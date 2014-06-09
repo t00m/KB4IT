@@ -1,0 +1,4936 @@
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.6/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.6/ http://www.mediawiki.org/xml/export-0.6.xsd" version="0.6" xml:lang="es">
+  <siteinfo>
+    <sitename>KB4IT</sitename>
+    <base>http://54.243.143.41/kb4it/index.php/P%C3%A1gina_principal</base>
+    <generator>MediaWiki 1.19.2</generator>
+    <case>first-letter</case>
+    <namespaces>
+      <namespace key="-2" case="first-letter">Medio</namespace>
+      <namespace key="-1" case="first-letter">Especial</namespace>
+      <namespace key="0" case="first-letter" />
+      <namespace key="1" case="first-letter">Discusión</namespace>
+      <namespace key="2" case="first-letter">Usuario</namespace>
+      <namespace key="3" case="first-letter">Usuario discusión</namespace>
+      <namespace key="4" case="first-letter">Proyecto</namespace>
+      <namespace key="5" case="first-letter">Proyecto discusión</namespace>
+      <namespace key="6" case="first-letter">Archivo</namespace>
+      <namespace key="7" case="first-letter">Archivo discusión</namespace>
+      <namespace key="8" case="first-letter">MediaWiki</namespace>
+      <namespace key="9" case="first-letter">MediaWiki discusión</namespace>
+      <namespace key="10" case="first-letter">Plantilla</namespace>
+      <namespace key="11" case="first-letter">Plantilla discusión</namespace>
+      <namespace key="12" case="first-letter">Ayuda</namespace>
+      <namespace key="13" case="first-letter">Ayuda discusión</namespace>
+      <namespace key="14" case="first-letter">Categoría</namespace>
+      <namespace key="15" case="first-letter">Categoría discusión</namespace>
+      <namespace key="102" case="first-letter">Atributo</namespace>
+      <namespace key="103" case="first-letter">Discusión atributo</namespace>
+      <namespace key="106" case="first-letter">Formulario</namespace>
+      <namespace key="107" case="first-letter">Discusión formulario</namespace>
+      <namespace key="108" case="first-letter">Concept</namespace>
+      <namespace key="109" case="first-letter">Concept talk</namespace>
+      <namespace key="170" case="first-letter">Filter</namespace>
+      <namespace key="171" case="first-letter">Filter talk</namespace>
+      <namespace key="274" case="first-letter">Widget</namespace>
+      <namespace key="275" case="first-letter">Widget talk</namespace>
+    </namespaces>
+  </siteinfo>
+  <page>
+    <title>Atributo:Centro de trabajo</title>
+    <ns>102</ns>
+    <id>2</id>
+      <sha1>7s2p8agi9hy5cbng80ut2q26erbgxzz</sha1>
+    <revision>
+      <id>3</id>
+      <timestamp>2012-10-12T19:59:36Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="150">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Centro de trabajo]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Clase de evento</title>
+    <ns>102</ns>
+    <id>134</id>
+      <sha1>30bc66sx7ruzus348ptmd23h2mgviz7</sha1>
+    <revision>
+      <id>260</id>
+      <timestamp>2012-10-14T21:18:03Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="147">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Tipo de evento]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Creates pages with form</title>
+    <ns>102</ns>
+    <id>3</id>
+      <sha1>7now60ovn1m59fu33p7euodl50y5fws</sha1>
+    <revision>
+      <id>5</id>
+      <timestamp>2012-10-12T19:59:36Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="59">Propiedad que permite crear páginas con un formulario dado</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Departamento</title>
+    <ns>102</ns>
+    <id>4</id>
+      <sha1>ne2x1zjdil3iak6rpl4sixixopig942</sha1>
+    <revision>
+      <id>7</id>
+      <timestamp>2012-10-12T19:59:36Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="145">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Departamento]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Dirección electrónica</title>
+    <ns>102</ns>
+    <id>1638</id>
+    <redirect title="Atributo:Email" />
+      <sha1>dngsua7eyeg9fwxhx7inpji77bv9lec</sha1>
+    <revision>
+      <id>210</id>
+      <timestamp>2012-10-12T21:57:45Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página redirigida a [[Atributo:Email]]</comment>
+      <text xml:space="preserve" bytes="28">#REDIRECT [[Atributo:Email]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Email</title>
+    <ns>102</ns>
+    <id>5</id>
+      <sha1>ssop5r45lzotsvk7jm9bceymv8lp82f</sha1>
+    <revision>
+      <id>3696</id>
+      <timestamp>2012-11-08T01:10:14Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="47">Esta propiedad es del tipo [[Has type::Email]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Empleado</title>
+    <ns>102</ns>
+    <id>6</id>
+      <sha1>ny472s57wcqrord9bgnukbvf6yceyhv</sha1>
+    <revision>
+      <id>11</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="141">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Empleado]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Empresa</title>
+    <ns>102</ns>
+    <id>7</id>
+      <sha1>oiulrfkpqpa0c0lv1xmlk49lpg7ivhx</sha1>
+    <revision>
+      <id>13</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="140">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Empresa]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Estado</title>
+    <ns>102</ns>
+    <id>8</id>
+      <sha1>k77hugr5p1y4s8en7gj5gqflgyh6ljq</sha1>
+    <revision>
+      <id>3511</id>
+      <timestamp>2012-11-08T01:01:47Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="394">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Estado del evento]].
+
+
+Los únicos valores permitidos son:
+* [[Allows value::Sin empezar]]
+* [[Allows value::En proceso]]
+* [[Allows value::Pendiente de terceros]]
+* [[Allows value::Pendiente de usuario]]
+* [[Allows value::Terminado]]
+* [[Allows value::Cancelado]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Etiqueta</title>
+    <ns>102</ns>
+    <id>9</id>
+      <sha1>g2ptfo4ose4f9iyfvwi1ktujo0e8y9x</sha1>
+    <revision>
+      <id>17</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="141">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Etiqueta]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Evento</title>
+    <ns>102</ns>
+    <id>1598</id>
+      <sha1>aotjf1jxldexmcxgdfhwg1ejof8j91j</sha1>
+    <revision>
+      <id>3506</id>
+      <timestamp>2012-11-08T00:25:53Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Evento]].»</comment>
+      <text xml:space="preserve" bytes="139">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Evento]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Fichero adjunto</title>
+    <ns>102</ns>
+    <id>10</id>
+      <sha1>mecrultsu7ekr05av9yzgtezlju26f3</sha1>
+    <revision>
+      <id>2181</id>
+      <timestamp>2012-11-02T23:31:33Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="148">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Fichero adjunto]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Fin</title>
+    <ns>102</ns>
+    <id>11</id>
+      <sha1>e2t72snh5sad5f7f56y7vu6vr7vra02</sha1>
+    <revision>
+      <id>21</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="61">Esta es una propiedad de tipo [[Tiene tipo de datos::Fecha]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Has default form</title>
+    <ns>102</ns>
+    <id>135</id>
+      <sha1>7rytah8ys5k1rlcs3dw01otodbjz1m4</sha1>
+    <revision>
+      <id>2122</id>
+      <timestamp>2012-11-02T19:27:03Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="129">Propiedad que permite definir un formulario para los elementos de una categoría. Esta propiedad tiene el tipo [[Has type::Page]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Has improper value for</title>
+    <ns>102</ns>
+    <id>136</id>
+      <sha1>7now60ovn1m59fu33p7euodl50y5fws</sha1>
+    <revision>
+      <id>273</id>
+      <timestamp>2012-10-15T12:36:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «Propiedad que permite crear páginas con un formulario dado»</comment>
+      <text xml:space="preserve" bytes="59">Propiedad que permite crear páginas con un formulario dado</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Identificador</title>
+    <ns>102</ns>
+    <id>1356</id>
+      <sha1>2baowusggclr2iptd6fgwgtfx5jplua</sha1>
+    <revision>
+      <id>2639</id>
+      <timestamp>2012-11-03T20:44:51Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Identificador]].»</comment>
+      <text xml:space="preserve" bytes="146">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Identificador]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Inicio</title>
+    <ns>102</ns>
+    <id>12</id>
+      <sha1>e2t72snh5sad5f7f56y7vu6vr7vra02</sha1>
+    <revision>
+      <id>23</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="61">Esta es una propiedad de tipo [[Tiene tipo de datos::Fecha]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Modification date</title>
+    <ns>102</ns>
+    <id>130</id>
+    <redirect title="Atributo:Modification date" />
+      <sha1>4vrafrqqnpvgdxo6501pnre41qy4ena</sha1>
+    <revision>
+      <id>237</id>
+      <timestamp>2012-10-13T11:56:20Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página redirigida a [[Atributo:Modification date]]</comment>
+      <text xml:space="preserve" bytes="40">#REDIRECT [[Atributo:Modification date]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Nick</title>
+    <ns>102</ns>
+    <id>13</id>
+      <sha1>mcoi9mmwe0izp8g5psuv3sfx2enge7i</sha1>
+    <revision>
+      <id>25</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="137">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Nick]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Nombre</title>
+    <ns>102</ns>
+    <id>14</id>
+      <sha1>n4ur8gmeu412y7t6er8xweiau0nw585</sha1>
+    <revision>
+      <id>27</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="139">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Nombre]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Permite el valor</title>
+    <ns>102</ns>
+    <id>137</id>
+      <sha1>kon6e5p9h0awqfz59hm40ueamtli9fx</sha1>
+    <revision>
+      <id>274</id>
+      <timestamp>2012-10-16T13:41:08Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «Atributo que permite especificar qué tipo de valor tiene una página.»</comment>
+      <text xml:space="preserve" bytes="70">Atributo que permite especificar qué tipo de valor tiene una página.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Primer apellido</title>
+    <ns>102</ns>
+    <id>15</id>
+      <sha1>15w9fh6bk5oyb7k5twanweq5y0uregw</sha1>
+    <revision>
+      <id>29</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="148">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Primer apellido]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Prioridad</title>
+    <ns>102</ns>
+    <id>16</id>
+      <sha1>k1f2swf0b7dnz3umj4qpkuckjirdmuk</sha1>
+    <revision>
+      <id>3513</id>
+      <timestamp>2012-11-08T01:02:42Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="315">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Prioridad]].
+
+
+Los únicos valores permitidos son:
+* [[Allows value::Muy alta]]
+* [[Allows value::Alta]]
+* [[Allows value::Normal]]
+* [[Allows value::Baja]]
+* [[Allows value::Muy baja]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Proyecto</title>
+    <ns>102</ns>
+    <id>18</id>
+      <sha1>qrc534knxp9arechhznywfkf97pqsyo</sha1>
+    <revision>
+      <id>35</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="141">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Proyecto]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Puesto de trabajo</title>
+    <ns>102</ns>
+    <id>19</id>
+      <sha1>2hpst2ewcravalnj6p2ur8jz6cf3sbs</sha1>
+    <revision>
+      <id>37</id>
+      <timestamp>2012-10-12T19:59:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="150">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Puesto de trabajo]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Relación</title>
+    <ns>102</ns>
+    <id>1221</id>
+      <sha1>0rujy9l2ezb3vctljg0eakfjqfhgjb0</sha1>
+    <revision>
+      <id>2638</id>
+      <timestamp>2012-11-03T20:43:08Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <minor/>
+      <text xml:space="preserve" bytes="142">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Relación]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Segundo apellido</title>
+    <ns>102</ns>
+    <id>20</id>
+      <sha1>h6wp0um2p2cxrtb2c7ie34iwre81gsk</sha1>
+    <revision>
+      <id>39</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="149">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Segundo apellido]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Subproyecto de</title>
+    <ns>102</ns>
+    <id>21</id>
+      <sha1>89ppbazcumyn8kfqa5cckizqw2hvlah</sha1>
+    <revision>
+      <id>261</id>
+      <timestamp>2012-10-14T21:20:11Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="215">Atributo que permite especificar a qué proyecto pertenece otro proyecto.
+Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Proyecto]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Teléfono</title>
+    <ns>102</ns>
+    <id>22</id>
+      <sha1>suqe4dq68offbeglls6pjj306lj71zn</sha1>
+    <revision>
+      <id>43</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="142">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Teléfono]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Tiene tipo de datos</title>
+    <ns>102</ns>
+    <id>23</id>
+      <sha1>m2grt6se0ob8p63rw0i3tokgej8j1r2</sha1>
+    <revision>
+      <id>45</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="60">Atributo que especifica que tipo de datos usa una propiedad.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Tipo de evento</title>
+    <ns>102</ns>
+    <id>24</id>
+      <sha1>f3cmzvsxgi0hfe7p3nt9fz502nd9gvr</sha1>
+    <revision>
+      <id>4379</id>
+      <timestamp>2012-11-18T19:50:12Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1392">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Tipo de evento]].
+
+Los únicos valores permitidos son:
+* [[Allows value::Ausencia]]
+* [[Allows value::Baja por enfermedad]]
+* [[Allows value::Bug]]
+* [[Allows value::Cursos y Educación]]
+* [[Allows value::Documentación]]
+* [[Allows value::E-mail]]
+* [[Allows value::Evento]]
+* [[Allows value::Guardia]]
+* [[Allows value::Guardia 24x7]]
+* [[Allows value::Incidencia]]
+* [[Allows value::Incidencia guardia]]
+* [[Allows value::Informativo]]
+* [[Allows value::Informe]]
+* [[Allows value::Informe anual]]
+* [[Allows value::Informe diario]]
+* [[Allows value::Informe guardia]]
+* [[Allows value::Informe mensual]]
+* [[Allows value::Informe semanal]]
+* [[Allows value::Instalación]]
+* [[Allows value::Intervención]]
+* [[Allows value::Intervención guardia]]
+* [[Allows value::Libre disposición]]
+* [[Allows value::Libre turno]]
+* [[Allows value::Llamada]]
+* [[Allows value::Llamada guardia]]
+* [[Allows value::Parada de sistema]]
+* [[Allows value::Petición]]
+* [[Allows value::Procedimiento]]
+* [[Allows value::Reunión]]
+* [[Allows value::Seguimiento]]
+* [[Allows value::Tarea]]
+* [[Allows value::Tarea programada]]
+* [[Allows value::Turno]]
+* [[Allows value::Turno adicional]]
+* [[Allows value::Upgrade]]
+* [[Allows value::Vacaciones]]
+* [[Allows value::Visita]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Versión</title>
+    <ns>102</ns>
+    <id>25</id>
+      <sha1>pqefo7dv2d9ads1eao3xfyzq8ha4fee</sha1>
+    <revision>
+      <id>2248</id>
+      <timestamp>2012-11-03T01:01:29Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="141">Esta es una propiedad de tipo [[Tiene tipo de datos::Page]]. Vincula a páginas que usen el formulario [[Creates pages with form::Versión]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Atributo:Web</title>
+    <ns>102</ns>
+    <id>1599</id>
+      <sha1>aq5c8gx6sntlc9pu5xknk8lcj6ro109</sha1>
+    <revision>
+      <id>3507</id>
+      <timestamp>2012-11-08T00:31:36Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «Esta es una propiedad de tipo [[Tiene tipo de datos::URL]].»</comment>
+      <text xml:space="preserve" bytes="59">Esta es una propiedad de tipo [[Tiene tipo de datos::URL]].</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Centro de trabajo</title>
+    <ns>106</ns>
+    <id>26</id>
+      <sha1>cvfyiwuotczkdya4tswsvs7egp478kp</sha1>
+    <revision>
+      <id>51</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="798">&lt;noinclude&gt;
+Este es el formulario ''Centro de trabajo''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Centro de trabajo}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Centro de trabajo}}}
+{| class=&quot;formtable&quot;
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Departamento</title>
+    <ns>106</ns>
+    <id>27</id>
+      <sha1>fup6jqd9qpkfbr62d4ft5z57i5vmico</sha1>
+    <revision>
+      <id>53</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="783">&lt;noinclude&gt;
+Este es el formulario ''Departamento''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Departamento}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Departamento}}}
+{| class=&quot;formtable&quot;
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Empleado</title>
+    <ns>106</ns>
+    <id>28</id>
+      <sha1>bc3zc55784wy7yuadxzkqwoywm31hm8</sha1>
+    <revision>
+      <id>3742</id>
+      <timestamp>2012-11-08T01:52:57Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="3875">&lt;noinclude&gt;
+Escriba el nombre y apellidos del empleado.
+
+Ej.: ''Juan Pérez García''
+
+
+{{#forminput:form=Empleado}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Empleado}}}
+=Datos personales=
+{| class=&quot;formtable&quot; style=&quot;border:1px solid transparent;&quot; width=&quot;100%&quot; cellpadding=&quot;6&quot; cellspacing=&quot;6&quot;
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | Nick:
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|nick|size=20|property=Nick}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | Nombre:
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|nombre|size=20|property=Nombre}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | 1er. apellido:
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|apellido_uno|size=20|property=Primer apellido}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | 2o. apellido:
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|apellido_dos|size=20|property=Segundo apellido}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | Teléfono personal
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|telefono_personal|size=60|property=Teléfono}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | Email personal:
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|email_personal|size=60|property=Email}}}
+|}
+
+
+=Datos laborales=
+{| class=&quot;formtable&quot; style=&quot;border:1px solid transparent;&quot; width=&quot;100%&quot; cellpadding=&quot;6&quot; cellspacing=&quot;6&quot;
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Empresa'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|empresa|size=20|property=Empresa|values from category=Empresas}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Centro de trabajo'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|centro de trabajo|size=60|property=Centro de trabajo|values from category=Centros de trabajo}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Departamento'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|departamento|size=30|property=Departamento|values from category=Departamentos}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Puesto de trabajo'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|puesto de trabajo|size=60|property=Puesto de trabajo|values from category=Puestos de trabajo}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Teléfono'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|telefono_trabajo|size=60|property=Teléfono|values from category=Teléfonos}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Email trabajo'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|email_trabajo|size=60|property=Email}}}
+|}
+
+
+=Actividad=
+{| class=&quot;formtable&quot; style=&quot;border:1px solid transparent;&quot; width=&quot;100%&quot; cellpadding=&quot;6&quot; cellspacing=&quot;6&quot;
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Proyectos'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|proyectos|input type=listbox|size=20|property=Proyecto|values from category=Proyectos}}}
+|}
+
+
+&lt;headertabs/&gt;
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Empresa</title>
+    <ns>106</ns>
+    <id>29</id>
+      <sha1>imihgnrk52ck2sp9605n1ahjogezrpg</sha1>
+    <revision>
+      <id>3812</id>
+      <timestamp>2012-11-09T02:11:33Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1532">&lt;noinclude&gt;
+Este es el formulario ''Empresa''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Empresa}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Empresa}}}
+
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Centros de trabajo'''
+| align=&quot;left&quot; valign=&quot;top&quot; width=&quot;55%&quot;   | {{{field|centros|list|property=Centro de trabajo|size=60|values from category=Centros de trabajo}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Teléfono'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|teléfono|size=60|property=Teléfono|values from category=Teléfonos}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Email'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|email|size=60|property=Email}}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Web'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{{field|web|size=60|property=Web}}}
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Entorno</title>
+    <ns>106</ns>
+    <id>1038</id>
+      <sha1>5v7gexx9zu0ptkh57ephkbax3nrrr30</sha1>
+    <revision>
+      <id>1559</id>
+      <timestamp>2012-10-31T11:11:11Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «&lt;noinclude&gt; Este es el formulario ''Entorno''. Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya ...»</comment>
+      <text xml:space="preserve" bytes="768">&lt;noinclude&gt;
+Este es el formulario ''Entorno''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Entorno}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Entorno}}}
+{| class=&quot;formtable&quot;
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Estado del evento</title>
+    <ns>106</ns>
+    <id>30</id>
+      <sha1>2ieojsy88x98wil5hi8fqu0tevz2hgi</sha1>
+    <revision>
+      <id>59</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="857">&lt;noinclude&gt;
+Este es el formulario ''Estado del evento''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+{{#ask:[[Categoría:Estados de eventos]]
+|format=category
+|limit=5000
+|offset=0
+}}
+
+{{#forminput:form=Estado del evento}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Estado del evento}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Etiqueta</title>
+    <ns>106</ns>
+    <id>31</id>
+      <sha1>t3uvsnzolxt73lh07af5kfg6eyrqf7c</sha1>
+    <revision>
+      <id>61</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="618">&lt;noinclude&gt;
+Este es el formulario ''Etiqueta''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Etiqueta}}
+
+&lt;/noinclude&gt;
+&lt;includeonly&gt;{{{for template|Etiqueta}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Evento</title>
+    <ns>106</ns>
+    <id>32</id>
+      <sha1>j9xx0s1fotkv74k34ridsco14203j77</sha1>
+    <revision>
+      <id>5253</id>
+      <timestamp>2012-12-30T12:37:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="5738">&lt;noinclude&gt;
+Este es el formulario ''Evento''.
+Para crear un nuevo evento ingrese el nombre de dicho evento a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+{{#forminput:form=Evento}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Evento}}}
+=Qué=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot; | Identificador {{#info: {{FORMULARIO_EVENTO_AYUDA_IDENTIFICADOR}} }}
+| align=&quot;left&quot;  valign=&quot;top&quot;  | {{{field|identificador|input type=combobox|mandatory|property=Identificador|default={{CURRENTTIMESTAMP}}-{{#replace:{{PAGENAME}}| |-}}|size=50|values from category=Identificadores}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot;  | Tipo de evento {{#info: {{FORMULARIO_EVENTO_AYUDA_TIPO_DE_EVENTO}}  }}
+| align=&quot;left&quot; valign=&quot;top&quot;    |  {{{field|tipo de evento|mandatory|input type=combobox|property=Tipo de evento|values from category=Tipos de eventos}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot;  | Proyecto {{#info: {{FORMULARIO_EVENTO_AYUDA_PROYECTO}} }}
+| align=&quot;left&quot; valign=&quot;top&quot;    | {{{field|proyecto|list|property=Proyecto|input type=combobox|size=50|list|values from category=Proyectos}}}
+|}
+
+
+=Dónde=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot;  | Empresa {{#info: {{FORMULARIO_EVENTO_AYUDA_EMPRESA}} }} 
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|empresa|list|property=Empresa|input type=combobox|size=50|values from category=Empresas}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot; | Centro(s) de trabajo {{#info: {{FORMULARIO_EVENTO_AYUDA_CENTRO DE TRABAJO}} }} 
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|centro|list|property=Centro de trabajo|input type=combobox|size=50|values from category=Centros de trabajo}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot;  | Departamento(s) {{#info: {{FORMULARIO_EVENTO_AYUDA_DEPARTAMENTO}}  }}
+| align=&quot;left&quot; valign=&quot;top&quot;    | {{{field|departamento|list|property=Departamento|size=50|input type=combobox|values from category=Departamentos}}}
+|}
+
+
+=Cúando=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;  width=&quot;100%&quot;
+! align=&quot;right&quot; valign=&quot;top&quot; width=&quot;25%&quot; | Fecha de inicio {{#info: {{FORMULARIO_EVENTO_AYUDA_INICIO}}  }}
+| align=&quot;left&quot; valign=&quot;top&quot;    | {{{field|inicio|input type=date|mandatory|property=Inicio|default=now}}} Hora: {{{field|inicio_hora |mandatory |property=Hora |default={{#time: H|now}}|size=2 |values from category=Horas}}}:{{{field|inicio_minuto|mandatory|property=Minuto|default={{#time: i|now}}|size=2 |values from category=Minutos}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot; width=&quot;25%&quot; | Fecha límite {{#info: {{FORMULARIO_EVENTO_AYUDA_FIN}} }}
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|fin|input type=date|mandatory|property=Fin|default=now}}} Hora: {{{field|fin_hora |mandatory |property=Hora |default={{#time: H|now}}|size=2 |values from category=Horas}}}:{{{field|fin_minuto|mandatory|property=Minuto|default={{#time: i|now}}|size=2 |values from category=Minutos}}}
+|}
+
+
+=Quién=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot;   width=&quot;25%&quot; | Organizador {{#info: {{FORMULARIO_EVENTO_AYUDA_ORGANIZADOR}} }}
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|organizador|property=Empleado|list|size=50|input type=combobox|values from category=Empleados}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot;  | Empleados que participan {{#info: {{FORMULARIO_EVENTO_AYUDA_EMPLEADO}}  }}
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|empleados|property=Empleado|list|size=50|input type=combobox|values from category=Empleados}}}
+|-
+| colspan=&quot;3&quot; | {{NUBE DE EMPLEADOS|nolink}}
+|}
+
+
+=Cómo=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot; 
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot; | Estado del evento {{#info: {{FORMULARIO_EVENTO_AYUDA_ESTADO}}  }} 
+| align=&quot;left&quot; valign=&quot;top&quot;  | {{{field|estado|input type=dropdown|default=En proceso|property=Estado}}}
+|-
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot; | Prioridad {{#info: {{FORMULARIO_EVENTO_AYUDA_PRIORIDAD}} }}
+| align=&quot;left&quot; valign=&quot;top&quot;  | {{{field|prioridad|input type=dropdown|values=Muy alta, Alta, Normal, Baja, Muy baja|default=Normal|property=Prioridad}}}
+|}
+
+
+=Revisión=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot;  | Versión {{#info: {{FORMULARIO_EVENTO_AYUDA_VERSION}} }}
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|versión|input type=combobox|property=Versión|default=1}}}
+|}
+
+
+=Etiquetado=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot; width=&quot;25%&quot;  | Etiquetas {{#info: {{FORMULARIO_EVENTO_AYUDA_ETIQUETA}}  }}
+| align=&quot;left&quot; valign=&quot;top&quot;  | {{{field|etiquetas|property=Etiqueta|list|size=50|values from category=Etiquetas}}}
+|-
+| colspan=&quot;3&quot; | {{NUBE DE ETIQUETAS|nolink}}
+|}
+
+
+=Relaciones=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot; | Relaciones {{#info:  {{FORMULARIO_EVENTO_AYUDA_RELACIÓN}} }}
+| align=&quot;left&quot; valign=&quot;top&quot; | {{{field|relación|property=Relación|list|size=50|input type=combobox|values from category=Relaciones}}}
+|}
+
+
+=Ficheros adjuntos=
+{| class=&quot;formtable&quot; cellspacing=&quot;12&quot; cellpadding=&quot;6&quot;
+! align=&quot;right&quot; valign=&quot;top&quot;  width=&quot;25%&quot; |  Adjuntar un fichero {{#info: {{FORMULARIO_EVENTO_AYUDA_FICHERO_ADJUNTO}} }}
+| align=&quot;left&quot; valign=&quot;top&quot;   | {{{field|adjunto|uploadable|property=Fichero adjunto|values from namespace=Archivo|size=30}}}
+|}
+
+
+&lt;headertabs/&gt;
+{{{end template}}}
+=Texto libre=
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+
+
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Fichero adjunto</title>
+    <ns>106</ns>
+    <id>33</id>
+      <sha1>8mivyc7t3wff4733uqm2tqnqrexf8dm</sha1>
+    <revision>
+      <id>65</id>
+      <timestamp>2012-10-12T19:59:38Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="637">&lt;noinclude&gt;
+Este es el formulario ''Fichero adjunto''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+{{#forminput:form=Fichero adjunto}}
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Fichero adjunto}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Identificador</title>
+    <ns>106</ns>
+    <id>34</id>
+      <sha1>282z4g0azzo96bmzz0zhymriyyyddi3</sha1>
+    <revision>
+      <id>67</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="786">&lt;noinclude&gt;
+Este es el formulario ''Identificador''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Identificador}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Identificador}}}
+{| class=&quot;formtable&quot;
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Nick</title>
+    <ns>106</ns>
+    <id>35</id>
+      <sha1>3q5uxljd6hl54tarxgw57gp12kk04mt</sha1>
+    <revision>
+      <id>69</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="735">&lt;noinclude&gt;
+Este es el formulario ''Nick''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Nick}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Nick}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Nombre</title>
+    <ns>106</ns>
+    <id>36</id>
+      <sha1>q3vo8xcfbe2vdycnd7gxiut0cf23acu</sha1>
+    <revision>
+      <id>71</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="612">&lt;noinclude&gt;
+Este es el formulario ''Nombre''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Nombre}}
+
+&lt;/noinclude&gt;
+&lt;includeonly&gt;{{{for template|Nombre}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Primer apellido</title>
+    <ns>106</ns>
+    <id>37</id>
+      <sha1>1k3rkdzcy3kaxv9rpr6ucl1qjxg3kh4</sha1>
+    <revision>
+      <id>73</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="768">&lt;noinclude&gt;
+Este es el formulario ''Primer apellido''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Primer apellido}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Primer apellido}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Prioridad</title>
+    <ns>106</ns>
+    <id>38</id>
+      <sha1>jk4t5ijiifmeiat72fzvecbep8mjh1u</sha1>
+    <revision>
+      <id>75</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="621">&lt;noinclude&gt;
+Este es el formulario ''Prioridad''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Prioridad}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Prioridad}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Proyecto</title>
+    <ns>106</ns>
+    <id>40</id>
+      <sha1>f1qzkh9x6bfpdo2dextndy483cobi3q</sha1>
+    <revision>
+      <id>2041</id>
+      <timestamp>2012-11-02T00:24:57Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="853">&lt;noinclude&gt;
+Este es el formulario ''Proyecto''.
+
+Para añadir un nuevo proyecto, ingrese su nombre a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Proyecto}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Proyecto}}}
+{| class=&quot;formtable&quot;
+! Subproyecto de:
+| {{{field|subproyecto de|default=no depende de ningún proyecto|value=no depende de ningún proyecto|property=Subproyecto de|values from property=Subproyecto de}}}
+|-
+! Empresa:
+| {{{field|empresa|property=Empresa}}}
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Puesto de trabajo</title>
+    <ns>106</ns>
+    <id>41</id>
+      <sha1>mwomq2mqpo287osnywuewr1x2l1ipd9</sha1>
+    <revision>
+      <id>81</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="782">&lt;noinclude&gt;
+Este es el formulario ''Puesto de trabajo''.
+Para crear una página con este formulario, ingrese el puesto de trabajo a continuación; si la página con ese puesto de trabajo ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Puesto de trabajo}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Puesto de trabajo}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Relación</title>
+    <ns>106</ns>
+    <id>1222</id>
+      <sha1>b9ufskuep0xz3xfaxiwa7n9uozx2ab2</sha1>
+    <revision>
+      <id>2156</id>
+      <timestamp>2012-11-02T20:46:50Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «&lt;noinclude&gt; Este es el formulario ''Relación''. Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre y...»</comment>
+      <text xml:space="preserve" bytes="621">&lt;noinclude&gt;
+Este es el formulario ''Relación''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Relación}}
+
+&lt;/noinclude&gt;
+&lt;includeonly&gt;{{{for template|Relación}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Segundo apellido</title>
+    <ns>106</ns>
+    <id>42</id>
+      <sha1>l4yv2jx438srgh68gf5bltcj9610sta</sha1>
+    <revision>
+      <id>83</id>
+      <timestamp>2012-10-12T19:59:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="771">&lt;noinclude&gt;
+Este es el formulario ''Segundo apellido''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Segundo apellido}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Segundo apellido}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Teléfono</title>
+    <ns>106</ns>
+    <id>43</id>
+      <sha1>2nw0f74yk0is2frhgzsdyw2uynmhz6e</sha1>
+    <revision>
+      <id>85</id>
+      <timestamp>2012-10-12T19:59:40Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="774">&lt;noinclude&gt;
+Este es el formulario ''Teléfono''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Teléfono}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;div id=&quot;wikiPreview&quot; style=&quot;display: none; padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #AAAAAA;&quot;&gt;&lt;/div&gt;
+{{{for template|Teléfono}}}
+{| class=&quot;formtable&quot;
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Tipo de evento</title>
+    <ns>106</ns>
+    <id>44</id>
+      <sha1>459hf4n6tlfsvq3ldaud51gcf6h4h57</sha1>
+    <revision>
+      <id>253</id>
+      <timestamp>2012-10-14T12:07:35Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="863">&lt;noinclude&gt;
+Este es el formulario ''Tipo de evento''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+{{#ask:[[Categoría:Tipos de eventos]]
+|format=list
+|limit=5000
+|offset=0
+|link=all
+}}
+
+{{#forminput:form=Tipo de evento}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+
+{{{for template|Tipo de evento}}}
+{| class=&quot;formtable&quot;
+! Clase de evento:
+| {{{field|clase|default=|value=|property=Tipo de evento|values from property=Tipo de evento}}}
+|}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Formulario:Versión</title>
+    <ns>106</ns>
+    <id>45</id>
+      <sha1>6x8sgvqlv2xb3u0iwvjorqm3hiaxaho</sha1>
+    <revision>
+      <id>89</id>
+      <timestamp>2012-10-12T19:59:40Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="618">&lt;noinclude&gt;
+Este es el formulario ''Versión''.
+Para crear una página con este formulario, ingrese el nombre de la página a continuación; si la página con ese nombre ya existe, será dirigido al formulario para editar esa página.
+
+
+{{#forminput:form=Versión}}
+
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{{for template|Versión}}}
+{{{end template}}}
+
+'''Texto libre:'''
+
+{{{standard input|free text|rows=10}}}
+
+
+{{{standard input|summary}}}
+
+{{{standard input|minor edit}}} {{{standard input|watch}}}
+
+{{{standard input|save}}} {{{standard input|preview}}} {{{standard input|changes}}} {{{standard input|cancel}}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Ayer</title>
+    <ns>10</ns>
+    <id>1485</id>
+      <sha1>kgp0ln95fniok4aw0cwe1v1hvk6bw6l</sha1>
+    <revision>
+      <id>3096</id>
+      <timestamp>2012-11-04T20:44:32Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="26">{{#time: d/m/Y|now-1 day}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:CUADRO ESTADISTICAS KB</title>
+    <ns>10</ns>
+    <id>1291</id>
+      <sha1>h94qwwt9eg77q2sirbl3au6h8h16z1t</sha1>
+    <revision>
+      <id>3285</id>
+      <timestamp>2012-11-06T01:20:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="817">{| class=&quot;wikitable&quot; cellspacing=&quot;6&quot; cellpadding=&quot;6&quot; width=&quot;100%&quot;
+|+ Estadísticas KB
+|- 
+! align=&quot;right&quot; width=&quot;90%&quot; | Eventos
+| align=&quot;right&quot; |  [[Eventos|{{TOTAL EVENTOS}}]] 
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Procedimientos
+| align=&quot;right&quot; |  [[Procedimientos|{{TOTAL PROCEDIMIENTOS}}]] 
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Empleados
+| align=&quot;right&quot; |  [[Empleados|{{TOTAL EMPLEADOS}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Centros
+| align=&quot;right&quot; |  [[Centros de trabajo|{{TOTAL CENTROS DE TRABAJO}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Departamentos
+| align=&quot;right&quot; |  [[Departamentos|{{TOTAL DEPARTAMENTOS}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Puestos
+| align=&quot;right&quot; |  [[Puestos de trabajo|{{TOTAL PUESTOS DE TRABAJO}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Proyectos
+| align=&quot;right&quot; |  [[Proyectos|{{TOTAL PROYECTOS}}]] 
+|}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:CUADRO EVENTOS KB</title>
+    <ns>10</ns>
+    <id>1292</id>
+      <sha1>ocun0gl5ekwv3n75dz2fnf3b42x6afj</sha1>
+    <revision>
+      <id>3286</id>
+      <timestamp>2012-11-06T01:22:04Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="828">{| class=&quot;wikitable&quot; cellspacing=&quot;6&quot; cellpadding=&quot;6&quot; width=&quot;100%&quot;
+|+ Eventos
+|- 
+! align=&quot;right&quot; width=&quot;90%&quot; | Sin empezar
+| align=&quot;right&quot; | [[Eventos sin empezar | {{TOTAL_EVENTOS_SIN_EMPEZAR}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | En proceso
+| align=&quot;right&quot;  |  [[Eventos en proceso | {{TOTAL_EVENTOS_EN_PROCESO}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Pte. terceros
+| align=&quot;right&quot;  |  [[Eventos pendientes de terceros | {{TOTAL_EVENTOS_PENDIENTE_TERCEROS}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Pte. usuario
+| align=&quot;right&quot;  |  [[Eventos pendientes de usuario | {{TOTAL_EVENTOS_PENDIENTE_USUARIO}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Terminado
+| align=&quot;right&quot;  |  [[Eventos terminados | {{TOTAL_EVENTOS_TERMINADO}}]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Cancelado
+| align=&quot;right&quot;  |  [[Eventos cancelados | {{TOTAL_EVENTOS_CANCELADO}}]]
+|}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:CUADRO IDENTIFICADOR</title>
+    <ns>10</ns>
+    <id>1364</id>
+      <sha1>0xhm33pe48luctqr814w2pgdoc3a1gp</sha1>
+    <revision>
+      <id>2663</id>
+      <timestamp>2012-11-03T22:40:17Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="205">&lt;strong&gt;'''{{{1}}}'''&lt;/strong&gt;
+
+'''{{{2}}}''' para el proyecto '''{{{3}}}'''.
+
+'''Comienzo''': '''{{{4}}}'''
+
+'''Fecha límite''': '''{{{5}}}'''
+
+'''Estado''': '''{{{6}}}'''
+
+'''Prioridad''': '''{{{7}}}'''</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:CUADRO PROCEDIMIENTOS KB</title>
+    <ns>10</ns>
+    <id>1299</id>
+      <sha1>q2ypvaxi1rhqabyuamgx95yh8vjsc6z</sha1>
+    <revision>
+      <id>3309</id>
+      <timestamp>2012-11-06T02:09:24Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="479">{| class=&quot;wikitable&quot; cellspacing=&quot;6&quot; cellpadding=&quot;6&quot; width=&quot;100%&quot;
+|+ Procedimientos
+|- 
+! align=&quot;right&quot; width=&quot;90%&quot;| Borradores
+| align=&quot;right&quot;  |  [[Procedimientos sin empezar | {{TOTAL_PROCEDIMIENTOS_SIN_EMPEZAR}} ]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | En vigor
+| align=&quot;right&quot; |  [[Procedimientos en vigor | {{TOTAL_PROCEDIMIENTOS_EN_PROCESO}} ]]
+|-
+! align=&quot;right&quot; width=&quot;90%&quot; | Obsoletos
+| align=&quot;right&quot;  |  [[Procedimientos obsoletos | {{TOTAL_PROCEDIMIENTOS_TERMINADO}} ]]
+|}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Centro de trabajo</title>
+    <ns>10</ns>
+    <id>46</id>
+      <sha1>eh5cdaxv0rwt0z6de8g60neon32n3oz</sha1>
+    <revision>
+      <id>4080</id>
+      <timestamp>2012-11-14T23:47:44Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="600">&lt;noinclude&gt;
+Este es la plantilla 'Centro de trabajo'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Centro de trabajo}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;
+&lt;includeonly&gt;{{#ask:[[Categoría:Empleados]] [[Centro de trabajo::{{PAGENAME}}]]
+|?Departamento| +limit=1
+|?Puesto de trabajo| +limit=1
+|?Teléfono |+limit=1
+|?Email |+limit=1
+|format=broadtable
+|limit=20
+|offset=0
+|sort=Nombre, Departamento
+|mainlabel=En este centro
+|default=No se han encontrado empleados en este centro de trabajo
+}}
+
+
+[[Categoría:Centros de trabajo]]
+__SHOWFACTBOX__
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Departamento</title>
+    <ns>10</ns>
+    <id>47</id>
+      <sha1>2ab3inx199ysxgfvuhm9crtrw6vdcnq</sha1>
+    <revision>
+      <id>3214</id>
+      <timestamp>2012-11-05T02:46:14Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1622">&lt;noinclude&gt;
+Este es la plantilla 'Departamento'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Departamento}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+=Ficha de departamento=
+Hay {{EMPLEADOSxDEPARTAMENTO|{{PAGENAME}}}} empleados trabajando en un departamento llamado '''{{PAGENAME}}'''. Tenga en cuenta que este departamento se puede encontrar en otras empresas también.
+
+
+=Empleados asignados=
+{{#ask:[[Categoría:Empleados]] [[Departamento::{{PAGENAME}}]]
+|?Puesto de trabajo |+limit=1
+|?Empresa |+limit=1
+|?Centro de trabajo |+limit=1
+|format=broadtable
+|mainlabel=Empleados en este departamento
+|limit=500
+|offset=0
+|sort=Empresa
+|default=No hay ningún empleado registrado en este departamento
+}}
+
+
+=Eventos asociados=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Departamento::{{PAGENAME}}]]
+|?Estado
+|format=broadtable
+|limit=500
+|headers=show
+|mainlabel=Eventos relacionados
+|default=no se han encontrado registros.
+|offset=0
+}}
+
+
+=Procedimientos asociados=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::Procedimiento]] [[Departamento::{{PAGENAME}}]]
+|?Estado
+|format=broadtable
+|limit=500
+|headers=show
+|mainlabel=Procedimientos relacionados
+|default=no se han encontrado registros.
+|offset=0
+}}
+
+
+=Etiquetas=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::Procedimiento]] [[Departamento::{{PAGENAME}}]]
+|?Etiqueta|+limit=10
+|format=tagcloud
+|headers=hide
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=75
+|maxsize=250
+|offset=
+|limit=100
+}}
+
+&lt;headertabs/&gt;
+
+
+
+[[Categoría:Departamentos]]
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:EMPLEADOS DEL PROYECTO</title>
+    <ns>10</ns>
+    <id>1184</id>
+      <sha1>imj6n155v2s8x3w8twz4cbfbpzzkb7e</sha1>
+    <revision>
+      <id>1976</id>
+      <timestamp>2012-11-01T20:12:51Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="92">{{#ask: [[Categoría:Empleados]] [[Proyecto::{{{1}}}]] | ?Empresa= |+limit=1 | format=list}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:EMPLEADOSxDEPARTAMENTO</title>
+    <ns>10</ns>
+    <id>64</id>
+      <sha1>dfjdbnq7mmrvhjwlxkg0co1e46ffxqx</sha1>
+    <revision>
+      <id>127</id>
+      <timestamp>2012-10-12T19:59:41Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="72">{{#ask:[[Categoría:Empleados]] [[Departamento::{{{1}}}]]|format=count}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:ESTADISTICAS EMPLEADO</title>
+    <ns>10</ns>
+    <id>1180</id>
+      <sha1>23a7e94z6r7r9spfualtwse3r5ls1vy</sha1>
+    <revision>
+      <id>1944</id>
+      <timestamp>2012-11-01T19:19:46Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="825">Nombrado en '''{{#ask: [[Empleado::{{{1}}}]] | format=count}} páginas'''. 
+
+
+Ha participado en '''{{#ask: [[Categoría:Eventos]] [[Empleado::{{{1}}}]] | format=count}} eventos''' de los cuales:
+* '''{{#ask: [[Categoría:Eventos]] [[Empleado::{{{1}}}]] [[Estado::Sin empezar]] | format=count}}''' están '''sin empezar'''
+* '''{{#ask: [[Categoría:Eventos]] [[Empleado::{{{1}}}]] [[Estado::En proceso]] | format=count}}''' están '''en proceso'''
+* '''{{#ask: [[Categoría:Eventos]] [[Empleado::{{{1}}}]] [[Estado::Terminado]] | format=count}}''' están '''terminados'''
+* '''{{#ask: [[Categoría:Eventos]] [[Empleado::{{{1}}}]] [[Estado::Cancelado]] | format=count}}''' están '''cancelados'''
+
+
+Colaboró en la redacción de '''{{#ask: [[Categoría:Procedimientos]] [[Empleado::{{{1}}}]] | format=count}} procedimientos'''.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:ESTADISTICAS EMPRESA</title>
+    <ns>10</ns>
+    <id>1198</id>
+      <sha1>264zhdbtvxotxco65og8ofz27zq97qn</sha1>
+    <revision>
+      <id>2039</id>
+      <timestamp>2012-11-02T00:22:05Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="341">* Empleados: {{#ask: [[Categoría:Empleados]] [[Empresa::{{{1}}}]] | format=count}}
+* Proyectos: {{#ask: [[Categoría:Proyectos]] [[Empresa::{{{1}}}]] | format=count}}
+* Procedimientos: {{#ask: [[Categoría:Procedimientos]] [[Empresa::{{{1}}}]] | format=count}}
+* Eventos: {{#ask: [[Categoría:Eventos]] [[Empresa::{{{1}}}]] | format=count}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:ESTADO EVENTOS EMPLEADO</title>
+    <ns>10</ns>
+    <id>1182</id>
+      <sha1>nhs99aws6ea4lbv9ijr60y6imock4iq</sha1>
+    <revision>
+      <id>1931</id>
+      <timestamp>2012-11-01T19:03:53Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="74">* El evento '''{{{1}}}''' está '''{{{3}}}''' en el proyecto '''{{{2}}}'''</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:EVENTOS ABIERTOS EMPLEADO</title>
+    <ns>10</ns>
+    <id>1183</id>
+      <sha1>cmn9dlq4osu63jqm4mfq9mfvdt3q6zw</sha1>
+    <revision>
+      <id>1939</id>
+      <timestamp>2012-11-01T19:13:02Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{{1}}}»</comment>
+      <text xml:space="preserve" bytes="7">{{{1}}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:EVENTOS CON ESTADO</title>
+    <ns>10</ns>
+    <id>1302</id>
+      <sha1>khvyni614e5tbu2d1ctno4na6ivnh2u</sha1>
+    <revision>
+      <id>4255</id>
+      <timestamp>2012-11-17T12:23:40Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="283">{{#ask:[[Categoría:Eventos]] [[Estado::{{{1}}}]] [[Tipo de evento::!Procedimiento]]
+|?Tipo de evento=Tipo
+|?Departamento |+limit=1
+|?Inicio |+limit=1
+|format=broadtable
+|limit=20
+|offset=0
+|default=no se han encontrado eventos con este estado.
+|mainlabel=Eventos {{lc: {{{1|}}}}}
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:EVENTOS CON ESTADO EMPLEADO</title>
+    <ns>10</ns>
+    <id>1885</id>
+      <sha1>r33qnw52idoheot2oe601rqacd0i8up</sha1>
+    <revision>
+      <id>4323</id>
+      <timestamp>2012-11-17T19:40:01Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="132">{{#ask: [[Categoría:Eventos]] [[Empleado::{{{2}}}]] [[Estado::{{{1}}}]] [[Tipo de evento::!Procedimiento]]
+        |format=count
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Empleado</title>
+    <ns>10</ns>
+    <id>48</id>
+      <sha1>tocuyq65727vb15euywpg2t0h7wo351</sha1>
+    <revision>
+      <id>4716</id>
+      <timestamp>2012-11-29T10:45:23Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="5041">&lt;noinclude&gt;
+Este es la plantilla 'Empleado'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Empleado
+|nick=
+|nombre=
+|apellido_uno=
+|apellido_dos=
+|empresa=
+|centro de trabajo=
+|departamento=
+|puesto de trabajo=
+|proyectos=
+|email_trabajo=
+|email_personal=
+|teléfono_trabajo=
+|teléfono_personal=
+}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{#declare:Nick=nick| Nombre=nombre| Primer apellido=apellido_uno| Segundo apellido=apellido_dos| Email=email_trabajo| Email=email_personal| Empresa=empresa| Departamento=departamento| Teléfono=telefono_trabajo | Teléfono=teléfono_personal| Proyecto=proyectos | Centro de trabajo=centro de trabajo| Puesto de trabajo=puesto_de_trabajo | Empresa=empresa}}
+=Ficha de empleado=
+{| style=&quot;border:2px solid black;&quot; cellspacing=&quot;6&quot; cellpadding=&quot;6&quot; align=&quot;center&quot; width=&quot;100%&quot;
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Empresa'''
+|  align=&quot;left&quot; valign=&quot;top&quot; | [[Empresa::{{{empresa|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Centro'''
+|  align=&quot;left&quot; valign=&quot;top&quot; | [[Centro de trabajo::{{{centro de trabajo|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Departamento'''
+|  align=&quot;left&quot; valign=&quot;top&quot; | [[Departamento::{{{departamento|}}}]]
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Puesto'''
+|  align=&quot;left&quot; valign=&quot;top&quot; | [[Puesto de trabajo::{{{puesto de trabajo|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Teléfono'''
+|  align=&quot;left&quot; valign=&quot;top&quot; | {{#arraymap:{{{telefono_trabajo|}}}|,|x|[[Teléfono::x]]}}
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Email'''
+|  align=&quot;left&quot; valign=&quot;top&quot; | [[Email::{{{email_trabajo|}}}]]
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Proyectos'''
+| colspan=&quot;5&quot;  align=&quot;left&quot; valign=&quot;top&quot; | {{#ask: [[Empleado::{{PAGENAME}}]]
+          |?Proyecto| +limit=1
+          |format=tagcloud
+          |headers=hide
+          |link=all
+          |increase=log
+          |tagorder=alphabetical
+          |mincount=1
+          |maxtags=1000
+          |minsize=75
+          |maxsize=250
+          |offset=
+          |limit=5000
+          }}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Tipos de evento'''
+| colspan=&quot;5&quot;  align=&quot;left&quot; valign=&quot;top&quot; | {{#ask: [[Empleado::{{PAGENAME}}]]
+          |?Tipo de evento| +limit=1
+          |format=tagcloud
+          |headers=hide
+          |link=all
+          |increase=log
+          |tagorder=alphabetical
+          |mincount=1
+          |maxtags=1000
+          |minsize=75
+          |maxsize=150
+          |offset=
+          |limit=5000
+          }}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Estadísticas'''
+| colspan=&quot;5&quot;  align=&quot;left&quot; valign=&quot;top&quot; |
+Ha colaborado en la redacción de '''{{#ask:[[Categoría:Eventos]] [[Tipo de evento::Procedimiento]] [[Empleado::{{PAGENAME}}]] |format=count}} procedimientos'''. Es mencionado en '''{{#ask: [[Empleado::{{PAGENAME}}]] | format=count }} páginas'''.
+Tiene '''{{EVENTOS CON ESTADO EMPLEADO|Sin empezar|{{PAGENAME}}}} eventos sin empezar''', '''{{EVENTOS CON ESTADO EMPLEADO|En proceso|{{PAGENAME}}}} en proceso''', '''{{EVENTOS CON ESTADO EMPLEADO|Terminado|{{PAGENAME}}}} terminados''' y '''{{EVENTOS CON ESTADO EMPLEADO|Cancelado|{{PAGENAME}}}} cancelados'''.
+|}
+
+
+=Eventos=
+'''Eventos en proceso:''' {{#ask: [[Categoría:Eventos]] [[Empleado::{{PAGENAME}}]] [[Estado::En proceso]] [[Tipo de evento::!Procedimiento]]
+        |?Tipo de evento=Tipo
+        |?Departamento |+limit=1
+        |?Proyecto |+limit=1
+        |?Prioridad 
+        |?Inicio=Comienzo |+limit=1
+        |?Fin=Fecha límite |+limit=1
+        |format=broadtable
+        |mainlabel=Evento
+        |default=ninguno
+        |sort=Fin
+        |order=Descending
+        |limit=5
+        }}
+
+
+=Formularios=
+{| class=&quot;no-printable&quot; width=&quot;100%&quot;
+|-
+| width=&quot;50%&quot; valign=&quot;top&quot; | '''Nuevo evento:''' {{#forminput:form=Evento|Evento[empleados]={{PAGENAME}}|Evento[inicio]={{#time: Y/m/d H:i|now}}|Evento[fin]={{#time: Y/m/d H:i|now}}|Evento[estado]=En proceso|Evento[prioridad]=Normal|size=30|default value=Escriba el nombre del evento|button text=Añadir|autocomplete on category=Eventos|remote autocompletion|popup}}
+| width=&quot;50%&quot; valign=&quot;top&quot; | '''Nuevo procedimiento:''' {{#forminput:form=Evento|Evento[organizador]={{PAGENAME}}|Evento[versión]=1|Evento[inicio]={{#time: Y/m/d H:i|now}}|size=30|default value=Escriba el nombre del procedimiento|button text=Añadir|autocomplete on category=Procedimientos|remote autocompletion|popup}}
+|}
+
+
+{{HeaderTabs}}
+[[Categoría:Empleados]]
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Empresa</title>
+    <ns>10</ns>
+    <id>49</id>
+      <sha1>ibjmq1m51rfpru5ld6pc4rjd3k9il8r</sha1>
+    <revision>
+      <id>2070</id>
+      <timestamp>2012-11-02T00:54:36Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Deshecha la revisión 2069 de [[Special:Contributions/Operador|Operador]] ([[User talk:Operador|disc.]])</comment>
+      <text xml:space="preserve" bytes="2311">&lt;noinclude&gt;
+Este es la plantilla 'Empresa'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Empresa
+|centros=
+|teléfono=
+|email=
+|web=
+}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{#declare:Centro de trabajo=centros| Teléfono=teléfono| Email=email | Web=web}}
+=Ficha de empresa=
+{| style=&quot;border:1px solid transparent;&quot; width=&quot;100%&quot; cellpadding=&quot;6&quot; cellspacing=&quot;6&quot;
+|- 
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Centros de trabajo'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{#arraymap:{{{centros|}}}|,|x|[[Centro de trabajo::x]]}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Teléfono'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{#arraymap:{{{teléfono|}}}|,|x|[[Teléfono::x]]}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Email'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{#arraymap:{{{email|}}}|,|x|[[Email::x]]}}
+|-
+! width=&quot;10%&quot; align=&quot;right&quot; valign=&quot;top&quot; scope=&quot;col&quot; | '''Web'''
+| width=&quot;90%&quot; align=&quot;left&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | [{{{web|}}} {{{web|}}}]
+|-
+| align=&quot;right&quot; width=&quot;10%&quot; valign=&quot;top&quot; | '''Estadísticas'''
+| align=&quot;left&quot;  width=&quot;90%&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{ESTADISTICAS EMPRESA|{{PAGENAME}}}}
+|-
+| align=&quot;right&quot; width=&quot;10%&quot; valign=&quot;top&quot; | '''vCard'''
+| align=&quot;left&quot;  width=&quot;90%&quot; valign=&quot;top&quot; style=&quot;border-bottom:1px dashed transparent;&quot; | {{#ask: [[{{FULLPAGENAME}}]] | format=vcard |?Teléfono=workphone | ?Email=email | ?Centro de trabajo=workextendedaddress | searchlabel=Tarjeta de visita electrónica de {{PAGENAME}} }}
+|}
+
+&lt;strong&gt;Introducción&lt;/strong&gt;:
+
+{{:Introducción a {{PAGENAME}}}}
+
+
+=Empleados=
+{{#ask: [[Categoría:Empleados]] [[Empresa::{{PAGENAME}}]]
+|?Centro de trabajo |+limit=1
+|?Departamento |+limit=1
+|?Puesto de trabajo |+limit=1
+|format=broadtable
+|sort=Centro de trabajo, Departamento
+|order=Ascending
+|mainlabel=Empleado
+|default='''Ninguno'''
+}}
+
+
+=Proyectos=
+{{#ask:[[Categoría:Proyectos]] [[Empresa::{{PAGENAME}}]]
+|format=broadtable
+|mainlabel=Proyecto
+|default='''Ninguno'''
+}}
+
+
+
+&lt;headertabs /&gt;
+
+[[Categoría:Empresas]]
+
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Entorno</title>
+    <ns>10</ns>
+    <id>1036</id>
+      <sha1>97a3l7lrgm1km9fmn308qu0210foksf</sha1>
+    <revision>
+      <id>1596</id>
+      <timestamp>2012-10-31T18:18:13Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="537">&lt;noinclude&gt;
+Este es la plantilla 'Entorno'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Entorno}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;
+&lt;includeonly&gt;
+{{#ask:[[Categoría:Sistemas]] [[Entorno::{{PAGENAME}}]]
+|format=broadtable
+|limit=20
+|offset=0
+|mainlabel=Sistemas con entornos de {{PAGENAME}}
+}}
+
+
+{{#ask:[[Entorno::{{PAGENAME}}]]
+|format=broadtable
+|limit=20
+|offset=0
+|mainlabel=Páginas que hacen mención al entorno de {{PAGENAME}}
+}}
+
+[[Categoría:Entornos]]
+__SHOWFACTBOX__
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Estado del evento</title>
+    <ns>10</ns>
+    <id>50</id>
+      <sha1>likx8ll4dyflty74tj5o85z7iaalesg</sha1>
+    <revision>
+      <id>4405</id>
+      <timestamp>2012-11-18T20:39:49Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="966">&lt;noinclude&gt;
+Este es la plantilla 'Estado del evento'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Estado del evento}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+=Eventos=
+{{#ask:[[Categoría:Eventos]] [[Estado::{{PAGENAME}}]] [[Tipo de evento::!Procedimiento]]
+|?Tipo de evento=Tipo
+|?Inicio=Comienzo
+|?Fin=Fecha límite
+|?Empleado=Empleados que participan |+limit=1
+|format=broadtable
+|mainlabel=Evento
+|sort=Inicio
+|limit=2000
+|offset=0
+|default=no hay eventos registrados en este estado.
+}}
+
+
+=Procedimientos=
+{{#ask:[[Categoría:Eventos]] [[Estado::{{PAGENAME}}]] [[Tipo de evento::Procedimiento]]
+|?Tipo de evento=Tipo
+|?Inicio=Comienzo
+|?Fin=Fecha límite
+|?Empleado=Empleados que participan |+limit=1
+|format=broadtable
+|mainlabel=Evento
+|sort=Inicio
+|limit=2000
+|offset=0
+|default=no hay procedimientos registrados en este estado.
+}}
+
+
+{{HeaderTabs}}
+[[Categoría:Estados de eventos]]
+__NOTOC__
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Etiqueta</title>
+    <ns>10</ns>
+    <id>51</id>
+      <sha1>i3372w62j18buu2jy1b0qwing3xox5d</sha1>
+    <revision>
+      <id>4398</id>
+      <timestamp>2012-11-18T20:30:57Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1006">&lt;noinclude&gt;
+Este es la plantilla 'Etiqueta'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Etiqueta}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+=Páginas=
+{{#ask:[[Categoría:Eventos]] [[Etiqueta::{{PAGENAME}}]]
+|?Tipo de evento=Tipo
+|?Proyecto
+|?Estado
+|?Prioridad
+|format=broadtable
+|sort=Etiqueta
+|order=Descending
+|limit=10
+|offset=0
+|mainlabel=[[Archivo:Etiqueta.png|16px|16px]] Páginas con la etiqueta '''''{{PAGENAME}}'''''
+|default=no se ha encontrado ningún procedimiento con esta etiqueta
+}}
+
+
+=Etiquetas relacionadas=
+{{#ask: [[Categoría:Eventos]] [[Etiqueta::{{PAGENAME}}]]
+  |?Etiqueta|+limit=10
+  |format=tagcloud
+  |headers=hide
+  |link=all
+  |increase=log
+  |tagorder=alphabetical
+  |mincount=1
+  |maxtags=1000
+  |minsize=75
+  |maxsize=350
+  |offset=
+  |limit=15
+  |default=no hay datos suficientes para mostrar la nube de etiquetas.
+  |print=unique
+  }}
+
+
+{{HeaderTabs}}
+[[Categoría:Etiquetas]]
+__NOEDITSECTION__
+__NOTOC__
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Evento</title>
+    <ns>10</ns>
+    <id>52</id>
+      <sha1>dpaxhrjcumh0oob4hsdv9bbzmcl2j4q</sha1>
+    <revision>
+      <id>5252</id>
+      <timestamp>2012-12-30T12:36:43Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="5727">&lt;noinclude&gt;
+Este es la plantilla 'Evento'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Evento
+|identificador=
+|version=
+|empresa=
+|centro=
+|departamento=
+|trabajo=
+|proyecto=
+|trabajo=
+|tipo de evento=
+|inicio=
+|inicio_hora=
+|inicio_minuto
+|fin=
+|fin_hora
+|fin_minuto
+|organizador=
+|empleados=
+|estado=
+|prioridad=
+|etiquetas=
+|relación=
+|adjunto
+}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;{{#declare:Identificador=identificador| Empresa=empresa| Centro de trabajo=centro| Departamento=departamento| Puesto de trabajo=trabajo | Proyecto=proyecto| Tipo de evento=tipo de evento| Inicio=Inicio| Fin=fin| Empleado=organizador| Empleado=empleados| Estado=estado| Prioridad=prioridad| Etiqueta=etiquetas| Relación=relación | Fichero adjunto=adjunto}}
+=Ficha de evento=
+{| style=&quot;border:2px solid black;&quot; cellspacing=&quot;6&quot; cellpadding=&quot;6&quot; align=&quot;center&quot; width=&quot;100%&quot;
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Id.'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black; font-size:90%;&quot; align=&quot;left&quot; valign=&quot;top&quot; | {{#arraymap:{{{identificador|}}}|,|x|[[Identificador::x]]}}
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Ver.
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot; | [[Versión::{{{versión|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Tipo'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot; valign=&quot;top&quot;   | [[Tipo de evento::{{{tipo de evento|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Inicio'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;center&quot; valign=&quot;top&quot; colspan=&quot;2&quot;| [[Inicio::{{#time: d/M/Y | {{{inicio|}}} }}]] [[Hora::{{{inicio_hora|}}}]]:[[Minuto::{{{inicio_minuto|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Fin'''
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;center&quot; valign=&quot;top&quot; colspan=&quot;2&quot;| [[Fin::{{#time: d/M/Y | {{{fin|}}} }}]] [[Hora::{{{fin_hora|}}}]]:[[Minuto::{{{fin_minuto|}}}]]
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Estado'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot; valign=&quot;top&quot;   | [[Estado::{{{estado|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Prioridad'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot; valign=&quot;top&quot;  | [[Prioridad::{{{prioridad|}}}]]
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot; valign=&quot;top&quot; | '''Proyecto'''
+| colspan=&quot;7&quot; style=&quot;border-bottom:1px solid black;&quot; | {{#arraymap:{{{proyecto|}}}|,|x|[[Proyecto::x]]}}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot;   | '''Organiza'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot;   | {{#arraymap:{{{organizador|}}}|,|x|[[Empleado::x]]}}
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Participan'''
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;left&quot; valign=&quot;top&quot; colspan=&quot;10&quot; | {{#arraymap:{{{empleados|}}}|,|x|[[Empleado::x]]}}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Empresa'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot;   | {{#arraymap:{{{empresa|}}}|,|x|[[Empresa::x]]}}
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Centro'''
+| style=&quot;border-bottom:1px solid black; border-right:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot;   colspan=&quot;2&quot; | {{#arraymap:{{{centro|}}}|,|x|[[Centro de trabajo::x]]}}
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Departamento'''
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot;   colspan=&quot;7&quot; | {{#arraymap:{{{departamento|}}}|,|x|[[Departamento::x]]}}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Puesto'''
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot; colspan=&quot;12&quot; | [[Puesto de trabajo::{{{trabajo|}}}]]
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Etiquetas'''
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot; colspan=&quot;12&quot; | {{#arraymap:{{{etiquetas|}}}|,|x|[[Etiqueta::x]]}}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Relaciones:
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot; colspan=&quot;12&quot; | {{#arraymaptemplate:{{{relación|}}}|RELACIONES|,|x|[[Relación::x]]}}
+|-
+| style=&quot;border-bottom:2px solid black; border-right:2px solid black;&quot; align=&quot;right&quot;  valign=&quot;top&quot; | '''Adjunto'''
+| style=&quot;border-bottom:1px solid black;&quot; align=&quot;left&quot;  valign=&quot;top&quot; colspan=&quot;12&quot; | [[Fichero adjunto::{{{adjunto|}}}]]
+|-
+| colspan=&quot;8&quot; align=&quot;left&quot; | '''Añade este evento a tu calendario''': {{#ask: [[{{PAGENAME}}]]
+|?Inicio= start
+|?Fin= end
+|format=icalendar
+}}
+|}
+
+
+{{HeaderTabs}}
+{{#ifeq: {{{tipo de evento|}}}|Procedimiento
+       | [[Categoría:Eventos]] [[Categoría:Procedimientos]] 
+       | [[Categoría:Eventos]]
+}}
+&lt;/includeonly&gt;
+__NOEDITSECTION__
+__NOTOC__</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA CENTRO DE TRABAJO</title>
+    <ns>10</ns>
+    <id>1232</id>
+      <sha1>di57py4wa6tesv9xduza4yehsyj2nar</sha1>
+    <revision>
+      <id>2276</id>
+      <timestamp>2012-11-03T01:57:26Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="110">'''Opcional'''. Nombres de los centros de trabajo, separados por comas (''evita que quede una coma al final'')</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA DEPARTAMENTO</title>
+    <ns>10</ns>
+    <id>1237</id>
+      <sha1>bkkz8d3no1rjn08iwnd34nwcb2we8f6</sha1>
+    <revision>
+      <id>2277</id>
+      <timestamp>2012-11-03T01:58:10Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Nombres de los departamentos, separados por comas (''evita que quede una coma al final'')»</comment>
+      <text xml:space="preserve" bytes="105">'''Opcional'''. Nombres de los departamentos, separados por comas (''evita que quede una coma al final'')</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA EMPLEADO</title>
+    <ns>10</ns>
+    <id>1244</id>
+      <sha1>aywb7gtim9qz2i39zw8sg4w8x6vekzh</sha1>
+    <revision>
+      <id>2294</id>
+      <timestamp>2012-11-03T02:41:09Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Empleado o empleados que asisten a este evento.»</comment>
+      <text xml:space="preserve" bytes="63">'''Opcional'''. Empleado o empleados que asisten a este evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA EMPRESA</title>
+    <ns>10</ns>
+    <id>1231</id>
+      <sha1>n1s6b2o0hkdt55yxyv9oqail14dnrz7</sha1>
+    <revision>
+      <id>2275</id>
+      <timestamp>2012-11-03T01:57:04Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="99">'''Opcional'''. Nombre de las empresas, separadas por comas (''evita que quede una coma al final'')</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA ESTADO</title>
+    <ns>10</ns>
+    <id>1245</id>
+      <sha1>q6j15snbr5rffzqzjjsimlnnsef2l42</sha1>
+    <revision>
+      <id>2295</id>
+      <timestamp>2012-11-03T02:41:53Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Obligatorio'''. Estado actual de este evento.»</comment>
+      <text xml:space="preserve" bytes="48">'''Obligatorio'''. Estado actual de este evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA ETIQUETA</title>
+    <ns>10</ns>
+    <id>1247</id>
+      <sha1>5oazpdlo4nsbsemr1mvisew27r0drw4</sha1>
+    <revision>
+      <id>2300</id>
+      <timestamp>2012-11-03T02:47:02Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Añada etiquetas a este evento. Separar por comas (''evita que quede una coma al final'').»</comment>
+      <text xml:space="preserve" bytes="106">'''Opcional'''. Añada etiquetas a este evento. Separar por comas (''evita que quede una coma al final'').</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA FICHERO ADJUNTO</title>
+    <ns>10</ns>
+    <id>1249</id>
+      <sha1>9g8xomei0u6e291knkdl5ru7hxq097u</sha1>
+    <revision>
+      <id>2303</id>
+      <timestamp>2012-11-03T02:49:50Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Suba un nuevo fichero. Se adjuntará a este evento.»</comment>
+      <text xml:space="preserve" bytes="67">'''Opcional'''. Suba un nuevo fichero. Se adjuntará a este evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA FIN</title>
+    <ns>10</ns>
+    <id>1242</id>
+      <sha1>r06jowx7myubg05vy8mquj8mmc80vpm</sha1>
+    <revision>
+      <id>2292</id>
+      <timestamp>2012-11-03T02:40:15Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Obligatorio'''. Introduzca la fecha límite para este evento.»</comment>
+      <text xml:space="preserve" bytes="64">'''Obligatorio'''. Introduzca la fecha límite para este evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA IDENTIFICADOR</title>
+    <ns>10</ns>
+    <id>1229</id>
+      <sha1>5dkwnivphqu0fk08ose8pzm5uc426jz</sha1>
+    <revision>
+      <id>2288</id>
+      <timestamp>2012-11-03T02:36:25Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="165">'''Obligatorio'''. 
+
+'''Utiliza identificadores que sigan un cierto patrón'''. Una buena idea sería añadir como prefijo el ''timestamp'' del evento (por defecto).</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA INICIO</title>
+    <ns>10</ns>
+    <id>1241</id>
+      <sha1>b6t2o10dj9nogb1n3pn55ufdx864n2r</sha1>
+    <revision>
+      <id>2291</id>
+      <timestamp>2012-11-03T02:39:49Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Obligatorio'''. Introduzca la fecha de inicio del evento.»</comment>
+      <text xml:space="preserve" bytes="60">'''Obligatorio'''. Introduzca la fecha de inicio del evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA ORGANIZADOR</title>
+    <ns>10</ns>
+    <id>1243</id>
+      <sha1>6f880v4fpsdfd22pvixurqhos3vihms</sha1>
+    <revision>
+      <id>2293</id>
+      <timestamp>2012-11-03T02:40:58Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Empleado o empleados que organizan este evento.»</comment>
+      <text xml:space="preserve" bytes="63">'''Opcional'''. Empleado o empleados que organizan este evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA PRIORIDAD</title>
+    <ns>10</ns>
+    <id>1246</id>
+      <sha1>5a0ui7lcojujr48pwakyyl854e1ds97</sha1>
+    <revision>
+      <id>2296</id>
+      <timestamp>2012-11-03T02:42:16Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Obligatorio'''. Prioridad que se le da a este evento.»</comment>
+      <text xml:space="preserve" bytes="56">'''Obligatorio'''. Prioridad que se le da a este evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA PROYECTO</title>
+    <ns>10</ns>
+    <id>1238</id>
+      <sha1>7sw4mxwbeqnn57xjh7kg8ybbwaz0ets</sha1>
+    <revision>
+      <id>2278</id>
+      <timestamp>2012-11-03T01:59:25Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Obligatorio'''. Nombre del proyecto.»</comment>
+      <text xml:space="preserve" bytes="39">'''Obligatorio'''. Nombre del proyecto.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA PUESTO DE TRABAJO</title>
+    <ns>10</ns>
+    <id>1258</id>
+      <sha1>8hxwtu8hxocc9dkbr8gjgf47s2ocax3</sha1>
+    <revision>
+      <id>2342</id>
+      <timestamp>2012-11-03T11:38:40Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Tipo de puesto de trabajo requerido en el evento.»</comment>
+      <text xml:space="preserve" bytes="65">'''Opcional'''. Tipo de puesto de trabajo requerido en el evento.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA RELACIÓN</title>
+    <ns>10</ns>
+    <id>1248</id>
+      <sha1>n99s3ix1wo2splzp5vz9brx52r8g7n5</sha1>
+    <revision>
+      <id>2302</id>
+      <timestamp>2012-11-03T02:48:55Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «Opcional. Relacione este evento con otros utilizando identificadores. Separe los identificadores por comas (evita que quede una coma al final).»</comment>
+      <text xml:space="preserve" bytes="143">Opcional. Relacione este evento con otros utilizando identificadores. Separe los identificadores por comas (evita que quede una coma al final).</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA SISTEMA</title>
+    <ns>10</ns>
+    <id>1240</id>
+      <sha1>ioxzaua10h00y6mz9ej4o7xl13li405</sha1>
+    <revision>
+      <id>2289</id>
+      <timestamp>2012-11-03T02:36:58Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Opcional'''. Detalle los sistemas que se ven afectados.»</comment>
+      <text xml:space="preserve" bytes="58">'''Opcional'''. Detalle los sistemas que se ven afectados.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA TIPO DE EVENTO</title>
+    <ns>10</ns>
+    <id>1239</id>
+      <sha1>9sdnb339bzjcrpm7cxlej9jx2ks501x</sha1>
+    <revision>
+      <id>2284</id>
+      <timestamp>2012-11-03T02:34:03Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Obligatorio'''. Escoge un tipo de evento o crea uno nuevo.»</comment>
+      <text xml:space="preserve" bytes="61">'''Obligatorio'''. Escoge un tipo de evento o crea uno nuevo.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:FORMULARIO EVENTO AYUDA VERSION</title>
+    <ns>10</ns>
+    <id>1230</id>
+      <sha1>ezk0y71mpsafzdkj8iyrni5jy6bz56y</sha1>
+    <revision>
+      <id>2298</id>
+      <timestamp>2012-11-03T02:44:11Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="265">'''Opcional'''. Este campo es útil cuando se utiliza conjuntamente con el campo ''Tipo de evento'' con valor ''Procedimiento'' para especificar la versión en la que se encuentra la documentación del mismo.
+
+
+Por supuesto, puedes encontrar más usos a este campo.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Fichero adjunto</title>
+    <ns>10</ns>
+    <id>53</id>
+      <sha1>pbfqnfkiix26rf8zacho6xn3ky6ezyt</sha1>
+    <revision>
+      <id>105</id>
+      <timestamp>2012-10-12T19:59:40Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="491">&lt;noinclude&gt;
+Este es la plantilla 'Fichero adjunto'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Fichero adjunto}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+&lt;center&gt;[[Archivo:{{PAGENAME}}]]&lt;/center&gt;
+
+
+{{#ask:[[Fichero adjunto::{{PAGENAME}}]]
+| format=broadtable
+| mainlabel=Páginas que hacen referencia a este fichero adjunto
+| default=no se encontraron registros.
+| offset=0
+| limit= 5000
+}}
+
+[[Categoría:Ficheros adjuntos]]
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:HIDE CATEGORY PAGES</title>
+    <ns>10</ns>
+    <id>65</id>
+      <sha1>7qxq3exctfy12j5qdgnijk0r2pq607u</sha1>
+    <revision>
+      <id>129</id>
+      <timestamp>2012-10-12T19:59:41Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="209">&lt;noinclude&gt;This template is meant to be used in Category pages to hide the default list of pages.&lt;/noinclude&gt;
+&lt;includeonly&gt;
+{{#css:
+#mw-subcategories {display: none}
+#mw-pages {display: none}
+}}
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:HeaderTabs</title>
+    <ns>10</ns>
+    <id>1892</id>
+      <sha1>e5tnllyhptn1y3t4moh7xw271zkzsli</sha1>
+    <revision>
+      <id>4371</id>
+      <timestamp>2012-11-18T19:22:34Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{#ifeq:{{#urlget:printable|false}}|false|{{#tag:headertabs}}| }}»</comment>
+      <text xml:space="preserve" bytes="65">{{#ifeq:{{#urlget:printable|false}}|false|{{#tag:headertabs}}| }}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Hoy</title>
+    <ns>10</ns>
+    <id>1486</id>
+      <sha1>js2kvvaj65gxi0jdxpswgfl5awgtjw1</sha1>
+    <revision>
+      <id>3097</id>
+      <timestamp>2012-11-04T20:44:50Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{#time: d/m/Y|now}}»</comment>
+      <text xml:space="preserve" bytes="20">{{#time: d/m/Y|now}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Identificador</title>
+    <ns>10</ns>
+    <id>1360</id>
+      <sha1>d66rjzis4mihh3dtv5zkwvmyq7pbrsg</sha1>
+    <revision>
+      <id>2654</id>
+      <timestamp>2012-11-03T21:01:52Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="469">&lt;noinclude&gt;
+Este es la plantilla 'Nombre'. Debe ser llamada en el siguiente formato:
+&lt;pre&gt;
+{{Identificador}}
+&lt;/pre&gt;
+Editar la página para ver el texto de la plantilla.
+&lt;/noinclude&gt;&lt;includeonly&gt;
+{{#ask:[[Categoría:Eventos]] [[Identificador::{{PAGENAME}}]]
+|?Tipo de evento
+|?Proyecto
+|?Inicio
+|?Fin
+|?Estado
+|?Prioridad
+|format=template
+|template=CUADRO IDENTIFICADOR
+|limit=20
+|offset=0
+|sort=Inicio
+|order=Descending
+}}
+
+[[Categoría:Identificadores]]
+&lt;/includeonly&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:MENCIONADO EN</title>
+    <ns>10</ns>
+    <id>1582</id>
+      <sha1>jomqumx98r7vcqu3avj942iwk770ckt</sha1>
+    <revision>
+      <id>3971</id>
+      <timestamp>2012-11-13T15:27:53Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="31">* &lt;div&gt;{{{1|}}} ({{{2}}})&lt;/div&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:Mañana</title>
+    <ns>10</ns>
+    <id>1484</id>
+      <sha1>4uxi0ttzdnbskoz28wrr9wqa7sonc09</sha1>
+    <revision>
+      <id>3098</id>
+      <timestamp>2012-11-04T20:45:09Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="28">{{#time: d/m/Y|now + 1 day}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:NUBE DE EMPLEADOS</title>
+    <ns>10</ns>
+    <id>1235</id>
+      <sha1>21d8116k94cjytqfqwwdpr2iaieacn5</sha1>
+    <revision>
+      <id>4475</id>
+      <timestamp>2012-11-19T01:23:11Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="355">{| width=&quot;100%&quot; cellpadding=&quot;3&quot; cellspacing=&quot;3&quot; style=&quot;vertical-align:top;background-color:transparent&quot;
+! &lt;h2 style=&quot;border-bottom:1px solid black;margin:0;background-color:transparent;font-size:120%;font-weight:bold;text-align:left;color:#000;padding:0.2em 0.4em;&quot;&gt;Nube de empleados&lt;/h2&gt;
+|-
+|style=&quot;color:#000&quot;| {{NUBE_ETIQUETAS_EMPLEADOS|{{{1}}}}}
+|-
+|}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:NUBE DE ETIQUETAS</title>
+    <ns>10</ns>
+    <id>1218</id>
+      <sha1>b4026t4d5o9qcp3ikljyth6hehes2b0</sha1>
+    <revision>
+      <id>3193</id>
+      <timestamp>2012-11-05T01:32:09Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="362">{| width=&quot;100%&quot; cellpadding=&quot;3&quot; cellspacing=&quot;3&quot; style=&quot;border:1px; vertical-align:top;background-color:transparent&quot;
+! &lt;h2 style=&quot;margin:0;font-size:120%;font-weight:bold;border-bottom:1px solid black;text-align:left;padding:0.1em 0.1em;&quot;&gt;[[Archivo:etiqueta.png|left|18px|]]  Nube de etiquetas&lt;/h2&gt;
+|-
+|style=&quot;color:#000&quot;| {{NUBE_ETIQUETAS_EVENTOS|{{{1}}}}}
+|-
+|}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:NUBE ETIQUETAS EMPLEADOS</title>
+    <ns>10</ns>
+    <id>1236</id>
+      <sha1>76o6ltsrw79spwq74kj3oxpudkuzs24</sha1>
+    <revision>
+      <id>4480</id>
+      <timestamp>2012-11-19T01:28:32Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="437">{{#ifeq: {{{1}}}|nolink
+| {{#ask:[[Categoría:Eventos]]
+|?Empleado|+limit=1
+|format=tagcloud
+|headers=hide
+|link=none
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=75
+|maxsize=250
+|offset=
+|limit=5000
+}}
+| {{#ask:[[Categoría:Eventos]]
+|?Empleado|+limit=1
+|format=tagcloud
+|headers=hide
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=75
+|maxsize=250
+|offset=
+|limit=5000
+}}
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Plantilla:NUBE ETIQUETAS EVENTOS</title>
+    <ns>10</ns>
+    <id>1352</id>
+      <sha1>s62tt0kdl5bshl5js5c0g4ihprpvbtk</sha1>
+    <revision>
+      <id>4606</id>
+      <timestamp>2012-11-20T19:27:12Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="637">{{#ifeq: {{{1}}}|nolink
+| {{#ask:[[Categoría:Eventos]]
+  |?Etiqueta|+limit=10
+  |format=tagcloud
+  |headers=hide
+  |link=none
+  |increase=log
+  |tagorder=alphabetical
+  |mincount=1
+  |maxtags=1000
+  |minsize=75
+  |maxsize=350
+  |offset=
+  |default=no hay datos suficientes para mostrar la nube de etiquetas.
+  |print=unique
+  }}
+| {{#ask:[[Categoría:Eventos]]
+  |?Etiqueta|+limit=10
+  |format=tagcloud
+  |headers=hide
+  |link=all
+  |increase=log
+  |tagorder=alphabetical
+  |mincount=1
+  |maxtags=1000
+  |minsize=75
+  |maxsize=350
+  |offset=
+  |default=no hay datos suficientes para mostrar la nube de etiquetas.
+  |print=unique
+  }}
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Agenda</title>
+    <ns>14</ns>
+    <id>74</id>
+      <sha1>60dfr95wucknve84k0j0xopo6sb9op8</sha1>
+    <revision>
+      <id>3167</id>
+      <timestamp>2012-11-04T23:27:45Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="843">=Hoy=
+Hoy {{#time: d \de F|now}} a las {{#time: H:i|now}} hay '''[[Eventos en proceso | {{TOTAL_EVENTOS_EN_PROCESO}}]]''' eventos en proceso.
+
+
+={{#time: F|now}}=
+jajaja
+
+
+=Calendario=
+{{#ask:
+  [[Categoría:Eventos]]
+  [[Inicio::&gt;{{#calendarstartdate:}}]]
+  |? Inicio
+  |link=all
+  |format=calendar
+  |defaultview=day
+  |height=200px
+}}
+
+
+=Proyectos=
+{{NUBE_ETIQUETAS_PROYECTOS}}
+
+
+=Empleados=
+{{#ask: [[Categoría:Empleados]]
+|?Empresa |+limit=1
+|?Centro de trabajo |+limit=1
+|?Departamento |+limit=1
+|?Puesto de trabajo |+limit=1
+|?Proyecto |+limit=1
+|format=broadtable
+|limit=50
+|mainlabel=Empleado
+|sort=Departamento
+|order=Ascending
+|class=sortable smwtable wikitable 
+}}
+
+
+=Empresas=
+{{#ask:[[Categoría:Empresas]]
+|format=broadtable
+|headers=show
+|link=all
+|offset=
+|limit=
+|mainlabel=Empresa
+}}
+
+
+&lt;headertabs/&gt;
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Apellidos</title>
+    <ns>14</ns>
+    <id>75</id>
+      <sha1>5oewmscrsjxubx729vzzlzfljg61oht</sha1>
+    <revision>
+      <id>149</id>
+      <timestamp>2012-10-12T19:59:42Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="21">[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Centros de trabajo</title>
+    <ns>14</ns>
+    <id>76</id>
+    <redirect title="Centros de trabajo" />
+      <sha1>q6wtwnor2e0kjc4k9e7ls37gppzldol</sha1>
+    <revision>
+      <id>3246</id>
+      <timestamp>2012-11-05T12:51:20Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="56">#REDIRECT [[Centros de trabajo]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Departamentos</title>
+    <ns>14</ns>
+    <id>77</id>
+    <redirect title="Departamentos" />
+      <sha1>9mkxmpwu3vwad6va3hhifrffte5xdhf</sha1>
+    <revision>
+      <id>3249</id>
+      <timestamp>2012-11-05T12:53:33Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página redirigida a [[Departamentos]]</comment>
+      <text xml:space="preserve" bytes="51">#REDIRECT [[Departamentos]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Empleados</title>
+    <ns>14</ns>
+    <id>78</id>
+    <redirect title="Empleados" />
+      <sha1>si7hgxcvtlnkiw330pl42ldo9uv100v</sha1>
+    <revision>
+      <id>3243</id>
+      <timestamp>2012-11-05T12:50:11Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página redirigida a [[Empleados]]</comment>
+      <text xml:space="preserve" bytes="23">#REDIRECT [[Empleados]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Empresas</title>
+    <ns>14</ns>
+    <id>79</id>
+      <sha1>4lpw2icv6uq606g1o338xhdsttjam9v</sha1>
+    <revision>
+      <id>157</id>
+      <timestamp>2012-10-12T19:59:42Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="484">='''Empresas'''=
+{{#ask:[[Categoría:Empresas]]
+|format=broadtable
+|headers=hide
+|link=all
+|offset=
+|limit=
+|mainlabel=Empresa
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Empresa]] por defecto.
+
+
+&lt;headertabs/&gt;
+
+
+'''Añadir nueva empresa:''' {{#forminput:form=Empresa|size=50|default value=Escriba el nombre de la empresa|button text=Añadir|autocomplete on category=Empresas|remote autocompletion|popup}}
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Entornos</title>
+    <ns>14</ns>
+    <id>1037</id>
+      <sha1>0lcggav7e8km67sv4grf58lwoop283x</sha1>
+    <revision>
+      <id>1558</id>
+      <timestamp>2012-10-31T11:07:43Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «='''Entornos'''= {{#ask: [[Categoría:Sistemas]] |headers=hide |format=broadtable |link=all }}   =Metadata= Las páginas de la categoría {{PAGENAME}} tienen el formulario ...»</comment>
+      <text xml:space="preserve" bytes="448">='''Entornos'''=
+{{#ask: [[Categoría:Sistemas]]
+|headers=hide
+|format=broadtable
+|link=all
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Entorno]] por defecto.
+
+
+&lt;headertabs/&gt;
+
+
+'''Añadir nuevo entorno:''' {{#forminput:form=Entorno|size=50|default value=Escriba el nombre del entorno|button text=Añadir|autocomplete on category=Entornos|remote autocompletion|popup}}
+
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Estados de eventos</title>
+    <ns>14</ns>
+    <id>80</id>
+      <sha1>oin29ocxy0vzzmcfs3gegmfu5rxqxtd</sha1>
+    <revision>
+      <id>3206</id>
+      <timestamp>2012-11-05T02:05:29Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="255">=Estados=
+{{#ask: [[Categoría:Estados de eventos]]
+|format=ul
+}}
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Estado del evento]] por defecto.
+
+&lt;headertabs/&gt;
+[[Categoría:Agenda]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Etiquetas</title>
+    <ns>14</ns>
+    <id>81</id>
+    <redirect title="Etiquetas" />
+      <sha1>lyh9lovky6mjkzcefzwkbjqke0ofyxu</sha1>
+    <revision>
+      <id>4219</id>
+      <timestamp>2012-11-17T00:58:26Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página redirigida a [[Etiquetas]]</comment>
+      <text xml:space="preserve" bytes="156">#REDIRECT [[Etiquetas]]
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Etiqueta]] por defecto.
+
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Eventos</title>
+    <ns>14</ns>
+    <id>82</id>
+    <redirect title="Eventos" />
+      <sha1>6bg2gb78j2dfkzs4f3u9uoctq4mig3v</sha1>
+    <revision>
+      <id>4225</id>
+      <timestamp>2012-11-17T01:03:48Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="127">#REDIRECT [[Eventos]]
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Evento]] por defecto.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Ficheros adjuntos</title>
+    <ns>14</ns>
+    <id>1499</id>
+      <sha1>a7rro4rqiwgstkn7y8kcntu8v438x2l</sha1>
+    <revision>
+      <id>3160</id>
+      <timestamp>2012-11-04T23:10:20Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="119">{{#ask:[[Categoría:Ficheros adjuntos]]
+|?#
+|format=gallery
+|headers=show
+|link=all
+|autocaptions=1
+|offset=
+|limit=
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Identificadores</title>
+    <ns>14</ns>
+    <id>1363</id>
+      <sha1>aahi4xt2f5ajil5xn23trclh63is7n7</sha1>
+    <revision>
+      <id>2648</id>
+      <timestamp>2012-11-03T20:53:00Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="462">=Identificadores=
+{{#ask:[[Categoría:Eventos]]
+|?Identificador|+limit=10
+|format=category
+|headers=hide
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=75
+|maxsize=250
+|offset=
+|limit=100
+|default=no hay datos suficientes para mostrar la nube de etiquetas.
+}}
+
+
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Identificador]] por defecto.
+
+
+&lt;headertabs/&gt;
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Nicks</title>
+    <ns>14</ns>
+    <id>83</id>
+      <sha1>odj36jocwa53f8h9wkqa4p5n50y6jqf</sha1>
+    <revision>
+      <id>165</id>
+      <timestamp>2012-10-12T19:59:42Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="125">Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Nick]] por defecto.
+[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Nombres</title>
+    <ns>14</ns>
+    <id>84</id>
+      <sha1>ez9q7uv2t7o5bu0h05bdj60v4bygkmm</sha1>
+    <revision>
+      <id>167</id>
+      <timestamp>2012-10-12T19:59:42Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="517">=Nombre=
+{{#ask:[[Categoría:Empleados]]
+|?Nombre
+|format=tagcloud
+|limit=50
+|headers=show
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=77
+|maxsize=242
+|offset=
+}}
+{{#ask:[[Categoría:Empleados]]
+|?Nombre
+|?Primer apellido
+|?Segundo apellido
+|?Teléfono
+|?Email
+|format=broadtable
+|sort=Nombre
+}}
+
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Nombre]] por defecto.
+
+
+
+
+&lt;headertabs/&gt;
+[[Categoría:Agenda]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Prioridades</title>
+    <ns>14</ns>
+    <id>85</id>
+      <sha1>q88nfqofnwv5um88qhpevi6tex3jsee</sha1>
+    <revision>
+      <id>169</id>
+      <timestamp>2012-10-12T19:59:42Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="108">Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Prioridad]] por defecto.</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Proyectos</title>
+    <ns>14</ns>
+    <id>87</id>
+    <redirect title="Proyectos" />
+      <sha1>ibos3tbsbnca3bww80g90fm0ouctgsl</sha1>
+    <revision>
+      <id>3256</id>
+      <timestamp>2012-11-05T12:57:35Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página redirigida a [[Proyectos]]</comment>
+      <text xml:space="preserve" bytes="47">#REDIRECT [[Proyectos]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Puestos de trabajo</title>
+    <ns>14</ns>
+    <id>88</id>
+    <redirect title="Puestos de trabajo" />
+      <sha1>hor70wsboaqsa1krxb77cb6yu9ypwow</sha1>
+    <revision>
+      <id>3252</id>
+      <timestamp>2012-11-05T12:55:37Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página redirigida a [[Puestos de trabajo]]</comment>
+      <text xml:space="preserve" bytes="56">#REDIRECT [[Puestos de trabajo]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Sistemas</title>
+    <ns>14</ns>
+    <id>1051</id>
+      <sha1>7pl0wzjc1h6qyhk67gx0j7flfo0rziq</sha1>
+    <revision>
+      <id>1599</id>
+      <timestamp>2012-10-31T19:13:26Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «= Por proyecto = {{#ask:[[Categoría:Sistemas]] |?Proyecto |?Departamento= |format=outline |outlineproperties=Proyecto |sort=Departamento |limit=50 }}    = Por área de con...»</comment>
+      <text xml:space="preserve" bytes="728">= Por proyecto =
+{{#ask:[[Categoría:Sistemas]]
+|?Proyecto
+|?Departamento=
+|format=outline
+|outlineproperties=Proyecto
+|sort=Departamento
+|limit=50
+}}
+
+
+
+= Por área de conocimiento =
+{{#ask:[[Categoría:Sistemas]]
+|?Departamento
+|?Proyecto=
+|format=outline
+|outlineproperties=Departamento
+|limit=50
+|headers=show
+|mainlabel=
+|default=no se han encontrado registros.
+|offset=0
+|sort=Proyecto
+}}
+
+
+= Por empleado =
+{{#ask:[[Categoría:Sistemas]]
+|?Empleado
+|?Departamento=
+|format=outline
+|outlineproperties=Empleado
+|sort=Empleado
+|limit=50
+}}
+
+
+= Metadata =
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Sistema]] por defecto.
+
+
+&lt;headertabs/&gt;
+
+[[Categoría:Agenda]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Teléfonos</title>
+    <ns>14</ns>
+    <id>89</id>
+      <sha1>pkui4ocyf7v6drjbzr0vo44h02pqwdv</sha1>
+    <revision>
+      <id>177</id>
+      <timestamp>2012-10-12T19:59:43Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT importada</comment>
+      <text xml:space="preserve" bytes="130">Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Teléfono]] por defecto.
+[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Categoría:Tipos de eventos</title>
+    <ns>14</ns>
+    <id>90</id>
+      <sha1>2vemzf2p7qyme46aq1cxaqdqqa91p2g</sha1>
+    <revision>
+      <id>275</id>
+      <timestamp>2012-10-16T13:41:35Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="517">='''Tipos de eventos'''=
+{{#ask:
+[[Category:Tipos de eventos]]
+|headers=hide
+|format=category
+|link=all
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Tipo de evento]] por defecto.
+
+
+&lt;headertabs/&gt;
+
+
+'''Añadir nuevo tipo de evento:''' {{#forminput:form=Tipo de evento|size=50|default value=Escriba el nombre del tipo de evento|button text=Añadir|autocomplete on category=Tipos de eventos|remote autocompletion|popup}}
+[[Categoría:Agenda]]
+{{HIDE_CATEGORY_PAGES}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Agenda</title>
+    <ns>0</ns>
+    <id>1500</id>
+      <sha1>b2tghy6c02q8q9ssmqwgo8fvnswy7fr</sha1>
+    <revision>
+      <id>3921</id>
+      <timestamp>2012-11-09T19:43:03Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1163">=Hoy=
+Hoy {{#time: d \de F|now}} a las {{#time: H:i|now}} hay '''[[Eventos en proceso hoy | {{TOTAL_EVENTOS_EN_PROCESO_HOY}}]]''' eventos en proceso:
+{{:Eventos en proceso hoy}}
+
+
+=Este mes=
+Durante este mes de '''{{#time: F|now}}''', hay '''{{TOTAL_EVENTOS_SIN_EMPEZAR_MES}} eventos sin empezar''' y '''{{TOTAL_EVENTOS_EN_PROCESO_MES}} en proceso'''.
+{{#ask: [[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::En proceso||Sin empezar]] [[Inicio::&gt;{{#time: d/m/Y|now}}]] [[Fin::&lt;{{#time: d/m/Y|now + 1 month}}]]
+|format=broadtable
+}}
+
+
+
+=Empleados=
+{{#ask: [[Categoría:Empleados]]
+|?Empresa |+limit=1
+|?Centro de trabajo |+limit=1
+|?Departamento |+limit=1
+|?Puesto de trabajo |+limit=1
+|?Proyecto |+limit=1
+|format=broadtable
+|limit=50
+|mainlabel=Empleado
+|sort=Departamento
+|order=Ascending
+}}
+
+=Calendario=
+{{#ask:
+  [[Categoría:Eventos]]
+  [[Inicio::&gt;{{#calendarstartdate:}}]]
+  |? Inicio
+  |link=all
+  |format=calendar
+  |defaultview=day
+  |height=200px
+}}
+
+
+=Empresas=
+{{#ask: [[Categoría:Empresas]]
+|format=broadtable
+|headers=show
+|link=all
+|offset=
+|limit=
+|mainlabel=Empresa
+}}
+
+=Proyectos=
+{{NUBE_ETIQUETAS_PROYECTOS}}
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Alta</title>
+    <ns>0</ns>
+    <id>534</id>
+      <sha1>a5rqjr7jk77qvgekqrwbgzrcgds0uru</sha1>
+    <revision>
+      <id>988</id>
+      <timestamp>2012-10-29T00:11:01Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="13">{{Prioridad}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Ausencia</title>
+    <ns>0</ns>
+    <id>543</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>1012</id>
+      <timestamp>2012-10-29T00:50:33Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Baja</title>
+    <ns>0</ns>
+    <id>682</id>
+      <sha1>a5rqjr7jk77qvgekqrwbgzrcgds0uru</sha1>
+    <revision>
+      <id>1157</id>
+      <timestamp>2012-10-29T04:56:33Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="13">{{Prioridad}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Bug</title>
+    <ns>0</ns>
+    <id>1579</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>3436</id>
+      <timestamp>2012-11-07T12:16:49Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{Tipo de evento}}»</comment>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Cancelado</title>
+    <ns>0</ns>
+    <id>533</id>
+      <sha1>108ysqh2f5ngczps1mstwn7fyw9bxhw</sha1>
+    <revision>
+      <id>974</id>
+      <timestamp>2012-10-29T00:10:36Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="21">{{Estado del evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Centros de trabajo</title>
+    <ns>0</ns>
+    <id>1521</id>
+      <sha1>ktqkcgwgpnx9dzz0k4oek2bnqiftcg4</sha1>
+    <revision>
+      <id>3248</id>
+      <timestamp>2012-11-05T12:52:13Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="523">'''Añadir nuevo centro de trabajo:''' {{#forminput:form=Centro de trabajo|size=50|default value=Escriba el nombre del centro de trabajo|button text=Añadir|autocomplete on category=Centros de trabajo|remote autocompletion|popup}}
+[[Categoría:Agenda]]
+
+
+='''Centros de trabajo'''=
+{{#ask:
+[[Category:Centros de trabajo]]
+|mainlabel={{PAGENAME}}
+|format=broadtable
+|link=all
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Centro de trabajo]] por defecto.
+
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Cursos y Educación</title>
+    <ns>0</ns>
+    <id>317</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>651</id>
+      <timestamp>2012-10-24T15:43:43Z</timestamp>
+      <contributor>
+        <ip>195.235.176.225</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Departamentos</title>
+    <ns>0</ns>
+    <id>1522</id>
+      <sha1>3z0unjsdwc3v2feba8yqik7q49fd95u</sha1>
+    <revision>
+      <id>3251</id>
+      <timestamp>2012-11-05T12:54:27Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="488">'''Añadir nuevo departamento:''' {{#forminput:form=Departamento|size=50|default value=Escriba el nombre del departamento|button text=Añadir|autocomplete on category=Departamentos|remote autocompletion|popup}}
+[[Categoría:Agenda]]
+
+
+='''Departamentos'''=
+{{#ask:
+[[Category:Departamentos]]
+|mainlabel={{PAGENAME}}
+|format=broadtable
+|link=all
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Departamento]] por defecto.
+
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Documentación</title>
+    <ns>0</ns>
+    <id>1411</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>4349</id>
+      <timestamp>2012-11-17T22:18:34Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página reemplazada por «{{Tipo de evento}}»</comment>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Empleados</title>
+    <ns>0</ns>
+    <id>1520</id>
+      <sha1>krd8r26fzwhpxiwulm31xznsuv5byy3</sha1>
+    <revision>
+      <id>4575</id>
+      <timestamp>2012-11-19T21:46:55Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="1319">'''Añadir nuevo empleado:''' {{#forminput:form=Empleado|Empleado[inicio]={{#time: Y/m/d H:i|now}}|Empleado[fin]={{#time: Y/m/d H:i|2100}}|size=50|default value=Escriba el nombre completo del empleado|button text=Añadir|autocomplete on category=Empleados|remote autocompletion|popup}}
+
+
+=Empleados=
+Hay '''{{NUMERO_EMPLEADOS}}''' empleados registrados:
+{{#ask:
+[[Category:Empleados]]
+|?Empresa=
+|?Departamento=
+|format=category
+|link=subject
+|limit=5000
+|mainlabel=
+}}
+
+
+=Por empresa=
+{{#ask:[[Categoría:Empleados]]
+|?Empresa
+|format=outline
+|outlineproperties=Empresa
+|sort=Empresa
+|limit=50
+}}
+
+
+= Por centros de trabajo =
+{{#ask:[[Categoría:Empleados]]
+|?Centro de trabajo
+|format=outline
+|outlineproperties=Centro de trabajo
+|sort=Centro de trabajo
+|limit=50
+}}
+
+
+=Por departamentos=
+{{#ask:[[Categoría:Empleados]]
+|?Departamento
+|format=outline
+|outlineproperties=Departamento
+|limit=50
+|headers=show
+|mainlabel=
+|default=no se han encontrado registros.
+|offset=0
+|sort=Departamento
+}}
+
+
+=Por proyecto=
+{{#ask:[[Categoría:Empleados]]
+|?Proyecto
+|format=outline
+|outlineproperties=Proyecto
+|sort=Proyecto
+|limit=50
+}}
+
+
+=Metadata=
+&lt;div class=&quot;no-printable&quot;&gt;Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Empleado]] por defecto.&lt;/div&gt;
+
+
+&lt;headertabs/&gt;
+
+
+[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Empresas</title>
+    <ns>0</ns>
+    <id>1670</id>
+      <sha1>p9sp00tuwj1061mqjcckupkc5dgru9t</sha1>
+    <revision>
+      <id>3855</id>
+      <timestamp>2012-11-09T12:29:29Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «'''Añadir nueva empresa:''' {{#forminput:form=Empresa|size=50|default value=Escriba el nombre de la empresa|button text=Añadir|autocomplete on category=Empresas|remote au...»</comment>
+      <text xml:space="preserve" bytes="465">'''Añadir nueva empresa:''' {{#forminput:form=Empresa|size=50|default value=Escriba el nombre de la empresa|button text=Añadir|autocomplete on category=Empresas|remote autocompletion|popup}}
+[[Categoría:Agenda]]
+
+
+='''Departamentos'''=
+{{#ask:
+[[Category:Empresas]]
+|mainlabel={{PAGENAME}}
+|format=broadtable
+|link=all
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Departamento]] por defecto.
+
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>En proceso</title>
+    <ns>0</ns>
+    <id>316</id>
+      <sha1>108ysqh2f5ngczps1mstwn7fyw9bxhw</sha1>
+    <revision>
+      <id>650</id>
+      <timestamp>2012-10-24T14:07:59Z</timestamp>
+      <contributor>
+        <ip>195.235.176.225</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="21">{{Estado del evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Evento</title>
+    <ns>0</ns>
+    <id>133</id>
+      <sha1>dfemz05b3uy9ppj8w9lbrcss8s5zf7p</sha1>
+    <revision>
+      <id>256</id>
+      <timestamp>2012-10-14T13:33:59Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="33">{{Tipo de evento
+|clase=Evento
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos</title>
+    <ns>0</ns>
+    <id>1518</id>
+      <sha1>pxswutqkz9uj3qsp833hrj5tn64xw22</sha1>
+    <revision>
+      <id>4576</id>
+      <timestamp>2012-11-19T21:47:26Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="2421">&lt;div class=&quot;no-printable&quot;&gt;'''Añadir nuevo evento:''' {{#forminput:form=Evento|Evento[tipo de evento]=Evento|Evento[inicio]={{#time: Y/m/d H:i|now}}|Evento[fin]={{#time: Y/m/d H:i|2100/01/01}}|Evento[estado]=En proceso|Evento[prioridad]=Normal|size=50|default value=Escriba el nombre del evento|button text=Añadir|autocomplete on category=Eventos|remote autocompletion|popup}}&lt;/div&gt;
+
+
+='''En proceso'''=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::En proceso]]
+|?Proyecto |+limit=1
+|?Tipo de evento
+|?Prioridad
+|?Inicio
+|format=broadtable
+|sort=Inicio
+|order=Descending
+|limit=20
+|offset=0
+|mainlabel=Evento
+|default=no hay nuevos eventos registrados.
+}}
+
+
+='''Sin empezar'''=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::Sin empezar]]
+|?Proyecto |+limit=1
+|?Tipo de evento
+|?Prioridad
+|?Inicio
+|format=broadtable
+|sort=Inicio
+|order=Descending
+|limit=20
+|offset=0
+|mainlabel=Evento
+|default=no hay nuevos eventos registrados.
+}}
+
+
+=Pendientes de terceros=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::Pendiente de terceros]]
+|?Proyecto |+limit=1
+|?Tipo de evento
+|?Prioridad
+|?Inicio
+|format=broadtable
+|sort=Inicio
+|order=Descending
+|limit=20
+|offset=0
+|mainlabel=Evento
+|default=no hay nuevos eventos registrados.
+}}
+
+
+=Pendientes de usuario=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::Pendiente de usuario]]
+|?Proyecto |+limit=1
+|?Tipo de evento
+|?Prioridad
+|?Inicio
+|format=broadtable
+|sort=Inicio
+|order=Descending
+|limit=20
+|offset=0
+|mainlabel=Evento
+|default=no hay nuevos eventos registrados.
+}}
+
+
+=Cancelados=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::Cancelado]]
+|?Proyecto |+limit=1
+|?Tipo de evento
+|?Prioridad
+|?Inicio
+|format=broadtable
+|sort=Inicio
+|order=Descending
+|limit=20
+|offset=0
+|mainlabel=Evento
+|default=no hay nuevos eventos registrados.
+}}
+
+
+=Terminados=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::!Procedimiento]] [[Estado::Terminado]]
+|?Proyecto |+limit=1
+|?Tipo de evento
+|?Prioridad
+|?Inicio
+|format=broadtable
+|sort=Inicio
+|order=Descending
+|limit=20
+|offset=0
+|mainlabel=Evento
+|default=no hay nuevos eventos registrados.
+}}
+
+
+=Metadata=
+&lt;div class=&quot;no-printable&quot;&gt;Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Evento]] por defecto.&lt;/div&gt;
+
+
+{{HeaderTabs}}
+[[Categoría:Agenda]]
+__NOTOC__</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos cancelados</title>
+    <ns>0</ns>
+    <id>1307</id>
+      <sha1>jlpbj3lpdm54gdtroyrhaj5ccgbt6eb</sha1>
+    <revision>
+      <id>4396</id>
+      <timestamp>2012-11-18T20:24:40Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="57">{{EVENTOS CON ESTADO|Cancelado}}
+
+
+[[Categoría:Eventos]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos en proceso</title>
+    <ns>0</ns>
+    <id>1301</id>
+      <sha1>do0v50shqir4cojuy1pr0wqgqbtm17v</sha1>
+    <revision>
+      <id>4393</id>
+      <timestamp>2012-11-18T20:23:15Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="58">{{EVENTOS CON ESTADO|En proceso}}
+
+
+[[Categoría:Eventos]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos pendientes</title>
+    <ns>0</ns>
+    <id>91</id>
+      <sha1>otyoflhxt38smt4tri642szj87f9dc3</sha1>
+    <revision>
+      <id>181</id>
+      <timestamp>2012-10-12T20:00:24Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT-Extras importada</comment>
+      <text xml:space="preserve" bytes="292">'''No se ha encontrado ningún evento en proceso.'''
+
+
+Mostrando los últimos eventos terminados:
+{{#ask: [[Categoría:Eventos]] [[Estado::en proceso]]
+|?Proyecto
+|?Empleado
+|?Inicio
+|?Fin
+|format=broadtable
+|sort=Inicio
+|order=desc
+|mainlabel=Evento
+|default={{últimos eventos cerrados}}
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos pendientes de terceros</title>
+    <ns>0</ns>
+    <id>1304</id>
+      <sha1>iehh190kgo2csjzmlnlkwwywoedk0go</sha1>
+    <revision>
+      <id>2480</id>
+      <timestamp>2012-11-03T15:37:02Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{EVENTOS CON ESTADO|Pendiente de terceros}}»</comment>
+      <text xml:space="preserve" bytes="44">{{EVENTOS CON ESTADO|Pendiente de terceros}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos pendientes de usuario</title>
+    <ns>0</ns>
+    <id>1305</id>
+      <sha1>947h1ivn8hxh2xge3ctirn0j42p6tv4</sha1>
+    <revision>
+      <id>2481</id>
+      <timestamp>2012-11-03T15:37:24Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{EVENTOS CON ESTADO|Pendiente de usuario}}»</comment>
+      <text xml:space="preserve" bytes="43">{{EVENTOS CON ESTADO|Pendiente de usuario}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos sin empezar</title>
+    <ns>0</ns>
+    <id>1300</id>
+      <sha1>54amjr8juqrp6s676id7g9u8czsut3r</sha1>
+    <revision>
+      <id>4394</id>
+      <timestamp>2012-11-18T20:23:52Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="59">{{EVENTOS CON ESTADO|Sin empezar}}
+
+
+[[Categoría:Eventos]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Eventos terminados</title>
+    <ns>0</ns>
+    <id>1306</id>
+      <sha1>0uwr10ndyk3f56qselkfv5uwobw1n75</sha1>
+    <revision>
+      <id>4395</id>
+      <timestamp>2012-11-18T20:24:09Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="57">{{EVENTOS CON ESTADO|Terminado}}
+
+
+[[Categoría:Eventos]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Guardia</title>
+    <ns>0</ns>
+    <id>1252</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>4792</id>
+      <timestamp>2012-12-06T18:23:49Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Incidencia</title>
+    <ns>0</ns>
+    <id>131</id>
+      <sha1>dfemz05b3uy9ppj8w9lbrcss8s5zf7p</sha1>
+    <revision>
+      <id>257</id>
+      <timestamp>2012-10-14T13:34:22Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="33">{{Tipo de evento
+|clase=Evento
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Informe</title>
+    <ns>0</ns>
+    <id>361</id>
+      <sha1>rc5z6mtr7ef4dpym8bztl4eix5yf570</sha1>
+    <revision>
+      <id>695</id>
+      <timestamp>2012-10-25T14:24:08Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="12">{{Etiqueta}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Informe diario</title>
+    <ns>0</ns>
+    <id>1568</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>3404</id>
+      <timestamp>2012-11-06T20:04:36Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Intervención</title>
+    <ns>0</ns>
+    <id>315</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>649</id>
+      <timestamp>2012-10-24T12:02:27Z</timestamp>
+      <contributor>
+        <ip>88.9.96.59</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Llamada</title>
+    <ns>0</ns>
+    <id>1251</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>3114</id>
+      <timestamp>2012-11-04T22:25:40Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Muy alta</title>
+    <ns>0</ns>
+    <id>1394</id>
+      <sha1>a5rqjr7jk77qvgekqrwbgzrcgds0uru</sha1>
+    <revision>
+      <id>2717</id>
+      <timestamp>2012-11-04T00:00:27Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="13">{{Prioridad}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Muy baja</title>
+    <ns>0</ns>
+    <id>1396</id>
+      <sha1>a5rqjr7jk77qvgekqrwbgzrcgds0uru</sha1>
+    <revision>
+      <id>2722</id>
+      <timestamp>2012-11-04T00:01:25Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="13">{{Prioridad}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Normal</title>
+    <ns>0</ns>
+    <id>117</id>
+      <sha1>a5rqjr7jk77qvgekqrwbgzrcgds0uru</sha1>
+    <revision>
+      <id>222</id>
+      <timestamp>2012-10-12T22:28:44Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="13">{{Prioridad}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Pendiente de terceros</title>
+    <ns>0</ns>
+    <id>1423</id>
+      <sha1>108ysqh2f5ngczps1mstwn7fyw9bxhw</sha1>
+    <revision>
+      <id>2811</id>
+      <timestamp>2012-11-04T09:40:36Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="21">{{Estado del evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Pendiente de usuario</title>
+    <ns>0</ns>
+    <id>1515</id>
+      <sha1>108ysqh2f5ngczps1mstwn7fyw9bxhw</sha1>
+    <revision>
+      <id>3203</id>
+      <timestamp>2012-11-05T02:01:51Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <comment>Página creada con «{{Estado del evento}}»</comment>
+      <text xml:space="preserve" bytes="21">{{Estado del evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Petición</title>
+    <ns>0</ns>
+    <id>612</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>3438</id>
+      <timestamp>2012-11-07T12:42:06Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimiento</title>
+    <ns>0</ns>
+    <id>1256</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>2329</id>
+      <timestamp>2012-11-03T11:01:08Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos</title>
+    <ns>0</ns>
+    <id>1519</id>
+      <sha1>jur25orgjsw6akjw9bqytohae7cdhw3</sha1>
+    <revision>
+      <id>4392</id>
+      <timestamp>2012-11-18T20:22:14Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <minor/>
+      <comment>Protegió «[[Procedimientos]]» (‎[edit=sysop] (indefinido) ‎[move=sysop] (indefinido))</comment>
+      <text xml:space="preserve" bytes="1538">&lt;div class=&quot;no-printable&quot;&gt;'''Añadir nuevo procedimiento:''' {{#forminput:form=Evento|Evento[tipo de evento]=Procedimiento|Evento[inicio]={{#time: Y/m/d H:i|now}}|Evento[fin]={{#time: Y/m/d H:i|2100/01/01}}|Evento[estado]=En proceso|Evento[prioridad]=Normal|size=50|default value=Escriba el nombre del procedimiento|button text=Añadir|autocomplete on category=Eventos|remote autocompletion|popup}}&lt;/div&gt;
+
+
+=Todos=
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::Procedimiento]]
+|?Empresa |+limit=1
+|?Departamento |+limit=1
+|?Proyecto |+limit=1
+|?Estado |+limit=1
+|?Prioridad |+limit=1
+|?Inicio |+limit=1
+|format=broadtable
+|sort=Departamento
+|order=Descending
+|mainlabel=Procedimiento
+}}
+
+
+= Por proyecto =
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::Procedimiento]]
+|?Proyecto
+|?Departamento=
+|format=outline
+|outlineproperties=Proyecto
+|sort=Departamento
+|limit=50
+}}
+
+
+
+= Por área de conocimiento =
+{{#ask: [[Categoría:Eventos]] [[Tipo de evento::Procedimiento]]
+|?Departamento
+|?Proyecto=
+|format=outline
+|outlineproperties=Departamento
+|limit=50
+|headers=show
+|mainlabel=
+|default=no se han encontrado registros.
+|offset=0
+|sort=Proyecto
+}}
+
+
+
+= Por empleado =
+{{#ask:[[Categoría:Eventos]] [[Tipo de evento::Procedimiento]]
+|?Empleado
+|?Departamento=
+|format=outline
+|outlineproperties=Empleado
+|sort=Empleado
+|limit=50
+}}
+
+
+
+= Metadata =
+&lt;div class=&quot;no-printable&quot;&gt;Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Evento]] por defecto.
+&lt;/div&gt;
+
+{{HeaderTabs}}
+__NOTOC__
+[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos en vigor</title>
+    <ns>0</ns>
+    <id>1529</id>
+      <sha1>0xcasg6x6hl7vrh0rcbtpy6aula6f8o</sha1>
+    <revision>
+      <id>3296</id>
+      <timestamp>2012-11-06T01:33:39Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="40">{{PROCEDIMIENTOS CON ESTADO|En proceso}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos obsoletos</title>
+    <ns>0</ns>
+    <id>1530</id>
+      <sha1>1h1e3yb1b4edypkci8sjdmbndt5l81j</sha1>
+    <revision>
+      <id>3292</id>
+      <timestamp>2012-11-06T01:29:52Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «{{PROCEDIMIENTOS CON ESTADO|Terminado}}»</comment>
+      <text xml:space="preserve" bytes="39">{{PROCEDIMIENTOS CON ESTADO|Terminado}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos por departamento</title>
+    <ns>0</ns>
+    <id>97</id>
+      <sha1>m7vc7esagw912kedujpuperrbc5p50d</sha1>
+    <revision>
+      <id>193</id>
+      <timestamp>2012-10-12T20:00:25Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT-Extras importada</comment>
+      <text xml:space="preserve" bytes="575">=Listado=
+{{#ask:[[Categoría:Procedimientos]]
+|?Departamento
+|?Empleado=
+|format=outline
+|outlineproperties=Departamento
+|sort=Departamento
+|limit=50
+}}
+
+
+=Nube=
+{{#ask:[[Categoría:Procedimientos]]
+|?Departamento
+|format=tagcloud
+|headers=hide
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=77
+|maxsize=242
+|offset=
+|limit=
+}}
+
+
+=Añadir=
+{{#forminput:form=Procedimiento|size=|default value=|button text=Añadir procedimiento|autocomplete on category=Procedimientos|autocomplete on namespace=|remote autocompletion|popup}}
+
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos por empleado</title>
+    <ns>0</ns>
+    <id>99</id>
+      <sha1>87905u56z583cxyzxftk6rq7bmwlv38</sha1>
+    <revision>
+      <id>197</id>
+      <timestamp>2012-10-12T20:00:25Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT-Extras importada</comment>
+      <text xml:space="preserve" bytes="563">=Listado=
+{{#ask:[[Categoría:Procedimientos]]
+|?Empleado
+|?Departamento=
+|format=outline
+|outlineproperties=Empleado
+|sort=Empleado
+|limit=50
+}}
+
+
+=Nube=
+{{#ask:[[Categoría:Procedimientos]]
+|?Empleado
+|format=tagcloud
+|headers=hide
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=77
+|maxsize=242
+|offset=
+|limit=
+}}
+
+
+=Añadir=
+{{#forminput:form=Procedimiento|size=|default value=|button text=Añadir procedimiento|autocomplete on category=Procedimientos|autocomplete on namespace=|remote autocompletion|popup}}
+
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos por proyecto</title>
+    <ns>0</ns>
+    <id>98</id>
+      <sha1>ejxswsn3u7of5chmunfx7oyp6yxvtft</sha1>
+    <revision>
+      <id>195</id>
+      <timestamp>2012-10-12T20:00:25Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <minor/>
+      <comment>1 revisión: Versión 0.1 de KB4IT-Extras importada</comment>
+      <text xml:space="preserve" bytes="567">=Listado=
+{{#ask:[[Categoría:Procedimientos]]
+|?Proyecto
+|?Departamento=
+|format=outline
+|outlineproperties=Proyecto
+|sort=Departamento
+|limit=50
+}}
+
+
+=Nube=
+{{#ask:[[Categoría:Procedimientos]]
+|?Proyecto
+|format=tagcloud
+|headers=hide
+|link=all
+|increase=log
+|tagorder=alphabetical
+|mincount=1
+|maxtags=1000
+|minsize=77
+|maxsize=242
+|offset=
+|limit=
+}}
+
+
+=Añadir=
+{{#forminput:form=Procedimiento|size=|default value=|button text=Añadir procedimiento|autocomplete on category=Procedimientos|autocomplete on namespace=|remote autocompletion|popup}}
+
+
+&lt;headertabs/&gt;</text>
+    </revision>
+  </page>
+  <page>
+    <title>Procedimientos sin empezar</title>
+    <ns>0</ns>
+    <id>1531</id>
+      <sha1>gq8qivgyihkj8cgdzzma9c1rh61ubhe</sha1>
+    <revision>
+      <id>3293</id>
+      <timestamp>2012-11-06T01:30:16Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <comment>Página creada con «{{PROCEDIMIENTOS CON ESTADO|Sin empezar}}»</comment>
+      <text xml:space="preserve" bytes="41">{{PROCEDIMIENTOS CON ESTADO|Sin empezar}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Proyectos</title>
+    <ns>0</ns>
+    <id>646</id>
+      <sha1>1a7488j6o3cuqla1s82ui2dgrusg3h4</sha1>
+    <revision>
+      <id>3257</id>
+      <timestamp>2012-11-05T12:58:47Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="490">'''Añadir nuevo proyecto:''' {{#forminput:form=Proyecto|size=50|default value=Escriba el nombre del proyecto|button text=Añadir|autocomplete on category=Proyectos|remote autocompletion|popup}}
+
+
+=Proyectos=
+{{#ask:[[Categoría:Proyectos]]
+|?Empresa
+|format=broadtable
+|default=no se encontraron registros.
+|mainlabel=Proyecto
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Proyecto]] por defecto.
+
+
+&lt;headertabs/&gt;
+
+[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Puestos de trabajo</title>
+    <ns>0</ns>
+    <id>1523</id>
+      <sha1>51ain3dejienlxycaajagarlvcmhgin</sha1>
+    <revision>
+      <id>3255</id>
+      <timestamp>2012-11-05T12:56:27Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="525">'''Añadir nuevo puesto de trabajo:''' {{#forminput:form=Puesto de trabajo|size=50|default value=Escriba el nombre del puesto de trabajo|button text=Añadir|autocomplete on category=Puestos de trabajo|remote autocompletion|popup}}
+
+
+='''Puestos de trabajo'''=
+{{#ask:[[Categoría:Puestos de trabajo]]
+|mainlabel={{PAGENAME}}
+|format=broadtable
+|link=all
+}}
+
+
+=Metadata=
+Las páginas de la categoría {{PAGENAME}} tienen el formulario [[Has default form::Puesto de trabajo]] por defecto.
+
+
+&lt;headertabs/&gt;
+
+[[Categoría:Agenda]]</text>
+    </revision>
+  </page>
+  <page>
+    <title>Reunión</title>
+    <ns>0</ns>
+    <id>1226</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>2167</id>
+      <timestamp>2012-11-02T22:24:12Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Seguimiento</title>
+    <ns>0</ns>
+    <id>681</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>1156</id>
+      <timestamp>2012-10-29T03:57:35Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Sin empezar</title>
+    <ns>0</ns>
+    <id>116</id>
+      <sha1>108ysqh2f5ngczps1mstwn7fyw9bxhw</sha1>
+    <revision>
+      <id>221</id>
+      <timestamp>2012-10-12T22:28:18Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="21">{{Estado del evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Tarea</title>
+    <ns>0</ns>
+    <id>115</id>
+      <sha1>dfemz05b3uy9ppj8w9lbrcss8s5zf7p</sha1>
+    <revision>
+      <id>254</id>
+      <timestamp>2012-10-14T12:08:01Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="33">{{Tipo de evento
+|clase=Evento
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Tarea programada</title>
+    <ns>0</ns>
+    <id>132</id>
+      <sha1>s5ek6imoyo3yhbfesgbboaakow9vvv4</sha1>
+    <revision>
+      <id>258</id>
+      <timestamp>2012-10-14T13:35:07Z</timestamp>
+      <contributor>
+        <username>Tomás Vírseda</username>
+        <id>1</id>
+      </contributor>
+      <text xml:space="preserve" bytes="32">{{Tipo de evento
+|clase=Tarea
+}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Terminado</title>
+    <ns>0</ns>
+    <id>318</id>
+      <sha1>108ysqh2f5ngczps1mstwn7fyw9bxhw</sha1>
+    <revision>
+      <id>652</id>
+      <timestamp>2012-10-24T15:51:47Z</timestamp>
+      <contributor>
+        <ip>195.235.176.225</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="21">{{Estado del evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Turno adicional</title>
+    <ns>0</ns>
+    <id>320</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>654</id>
+      <timestamp>2012-10-24T15:54:53Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Upgrade</title>
+    <ns>0</ns>
+    <id>1166</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>1763</id>
+      <timestamp>2012-11-01T01:53:43Z</timestamp>
+      <contributor>
+        <username>Operador</username>
+        <id>2</id>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+  <page>
+    <title>Vacaciones</title>
+    <ns>0</ns>
+    <id>321</id>
+      <sha1>5r84ek1d4kupgdviv78sbezvdftm2tz</sha1>
+    <revision>
+      <id>655</id>
+      <timestamp>2012-10-24T15:55:00Z</timestamp>
+      <contributor>
+        <ip>127.0.0.1</ip>
+      </contributor>
+      <text xml:space="preserve" bytes="18">{{Tipo de evento}}</text>
+    </revision>
+  </page>
+</mediawiki>

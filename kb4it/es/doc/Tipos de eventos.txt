@@ -1,0 +1,19 @@
+=Tipos de eventos=
+Visita al centro de trabajo
+Comida de empresa
+Día festivo
+Encuentro de negocios
+Formación
+Reunión
+Disponibilidad
+Turnos
+Trabajos planificados
+Horas entre proyectos
+Interno
+Tiempo adiccional
+Ausencia
+Compensación
+Enfermedad de un familiar
+Libre disposición
+Libre turno
+Vacaciones
