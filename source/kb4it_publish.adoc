@@ -1,0 +1,19 @@
+= How to publish documents
+:Author:        t00mlabs
+:Revnumber:     v0.2
+:Revdate:       2018-09-05
+:Category:      Help
+:Status:        Draft
+:Scope:         Documentation
+:Department:
+:Team:
+:Tag:           help, asciidoctor, markdown, publish, technical, documentation
+:Priority:      Low
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Upload your document
+
+Upload the contents of target directory to your web server or copy them to another folder.
+
+Or just browse your repository pointing the browser to target/index.html
