@@ -1,5 +1,10 @@
-Introduction {#_introduction}
-============
+:toc: left
+:toclevels: 6
+:icons: font
+:iconfont-remote: None
+:iconfont-name: fontawesome-4.7.0
+
+== Introduction
 
 **KB4IT** helps you to build a static website with all your procedures
 and documents
@@ -16,8 +21,8 @@ Main goals:
 
 -   Easy to [backup/restore](kb4it_expimp.xml) documentation
 
-How it works {#_how_it_works}
-============
+
+== How it works
 
 There is only one script (kb4it.py) which is in charge of all process.
 
@@ -74,8 +79,7 @@ Resources directory contains another two directories:
 
 -   online: resources to be copied to target directory
 
-Execution {#_execution}
-=========
+== Execution
 
 kb4it is a python 3 script. All parameters are optional.
 
@@ -135,26 +139,18 @@ similar to this:
        INFO |  853  | 2018-08-30 23:06:06,000 | 7. Source docs copied to target directory
        INFO |  854  | 2018-08-30 23:06:06,000 | Execution finished
 
-Notes {#_notes}
------
+== Notes
 
-> **Tip**
->
-> Source and target directories are created if they do not exist.
+TIP: Source and target directories are created if they do not exist.
 
-> **Important**
->
-> Source directory is never touched. Source documents are copied to a
-> temporary directory
+IMPORTANT: Source directory is never touched. Source documents are copied to a temporary directory
 
-> **Warning**
->
-> Contents on target directory are always deleted before compilation
+WARNING: Contents on target directory are always deleted before compilation
 
-Download {#_download}
-========
 
-Get a copy from SVN repository:
+== Download
+
+Get a copy from GIT repository:
 
 ``` {.bash}
 git clone https://github.com/t00m/KB4IT.git
