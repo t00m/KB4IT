@@ -9,7 +9,7 @@
 **KB4IT** helps you to build a static website with all your procedures
 and documents
 
-It is based on [Asciidoctor](https://asciidoctor.org) markdown.
+It is based on Asciidoctor markdown.
 
 Main goals:
 
