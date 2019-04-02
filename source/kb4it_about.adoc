@@ -29,8 +29,6 @@ Main goals:
 
 == How it works
 
-There is only one script (kb4it.py) which is in charge of all process.
-
 This is the flow:
 
 . Delete contents of target directory (if any)
@@ -168,9 +166,8 @@ Contents on target directory are always deleted before compilation
 
 == Download
 
-Get a copy from SVN repository:
+Get a copy from GIT repository:
 
-[source,bash]
-----
-svn checkout https://subversion.t00mlabs.net/kb4it/trunk kb4it
-----
+``` {.bash}
+git clone https://github.com/t00m/KB4IT.git
+```
