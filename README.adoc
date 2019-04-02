@@ -34,8 +34,6 @@ Main goals:
 
 == How it works
 
-There is only one script (kb4it.py) which is in charge of all process.
-
 This is the flow:
 
 . Delete contents of target directory (if any)
