@@ -13,13 +13,13 @@ It is based on Asciidoctor markdown.
 
 Main goals:
 
--   Easy to [write](kb4it_write.xml) technical documentation
+-   Easy to write technical documentation
 
--   Easy to [find](kb4it_find.xml) documentation
+-   Easy to find documentation
 
--   Easy to [publish](kb4it_publish.xml) documentation
+-   Easy to publish documentation
 
--   Easy to [backup/restore](kb4it_expimp.xml) documentation
+-   Easy to backup/restore documentation
 
 
 == How it works
