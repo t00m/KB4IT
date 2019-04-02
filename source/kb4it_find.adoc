@@ -1,0 +1,20 @@
+= How to find documents
+:Author:        t00mlabs
+:Revnumber:     v0.2
+:Revdate:       2018-09-05
+:Category:      Help
+:Status:        Draft
+:Scope:         Documentation
+:Department:
+:Team:
+:Tag:           help, asciidoctor, markdown, find, technical, documentation
+:Priority:      Medium
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== How to find documents in this repository.
+
+This a static website and search has not been implemented yet.
+
+However, you can use the Keys page to browse all the topcis available.
+

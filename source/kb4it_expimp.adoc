@@ -1,0 +1,29 @@
+= Backup/Restore your repository
+:Author:        t00mlabs
+:Revnumber:     v0.1
+:Revdate:       2018-07-27
+:Category:      Help
+:Status:        Draft
+:Scope:         Documentation
+:Department:
+:Team:
+:Tag:           help, asciidoctor, markdown, backup, restore, technical, documentation
+:Priority:      High
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Backup
+
+As simple as keep safe a copy of your source folder
+
+[IMPORTANT]
+====
+Make sure you keep a copy of the script
+====
+
+
+== Restore
+
+Restore the folder somewhere
+
+
