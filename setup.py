@@ -16,7 +16,7 @@ import os
 import glob
 from setuptools import setup
 
-with open('VERSION', 'r') as fver:
+with open('kb4it/resources/offline/appdata/VERSION', 'r') as fver:
     VERSION = fver.read()
 
 with open('README', 'r') as f:
@@ -50,7 +50,7 @@ DATA_FILES = add_data('kb4it/resources')
 
 setup(
     name='kb4it',
-    version='0.7',
+    version=VERSION,
     author='Tomás Vírseda',
     author_email='tomasvirseda@gmail.com',
     url='https://github.com/t00m/KB4IT',

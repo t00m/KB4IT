@@ -21,8 +21,7 @@ from kb4it.src.core.mod_utils import valid_filename, load_current_kbdict
 from kb4it.src.core.mod_utils import template, exec_cmd, job_done, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification
-from kb4it.src.core.mod_utils import last_modification, last_modification_date
+from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.services.srv_db import HEADER_KEYS
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
@@ -217,7 +216,6 @@ class Application(Service):
         """
         docs.sort(key=lambda y: y.lower())
         for source in docs:
-            self.log.error("Doc[%s]: %s", os.path.basename(source), last_modification(source))
             docname = os.path.basename(source)
             self.kbdict_new['document'][docname] = {}
             self.log.debug("          Preprocessing DOC[%s]", docname)
@@ -253,7 +251,6 @@ class Application(Service):
                             self.kbdict_new['metadata'][key] = {}
                         if elem not in self.kbdict_new['metadata'][key]:
                             self.kbdict_new['metadata'][key][elem] = [docname]
-            self.srvdtb.add_document_key(docname, 'Modified', last_modification_date(source))
 
             # Compare
             try:
