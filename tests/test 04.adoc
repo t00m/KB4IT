@@ -1,0 +1,14 @@
+= Test 04: Source document with white spaces
+:Author:        Tomás Vírseda
+:Category:      Testing
+:Scope:         Development
+:Status:        Released
+:Priority:      Low
+:Team:          IT Plumbers
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Expected result
+
+KB4IT should handle without any problem those files with white spaces in the filename. Therefore, this page should be shown.
+
