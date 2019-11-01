@@ -18,18 +18,8 @@ import glob
 ROOT = abspath(sys.modules[__name__].__file__ + "/../../../")
 USER_DIR = os.path.expanduser('~')
 
-# App Info
 APP = {}
 APP['shortname'] = "KB4IT"
-APP['name'] = "Knowledge Base For IT"
-APP['license'] = "The code is licensed under the terms of the  GPL v3\n\
-                  so you're free to grab, extend, improve and fork the \
-                  code\nas you want"
-APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
-APP['desc'] = ""
-APP['version'] = "0.7"
-APP['authors'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
-APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 
 # Local paths
 LPATH = {}
@@ -52,6 +42,7 @@ GPATH['ROOT'] = ROOT
 GPATH['DATA'] = os.path.join(GPATH['ROOT'], 'kb4it')
 GPATH['RESOURCES'] = os.path.join(GPATH['ROOT'], 'resources')
 GPATH['OFFLINE'] = os.path.join(GPATH['RESOURCES'], 'offline')
+GPATH['APPDATA'] = os.path.join(GPATH['OFFLINE'], 'appdata')
 GPATH['ADOCS'] = os.path.join(GPATH['OFFLINE'], 'sources')
 GPATH['TEMPLATES'] = os.path.join(GPATH['OFFLINE'], 'templates')
 GPATH['DOCINFO'] = os.path.join(GPATH['OFFLINE'], 'docinfo')
@@ -63,6 +54,19 @@ GPATH['DOC'] = os.path.join(GPATH['SHARE'], 'docs')
 GPATH['RES'] = os.path.join(GPATH['DATA'], 'res')
 GPATH['HELP'] = os.path.join(GPATH['DATA'], 'help')
 GPATH['HELP_HTML'] = os.path.join(GPATH['HELP'], 'html')
+
+VERSION = open(os.path.join(GPATH['APPDATA'], 'VERSION'), 'r').read()
+
+# App Info
+APP['name'] = "Knowledge Base For IT"
+APP['license'] = "The code is licensed under the terms of the  GPL v3\n\
+                  so you're free to grab, extend, improve and fork the \
+                  code\nas you want"
+APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
+APP['desc'] = ""
+APP['version'] = VERSION
+APP['authors'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
+APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 
 # Configuration, SAP Notes Database and Log files
 FILE = {}
