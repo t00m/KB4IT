@@ -1,0 +1,26 @@
+= Test 01: TOC Test
+:Author:        Tomás Vírseda
+:Category:      Testing
+:Scope:         Development
+:Status:        Released
+:Priority:      Low
+:Team:          IT Plumbers
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Expected result
+
+After applying transformations, left TOC should show the sections declared in this document (up to 4 levels).
+
+== H2A
+
+=== H3A
+
+==== H4A
+
+== H2B
+
+=== H3B
+
+==== H4B
+
