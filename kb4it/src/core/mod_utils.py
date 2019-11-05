@@ -90,6 +90,7 @@ def get_source_docs(path):
 
     pattern = os.path.join(path) + '*.adoc'
     docs = glob.glob(pattern)
+    docs.sort(key=lambda y: y.lower())
     log.debug("\tFound %d asciidoc documents", len(docs))
 
     return docs
