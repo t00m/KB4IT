@@ -1,0 +1,29 @@
+        </div>
+    </div>
+    <!-- CONTENTS (Document) :: END -->
+</div>
+<div><!-- FOOTER :: START -->
+</div><!-- FOOTER :: END -->
+<script>
+<!-- Necessary javascript for filtering results -->
+<!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
+var input = document.getElementById('text_filter');
+var filter = document.getElementById('filter');
+
+input.addEventListener( 'keyup', function(event)
+{
+    if ( input.value == "" )
+    {
+        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+    }
+
+    else
+    {
+        filter.setAttribute( 'uk-filter-control', 'filter:[data-title*=\'' + input.value + '\'i]' );
+    }
+
+    filter.click();
+});
+</script>
+</body>
+</html>
