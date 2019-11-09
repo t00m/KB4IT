@@ -10,7 +10,7 @@
 
 == Expected result
 
-After applying transformations, left TOC should show the sections declared in this document (up to 4 levels).
+After applying transformations, left TOC should show the sections declared in this document (up to 3 levels).
 
 == H2A
 

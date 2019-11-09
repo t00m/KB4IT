@@ -34,7 +34,7 @@ class KB4ITDB(Service):
     def add_document(self, doc):
         """Add a new document node to the graph."""
         self.db[doc] = {}
-        self.log.debug("Created new document: %s", doc)
+        self.log.debug("\t\tCreated new document: %s", doc)
 
     def add_document_key(self, doc, key, value):
         """Add a new key node to a document."""
@@ -51,7 +51,7 @@ class KB4ITDB(Service):
         html = []
 
         values = self.get_values(doc, key)
-        self.log.debug("[%s][%s] = %s", doc, key, values)
+        self.log.debug("\t\t\t[%s][%s] = %s", doc, key, values)
         for value in values:
             url = "%s_%s.html" % (key, value)
             html.append((url, value))
@@ -69,7 +69,7 @@ class KB4ITDB(Service):
         values = []
         for doc in self.db:
             try:
-                self.log.debug("          Doc[%s] - Key[%s] -> Values: %s", doc, key, self.db[doc][key])
+                # ~ self.log.debug("\t\tDoc[%s] - Key[%s] -> Values: %s", doc, key, self.db[doc][key])
                 values.extend(self.db[doc][key])
             except KeyError:
                 pass
