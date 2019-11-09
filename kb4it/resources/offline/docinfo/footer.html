@@ -14,7 +14,7 @@ input.addEventListener( 'keyup', function(event)
 {
     if ( input.value == "" )
     {
-        filter.setAttribute( 'uk-filter-control', '' );
+        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
     }
 
     else
