@@ -1,7 +1,7 @@
 
         <div uk-filter="target: .js-filter"> <!-- Filter :: Start -->
             <ul class="uk-subnav uk-subnav-pill"> <!-- Filter buttons :: Start -->
-                <li class="uk-active" uk-filter-control><a href="#"><div class="uk-text-capitalize uk-text-bold">All</div></a></li> <!-- ALL button -->
+                <!-- <li class="uk-active" uk-filter-control><a href="#"><div class="uk-text-capitalize uk-text-bold">All</div></a></li> -->
 %s
             </ul> <!-- Filter buttons :: End -->
             <form action="" method="post" class="uk-search uk-search-default uk-width-1-1 uk-margin-medium-bottom">

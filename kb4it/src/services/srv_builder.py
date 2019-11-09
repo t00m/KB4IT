@@ -411,7 +411,7 @@ class Builder(Service):
         author = self.srvdtb.get_values(doc, 'Author')[0]
         author_icon, icon_path = get_author_icon(source_dir, author)
         if icon_path is not None:
-            self.log.warning("Missing author icon: %s", icon_path)
+            self.log.warning("\t\tMissing author icon: %s", icon_path)
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
         link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)

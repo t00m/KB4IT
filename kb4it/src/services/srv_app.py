@@ -23,7 +23,7 @@ from kb4it.src.core.mod_utils import valid_filename, load_current_kbdict
 from kb4it.src.core.mod_utils import template, exec_cmd, job_done, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import get_author_icon
+from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification
 from kb4it.src.services.srv_db import HEADER_KEYS
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
@@ -43,7 +43,7 @@ class Application(Service):
 
         # Initialize directories
         self.runtime['dir'] = {}
-        self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP'])
+        self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
         if parameters.TARGET_PATH is None:
             self.runtime['dir']['target'] = LPATH['WWW']
         else:
@@ -96,9 +96,13 @@ class Application(Service):
     def stage_1_check_environment(self):
         """Check environment."""
         self.log.info("Stage 1\tCheck environment")
+        self.log.debug("\t\tCache directory: %s", self.runtime['dir']['cache'])
+        self.log.debug("\t\tWorking directory: %s", self.runtime['dir']['tmp'])
+        self.log.debug("\t\tSource directory: %s", self.runtime['dir']['source'])
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.runtime['dir']['target']):
             os.makedirs(self.runtime['dir']['target'])
+        self.log.debug("\t\tTarget directory: %s", self.runtime['dir']['target'])
 
         # Check if help and about documents exists. If not, use the default ones
         file_about = os.path.join(self.runtime['dir']['source'], 'about.adoc')
@@ -126,7 +130,9 @@ class Application(Service):
             self.log.error("\tNo asciidoctor files found in: %s", self.runtime['dir']['source'])
             self.log.error("\tExecution finished.")
             sys.exit()
-        self.log.info("\t\tFound %d asciidoctor documents", self.runtime['docs']['count'])
+        self.log.info("\t\tFound %d asciidoctor documents:", self.runtime['docs']['count'])
+        for doc in self.runtime['docs']['bag']:
+            self.log.debug("\t\t\t%s", doc)
 
     def stage_3_preprocessing(self):
         """
@@ -161,6 +167,7 @@ class Application(Service):
             # Get Document Content and Metadata Hash
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
+            self.kbdict_new['document'][docname]['timestamp'] = last_dt_modification(source).isoformat()
 
             # Get documents per [key, value] and add them to kbdict
             for key in keys:
@@ -179,26 +186,16 @@ class Application(Service):
 
             # Compare the document with the one in the cache
             try:
-                doc_new_mdt_hash = self.kbdict_new['document'][docname]['metadata_hash']
-                doc_cur_mdt_hash = self.kbdict_cur['document'][docname]['metadata_hash']
-                doc_new_cnt_hash = self.kbdict_new['document'][docname]['content_hash']
-                doc_cur_cnt_hash = self.kbdict_cur['document'][docname]['content_hash']
-
-                changed_metadata = doc_new_mdt_hash != doc_cur_mdt_hash
-                changed_content = doc_new_cnt_hash != doc_cur_cnt_hash
-                cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
-                cache_exists = os.path.exists(cached_document)
-
-                changed_document = changed_metadata or changed_content
-                if changed_document:
+                doc_ts_new = self.kbdict_new['document'][docname]['timestamp']
+                doc_ts_cur = self.kbdict_cur['document'][docname]['timestamp']
+                self.log.debug("\t\tDoc[%s]: %s > %s: %s", docname, doc_ts_new, doc_ts_cur, doc_ts_new > doc_ts_cur)
+                if doc_ts_new > doc_ts_cur:
                     FORCE_DOC_COMPILATION = True
                 else:
-                    if cache_exists:
-                        FORCE_DOC_COMPILATION = False
-                    else:
-                        FORCE_DOC_COMPILATION = True
+                    FORCE_DOC_COMPILATION = False
             except KeyError:
                 FORCE_DOC_COMPILATION = True
+            self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
 
             # Force compilation if document (content or metadata) has changed
             if FORCE_DOC_COMPILATION:
@@ -233,37 +230,28 @@ class Application(Service):
                 self.log.debug("\t\tAdding missing key: %s", key)
                 missing.append(key)
         available_keys.extend(missing)
-        available_keys.append('Title')
+        # ~ available_keys.append('Title')
 
         # Process
         for key in available_keys:
             # ~ if key == 'Title':
                 # ~ break
             # ~ self.log.error("")
-            self.log.debug("\t\tProcessing key: %s", key)
+            self.log.debug("\t\t* Processing key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
                 try:
+                    FORCE_DOC_COMPILATION = False
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                     docname = os.path.join(self.runtime['dir']['tmp'], filename)
-                    doc_new = self.kbdict_new['metadata'][key][value]
-                    doc_old = self.kbdict_cur['metadata'][key][value]
-                    # ~ self.log.error("\tNEW: %s - %s - %s", key, value, doc_new)
-                    # ~ self.log.error("\tOLD: %s - %s - %s", key, value, doc_old)
-                    doc_changed = doc_new != doc_old
-                    file_cached = "%s_%s.html" % (valid_filename(key), valid_filename(value))
-                    cached_document = os.path.join(self.runtime['dir']['cache'], file_cached)
-                    cache_exists = os.path.exists(cached_document)
-                    if doc_changed:
-                        FORCE_DOC_COMPILATION = True
-                    else:
-                        if cache_exists:
-                            FORCE_DOC_COMPILATION = False
-                        else:
-                            FORCE_DOC_COMPILATION = True
+                    self.kbdict_new['document']
+                    rel_docs = self.kbdict_new['metadata'][key][value]
+                    for adoc in rel_docs:
+                        self.log.debug("\t\t\tDoc '%s' must be compiled again? Answer: %s", adoc, self.kbdict_new['document'][adoc]['compile'])
+                        FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or self.kbdict_new['document'][adoc]['compile']
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
-
+                # ~ self.log.debug("\t\tForce compilation for %s: %s", docname, FORCE_DOC_COMPILATION)
                 if FORCE_DOC_COMPILATION:
                     # Create .adoc from value
 
@@ -305,9 +293,8 @@ class Application(Service):
         # ~ self.log.debug("          Document's metadata processed")
 
     def stage_5_compilation(self):
-        """Compile documents to html with asciidoc."""
+        """Compile documents to html with asciidoctor."""
         self.log.info("Stage 5\tCompilation")
-        self.log.info("\t\t0% done")
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
@@ -331,19 +318,20 @@ class Application(Service):
             jobs = []
             jobcount = 0
             num = 1
-            self.log.debug("\t\tGenerating %d jobs. Please, wait.", len(docs))
+            self.log.debug("\t\tGenerating jobs. Please, wait")
             for doc in docs:
                 cmd = "asciidoctor -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                 # ~ self.log.debug("\t\t%s", cmd)
                 job = exe.submit(exec_cmd, (doc, cmd, num))
                 job.add_done_callback(job_done)
-                # ~ self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
+                self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
                 jobs.append(job)
                 num = num + 1
-
+            self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
+            self.log.info("\t\t0% done")
             for job in jobs:
                 adoc, res, jobid = job.result()
-                self.log.debug("\t\tJob[%4d]: %s compiled successfully", jobid, os.path.basename(adoc))
+                self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))
                 jobcount += 1
                 if jobcount % MAX_WORKERS == 0:
                     pct = int(jobcount * 100 / len(docs))
@@ -375,7 +363,7 @@ class Application(Service):
         pattern = os.path.join(self.runtime['dir']['source'], '*.adoc')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['target'])
-        self.log.info("\t\tCopy %d asciidoc sources from source path to target Path", len(files))
+        self.log.info("\t\tCopy %d asciidoctor sources from source path to target Path", len(files))
 
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
@@ -417,7 +405,7 @@ class Application(Service):
         2. Get source documents
         3. Preprocess documents (get metadata)
         4. Process documents in a temporary dir
-        5. Compile documents to html with asciidoc
+        5. Compile documents to html with asciidoctor
         6. Delete contents of target directory (if any)
         7. Refresh target directory
         8. Remove temporary directory

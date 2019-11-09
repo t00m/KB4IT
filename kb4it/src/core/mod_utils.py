@@ -56,7 +56,7 @@ def save_current_kbdict(kbdict, source_path):
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
     for doc in docs:
-        shutil.copy(doc, target)
+        shutil.copy('%s' % doc, target)
         log.debug("          %s copied to %s", doc, target)
     log.debug("          %d documents copied to '%s'", len(docs), target)
 
@@ -91,7 +91,7 @@ def get_source_docs(path):
     pattern = os.path.join(path) + '*.adoc'
     docs = glob.glob(pattern)
     docs.sort(key=lambda y: y.lower())
-    log.debug("\tFound %d asciidoc documents", len(docs))
+    log.debug("\tFound %d asciidoctor documents", len(docs))
 
     return docs
 
