@@ -297,11 +297,11 @@ class Builder(Service):
         ## Build filter body
         key_filter_docs = ""
         # ~ self.log.error("VALUES: %s", values)
-        cardset = set()
+        cardset = []
         for value in values:
             docs = self.srvdtb.get_docs_by_key_value(key, value)
             for doc in docs:
-                cardset.add(doc)
+                cardset.append(doc)
 
         for doc in cardset:
             objects = self.srvdtb.get_values(doc, key)
@@ -311,6 +311,7 @@ class Builder(Service):
                 data_objects.append(valid_filename(obj))
 
             title = self.srvdtb.get_values(doc, 'Title')[0] # Only first match
+            self.log.error(title)
             doc_card = self.get_doc_card(doc)
             tpl_key_filter_docs = template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
             key_filter_docs += tpl_key_filter_docs % (valid_filename(title), \

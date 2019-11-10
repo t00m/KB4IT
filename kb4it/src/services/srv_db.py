@@ -108,7 +108,17 @@ class KB4ITDB(Service):
             except KeyError:
                 pass
         docs.sort(key=lambda y: y.lower())
-        return docs
+        ltitles = []
+        dtitles = {}
+        for doc in docs:
+            title = self.get_values(doc, 'Title')[0]
+            ltitles.append(title)
+            dtitles[title] = doc
+        ltitles.sort()
+        ldocs = []
+        for title in ltitles:
+            ldocs.append(dtitles[title])
+        return ldocs
 
     def get_doc_keys(self, doc):
         """Get keys for a given doc."""
