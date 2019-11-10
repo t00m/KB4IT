@@ -168,7 +168,8 @@ class Application(Service):
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
             self.kbdict_new['document'][docname]['timestamp'] = last_dt_modification(source).isoformat()
-
+            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
+            cached_document_exists = os.path.exists(cached_document)
             # Get documents per [key, value] and add them to kbdict
             for key in keys:
                 alist = keys[key]
@@ -185,16 +186,21 @@ class Application(Service):
                             self.kbdict_new['metadata'][key][value] = [docname]
 
             # Compare the document with the one in the cache
-            try:
-                doc_ts_new = self.kbdict_new['document'][docname]['timestamp']
-                doc_ts_cur = self.kbdict_cur['document'][docname]['timestamp']
-                self.log.debug("\t\tDoc[%s]: %s > %s: %s", docname, doc_ts_new, doc_ts_cur, doc_ts_new > doc_ts_cur)
-                if doc_ts_new > doc_ts_cur:
-                    FORCE_DOC_COMPILATION = True
-                else:
-                    FORCE_DOC_COMPILATION = False
-            except KeyError:
+            self.log.debug("\t\tDoes doc %s exist in cache? Answer: %s", docname, cached_document_exists)
+            if not cached_document_exists:
                 FORCE_DOC_COMPILATION = True
+            else:
+                try:
+                    doc_ts_new = self.kbdict_new['document'][docname]['timestamp']
+                    doc_ts_cur = self.kbdict_cur['document'][docname]['timestamp']
+                    self.log.debug("\t\tDoc[%s]: %s > %s: %s", docname, doc_ts_new, doc_ts_cur, doc_ts_new > doc_ts_cur)
+                    if doc_ts_new > doc_ts_cur:
+                        FORCE_DOC_COMPILATION = True
+                    else:
+                        FORCE_DOC_COMPILATION = False
+                except KeyError:
+                    FORCE_DOC_COMPILATION = True
+
             self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
 
             # Force compilation if document (content or metadata) has changed
