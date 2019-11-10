@@ -19,7 +19,7 @@ from setuptools import setup
 with open('kb4it/resources/offline/appdata/VERSION', 'r') as fver:
     VERSION = fver.read()
 
-with open('README', 'r') as f:
+with open('README.adoc', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 
