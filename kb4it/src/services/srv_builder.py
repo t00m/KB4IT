@@ -296,7 +296,6 @@ class Builder(Service):
 
         ## Build filter body
         key_filter_docs = ""
-        # ~ self.log.error("VALUES: %s", values)
         cardset = []
         for value in values:
             docs = self.srvdtb.get_docs_by_key_value(key, value)
@@ -311,7 +310,6 @@ class Builder(Service):
                 data_objects.append(valid_filename(obj))
 
             title = self.srvdtb.get_values(doc, 'Title')[0] # Only first match
-            self.log.error(title)
             doc_card = self.get_doc_card(doc)
             tpl_key_filter_docs = template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
             key_filter_docs += tpl_key_filter_docs % (valid_filename(title), \
@@ -354,17 +352,14 @@ class Builder(Service):
                                             get_labels(scope), get_labels(team), \
                                             get_labels(status), get_labels(priority), \
                                             get_labels(tags))
-            # ~ self.log.error(html)
 
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
             for key in custom_keys:
                 values = self.srvdtb.get_html_values_from_key(doc, key)
-                # ~ self.log.error(values)
                 labels = get_labels(values)
                 row_custom_prop = template('METADATA_ROW_CUSTOM_PROPERTY')
                 custom_props += row_custom_prop % (valid_filename(key), key, labels)
-            # ~ self.log.error(custom_props)
 
             num_custom_props = len(custom_props)
             if  num_custom_props > 0:
@@ -377,7 +372,7 @@ class Builder(Service):
                                                open(source_path, 'r').read())
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
-            self.log.error("\t%s", msgerror)
+            self.log.error("\t\t%s", msgerror)
             html = ''
             raise
 
