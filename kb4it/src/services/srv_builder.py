@@ -414,3 +414,4 @@ class Builder(Service):
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
         return DOC_CARD % (link_title, author_icon, link_category, link_scope, link_team)
+
