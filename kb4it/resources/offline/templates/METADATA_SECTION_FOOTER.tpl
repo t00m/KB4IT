@@ -15,13 +15,11 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- View Source Button :: END -->
+                        </div> <!-- View Source Button :: END -->
                     </td>
                 </tr>
             </table>
         </div>
     </li>
-</ul>
-<!-- Document Metadata section :: END -->
+</ul> <!-- Document Metadata section :: END -->
 ++++
