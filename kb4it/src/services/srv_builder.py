@@ -296,11 +296,11 @@ class Builder(Service):
 
         ## Build filter body
         key_filter_docs = ""
-        cardset = []
+        cardset = set()
         for value in values:
             docs = self.srvdtb.get_docs_by_key_value(key, value)
             for doc in docs:
-                cardset.append(doc)
+                cardset.add(doc)
 
         for doc in cardset:
             objects = self.srvdtb.get_values(doc, key)
