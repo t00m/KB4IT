@@ -1,1 +1,3 @@
-            <li data-title="%s">%s</li>
+            <li data-title="%s">
+%s
+            </li>

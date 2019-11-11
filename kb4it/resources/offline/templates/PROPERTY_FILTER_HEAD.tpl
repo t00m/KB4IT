@@ -1,3 +1,4 @@
+<!-- PROPERTY_FILTER_HEAD.tpl -->
 <div uk-filter="target: .js-filter"> <!-- Filter Head :: START -->
     <ul class="uk-subnav uk-subnav-pill"> <!-- Filter Head buttons :: START -->
         <li class="uk-active" uk-filter-control> <!-- ALL Values button :: START -->
