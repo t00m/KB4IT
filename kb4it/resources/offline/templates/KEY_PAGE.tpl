@@ -1,18 +1,26 @@
 = %s
 
 ++++
-<!--- Tabs header-->
-<ul uk-tab>
-    <li><a href="#">Filter</a></li>
-    <li><a href="#">Cloud</a></li>
-    <li class="uk-text-capitalize"><a href="#">Stats</a></li>
-</ul>
+    <!-- KEY_PAGE.tpl -->
+    <!-- Tabs header :: START-->
+    <ul uk-tab>
+        <li><a href="#">Filter</a></li>
+        <li><a href="#">Cloud</a></li>
+        <li><a href="#">Stats</a></li>
+    </ul> <!-- Tabs header :: END -->
 
-<!-- Tabs content :: START-->
-<ul class="uk-switcher uk-margin">
-    <li>%s</li><!-- Filter -->
-    <li>%s</li><!-- Cloud -->
-    <li>%s</li><!-- Stats -->
-</ul>
-<!-- Tabs content :: END-->
+    <!-- Tabs content :: START-->
+    <ul class="uk-switcher uk-margin">
+        <li> <!-- Filter :: START-->
+%s
+        </li> <!-- Filter :: END-->
+
+        <li> <!-- Cloud :: Start -->
+%s
+        </li> <!-- Cloud :: End -->
+
+        <li> <!-- Stats :: Start -->
+%s
+        </li> <!-- Stats :: End-->
+    </ul> <!-- Tabs content :: END-->
 ++++

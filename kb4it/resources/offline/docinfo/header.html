@@ -3,12 +3,10 @@
 <head>
 <title>KB4IT</title>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
-    <meta name="author" content="t00mlabs">
-    <meta name="description" content="KB4IT">
-    <meta name="author" content="KB4IT Generator">
+    <meta name="description" content="KB4IT document">
+    <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
@@ -17,43 +15,31 @@
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
-<!-- GRID LAYOUT :: START
-| LEFT MENU | CONTENTS |
-|    TOC    | Document |
--->
 <div uk-grid>
     <!-- LEFT MENU :: START -->
     <div id="kb4it-menu" class=" uk-card-default uk-width-1-5@m uk-padding-small" style="border-right:1px solid transparent;">
-            <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
-                <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
-                    <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
-                        <div class="uk-navbar-left">
-                            <li class="uk-link-toggle uk-text-bolder">
-                                <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
-                            </li>
-                            <!--
-                            <li class="uk-link-toggle uk-text-bolder">
-                                <a class="uk-link-heading" href="search.html">
-                                    <span class="uk-margin-small-right" uk-icon="icon: search"></span></a>
-                            </li>
-                            -->
-                            <li class="uk-link-toggle uk-text-bolder">
-                                <a class="uk-link-heading" href="help.html">
-                                    <span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
-                            </li>
-                            <li class="uk-link-toggle uk-text-bolder">
-                                <a class="uk-link-heading" href="about.html">
-                                    <span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
-                            </li>
-                        </div>
-                    </nav>
-                </div>
-                <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
-                    <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
-                        %s
-                    </ul>
-                </div>
+        <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
+            <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
+                <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
+                    <div class="uk-navbar-left">
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                        </li>
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-link-heading" href="help.html"><span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
+                        </li>
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-link-heading" href="about.html"><span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
+                        </li>
+                    </div>
+                </nav>
             </div>
+            <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
+                <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
+%s
+                </ul>
+            </div>
+        </div>
     </div>
     <!-- LEFT MENU :: END -->
     <!-- CONTENTS (Document) :: START -->
