@@ -130,45 +130,6 @@ class Builder(Service):
                 # ~ buttons += button.replace('++++', '')
                 custom_buttons += button
 
-        # TAB Categories
-        # ~ total = 0
-        # ~ cats = self.srvdtb.get_all_values_for_key('Category')
-        # ~ filter_cats = {}
-        # ~ for cat in cats:
-            # ~ subjects = self.srvdtb.get_docs_by_key_value('Category', cat)
-            # ~ filter_cats[cat] = subjects
-
-        # ~ DOC_CARD = template('DOC_CARD')
-        # ~ DOC_CARD_LINK = template('DOC_CARD_LINK')
-        # ~ DOC_CARD_FILTER_HEADER = template('DOC_CARD_FILTER_HEADER')
-        # ~ DOC_CARD_FILTER_HEADER_ITEM = template('DOC_CARD_FILTER_HEADER_ITEM')
-        # ~ DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
-
-        # ~ filter_items = ''
-        # ~ for cat in filter_cats:
-            # ~ filter_items += DOC_CARD_FILTER_HEADER_ITEM % (valid_filename(cat), \
-                                                            # ~ cat, len(filter_cats[cat]))
-        # ~ doc_cards = ''
-        # ~ for cat in filter_cats:
-            # ~ docs = filter_cats[cat]
-            # ~ for doc in docs:
-                # ~ title = self.srvdtb.get_values(doc, 'Title')[0]
-                # ~ scope = self.srvdtb.get_values(doc, 'Scope')[0]
-                # ~ author = self.srvdtb.get_values(doc, 'Author')[0]
-                # ~ link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
-                # ~ link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
-                # ~ link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-                # ~ doc_card = DOC_CARD % (link_title, link_scope, link_author)
-                # ~ doc_cards += DOC_CARD_FILTER_DATA_TITLE % (valid_filename(cat), doc_card)
-
-        # ~ html_filter = DOC_CARD_FILTER_HEADER % (filter_items, doc_cards)
-
-        # TAB Scopes
-        # ~ tblareas = self.create_tagcloud_from_key('Scope')
-
-        # TAB Tag Cloud
-        # ~ tagcloud = self.create_tagcloud_from_key('Tag')
-
         # TAB Stats
         stats = template('INDEX_TAB_STATS')
         item = template('KEY_LEADER_ITEM')
@@ -413,5 +374,5 @@ class Builder(Service):
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        return DOC_CARD % (link_title, author_icon, link_category, link_scope, link_team)
+        return DOC_CARD % (link_title, author_icon)
 
