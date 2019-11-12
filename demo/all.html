@@ -1,0 +1,96 @@
+<!DOCTYPE Html>
+<html lang="en">
+<head>
+<title>KB4IT</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="Asciidoctor 2.0.10">
+    <meta name="description" content="KB4IT document">
+    <meta name="author" content="KB4IT by t00mlabs.net">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
+    <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
+    <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <script src="resources/uikit/js/uikit.min.js"></script>
+    <script src="resources/uikit/js/uikit-icons.min.js"></script>
+</head>
+<body>
+<div uk-grid>
+    <!-- LEFT MENU :: START -->
+    <div id="kb4it-menu" class=" uk-card-default uk-width-1-5@m uk-padding-small" style="border-right:1px solid transparent;">
+        <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
+            <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
+                <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
+                    <div class="uk-navbar-left">
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                        </li>
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-link-heading" href="help.html"><span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
+                        </li>
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-link-heading" href="about.html"><span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
+                        </li>
+                    </div>
+                </nav>
+            </div>
+            <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
+                <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
+
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- LEFT MENU :: END -->
+    <!-- CONTENTS (Document) :: START -->
+    <div class="uk-width-expand@m">
+        <div class="uk-card uk-card-body">
+<h1>All documents</h1>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="test01.html">Test 01: TOC Test</a></p>
+</li>
+<li>
+<p><a href="test02.html">Test 02: Admonitions</a></p>
+</li>
+<li>
+<p><a href="test03.html">Test 03: Custom key without values</a></p>
+</li>
+<li>
+<p><a href="ŧestø5.html">Test 05: Filenames with non-ascii characters</a></p>
+</li>
+<li>
+<p><a href="test06.html">Test 06: Custom author icons</a></p>
+</li>
+</ol>
+</div>        </div>
+    </div>
+    <!-- CONTENTS (Document) :: END -->
+</div>
+<div><!-- FOOTER :: START -->
+</div><!-- FOOTER :: END -->
+<script>
+<!-- Necessary javascript for filtering results -->
+<!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
+var input = document.getElementById('text_filter');
+var filter = document.getElementById('filter');
+
+input.addEventListener( 'keyup', function(event)
+{
+    if ( input.value == "" )
+    {
+        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+    }
+
+    else
+    {
+        filter.setAttribute( 'uk-filter-control', 'filter:[data-title*=\'' + input.value + '\'i]' );
+    }
+
+    filter.click();
+});
+</script>
+<!-- GRID LAYOUT :: END -->
+</body>
+</html>

@@ -1,0 +1,36 @@
+= Test 02: Admonitions
+:Author:        Tomás Vírseda
+:Category:      Testing
+:Scope:         Development
+:Status:        Released
+:Priority:      Normal
+:Team:          IT Plumbers
+
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Expected result
+
+After applying transformations, admonition icons should appear.
+
+== Admonition icons
+
+=== Note
+
+NOTE: This is a note
+
+=== Tip
+
+TIP: This is a tip
+
+=== Important
+
+IMPORTANT: This is important
+
+=== Caution
+
+CAUTION: This is a caution message
+
+=== Warning
+
+WARNING: This is a warning
