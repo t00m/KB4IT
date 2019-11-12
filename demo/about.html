@@ -1,0 +1,501 @@
+<!DOCTYPE Html>
+<html lang="en">
+<head>
+<title>KB4IT</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="Asciidoctor 2.0.10">
+    <meta name="description" content="KB4IT document">
+    <meta name="author" content="KB4IT by t00mlabs.net">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
+    <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
+    <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <script src="resources/uikit/js/uikit.min.js"></script>
+    <script src="resources/uikit/js/uikit-icons.min.js"></script>
+</head>
+<body>
+<div uk-grid>
+    <!-- LEFT MENU :: START -->
+    <div id="kb4it-menu" class=" uk-card-default uk-width-1-5@m uk-padding-small" style="border-right:1px solid transparent;">
+        <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
+            <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
+                <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
+                    <div class="uk-navbar-left">
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                        </li>
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-link-heading" href="help.html"><span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
+                        </li>
+                        <li class="uk-link-toggle uk-text-bolder">
+                            <a class="uk-link-heading" href="about.html"><span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
+                        </li>
+                    </div>
+                </nav>
+            </div>
+            <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
+                <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
+<li class="uk-nav-header uk-padding-small uk-padding-remove-bottom uk-text-bold">Contents</li>
+<ul class="uk-nav uk-nav-default">
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_introduction">Introduction</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_motivations">Motivations:</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_features">Features</a>
+<ul class="uk-nav-sub">
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_pros">Pros</a>
+<ul class="uk-nav-sub">
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_writing_documentation">Writing documentation</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_fiding_documents">Fiding documents</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_publishing_your_repository">Publishing your repository</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_serverless">Serverless</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_smart_compiling">Smart compiling</a></li>
+</ul>
+</li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_cons">Cons</a>
+<ul class="uk-nav-sub">
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_no_online_editor">No online editor</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_no_dynamic_search">No dynamic search</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_how_it_works">How it works</a>
+<ul class="uk-nav-sub">
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_workflow">Workflow</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_hacking">Hacking</a></li>
+</ul>
+</li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_installation">Installation</a>
+<ul class="uk-nav-sub">
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_command_line">Command line</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_pypi">Pypi</a></li>
+</ul>
+</li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_execution">Execution</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_notes">Notes</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_download">Download</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_credits">Credits</a></li>
+</ul>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- LEFT MENU :: END -->
+    <!-- CONTENTS (Document) :: START -->
+    <div class="uk-width-expand@m">
+        <div class="uk-card uk-card-body">
+<h1>About KB4IT</h1>
+<div hidden>
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_introduction">Introduction</a></li>
+<li><a href="#_motivations">Motivations:</a></li>
+<li><a href="#_features">Features</a>
+<ul class="sectlevel2">
+<li><a href="#_pros">Pros</a>
+<ul class="sectlevel3">
+<li><a href="#_writing_documentation">Writing documentation</a></li>
+<li><a href="#_fiding_documents">Fiding documents</a></li>
+<li><a href="#_publishing_your_repository">Publishing your repository</a></li>
+<li><a href="#_serverless">Serverless</a></li>
+<li><a href="#_smart_compiling">Smart compiling</a></li>
+</ul>
+</li>
+<li><a href="#_cons">Cons</a>
+<ul class="sectlevel3">
+<li><a href="#_no_online_editor">No online editor</a></li>
+<li><a href="#_no_dynamic_search">No dynamic search</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_how_it_works">How it works</a>
+<ul class="sectlevel2">
+<li><a href="#_workflow">Workflow</a></li>
+<li><a href="#_hacking">Hacking</a></li>
+</ul>
+</li>
+<li><a href="#_installation">Installation</a>
+<ul class="sectlevel2">
+<li><a href="#_command_line">Command line</a></li>
+<li><a href="#_pypi">Pypi</a></li>
+</ul>
+</li>
+<li><a href="#_execution">Execution</a></li>
+<li><a href="#_notes">Notes</a></li>
+<li><a href="#_download">Download</a></li>
+<li><a href="#_credits">Credits</a></li>
+</ul>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_introduction">Introduction</h2>
+<div class="uk-container">
+<div class="paragraph">
+<p><strong>KB4IT</strong> is a static website generator based on Asciidoctor sources mainly for technical documentation purposes.</p>
+</div>
+<div class="paragraph">
+<p>Taking advantage of the <code>user-defined attributes</code> feature in Asciidoctor, KB4IT can parse Asciidoctor sources, extract all metadata available and create something similar to a wiki. In this way, all information provided by the user can be easily related.</p>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_motivations">Motivations:</h2>
+<div class="uk-container">
+<div class="ulist">
+<ul>
+<li>
+<p>The main aim is to provide an easy way to write technical documentation.</p>
+</li>
+<li>
+<p>Don&#8217;t care about the formatting and focus on the contents.</p>
+</li>
+<li>
+<p>To allow teams to manage their knowledge database easily.</p>
+</li>
+<li>
+<p>Do not depend on third software products like word processors or complex web applications.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_features">Features</h2>
+<div class="uk-container">
+<table class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong>Pros</strong></th>
+<th class="tableblock halign-left valign-top"><strong>Cons</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Easy to <strong>write</strong> technical documentation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>No online editor</strong>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Easy to <strong>find</strong> documentation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">There is <strong>no dynamic search</strong>.</p>
+<p class="tableblock">Search is based on static filters generated each time a page is compiled.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Easy to <strong>publish</strong> documentation</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Easy to <strong>backup/restore</strong> documentation</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Serverless</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Smart compiling</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<h3 id="_pros">Pros</h3>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_writing_documentation">Writing documentation</h4>
+<div class="paragraph">
+<p>Documents must be in Asciidoctor format which is easy to learn.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="help.html">help</a> page for more details.</p>
+</div>
+<div class="paragraph">
+<p>Take into account that, for each document, there is its corresponding Asciidoctor source. So you can use it as a template to write another document without spending too much time.</p>
+</div>
+</div>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_fiding_documents">Fiding documents</h4>
+<div class="paragraph">
+<p>There are many ways to find the document you are looking for.</p>
+</div>
+<div class="paragraph">
+<p>Firstly, each document has properties which can you can browse.
+Eg.: If you remember the author of a document, just visit the author page.</p>
+</div>
+<div class="paragraph">
+<p>Also, properties pages have filters. Moreover, there is a search entry to filter results by writing some of the letters of the title.</p>
+</div>
+</div>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_publishing_your_repository">Publishing your repository</h4>
+<div class="paragraph">
+<p>All documents you write are compiled/converted to HTML files.</p>
+</div>
+<div class="paragraph">
+<p>Just put them in any folder and point your browser to <code>&lt;target_path&gt;\index.html</code>.</p>
+</div>
+<div class="paragraph">
+<p>However, you can upload/copy them to your webserver.</p>
+</div>
+</div>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_serverless">Serverless</h4>
+<div class="paragraph">
+<p>There is no need for a web server. Of course, you can use one if you please.</p>
+</div>
+<div class="paragraph">
+<p>However, KB4IT was designed to work in mixed environments where people use shared folders (Eg.: Windows shares or directories mounted by NFS).</p>
+</div>
+</div>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_smart_compiling">Smart compiling</h4>
+<div class="paragraph">
+<p>Only those documents added or modified are compiled. It reduces drastically the amount of time and CPU needed to generate the website.</p>
+</div>
+<div class="paragraph">
+<p>However, to achieve this, KB4IT uses a cache. If the cache is deleted or missing, the whole repository is compiled again.</p>
+</div>
+<div class="paragraph">
+<p>A repository with 100 documents, in a Linux Virtual Machine with 2 CPU and 2G memory it takes less than 2 mins. Other tests carried out in a server with more CPUs and memory, the compilation time is much less.</p>
+</div>
+<div class="paragraph">
+<p>To speed up the compilation, KB4IT uses threading. By default, it launches 30 threads in parallel. So, please, be aware of this feature, as it will eat all CPU available until the compilation finishes.</p>
+</div>
+</div>
+</div>
+<div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<h3 id="_cons">Cons</h3>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_no_online_editor">No online editor</h4>
+<div class="paragraph">
+<p>At this moment, KB4IT doesn&#8217;t include any online editor. You must create or edit your documents with your preferred editor.</p>
+</div>
+</div>
+<div class="sect3 uk-card-hover uk-border-rounded uk-padding-small">
+<h4 id="_no_dynamic_search">No dynamic search</h4>
+<div class="paragraph">
+<p>KB4IT was developed to be as simple as possible. No dependencies at all excepting Asciidoctor (as text processor and publishing toolchain) and Python (the programming language used).</p>
+</div>
+<div class="paragraph">
+<p>The main goal was to have something like a Wiki but just with plain HTML files in a directory. Nothing else. Because of this, no full-text search can be implemented.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_how_it_works">How it works</h2>
+<div class="uk-container">
+<div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<h3 id="_workflow">Workflow</h3>
+<div class="paragraph">
+<p>This is the flow:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Get source documents</p>
+</li>
+<li>
+<p>Preprocess documents (get metadata)</p>
+</li>
+<li>
+<p>Process documents in a temporary dir</p>
+</li>
+<li>
+<p>Compile documents to HTML with Asciidoctor</p>
+</li>
+<li>
+<p>Delete contents of target directory (if any)</p>
+</li>
+<li>
+<p>Copy all resources (global and local) to the target path</p>
+</li>
+<li>
+<p>Copy all documents to the target path</p>
+</li>
+<li>
+<p>Copy source docs to the target path</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<h3 id="_hacking">Hacking</h3>
+<div class="paragraph">
+<p>KB4IT is a set of Python 3 scripts.</p>
+</div>
+<div class="paragraph">
+<p>The code is organized in the following way:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>kb4it
+├── resources
+│   ├── offline
+│   │   ├── docinfo
+│   │   └── templates
+│   └── online
+│       ├── images
+│       └── uikit
+│           ├── css
+│           ├── fonts
+│           └── js
+└── src
+    ├── core
+    └── services</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Offline</strong> resources: they are used to build target files (templates)</p>
+</li>
+<li>
+<p><strong>Online</strong>: resources to be copied to target directory</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_installation">Installation</h2>
+<div class="uk-container">
+<div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<h3 id="_command_line">Command line</h3>
+<div class="paragraph">
+<p><code>python3 setup.py install --user</code></p>
+</div>
+</div>
+<div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<h3 id="_pypi">Pypi</h3>
+<div class="paragraph">
+<p><code>sudo pip install kb4it --user</code></p>
+</div>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_execution">Execution</h2>
+<div class="uk-container">
+<div class="paragraph">
+<p>The most typical usage would be:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$HOME/.local/bin/kb4it -sp /path/to/source/docs -tp /var/www/html/repo --log INFO</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Display help by passing -h as argument:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">usage: kb4it [-h] -sp SOURCE_PATH [-tp TARGET_PATH] [-log LOGLEVEL]
+             [--version]
+
+KB4IT by Tomás Vírseda
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -sp SOURCE_PATH, --source-path SOURCE_PATH
+                        Path for Asciidoctor source files.
+  -tp TARGET_PATH, --target-path TARGET_PATH
+                        Path for output files
+  -log LOGLEVEL, --log-level LOGLEVEL
+                        Increase output verbosity
+  --version             show program's version number and exit</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>-sp</code> is mandatory. KB4IT needs to know where your sources are.</p>
+</div>
+<div class="paragraph">
+<p><code>-tp</code> is optional. If this parameter is missing, a directory <code>target</code> will be created. If it exists, contents will be deleted.</p>
+</div>
+<div class="paragraph">
+<p><code>-log</code> accepts DEBUG, INFO, WARNING, and ERROR</p>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_notes">Notes</h2>
+<div class="uk-container">
+<div class="ulist">
+<ul>
+<li>
+<p>Target directory is created if it does not exist.</p>
+</li>
+<li>
+<p>Source directory is never touched. Source documents are copied to a temporary directory</p>
+</li>
+<li>
+<p>Contents on target directory are always deleted after compilation and replace it with those in the cache and the new ones compiled.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_download">Download</h2>
+<div class="uk-container">
+<div class="paragraph">
+<p>Get the code from GitHub:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">git clone https://github.com/t00m/KB4IT</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
+<h2 id="_credits">Credits</h2>
+<div class="uk-container">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://python.org">Python</a></p>
+</li>
+<li>
+<p><a href="https://asciidoctor.org">Asciidoctor</a></p>
+</li>
+<li>
+<p><a href="https://getuikit.com">UIKit</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>        </div>
+    </div>
+    <!-- CONTENTS (Document) :: END -->
+</div>
+<div><!-- FOOTER :: START -->
+</div><!-- FOOTER :: END -->
+<script>
+<!-- Necessary javascript for filtering results -->
+<!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
+var input = document.getElementById('text_filter');
+var filter = document.getElementById('filter');
+
+input.addEventListener( 'keyup', function(event)
+{
+    if ( input.value == "" )
+    {
+        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+    }
+
+    else
+    {
+        filter.setAttribute( 'uk-filter-control', 'filter:[data-title*=\'' + input.value + '\'i]' );
+    }
+
+    filter.click();
+});
+</script>
+<!-- GRID LAYOUT :: END -->
+</body>
+</html>
