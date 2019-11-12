@@ -186,14 +186,14 @@ class Application(Service):
                             self.kbdict_new['metadata'][key][value] = [docname]
 
             # Compare the document with the one in the cache
-            self.log.debug("\t\tDoes doc %s exist in cache? Answer: %s", docname, cached_document_exists)
+            self.log.debug("\t\t\tDoes document %s exist in cache? %s", docname, cached_document_exists)
             if not cached_document_exists:
                 FORCE_DOC_COMPILATION = True
             else:
                 try:
+                    # Compare timestamps for source/cache documents
                     doc_ts_new = self.kbdict_new['document'][docname]['timestamp']
                     doc_ts_cur = self.kbdict_cur['document'][docname]['timestamp']
-                    self.log.debug("\t\tDoc[%s]: %s > %s: %s", docname, doc_ts_new, doc_ts_cur, doc_ts_new > doc_ts_cur)
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
                     else:
@@ -236,16 +236,14 @@ class Application(Service):
                 self.log.debug("\t\tAdding missing key: %s", key)
                 missing.append(key)
         available_keys.extend(missing)
-        # ~ available_keys.append('Title')
+
 
         # Process
         for key in available_keys:
-            # ~ if key == 'Title':
-                # ~ break
-            # ~ self.log.error("")
-            self.log.debug("\t\t* Processing key: %s", key)
+            self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
+                self.log.debug("\t\t\tRelated documents for %s: %s", key, value)
                 try:
                     FORCE_DOC_COMPILATION = False
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
@@ -253,11 +251,11 @@ class Application(Service):
                     self.kbdict_new['document']
                     rel_docs = self.kbdict_new['metadata'][key][value]
                     for adoc in rel_docs:
-                        self.log.debug("\t\t\tDoc '%s' must be compiled again? Answer: %s", adoc, self.kbdict_new['document'][adoc]['compile'])
+                        self.log.debug("\t\t\t\t- Doc '%s'. Compile again? %s", adoc, self.kbdict_new['document'][adoc]['compile'])
                         FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or self.kbdict_new['document'][adoc]['compile']
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
-                # ~ self.log.debug("\t\tForce compilation for %s: %s", docname, FORCE_DOC_COMPILATION)
+
                 if FORCE_DOC_COMPILATION:
                     # Create .adoc from value
 
@@ -286,7 +284,7 @@ class Application(Service):
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-                self.log.debug("\t\tForce compilation for [%s][%s]: %s", key, value, FORCE_DOC_COMPILATION)
+                self.log.debug("\t\t\t\tForce compilation for %s: %s? %s", key, value, FORCE_DOC_COMPILATION)
             docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
             html = self.srvbld.create_key_page(key, values)
             with open(docname, 'w') as fkey:
@@ -295,8 +293,6 @@ class Application(Service):
         self.srvbld.create_all_keys_page()
         self.srvbld.create_index_all()
         self.srvbld.create_index_page()
-        # ~ self.srvbld.create_search_page()
-        # ~ self.log.debug("          Document's metadata processed")
 
     def stage_5_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -327,10 +323,10 @@ class Application(Service):
             self.log.debug("\t\tGenerating jobs. Please, wait")
             for doc in docs:
                 cmd = "asciidoctor -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                # ~ self.log.debug("\t\t%s", cmd)
                 job = exe.submit(exec_cmd, (doc, cmd, num))
                 job.add_done_callback(job_done)
                 self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
+                # ~ self.log.debug("\t\tJob[%4d]: %s", num, cmd)
                 jobs.append(job)
                 num = num + 1
             self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
@@ -404,6 +400,17 @@ class Application(Service):
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.info("\t\tTemporary directory %s deleted successfully", self.runtime['dir']['tmp'])
 
+    def stage_9_print_missing_icons(self):
+        """Print list of missing icons."""
+        self.log.info("Stage 9\tMissing icons report")
+        missing_icons = self.srvbld.get_missing_icons()
+        if len(missing_icons) > 0:
+            self.log.warning("\t\tThe following author icons are missing:")
+            for icon_path in missing_icons:
+                self.log.warning("\t\t%s", icon_path)
+        else:
+            self.log.warning("\t\tNo missing icons.")
+
     def run(self):
         """Start script execution following this flow.
 
@@ -426,6 +433,7 @@ class Application(Service):
         self.stage_6_clean_target()
         self.stage_7_refresh_target()
         self.stage_8_remove_temporary_dir()
+        self.stage_9_print_missing_icons()
 
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
