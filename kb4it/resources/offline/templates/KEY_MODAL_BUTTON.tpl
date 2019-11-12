@@ -9,7 +9,7 @@
                     </div>
                     <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                         <div class="uk-padding-large">
-                            <p class="uk-align-center">%s</p>
+%s
                         </div>
                     </div>
                 </div>

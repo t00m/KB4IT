@@ -26,9 +26,11 @@ class Builder(Service):
     tmpdir = None
     srvdtb = None
     srvapp = None
+    missing_icons = None
 
     def initialize(self):
         """Initialize Builder class."""
+        self.missing_icons = set()
         self.get_services()
         self.tmpdir = self.srvapp.get_temp_dir()
 
@@ -36,6 +38,10 @@ class Builder(Service):
         """Get services."""
         self.srvdtb = self.get_service('DB')
         self.srvapp = self.get_service('App')
+
+    def get_missing_icons(self):
+        """Return list of missing author icons."""
+        return self.missing_icons
 
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -368,7 +374,7 @@ class Builder(Service):
         author = self.srvdtb.get_values(doc, 'Author')[0]
         author_icon, icon_path = get_author_icon(source_dir, author)
         if icon_path is not None:
-            self.log.warning("\t\tMissing author icon: %s", icon_path)
+            self.missing_icons.add(icon_path)
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
         link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
