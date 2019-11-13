@@ -372,7 +372,8 @@ class Builder(Service):
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
         author = self.srvdtb.get_values(doc, 'Author')[0]
-        author_icon, icon_path = get_author_icon(source_dir, author)
+        icon_path = get_author_icon(source_dir, author)
+        self.log.error(icon_path)
         if icon_path is not None:
             self.missing_icons.add(icon_path)
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
@@ -380,5 +381,5 @@ class Builder(Service):
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        return DOC_CARD % (link_title, author_icon)
+        return DOC_CARD % (link_title, icon_path)
 
