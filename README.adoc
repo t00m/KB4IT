@@ -55,10 +55,11 @@ Take into account that, for each document, there is its corresponding Asciidocto
 ==== Fiding documents
 There are many ways to find the document you are looking for.
 
-Firstly, each document has properties which can you can browse.
-Eg.: If you remember the author of a document, just visit the author page.
+Each document has properties which can be browsed.
 
-Also, properties pages have filters. Moreover, there is a search entry to filter results by writing some of the letters of the title.
+Also, properties pages have filters. 
+
+Moreover, there is a search entry to filter results. Just type some letters.
 
 ==== Publishing your repository
 All documents you write are compiled/converted to HTML files.
