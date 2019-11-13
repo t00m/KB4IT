@@ -48,8 +48,6 @@ Search is based on static filters generated each time a page is compiled.
 ==== Writing documentation
 Documents must be in Asciidoctor format which is easy to learn.
 
-See <<help.adoc#, help>> page for more details.
-
 Take into account that, for each document, there is its corresponding Asciidoctor source. So you can use it as a template to write another document without spending too much time.
 
 ==== Fiding documents
