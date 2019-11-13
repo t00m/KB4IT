@@ -397,12 +397,10 @@ def last_modification(filename):
     return "%s" % d.strftime("%A, %B %e, %Y at %H:%M:%S")
 
 def get_author_icon(source_path, author):
-    res_dir = os.path.join(source_path, 'resources')
-    img_dir = os.path.join(res_dir, 'images')
-    usr_dir = os.path.join(img_dir, 'authors')
-    icon_path = os.path.join(usr_dir, "%s.png" % valid_filename(author))[len(source_path)+1:]
+    relpath = "resources/images/authors/%s.png" % valid_filename(author)
+    abspath = os.path.join(source_path, relpath)
 
-    if os.path.exists(icon_path):
-        return icon_path, None
+    if os.path.exists(abspath):
+        return relpath
     else:
-        return FILE['AUTHOR_UNKNOWN'], icon_path
+        return "resources/images/authors/author_unknown.png"
