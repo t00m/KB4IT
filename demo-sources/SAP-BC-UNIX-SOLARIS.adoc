@@ -1,0 +1,138 @@
+= Solaris for SAP Basis Admins
+:Author:        Davor Barišić
+:Category:      Note
+:Scope:         Unix Administration
+:Status:        Released
+:Team:          Unix
+:Tag:           network, services, system
+:Command:       svcadm, svcs
+:Product:       Solaris
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+Useful Solaris commands for SAP Basis Administrators
+
+
+== Services
+
+=== List services
+
+`svcs`:
+
+----
+# svcs
+STATE          STIME    FMRI
+legacy_run     11:51:07 lrc:/etc/rc2_d/S89PRESERVE
+online         11:49:05 svc:/system/early-manifest-import:default
+online         11:49:05 svc:/system/svc/restarter:default
+online         11:49:06 svc:/network/socket-config:default
+online         11:49:07 svc:/milestone/immutable-setup:default
+online         11:49:07 svc:/network/netcfg:default
+online         11:49:07 svc:/network/tcp/congestion-control:highspeed
+online         11:49:07 svc:/network/sctp/congestion-control:newreno
+online         11:49:07 svc:/network/tcp/congestion-control:vegas
+online         11:49:07 svc:/network/tcp/congestion-control:newreno
+online         11:49:07 svc:/network/sctp/congestion-control:vegas
+online         11:49:07 svc:/system/svc/periodic-restarter:default
+online         11:49:07 svc:/network/sctp/congestion-control:cubic
+online         11:49:07 svc:/network/tcp/congestion-control:cubic
+online         11:49:07 svc:/network/sctp/congestion-control:highspeed
+online         11:49:07 svc:/system/name-service/upgrade:default
+online         11:49:07 svc:/system/filesystem/root:default
+online         11:49:08 svc:/network/tcp/tcpkey:default
+online         11:49:08 svc:/network/datalink-management:default
+online         11:49:08 svc:/system/cryptosvc:default
+online         11:49:08 svc:/network/ip-interface-management:default
+online         11:49:08 svc:/system/boot-archive:default
+online         11:49:08 svc:/network/ipsec/ipsecalgs:default
+online         11:49:09 svc:/system/filesystem/usr:default
+online         11:49:09 svc:/network/loopback:default
+online         11:49:09 svc:/system/pfexec:default
+online         11:49:09 svc:/application/man-index:default
+online         11:49:09 svc:/system/device/local:default
+online         11:49:09 svc:/network/ipmp:default
+online         11:49:09 svc:/milestone/devices:default
+online         11:49:09 svc:/network/routing/ndp:default
+online         11:49:09 svc:/system/filesystem/minimal:default
+online         11:49:09 svc:/network/uucp-lock-cleanup:default
+online         11:49:10 svc:/system/rad:local-http
+online         11:49:10 svc:/system/utmp:default
+online         11:49:10 svc:/system/pkgserv:default
+online         11:49:10 svc:/system/security/security-extensions:default
+online         11:49:10 svc:/system/ca-certificates:default
+online         11:49:10 svc:/system/rad:local
+online         11:49:10 svc:/system/dbus:default
+online         11:49:10 svc:/system/filesystem/uvfs-instclean:default
+online         11:49:10 svc:/system/rmtmpfiles:default
+online         11:49:10 svc:/system/logadm-upgrade:default
+online         11:49:10 svc:/system/environment:init
+online         11:49:38 svc:/milestone/unconfig:default
+online         11:49:50 svc:/milestone/config:default
+online         11:49:50 svc:/system/coreadm:default
+online         11:49:50 svc:/system/timezone:default
+online         11:49:51 svc:/network/physical:upgrade
+online         11:49:51 svc:/system/config-user:default
+online         11:49:51 svc:/network/location:upgrade
+online         11:49:52 svc:/network/install:default
+online         11:50:57 svc:/network/physical:default
+online         11:50:58 svc:/system/identity:node
+online         11:50:58 svc:/network/location:default
+online         11:50:58 svc:/network/ipsec/policy:default
+online         11:50:58 svc:/system/identity:domain
+online         11:50:58 svc:/milestone/network:default
+online         11:50:58 svc:/system/name-service/switch:default
+online         11:50:58 svc:/network/iptun:default
+online         11:50:58 svc:/milestone/single-user:default
+online         11:50:58 svc:/network/initial:default
+online         11:50:58 svc:/application/pkg/zones-proxy-client:default
+online         11:50:58 svc:/network/nfs/fedfs-client:default
+online         11:50:58 svc:/network/netmask:default
+online         11:50:58 svc:/network/service:default
+online         11:50:59 svc:/system/auditset:default
+online         11:50:59 svc:/system/name-service/cache:default
+online         11:50:59 svc:/system/filesystem/local:default
+online         11:50:59 svc:/system/cron:default
+online         11:50:59 svc:/system/filesystem/ufs/quota:default
+online         11:50:59 svc:/network/shares:default
+online         11:50:59 svc:/network/routing-setup:default
+online         11:51:00 svc:/network/rpc/bind:default
+online         11:51:00 svc:/system/filesystem/autofs:default
+online         11:51:00 svc:/application/pkg/repositories-setup:default
+online         11:51:00 svc:/system/fmd:default
+online         11:51:03 svc:/application/puppet:agent
+online         11:51:05 svc:/application/security/compliance:generate-guide
+online         11:51:06 svc:/milestone/self-assembly-complete:default
+online         11:51:07 svc:/system/console-login:default
+online         11:51:07 svc:/milestone/multi-user:default
+online         11:51:07 svc:/milestone/multi-user-server:default
+online         11:51:07 svc:/system/fm/smtp-notify:default
+online         11:51:32 svc:/network/sendmail-client:default
+online         11:51:32 svc:/network/dns/client:default
+online         11:51:32 svc:/milestone/name-services:default
+online         11:51:32 svc:/network/smtp:sendmail
+online         11:51:34 svc:/system/system-log:default
+online         11:51:34 svc:/network/ssh:default
+online         11:53:16 svc:/system/manifest-import:default
+online         11:53:25 svc:/luxair/nrpe-client:default
+online         11:53:26 svc:/luxair/nagios-checks:lxcheck_fma
+online         11:54:33 svc:/network/nfs/status:default
+online         11:54:33 svc:/network/nfs/nlockmgr:default
+online         11:54:33 svc:/network/nfs/cbd:default
+online         11:54:33 svc:/network/nfs/mapid:default
+online         11:54:33 svc:/network/inetd:default
+online         11:54:33 svc:/network/rpc/smserver:default
+online         11:54:33 svc:/network/rpc/gss:default
+online         12:34:17 svc:/network/nfs/client:default
+----
+
+
+=== Stop service
+
+`svcadm disable <service_name>`
+
+
+=== Start service
+
+`svcadm enable <service_name>`

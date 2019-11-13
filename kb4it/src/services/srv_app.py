@@ -406,8 +406,8 @@ class Application(Service):
         missing_icons = self.srvbld.get_missing_icons()
         if len(missing_icons) > 0:
             self.log.warning("\t\tThe following author icons are missing:")
-            for icon_path in missing_icons:
-                self.log.warning("\t\t%s", icon_path)
+            for author in missing_icons:
+                self.log.warning("\t\t%s: %s", author, missing_icons[author])
         else:
             self.log.warning("\t\tNo missing icons.")
 
