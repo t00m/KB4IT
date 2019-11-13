@@ -26,11 +26,10 @@ class Builder(Service):
     tmpdir = None
     srvdtb = None
     srvapp = None
-    missing_icons = None
+    missing_icons = {}
 
     def initialize(self):
         """Initialize Builder class."""
-        self.missing_icons = set()
         self.get_services()
         self.tmpdir = self.srvapp.get_temp_dir()
 
@@ -373,8 +372,9 @@ class Builder(Service):
         team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
         author = self.srvdtb.get_values(doc, 'Author')[0]
         icon_path = get_author_icon(source_dir, author)
+        self.log.debug("Author: %s -> %s", author, icon_path)
         if icon_path == "resources/images/authors/author_unknown.png":
-            self.missing_icons.add(icon_path)
+            self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
         link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
