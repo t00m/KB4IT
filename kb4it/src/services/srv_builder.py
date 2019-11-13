@@ -373,8 +373,7 @@ class Builder(Service):
         team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
         author = self.srvdtb.get_values(doc, 'Author')[0]
         icon_path = get_author_icon(source_dir, author)
-        self.log.error(icon_path)
-        if icon_path is not None:
+        if icon_path == "resources/images/authors/author_unknown.png":
             self.missing_icons.add(icon_path)
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
         link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
