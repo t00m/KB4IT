@@ -45,7 +45,7 @@
     <!-- CONTENTS (Document) :: START -->
     <div class="uk-width-expand@m">
         <div class="uk-card uk-card-body">
-<h1>Tag</h1>
+<h1>Category</h1>
     <!-- KEY_PAGE.tpl -->
     <!-- Tabs header :: START-->
     <ul uk-tab>
@@ -63,16 +63,9 @@
                 <!-- Filter buttons :: Start -->
                 <ul class="uk-subnav uk-subnav-pill">
                     <!-- <li class="uk-active" uk-filter-control><a href="#"><div class="uk-text-capitalize uk-text-bold">All</div></a></li> -->
-                    <li uk-filter-control="[data-Tag*='datafile']"><a href="#"><div class="uk-text-capitalize uk-text-bold">datafile (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='extend']"><a href="#"><div class="uk-text-capitalize uk-text-bold">extend (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='network']"><a href="#"><div class="uk-text-capitalize uk-text-bold">network (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='sapcontrol']"><a href="#"><div class="uk-text-capitalize uk-text-bold">sapcontrol (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='services']"><a href="#"><div class="uk-text-capitalize uk-text-bold">services (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='shell_scripting']"><a href="#"><div class="uk-text-capitalize uk-text-bold">shell scripting (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='start']"><a href="#"><div class="uk-text-capitalize uk-text-bold">start (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='stop']"><a href="#"><div class="uk-text-capitalize uk-text-bold">stop (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='system']"><a href="#"><div class="uk-text-capitalize uk-text-bold">system (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
-                    <li uk-filter-control="[data-Tag*='tablespace']"><a href="#"><div class="uk-text-capitalize uk-text-bold">tablespace (1)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
+                    <li uk-filter-control="[data-Category*='Note']"><a href="#"><div class="uk-text-capitalize uk-text-bold">Note (2)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
+                    <li uk-filter-control="[data-Category*='Procedure']"><a href="#"><div class="uk-text-capitalize uk-text-bold">Procedure (2)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
+                    <li uk-filter-control="[data-Category*='Testing']"><a href="#"><div class="uk-text-capitalize uk-text-bold">Testing (5)</div></a></li> <!-- PRPERTY_FILTER_HEAD_ITEM.tpl -->
 
                 </ul> <!-- Filter buttons :: End -->
 
@@ -85,7 +78,7 @@
 
                 <!-- Filtered rows :: Start -->
                 <ul class="js-filter uk-child-width-1-3@m" uk-grid>
-                    <li data-title="Get_SAP_status_from_command_line" data-Tag="['sapcontrol', 'shell_scripting']">
+                    <li data-title="Get_SAP_status_from_command_line" data-Category="['Note']">
                         <!-- DOC_CARD.tpl :: START -->
                         <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
                             <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
@@ -103,7 +96,133 @@
                         </div>
                         <!-- DOC_CARD.tpl :: END -->
                     </li>
-                    <li data-title="Solaris_for_SAP_Basis_Admins" data-Tag="['network', 'services', 'system']">
+                    <li data-title="Test_03_Custom_key_without_values" data-Category="['Testing']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="test03.html">Test 03: Custom key without values</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Tomás_Vírseda.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="Test_01_TOC_Test" data-Category="['Testing']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="test01.html">Test 01: TOC Test</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Tomás_Vírseda.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="Extend_Oracle_tablespaces" data-Category="['Procedure']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="SAP-BC-ORACLE-EXTEND-TABLESPACE.html">Extend Oracle tablespaces</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Nora_Hobbs.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="Test_06_Custom_author_icons" data-Category="['Testing']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="test06.html">Test 06: Custom author icons</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Tomás_Vírseda.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="Test_02_Admonitions" data-Category="['Testing']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="test02.html">Test 02: Admonitions</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Tomás_Vírseda.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="Test_05_Filenames_with_non-ascii_characters" data-Category="['Testing']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="ŧestø5.html">Test 05: Filenames with non-ascii characters</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Tomás_Vírseda.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="How_to_stop_a_DB2_database" data-Category="['Procedure']">
+                        <!-- DOC_CARD.tpl :: START -->
+                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
+                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
+                                <div>
+                                    <div class="uk-flex-middle" uk-grid>
+                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
+                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="SAP-BC-DB2-STOP-DATABASE.html">How to stop a DB2 database</a></span>
+                                        </div>
+                                        <div class="uk-width-auto@m uk-flex-first">
+                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/Nora_Hobbs.png">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DOC_CARD.tpl :: END -->
+                    </li>
+                    <li data-title="Solaris_for_SAP_Basis_Admins" data-Category="['Note']">
                         <!-- DOC_CARD.tpl :: START -->
                         <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
                             <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
@@ -121,42 +240,6 @@
                         </div>
                         <!-- DOC_CARD.tpl :: END -->
                     </li>
-                    <li data-title="Extend_Oracle_tablespaces" data-Tag="['datafile', 'extend', 'tablespace']">
-                        <!-- DOC_CARD.tpl :: START -->
-                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
-                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
-                                <div>
-                                    <div class="uk-flex-middle" uk-grid>
-                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
-                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="SAP-BC-ORACLE-EXTEND-TABLESPACE.html">Extend Oracle tablespaces</a></span>
-                                        </div>
-                                        <div class="uk-width-auto@m uk-flex-first">
-                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/author_unknown.png">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- DOC_CARD.tpl :: END -->
-                    </li>
-                    <li data-title="How_to_stop_a_DB2_database" data-Tag="['start', 'stop']">
-                        <!-- DOC_CARD.tpl :: START -->
-                        <div class="uk-card uk-border-rounded uk-card-small uk-card-hover uk-auto@m uk-padding-small" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="border:1px solid lightgray; background-color: ghostwhite">
-                            <div class="uk-child-width-expand@s uk-text-center" uk-grid uk-height-match="target: > div > .uk-card">
-                                <div>
-                                    <div class="uk-flex-middle" uk-grid>
-                                        <div class="uk-width-expand@m uk-padding-remove-top uk-padding-remove-bottom uk-padding-remove-right">
-                                            <span class="uk-text-small uk-text-bold uk-text-truncate uk-align-left"><a class="uk-link-heading" href="SAP-BC-DB2-STOP-DATABASE.html">How to stop a DB2 database</a></span>
-                                        </div>
-                                        <div class="uk-width-auto@m uk-flex-first">
-                                            <img class="uk-border-circle" width="48" height="48" src="resources/images/authors/author_unknown.png">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- DOC_CARD.tpl :: END -->
-                    </li>
 
                 </ul> <!-- Filtered rows :: End -->
             </div> <!-- PROPERTY_FILTER.tpl // Filter :: End -->
@@ -167,16 +250,9 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_datafile.html"><span style="font-size:18pt;">datafile</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_extend.html"><span style="font-size:18pt;">extend</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_network.html"><span style="font-size:18pt;">network</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_sapcontrol.html"><span style="font-size:18pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_services.html"><span style="font-size:18pt;">services</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_shell_scripting.html"><span style="font-size:18pt;">shell scripting</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_start.html"><span style="font-size:18pt;">start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_stop.html"><span style="font-size:18pt;">stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_system.html"><span style="font-size:18pt;">system</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_tablespace.html"><span style="font-size:18pt;">tablespace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Note.html"><span style="font-size:36pt;">Note</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Procedure.html"><span style="font-size:36pt;">Procedure</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Testing.html"><span style="font-size:72pt;">Testing</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -184,44 +260,16 @@
 
         <li> <!-- Stats :: Start -->
             <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_datafile.html">datafile</a></div>
-                <div>1</div>
+                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Category_Note.html">Note</a></div>
+                <div>2</div>
             </div>
             <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_extend.html">extend</a></div>
-                <div>1</div>
+                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Category_Procedure.html">Procedure</a></div>
+                <div>2</div>
             </div>
             <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_network.html">network</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_sapcontrol.html">sapcontrol</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_services.html">services</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_shell_scripting.html">shell scripting</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_start.html">start</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_stop.html">stop</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_system.html">system</a></div>
-                <div>1</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag_tablespace.html">tablespace</a></div>
-                <div>1</div>
+                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Category_Testing.html">Testing</a></div>
+                <div>5</div>
             </div>
 
         </li> <!-- Stats :: End-->
