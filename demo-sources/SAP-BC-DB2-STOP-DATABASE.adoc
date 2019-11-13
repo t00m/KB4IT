@@ -1,0 +1,45 @@
+= How to stop a DB2 database
+:Author:        Nora Hobbs
+:Category:      Procedure
+:Status:        Released
+:Scope:         Database Administration
+:Team:          DBA
+:Tag:           start, stop
+:Database:      Oracle
+:Command:       db2, kill, ps, ipcs, db2start, db2admin, db2stop, grep, awk, print
+:Database:      DB2
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+
+== Introduction
+Sometimes, _db2stop_ command cannot stop the database and it returns the following message:
+
+----
+The database manager was not stopped because databases are still active.
+----
+
+
+== Procedure
+
+
+=== Check running applications
+
+Login as db2<sid> and execute the following commands:
+
+`db2 list application show detail`
+
+=== Stop database
+Stop all of them:
+
+`db2 force application all` followed by `db2stop`
+
+Then, check if there are still DB2 processes:
+
+`ps -ef | grep db2crt`
+
+If any, kill'em all with the `kill` command.
+
+== Notes about this procedure
+
+WARNING: This procedure is very *dangerous*. Try to avoid it.
