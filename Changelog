@@ -1,10 +1,10 @@
-2019-12-01  Tomás Vírseda <tomasvirseda@gmail.com>
+2019-11-15 Tomás Vírseda <tomasvirseda@gmail.com>
 
  * Released version 0.7
 
  Features:
     - Using Asciidoctor 2.0
-    - Based on UIKIT for frontend web interface
+    - Based on UIKIT
     - Smart compiling
 
 
