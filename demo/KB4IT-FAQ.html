@@ -39,7 +39,7 @@
 <li class="uk-nav-header uk-padding-small uk-padding-remove-bottom uk-text-bold">Contents</li>
 <ul class="uk-nav uk-nav-default">
 <li class="uk-link-toggle"><a class="uk-link-heading" href="#_metadata">Metadata</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_expected_result">Expected result</a></li>
+<li class="uk-link-toggle"><a class="uk-link-heading" href="#_questions_answers">Questions &amp; Answers</a></li>
 </ul>
                 </ul>
             </div>
@@ -49,12 +49,12 @@
     <!-- CONTENTS (Document) :: START -->
     <div class="uk-width-expand@m">
         <div class="uk-card uk-card-body">
-<h1>Test 06: Custom author icons</h1>
+<h1>KB4IT FAQ</h1>
 <div hidden>
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_metadata">Metadata</a></li>
-<li><a href="#_expected_result">Expected result</a></li>
+<li><a href="#_questions_answers">Questions &amp; Answers</a></li>
 </ul>
 </div>
 <div id="kb4it-doc-metadata" class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded uk-background-muted noprint" style="border: 1px solid black;">
@@ -77,8 +77,8 @@
 </div></td>
                 <td><a class="uk-link-toggle" href="Category.html"><div class="uk-text-bold uk-text-secondary">Category</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Category_Testing.html">
-        <span class="uk-text-bold uk-padding-small">Testing</span>
+    <a class="uk-link-heading" href="Category_Note.html">
+        <span class="uk-text-bold uk-padding-small">Note</span>
     </a>
 </div>
 </div></td>
@@ -93,22 +93,22 @@
               <tr>
                 <td><a class="uk-link-toggle" href="Team.html"><div class="uk-text-bold uk-text-secondary">Team</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Team_IT_Plumbers.html">
-        <span class="uk-text-bold uk-padding-small">IT Plumbers</span>
+    <a class="uk-link-heading" href="Team_t00mlabs.html">
+        <span class="uk-text-bold uk-padding-small">t00mlabs</span>
     </a>
 </div>
 </div></td>
                 <td><a class="uk-link-toggle" href="Status.html"><div class="uk-text-bold uk-text-secondary">Status</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Status_Released.html">
-        <span class="uk-text-bold uk-padding-small">Released</span>
+    <a class="uk-link-heading" href="Status_Draft.html">
+        <span class="uk-text-bold uk-padding-small">Draft</span>
     </a>
 </div>
 </div></td>
                 <td><a class="uk-link-toggle" href="Priority.html"><div class="uk-text-bold uk-text-secondary">Priority</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Priority_Low.html">
-        <span class="uk-text-bold uk-padding-small">Low</span>
+    <a class="uk-link-heading" href="Priority_Normal.html">
+        <span class="uk-text-bold uk-padding-small">Normal</span>
     </a>
 </div>
 </div></td>
@@ -126,6 +126,19 @@
               </tr>
               <tr><td colspan="6"><hr></td></tr>
 -->
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Product.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Product</div>
+                </a>
+            </td>
+            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+    <a class="uk-link-heading" href="Product_KB4IT.html">
+        <span class="uk-text-bold uk-padding-small">KB4IT</span>
+    </a>
+</div>
+</div></td>
+        </tr>
                 <tr>
                     <td colspan="6" align="center">
                         <!-- View Asciidoc Source Button :: START -->
@@ -136,26 +149,24 @@
                                 <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                     <div class="uk-padding-large uk-background-muted">
                                         <div class="uk-text-lead">Asciidoc Source</div>
-                                        <div class="uk-text-meta">test06.adoc</div>
-                                        <pre>= Test 06: Custom author icons
+                                        <div class="uk-text-meta">KB4IT-FAQ.adoc</div>
+                                        <pre>= KB4IT FAQ
 :Author:        Tomás Vírseda
-:Category:      Testing
+:Category:      Note
 :Scope:         Development
-:Status:        Released
-:Priority:      Low
-:Team:          IT Plumbers
+:Status:        Draft
+:Priority:      Normal
+:Team:          t00mlabs
+:Product:       KB4IT
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Expected result
+== Questions & Answers
 
-If available, KB4IT should show custom author icons.
-
-A warning message with the path where the icon should be placed is displayed:
-
-----
-WARNING |  151 | Application     | 2019-10-24 23:01:48,389 | Missing author icon: /home/t00m/Documents/devel/kb4it/branches/BR-0.6-uikit/tests/resources/images/authors/Tomás_Vírseda.png
-----</pre>
+[qanda]
+What is Asciidoctor?::
+  Asciidoctor is a fast, open source text processor and publishing toolchain for converting AsciiDoc content to HTML5, DocBook, PDF, and other formats.
+</pre>
                                     </div>
                                 </div>
                             </div>
@@ -169,18 +180,15 @@ WARNING |  151 | Application     | 2019-10-24 23:01:48,389 | Missing author icon
 </div>
 </div>
 <div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
-<h2 id="_expected_result">Expected result</h2>
+<h2 id="_questions_answers">Questions &amp; Answers</h2>
 <div class="uk-container">
-<div class="paragraph">
-<p>If available, KB4IT should show custom author icons.</p>
-</div>
-<div class="paragraph">
-<p>A warning message with the path where the icon should be placed is displayed:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>WARNING |  151 | Application     | 2019-10-24 23:01:48,389 | Missing author icon: /home/t00m/Documents/devel/kb4it/branches/BR-0.6-uikit/tests/resources/images/authors/Tomás_Vírseda.png</pre>
-</div>
+<div class="qlist qanda">
+<ol>
+<li>
+<p><em>What is Asciidoctor?</em></p>
+<p>Asciidoctor is a fast, open source text processor and publishing toolchain for converting AsciiDoc content to HTML5, DocBook, PDF, and other formats.</p>
+</li>
+</ol>
 </div>
 </div>
 </div>        </div>
