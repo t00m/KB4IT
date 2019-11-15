@@ -19,7 +19,7 @@ from setuptools import setup
 with open('kb4it/resources/offline/appdata/VERSION', 'r') as fver:
     VERSION = fver.read()
 
-with open('README.adoc', 'r') as f:
+with open('kb4it/resources/offline/appdata/pypi/README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 
@@ -54,8 +54,7 @@ setup(
     author='Tomás Vírseda',
     author_email='tomasvirseda@gmail.com',
     url='https://github.com/t00m/KB4IT',
-    description='A static website generator based on Asciidoc sources \
-    and Asciidoctor processor and publishing toolchain.',
+    description='A static website generator based on Asciidoctor sources.',
     long_description=LONG_DESCRIPTION,
     download_url='https://github.com/t00m/KB4IT/archive/master.zip',
     license='GPLv3',
