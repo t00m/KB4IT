@@ -4,8 +4,8 @@
 :Scope:         Development
 :Status:        Released
 :Priority:      Low
-:Team:          IT Plumbers
-:CustomKey:     CustomValue
+:Team:          t00mlabs
+:Product:       KB4IT
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
