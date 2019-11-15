@@ -1,0 +1,16 @@
+= KB4IT FAQ
+:Author:        Tomás Vírseda
+:Category:      Note
+:Scope:         Development
+:Status:        Draft
+:Priority:      Normal
+:Team:          t00mlabs
+:Product:       KB4IT
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Questions & Answers
+
+[qanda]
+What is Asciidoctor?::
+  Asciidoctor is a fast, open source text processor and publishing toolchain for converting AsciiDoc content to HTML5, DocBook, PDF, and other formats.

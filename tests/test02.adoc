@@ -4,8 +4,8 @@
 :Scope:         Development
 :Status:        Released
 :Priority:      Normal
-:Team:          IT Plumbers
-
+:Team:          t00mlabs
+:Product:       KB4IT
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 

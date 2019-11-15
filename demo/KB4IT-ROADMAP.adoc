@@ -1,0 +1,25 @@
+= KB4IT Roadmap
+:Author:        Tomás Vírseda
+:Category:      Note
+:Scope:         Development
+:Status:        Draft
+:Priority:      Normal
+:Team:          t00mlabs
+:Product:       KB4IT
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== KB4IT v0.8
+
+* *Status*: _Upcoming release_
+* *Functionality*:
+** Overview of last added/modified documents
+** Blog page
+
+== KB4IT v0.7
+
+* *Status*: _Current release_
+* *Functionality*:
+** Convert Asciidoctor sources to HTML pages by using UIKIt
+** Smart compilation
+** Browse metadata
