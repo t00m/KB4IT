@@ -240,18 +240,35 @@ class Application(Service):
 
         # Process
         for key in available_keys:
+            FORCE_DOC_COMPILATION = False
             self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
-                self.log.debug("\t\t\tRelated documents for %s: %s", key, value)
                 try:
-                    FORCE_DOC_COMPILATION = False
+                    cur_nodes = sorted(self.kbdict_cur['metadata'][key][value])
+                except:
+                    cur_nodes = []
+                new_nodes = sorted(self.kbdict_new['metadata'][key][value])
+                # ~ self.log.debug("Cache [%s][%s]: %s", key, value, cur_nodes)
+                # ~ self.log.debug("  New [%s][%s]: %s", key, value, new_nodes)
+                if cur_nodes != new_nodes:
+                    FORCE_DOC_KEY_COMPILATION = True
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                     docname = os.path.join(self.runtime['dir']['tmp'], filename)
-                    self.kbdict_new['document']
+                    self.log.debug("\t\t\t[%s][%s] Changes detected for documents related to this key/value (%s)", key, value, docname)
+                else:
+                    FORCE_DOC_KEY_COMPILATION = False
+
+                FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
+
+                # ~ self.log.debug("\t\t\tRelated documents for %s: %s", key, value)
+                try:
+                    # ~ FORCE_DOC_KEY_VALUE_COMPILATION = False
+                    filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+                    docname = os.path.join(self.runtime['dir']['tmp'], filename)
                     rel_docs = self.kbdict_new['metadata'][key][value]
                     for adoc in rel_docs:
-                        self.log.debug("\t\t\t\t- Doc '%s'. Compile again? %s", adoc, self.kbdict_new['document'][adoc]['compile'])
+                        self.log.debug("\t\t\t- Doc '%s'. Compile again? %s", adoc, self.kbdict_new['document'][adoc]['compile'])
                         FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or self.kbdict_new['document'][adoc]['compile']
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
@@ -284,7 +301,7 @@ class Application(Service):
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-                self.log.debug("\t\t\t\tForce compilation for %s: %s? %s", key, value, FORCE_DOC_COMPILATION)
+                self.log.debug("\t\t\tForce compilation for %s: %s? %s", key, value, FORCE_DOC_COMPILATION)
             docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
             html = self.srvbld.create_key_page(key, values)
             with open(docname, 'w') as fkey:
