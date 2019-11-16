@@ -372,7 +372,6 @@ class Builder(Service):
         team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
         author = self.srvdtb.get_values(doc, 'Author')[0]
         icon_path = get_author_icon(source_dir, author)
-        self.log.debug("Author: %s -> %s", author, icon_path)
         if icon_path == "resources/images/authors/author_unknown.png":
             self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
