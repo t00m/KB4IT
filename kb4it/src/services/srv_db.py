@@ -51,7 +51,7 @@ class KB4ITDB(Service):
         html = []
 
         values = self.get_values(doc, key)
-        self.log.debug("\t\t\t[%s][%s] = %s", doc, key, values)
+        # ~ self.log.debug("\t\t\t[%s][%s] = %s", doc, key, values)
         for value in values:
             url = "%s_%s.html" % (key, value)
             html.append((url, value))
