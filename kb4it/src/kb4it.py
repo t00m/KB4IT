@@ -17,6 +17,7 @@ from kb4it.src.core.mod_log import get_logger
 from kb4it.src.services.srv_app import Application
 from kb4it.src.services.srv_db import KB4ITDB
 from kb4it.src.services.srv_builder import Builder
+from kb4it.src.services.srv_rss import RSS
 
 
 class KB4IT:
@@ -66,6 +67,7 @@ class KB4IT:
             services = {
                 'DB': KB4ITDB(),
                 'App': Application(),
+                'RSS': RSS(),
                 'Builder': Builder(),
             }
             for name in services:
@@ -135,12 +137,14 @@ class KB4IT:
 def main():
     """Execute application."""
     parser = argparse.ArgumentParser(description='KB4IT %s by Tomás Vírseda' % APP['version'])
+
+    parser.add_argument('-n', '--name', help='Repository name')
     parser.add_argument('-sp', '--source-path', dest='SOURCE_PATH',
                         help='Path for Asciidoc source files.',
                         required=True)
     parser.add_argument('-tp', '--target-path', dest='TARGET_PATH',
                         help='Path for output files')
-    parser.add_argument('-log', '--log-level', dest='LOGLEVEL',
+    parser.add_argument('-l', '--log', dest='LOGLEVEL',
                         help='Increase output verbosity',
                         action='store', default='INFO')
     parser.add_argument('--version', action='version',

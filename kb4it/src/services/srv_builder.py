@@ -31,7 +31,7 @@ class Builder(Service):
     def initialize(self):
         """Initialize Builder class."""
         self.get_services()
-        self.tmpdir = self.srvapp.get_temp_dir()
+        self.tmpdir = self.srvapp.get_temp_path()
 
     def get_services(self):
         """Get services."""
