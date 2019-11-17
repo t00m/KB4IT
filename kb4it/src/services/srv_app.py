@@ -75,11 +75,11 @@ class Application(Service):
         """Get asciidoctor sources path."""
         return self.runtime['dir']['source']
 
-    # ~ def get_target_path(self):
-        # ~ """Get target path."""
-        # ~ return self.runtime['dir']['target']
+    def get_target_path(self):
+        """Get target path."""
+        return self.runtime['dir']['target']
 
-    def get_temp_dir(self):
+    def get_temp_path(self):
         """Get temporary working path."""
         return self.runtime['dir']['tmp']
 
@@ -87,13 +87,14 @@ class Application(Service):
         """Missing method docstring."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
+        self.srvrss = self.get_service('RSS')
 
     def get_numdocs(self):
         """Missing method docstring."""
         return self.runtime['docs']['count']
 
 
-    def stage_1_check_environment(self):
+    def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("Stage 1\tCheck environment")
         self.log.debug("\t\tCache directory: %s", self.runtime['dir']['cache'])
@@ -121,7 +122,7 @@ class Application(Service):
                 fhelp.write(template('PAGE_HELP'))
                 self.log.info("\t\tAdded missing 'help.adoc' document")
 
-    def stage_2_get_source_documents(self):
+    def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
         self.log.info("Stage 2\tGet Asciidoctor source documents")
         self.runtime['docs']['bag'] = get_source_docs(self.runtime['dir']['source'])
@@ -134,7 +135,7 @@ class Application(Service):
         for doc in self.runtime['docs']['bag']:
             self.log.debug("\t\t\t%s", doc)
 
-    def stage_3_preprocessing(self):
+    def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
 
@@ -224,7 +225,7 @@ class Application(Service):
 
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
 
-    def stage_4_processing(self):
+    def stage_04_processing(self):
         """Process all documents."""
         self.log.info("Stage 4\tProcessing")
         # Get all available keys
@@ -249,8 +250,6 @@ class Application(Service):
                 except:
                     cur_nodes = []
                 new_nodes = sorted(self.kbdict_new['metadata'][key][value])
-                # ~ self.log.debug("Cache [%s][%s]: %s", key, value, cur_nodes)
-                # ~ self.log.debug("  New [%s][%s]: %s", key, value, new_nodes)
                 if cur_nodes != new_nodes:
                     FORCE_DOC_KEY_COMPILATION = True
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
@@ -261,9 +260,7 @@ class Application(Service):
 
                 FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
 
-                # ~ self.log.debug("\t\t\tRelated documents for %s: %s", key, value)
                 try:
-                    # ~ FORCE_DOC_KEY_VALUE_COMPILATION = False
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                     docname = os.path.join(self.runtime['dir']['tmp'], filename)
                     rel_docs = self.kbdict_new['metadata'][key][value]
@@ -311,7 +308,7 @@ class Application(Service):
         self.srvbld.create_index_all()
         self.srvbld.create_index_page()
 
-    def stage_5_compilation(self):
+    def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         self.log.info("Stage 5\tCompilation")
         dcomps = datetime.datetime.now()
@@ -369,55 +366,74 @@ class Application(Service):
             self.log.info("\t\tCompilation Avg. Speed: %d docs/sec",
                           int((totaldocs/1)))
 
-    def stage_6_clean_target(self):
+    def stage_06_extras(self):
+        """Include other stuff."""
+        ### RSS feeds
+        self.srvrss.generate_rss_main()
+
+    def stage_07_clean_target(self):
         """Delete contents of target directory (if any)."""
         self.log.info("Stage 6\tClean target directory")
         delete_target_contents(self.runtime['dir']['target'])
         self.log.info("\t\tDeleted target contents in: %s", self.runtime['dir']['target'])
 
-    def stage_7_refresh_target(self):
+    def stage_08_refresh_target(self):
         """Refresh target directory."""
         self.log.info("Stage 7\tRefresh target directory")
+
         # Copy compiled documents to target path
         pattern = os.path.join(self.runtime['dir']['source'], '*.adoc')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['target'])
-        self.log.info("\t\tCopy %d asciidoctor sources from source path to target Path", len(files))
+        self.log.info("\t\tCopy %d asciidoctor sources from source path to target path", len(files))
 
+        # Copy RSS feeds to target path
+        pattern = os.path.join(self.runtime['dir']['tmp'], '*.xml')
+        files = glob.glob(pattern)
+        copy_docs(files, self.runtime['dir']['target'])
+        self.log.info("\t\tCopy %d RSS feeds from temporary path to target path", len(files))
+
+        # Copy compiled documents to target path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['target'])
         self.log.info("\t\tCopy %d html files from temporary path to target path", len(files))
 
+        # Copy cached documents to target path
         copy_docs(self.runtime['docs']['cached'], self.runtime['dir']['target'])
         self.log.info("\t\tCopied %d cached documents successfully to target path", len(self.runtime['docs']['cached']))
 
-        copy_docs(self.runtime['docs']['bag'], self.runtime['dir']['target'])
-        self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
+        # ???
+        # ~ copy_docs(self.runtime['docs']['bag'], self.runtime['dir']['target'])
+        # ~ self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
 
+        # Copy global resources to target path
+        global_resources_dir = GPATH['ONLINE']
+        resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
+        copydir(global_resources_dir, resources_dir_target)
+        self.log.info("\t\tCopied global resources to target path")
+
+        # Copy local resources to target path
         source_resources_dir = os.path.join(self.runtime['dir']['source'], 'resources')
         if os.path.exists(source_resources_dir):
             resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
             copydir(source_resources_dir, resources_dir_target)
             self.log.info("\t\tCopied local resources to target path")
 
-        global_resources_dir = GPATH['ONLINE']
-        resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
-        copydir(global_resources_dir, resources_dir_target)
-        self.log.info("\t\tCopied global resources to target path")
-
+        # Copy back all HTML files from target to cache
+        # Fixme: should cache contents be deletd before copying?
         pattern = os.path.join(self.runtime['dir']['target'], '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
         self.log.info("\t\tCopying HTML files to cache...")
 
-    def stage_8_remove_temporary_dir(self):
+    def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.info("Stage 8\tRemove temporary directory")
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.info("\t\tTemporary directory %s deleted successfully", self.runtime['dir']['tmp'])
 
-    def stage_9_print_missing_icons(self):
+    def stage_10_print_missing_icons(self):
         """Print list of missing icons."""
         self.log.info("Stage 9\tMissing icons report")
         missing_icons = self.srvbld.get_missing_icons()
@@ -442,15 +458,16 @@ class Application(Service):
         """
         self.log.info("KB4IT - Knowledge Base for IT")
 
-        self.stage_1_check_environment()
-        self.stage_2_get_source_documents()
-        self.stage_3_preprocessing()
-        self.stage_4_processing()
-        self.stage_5_compilation()
-        self.stage_6_clean_target()
-        self.stage_7_refresh_target()
-        self.stage_8_remove_temporary_dir()
-        self.stage_9_print_missing_icons()
+        self.stage_01_check_environment()
+        self.stage_02_get_source_documents()
+        self.stage_03_preprocessing()
+        self.stage_04_processing()
+        self.stage_05_compilation()
+        self.stage_06_extras()
+        self.stage_07_clean_target()
+        self.stage_08_refresh_target()
+        self.stage_09_remove_temporary_dir()
+        self.stage_10_print_missing_icons()
 
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
