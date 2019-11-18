@@ -15,6 +15,7 @@ import shutil
 import pprint
 import tempfile
 import datetime
+import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
 from kb4it.src.core.mod_env import LPATH, GPATH
 from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
@@ -23,7 +24,7 @@ from kb4it.src.core.mod_utils import valid_filename, load_current_kbdict
 from kb4it.src.core.mod_utils import template, exec_cmd, job_done, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification
+from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
 from kb4it.src.services.srv_db import HEADER_KEYS
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
@@ -168,7 +169,8 @@ class Application(Service):
             # Get Document Content and Metadata Hash
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
-            self.kbdict_new['document'][docname]['timestamp'] = last_dt_modification(source).isoformat()
+            self.kbdict_new['document'][docname]['timestamp'] = last_modification_date(source)
+            # ~ self.log.error("%s -> %s", self.kbdict_new['document'][docname]['timestamp'], docname)
             cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
             cached_document_exists = os.path.exists(cached_document)
             # Get documents per [key, value] and add them to kbdict
@@ -368,8 +370,14 @@ class Application(Service):
 
     def stage_06_extras(self):
         """Include other stuff."""
+        adict = {}
         ### RSS feeds
-        self.srvrss.generate_rss_main()
+        for docname in self.kbdict_new['document']:
+            ts = self.kbdict_new['document'][docname]['timestamp']
+            adict[docname] = ts
+        # ~ Sort docs by timestamp and get the first 10 documents
+        lastdocs = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+        self.srvrss.generate_rss_main(lastdocs)
 
     def stage_07_clean_target(self):
         """Delete contents of target directory (if any)."""
