@@ -384,11 +384,15 @@ def last_ts_modification(filename):
     d = datetime.fromtimestamp(t)
     return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
 
+def last_ts_rss(date):
+    """ Converts a datetime into an RFC 2822 formatted date."""
+    return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday()], date.day, ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][date.month-1], date.year, date.hour, date.minute, date.second)
+
 def last_modification_date(filename):
     """Return last modification human-readable datetime of a file """
     t = os.path.getmtime(filename)
     d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%Y/%m/%d")
+    return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
 
 def last_modification(filename):
     """Return last modification human-readable datetime of a file """
