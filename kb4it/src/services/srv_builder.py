@@ -349,5 +349,5 @@ class Builder(Service):
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        return DOC_CARD % (link_title, icon_path)
+        return DOC_CARD % (icon_path, link_title)
 
