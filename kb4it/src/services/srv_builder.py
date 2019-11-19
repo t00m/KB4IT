@@ -10,7 +10,7 @@ Builder service.
 """
 
 import os
-# ~ import datetime as dt
+import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.services.srv_db import HEADER_KEYS
@@ -150,7 +150,6 @@ class Builder(Service):
             content = TPL_INDEX % (mtime, core_buttons, custom_buttons, tab_stats)
             findex.write(content)
 
-
     def create_all_keys_page(self):
         """Missing method docstring."""
         TPL_KEYS = template('KEYS')
@@ -165,81 +164,52 @@ class Builder(Service):
                     fkeys.write("\n++++\n%s\n++++\n" % cloud)
 
 
-    # ~ def create_recents_page(self):
-        # ~ """Create recents page.
+    def create_recents_page(self, docs):
+        """Create recents page."""
+        db = self.srvdtb.get_database()
+        recents = template('RECENTS')
+        filterrow = template('FILTER_BODY_ROW')
+        docname = "%s/%s" % (self.tmpdir, 'recents.adoc')
 
-        # ~ In order this page makes sense, this script should be
-        # ~ executed periodically from crontab.
-        # ~ """
-        # ~ docname = "%s/%s" % (self.tmpdir, 'recents.adoc')
-        # ~ with open(docname, 'w') as frec:
-            # ~ relset = set()
-            # ~ today = datetime.now()
-            # ~ lastweek = today - dt.timedelta(weeks=1)
-            # ~ lastmonth = today - dt.timedelta(days=31)
-            # ~ strtoday = "%d-%02d-%02d" % (today.year, today.month, today.day)
+        now = datetime.now()
+        strtoday = "%d-%02d-%02d" % (now.year, now.month, now.day)
+        lastday = now - dt.timedelta(days=1)
+        lastweek = now - dt.timedelta(weeks=1)
+        lastmonth = now - dt.timedelta(days=31)
+        lastyear = now - dt.timedelta(days=365)
 
-            # ~ # TODAY
-            # ~ docs = self.srvdtb.subjects(RDF['type'], URIRef(KB4IT['Document']))
-            # ~ for doc in docs:
-                # ~ revdate = self.srvdtb.value(doc, 'Revdate')
-                # ~ if revdate == Literal(strtoday):
-                    # ~ relset.add(doc)
+        rows = ''
+        for doc, timestamp in docs:
+            title = db[doc]['Title'][0]
+            datafilter = ''
+            adate = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
+            if adate > lastday:
+                # ~ self.log.debug("Today: %s -> %s", timestamp, docname)
+                datafilter += 'Today'
+            elif adate > lastweek:
+                # ~ self.log.debug(" Week: %s -> %s", timestamp, docname)
+                datafilter += 'Week'
+            elif adate > lastmonth:
+                # ~ self.log.debug("Month: %s -> %s", timestamp, docname)
+                datafilter += 'Month'
+            datatitle = valid_filename(title)
+            card = self.get_doc_card(doc)
+            rows += filterrow % (datatitle, 'recent', datafilter, card)
+        with open(docname, 'w') as fcal:
+            fcal.write(recents % rows)
 
-            # ~ page = '= Last documents added\n\n'
-            # ~ page += '== Today (%d)\n\n' % len(relset)
-            # ~ page += """[options="header", width="100%", cols="60%,20%,20%"]\n"""
-            # ~ page += "|===\n"
-            # ~ page += "|Document |Category | Status\n"
+    def create_bookmarks_page(self):
+        page = template('BOOKMARKS')
+        docname = "%s/%s" % (self.tmpdir, 'bookmarks.adoc')
+        bookmarks = ''
+        for doc in self.srvdtb.get_database():
+            bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
+            if bookmark == 'Yes':
+                card = self.get_doc_card(doc)
+                bookmarks += card
+        with open(docname, 'w') as fbk:
+            fbk.write(page % bookmarks)
 
-            # ~ for doc in relset:
-                # ~ title = self.srvdtb.value(doc, 'Title'])
-                # ~ category = self.srvdtb.value(doc, 'Category'])
-                # ~ status = self.srvdtb.value(doc, 'Status'])
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(title))
-                # ~ page += "|<<Category_%s.adoc#,%s>>\n" % (category, quote(category))
-                # ~ page += "|<<Status_%s.adoc#,%s>>\n" % (status, status)
-
-            # ~ page += "|==="
-
-            # ~ # WEEK
-            # ~ for doc in docs:
-                # ~ revdate = datetime.strptime(self.srvdtb.value(doc, 'Revdate']), "%Y-%m-%d")
-                # ~ if revdate <= today and revdate >= lastweek:
-                    # ~ relset.add(doc)
-
-            # ~ page += '\n\n== This week (%d)\n\n' %  len(relset)
-            # ~ page += """[options="header", width="100%", cols="60%,20%,20%"]\n"""
-            # ~ page += "|===\n"
-            # ~ page += "|Document |Category | Status\n"
-            # ~ for doc in relset:
-                # ~ title = self.srvdtb.value(doc, 'Title'])
-                # ~ category = self.srvdtb.value(doc, 'Category'])
-                # ~ status = self.srvdtb.value(doc, 'Status'])
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(title))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(category))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(status))
-            # ~ page += "|==="
-
-            # ~ # MONTH
-            # ~ for doc in docs:
-                # ~ revdate = datetime.strptime(self.srvdtb.value(doc, 'Revdate']), "%Y-%m-%d")
-                # ~ if revdate <= today and revdate >= lastmonth:
-                    # ~ relset.add(doc)
-
-            # ~ page += '\n\n== This month (%d)\n\n' % len(relset)
-            # ~ page += """[options="header", width="100%", cols="60%,20%,20%"]\n"""
-            # ~ page += "|===\n"
-            # ~ page += "|Document |Category | Status\n"
-            # ~ for doc in relset:
-                # ~ title = self.srvdtb.value(doc, 'Title'])
-                # ~ category = self.srvdtb.value(doc, 'Category'])
-                # ~ status = self.srvdtb.value(doc, 'Status'])
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(title))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(category))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(status))
-            # ~ page += "|===\n\n"
-            # ~ frec.write(page)
 
     def create_key_page(self, key, values):
         """Missing method docstring."""
