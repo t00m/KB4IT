@@ -94,6 +94,13 @@ class Application(Service):
         """Missing method docstring."""
         return self.runtime['docs']['count']
 
+    def get_docs_by_timestamp(self):
+        """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
+        adict = {}
+        for docname in self.kbdict_new['document']:
+            ts = self.kbdict_new['document'][docname]['timestamp']
+            adict[docname] = ts
+        return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
 
     def stage_01_check_environment(self):
         """Check environment."""
@@ -306,7 +313,10 @@ class Application(Service):
             with open(docname, 'w') as fkey:
                 fkey.write(html)
 
+        docs_sorted_by_timestamp = self.get_docs_by_timestamp()
         self.srvbld.create_all_keys_page()
+        self.srvbld.create_bookmarks_page()
+        self.srvbld.create_recents_page(docs_sorted_by_timestamp)
         self.srvbld.create_index_all()
         self.srvbld.create_index_page()
 
@@ -375,7 +385,7 @@ class Application(Service):
         for docname in self.kbdict_new['document']:
             ts = self.kbdict_new['document'][docname]['timestamp']
             adict[docname] = ts
-        # ~ Sort docs by timestamp and get the first 10 documents
+        # ~ Sort docs by timestamp
         lastdocs = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
         self.srvrss.generate_rss_main(lastdocs)
 
