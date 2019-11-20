@@ -3,16 +3,23 @@
                             <div class="uk-card-header">
                                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                                     <div class="uk-width-auto">
-                                        <img class="uk-border-circle" width="48" height="48" src="%s">
+                                        <a href="%s"><img class="uk-border-circle" width="48" height="48" src="%s" uk-tooltip="%s"></a>
                                     </div>
                                     <div class="uk-width-expand">
                                         <div class="uk-text-break uk-text-truncate uk-text-bold uk-margin-remove-bottom">%s</div>
-                                        <p class="uk-text-meta uk-margin-remove-top"><time datetime="2016-04-01T19:00">April 01, 2016</time></p>
+                                        <p class="uk-text-meta uk-margin-remove-top"><time datetime="%s">%s</time></p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="uk-card-footer">
-                                <a href="#" class="uk-button uk-button-text">Read more</a>
+                            <div class="uk-card-footer uk-padding-remove-bottom">
+                                <div class="uk-flex uk-flex-right">
+                                    <ul class="uk-breadcrumb">
+                                        <li>%s</li>
+                                        <li>%s</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         <!-- DOC_CARD.tpl :: END -->
+
+
