@@ -15,6 +15,7 @@ from datetime import datetime
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.services.srv_db import HEADER_KEYS
 from kb4it.src.core.mod_utils import template, valid_filename, get_labels
+from kb4it.src.core.mod_utils import last_ts_rss, get_human_datetime
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
 from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.core.mod_utils import last_modification
@@ -292,11 +293,13 @@ class Builder(Service):
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
             for key in custom_keys:
-                values = self.srvdtb.get_html_values_from_key(doc, key)
-                labels = get_labels(values)
-                row_custom_prop = template('METADATA_ROW_CUSTOM_PROPERTY')
-                custom_props += row_custom_prop % (valid_filename(key), key, labels)
-
+                try:
+                    values = self.srvdtb.get_html_values_from_key(doc, key)
+                    labels = get_labels(values)
+                    row_custom_prop = template('METADATA_ROW_CUSTOM_PROPERTY')
+                    custom_props += row_custom_prop % (valid_filename(key), key, labels)
+                except Exception as error:
+                    self.log.error("Key[%s]: %s", key, error)
             num_custom_props = len(custom_props)
             if  num_custom_props > 0:
                 html += custom_props
@@ -341,6 +344,7 @@ class Builder(Service):
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
         author = self.srvdtb.get_values(doc, 'Author')[0]
+        authors = ', '.join(self.srvdtb.get_values(doc, 'Author'))
         icon_path = get_author_icon(source_dir, author)
         if icon_path == "resources/images/authors/author_unknown.png":
             self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
@@ -349,5 +353,8 @@ class Builder(Service):
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        return DOC_CARD % (link_title, icon_path)
+        link_image = "Author_%s.html" % valid_filename(author)
+        timestamp = self.srvdtb.get_doc_timestamp(doc)
+        human_ts = get_human_datetime(timestamp)
+        return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
 
