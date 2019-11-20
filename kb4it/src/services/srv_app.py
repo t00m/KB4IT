@@ -98,7 +98,7 @@ class Application(Service):
         """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
         adict = {}
         for docname in self.kbdict_new['document']:
-            ts = self.kbdict_new['document'][docname]['timestamp']
+            ts = self.kbdict_new['document'][docname]['Timestamp']
             adict[docname] = ts
         return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
 
@@ -160,7 +160,9 @@ class Application(Service):
             self.log.debug("\t\tPreprocessing DOC[%s]", docname)
 
             # Add a new document to the database
-            self.srvdtb.add_document(docname)
+            ts_dtm = last_dt_modification(source)
+            timestamp = last_modification_date(source)
+            self.srvdtb.add_document(docname, ts_dtm)
 
             # Get content
             with open(source) as source_adoc:
@@ -176,8 +178,8 @@ class Application(Service):
             # Get Document Content and Metadata Hash
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
-            self.kbdict_new['document'][docname]['timestamp'] = last_modification_date(source)
-            # ~ self.log.error("%s -> %s", self.kbdict_new['document'][docname]['timestamp'], docname)
+            self.kbdict_new['document'][docname]['Timestamp'] = timestamp
+            # ~ self.log.error("%s -> %s", self.kbdict_new['document'][docname]['Timestamp'], docname)
             cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
             cached_document_exists = os.path.exists(cached_document)
             # Get documents per [key, value] and add them to kbdict
@@ -202,8 +204,8 @@ class Application(Service):
             else:
                 try:
                     # Compare timestamps for source/cache documents
-                    doc_ts_new = self.kbdict_new['document'][docname]['timestamp']
-                    doc_ts_cur = self.kbdict_cur['document'][docname]['timestamp']
+                    doc_ts_new = self.kbdict_new['document'][docname]['Timestamp']
+                    doc_ts_cur = self.kbdict_cur['document'][docname]['Timestamp']
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
                     else:
@@ -249,6 +251,7 @@ class Application(Service):
 
 
         # Process
+        self.log.debug("All keys: %s", available_keys)
         for key in available_keys:
             FORCE_DOC_COMPILATION = False
             self.log.debug("\t\t* Processing Key: %s", key)
@@ -258,7 +261,12 @@ class Application(Service):
                     cur_nodes = sorted(self.kbdict_cur['metadata'][key][value])
                 except:
                     cur_nodes = []
-                new_nodes = sorted(self.kbdict_new['metadata'][key][value])
+                try:
+                    new_nodes = sorted(self.kbdict_new['metadata'][key][value])
+                except Exception as error:
+                    self.log.error("Error in [%s][%s]: %s", key, value, error)
+                    new_nodes = ['###ERROR###']
+
                 if cur_nodes != new_nodes:
                     FORCE_DOC_KEY_COMPILATION = True
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
@@ -383,7 +391,7 @@ class Application(Service):
         adict = {}
         ### RSS feeds
         for docname in self.kbdict_new['document']:
-            ts = self.kbdict_new['document'][docname]['timestamp']
+            ts = self.kbdict_new['document'][docname]['Timestamp']
             adict[docname] = ts
         # ~ Sort docs by timestamp
         lastdocs = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
