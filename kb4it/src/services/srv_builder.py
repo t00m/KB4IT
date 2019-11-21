@@ -207,7 +207,7 @@ class Builder(Service):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 card = self.get_doc_card(doc)
-                bookmarks += card
+                bookmarks += "<li>%s</li>\n" % card
         with open(docname, 'w') as fbk:
             fbk.write(page % bookmarks)
 
@@ -378,7 +378,7 @@ class Builder(Service):
         link_image = "Author_%s.html" % valid_filename(author)
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
-        return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
+        return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, link_category, link_scope)
 
     def create_blog(self):
         blog = template('BLOG')
