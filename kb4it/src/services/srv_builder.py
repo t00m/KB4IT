@@ -175,7 +175,7 @@ class Builder(Service):
         strtoday = "%d-%02d-%02d" % (now.year, now.month, now.day)
         lastday = now - dt.timedelta(days=1)
         lastweek = now - dt.timedelta(weeks=1)
-        lastmonth = now - dt.timedelta(days=31)
+        lastmonth = now - dt.timedelta(days=30)
         lastyear = now - dt.timedelta(days=365)
 
         rows = ''
@@ -187,10 +187,12 @@ class Builder(Service):
             if timestamp > lastday:
                 # ~ self.log.debug("Today: %s -> %s", timestamp, docname)
                 datafilter += 'Today'
-            elif timestamp > lastweek:
+
+            if timestamp > lastweek:
                 # ~ self.log.debug(" Week: %s -> %s", timestamp, docname)
                 datafilter += 'Week'
-            elif timestamp > lastmonth:
+
+            if timestamp > lastmonth:
                 # ~ self.log.debug("Month: %s -> %s", timestamp, docname)
                 datafilter += 'Month'
             datatitle = valid_filename(title)
