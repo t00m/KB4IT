@@ -165,9 +165,8 @@ class Builder(Service):
                     fkeys.write("\n++++\n%s\n++++\n" % cloud)
 
 
-    def create_recents_page(self, docs):
+    def create_recents_page(self):
         """Create recents page."""
-        db = self.srvdtb.get_database()
         recents = template('RECENTS')
         filterrow = template('FILTER_BODY_ROW')
         docname = "%s/%s" % (self.tmpdir, 'recents.adoc')
@@ -180,17 +179,18 @@ class Builder(Service):
         lastyear = now - dt.timedelta(days=365)
 
         rows = ''
-        for doc, timestamp in docs:
-            title = db[doc]['Title'][0]
+        for doc in self.srvdtb.get_documents():
+            title = self.srvdtb.get_values(doc, 'Title')[0]
             datafilter = ''
-            adate = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
-            if adate > lastday:
+            timestamp = self.srvdtb.get_values(doc, 'Timestamp')
+            # ~ adate = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
+            if timestamp > lastday:
                 # ~ self.log.debug("Today: %s -> %s", timestamp, docname)
                 datafilter += 'Today'
-            elif adate > lastweek:
+            elif timestamp > lastweek:
                 # ~ self.log.debug(" Week: %s -> %s", timestamp, docname)
                 datafilter += 'Week'
-            elif adate > lastmonth:
+            elif timestamp > lastmonth:
                 # ~ self.log.debug("Month: %s -> %s", timestamp, docname)
                 datafilter += 'Month'
             datatitle = valid_filename(title)
@@ -205,7 +205,7 @@ class Builder(Service):
         bookmarks = ''
         for doc in self.srvdtb.get_database():
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
-            if bookmark == 'Yes':
+            if bookmark == 'Yes' or bookmark == 'True':
                 card = self.get_doc_card(doc)
                 bookmarks += card
         with open(docname, 'w') as fbk:
@@ -334,6 +334,28 @@ class Builder(Service):
             # ~ tpl = template('PAGE_SEARCH')
             # ~ fsp.write(tpl % html)
 
+    def get_doc_card_blogpost(self, doc):
+        source_dir = self.srvapp.get_source_path()
+        DOC_CARD = template('DOC_CARD_BLOGPOST')
+        DOC_CARD_LINK = template('DOC_CARD_LINK')
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
+        author = self.srvdtb.get_values(doc, 'Author')[0]
+        authors = ', '.join(self.srvdtb.get_values(doc, 'Author'))
+        icon_path = get_author_icon(source_dir, author)
+        if icon_path == "resources/images/authors/author_unknown.png":
+            self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
+        link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
+        link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
+        link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+        link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
+        link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
+        link_image = "Author_%s.html" % valid_filename(author)
+        timestamp = self.srvdtb.get_doc_timestamp(doc)
+        human_ts = get_human_datetime(timestamp)
+        return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
 
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()
@@ -358,3 +380,19 @@ class Builder(Service):
         human_ts = get_human_datetime(timestamp)
         return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
 
+    def create_blog(self):
+        blog = template('BLOG')
+        filterrow = template('FILTER_BODY_ROW')
+        blogposts = ''
+        for doc in self.srvdtb.get_documents():
+
+            category = self.srvdtb.get_values(doc, 'Category')[0]
+            if category == 'Post':
+                title = self.srvdtb.get_values(doc, 'Title')[0]
+                datatitle = valid_filename(title)
+                card = self.get_doc_card(doc)
+                blogposts += filterrow % (datatitle, 'recent', '', card)
+
+        docname = "%s/%s" % (self.tmpdir, 'blog.adoc')
+        with open(docname, 'w') as fblog:
+            fblog.write(blog % blogposts)

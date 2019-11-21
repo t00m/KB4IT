@@ -234,6 +234,8 @@ class Application(Service):
         # Save current status for the next run
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
+        # Build a list of documents sorted by timestamp
+        self.srvdtb.sort()
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
 
     def stage_04_processing(self):
@@ -248,7 +250,6 @@ class Application(Service):
                 self.log.debug("\t\tAdding missing key: %s", key)
                 missing.append(key)
         available_keys.extend(missing)
-
 
         # Process
         self.log.debug("All keys: %s", available_keys)
@@ -321,10 +322,11 @@ class Application(Service):
             with open(docname, 'w') as fkey:
                 fkey.write(html)
 
-        docs_sorted_by_timestamp = self.get_docs_by_timestamp()
+        # ~ docs_sorted_by_timestamp = self.get_docs_by_timestamp()
         self.srvbld.create_all_keys_page()
         self.srvbld.create_bookmarks_page()
-        self.srvbld.create_recents_page(docs_sorted_by_timestamp)
+        self.srvbld.create_blog()
+        self.srvbld.create_recents_page()
         self.srvbld.create_index_all()
         self.srvbld.create_index_page()
 
