@@ -7,7 +7,7 @@ RDF Graph In Memory database module.
 # License: GPLv3
 # Description: module to allow kb4it create a RDF graph
 """
-
+import operator
 from kb4it.src.core.mod_srv import Service
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
@@ -21,6 +21,7 @@ class KB4ITDB(Service):
     params = None
     db = {}
     source_path = None
+    sorted_docs = []
 
     def initialize(self):
         """Initialize database module."""
@@ -35,7 +36,7 @@ class KB4ITDB(Service):
         """Add a new document node to the graph."""
         self.db[doc] = {}
         self.db[doc]['Timestamp'] = timestamp
-        self.log.debug("\t\t\tCreated new document: %s with timestamp %s", doc, timestamp)
+        self.log.debug("\t\t\t%s created/modified on %s", doc, timestamp)
 
     def add_document_key(self, doc, key, value):
         """Add a new key node to a document."""
@@ -46,6 +47,18 @@ class KB4ITDB(Service):
         except KeyError:
             self.db[doc][key] = [value]
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
+
+    def sort(self):
+        """Build a list of documents sorted by timestamp desc."""
+        adict = {}
+        for doc in self.db:
+            adict[doc] = self.db[doc]['Timestamp']
+        alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+        for doc, timestamp in alist:
+            self.sorted_docs.append(doc)
+
+    def get_documents(self):
+        return self.sorted_docs
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
