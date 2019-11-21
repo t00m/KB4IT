@@ -386,7 +386,7 @@ def last_ts_modification(filename):
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
-    return "%s" % dt.strftime("%A, %B %m, %Y at %H:%M")
+    return "%s" % dt.strftime("%a, %b %m, %Y at %H:%M")
 
 def last_ts_rss(date):
     """ Converts a datetime into an RFC 2822 formatted date."""
