@@ -2,8 +2,8 @@
 
 ++++
         <!-- BOOKMARKS.tpl :: START -->
-        <div class="uk-child-width-1-1@s" uk-grid>
+        <ul class="uk-child-width-1-3@m" uk-grid>
 %s
-        </div>
+        </ul>
         <!-- BOOKMARKS.tpl :: END -->
 ++++
