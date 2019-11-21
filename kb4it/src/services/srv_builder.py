@@ -175,7 +175,7 @@ class Builder(Service):
         strtoday = "%d-%02d-%02d" % (now.year, now.month, now.day)
         lastday = now - dt.timedelta(days=1)
         lastweek = now - dt.timedelta(weeks=1)
-        lastmonth = now - dt.timedelta(days=31)
+        lastmonth = now - dt.timedelta(days=30)
         lastyear = now - dt.timedelta(days=365)
 
         rows = ''
@@ -187,10 +187,12 @@ class Builder(Service):
             if timestamp > lastday:
                 # ~ self.log.debug("Today: %s -> %s", timestamp, docname)
                 datafilter += 'Today'
-            elif timestamp > lastweek:
+
+            if timestamp > lastweek:
                 # ~ self.log.debug(" Week: %s -> %s", timestamp, docname)
                 datafilter += 'Week'
-            elif timestamp > lastmonth:
+
+            if timestamp > lastmonth:
                 # ~ self.log.debug("Month: %s -> %s", timestamp, docname)
                 datafilter += 'Month'
             datatitle = valid_filename(title)
@@ -207,7 +209,7 @@ class Builder(Service):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 card = self.get_doc_card(doc)
-                bookmarks += card
+                bookmarks += "<li>%s</li>\n" % card
         with open(docname, 'w') as fbk:
             fbk.write(page % bookmarks)
 
@@ -378,7 +380,7 @@ class Builder(Service):
         link_image = "Author_%s.html" % valid_filename(author)
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
-        return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
+        return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, link_category, link_scope)
 
     def create_blog(self):
         blog = template('BLOG')
