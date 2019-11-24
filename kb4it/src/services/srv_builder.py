@@ -118,6 +118,8 @@ class Builder(Service):
         mtime = now.strftime("%Y/%m/%d %H:%M")
         numdocs = self.srvapp.get_numdocs()
 
+        msgs = self.get_messages()
+
         # Core Modal buttons
         core_buttons = ''
         for key in sorted(HEADER_KEYS, key=lambda y: y.lower()):
@@ -148,6 +150,7 @@ class Builder(Service):
             leader_items += item % (valid_filename(key), key, valid_filename(key), len(values))
         tab_stats = stats % (numdocs, numkeys, leader_items)
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
+            findex.write(msgs)
             content = TPL_INDEX % (mtime, core_buttons, custom_buttons, tab_stats)
             findex.write(content)
 
@@ -336,6 +339,22 @@ class Builder(Service):
             # ~ tpl = template('PAGE_SEARCH')
             # ~ fsp.write(tpl % html)
 
+    def get_messages(self):
+        msgs = ''
+        msg = template('MESSAGE')
+        found = False
+        for doc in self.srvdtb.get_documents():
+            category = self.srvdtb.get_values(doc, 'Category')[0]
+            if category == 'Message':
+                found = True
+                break
+
+        if found:
+            return msgs + msg
+        else:
+            return ''
+
+
     def get_doc_card_blogpost(self, doc):
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = template('DOC_CARD_BLOGPOST')
@@ -392,8 +411,8 @@ class Builder(Service):
             if category == 'Post':
                 title = self.srvdtb.get_values(doc, 'Title')[0]
                 datatitle = valid_filename(title)
-                card = self.get_doc_card(doc)
-                blogposts += filterrow % (datatitle, 'recent', '', card)
+                card = self.get_doc_card_blogpost(doc)
+                blogposts += card
 
         docname = "%s/%s" % (self.tmpdir, 'blog.adoc')
         with open(docname, 'w') as fblog:
