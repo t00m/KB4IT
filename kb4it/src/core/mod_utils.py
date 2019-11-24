@@ -237,7 +237,7 @@ def extract_toc(source):
                 line = line.replace("sectlevel3", "uk-nav-sub")
                 line = line.replace("sectlevel4", "uk-nav-sub")
             items.append(line)
-        items.insert(0, template('TOC_HEADER_TITLE'))
+        # ~ items.insert(0, template('TOC_HEADER_TITLE'))
         toc = '\n'.join(items)
     return toc
 
@@ -271,7 +271,12 @@ def job_done(future):
                 pass
 
             with open(htmldoc, 'w') as fhtm:
-                fhtm.write(HTML_HEADER % toc)
+                len_toc = len(toc)
+                if len_toc > 0:
+                    TOC = template('MENU_CONTENTS_ENABLED') % toc
+                else:
+                    TOC = template('MENU_CONTENTS_DISABLED')
+                fhtm.write(HTML_HEADER % TOC)
                 fhtm.write(title)
                 fhtm.write(content)
                 fhtm.write(HTML_FOOTER)

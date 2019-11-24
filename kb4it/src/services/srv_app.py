@@ -368,7 +368,7 @@ class Application(Service):
             num = 1
             self.log.debug("\t\tGenerating jobs. Please, wait")
             for doc in docs:
-                cmd = "asciidoctor -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
+                cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                 job = exe.submit(exec_cmd, (doc, cmd, num))
                 job.add_done_callback(job_done)
                 self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
