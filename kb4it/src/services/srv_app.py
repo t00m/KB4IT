@@ -40,16 +40,16 @@ class Application(Service):
         """Initialize application structure"""
 
         # Get params from command line
-        parameters = self.app.get_params()
+        self.parameters = self.app.get_params()
 
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
-        if parameters.TARGET_PATH is None:
+        if self.parameters.TARGET_PATH is None:
             self.runtime['dir']['target'] = LPATH['WWW']
         else:
-            self.runtime['dir']['target'] = os.path.realpath(parameters.TARGET_PATH)
-        self.runtime['dir']['source'] = os.path.realpath(parameters.SOURCE_PATH)
+            self.runtime['dir']['target'] = os.path.realpath(self.parameters.TARGET_PATH)
+        self.runtime['dir']['source'] = os.path.realpath(self.parameters.SOURCE_PATH)
         self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
@@ -216,7 +216,12 @@ class Application(Service):
             self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
 
             # Force compilation if document (content or metadata) has changed
-            if FORCE_DOC_COMPILATION:
+            if self.parameters.FORCE == 'True':
+                FORCE_ALL = True
+            else:
+                FORCE_ALL = False
+
+            if FORCE_DOC_COMPILATION or FORCE_ALL:
                 # Create metadata section
                 meta_section = self.srvbld.create_metadata_section(docname)
 
@@ -288,7 +293,13 @@ class Application(Service):
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
-                if FORCE_DOC_COMPILATION:
+                if self.parameters.FORCE == 'True':
+                    FORCE_ALL = True
+                else:
+                    FORCE_ALL = False
+
+                COMPILE_AGAIN = FORCE_DOC_COMPILATION or FORCE_ALL
+                if COMPILE_AGAIN:
                     # Create .adoc from value
 
                     with open(docname, 'w') as fvalue:
@@ -322,7 +333,6 @@ class Application(Service):
             with open(docname, 'w') as fkey:
                 fkey.write(html)
 
-        # ~ docs_sorted_by_timestamp = self.get_docs_by_timestamp()
         self.srvbld.create_all_keys_page()
         self.srvbld.create_bookmarks_page()
         self.srvbld.create_blog()
@@ -500,4 +510,3 @@ class Application(Service):
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
         self.log.info("%s/index.html", os.path.abspath(self.runtime['dir']['target']))
-        # ~ pprint.pprint(self.runtime)
