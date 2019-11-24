@@ -320,7 +320,7 @@ def get_metadata(docpath):
         # read the rest of properties until watermark
         for n in range(1, len(line)):
             if line[n].startswith(':'):
-                key = line[n][1:line[n].rfind(':')]
+                key = line[n][1:line[n].find(':', 1)]
                 alist = nosb(line[n][len(key)+2:-1].split(','))
                 props[key] = alist
             elif line[n].startswith(EOHMARK):
