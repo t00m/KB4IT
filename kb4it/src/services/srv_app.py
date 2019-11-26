@@ -41,7 +41,6 @@ class Application(Service):
 
         # Get params from command line
         self.parameters = self.app.get_params()
-        self.log.error(self.parameters)
 
         # Initialize directories
         self.runtime['dir'] = {}
