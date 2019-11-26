@@ -138,7 +138,7 @@ def main():
     """Execute application."""
     parser = argparse.ArgumentParser(description='KB4IT %s by Tomás Vírseda' % APP['version'])
 
-    parser.add_argument('-f', '--force', dest='FORCE', default=False, help='Force a clean compilation')
+    parser.add_argument('-f', '--force', action='store_true', dest='FORCE', help='Force a clean compilation')
     parser.add_argument('-sp', '--source-path', dest='SOURCE_PATH',
                         help='Path for Asciidoc source files.',
                         required=True)
