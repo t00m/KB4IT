@@ -41,6 +41,7 @@ class Application(Service):
 
         # Get params from command line
         self.parameters = self.app.get_params()
+        self.log.error(self.parameters)
 
         # Initialize directories
         self.runtime['dir'] = {}
@@ -216,7 +217,7 @@ class Application(Service):
             self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
 
             # Force compilation if document (content or metadata) has changed
-            if self.parameters.FORCE == 'True':
+            if self.parameters.FORCE == True:
                 FORCE_ALL = True
             else:
                 FORCE_ALL = False
@@ -293,7 +294,7 @@ class Application(Service):
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
-                if self.parameters.FORCE == 'True':
+                if self.parameters.FORCE == True:
                     FORCE_ALL = True
                 else:
                     FORCE_ALL = False
