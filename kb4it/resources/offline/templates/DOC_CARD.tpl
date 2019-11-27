@@ -14,8 +14,8 @@
                             <div class="uk-card-footer uk-padding-remove-bottom">
                                 <div class="uk-flex uk-flex-right">
                                     <ul class="uk-breadcrumb">
-                                        <li class="uk-text-uppercase" uk-tooltip="Category">%s</li>
-                                        <li class="uk-text-uppercase" uk-tooltip="Scope">%s</li>
+                                        <li uk-tooltip="Category">%s</li>
+                                        <li uk-tooltip="Scope">%s</li>
                                     </ul>
                                 </div>
                             </div>

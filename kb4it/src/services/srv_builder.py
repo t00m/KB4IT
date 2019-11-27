@@ -151,7 +151,7 @@ class Builder(Service):
         tab_stats = stats % (numdocs, numkeys, leader_items)
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
             findex.write(msgs)
-            content = TPL_INDEX % (mtime, core_buttons, custom_buttons, tab_stats)
+            content = TPL_INDEX % (get_human_datetime(now), core_buttons, custom_buttons, tab_stats)
             findex.write(content)
 
     def create_all_keys_page(self):
@@ -312,8 +312,9 @@ class Builder(Service):
             METADATA_SECTION_FOOTER = template('METADATA_SECTION_FOOTER')
             source_dir = self.srvapp.get_source_path()
             source_path = os.path.join(source_dir, doc)
+            source_code = open(source_path, 'r').read()
             html += METADATA_SECTION_FOOTER % (doc, \
-                                               open(source_path, 'r').read())
+                                               source_code)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
             self.log.error("\t\t%s", msgerror)
