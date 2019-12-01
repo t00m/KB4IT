@@ -1,11 +1,11 @@
 LOCAL_PYTHON_PACKAGES=`python3 -c "import site; print(site.getsitepackages()[0])"`
 KB4IT_LIBRARY="$LOCAL_PYTHON_PACKAGES/kb4it-*"
-reset
-rm -rf $KB4IT_LIBRARY
-rm -rf build
-rm -rf kb4it.egg-info
-# rm -rf $HOME/.kb4it
-python3 setup.py install --user
+echo -n "Uninstalling KB4IT... "
+pip3 uninstall kb4it -qy
+echo "Done."
+echo -n "Install KB4IT from sources... "
+python3 setup.py -q install --user
+echo "Done"
 echo ""
 echo "====================="
 echo "Installation finished"
