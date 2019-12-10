@@ -171,11 +171,12 @@ class Application(Service):
             # Get metadata
             docpath = os.path.join(self.runtime['dir']['source'], docname)
             keys = get_metadata(docpath)
+
             # To track changes in a document, hashes for metadata and content are created.
             # Comparing them with those in the cache, KB4IT determines if a document must be
             # compiled again. Very useful to reduce the compilation time.
 
-            # Get Document Content and Metadata Hash
+            # Get Document Content and Metadata Hashes
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
             self.kbdict_new['document'][docname]['Timestamp'] = timestamp

@@ -3,7 +3,7 @@
 ++++
     <!-- KEY_PAGE.tpl -->
     <!-- Tabs header :: START-->
-    <ul uk-tab>
+    <ul class="uk-flex-center" uk-tab>
         <li><a href="#">Filter</a></li>
         <li><a href="#">Cloud</a></li>
         <li><a href="#">Stats</a></li>

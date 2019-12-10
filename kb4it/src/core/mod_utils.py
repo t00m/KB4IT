@@ -189,7 +189,7 @@ def apply_transformations(source):
     content = content.replace(template('SECT3_OLD'), template('SECT3_NEW'))
     content = content.replace(template('SECT4_OLD'), template('SECT4_NEW'))
     content = content.replace(template('SECTIONBODY_OLD'), template('SECTIONBODY_NEW'))
-    content = content.replace(template('H1_OLD'), template('H1_NEW'))
+    # ~ content = content.replace(template('H1_OLD'), template('H1_NEW'))
     content = content.replace(template('H2_OLD'), template('H2_NEW'))
     content = content.replace(template('H3_OLD'), template('H3_NEW'))
     content = content.replace(template('H4_OLD'), template('H4_NEW'))
@@ -255,7 +255,7 @@ def job_done(future):
         htmldoc = adoc.replace('.adoc', '.html')
         if os.path.exists(htmldoc):
             adoc_title = open(adoc).readlines()[0]
-            title = "<h1>%s</h1>\n" % adoc_title[2:-1]
+            title = """<h1 class="uk-heading-small uk-text-center">%s</h1>\n""" % adoc_title[2:-1]
             htmldoctmp = "%s.tmp" % htmldoc
             shutil.move(htmldoc, htmldoctmp)
             source = open(htmldoctmp, 'r').read()
