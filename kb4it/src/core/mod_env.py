@@ -59,6 +59,9 @@ VERSION = open(os.path.join(GPATH['APPDATA'], 'VERSION'), 'r').read()
 
 # App Info
 APP['name'] = "Knowledge Base For IT"
+APP['description'] = "KB4IT is a static website generator based on \
+                      Asciidoctor sources mainly for technical \
+                      documentation purposes."
 APP['license'] = "The code is licensed under the terms of the  GPL v3\n\
                   so you're free to grab, extend, improve and fork the \
                   code\nas you want"

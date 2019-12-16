@@ -17,7 +17,7 @@ import tempfile
 import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH
+from kb4it.src.core.mod_env import LPATH, GPATH, APP
 from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import valid_filename, load_current_kbdict
@@ -41,7 +41,7 @@ class Application(Service):
 
         # Get params from command line
         self.parameters = self.app.get_params()
-
+        self.log.debug(self.app.get_params())
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
@@ -121,7 +121,8 @@ class Application(Service):
         if not doc_about:
             tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
             with open(tmp_about, 'w') as fabout:
-                fabout.write(template('PAGE_ABOUT'))
+                page_about = template('PAGE_ABOUT')
+                fabout.write(page_about % APP['version'])
                 self.log.info("\t\tAdded missing 'about.adoc' document")
 
         if not doc_help:
@@ -510,4 +511,4 @@ class Application(Service):
 
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
-        self.log.info("%s/index.html", os.path.abspath(self.runtime['dir']['target']))
+        self.log.info("sensible-browser %s/index.html", os.path.abspath(self.runtime['dir']['target']))
