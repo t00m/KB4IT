@@ -378,7 +378,7 @@ class Application(Service):
                 jobs.append(job)
                 num = num + 1
             self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
-            self.log.info("\t\t0% done")
+            self.log.info("\t\t 0% done")
             for job in jobs:
                 adoc, res, jobid = job.result()
                 self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))

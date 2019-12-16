@@ -11,7 +11,7 @@ import operator
 from kb4it.src.core.mod_srv import Service
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
-HEADER_KEYS = ['Author', 'Category', 'Scope', 'Status', 'Team', 'Priority']
+HEADER_KEYS = ['Author', 'Category', 'Scope']
 IGNORE_KEYS = HEADER_KEYS + ['Title', 'Timestamp']
 
 

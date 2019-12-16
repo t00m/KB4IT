@@ -291,9 +291,7 @@ class Builder(Service):
 
             METADATA_SECTION_BODY = template('METADATA_SECTION_BODY')
             html += METADATA_SECTION_BODY % (get_labels(author), get_labels(category), \
-                                            get_labels(scope), get_labels(team), \
-                                            get_labels(status), get_labels(priority), \
-                                            get_labels(tags))
+                                            get_labels(scope))
 
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
