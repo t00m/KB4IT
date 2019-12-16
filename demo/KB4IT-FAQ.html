@@ -11,45 +11,85 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
-<div uk-grid>
-    <!-- LEFT MENU :: START -->
-    <div id="kb4it-menu" class=" uk-card-default uk-width-1-5@m uk-padding-small" style="border-right:1px solid transparent;">
-        <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
-            <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
-                <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
-                    <div class="uk-navbar-left">
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
-                        </li>
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-link-heading" href="help.html"><span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
-                        </li>
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-link-heading" href="about.html"><span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
-                        </li>
-                    </div>
-                </nav>
+<div>
+<div id="container-1" class="uk-container uk-container-center">
+    <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left">
+                <ul class="uk-navbar-nav">
+                    <li class="uk-link-toggle uk-text-bolder">
+                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    </li>
+                    <li>
+                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
             </div>
-            <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
-                <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
-<li class="uk-nav-header uk-padding-small uk-padding-remove-bottom uk-text-bold">Contents</li>
+            <div class="uk-navbar-center">
+                <ul class="uk-navbar-nav">
+                    <!-- MENU CONTENTS :: START -->
+                            <li>
+                                <a class="uk-link-toggle uk-text-bolder" href="#">Contents</a>
+                                <div class="uk-navbar-dropdown">
+                                    <ul class="uk-nav uk-navbar-dropdown-nav">
 <ul class="uk-nav uk-nav-default">
 <li class="uk-link-toggle"><a class="uk-link-heading" href="#_metadata">Metadata</a></li>
 <li class="uk-link-toggle"><a class="uk-link-heading" href="#_questions_answers">Questions &amp; Answers</a></li>
 </ul>
+                                    </ul>
+                                </div>
+                            </li>
+                    <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
-        </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav">
+                    <li>
+                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="help.html">Help</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="about.html">About</a>
+                                </li>
+                                <!--
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                </li>
+                                -->
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
     </div>
-    <!-- LEFT MENU :: END -->
-    <!-- CONTENTS (Document) :: START -->
-    <div class="uk-width-expand@m">
-        <div class="uk-card uk-card-body">
-<h1>KB4IT FAQ</h1>
+</div>
+<div class="uk-container uk-container-center">
+<h1 class="uk-heading-small uk-text-center">KB4IT FAQ</h1>
 <div hidden>
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -71,61 +111,39 @@
                 <td><a class="uk-link-toggle" href="Author.html"><div class="uk-text-bold uk-text-secondary">Author</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Author_Tomás_Vírseda.html">
-        <span class="uk-text-bold uk-padding-small">Tomás Vírseda</span>
+        <span class="uk-padding-small">Tomás Vírseda</span>
     </a>
 </div>
 </div></td>
                 <td><a class="uk-link-toggle" href="Category.html"><div class="uk-text-bold uk-text-secondary">Category</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Category_Note.html">
-        <span class="uk-text-bold uk-padding-small">Note</span>
+        <span class="uk-padding-small">Note</span>
     </a>
 </div>
 </div></td>
                 <td><a class="uk-link-toggle" href="Scope.html"><div class="uk-text-bold uk-text-secondary">Scope</div></a></td>
                 <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Scope_Development.html">
-        <span class="uk-text-bold uk-padding-small">Development</span>
+        <span class="uk-padding-small">Development</span>
     </a>
 </div>
 </div></td>
               </tr>
-              <tr>
-                <td><a class="uk-link-toggle" href="Team.html"><div class="uk-text-bold uk-text-secondary">Team</div></a></td>
-                <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Team_t00mlabs.html">
-        <span class="uk-text-bold uk-padding-small">t00mlabs</span>
-    </a>
-</div>
-</div></td>
-                <td><a class="uk-link-toggle" href="Status.html"><div class="uk-text-bold uk-text-secondary">Status</div></a></td>
-                <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Status_Draft.html">
-        <span class="uk-text-bold uk-padding-small">Draft</span>
-    </a>
-</div>
-</div></td>
-                <td><a class="uk-link-toggle" href="Priority.html"><div class="uk-text-bold uk-text-secondary">Priority</div></a></td>
-                <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+              <tr><td colspan="6"><hr></td></tr>
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Priority.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Priority</div>
+                </a>
+            </td>
+            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Priority_Normal.html">
-        <span class="uk-text-bold uk-padding-small">Normal</span>
+        <span class="uk-padding-small">Normal</span>
     </a>
 </div>
 </div></td>
-              </tr>
-              <tr>
-                <td>
-                    <a class="uk-link-toggle" href="Tag.html"><div class="uk-text-bold uk-text-secondary">Tags</div></a>
-                </td>
-                <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"></div></td>
-              </tr>
-              <tr><td colspan="6"><hr></td></tr>
-<!--
-              <tr>
-                  <td colspan="6"><div class="uk-flex uk-flex-row uk-flex-wrap"><span class="uk-text-secondary uk-text-meta">Modified on&nbsp;</span><span class="uk-text-meta">s</span></div></td>
-              </tr>
-              <tr><td colspan="6"><hr></td></tr>
--->
+        </tr>
         <tr>
             <td>
                 <a class="uk-link-text" href="Product.html">
@@ -134,7 +152,33 @@
             </td>
             <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Product_KB4IT.html">
-        <span class="uk-text-bold uk-padding-small">KB4IT</span>
+        <span class="uk-padding-small">KB4IT</span>
+    </a>
+</div>
+</div></td>
+        </tr>
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Status.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Status</div>
+                </a>
+            </td>
+            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+    <a class="uk-link-heading" href="Status_Draft.html">
+        <span class="uk-padding-small">Draft</span>
+    </a>
+</div>
+</div></td>
+        </tr>
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Team.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Team</div>
+                </a>
+            </td>
+            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+    <a class="uk-link-heading" href="Team_t00mlabs.html">
+        <span class="uk-padding-small">t00mlabs</span>
     </a>
 </div>
 </div></td>
@@ -149,8 +193,8 @@
                                 <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                     <div class="uk-padding-large uk-background-muted">
                                         <div class="uk-text-lead">Asciidoc Source</div>
-                                        <div class="uk-text-meta">KB4IT-FAQ.adoc</div>
-                                        <pre>= KB4IT FAQ
+                                        <div class="uk-text-meta">KB4IT-FAQ.adoc&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
+                                        <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">= KB4IT FAQ
 :Author:        Tomás Vírseda
 :Category:      Note
 :Scope:         Development
@@ -166,7 +210,7 @@
 [qanda]
 What is Asciidoctor?::
   Asciidoctor is a fast, open source text processor and publishing toolchain for converting AsciiDoc content to HTML5, DocBook, PDF, and other formats.
-</pre>
+</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -217,6 +261,15 @@ input.addEventListener( 'keyup', function(event)
 
     filter.click();
 });
+</script>
+<script>
+function copyToClipboard() {
+  var copyText = document.getElementById("source-code");
+  copyText.select();
+  copyText.setSelectionRange(0, 99999)
+  document.execCommand("copy");
+  alert("Text copied to clipboard");
+}
 </script>
 <!-- GRID LAYOUT :: END -->
 </body>
