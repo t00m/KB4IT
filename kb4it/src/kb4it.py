@@ -11,12 +11,14 @@ KB4IT module. Entry point.
 """
 
 import os
+import sys
 import argparse
 from kb4it.src.core.mod_env import APP, LPATH, GPATH
 from kb4it.src.core.mod_log import get_logger
 from kb4it.src.services.srv_app import Application
 from kb4it.src.services.srv_db import KB4ITDB
 from kb4it.src.services.srv_builder import Builder
+from kb4it.src.services.srv_rss import RSS
 
 
 class KB4IT:
@@ -33,8 +35,19 @@ class KB4IT:
         """Initialize KB4IT class."""
         self.params = params
         self.setup_logging(params.LOGLEVEL)
+        self.check_params()
         self.setup_services()
         self.setup_environment()
+
+    def check_params(self):
+        source = os.path.abspath(self.params.SOURCE_PATH)
+        target = os.path.abspath(self.params.TARGET_PATH)
+        if source == target:
+            self.log.error("Error. Source and target paths are the same.")
+            self.log.error("Source path: %s", source)
+            self.log.error("Target path: %s", target)
+            self.log.error("Check, please!")
+            sys.exit(-1)
 
     def get_params(self):
         """Return parametres."""
@@ -66,6 +79,7 @@ class KB4IT:
             services = {
                 'DB': KB4ITDB(),
                 'App': Application(),
+                'RSS': RSS(),
                 'Builder': Builder(),
             }
             for name in services:
@@ -135,12 +149,14 @@ class KB4IT:
 def main():
     """Execute application."""
     parser = argparse.ArgumentParser(description='KB4IT %s by Tomás Vírseda' % APP['version'])
+
+    parser.add_argument('-f', '--force', action='store_true', dest='FORCE', help='Force a clean compilation')
     parser.add_argument('-sp', '--source-path', dest='SOURCE_PATH',
                         help='Path for Asciidoc source files.',
                         required=True)
     parser.add_argument('-tp', '--target-path', dest='TARGET_PATH',
                         help='Path for output files')
-    parser.add_argument('-log', '--log-level', dest='LOGLEVEL',
+    parser.add_argument('-l', '--log', dest='LOGLEVEL',
                         help='Increase output verbosity',
                         action='store', default='INFO')
     parser.add_argument('--version', action='version',

@@ -1,1 +1,1 @@
-<a class="uk-link-heading" href="%s.html">%s</a>
+<a class="uk-link-heading uk-text-meta" href="%s.html">%s</a>
