@@ -11,6 +11,7 @@ KB4IT module. Entry point.
 """
 
 import os
+import sys
 import argparse
 from kb4it.src.core.mod_env import APP, LPATH, GPATH
 from kb4it.src.core.mod_log import get_logger
@@ -34,8 +35,19 @@ class KB4IT:
         """Initialize KB4IT class."""
         self.params = params
         self.setup_logging(params.LOGLEVEL)
+        self.check_params()
         self.setup_services()
         self.setup_environment()
+
+    def check_params(self):
+        source = os.path.abspath(self.params.SOURCE_PATH)
+        target = os.path.abspath(self.params.TARGET_PATH)
+        if source == target:
+            self.log.error("Error. Source and target paths are the same.")
+            self.log.error("Source path: %s", source)
+            self.log.error("Target path: %s", target)
+            self.log.error("Check, please!")
+            sys.exit(-1)
 
     def get_params(self):
         """Return parametres."""
