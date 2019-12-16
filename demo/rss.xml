@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+
+<channel>
+    <title>KB4IT</title>
+    <link>index.html</link>
+    <language>en</language>
+    <description>RSS Feed for KB4IT</description>
+    <pubDate>Mon, 16 Dec 2019 22:48:16 GMT</pubDate>
+<item>
+    <title>Solaris for SAP Basis Admins</title>
+    <guid>SAP-BC-UNIX-SOLARIS.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:48:03 GMT</pubDate>
+</item>
+<item>
+    <title>Test 01: TOC Test</title>
+    <guid>test01.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:46:27 GMT</pubDate>
+</item>
+<item>
+    <title>Test 02: Admonitions</title>
+    <guid>test02.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:46:27 GMT</pubDate>
+</item>
+<item>
+    <title>Test 03: Custom key without values</title>
+    <guid>test03.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:46:27 GMT</pubDate>
+</item>
+<item>
+    <title>Test 06: Custom author icons</title>
+    <guid>test06.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:46:27 GMT</pubDate>
+</item>
+<item>
+    <title>Test 05: Filenames with non-ascii characters</title>
+    <guid>ŧestø5.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:46:27 GMT</pubDate>
+</item>
+<item>
+    <title>KB4IT FAQ</title>
+    <guid>KB4IT-FAQ.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Mon, 16 Dec 2019 22:44:50 GMT</pubDate>
+</item>
+<item>
+    <title>KB4IT Roadmap</title>
+    <guid>KB4IT-ROADMAP.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Fri, 15 Nov 2019 22:35:18 GMT</pubDate>
+</item>
+<item>
+    <title>How to stop a DB2 database</title>
+    <guid>SAP-BC-DB2-STOP-DATABASE.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Fri, 15 Nov 2019 21:26:20 GMT</pubDate>
+</item>
+<item>
+    <title>Get SAP status from command line</title>
+    <guid>SAP-BC-GET-STATUS.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Fri, 15 Nov 2019 21:26:20 GMT</pubDate>
+</item>
+<item>
+    <title>Extend Oracle tablespaces</title>
+    <guid>SAP-BC-ORACLE-EXTEND-TABLESPACE.adoc</guid>
+    <link></link>
+    <description></description>
+    <pubDate>Fri, 15 Nov 2019 21:26:20 GMT</pubDate>
+</item>
+</channel>
+</rss>

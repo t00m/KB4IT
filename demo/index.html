@@ -11,61 +11,78 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
-<div uk-grid>
-    <!-- LEFT MENU :: START -->
-    <div id="kb4it-menu" class=" uk-card-default uk-width-1-5@m uk-padding-small" style="border-right:1px solid transparent;">
-        <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
-            <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
-                <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
-                    <div class="uk-navbar-left">
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
-                        </li>
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-link-heading" href="help.html"><span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
-                        </li>
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-link-heading" href="about.html"><span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
-                        </li>
-                    </div>
-                </nav>
-            </div>
-            <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
-                <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
-
+<div>
+<div id="container-1" class="uk-container uk-container-center">
+    <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left">
+                <ul class="uk-navbar-nav">
+                    <li class="uk-link-toggle uk-text-bolder">
+                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    </li>
+                    <li>
+                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                 </ul>
             </div>
-        </div>
+            <div class="uk-navbar-center">
+                <ul class="uk-navbar-nav">
+                    <!-- MENU CONTENTS :: START -->
+                            <!-- <li><a href="#">Contents</a></li> -->
+                    <!-- MENU CONTENTS :: END -->
+                </ul>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav">
+                    <li>
+                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="help.html">Help</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="about.html">About</a>
+                                </li>
+                                <!--
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                </li>
+                                -->
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
     </div>
-    <!-- LEFT MENU :: END -->
-    <!-- CONTENTS (Document) :: START -->
-    <div class="uk-width-expand@m">
-        <div class="uk-card uk-card-body">
-<h1>Repository Index</h1>
-<!--
-    <article class="uk-comment">
-        <header class="uk-comment-header uk-grid-medium uk-flex-middle" uk-grid>
-            <div class="uk-width-auto">
-                <img class="uk-comment-avatar" src="resources/images/author_unknown.png" width="80" height="80" alt="">
-            </div>
-            <div class="uk-width-expand">
-                <h4 class="uk-comment-title uk-margin-remove"><a class="uk-link-reset" href="#">KB4IT</a></h4>
-                <ul class="uk-comment-meta uk-subnav uk-subnav-divider uk-margin-remove-top">
-                    <li>Last update: 2019/11/15 21:55</li>
-                </ul>
-            </div>
-        </header>
--->
-<!--
-        <div class="uk-comment-body">
-            <p>Welcome to your documentation repository</p>
-        </div>
-    </article>
--->
+</div>
+<div class="uk-container uk-container-center">
+<h1 class="uk-heading-small uk-text-center"></h1>
+    <div class="uk-card uk-border-rounded uk-card-body uk-padding-remove">
+        <span class="uk-align-right uk-text-meta">Last update on Mon, Dec 16, 2019 at 22:48</span>
+    </div>
     <ul uk-accordion>
         <li class="uk-open">
             <a class="uk-accordion-title" href="#">Core properties</a>
@@ -90,8 +107,8 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Davor_Barišić.html"><span style="font-size:36pt;">Davor Barišić</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Nora_Hobbs.html"><span style="font-size:72pt;">Nora Hobbs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Davor_Barišić.html"><span style="font-size:18pt;">Davor Barišić</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Nora_Hobbs.html"><span style="font-size:36pt;">Nora Hobbs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
                     <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Tomás_Vírseda.html"><span style="font-size:72pt;">Tomás Vírseda</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
@@ -118,30 +135,7 @@
             <div uk-grid="parallax: 150">
                     <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Note.html"><span style="font-size:72pt;">Note</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
                     <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Procedure.html"><span style="font-size:36pt;">Procedure</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Priority" uk-toggle><h5>Priority</h5></a>
-            <div id="modal-full-Priority" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Priority.html">Priority</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Normal.html"><span style="font-size:36pt;">Normal</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Testing.html"><span style="font-size:72pt;">Testing</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -165,62 +159,10 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Database_Administration.html"><span style="font-size:72pt;">Database Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Database_Administration.html"><span style="font-size:36pt;">Database Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
                     <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Development.html"><span style="font-size:72pt;">Development</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_SAP_Administration.html"><span style="font-size:36pt;">SAP Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Unix_Administration.html"><span style="font-size:36pt;">Unix Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Status" uk-toggle><h5>Status</h5></a>
-            <div id="modal-full-Status" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Status.html">Status</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Status_Draft.html"><span style="font-size:72pt;">Draft</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Status_Released.html"><span style="font-size:72pt;">Released</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Team" uk-toggle><h5>Team</h5></a>
-            <div id="modal-full-Team" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Team.html">Team</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_DBA.html"><span style="font-size:72pt;">DBA</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_SAP.html"><span style="font-size:36pt;">SAP</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_t00mlabs.html"><span style="font-size:72pt;">t00mlabs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_Unix.html"><span style="font-size:36pt;">Unix</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_SAP_Administration.html"><span style="font-size:18pt;">SAP Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Unix_Administration.html"><span style="font-size:18pt;">Unix Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -262,23 +204,23 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_awk.html"><span style="font-size:36pt;">awk</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_brspace.html"><span style="font-size:36pt;">brspace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_brtools.html"><span style="font-size:36pt;">brtools</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2.html"><span style="font-size:36pt;">db2</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2admin.html"><span style="font-size:36pt;">db2admin</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2start.html"><span style="font-size:36pt;">db2start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2stop.html"><span style="font-size:36pt;">db2stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_grep.html"><span style="font-size:36pt;">grep</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_ipcs.html"><span style="font-size:36pt;">ipcs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_kill.html"><span style="font-size:36pt;">kill</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_print.html"><span style="font-size:36pt;">print</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_ps.html"><span style="font-size:36pt;">ps</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_sapcontrol.html"><span style="font-size:36pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_saphostctrl.html"><span style="font-size:36pt;">saphostctrl</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_sqlplus.html"><span style="font-size:36pt;">sqlplus</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_svcadm.html"><span style="font-size:36pt;">svcadm</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_svcs.html"><span style="font-size:36pt;">svcs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_awk.html"><span style="font-size:18pt;">awk</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_brspace.html"><span style="font-size:18pt;">brspace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_brtools.html"><span style="font-size:18pt;">brtools</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2.html"><span style="font-size:18pt;">db2</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2admin.html"><span style="font-size:18pt;">db2admin</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2start.html"><span style="font-size:18pt;">db2start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2stop.html"><span style="font-size:18pt;">db2stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_grep.html"><span style="font-size:18pt;">grep</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_ipcs.html"><span style="font-size:18pt;">ipcs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_kill.html"><span style="font-size:18pt;">kill</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_print.html"><span style="font-size:18pt;">print</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_ps.html"><span style="font-size:18pt;">ps</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_sapcontrol.html"><span style="font-size:18pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_saphostctrl.html"><span style="font-size:18pt;">saphostctrl</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_sqlplus.html"><span style="font-size:18pt;">sqlplus</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_svcadm.html"><span style="font-size:18pt;">svcadm</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_svcs.html"><span style="font-size:18pt;">svcs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -302,8 +244,33 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Database_DB2.html"><span style="font-size:36pt;">DB2</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Database_Oracle.html"><span style="font-size:36pt;">Oracle</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Database_DB2.html"><span style="font-size:18pt;">DB2</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Database_Oracle.html"><span style="font-size:18pt;">Oracle</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+
+            </div> <!-- WORDCLOUD.tpl :: END -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Button :: END -->
+    <div> <!-- Button :: START -->
+        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
+            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Priority" uk-toggle><h5>Priority</h5></a>
+            <div id="modal-full-Priority" class="uk-modal-container" uk-modal>
+                <div class="uk-modal-dialog" uk-overflow-auto>
+                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
+                    <div class="uk-modal-header uk-light uk-background-secondary">
+                        <h2 class="uk-modal-title"><a href="Priority.html">Priority</a></h2>
+                    </div>
+                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                        <div class="uk-padding-large">
+
+            <!-- WORDCLOUD.tpl :: START -->
+            <div uk-grid="parallax: 150">
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Low.html"><span style="font-size:72pt;">Low</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Normal.html"><span style="font-size:72pt;">Normal</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -328,8 +295,33 @@
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
                     <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_KB4IT.html"><span style="font-size:72pt;">KB4IT</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_SAP_Netweaver.html"><span style="font-size:36pt;">SAP Netweaver</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_Solaris.html"><span style="font-size:36pt;">Solaris</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_SAP_Netweaver.html"><span style="font-size:18pt;">SAP Netweaver</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_Solaris.html"><span style="font-size:18pt;">Solaris</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+
+            </div> <!-- WORDCLOUD.tpl :: END -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Button :: END -->
+    <div> <!-- Button :: START -->
+        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
+            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Status" uk-toggle><h5>Status</h5></a>
+            <div id="modal-full-Status" class="uk-modal-container" uk-modal>
+                <div class="uk-modal-dialog" uk-overflow-auto>
+                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
+                    <div class="uk-modal-header uk-light uk-background-secondary">
+                        <h2 class="uk-modal-title"><a href="Status.html">Status</a></h2>
+                    </div>
+                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                        <div class="uk-padding-large">
+
+            <!-- WORDCLOUD.tpl :: START -->
+            <div uk-grid="parallax: 150">
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Status_Draft.html"><span style="font-size:36pt;">Draft</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Status_Released.html"><span style="font-size:72pt;">Released</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -377,16 +369,43 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_datafile.html"><span style="font-size:36pt;">datafile</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_extend.html"><span style="font-size:36pt;">extend</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_network.html"><span style="font-size:36pt;">network</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_sapcontrol.html"><span style="font-size:36pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_services.html"><span style="font-size:36pt;">services</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_shell_scripting.html"><span style="font-size:36pt;">shell scripting</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_start.html"><span style="font-size:36pt;">start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_stop.html"><span style="font-size:36pt;">stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_system.html"><span style="font-size:36pt;">system</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_tablespace.html"><span style="font-size:36pt;">tablespace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_datafile.html"><span style="font-size:18pt;">datafile</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_extend.html"><span style="font-size:18pt;">extend</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_network.html"><span style="font-size:18pt;">network</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_sapcontrol.html"><span style="font-size:18pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_services.html"><span style="font-size:18pt;">services</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_shell_scripting.html"><span style="font-size:18pt;">shell scripting</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_start.html"><span style="font-size:18pt;">start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_stop.html"><span style="font-size:18pt;">stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_system.html"><span style="font-size:18pt;">system</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_tablespace.html"><span style="font-size:18pt;">tablespace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+
+            </div> <!-- WORDCLOUD.tpl :: END -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Button :: END -->
+    <div> <!-- Button :: START -->
+        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
+            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Team" uk-toggle><h5>Team</h5></a>
+            <div id="modal-full-Team" class="uk-modal-container" uk-modal>
+                <div class="uk-modal-dialog" uk-overflow-auto>
+                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
+                    <div class="uk-modal-header uk-light uk-background-secondary">
+                        <h2 class="uk-modal-title"><a href="Team.html">Team</a></h2>
+                    </div>
+                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                        <div class="uk-padding-large">
+
+            <!-- WORDCLOUD.tpl :: START -->
+            <div uk-grid="parallax: 150">
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_DBA.html"><span style="font-size:36pt;">DBA</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_SAP.html"><span style="font-size:18pt;">SAP</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_t00mlabs.html"><span style="font-size:72pt;">t00mlabs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
+                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_Unix.html"><span style="font-size:18pt;">Unix</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
 
             </div> <!-- WORDCLOUD.tpl :: END -->
 
@@ -418,7 +437,7 @@
         <div class="uk-width-expand uk-text-bold" uk-leader>
             <a class="uk-link-heading" href="all.html">Documents</a>
         </div>
-        <div>6</div> <!-- Num of documents -->
+        <div>11</div> <!-- Num of documents -->
     </div>
     <div class="uk-grid-small" uk-grid>
         <div class="uk-width-expand uk-text-bold" uk-leader>Properties</div>
@@ -433,7 +452,7 @@
     <div class="uk-grid-small" uk-grid>
         <div class="uk-width-1-6@m"></div>
         <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Category.html">Category</a></div>
-        <div><a href="Category.html">2</a></div>
+        <div><a href="Category.html">3</a></div>
     </div>
     <div class="uk-grid-small" uk-grid>
         <div class="uk-width-1-6@m"></div>
@@ -448,7 +467,7 @@
     <div class="uk-grid-small" uk-grid>
         <div class="uk-width-1-6@m"></div>
         <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Priority.html">Priority</a></div>
-        <div><a href="Priority.html">1</a></div>
+        <div><a href="Priority.html">2</a></div>
     </div>
     <div class="uk-grid-small" uk-grid>
         <div class="uk-width-1-6@m"></div>
@@ -516,6 +535,15 @@ input.addEventListener( 'keyup', function(event)
 
     filter.click();
 });
+</script>
+<script>
+function copyToClipboard() {
+  var copyText = document.getElementById("source-code");
+  copyText.select();
+  copyText.setSelectionRange(0, 99999)
+  document.execCommand("copy");
+  alert("Text copied to clipboard");
+}
 </script>
 <!-- GRID LAYOUT :: END -->
 </body>
