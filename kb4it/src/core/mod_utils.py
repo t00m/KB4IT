@@ -189,7 +189,7 @@ def apply_transformations(source):
     content = content.replace(template('SECT3_OLD'), template('SECT3_NEW'))
     content = content.replace(template('SECT4_OLD'), template('SECT4_NEW'))
     content = content.replace(template('SECTIONBODY_OLD'), template('SECTIONBODY_NEW'))
-    content = content.replace(template('H1_OLD'), template('H1_NEW'))
+    # ~ content = content.replace(template('H1_OLD'), template('H1_NEW'))
     content = content.replace(template('H2_OLD'), template('H2_NEW'))
     content = content.replace(template('H3_OLD'), template('H3_NEW'))
     content = content.replace(template('H4_OLD'), template('H4_NEW'))
@@ -237,7 +237,7 @@ def extract_toc(source):
                 line = line.replace("sectlevel3", "uk-nav-sub")
                 line = line.replace("sectlevel4", "uk-nav-sub")
             items.append(line)
-        items.insert(0, template('TOC_HEADER_TITLE'))
+        # ~ items.insert(0, template('TOC_HEADER_TITLE'))
         toc = '\n'.join(items)
     return toc
 
@@ -255,7 +255,7 @@ def job_done(future):
         htmldoc = adoc.replace('.adoc', '.html')
         if os.path.exists(htmldoc):
             adoc_title = open(adoc).readlines()[0]
-            title = "<h1>%s</h1>\n" % adoc_title[2:-1]
+            title = """<h1 class="uk-heading-small uk-text-center">%s</h1>\n""" % adoc_title[2:-1]
             htmldoctmp = "%s.tmp" % htmldoc
             shutil.move(htmldoc, htmldoctmp)
             source = open(htmldoctmp, 'r').read()
@@ -271,7 +271,12 @@ def job_done(future):
                 pass
 
             with open(htmldoc, 'w') as fhtm:
-                fhtm.write(HTML_HEADER % toc)
+                len_toc = len(toc)
+                if len_toc > 0:
+                    TOC = template('MENU_CONTENTS_ENABLED') % toc
+                else:
+                    TOC = template('MENU_CONTENTS_DISABLED')
+                fhtm.write(HTML_HEADER % TOC)
                 fhtm.write(title)
                 fhtm.write(content)
                 fhtm.write(HTML_FOOTER)
@@ -315,7 +320,7 @@ def get_metadata(docpath):
         # read the rest of properties until watermark
         for n in range(1, len(line)):
             if line[n].startswith(':'):
-                key = line[n][1:line[n].rfind(':')]
+                key = line[n][1:line[n].find(':', 1)]
                 alist = nosb(line[n][len(key)+2:-1].split(','))
                 props[key] = alist
             elif line[n].startswith(EOHMARK):
@@ -379,16 +384,24 @@ def last_dt_modification(filename):
     return dt
 
 def last_ts_modification(filename):
-    """Return last modification human-readable datetime of a file """
+    """Return last modification human-readable timestamp of a file """
     t = os.path.getmtime(filename)
     d = datetime.fromtimestamp(t)
     return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
 
+def get_human_datetime(dt):
+    """Return datetime for humans."""
+    return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
+
+def last_ts_rss(date):
+    """ Converts a datetime into an RFC 2822 formatted date."""
+    return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday()], date.day, ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][date.month-1], date.year, date.hour, date.minute, date.second)
+
 def last_modification_date(filename):
-    """Return last modification human-readable datetime of a file """
+    """Return last modification human-readable timestamp of a file """
     t = os.path.getmtime(filename)
     d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%Y/%m/%d")
+    return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
 
 def last_modification(filename):
     """Return last modification human-readable datetime of a file """

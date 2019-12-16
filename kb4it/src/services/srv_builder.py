@@ -10,11 +10,12 @@ Builder service.
 """
 
 import os
-# ~ import datetime as dt
+import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.services.srv_db import HEADER_KEYS
 from kb4it.src.core.mod_utils import template, valid_filename, get_labels
+from kb4it.src.core.mod_utils import last_ts_rss, get_human_datetime
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
 from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.core.mod_utils import last_modification
@@ -31,7 +32,7 @@ class Builder(Service):
     def initialize(self):
         """Initialize Builder class."""
         self.get_services()
-        self.tmpdir = self.srvapp.get_temp_dir()
+        self.tmpdir = self.srvapp.get_temp_path()
 
     def get_services(self):
         """Get services."""
@@ -117,6 +118,8 @@ class Builder(Service):
         mtime = now.strftime("%Y/%m/%d %H:%M")
         numdocs = self.srvapp.get_numdocs()
 
+        msgs = self.get_messages()
+
         # Core Modal buttons
         core_buttons = ''
         for key in sorted(HEADER_KEYS, key=lambda y: y.lower()):
@@ -147,9 +150,9 @@ class Builder(Service):
             leader_items += item % (valid_filename(key), key, valid_filename(key), len(values))
         tab_stats = stats % (numdocs, numkeys, leader_items)
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
-            content = TPL_INDEX % (mtime, core_buttons, custom_buttons, tab_stats)
+            findex.write(msgs)
+            content = TPL_INDEX % (get_human_datetime(now), core_buttons, custom_buttons, tab_stats)
             findex.write(content)
-
 
     def create_all_keys_page(self):
         """Missing method docstring."""
@@ -165,81 +168,54 @@ class Builder(Service):
                     fkeys.write("\n++++\n%s\n++++\n" % cloud)
 
 
-    # ~ def create_recents_page(self):
-        # ~ """Create recents page.
+    def create_recents_page(self):
+        """Create recents page."""
+        recents = template('RECENTS')
+        filterrow = template('FILTER_BODY_ROW')
+        docname = "%s/%s" % (self.tmpdir, 'recents.adoc')
 
-        # ~ In order this page makes sense, this script should be
-        # ~ executed periodically from crontab.
-        # ~ """
-        # ~ docname = "%s/%s" % (self.tmpdir, 'recents.adoc')
-        # ~ with open(docname, 'w') as frec:
-            # ~ relset = set()
-            # ~ today = datetime.now()
-            # ~ lastweek = today - dt.timedelta(weeks=1)
-            # ~ lastmonth = today - dt.timedelta(days=31)
-            # ~ strtoday = "%d-%02d-%02d" % (today.year, today.month, today.day)
+        now = datetime.now()
+        strtoday = "%d-%02d-%02d" % (now.year, now.month, now.day)
+        lastday = now - dt.timedelta(days=1)
+        lastweek = now - dt.timedelta(weeks=1)
+        lastmonth = now - dt.timedelta(days=30)
+        lastyear = now - dt.timedelta(days=365)
 
-            # ~ # TODAY
-            # ~ docs = self.srvdtb.subjects(RDF['type'], URIRef(KB4IT['Document']))
-            # ~ for doc in docs:
-                # ~ revdate = self.srvdtb.value(doc, 'Revdate')
-                # ~ if revdate == Literal(strtoday):
-                    # ~ relset.add(doc)
+        rows = ''
+        for doc in self.srvdtb.get_documents():
+            title = self.srvdtb.get_values(doc, 'Title')[0]
+            datafilter = ''
+            timestamp = self.srvdtb.get_values(doc, 'Timestamp')
+            # ~ adate = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
+            if timestamp > lastday:
+                # ~ self.log.debug("Today: %s -> %s", timestamp, docname)
+                datafilter += 'Today'
 
-            # ~ page = '= Last documents added\n\n'
-            # ~ page += '== Today (%d)\n\n' % len(relset)
-            # ~ page += """[options="header", width="100%", cols="60%,20%,20%"]\n"""
-            # ~ page += "|===\n"
-            # ~ page += "|Document |Category | Status\n"
+            if timestamp > lastweek:
+                # ~ self.log.debug(" Week: %s -> %s", timestamp, docname)
+                datafilter += 'Week'
 
-            # ~ for doc in relset:
-                # ~ title = self.srvdtb.value(doc, 'Title'])
-                # ~ category = self.srvdtb.value(doc, 'Category'])
-                # ~ status = self.srvdtb.value(doc, 'Status'])
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(title))
-                # ~ page += "|<<Category_%s.adoc#,%s>>\n" % (category, quote(category))
-                # ~ page += "|<<Status_%s.adoc#,%s>>\n" % (status, status)
+            if timestamp > lastmonth:
+                # ~ self.log.debug("Month: %s -> %s", timestamp, docname)
+                datafilter += 'Month'
+            datatitle = valid_filename(title)
+            card = self.get_doc_card(doc)
+            rows += filterrow % (datatitle, 'recent', datafilter, card)
+        with open(docname, 'w') as fcal:
+            fcal.write(recents % rows)
 
-            # ~ page += "|==="
+    def create_bookmarks_page(self):
+        page = template('BOOKMARKS')
+        docname = "%s/%s" % (self.tmpdir, 'bookmarks.adoc')
+        bookmarks = ''
+        for doc in self.srvdtb.get_database():
+            bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
+            if bookmark == 'Yes' or bookmark == 'True':
+                card = self.get_doc_card(doc)
+                bookmarks += "<li>%s</li>\n" % card
+        with open(docname, 'w') as fbk:
+            fbk.write(page % bookmarks)
 
-            # ~ # WEEK
-            # ~ for doc in docs:
-                # ~ revdate = datetime.strptime(self.srvdtb.value(doc, 'Revdate']), "%Y-%m-%d")
-                # ~ if revdate <= today and revdate >= lastweek:
-                    # ~ relset.add(doc)
-
-            # ~ page += '\n\n== This week (%d)\n\n' %  len(relset)
-            # ~ page += """[options="header", width="100%", cols="60%,20%,20%"]\n"""
-            # ~ page += "|===\n"
-            # ~ page += "|Document |Category | Status\n"
-            # ~ for doc in relset:
-                # ~ title = self.srvdtb.value(doc, 'Title'])
-                # ~ category = self.srvdtb.value(doc, 'Category'])
-                # ~ status = self.srvdtb.value(doc, 'Status'])
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(title))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(category))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(status))
-            # ~ page += "|==="
-
-            # ~ # MONTH
-            # ~ for doc in docs:
-                # ~ revdate = datetime.strptime(self.srvdtb.value(doc, 'Revdate']), "%Y-%m-%d")
-                # ~ if revdate <= today and revdate >= lastmonth:
-                    # ~ relset.add(doc)
-
-            # ~ page += '\n\n== This month (%d)\n\n' % len(relset)
-            # ~ page += """[options="header", width="100%", cols="60%,20%,20%"]\n"""
-            # ~ page += "|===\n"
-            # ~ page += "|Document |Category | Status\n"
-            # ~ for doc in relset:
-                # ~ title = self.srvdtb.value(doc, 'Title'])
-                # ~ category = self.srvdtb.value(doc, 'Category'])
-                # ~ status = self.srvdtb.value(doc, 'Status'])
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(title))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(category))
-                # ~ page += "|<<%s#,%s>>\n" % (doc, quote(status))
-            # ~ page += "|===\n\n"
-            # ~ frec.write(page)
 
     def create_key_page(self, key, values):
         """Missing method docstring."""
@@ -315,18 +291,18 @@ class Builder(Service):
 
             METADATA_SECTION_BODY = template('METADATA_SECTION_BODY')
             html += METADATA_SECTION_BODY % (get_labels(author), get_labels(category), \
-                                            get_labels(scope), get_labels(team), \
-                                            get_labels(status), get_labels(priority), \
-                                            get_labels(tags))
+                                            get_labels(scope))
 
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
             for key in custom_keys:
-                values = self.srvdtb.get_html_values_from_key(doc, key)
-                labels = get_labels(values)
-                row_custom_prop = template('METADATA_ROW_CUSTOM_PROPERTY')
-                custom_props += row_custom_prop % (valid_filename(key), key, labels)
-
+                try:
+                    values = self.srvdtb.get_html_values_from_key(doc, key)
+                    labels = get_labels(values)
+                    row_custom_prop = template('METADATA_ROW_CUSTOM_PROPERTY')
+                    custom_props += row_custom_prop % (valid_filename(key), key, labels)
+                except Exception as error:
+                    self.log.error("Key[%s]: %s", key, error)
             num_custom_props = len(custom_props)
             if  num_custom_props > 0:
                 html += custom_props
@@ -334,8 +310,9 @@ class Builder(Service):
             METADATA_SECTION_FOOTER = template('METADATA_SECTION_FOOTER')
             source_dir = self.srvapp.get_source_path()
             source_path = os.path.join(source_dir, doc)
+            source_code = open(source_path, 'r').read()
             html += METADATA_SECTION_FOOTER % (doc, \
-                                               open(source_path, 'r').read())
+                                               source_code)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
             self.log.error("\t\t%s", msgerror)
@@ -361,6 +338,44 @@ class Builder(Service):
             # ~ tpl = template('PAGE_SEARCH')
             # ~ fsp.write(tpl % html)
 
+    def get_messages(self):
+        msgs = ''
+        msg = template('MESSAGE')
+        found = False
+        for doc in self.srvdtb.get_documents():
+            category = self.srvdtb.get_values(doc, 'Category')[0]
+            if category == 'Message':
+                found = True
+                break
+
+        if found:
+            return msgs + msg
+        else:
+            return ''
+
+
+    def get_doc_card_blogpost(self, doc):
+        source_dir = self.srvapp.get_source_path()
+        DOC_CARD = template('DOC_CARD_BLOGPOST')
+        DOC_CARD_LINK = template('DOC_CARD_LINK')
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
+        author = self.srvdtb.get_values(doc, 'Author')[0]
+        authors = ', '.join(self.srvdtb.get_values(doc, 'Author'))
+        icon_path = get_author_icon(source_dir, author)
+        if icon_path == "resources/images/authors/author_unknown.png":
+            self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
+        link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
+        link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
+        link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+        link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
+        link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
+        link_image = "Author_%s.html" % valid_filename(author)
+        timestamp = self.srvdtb.get_doc_timestamp(doc)
+        human_ts = get_human_datetime(timestamp)
+        return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
 
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()
@@ -371,6 +386,7 @@ class Builder(Service):
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
         author = self.srvdtb.get_values(doc, 'Author')[0]
+        authors = ', '.join(self.srvdtb.get_values(doc, 'Author'))
         icon_path = get_author_icon(source_dir, author)
         if icon_path == "resources/images/authors/author_unknown.png":
             self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
@@ -379,5 +395,24 @@ class Builder(Service):
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        return DOC_CARD % (link_title, icon_path)
+        link_image = "Author_%s.html" % valid_filename(author)
+        timestamp = self.srvdtb.get_doc_timestamp(doc)
+        human_ts = get_human_datetime(timestamp)
+        return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, link_category, link_scope)
 
+    def create_blog(self):
+        blog = template('BLOG')
+        filterrow = template('FILTER_BODY_ROW')
+        blogposts = ''
+        for doc in self.srvdtb.get_documents():
+
+            category = self.srvdtb.get_values(doc, 'Category')[0]
+            if category == 'Post':
+                title = self.srvdtb.get_values(doc, 'Title')[0]
+                datatitle = valid_filename(title)
+                card = self.get_doc_card_blogpost(doc)
+                blogposts += card
+
+        docname = "%s/%s" % (self.tmpdir, 'blog.adoc')
+        with open(docname, 'w') as fblog:
+            fblog.write(blog % blogposts)

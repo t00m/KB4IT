@@ -11,37 +11,71 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
-<div uk-grid>
-    <!-- LEFT MENU :: START -->
-    <div id="kb4it-menu" class=" uk-card-default uk-width-1-5@m uk-padding-small" style="border-right:1px solid transparent;">
-        <div uk-sticky="sel-target: .uk-navbar-container; cls-active: uk-navbar-sticky; bottom: #transparent-sticky-navbar;">
-            <div class="uk-card uk-card-body uk-padding-medium uk-padding-remove-top uk-padding-remove-bottom">
-                <nav class="uk-navbar-container uk-margin" style="background-color: transparent;" uk-navbar>
-                    <div class="uk-navbar-left">
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
-                        </li>
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-link-heading" href="help.html"><span class="uk-margin-small-right" uk-icon="icon: lifesaver"></span></a>
-                        </li>
-                        <li class="uk-link-toggle uk-text-bolder">
-                            <a class="uk-link-heading" href="about.html"><span class="uk-margin-small-right" uk-icon="icon: star"></span></a>
-                        </li>
-                    </div>
-                </nav>
-            </div>
-            <div class="uk-card uk-card-body uk-padding-large uk-padding-remove-top">
-                <ul class="uk-nav uk-nav-default uk-panel uk-panel-scrollable" style="border: 1px solid transparent;" uk-height-viewport="expand: false">
-%s
+<div>
+<div id="container-1" class="uk-container uk-container-center">
+    <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left">
+                <ul class="uk-navbar-nav">
+                    <li class="uk-link-toggle uk-text-bolder">
+                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    </li>
+                    <li>
+                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                 </ul>
             </div>
-        </div>
+            <div class="uk-navbar-center">
+                <ul class="uk-navbar-nav">
+                    <!-- MENU CONTENTS :: START -->
+%s
+                    <!-- MENU CONTENTS :: END -->
+                </ul>
+            </div>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav">
+                    <li>
+                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="help.html">Help</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="about.html">About</a>
+                                </li>
+                                <!--
+                                <li class="uk-link-toggle uk-text-bolder">
+                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                </li>
+                                -->
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
     </div>
-    <!-- LEFT MENU :: END -->
-    <!-- CONTENTS (Document) :: START -->
-    <div class="uk-width-expand@m">
-        <div class="uk-card uk-card-body">
+</div>
+<div class="uk-container uk-container-center">

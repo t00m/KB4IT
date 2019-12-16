@@ -7,12 +7,12 @@ RDF Graph In Memory database module.
 # License: GPLv3
 # Description: module to allow kb4it create a RDF graph
 """
-
+import operator
 from kb4it.src.core.mod_srv import Service
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
-HEADER_KEYS = ['Author', 'Category', 'Scope', 'Status', 'Team', 'Priority']
-IGNORE_KEYS = HEADER_KEYS + ['Title']
+HEADER_KEYS = ['Author', 'Category', 'Scope']
+IGNORE_KEYS = HEADER_KEYS + ['Title', 'Timestamp']
 
 
 class KB4ITDB(Service):
@@ -21,6 +21,7 @@ class KB4ITDB(Service):
     params = None
     db = {}
     source_path = None
+    sorted_docs = []
 
     def initialize(self):
         """Initialize database module."""
@@ -31,10 +32,11 @@ class KB4ITDB(Service):
         """Get a pointer to the database."""
         return self.db
 
-    def add_document(self, doc):
+    def add_document(self, doc, timestamp):
         """Add a new document node to the graph."""
         self.db[doc] = {}
-        self.log.debug("\t\t\tCreated new document: %s", doc)
+        self.db[doc]['Timestamp'] = timestamp
+        self.log.debug("\t\t\t%s created/modified on %s", doc, timestamp)
 
     def add_document_key(self, doc, key, value):
         """Add a new key node to a document."""
@@ -45,6 +47,22 @@ class KB4ITDB(Service):
         except KeyError:
             self.db[doc][key] = [value]
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
+
+    def sort(self):
+        """Build a list of documents sorted by timestamp desc."""
+        adict = {}
+        for doc in self.db:
+            adict[doc] = self.db[doc]['Timestamp']
+        alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+        for doc, timestamp in alist:
+            self.sorted_docs.append(doc)
+
+    def get_documents(self):
+        return self.sorted_docs
+
+    def get_doc_timestamp(self, doc):
+        """Get timestamp for a given document."""
+        return self.db[doc]['Timestamp']
 
     def get_html_values_from_key(self, doc, key):
         """Return the html link for a value."""
@@ -91,7 +109,7 @@ class KB4ITDB(Service):
         keys = []
         for doc in self.db:
             for key in self.get_doc_keys(doc):
-                if key != 'Title':
+                if key not in ['Title', 'Timestamp']:
                     keys.append(key)
         keys = list(set(keys))
         keys.sort(key=lambda y: y.lower())

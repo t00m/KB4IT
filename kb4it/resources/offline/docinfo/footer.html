@@ -25,6 +25,15 @@ input.addEventListener( 'keyup', function(event)
     filter.click();
 });
 </script>
+<script>
+function copyToClipboard() {
+  var copyText = document.getElementById("source-code");
+  copyText.select();
+  copyText.setSelectionRange(0, 99999)
+  document.execCommand("copy");
+  alert("Text copied to clipboard");
+}
+</script>
 <!-- GRID LAYOUT :: END -->
 </body>
 </html>

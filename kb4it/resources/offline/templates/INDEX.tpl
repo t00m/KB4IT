@@ -1,29 +1,8 @@
-= Repository Index
 
 ++++
-<!--
-    <article class="uk-comment">
-        <header class="uk-comment-header uk-grid-medium uk-flex-middle" uk-grid>
-            <div class="uk-width-auto">
-                <img class="uk-comment-avatar" src="resources/images/author_unknown.png" width="80" height="80" alt="">
-            </div>
-            <div class="uk-width-expand">
-                <h4 class="uk-comment-title uk-margin-remove"><a class="uk-link-reset" href="#">KB4IT</a></h4>
-                <ul class="uk-comment-meta uk-subnav uk-subnav-divider uk-margin-remove-top">
-                    <li>Last update: %s</li>
-                </ul>
-            </div>
-        </header>
--->
-<!--
-        <div class="uk-comment-body">
-            <p>Welcome to your documentation repository</p>
-        </div>
-    </article>
--->
-++++
-
-++++
+    <div class="uk-card uk-border-rounded uk-card-body uk-padding-remove">
+        <span class="uk-align-right uk-text-meta">Last update on %s</span>
+    </div>
     <ul uk-accordion>
         <li class="uk-open">
             <a class="uk-accordion-title" href="#">Core properties</a>

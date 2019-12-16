@@ -15,15 +15,16 @@ import shutil
 import pprint
 import tempfile
 import datetime
+import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH
+from kb4it.src.core.mod_env import LPATH, GPATH, APP
 from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import valid_filename, load_current_kbdict
 from kb4it.src.core.mod_utils import template, exec_cmd, job_done, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification
+from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
 from kb4it.src.services.srv_db import HEADER_KEYS
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
@@ -39,16 +40,16 @@ class Application(Service):
         """Initialize application structure"""
 
         # Get params from command line
-        parameters = self.app.get_params()
-
+        self.parameters = self.app.get_params()
+        self.log.debug(self.app.get_params())
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
-        if parameters.TARGET_PATH is None:
+        if self.parameters.TARGET_PATH is None:
             self.runtime['dir']['target'] = LPATH['WWW']
         else:
-            self.runtime['dir']['target'] = os.path.realpath(parameters.TARGET_PATH)
-        self.runtime['dir']['source'] = os.path.realpath(parameters.SOURCE_PATH)
+            self.runtime['dir']['target'] = os.path.realpath(self.parameters.TARGET_PATH)
+        self.runtime['dir']['source'] = os.path.realpath(self.parameters.SOURCE_PATH)
         self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
@@ -75,11 +76,11 @@ class Application(Service):
         """Get asciidoctor sources path."""
         return self.runtime['dir']['source']
 
-    # ~ def get_target_path(self):
-        # ~ """Get target path."""
-        # ~ return self.runtime['dir']['target']
+    def get_target_path(self):
+        """Get target path."""
+        return self.runtime['dir']['target']
 
-    def get_temp_dir(self):
+    def get_temp_path(self):
         """Get temporary working path."""
         return self.runtime['dir']['tmp']
 
@@ -87,13 +88,21 @@ class Application(Service):
         """Missing method docstring."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
+        self.srvrss = self.get_service('RSS')
 
     def get_numdocs(self):
         """Missing method docstring."""
         return self.runtime['docs']['count']
 
+    def get_docs_by_timestamp(self):
+        """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
+        adict = {}
+        for docname in self.kbdict_new['document']:
+            ts = self.kbdict_new['document'][docname]['Timestamp']
+            adict[docname] = ts
+        return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
 
-    def stage_1_check_environment(self):
+    def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("Stage 1\tCheck environment")
         self.log.debug("\t\tCache directory: %s", self.runtime['dir']['cache'])
@@ -112,7 +121,8 @@ class Application(Service):
         if not doc_about:
             tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
             with open(tmp_about, 'w') as fabout:
-                fabout.write(template('PAGE_ABOUT'))
+                page_about = template('PAGE_ABOUT')
+                fabout.write(page_about % APP['version'])
                 self.log.info("\t\tAdded missing 'about.adoc' document")
 
         if not doc_help:
@@ -121,7 +131,7 @@ class Application(Service):
                 fhelp.write(template('PAGE_HELP'))
                 self.log.info("\t\tAdded missing 'help.adoc' document")
 
-    def stage_2_get_source_documents(self):
+    def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
         self.log.info("Stage 2\tGet Asciidoctor source documents")
         self.runtime['docs']['bag'] = get_source_docs(self.runtime['dir']['source'])
@@ -134,7 +144,7 @@ class Application(Service):
         for doc in self.runtime['docs']['bag']:
             self.log.debug("\t\t\t%s", doc)
 
-    def stage_3_preprocessing(self):
+    def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
 
@@ -151,7 +161,9 @@ class Application(Service):
             self.log.debug("\t\tPreprocessing DOC[%s]", docname)
 
             # Add a new document to the database
-            self.srvdtb.add_document(docname)
+            ts_dtm = last_dt_modification(source)
+            timestamp = last_modification_date(source)
+            self.srvdtb.add_document(docname, ts_dtm)
 
             # Get content
             with open(source) as source_adoc:
@@ -160,14 +172,16 @@ class Application(Service):
             # Get metadata
             docpath = os.path.join(self.runtime['dir']['source'], docname)
             keys = get_metadata(docpath)
+
             # To track changes in a document, hashes for metadata and content are created.
             # Comparing them with those in the cache, KB4IT determines if a document must be
             # compiled again. Very useful to reduce the compilation time.
 
-            # Get Document Content and Metadata Hash
+            # Get Document Content and Metadata Hashes
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
-            self.kbdict_new['document'][docname]['timestamp'] = last_dt_modification(source).isoformat()
+            self.kbdict_new['document'][docname]['Timestamp'] = timestamp
+            # ~ self.log.error("%s -> %s", self.kbdict_new['document'][docname]['Timestamp'], docname)
             cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
             cached_document_exists = os.path.exists(cached_document)
             # Get documents per [key, value] and add them to kbdict
@@ -192,8 +206,8 @@ class Application(Service):
             else:
                 try:
                     # Compare timestamps for source/cache documents
-                    doc_ts_new = self.kbdict_new['document'][docname]['timestamp']
-                    doc_ts_cur = self.kbdict_cur['document'][docname]['timestamp']
+                    doc_ts_new = self.kbdict_new['document'][docname]['Timestamp']
+                    doc_ts_cur = self.kbdict_cur['document'][docname]['Timestamp']
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
                     else:
@@ -204,7 +218,12 @@ class Application(Service):
             self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
 
             # Force compilation if document (content or metadata) has changed
-            if FORCE_DOC_COMPILATION:
+            if self.parameters.FORCE == True:
+                FORCE_ALL = True
+            else:
+                FORCE_ALL = False
+
+            if FORCE_DOC_COMPILATION or FORCE_ALL:
                 # Create metadata section
                 meta_section = self.srvbld.create_metadata_section(docname)
 
@@ -222,9 +241,11 @@ class Application(Service):
         # Save current status for the next run
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
+        # Build a list of documents sorted by timestamp
+        self.srvdtb.sort()
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
 
-    def stage_4_processing(self):
+    def stage_04_processing(self):
         """Process all documents."""
         self.log.info("Stage 4\tProcessing")
         # Get all available keys
@@ -237,8 +258,8 @@ class Application(Service):
                 missing.append(key)
         available_keys.extend(missing)
 
-
         # Process
+        self.log.debug("All keys: %s", available_keys)
         for key in available_keys:
             FORCE_DOC_COMPILATION = False
             self.log.debug("\t\t* Processing Key: %s", key)
@@ -248,9 +269,12 @@ class Application(Service):
                     cur_nodes = sorted(self.kbdict_cur['metadata'][key][value])
                 except:
                     cur_nodes = []
-                new_nodes = sorted(self.kbdict_new['metadata'][key][value])
-                # ~ self.log.debug("Cache [%s][%s]: %s", key, value, cur_nodes)
-                # ~ self.log.debug("  New [%s][%s]: %s", key, value, new_nodes)
+                try:
+                    new_nodes = sorted(self.kbdict_new['metadata'][key][value])
+                except Exception as error:
+                    self.log.error("Error in [%s][%s]: %s", key, value, error)
+                    new_nodes = ['###ERROR###']
+
                 if cur_nodes != new_nodes:
                     FORCE_DOC_KEY_COMPILATION = True
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
@@ -261,9 +285,7 @@ class Application(Service):
 
                 FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
 
-                # ~ self.log.debug("\t\t\tRelated documents for %s: %s", key, value)
                 try:
-                    # ~ FORCE_DOC_KEY_VALUE_COMPILATION = False
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                     docname = os.path.join(self.runtime['dir']['tmp'], filename)
                     rel_docs = self.kbdict_new['metadata'][key][value]
@@ -273,7 +295,13 @@ class Application(Service):
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
-                if FORCE_DOC_COMPILATION:
+                if self.parameters.FORCE == True:
+                    FORCE_ALL = True
+                else:
+                    FORCE_ALL = False
+
+                COMPILE_AGAIN = FORCE_DOC_COMPILATION or FORCE_ALL
+                if COMPILE_AGAIN:
                     # Create .adoc from value
 
                     with open(docname, 'w') as fvalue:
@@ -308,10 +336,13 @@ class Application(Service):
                 fkey.write(html)
 
         self.srvbld.create_all_keys_page()
+        self.srvbld.create_bookmarks_page()
+        self.srvbld.create_blog()
+        self.srvbld.create_recents_page()
         self.srvbld.create_index_all()
         self.srvbld.create_index_page()
 
-    def stage_5_compilation(self):
+    def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         self.log.info("Stage 5\tCompilation")
         dcomps = datetime.datetime.now()
@@ -339,7 +370,7 @@ class Application(Service):
             num = 1
             self.log.debug("\t\tGenerating jobs. Please, wait")
             for doc in docs:
-                cmd = "asciidoctor -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
+                cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                 job = exe.submit(exec_cmd, (doc, cmd, num))
                 job.add_done_callback(job_done)
                 self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
@@ -347,7 +378,7 @@ class Application(Service):
                 jobs.append(job)
                 num = num + 1
             self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
-            self.log.info("\t\t0% done")
+            self.log.info("\t\t 0% done")
             for job in jobs:
                 adoc, res, jobid = job.result()
                 self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))
@@ -369,55 +400,80 @@ class Application(Service):
             self.log.info("\t\tCompilation Avg. Speed: %d docs/sec",
                           int((totaldocs/1)))
 
-    def stage_6_clean_target(self):
+    def stage_06_extras(self):
+        """Include other stuff."""
+        adict = {}
+        ### RSS feeds
+        for docname in self.kbdict_new['document']:
+            ts = self.kbdict_new['document'][docname]['Timestamp']
+            adict[docname] = ts
+        # ~ Sort docs by timestamp
+        lastdocs = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+        self.srvrss.generate_rss_main(lastdocs)
+
+    def stage_07_clean_target(self):
         """Delete contents of target directory (if any)."""
         self.log.info("Stage 6\tClean target directory")
         delete_target_contents(self.runtime['dir']['target'])
         self.log.info("\t\tDeleted target contents in: %s", self.runtime['dir']['target'])
 
-    def stage_7_refresh_target(self):
+    def stage_08_refresh_target(self):
         """Refresh target directory."""
         self.log.info("Stage 7\tRefresh target directory")
+
         # Copy compiled documents to target path
         pattern = os.path.join(self.runtime['dir']['source'], '*.adoc')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['target'])
-        self.log.info("\t\tCopy %d asciidoctor sources from source path to target Path", len(files))
+        self.log.info("\t\tCopy %d asciidoctor sources from source path to target path", len(files))
 
+        # Copy RSS feeds to target path
+        pattern = os.path.join(self.runtime['dir']['tmp'], '*.xml')
+        files = glob.glob(pattern)
+        copy_docs(files, self.runtime['dir']['target'])
+        self.log.info("\t\tCopy %d RSS feeds from temporary path to target path", len(files))
+
+        # Copy compiled documents to target path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['target'])
         self.log.info("\t\tCopy %d html files from temporary path to target path", len(files))
 
+        # Copy cached documents to target path
         copy_docs(self.runtime['docs']['cached'], self.runtime['dir']['target'])
         self.log.info("\t\tCopied %d cached documents successfully to target path", len(self.runtime['docs']['cached']))
 
-        copy_docs(self.runtime['docs']['bag'], self.runtime['dir']['target'])
-        self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
+        # ???
+        # ~ copy_docs(self.runtime['docs']['bag'], self.runtime['dir']['target'])
+        # ~ self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
 
+        # Copy global resources to target path
+        global_resources_dir = GPATH['ONLINE']
+        resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
+        copydir(global_resources_dir, resources_dir_target)
+        self.log.info("\t\tCopied global resources to target path")
+
+        # Copy local resources to target path
         source_resources_dir = os.path.join(self.runtime['dir']['source'], 'resources')
         if os.path.exists(source_resources_dir):
             resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
             copydir(source_resources_dir, resources_dir_target)
             self.log.info("\t\tCopied local resources to target path")
 
-        global_resources_dir = GPATH['ONLINE']
-        resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
-        copydir(global_resources_dir, resources_dir_target)
-        self.log.info("\t\tCopied global resources to target path")
-
+        # Copy back all HTML files from target to cache
+        # Fixme: should cache contents be deletd before copying?
         pattern = os.path.join(self.runtime['dir']['target'], '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
         self.log.info("\t\tCopying HTML files to cache...")
 
-    def stage_8_remove_temporary_dir(self):
+    def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.info("Stage 8\tRemove temporary directory")
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.info("\t\tTemporary directory %s deleted successfully", self.runtime['dir']['tmp'])
 
-    def stage_9_print_missing_icons(self):
+    def stage_10_print_missing_icons(self):
         """Print list of missing icons."""
         self.log.info("Stage 9\tMissing icons report")
         missing_icons = self.srvbld.get_missing_icons()
@@ -442,17 +498,17 @@ class Application(Service):
         """
         self.log.info("KB4IT - Knowledge Base for IT")
 
-        self.stage_1_check_environment()
-        self.stage_2_get_source_documents()
-        self.stage_3_preprocessing()
-        self.stage_4_processing()
-        self.stage_5_compilation()
-        self.stage_6_clean_target()
-        self.stage_7_refresh_target()
-        self.stage_8_remove_temporary_dir()
-        self.stage_9_print_missing_icons()
+        self.stage_01_check_environment()
+        self.stage_02_get_source_documents()
+        self.stage_03_preprocessing()
+        self.stage_04_processing()
+        self.stage_05_compilation()
+        self.stage_06_extras()
+        self.stage_07_clean_target()
+        self.stage_08_refresh_target()
+        self.stage_09_remove_temporary_dir()
+        self.stage_10_print_missing_icons()
 
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
-        self.log.info("%s/index.html", os.path.abspath(self.runtime['dir']['target']))
-        # ~ pprint.pprint(self.runtime)
+        self.log.info("sensible-browser %s/index.html", os.path.abspath(self.runtime['dir']['target']))
