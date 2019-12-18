@@ -13,7 +13,7 @@ import os
 import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_srv import Service
-from kb4it.src.services.srv_db import HEADER_KEYS
+from kb4it.src.services.srv_db import HEADER_KEYS, IGNORE_KEYS, BLOCKED_KEYS
 from kb4it.src.core.mod_utils import template, valid_filename, get_labels
 from kb4it.src.core.mod_utils import last_ts_rss, get_human_datetime
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
@@ -116,42 +116,17 @@ class Builder(Service):
         # Breadcrumb
         now = datetime.now()
         mtime = now.strftime("%Y/%m/%d %H:%M")
-        numdocs = self.srvapp.get_numdocs()
 
-        msgs = self.get_messages()
-
-        # Core Modal buttons
-        core_buttons = ''
-        for key in sorted(HEADER_KEYS, key=lambda y: y.lower()):
-            html = self.create_tagcloud_from_key(key)
-            button = TPL_KEY_MODAL_BUTTON % (key, key, key, key, key, html)
-            # ~ buttons += button.replace('++++', '')
-            core_buttons += button
-
-        # Core Modal buttons
-        all_keys = self.srvdtb.get_all_keys()
-        custom_buttons = ''
-        for key in all_keys:
-            if key not in HEADER_KEYS:
-                html = self.create_tagcloud_from_key(key)
-                button = TPL_KEY_MODAL_BUTTON % (key, key, key, key, key, html)
-                # ~ buttons += button.replace('++++', '')
-                custom_buttons += button
-
-        # TAB Stats
-        stats = template('INDEX_TAB_STATS')
-        item = template('KEY_LEADER_ITEM')
-        numdocs = self.srvapp.get_numdocs()
-        keys = self.srvdtb.get_all_keys()
-        numkeys = len(keys)
-        leader_items = ''
-        for key in keys:
-            values = self.srvdtb.get_all_values_for_key(key)
-            leader_items += item % (valid_filename(key), key, valid_filename(key), len(values))
-        tab_stats = stats % (numdocs, numkeys, leader_items)
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
-            findex.write(msgs)
-            content = TPL_INDEX % (get_human_datetime(now), core_buttons, custom_buttons, tab_stats)
+            custom_index_file = os.path.join(self.srvapp.get_source_path(), 'index.adoc')
+            if os.path.exists(custom_index_file):
+                self.log.info("\t\tCustom index page found.")
+                custom_index = open(custom_index_file, 'r').read()
+            else:
+                self.log.warning("\t\tNo custom index page found. Using default template.")
+                custom_index = ''
+
+            content = TPL_INDEX % (get_human_datetime(now), custom_index)
             findex.write(content)
 
     def create_all_keys_page(self):
@@ -216,6 +191,37 @@ class Builder(Service):
         with open(docname, 'w') as fbk:
             fbk.write(page % bookmarks)
 
+
+    def create_properties_page(self):
+        TPL_PROPS_PAGE = template('PAGE_PROPERTIES')
+        TPL_KEY_MODAL_BUTTON = template('KEY_MODAL_BUTTON')
+        # Custom modal buttons
+        all_keys = self.srvdtb.get_all_keys()
+        custom_buttons = ''
+        for key in all_keys:
+            if key not in BLOCKED_KEYS:
+                html = self.create_tagcloud_from_key(key)
+                button = TPL_KEY_MODAL_BUTTON % (key, key, key, key, key, html)
+                custom_buttons += button
+
+        content = TPL_PROPS_PAGE % (custom_buttons)
+        with open('%s/properties.adoc' % self.tmpdir, 'w') as fprops:
+            fprops.write(content)
+
+    def create_stats_page(self):
+        TPL_STATS_PAGE = template('PAGE_STATS')
+        item = template('KEY_LEADER_ITEM')
+        numdocs = self.srvapp.get_numdocs()
+        keys = self.srvdtb.get_all_keys()
+        numkeys = len(keys)
+        leader_items = ''
+        for key in keys:
+            values = self.srvdtb.get_all_values_for_key(key)
+            leader_items += item % (valid_filename(key), key, valid_filename(key), len(values))
+        stats = TPL_STATS_PAGE % (numdocs, numkeys, leader_items)
+
+        with open('%s/stats.adoc' % self.tmpdir, 'w') as fstats:
+            fstats.write(stats)
 
     def create_key_page(self, key, values):
         """Missing method docstring."""

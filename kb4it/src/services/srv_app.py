@@ -339,6 +339,8 @@ class Application(Service):
         self.srvbld.create_bookmarks_page()
         self.srvbld.create_blog()
         self.srvbld.create_recents_page()
+        self.srvbld.create_properties_page()
+        self.srvbld.create_stats_page()
         self.srvbld.create_index_all()
         self.srvbld.create_index_page()
 
