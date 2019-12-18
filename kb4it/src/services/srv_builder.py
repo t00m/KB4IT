@@ -118,7 +118,9 @@ class Builder(Service):
         mtime = now.strftime("%Y/%m/%d %H:%M")
 
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
-            custom_index_file = os.path.join(self.srvapp.get_source_path(), 'index.adoc')
+            dir_res = os.path.join(self.srvapp.get_source_path(), 'resources')
+            dir_tpl = os.path.join(dir_res, 'templates')
+            custom_index_file = os.path.join(dir_tpl, 'index.adoc')
             if os.path.exists(custom_index_file):
                 self.log.info("\t\tCustom index page found.")
                 custom_index = open(custom_index_file, 'r').read()
