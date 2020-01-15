@@ -15,7 +15,7 @@ from datetime import datetime
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.services.srv_db import HEADER_KEYS, IGNORE_KEYS, BLOCKED_KEYS
 from kb4it.src.core.mod_utils import template, valid_filename, get_labels
-from kb4it.src.core.mod_utils import last_ts_rss, get_human_datetime
+from kb4it.src.core.mod_utils import get_human_datetime
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
 from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.core.mod_utils import last_modification

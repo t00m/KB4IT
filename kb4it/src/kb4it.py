@@ -18,7 +18,6 @@ from kb4it.src.core.mod_log import get_logger
 from kb4it.src.services.srv_app import Application
 from kb4it.src.services.srv_db import KB4ITDB
 from kb4it.src.services.srv_builder import Builder
-from kb4it.src.services.srv_rss import RSS
 
 
 class KB4IT:
@@ -79,7 +78,6 @@ class KB4IT:
             services = {
                 'DB': KB4ITDB(),
                 'App': Application(),
-                'RSS': RSS(),
                 'Builder': Builder(),
             }
             for name in services:

@@ -88,7 +88,6 @@ class Application(Service):
         """Missing method docstring."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
-        self.srvrss = self.get_service('RSS')
 
     def get_numdocs(self):
         """Missing method docstring."""
@@ -404,14 +403,7 @@ class Application(Service):
 
     def stage_06_extras(self):
         """Include other stuff."""
-        adict = {}
-        ### RSS feeds
-        for docname in self.kbdict_new['document']:
-            ts = self.kbdict_new['document'][docname]['Timestamp']
-            adict[docname] = ts
-        # ~ Sort docs by timestamp
-        lastdocs = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
-        self.srvrss.generate_rss_main(lastdocs)
+        pass
 
     def stage_07_clean_target(self):
         """Delete contents of target directory (if any)."""
@@ -428,12 +420,6 @@ class Application(Service):
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['target'])
         self.log.info("\t\tCopy %d asciidoctor sources from source path to target path", len(files))
-
-        # Copy RSS feeds to target path
-        pattern = os.path.join(self.runtime['dir']['tmp'], '*.xml')
-        files = glob.glob(pattern)
-        copy_docs(files, self.runtime['dir']['target'])
-        self.log.info("\t\tCopy %d RSS feeds from temporary path to target path", len(files))
 
         # Copy compiled documents to target path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
