@@ -25,7 +25,7 @@ from kb4it.src.core.mod_utils import template, exec_cmd, job_done, delete_target
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
 from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
-from kb4it.src.services.srv_db import HEADER_KEYS
+# ~ from kb4it.src.services.srv_db import HEADER_KEYS
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
 
@@ -250,12 +250,12 @@ class Application(Service):
         # Get all available keys
         available_keys = self.srvdtb.get_all_keys()
         # Check if any of the core keys is missing
-        missing = []
-        for key in HEADER_KEYS:
-            if key not in available_keys:
-                self.log.debug("\t\tAdding missing key: %s", key)
-                missing.append(key)
-        available_keys.extend(missing)
+        # ~ missing = []
+        # ~ for key in HEADER_KEYS:
+            # ~ if key not in available_keys:
+                # ~ self.log.debug("\t\tAdding missing key: %s", key)
+                # ~ missing.append(key)
+        # ~ available_keys.extend(missing)
 
         # Process
         self.log.debug("All keys: %s", available_keys)

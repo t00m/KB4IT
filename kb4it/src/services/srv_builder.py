@@ -13,7 +13,7 @@ import os
 import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_srv import Service
-from kb4it.src.services.srv_db import HEADER_KEYS, IGNORE_KEYS, BLOCKED_KEYS
+from kb4it.src.services.srv_db import IGNORE_KEYS, BLOCKED_KEYS # HEADER_KEYS,
 from kb4it.src.core.mod_utils import template, valid_filename, get_labels
 from kb4it.src.core.mod_utils import get_human_datetime
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
@@ -203,7 +203,7 @@ class Builder(Service):
         for key in all_keys:
             if key not in BLOCKED_KEYS:
                 html = self.create_tagcloud_from_key(key)
-                button = TPL_KEY_MODAL_BUTTON % (key, key, key, key, key, html)
+                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), key, valid_filename(key), valid_filename(key), key, html)
                 custom_buttons += button
 
         content = TPL_PROPS_PAGE % (custom_buttons)
@@ -289,17 +289,17 @@ class Builder(Service):
         try:
             doc_path = os.path.join(self.srvapp.get_source_path(), doc)
             html = template('METADATA_SECTION_HEADER')
-            author = self.srvdtb.get_html_values_from_key(doc, 'Author')
-            category = self.srvdtb.get_html_values_from_key(doc, 'Category')
-            scope = self.srvdtb.get_html_values_from_key(doc, 'Scope')
-            status = self.srvdtb.get_html_values_from_key(doc, 'Status')
-            team = self.srvdtb.get_html_values_from_key(doc, 'Team')
-            priority = self.srvdtb.get_html_values_from_key(doc, 'Priority')
-            tags = self.srvdtb.get_html_values_from_key(doc, 'Tag')
+            # ~ author = self.srvdtb.get_html_values_from_key(doc, 'Author')
+            # ~ category = self.srvdtb.get_html_values_from_key(doc, 'Category')
+            # ~ scope = self.srvdtb.get_html_values_from_key(doc, 'Scope')
+            # ~ status = self.srvdtb.get_html_values_from_key(doc, 'Status')
+            # ~ team = self.srvdtb.get_html_values_from_key(doc, 'Team')
+            # ~ priority = self.srvdtb.get_html_values_from_key(doc, 'Priority')
+            # ~ tags = self.srvdtb.get_html_values_from_key(doc, 'Tag')
 
-            METADATA_SECTION_BODY = template('METADATA_SECTION_BODY')
-            html += METADATA_SECTION_BODY % (get_labels(author), get_labels(category), \
-                                            get_labels(scope))
+            # ~ METADATA_SECTION_BODY = template('METADATA_SECTION_BODY')
+            # ~ html += METADATA_SECTION_BODY % (get_labels(author), get_labels(category), \
+                                            # ~ get_labels(scope))
 
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
