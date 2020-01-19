@@ -9,7 +9,7 @@
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
 
-== About KB4IT (v%s)
+== About KB4IT %s
 
 === Introduction
 
