@@ -7,5 +7,6 @@
     <li>
         <a class="uk-accordion-title uk-text-primary" href="#">Show</a>
         <div class="uk-accordion-content">
+        <table class="uk-table uk-table-small">
 ++++
 

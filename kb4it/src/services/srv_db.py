@@ -11,9 +11,9 @@ import operator
 from kb4it.src.core.mod_srv import Service
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
-HEADER_KEYS = ['Author', 'Category', 'Scope']
+# ~ HEADER_KEYS = ['Author', 'Category', 'Scope']
 BLOCKED_KEYS = ['Title', 'Timestamp']
-IGNORE_KEYS = HEADER_KEYS + BLOCKED_KEYS
+IGNORE_KEYS = BLOCKED_KEYS # + HEADER_KEYS
 
 
 class KB4ITDB(Service):
