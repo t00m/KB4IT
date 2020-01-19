@@ -388,6 +388,7 @@ class Builder(Service):
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = template('DOC_CARD')
+        DOC_CARD_FOOTER = template('DOC_CARD_FOOTER')
         DOC_CARD_LINK = template('DOC_CARD_LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
@@ -399,14 +400,18 @@ class Builder(Service):
         if icon_path == "resources/images/authors/author_unknown.png":
             self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
-        link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
-        link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+        if len(category) > 0 and len(scope) >0:
+            link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
+            link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+            footer = DOC_CARD_FOOTER % (link_category, link_scope)
+        else:
+            footer = ''
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
         link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
         link_image = "Author_%s.html" % valid_filename(author)
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
-        return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, link_category, link_scope)
+        return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, footer)
 
     def create_blog(self):
         blog = template('BLOG')

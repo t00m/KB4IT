@@ -11,13 +11,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="uk-card-footer uk-padding-remove-bottom">
-                                <div class="uk-flex uk-flex-right">
-                                    <ul class="uk-breadcrumb">
-                                        <li uk-tooltip="Category">%s</li>
-                                        <li uk-tooltip="Scope">%s</li>
-                                    </ul>
-                                </div>
-                            </div>
+%s
                         </div>
                         <!-- DOC_CARD.tpl :: END -->
