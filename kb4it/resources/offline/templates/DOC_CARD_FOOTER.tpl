@@ -1,5 +1,5 @@
                             <!-- DOC_CARD_FOOTER.tpl :: START -->
-                            <div class="uk-card-footer uk-padding-remove-bottom">
+                            <div class="uk-card-footer">
                                 <div class="uk-flex uk-flex-right">
                                     <ul class="uk-breadcrumb">
                                         <li uk-tooltip="Category">%s</li>
