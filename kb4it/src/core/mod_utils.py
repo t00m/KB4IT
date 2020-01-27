@@ -44,10 +44,14 @@ def load_current_kbdict(source_path):
     return kbdict
 
 
-def save_current_kbdict(kbdict, source_path):
+def save_current_kbdict(kbdict, path, name=None):
     """C0111: Missing function docstring (missing-docstring)."""
-    source_path = valid_filename(source_path)
-    KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % source_path)
+    if name is None:
+        target_path = valid_filename(path)
+        KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % target_path)
+    else:
+        KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
+
     with open(KB4IT_DB_FILE, 'w') as fkb:
         json.dump(kbdict, fkb)
         log.debug("KBDICT %s saved", KB4IT_DB_FILE)

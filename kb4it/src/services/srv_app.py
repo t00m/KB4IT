@@ -189,6 +189,13 @@ class Application(Service):
                 for value in alist:
                     self.srvdtb.add_document_key(docname, key, value)
                     try:
+                        values = self.kbdict_new['document'][docname][key]
+                        if value not in values:
+                            values.append(value)
+                            self.kbdict_new['document'][docname][key] = sorted(values)
+                    except:
+                           self.kbdict_new['document'][docname][key] = [value]
+                    try:
                         documents = self.kbdict_new['metadata'][key][value]
                         documents.append(docname)
                         self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
@@ -239,6 +246,7 @@ class Application(Service):
 
         # Save current status for the next run
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
+        #save_current_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort()
@@ -454,6 +462,10 @@ class Application(Service):
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
         self.log.info("\t\tCopying HTML files to cache...")
+
+        # Copy JSON database to target path so it can be queried from others applications 
+        save_current_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')
+        self.log.info("\t\tCopied JSON database to target")
 
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
