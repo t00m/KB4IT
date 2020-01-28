@@ -1,4 +1,3 @@
-++++
         <tr>
             <td>
                 <a class="uk-link-text" href="%s.html">
@@ -7,5 +6,4 @@
             </td>
             <td><div class="uk-flex uk-flex-row uk-flex-wrap">%s</div></td>
         </tr>
-++++
 

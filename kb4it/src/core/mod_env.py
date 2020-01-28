@@ -78,6 +78,7 @@ FILE['LOG'] = os.path.join(LPATH['LOG'] + APP['shortname'].lower(), '.log')
 FILE['HELP_INDEX'] = os.path.join(GPATH['HELP_HTML'], 'index.html')
 FILE['FOOTER'] = os.path.join(GPATH['DOCINFO'], 'footer.html')
 FILE['HEADER'] = os.path.join(GPATH['DOCINFO'], 'header.html')
+FILE['HEADER_NODOC'] = os.path.join(GPATH['DOCINFO'], 'header_nodoc.html')
 FILE['AUTHOR_UNKNOWN'] = os.path.join(GPATH['AUTHORS'], 'author_unknown.png')
 # ~ FILE['KBDICT'] = LPATH['DB'] + 'kbdict.json'
 
@@ -100,7 +101,9 @@ ADOCPROPS = {
     # ~ 'docinfo'               :   'shared',
     # ~ 'docinfodir'            :   'resources/docinfo',
 }
-
+HTML_HEADER = open(FILE['HEADER'], 'r').read()
+HTML_HEADER_NODOC = open(FILE['HEADER_NODOC'], 'r').read()
+HTML_FOOTER = open(FILE['FOOTER'], 'r').read()
 TEMPLATES = {}
 for filename in glob.glob(os.path.join(GPATH['TEMPLATES'], '*.tpl')):
     template = os.path.basename(filename)[:-4]
