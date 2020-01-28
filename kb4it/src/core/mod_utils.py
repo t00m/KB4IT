@@ -27,9 +27,6 @@ from kb4it.src.core.mod_log import get_logger
 
 log = get_logger('Utils')
 
-HTML_HEADER = open(FILE['HEADER'], 'r').read()
-HTML_FOOTER = open(FILE['FOOTER'], 'r').read()
-
 
 def load_current_kbdict(source_path):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -244,49 +241,6 @@ def extract_toc(source):
         # ~ items.insert(0, template('TOC_HEADER_TITLE'))
         toc = '\n'.join(items)
     return toc
-
-
-def job_done(future):
-    """C0111: Missing function docstring (missing-docstring)."""
-    time.sleep(random.random())
-    x = future.result()
-    cur_thread = threading.current_thread().name
-    if cur_thread != x:
-        adoc, rc, j = x
-        log.debug("Job[%5d]: %s compiled", j, adoc)
-
-        # Add header and footer to compiled doc
-        htmldoc = adoc.replace('.adoc', '.html')
-        if os.path.exists(htmldoc):
-            adoc_title = open(adoc).readlines()[0]
-            title = """<h1 class="uk-heading-small uk-text-center">%s</h1>\n""" % adoc_title[2:-1]
-            htmldoctmp = "%s.tmp" % htmldoc
-            shutil.move(htmldoc, htmldoctmp)
-            source = open(htmldoctmp, 'r').read()
-            toc = extract_toc(source)
-            content = apply_transformations(source)
-            try:
-                # ~ log.error(toc)
-                if 'Metadata' in content:
-                    content = highlight_metadata_section(content)
-            except IndexError as error:
-                # ~ log.error(error)
-                # Some pages don't have toc section. Ignore it.
-                pass
-
-            with open(htmldoc, 'w') as fhtm:
-                len_toc = len(toc)
-                if len_toc > 0:
-                    TOC = template('MENU_CONTENTS_ENABLED') % toc
-                else:
-                    TOC = template('MENU_CONTENTS_DISABLED')
-                fhtm.write(HTML_HEADER % TOC)
-                fhtm.write(title)
-                fhtm.write(content)
-                fhtm.write(HTML_FOOTER)
-            os.remove(htmldoctmp)
-            # ~ log.debug("Temporary html document deleted: %s", htmldoctmp)
-            return x
 
 
 def create_directory(directory):

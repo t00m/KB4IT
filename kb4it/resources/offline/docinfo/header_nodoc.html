@@ -20,7 +20,7 @@
 <div>
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin-medium" style="background-color: white;" uk-navbar>
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left">
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle uk-text-bolder">
@@ -60,48 +60,7 @@
             </div>
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
-                <ul class="uk-navbar-nav">
-                    <li>
-                        <a class="uk-link-heading uk-text-bolder" href="#">%s</a>
-                        <div class="uk-navbar-dropdown">
-                            <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li>
-                                    <!-- View Metadata Button :: START -->
-                                    <a class="uk-link-lead" href="#modal-full-metadata" uk-toggle><span class="uk-text-bolder">Metadata</span></a>
-                                    <div id="modal-full-metadata" class="uk-modal-full" uk-modal>
-                                        <div class="uk-modal-dialog">
-                                            <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
-                                            <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                                                <div class="uk-padding-large uk-background-muted">
-                                                    <div class="uk-text-lead">Metadata</div>
-<!-- METADATA :: START -->
 %s
-<!-- METADATA :: END -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- View Metadata Button :: END -->
-                                </li>
-                                <li>
-                                    <!-- View Asciidoc Source Button :: START -->
-                                    <a class="uk-link-lead" href="#modal-full-source" uk-toggle><span class="uk-text-bolder">Source</span></a>
-                                    <div id="modal-full-source" class="uk-modal-full" uk-modal>
-                                        <div class="uk-modal-dialog">
-                                            <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
-                                            <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                                                <div class="uk-padding-large uk-background-muted">
-                                                    <div class="uk-text-lead">%s&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
-                                                    <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">%s</textarea>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div> <!-- View Source Button :: END -->
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                </u>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
             <div class="uk-navbar-right">
