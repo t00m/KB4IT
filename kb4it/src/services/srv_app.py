@@ -11,17 +11,22 @@ Module with the application logic.
 import os
 import sys
 import glob
+import time
+import random
+import threading
 import shutil
 import pprint
 import tempfile
 import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH, APP
+from kb4it.src.core.mod_env import LPATH, GPATH, APP, HTML_FOOTER, HTML_HEADER, HTML_HEADER_NODOC
 from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.src.core.mod_srv import Service
-from kb4it.src.core.mod_utils import valid_filename, load_current_kbdict
-from kb4it.src.core.mod_utils import template, exec_cmd, job_done, delete_target_contents
+from kb4it.src.core.mod_utils import get_human_datetime
+from kb4it.src.core.mod_utils import apply_transformations, highlight_metadata_section
+from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_kbdict
+from kb4it.src.core.mod_utils import template, exec_cmd, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
 from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
@@ -100,6 +105,58 @@ class Application(Service):
             ts = self.kbdict_new['document'][docname]['Timestamp']
             adict[docname] = ts
         return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+
+    def job_done(self, future):
+        """C0111: Missing function docstring (missing-docstring)."""
+        now = datetime.datetime.now()
+        timestamp = get_human_datetime(now)
+        time.sleep(random.random())
+        x = future.result()
+        cur_thread = threading.current_thread().name
+        if cur_thread != x:
+            adoc, rc, j = x
+            # Add header and footer to compiled doc
+            htmldoc = adoc.replace('.adoc', '.html')
+            if os.path.exists(htmldoc):
+                adoc_title = open(adoc).readlines()[0]
+                title = adoc_title[2:-1]
+                # ~ self.log.debug(title)
+                html_title = """<span class="uk-text-primary uk-text-bold uk-text-truncate">%s</span>""" % title
+                htmldoctmp = "%s.tmp" % htmldoc
+                shutil.move(htmldoc, htmldoctmp)
+                source = open(htmldoctmp, 'r').read()
+                toc = extract_toc(source)
+                content = apply_transformations(source)
+                try:
+                    # ~ log.error(toc)
+                    if 'Metadata' in content:
+                        content = highlight_metadata_section(content)
+                except IndexError as error:
+                    # ~ log.error(error)
+                    # Some pages don't have toc section. Ignore it.
+                    pass
+
+                with open(htmldoc, 'w') as fhtm:
+                    len_toc = len(toc)
+                    if len_toc > 0:
+                        TOC = template('MENU_CONTENTS_ENABLED') % toc
+                    else:
+                        TOC = template('MENU_CONTENTS_DISABLED')
+                    docname = os.path.basename(adoc)
+                    userdoc = os.path.join(self.get_source_path(), docname)
+                    if os.path.exists(userdoc):
+                        source_code = open(userdoc, 'r').read()
+                        meta_section = self.srvbld.create_metadata_section(docname)
+                        fhtm.write(HTML_HEADER % (TOC, html_title, meta_section, docname, source_code))
+                    else:
+                        fhtm.write(HTML_HEADER_NODOC % (TOC, html_title))
+                    fhtm.write(content)
+                    fhtm.write(HTML_FOOTER % timestamp)
+                os.remove(htmldoctmp)
+                # ~ log.debug("Temporary html document deleted: %s", htmldoctmp)
+                return x
+
+
 
     def stage_01_check_environment(self):
         """Check environment."""
@@ -231,10 +288,11 @@ class Application(Service):
 
             if FORCE_DOC_COMPILATION or FORCE_ALL:
                 # Create metadata section
-                meta_section = self.srvbld.create_metadata_section(docname)
+                # ~ meta_section = self.srvbld.create_metadata_section(docname)
 
-                # Replace EOHMARK with metadata section
-                newadoc = srcadoc.replace(EOHMARK, meta_section, 1)
+                # Replace EOHMARK with nothing #metadata section
+                # ~ newadoc = srcadoc.replace(EOHMARK, meta_section, 1)
+                newadoc = srcadoc.replace(EOHMARK, '', 1)
 
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
@@ -381,7 +439,7 @@ class Application(Service):
             for doc in docs:
                 cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                 job = exe.submit(exec_cmd, (doc, cmd, num))
-                job.add_done_callback(job_done)
+                job.add_done_callback(self.job_done)
                 self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
                 # ~ self.log.debug("\t\tJob[%4d]: %s", num, cmd)
                 jobs.append(job)
@@ -463,7 +521,7 @@ class Application(Service):
         copy_docs(html_files, self.runtime['dir']['cache'])
         self.log.info("\t\tCopying HTML files to cache...")
 
-        # Copy JSON database to target path so it can be queried from others applications 
+        # Copy JSON database to target path so it can be queried from others applications
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')
         self.log.info("\t\tCopied JSON database to target")
 

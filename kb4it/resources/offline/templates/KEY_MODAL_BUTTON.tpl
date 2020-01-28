@@ -1,4 +1,5 @@
-    <div> <!-- Button :: START -->
+    <!-- Button :: START -->
+    <div>
         <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
             <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-%s" uk-toggle><h5>%s</h5></a>
             <div id="modal-full-%s" class="uk-modal-container" uk-modal>
@@ -15,4 +16,5 @@
                 </div>
             </div>
         </div>
-    </div> <!-- Button :: END -->
+    </div>
+    <!-- Button :: END -->

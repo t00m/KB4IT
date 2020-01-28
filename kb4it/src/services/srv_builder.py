@@ -113,10 +113,6 @@ class Builder(Service):
         TPL_INDEX = template('INDEX')
         TPL_KEY_MODAL_BUTTON = template('KEY_MODAL_BUTTON')
 
-        # Breadcrumb
-        now = datetime.now()
-        mtime = now.strftime("%Y/%m/%d %H:%M")
-
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
             dir_res = os.path.join(self.srvapp.get_source_path(), 'resources')
             dir_tpl = os.path.join(dir_res, 'templates')
@@ -128,7 +124,7 @@ class Builder(Service):
                 self.log.warning("\t\tNo custom index page found. Using default template.")
                 custom_index = ''
 
-            content = TPL_INDEX % (get_human_datetime(now), custom_index)
+            content = TPL_INDEX % (custom_index)
             findex.write(content)
 
     def create_all_keys_page(self):
@@ -289,18 +285,6 @@ class Builder(Service):
         try:
             doc_path = os.path.join(self.srvapp.get_source_path(), doc)
             html = template('METADATA_SECTION_HEADER')
-            # ~ author = self.srvdtb.get_html_values_from_key(doc, 'Author')
-            # ~ category = self.srvdtb.get_html_values_from_key(doc, 'Category')
-            # ~ scope = self.srvdtb.get_html_values_from_key(doc, 'Scope')
-            # ~ status = self.srvdtb.get_html_values_from_key(doc, 'Status')
-            # ~ team = self.srvdtb.get_html_values_from_key(doc, 'Team')
-            # ~ priority = self.srvdtb.get_html_values_from_key(doc, 'Priority')
-            # ~ tags = self.srvdtb.get_html_values_from_key(doc, 'Tag')
-
-            # ~ METADATA_SECTION_BODY = template('METADATA_SECTION_BODY')
-            # ~ html += METADATA_SECTION_BODY % (get_labels(author), get_labels(category), \
-                                            # ~ get_labels(scope))
-
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
             for key in custom_keys:
@@ -314,13 +298,7 @@ class Builder(Service):
             num_custom_props = len(custom_props)
             if  num_custom_props > 0:
                 html += custom_props
-
-            METADATA_SECTION_FOOTER = template('METADATA_SECTION_FOOTER')
-            source_dir = self.srvapp.get_source_path()
-            source_path = os.path.join(source_dir, doc)
-            source_code = open(source_path, 'r').read()
-            html += METADATA_SECTION_FOOTER % (doc, \
-                                               source_code)
+            html += template('METADATA_SECTION_FOOTER')
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
             self.log.error("\t\t%s", msgerror)
