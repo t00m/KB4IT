@@ -1,1 +1,1 @@
-<table class="tableblock frame-all grid-all stretch">
+<table class="tableblock frame-all grid-all spread">
