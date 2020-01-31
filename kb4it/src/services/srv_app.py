@@ -121,7 +121,7 @@ class Application(Service):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
                 # ~ self.log.debug(title)
-                html_title = """<span class="uk-text-primary uk-text-bold uk-text-truncate">%s</span>""" % title
+                html_title = """<div class="uk-text-primary uk-text-bold uk-text-truncate">%s</div>""" % title
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
