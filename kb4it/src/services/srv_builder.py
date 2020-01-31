@@ -101,8 +101,16 @@ class Builder(Service):
 
         with open(docname, 'w') as fall:
             fall.write("= All documents\n\n")
+            table_options = """[cols="5%,95%", options="header"]"""
+            fall.write("\n\n%s" % table_options)
+            fall.write("\n|===")
+            fall.write("\n| Nº\n| Document\n\n")
+            n = 1
             for title in doclist:
-                fall.write(". <<%s#,%s>>\n" % (os.path.basename(valid_filename(docdict[title])[:-5]), title))
+                doc = "<<%s#,%s>>" % (os.path.basename(valid_filename(docdict[title])[:-5]), title)
+                fall.write("\n| %5d\n| %s\n\n" % (n, doc))
+                n += 1
+            fall.write("|===\n")
 
     def create_category_filter(self, categories):
         """Missing method docstring."""
