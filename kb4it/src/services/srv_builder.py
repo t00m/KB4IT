@@ -399,7 +399,7 @@ class Builder(Service):
         human_ts = get_human_datetime(timestamp)
         return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, footer)
 
-    def create_blog(self):
+    def create_blog_page(self):
         blog = template('BLOG')
         filterrow = template('FILTER_BODY_ROW')
         blogposts = ''
@@ -415,3 +415,20 @@ class Builder(Service):
         docname = "%s/%s" % (self.tmpdir, 'blog.adoc')
         with open(docname, 'w') as fblog:
             fblog.write(blog % blogposts)
+
+    def create_events_page(self):
+        blog = template('EVENTS')
+        filterrow = template('FILTER_BODY_ROW')
+        events = ''
+        for doc in self.srvdtb.get_documents():
+
+            category = self.srvdtb.get_values(doc, 'Category')[0]
+            if category == 'Event':
+                title = self.srvdtb.get_values(doc, 'Title')[0]
+                datatitle = valid_filename(title)
+                card = self.get_doc_card_blogpost(doc)
+                events += card
+
+        docname = "%s/%s" % (self.tmpdir, 'events.adoc')
+        with open(docname, 'w') as fblog:
+            fblog.write(blog % events)

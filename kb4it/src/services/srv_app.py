@@ -409,7 +409,8 @@ class Application(Service):
 
         self.srvbld.create_all_keys_page()
         self.srvbld.create_bookmarks_page()
-        self.srvbld.create_blog()
+        self.srvbld.create_events_page()
+        self.srvbld.create_blog_page()
         self.srvbld.create_recents_page()
         self.srvbld.create_properties_page()
         self.srvbld.create_stats_page()
