@@ -196,7 +196,7 @@ class Application(Service):
             self.log.error("\tNo asciidoctor files found in: %s", self.runtime['dir']['source'])
             self.log.error("\tExecution finished.")
             sys.exit()
-        self.log.info("\t\tFound %d asciidoctor documents:", self.runtime['docs']['count'])
+        self.log.info("\t\tFound %d asciidoctor documents", self.runtime['docs']['count'])
         for doc in self.runtime['docs']['bag']:
             self.log.debug("\t\t\t%s", doc)
 
@@ -237,14 +237,14 @@ class Application(Service):
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
             self.kbdict_new['document'][docname]['Timestamp'] = timestamp
-            # ~ self.log.error("%s -> %s", self.kbdict_new['document'][docname]['Timestamp'], docname)
-            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
-            cached_document_exists = os.path.exists(cached_document)
-            # Get documents per [key, value] and add them to kbdict
+
+            # Generate caches
             for key in keys:
                 alist = keys[key]
                 for value in alist:
                     self.srvdtb.add_document_key(docname, key, value)
+
+                    # For each document and for each key/value linked to that document add an entry to kbdic['document']
                     try:
                         values = self.kbdict_new['document'][docname][key]
                         if value not in values:
@@ -252,6 +252,8 @@ class Application(Service):
                             self.kbdict_new['document'][docname][key] = sorted(values)
                     except:
                            self.kbdict_new['document'][docname][key] = [value]
+
+                    # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                     try:
                         documents = self.kbdict_new['metadata'][key][value]
                         documents.append(docname)
@@ -262,13 +264,19 @@ class Application(Service):
                         if value not in self.kbdict_new['metadata'][key]:
                             self.kbdict_new['metadata'][key][value] = [docname]
 
+            # Get cached document path and check if it exists
+            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
+            cached_document_exists = os.path.exists(cached_document)
+
             # Compare the document with the one in the cache
             self.log.debug("\t\t\tDoes document %s exist in cache? %s", docname, cached_document_exists)
+
             if not cached_document_exists:
                 FORCE_DOC_COMPILATION = True
             else:
                 try:
-                    # Compare timestamps for source/cache documents
+                    # Compare timestamps for each source/cached document.
+                    #If timestamp differs, compile it again.
                     doc_ts_new = self.kbdict_new['document'][docname]['Timestamp']
                     doc_ts_cur = self.kbdict_cur['document'][docname]['Timestamp']
                     if doc_ts_new > doc_ts_cur:
@@ -278,24 +286,21 @@ class Application(Service):
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
+            # Save compilation status
             self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
 
-            # Force compilation if document (content or metadata) has changed
+            # Force compilation (from command line)?
             if self.parameters.FORCE == True:
                 FORCE_ALL = True
             else:
                 FORCE_ALL = False
 
             if FORCE_DOC_COMPILATION or FORCE_ALL:
-                # Create metadata section
-                # ~ meta_section = self.srvbld.create_metadata_section(docname)
-
-                # Replace EOHMARK with nothing #metadata section
-                # ~ newadoc = srcadoc.replace(EOHMARK, meta_section, 1)
                 newadoc = srcadoc.replace(EOHMARK, '', 1)
 
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
+                self.log.info("\t\tDocument %s will be compiled again" % valid_filename(docname))
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             else:
@@ -304,24 +309,17 @@ class Application(Service):
 
         # Save current status for the next run
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
-        #save_current_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort()
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
+
 
     def stage_04_processing(self):
         """Process all documents."""
         self.log.info("Stage 4\tProcessing")
         # Get all available keys
         available_keys = self.srvdtb.get_all_keys()
-        # Check if any of the core keys is missing
-        # ~ missing = []
-        # ~ for key in HEADER_KEYS:
-            # ~ if key not in available_keys:
-                # ~ self.log.debug("\t\tAdding missing key: %s", key)
-                # ~ missing.append(key)
-        # ~ available_keys.extend(missing)
 
         # Process
         self.log.debug("All keys: %s", available_keys)
@@ -330,10 +328,15 @@ class Application(Service):
             self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
+                FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
+
+                # Get list of documents linked to a key/value for cached entries
                 try:
                     cur_nodes = sorted(self.kbdict_cur['metadata'][key][value])
                 except:
                     cur_nodes = []
+
+                # Get list of documents linked to a key/value for new entries
                 try:
                     new_nodes = sorted(self.kbdict_new['metadata'][key][value])
                 except Exception as error:
@@ -344,7 +347,7 @@ class Application(Service):
                     FORCE_DOC_KEY_COMPILATION = True
                     filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                     docname = os.path.join(self.runtime['dir']['tmp'], filename)
-                    self.log.debug("\t\t\t[%s][%s] Changes detected for documents related to this key/value (%s)", key, value, docname)
+                    self.log.info("\t\t\t[%s][%s] Changes detected for documents related to this key/value", key, value)
                 else:
                     FORCE_DOC_KEY_COMPILATION = False
 
@@ -394,7 +397,11 @@ class Application(Service):
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-                self.log.debug("\t\t\tForce compilation for %s: %s? %s", key, value, FORCE_DOC_COMPILATION)
+                if FORCE_DOC_COMPILATION:
+                    self.log.info("\t\t\tForce compilation for %s: %s? Yes", key, value)
+                else:
+                    self.log.debug("\t\t\tForce compilation for %s: %s? No", key, value)
+
             docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
             html = self.srvbld.create_key_page(key, values)
             with open(docname, 'w') as fkey:
