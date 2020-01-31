@@ -195,6 +195,7 @@ def apply_transformations(source):
     content = content.replace(template('H3_OLD'), template('H3_NEW'))
     content = content.replace(template('H4_OLD'), template('H4_NEW'))
     content = content.replace(template('TABLE_OLD'), template('TABLE_NEW'))
+    content = content.replace(template('TABLE_OLD_2'), template('TABLE_NEW'))
     # Admonitions
     content = content.replace(template('ADMONITION_ICON_NOTE_OLD'), template('ADMONITION_ICON_NOTE_NEW'))
     content = content.replace(template('ADMONITION_ICON_TIP_OLD'), template('ADMONITION_ICON_TIP_NEW'))
