@@ -368,31 +368,37 @@ class Application(Service):
                             DOCNAME = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), current_page)
                         DOCNAME_PATH = os.path.join(self.runtime['dir']['tmp'], DOCNAME)
                         self.log.info("New key/value page created: %s", DOCNAME)
-                        start = 50*current_page # lower limit
-                        end = 50*current_page + 50 # upper limit
+                        if total_pages > 10:
+                            total_pages = 10
+                            k = math.ceil(num_rel_docs/total_pages) + 1
+                        else:
+                            k = 50
+                        start = k*current_page # lower limit
+                        end = k*current_page + k # upper limit
                         with open(DOCNAME_PATH, 'w') as fkeyvalue:
                             # GRID START
                             DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
-                            html = """<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
+                            PAGINATION = """<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
                             for i in range(total_pages):
                                 if i == current_page:
-                                    html += """<li class="uk-active"><span>%d</span></li>""" % i
+                                    PAGINATION += """<li class="uk-active"><span>%d</span></li>""" % i
                                 else:
                                     if i == 0:
                                         PAGE = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                                     else:
                                         PAGE = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), i)
-                                    html += """<li><a href="%s"><span>%i</span></a></li>""" % (PAGE.replace('adoc','html'), i)
-                            html += """</ul>\n"""
+                                    PAGINATION += """<li><a href="%s"><span>%i</span></a></li>""" % (PAGE.replace('adoc','html'), i)
+                            PAGINATION += """</ul>\n"""
+                            CARDS = ""
                             for doc in related_docs_new[start:end]:
                                 title = self.srvdtb.get_values(doc, 'Title')[0]
                                 doc_card = self.srvbld.get_doc_card(doc)
                                 card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-                                html += """%s""" % card_search_filter
+                                CARDS += """%s""" % card_search_filter
 
 
                             TPL_VALUE = template('VALUE')
-                            fkeyvalue.write(TPL_VALUE % (valid_filename(key), key, value, html))
+                            fkeyvalue.write(TPL_VALUE % (valid_filename(key), key, value, PAGINATION, CARDS))
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
