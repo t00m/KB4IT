@@ -235,7 +235,6 @@ class Builder(Service):
         source_dir = self.srvapp.get_source_path()
 
         num_values = len(values)
-        self.log.error("Key: %s (%d)", key, num_values)
         if num_values > 50:
             html = template('KEY_PAGE_WITH_FILTERS')
 

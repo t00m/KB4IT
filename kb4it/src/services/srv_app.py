@@ -323,18 +323,23 @@ class Application(Service):
         available_keys = self.srvdtb.get_all_keys()
 
         # Process
-        self.log.debug("All keys: %s", available_keys)
+        self.log.debug("Available keys: %s", available_keys)
         for key in available_keys:
             FORCE_DOC_COMPILATION = False
             self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
+                k = 12
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
                 related_docs_new = sorted(self.kbdict_new['metadata'][key][value])
                 related_docs_cur = sorted(self.kbdict_cur['metadata'][key][value])
                 num_rel_docs = len(related_docs_new)
-                total_pages = math.ceil(num_rel_docs/50)
-
+                self.log.debug("[%s][%s] = %d", key, value, num_rel_docs)
+                total_pages = math.ceil(num_rel_docs/k)
+                if total_pages > 10:
+                    total_pages = 10
+                    k = math.ceil(num_rel_docs/total_pages)
+                self.log.debug("\t\tTo be displayed in %d pages with %d in each page", total_pages, k)
                 if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
                 else:
@@ -344,8 +349,8 @@ class Application(Service):
 
                 try:
                     for adoc in related_docs_new:
-                        self.log.debug("\t\t\t- Doc '%s'. Compile again? %s", adoc, self.kbdict_new['document'][adoc]['compile'])
                         FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or self.kbdict_new['document'][adoc]['compile']
+                        self.log.debug("\t\t\t- Doc '%s'. Compile again? %s", adoc, FORCE_DOC_COMPILATION)
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
@@ -357,37 +362,29 @@ class Application(Service):
                 COMPILE_AGAIN = FORCE_DOC_COMPILATION or FORCE_ALL
                 if COMPILE_AGAIN:
                     # Create .adoc from value
-
-                    # ~ filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
-                    # ~ docname = os.path.join(self.runtime['dir']['tmp'], filename)
-
                     for current_page in range(total_pages):
                         if current_page < 1:
                             DOCNAME = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
                         else:
                             DOCNAME = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), current_page)
                         DOCNAME_PATH = os.path.join(self.runtime['dir']['tmp'], DOCNAME)
-                        self.log.info("New key/value page created: %s", DOCNAME)
-                        if total_pages > 10:
-                            total_pages = 10
-                            k = math.ceil(num_rel_docs/total_pages) + 1
-                        else:
-                            k = 50
                         start = k*current_page # lower limit
                         end = k*current_page + k # upper limit
+                        # ~ self.log.debug("\t\t\tDisplaying %d/%d of %d in page %d", start, end, num_rel_docs, current_page)
                         with open(DOCNAME_PATH, 'w') as fkeyvalue:
                             # GRID START
                             DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
                             PAGINATION = """<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
-                            for i in range(total_pages):
-                                if i == current_page:
-                                    PAGINATION += """<li class="uk-active"><span>%d</span></li>""" % i
-                                else:
-                                    if i == 0:
-                                        PAGE = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+                            if total_pages > 1:
+                                for i in range(total_pages):
+                                    if i == current_page:
+                                        PAGINATION += """<li class="uk-active"><span>%d</span></li>""" % i
                                     else:
-                                        PAGE = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), i)
-                                    PAGINATION += """<li><a href="%s"><span>%i</span></a></li>""" % (PAGE.replace('adoc','html'), i)
+                                        if i == 0:
+                                            PAGE = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+                                        else:
+                                            PAGE = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), i)
+                                        PAGINATION += """<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
                             PAGINATION += """</ul>\n"""
                             CARDS = ""
                             for doc in related_docs_new[start:end]:
@@ -404,7 +401,7 @@ class Application(Service):
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-                if FORCE_DOC_COMPILATION:
+                if COMPILE_AGAIN:
                     self.log.info("\t\t\tForce compilation for %s: %s? Yes", key, value)
                 else:
                     self.log.debug("\t\t\tForce compilation for %s: %s? No", key, value)
