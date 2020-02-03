@@ -80,7 +80,8 @@ class Builder(Service):
                 frequency = len(dkeyurl[word])
                 size = get_font_size(frequency, max_frequency)
                 url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
-                item = WORDCLOUD_ITEM % (url, size, word)
+                tooltip = "%d documents" % frequency
+                item = WORDCLOUD_ITEM % (url, tooltip, size, word)
                 items += item
             html = WORDCLOUD % items
         else:
@@ -207,7 +208,9 @@ class Builder(Service):
         for key in all_keys:
             if key not in BLOCKED_KEYS:
                 html = self.create_tagcloud_from_key(key)
-                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), key, valid_filename(key), valid_filename(key), key, html)
+                values = self.srvdtb.get_all_values_for_key(key)
+                tooltip = "%d values" % len(values)
+                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, key, valid_filename(key), valid_filename(key), key, html)
                 custom_buttons += button
 
         content = TPL_PROPS_PAGE % (custom_buttons)
@@ -231,11 +234,14 @@ class Builder(Service):
 
     def create_key_page(self, key, values):
         """Missing method docstring."""
-        html = template('KEY_PAGE')
+        # ~ self.log.error("[%s]: %s", key, values)
         source_dir = self.srvapp.get_source_path()
 
+        num_values = len(values)
+        html = template('KEY_PAGE')
+
         # TAB Filter
-        key_filter = template('PROPERTY_FILTER')
+        key_filter = '' #template('PROPERTY_FILTER')
 
         ## Build filter header
         key_filter_header_rows = ""
@@ -271,8 +277,6 @@ class Builder(Service):
                                                       data_objects, \
                                                       doc_card)
 
-        key_filter = key_filter % (key_filter_header_rows, key_filter_docs)
-
 
         # TAB Cloud
         cloud = self.create_tagcloud_from_key(key)
@@ -286,7 +290,7 @@ class Builder(Service):
             value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
             stats += leader_row % (value_link, len(docs))
 
-        return html % (key, key_filter, cloud, stats)
+        return html % (key, cloud, stats)
 
     def create_metadata_section(self, doc):
         """Return a html block for displaying core and custom keys."""
@@ -370,6 +374,12 @@ class Builder(Service):
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
         return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
+
+
+    def get_doc_link(self, doc):
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        link = "%s.html" % doc
+        return """<a href="%s"><span>%s</span></a>""" % (link, title)
 
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()

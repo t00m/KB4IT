@@ -12,6 +12,7 @@ import os
 import sys
 import glob
 import time
+import math
 import random
 import threading
 import shutil
@@ -121,7 +122,7 @@ class Application(Service):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
                 # ~ self.log.debug(title)
-                html_title = """<div class="uk-text-primary uk-text-bold uk-text-truncate">%s</div>""" % title
+                html_title = """%s""" % title
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
@@ -242,6 +243,9 @@ class Application(Service):
             for key in keys:
                 alist = keys[key]
                 for value in alist:
+                    nc = len(value.strip())
+                    if nc == 0:
+                        continue
                     self.srvdtb.add_document_key(docname, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
@@ -322,44 +326,41 @@ class Application(Service):
         available_keys = self.srvdtb.get_all_keys()
 
         # Process
-        self.log.debug("All keys: %s", available_keys)
+        self.log.debug("Available keys: %s", available_keys)
         for key in available_keys:
             FORCE_DOC_COMPILATION = False
             self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
+                k = 12
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
-
-                # Get list of documents linked to a key/value for cached entries
                 try:
-                    cur_nodes = sorted(self.kbdict_cur['metadata'][key][value])
+                    related_docs_new = sorted(self.kbdict_new['metadata'][key][value])
                 except:
-                    cur_nodes = []
+                    related_docs_new = []
 
-                # Get list of documents linked to a key/value for new entries
                 try:
-                    new_nodes = sorted(self.kbdict_new['metadata'][key][value])
-                except Exception as error:
-                    self.log.error("Error in [%s][%s]: %s", key, value, error)
-                    new_nodes = ['###ERROR###']
-
-                if cur_nodes != new_nodes:
+                    related_docs_cur = sorted(self.kbdict_cur['metadata'][key][value])
+                except:
+                    related_docs_cur = []
+                num_rel_docs = len(related_docs_new)
+                # ~ self.log.debug("[%s][%s] = %d", key, value, num_rel_docs)
+                total_pages = math.ceil(num_rel_docs/k)
+                if total_pages > 10:
+                    total_pages = 10
+                    k = math.ceil(num_rel_docs/total_pages)
+                self.log.debug("\t\tTo be displayed in %d pages with %d in each page", total_pages, k)
+                if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
-                    filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
-                    docname = os.path.join(self.runtime['dir']['tmp'], filename)
-                    self.log.info("\t\t\t[%s][%s] Changes detected for documents related to this key/value", key, value)
                 else:
                     FORCE_DOC_KEY_COMPILATION = False
 
                 FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
 
                 try:
-                    filename = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
-                    docname = os.path.join(self.runtime['dir']['tmp'], filename)
-                    rel_docs = self.kbdict_new['metadata'][key][value]
-                    for adoc in rel_docs:
-                        self.log.debug("\t\t\t- Doc '%s'. Compile again? %s", adoc, self.kbdict_new['document'][adoc]['compile'])
+                    for adoc in related_docs_new:
                         FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or self.kbdict_new['document'][adoc]['compile']
+                        self.log.debug("\t\t\t- Doc '%s'. Compile again? %s", adoc, FORCE_DOC_COMPILATION)
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
@@ -371,34 +372,47 @@ class Application(Service):
                 COMPILE_AGAIN = FORCE_DOC_COMPILATION or FORCE_ALL
                 if COMPILE_AGAIN:
                     # Create .adoc from value
+                    for current_page in range(total_pages):
+                        if current_page < 1:
+                            DOCNAME = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+                        else:
+                            DOCNAME = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), current_page)
+                        DOCNAME_PATH = os.path.join(self.runtime['dir']['tmp'], DOCNAME)
+                        start = k*current_page # lower limit
+                        end = k*current_page + k # upper limit
+                        # ~ self.log.debug("\t\t\tDisplaying %d/%d of %d in page %d", start, end, num_rel_docs, current_page)
+                        with open(DOCNAME_PATH, 'w') as fkeyvalue:
+                            # GRID START
+                            DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
+                            PAGINATION = """<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
+                            if total_pages > 1:
+                                for i in range(total_pages):
+                                    if i == current_page:
+                                        PAGINATION += """<li class="uk-active"><span>%d</span></li>""" % i
+                                    else:
+                                        if i == 0:
+                                            PAGE = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+                                        else:
+                                            PAGE = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), i)
+                                        PAGINATION += """<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
+                            PAGINATION += """</ul>\n"""
+                            CARDS = ""
+                            for doc in related_docs_new[start:end]:
+                                title = self.srvdtb.get_values(doc, 'Title')[0]
+                                doc_card = self.srvbld.get_doc_card(doc)
+                                card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+                                CARDS += """%s""" % card_search_filter
 
-                    with open(docname, 'w') as fvalue:
-                        # Search documents related to this key/value
-                        related_docs = set()
-                        for doc in self.srvdtb.get_database():
-                            objects = self.srvdtb.get_values(doc, key)
-                            for obj in objects:
-                                if value == obj:
-                                    related_docs.add(doc)
 
-                        # GRID START
-                        DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
-                        html = ''
-                        for doc in related_docs:
-                            title = self.srvdtb.get_values(doc, 'Title')[0]
-                            doc_card = self.srvbld.get_doc_card(doc)
-                            card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-                            html += """%s""" % card_search_filter
-
-                        TPL_VALUE = template('VALUE')
-                        fvalue.write(TPL_VALUE % (valid_filename(key), key, value, html))
+                            TPL_VALUE = template('VALUE')
+                            fkeyvalue.write(TPL_VALUE % (valid_filename(key), key, value, PAGINATION, CARDS))
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-                if FORCE_DOC_COMPILATION:
-                    self.log.info("\t\t\tForce compilation for %s: %s? Yes", key, value)
+                if COMPILE_AGAIN:
+                    self.log.info("\t\tForce compilation for %s: %s? Yes", key, value)
                 else:
                     self.log.debug("\t\t\tForce compilation for %s: %s? No", key, value)
 
@@ -406,6 +420,7 @@ class Application(Service):
             html = self.srvbld.create_key_page(key, values)
             with open(docname, 'w') as fkey:
                 fkey.write(html)
+            # ~ self.log.info("Key page created: %s", docname)
 
         self.srvbld.create_all_keys_page()
         self.srvbld.create_bookmarks_page()
@@ -453,7 +468,7 @@ class Application(Service):
                 jobs.append(job)
                 num = num + 1
             self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
-            self.log.info("\t\t 0% done")
+            self.log.info("\t\t%3s%% done", "0")
             for job in jobs:
                 adoc, res, jobid = job.result()
                 self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))
