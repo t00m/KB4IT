@@ -231,7 +231,7 @@ def extract_toc(source):
     if s > 0 and e > s:
         for line in lines[s:e]:
             if line.startswith('<li><a href='):
-                modifier = """<li class="uk-link-toggle"><a class="uk-link-heading" """
+                modifier = """<li><a class="uk-link-heading uk-text-truncate" """
                 line = line.replace("<li><a ", modifier)
             else:
                 line = line.replace("sectlevel1", "uk-nav uk-nav-default")

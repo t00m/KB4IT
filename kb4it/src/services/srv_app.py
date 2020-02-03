@@ -122,7 +122,7 @@ class Application(Service):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
                 # ~ self.log.debug(title)
-                html_title = """<div class="uk-text-primary uk-text-bold uk-text-truncate">%s</div>""" % title
+                html_title = """%s""" % title
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
@@ -243,6 +243,9 @@ class Application(Service):
             for key in keys:
                 alist = keys[key]
                 for value in alist:
+                    nc = len(value.strip())
+                    if nc == 0:
+                        continue
                     self.srvdtb.add_document_key(docname, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
@@ -331,10 +334,17 @@ class Application(Service):
             for value in values:
                 k = 12
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
-                related_docs_new = sorted(self.kbdict_new['metadata'][key][value])
-                related_docs_cur = sorted(self.kbdict_cur['metadata'][key][value])
+                try:
+                    related_docs_new = sorted(self.kbdict_new['metadata'][key][value])
+                except:
+                    related_docs_new = []
+
+                try:
+                    related_docs_cur = sorted(self.kbdict_cur['metadata'][key][value])
+                except:
+                    related_docs_cur = []
                 num_rel_docs = len(related_docs_new)
-                self.log.debug("[%s][%s] = %d", key, value, num_rel_docs)
+                # ~ self.log.debug("[%s][%s] = %d", key, value, num_rel_docs)
                 total_pages = math.ceil(num_rel_docs/k)
                 if total_pages > 10:
                     total_pages = 10
@@ -402,7 +412,7 @@ class Application(Service):
                     self.runtime['docs']['cached'].append(filename)
 
                 if COMPILE_AGAIN:
-                    self.log.info("\t\t\tForce compilation for %s: %s? Yes", key, value)
+                    self.log.info("\t\tForce compilation for %s: %s? Yes", key, value)
                 else:
                     self.log.debug("\t\t\tForce compilation for %s: %s? No", key, value)
 
@@ -410,7 +420,7 @@ class Application(Service):
             html = self.srvbld.create_key_page(key, values)
             with open(docname, 'w') as fkey:
                 fkey.write(html)
-            self.log.info("Key page created: %s", docname)
+            # ~ self.log.info("Key page created: %s", docname)
 
         self.srvbld.create_all_keys_page()
         self.srvbld.create_bookmarks_page()
@@ -458,7 +468,7 @@ class Application(Service):
                 jobs.append(job)
                 num = num + 1
             self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
-            self.log.info("\t\t 0% done")
+            self.log.info("\t\t%3s%% done", "0")
             for job in jobs:
                 adoc, res, jobid = job.result()
                 self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))

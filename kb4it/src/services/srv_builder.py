@@ -80,7 +80,8 @@ class Builder(Service):
                 frequency = len(dkeyurl[word])
                 size = get_font_size(frequency, max_frequency)
                 url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
-                item = WORDCLOUD_ITEM % (url, size, word)
+                tooltip = "%d documents" % frequency
+                item = WORDCLOUD_ITEM % (url, tooltip, size, word)
                 items += item
             html = WORDCLOUD % items
         else:
@@ -207,7 +208,9 @@ class Builder(Service):
         for key in all_keys:
             if key not in BLOCKED_KEYS:
                 html = self.create_tagcloud_from_key(key)
-                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), key, valid_filename(key), valid_filename(key), key, html)
+                values = self.srvdtb.get_all_values_for_key(key)
+                tooltip = "%d values" % len(values)
+                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, key, valid_filename(key), valid_filename(key), key, html)
                 custom_buttons += button
 
         content = TPL_PROPS_PAGE % (custom_buttons)
@@ -231,53 +234,49 @@ class Builder(Service):
 
     def create_key_page(self, key, values):
         """Missing method docstring."""
-
+        # ~ self.log.error("[%s]: %s", key, values)
         source_dir = self.srvapp.get_source_path()
 
         num_values = len(values)
-        if num_values > 50:
-            html = template('KEY_PAGE_WITH_FILTERS')
+        html = template('KEY_PAGE')
 
-            # TAB Filter
-            key_filter = '' #template('PROPERTY_FILTER')
+        # TAB Filter
+        key_filter = '' #template('PROPERTY_FILTER')
 
-            ## Build filter header
-            key_filter_header_rows = ""
-            for value in values:
-                docs = self.srvdtb.get_docs_by_key_value(key, value)
-                tpl_header_item = template('PROPERTY_FILTER_HEAD_ITEM')
-                value_filter = value.replace(' ', '_')
-                header_item = tpl_header_item % (valid_filename(key), \
-                                                 valid_filename(value_filter),
-                                                 value, len(docs))
-                key_filter_header_rows += header_item
+        ## Build filter header
+        key_filter_header_rows = ""
+        for value in values:
+            docs = self.srvdtb.get_docs_by_key_value(key, value)
+            tpl_header_item = template('PROPERTY_FILTER_HEAD_ITEM')
+            value_filter = value.replace(' ', '_')
+            header_item = tpl_header_item % (valid_filename(key), \
+                                             valid_filename(value_filter),
+                                             value, len(docs))
+            key_filter_header_rows += header_item
 
-            ## Build filter body
-            key_filter_docs = ""
-            cardset = set()
-            for value in values:
-                docs = self.srvdtb.get_docs_by_key_value(key, value)
-                for doc in docs:
-                    cardset.add(doc)
+        ## Build filter body
+        key_filter_docs = ""
+        cardset = set()
+        for value in values:
+            docs = self.srvdtb.get_docs_by_key_value(key, value)
+            for doc in docs:
+                cardset.add(doc)
 
-            for doc in cardset:
-                objects = self.srvdtb.get_values(doc, key)
-                data_objects = []
+        for doc in cardset:
+            objects = self.srvdtb.get_values(doc, key)
+            data_objects = []
 
-                for obj in objects:
-                    data_objects.append(valid_filename(obj))
+            for obj in objects:
+                data_objects.append(valid_filename(obj))
 
-                title = self.srvdtb.get_values(doc, 'Title')[0] # Only first match
-                doc_card = self.get_doc_card(doc)
-                tpl_key_filter_docs = template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
-                key_filter_docs += tpl_key_filter_docs % (valid_filename(title), \
-                                                          valid_filename(key), \
-                                                          data_objects, \
-                                                          doc_card)
+            title = self.srvdtb.get_values(doc, 'Title')[0] # Only first match
+            doc_card = self.get_doc_card(doc)
+            tpl_key_filter_docs = template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
+            key_filter_docs += tpl_key_filter_docs % (valid_filename(title), \
+                                                      valid_filename(key), \
+                                                      data_objects, \
+                                                      doc_card)
 
-            key_filter = key_filter % (key_filter_header_rows, key_filter_docs)
-        else:
-            html = template('KEY_PAGE')
 
         # TAB Cloud
         cloud = self.create_tagcloud_from_key(key)
@@ -291,10 +290,7 @@ class Builder(Service):
             value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
             stats += leader_row % (value_link, len(docs))
 
-        if num_values > 50:
-            return html % (key, key_filter, cloud, stats)
-        else:
-            return html % (key, cloud, stats)
+        return html % (key, cloud, stats)
 
     def create_metadata_section(self, doc):
         """Return a html block for displaying core and custom keys."""
