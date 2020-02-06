@@ -349,7 +349,6 @@ class Application(Service):
                 if total_pages > 10:
                     total_pages = 10
                     k = math.ceil(num_rel_docs/total_pages)
-                self.log.debug("\t\tTo be displayed in %d pages with %d in each page", total_pages, k)
                 if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
                 else:
@@ -360,7 +359,6 @@ class Application(Service):
                 try:
                     for adoc in related_docs_new:
                         FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or self.kbdict_new['document'][adoc]['compile']
-                        self.log.debug("\t\t\t- Doc '%s'. Compile again? %s", adoc, FORCE_DOC_COMPILATION)
                 except KeyError:
                     FORCE_DOC_COMPILATION = True
 
@@ -411,10 +409,7 @@ class Application(Service):
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-                if COMPILE_AGAIN:
-                    self.log.info("\t\tForce compilation for %s: %s? Yes", key, value)
-                else:
-                    self.log.debug("\t\t\tForce compilation for %s: %s? No", key, value)
+                self.log.debug("\t\t\t- [Compile? %5s][%s][%s][%s]: %d pages with %d cards in each page", COMPILE_AGAIN, key, value, adoc, total_pages, k)
 
             docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
             html = self.srvbld.create_key_page(key, values)

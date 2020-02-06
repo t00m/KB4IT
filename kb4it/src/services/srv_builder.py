@@ -10,6 +10,7 @@ Builder service.
 """
 
 import os
+import math
 import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_srv import Service
@@ -91,27 +92,68 @@ class Builder(Service):
 
     def create_index_all(self):
         """Missing method docstring."""
-        docname = "%s/all.adoc" % (self.tmpdir)
+        # ~ DOCNAME_PATH = "%s/all.adoc" % (self.tmpdir)
         docdict = {}
-        doclist = []
+        docset = set()
         for doc in self.srvdtb.get_database():
             title = self.srvdtb.get_values(doc, 'Title')[0]
-            doclist.append(title)
+            docset.add(title)
             docdict[title] = doc
+        doclist = list(docset)
         doclist.sort(key=lambda y: y.lower())
+        # Pagination
 
-        with open(docname, 'w') as fall:
-            fall.write("= All documents\n\n")
-            table_options = """[cols="5%,95%", options="header"]"""
-            fall.write("\n\n%s" % table_options)
-            fall.write("\n|===")
-            fall.write("\n| Nº\n| Document\n\n")
-            n = 1
-            for title in doclist:
-                doc = "<<%s#,%s>>" % (os.path.basename(valid_filename(docdict[title])[:-5]), title)
-                fall.write("\n| %5d\n| %s\n\n" % (n, doc))
-                n += 1
-            fall.write("|===\n")
+        k = 12
+        num_rel_docs = len(doclist)
+        total_pages = math.ceil(num_rel_docs/k)
+        if total_pages > 10:
+            total_pages = 10
+            k = math.ceil(num_rel_docs/total_pages)
+        self.log.debug("\t\tCreated 'all' page (%d pages with %d in each page)", total_pages, k)
+
+
+        for current_page in range(total_pages):
+            PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
+            self.log.debug("ALL - Current page: %d" % current_page)
+            if total_pages > 1:
+                for i in range(total_pages):
+                    start = k*i # lower limit
+                    end = k*i + k # upper limit
+                    self.log.debug("\tLink %d in page %d" % (i, current_page))
+                    if i == current_page:
+                        PAGINATION += """\t<li uk-tooltip="Page %d: %d-%d/%d" class="uk-active"><span>%d</span></li>\n""" % (i, start, end, num_rel_docs,i)
+                        cstart = start
+                        cend = end
+                    else:
+                        if i == 0:
+                            PAGE = "all.adoc"
+                        else:
+                            PAGE = "all-%d.adoc" % i
+                        PAGINATION += """\t<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>\n""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
+            PAGINATION += """</ul>\n"""
+            self.log.debug(PAGINATION)
+
+            if current_page == 0:
+                DOCNAME_PATH = "%s/all.adoc" % (self.tmpdir)
+            else:
+                DOCNAME_PATH = "%s/all-%d.adoc" % (self.tmpdir, current_page)
+            ps = cstart
+            pe = cend
+            with open(DOCNAME_PATH, 'w') as fall:
+                fall.write("= All documents\n\n")
+                fall.write("""++++\n%s\n\n++++\n""" % PAGINATION)
+                # ~ fall.write("Displaying documents from %d to %d\n\n" % (ps, pe-1))
+                table_options = """[cols="5%,95%", options="header"]"""
+                fall.write("\n\n%s" % table_options)
+                fall.write("\n|===")
+                fall.write("\n| Nº\n| Document\n\n")
+                n = ps
+                self.log.debug("Displaying documents from %d to %d" % (ps, pe-1))
+                for title in doclist[ps:pe]:
+                    doc = "<<%s#,%s>>" % (os.path.basename(valid_filename(docdict[title])[:-5]), title)
+                    fall.write("\n| %5d\n| %s\n\n" % (n, doc))
+                    n += 1
+                fall.write("|===\n")
 
     def create_category_filter(self, categories):
         """Missing method docstring."""
@@ -355,6 +397,7 @@ class Builder(Service):
     def get_doc_card_blogpost(self, doc):
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = template('DOC_CARD_BLOGPOST')
+        DOC_CARD_TITLE = template('DOC_CARD_BLOGPOST_TITLE')
         DOC_CARD_LINK = template('DOC_CARD_LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
@@ -365,7 +408,7 @@ class Builder(Service):
         icon_path = get_author_icon(source_dir, author)
         if icon_path == "resources/images/authors/author_unknown.png":
             self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
-        link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
+        link_title = DOC_CARD_TITLE % (valid_filename(doc).replace('.adoc', ''), title)
         link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
         link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
         link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
@@ -373,7 +416,7 @@ class Builder(Service):
         link_image = "Author_%s.html" % valid_filename(author)
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
-        return DOC_CARD % (link_image, icon_path, authors, link_title, timestamp, human_ts, link_category, link_scope)
+        return DOC_CARD % (link_title, timestamp, human_ts, link_scope)
 
 
     def get_doc_link(self, doc):
