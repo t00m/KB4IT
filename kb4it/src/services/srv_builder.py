@@ -100,10 +100,10 @@ class Builder(Service):
             docdict[title] = doc
         doclist = list(docset)
         doclist.sort(key=lambda y: y.lower())
-        self.build_pagination('all', doclist)
+        self.build_pagination('All documents', 'all', doclist)
 
 
-    def build_pagination(self, basename, doclist):
+    def build_pagination(self, page_title, basename, doclist):
         PG_HEAD = template('PAGINATION_HEAD')
         PG_CARD = template('PAGINATION_CARD')
         DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
@@ -113,17 +113,22 @@ class Builder(Service):
         if total_pages > 10:
             total_pages = 10
             k = math.ceil(num_rel_docs/total_pages)
+        elif total_pages == 0:
+            total_pages = 1
 
         for current_page in range(total_pages):
             PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
             self.log.debug("ALL - Current page: %d" % current_page)
-            if total_pages > 1:
+            if total_pages > 0:
                 for i in range(total_pages):
                     start = k*i # lower limit
                     end = k*i + k # upper limit
                     self.log.debug("\tLink %d in page %d" % (i, current_page))
                     if i == current_page:
-                        PAGINATION += """\t<li uk-tooltip="Page %d: %d-%d/%d" class="uk-active"><span>%d</span></li>\n""" % (i, start, end, num_rel_docs,i)
+                        if total_pages - 1 == 0:
+                            PAGINATION += """\t<li class="uk-active"></li>\n"""
+                        else:
+                            PAGINATION += """\t<li class="uk-active"><span uk-tooltip="Page %d: %d-%d/%d">%d</span></li>\n""" % (i, start, end, num_rel_docs,i)
                         cstart = start
                         cend = end
                     else:
@@ -151,7 +156,7 @@ class Builder(Service):
                     card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
                     CARDS += """%s""" % card_search_filter
                     n += 1
-                fall.write(PG_HEAD % ("All documents", PAGINATION, CARDS))
+                fall.write(PG_HEAD % (page_title, PAGINATION, CARDS))
         self.log.debug("\t\tCreated 'all' page (%d pages with %d in each page)", total_pages, k)
 
 
@@ -194,10 +199,6 @@ class Builder(Service):
 
     def create_recents_page(self):
         """Create recents page."""
-        recents = template('RECENTS')
-        filterrow = template('FILTER_BODY_ROW')
-        docname = "%s/%s" % (self.tmpdir, 'recents.adoc')
-
         now = datetime.now()
         strtoday = "%d-%02d-%02d" % (now.year, now.month, now.day)
         lastday = now - dt.timedelta(days=1)
@@ -205,40 +206,30 @@ class Builder(Service):
         lastmonth = now - dt.timedelta(days=30)
         lastyear = now - dt.timedelta(days=365)
 
-        rows = ''
+        doclist = set()
         for doc in self.srvdtb.get_documents():
             title = self.srvdtb.get_values(doc, 'Title')[0]
             datafilter = ''
             timestamp = self.srvdtb.get_values(doc, 'Timestamp')
-            # ~ adate = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
             if timestamp > lastday:
-                # ~ self.log.debug("Today: %s -> %s", timestamp, docname)
-                datafilter += 'Today'
+                doclist.add(doc)
+            elif timestamp > lastweek:
+                doclist.add(doc)
+            elif timestamp > lastmonth:
+                doclist.add(doc)
+            else:
+                doclist.add(doc)
 
-            if timestamp > lastweek:
-                # ~ self.log.debug(" Week: %s -> %s", timestamp, docname)
-                datafilter += 'Week'
-
-            if timestamp > lastmonth:
-                # ~ self.log.debug("Month: %s -> %s", timestamp, docname)
-                datafilter += 'Month'
-            datatitle = valid_filename(title)
-            card = self.get_doc_card(doc)
-            rows += filterrow % (datatitle, 'recent', datafilter, card)
-        with open(docname, 'w') as fcal:
-            fcal.write(recents % rows)
+        # By default, display only last 12 documents
+        self.build_pagination('Recents', 'recents', list(doclist)[:12])
 
     def create_bookmarks_page(self):
-        page = template('BOOKMARKS')
-        docname = "%s/%s" % (self.tmpdir, 'bookmarks.adoc')
-        bookmarks = ''
+        doclist = set()
         for doc in self.srvdtb.get_database():
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
-                card = self.get_doc_card(doc)
-                bookmarks += "<li>%s</li>\n" % card
-        with open(docname, 'w') as fbk:
-            fbk.write(page % bookmarks)
+                doclist.add(doc)
+        self.build_pagination('Bookmarks', 'bookmarks', list(doclist))
 
 
     def create_properties_page(self):
@@ -453,35 +444,18 @@ class Builder(Service):
         return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, footer)
 
     def create_blog_page(self):
-        blog = template('BLOG')
-        filterrow = template('FILTER_BODY_ROW')
-        blogposts = ''
+        doclist = set()
         for doc in self.srvdtb.get_documents():
-
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Post':
-                title = self.srvdtb.get_values(doc, 'Title')[0]
-                datatitle = valid_filename(title)
-                card = self.get_doc_card_blogpost(doc)
-                blogposts += card
-
-        docname = "%s/%s" % (self.tmpdir, 'blog.adoc')
-        with open(docname, 'w') as fblog:
-            fblog.write(blog % blogposts)
+                doclist.add(doc)
+        self.build_pagination('Blog', 'blog', list(doclist))
 
     def create_events_page(self):
-        blog = template('EVENTS')
-        filterrow = template('FILTER_BODY_ROW')
-        events = ''
+        doclist = set()
         for doc in self.srvdtb.get_documents():
-
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Event':
-                title = self.srvdtb.get_values(doc, 'Title')[0]
-                datatitle = valid_filename(title)
-                card = self.get_doc_card_blogpost(doc)
-                events += card
+                doclist.add(doc)
 
-        docname = "%s/%s" % (self.tmpdir, 'events.adoc')
-        with open(docname, 'w') as fblog:
-            fblog.write(blog % events)
+        self.build_pagination('Events', 'events', list(doclist))
