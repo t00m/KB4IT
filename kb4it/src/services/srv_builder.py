@@ -92,25 +92,27 @@ class Builder(Service):
 
     def create_index_all(self):
         """Missing method docstring."""
-        # ~ DOCNAME_PATH = "%s/all.adoc" % (self.tmpdir)
         docdict = {}
         docset = set()
         for doc in self.srvdtb.get_database():
             title = self.srvdtb.get_values(doc, 'Title')[0]
-            docset.add(title)
+            docset.add(doc)
             docdict[title] = doc
         doclist = list(docset)
         doclist.sort(key=lambda y: y.lower())
-        # Pagination
+        self.build_pagination('all', doclist)
 
+
+    def build_pagination(self, basename, doclist):
+        PG_HEAD = template('PAGINATION_HEAD')
+        PG_CARD = template('PAGINATION_CARD')
+        DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
         k = 12
         num_rel_docs = len(doclist)
         total_pages = math.ceil(num_rel_docs/k)
         if total_pages > 10:
             total_pages = 10
             k = math.ceil(num_rel_docs/total_pages)
-        self.log.debug("\t\tCreated 'all' page (%d pages with %d in each page)", total_pages, k)
-
 
         for current_page in range(total_pages):
             PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
@@ -126,34 +128,32 @@ class Builder(Service):
                         cend = end
                     else:
                         if i == 0:
-                            PAGE = "all.adoc"
+                            PAGE = "%s.adoc" % basename
                         else:
-                            PAGE = "all-%d.adoc" % i
+                            PAGE = "%s-%d.adoc" % (basename, i)
                         PAGINATION += """\t<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>\n""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
             PAGINATION += """</ul>\n"""
-            self.log.debug(PAGINATION)
+            # ~ self.log.debug(PAGINATION)
 
             if current_page == 0:
-                DOCNAME_PATH = "%s/all.adoc" % (self.tmpdir)
+                DOCNAME_PATH = "%s/%s.adoc" % (self.tmpdir, basename)
             else:
-                DOCNAME_PATH = "%s/all-%d.adoc" % (self.tmpdir, current_page)
+                DOCNAME_PATH = "%s/%s-%d.adoc" % (self.tmpdir, basename, current_page)
             ps = cstart
             pe = cend
             with open(DOCNAME_PATH, 'w') as fall:
-                fall.write("= All documents\n\n")
-                fall.write("""++++\n%s\n\n++++\n""" % PAGINATION)
-                # ~ fall.write("Displaying documents from %d to %d\n\n" % (ps, pe-1))
-                table_options = """[cols="5%,95%", options="header"]"""
-                fall.write("\n\n%s" % table_options)
-                fall.write("\n|===")
-                fall.write("\n| Nº\n| Document\n\n")
                 n = ps
                 self.log.debug("Displaying documents from %d to %d" % (ps, pe-1))
-                for title in doclist[ps:pe]:
-                    doc = "<<%s#,%s>>" % (os.path.basename(valid_filename(docdict[title])[:-5]), title)
-                    fall.write("\n| %5d\n| %s\n\n" % (n, doc))
+                CARDS = ""
+                for doc in doclist[ps:pe]:
+                    title = self.srvdtb.get_values(doc, 'Title')[0]
+                    doc_card = self.get_doc_card(doc)
+                    card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+                    CARDS += """%s""" % card_search_filter
                     n += 1
-                fall.write("|===\n")
+                fall.write(PG_HEAD % ("All documents", PAGINATION, CARDS))
+        self.log.debug("\t\tCreated 'all' page (%d pages with %d in each page)", total_pages, k)
+
 
     def create_category_filter(self, categories):
         """Missing method docstring."""
