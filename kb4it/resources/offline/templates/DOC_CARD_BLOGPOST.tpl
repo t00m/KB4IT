@@ -18,3 +18,4 @@
             </div>
         </article>
         <!-- DOC_CARD.tpl :: END -->
+
