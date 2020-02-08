@@ -376,3 +376,34 @@ def get_author_icon(source_path, author):
         return relpath
     else:
         return "resources/images/authors/author_unknown.png"
+
+def fuzzy_date_from_timestamp(timestamp):
+    """
+    Missing method docstring (missing-docstring)
+    """
+    d1 = timestamp
+    d2 = datetime.now()
+    rdate = d2 - d1 # DateTimeDelta
+    if rdate.days > 0:
+        if rdate.days <= 31:
+            return "%d days ago" % int(rdate.days)
+
+        if rdate.days > 31 and rdate.days < 365:
+            return "%d months ago" % int((rdate.days/31))
+
+        if rdate.days >= 365:
+            return "%d years ago" % int((rdate.days/365))
+
+    hours = rdate.seconds / 3600
+    if int(hours) > 0:
+        return "%d hours ago" % int(hours)
+
+    minutes = rdate.seconds / 60
+    if int(minutes) > 0:
+        return "%d minutes ago" % int(minutes)
+
+    if int(rdate.seconds) > 0:
+        return "%d seconds ago" % int(rdate.seconds)
+
+    if int(rdate.seconds) == 0:
+        return "Right now"
