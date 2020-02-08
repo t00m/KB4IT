@@ -416,7 +416,8 @@ class Builder(Service):
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
         fuzzy_date = fuzzy_date_from_timestamp(timestamp)
-        return DOC_CARD % (title, timestamp, link_title, timestamp, fuzzy_date, footer)
+        tooltip ="%s" % (title)
+        return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
 
     def create_blog_page(self):
         doclist = []
