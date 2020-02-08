@@ -1,6 +1,6 @@
     <!-- Button :: START -->
     <div>
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-small uk-text-lead">
+        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-text-lead">
             <a class="uk-link-heading" href="#modal-full-%s" uk-tooltip="%s" uk-toggle>%s</a>
             <div id="modal-full-%s" class="uk-modal-container" uk-modal>
                 <div class="uk-modal-dialog" uk-overflow-auto>

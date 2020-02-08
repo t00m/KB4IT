@@ -29,10 +29,6 @@ class KB4ITDB(Service):
         self.params = self.app.get_params()
         self.source_path = self.params.SOURCE_PATH
 
-    def get_database(self):
-        """Get a pointer to the database."""
-        return self.db
-
     def add_document(self, doc, timestamp):
         """Add a new document node to the graph."""
         self.db[doc] = {}

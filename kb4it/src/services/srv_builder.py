@@ -16,7 +16,7 @@ from datetime import datetime
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.services.srv_db import IGNORE_KEYS, BLOCKED_KEYS # HEADER_KEYS,
 from kb4it.src.core.mod_utils import template, valid_filename, get_labels
-from kb4it.src.core.mod_utils import get_human_datetime
+from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
 from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.core.mod_utils import last_modification
@@ -47,7 +47,7 @@ class Builder(Service):
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
         dkeyurl = {}
-        for doc in self.srvdtb.get_database():
+        for doc in self.srvdtb.get_documents():
             tags = self.srvdtb.get_values(doc, key)
             url = os.path.basename(doc)[:-5]
             for tag in tags:
@@ -92,14 +92,7 @@ class Builder(Service):
 
     def create_index_all(self):
         """Missing method docstring."""
-        docdict = {}
-        docset = set()
-        for doc in self.srvdtb.get_database():
-            title = self.srvdtb.get_values(doc, 'Title')[0]
-            docset.add(doc)
-            docdict[title] = doc
-        doclist = list(docset)
-        doclist.sort(key=lambda y: y.lower())
+        doclist = self.srvdtb.get_documents()
         self.build_pagination('All documents', 'all', doclist)
 
 
@@ -118,12 +111,12 @@ class Builder(Service):
 
         for current_page in range(total_pages):
             PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
-            self.log.debug("ALL - Current page: %d" % current_page)
+            # ~ self.log.debug("ALL - Current page: %d" % current_page)
             if total_pages > 0:
                 for i in range(total_pages):
                     start = k*i # lower limit
                     end = k*i + k # upper limit
-                    self.log.debug("\tLink %d in page %d" % (i, current_page))
+                    # ~ self.log.debug("\tLink %d in page %d" % (i, current_page))
                     if i == current_page:
                         if total_pages - 1 == 0:
                             PAGINATION += """\t<li class="uk-active"></li>\n"""
@@ -148,7 +141,7 @@ class Builder(Service):
             pe = cend
             with open(DOCNAME_PATH, 'w') as fall:
                 n = ps
-                self.log.debug("Displaying documents from %d to %d" % (ps, pe-1))
+                # ~ self.log.debug("Displaying documents from %d to %d" % (ps, pe-1))
                 CARDS = ""
                 for doc in doclist[ps:pe]:
                     title = self.srvdtb.get_values(doc, 'Title')[0]
@@ -157,7 +150,7 @@ class Builder(Service):
                     CARDS += """%s""" % card_search_filter
                     n += 1
                 fall.write(PG_HEAD % (page_title, PAGINATION, CARDS))
-        self.log.debug("\t\tCreated 'all' page (%d pages with %d in each page)", total_pages, k)
+        self.log.debug("\t\tCreated '%s' page (%d pages with %d in each page)", page_title, total_pages, k)
 
 
     def create_category_filter(self, categories):
@@ -199,40 +192,21 @@ class Builder(Service):
 
     def create_recents_page(self):
         """Create recents page."""
-        now = datetime.now()
-        strtoday = "%d-%02d-%02d" % (now.year, now.month, now.day)
-        lastday = now - dt.timedelta(days=1)
-        lastweek = now - dt.timedelta(weeks=1)
-        lastmonth = now - dt.timedelta(days=30)
-        lastyear = now - dt.timedelta(days=365)
-
-        doclist = set()
-        for doc in self.srvdtb.get_documents():
-            title = self.srvdtb.get_values(doc, 'Title')[0]
-            datafilter = ''
-            timestamp = self.srvdtb.get_values(doc, 'Timestamp')
-            if timestamp > lastday:
-                doclist.add(doc)
-            elif timestamp > lastweek:
-                doclist.add(doc)
-            elif timestamp > lastmonth:
-                doclist.add(doc)
-            else:
-                doclist.add(doc)
-
-        # By default, display only last 12 documents
-        self.build_pagination('Recents', 'recents', list(doclist)[:12])
+        doclist = self.srvdtb.get_documents()[:60]
+        self.build_pagination('Recents', 'recents', doclist)
 
     def create_bookmarks_page(self):
-        doclist = set()
-        for doc in self.srvdtb.get_database():
+        """Create bookmarks page."""
+        doclist = []
+        for doc in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
-                doclist.add(doc)
-        self.build_pagination('Bookmarks', 'bookmarks', list(doclist))
+                doclist.append(doc)
+        self.build_pagination('Bookmarks', 'bookmarks', doclist)
 
 
     def create_properties_page(self):
+        """Create properties page."""
         TPL_PROPS_PAGE = template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = template('KEY_MODAL_BUTTON')
         # Custom modal buttons
@@ -359,7 +333,7 @@ class Builder(Service):
 
         # ~ DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
         # ~ html = ''
-        # ~ for doc in self.srvdtb.get_database():
+        # ~ for doc in self.srvdtb.get_documents():
             # ~ title = self.srvdtb.get_values(doc, 'Title')[0]
             # ~ doc_card = self.get_doc_card(doc)
             # ~ card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
@@ -441,15 +415,16 @@ class Builder(Service):
         link_image = "Author_%s.html" % valid_filename(author)
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
-        return DOC_CARD % (link_image, icon_path, authors, title, link_title, timestamp, human_ts, footer)
+        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
+        return DOC_CARD % (title, timestamp, link_title, timestamp, fuzzy_date, footer)
 
     def create_blog_page(self):
-        doclist = set()
+        doclist = []
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Post':
-                doclist.add(doc)
-        self.build_pagination('Blog', 'blog', list(doclist))
+                doclist.append(doc)
+        self.build_pagination('Blog', 'blog', doclist)
 
     def create_events_page(self):
         doclist = set()
