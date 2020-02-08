@@ -1,9 +1,6 @@
         <!-- DOC_CARD.tpl :: START -->
         <article class="uk-article">
             <div class="uk-grid-small uk-flex-middle" uk-grid>
-                <div class="uk-width-auto">
-                    <a href="%s"><img class="uk-border-circle" width="48" height="48" src="%s" uk-tooltip="%s"></a>
-                </div>
                 <div class="uk-width-expand">
                     <h1 class="uk-article-title">%s</h1>
                     <p class="uk-text-meta uk-margin-remove-top"><time datetime="%s">%s</time></p>
@@ -15,7 +12,6 @@
                 <hr class="uk-divider-icon">
                 <div class="uk-flex uk-flex-right">
                     <ul class="uk-breadcrumb">
-                        <!-- <li>%s</li> -->
                         <li><span class="uk-text-meta uk-text-bold">Archived on&nbsp;</span>%s</li>
                     </ul>
                 </div>
