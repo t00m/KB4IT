@@ -57,6 +57,8 @@ class KB4ITDB(Service):
         alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
         for doc, timestamp in alist:
             self.sorted_docs.append(doc)
+        # ~ for doc in self.sorted_docs:
+            # ~ self.log.error("%s - %s", self.db[doc]['Timestamp'], self.db[doc]['Title'][0])
 
     def get_documents(self):
         return self.sorted_docs
