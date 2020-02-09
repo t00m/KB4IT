@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-<title>KB4IT</title>
+    <title>KB4IT - About KB4IT</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/uikit/css/kb4it.css">
     <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
@@ -19,60 +20,66 @@
 <div>
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
-            <div class="uk-navbar-left">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
-                    <li class="uk-link-toggle uk-text-bolder">
-                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    <li class="uk-link-toggle">
+                        <a class="uk-logo" href="index.html">
+                            <img src="resources/images/logo.png" alt="">
+                        </a>
                     </li>
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="bookmarks.html">Bookmarks</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
                         </div>
                     </li>
                 </ul>
-            </div>
-            <div class="uk-navbar-center">
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
-                            <li>
-                                <a class="uk-link-toggle uk-text-bolder" href="#">Contents</a>
+                            <li class="noprint">
+                                <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Contents</a>
                                 <div class="uk-navbar-dropdown">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
 <ul class="uk-nav uk-nav-default">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_about_kb4it_v0_7_4">About KB4IT (v0.7.4</a>
+<li><a class="uk-link-heading uk-text-truncate" href="#_about_kb4it_0_7_4_20200209_build02">About KB4IT 0.7.4+20200209.build02</a>
 <ul class="uk-nav-sub">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_introduction">Introduction</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_motivations">Motivations</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_features">Features</a>
+<li><a class="uk-link-heading uk-text-truncate" href="#_introduction">Introduction</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_motivations">Motivations</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_features">Features</a>
 <ul class="uk-nav-sub">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_pros">Pros</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_cons">Cons</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_pros">Pros</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_cons">Cons</a></li>
 </ul>
 </li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_installation">Installation</a>
+<li><a class="uk-link-heading uk-text-truncate" href="#_installation">Installation</a>
 <ul class="uk-nav-sub">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_from_source">From source</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_pypi_package">Pypi package</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_from_source">From source</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_pypi_package">Pypi package</a></li>
 </ul>
 </li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_execution">Execution</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_download">Download</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_credits">Credits</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_execution">Execution</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_download">Download</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_credits">Credits</a></li>
 </ul>
 </li>
 </ul>
@@ -82,21 +89,26 @@
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
-            <div class="uk-navbar-right">
+            <div class="uk-navbar-center">
+                <!-- DOCUMENT TITLE :: START -->
+<span class="uk-text-danger uk-text-truncate">About KB4IT</span>
+                <!-- DOCUMENT TITLE :: END -->
+            </div>
+            <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html">Help</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about.html">About</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
                                 </li>
                                 <!--
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
                                 </li>
                                 -->
                             </ul>
@@ -108,11 +120,10 @@
     </div>
 </div>
 <div class="uk-container uk-container-center">
-<h1 class="uk-heading-small uk-text-center">About KB4IT</h1>
 <div hidden>
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_about_kb4it_v0_7_4">About KB4IT (v0.7.4</a>
+<li><a href="#_about_kb4it_0_7_4_20200209_build02">About KB4IT 0.7.4+20200209.build02</a>
 <ul class="sectlevel2">
 <li><a href="#_introduction">Introduction</a></li>
 <li><a href="#_motivations">Motivations</a></li>
@@ -136,11 +147,8 @@
 </ul>
 </div>
 <div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
-<h2 id="_about_kb4it_v0_7_4">About KB4IT (v0.7.4</h2>
+<h2 id="_about_kb4it_0_7_4_20200209_build02">About KB4IT 0.7.4+20200209.build02</h2>
 <div class="uk-container">
-<div class="paragraph">
-<p>)</p>
-</div>
 <div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
 <h3 id="_introduction">Introduction</h3>
 <div class="paragraph">
@@ -266,12 +274,18 @@ publishing toolchain) and Python (the programming language used).</p>
 </div>
 </div>
 </div>
-</div>        </div>
+</div>            <!-- FOOTER :: START -->
+            <div class="uk-flex uk-flex-center uk-flex-wrap">
+<!--
+                <div class="uk-card uk-card-body">
+                    <span class="uk-text-meta">Last update on Sun, Feb 09, 2020 at 23:33</span>
+                </div>
+-->
+            </div>
+            <!-- FOOTER :: END -->
+        </div>
     </div>
     <!-- CONTENTS (Document) :: END -->
-</div>
-<div><!-- FOOTER :: START -->
-</div><!-- FOOTER :: END -->
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
@@ -282,7 +296,7 @@ input.addEventListener( 'keyup', function(event)
 {
     if ( input.value == "" )
     {
-        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+        filter.setAttribute( 'uk-filter-control', '' );
     }
 
     else

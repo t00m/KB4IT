@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-    <title>KB4IT - Priority</title>
+    <title>KB4IT - Stats</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -62,7 +62,7 @@
             </div>
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
-<span class="uk-text-danger uk-text-truncate">Priority</span>
+<span class="uk-text-danger uk-text-truncate">Stats</span>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
             <div class="uk-navbar-right noprint">
@@ -91,40 +91,55 @@
     </div>
 </div>
 <div class="uk-container uk-container-center">
-    <!-- KEY_PAGE.tpl -->
-    <!-- Tabs header :: START-->
-    <ul class="uk-flex-center" uk-tab>
-        <li><a href="#">Cloud</a></li>
-        <li><a href="#">Stats</a></li>
-    </ul>
-    <!-- Tabs header :: END -->
+    <!-- INDEX_TAB_STATS.tpl :: START -->
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-expand uk-text-bold" uk-leader>
+            <a class="uk-link-heading" href="all.html">Documents</a>
+        </div>
+        <div><a href="all.html">5</a></div> <!-- Num of documents -->
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-expand uk-text-bold" uk-leader>Properties</div>
+        <div><a href="properties.html">7</a></div> <!-- Num of properties -->
+    </div>
+    <!-- Property leader items -->
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Author.html">Author</a></div>
+        <div><a href="Author.html">1</a></div>
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Category.html">Category</a></div>
+        <div><a href="Category.html">1</a></div>
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Priority.html">Priority</a></div>
+        <div><a href="Priority.html">2</a></div>
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Product.html">Product</a></div>
+        <div><a href="Product.html">1</a></div>
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Scope.html">Scope</a></div>
+        <div><a href="Scope.html">1</a></div>
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Status.html">Status</a></div>
+        <div><a href="Status.html">1</a></div>
+    </div>
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-6@m"></div>
+        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Team.html">Team</a></div>
+        <div><a href="Team.html">1</a></div>
+    </div>
 
-    <!-- Tabs content :: START-->
-    <ul class="uk-switcher uk-margin">
-        <li> <!-- Cloud :: Start -->
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div class="uk-flex-center" uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Low.html" uk-tooltip="4 documents"><span style="font-size:72pt;">Low</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Normal.html" uk-tooltip="1 documents"><span style="font-size:36pt;">Normal</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-        </li> <!-- Cloud :: End -->
-
-        <li> <!-- Stats :: Start -->
-            <div class="uk-grid-small uk-child-width-1-6@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Priority_Low.html">Low</a></div>
-                <div>4</div>
-            </div>
-            <div class="uk-grid-small uk-child-width-1-6@m" uk-grid>
-                <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Priority_Normal.html">Normal</a></div>
-                <div>1</div>
-            </div>
-
-        </li> <!-- Stats :: End-->
-    </ul>
-    <!-- Tabs content :: END-->            <!-- FOOTER :: START -->
+    <!-- Property leader items -->            <!-- FOOTER :: START -->
             <div class="uk-flex uk-flex-center uk-flex-wrap">
 <!--
                 <div class="uk-card uk-card-body">

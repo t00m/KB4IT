@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-<title>KB4IT</title>
+    <title>KB4IT - </title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/uikit/css/kb4it.css">
     <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
@@ -19,55 +20,66 @@
 <div>
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
-            <div class="uk-navbar-left">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
-                    <li class="uk-link-toggle uk-text-bolder">
-                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    <li class="uk-link-toggle">
+                        <a class="uk-logo" href="index.html">
+                            <img src="resources/images/logo.png" alt="">
+                        </a>
                     </li>
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="bookmarks.html">Bookmarks</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
                         </div>
                     </li>
                 </ul>
-            </div>
-            <div class="uk-navbar-center">
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
                             <!-- <li><a href="#">Contents</a></li> -->
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
-            <div class="uk-navbar-right">
+            <div class="uk-navbar-center">
+                <!-- DOCUMENT TITLE :: START -->
+<span class="uk-text-danger uk-text-truncate"></span>
+                <!-- DOCUMENT TITLE :: END -->
+            </div>
+            <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html">Help</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about.html">About</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
                                 </li>
                                 <!--
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
                                 </li>
                                 -->
                             </ul>
@@ -79,442 +91,18 @@
     </div>
 </div>
 <div class="uk-container uk-container-center">
-<h1 class="uk-heading-small uk-text-center"></h1>
-    <div class="uk-card uk-border-rounded uk-card-body uk-padding-remove">
-        <span class="uk-align-right uk-text-meta">Last update on Mon, Dec 16, 2019 at 22:48</span>
-    </div>
-    <ul uk-accordion>
-        <li class="uk-open">
-            <a class="uk-accordion-title" href="#">Core properties</a>
-            <div class="uk-accordion-content">
-                <!-- Modal buttons for keys :: START-->
-                <div class="uk-card uk-border-rounded uk-card-small uk-auto@m uk-background-muted" style="border: 1px solid gray;">
-                    <div class="uk-card-header">
-                        <div class="uk-grid-medium uk-flex-middle uk-child-width-expand" uk-grid>
-                            <div class="uk-width-expand">
-                                <div class="uk-flex uk-flex-left uk-flex-wrap">
-                <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Author" uk-toggle><h5>Author</h5></a>
-            <div id="modal-full-Author" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Author.html">Author</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Davor_Barišić.html"><span style="font-size:18pt;">Davor Barišić</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Nora_Hobbs.html"><span style="font-size:36pt;">Nora Hobbs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Author_Tomás_Vírseda.html"><span style="font-size:72pt;">Tomás Vírseda</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
+            <!-- FOOTER :: START -->
+            <div class="uk-flex uk-flex-center uk-flex-wrap">
+<!--
+                <div class="uk-card uk-card-body">
+                    <span class="uk-text-meta">Last update on Sun, Feb 09, 2020 at 23:33</span>
                 </div>
+-->
             </div>
+            <!-- FOOTER :: END -->
         </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Category" uk-toggle><h5>Category</h5></a>
-            <div id="modal-full-Category" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Category.html">Category</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Note.html"><span style="font-size:72pt;">Note</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Procedure.html"><span style="font-size:36pt;">Procedure</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Category_Testing.html"><span style="font-size:72pt;">Testing</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Scope" uk-toggle><h5>Scope</h5></a>
-            <div id="modal-full-Scope" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Scope.html">Scope</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Database_Administration.html"><span style="font-size:36pt;">Database Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Development.html"><span style="font-size:72pt;">Development</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_SAP_Administration.html"><span style="font-size:18pt;">SAP Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Scope_Unix_Administration.html"><span style="font-size:18pt;">Unix Administration</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Modal buttons for keys :: END -->
-            </div>
-        </li>
-        <li>
-            <a class="uk-accordion-title" href="#">Custom properties</a>
-            <div class="uk-accordion-content">
-                <!-- Modal buttons for keys :: START-->
-                <div class="uk-card uk-border-rounded uk-card-small uk-auto@m uk-background-muted">
-                    <div class="uk-card-header">
-                        <div class="uk-grid-medium uk-flex-middle" uk-grid>
-                            <div class="uk-width-expand">
-                                <div class="uk-flex uk-flex-left uk-flex-wrap">
-                <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Command" uk-toggle><h5>Command</h5></a>
-            <div id="modal-full-Command" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Command.html">Command</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_awk.html"><span style="font-size:18pt;">awk</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_brspace.html"><span style="font-size:18pt;">brspace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_brtools.html"><span style="font-size:18pt;">brtools</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2.html"><span style="font-size:18pt;">db2</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2admin.html"><span style="font-size:18pt;">db2admin</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2start.html"><span style="font-size:18pt;">db2start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_db2stop.html"><span style="font-size:18pt;">db2stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_grep.html"><span style="font-size:18pt;">grep</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_ipcs.html"><span style="font-size:18pt;">ipcs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_kill.html"><span style="font-size:18pt;">kill</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_print.html"><span style="font-size:18pt;">print</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_ps.html"><span style="font-size:18pt;">ps</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_sapcontrol.html"><span style="font-size:18pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_saphostctrl.html"><span style="font-size:18pt;">saphostctrl</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_sqlplus.html"><span style="font-size:18pt;">sqlplus</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_svcadm.html"><span style="font-size:18pt;">svcadm</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Command_svcs.html"><span style="font-size:18pt;">svcs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Database" uk-toggle><h5>Database</h5></a>
-            <div id="modal-full-Database" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Database.html">Database</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Database_DB2.html"><span style="font-size:18pt;">DB2</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Database_Oracle.html"><span style="font-size:18pt;">Oracle</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Priority" uk-toggle><h5>Priority</h5></a>
-            <div id="modal-full-Priority" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Priority.html">Priority</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Low.html"><span style="font-size:72pt;">Low</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Priority_Normal.html"><span style="font-size:72pt;">Normal</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Product" uk-toggle><h5>Product</h5></a>
-            <div id="modal-full-Product" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Product.html">Product</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_KB4IT.html"><span style="font-size:72pt;">KB4IT</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_SAP_Netweaver.html"><span style="font-size:18pt;">SAP Netweaver</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Product_Solaris.html"><span style="font-size:18pt;">Solaris</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Status" uk-toggle><h5>Status</h5></a>
-            <div id="modal-full-Status" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Status.html">Status</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Status_Draft.html"><span style="font-size:36pt;">Draft</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Status_Released.html"><span style="font-size:72pt;">Released</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Tablespace" uk-toggle><h5>Tablespace</h5></a>
-            <div id="modal-full-Tablespace" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Tablespace.html">Tablespace</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tablespace_PSAPSR3.html"><span style="font-size:18pt;">PSAPSR3</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Tag" uk-toggle><h5>Tag</h5></a>
-            <div id="modal-full-Tag" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Tag.html">Tag</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_datafile.html"><span style="font-size:18pt;">datafile</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_extend.html"><span style="font-size:18pt;">extend</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_network.html"><span style="font-size:18pt;">network</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_sapcontrol.html"><span style="font-size:18pt;">sapcontrol</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_services.html"><span style="font-size:18pt;">services</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_shell_scripting.html"><span style="font-size:18pt;">shell scripting</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_start.html"><span style="font-size:18pt;">start</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_stop.html"><span style="font-size:18pt;">stop</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_system.html"><span style="font-size:18pt;">system</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Tag_tablespace.html"><span style="font-size:18pt;">tablespace</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-    <div> <!-- Button :: START -->
-        <div class="uk-card uk-border-rounded uk-card-hover uk-card-body uk-padding-remove">
-            <a class="uk-button uk-button-muted uk-card-body uk-text-capitalize" href="#modal-full-Team" uk-toggle><h5>Team</h5></a>
-            <div id="modal-full-Team" class="uk-modal-container" uk-modal>
-                <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
-                    <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="Team.html">Team</a></h2>
-                    </div>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                        <div class="uk-padding-large">
-
-            <!-- WORDCLOUD.tpl :: START -->
-            <div uk-grid="parallax: 150">
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_DBA.html"><span style="font-size:36pt;">DBA</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_SAP.html"><span style="font-size:18pt;">SAP</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_t00mlabs.html"><span style="font-size:72pt;">t00mlabs</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="Team_Unix.html"><span style="font-size:18pt;">Unix</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
-
-            </div> <!-- WORDCLOUD.tpl :: END -->
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- Button :: END -->
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Modal buttons for keys :: END -->
-            </div>
-        </li>
-        <li>
-            <a class="uk-accordion-title" href="#">Stats</a>
-            <div class="uk-accordion-content">
-                <!-- Stats :: START-->
-                <div class="uk-card uk-border-rounded uk-card-small uk-auto@m uk-background-muted">
-                    <div class="uk-card-header">
-                        <div class="uk-grid-medium uk-flex-middle" uk-grid>
-                            <div class="uk-width-expand">
-                <!-- INDEX_TAB_STATS.tpl :: START -->
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-expand uk-text-bold" uk-leader>
-            <a class="uk-link-heading" href="all.html">Documents</a>
-        </div>
-        <div>11</div> <!-- Num of documents -->
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-expand uk-text-bold" uk-leader>Properties</div>
-        <div>11</div> <!-- Num of properties -->
-    </div>
-    <!-- Property leader items -->
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Author.html">Author</a></div>
-        <div><a href="Author.html">3</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Category.html">Category</a></div>
-        <div><a href="Category.html">3</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Command.html">Command</a></div>
-        <div><a href="Command.html">17</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Database.html">Database</a></div>
-        <div><a href="Database.html">2</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Priority.html">Priority</a></div>
-        <div><a href="Priority.html">2</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Product.html">Product</a></div>
-        <div><a href="Product.html">3</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Scope.html">Scope</a></div>
-        <div><a href="Scope.html">4</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Status.html">Status</a></div>
-        <div><a href="Status.html">2</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tablespace.html">Tablespace</a></div>
-        <div><a href="Tablespace.html">1</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Tag.html">Tag</a></div>
-        <div><a href="Tag.html">10</a></div>
-    </div>
-    <div class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-6@m"></div>
-        <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="Team.html">Team</a></div>
-        <div><a href="Team.html">4</a></div>
-    </div>
-
-    <!-- Property leader items -->
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stats :: END -->
-            </div>
-        </li>
-    </ul>        </div>
     </div>
     <!-- CONTENTS (Document) :: END -->
-</div>
-<div><!-- FOOTER :: START -->
-</div><!-- FOOTER :: END -->
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
@@ -525,7 +113,7 @@ input.addEventListener( 'keyup', function(event)
 {
     if ( input.value == "" )
     {
-        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+        filter.setAttribute( 'uk-filter-control', '' );
     }
 
     else
