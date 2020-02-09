@@ -1,4 +1,4 @@
-= <a href="%s.html">%s</a> %s
+= %s - %s
 
 ++++
 <!-- Pagination :: Start-->

@@ -148,9 +148,9 @@ class Application(Service):
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
                         meta_section = self.srvbld.create_metadata_section(docname)
-                        fhtm.write(HTML_HEADER % (TOC, html_title, meta_section, docname, source_code))
+                        fhtm.write(HTML_HEADER % (title, TOC, html_title, meta_section, docname, source_code))
                     else:
-                        fhtm.write(HTML_HEADER_NODOC % (TOC, html_title))
+                        fhtm.write(HTML_HEADER_NODOC % (title, TOC, html_title))
                     fhtm.write(content)
                     fhtm.write(HTML_FOOTER % timestamp)
                 os.remove(htmldoctmp)
@@ -403,7 +403,7 @@ class Application(Service):
 
 
                             TPL_VALUE = template('VALUE')
-                            fkeyvalue.write(TPL_VALUE % (valid_filename(key), key, value, PAGINATION, CARDS))
+                            fkeyvalue.write(TPL_VALUE % (key, value, PAGINATION, CARDS))
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
