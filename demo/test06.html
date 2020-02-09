@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-<title>KB4IT</title>
+    <title>KB4IT - Test 06: Custom author icons</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/uikit/css/kb4it.css">
     <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
@@ -19,43 +20,48 @@
 <div>
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
-            <div class="uk-navbar-left">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
-                    <li class="uk-link-toggle uk-text-bolder">
-                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    <li class="uk-link-toggle">
+                        <a class="uk-logo uk-card uk-card-hover" href="index.html">
+                            <img src="resources/images/logo.png" alt="">
+                        </a>
                     </li>
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="bookmarks.html">Bookmarks</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
                         </div>
                     </li>
                 </ul>
-            </div>
-            <div class="uk-navbar-center">
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
-                            <li>
-                                <a class="uk-link-toggle uk-text-bolder" href="#">Contents</a>
+                            <li class="noprint">
+                                <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Contents</a>
                                 <div class="uk-navbar-dropdown">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
 <ul class="uk-nav uk-nav-default">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_metadata">Metadata</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_expected_result">Expected result</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_expected_result">Expected result</a></li>
 </ul>
                                     </ul>
                                 </div>
@@ -63,138 +69,142 @@
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
-            <div class="uk-navbar-right">
+            <div class="uk-navbar-center">
+                <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                       <a href="#"><span class="uk-text-emphasis uk-text-truncate">Test 06: Custom author icons</span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html">Help</a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about.html">About</a>
-                                </li>
-                                <!--
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
-                                </li>
-                                -->
-                            </ul>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </div>
-</div>
-<div class="uk-container uk-container-center">
-<h1 class="uk-heading-small uk-text-center">Test 06: Custom author icons</h1>
-<div hidden>
-<div id="toctitle">Table of Contents</div>
-<ul class="sectlevel1">
-<li><a href="#_metadata">Metadata</a></li>
-<li><a href="#_expected_result">Expected result</a></li>
-</ul>
-</div>
-<div id="kb4it-doc-metadata" class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded uk-background-muted noprint" style="border: 1px solid black;">
-<h2 id="_metadata">Metadata</h2>
-<div class="uk-container">
-<!-- Document Metadata section :: START -->
-<!-- Use <ul uk-accordion active="0"> to show metadata section by default -->
-<ul uk-accordion>
-    <li>
-        <a class="uk-accordion-title uk-text-primary" href="#">Show</a>
-        <div class="uk-accordion-content">
-            <table class="uk-table uk-table-small">
-              <tr>
-                <td><a class="uk-link-toggle" href="Author.html"><div class="uk-text-bold uk-text-secondary">Author</div></a></td>
-                <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+                                <li>
+                                    <!-- View Metadata Button :: START -->
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#modal-full-metadata" uk-toggle><span class="">Metadata</span></a>
+                                    <div id="modal-full-metadata" class="uk-modal-full" uk-modal>
+                                        <div class="uk-modal-dialog">
+                                            <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
+                                            <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                                                <div class="uk-padding-large uk-background-muted">
+                                                    <div class="uk-text-lead uk-text-center uk-text-danger">Metadata</div>
+<!-- METADATA :: START -->
+        <table class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-hover">
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Author.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Author</div>
+                </a>
+            </td>
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Author_Tomás_Vírseda.html">
         <span class="uk-padding-small">Tomás Vírseda</span>
     </a>
 </div>
 </div></td>
-                <td><a class="uk-link-toggle" href="Category.html"><div class="uk-text-bold uk-text-secondary">Category</div></a></td>
-                <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+        </tr>
+
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Category.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Category</div>
+                </a>
+            </td>
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Category_Testing.html">
         <span class="uk-padding-small">Testing</span>
     </a>
 </div>
 </div></td>
-                <td><a class="uk-link-toggle" href="Scope.html"><div class="uk-text-bold uk-text-secondary">Scope</div></a></td>
-                <td><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
-    <a class="uk-link-heading" href="Scope_Development.html">
-        <span class="uk-padding-small">Development</span>
-    </a>
-</div>
-</div></td>
-              </tr>
-              <tr><td colspan="6"><hr></td></tr>
+        </tr>
+
         <tr>
             <td>
                 <a class="uk-link-text" href="Priority.html">
-                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Priority</div>
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Priority</div>
                 </a>
             </td>
-            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Priority_Low.html">
         <span class="uk-padding-small">Low</span>
     </a>
 </div>
 </div></td>
         </tr>
+
         <tr>
             <td>
                 <a class="uk-link-text" href="Product.html">
-                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Product</div>
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Product</div>
                 </a>
             </td>
-            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Product_KB4IT.html">
         <span class="uk-padding-small">KB4IT</span>
     </a>
 </div>
 </div></td>
         </tr>
+
+        <tr>
+            <td>
+                <a class="uk-link-text" href="Scope.html">
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Scope</div>
+                </a>
+            </td>
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
+    <a class="uk-link-heading" href="Scope_Development.html">
+        <span class="uk-padding-small">Development</span>
+    </a>
+</div>
+</div></td>
+        </tr>
+
         <tr>
             <td>
                 <a class="uk-link-text" href="Status.html">
-                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Status</div>
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Status</div>
                 </a>
             </td>
-            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Status_Released.html">
         <span class="uk-padding-small">Released</span>
     </a>
 </div>
 </div></td>
         </tr>
+
         <tr>
             <td>
                 <a class="uk-link-text" href="Team.html">
-                    <div class="uk-text-bolder uk-text-secondary uk-text-bold">Team</div>
+                    <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">Team</div>
                 </a>
             </td>
-            <td colspan="5"><div class="uk-flex uk-flex-row uk-flex-wrap"><div class="uk-link-toggle uk-text-muted">
+            <td><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta"><div class="uk-link-toggle uk-text-muted">
     <a class="uk-link-heading" href="Team_t00mlabs.html">
         <span class="uk-padding-small">t00mlabs</span>
     </a>
 </div>
 </div></td>
         </tr>
-                <tr>
-                    <td colspan="6" align="center">
-                        <!-- View Asciidoc Source Button :: START -->
-                        <a class="uk-button uk-button-danger" href="#modal-full" uk-toggle>Source</a>
-                        <div id="modal-full" class="uk-modal-full" uk-modal>
-                            <div class="uk-modal-dialog">
-                                <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
-                                <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
-                                    <div class="uk-padding-large uk-background-muted">
-                                        <div class="uk-text-lead">Asciidoc Source</div>
-                                        <div class="uk-text-meta">test06.adoc&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
-                                        <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">= Test 06: Custom author icons
+
+            </table>
+
+<!-- METADATA :: END -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- View Metadata Button :: END -->
+                                </li>
+                                <li>
+                                    <!-- View Asciidoc Source Button :: START -->
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#modal-full-source" uk-toggle><span class="">Source</span></a>
+                                    <div id="modal-full-source" class="uk-modal-full" uk-modal>
+                                        <div class="uk-modal-dialog">
+                                            <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
+                                            <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                                                <div class="uk-padding-large uk-background-muted">
+                                                    <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
+                                                    <div class="uk-text-lead">test06.adoc&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
+                                                    <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">= Test 06: Custom author icons
 :Author:        Tomás Vírseda
 :Category:      Testing
 :Scope:         Development
@@ -215,17 +225,48 @@ A warning message with the path where the icon should be placed is displayed:
 WARNING |  151 | Application     | 2019-10-24 23:01:48,389 | Missing author icon: /home/t00m/Documents/devel/kb4it/branches/BR-0.6-uikit/tests/resources/images/authors/Tomás_Vírseda.png
 ----
 </textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> <!-- View Source Button :: END -->
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </li>
-</ul> <!-- Document Metadata section :: END -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> <!-- View Source Button :: END -->
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </u>
+                <!-- DOCUMENT TITLE :: END -->
+            </div>
+            <div class="uk-navbar-right noprint">
+                <ul class="uk-navbar-nav">
+                    <li>
+                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
+                                </li>
+                                <!--
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                </li>
+                                -->
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
 </div>
+<div class="uk-container uk-container-center">
+<div hidden>
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_expected_result">Expected result</a></li>
+</ul>
 </div>
 <div class="uk-margin-small-bottom uk-card uk-card-body uk-card-hover uk-border-rounded">
 <h2 id="_expected_result">Expected result</h2>
@@ -242,12 +283,18 @@ WARNING |  151 | Application     | 2019-10-24 23:01:48,389 | Missing author icon
 </div>
 </div>
 </div>
-</div>        </div>
+</div>            <!-- FOOTER :: START -->
+            <div class="uk-flex uk-flex-center uk-flex-wrap">
+<!--
+                <div class="uk-card uk-card-body">
+                    <span class="uk-text-meta">Last update on Sun, Feb 09, 2020 at 23:33</span>
+                </div>
+-->
+            </div>
+            <!-- FOOTER :: END -->
+        </div>
     </div>
     <!-- CONTENTS (Document) :: END -->
-</div>
-<div><!-- FOOTER :: START -->
-</div><!-- FOOTER :: END -->
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
@@ -258,7 +305,7 @@ input.addEventListener( 'keyup', function(event)
 {
     if ( input.value == "" )
     {
-        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+        filter.setAttribute( 'uk-filter-control', '' );
     }
 
     else

@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-<title>KB4IT</title>
+    <title>KB4IT - How to write asciidoc documents for KB4IT</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/uikit/css/kb4it.css">
     <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
     <script src="resources/uikit/js/uikit.min.js"></script>
     <script src="resources/uikit/js/uikit-icons.min.js"></script>
@@ -19,67 +20,73 @@
 <div>
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
-            <div class="uk-navbar-left">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin" style="background-color: white;" uk-navbar>
+            <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
-                    <li class="uk-link-toggle uk-text-bolder">
-                        <a class="uk-navbar-item uk-logo uk-link-heading" href="index.html"><span class="uk-label uk-label-danger">KB4IT</span></a>
+                    <li class="uk-link-toggle">
+                        <a class="uk-logo" href="index.html">
+                            <img src="resources/images/logo.png" alt="">
+                        </a>
                     </li>
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="recents.html">Recents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="blog.html">Blog</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="bookmarks.html">Bookmarks</a>
                                 </li>
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="all.html">All documents</a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="blog.html">Blog</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
                         </div>
                     </li>
                 </ul>
-            </div>
-            <div class="uk-navbar-center">
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
-                            <li>
-                                <a class="uk-link-toggle uk-text-bolder" href="#">Contents</a>
+                            <li class="noprint">
+                                <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Contents</a>
                                 <div class="uk-navbar-dropdown">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
 <ul class="uk-nav uk-nav-default">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#idname">Introduction</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_kb4it_documents">KB4IT Documents</a>
+<li><a class="uk-link-heading uk-text-truncate" href="#idname">Introduction</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_kb4it_documents">KB4IT Documents</a>
 <ul class="uk-nav-sub">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_header">Header</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_body">Body</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_header">Header</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_body">Body</a></li>
 </ul>
 </li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#Cheatsheet">Asciidoc Cheatsheet</a>
+<li><a class="uk-link-heading uk-text-truncate" href="#Cheatsheet">Asciidoc Cheatsheet</a>
 <ul class="uk-nav-sub">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_paragraphs">Paragraphs</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_text_formatting">Text Formatting</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_admonitions">Admonitions</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_links">Links</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_anchors">Anchors</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_lists">Lists</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_sections">Sections</a>
+<li><a class="uk-link-heading uk-text-truncate" href="#_paragraphs">Paragraphs</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_text_formatting">Text Formatting</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_admonitions">Admonitions</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_links">Links</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_anchors">Anchors</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_lists">Lists</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_sections">Sections</a>
 <ul class="uk-nav-sub">
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_level_3">Level 3</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_back_at_level_3">Back at Level 3</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_level_3">Level 3</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_back_at_level_3">Back at Level 3</a></li>
 </ul>
 </li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_tables">Tables</a></li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#_multimedia">Multimedia</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_tables">Tables</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#_multimedia">Multimedia</a></li>
 </ul>
 </li>
-<li class="uk-link-toggle"><a class="uk-link-heading" href="#References">References</a></li>
+<li><a class="uk-link-heading uk-text-truncate" href="#References">References</a></li>
 </ul>
                                     </ul>
                                 </div>
@@ -87,21 +94,26 @@
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
-            <div class="uk-navbar-right">
+            <div class="uk-navbar-center">
+                <!-- DOCUMENT TITLE :: START -->
+<span class="uk-text-danger uk-text-truncate">How to write asciidoc documents for KB4IT</span>
+                <!-- DOCUMENT TITLE :: END -->
+            </div>
+            <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a <a class="uk-link-heading uk-text-bolder"href="#">Help</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html">Help</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about.html">About</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
                                 </li>
                                 <!--
-                                <li class="uk-link-toggle uk-text-bolder">
-                                    <a class="uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
                                 </li>
                                 -->
                             </ul>
@@ -113,7 +125,6 @@
     </div>
 </div>
 <div class="uk-container uk-container-center">
-<h1 class="uk-heading-small uk-text-center">How to write asciidoc documents for KB4IT</h1>
 <div hidden>
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -388,7 +399,7 @@ mailto:hello@example.org[Email to say hello!]</code></pre>
 <p><a href="../path/to/file.txt">A local file</a></p>
 </div>
 <div class="paragraph">
-<p><a href="document.html">A sibling document</a></p>
+<p><a href="#document.adoc">A sibling document</a></p>
 </div>
 <div class="paragraph">
 <p><a href="mailto:hello@example.org">Email to say hello!</a></p>
@@ -423,7 +434,7 @@ This paragraph has a footnote.footnote:[This is the text of the footnote.]</code
 <p><a href="document.html#idname">Jumps to anchor in another document</a>.</p>
 </div>
 <div class="paragraph">
-<p>This paragraph has a footnote.<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup></p>
+<p>This paragraph has a footnote.<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup></p>
 </div>
 </div>
 <div class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
@@ -603,7 +614,7 @@ description of second term</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="ruby">puts <span class="string"><span class="delimiter">'</span><span class="content">Hello, World!</span><span class="delimiter">'</span></span> <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+<pre>puts 'Hello, World!' <i class="conum" data-value="1"></i><b>(1)</b></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -664,7 +675,7 @@ description of second term</code></pre>
 <div class="listingblock">
 <div class="title"><strong>Source</strong></div>
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="adoc">[options=&quot;header&quot;, width=&quot;100%&quot;, cols=&quot;10%,70%,10%,10%&quot;]
+<pre class="CodeRay highlight"><code data-lang="adoc">[options="header", width="100%", cols="10%,70%,10%,10%"]
 |===
 | Active
 | Server
@@ -686,7 +697,8 @@ description of second term</code></pre>
 <div class="paragraph">
 <p><strong>Output</strong></p>
 </div>
-<table class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small">
+<table class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-hover">
+
 <colgroup>
 <col style="width: 10%;">
 <col style="width: 70%;">
@@ -756,15 +768,21 @@ description of second term</code></pre>
 </div>
 <div id="footnotes">
 <hr>
-<div class="footnote" id="_footnotedef_1">
+<div class="footnote" id="_footnote_1">
 <a href="#_footnoteref_1">1</a>. This is the text of the footnote.
 </div>
-</div>        </div>
+</div>            <!-- FOOTER :: START -->
+            <div class="uk-flex uk-flex-center uk-flex-wrap">
+<!--
+                <div class="uk-card uk-card-body">
+                    <span class="uk-text-meta">Last update on Sun, Feb 09, 2020 at 23:33</span>
+                </div>
+-->
+            </div>
+            <!-- FOOTER :: END -->
+        </div>
     </div>
     <!-- CONTENTS (Document) :: END -->
-</div>
-<div><!-- FOOTER :: START -->
-</div><!-- FOOTER :: END -->
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
@@ -775,7 +793,7 @@ input.addEventListener( 'keyup', function(event)
 {
     if ( input.value == "" )
     {
-        filter.setAttribute( 'uk-filter-control', '[data-*=\'#nodata#\']' );
+        filter.setAttribute( 'uk-filter-control', '' );
     }
 
     else
