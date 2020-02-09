@@ -100,14 +100,24 @@ class Builder(Service):
         PG_HEAD = template('PAGINATION_HEAD')
         PG_CARD = template('PAGINATION_CARD')
         DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
-        k = 12
         num_rel_docs = len(doclist)
-        total_pages = math.ceil(num_rel_docs/k)
-        if total_pages > 10:
-            total_pages = 10
-            k = math.ceil(num_rel_docs/total_pages)
-        elif total_pages == 0:
+        if num_rel_docs < 100:
             total_pages = 1
+            k = math.ceil(num_rel_docs/total_pages)
+        else:
+            k = 12
+            total_pages = math.ceil(num_rel_docs/k)
+            if total_pages > 10:
+                total_pages = 10
+                k = math.ceil(num_rel_docs/total_pages)
+                row = k % 3 # Always display rows with 3 elements at list
+                while row != 0:
+                    k += 1
+                    row = k % 3
+                total_pages = math.ceil(num_rel_docs/k)
+            elif total_pages == 0:
+                total_pages = 1
+                k = math.ceil(num_rel_docs/total_pages)
 
         for current_page in range(total_pages):
             PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
@@ -139,7 +149,7 @@ class Builder(Service):
                 DOCNAME_PATH = "%s/%s-%d.adoc" % (self.tmpdir, basename, current_page)
             ps = cstart
             pe = cend
-            with open(DOCNAME_PATH, 'w') as fall:
+            with open(DOCNAME_PATH, 'w') as fpag:
                 n = ps
                 # ~ self.log.debug("Displaying documents from %d to %d" % (ps, pe-1))
                 CARDS = ""
@@ -149,8 +159,9 @@ class Builder(Service):
                     card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
                     CARDS += """%s""" % card_search_filter
                     n += 1
-                fall.write(PG_HEAD % (page_title, PAGINATION, CARDS))
-        self.log.debug("\t\tCreated '%s' page (%d pages with %d in each page)", page_title, total_pages, k)
+                title = basename.replace('_', ' ')
+                fpag.write(PG_HEAD % (title, PAGINATION, CARDS))
+        self.log.debug("\t\t\t  Created '%s' page (%d pages with %d in each page)", basename, total_pages, k)
 
 
     def create_category_filter(self, categories):

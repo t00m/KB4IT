@@ -332,7 +332,6 @@ class Application(Service):
             self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
-                k = 12
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
                 try:
                     related_docs_new = self.kbdict_new['metadata'][key][value]
@@ -343,12 +342,7 @@ class Application(Service):
                     related_docs_cur = self.kbdict_new['metadata'][key][value]
                 except:
                     related_docs_cur = []
-                num_rel_docs = len(related_docs_new)
-                # ~ self.log.debug("[%s][%s] = %d", key, value, num_rel_docs)
-                total_pages = math.ceil(num_rel_docs/k)
-                if total_pages > 10:
-                    total_pages = 10
-                    k = math.ceil(num_rel_docs/total_pages)
+
                 if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
                 else:
@@ -370,45 +364,15 @@ class Application(Service):
                 COMPILE_AGAIN = FORCE_DOC_COMPILATION or FORCE_ALL
                 if COMPILE_AGAIN:
                     # Create .adoc from value
-                    for current_page in range(total_pages):
-                        if current_page < 1:
-                            DOCNAME = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
-                        else:
-                            DOCNAME = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), current_page)
-                        DOCNAME_PATH = os.path.join(self.runtime['dir']['tmp'], DOCNAME)
-                        start = k*current_page # lower limit
-                        end = k*current_page + k # upper limit
-                        # ~ self.log.debug("\t\t\tDisplaying %d/%d of %d in page %d", start, end, num_rel_docs, current_page)
-                        with open(DOCNAME_PATH, 'w') as fkeyvalue:
-                            # GRID START
-                            DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
-                            PAGINATION = """<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
-                            if total_pages > 1:
-                                for i in range(total_pages):
-                                    if i == current_page:
-                                        PAGINATION += """<li class="uk-active"><span>%d</span></li>""" % i
-                                    else:
-                                        if i == 0:
-                                            PAGE = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
-                                        else:
-                                            PAGE = "%s_%s-%d.adoc" % (valid_filename(key), valid_filename(value), i)
-                                        PAGINATION += """<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
-                            PAGINATION += """</ul>\n"""
-                            CARDS = ""
-                            sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
-                            for doc in sorted_docs[start:end]:
-                                title = self.srvdtb.get_values(doc, 'Title')[0]
-                                doc_card = self.srvbld.get_doc_card(doc)
-                                card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-                                CARDS += """%s""" % card_search_filter
-                            TPL_VALUE = template('VALUE')
-                            fkeyvalue.write(TPL_VALUE % (key, value, PAGINATION, CARDS))
+                    sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
+                    pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
+                    basename = "%s_%s" % (valid_filename(key), valid_filename(value))
+                    self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)
+                    self.srvbld.build_pagination(pagename, basename, sorted_docs)
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
-
-                self.log.debug("\t\t\t- [Compile? %5s][%s][%s][%s]: %d pages with %d cards in each page", COMPILE_AGAIN, key, value, adoc, total_pages, k)
 
             docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
             html = self.srvbld.create_key_page(key, values)
