@@ -335,12 +335,12 @@ class Application(Service):
                 k = 12
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
                 try:
-                    related_docs_new = sorted(self.kbdict_new['metadata'][key][value])
+                    related_docs_new = self.kbdict_new['metadata'][key][value]
                 except:
                     related_docs_new = []
 
                 try:
-                    related_docs_cur = sorted(self.kbdict_cur['metadata'][key][value])
+                    related_docs_cur = self.kbdict_new['metadata'][key][value]
                 except:
                     related_docs_cur = []
                 num_rel_docs = len(related_docs_new)
@@ -395,13 +395,12 @@ class Application(Service):
                                         PAGINATION += """<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
                             PAGINATION += """</ul>\n"""
                             CARDS = ""
-                            for doc in related_docs_new[start:end]:
+                            sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
+                            for doc in sorted_docs[start:end]:
                                 title = self.srvdtb.get_values(doc, 'Title')[0]
                                 doc_card = self.srvbld.get_doc_card(doc)
                                 card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
                                 CARDS += """%s""" % card_search_filter
-
-
                             TPL_VALUE = template('VALUE')
                             fkeyvalue.write(TPL_VALUE % (key, value, PAGINATION, CARDS))
                 else:

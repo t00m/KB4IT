@@ -56,6 +56,17 @@ class KB4ITDB(Service):
         # ~ for doc in self.sorted_docs:
             # ~ self.log.error("%s - %s", self.db[doc]['Timestamp'], self.db[doc]['Title'][0])
 
+    def sort_by_date(self, doclist):
+        """Build a list of documents sorted by timestamp desc."""
+        sorted_docs = []
+        adict = {}
+        for doc in doclist:
+            adict[doc] = self.db[doc]['Timestamp']
+        alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+        for doc, timestamp in alist:
+            sorted_docs.append(doc)
+        return sorted_docs
+
     def get_documents(self):
         return self.sorted_docs
 
