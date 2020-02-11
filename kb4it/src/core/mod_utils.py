@@ -22,7 +22,7 @@ import threading
 import subprocess
 import traceback as tb
 from datetime import datetime
-from kb4it.src.core.mod_env import LPATH, GPATH, EOHMARK, FILE, TEMPLATES
+from kb4it.src.core.mod_env import LPATH, GPATH, EOHMARK, FILE
 from kb4it.src.core.mod_log import get_logger
 
 log = get_logger('Utils')
@@ -97,13 +97,6 @@ def get_source_docs(path):
     return docs
 
 
-def template(name):
-    """C0111: Missing function docstring (missing-docstring)."""
-    # ~ TEMPLATE_PATH = os.path.join(GPATH['TEMPLATES'], "%s.tpl" % template)
-    # ~ return open(TEMPLATE_PATH, 'r').read()
-    return TEMPLATES[name]
-
-
 def get_traceback():
     """Get traceback."""
     return tb.format_exc()
@@ -172,46 +165,6 @@ def nosb(alist, lower=False):
     return newlist
 
 
-def get_labels(values):
-    """C0111: Missing function docstring (missing-docstring)."""
-    label_links = ''
-    value_link = template('METADATA_VALUE_LINK')
-    for page, text in values:
-        if len(text) != 0:
-            label_links += value_link % (valid_filename(page), text)
-    return label_links
-
-
-def apply_transformations(source):
-    """C0111: Missing function docstring (missing-docstring)."""
-    content = source.replace(template('TOC_OLD'), template('TOC_NEW'))
-    content = content.replace(template('SECT1_OLD'), template('SECT1_NEW'))
-    content = content.replace(template('SECT2_OLD'), template('SECT2_NEW'))
-    content = content.replace(template('SECT3_OLD'), template('SECT3_NEW'))
-    content = content.replace(template('SECT4_OLD'), template('SECT4_NEW'))
-    content = content.replace(template('SECTIONBODY_OLD'), template('SECTIONBODY_NEW'))
-    # ~ content = content.replace(template('H1_OLD'), template('H1_NEW'))
-    content = content.replace(template('H2_OLD'), template('H2_NEW'))
-    content = content.replace(template('H3_OLD'), template('H3_NEW'))
-    content = content.replace(template('H4_OLD'), template('H4_NEW'))
-    content = content.replace(template('TABLE_OLD'), template('TABLE_NEW'))
-    content = content.replace(template('TABLE_OLD_2'), template('TABLE_NEW'))
-    # Admonitions
-    content = content.replace(template('ADMONITION_ICON_NOTE_OLD'), template('ADMONITION_ICON_NOTE_NEW'))
-    content = content.replace(template('ADMONITION_ICON_TIP_OLD'), template('ADMONITION_ICON_TIP_NEW'))
-    content = content.replace(template('ADMONITION_ICON_IMPORTANT_OLD'), template('ADMONITION_ICON_IMPORTANT_NEW'))
-    content = content.replace(template('ADMONITION_ICON_CAUTION_OLD'), template('ADMONITION_ICON_CAUTION_NEW'))
-    content = content.replace(template('ADMONITION_ICON_WARNING_OLD'), template('ADMONITION_ICON_WARNING_NEW'))
-
-    return content
-
-
-def highlight_metadata_section(source):
-    """C0111: Missing function docstring (missing-docstring)."""
-    content = source.replace(template('METADATA_OLD'), template('METADATA_NEW'), 1)
-    return content
-
-
 def extract_toc(source):
     """C0111: Missing function docstring (missing-docstring)."""
     toc = ''
@@ -231,7 +184,7 @@ def extract_toc(source):
     if s > 0 and e > s:
         for line in lines[s:e]:
             if line.startswith('<li><a href='):
-                modifier = """<li><a class="uk-link-heading uk-text-truncate" """
+                modifier = """<li><a class="uk-link-heading" """
                 line = line.replace("<li><a ", modifier)
             else:
                 line = line.replace("sectlevel1", "uk-nav uk-nav-default")
@@ -239,7 +192,6 @@ def extract_toc(source):
                 line = line.replace("sectlevel3", "uk-nav-sub")
                 line = line.replace("sectlevel4", "uk-nav-sub")
             items.append(line)
-        # ~ items.insert(0, template('TOC_HEADER_TITLE'))
         toc = '\n'.join(items)
     return toc
 

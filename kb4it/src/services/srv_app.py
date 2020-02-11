@@ -21,13 +21,12 @@ import tempfile
 import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH, APP, HTML_FOOTER, HTML_HEADER, HTML_HEADER_NODOC
+from kb4it.src.core.mod_env import LPATH, GPATH, APP
 from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import get_human_datetime
-from kb4it.src.core.mod_utils import apply_transformations, highlight_metadata_section
 from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_kbdict
-from kb4it.src.core.mod_utils import template, exec_cmd, delete_target_contents
+from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
 from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
@@ -48,6 +47,7 @@ class Application(Service):
         # Get params from command line
         self.parameters = self.app.get_params()
         self.log.debug(self.app.get_params())
+
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
@@ -59,6 +59,21 @@ class Application(Service):
         self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
+
+        # Select theme
+        self.runtime['theme'] =  {}
+        if self.parameters.THEME is None:
+            self.runtime['theme']['id'] = 'default'
+            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
+        else:
+            self.runtime['theme']['id'] = self.parameters.THEME
+            self.runtime['theme']['path'] = self.search_theme(self.runtime['theme']['id'])
+            if self.runtime['theme']['path'] is not None:
+                theme_conf = os.path.join(theme_path, "%s.adoc" % self.runtime['theme']['id'])
+                if not os.path.exists(theme_conf):
+                    self.log.error("Theme config file not found: %s", theme_conf)
+                    sys.exit(-1)
+        self.log.info("Loading theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
 
         # Initialize docs structure
         self.runtime['docs'] = {}
@@ -77,6 +92,27 @@ class Application(Service):
     # ~ def get_cache_path(self):
         # ~ """Get cache path."""
         # ~ return self.runtime['dir']['cache']
+
+    def search_theme(self, theme):
+        """Search custom theme"""
+
+        found = False
+        # Search in sources path or fallback to default
+        source_path = self.runtime['dir']['source']
+        theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
+        theme_path = os.path.join(self.runtime['dir']['source'], theme_rel_path)
+        self.log.debug(theme_path)
+        if os.path.exists(theme_path):
+            found = True
+
+        if found:
+            self.log.debug("Found theme %s in local repository: %s" % (theme, theme_path))
+            return theme_path
+        else:
+            self.log.debug("Theme not found in local repository: %s." % theme)
+            return None
+
+        # Then search
 
     def get_source_path(self):
         """Get asciidoctor sources path."""
@@ -107,6 +143,35 @@ class Application(Service):
             adict[docname] = ts
         return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
 
+    def highlight_metadata_section(self, source):
+        """C0111: Missing function docstring (missing-docstring)."""
+        content = source.replace(self.srvbld.template('METADATA_OLD'), self.srvbld.template('METADATA_NEW'), 1)
+        return content
+
+    def apply_transformations(self, source):
+        """C0111: Missing function docstring (missing-docstring)."""
+        content = source.replace(self.srvbld.template('TOC_OLD'), self.srvbld.template('TOC_NEW'))
+        content = content.replace(self.srvbld.template('SECT1_OLD'), self.srvbld.template('SECT1_NEW'))
+        content = content.replace(self.srvbld.template('SECT2_OLD'), self.srvbld.template('SECT2_NEW'))
+        content = content.replace(self.srvbld.template('SECT3_OLD'), self.srvbld.template('SECT3_NEW'))
+        content = content.replace(self.srvbld.template('SECT4_OLD'), self.srvbld.template('SECT4_NEW'))
+        content = content.replace(self.srvbld.template('SECTIONBODY_OLD'), self.srvbld.template('SECTIONBODY_NEW'))
+        # ~ content = content.replace(self.srvbld.template('H1_OLD'), self.srvbld.template('H1_NEW'))
+        content = content.replace(self.srvbld.template('H2_OLD'), self.srvbld.template('H2_NEW'))
+        content = content.replace(self.srvbld.template('H3_OLD'), self.srvbld.template('H3_NEW'))
+        content = content.replace(self.srvbld.template('H4_OLD'), self.srvbld.template('H4_NEW'))
+        content = content.replace(self.srvbld.template('TABLE_OLD'), self.srvbld.template('TABLE_NEW'))
+        content = content.replace(self.srvbld.template('TABLE_OLD_2'), self.srvbld.template('TABLE_NEW'))
+        # Admonitions
+        content = content.replace(self.srvbld.template('ADMONITION_ICON_NOTE_OLD'), self.srvbld.template('ADMONITION_ICON_NOTE_NEW'))
+        content = content.replace(self.srvbld.template('ADMONITION_ICON_TIP_OLD'), self.srvbld.template('ADMONITION_ICON_TIP_NEW'))
+        content = content.replace(self.srvbld.template('ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.template('ADMONITION_ICON_IMPORTANT_NEW'))
+        content = content.replace(self.srvbld.template('ADMONITION_ICON_CAUTION_OLD'), self.srvbld.template('ADMONITION_ICON_CAUTION_NEW'))
+        content = content.replace(self.srvbld.template('ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('ADMONITION_ICON_WARNING_NEW'))
+
+        return content
+
+
     def job_done(self, future):
         """C0111: Missing function docstring (missing-docstring)."""
         now = datetime.datetime.now()
@@ -127,7 +192,7 @@ class Application(Service):
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
                 toc = extract_toc(source)
-                content = apply_transformations(source)
+                content = self.apply_transformations(source)
                 try:
                     # ~ log.error(toc)
                     if 'Metadata' in content:
@@ -140,9 +205,9 @@ class Application(Service):
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
                     if len_toc > 0:
-                        TOC = template('MENU_CONTENTS_ENABLED') % toc
+                        TOC = self.srvbld.template('MENU_CONTENTS_ENABLED') % toc
                     else:
-                        TOC = template('MENU_CONTENTS_DISABLED')
+                        TOC = self.srvbld.template('MENU_CONTENTS_DISABLED')
                     docname = os.path.basename(adoc)
                     userdoc = os.path.join(self.get_source_path(), docname)
                     if os.path.exists(userdoc):
@@ -178,14 +243,14 @@ class Application(Service):
         if not doc_about:
             tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
             with open(tmp_about, 'w') as fabout:
-                page_about = template('PAGE_ABOUT')
+                page_about = self.srvbld.template('PAGE_ABOUT')
                 fabout.write(page_about % APP['version'])
                 self.log.info("\t\tAdded missing 'about.adoc' document")
 
         if not doc_help:
             tmp_help = os.path.join(self.runtime['dir']['tmp'], 'help.adoc')
             with open(tmp_help, 'w') as fhelp:
-                fhelp.write(template('PAGE_HELP'))
+                fhelp.write(self.srvbld.template('PAGE_HELP'))
                 self.log.info("\t\tAdded missing 'help.adoc' document")
 
     def stage_02_get_source_documents(self):
