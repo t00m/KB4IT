@@ -16,10 +16,10 @@ import os
 import glob
 from setuptools import setup
 
-with open('kb4it/resources/offline/appdata/VERSION', 'r') as fver:
+with open('kb4it/resources/common/appdata/VERSION', 'r') as fver:
     VERSION = fver.read()
 
-with open('kb4it/resources/offline/appdata/pypi/README.rst', 'r') as f:
+with open('kb4it/resources/common/appdata/pypi/README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 

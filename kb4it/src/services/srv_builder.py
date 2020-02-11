@@ -14,12 +14,12 @@ import math
 import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_srv import Service
-from kb4it.src.services.srv_db import IGNORE_KEYS, BLOCKED_KEYS # HEADER_KEYS,
-from kb4it.src.core.mod_utils import template, valid_filename, get_labels
+from kb4it.src.core.mod_utils import valid_filename
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
 from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.core.mod_utils import last_modification
+from kb4it.src.services.srv_db import IGNORE_KEYS, BLOCKED_KEYS # HEADER_KEYS,
 
 
 class Builder(Service):
@@ -74,8 +74,8 @@ class Builder(Service):
         if  len_words > 0:
             lwords.sort(key=lambda y: y.lower())
 
-            WORDCLOUD = template('WORDCLOUD')
-            WORDCLOUD_ITEM = template('WORDCLOUD_ITEM')
+            WORDCLOUD = self.template('WORDCLOUD')
+            WORDCLOUD_ITEM = self.template('WORDCLOUD_ITEM')
             items = ''
             for word in lwords:
                 frequency = len(dkeyurl[word])
@@ -97,9 +97,9 @@ class Builder(Service):
 
 
     def build_pagination(self, page_title, basename, doclist):
-        PG_HEAD = template('PAGINATION_HEAD')
-        PG_CARD = template('PAGINATION_CARD')
-        DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
+        PG_HEAD = self.template('PAGINATION_HEAD')
+        PG_CARD = self.template('PAGINATION_CARD')
+        DOC_CARD_FILTER_DATA_TITLE = self.template('DOC_CARD_FILTER_DATA_TITLE')
         num_rel_docs = len(doclist)
         if num_rel_docs < 100:
             total_pages = 1
@@ -170,8 +170,8 @@ class Builder(Service):
 
     def create_index_page(self):
         """Missing method docstring."""
-        TPL_INDEX = template('INDEX')
-        TPL_KEY_MODAL_BUTTON = template('KEY_MODAL_BUTTON')
+        TPL_INDEX = self.template('INDEX')
+        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
 
         with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
             dir_res = os.path.join(self.srvapp.get_source_path(), 'resources')
@@ -189,7 +189,7 @@ class Builder(Service):
 
     def create_all_keys_page(self):
         """Missing method docstring."""
-        TPL_KEYS = template('KEYS')
+        TPL_KEYS = self.template('KEYS')
         with open('%s/keys.adoc' % self.tmpdir, 'w') as fkeys:
             fkeys.write(TPL_KEYS)
             all_keys = self.srvdtb.get_all_keys()
@@ -218,8 +218,8 @@ class Builder(Service):
 
     def create_properties_page(self):
         """Create properties page."""
-        TPL_PROPS_PAGE = template('PAGE_PROPERTIES')
-        TPL_KEY_MODAL_BUTTON = template('KEY_MODAL_BUTTON')
+        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
+        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
         # Custom modal buttons
         all_keys = self.srvdtb.get_all_keys()
         custom_buttons = ''
@@ -236,8 +236,8 @@ class Builder(Service):
             fprops.write(content)
 
     def create_stats_page(self):
-        TPL_STATS_PAGE = template('PAGE_STATS')
-        item = template('KEY_LEADER_ITEM')
+        TPL_STATS_PAGE = self.template('PAGE_STATS')
+        item = self.template('KEY_LEADER_ITEM')
         numdocs = self.srvapp.get_numdocs()
         keys = self.srvdtb.get_all_keys()
         numkeys = len(keys)
@@ -256,16 +256,16 @@ class Builder(Service):
         source_dir = self.srvapp.get_source_path()
 
         num_values = len(values)
-        html = template('KEY_PAGE')
+        html = self.template('KEY_PAGE')
 
         # TAB Filter
-        key_filter = '' #template('PROPERTY_FILTER')
+        key_filter = '' #self.template('PROPERTY_FILTER')
 
         ## Build filter header
         key_filter_header_rows = ""
         for value in values:
             docs = self.srvdtb.get_docs_by_key_value(key, value)
-            tpl_header_item = template('PROPERTY_FILTER_HEAD_ITEM')
+            tpl_header_item = self.template('PROPERTY_FILTER_HEAD_ITEM')
             value_filter = value.replace(' ', '_')
             header_item = tpl_header_item % (valid_filename(key), \
                                              valid_filename(value_filter),
@@ -289,7 +289,7 @@ class Builder(Service):
 
             title = self.srvdtb.get_values(doc, 'Title')[0] # Only first match
             doc_card = self.get_doc_card(doc)
-            tpl_key_filter_docs = template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
+            tpl_key_filter_docs = self.template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
             key_filter_docs += tpl_key_filter_docs % (valid_filename(title), \
                                                       valid_filename(key), \
                                                       data_objects, \
@@ -301,10 +301,10 @@ class Builder(Service):
 
         # TAB Stats
         stats = ""
-        leader_row = template('LEADER_ROW')
+        leader_row = self.template('LEADER_ROW')
         for value in values:
             docs = list(self.srvdtb.get_docs_by_key_value(key, value))
-            tpl_value_link = template('LEADER_ROW_VALUE_LINK')
+            tpl_value_link = self.template('LEADER_ROW_VALUE_LINK')
             value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
             stats += leader_row % (value_link, len(docs))
 
@@ -314,21 +314,21 @@ class Builder(Service):
         """Return a html block for displaying core and custom keys."""
         try:
             doc_path = os.path.join(self.srvapp.get_source_path(), doc)
-            html = template('METADATA_SECTION_HEADER')
+            html = self.template('METADATA_SECTION_HEADER')
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
             for key in custom_keys:
                 try:
                     values = self.srvdtb.get_html_values_from_key(doc, key)
-                    labels = get_labels(values)
-                    row_custom_prop = template('METADATA_ROW_CUSTOM_PROPERTY')
+                    labels = self.get_labels(values)
+                    row_custom_prop = self.template('METADATA_ROW_CUSTOM_PROPERTY')
                     custom_props += row_custom_prop % (valid_filename(key), key, labels)
                 except Exception as error:
                     self.log.error("Key[%s]: %s", key, error)
             num_custom_props = len(custom_props)
             if  num_custom_props > 0:
                 html += custom_props
-            html += template('METADATA_SECTION_FOOTER')
+            html += self.template('METADATA_SECTION_FOOTER')
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
             self.log.error("\t\t%s", msgerror)
@@ -342,7 +342,7 @@ class Builder(Service):
         # ~ filename = 'search.adoc'
         # ~ search_page = os.path.join(self.tmpdir, filename)
 
-        # ~ DOC_CARD_FILTER_DATA_TITLE = template('DOC_CARD_FILTER_DATA_TITLE')
+        # ~ DOC_CARD_FILTER_DATA_TITLE = self.template('DOC_CARD_FILTER_DATA_TITLE')
         # ~ html = ''
         # ~ for doc in self.srvdtb.get_documents():
             # ~ title = self.srvdtb.get_values(doc, 'Title')[0]
@@ -351,12 +351,12 @@ class Builder(Service):
             # ~ html += """%s""" % card_search_filter
 
         # ~ with open(search_page, 'w') as fsp:
-            # ~ tpl = template('PAGE_SEARCH')
+            # ~ tpl = self.template('PAGE_SEARCH')
             # ~ fsp.write(tpl % html)
 
     def get_messages(self):
         msgs = ''
-        msg = template('MESSAGE')
+        msg = self.template('MESSAGE')
         found = False
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
@@ -372,9 +372,9 @@ class Builder(Service):
 
     def get_doc_card_blogpost(self, doc):
         source_dir = self.srvapp.get_source_path()
-        DOC_CARD = template('DOC_CARD_BLOGPOST')
-        DOC_CARD_TITLE = template('DOC_CARD_BLOGPOST_TITLE')
-        DOC_CARD_LINK = template('DOC_CARD_LINK')
+        DOC_CARD = self.template('DOC_CARD_BLOGPOST')
+        DOC_CARD_TITLE = self.template('DOC_CARD_BLOGPOST_TITLE')
+        DOC_CARD_LINK = self.template('DOC_CARD_LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
@@ -402,9 +402,9 @@ class Builder(Service):
 
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()
-        DOC_CARD = template('DOC_CARD')
-        DOC_CARD_FOOTER = template('DOC_CARD_FOOTER')
-        DOC_CARD_LINK = template('DOC_CARD_LINK')
+        DOC_CARD = self.template('DOC_CARD')
+        DOC_CARD_FOOTER = self.template('DOC_CARD_FOOTER')
+        DOC_CARD_LINK = self.template('DOC_CARD_LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
@@ -446,3 +446,16 @@ class Builder(Service):
                 doclist.add(doc)
 
         self.build_pagination('Events', 'events', list(doclist))
+
+    def get_labels(self, values):
+        """C0111: Missing function docstring (missing-docstring)."""
+        label_links = ''
+        value_link = self.template('METADATA_VALUE_LINK')
+        for page, text in values:
+            if len(text) != 0:
+                label_links += value_link % (valid_filename(page), text)
+        return label_links
+
+    def template(self, name):
+        """Return the template content from Default theme or user theme"""
+        return TEMPLATES['Default'][name]

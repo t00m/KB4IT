@@ -148,17 +148,12 @@ def main():
     """Execute application."""
     parser = argparse.ArgumentParser(description='KB4IT %s by Tomás Vírseda' % APP['version'])
 
-    parser.add_argument('-f', '--force', action='store_true', dest='FORCE', help='Force a clean compilation')
-    parser.add_argument('-sp', '--source-path', dest='SOURCE_PATH',
-                        help='Path for Asciidoc source files.',
-                        required=True)
-    parser.add_argument('-tp', '--target-path', dest='TARGET_PATH',
-                        help='Path for output files')
-    parser.add_argument('-l', '--log', dest='LOGLEVEL',
-                        help='Increase output verbosity',
-                        action='store', default='INFO')
-    parser.add_argument('--version', action='version',
-                        version='%s %s' % (APP['shortname'], APP['version']))
+    parser.add_argument('-force', action='store_true', dest='FORCE', help='Force a clean compilation')
+    parser.add_argument('-theme', dest='THEME', help='Specify theme. Otherwise, it uses the default one', required=False)
+    parser.add_argument('-source', dest='SOURCE_PATH', help='Source directory with asciidoctor source files', required=True)
+    parser.add_argument('-target', dest='TARGET_PATH', help='Target directory')
+    parser.add_argument('-log', dest='LOGLEVEL', help='Increase output verbosity', action='store', default='INFO')
+    parser.add_argument('-version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
     params = parser.parse_args()
     app = KB4IT(params)
     app.run()
