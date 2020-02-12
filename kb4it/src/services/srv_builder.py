@@ -10,9 +10,11 @@ Builder service.
 """
 
 import os
+import sys
 import math
 import datetime as dt
 from datetime import datetime
+from kb4it.src.core.mod_env import GPATH
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import valid_filename
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
@@ -456,6 +458,19 @@ class Builder(Service):
                 label_links += value_link % (valid_filename(page), text)
         return label_links
 
-    def template(self, name):
-        """Return the template content from Default theme or user theme"""
-        return TEMPLATES['Default'][name]
+    def template(self, template):
+        """Return the template content from default theme or user theme"""
+
+        properties = self.srvapp.get_runtime_properties()
+        theme = properties['theme']
+        # ~ self.log.debug("\t\tLoading template '%s' from theme '%s'", template, theme['id'])
+        template_path = os.path.join(theme['templates'], "%s.tpl" % template)
+        if not os.path.exists(template_path):
+            theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
+            template_path = os.path.join(theme_default, "%s.tpl" % template)
+
+        # ~ self.log.debug("Template %s: %s", template, template_path)
+        if not os.path.exists(template_path):
+            self.log.error("Template '%s' not found in '%s'", template, template_path)
+
+        return open(template_path, 'r').read()

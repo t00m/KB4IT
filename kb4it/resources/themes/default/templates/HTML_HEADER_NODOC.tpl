@@ -8,13 +8,12 @@
     <meta name="description" content="KB4IT document">
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="resources/uikit/css/uikit.min.css">
-    <link rel="stylesheet" href="resources/uikit/css/coderay-asciidoctor.css">
-    <link rel="stylesheet" href="resources/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="resources/uikit/css/kb4it.css">
-    <link rel="alternate" type="application/rss+xml" href="rss.xml" title="KB4IT Repository">
-    <script src="resources/uikit/js/uikit.min.js"></script>
-    <script src="resources/uikit/js/uikit-icons.min.js"></script>
+    <link rel="stylesheet" href="resources/common/uikit/css/uikit.min.css">
+    <link rel="stylesheet" href="resources/common/uikit/css/coderay-asciidoctor.css">
+    <link rel="stylesheet" href="resources/common/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/common/uikit/css/kb4it.css">
+    <script src="resources/common/uikit/js/uikit.min.js"></script>
+    <script src="resources/common/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
 <div>
