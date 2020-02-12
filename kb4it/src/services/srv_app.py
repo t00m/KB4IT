@@ -65,14 +65,22 @@ class Application(Service):
         if self.parameters.THEME is None:
             self.runtime['theme']['id'] = 'default'
             self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
+            self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
         else:
             self.runtime['theme']['id'] = self.parameters.THEME
             self.runtime['theme']['path'] = self.search_theme(self.runtime['theme']['id'])
-            if self.runtime['theme']['path'] is not None:
-                theme_conf = os.path.join(theme_path, "%s.adoc" % self.runtime['theme']['id'])
-                if not os.path.exists(theme_conf):
-                    self.log.error("Theme config file not found: %s", theme_conf)
-                    sys.exit(-1)
+
+        if self.runtime['theme']['path'] is None:
+            self.runtime['theme']['id'] = 'default'
+            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
+            self.log.debug("Fallback to default theme")
+
+        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
+        if not os.path.exists(theme_conf):
+            self.log.error("Theme config file not found: %s", theme_conf)
+            sys.exit(-1)
+
+        self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
         self.log.info("Loading theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
 
         # Initialize docs structure
@@ -101,7 +109,6 @@ class Application(Service):
         source_path = self.runtime['dir']['source']
         theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
         theme_path = os.path.join(self.runtime['dir']['source'], theme_rel_path)
-        self.log.debug(theme_path)
         if os.path.exists(theme_path):
             found = True
 
@@ -113,6 +120,9 @@ class Application(Service):
             return None
 
         # Then search
+
+    def get_runtime_properties(self):
+        return self.runtime
 
     def get_source_path(self):
         """Get asciidoctor sources path."""
@@ -213,10 +223,13 @@ class Application(Service):
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
                         meta_section = self.srvbld.create_metadata_section(docname)
+                        HTML_HEADER = self.srvbld.template('HTML_HEADER')
                         fhtm.write(HTML_HEADER % (title, TOC, html_title, meta_section, docname, source_code))
                     else:
+                        HTML_HEADER_NODOC = self.srvbld.template('HTML_HEADER_NODOC')
                         fhtm.write(HTML_HEADER_NODOC % (title, TOC, html_title))
                     fhtm.write(content)
+                    HTML_FOOTER = self.srvbld.template('HTML_FOOTER')
                     fhtm.write(HTML_FOOTER % timestamp)
                 os.remove(htmldoctmp)
                 # ~ log.debug("Temporary html document deleted: %s", htmldoctmp)
@@ -461,9 +474,10 @@ class Application(Service):
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
-        resources_dir_source = GPATH['ONLINE']
+        # ~ resources_dir_source = GPATH['THEMES']
         resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
-        shutil.copytree(resources_dir_source, resources_dir_tmp)
+        shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
+        self.log.info("\t\tResources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
         for prop in ADOCPROPS:
@@ -548,7 +562,7 @@ class Application(Service):
         # ~ self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
 
         # Copy global resources to target path
-        global_resources_dir = GPATH['ONLINE']
+        global_resources_dir = GPATH['RESOURCES']
         resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
         copydir(global_resources_dir, resources_dir_target)
         self.log.info("\t\tCopied global resources to target path")
@@ -577,16 +591,6 @@ class Application(Service):
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.info("\t\tTemporary directory %s deleted successfully", self.runtime['dir']['tmp'])
 
-    def stage_10_print_missing_icons(self):
-        """Print list of missing icons."""
-        self.log.info("Stage 9\tMissing icons report")
-        missing_icons = self.srvbld.get_missing_icons()
-        if len(missing_icons) > 0:
-            self.log.warning("\t\tThe following author icons are missing:")
-            for author in missing_icons:
-                self.log.warning("\t\t%s: %s", author, missing_icons[author])
-        else:
-            self.log.warning("\t\tNo missing icons.")
 
     def run(self):
         """Start script execution following this flow.
@@ -611,7 +615,6 @@ class Application(Service):
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
         self.stage_09_remove_temporary_dir()
-        self.stage_10_print_missing_icons()
 
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
