@@ -23,6 +23,7 @@ from kb4it.src.core.mod_utils import get_author_icon
 from kb4it.src.core.mod_utils import last_modification
 from kb4it.src.services.srv_db import IGNORE_KEYS, BLOCKED_KEYS # HEADER_KEYS,
 
+TEMPLATES = {}
 
 class Builder(Service):
     """Build HTML blocks"""
@@ -463,14 +464,21 @@ class Builder(Service):
 
         properties = self.srvapp.get_runtime_properties()
         theme = properties['theme']
-        # ~ self.log.debug("\t\tLoading template '%s' from theme '%s'", template, theme['id'])
-        template_path = os.path.join(theme['templates'], "%s.tpl" % template)
-        if not os.path.exists(template_path):
-            theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
-            template_path = os.path.join(theme_default, "%s.tpl" % template)
+        current_theme = theme['id']
 
-        # ~ self.log.debug("Template %s: %s", template, template_path)
-        if not os.path.exists(template_path):
-            self.log.error("Template '%s' not found in '%s'", template, template_path)
+        # Try to get the template from cache
+        try:
+            return TEMPLATES[template]
+        except KeyError:
+            template_path = os.path.join(theme['templates'], "%s.tpl" % template)
+            if not os.path.exists(template_path):
+                current_theme = 'default'
+                theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
+                template_path = os.path.join(theme_default, "%s.tpl" % template)
 
-        return open(template_path, 'r').read()
+            if not os.path.exists(template_path):
+                self.log.error("Template '%s' not found in '%s'", template, template_path)
+                return None
+            self.log.debug("\t\tAdding template '%s' to cache from theme '%s'", template, current_theme)
+            TEMPLATES[template] = open(template_path, 'r').read()
+            return TEMPLATES[template]

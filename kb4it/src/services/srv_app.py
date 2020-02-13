@@ -81,6 +81,19 @@ class Application(Service):
             sys.exit(-1)
 
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
+        self.runtime['theme']['bin'] = os.path.join(self.runtime['theme']['path'], 'bin')
+        sys.path.insert(0, self.runtime['theme']['bin'])
+        try:
+            from theme import Theme
+            self.app.register_service('Theme', Theme())
+            self.srvthm = self.get_service('Theme')
+            self.srvthm.hello()
+            # ~ t = Theme(self.app)
+            # ~ t.hello()
+        except Exception as error:
+            self.log.warning("Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
+            self.log.error(error)
+            raise
         self.log.info("Loading theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
 
         # Initialize docs structure
