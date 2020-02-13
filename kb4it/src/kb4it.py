@@ -19,7 +19,6 @@ from kb4it.src.services.srv_app import Application
 from kb4it.src.services.srv_db import KB4ITDB
 from kb4it.src.services.srv_builder import Builder
 
-
 class KB4IT:
     """KB4IT Application class."""
 
