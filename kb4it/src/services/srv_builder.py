@@ -43,9 +43,16 @@ class Builder(Service):
         self.srvdtb = self.get_service('DB')
         self.srvapp = self.get_service('App')
 
-    def get_missing_icons(self):
-        """Return list of missing author icons."""
-        return self.missing_icons
+    def distribute(self, name, content):
+        PAGE_NAME = "%s.adoc" % name
+        PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
+
+        if os.path.exists(PAGE_PATH):
+            self.log.error("\t\t\tPage '%s' already exists. Skip." % name)
+
+        with open(PAGE_PATH, 'w') as fpag:
+            fpag.write(content)
+        self.log.debug("Page '%s' saved", name)
 
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -96,10 +103,14 @@ class Builder(Service):
     def create_index_all(self):
         """Missing method docstring."""
         doclist = self.srvdtb.get_documents()
-        self.build_pagination('All documents', 'all', doclist)
+        self.build_pagination('all', doclist)
 
+    def create_recents_page(self):
+        """Create recents page."""
+        doclist = self.srvdtb.get_documents()[:60]
+        self.build_pagination('recents', doclist, 'Recents')
 
-    def build_pagination(self, page_title, basename, doclist):
+    def build_pagination(self, basename, doclist, optional_title=None):
         PG_HEAD = self.template('PAGINATION_HEAD')
         PG_CARD = self.template('PAGINATION_CARD')
         DOC_CARD_FILTER_DATA_TITLE = self.template('DOC_CARD_FILTER_DATA_TITLE')
@@ -124,12 +135,10 @@ class Builder(Service):
 
         for current_page in range(total_pages):
             PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
-            # ~ self.log.debug("ALL - Current page: %d" % current_page)
             if total_pages > 0:
                 for i in range(total_pages):
                     start = k*i # lower limit
                     end = k*i + k # upper limit
-                    # ~ self.log.debug("\tLink %d in page %d" % (i, current_page))
                     if i == current_page:
                         if total_pages - 1 == 0:
                             PAGINATION += """\t<li class="uk-active"></li>\n"""
@@ -144,86 +153,52 @@ class Builder(Service):
                             PAGE = "%s-%d.adoc" % (basename, i)
                         PAGINATION += """\t<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>\n""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
             PAGINATION += """</ul>\n"""
-            # ~ self.log.debug(PAGINATION)
 
             if current_page == 0:
-                DOCNAME_PATH = "%s/%s.adoc" % (self.tmpdir, basename)
+                name = "%s" % basename
             else:
-                DOCNAME_PATH = "%s/%s-%d.adoc" % (self.tmpdir, basename, current_page)
+                name = "%s-%d" % (basename, current_page)
             ps = cstart
             pe = cend
-            with open(DOCNAME_PATH, 'w') as fpag:
-                n = ps
-                # ~ self.log.debug("Displaying documents from %d to %d" % (ps, pe-1))
-                CARDS = ""
-                for doc in doclist[ps:pe]:
-                    title = self.srvdtb.get_values(doc, 'Title')[0]
-                    doc_card = self.get_doc_card(doc)
-                    card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-                    CARDS += """%s""" % card_search_filter
-                    n += 1
-                title = basename.replace('_', ' ')
-                fpag.write(PG_HEAD % (title, PAGINATION, CARDS))
+
+            n = ps
+            CARDS = ""
+            for doc in doclist[ps:pe]:
+                title = self.srvdtb.get_values(doc, 'Title')[0]
+                doc_card = self.get_doc_card(doc)
+                card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+                CARDS += """%s""" % card_search_filter
+                n += 1
+            if optional_title is None:
+                title = basename.replace('_', ' ').title()
+            else:
+                title = optional_title
+            content = PG_HEAD % (title, PAGINATION, CARDS)
+            self.distribute(name, content)
         self.log.debug("\t\t\t  Created '%s' page (%d pages with %d in each page)", basename, total_pages, k)
-
-
-    def create_category_filter(self, categories):
-        """Missing method docstring."""
-        pass
 
     def create_index_page(self):
         """Missing method docstring."""
         TPL_INDEX = self.template('INDEX')
-        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-
-        with open('%s/index.adoc' % self.tmpdir, 'w') as findex:
-            dir_res = os.path.join(self.srvapp.get_source_path(), 'resources')
-            dir_tpl = os.path.join(dir_res, 'templates')
-            custom_index_file = os.path.join(dir_tpl, 'index.adoc')
-            if os.path.exists(custom_index_file):
-                self.log.info("\t\tCustom index page found.")
-                custom_index = open(custom_index_file, 'r').read()
-            else:
-                self.log.warning("\t\tNo custom index page found. Using default template.")
-                custom_index = ''
-
-            content = TPL_INDEX % (custom_index)
-            findex.write(content)
+        self.distribute('index', TPL_INDEX)
 
     def create_all_keys_page(self):
         """Missing method docstring."""
-        TPL_KEYS = self.template('KEYS')
-        with open('%s/keys.adoc' % self.tmpdir, 'w') as fkeys:
-            fkeys.write(TPL_KEYS)
-            all_keys = self.srvdtb.get_all_keys()
-            for key in all_keys:
-                cloud = self.create_tagcloud_from_key(key)
-                len_cloud = len(cloud)
-                if  len_cloud > 0:
-                    fkeys.write("\n\n== %s\n\n" % key)
-                    fkeys.write("\n++++\n%s\n++++\n" % cloud)
-
-
-    def create_recents_page(self):
-        """Create recents page."""
-        doclist = self.srvdtb.get_documents()[:60]
-        self.build_pagination('Recents', 'recents', doclist)
-
-    def create_bookmarks_page(self):
-        """Create bookmarks page."""
-        doclist = []
-        for doc in self.srvdtb.get_documents():
-            bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
-            if bookmark == 'Yes' or bookmark == 'True':
-                doclist.append(doc)
-        self.build_pagination('Bookmarks', 'bookmarks', doclist)
-
+        content = self.template('KEYS')
+        all_keys = self.srvdtb.get_all_keys()
+        for key in all_keys:
+            cloud = self.create_tagcloud_from_key(key)
+            len_cloud = len(cloud)
+            if  len_cloud > 0:
+                content += "\n\n== %s\n\n" % key
+                content += "\n++++\n%s\n++++\n" % cloud
+        self.distribute('keys', content)
 
     def create_properties_page(self):
         """Create properties page."""
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-        # Custom modal buttons
+
         all_keys = self.srvdtb.get_all_keys()
         custom_buttons = ''
         for key in all_keys:
@@ -233,10 +208,8 @@ class Builder(Service):
                 tooltip = "%d values" % len(values)
                 button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, key, valid_filename(key), valid_filename(key), key, html)
                 custom_buttons += button
-
         content = TPL_PROPS_PAGE % (custom_buttons)
-        with open('%s/properties.adoc' % self.tmpdir, 'w') as fprops:
-            fprops.write(content)
+        self.distribute('properties', content)
 
     def create_stats_page(self):
         TPL_STATS_PAGE = self.template('PAGE_STATS')
@@ -249,55 +222,14 @@ class Builder(Service):
             values = self.srvdtb.get_all_values_for_key(key)
             leader_items += item % (valid_filename(key), key, valid_filename(key), len(values))
         stats = TPL_STATS_PAGE % (numdocs, numkeys, leader_items)
+        self.distribute('stats', stats)
 
-        with open('%s/stats.adoc' % self.tmpdir, 'w') as fstats:
-            fstats.write(stats)
 
     def create_key_page(self, key, values):
-        """Missing method docstring."""
-        # ~ self.log.error("[%s]: %s", key, values)
+        """Create key page."""
         source_dir = self.srvapp.get_source_path()
-
         num_values = len(values)
         html = self.template('KEY_PAGE')
-
-        # TAB Filter
-        key_filter = '' #self.template('PROPERTY_FILTER')
-
-        ## Build filter header
-        key_filter_header_rows = ""
-        for value in values:
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            tpl_header_item = self.template('PROPERTY_FILTER_HEAD_ITEM')
-            value_filter = value.replace(' ', '_')
-            header_item = tpl_header_item % (valid_filename(key), \
-                                             valid_filename(value_filter),
-                                             value, len(docs))
-            key_filter_header_rows += header_item
-
-        ## Build filter body
-        key_filter_docs = ""
-        cardset = set()
-        for value in values:
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            for doc in docs:
-                cardset.add(doc)
-
-        for doc in cardset:
-            objects = self.srvdtb.get_values(doc, key)
-            data_objects = []
-
-            for obj in objects:
-                data_objects.append(valid_filename(obj))
-
-            title = self.srvdtb.get_values(doc, 'Title')[0] # Only first match
-            doc_card = self.get_doc_card(doc)
-            tpl_key_filter_docs = self.template('DOC_CARD_FILTER_DATA_TITLE_PLUS_OTHER_DATA')
-            key_filter_docs += tpl_key_filter_docs % (valid_filename(title), \
-                                                      valid_filename(key), \
-                                                      data_objects, \
-                                                      doc_card)
-
 
         # TAB Cloud
         cloud = self.create_tagcloud_from_key(key)
@@ -340,64 +272,6 @@ class Builder(Service):
 
         return html
 
-
-    # ~ def create_search_page(self):
-        # ~ filename = 'search.adoc'
-        # ~ search_page = os.path.join(self.tmpdir, filename)
-
-        # ~ DOC_CARD_FILTER_DATA_TITLE = self.template('DOC_CARD_FILTER_DATA_TITLE')
-        # ~ html = ''
-        # ~ for doc in self.srvdtb.get_documents():
-            # ~ title = self.srvdtb.get_values(doc, 'Title')[0]
-            # ~ doc_card = self.get_doc_card(doc)
-            # ~ card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-            # ~ html += """%s""" % card_search_filter
-
-        # ~ with open(search_page, 'w') as fsp:
-            # ~ tpl = self.template('PAGE_SEARCH')
-            # ~ fsp.write(tpl % html)
-
-    def get_messages(self):
-        msgs = ''
-        msg = self.template('MESSAGE')
-        found = False
-        for doc in self.srvdtb.get_documents():
-            category = self.srvdtb.get_values(doc, 'Category')[0]
-            if category == 'Message':
-                found = True
-                break
-
-        if found:
-            return msgs + msg
-        else:
-            return ''
-
-
-    def get_doc_card_blogpost(self, doc):
-        source_dir = self.srvapp.get_source_path()
-        DOC_CARD = self.template('DOC_CARD_BLOGPOST')
-        DOC_CARD_TITLE = self.template('DOC_CARD_BLOGPOST_TITLE')
-        DOC_CARD_LINK = self.template('DOC_CARD_LINK')
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        category = self.srvdtb.get_values(doc, 'Category')[0]
-        scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
-        author = self.srvdtb.get_values(doc, 'Author')[0]
-        authors = ', '.join(self.srvdtb.get_values(doc, 'Author'))
-        icon_path = get_author_icon(source_dir, author)
-        if icon_path == "resources/images/authors/author_unknown.png":
-            self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
-        link_title = DOC_CARD_TITLE % (valid_filename(doc).replace('.adoc', ''), title)
-        link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
-        link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
-        link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
-        link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        link_image = "Author_%s.html" % valid_filename(author)
-        timestamp = self.srvdtb.get_doc_timestamp(doc)
-        human_ts = get_human_datetime(timestamp)
-        return DOC_CARD % (link_title, timestamp, human_ts, link_scope)
-
-
     def get_doc_link(self, doc):
         title = self.srvdtb.get_values(doc, 'Title')[0]
         link = "%s.html" % doc
@@ -433,23 +307,6 @@ class Builder(Service):
         tooltip ="%s" % (title)
         return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
 
-    def create_blog_page(self):
-        doclist = []
-        for doc in self.srvdtb.get_documents():
-            category = self.srvdtb.get_values(doc, 'Category')[0]
-            if category == 'Post':
-                doclist.append(doc)
-        self.build_pagination('Blog', 'blog', doclist)
-
-    def create_events_page(self):
-        doclist = set()
-        for doc in self.srvdtb.get_documents():
-            category = self.srvdtb.get_values(doc, 'Category')[0]
-            if category == 'Event':
-                doclist.add(doc)
-
-        self.build_pagination('Events', 'events', list(doclist))
-
     def get_labels(self, values):
         """C0111: Missing function docstring (missing-docstring)."""
         label_links = ''
@@ -479,6 +336,6 @@ class Builder(Service):
             if not os.path.exists(template_path):
                 self.log.error("Template '%s' not found in '%s'", template, template_path)
                 return None
-            self.log.debug("\t\tAdding template '%s' to cache from theme '%s'", template, current_theme)
+            # ~ self.log.debug("\t\tAdding template '%s' to cache from theme '%s'", template, current_theme)
             TEMPLATES[template] = open(template_path, 'r').read()
             return TEMPLATES[template]

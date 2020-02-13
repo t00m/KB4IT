@@ -12,6 +12,7 @@ import os
 import sys
 import glob
 import time
+import json
 import math
 import random
 import threading
@@ -61,40 +62,7 @@ class Application(Service):
             os.makedirs(self.runtime['dir']['cache'])
 
         # Select theme
-        self.runtime['theme'] =  {}
-        if self.parameters.THEME is None:
-            self.runtime['theme']['id'] = 'default'
-            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
-            self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
-        else:
-            self.runtime['theme']['id'] = self.parameters.THEME
-            self.runtime['theme']['path'] = self.search_theme(self.runtime['theme']['id'])
-
-        if self.runtime['theme']['path'] is None:
-            self.runtime['theme']['id'] = 'default'
-            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
-            self.log.debug("Fallback to default theme")
-
-        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
-        if not os.path.exists(theme_conf):
-            self.log.error("Theme config file not found: %s", theme_conf)
-            sys.exit(-1)
-
-        self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
-        self.runtime['theme']['bin'] = os.path.join(self.runtime['theme']['path'], 'bin')
-        sys.path.insert(0, self.runtime['theme']['bin'])
-        try:
-            from theme import Theme
-            self.app.register_service('Theme', Theme())
-            self.srvthm = self.get_service('Theme')
-            self.srvthm.hello()
-            # ~ t = Theme(self.app)
-            # ~ t.hello()
-        except Exception as error:
-            self.log.warning("Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
-            self.log.error(error)
-            raise
-        self.log.info("Loading theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
+        self.load_theme()
 
         # Initialize docs structure
         self.runtime['docs'] = {}
@@ -114,8 +82,45 @@ class Application(Service):
         # ~ """Get cache path."""
         # ~ return self.runtime['dir']['cache']
 
+    def load_theme(self):
+        """Load custom user theme or default"""
+
+        self.runtime['theme'] =  {}
+        self.runtime['theme']['path'] = self.search_theme(self.parameters.THEME)
+        if self.runtime['theme']['path'] is None:
+            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
+            self.log.debug("Fallback to default theme")
+
+        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
+        if not os.path.exists(theme_conf):
+            self.log.error("Theme config file not found: %s", theme_conf)
+            sys.exit(-1)
+
+        with open(theme_conf, 'r') as fth:
+            theme = json.load(fth)
+            for prop in theme:
+                self.runtime['theme'][prop] = theme[prop]
+
+        self.log.debug(self.runtime['theme'])
+        self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
+        self.runtime['theme']['bin'] = os.path.join(self.runtime['theme']['path'], 'bin')
+        sys.path.insert(0, self.runtime['theme']['bin'])
+        try:
+            from theme import Theme
+            self.app.register_service('Theme', Theme())
+            self.srvthm = self.get_service('Theme')
+            self.srvthm.hello()
+        except Exception as error:
+            self.log.warning("Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
+            self.log.error(error)
+            raise
+        self.log.info("Loading theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
+
     def search_theme(self, theme):
         """Search custom theme"""
+
+        if theme is None:
+            return None
 
         found = False
         # Search in sources path or fallback to default
@@ -262,22 +267,22 @@ class Application(Service):
         self.log.debug("\t\tTarget directory: %s", self.runtime['dir']['target'])
 
         # Check if help and about documents exists. If not, use the default ones
-        file_about = os.path.join(self.runtime['dir']['source'], 'about.adoc')
-        file_help = os.path.join(self.runtime['dir']['source'], 'help.adoc')
-        doc_about = os.path.exists(file_about)
-        doc_help = os.path.exists(file_help)
-        if not doc_about:
-            tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
-            with open(tmp_about, 'w') as fabout:
-                page_about = self.srvbld.template('PAGE_ABOUT')
-                fabout.write(page_about % APP['version'])
-                self.log.info("\t\tAdded missing 'about.adoc' document")
+        # ~ file_about = os.path.join(self.runtime['dir']['source'], 'about.adoc')
+        # ~ file_help = os.path.join(self.runtime['dir']['source'], 'help.adoc')
+        # ~ doc_about = os.path.exists(file_about)
+        # ~ doc_help = os.path.exists(file_help)
+        # ~ if not doc_about:
+            # ~ tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
+            # ~ with open(tmp_about, 'w') as fabout:
+                # ~ page_about = self.srvbld.template('PAGE_ABOUT')
+                # ~ fabout.write(page_about % APP['version'])
+                # ~ self.log.info("\t\tAdded missing 'about.adoc' document")
 
-        if not doc_help:
-            tmp_help = os.path.join(self.runtime['dir']['tmp'], 'help.adoc')
-            with open(tmp_help, 'w') as fhelp:
-                fhelp.write(self.srvbld.template('PAGE_HELP'))
-                self.log.info("\t\tAdded missing 'help.adoc' document")
+        # ~ if not doc_help:
+            # ~ tmp_help = os.path.join(self.runtime['dir']['tmp'], 'help.adoc')
+            # ~ with open(tmp_help, 'w') as fhelp:
+                # ~ fhelp.write(self.srvbld.template('PAGE_HELP'))
+                # ~ self.log.info("\t\tAdded missing 'help.adoc' document")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
@@ -412,15 +417,13 @@ class Application(Service):
 
     def stage_04_processing(self):
         """Process all documents."""
+
         self.log.info("Stage 4\tProcessing")
-        # Get all available keys
         available_keys = self.srvdtb.get_all_keys()
 
-        # Process
-        self.log.debug("Available keys: %s", available_keys)
         for key in available_keys:
+            FORCE_DOC_KEY_COMPILATION = False
             FORCE_DOC_COMPILATION = False
-            self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
@@ -436,8 +439,8 @@ class Application(Service):
 
                 if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
-                else:
-                    FORCE_DOC_KEY_COMPILATION = False
+                # ~ else:
+                    # ~ FORCE_DOC_KEY_COMPILATION = False
 
                 FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
 
@@ -459,27 +462,22 @@ class Application(Service):
                     pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
                     self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)
-                    self.srvbld.build_pagination(pagename, basename, sorted_docs)
+                    self.srvbld.build_pagination(basename, sorted_docs)
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-            docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
-            html = self.srvbld.create_key_page(key, values)
-            with open(docname, 'w') as fkey:
-                fkey.write(html)
+                FORCE_DOC_KEY_COMPILATION = FORCE_DOC_KEY_COMPILATION or COMPILE_AGAIN
+            self.log.debug("\t\t* Processing Key: %s - Compile? %s", key, FORCE_DOC_KEY_COMPILATION)
+            if FORCE_DOC_KEY_COMPILATION:
+                docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
+                html = self.srvbld.create_key_page(key, values)
+                with open(docname, 'w') as fkey:
+                    fkey.write(html)
             # ~ self.log.info("Key page created: %s", docname)
 
-        self.srvbld.create_all_keys_page()
-        self.srvbld.create_bookmarks_page()
-        self.srvbld.create_events_page()
-        self.srvbld.create_blog_page()
-        self.srvbld.create_recents_page()
-        self.srvbld.create_properties_page()
-        self.srvbld.create_stats_page()
-        self.srvbld.create_index_all()
-        self.srvbld.create_index_page()
+        self.srvthm.build()
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
