@@ -1,1 +1,0 @@
-<i uk-icon="bolt" class="uk-text-danger"
