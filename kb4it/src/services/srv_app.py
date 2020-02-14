@@ -173,29 +173,29 @@ class Application(Service):
 
     def highlight_metadata_section(self, source):
         """C0111: Missing function docstring (missing-docstring)."""
-        content = source.replace(self.srvbld.template('METADATA_OLD'), self.srvbld.template('METADATA_NEW'), 1)
+        content = source.replace(self.srvbld.template('HTML_TAG_METADATA_OLD'), self.srvbld.template('HTML_TAG_METADATA_NEW'), 1)
         return content
 
     def apply_transformations(self, source):
         """C0111: Missing function docstring (missing-docstring)."""
-        content = source.replace(self.srvbld.template('TOC_OLD'), self.srvbld.template('TOC_NEW'))
-        content = content.replace(self.srvbld.template('SECT1_OLD'), self.srvbld.template('SECT1_NEW'))
-        content = content.replace(self.srvbld.template('SECT2_OLD'), self.srvbld.template('SECT2_NEW'))
-        content = content.replace(self.srvbld.template('SECT3_OLD'), self.srvbld.template('SECT3_NEW'))
-        content = content.replace(self.srvbld.template('SECT4_OLD'), self.srvbld.template('SECT4_NEW'))
-        content = content.replace(self.srvbld.template('SECTIONBODY_OLD'), self.srvbld.template('SECTIONBODY_NEW'))
+        content = source.replace(self.srvbld.template('HTML_TAG_TOC_OLD'), self.srvbld.template('HTML_TAG_TOC_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT1_OLD'), self.srvbld.template('HTML_TAG_SECT1_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT2_OLD'), self.srvbld.template('HTML_TAG_SECT2_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT3_OLD'), self.srvbld.template('HTML_TAG_SECT3_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT4_OLD'), self.srvbld.template('HTML_TAG_SECT4_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECTIONBODY_OLD'), self.srvbld.template('HTML_TAG_SECTIONBODY_NEW'))
         # ~ content = content.replace(self.srvbld.template('H1_OLD'), self.srvbld.template('H1_NEW'))
-        content = content.replace(self.srvbld.template('H2_OLD'), self.srvbld.template('H2_NEW'))
-        content = content.replace(self.srvbld.template('H3_OLD'), self.srvbld.template('H3_NEW'))
-        content = content.replace(self.srvbld.template('H4_OLD'), self.srvbld.template('H4_NEW'))
-        content = content.replace(self.srvbld.template('TABLE_OLD'), self.srvbld.template('TABLE_NEW'))
-        content = content.replace(self.srvbld.template('TABLE_OLD_2'), self.srvbld.template('TABLE_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_H2_OLD'), self.srvbld.template('HTML_TAG_H2_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_H3_OLD'), self.srvbld.template('HTML_TAG_H3_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_H4_OLD'), self.srvbld.template('HTML_TAG_H4_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_TABLE_OLD'), self.srvbld.template('HTML_TAG_TABLE_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_TABLE_OLD_2'), self.srvbld.template('HTML_TAG_TABLE_NEW'))
         # Admonitions
-        content = content.replace(self.srvbld.template('ADMONITION_ICON_NOTE_OLD'), self.srvbld.template('ADMONITION_ICON_NOTE_NEW'))
-        content = content.replace(self.srvbld.template('ADMONITION_ICON_TIP_OLD'), self.srvbld.template('ADMONITION_ICON_TIP_NEW'))
-        content = content.replace(self.srvbld.template('ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.template('ADMONITION_ICON_IMPORTANT_NEW'))
-        content = content.replace(self.srvbld.template('ADMONITION_ICON_CAUTION_OLD'), self.srvbld.template('ADMONITION_ICON_CAUTION_NEW'))
-        content = content.replace(self.srvbld.template('ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('ADMONITION_ICON_WARNING_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_TIP_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
 
         return content
 
@@ -233,9 +233,9 @@ class Application(Service):
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
                     if len_toc > 0:
-                        TOC = self.srvbld.template('MENU_CONTENTS_ENABLED') % toc
+                        TOC = self.srvbld.template('HTML_HEADER_MENU_CONTENTS_ENABLED') % toc
                     else:
-                        TOC = self.srvbld.template('MENU_CONTENTS_DISABLED')
+                        TOC = self.srvbld.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                     docname = os.path.basename(adoc)
                     userdoc = os.path.join(self.get_source_path(), docname)
                     if os.path.exists(userdoc):

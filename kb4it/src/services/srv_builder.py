@@ -111,9 +111,9 @@ class Builder(Service):
         self.build_pagination('recents', doclist, 'Recents')
 
     def build_pagination(self, basename, doclist, optional_title=None):
-        PG_HEAD = self.template('PAGINATION_HEAD')
-        PG_CARD = self.template('PAGINATION_CARD')
-        DOC_CARD_FILTER_DATA_TITLE = self.template('DOC_CARD_FILTER_DATA_TITLE')
+        PG_HEAD = self.template('PAGE_PAGINATION_HEAD')
+        PG_CARD = self.template('CARD_PAGINATION')
+        CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
         num_rel_docs = len(doclist)
         if num_rel_docs < 100:
             total_pages = 1
@@ -134,16 +134,16 @@ class Builder(Service):
                 k = math.ceil(num_rel_docs/total_pages)
 
         for current_page in range(total_pages):
-            PAGINATION = """\n<ul class="uk-pagination uk-flex-center" uk-margin>\n"""
+            PAGINATION = self.template('PAGINATION_START')
             if total_pages > 0:
                 for i in range(total_pages):
                     start = k*i # lower limit
                     end = k*i + k # upper limit
                     if i == current_page:
                         if total_pages - 1 == 0:
-                            PAGINATION += """\t<li class="uk-active"></li>\n"""
+                            PAGINATION += self.template('PAGINATION_NONE')
                         else:
-                            PAGINATION += """\t<li class="uk-active"><span uk-tooltip="Page %d: %d-%d/%d">%d</span></li>\n""" % (i, start, end, num_rel_docs,i)
+                            PAGINATION += self.template('PAGINATION_PAGE_ACTIVE.tpl') % (i, start, end, num_rel_docs,i)
                         cstart = start
                         cend = end
                     else:
@@ -151,8 +151,8 @@ class Builder(Service):
                             PAGE = "%s.adoc" % basename
                         else:
                             PAGE = "%s-%d.adoc" % (basename, i)
-                        PAGINATION += """\t<li uk-tooltip="Page %d: %d-%d/%d"><a href="%s"><span>%i</span></a></li>\n""" % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
-            PAGINATION += """</ul>\n"""
+                        PAGINATION += self.template('PAGINATION_PAGE_INACTIVE.tpl') % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
+            PAGINATION += self.template('PAGINATION_END')
 
             if current_page == 0:
                 name = "%s" % basename
@@ -166,7 +166,7 @@ class Builder(Service):
             for doc in doclist[ps:pe]:
                 title = self.srvdtb.get_values(doc, 'Title')[0]
                 doc_card = self.get_doc_card(doc)
-                card_search_filter = DOC_CARD_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+                card_search_filter = CARD_DOC_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
                 CARDS += """%s""" % card_search_filter
                 n += 1
             if optional_title is None:
@@ -179,12 +179,12 @@ class Builder(Service):
 
     def create_index_page(self):
         """Missing method docstring."""
-        TPL_INDEX = self.template('INDEX')
+        TPL_INDEX = self.template('PAGE_INDEX')
         self.distribute('index', TPL_INDEX)
 
     def create_all_keys_page(self):
         """Missing method docstring."""
-        content = self.template('KEYS')
+        content = self.template('PAGE_KEYS')
         all_keys = self.srvdtb.get_all_keys()
         for key in all_keys:
             cloud = self.create_tagcloud_from_key(key)
@@ -229,7 +229,7 @@ class Builder(Service):
         """Create key page."""
         source_dir = self.srvapp.get_source_path()
         num_values = len(values)
-        html = self.template('KEY_PAGE')
+        html = self.template('PAGE_KEY')
 
         # TAB Cloud
         cloud = self.create_tagcloud_from_key(key)
@@ -279,9 +279,9 @@ class Builder(Service):
 
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()
-        DOC_CARD = self.template('DOC_CARD')
-        DOC_CARD_FOOTER = self.template('DOC_CARD_FOOTER')
-        DOC_CARD_LINK = self.template('DOC_CARD_LINK')
+        DOC_CARD = self.template('CARD_DOC')
+        DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
+        DOC_CARD_LINK = self.template('CARD_DOC_LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
