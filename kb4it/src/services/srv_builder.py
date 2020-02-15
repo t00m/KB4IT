@@ -14,14 +14,12 @@ import sys
 import math
 import datetime as dt
 from datetime import datetime
-from kb4it.src.core.mod_env import GPATH
+from kb4it.src.core.mod_env import GPATH, VERSION
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import valid_filename
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
-from kb4it.src.core.mod_utils import get_author_icon
-from kb4it.src.core.mod_utils import last_modification
-from kb4it.src.services.srv_db import IGNORE_KEYS, BLOCKED_KEYS # HEADER_KEYS,
+from kb4it.src.services.srv_db import BLOCKED_KEYS
 
 TEMPLATES = {}
 
@@ -31,7 +29,6 @@ class Builder(Service):
     tmpdir = None
     srvdtb = None
     srvapp = None
-    missing_icons = {}
 
     def initialize(self):
         """Initialize Builder class."""
@@ -101,7 +98,7 @@ class Builder(Service):
         return html
 
     def create_index_all(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         doclist = self.srvdtb.get_documents()
         self.build_pagination('all', doclist)
 
@@ -177,13 +174,23 @@ class Builder(Service):
             self.distribute(name, content)
         self.log.debug("\t\t\t  Created '%s' page (%d pages with %d in each page)", basename, total_pages, k)
 
+    def create_about_page(self):
+        """C0111: Missing function docstring (missing-docstring)."""
+        TPL_ABOUT = self.template('PAGE_ABOUT')
+        self.distribute('about', TPL_ABOUT % VERSION)
+
+    def create_help_page(self):
+        """C0111: Missing function docstring (missing-docstring)."""
+        TPL_HELP = self.template('PAGE_HELP')
+        self.distribute('help', TPL_HELP)
+
     def create_index_page(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         TPL_INDEX = self.template('PAGE_INDEX')
         self.distribute('index', TPL_INDEX)
 
     def create_all_keys_page(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         content = self.template('PAGE_KEYS')
         all_keys = self.srvdtb.get_all_keys()
         for key in all_keys:
@@ -285,12 +292,6 @@ class Builder(Service):
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        team = self.srvdtb.get_values(doc, 'Team')[0] # Only first match?
-        author = self.srvdtb.get_values(doc, 'Author')[0]
-        authors = ', '.join(self.srvdtb.get_values(doc, 'Author'))
-        icon_path = get_author_icon(source_dir, author)
-        if icon_path == "resources/images/authors/author_unknown.png":
-            self.missing_icons[author] = os.path.join(source_dir, "%s.png" % valid_filename(author))
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
         if len(category) > 0 and len(scope) >0:
             link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
@@ -298,9 +299,6 @@ class Builder(Service):
             footer = DOC_CARD_FOOTER % (link_category, link_scope)
         else:
             footer = ''
-        link_team = DOC_CARD_LINK % ("Team_%s" % valid_filename(team), team)
-        link_author = DOC_CARD_LINK % ("Author_%s" % valid_filename(author), author)
-        link_image = "Author_%s.html" % valid_filename(author)
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         human_ts = get_human_datetime(timestamp)
         fuzzy_date = fuzzy_date_from_timestamp(timestamp)

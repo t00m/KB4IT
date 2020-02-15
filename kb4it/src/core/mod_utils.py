@@ -244,7 +244,7 @@ def get_metadata(docpath):
 
 
 def uniq_sort(result):
-    """Missing docstring."""
+    """C0111: Missing function docstring (missing-docstring)."""
     alist = list(result)
     aset = set(alist)
     alist = list(aset)
@@ -320,19 +320,8 @@ def last_modification(filename):
     d = datetime.fromtimestamp(t)
     return "%s" % d.strftime("%A, %B %e, %Y at %H:%M:%S")
 
-def get_author_icon(source_path, author):
-    relpath = "resources/images/authors/%s.png" % valid_filename(author)
-    abspath = os.path.join(source_path, relpath)
-
-    if os.path.exists(abspath):
-        return relpath
-    else:
-        return "resources/images/authors/author_unknown.png"
-
 def fuzzy_date_from_timestamp(timestamp):
-    """
-    Missing method docstring (missing-docstring)
-    """
+    """C0111: Missing function docstring (missing-docstring)."""
     d1 = timestamp
     d2 = datetime.now()
     rdate = d2 - d1 # DateTimeDelta
