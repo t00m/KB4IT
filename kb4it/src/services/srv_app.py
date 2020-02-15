@@ -30,14 +30,13 @@ from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_k
 from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
-# ~ from kb4it.src.services.srv_db import HEADER_KEYS
+from kb4it.src.core.mod_utils import last_dt_modification, last_modification_date
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
 
 
 class Application(Service):
-    """Missing class docstring (missing-docstring)."""
+    """C0111: Missing function docstring (missing-docstring)."""
     runtime = {}
     kbdict_new = {}
     kbdict_cur = {}
@@ -78,12 +77,8 @@ class Application(Service):
         # Get services
         self.get_services()
 
-    # ~ def get_cache_path(self):
-        # ~ """Get cache path."""
-        # ~ return self.runtime['dir']['cache']
-
     def load_theme(self):
-        """Load custom user theme or default"""
+        """Load custom user theme, global theme or default"""
 
         self.runtime['theme'] =  {}
         self.runtime['theme']['path'] = self.search_theme(self.parameters.THEME)
@@ -105,10 +100,10 @@ class Application(Service):
         for prop in theme:
             if prop != 'name':
                 self.log.debug("\t%s: %s", prop.title(), theme[prop])
-        # ~ self.log.debug(self.runtime['theme'])
+
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
-        self.runtime['theme']['bin'] = os.path.join(self.runtime['theme']['path'], 'bin')
-        sys.path.insert(0, self.runtime['theme']['bin'])
+        self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
+        sys.path.insert(0, self.runtime['theme']['logic'])
         try:
             from theme import Theme
             self.app.register_service('Theme', Theme())
@@ -167,12 +162,12 @@ class Application(Service):
         return self.runtime['dir']['tmp']
 
     def get_services(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
 
     def get_numdocs(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         return self.runtime['docs']['count']
 
     def get_docs_by_timestamp(self):
@@ -277,24 +272,6 @@ class Application(Service):
         if not os.path.exists(self.runtime['dir']['target']):
             os.makedirs(self.runtime['dir']['target'])
         self.log.debug("\t\tTarget directory: %s", self.runtime['dir']['target'])
-
-        # Check if help and about documents exists. If not, use the default ones
-        # ~ file_about = os.path.join(self.runtime['dir']['source'], 'about.adoc')
-        # ~ file_help = os.path.join(self.runtime['dir']['source'], 'help.adoc')
-        # ~ doc_about = os.path.exists(file_about)
-        # ~ doc_help = os.path.exists(file_help)
-        # ~ if not doc_about:
-            # ~ tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
-            # ~ with open(tmp_about, 'w') as fabout:
-                # ~ page_about = self.srvbld.template('PAGE_ABOUT')
-                # ~ fabout.write(page_about % APP['version'])
-                # ~ self.log.info("\t\tAdded missing 'about.adoc' document")
-
-        # ~ if not doc_help:
-            # ~ tmp_help = os.path.join(self.runtime['dir']['tmp'], 'help.adoc')
-            # ~ with open(tmp_help, 'w') as fhelp:
-                # ~ fhelp.write(self.srvbld.template('PAGE_HELP'))
-                # ~ self.log.info("\t\tAdded missing 'help.adoc' document")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
