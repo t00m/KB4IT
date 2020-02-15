@@ -101,7 +101,11 @@ class Application(Service):
             for prop in theme:
                 self.runtime['theme'][prop] = theme[prop]
 
-        self.log.debug(self.runtime['theme'])
+        self.log.debug("Theme: %s", theme['name'])
+        for prop in theme:
+            if prop != 'name':
+                self.log.debug("\t%s: %s", prop.title(), theme[prop])
+        # ~ self.log.debug(self.runtime['theme'])
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
         self.runtime['theme']['bin'] = os.path.join(self.runtime['theme']['path'], 'bin')
         sys.path.insert(0, self.runtime['theme']['bin'])
@@ -123,17 +127,25 @@ class Application(Service):
             return None
 
         found = False
-        # Search in sources path or fallback to default
+
+        # Search in sources path
         source_path = self.runtime['dir']['source']
         theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
         theme_path = os.path.join(self.runtime['dir']['source'], theme_rel_path)
         if os.path.exists(theme_path):
             found = True
+        else:
+            # Search for theme in KB4IT global theme
+            theme_path = os.path.join(GPATH['THEMES'], theme)
+            if os.path.exists(theme_path):
+                found = True
 
         if found:
+            # Return custom theme
             self.log.debug("Found theme %s in local repository: %s" % (theme, theme_path))
             return theme_path
         else:
+            # Fallback to default
             self.log.debug("Theme not found in local repository: %s." % theme)
             return None
 

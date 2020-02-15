@@ -48,11 +48,11 @@ class Builder(Service):
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
 
         if os.path.exists(PAGE_PATH):
-            self.log.error("\t\t\tPage '%s' already exists. Skip." % name)
+            self.log.error("\t\t\t  Page '%s' already exists. Skip." % name)
 
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("Page '%s' saved", name)
+        self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
 
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
