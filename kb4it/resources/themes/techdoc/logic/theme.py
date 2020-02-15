@@ -17,6 +17,8 @@ class Theme(Builder):
         self.log.debug("This is the theme techdoc")
 
     def build(self):
+        self.create_about_page()
+        self.create_help_page()
         self.create_all_keys_page()
         self.create_properties_page()
         self.create_stats_page()
