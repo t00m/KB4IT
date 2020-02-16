@@ -110,7 +110,6 @@ class Builder(Service):
     def build_pagination(self, basename, doclist, optional_title=None):
         PG_HEAD = self.template('PAGE_PAGINATION_HEAD')
         PG_CARD = self.template('CARD_PAGINATION')
-        CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
         num_rel_docs = len(doclist)
         if num_rel_docs < 100:
             total_pages = 1
@@ -158,16 +157,12 @@ class Builder(Service):
             ps = cstart
             pe = cend
 
-            n = ps
-            CARDS = ""
             self.log.debug("PAGINATION: %d - %d", ps, pe)
             if pe > 0:
-                for doc in doclist[ps:pe]:
-                    title = self.srvdtb.get_values(doc, 'Title')[0]
-                    doc_card = self.get_doc_card(doc)
-                    card_search_filter = CARD_DOC_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-                    CARDS += """%s""" % card_search_filter
-                    n += 1
+                CARDS = self.build_cardset(doclist[ps:pe])
+            else:
+                CARDS = ""
+
             if optional_title is None:
                 title = basename.replace('_', ' ').title()
             else:
@@ -175,6 +170,16 @@ class Builder(Service):
             content = PG_HEAD % (title, PAGINATION, CARDS)
             self.distribute(name, content)
         self.log.debug("\t\t\t  Created '%s' page (%d pages with %d in each page)", basename, total_pages, k)
+
+    def build_cardset(self, doclist):
+        CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
+        CARDS = ""
+        for doc in doclist:
+            title = self.srvdtb.get_values(doc, 'Title')[0]
+            doc_card = self.get_doc_card(doc)
+            card_search_filter = CARD_DOC_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+            CARDS += """%s""" % card_search_filter
+        return CARDS
 
     def create_about_page(self):
         """C0111: Missing function docstring (missing-docstring)."""
