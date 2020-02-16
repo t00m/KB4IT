@@ -29,13 +29,23 @@ class Theme(Builder):
         self.create_blog_page()
         self.create_recents_page()
 
+    def build_blog(self, doclist):
+        CARD = self.template('CARD_DOC_BLOG')
+        CARDS = ""
+        for doc in doclist:
+            title = self.srvdtb.get_values(doc, 'Title')[0]
+            doc_card = self.get_doc_card(doc)
+            card_search_filter = CARD % (valid_filename(title), doc_card)
+            CARDS += """%s""" % card_search_filter
+        return CARDS
+
     def create_blog_page(self):
         doclist = []
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Post':
                 doclist.append(doc)
-        self.build_pagination('blog', doclist, 'Blog')
+        self.build_pagination('blog', doclist, 'Blog', "build_blog")
 
     def create_events_page(self):
         doclist = set()
