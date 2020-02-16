@@ -43,6 +43,8 @@ class Theme(Builder):
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Event':
                 doclist.add(doc)
+        self.log.debug("Events: %d", len(doclist))
+        self.build_pagination('events', doclist, 'Events')
 
     def create_recents_page(self):
         """Create recents page."""
