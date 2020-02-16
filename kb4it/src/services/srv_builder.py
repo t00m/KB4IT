@@ -160,12 +160,14 @@ class Builder(Service):
 
             n = ps
             CARDS = ""
-            for doc in doclist[ps:pe]:
-                title = self.srvdtb.get_values(doc, 'Title')[0]
-                doc_card = self.get_doc_card(doc)
-                card_search_filter = CARD_DOC_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
-                CARDS += """%s""" % card_search_filter
-                n += 1
+            self.log.debug("PAGINATION: %d - %d", ps, pe)
+            if pe > 0:
+                for doc in doclist[ps:pe]:
+                    title = self.srvdtb.get_values(doc, 'Title')[0]
+                    doc_card = self.get_doc_card(doc)
+                    card_search_filter = CARD_DOC_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+                    CARDS += """%s""" % card_search_filter
+                    n += 1
             if optional_title is None:
                 title = basename.replace('_', ' ').title()
             else:
