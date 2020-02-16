@@ -107,7 +107,7 @@ class Builder(Service):
         doclist = self.srvdtb.get_documents()[:60]
         self.build_pagination('recents', doclist, 'Recents')
 
-    def build_pagination(self, basename, doclist, optional_title=None):
+    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset'):
         PG_HEAD = self.template('PAGE_PAGINATION_HEAD')
         PG_CARD = self.template('CARD_PAGINATION')
         num_rel_docs = len(doclist)
@@ -157,9 +157,11 @@ class Builder(Service):
             ps = cstart
             pe = cend
 
-            self.log.debug("PAGINATION: %d - %d", ps, pe)
             if pe > 0:
-                CARDS = self.build_cardset(doclist[ps:pe])
+                # get build_cardset custom function or default
+                custom_build_cardset = "self.%s" % custom_function
+                self.log.debug("\t\t\tCustom function: %s", custom_build_cardset)
+                CARDS = eval(custom_build_cardset)(doclist[ps:pe])
             else:
                 CARDS = ""
 
@@ -169,7 +171,7 @@ class Builder(Service):
                 title = optional_title
             content = PG_HEAD % (title, PAGINATION, CARDS)
             self.distribute(name, content)
-        self.log.debug("\t\t\t  Created '%s' page (%d pages with %d in each page)", basename, total_pages, k)
+        self.log.debug("\t\t\t  Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
 
     def build_cardset(self, doclist):
         CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
