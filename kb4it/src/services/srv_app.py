@@ -257,7 +257,6 @@ class Application(Service):
                     HTML_FOOTER = self.srvbld.template('HTML_FOOTER')
                     fhtm.write(HTML_FOOTER % timestamp)
                 os.remove(htmldoctmp)
-                # ~ log.debug("Temporary html document deleted: %s", htmldoctmp)
                 return x
 
 

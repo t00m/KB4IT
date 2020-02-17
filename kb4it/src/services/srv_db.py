@@ -85,6 +85,9 @@ class KB4ITDB(Service):
             html.append((url, value))
         return html
 
+    def get_doc_properties(self, doc):
+        return self.db[doc]
+
     def get_values(self, doc, key):
         """Get a list of values given a document and a key."""
         try:
