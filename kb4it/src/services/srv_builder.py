@@ -49,7 +49,7 @@ class Builder(Service):
 
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
+        # ~ self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
 
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -160,7 +160,6 @@ class Builder(Service):
             if pe > 0:
                 # get build_cardset custom function or default
                 custom_build_cardset = "self.%s" % custom_function
-                self.log.debug("\t\t\tCustom function: %s", custom_build_cardset)
                 CARDS = eval(custom_build_cardset)(doclist[ps:pe])
             else:
                 CARDS = ""
@@ -174,6 +173,7 @@ class Builder(Service):
         self.log.debug("\t\t\t  Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
 
     def build_cardset(self, doclist):
+        self.log.debug("\t\t\t  Using default build cardset function")
         CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
         CARDS = ""
         for doc in doclist:

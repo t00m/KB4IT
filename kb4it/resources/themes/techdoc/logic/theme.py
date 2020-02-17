@@ -10,6 +10,8 @@ Server module.
 # Description: techdoc theme scripts
 """
 
+from pprint import pprint
+from kb4it.src.core.mod_utils import valid_filename, get_human_datetime
 from kb4it.src.services.srv_builder import Builder
 
 class Theme(Builder):
@@ -30,14 +32,54 @@ class Theme(Builder):
         self.create_recents_page()
 
     def build_blog(self, doclist):
-        CARD = self.template('CARD_DOC_BLOG')
+        self.log.debug("\t\t\t  Using custom build cardset function for blog posts")
+        # ~ CARD = self.template('CARD_DOC_BLOG')
         CARDS = ""
+        blog = {}
+        years = []
+        months = []
         for doc in doclist:
-            title = self.srvdtb.get_values(doc, 'Title')[0]
-            doc_card = self.get_doc_card(doc)
-            card_search_filter = CARD % (valid_filename(title), doc_card)
-            CARDS += """%s""" % card_search_filter
-        return CARDS
+            post = self.srvdtb.get_doc_properties(doc)
+            timestamp = post['Timestamp']
+            year = "%4d" % timestamp.year
+            month = "%4d%02d" % (timestamp.year, timestamp.month)
+
+            if not year in years:
+                years.append(year)
+
+            if not month in months:
+                months.append(month)
+
+            try:
+                posts = blog[year]
+                posts.append(doc)
+                blog[year] = posts
+            except:
+                blog[year] = []
+
+            try:
+                posts = blog[month]
+                posts.append(doc)
+                blog[month] = posts
+            except:
+                blog[month] = []
+
+        HTML = "<ul>\n"
+        for year in years:
+            HTML += "\t<li>%s</li>\n" % year
+            for month in months:
+                if month.startswith(year):
+                    HTML += "\t<ul>\n\t\t<li>%s</li>\n" % month[4:]
+                    HTML += "\t\t<ul>\n"
+                    for doc in blog[month]:
+                        title = self.srvdtb.get_values(doc, 'Title')[0]
+                        timestamp = self.srvdtb.get_values(doc, 'Timestamp')
+                        HTML += "\t\t\t<li>%s - %s</li>\n" % (timestamp, title)
+                    HTML += "\t\t</ul>\n"
+            HTML += "\t</ul>\n"
+        HTML += "</ul>\n"
+        self.log.debug(HTML)
+        return HTML
 
     def create_blog_page(self):
         doclist = []
