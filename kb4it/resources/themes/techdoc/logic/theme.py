@@ -46,16 +46,15 @@ class Theme(Builder):
         self.create_blog_page()
         self.create_recents_page()
 
-    def build_blog(self, doclist):
-        self.log.debug("\t\t\t  Using custom build cardset function for blog posts")
-        # ~ CARD = self.template('CARD_DOC_BLOG')
+    def build_events(self, doclist):
+        self.log.debug("\t\t\t  Using custom build cardset function for events")
         CARDS = ""
-        blog = {}
+        events = {}
         years = []
         months = []
         for doc in doclist:
-            post = self.srvdtb.get_doc_properties(doc)
-            timestamp = post['Timestamp']
+            props = self.srvdtb.get_doc_properties(doc)
+            timestamp = props['Timestamp']
             year = "%4d" % timestamp.year
             month = "%4d%02d" % (timestamp.year, timestamp.month)
 
@@ -66,29 +65,29 @@ class Theme(Builder):
                 months.append(month)
 
             try:
-                posts = blog[year]
-                posts.append(doc)
-                blog[year] = posts
+                docs = events[year]
+                docs.append(doc)
+                events[year] = docs
             except:
-                blog[year] = []
+                events[year] = []
 
             try:
-                posts = blog[month]
-                posts.append(doc)
-                blog[month] = posts
+                docs = events[month]
+                docs.append(doc)
+                events[month] = docs
             except:
-                blog[month] = []
+                events[month] = []
 
         HTML = """<ul class="uk-list uk-card uk-card-body uk-card-hover">\n"""
         for year in years:
-            self.build_pagination('posts-year-%s' % year, blog[year], optional_title="Posted on %s" % year)
-            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><a class="uk-link-heading" href="posts-year-%s.html"><span class="uk-heading-medium">%s</span></a>\n""" % (year, year)
+            self.build_pagination('docs-year-%s' % year, events[year], optional_title="Documents created during %s" % year)
+            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><a class="uk-link-heading" href="docs-year-%s.html" uk-toggle=""><span class="uk-heading-medium">%s</span></a>\n""" % (year, year)
             for month in months:
                 if month.startswith(year):
-                    self.build_pagination('posts-month-%s' % month, blog[month], optional_title="Posted on %s %s" % (MONTH[month[4:]], year))
-                    HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><a class="uk-link-heading" href="posts-month-%s.html"><span class="uk-heading-small">%s</span></a></li>\n""" % (month, MONTH[month[4:]])
+                    self.build_pagination('docs-month-%s' % month, events[month], optional_title="Posted on %s %s" % (MONTH[month[4:]], year))
+                    HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><a class="uk-link-heading" href="docs-month-%s.html"><span class="uk-heading-small">%s</span></a></li>\n""" % (month, MONTH[month[4:]])
                     HTML += "\t\t<ul>\n"
-                    for doc in blog[month]:
+                    for doc in events[month]:
                         title = self.srvdtb.get_values(doc, 'Title')[0]
                         timestamp = self.srvdtb.get_values(doc, 'Timestamp')
                         HTML += """\t\t\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-text-lead">%s - %s</span></li>\n""" % (timestamp, title)
@@ -104,7 +103,7 @@ class Theme(Builder):
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Post':
                 doclist.append(doc)
-        self.build_pagination('blog', doclist, 'Blog', "build_blog", "PAGE_PAGINATION_HEAD_EVENT")
+        self.build_pagination('blog', doclist, 'Blog', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_events_page(self):
         doclist = set()
@@ -112,8 +111,7 @@ class Theme(Builder):
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category == 'Event':
                 doclist.add(doc)
-        self.log.debug("Events: %d", len(doclist))
-        self.build_pagination('events', doclist, 'Events')
+        self.build_pagination('events', doclist, 'Events', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_recents_page(self):
         """Create recents page."""
