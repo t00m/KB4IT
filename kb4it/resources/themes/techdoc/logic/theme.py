@@ -81,7 +81,8 @@ class Theme(Builder):
 
         HTML = """<ul class="uk-list uk-card uk-card-body uk-card-hover">\n"""
         for year in years:
-            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-heading-medium">%s</span>\n""" % year
+            self.build_pagination('posts-year-%s' % year, blog[year])
+            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><a href="posts-year-%s.html"><span class="uk-heading-medium">%s</span></a>\n""" % (year, year)
             for month in months:
                 if month.startswith(year):
                     HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><span class="uk-heading-small">%s</span></li>\n""" % MONTH[month[4:]]
