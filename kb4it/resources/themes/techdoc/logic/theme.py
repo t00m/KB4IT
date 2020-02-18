@@ -81,7 +81,7 @@ class Theme(Builder):
 
         HTML = """<ul class="uk-list uk-card uk-card-body uk-card-hover">\n"""
         for year in years:
-            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-heading-medium">%s</span></li>\n""" % year
+            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-heading-medium">%s</span>\n""" % year
             for month in months:
                 if month.startswith(year):
                     HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><span class="uk-heading-small">%s</span></li>\n""" % MONTH[month[4:]]
@@ -91,7 +91,7 @@ class Theme(Builder):
                         timestamp = self.srvdtb.get_values(doc, 'Timestamp')
                         HTML += """\t\t\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-text-lead">%s - %s</span></li>\n""" % (timestamp, title)
                     HTML += "\t\t</ul>\n"
-            HTML += "\t</ul>\n"
+            HTML += "\t</li>\n\t</ul>\n"
         HTML += "</ul>\n"
         self.log.debug(HTML)
         return HTML
