@@ -107,8 +107,8 @@ class Builder(Service):
         doclist = self.srvdtb.get_documents()[:60]
         self.build_pagination('recents', doclist, 'Recents')
 
-    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset'):
-        PG_HEAD = self.template('PAGE_PAGINATION_HEAD')
+    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD'):
+        PG_HEAD = self.template(custom_pagination_template)
         PG_CARD = self.template('CARD_PAGINATION')
         num_rel_docs = len(doclist)
         if num_rel_docs < 100:
