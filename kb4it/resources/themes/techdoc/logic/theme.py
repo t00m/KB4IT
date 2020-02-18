@@ -81,11 +81,12 @@ class Theme(Builder):
 
         HTML = """<ul class="uk-list uk-card uk-card-body uk-card-hover">\n"""
         for year in years:
-            self.build_pagination('posts-year-%s' % year, blog[year])
-            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><a href="posts-year-%s.html"><span class="uk-heading-medium">%s</span></a>\n""" % (year, year)
+            self.build_pagination('posts-year-%s' % year, blog[year], optional_title="Posted on %s" % year)
+            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><a class="uk-link-heading" href="posts-year-%s.html"><span class="uk-heading-medium">%s</span></a>\n""" % (year, year)
             for month in months:
                 if month.startswith(year):
-                    HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><span class="uk-heading-small">%s</span></li>\n""" % MONTH[month[4:]]
+                    self.build_pagination('posts-month-%s' % month, blog[month], optional_title="Posted on %s %s" % (MONTH[month[4:]], year))
+                    HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><a class="uk-link-heading" href="posts-month-%s.html"><span class="uk-heading-small">%s</span></a></li>\n""" % (month, MONTH[month[4:]])
                     HTML += "\t\t<ul>\n"
                     for doc in blog[month]:
                         title = self.srvdtb.get_values(doc, 'Title')[0]
