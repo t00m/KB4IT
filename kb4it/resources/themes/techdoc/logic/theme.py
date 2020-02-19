@@ -11,6 +11,7 @@ Server module.
 """
 
 from pprint import pprint
+from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import valid_filename, get_human_datetime
 from kb4it.src.services.srv_builder import Builder
 
@@ -46,6 +47,27 @@ class Theme(Builder):
         self.create_blog_page()
         self.create_recents_page()
 
+    def get_doc_card_event(self, doc):
+        source_dir = self.srvapp.get_source_path()
+        DOC_CARD = self.template('CARD_DOC_EVENT')
+        DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
+        DOC_CARD_LINK = self.template('CARD_DOC_LINK')
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
+        if len(category) > 0 and len(scope) >0:
+            link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
+            link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+            footer = DOC_CARD_FOOTER % (link_category, link_scope)
+        else:
+            footer = ''
+        timestamp = self.srvdtb.get_doc_timestamp(doc)
+        human_ts = get_human_datetime(timestamp)
+        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
+        tooltip ="%s" % (title)
+        return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
+
     def build_events(self, doclist):
         self.log.debug("\t\t\t  Using custom build cardset function for events")
         CARDS = ""
@@ -78,22 +100,26 @@ class Theme(Builder):
             except:
                 events[month] = []
 
-        HTML = """<ul class="uk-list uk-card uk-card-body uk-card-hover">\n"""
+        HTML = "" #self.template('BLOCK_EVENT_START')
         for year in years:
-            self.build_pagination('docs-year-%s' % year, events[year], optional_title="Documents created during %s" % year)
-            HTML += """\t<li class="uk-card uk-card-body uk-card-hover"><a class="uk-link-heading" href="docs-year-%s.html" uk-toggle=""><span class="uk-heading-medium">%s</span></a>\n""" % (year, year)
+            self.build_pagination('docs-year-%s' % year, events[year], optional_title="Posted on %s" % year)
+            EVENT_ROW_YEAR_START = self.template('BLOCK_EVENT_ROW_YEAR_START')
+            HTML += EVENT_ROW_YEAR_START % (year, year)
             for month in months:
                 if month.startswith(year):
                     self.build_pagination('docs-month-%s' % month, events[month], optional_title="Posted on %s %s" % (MONTH[month[4:]], year))
-                    HTML += """\t<ul class="uk-card uk-card-body uk-card-hover">\n\t\t<li><a class="uk-link-heading" href="docs-month-%s.html"><span class="uk-heading-small">%s</span></a></li>\n""" % (month, MONTH[month[4:]])
-                    HTML += "\t\t<ul>\n"
+                    EVENT_ROW_MONTH_START = self.template('BLOCK_EVENT_ROW_MONTH_START')
+                    HTML += EVENT_ROW_MONTH_START % (month, MONTH[month[4:]])
+                    HTML += """<div class="uk-child-width-expand@s" uk-grid>"""
                     for doc in events[month]:
                         title = self.srvdtb.get_values(doc, 'Title')[0]
                         timestamp = self.srvdtb.get_values(doc, 'Timestamp')
-                        HTML += """\t\t\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-text-lead">%s - %s</span></li>\n""" % (timestamp, title)
-                    HTML += "\t\t</ul>\n"
-            HTML += "\t</li>\n\t</ul>\n"
-        HTML += "</ul>\n"
+                        CARD = self.get_doc_card_event(doc)
+                        HTML += CARD
+                        # ~ HTML += """\t\t\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-text-lead">%s - %s</span></li>\n""" % (timestamp, title)
+                    HTML += "</div>\n"
+            HTML += "\t</div></div>\n"
+        # ~ HTML += "</div></div>\n"
         self.log.debug(HTML)
         return HTML
 
