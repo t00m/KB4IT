@@ -91,14 +91,12 @@ class KB4ITDB(Service):
             attribute = params.SORT_ATTRIBUTE
         except:
             attribute = 'Timestamp'
-        # ~ self.log.error("Sort attribute: %s", attribute)
 
         # Get doc timestamp for that attribute or use default timestamp
         try:
             timestamp = self.db[doc][attribute][0]
         except:
             timestamp = self.db[doc]['Timestamp']
-        # ~ self.log.error("Timestamp from attribute %s: %s", attribute, timestamp)
 
         return timestamp
 

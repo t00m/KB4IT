@@ -413,7 +413,7 @@ class Application(Service):
     def stage_04_processing(self):
         """Process all documents."""
 
-        self.log.info("Stage 4\tProcessing")
+        self.log.info("Stage 4\tProcessing keys")
         available_keys = self.srvdtb.get_all_keys()
 
         for key in available_keys:
@@ -470,7 +470,6 @@ class Application(Service):
                 html = self.srvbld.create_key_page(key, values)
                 with open(docname, 'w') as fkey:
                     fkey.write(html)
-            # ~ self.log.info("Key page created: %s", docname)
 
         self.srvthm.build()
 
@@ -483,7 +482,7 @@ class Application(Service):
         # ~ resources_dir_source = GPATH['THEMES']
         resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
         shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
-        self.log.info("\t\tResources copied to '%s'", resources_dir_tmp)
+        self.log.debug("\t\tResources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
         for prop in ADOCPROPS:
@@ -510,8 +509,8 @@ class Application(Service):
                 # ~ self.log.debug("\t\tJob[%4d]: %s", num, cmd)
                 jobs.append(job)
                 num = num + 1
-            self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
-            self.log.info("\t\t%3s%% done", "0")
+            self.log.info("\t\tCreated %d jobs. Starting compilation", num - 1)
+            # ~ self.log.info("\t\t%3s%% done", "0")
             for job in jobs:
                 adoc, res, jobid = job.result()
                 self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))
