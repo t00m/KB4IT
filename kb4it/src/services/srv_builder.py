@@ -12,6 +12,7 @@ Builder service.
 import os
 import sys
 import math
+import time
 import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_env import GPATH, VERSION
@@ -139,7 +140,7 @@ class Builder(Service):
                         if total_pages - 1 == 0:
                             PAGINATION += self.template('PAGINATION_NONE')
                         else:
-                            PAGINATION += self.template('PAGINATION_PAGE_ACTIVE.tpl') % (i, start, end, num_rel_docs,i)
+                            PAGINATION += self.template('PAGINATION_PAGE_ACTIVE') % (i, start, end, num_rel_docs,i)
                         cstart = start
                         cend = end
                     else:
@@ -147,7 +148,7 @@ class Builder(Service):
                             PAGE = "%s.adoc" % basename
                         else:
                             PAGE = "%s-%d.adoc" % (basename, i)
-                        PAGINATION += self.template('PAGINATION_PAGE_INACTIVE.tpl') % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
+                        PAGINATION += self.template('PAGINATION_PAGE_INACTIVE') % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
             PAGINATION += self.template('PAGINATION_END')
 
             if current_page == 0:
@@ -309,6 +310,8 @@ class Builder(Service):
         else:
             footer = ''
         timestamp = self.srvdtb.get_doc_timestamp(doc)
+        if type(timestamp) == str:
+            timestamp = datetime.strptime(timestamp, "%d/%m/%Y")
         human_ts = get_human_datetime(timestamp)
         fuzzy_date = fuzzy_date_from_timestamp(timestamp)
         tooltip ="%s" % (title)
