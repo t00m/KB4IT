@@ -151,6 +151,7 @@ def main():
     parser.add_argument('-theme', dest='THEME', help='Specify theme. Otherwise, it uses the default one', required=False)
     parser.add_argument('-source', dest='SOURCE_PATH', help='Source directory with asciidoctor source files', required=True)
     parser.add_argument('-target', dest='TARGET_PATH', help='Target directory')
+    parser.add_argument('-sort', dest='SORT_ATTRIBUTE', help='Choose another attribute for sorting instead the default timestamp')
     parser.add_argument('-log', dest='LOGLEVEL', help='Increase output verbosity', action='store', default='INFO')
     parser.add_argument('-version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
     params = parser.parse_args()

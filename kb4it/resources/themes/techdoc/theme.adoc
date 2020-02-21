@@ -6,5 +6,6 @@
     "website": "http://github.com/kb4it-themes",
     "description": "Theme for technical documentation with capabilities for blog posts, events, and tasks",
     "version": "0.0.2",
-    "kb4it": "0.8"
+    "kb4it": "0.8",
+    "event": "Change, Email, Incident, Log, Message, Meeting, Note, Post, Reminder, Report, Task"
 }

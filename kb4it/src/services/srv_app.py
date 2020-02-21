@@ -60,6 +60,12 @@ class Application(Service):
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
 
+        if self.parameters.SORT_ATTRIBUTE is None:
+            self.runtime['sort_attribute'] = 'Timestamp'
+        else:
+            self.runtime['sort_attribute'] = self.parameters.SORT_ATTRIBUTE
+        self.log.info("Sort attribute: %s", self.runtime['sort_attribute'])
+
         # Select theme
         self.load_theme()
 
@@ -264,9 +270,10 @@ class Application(Service):
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("Stage 1\tCheck environment")
-        self.log.debug("\t\tCache directory: %s", self.runtime['dir']['cache'])
-        self.log.debug("\t\tWorking directory: %s", self.runtime['dir']['tmp'])
-        self.log.debug("\t\tSource directory: %s", self.runtime['dir']['source'])
+        self.log.info("\t\tCache directory: %s", self.runtime['dir']['cache'])
+        self.log.info("\t\tWorking directory: %s", self.runtime['dir']['tmp'])
+        self.log.info("\t\tSource directory: %s", self.runtime['dir']['source'])
+        self.log.info("\t\tTheme: %s (%s)", self.runtime['theme']['id'], self.runtime['theme']['name'])
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.runtime['dir']['target']):
             os.makedirs(self.runtime['dir']['target'])
@@ -388,7 +395,7 @@ class Application(Service):
 
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
-                self.log.info("\t\tDocument %s will be compiled again" % valid_filename(docname))
+                self.log.debug("\t\tDocument %s will be compiled again" % valid_filename(docname))
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             else:

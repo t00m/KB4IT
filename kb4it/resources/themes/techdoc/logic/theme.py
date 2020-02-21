@@ -119,7 +119,7 @@ class Theme(Builder):
                         # ~ HTML += """\t\t\t<li class="uk-card uk-card-body uk-card-hover"><span class="uk-text-lead">%s - %s</span></li>\n""" % (timestamp, title)
                     HTML += "</div>\n"
             HTML += "\t</div></div>\n"
-        # ~ HTML += "</div></div>\n"
+            HTML += """<div class="uk-card uk-card-body"></div>"""
         self.log.debug(HTML)
         return HTML
 
