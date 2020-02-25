@@ -35,9 +35,6 @@
                                     <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
-                                </li>
-                                <li class="uk-link-toggle">
                                     <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
@@ -100,14 +97,14 @@
             <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
+                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-link-heading" href="#">Help</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
                                 </li>
                                 <!--
                                 <li class="uk-link-toggle">

@@ -19,15 +19,9 @@ class Theme(Builder):
     def build(self):
         # Default pages
         self.create_all_keys_page()
-        self.create_recents_page()
         self.create_properties_page()
         self.create_stats_page()
         self.create_index_all()
         self.create_index_page()
         self.create_about_page()
         self.create_help_page()
-
-        # ~ # On steroids
-        # ~ self.create_bookmarks_page()
-        # ~ self.create_events_page()
-        # ~ self.create_blog_page()

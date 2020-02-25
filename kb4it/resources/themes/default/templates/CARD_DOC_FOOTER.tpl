@@ -8,3 +8,4 @@
                                 </div>
                             </div>
                             <!-- DOC_CARD_FOOTER.tpl :: END -->
+                        <!-- DOC_CARD.tpl :: END -->
