@@ -56,7 +56,7 @@ class KB4ITDB(Service):
         alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
         for doc, timestamp in alist:
             self.sorted_docs.append(doc)
-        self.sorted_docs.reverse()
+        # ~ self.sorted_docs.reverse()
 
 
     def sort_by_date(self, doclist, attribute='Timestamp'):
@@ -71,7 +71,7 @@ class KB4ITDB(Service):
         alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
-        sorted_docs.reverse()
+        # ~ sorted_docs.reverse()
         # ~ for doc in sorted_docs:
             # ~ start = self.get_values(doc, 'Start')[0]
             # ~ timestamp = self.get_values(doc, 'Timestamp')

@@ -288,6 +288,24 @@ def valid_filename(s):
     s = str(s).strip().replace(' ', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
 
+def guess_datetime(sdate):
+    found = False
+    print("\tGuessing format for: %s" % sdate)
+    patterns = ["%d/%m/%Y", "%d.%m.%Y", "%d-%m-%Y", "%Y/%m/%d",
+                "%Y.%m.%d", "%Y-%m-%d", "%Y-%m-%d %H:%M",
+               ]
+    for pattern in patterns:
+        if not found:
+            try:
+                timestamp = datetime.strptime(sdate, pattern)
+                print("\t\tTested successfully date pattern: %s" % pattern)
+                found = True
+            except ValueError:
+                timestamp = None
+                print("\t\tPattern not valid: %s" % pattern)
+    print ("\tFinal timestamp: %s" % timestamp)
+    return timestamp
+
 def last_dt_modification(filename):
     """Return last modification datetime of a file """
     t = os.path.getmtime(filename)
