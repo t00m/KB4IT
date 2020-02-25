@@ -176,13 +176,13 @@ class Application(Service):
         """C0111: Missing function docstring (missing-docstring)."""
         return self.runtime['docs']['count']
 
-    def get_docs_by_timestamp(self):
-        """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
-        adict = {}
-        for docname in self.kbdict_new['document']:
-            ts = self.kbdict_new['document'][docname]['Timestamp']
-            adict[docname] = ts
-        return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+    # ~ def get_docs_by_timestamp(self):
+        # ~ """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
+        # ~ adict = {}
+        # ~ for docname in self.kbdict_new['document']:
+            # ~ ts = self.kbdict_new['document'][docname]['Timestamp']
+            # ~ adict[docname] = ts
+        # ~ return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
 
     def highlight_metadata_section(self, source):
         """C0111: Missing function docstring (missing-docstring)."""

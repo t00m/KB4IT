@@ -17,7 +17,7 @@ import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_env import GPATH, VERSION
 from kb4it.src.core.mod_srv import Service
-from kb4it.src.core.mod_utils import valid_filename
+from kb4it.src.core.mod_utils import valid_filename, guess_datetime
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
 from kb4it.src.services.srv_db import BLOCKED_KEYS
@@ -171,10 +171,9 @@ class Builder(Service):
                 title = optional_title
             content = PG_HEAD % (title, PAGINATION, CARDS)
             self.distribute(name, content)
-        self.log.debug("\t\t\t  Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
+        # ~ self.log.debug("\t\t\t  Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
 
     def build_cardset(self, doclist):
-        self.log.debug("\t\t\t  Using default build cardset function")
         CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
         CARDS = ""
         for doc in doclist:
@@ -267,18 +266,21 @@ class Builder(Service):
         try:
             doc_path = os.path.join(self.srvapp.get_source_path(), doc)
             html = self.template('METADATA_SECTION_HEADER')
+            ROW_CUSTOM_PROP = self.template('METADATA_ROW_CUSTOM_PROPERTY')
+            ROW_CUSTOM_PROP_TIMESTAMP = self.template('METADATA_ROW_CUSTOM_PROPERTY_TIMESTAMP')
             custom_keys = self.srvdtb.get_custom_keys(doc)
             custom_props = ''
             for key in custom_keys:
                 try:
                     values = self.srvdtb.get_html_values_from_key(doc, key)
                     labels = self.get_labels(values)
-                    row_custom_prop = self.template('METADATA_ROW_CUSTOM_PROPERTY')
-                    custom_props += row_custom_prop % (valid_filename(key), key, labels)
+                    custom_props += ROW_CUSTOM_PROP % (valid_filename(key), key, labels)
                 except Exception as error:
                     self.log.error("Key[%s]: %s", key, error)
+            timestamp = self.srvdtb.get_doc_timestamp(doc)
+            custom_props += ROW_CUSTOM_PROP_TIMESTAMP % ('Timestamp', timestamp)
             num_custom_props = len(custom_props)
-            if  num_custom_props > 0:
+            if  num_custom_props > 1:
                 html += custom_props
             html += self.template('METADATA_SECTION_FOOTER')
         except Exception as error:
@@ -309,11 +311,18 @@ class Builder(Service):
             footer = DOC_CARD_FOOTER % (link_category, link_scope)
         else:
             footer = ''
+
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         if type(timestamp) == str:
-            timestamp = datetime.strptime(timestamp, "%d/%m/%Y")
-        human_ts = get_human_datetime(timestamp)
-        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
+            timestamp = guess_datetime(timestamp)
+
+        if timestamp is not None:
+            human_ts = get_human_datetime(timestamp)
+            fuzzy_date = fuzzy_date_from_timestamp(timestamp)
+        else:
+            timestamp = ''
+            fuzzy_date = ''
+            self.log.warning("No timestamp detected")
         tooltip ="%s" % (title)
         return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
 
