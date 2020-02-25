@@ -12,6 +12,7 @@ Builder service.
 import os
 import sys
 import math
+import time
 import datetime as dt
 from datetime import datetime
 from kb4it.src.core.mod_env import GPATH, VERSION
@@ -49,7 +50,7 @@ class Builder(Service):
 
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
+        # ~ self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
 
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -107,8 +108,8 @@ class Builder(Service):
         doclist = self.srvdtb.get_documents()[:60]
         self.build_pagination('recents', doclist, 'Recents')
 
-    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset'):
-        PG_HEAD = self.template('PAGE_PAGINATION_HEAD')
+    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD'):
+        PG_HEAD = self.template(custom_pagination_template)
         PG_CARD = self.template('CARD_PAGINATION')
         num_rel_docs = len(doclist)
         if num_rel_docs < 100:
@@ -139,7 +140,7 @@ class Builder(Service):
                         if total_pages - 1 == 0:
                             PAGINATION += self.template('PAGINATION_NONE')
                         else:
-                            PAGINATION += self.template('PAGINATION_PAGE_ACTIVE.tpl') % (i, start, end, num_rel_docs,i)
+                            PAGINATION += self.template('PAGINATION_PAGE_ACTIVE') % (i, start, end, num_rel_docs,i)
                         cstart = start
                         cend = end
                     else:
@@ -147,7 +148,7 @@ class Builder(Service):
                             PAGE = "%s.adoc" % basename
                         else:
                             PAGE = "%s-%d.adoc" % (basename, i)
-                        PAGINATION += self.template('PAGINATION_PAGE_INACTIVE.tpl') % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
+                        PAGINATION += self.template('PAGINATION_PAGE_INACTIVE') % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
             PAGINATION += self.template('PAGINATION_END')
 
             if current_page == 0:
@@ -160,7 +161,6 @@ class Builder(Service):
             if pe > 0:
                 # get build_cardset custom function or default
                 custom_build_cardset = "self.%s" % custom_function
-                self.log.debug("\t\t\tCustom function: %s", custom_build_cardset)
                 CARDS = eval(custom_build_cardset)(doclist[ps:pe])
             else:
                 CARDS = ""
@@ -174,6 +174,7 @@ class Builder(Service):
         self.log.debug("\t\t\t  Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
 
     def build_cardset(self, doclist):
+        self.log.debug("\t\t\t  Using default build cardset function")
         CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
         CARDS = ""
         for doc in doclist:
@@ -309,6 +310,8 @@ class Builder(Service):
         else:
             footer = ''
         timestamp = self.srvdtb.get_doc_timestamp(doc)
+        if type(timestamp) == str:
+            timestamp = datetime.strptime(timestamp, "%d/%m/%Y")
         human_ts = get_human_datetime(timestamp)
         fuzzy_date = fuzzy_date_from_timestamp(timestamp)
         tooltip ="%s" % (title)

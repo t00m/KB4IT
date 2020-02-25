@@ -4,7 +4,8 @@
     "author": "Tomás Vírseda",
     "email": "tomasvirseda@gmail.com",
     "website": "http://github.com/kb4it-themes",
-    "description": "Special theme for technical documents",
-    "version": "0.0.1",
-    "kb4it": "0.7.4"
+    "description": "Theme for technical documentation with capabilities for blog posts, events, and tasks",
+    "version": "0.0.2",
+    "kb4it": "0.8",
+    "event": "Change, Email, Incident, Log, Message, Meeting, Note, Post, Reminder, Report, Task"
 }

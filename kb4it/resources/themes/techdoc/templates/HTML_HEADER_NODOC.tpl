@@ -76,11 +76,6 @@
                                 <li class="uk-link-toggle">
                                     <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
                                 </li>
-                                <!--
-                                <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
-                                </li>
-                                -->
                             </ul>
                         </div>
                     </li>
@@ -89,4 +84,5 @@
         </nav>
     </div>
 </div>
+<!-- CONTENT :: START -->
 <div class="uk-container uk-container-center">

@@ -45,26 +45,38 @@ class KB4ITDB(Service):
             self.db[doc][key] = [value]
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
 
-    def sort(self):
+    def sort(self, attribute='Timestamp'):
         """Build a list of documents sorted by timestamp desc."""
         adict = {}
         for doc in self.db:
-            adict[doc] = self.db[doc]['Timestamp']
+            try:
+                adict[doc] = self.db[doc][attribute]
+            except:
+                adict[doc] = self.db[doc]['Timestamp']
         alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
         for doc, timestamp in alist:
             self.sorted_docs.append(doc)
-        # ~ for doc in self.sorted_docs:
-            # ~ self.log.error("%s - %s", self.db[doc]['Timestamp'], self.db[doc]['Title'][0])
+        self.sorted_docs.reverse()
 
-    def sort_by_date(self, doclist):
+
+    def sort_by_date(self, doclist, attribute='Timestamp'):
         """Build a list of documents sorted by timestamp desc."""
         sorted_docs = []
         adict = {}
         for doc in doclist:
-            adict[doc] = self.db[doc]['Timestamp']
+            try:
+                adict[doc] = self.db[doc][attribute]
+            except:
+                adict[doc] = self.db[doc]['Timestamp']
         alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
+        sorted_docs.reverse()
+        # ~ for doc in sorted_docs:
+            # ~ start = self.get_values(doc, 'Start')[0]
+            # ~ timestamp = self.get_values(doc, 'Timestamp')
+            # ~ self.log.error("%s -> A[%s] T[%s]", doc, start, timestamp)
+        # ~ self.log.error(" ")
         return sorted_docs
 
     def get_documents(self):
@@ -72,7 +84,21 @@ class KB4ITDB(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        return self.db[doc]['Timestamp']
+        params = self.app.get_params()
+
+        # Get sort attribute
+        try:
+            attribute = params.SORT_ATTRIBUTE
+        except:
+            attribute = 'Timestamp'
+
+        # Get doc timestamp for that attribute or use default timestamp
+        try:
+            timestamp = self.db[doc][attribute][0]
+        except:
+            timestamp = self.db[doc]['Timestamp']
+
+        return timestamp
 
     def get_html_values_from_key(self, doc, key):
         """Return the html link for a value."""
@@ -84,6 +110,9 @@ class KB4ITDB(Service):
             url = "%s_%s.html" % (key, value)
             html.append((url, value))
         return html
+
+    def get_doc_properties(self, doc):
+        return self.db[doc]
 
     def get_values(self, doc, key):
         """Get a list of values given a document and a key."""
