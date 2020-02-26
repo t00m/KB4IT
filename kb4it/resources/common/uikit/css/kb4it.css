@@ -1,9 +1,11 @@
 /* KB4IT.css custom stylesheet based on Asciidoctor default stylesheet */
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
 
+/*
 address, dl, fieldset, figure, ol, p, ul {
     margin: 0 0 00px 0;
 }
+*/
 
 pre {
     font: .875rem/1.5 Consolas,monaco,monospace;

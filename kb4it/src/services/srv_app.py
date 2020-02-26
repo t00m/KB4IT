@@ -238,10 +238,11 @@ class Application(Service):
                     # ~ log.error(toc)
                     if 'Metadata' in content:
                         content = highlight_metadata_section(content)
-                except IndexError as error:
+                except Exception as error:
                     # ~ log.error(error)
                     # Some pages don't have toc section. Ignore it.
-                    pass
+                    self.log.error("%s: %s", adoc, error)
+                    raise
 
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
