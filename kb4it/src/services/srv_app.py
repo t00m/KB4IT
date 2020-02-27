@@ -227,7 +227,6 @@ class Application(Service):
             if os.path.exists(htmldoc):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
-                # ~ self.log.debug(title)
                 html_title = """%s""" % title
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
@@ -235,14 +234,17 @@ class Application(Service):
                 toc = extract_toc(source)
                 content = self.apply_transformations(source)
                 try:
-                    # ~ log.error(toc)
                     if 'Metadata' in content:
                         content = highlight_metadata_section(content)
-                except Exception as error:
-                    # ~ log.error(error)
+                except NameError as error:
+                    # Sometimes, weird links in asciidoctor sources
+                    # provoke compilation errors
+                    basename = os.path.basename(adoc)
+                    self.log.error("\t\tERROR!! Please, check source document '%s'.", basename)
+                    self.log.error("\t\tERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
+                finally:
                     # Some pages don't have toc section. Ignore it.
-                    self.log.error("%s: %s", adoc, error)
-                    raise
+                    pass
 
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
