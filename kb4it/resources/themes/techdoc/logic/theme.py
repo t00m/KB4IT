@@ -44,7 +44,7 @@ class Theme(Builder):
         self.create_index_page()
         self.create_bookmarks_page()
         self.create_events_page()
-        self.create_blog_page()
+        # ~ self.create_blog_page()
         self.create_recents_page()
 
     def get_doc_card_event(self, doc):
@@ -131,13 +131,13 @@ class Theme(Builder):
         self.log.debug(HTML)
         return HTML
 
-    def create_blog_page(self):
-        doclist = []
-        for doc in self.srvdtb.get_documents():
-            category = self.srvdtb.get_values(doc, 'Category')[0]
-            if category == 'Post':
-                doclist.append(doc)
-        self.build_pagination('blog', doclist, 'Blog', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
+    # ~ def create_blog_page(self):
+        # ~ doclist = []
+        # ~ for doc in self.srvdtb.get_documents():
+            # ~ category = self.srvdtb.get_values(doc, 'Category')[0]
+            # ~ if category == 'Post':
+                # ~ doclist.append(doc)
+        # ~ self.build_pagination('blog', doclist, 'Blog', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_events_page(self):
         doclist = set()
