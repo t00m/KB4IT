@@ -44,9 +44,6 @@
                                     <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="blog.html">Blog</a>
-                                </li>
-                                <li class="uk-link-toggle">
                                     <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
