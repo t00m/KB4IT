@@ -290,20 +290,21 @@ def valid_filename(s):
 
 def guess_datetime(sdate):
     found = False
-    print("\tGuessing format for: %s" % sdate)
-    patterns = ["%d/%m/%Y", "%d.%m.%Y", "%d-%m-%Y", "%Y/%m/%d",
-                "%Y.%m.%d", "%Y-%m-%d", "%Y-%m-%d %H:%M",
+    patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
+                "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S"
+                "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
+                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S",
+                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S",
+                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
                ]
     for pattern in patterns:
         if not found:
             try:
                 timestamp = datetime.strptime(sdate, pattern)
-                print("\t\tTested successfully date pattern: %s" % pattern)
                 found = True
             except ValueError:
                 timestamp = None
-                print("\t\tPattern not valid: %s" % pattern)
-    print ("\tFinal timestamp: %s" % timestamp)
     return timestamp
 
 def last_dt_modification(filename):
