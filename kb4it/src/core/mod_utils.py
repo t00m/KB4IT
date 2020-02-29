@@ -146,7 +146,7 @@ def get_font_size(frequency, max_frequency):
         size = 36
     elif proportion in range(4, 5):
         size = 72
-    elif proportion > 5:
+    else:
         size = 72
 
     return size

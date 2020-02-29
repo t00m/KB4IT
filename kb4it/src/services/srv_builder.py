@@ -210,19 +210,32 @@ class Builder(Service):
                 content += "\n++++\n%s\n++++\n" % cloud
         self.distribute('keys', content)
 
+    def get_maxkv_freq(self):
+        maxkvfreq = 0
+        all_keys = self.srvdtb.get_all_keys()
+        for key in all_keys:
+            if key not in BLOCKED_KEYS:
+                values = self.srvdtb.get_all_values_for_key(key)
+                if len(values) > maxkvfreq:
+                    maxkvfreq = len(values)
+        return maxkvfreq
+
     def create_properties_page(self):
         """Create properties page."""
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-
+        max_frequency = self.get_maxkv_freq()
         all_keys = self.srvdtb.get_all_keys()
         custom_buttons = ''
         for key in all_keys:
             if key not in BLOCKED_KEYS:
                 html = self.create_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
+                frequency = len(values)
+                size = get_font_size(frequency, max_frequency)
+                proportion = int(math.log((frequency * 100) / max_frequency))
                 tooltip = "%d values" % len(values)
-                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, key, valid_filename(key), valid_filename(key), key, html)
+                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
                 custom_buttons += button
         content = TPL_PROPS_PAGE % (custom_buttons)
         self.distribute('properties', content)
