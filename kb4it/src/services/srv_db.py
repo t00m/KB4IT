@@ -23,6 +23,7 @@ class KB4ITDB(Service):
     db = {}
     source_path = None
     sorted_docs = []
+    maxvk = 0
 
     def initialize(self):
         """Initialize database module."""
@@ -43,6 +44,7 @@ class KB4ITDB(Service):
             self.db[doc][key] = alist
         except KeyError:
             self.db[doc][key] = [value]
+
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
 
     def sort(self, attribute='Timestamp'):
