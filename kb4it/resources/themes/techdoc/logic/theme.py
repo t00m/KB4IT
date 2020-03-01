@@ -36,25 +36,24 @@ MONTH = {
 # Constants for months referenced later
 January = 1
 
-class PayDayCalendar(HTMLCalendar):
-    def __init__(self, pay_days):
-            super(PayDayCalendar, self).__init__(calendar.SUNDAY)
-            self.pay_days = pay_days # attach the list of paydays as a property, so we can access it anywhere
+class EventsCalendar(HTMLCalendar):
+    def __init__(self, events_days):
+            super(EventsCalendar, self).__init__(calendar.MONDAY)
+            self.events_days = events_days # attach the list of paydays as a property, so we can access it anywhere
 
     def formatday(self, day, weekday):
-        pday = 0 # var for checking if it's a payday
+        eday = 0 # var for checking if it's a event day
         cal_date = (self.month, day) # create a tuple of the calendar month and day
 
-        if cal_date in self.pay_days: # check if current calendar tuple date exist in our list of pay days
-            print('cal_date: ', cal_date, ' day: ', day)
-            pday = day # if it does exist set the pay day var with it
+        if cal_date in self.events_days: # check if current calendar tuple date exist in our list of pay days
+            eday = day # if it does exist set the pay day var with it
 
         """
           Return a day as a table cell.
         """
         if day == 0:
             return '<td class="noday day">&nbsp;</td>' # day outside month
-        elif day == pday: # check if this is one of the pay days, then change the class
+        elif day == eday: # check if this is one of the events days, then change the class
             return '<td class="%s payday day uk-text-bold uk-text-right uk-background-primary" style="color: white;">%d</td>' % (self.cssclasses[weekday], day)
         else:
             return '<td class="%s day" align="right">%d</td>' % (self.cssclasses[weekday], day)
@@ -76,7 +75,7 @@ class PayDayCalendar(HTMLCalendar):
     # override in order to add the month as a property
     def formatmonth(self, theyear, themonth, withyear=True):
         self.month = themonth
-        return super(PayDayCalendar, self).formatmonth(theyear, themonth, withyear=False)
+        return super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
 
     def formatyear(self, theyear, width=3):
         """
@@ -191,12 +190,9 @@ class Theme(Builder):
 
         for year in dey:
             HTML +="""<li><a class="uk-accordion-title uk-text-center uk-text-bolder" href="#">%s</a><div class="uk-accordion-content">""" % year
-            HTML += PayDayCalendar(dey[year]).formatyearpage(year, 3)
+            HTML += EventsCalendar(dey[year]).formatyearpage(year, 3)
             HTML += """</div></li>\n"""
 
-        # ~ events = PayDayCalendar(calendar.SUNDAY)
-
-        # ~ return myCal.formatyear(2020)
         HTML += "</u>"
         return HTML
 
