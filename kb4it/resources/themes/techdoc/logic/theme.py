@@ -39,14 +39,15 @@ January = 1
 class EventsCalendar(HTMLCalendar):
     def __init__(self, events_days):
             super(EventsCalendar, self).__init__(calendar.MONDAY)
-            self.events_days = events_days # attach the list of paydays as a property, so we can access it anywhere
+            self.current_year = None
+            self.events_days = events_days # attach the list of event days as a property, so we can access it anywhere
 
     def formatday(self, day, weekday):
         eday = 0 # var for checking if it's a event day
         cal_date = (self.month, day) # create a tuple of the calendar month and day
 
-        if cal_date in self.events_days: # check if current calendar tuple date exist in our list of pay days
-            eday = day # if it does exist set the pay day var with it
+        if cal_date in self.events_days: # check if current calendar tuple date exist in our list of events days
+            eday = day # if it does exist set the event day var with it
 
         """
           Return a day as a table cell.
@@ -54,7 +55,9 @@ class EventsCalendar(HTMLCalendar):
         if day == 0:
             return '<td class="noday day">&nbsp;</td>' # day outside month
         elif day == eday: # check if this is one of the events days, then change the class
-            return '<td class="%s payday day uk-text-bold uk-text-right uk-background-primary" style="color: white;">%d</td>' % (self.cssclasses[weekday], day)
+            EVENT_PAGE = "Events_%4d%02d%02d.adoc" % (self.current_year, self.month, day)
+            print(EVENT_PAGE)
+            return '<td class="%s eventday day uk-text-bold uk-text-right uk-background-primary" style="color: white;">%d</td>' % (self.cssclasses[weekday], day)
         else:
             return '<td class="%s day" align="right">%d</td>' % (self.cssclasses[weekday], day)
 
@@ -75,7 +78,7 @@ class EventsCalendar(HTMLCalendar):
     # override in order to add the month as a property
     def formatmonth(self, theyear, themonth, withyear=True):
         self.month = themonth
-        return super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
+        return super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=True)
 
     def formatyear(self, theyear, width=3):
         """
@@ -86,14 +89,13 @@ class EventsCalendar(HTMLCalendar):
         width = max(width, 1)
         a('<table class="uk-table" border="0" cellpadding="0" cellspacing="0" id="calendar">')
         a('\n')
-        a('<tr id="calendar-year"><th colspan="%d" class="year">Government Pay Days for %s</th></tr>' % (width, theyear))
         for i in range(January, January+12, width):
             # months in this row
             months = range(i, min(i+width, 13))
             a('<tr class="month-row">')
             for m in months:
                 a('<td class="calendar-month">')
-                a(self.formatmonth(theyear, m, withyear=False))
+                a(self.formatmonth(theyear, m, withyear=True))
                 a('</td>')
             a('</tr>')
         a('</table>')
@@ -103,6 +105,7 @@ class EventsCalendar(HTMLCalendar):
         """
         Return a formatted year as a complete HTML page.
         """
+        self.current_year = theyear
         v = []
         a = v.append
         # ~ a('<div id="wrapper">\n')
