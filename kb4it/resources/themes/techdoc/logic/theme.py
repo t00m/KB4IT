@@ -37,6 +37,8 @@ MONTH = {
 January = 1
 
 class EventsCalendar(HTMLCalendar):
+    """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""
+
     def __init__(self, events_days):
             super(EventsCalendar, self).__init__(calendar.MONDAY)
             self.current_year = None
