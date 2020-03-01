@@ -155,6 +155,12 @@ class Application(Service):
     def get_runtime_properties(self):
         return self.runtime
 
+    def get_runtime_parameter(self, parameter):
+        return self.runtime[parameter]
+
+    def get_theme_properties(self):
+        return self.runtime['theme']
+
     def get_source_path(self):
         """Get asciidoctor sources path."""
         return self.runtime['dir']['source']
