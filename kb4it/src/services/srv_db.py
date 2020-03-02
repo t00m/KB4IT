@@ -11,9 +11,8 @@ import operator
 from kb4it.src.core.mod_srv import Service
 
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
-# ~ HEADER_KEYS = ['Author', 'Category', 'Scope']
 BLOCKED_KEYS = ['Title', 'Timestamp']
-IGNORE_KEYS = BLOCKED_KEYS # + HEADER_KEYS
+IGNORE_KEYS = BLOCKED_KEYS
 
 
 class KB4ITDB(Service):
@@ -46,6 +45,9 @@ class KB4ITDB(Service):
             self.db[doc][key] = [value]
 
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
+
+    def ignore_key(self, key):
+        IGNORE_KEYS.append(key)
 
     def sort(self, attribute='Timestamp'):
         """Build a list of documents sorted by timestamp desc."""
@@ -134,6 +136,9 @@ class KB4ITDB(Service):
         values = list(set(values))
         values.sort(key=lambda y: y.lower())
         return values
+
+    def get_ignore_keys(self):
+        return IGNORE_KEYS
 
     def get_custom_keys(self, doc):
         """Get a list of custom keys."""
