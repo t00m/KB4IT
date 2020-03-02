@@ -66,9 +66,6 @@ class Application(Service):
             self.runtime['sort_attribute'] = self.parameters.SORT_ATTRIBUTE
         self.log.info("Sort attribute: %s", self.runtime['sort_attribute'])
 
-        # Select theme
-        self.load_theme()
-
         # Initialize docs structure
         self.runtime['docs'] = {}
         self.runtime['docs']['count'] = 0
@@ -82,6 +79,9 @@ class Application(Service):
 
         # Get services
         self.get_services()
+
+        # Select theme
+        self.load_theme()
 
     def load_theme(self):
         """Load custom user theme, global theme or default"""
@@ -109,6 +109,11 @@ class Application(Service):
 
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
         self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
+        date_attribs = self.runtime['theme']['date']
+        for attrib in date_attribs.split(','):
+            self.log.debug("\tIgnoring key: %s", attrib)
+            self.srvdtb.ignore_key(attrib)
+
         sys.path.insert(0, self.runtime['theme']['logic'])
         try:
             from theme import Theme
@@ -423,7 +428,9 @@ class Application(Service):
         """Process all documents."""
 
         self.log.info("Stage 4\tProcessing keys")
-        available_keys = self.srvdtb.get_all_keys()
+        all_keys = set(self.srvdtb.get_all_keys())
+        ign_keys = set(self.srvdtb.get_ignore_keys())
+        available_keys = list(all_keys - ign_keys)
 
         for key in available_keys:
             FORCE_DOC_KEY_COMPILATION = False

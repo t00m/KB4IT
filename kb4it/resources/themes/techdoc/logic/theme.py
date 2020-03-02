@@ -51,6 +51,9 @@ class EventsCalendar(Service, HTMLCalendar):
     def set_events_docs(self, docs):
         self.events_docs = docs
 
+    def set_events_html(self, html):
+        self.events_html = html
+
     def get_services(self):
         self.srvbld = self.get_service('Builder')
 
@@ -116,7 +119,7 @@ class EventsCalendar(Service, HTMLCalendar):
             months = range(i, min(i+width, 13))
             a('<tr class="month-row">')
             for m in months:
-                a('<td class="calendar-month">')
+                a('<td class="calendar-month uk-card-hover">')
                 a(self.formatmonth(theyear, m, withyear=False))
                 a('</td>')
             a('</tr>')
@@ -139,14 +142,14 @@ class Theme(Builder):
         self.log.debug("This is the theme techdoc")
 
     def build(self):
-        # ~ self.create_about_page()
-        # ~ self.create_help_page()
-        # ~ self.create_all_keys_page()
-        # ~ self.create_properties_page()
-        # ~ self.create_stats_page()
-        # ~ self.create_index_all()
-        # ~ self.create_index_page()
-        # ~ self.create_bookmarks_page()
+        self.create_about_page()
+        self.create_help_page()
+        self.create_all_keys_page()
+        self.create_properties_page()
+        self.create_stats_page()
+        self.create_index_all()
+        self.create_index_page()
+        self.create_bookmarks_page()
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
         self.create_events_page()
@@ -187,6 +190,7 @@ class Theme(Builder):
         # ~ self.log.debug("\t\t\t  Using custom build cardset function for events")
         dey = {} # Dictionary of day events per year
         events_docs = {} # Dictionary storing a list of docs for a given date
+        events_docs_html = {}
         HTML = '<ul uk-accordion>\n'
         for doc in doclist:
             props = self.srvdtb.get_doc_properties(doc)
@@ -215,12 +219,15 @@ class Theme(Builder):
                 # Build dict of documents
                 if not y in events_docs:
                     events_docs[y] = {}
+                    events_docs_html[y] = {}
 
                 if not m in events_docs[y]:
                     events_docs[y][m] = {}
+                    events_docs_html[y][m] = {}
 
                 if not d in events_docs[y][m]:
                     events_docs[y][m][d] = []
+                    events_docs_html[y][m][d] = ''
 
                 docs = events_docs[y][m][d]
                 docs.append(doc)
@@ -239,18 +246,27 @@ class Theme(Builder):
                     edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                     title = edt.strftime("Events on %A, %B %d %Y")
                     EVENT_PAGE = "Events_%4d%02d%02d" % (year, month, day)
+
+                    # create html page
                     self.build_pagination(EVENT_PAGE, docs, title)
 
+                    # Generate HTML to display into the modal window
+                    events_docs_html[y][m][d] = self.build_html_events(docs)
+
         for year in dey:
-            HTML +="""<li><a class="uk-accordion-title uk-text-center uk-text-bolder" href="#">%s</a><div class="uk-accordion-content">""" % year
+            HTML +="""<li><a class="uk-accordion-title uk-text-center uk-text-bolder" href="#">%s</a><div class="uk-accordion-content uk-card uk-card-large uk-card-body">""" % year
             self.srvcal.set_events_days(dey[year])
             self.srvcal.set_events_docs(events_docs[year])
+            self.srvcal.set_events_html(events_docs_html[year])
             HTML += self.srvcal.formatyearpage(year, 3)
             HTML += """</div></li>\n"""
 
         HTML += "</u>"
         return HTML
 
+    def build_html_events(self, docs):
+        # ~ self.log.debug(docs)
+        pass
 
     def load_events_days(self, events_days, year):
         events_set = set()

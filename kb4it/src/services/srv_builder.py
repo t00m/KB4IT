@@ -228,7 +228,7 @@ class Builder(Service):
         all_keys = self.srvdtb.get_all_keys()
         custom_buttons = ''
         for key in all_keys:
-            if key not in BLOCKED_KEYS:
+            if key not in self.srvdtb.get_ignore_keys():
                 html = self.create_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
