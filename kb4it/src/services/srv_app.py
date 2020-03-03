@@ -30,9 +30,8 @@ from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_k
 from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import last_dt_modification, last_modification_date
-
-EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
+from kb4it.src.core.mod_utils import file_timestamp, last_modification_date
+from kb4it.src.core.mod_utils import guess_datetime
 
 
 class Application(Service):
@@ -121,10 +120,13 @@ class Application(Service):
 
         # Get date-based attributes from theme. Date attributes aren't
         # displayed as properties but used to build events pages.
-        date_attribs = self.runtime['theme']['date']
-        for attrib in date_attribs.split(','):
-            self.log.debug("\tIgnoring key: %s", attrib)
-            self.srvdtb.ignore_key(attrib)
+        try:
+            ignored_keys = self.runtime['theme']['ignored_keys']
+            for key in ignored_keys:
+                self.log.debug("\tIgnoring key: %s", key)
+                self.srvdtb.ignore_key(key)
+        except KeyError:
+            self.log.warning("No ignored_keys defined in this theme")
 
         # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])
@@ -332,11 +334,13 @@ class Application(Service):
             self.kbdict_new['document'][docname] = {}
             self.log.debug("\t\tPreprocessing DOC[%s]", docname)
 
-            # Get datetime timestamp from filesystem
-            timestamp = last_dt_modification(source)
-
             # Add a new document to the database
-            self.srvdtb.add_document(docname, timestamp)
+            self.srvdtb.add_document(docname)
+
+            # Get datetime timestamp from filesystem and add it as
+            # attribute
+            timestamp = file_timestamp(source)
+            self.srvdtb.add_document_key(docname, 'Timestamp', timestamp)
 
             # Get content
             with open(source) as source_adoc:
@@ -398,7 +402,7 @@ class Application(Service):
                     # Compare timestamps for each source/cached document.
                     #If timestamp differs, compile it again.
                     doc_ts_new = self.kbdict_new['document'][docname]['Timestamp']
-                    doc_ts_cur = self.kbdict_cur['document'][docname]['Timestamp']
+                    doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname]['Timestamp'])
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
                     else:
@@ -440,7 +444,7 @@ class Application(Service):
 
         self.log.info("Stage 4\tProcessing keys")
         all_keys = set(self.srvdtb.get_all_keys())
-        ign_keys = set(self.srvdtb.get_ignore_keys())
+        ign_keys = set(self.srvdtb.get_ignored_keys())
         available_keys = list(all_keys - ign_keys)
 
         for key in available_keys:
