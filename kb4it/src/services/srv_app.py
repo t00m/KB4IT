@@ -37,9 +37,15 @@ EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
 
 class Application(Service):
     """C0111: Missing function docstring (missing-docstring)."""
-    runtime = {}
-    kbdict_new = {}
-    kbdict_cur = {}
+    runtime = {} # Dictionary of runtime properties
+    kbdict_new = {} # New compilation cache
+    kbdict_cur = {} # Cached data
+
+    # Dictionary of docs' timestamps
+    # tsdict[doc]['tsos'] : OS timestamp
+    # tsdict[doc]['sort'] : Date Attribute acting as a timestamp
+    # If 'sort' not available, default to 'tsos'
+    runtime['timestamp'] = {} # FIXME: necessary?
 
     def initialize(self):
         """Initialize application structure"""
@@ -60,6 +66,7 @@ class Application(Service):
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
 
+        # if SORT attribute is given, use it instead of the OS timestamp
         if self.parameters.SORT_ATTRIBUTE is None:
             self.runtime['sort_attribute'] = 'Timestamp'
         else:
@@ -90,13 +97,14 @@ class Application(Service):
         self.runtime['theme']['path'] = self.search_theme(self.parameters.THEME)
         if self.runtime['theme']['path'] is None:
             self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
-            self.log.debug("Fallback to default theme")
+            self.log.warning("Fallback to default theme")
 
         theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
         if not os.path.exists(theme_conf):
             self.log.error("Theme config file not found: %s", theme_conf)
             sys.exit(-1)
 
+        # load theme configuration
         with open(theme_conf, 'r') as fth:
             theme = json.load(fth)
             for prop in theme:
@@ -107,24 +115,28 @@ class Application(Service):
             if prop != 'name':
                 self.log.debug("\t%s: %s", prop.title(), theme[prop])
 
+        # Get theme directories
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
         self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
+
+        # Get date-based attributes from theme. Date attributes aren't
+        # displayed as properties but used to build events pages.
         date_attribs = self.runtime['theme']['date']
         for attrib in date_attribs.split(','):
             self.log.debug("\tIgnoring key: %s", attrib)
             self.srvdtb.ignore_key(attrib)
 
+        # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])
         try:
             from theme import Theme
             self.app.register_service('Theme', Theme())
             self.srvthm = self.get_service('Theme')
-            self.srvthm.hello()
         except Exception as error:
             self.log.warning("Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
             self.log.error(error)
             raise
-        self.log.info("Loading theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
+        self.log.info("Loaded theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
 
     def search_theme(self, theme):
         """Search custom theme"""
@@ -154,8 +166,6 @@ class Application(Service):
             # Fallback to default
             self.log.debug("Theme not found in local repository: %s." % theme)
             return None
-
-        # Then search
 
     def get_runtime_properties(self):
         return self.runtime
@@ -222,7 +232,6 @@ class Application(Service):
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
 
         return content
-
 
     def job_done(self, future):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -317,15 +326,17 @@ class Application(Service):
         browsable throught its metadata.
         """
         self.log.info("Stage 3\tPreprocessing")
+        tsdict = {}
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
             self.kbdict_new['document'][docname] = {}
             self.log.debug("\t\tPreprocessing DOC[%s]", docname)
 
+            # Get datetime timestamp from filesystem
+            timestamp = last_dt_modification(source)
+
             # Add a new document to the database
-            ts_dtm = last_dt_modification(source)
-            timestamp = last_modification_date(source)
-            self.srvdtb.add_document(docname, ts_dtm)
+            self.srvdtb.add_document(docname, timestamp)
 
             # Get content
             with open(source) as source_adoc:

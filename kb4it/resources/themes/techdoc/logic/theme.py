@@ -138,9 +138,6 @@ class EventsCalendar(Service, HTMLCalendar):
 
 
 class Theme(Builder):
-    def hello(self):
-        self.log.debug("This is the theme techdoc")
-
     def build(self):
         self.create_about_page()
         self.create_help_page()
@@ -150,9 +147,9 @@ class Theme(Builder):
         self.create_index_all()
         self.create_index_page()
         self.create_bookmarks_page()
-        self.app.register_service('EvCal', EventsCalendar())
-        self.srvcal = self.get_service('EvCal')
-        self.create_events_page()
+        # ~ self.app.register_service('EvCal', EventsCalendar())
+        # ~ self.srvcal = self.get_service('EvCal')
+        # ~ self.create_events_page()
         # ~ self.create_blog_page()
         self.create_recents_page()
 
