@@ -50,7 +50,9 @@ def save_current_kbdict(kbdict, path, name=None):
         KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
 
     with open(KB4IT_DB_FILE, 'w') as fkb:
-        json.dump(kbdict, fkb)
+        # Save datetimes as str ("%Y/%m/%d %H:%M:%S") during JSON serialization
+        # https://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable/36142844#36142844
+        json.dump(kbdict, fkb, default=str)
         log.debug("KBDICT %s saved", KB4IT_DB_FILE)
 
 
