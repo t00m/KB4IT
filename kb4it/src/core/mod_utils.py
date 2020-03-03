@@ -291,6 +291,9 @@ def valid_filename(s):
     return re.sub(r'(?u)[^-\w.]', '', s)
 
 def guess_datetime(sdate):
+    """Guess datetime for a given string and return a normalized datetime"""
+
+    # ~ print("Guessing format pattern for: %s" % sdate)
     found = False
     patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
                 "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
@@ -298,22 +301,29 @@ def guess_datetime(sdate):
                 "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S",
                 "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S",
                 "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
+                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
+                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
+                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
                ]
     for pattern in patterns:
+        # ~ print("\tTrying pattern: %s" % pattern)
         if not found:
             try:
-                timestamp = datetime.strptime(sdate, pattern)
+                td = datetime.strptime(sdate, pattern)
+                ts = td.strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
                 found = True
             except ValueError:
                 timestamp = None
+    # ~ print("\tTimestamp: %s" % timestamp)
     return timestamp
 
-def last_dt_modification(filename):
-    """Return last modification datetime of a file """
+def file_timestamp(filename):
+    """Return last modification datetime normalized of a file"""
     t = os.path.getmtime(filename)
-    dt = datetime.fromtimestamp(t)
-    return dt
+    sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.strptime(sdate, "%Y-%m-%d %H:%M:%S")
+    return timestamp
 
 def last_ts_modification(filename):
     """Return last modification human-readable timestamp of a file """

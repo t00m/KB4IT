@@ -147,9 +147,9 @@ class Theme(Builder):
         self.create_index_all()
         self.create_index_page()
         self.create_bookmarks_page()
-        # ~ self.app.register_service('EvCal', EventsCalendar())
-        # ~ self.srvcal = self.get_service('EvCal')
-        # ~ self.create_events_page()
+        self.app.register_service('EvCal', EventsCalendar())
+        self.srvcal = self.get_service('EvCal')
+        self.create_events_page()
         # ~ self.create_blog_page()
         self.create_recents_page()
 
@@ -195,7 +195,7 @@ class Theme(Builder):
             try:
                 timestamp = guess_datetime(props[SORT][0])
             except:
-                timestamp = guess_datetime(props['Timestamp'])
+                timestamp = props['Timestamp'][0]
             # ~ self.log.debug("TIMESTAMP: %s", timestamp)
 
             # Build dict of events for a given date as a list of tuples
@@ -231,9 +231,9 @@ class Theme(Builder):
                 events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
-                # ~ self.log.error(error)
-                # ~ raise
-                pass
+                self.log.error(error)
+                raise
+                # ~ pass
 
         # Build day event pages
         for year in events_docs:
@@ -279,7 +279,7 @@ class Theme(Builder):
         doclist = []
         theme = self.srvapp.get_theme_properties()
         try:
-            event_types = theme['event'].split(',')
+            event_types = theme['events']
         except:
             event_types = []
         self.log.info("\t\tEvent types registered for this theme: %s", ','.join(event_types))

@@ -20,7 +20,6 @@ from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import valid_filename, guess_datetime
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
-from kb4it.src.services.srv_db import BLOCKED_KEYS
 
 TEMPLATES = {}
 
@@ -214,7 +213,8 @@ class Builder(Service):
         maxkvfreq = 0
         all_keys = self.srvdtb.get_all_keys()
         for key in all_keys:
-            if key not in BLOCKED_KEYS:
+            blocked_keys = self.srvdtb.get_blocked_keys()
+            if key not in blocked_keys:
                 values = self.srvdtb.get_all_values_for_key(key)
                 if len(values) > maxkvfreq:
                     maxkvfreq = len(values)
@@ -228,7 +228,8 @@ class Builder(Service):
         all_keys = self.srvdtb.get_all_keys()
         custom_buttons = ''
         for key in all_keys:
-            if key not in self.srvdtb.get_ignore_keys():
+            ignored_keys = self.srvdtb.get_ignored_keys()
+            if key not in ignored_keys:
                 html = self.create_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)

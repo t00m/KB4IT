@@ -10,10 +10,6 @@ RDF Graph In Memory database module.
 import operator
 from kb4it.src.core.mod_srv import Service
 
-EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
-BLOCKED_KEYS = ['Title', 'Timestamp']
-IGNORE_KEYS = BLOCKED_KEYS
-
 
 class KB4ITDB(Service):
     """KB4IT database class."""
@@ -22,6 +18,8 @@ class KB4ITDB(Service):
     db = {}
     source_path = None
     sorted_docs = []
+    blocked_keys = ['Title', 'Timestamp']
+    ignored_keys = blocked_keys
     maxvk = 0
 
     def initialize(self):
@@ -29,14 +27,12 @@ class KB4ITDB(Service):
         self.params = self.app.get_params()
         self.source_path = self.params.SOURCE_PATH
 
-    def add_document(self, doc, timestamp):
-        """Add a new document node to the graph."""
+    def add_document(self, doc):
+        """Add a new document node to the database."""
         self.db[doc] = {}
-        self.db[doc]['Timestamp'] = timestamp
-        self.log.debug("\t\t\t%s created/modified on %s", doc, timestamp)
 
     def add_document_key(self, doc, key, value):
-        """Add a new key node to a document."""
+        """Add a new key/value node for a given document."""
         try:
             alist = self.db[doc][key]
             alist.append(value)
@@ -46,8 +42,14 @@ class KB4ITDB(Service):
 
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
 
+    def get_blocked_keys(self):
+        return self.blocked_keys
+
+    def get_ignored_keys(self):
+        return self.ignored_keys
+
     def ignore_key(self, key):
-        IGNORE_KEYS.append(key)
+        self.ignored_keys.append(key)
 
     def sort(self, attribute='Timestamp'):
         """Build a list of documents sorted by timestamp desc."""
@@ -88,21 +90,17 @@ class KB4ITDB(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        params = self.app.get_params()
 
-        # Get sort attribute
-        try:
-            attribute = params.SORT_ATTRIBUTE
-        except:
-            attribute = 'Timestamp'
+        # Get sort attribute or default timestamp
+        params = self.app.get_params()
+        attribute = params.SORT_ATTRIBUTE
 
         # Get doc timestamp for that attribute or use default timestamp
         try:
             timestamp = self.db[doc][attribute][0]
         except:
-            timestamp = self.db[doc]['Timestamp']
-
-        return timestamp
+            timestamp = self.db[doc]['Timestamp'][0]
+        return
 
     def get_html_values_from_key(self, doc, key):
         """Return the html link for a value."""
@@ -137,15 +135,12 @@ class KB4ITDB(Service):
         values.sort(key=lambda y: y.lower())
         return values
 
-    def get_ignore_keys(self):
-        return IGNORE_KEYS
-
     def get_custom_keys(self, doc):
         """Get a list of custom keys."""
         custom_keys = []
         keys = self.get_doc_keys(doc)
         for key in keys:
-            if key not in IGNORE_KEYS:
+            if key not in self.ignored_keys:
                 custom_keys.append(key)
         custom_keys.sort(key=lambda y: y.lower())
         return custom_keys
