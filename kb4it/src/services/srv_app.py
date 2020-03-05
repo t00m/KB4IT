@@ -30,8 +30,8 @@ from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_k
 from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import file_timestamp, last_modification_date
-from kb4it.src.core.mod_utils import guess_datetime
+from kb4it.src.core.mod_utils import file_timestamp
+from kb4it.src.core.mod_utils import guess_datetime, string_timestamp
 
 
 class Application(Service):
@@ -366,6 +366,11 @@ class Application(Service):
                     nc = len(value.strip())
                     if nc == 0:
                         continue
+                    try:
+                        if key in self.runtime['theme']['date_attributes']:
+                            value = string_timestamp(value)
+                    except:
+                        pass
                     self.srvdtb.add_document_key(docname, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
@@ -373,9 +378,9 @@ class Application(Service):
                         values = self.kbdict_new['document'][docname][key]
                         if value not in values:
                             values.append(value)
-                            self.kbdict_new['document'][docname][key] = sorted(values)
+                        self.kbdict_new['document'][docname][key] = sorted(values)
                     except:
-                           self.kbdict_new['document'][docname][key] = [value]
+                        self.kbdict_new['document'][docname][key] = [value]
 
                     # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                     try:
@@ -401,7 +406,7 @@ class Application(Service):
                 try:
                     # Compare timestamps for each source/cached document.
                     #If timestamp differs, compile it again.
-                    doc_ts_new = self.kbdict_new['document'][docname]['Timestamp']
+                    doc_ts_new = guess_datetime(self.kbdict_new['document'][docname]['Timestamp'])
                     doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname]['Timestamp'])
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
@@ -424,18 +429,19 @@ class Application(Service):
 
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
-                self.log.debug("\t\tDocument %s will be compiled again" % valid_filename(docname))
+                self.log.debug("\t\t\tDocument %s will be compiled again" % valid_filename(docname))
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             else:
                 filename = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
                 self.runtime['docs']['cached'].append(filename)
+                self.log.debug("\t\t\tDocument %s is cached. It won't be compiled." % valid_filename(docname))
 
         # Save current status for the next run
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
         # Build a list of documents sorted by timestamp
-        self.srvdtb.sort()
+        self.srvdtb.sort_database(self.runtime['sort_attribute'])
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
 
 
