@@ -18,10 +18,11 @@ import math
 import shutil
 import random
 import hashlib
+import operator
 import threading
 import subprocess
 import traceback as tb
-from datetime import datetime
+from datetime import date, datetime
 from kb4it.src.core.mod_env import LPATH, GPATH, EOHMARK, FILE
 from kb4it.src.core.mod_log import get_logger
 
@@ -40,7 +41,6 @@ def load_current_kbdict(source_path):
     log.debug("Current kbdict entries: %d", len(kbdict))
     return kbdict
 
-
 def save_current_kbdict(kbdict, path, name=None):
     """C0111: Missing function docstring (missing-docstring)."""
     if name is None:
@@ -50,9 +50,7 @@ def save_current_kbdict(kbdict, path, name=None):
         KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
 
     with open(KB4IT_DB_FILE, 'w') as fkb:
-        # Save datetimes as str ("%Y/%m/%d %H:%M:%S") during JSON serialization
-        # https://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable/36142844#36142844
-        json.dump(kbdict, fkb, default=str)
+        json.dump(kbdict, fkb)
         log.debug("KBDICT %s saved", KB4IT_DB_FILE)
 
 
@@ -113,7 +111,6 @@ def exec_cmd(data):
     - res is the output
     """
     doc, cmd, res = data
-    # ~ log.debug(cmd)
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
     outs, errs = process.communicate()
     if errs is None:
@@ -197,15 +194,6 @@ def extract_toc(source):
         toc = '\n'.join(items)
     return toc
 
-
-def create_directory(directory):
-    """Create a given directory path."""
-    log.debug("Checking if directory '%s' exists", directory)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        log.debug("Creating directory '%s'", directory)
-
-
 def delete_target_contents(target_path):
     """C0111: Missing function docstring (missing-docstring)."""
     if os.path.exists(target_path):
@@ -244,16 +232,6 @@ def get_metadata(docpath):
         log.error("Document %s could not be processed" % docpath)
     return props
 
-
-def uniq_sort(result):
-    """C0111: Missing function docstring (missing-docstring)."""
-    alist = list(result)
-    aset = set(alist)
-    alist = list(aset)
-    alist.sort(key=lambda y: y.lower())
-    return alist
-
-
 def get_hash_from_dict(adict):
     """Get the SHA256 hash for a given dictionary."""
     alist = []
@@ -267,13 +245,6 @@ def get_hash_from_dict(adict):
     m = hashlib.sha256()
     m.update(string.encode())
     return m.hexdigest()
-
-
-def setup_new_repository(target):
-    """Set up a new repository if no source files found."""
-    docs = get_source_docs(target)
-    copy_docs(GPATH['ADOCS'], target)
-
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
@@ -293,7 +264,6 @@ def valid_filename(s):
 def guess_datetime(sdate):
     """Guess datetime for a given string and return a normalized datetime"""
 
-    # ~ print("Guessing format pattern for: %s" % sdate)
     found = False
     patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
                 "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
@@ -306,7 +276,6 @@ def guess_datetime(sdate):
                 "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
                ]
     for pattern in patterns:
-        # ~ print("\tTrying pattern: %s" % pattern)
         if not found:
             try:
                 td = datetime.strptime(sdate, pattern)
@@ -315,41 +284,22 @@ def guess_datetime(sdate):
                 found = True
             except ValueError:
                 timestamp = None
-    # ~ print("\tTimestamp: %s" % timestamp)
     return timestamp
 
 def file_timestamp(filename):
     """Return last modification datetime normalized of a file"""
     t = os.path.getmtime(filename)
     sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
-    timestamp = datetime.strptime(sdate, "%Y-%m-%d %H:%M:%S")
-    return timestamp
+    return sdate
 
-def last_ts_modification(filename):
-    """Return last modification human-readable timestamp of a file """
-    t = os.path.getmtime(filename)
-    d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
+def string_timestamp(string):
+    dt = guess_datetime(string)
+    sdate = datetime.fromtimestamp(dt).strftime("%Y-%m-%d %H:%M:%S")
+    return sdate
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
-
-def last_ts_rss(date):
-    """ Converts a datetime into an RFC 2822 formatted date."""
-    return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday()], date.day, ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][date.month-1], date.year, date.hour, date.minute, date.second)
-
-def last_modification_date(filename):
-    """Return last modification human-readable timestamp of a file """
-    t = os.path.getmtime(filename)
-    d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
-
-def last_modification(filename):
-    """Return last modification human-readable datetime of a file """
-    t = os.path.getmtime(filename)
-    d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%A, %B %e, %Y at %H:%M:%S")
 
 def fuzzy_date_from_timestamp(timestamp):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -379,3 +329,6 @@ def fuzzy_date_from_timestamp(timestamp):
 
     if int(rdate.seconds) == 0:
         return "Right now"
+
+def sort_dictionary(adict, reverse=True):
+    return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)

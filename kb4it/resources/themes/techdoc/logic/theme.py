@@ -193,7 +193,7 @@ class Theme(Builder):
             props = self.srvdtb.get_doc_properties(doc)
             # ~ self.log.debug("\tPROPS: %s", props)
             try:
-                timestamp = guess_datetime(props[SORT][0])
+                timestamp = props[SORT][0]
             except:
                 timestamp = props['Timestamp'][0]
             # ~ self.log.debug("TIMESTAMP: %s", timestamp)
@@ -202,6 +202,7 @@ class Theme(Builder):
             # (month, day) indexed by year
             # Also, build a dict to store those docs ocurring in that date
             try:
+                timestamp = guess_datetime(timestamp)
                 y = timestamp.year
                 m = timestamp.month
                 d = timestamp.day
@@ -250,7 +251,13 @@ class Theme(Builder):
                     # Generate HTML to display into the modal window
                     events_docs_html[y][m][d] = self.build_html_events(docs)
 
+        lyears = []
         for year in dey:
+            lyears.append(year)
+        # ~ self.log.debug(lyears)
+        # ~ lyears.reverse()
+        # ~ self.log.debug(lyears)
+        for year in sorted(lyears, reverse=True):
             HTML +="""<li><a class="uk-accordion-title uk-text-center uk-text-bolder" href="#">%s</a><div class="uk-accordion-content uk-card uk-card-large uk-card-body">""" % year
             self.srvcal.set_events_days(dey[year])
             self.srvcal.set_events_docs(events_docs[year])
@@ -285,12 +292,16 @@ class Theme(Builder):
         self.log.info("\t\tEvent types registered for this theme: %s", ','.join(event_types))
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
+            self.log.debug("Category '%s' is an event? %s", category, category in event_types)
             if category in event_types:
                 doclist.append(doc)
                 category = self.srvdtb.get_values(doc, 'Category')[0]
                 title = self.srvdtb.get_values(doc, 'Title')[0]
                 self.log.debug("\t\tFound event of type %s: '%s'", category, title)
-        self.build_pagination('events', doclist, 'Events', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
+        page = self.template('PAGE_EVENTS')
+        content = page % self.build_events(doclist)
+        self.distribute('events', content)
+        # ~ self.build_pagination('events', doclist, 'Events', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_recents_page(self):
         """Create recents page."""

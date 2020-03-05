@@ -268,12 +268,22 @@ class Builder(Service):
         stats = ""
         leader_row = self.template('LEADER_ROW')
         for value in values:
-            docs = list(self.srvdtb.get_docs_by_key_value(key, value))
+            docs = self.srvdtb.get_docs_by_key_value(key, value)
             tpl_value_link = self.template('LEADER_ROW_VALUE_LINK')
             value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
             stats += leader_row % (value_link, len(docs))
 
         return html % (key, cloud, stats)
+
+    def get_html_values_from_key(self, doc, key):
+        """Return the html link for a value."""
+        html = []
+
+        values = self.srvdtb.get_values(doc, key)
+        for value in values:
+            url = "%s_%s.html" % (key, value)
+            html.append((url, value))
+        return html
 
     def create_metadata_section(self, doc):
         """Return a html block for displaying core and custom keys."""
@@ -286,7 +296,7 @@ class Builder(Service):
             custom_props = ''
             for key in custom_keys:
                 try:
-                    values = self.srvdtb.get_html_values_from_key(doc, key)
+                    values = self.get_html_values_from_key(doc, key)
                     labels = self.get_labels(values)
                     custom_props += ROW_CUSTOM_PROP % (valid_filename(key), key, labels)
                 except Exception as error:
