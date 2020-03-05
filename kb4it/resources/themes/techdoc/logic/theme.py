@@ -70,7 +70,7 @@ class EventsCalendar(Service, HTMLCalendar):
         if day == 0:
             return '<td class="noday day">&nbsp;</td>' # day outside month
         elif day == eday: # check if this is one of the events days, then change the
-            EVENT_PAGE = "Events_%4d%02d%02d" % (self.current_year, self.month, day)
+            EVENT_PAGE = "events_%4d%02d%02d" % (self.current_year, self.month, day)
             EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
             EVENT_MODAL_BUTTON = self.srvbld.template('EVENT_DAY_MODAL')
             edt = guess_datetime("%4d.%02d.%02d" % (self.current_year, self.month, day))
@@ -79,12 +79,12 @@ class EventsCalendar(Service, HTMLCalendar):
             title = edt.strftime("Events on %A, %B %d %Y")
             content = ''
             button = EVENT_MODAL_BUTTON % (EVENT_PAGE_VALID_FNAME, tooltip, fontsize, day, EVENT_PAGE, EVENT_PAGE, title, content)
-            self.log.debug("\t\t%s: %s", title, self.events_docs[self.month][day])
+            self.log.debug("\t\t%s: %d", title, len(self.events_docs[self.month][day]))
             # ~ self.log.error(button)
             # ~ print(EVENT_PAGE)
-            return '<td class="%s eventday day uk-text-bold uk-text-right uk-background-primary" style="color: white;">%s</td>' % (self.cssclasses[weekday], button)
+            return """<td class="%s eventday day uk-text-bold uk-text-right uk-background-primary"><a href="%s.html">%s</a></td>""" % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
         else:
-            return '<td class="%s day" align="right">%d</td>' % (self.cssclasses[weekday], day)
+            return """<td class="%s day" align="right">%d</td>""" % (self.cssclasses[weekday], day)
 
     def formatweek(self, theweek):
         """
@@ -188,16 +188,11 @@ class Theme(Builder):
         dey = {} # Dictionary of day events per year
         events_docs = {} # Dictionary storing a list of docs for a given date
         events_docs_html = {}
-        HTML = '<ul uk-accordion>\n'
+
+        # Get events dates
         for doc in doclist:
             props = self.srvdtb.get_doc_properties(doc)
-            # ~ self.log.debug("\tPROPS: %s", props)
-            try:
-                timestamp = props[SORT][0]
-            except:
-                timestamp = props['Timestamp'][0]
-            # ~ self.log.debug("TIMESTAMP: %s", timestamp)
-
+            timestamp = self.srvdtb.get_doc_timestamp(doc)
             # Build dict of events for a given date as a list of tuples
             # (month, day) indexed by year
             # Also, build a dict to store those docs ocurring in that date
@@ -243,29 +238,48 @@ class Theme(Builder):
                     docs = events_docs[year][month][day]
                     edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                     title = edt.strftime("Events on %A, %B %d %Y")
-                    EVENT_PAGE = "Events_%4d%02d%02d" % (year, month, day)
+                    EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
 
                     # create html page
-                    self.build_pagination(EVENT_PAGE, docs, title)
+                    self.build_pagination(EVENT_PAGE_DAY, docs, title)
 
                     # Generate HTML to display into the modal window
                     events_docs_html[y][m][d] = self.build_html_events(docs)
 
+        # Build month event pages
+        for year in events_docs:
+            for month in events_docs[year]:
+                thismonth = []
+                edt = guess_datetime("%4d.%02d.01" % (year, month))
+                title = edt.strftime("Events on %B, %Y")
+                EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
+                for day in events_docs[year][month]:
+                    thismonth.extend(events_docs[year][month][day])
+
+                # create html page
+                self.build_pagination(EVENT_PAGE_MONTH, thismonth, title)
+
+                # Generate HTML to display into the modal window
+                # ~ events_docs_html[y][m][d] = self.build_html_events(docs)
+
+        # Build year event pages
         lyears = []
         for year in dey:
             lyears.append(year)
-        # ~ self.log.debug(lyears)
-        # ~ lyears.reverse()
-        # ~ self.log.debug(lyears)
+
         for year in sorted(lyears, reverse=True):
-            HTML +="""<li><a class="uk-accordion-title uk-text-center uk-text-bolder" href="#">%s</a><div class="uk-accordion-content uk-card uk-card-large uk-card-body">""" % year
+            edt = guess_datetime("%4d.01.01" % year)
+            title = edt.strftime("Events on %Y")
+            PAGE = self.template('PAGE_EVENTS_YEAR')
+            EVENT_PAGE_YEAR = "events_%4d" % year
+            HTML = """<div class="uk-card uk-card-large uk-card-body">\n"""
             self.srvcal.set_events_days(dey[year])
             self.srvcal.set_events_docs(events_docs[year])
             self.srvcal.set_events_html(events_docs_html[year])
             HTML += self.srvcal.formatyearpage(year, 3)
-            HTML += """</div></li>\n"""
+            HTML += """</div>\n"""
+            self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
 
-        HTML += "</u>"
         return HTML
 
     def build_html_events(self, docs):
@@ -292,15 +306,15 @@ class Theme(Builder):
         self.log.info("\t\tEvent types registered for this theme: %s", ','.join(event_types))
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
-            self.log.debug("Category '%s' is an event? %s", category, category in event_types)
+            # ~ self.log.debug("\t\tCategory '%s' is an event? %s", category, category in event_types)
             if category in event_types:
                 doclist.append(doc)
                 category = self.srvdtb.get_values(doc, 'Category')[0]
                 title = self.srvdtb.get_values(doc, 'Title')[0]
-                self.log.debug("\t\tFound event of type %s: '%s'", category, title)
+                # ~ self.log.debug("\t\t\tFound event of type %s: '%s'", category, title)
         page = self.template('PAGE_EVENTS')
         content = page % self.build_events(doclist)
-        self.distribute('events', content)
+        self.distribute('events', '= Events\n')
         # ~ self.build_pagination('events', doclist, 'Events', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_recents_page(self):

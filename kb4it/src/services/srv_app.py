@@ -40,12 +40,6 @@ class Application(Service):
     kbdict_new = {} # New compilation cache
     kbdict_cur = {} # Cached data
 
-    # Dictionary of docs' timestamps
-    # tsdict[doc]['tsos'] : OS timestamp
-    # tsdict[doc]['sort'] : Date Attribute acting as a timestamp
-    # If 'sort' not available, default to 'tsos'
-    runtime['timestamp'] = {} # FIXME: necessary?
-
     def initialize(self):
         """Initialize application structure"""
 
@@ -220,19 +214,16 @@ class Application(Service):
         content = content.replace(self.srvbld.template('HTML_TAG_SECT3_OLD'), self.srvbld.template('HTML_TAG_SECT3_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_SECT4_OLD'), self.srvbld.template('HTML_TAG_SECT4_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_SECTIONBODY_OLD'), self.srvbld.template('HTML_TAG_SECTIONBODY_NEW'))
-        # ~ content = content.replace(self.srvbld.template('H1_OLD'), self.srvbld.template('H1_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_H2_OLD'), self.srvbld.template('HTML_TAG_H2_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_H3_OLD'), self.srvbld.template('HTML_TAG_H3_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_H4_OLD'), self.srvbld.template('HTML_TAG_H4_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_TABLE_OLD'), self.srvbld.template('HTML_TAG_TABLE_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_TABLE_OLD_2'), self.srvbld.template('HTML_TAG_TABLE_NEW'))
-        # Admonitions
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_TIP_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
-
         return content
 
     def job_done(self, future):
@@ -406,8 +397,17 @@ class Application(Service):
                 try:
                     # Compare timestamps for each source/cached document.
                     #If timestamp differs, compile it again.
-                    doc_ts_new = guess_datetime(self.kbdict_new['document'][docname]['Timestamp'])
-                    doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname]['Timestamp'])
+                    SORT_ATTRIBUTE = self.runtime['sort_attribute']
+                    try:
+                        doc_ts_new = guess_datetime(self.kbdict_new['document'][docname][SORT_ATTRIBUTE])
+                    except:
+                        doc_ts_new = guess_datetime(self.kbdict_new['document'][docname]['Timestamp'])
+
+                    try:
+                        doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname][SORT_ATTRIBUTE])
+                    except:
+                        doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname]['Timestamp'])
+
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
                     else:
@@ -493,7 +493,7 @@ class Application(Service):
                     sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
                     pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-                    self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)
+                    # ~ self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)
                     self.srvbld.build_pagination(basename, sorted_docs)
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
@@ -501,7 +501,7 @@ class Application(Service):
                     self.runtime['docs']['cached'].append(filename)
 
                 FORCE_DOC_KEY_COMPILATION = FORCE_DOC_KEY_COMPILATION or COMPILE_AGAIN
-            self.log.debug("\t\t* Processing Key: %s - Compile? %s", key, FORCE_DOC_KEY_COMPILATION)
+            self.log.debug("\t\t\t* Key: %s - Compile? %s", key, FORCE_DOC_KEY_COMPILATION)
             if FORCE_DOC_KEY_COMPILATION:
                 docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
                 html = self.srvbld.create_key_page(key, values)
