@@ -302,7 +302,7 @@ class Theme(Builder):
             HTML += """</div>\n"""
             self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
 
-        return HTML
+        return dey
 
     def build_html_events(self, docs):
         # ~ self.log.debug(docs)
@@ -320,6 +320,7 @@ class Theme(Builder):
     def create_events_page(self):
         self.log.debug("\t\tBuilding events")
         doclist = []
+        ecats = {}
         theme = self.srvapp.get_theme_properties()
         try:
             event_types = theme['events']
@@ -330,13 +331,31 @@ class Theme(Builder):
             category = self.srvdtb.get_values(doc, 'Category')[0]
             # ~ self.log.debug("\t\tCategory '%s' is an event? %s", category, category in event_types)
             if category in event_types:
+                try:
+                    docs = ecats[category]
+                    docs.add(doc)
+                    ecats[category] = docs
+                except:
+                    docs = set()
+                    docs.add(doc)
+                    ecats[category] = docs
+
                 doclist.append(doc)
-                category = self.srvdtb.get_values(doc, 'Category')[0]
                 title = self.srvdtb.get_values(doc, 'Title')[0]
-                # ~ self.log.debug("\t\t\tFound event of type %s: '%s'", category, title)
+        self.log.debug(ecats)
+
+        dey = self.build_events(doclist)
+        self.log.debug(dey)
+
+
+        # Year pagination
+        HTML = """<div class="uk-flex uk-flex-center">\n"""
+        for yp in sorted(list(dey.keys())):
+            HTML += """<div class="uk-card uk-card-body uk-card-small uk-card-hover"><a class="uk-link" href="events_%d.html"><span class="">%d</span></a></div>\n""" % (yp, yp)
+        HTML += """</div>\n"""
+
         page = self.template('PAGE_EVENTS')
-        content = page % self.build_events(doclist)
-        self.distribute('events', '= Events\n')
+        self.distribute('events', page % HTML)
         # ~ self.build_pagination('events', doclist, 'Events', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_recents_page(self):
