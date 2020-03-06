@@ -441,7 +441,7 @@ class Application(Service):
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
         # Build a list of documents sorted by timestamp
-        self.srvdtb.sort_database(self.runtime['sort_attribute'])
+        self.srvdtb.sort_database()
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
 
 
@@ -491,6 +491,12 @@ class Application(Service):
                 if COMPILE_AGAIN:
                     # Create .adoc from value
                     sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
+
+                    # ~ dates = ''
+                    # ~ for doc in sorted_docs:
+                        # ~ dates += "%s " % self.srvdtb.get_doc_timestamp(doc)
+                    # ~ self.log.debug("[%s][%s]: %s", key, value, dates)
+
                     pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
                     # ~ self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)

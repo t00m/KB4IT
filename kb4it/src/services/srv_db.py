@@ -52,22 +52,27 @@ class KB4ITDB(Service):
     def ignore_key(self, key):
         self.ignored_keys.append(key)
 
-    def sort_database(self, attribute='Timestamp'):
+    def get_all_documents(self):
+        return list(self.db.keys())
+
+    def sort_database(self):
         """Build a list of documents sorted by the given date attribute
         in descending order"""
-        adict = {}
-        for doc in self.db:
-            adict[doc] = self.get_doc_timestamp(doc)
-        alist = sort_dictionary(adict)
-        for doc, timestamp in alist:
-            self.sorted_docs.append(doc)
+        all_docs = self.get_all_documents()
+        self.sorted_docs = self.sort_by_date(all_docs)
 
-    def sort_by_date(self, doclist, attribute='Timestamp'):
+    def sort_by_date(self, doclist):
         """Build a list of documents sorted by timestamp desc."""
         sorted_docs = []
         adict = {}
         for doc in doclist:
-            adict[doc] = self.get_doc_timestamp(doc)
+            sdate = self.get_doc_timestamp(doc)
+            ts = guess_datetime(sdate)
+            if ts is not None:
+                adict[doc] = ts
+            else:
+                self.log.error("Doc '%s' doesn't have a valid timestamp?", doc)
+
         alist = sort_dictionary(adict)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
@@ -85,17 +90,18 @@ class KB4ITDB(Service):
         return timestamp
 
     def get_doc_properties(self, doc):
+        """Return a dictionary with the properties of a given doc"""
         return self.db[doc]
 
     def get_values(self, doc, key):
-        """Get a list of values given a document and a key."""
+        """Return a list of values given a document and a key."""
         try:
             return self.db[doc][key]
         except KeyError:
             return ['']
 
     def get_all_values_for_key(self, key):
-        """Get all values for a given key."""
+        """Return a list of all values for a given key sorted alphabetically."""
         values = []
         for doc in self.db:
             try:
@@ -107,7 +113,7 @@ class KB4ITDB(Service):
         return values
 
     def get_custom_keys(self, doc):
-        """Get a list of custom keys."""
+        """Return a list of custom keys sorted alphabetically."""
         custom_keys = []
         keys = self.get_doc_keys(doc)
         for key in keys:
@@ -117,7 +123,7 @@ class KB4ITDB(Service):
         return custom_keys
 
     def get_all_keys(self):
-        """Get all keys in the database."""
+        """Return all keys in the database sorted alphabetically."""
         blocked_keys = self.get_blocked_keys()
         keys = set()
         for doc in self.db:
@@ -129,7 +135,7 @@ class KB4ITDB(Service):
         return keys
 
     def get_docs_by_key_value(self, key, value):
-        """Get a list of documents given a key and a value for that key."""
+        """Return a list documents for a given key/value sorted by date"""
         docs = []
         for doc in self.db:
             try:
@@ -137,10 +143,10 @@ class KB4ITDB(Service):
                     docs.append(doc)
             except KeyError:
                 pass
-        return docs
+        return self.sort_by_date(docs)
 
     def get_doc_keys(self, doc):
-        """Get keys for a given doc."""
+        """Return a list of keys for a given doc sorted alphabetically."""
         keys = []
         for key in self.db[doc]:
             keys.append(key)

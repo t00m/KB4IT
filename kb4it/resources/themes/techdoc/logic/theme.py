@@ -12,7 +12,7 @@ Server module.
 
 import calendar
 from calendar import HTMLCalendar
-from pprint import pprint
+from datetime import datetime
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import valid_filename, get_human_datetime, guess_datetime
@@ -43,10 +43,18 @@ class EventsCalendar(Service, HTMLCalendar):
     def initialize(self):
         super(HTMLCalendar, self).__init__(calendar.MONDAY)
         self.current_year = None
+        self.ml = {}
         self.get_services()
 
     def set_events_days(self, events_days):
         self.events_days = events_days # attach the list of event days as a property, so we can access it anywhere
+        for i in range(1,13):
+            self.ml[i] = False
+
+        for month, day in events_days:
+            self.ml[month] = True
+
+        print(self.ml)
 
     def set_events_docs(self, docs):
         self.events_docs = docs
@@ -78,13 +86,13 @@ class EventsCalendar(Service, HTMLCalendar):
             fontsize = 10
             title = edt.strftime("Events on %A, %B %d %Y")
             content = ''
-            button = EVENT_MODAL_BUTTON % (EVENT_PAGE_VALID_FNAME, tooltip, fontsize, day, EVENT_PAGE, EVENT_PAGE, title, content)
+            # ~ button = EVENT_MODAL_BUTTON % (EVENT_PAGE_VALID_FNAME, tooltip, fontsize, day, EVENT_PAGE, EVENT_PAGE, title, content)
             self.log.debug("\t\t%s: %d", title, len(self.events_docs[self.month][day]))
             # ~ self.log.error(button)
             # ~ print(EVENT_PAGE)
-            return """<td class="%s eventday day uk-text-bold uk-text-right uk-background-primary"><a href="%s.html">%s</a></td>""" % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
+            return """<td class="%s eventday day uk-text-bold uk-text-center uk-background-primary"><a class="uk-link-text uk-text-normal" href="%s.html" style="color: white;">%s</a></td>""" % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
         else:
-            return """<td class="%s day" align="right">%d</td>""" % (self.cssclasses[weekday], day)
+            return """<td class="%s day uk-text-center">%d</td>""" % (self.cssclasses[weekday], day)
 
     def formatweek(self, theweek):
         """
@@ -100,10 +108,33 @@ class EventsCalendar(Service, HTMLCalendar):
         s = ''.join(self.formatweekday(i) for i in self.iterweekdays())
         return '<tr class="weekheader">%s</tr>' % s
 
+    # override in order to make months linkable
+    def formatmonthname(self, theyear, themonth, withyear=True):
+        """
+        Return a formatted month name.
+        """
+        # ~ self.log.debug(self.events_days)
+        dt = guess_datetime("%4d-%02d-01" % (theyear, themonth))
+        if withyear:
+            month_name = datetime.strftime(dt, "%B %Y")
+        else:
+            month_name = datetime.strftime(dt, "%B")
+
+        if self.ml[themonth]:
+            link = """<a class="uk-link" href="events_%4d%02d.html"><span class="">%s</span></a>""" % (theyear, themonth, month_name)
+        else:
+            link = """<span class="">%s</span>""" % (month_name)
+        return link
+
+
+
     # override in order to add the month as a property
     def formatmonth(self, theyear, themonth, withyear=False):
+        # ~ self.log.debug("%s (%s) -> %s (%s)", theyear, type(theyear), themonth, type(themonth))
         self.month = themonth
-        return super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
+        month = super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
+        # ~ self.log.debug(month)
+        return month
 
     def formatyear(self, theyear, width=3):
         """
@@ -112,14 +143,14 @@ class EventsCalendar(Service, HTMLCalendar):
         v = []
         a = v.append
         width = max(width, 1)
-        a('<table class="uk-table-small" border="0" cellpadding="0" cellspacing="0" id="calendar">')
+        a('<table class="uk-table uk-table-small" border="0" cellpadding="0" cellspacing="0" id="calendar">')
         a('\n')
         for i in range(January, January+12, width):
             # months in this row
             months = range(i, min(i+width, 13))
             a('<tr class="month-row">')
             for m in months:
-                a('<td class="calendar-month uk-card-hover">')
+                a('<td class="calendar-month uk-card-small uk-card-hover">')
                 a(self.formatmonth(theyear, m, withyear=False))
                 a('</td>')
             a('</tr>')
@@ -293,7 +324,7 @@ class Theme(Builder):
 
         for month, day in events_set:
             adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
-            self.log.debug(adate)
+            # ~ self.log.debug(adate)
 
     def create_events_page(self):
         self.log.debug("\t\tBuilding events")
