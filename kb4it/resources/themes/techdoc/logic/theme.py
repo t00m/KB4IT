@@ -361,3 +361,4 @@ class Theme(Builder):
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
         self.build_pagination('bookmarks', doclist, 'Bookmarks')
+

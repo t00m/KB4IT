@@ -332,3 +332,4 @@ def fuzzy_date_from_timestamp(timestamp):
 
 def sort_dictionary(adict, reverse=True):
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
+

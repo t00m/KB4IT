@@ -383,3 +383,4 @@ class Builder(Service):
             # ~ self.log.debug("\t\tAdding template '%s' to cache from theme '%s'", template, current_theme)
             TEMPLATES[template] = open(template_path, 'r').read()
             return TEMPLATES[template]
+

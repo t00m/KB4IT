@@ -667,3 +667,4 @@ class Application(Service):
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
         self.log.info("sensible-browser %s/index.html", os.path.abspath(self.runtime['dir']['target']))
+
