@@ -18,25 +18,10 @@ from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timesta
 from kb4it.src.core.mod_utils import valid_filename, get_human_datetime, guess_datetime
 from kb4it.src.services.srv_builder import Builder
 
-MONTH = {
-            '01': 'January',
-            '02': 'February',
-            '03': 'March',
-            '04': 'April',
-            '05': 'May',
-            '06': 'June',
-            '07': 'July',
-            '08': 'August',
-            '09': 'September',
-            '10': 'October',
-            '11': 'November',
-            '12': 'December',
-        }
-
 # Constants for months referenced later
 January = 1
 
-#FIXME: Convert to Service
+
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""
 
@@ -299,11 +284,17 @@ class Theme(Builder):
             lyears.append(year)
 
         for year in sorted(lyears, reverse=True):
+            # Year pagination
+            HTML = """<div class="uk-flex uk-flex-center">\n"""
+            for yp in sorted(lyears):
+                HTML += """<div class="uk-card uk-card-body uk-card-small uk-card-hover"><a class="uk-link" href="events_%d.html"><span class="">%d</span></a></div>\n""" % (yp, yp)
+            HTML += """</div>\n"""
+
             edt = guess_datetime("%4d.01.01" % year)
             title = edt.strftime("Events on %Y")
             PAGE = self.template('PAGE_EVENTS_YEAR')
             EVENT_PAGE_YEAR = "events_%4d" % year
-            HTML = """<div class="uk-card uk-card-large uk-card-body">\n"""
+            HTML += """<div class="uk-card uk-card-large uk-card-body">\n"""
             self.srvcal.set_events_days(dey[year])
             self.srvcal.set_events_docs(events_docs[year])
             self.srvcal.set_events_html(events_docs_html[year])
