@@ -18,9 +18,6 @@ from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timesta
 from kb4it.src.core.mod_utils import valid_filename, get_human_datetime, guess_datetime
 from kb4it.src.services.srv_builder import Builder
 
-# Constants for months referenced later
-January = 1
-
 
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""
@@ -32,14 +29,15 @@ class EventsCalendar(Service, HTMLCalendar):
         self.get_services()
 
     def set_events_days(self, events_days):
-        self.events_days = events_days # attach the list of event days as a property, so we can access it anywhere
+        """
+        Attach the list of event days as a property, so we can access it
+        anywhere.
+        """
+        self.events_days = events_days #
         for i in range(1,13):
             self.ml[i] = False
-
         for month, day in events_days:
             self.ml[month] = True
-
-        print(self.ml)
 
     def set_events_docs(self, docs):
         self.events_docs = docs
@@ -51,54 +49,38 @@ class EventsCalendar(Service, HTMLCalendar):
         self.srvbld = self.get_service('Builder')
 
     def formatday(self, day, weekday):
+        """Return a day as a table cell."""
         eday = 0 # var for checking if it's a event day
         cal_date = (self.month, day) # create a tuple of the calendar month and day
-
+        EVENTCAL_TD_NODAY = self.srvbld.template('EVENTCAL_TD_NODAY')
+        EVENTCAL_TD_DAY_LINK = self.srvbld.template('EVENTCAL_TD_DAY_LINK')
+        EVENTCAL_TD_DAY_NOLINK = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK')
         if cal_date in self.events_days: # check if current calendar tuple date exist in our list of events days
             eday = day # if it does exist set the event day var with it
-
-        """
-          Return a day as a table cell.
-        """
         if day == 0:
-            return '<td class="noday day">&nbsp;</td>' # day outside month
+            return EVENTCAL_TD_NODAY # day outside month
         elif day == eday: # check if this is one of the events days, then change the
             EVENT_PAGE = "events_%4d%02d%02d" % (self.current_year, self.month, day)
             EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
-            EVENT_MODAL_BUTTON = self.srvbld.template('EVENT_DAY_MODAL')
-            edt = guess_datetime("%4d.%02d.%02d" % (self.current_year, self.month, day))
-            tooltip = ''
-            fontsize = 10
-            title = edt.strftime("Events on %A, %B %d %Y")
-            content = ''
-            # ~ button = EVENT_MODAL_BUTTON % (EVENT_PAGE_VALID_FNAME, tooltip, fontsize, day, EVENT_PAGE, EVENT_PAGE, title, content)
-            self.log.debug("\t\t%s: %d", title, len(self.events_docs[self.month][day]))
-            # ~ self.log.error(button)
-            # ~ print(EVENT_PAGE)
-            return """<td class="%s eventday day uk-text-bold uk-text-center uk-background-primary"><a class="uk-link-text uk-text-normal" href="%s.html" style="color: white;">%s</a></td>""" % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
+            return EVENTCAL_TD_DAY_LINK % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
         else:
-            return """<td class="%s day uk-text-center">%d</td>""" % (self.cssclasses[weekday], day)
+            return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
 
     def formatweek(self, theweek):
-        """
-        Return a complete week as a table row.
-        """
+        """Return a complete week as a table row."""
+        EVENTCAL_TR_WEEK = self.srvbld.template('EVENTCAL_TR_WEEK')
         s = ''.join(self.formatday(d, wd) for (d, wd) in theweek)
-        return '<tr class="week">%s</tr>' % s
+        return EVENTCAL_TR_WEEK % s
 
     def formatweekheader(self):
-        """
-        Return a header for a week as a table row.
-        """
+        """Return a header for a week as a table row."""
+        EVENTCAL_TR_WEEK_HEADER = self.srvbld.template('EVENTCAL_TR_WEEK_HEADER')
         s = ''.join(self.formatweekday(i) for i in self.iterweekdays())
-        return '<tr class="weekheader">%s</tr>' % s
+        return EVENTCAL_TR_WEEK_HEADER % s
 
-    # override in order to make months linkable
     def formatmonthname(self, theyear, themonth, withyear=True):
-        """
-        Return a formatted month name.
-        """
-        # ~ self.log.debug(self.events_days)
+        """Return a formatted month name."""
+        LINK = self.srvbld.template('LINK')
         dt = guess_datetime("%4d-%02d-01" % (theyear, themonth))
         if withyear:
             month_name = datetime.strftime(dt, "%B %Y")
@@ -106,52 +88,47 @@ class EventsCalendar(Service, HTMLCalendar):
             month_name = datetime.strftime(dt, "%B")
 
         if self.ml[themonth]:
-            link = """<a class="uk-link" href="events_%4d%02d.html"><span class="">%s</span></a>""" % (theyear, themonth, month_name)
+            link = LINK % ("uk-link", "events_%4d%02d.html" % (theyear, themonth), "", month_name)
         else:
-            link = """<span class="">%s</span>""" % (month_name)
+            link = LINK % ("uk-link", "", "", month_name)
         return link
 
-
-
-    # override in order to add the month as a property
     def formatmonth(self, theyear, themonth, withyear=False):
-        # ~ self.log.debug("%s (%s) -> %s (%s)", theyear, type(theyear), themonth, type(themonth))
+        """Override in order to add the month as a property."""
         self.month = themonth
         month = super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
-        # ~ self.log.debug(month)
         return month
 
     def formatyear(self, theyear, width=3):
-        """
-        Return a formatted year as a table of tables.
-        """
+        """Return a formatted year as a table of tables."""
+        EVENTCAL_TABLE_YEAR = self.srvbld.template('EVENTCAL_TABLE_YEAR')
+        EVENTCAL_TABLE_YEAR_TR_MONTHROW = self.srvbld.template('EVENTCAL_TABLE_YEAR_TR_MONTHROW')
+        EVENTCAL_TABLE_YEAR_TD_MONTH = self.srvbld.template('EVENTCAL_TABLE_YEAR_TD_MONTH')
         v = []
-        a = v.append
         width = max(width, 1)
-        a('<table class="uk-table uk-table-small" border="0" cellpadding="0" cellspacing="0" id="calendar">')
-        a('\n')
+        MONTHS = ''
+        January = 1
         for i in range(January, January+12, width):
-            # months in this row
             months = range(i, min(i+width, 13))
-            a('<tr class="month-row">')
+            TD_YEAR_MONTH = ''
             for m in months:
-                a('<td class="calendar-month uk-card-small uk-card-hover">')
-                a(self.formatmonth(theyear, m, withyear=False))
-                a('</td>')
-            a('</tr>')
-        a('</table>')
+                TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(theyear, m, withyear=False)
+            MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW % TD_YEAR_MONTH
+        v.append(EVENTCAL_TABLE_YEAR % MONTHS)
         return ''.join(v)
 
     def formatyearpage(self, theyear, width=3, css='calendar.css', encoding=None):
-        """
-        Return a formatted year as a complete HTML page.
-        """
+        """Return a formatted year as a complete HTML page."""
         self.current_year = theyear
-        v = []
-        v.append(self.formatyear(theyear, width))
+        return self.formatyear(theyear, width)
 
-        return ''.join(v)
-
+    def build_year_pagination(self, years):
+        EVENTCAL_YEAR_PAGINATION = self.srvbld.template('EVENTCAL_YEAR_PAGINATION')
+        EVENTCAL_YEAR_PAGINATION_ITEM = self.srvbld.template('EVENTCAL_YEAR_PAGINATION_ITEM')
+        ITEMS = ''
+        for yp in sorted(years):
+            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM % (yp, yp)
+        return EVENTCAL_YEAR_PAGINATION % ITEMS
 
 class Theme(Builder):
     def build(self):
@@ -173,14 +150,14 @@ class Theme(Builder):
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = self.template('CARD_DOC_EVENT')
         DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
-        DOC_CARD_LINK = self.template('CARD_DOC_LINK')
+        LINK = self.template('LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
         if len(category) > 0 and len(scope) >0:
-            link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
-            link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+            link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
+            link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
             footer = DOC_CARD_FOOTER % (link_category, link_scope)
         else:
             footer = ''
@@ -279,27 +256,20 @@ class Theme(Builder):
                 # ~ events_docs_html[y][m][d] = self.build_html_events(docs)
 
         # Build year event pages
-        lyears = []
-        for year in dey:
-            lyears.append(year)
+        # ~ lyears = []
+        # ~ for year in dey:
+            # ~ lyears.append(year)
 
-        for year in sorted(lyears, reverse=True):
-            # Year pagination
-            HTML = """<div class="uk-flex uk-flex-center">\n"""
-            for yp in sorted(lyears):
-                HTML += """<div class="uk-card uk-card-body uk-card-small uk-card-hover"><a class="uk-link" href="events_%d.html"><span class="">%d</span></a></div>\n""" % (yp, yp)
-            HTML += """</div>\n"""
-
+        for year in sorted(dey.keys(), reverse=True):
+            HTML = self.srvcal.build_year_pagination(dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
             title = edt.strftime("Events on %Y")
             PAGE = self.template('PAGE_EVENTS_YEAR')
             EVENT_PAGE_YEAR = "events_%4d" % year
-            HTML += """<div class="uk-card uk-card-large uk-card-body">\n"""
             self.srvcal.set_events_days(dey[year])
             self.srvcal.set_events_docs(events_docs[year])
             self.srvcal.set_events_html(events_docs_html[year])
             HTML += self.srvcal.formatyearpage(year, 3)
-            HTML += """</div>\n"""
             self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
 
         return dey
@@ -326,10 +296,9 @@ class Theme(Builder):
             event_types = theme['events']
         except:
             event_types = []
-        self.log.info("\t\tEvent types registered for this theme: %s", ','.join(event_types))
+        self.log.info("\t\tEvent types registered for this theme: %s", ', '.join(event_types))
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
-            # ~ self.log.debug("\t\tCategory '%s' is an event? %s", category, category in event_types)
             if category in event_types:
                 try:
                     docs = ecats[category]
@@ -342,21 +311,10 @@ class Theme(Builder):
 
                 doclist.append(doc)
                 title = self.srvdtb.get_values(doc, 'Title')[0]
-        self.log.debug(ecats)
-
         dey = self.build_events(doclist)
-        self.log.debug(dey)
-
-
-        # Year pagination
-        HTML = """<div class="uk-flex uk-flex-center">\n"""
-        for yp in sorted(list(dey.keys())):
-            HTML += """<div class="uk-card uk-card-body uk-card-small uk-card-hover"><a class="uk-link" href="events_%d.html"><span class="">%d</span></a></div>\n""" % (yp, yp)
-        HTML += """</div>\n"""
-
+        HTML = self.srvcal.build_year_pagination(dey.keys())
         page = self.template('PAGE_EVENTS')
         self.distribute('events', page % HTML)
-        # ~ self.build_pagination('events', doclist, 'Events', "build_events", "PAGE_PAGINATION_HEAD_EVENT")
 
     def create_recents_page(self):
         """Create recents page."""
