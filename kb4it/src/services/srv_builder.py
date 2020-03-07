@@ -315,23 +315,18 @@ class Builder(Service):
 
         return html
 
-    def get_doc_link(self, doc):
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        link = "%s.html" % doc
-        return """<a href="%s"><span>%s</span></a>""" % (link, title)
-
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = self.template('CARD_DOC')
         DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
-        DOC_CARD_LINK = self.template('CARD_DOC_LINK')
+        LINK = self.template('LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
-        if len(category) > 0 and len(scope) >0:
-            link_category = DOC_CARD_LINK % ("Category_%s" % valid_filename(category), category)
-            link_scope = DOC_CARD_LINK % ("Scope_%s" % valid_filename(scope), scope)
+        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
+        if len(category) > 0 and len(scope) > 0:
+            link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
+            link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
             footer = DOC_CARD_FOOTER % (link_category, link_scope)
         else:
             footer = ''

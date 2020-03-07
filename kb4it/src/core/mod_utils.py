@@ -302,10 +302,11 @@ def get_human_datetime(dt):
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
 
 def fuzzy_date_from_timestamp(timestamp):
+    # FIXME: Improve delta fuzzy dates
     """C0111: Missing function docstring (missing-docstring)."""
     d1 = timestamp
     d2 = datetime.now()
-    rdate = d2 - d1 # DateTimeDelta
+    rdate = d2 - d1
     if rdate.days > 0:
         if rdate.days <= 31:
             return "%d days ago" % int(rdate.days)

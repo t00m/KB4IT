@@ -13,17 +13,14 @@ import sys
 import glob
 import time
 import json
-import math
 import random
 import threading
 import shutil
-import pprint
 import tempfile
 import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH, APP
-from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
+from kb4it.src.core.mod_env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import get_human_datetime
 from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_kbdict
@@ -192,14 +189,6 @@ class Application(Service):
     def get_numdocs(self):
         """C0111: Missing function docstring (missing-docstring)."""
         return self.runtime['docs']['count']
-
-    # ~ def get_docs_by_timestamp(self):
-        # ~ """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
-        # ~ adict = {}
-        # ~ for docname in self.kbdict_new['document']:
-            # ~ ts = self.kbdict_new['document'][docname]['Timestamp']
-            # ~ adict[docname] = ts
-        # ~ return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
 
     def highlight_metadata_section(self, source):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -471,8 +460,6 @@ class Application(Service):
 
                 if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
-                # ~ else:
-                    # ~ FORCE_DOC_KEY_COMPILATION = False
 
                 FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
 
@@ -491,15 +478,8 @@ class Application(Service):
                 if COMPILE_AGAIN:
                     # Create .adoc from value
                     sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
-
-                    # ~ dates = ''
-                    # ~ for doc in sorted_docs:
-                        # ~ dates += "%s " % self.srvdtb.get_doc_timestamp(doc)
-                    # ~ self.log.debug("[%s][%s]: %s", key, value, dates)
-
                     pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-                    # ~ self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)
                     self.srvbld.build_pagination(basename, sorted_docs)
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))

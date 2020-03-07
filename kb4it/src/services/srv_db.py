@@ -56,8 +56,10 @@ class KB4ITDB(Service):
         return list(self.db.keys())
 
     def sort_database(self):
-        """Build a list of documents sorted by the given date attribute
-        in descending order"""
+        """
+        Build a list of documents sorted by the given date attribute
+        in descending order
+        """
         all_docs = self.get_all_documents()
         self.sorted_docs = self.sort_by_date(all_docs)
 
