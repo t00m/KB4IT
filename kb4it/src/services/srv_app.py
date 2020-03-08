@@ -229,7 +229,6 @@ class Application(Service):
             if os.path.exists(htmldoc):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
-                html_title = """%s""" % title
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
@@ -260,10 +259,10 @@ class Application(Service):
                         source_code = open(userdoc, 'r').read()
                         meta_section = self.srvbld.create_metadata_section(docname)
                         HTML_HEADER = self.srvbld.template('HTML_HEADER')
-                        fhtm.write(HTML_HEADER % (title, TOC, html_title, meta_section, docname, source_code))
+                        fhtm.write(HTML_HEADER % (title, TOC, title, meta_section, docname, source_code))
                     else:
                         HTML_HEADER_NODOC = self.srvbld.template('HTML_HEADER_NODOC')
-                        fhtm.write(HTML_HEADER_NODOC % (title, TOC, html_title))
+                        fhtm.write(HTML_HEADER_NODOC % (title, TOC, title))
                     fhtm.write(content)
                     HTML_FOOTER = self.srvbld.template('HTML_FOOTER')
                     fhtm.write(HTML_FOOTER % timestamp)
@@ -436,7 +435,6 @@ class Application(Service):
 
     def stage_04_processing(self):
         """Process all documents."""
-
         self.log.info("Stage 4\tProcessing keys")
         all_keys = set(self.srvdtb.get_all_keys())
         ign_keys = set(self.srvdtb.get_ignored_keys())
@@ -478,7 +476,6 @@ class Application(Service):
                 if COMPILE_AGAIN:
                     # Create .adoc from value
                     sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
-                    pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
                     self.srvbld.build_pagination(basename, sorted_docs)
                 else:
