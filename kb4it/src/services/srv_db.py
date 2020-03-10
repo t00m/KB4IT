@@ -5,7 +5,7 @@ RDF Graph In Memory database module.
 
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: module to allow kb4it create a RDF graph
+# Description: In-memory database module
 """
 
 
@@ -23,8 +23,6 @@ class KB4ITDB(Service):
 
     def initialize(self):
         """Initialize database module."""
-
-        # Get sort attribute or default timestamp
         params = self.app.get_params()
         self.sort_attribute = params.SORT_ATTRIBUTE
 
@@ -44,24 +42,23 @@ class KB4ITDB(Service):
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
 
     def get_blocked_keys(self):
+        """Return blocked keys"""
         return self.blocked_keys
 
     def get_ignored_keys(self):
+        """Return ignored keys"""
         return self.ignored_keys
 
     def ignore_key(self, key):
+        """Add given key to ignored keys list"""
         self.ignored_keys.append(key)
-
-    def get_all_documents(self):
-        return list(self.db.keys())
 
     def sort_database(self):
         """
         Build a list of documents sorted by the given date attribute
         in descending order
         """
-        all_docs = self.get_all_documents()
-        self.sorted_docs = self.sort_by_date(all_docs)
+        self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     def sort_by_date(self, doclist):
         """Build a list of documents sorted by timestamp desc."""
@@ -74,13 +71,16 @@ class KB4ITDB(Service):
                 adict[doc] = ts
             else:
                 self.log.error("Doc '%s' doesn't have a valid timestamp?", doc)
-
         alist = sort_dictionary(adict)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
         return sorted_docs
 
     def get_documents(self):
+        """
+        Return a list of docs sorted by date (timestamp or sort
+        attribute.
+        """
         return self.sorted_docs
 
     def get_doc_timestamp(self, doc):
@@ -91,10 +91,6 @@ class KB4ITDB(Service):
             timestamp = self.db[doc]['Timestamp'][0]
         return timestamp
 
-    def get_doc_properties(self, doc):
-        """Return a dictionary with the properties of a given doc"""
-        return self.db[doc]
-
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""
         try:
@@ -103,7 +99,10 @@ class KB4ITDB(Service):
             return ['']
 
     def get_all_values_for_key(self, key):
-        """Return a list of all values for a given key sorted alphabetically."""
+        """
+        Return a list of all values for a given key sorted
+        alphabetically.
+        """
         values = []
         for doc in self.db:
             try:
