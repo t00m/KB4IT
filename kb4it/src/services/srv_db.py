@@ -91,6 +91,10 @@ class KB4ITDB(Service):
             timestamp = self.db[doc]['Timestamp'][0]
         return timestamp
 
+    def get_doc_properties(self, doc):
+        """Return a dictionary with the properties of a given doc"""
+        return self.db[doc]
+
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""
         try:
