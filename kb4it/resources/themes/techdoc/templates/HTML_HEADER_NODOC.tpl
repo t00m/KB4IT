@@ -23,26 +23,28 @@
             <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
-                        <a class="uk-logo uk-card uk-card-hover" href="index.html">
+                        <a class="uk-logo" href="index.html">
                             <img src="resources/themes/default/images/logo.png" alt="">
                         </a>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
                                     <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
                                 </li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                </li>
+                                <li class="uk-link-toggle">
                                     <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
                                 </li>
                             </ul>
                         </div>
@@ -62,14 +64,14 @@
             <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Help</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
+                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
                                 </li>
                             </ul>
                         </div>
