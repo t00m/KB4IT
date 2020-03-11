@@ -487,6 +487,9 @@ class Application(Service):
 
                 FORCE_DOC_KEY_COMPILATION = FORCE_DOC_KEY_COMPILATION or COMPILE_AGAIN
             self.log.debug("\t\t\t* Key: %s - Compile? %s", key, FORCE_DOC_KEY_COMPILATION)
+
+            #FIXME: Force key compilation
+            FORCE_DOC_KEY_COMPILATION = True
             if FORCE_DOC_KEY_COMPILATION:
                 docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
                 html = self.srvbld.create_key_page(key, values)
