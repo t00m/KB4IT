@@ -217,6 +217,10 @@ class Application(Service):
 
     def job_done(self, future):
         """C0111: Missing function docstring (missing-docstring)."""
+        THEME_ID = self.runtime['theme']['id']
+        HTML_HEADER_COMMON = self.srvbld.template('HTML_HEADER_COMMON')
+        HTML_HEADER_DOC = self.srvbld.template('HTML_HEADER_DOC')
+        HTML_HEADER_NODOC = self.srvbld.template('HTML_HEADER_NODOC')
         now = datetime.datetime.now()
         timestamp = get_human_datetime(now)
         time.sleep(random.random())
@@ -258,18 +262,16 @@ class Application(Service):
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
                         meta_section = self.srvbld.create_metadata_section(docname)
-                        HTML_HEADER = self.srvbld.template('HTML_HEADER')
-                        fhtm.write(HTML_HEADER % (title, TOC, title, meta_section, docname, source_code))
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, meta_section, docname, source_code)
+                        fhtm.write(PAGE)
                     else:
-                        HTML_HEADER_NODOC = self.srvbld.template('HTML_HEADER_NODOC')
-                        fhtm.write(HTML_HEADER_NODOC % (title, TOC, title))
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_NODOC % (title)
+                        fhtm.write(PAGE)
                     fhtm.write(content)
                     HTML_FOOTER = self.srvbld.template('HTML_FOOTER')
                     fhtm.write(HTML_FOOTER % timestamp)
                 os.remove(htmldoctmp)
                 return x
-
-
 
     def stage_01_check_environment(self):
         """Check environment."""
