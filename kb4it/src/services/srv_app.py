@@ -12,35 +12,30 @@ import os
 import sys
 import glob
 import time
-import math
+import json
 import random
 import threading
 import shutil
-import pprint
 import tempfile
 import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH, APP, HTML_FOOTER, HTML_HEADER, HTML_HEADER_NODOC
-from kb4it.src.core.mod_env import ADOCPROPS, MAX_WORKERS, EOHMARK
+from kb4it.src.core.mod_env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import get_human_datetime
-from kb4it.src.core.mod_utils import apply_transformations, highlight_metadata_section
 from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_kbdict
-from kb4it.src.core.mod_utils import template, exec_cmd, delete_target_contents
+from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
 from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import get_author_icon, last_dt_modification, last_modification_date
-# ~ from kb4it.src.services.srv_db import HEADER_KEYS
-
-EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
+from kb4it.src.core.mod_utils import file_timestamp
+from kb4it.src.core.mod_utils import guess_datetime, string_timestamp
 
 
 class Application(Service):
-    """Missing class docstring (missing-docstring)."""
-    runtime = {}
-    kbdict_new = {}
-    kbdict_cur = {}
+    """C0111: Missing function docstring (missing-docstring)."""
+    runtime = {} # Dictionary of runtime properties
+    kbdict_new = {} # New compilation cache
+    kbdict_cur = {} # Cached data
 
     def initialize(self):
         """Initialize application structure"""
@@ -48,6 +43,7 @@ class Application(Service):
         # Get params from command line
         self.parameters = self.app.get_params()
         self.log.debug(self.app.get_params())
+
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
@@ -59,6 +55,13 @@ class Application(Service):
         self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
+
+        # if SORT attribute is given, use it instead of the OS timestamp
+        if self.parameters.SORT_ATTRIBUTE is None:
+            self.runtime['sort_attribute'] = 'Timestamp'
+        else:
+            self.runtime['sort_attribute'] = self.parameters.SORT_ATTRIBUTE
+        self.log.info("Sort attribute: %s", self.runtime['sort_attribute'])
 
         # Initialize docs structure
         self.runtime['docs'] = {}
@@ -74,9 +77,97 @@ class Application(Service):
         # Get services
         self.get_services()
 
-    # ~ def get_cache_path(self):
-        # ~ """Get cache path."""
-        # ~ return self.runtime['dir']['cache']
+        # Select theme
+        self.load_theme()
+
+    def load_theme(self):
+        """Load custom user theme, global theme or default"""
+
+        self.runtime['theme'] =  {}
+        self.runtime['theme']['path'] = self.search_theme(self.parameters.THEME)
+        if self.runtime['theme']['path'] is None:
+            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
+            self.log.warning("Fallback to default theme")
+
+        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
+        if not os.path.exists(theme_conf):
+            self.log.error("Theme config file not found: %s", theme_conf)
+            sys.exit(-1)
+
+        # load theme configuration
+        with open(theme_conf, 'r') as fth:
+            theme = json.load(fth)
+            for prop in theme:
+                self.runtime['theme'][prop] = theme[prop]
+
+        self.log.debug("Theme: %s", theme['name'])
+        for prop in theme:
+            if prop != 'name':
+                self.log.debug("\t%s: %s", prop.title(), theme[prop])
+
+        # Get theme directories
+        self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
+        self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
+
+        # Get date-based attributes from theme. Date attributes aren't
+        # displayed as properties but used to build events pages.
+        try:
+            ignored_keys = self.runtime['theme']['ignored_keys']
+            for key in ignored_keys:
+                self.log.debug("\tIgnoring key: %s", key)
+                self.srvdtb.ignore_key(key)
+        except KeyError:
+            self.log.warning("No ignored_keys defined in this theme")
+
+        # Register theme service
+        sys.path.insert(0, self.runtime['theme']['logic'])
+        try:
+            from theme import Theme
+            self.app.register_service('Theme', Theme())
+            self.srvthm = self.get_service('Theme')
+        except Exception as error:
+            self.log.warning("Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
+            self.log.error(error)
+            raise
+        self.log.info("Loaded theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
+
+    def search_theme(self, theme):
+        """Search custom theme"""
+
+        if theme is None:
+            return None
+
+        found = False
+
+        # Search in sources path
+        source_path = self.runtime['dir']['source']
+        theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
+        theme_path = os.path.join(self.runtime['dir']['source'], theme_rel_path)
+        if os.path.exists(theme_path):
+            found = True
+        else:
+            # Search for theme in KB4IT global theme
+            theme_path = os.path.join(GPATH['THEMES'], theme)
+            if os.path.exists(theme_path):
+                found = True
+
+        if found:
+            # Return custom theme
+            self.log.debug("Found theme %s in local repository: %s" % (theme, theme_path))
+            return theme_path
+        else:
+            # Fallback to default
+            self.log.debug("Theme not found in local repository: %s." % theme)
+            return None
+
+    def get_runtime_properties(self):
+        return self.runtime
+
+    def get_runtime_parameter(self, parameter):
+        return self.runtime[parameter]
+
+    def get_theme_properties(self):
+        return self.runtime['theme']
 
     def get_source_path(self):
         """Get asciidoctor sources path."""
@@ -91,24 +182,45 @@ class Application(Service):
         return self.runtime['dir']['tmp']
 
     def get_services(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
 
     def get_numdocs(self):
-        """Missing method docstring."""
+        """C0111: Missing function docstring (missing-docstring)."""
         return self.runtime['docs']['count']
 
-    def get_docs_by_timestamp(self):
-        """Return a list of tuples (doc, timestamp) sorted by timestamp desc."""
-        adict = {}
-        for docname in self.kbdict_new['document']:
-            ts = self.kbdict_new['document'][docname]['Timestamp']
-            adict[docname] = ts
-        return sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+    def highlight_metadata_section(self, source):
+        """C0111: Missing function docstring (missing-docstring)."""
+        content = source.replace(self.srvbld.template('HTML_TAG_METADATA_OLD'), self.srvbld.template('HTML_TAG_METADATA_NEW'), 1)
+        return content
+
+    def apply_transformations(self, source):
+        """C0111: Missing function docstring (missing-docstring)."""
+        content = source.replace(self.srvbld.template('HTML_TAG_TOC_OLD'), self.srvbld.template('HTML_TAG_TOC_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT1_OLD'), self.srvbld.template('HTML_TAG_SECT1_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT2_OLD'), self.srvbld.template('HTML_TAG_SECT2_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT3_OLD'), self.srvbld.template('HTML_TAG_SECT3_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECT4_OLD'), self.srvbld.template('HTML_TAG_SECT4_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_SECTIONBODY_OLD'), self.srvbld.template('HTML_TAG_SECTIONBODY_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_H2_OLD'), self.srvbld.template('HTML_TAG_H2_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_H3_OLD'), self.srvbld.template('HTML_TAG_H3_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_H4_OLD'), self.srvbld.template('HTML_TAG_H4_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_TABLE_OLD'), self.srvbld.template('HTML_TAG_TABLE_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_TABLE_OLD_2'), self.srvbld.template('HTML_TAG_TABLE_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_TIP_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
+        return content
 
     def job_done(self, future):
         """C0111: Missing function docstring (missing-docstring)."""
+        THEME_ID = self.runtime['theme']['id']
+        HTML_HEADER_COMMON = self.srvbld.template('HTML_HEADER_COMMON')
+        HTML_HEADER_DOC = self.srvbld.template('HTML_HEADER_DOC')
+        HTML_HEADER_NODOC = self.srvbld.template('HTML_HEADER_NODOC')
         now = datetime.datetime.now()
         timestamp = get_human_datetime(now)
         time.sleep(random.random())
@@ -121,72 +233,57 @@ class Application(Service):
             if os.path.exists(htmldoc):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
-                # ~ self.log.debug(title)
-                html_title = """%s""" % title
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
                 toc = extract_toc(source)
-                content = apply_transformations(source)
+                content = self.apply_transformations(source)
                 try:
-                    # ~ log.error(toc)
                     if 'Metadata' in content:
                         content = highlight_metadata_section(content)
-                except IndexError as error:
-                    # ~ log.error(error)
+                except NameError as error:
+                    # Sometimes, weird links in asciidoctor sources
+                    # provoke compilation errors
+                    basename = os.path.basename(adoc)
+                    self.log.error("\t\tERROR!! Please, check source document '%s'.", basename)
+                    self.log.error("\t\tERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
+                finally:
                     # Some pages don't have toc section. Ignore it.
                     pass
 
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
                     if len_toc > 0:
-                        TOC = template('MENU_CONTENTS_ENABLED') % toc
+                        TOC = self.srvbld.template('HTML_HEADER_MENU_CONTENTS_ENABLED') % toc
                     else:
-                        TOC = template('MENU_CONTENTS_DISABLED')
+                        TOC = self.srvbld.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                     docname = os.path.basename(adoc)
                     userdoc = os.path.join(self.get_source_path(), docname)
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
                         meta_section = self.srvbld.create_metadata_section(docname)
-                        fhtm.write(HTML_HEADER % (title, TOC, html_title, meta_section, docname, source_code))
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, meta_section, docname, source_code)
+                        fhtm.write(PAGE)
                     else:
-                        fhtm.write(HTML_HEADER_NODOC % (title, TOC, html_title))
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_NODOC % (title)
+                        fhtm.write(PAGE)
                     fhtm.write(content)
+                    HTML_FOOTER = self.srvbld.template('HTML_FOOTER')
                     fhtm.write(HTML_FOOTER % timestamp)
                 os.remove(htmldoctmp)
-                # ~ log.debug("Temporary html document deleted: %s", htmldoctmp)
                 return x
-
-
 
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("Stage 1\tCheck environment")
-        self.log.debug("\t\tCache directory: %s", self.runtime['dir']['cache'])
-        self.log.debug("\t\tWorking directory: %s", self.runtime['dir']['tmp'])
-        self.log.debug("\t\tSource directory: %s", self.runtime['dir']['source'])
+        self.log.info("\t\tCache directory: %s", self.runtime['dir']['cache'])
+        self.log.info("\t\tWorking directory: %s", self.runtime['dir']['tmp'])
+        self.log.info("\t\tSource directory: %s", self.runtime['dir']['source'])
+        self.log.info("\t\tTheme: %s (%s)", self.runtime['theme']['id'], self.runtime['theme']['name'])
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.runtime['dir']['target']):
             os.makedirs(self.runtime['dir']['target'])
         self.log.debug("\t\tTarget directory: %s", self.runtime['dir']['target'])
-
-        # Check if help and about documents exists. If not, use the default ones
-        file_about = os.path.join(self.runtime['dir']['source'], 'about.adoc')
-        file_help = os.path.join(self.runtime['dir']['source'], 'help.adoc')
-        doc_about = os.path.exists(file_about)
-        doc_help = os.path.exists(file_help)
-        if not doc_about:
-            tmp_about = os.path.join(self.runtime['dir']['tmp'], 'about.adoc')
-            with open(tmp_about, 'w') as fabout:
-                page_about = template('PAGE_ABOUT')
-                fabout.write(page_about % APP['version'])
-                self.log.info("\t\tAdded missing 'about.adoc' document")
-
-        if not doc_help:
-            tmp_help = os.path.join(self.runtime['dir']['tmp'], 'help.adoc')
-            with open(tmp_help, 'w') as fhelp:
-                fhelp.write(template('PAGE_HELP'))
-                self.log.info("\t\tAdded missing 'help.adoc' document")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
@@ -212,15 +309,19 @@ class Application(Service):
         browsable throught its metadata.
         """
         self.log.info("Stage 3\tPreprocessing")
+        tsdict = {}
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
             self.kbdict_new['document'][docname] = {}
             self.log.debug("\t\tPreprocessing DOC[%s]", docname)
 
             # Add a new document to the database
-            ts_dtm = last_dt_modification(source)
-            timestamp = last_modification_date(source)
-            self.srvdtb.add_document(docname, ts_dtm)
+            self.srvdtb.add_document(docname)
+
+            # Get datetime timestamp from filesystem and add it as
+            # attribute
+            timestamp = file_timestamp(source)
+            self.srvdtb.add_document_key(docname, 'Timestamp', timestamp)
 
             # Get content
             with open(source) as source_adoc:
@@ -246,6 +347,11 @@ class Application(Service):
                     nc = len(value.strip())
                     if nc == 0:
                         continue
+                    try:
+                        if key in self.runtime['theme']['date_attributes']:
+                            value = string_timestamp(value)
+                    except:
+                        pass
                     self.srvdtb.add_document_key(docname, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
@@ -253,9 +359,9 @@ class Application(Service):
                         values = self.kbdict_new['document'][docname][key]
                         if value not in values:
                             values.append(value)
-                            self.kbdict_new['document'][docname][key] = sorted(values)
+                        self.kbdict_new['document'][docname][key] = sorted(values)
                     except:
-                           self.kbdict_new['document'][docname][key] = [value]
+                        self.kbdict_new['document'][docname][key] = [value]
 
                     # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                     try:
@@ -281,8 +387,17 @@ class Application(Service):
                 try:
                     # Compare timestamps for each source/cached document.
                     #If timestamp differs, compile it again.
-                    doc_ts_new = self.kbdict_new['document'][docname]['Timestamp']
-                    doc_ts_cur = self.kbdict_cur['document'][docname]['Timestamp']
+                    SORT_ATTRIBUTE = self.runtime['sort_attribute']
+                    try:
+                        doc_ts_new = guess_datetime(self.kbdict_new['document'][docname][SORT_ATTRIBUTE])
+                    except:
+                        doc_ts_new = guess_datetime(self.kbdict_new['document'][docname]['Timestamp'])
+
+                    try:
+                        doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname][SORT_ATTRIBUTE])
+                    except:
+                        doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname]['Timestamp'])
+
                     if doc_ts_new > doc_ts_cur:
                         FORCE_DOC_COMPILATION = True
                     else:
@@ -304,32 +419,32 @@ class Application(Service):
 
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
-                self.log.info("\t\tDocument %s will be compiled again" % valid_filename(docname))
+                self.log.debug("\t\t\tDocument %s will be compiled again" % valid_filename(docname))
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             else:
                 filename = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
                 self.runtime['docs']['cached'].append(filename)
+                self.log.debug("\t\t\tDocument %s is cached. It won't be compiled." % valid_filename(docname))
 
         # Save current status for the next run
         save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
         # Build a list of documents sorted by timestamp
-        self.srvdtb.sort()
+        self.srvdtb.sort_database()
         self.log.info("\t\tPreprocessed %d docs", len(self.runtime['docs']['bag']))
 
 
     def stage_04_processing(self):
         """Process all documents."""
-        self.log.info("Stage 4\tProcessing")
-        # Get all available keys
-        available_keys = self.srvdtb.get_all_keys()
+        self.log.info("Stage 4\tProcessing keys")
+        all_keys = set(self.srvdtb.get_all_keys())
+        ign_keys = set(self.srvdtb.get_ignored_keys())
+        available_keys = list(all_keys - ign_keys)
 
-        # Process
-        self.log.debug("Available keys: %s", available_keys)
         for key in available_keys:
+            FORCE_DOC_KEY_COMPILATION = False
             FORCE_DOC_COMPILATION = False
-            self.log.debug("\t\t* Processing Key: %s", key)
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
                 FORCE_DOC_COMPILATION = False # Missing flag fix issue #48!!!
@@ -345,8 +460,6 @@ class Application(Service):
 
                 if related_docs_new != related_docs_cur:
                     FORCE_DOC_KEY_COMPILATION = True
-                else:
-                    FORCE_DOC_KEY_COMPILATION = False
 
                 FORCE_DOC_COMPILATION = FORCE_DOC_COMPILATION or FORCE_DOC_KEY_COMPILATION
 
@@ -365,30 +478,25 @@ class Application(Service):
                 if COMPILE_AGAIN:
                     # Create .adoc from value
                     sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
-                    pagename = """<a class="uk-link-heading" href="%s.html">%s</a> - %s""" % (valid_filename(key), key, value)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-                    self.log.debug("\t\t\t- [Compile? %5s] -> [%s][%s][%s]", COMPILE_AGAIN, key, value, adoc)
-                    self.srvbld.build_pagination(pagename, basename, sorted_docs)
+                    self.srvbld.build_pagination(basename, sorted_docs)
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
-            docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
-            html = self.srvbld.create_key_page(key, values)
-            with open(docname, 'w') as fkey:
-                fkey.write(html)
-            # ~ self.log.info("Key page created: %s", docname)
+                FORCE_DOC_KEY_COMPILATION = FORCE_DOC_KEY_COMPILATION or COMPILE_AGAIN
+            self.log.debug("\t\t\t* Key: %s - Compile? %s", key, FORCE_DOC_KEY_COMPILATION)
 
-        self.srvbld.create_all_keys_page()
-        self.srvbld.create_bookmarks_page()
-        self.srvbld.create_events_page()
-        self.srvbld.create_blog_page()
-        self.srvbld.create_recents_page()
-        self.srvbld.create_properties_page()
-        self.srvbld.create_stats_page()
-        self.srvbld.create_index_all()
-        self.srvbld.create_index_page()
+            #FIXME: Force key compilation
+            FORCE_DOC_KEY_COMPILATION = True
+            if FORCE_DOC_KEY_COMPILATION:
+                docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
+                html = self.srvbld.create_key_page(key, values)
+                with open(docname, 'w') as fkey:
+                    fkey.write(html)
+
+        self.srvthm.build()
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -396,9 +504,10 @@ class Application(Service):
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
-        resources_dir_source = GPATH['ONLINE']
+        # ~ resources_dir_source = GPATH['THEMES']
         resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
-        shutil.copytree(resources_dir_source, resources_dir_tmp)
+        shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
+        self.log.debug("\t\tResources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
         for prop in ADOCPROPS:
@@ -425,8 +534,8 @@ class Application(Service):
                 # ~ self.log.debug("\t\tJob[%4d]: %s", num, cmd)
                 jobs.append(job)
                 num = num + 1
-            self.log.debug("\t\t%d jobs created. Starting compilation", num - 1)
-            self.log.info("\t\t%3s%% done", "0")
+            self.log.info("\t\tCreated %d jobs. Starting compilation", num - 1)
+            # ~ self.log.info("\t\t%3s%% done", "0")
             for job in jobs:
                 adoc, res, jobid = job.result()
                 self.log.debug("\t\tJob[%d/%d]:\t%s compiled successfully", jobid, num - 1, os.path.basename(adoc))
@@ -483,7 +592,7 @@ class Application(Service):
         # ~ self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
 
         # Copy global resources to target path
-        global_resources_dir = GPATH['ONLINE']
+        global_resources_dir = GPATH['RESOURCES']
         resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
         copydir(global_resources_dir, resources_dir_target)
         self.log.info("\t\tCopied global resources to target path")
@@ -512,16 +621,6 @@ class Application(Service):
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.info("\t\tTemporary directory %s deleted successfully", self.runtime['dir']['tmp'])
 
-    def stage_10_print_missing_icons(self):
-        """Print list of missing icons."""
-        self.log.info("Stage 9\tMissing icons report")
-        missing_icons = self.srvbld.get_missing_icons()
-        if len(missing_icons) > 0:
-            self.log.warning("\t\tThe following author icons are missing:")
-            for author in missing_icons:
-                self.log.warning("\t\t%s: %s", author, missing_icons[author])
-        else:
-            self.log.warning("\t\tNo missing icons.")
 
     def run(self):
         """Start script execution following this flow.
@@ -546,8 +645,8 @@ class Application(Service):
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
         self.stage_09_remove_temporary_dir()
-        self.stage_10_print_missing_icons()
 
         self.log.info("KB4IT - Execution finished")
         self.log.info("Browse your documentation repository:")
         self.log.info("sensible-browser %s/index.html", os.path.abspath(self.runtime['dir']['target']))
+
