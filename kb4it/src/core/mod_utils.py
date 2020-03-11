@@ -18,11 +18,12 @@ import math
 import shutil
 import random
 import hashlib
+import operator
 import threading
 import subprocess
 import traceback as tb
-from datetime import datetime
-from kb4it.src.core.mod_env import LPATH, GPATH, EOHMARK, FILE, TEMPLATES
+from datetime import date, datetime
+from kb4it.src.core.mod_env import LPATH, GPATH, EOHMARK, FILE
 from kb4it.src.core.mod_log import get_logger
 
 log = get_logger('Utils')
@@ -39,7 +40,6 @@ def load_current_kbdict(source_path):
         kbdict = {}
     log.debug("Current kbdict entries: %d", len(kbdict))
     return kbdict
-
 
 def save_current_kbdict(kbdict, path, name=None):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -97,13 +97,6 @@ def get_source_docs(path):
     return docs
 
 
-def template(name):
-    """C0111: Missing function docstring (missing-docstring)."""
-    # ~ TEMPLATE_PATH = os.path.join(GPATH['TEMPLATES'], "%s.tpl" % template)
-    # ~ return open(TEMPLATE_PATH, 'r').read()
-    return TEMPLATES[name]
-
-
 def get_traceback():
     """Get traceback."""
     return tb.format_exc()
@@ -118,7 +111,6 @@ def exec_cmd(data):
     - res is the output
     """
     doc, cmd, res = data
-    # ~ log.debug(cmd)
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
     outs, errs = process.communicate()
     if errs is None:
@@ -153,7 +145,7 @@ def get_font_size(frequency, max_frequency):
         size = 36
     elif proportion in range(4, 5):
         size = 72
-    elif proportion > 5:
+    else:
         size = 72
 
     return size
@@ -170,46 +162,6 @@ def nosb(alist, lower=False):
     newlist.sort(key=lambda y: y.lower())
 
     return newlist
-
-
-def get_labels(values):
-    """C0111: Missing function docstring (missing-docstring)."""
-    label_links = ''
-    value_link = template('METADATA_VALUE_LINK')
-    for page, text in values:
-        if len(text) != 0:
-            label_links += value_link % (valid_filename(page), text)
-    return label_links
-
-
-def apply_transformations(source):
-    """C0111: Missing function docstring (missing-docstring)."""
-    content = source.replace(template('TOC_OLD'), template('TOC_NEW'))
-    content = content.replace(template('SECT1_OLD'), template('SECT1_NEW'))
-    content = content.replace(template('SECT2_OLD'), template('SECT2_NEW'))
-    content = content.replace(template('SECT3_OLD'), template('SECT3_NEW'))
-    content = content.replace(template('SECT4_OLD'), template('SECT4_NEW'))
-    content = content.replace(template('SECTIONBODY_OLD'), template('SECTIONBODY_NEW'))
-    # ~ content = content.replace(template('H1_OLD'), template('H1_NEW'))
-    content = content.replace(template('H2_OLD'), template('H2_NEW'))
-    content = content.replace(template('H3_OLD'), template('H3_NEW'))
-    content = content.replace(template('H4_OLD'), template('H4_NEW'))
-    content = content.replace(template('TABLE_OLD'), template('TABLE_NEW'))
-    content = content.replace(template('TABLE_OLD_2'), template('TABLE_NEW'))
-    # Admonitions
-    content = content.replace(template('ADMONITION_ICON_NOTE_OLD'), template('ADMONITION_ICON_NOTE_NEW'))
-    content = content.replace(template('ADMONITION_ICON_TIP_OLD'), template('ADMONITION_ICON_TIP_NEW'))
-    content = content.replace(template('ADMONITION_ICON_IMPORTANT_OLD'), template('ADMONITION_ICON_IMPORTANT_NEW'))
-    content = content.replace(template('ADMONITION_ICON_CAUTION_OLD'), template('ADMONITION_ICON_CAUTION_NEW'))
-    content = content.replace(template('ADMONITION_ICON_WARNING_OLD'), template('ADMONITION_ICON_WARNING_NEW'))
-
-    return content
-
-
-def highlight_metadata_section(source):
-    """C0111: Missing function docstring (missing-docstring)."""
-    content = source.replace(template('METADATA_OLD'), template('METADATA_NEW'), 1)
-    return content
 
 
 def extract_toc(source):
@@ -231,7 +183,7 @@ def extract_toc(source):
     if s > 0 and e > s:
         for line in lines[s:e]:
             if line.startswith('<li><a href='):
-                modifier = """<li><a class="uk-link-heading uk-text-truncate" """
+                modifier = """<li><a class="uk-link-heading" """
                 line = line.replace("<li><a ", modifier)
             else:
                 line = line.replace("sectlevel1", "uk-nav uk-nav-default")
@@ -239,18 +191,8 @@ def extract_toc(source):
                 line = line.replace("sectlevel3", "uk-nav-sub")
                 line = line.replace("sectlevel4", "uk-nav-sub")
             items.append(line)
-        # ~ items.insert(0, template('TOC_HEADER_TITLE'))
         toc = '\n'.join(items)
     return toc
-
-
-def create_directory(directory):
-    """Create a given directory path."""
-    log.debug("Checking if directory '%s' exists", directory)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        log.debug("Creating directory '%s'", directory)
-
 
 def delete_target_contents(target_path):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -290,16 +232,6 @@ def get_metadata(docpath):
         log.error("Document %s could not be processed" % docpath)
     return props
 
-
-def uniq_sort(result):
-    """Missing docstring."""
-    alist = list(result)
-    aset = set(alist)
-    alist = list(aset)
-    alist.sort(key=lambda y: y.lower())
-    return alist
-
-
 def get_hash_from_dict(adict):
     """Get the SHA256 hash for a given dictionary."""
     alist = []
@@ -313,13 +245,6 @@ def get_hash_from_dict(adict):
     m = hashlib.sha256()
     m.update(string.encode())
     return m.hexdigest()
-
-
-def setup_new_repository(target):
-    """Set up a new repository if no source files found."""
-    docs = get_source_docs(target)
-    copy_docs(GPATH['ADOCS'], target)
-
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
@@ -336,54 +261,52 @@ def valid_filename(s):
     s = str(s).strip().replace(' ', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
 
-def last_dt_modification(filename):
-    """Return last modification datetime of a file """
-    t = os.path.getmtime(filename)
-    dt = datetime.fromtimestamp(t)
-    return dt
+def guess_datetime(sdate):
+    """Guess datetime for a given string and return a normalized datetime"""
 
-def last_ts_modification(filename):
-    """Return last modification human-readable timestamp of a file """
+    found = False
+    patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
+                "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
+                "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
+                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S",
+                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S",
+                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
+                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
+                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
+                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
+               ]
+    for pattern in patterns:
+        if not found:
+            try:
+                td = datetime.strptime(sdate, pattern)
+                ts = td.strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+                found = True
+            except ValueError:
+                timestamp = None
+    return timestamp
+
+def file_timestamp(filename):
+    """Return last modification datetime normalized of a file"""
     t = os.path.getmtime(filename)
-    d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
+    sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
+    return sdate
+
+def string_timestamp(string):
+    dt = guess_datetime(string)
+    sdate = datetime.fromtimestamp(dt).strftime("%Y-%m-%d %H:%M:%S")
+    return sdate
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
 
-def last_ts_rss(date):
-    """ Converts a datetime into an RFC 2822 formatted date."""
-    return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday()], date.day, ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][date.month-1], date.year, date.hour, date.minute, date.second)
-
-def last_modification_date(filename):
-    """Return last modification human-readable timestamp of a file """
-    t = os.path.getmtime(filename)
-    d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%Y/%m/%d %H:%M:%S")
-
-def last_modification(filename):
-    """Return last modification human-readable datetime of a file """
-    t = os.path.getmtime(filename)
-    d = datetime.fromtimestamp(t)
-    return "%s" % d.strftime("%A, %B %e, %Y at %H:%M:%S")
-
-def get_author_icon(source_path, author):
-    relpath = "resources/images/authors/%s.png" % valid_filename(author)
-    abspath = os.path.join(source_path, relpath)
-
-    if os.path.exists(abspath):
-        return relpath
-    else:
-        return "resources/images/authors/author_unknown.png"
-
 def fuzzy_date_from_timestamp(timestamp):
-    """
-    Missing method docstring (missing-docstring)
-    """
+    # FIXME: Improve delta fuzzy dates
+    """C0111: Missing function docstring (missing-docstring)."""
     d1 = timestamp
     d2 = datetime.now()
-    rdate = d2 - d1 # DateTimeDelta
+    rdate = d2 - d1
     if rdate.days > 0:
         if rdate.days <= 31:
             return "%d days ago" % int(rdate.days)
@@ -407,3 +330,7 @@ def fuzzy_date_from_timestamp(timestamp):
 
     if int(rdate.seconds) == 0:
         return "Right now"
+
+def sort_dictionary(adict, reverse=True):
+    return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
+

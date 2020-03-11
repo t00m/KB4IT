@@ -5,95 +5,108 @@ RDF Graph In Memory database module.
 
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: module to allow kb4it create a RDF graph
+# Description: In-memory database module
 """
-import operator
-from kb4it.src.core.mod_srv import Service
 
-EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
-# ~ HEADER_KEYS = ['Author', 'Category', 'Scope']
-BLOCKED_KEYS = ['Title', 'Timestamp']
-IGNORE_KEYS = BLOCKED_KEYS # + HEADER_KEYS
+
+from kb4it.src.core.mod_srv import Service
+from kb4it.src.core.mod_utils import guess_datetime, sort_dictionary
 
 
 class KB4ITDB(Service):
     """KB4IT database class."""
 
-    params = None
     db = {}
-    source_path = None
     sorted_docs = []
+    blocked_keys = ['Title', 'Timestamp']
+    ignored_keys = blocked_keys
 
     def initialize(self):
         """Initialize database module."""
-        self.params = self.app.get_params()
-        self.source_path = self.params.SOURCE_PATH
+        params = self.app.get_params()
+        self.sort_attribute = params.SORT_ATTRIBUTE
 
-    def add_document(self, doc, timestamp):
-        """Add a new document node to the graph."""
+    def add_document(self, doc):
+        """Add a new document node to the database."""
         self.db[doc] = {}
-        self.db[doc]['Timestamp'] = timestamp
-        self.log.debug("\t\t\t%s created/modified on %s", doc, timestamp)
 
     def add_document_key(self, doc, key, value):
-        """Add a new key node to a document."""
+        """Add a new key/value node for a given document."""
         try:
             alist = self.db[doc][key]
             alist.append(value)
             self.db[doc][key] = alist
         except KeyError:
             self.db[doc][key] = [value]
+
         self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
 
-    def sort(self):
-        """Build a list of documents sorted by timestamp desc."""
-        adict = {}
-        for doc in self.db:
-            adict[doc] = self.db[doc]['Timestamp']
-        alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
-        for doc, timestamp in alist:
-            self.sorted_docs.append(doc)
-        # ~ for doc in self.sorted_docs:
-            # ~ self.log.error("%s - %s", self.db[doc]['Timestamp'], self.db[doc]['Title'][0])
+    def get_blocked_keys(self):
+        """Return blocked keys"""
+        return self.blocked_keys
+
+    def get_ignored_keys(self):
+        """Return ignored keys"""
+        return self.ignored_keys
+
+    def ignore_key(self, key):
+        """Add given key to ignored keys list"""
+        self.ignored_keys.append(key)
+
+    def sort_database(self):
+        """
+        Build a list of documents sorted by the given date attribute
+        in descending order
+        """
+        self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     def sort_by_date(self, doclist):
         """Build a list of documents sorted by timestamp desc."""
         sorted_docs = []
         adict = {}
         for doc in doclist:
-            adict[doc] = self.db[doc]['Timestamp']
-        alist = sorted(adict.items(), key=operator.itemgetter(1), reverse=True)
+            sdate = self.get_doc_timestamp(doc)
+            ts = guess_datetime(sdate)
+            if ts is not None:
+                adict[doc] = ts
+            else:
+                self.log.error("Doc '%s' doesn't have a valid timestamp?", doc)
+        alist = sort_dictionary(adict)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
         return sorted_docs
 
     def get_documents(self):
+        """
+        Return a list of docs sorted by date (timestamp or sort
+        attribute.
+        """
         return self.sorted_docs
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        return self.db[doc]['Timestamp']
+        try:
+            timestamp = self.db[doc][self.sort_attribute][0]
+        except:
+            timestamp = self.db[doc]['Timestamp'][0]
+        return timestamp
 
-    def get_html_values_from_key(self, doc, key):
-        """Return the html link for a value."""
-        html = []
-
-        values = self.get_values(doc, key)
-        # ~ self.log.debug("\t\t\t[%s][%s] = %s", doc, key, values)
-        for value in values:
-            url = "%s_%s.html" % (key, value)
-            html.append((url, value))
-        return html
+    def get_doc_properties(self, doc):
+        """Return a dictionary with the properties of a given doc"""
+        return self.db[doc]
 
     def get_values(self, doc, key):
-        """Get a list of values given a document and a key."""
+        """Return a list of values given a document and a key."""
         try:
             return self.db[doc][key]
         except KeyError:
             return ['']
 
     def get_all_values_for_key(self, key):
-        """Get all values for a given key."""
+        """
+        Return a list of all values for a given key sorted
+        alphabetically.
+        """
         values = []
         for doc in self.db:
             try:
@@ -105,28 +118,29 @@ class KB4ITDB(Service):
         return values
 
     def get_custom_keys(self, doc):
-        """Get a list of custom keys."""
+        """Return a list of custom keys sorted alphabetically."""
         custom_keys = []
         keys = self.get_doc_keys(doc)
         for key in keys:
-            if key not in IGNORE_KEYS:
+            if key not in self.ignored_keys:
                 custom_keys.append(key)
         custom_keys.sort(key=lambda y: y.lower())
         return custom_keys
 
     def get_all_keys(self):
-        """Get all keys in the database."""
-        keys = []
+        """Return all keys in the database sorted alphabetically."""
+        blocked_keys = self.get_blocked_keys()
+        keys = set()
         for doc in self.db:
             for key in self.get_doc_keys(doc):
-                if key not in ['Title', 'Timestamp']:
-                    keys.append(key)
-        keys = list(set(keys))
+                if key not in blocked_keys:
+                    keys.add(key)
+        keys = list(keys)
         keys.sort(key=lambda y: y.lower())
         return keys
 
     def get_docs_by_key_value(self, key, value):
-        """Get a list of documents given a key and a value for that key."""
+        """Return a list documents for a given key/value sorted by date"""
         docs = []
         for doc in self.db:
             try:
@@ -134,23 +148,13 @@ class KB4ITDB(Service):
                     docs.append(doc)
             except KeyError:
                 pass
-        docs.sort(key=lambda y: y.lower())
-        ltitles = []
-        dtitles = {}
-        for doc in docs:
-            title = self.get_values(doc, 'Title')[0]
-            ltitles.append(title)
-            dtitles[title] = doc
-        ltitles.sort()
-        ldocs = []
-        for title in ltitles:
-            ldocs.append(dtitles[title])
-        return ldocs
+        return self.sort_by_date(docs)
 
     def get_doc_keys(self, doc):
-        """Get keys for a given doc."""
+        """Return a list of keys for a given doc sorted alphabetically."""
         keys = []
         for key in self.db[doc]:
             keys.append(key)
         keys.sort(key=lambda y: y.lower())
         return keys
+

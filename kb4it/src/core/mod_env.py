@@ -35,25 +35,20 @@ LPATH['DB'] = os.path.join(LPATH['VAR'], 'db')
 LPATH['WWW'] = os.path.join(LPATH['VAR'], 'www')
 LPATH['EXPORT'] = os.path.join(LPATH['VAR'], 'export')
 LPATH['OPT'] = os.path.join(LPATH['ROOT'], 'opt')
+LPATH['THEMES'] = os.path.join(LPATH['OPT'], 'themes')
 
 # Global paths
 GPATH = {}
 GPATH['ROOT'] = ROOT
 GPATH['DATA'] = os.path.join(GPATH['ROOT'], 'kb4it')
 GPATH['RESOURCES'] = os.path.join(GPATH['ROOT'], 'resources')
-GPATH['OFFLINE'] = os.path.join(GPATH['RESOURCES'], 'offline')
-GPATH['APPDATA'] = os.path.join(GPATH['OFFLINE'], 'appdata')
-GPATH['ADOCS'] = os.path.join(GPATH['OFFLINE'], 'sources')
-GPATH['TEMPLATES'] = os.path.join(GPATH['OFFLINE'], 'templates')
-GPATH['DOCINFO'] = os.path.join(GPATH['OFFLINE'], 'docinfo')
 GPATH['ONLINE'] = os.path.join(GPATH['RESOURCES'], 'online')
 GPATH['IMAGES'] = os.path.join(GPATH['ONLINE'], 'images')
-GPATH['AUTHORS'] = os.path.join(GPATH['IMAGES'], 'authors')
-GPATH['SHARE'] = os.path.join(GPATH['DATA'], 'share')
-GPATH['DOC'] = os.path.join(GPATH['SHARE'], 'docs')
+GPATH['COMMON'] = os.path.join(GPATH['RESOURCES'], 'common')
+GPATH['THEMES'] = os.path.join(GPATH['RESOURCES'], 'themes')
+GPATH['APPDATA'] = os.path.join(GPATH['COMMON'], 'appdata')
 GPATH['RES'] = os.path.join(GPATH['DATA'], 'res')
-GPATH['HELP'] = os.path.join(GPATH['DATA'], 'help')
-GPATH['HELP_HTML'] = os.path.join(GPATH['HELP'], 'html')
+
 
 VERSION = open(os.path.join(GPATH['APPDATA'], 'VERSION'), 'r').read()
 
@@ -75,36 +70,25 @@ APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 FILE = {}
 FILE['CNF'] = os.path.join(LPATH['ETC'], APP['shortname'].lower(), '.ini')
 FILE['LOG'] = os.path.join(LPATH['LOG'] + APP['shortname'].lower(), '.log')
-FILE['HELP_INDEX'] = os.path.join(GPATH['HELP_HTML'], 'index.html')
-FILE['FOOTER'] = os.path.join(GPATH['DOCINFO'], 'footer.html')
-FILE['HEADER'] = os.path.join(GPATH['DOCINFO'], 'header.html')
-FILE['HEADER_NODOC'] = os.path.join(GPATH['DOCINFO'], 'header_nodoc.html')
-FILE['AUTHOR_UNKNOWN'] = os.path.join(GPATH['AUTHORS'], 'author_unknown.png')
-# ~ FILE['KBDICT'] = LPATH['DB'] + 'kbdict.json'
+# ~ FILE['FOOTER'] = os.path.join(GPATH['DOCINFO'], 'footer.html')
+# ~ FILE['HEADER'] = os.path.join(GPATH['DOCINFO'], 'header.html')
+# ~ FILE['HEADER_NODOC'] = os.path.join(GPATH['DOCINFO'], 'header_nodoc.html')
+# ~ FILE['AUTHOR_UNKNOWN'] = os.path.join(GPATH['AUTHORS'], 'author_unknown.png')
 
+# Compilation stuff
 MAX_WORKERS = 30
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
 ADOCPROPS = {
     'source-highlighter': 'coderay',
     'toc': 'left',
     'toclevels': '3',
-    'icons'                 :   'font',
-    # ~ 'experimental'          :   None,
-    # ~ 'linkcss'               :   None,
-    # ~ 'stylesheet'            :   'kb4it.css',
-    # ~ 'stylesdir'             :   'resources/uikit/css',
-    # ~ 'imagesdir'             :   'resources/images',
-    # ~ 'scriptsdir'            :   'resources/uikit/js',
-    # ~ 'iconfont-remote!'      :   None,
-    # ~ 'iconfont-name'         :   'fontawesome-4.7.0',
-    # ~ 'experimental'          :   None,
-    # ~ 'docinfo'               :   'shared',
-    # ~ 'docinfodir'            :   'resources/docinfo',
+    'icons': 'font',
 }
-HTML_HEADER = open(FILE['HEADER'], 'r').read()
-HTML_HEADER_NODOC = open(FILE['HEADER_NODOC'], 'r').read()
-HTML_FOOTER = open(FILE['FOOTER'], 'r').read()
-TEMPLATES = {}
-for filename in glob.glob(os.path.join(GPATH['TEMPLATES'], '*.tpl')):
-    template = os.path.basename(filename)[:-4]
-    TEMPLATES[template] = open(filename, 'r').read()
+# ~ HTML_HEADER = open(FILE['HEADER'], 'r').read()
+# ~ HTML_HEADER_NODOC = open(FILE['HEADER_NODOC'], 'r').read()
+# ~ HTML_FOOTER = open(FILE['FOOTER'], 'r').read()
+# ~ TEMPLATES = {}
+# ~ TEMPLATES['Default'] = {}
+# ~ for filename in glob.glob(os.path.join(GPATH['TEMPLATES'], '*.tpl')):
+    # ~ template = os.path.basename(filename)[:-4]
+    # ~ TEMPLATES['Default'][template] = open(filename, 'r').read()
