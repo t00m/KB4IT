@@ -140,6 +140,7 @@ class Theme(Builder):
         self.create_index_all()
         self.create_index_page()
         self.create_bookmarks_page()
+        self.create_authors_page()
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
         self.create_events_page()
@@ -237,7 +238,7 @@ class Theme(Builder):
                     self.build_pagination(EVENT_PAGE_DAY, docs, title)
 
                     # Generate HTML to display into the modal window
-                    events_docs_html[y][m][d] = self.build_html_events(docs)
+                    # ~ events_docs_html[y][m][d] = self.build_html_events(docs)
 
         # Build month event pages
         for year in events_docs:
@@ -252,14 +253,6 @@ class Theme(Builder):
                 # create html page
                 self.build_pagination(EVENT_PAGE_MONTH, thismonth, title)
 
-                # Generate HTML to display into the modal window
-                # ~ events_docs_html[y][m][d] = self.build_html_events(docs)
-
-        # Build year event pages
-        # ~ lyears = []
-        # ~ for year in dey:
-            # ~ lyears.append(year)
-
         for year in sorted(dey.keys(), reverse=True):
             HTML = self.srvcal.build_year_pagination(dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
@@ -273,10 +266,6 @@ class Theme(Builder):
             self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
 
         return dey
-
-    def build_html_events(self, docs):
-        # ~ self.log.debug(docs)
-        pass
 
     def load_events_days(self, events_days, year):
         events_set = set()
@@ -330,3 +319,40 @@ class Theme(Builder):
                 doclist.append(doc)
         self.build_pagination('bookmarks', doclist, 'Bookmarks')
 
+    def create_authors_page(self):
+        PAGE_AUTHOR = self.template('PAGE_AUTHOR')
+        authors = self.srvdtb.get_all_values_for_key('Author')
+
+        def tab_header(docs):
+            author_etypes = set()
+            event_types = self.srvapp.get_theme_property('events')
+            for doc in docs:
+                categories = self.srvdtb.get_values(doc, 'Category')
+                for category in categories:
+                    if category in event_types:
+                        author_etypes.add(category)
+            header = """<ul class="uk-flex-center" uk-tab>\n"""
+            for etype in sorted(list(author_etypes)):
+                header += """<li><a href="#">%s</a></li>\n""" % etype.title()
+            header += """</ul>\n"""
+            return sorted(list(author_etypes)), header
+
+        for author in authors:
+            docs = self.srvdtb.get_docs_by_key_value('Author', author)
+            author_etypes, header = tab_header(docs)
+            self.log.error ("%s -> %s", author, author_etypes)
+
+            content = """<ul class="uk-switcher">\n"""
+            for etype in author_etypes:
+                content_etype = """<li>\n"""
+                content_etype += """<div class="uk-child-width-1-3@m" uk-grid>"""
+                for doc in docs:
+                    if etype in self.srvdtb.get_values(doc, 'Category'):
+                        content_etype += """%s\n""" % self.get_doc_card(doc)
+                content_etype += """</div>"""
+                content_etype += """</li>\n"""
+                content += content_etype
+            content += """</ul>\n"""
+            PAGE = PAGE_AUTHOR % (author, header, content)
+            # ~ self.log.error(content)
+            self.distribute(valid_filename("Author_%s" % author), PAGE)

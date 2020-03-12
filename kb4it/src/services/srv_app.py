@@ -169,6 +169,9 @@ class Application(Service):
     def get_theme_properties(self):
         return self.runtime['theme']
 
+    def get_theme_property(self, prop):
+        return self.runtime['theme'][prop]
+
     def get_source_path(self):
         """Get asciidoctor sources path."""
         return self.runtime['dir']['source']
