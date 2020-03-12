@@ -352,6 +352,9 @@ class Application(Service):
                             value = string_timestamp(value)
                     except:
                         pass
+
+                    if key == 'Tag':
+                        value = value.lower()
                     self.srvdtb.add_document_key(docname, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
