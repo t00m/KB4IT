@@ -44,8 +44,8 @@ class Builder(Service):
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
 
-        if os.path.exists(PAGE_PATH):
-            self.log.error("\t\t\t  Page '%s' already exists. Skip." % name)
+        # ~ if os.path.exists(PAGE_PATH):
+            # ~ self.log.warning("\t\t\t  Page '%s' already exists. Skip." % name)
 
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
