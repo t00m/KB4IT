@@ -304,7 +304,10 @@ def get_human_datetime(dt):
 def fuzzy_date_from_timestamp(timestamp):
     # FIXME: Improve delta fuzzy dates
     """C0111: Missing function docstring (missing-docstring)."""
-    d1 = timestamp
+    if type(timestamp) == str:
+        d1 = guess_datetime(timestamp)
+    else:
+        d1 = timestamp
     d2 = datetime.now()
     rdate = d2 - d1
     if rdate.days > 0:

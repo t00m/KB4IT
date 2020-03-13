@@ -164,15 +164,7 @@ class Theme(Builder):
             footer = ''
 
         timestamp = self.srvdtb.get_doc_timestamp(doc)
-        if type(timestamp) == str:
-            timestamp = guess_datetime(timestamp)
-
-        if timestamp is not None:
-            human_ts = get_human_datetime(timestamp)
-            fuzzy_date = fuzzy_date_from_timestamp(timestamp)
-        else:
-            timestamp = ''
-            fuzzy_date = ''
+        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
         tooltip ="%s" % (title)
         return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
 
@@ -334,25 +326,61 @@ class Theme(Builder):
             header = """<ul class="uk-flex-center" uk-tab>\n"""
             for etype in sorted(list(author_etypes)):
                 header += """<li><a href="#">%s</a></li>\n""" % etype.title()
+            header += """<li><a href="#">Others</a></li>\n"""
             header += """</ul>\n"""
             return sorted(list(author_etypes)), header
 
         for author in authors:
             docs = self.srvdtb.get_docs_by_key_value('Author', author)
+            used = set()
             author_etypes, header = tab_header(docs)
             self.log.error ("%s -> %s", author, author_etypes)
 
-            content = """<ul class="uk-switcher">\n"""
+            content_author = """<ul class="uk-switcher">\n"""
             for etype in author_etypes:
-                content_etype = """<li>\n"""
-                content_etype += """<div class="uk-child-width-1-3@m" uk-grid>"""
+                content_author += """<li>\n"""
+                content_author += """<div class="uk-child-width-1-3@m uk-grid-collapse" uk-grid>"""
                 for doc in docs:
                     if etype in self.srvdtb.get_values(doc, 'Category'):
-                        content_etype += """%s\n""" % self.get_doc_card(doc)
-                content_etype += """</div>"""
-                content_etype += """</li>\n"""
-                content += content_etype
-            content += """</ul>\n"""
-            PAGE = PAGE_AUTHOR % (author, header, content)
+                        content_author += """%s\n""" % self.get_doc_card_author(doc)
+                        used.add(doc)
+                content_author += """</div>"""
+                content_author += """</li>\n"""
+                # ~ content += content_author
+            others = set(docs) - used
+            self.log.error("  Docs: %s", set(docs))
+            self.log.error("  Used: %s", used)
+            self.log.error("Others: %s", others)
+            content_author += """<li>\n"""
+            content_author += """<div class="uk-child-width-1-3@m uk-grid-collapse" uk-grid>"""
+            for doc in others:
+                content_author += """%s\n""" % self.get_doc_card_author(doc)
+            content_author += """</div>"""
+            content_author += """</li>\n"""
+            content_author += """</ul>\n"""
+            PAGE = PAGE_AUTHOR % (author, header, content_author)
             # ~ self.log.error(content)
             self.distribute(valid_filename("Author_%s" % author), PAGE)
+
+
+    def get_doc_card_author(self, doc):
+        source_dir = self.srvapp.get_source_path()
+        DOC_CARD = self.template('CARD_DOC_AUTHOR')
+        DOC_CARD_FOOTER = self.template('CARD_DOC_AUTHOR_FOOTER')
+        LINK = self.template('LINK')
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
+        # ~ if len(category) > 0 and len(scope) > 0:
+        link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
+        link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
+            # ~ footer = DOC_CARD_FOOTER % (link_category, link_scope)
+        # ~ else:
+            # ~ footer = ''
+
+        timestamp = self.srvdtb.get_doc_timestamp(doc)
+        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
+
+        tooltip ="%s" % (title)
+        return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, link_scope)
