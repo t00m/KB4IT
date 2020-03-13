@@ -313,6 +313,8 @@ class Theme(Builder):
 
     def create_authors_page(self):
         PAGE_AUTHOR = self.template('PAGE_AUTHOR')
+        SECTION_ETYPE = self.template('PAGE_AUTHOR_SECTION_EVENT_TYPE')
+        SWITCHER_ETYPE = self.template('PAGE_AUTHOR_SWITCHER_EVENT_TYPE')
         authors = self.srvdtb.get_all_values_for_key('Author')
 
         def tab_header(docs):
@@ -336,29 +338,24 @@ class Theme(Builder):
             author_etypes, header = tab_header(docs)
             self.log.error ("%s -> %s", author, author_etypes)
 
-            content_author = """<ul class="uk-switcher">\n"""
+            # Registered event types
+            content_author = ''
             for etype in author_etypes:
-                content_author += """<li>\n"""
-                content_author += """<div class="uk-child-width-1-3@m uk-grid-collapse" uk-grid>"""
+                items = ''
                 for doc in docs:
                     if etype in self.srvdtb.get_values(doc, 'Category'):
-                        content_author += """%s\n""" % self.get_doc_card_author(doc)
+                        items += self.get_doc_card_author(doc)
                         used.add(doc)
-                content_author += """</div>"""
-                content_author += """</li>\n"""
-                # ~ content += content_author
+                content_author += SECTION_ETYPE % items
+
+            # Others categories
             others = set(docs) - used
-            self.log.error("  Docs: %s", set(docs))
-            self.log.error("  Used: %s", used)
-            self.log.error("Others: %s", others)
-            content_author += """<li>\n"""
-            content_author += """<div class="uk-child-width-1-3@m uk-grid-collapse" uk-grid>"""
+            items = ''
             for doc in others:
-                content_author += """%s\n""" % self.get_doc_card_author(doc)
-            content_author += """</div>"""
-            content_author += """</li>\n"""
-            content_author += """</ul>\n"""
-            PAGE = PAGE_AUTHOR % (author, header, content_author)
+                items += self.get_doc_card_author(doc)
+            content_author += SECTION_ETYPE % items
+            content = SWITCHER_ETYPE % content_author
+            PAGE = PAGE_AUTHOR % (author, header, content)
             # ~ self.log.error(content)
             self.distribute(valid_filename("Author_%s" % author), PAGE)
 
