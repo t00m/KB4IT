@@ -332,17 +332,8 @@ class Builder(Service):
             footer = ''
 
         timestamp = self.srvdtb.get_doc_timestamp(doc)
-        # ~ self.log.debug("Timestamp %s: %s", doc, timestamp)
-        if type(timestamp) == str:
-            timestamp = guess_datetime(timestamp)
+        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
 
-        if timestamp is not None:
-            human_ts = get_human_datetime(timestamp)
-            fuzzy_date = fuzzy_date_from_timestamp(timestamp)
-        else:
-            timestamp = ''
-            fuzzy_date = ''
-            # ~ self.log.warning("No timestamp detected for %s", doc)
         tooltip ="%s" % (title)
         return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
 
