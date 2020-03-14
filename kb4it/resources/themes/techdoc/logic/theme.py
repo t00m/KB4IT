@@ -369,15 +369,11 @@ class Theme(Builder):
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
-        # ~ if len(category) > 0 and len(scope) > 0:
         link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
         link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
-            # ~ footer = DOC_CARD_FOOTER % (link_category, link_scope)
-        # ~ else:
-            # ~ footer = ''
 
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         fuzzy_date = fuzzy_date_from_timestamp(timestamp)
 
         tooltip ="%s" % (title)
-        return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, link_scope)
+        return DOC_CARD % (title, tooltip, link_title, timestamp, fuzzy_date, link_scope)
