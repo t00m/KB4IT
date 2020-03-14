@@ -1,3 +1,3 @@
-<ul class="uk-switcher">
+    <ul class="uk-switcher">
 %s
-</ul>
+    </ul>
