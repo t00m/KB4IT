@@ -323,18 +323,16 @@ class Theme(Builder):
             for doc in docs:
                 categories = self.srvdtb.get_values(doc, 'Category')
                 for category in categories:
-                    if category in event_types:
-                        author_etypes.add(category)
+                    author_etypes.add(category)
             header = """<ul class="uk-flex-center" uk-tab>\n"""
             for etype in sorted(list(author_etypes)):
                 header += """<li><a href="#">%s</a></li>\n""" % etype.title()
-            header += """<li><a href="#">Others</a></li>\n"""
+            # ~ header += """<li><a href="#">Others</a></li>\n"""
             header += """</ul>\n"""
             return sorted(list(author_etypes)), header
 
         for author in authors:
             docs = self.srvdtb.get_docs_by_key_value('Author', author)
-            used = set()
             author_etypes, header = tab_header(docs)
             self.log.error ("%s -> %s", author, author_etypes)
 
@@ -342,18 +340,20 @@ class Theme(Builder):
             content_author = ''
             for etype in author_etypes:
                 items = ''
+                sect_items = 0
                 for doc in docs:
-                    if etype in self.srvdtb.get_values(doc, 'Category'):
+                    category = self.srvdtb.get_values(doc, 'Category')
+                    if etype in category:
                         items += self.get_doc_card_author(doc)
-                        used.add(doc)
-                content_author += SECTION_ETYPE % items
+                        sect_items += 1
+                content_author += SECTION_ETYPE % (sect_items, len(docs), items)
 
             # Others categories
-            others = set(docs) - used
-            items = ''
-            for doc in others:
-                items += self.get_doc_card_author(doc)
-            content_author += SECTION_ETYPE % items
+            # ~ others = set(docs) - used
+            # ~ items = ''
+            # ~ for doc in others:
+                # ~ items += self.get_doc_card_author(doc)
+            # ~ content_author += SECTION_ETYPE % (len(others), items)
             content = SWITCHER_ETYPE % content_author
             PAGE = PAGE_AUTHOR % (author, header, content)
             # ~ self.log.error(content)
