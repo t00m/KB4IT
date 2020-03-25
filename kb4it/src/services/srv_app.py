@@ -294,9 +294,13 @@ class Application(Service):
         self.runtime['docs']['bag'] = get_source_docs(self.runtime['dir']['source'])
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         if self.runtime['docs']['count'] == 0:
-            self.log.error("\tNo asciidoctor files found in: %s", self.runtime['dir']['source'])
-            self.log.error("\tExecution finished.")
-            sys.exit()
+            themeid = self.get_theme_property('id')
+            if themeid == 'default':
+                self.log.error("\tNo asciidoctor files found in: %s", self.runtime['dir']['source'])
+                self.log.error("\tExecution finished.")
+                sys.exit()
+            else:
+                self.log.warning("No source files found.")
         self.log.info("\t\tFound %d asciidoctor documents", self.runtime['docs']['count'])
         for doc in self.runtime['docs']['bag']:
             self.log.debug("\t\t\t%s", doc)
