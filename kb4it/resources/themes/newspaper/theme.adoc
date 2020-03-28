@@ -1,0 +1,12 @@
+{
+    "id": "newspaper",
+    "name": "Newspaper",
+    "description": "Newspaper theme for KB4IT",
+    "author": "[Tomás Vírseda]",
+    "email": "[tomasvirseda@gmail.com]",
+    "ignored_keys": ["Published", "Updated", "RSSFeed"],
+    "date_attributes": ["Published", "Updated"],
+    "events": ["Entry"],
+    "version": "0.0.1",
+    "kb4it": "0.7.8"
+}

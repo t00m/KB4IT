@@ -16,6 +16,9 @@ class Theme(Builder):
     def hello(self):
         self.log.debug("This is the theme techdoc")
 
+    def generate_sources(self):
+        pass
+
     def build(self):
         # Default pages
         self.create_all_keys_page()

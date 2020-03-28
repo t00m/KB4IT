@@ -70,10 +70,6 @@ APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 FILE = {}
 FILE['CNF'] = os.path.join(LPATH['ETC'], APP['shortname'].lower(), '.ini')
 FILE['LOG'] = os.path.join(LPATH['LOG'] + APP['shortname'].lower(), '.log')
-# ~ FILE['FOOTER'] = os.path.join(GPATH['DOCINFO'], 'footer.html')
-# ~ FILE['HEADER'] = os.path.join(GPATH['DOCINFO'], 'header.html')
-# ~ FILE['HEADER_NODOC'] = os.path.join(GPATH['DOCINFO'], 'header_nodoc.html')
-# ~ FILE['AUTHOR_UNKNOWN'] = os.path.join(GPATH['AUTHORS'], 'author_unknown.png')
 
 # Compilation stuff
 MAX_WORKERS = 30
@@ -84,11 +80,3 @@ ADOCPROPS = {
     'toclevels': '3',
     'icons': 'font',
 }
-# ~ HTML_HEADER = open(FILE['HEADER'], 'r').read()
-# ~ HTML_HEADER_NODOC = open(FILE['HEADER_NODOC'], 'r').read()
-# ~ HTML_FOOTER = open(FILE['FOOTER'], 'r').read()
-# ~ TEMPLATES = {}
-# ~ TEMPLATES['Default'] = {}
-# ~ for filename in glob.glob(os.path.join(GPATH['TEMPLATES'], '*.tpl')):
-    # ~ template = os.path.basename(filename)[:-4]
-    # ~ TEMPLATES['Default'][template] = open(filename, 'r').read()

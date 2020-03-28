@@ -131,6 +131,9 @@ class EventsCalendar(Service, HTMLCalendar):
         return EVENTCAL_YEAR_PAGINATION % ITEMS
 
 class Theme(Builder):
+    def generate_sources(self):
+        pass
+
     def build(self):
         self.create_about_page()
         self.create_help_page()

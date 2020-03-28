@@ -647,6 +647,7 @@ class Application(Service):
         self.log.info("KB4IT - Knowledge Base for IT")
 
         self.stage_01_check_environment()
+        self.srvthm.generate_sources()
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
         self.stage_04_processing()

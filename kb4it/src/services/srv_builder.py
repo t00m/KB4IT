@@ -34,6 +34,7 @@ class Builder(Service):
         """Initialize Builder class."""
         self.get_services()
         self.tmpdir = self.srvapp.get_temp_path()
+        self.srcdir = self.srvapp.get_source_path()
 
     def get_services(self):
         """Get services."""
@@ -43,13 +44,17 @@ class Builder(Service):
     def distribute(self, name, content):
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
-
-        # ~ if os.path.exists(PAGE_PATH):
-            # ~ self.log.warning("\t\t\t  Page '%s' already exists. Skip." % name)
-
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
         # ~ self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
+
+    def distribute_to_source(self, name, content):
+        PAGE_NAME = "%s.adoc" % name
+        PAGE_PATH = os.path.join(self.srcdir, PAGE_NAME)
+        with open(PAGE_PATH, 'w') as fpag:
+            fpag.write(content)
+        # ~ self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
+
 
     def create_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -226,6 +231,7 @@ class Builder(Service):
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
         max_frequency = self.get_maxkv_freq()
         all_keys = self.srvdtb.get_all_keys()
+        self.log.error(all_keys)
         custom_buttons = ''
         for key in all_keys:
             ignored_keys = self.srvdtb.get_ignored_keys()
