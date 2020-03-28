@@ -8,6 +8,6 @@
     "version": "0.0.2",
     "kb4it": "0.8",
     "events": ["Change", "Email", "Incident", "Log", "Message", "Meeting", "Note", "Post", "Reminder", "Report", "Task"],
-    "ignored_keys": ["Start"],
-    "date_attributes": ["Start"]
+    "ignored_keys": ["Published"],
+    "date_attributes": ["Published"]
 }
