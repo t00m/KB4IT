@@ -393,7 +393,7 @@ class Theme(Builder):
                     del(self.feeds[rss]['header']['subtitle'])
                 except Exception as error:
                     self.log.error(error)
-                    sys.exit()
+                    pass #sys.exit()
 
                 ### Generate page id
                 try:
