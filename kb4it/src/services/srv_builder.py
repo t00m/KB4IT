@@ -190,7 +190,8 @@ class Builder(Service):
     def create_about_page(self):
         """C0111: Missing function docstring (missing-docstring)."""
         TPL_ABOUT = self.template('PAGE_ABOUT')
-        self.distribute('about', TPL_ABOUT % VERSION)
+        theme = self.srvapp.get_theme_properties()
+        self.distribute('about', TPL_ABOUT % (VERSION, theme['name'], theme['version'], theme['description']))
 
     def create_help_page(self):
         """C0111: Missing function docstring (missing-docstring)."""
