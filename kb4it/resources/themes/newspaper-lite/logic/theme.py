@@ -14,11 +14,11 @@ import os
 import sys
 import glob
 import uuid
-# ~ import nltk
+import nltk
 from datetime import datetime, timedelta
-# ~ from nltk.tokenize import sent_tokenize, word_tokenize
-# ~ from nltk.corpus import stopwords
-# ~ from nltk.stem import PorterStemmer
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
 from dateutil.parser import parse
 import feedparser
 from urllib.parse import urlparse
@@ -27,44 +27,44 @@ from kb4it.src.services.srv_builder import Builder
 from kb4it.src.core.mod_utils import valid_filename, guess_datetime
 from kb4it.src.core.mod_utils import sort_dictionary
 
-# ~ IGNORE = set()
-# ~ for token in tuple(nltk.corpus.stopwords.words('french')):
-    # ~ IGNORE.add(token.lower())
+IGNORE = set()
+for token in tuple(nltk.corpus.stopwords.words('french')):
+    IGNORE.add(token.lower())
 
-# ~ for token in tuple(nltk.corpus.stopwords.words('english')):
-    # ~ IGNORE.add(token.lower())
+for token in tuple(nltk.corpus.stopwords.words('english')):
+    IGNORE.add(token.lower())
 
-# ~ for token in tuple(nltk.corpus.stopwords.words('spanish')):
-    # ~ IGNORE.add(token.lower())
+for token in tuple(nltk.corpus.stopwords.words('spanish')):
+    IGNORE.add(token.lower())
 
-# ~ tokens = list(IGNORE)
-# ~ tokens.sort()
+tokens = list(IGNORE)
+tokens.sort()
 
 
-# ~ def get_tags(text):
-    # ~ # word stemming and polishing
-    # ~ mylist = set()
-    # ~ ps = PorterStemmer()
-    # ~ words = word_tokenize(text)
-    # ~ for word in words:
-        # ~ stem_word = ps.stem(word)
-        # ~ if stem_word not in words:
-            # ~ stem_word = words[0]
-        # ~ mylist.add(stem_word)
+def get_tags(text):
+    # word stemming and polishing
+    mylist = set()
+    ps = PorterStemmer()
+    words = word_tokenize(text)
+    for word in words:
+        stem_word = ps.stem(word)
+        if stem_word not in words:
+            stem_word = words[0]
+        mylist.add(stem_word)
 
-    # ~ # FIlter tags according basic rules
-    # ~ stags = set()
-    # ~ for w in mylist:
-        # ~ if w.lower() not in IGNORE:
-            # ~ if w.startswith('LG_'):
-                # ~ stags.add(w)
-            # ~ else:
-                # ~ if not w.isdigit():
-                    # ~ if w.isalnum() and len(w) > 3:
-                        # ~ stags.add(w.lower())
-    # ~ ltags = list(stags)
-    # ~ ltags.sort()
-    # ~ return ltags
+    # FIlter tags according basic rules
+    stags = set()
+    for w in mylist:
+        if w.lower() not in IGNORE:
+            if w.startswith('LG_'):
+                stags.add(w)
+            else:
+                if not w.isdigit():
+                    if w.isalnum() and len(w) > 3:
+                        stags.add(w.lower())
+    ltags = list(stags)
+    ltags.sort()
+    return ltags
 
 class Theme(Builder):
     feeds = {}
@@ -245,13 +245,13 @@ class Theme(Builder):
             summary = self.feeds[rss]['entries'][eid]['summary']
             updated = self.feeds[rss]['entries'][eid]['updated']
             link = self.feeds[rss]['entries'][eid]['link']
-            # ~ tags = self.feeds[rss]['entries'][eid]['tags']
+            tags = self.feeds[rss]['entries'][eid]['tags']
             NEWS += CARD_NP_ENTRY % (thumbnail, link, title, updated, summary)
 
             # RSS ENTRY PAGE
             properties = ''
-            # ~ properties += ':RSSFeed: %s\n' % rss # RSS
-            # ~ properties += ':Website: %s\n' % self.get_website(rss_link) # Website
+            properties += ':RSSFeed: %s\n' % rss # RSS
+            properties += ':Website: %s\n' % self.get_website(rss_link) # Website
             # ~ properties += ':Tag: %s\n' % tags # Tags
             properties += ':Updated: %s\n' % updated
 
@@ -413,14 +413,14 @@ class Theme(Builder):
                     eid = self.get_page_id() #entry['id']
                     try:
                         self.feeds[rss]['entries'][eid] = {}
-                        # ~ self.feeds[rss]['entries'][eid]['RSSFeed'] = rss
+                        self.feeds[rss]['entries'][eid]['RSSFeed'] = rss
                         self.feeds[rss]['entries'][eid]['title'] = self.get_field_value(entry, 'title')
                         self.feeds[rss]['entries'][eid]['summary'] = self.get_field_summary(entry)
                         self.feeds[rss]['entries'][eid]['thumbnail'] = self.get_field_value(entry, 'thumbnail')
                         self.feeds[rss]['entries'][eid]['link'] = self.get_field_value(entry, 'link')
                         self.feeds[rss]['entries'][eid]['updated'] = self.get_field_updated(entry)
-                        # ~ tags = get_tags(self.feeds[rss]['entries'][eid]['title'])
-                        # ~ self.feeds[rss]['entries'][eid]['tags'] = ', '.join(tags)
+                        tags = get_tags(self.feeds[rss]['entries'][eid]['title'])
+                        self.feeds[rss]['entries'][eid]['tags'] = ', '.join(tags)
                         self.log.debug("RSS[%s]: Entry %s added", rss, eid)
                     except Exception as error:
                         self.log.warning("Error while parsing entry for RSS: %s", rss)
