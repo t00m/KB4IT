@@ -211,7 +211,8 @@ class Theme(Builder):
         o = urlparse(link)
         rss_scheme = o.scheme
         rss_host = o.netloc
-        favicon = "%s://%s/favicon.ico" % (rss_scheme, rss_host)
+        favicon = "https://www.google.com/s2/favicons?domain=%s" % o.netloc
+        # ~ favicon = "%s://%s/favicon.ico" % (rss_scheme, rss_host)
         return favicon
 
     def get_homepage(self, link):
