@@ -34,6 +34,9 @@ for token in tuple(nltk.corpus.stopwords.words('french')):
 for token in tuple(nltk.corpus.stopwords.words('english')):
     IGNORE.add(token.lower())
 
+for token in tuple(nltk.corpus.stopwords.words('spanish')):
+    IGNORE.add(token.lower())
+
 tokens = list(IGNORE)
 tokens.sort()
 
