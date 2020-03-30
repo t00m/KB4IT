@@ -1,0 +1,12 @@
+= %s
+
+++++
+<!-- PAGE AUTHORS EVENT TYPES TAB HEADER :: START -->
+%s
+<!-- PAGE AUTHORS EVENT TYPES TAB HEADER :: END -->
+
+<!-- PAGE AUTHORS CONTENT :: START -->
+%s
+<!-- PAGE AUTHORS CONTENT :: END -->
+++++
+

@@ -1,0 +1,1 @@
+<tr class="week">%s</tr>

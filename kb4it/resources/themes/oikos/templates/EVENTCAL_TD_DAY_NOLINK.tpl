@@ -1,0 +1,1 @@
+<td class="%s day uk-text-center">%d</td>
