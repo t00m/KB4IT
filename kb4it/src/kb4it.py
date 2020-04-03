@@ -38,6 +38,7 @@ class KB4IT:
         self.setup_environment()
 
     def check_params(self):
+        print(self.params)
         source = os.path.abspath(self.params.SOURCE_PATH)
         target = os.path.abspath(self.params.TARGET_PATH)
         if source == target:

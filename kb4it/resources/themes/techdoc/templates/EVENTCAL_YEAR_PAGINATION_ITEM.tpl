@@ -1,1 +1,1 @@
-<div class="uk-card uk-card-body uk-card-small uk-card-hover"><a class="uk-link" href="events_%d.html"><span class="">%d</span></a></div>
+<div class=""><a class="uk-link-heading" href="events_%d.html"><span class="uk-text-lead uk-text-bolder">%d</span></a></div>

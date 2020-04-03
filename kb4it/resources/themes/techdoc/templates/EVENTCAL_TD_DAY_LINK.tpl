@@ -1,1 +1,1 @@
-<td class="%s eventday day uk-text-bold uk-text-center uk-background-primary"><a class="uk-link-text uk-text-normal" href="%s.html" style="color: white;">%s</a></td>
+<td class="%s eventday day uk-text-bolder uk-text-center uk-text-primary uk-card-hover uk-background-muted"><a class="uk-link-text" href="%s.html"><span class="">%s</span></a></td>
