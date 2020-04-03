@@ -206,6 +206,14 @@ def delete_target_contents(target_path):
                 shutil.rmtree(file_object_path)
         log.debug("          Contents of directory '%s' deleted successfully", target_path)
 
+def delete_files(files):
+    for path in files:
+        try:
+            if os.path.exists(path):
+                os.unlink(path)
+        except FileNotFoundError as error:
+            log.warning(error)
+            log.warning(files)
 
 def get_metadata(docpath):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -318,7 +326,15 @@ def fuzzy_date_from_timestamp(timestamp):
             return "%d months ago" % int((rdate.days/31))
 
         if rdate.days >= 365:
-            return "%d years ago" % int((rdate.days/365))
+            years = int(rdate.days/365)
+            months = int( (rdate.days / years - 365) / 30 )
+            if months > 0:
+                return "%d years and %d months ago" % (years, months)
+            else:
+                if years > 1:
+                    return "%d years ago" % years
+                else:
+                    return "1 year ago"
 
     hours = rdate.seconds / 3600
     if int(hours) > 0:

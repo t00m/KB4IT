@@ -79,4 +79,5 @@ ADOCPROPS = {
     'toc': 'left',
     'toclevels': '3',
     'icons': 'font',
+    'linkcss': None,
 }
