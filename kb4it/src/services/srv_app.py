@@ -81,8 +81,13 @@ class Application(Service):
         self.load_theme()
 
     def load_theme(self):
-        """Load custom user theme, global theme or default"""
+        """
+        Load custom user theme, global theme or default.
+        If theme is based on another theme and it exists, it is also
+        loaded.
+        """
 
+        # custom theme requested by user via command line properties
         self.runtime['theme'] =  {}
         self.runtime['theme']['path'] = self.search_theme(self.parameters.THEME)
         if self.runtime['theme']['path'] is None:
@@ -118,6 +123,32 @@ class Application(Service):
                 self.srvdtb.ignore_key(key)
         except KeyError:
             self.log.warning("No ignored_keys defined in this theme")
+
+        # Parent theme associated with this theme
+        try:
+            pid = self.runtime['theme']['parent_theme']
+        except KeyError:
+            pid = None
+
+        if pid is not None:
+            try:
+                parent_theme = {}
+                parent_theme['id'] = pid
+                parent_theme['path'] = self.search_theme(pid)
+                # ~ parent_theme_conf = os.path.join(parent_theme['path'], "theme.adoc")
+                # ~ with open(parent_theme_conf, 'r') as fth:
+                    # ~ theme = json.load(fth)
+                    # ~ for prop in theme:
+                        # ~ parent_theme[prop] = theme[prop]
+                parent_theme['templates'] = os.path.join(parent_theme['path'], 'templates')
+                if not os.path.exists(parent_theme['templates']):
+                    parent_theme = None
+            except:
+                parent_theme = None
+        else:
+            parent_theme = None
+        self.runtime['theme']['parent_theme'] = parent_theme
+
 
         # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])

@@ -48,19 +48,31 @@ class Builder(Service):
         self.srvapp = self.get_service('App')
 
     def distribute(self, name, content):
+        """
+        Distribute source file to temporary directory.
+        Use this method when the source asciidoctor file doesn't have to
+        be analyzed.
+        """
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("\t\t\t  Page '%s' saved in %s", name, PAGE_PATH)
+        # ~ self.log.debug("\t\tPage '%s' saved in %s", name, PAGE_PATH)
 
     def distribute_to_source(self, name, content):
+        """
+        Distribute source file to user source directory.
+        Use this method when the source asciidoctor file has to
+        be analyzed to extract its properties.
+        File path reference will be saved and deleted at the end of the
+        execution.
+        """
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.srcdir, PAGE_NAME)
         self.temp_sources.append(PAGE_PATH)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-            self.log.debug("\t\t\t Page '%s' saved in %s", name, PAGE_PATH)
+            # ~ self.log.debug("\t\tPage '%s' saved in %s", name, PAGE_PATH)
 
 
     def create_tagcloud_from_key(self, key):
@@ -239,7 +251,6 @@ class Builder(Service):
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
         max_frequency = self.get_maxkv_freq()
         all_keys = self.srvdtb.get_all_keys()
-        self.log.error(all_keys)
         custom_buttons = ''
         for key in all_keys:
             ignored_keys = self.srvdtb.get_ignored_keys()
@@ -371,16 +382,30 @@ class Builder(Service):
         try:
             return TEMPLATES[template]
         except KeyError:
+            # Firstly, get template from custom theme
             template_path = os.path.join(theme['templates'], "%s.tpl" % template)
-            if not os.path.exists(template_path):
-                current_theme = 'default'
-                theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
-                template_path = os.path.join(theme_default, "%s.tpl" % template)
+            if os.path.exists(template_path):
+                self.log.debug("\t\tLoaded template '%s' from theme '%s'", template, theme['id'])
+            else:
+                # Get template from parent theme
+                parent_theme = theme['parent_theme']
+                if parent_theme is not None:
+                    template_path = os.path.join(parent_theme['templates'], "%s.tpl" % template)
+                    if os.path.exists(template_path):
+                        self.log.debug("\t\tLoaded template '%s' from parent theme '%s'", template, parent_theme['id'])
+                    else:
+                        # Get template from default theme
+                        current_theme = 'default'
+                        theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
+                        template_path = os.path.join(theme_default, "%s.tpl" % template)
 
-            if not os.path.exists(template_path):
-                self.log.error("Template '%s' not found in '%s'", template, template_path)
-                return None
-            # ~ self.log.debug("\t\tAdding template '%s' to cache from theme '%s'", template, current_theme)
+                        if os.path.exists(template_path):
+                            self.log.debug("\t\tLoaded template '%s' from default theme", template)
+                        else:
+                            self.log.error("Template '%s' not found. Exit.", template)
+                            exit()
+
+            # If template found, add it to cache
             TEMPLATES[template] = open(template_path, 'r').read()
             return TEMPLATES[template]
 
