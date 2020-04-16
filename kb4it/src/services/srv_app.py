@@ -237,6 +237,7 @@ class Application(Service):
         content = content.replace(self.srvbld.template('HTML_TAG_SECT3_OLD'), self.srvbld.template('HTML_TAG_SECT3_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_SECT4_OLD'), self.srvbld.template('HTML_TAG_SECT4_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_SECTIONBODY_OLD'), self.srvbld.template('HTML_TAG_SECTIONBODY_NEW'))
+        content = content.replace(self.srvbld.template('HTML_TAG_PRE_OLD'), self.srvbld.template('HTML_TAG_PRE_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_H2_OLD'), self.srvbld.template('HTML_TAG_H2_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_H3_OLD'), self.srvbld.template('HTML_TAG_H3_NEW'))
         content = content.replace(self.srvbld.template('HTML_TAG_H4_OLD'), self.srvbld.template('HTML_TAG_H4_NEW'))
@@ -295,7 +296,7 @@ class Application(Service):
                     userdoc = os.path.join(self.get_source_path(), docname)
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
-                        meta_section = self.srvbld.create_metadata_section(docname)
+                        meta_section = self.srvthm.create_metadata_section(docname)
                         PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, meta_section, docname, source_code)
                         fhtm.write(PAGE)
                     else:
@@ -520,7 +521,7 @@ class Application(Service):
                     # Create .adoc from value
                     sorted_docs = self.srvdtb.sort_by_date(related_docs_new)
                     basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-                    self.srvbld.build_pagination(basename, sorted_docs)
+                    self.srvthm.build_pagination(basename, sorted_docs)
                 else:
                     docname = "%s_%s.html" % (valid_filename(key), valid_filename(value))
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
@@ -533,7 +534,7 @@ class Application(Service):
             FORCE_DOC_KEY_COMPILATION = True
             if FORCE_DOC_KEY_COMPILATION:
                 docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
-                html = self.srvbld.create_key_page(key, values)
+                html = self.srvthm.create_key_page(key, values)
                 with open(docname, 'w') as fkey:
                     fkey.write(html)
 
