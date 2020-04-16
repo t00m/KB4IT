@@ -1,1 +1,0 @@
-<td class="%s eventday day uk-text-bold uk-text-center uk-background-primary"><a class="uk-link-text uk-text-normal" href="%s.html" style="color: white;">%s</a></td>

@@ -21,8 +21,11 @@ from evcal import EventsCalendar
 
 
 class Theme(Builder):
+    # ~ def initialize(self):
+        # ~ self.log.debug("Hi, Ich bin Thema 'techdoc'")
+
     def generate_sources(self):
-        pass
+        self.log.warning("Oikos shouldn't call this method...")
 
     def build(self):
         self.create_about_page()

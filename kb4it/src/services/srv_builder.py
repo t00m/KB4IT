@@ -189,7 +189,7 @@ class Builder(Service):
                 CARDS = ""
 
             if optional_title is None:
-                title = basename.replace('_', ' ').title()
+                title = basename.replace('_', ' ')
             else:
                 title = optional_title
             content = PG_HEAD % (title, PAGINATION, CARDS)
@@ -300,6 +300,28 @@ class Builder(Service):
 
         return html % (key, cloud, stats)
 
+
+    def create_key_body_page(self, key):
+        """Create key page."""
+        source_dir = self.srvapp.get_source_path()
+        values = self.srvdtb.get_all_values_for_key(key)
+        num_values = len(values)
+        html = self.template('BODY_KEY')
+
+        # TAB Cloud
+        cloud = self.create_tagcloud_from_key(key)
+
+        # TAB Stats
+        stats = ""
+        leader_row = self.template('LEADER_ROW')
+        for value in values:
+            docs = self.srvdtb.get_docs_by_key_value(key, value)
+            tpl_value_link = self.template('LEADER_ROW_VALUE_LINK')
+            value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
+            stats += leader_row % (value_link, len(docs))
+
+        return html % (cloud, stats)
+
     def get_html_values_from_key(self, doc, key):
         """Return the html link for a value."""
         html = []
@@ -394,18 +416,26 @@ class Builder(Service):
                     if os.path.exists(template_path):
                         self.log.debug("\t\tLoaded template '%s' from parent theme '%s'", template, parent_theme['id'])
                     else:
-                        # Get template from default theme
-                        current_theme = 'default'
-                        theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
-                        template_path = os.path.join(theme_default, "%s.tpl" % template)
+                        template_path = None
+                else:
+                    template_path = None
 
-                        if os.path.exists(template_path):
-                            self.log.debug("\t\tLoaded template '%s' from default theme", template)
-                        else:
-                            self.log.error("Template '%s' not found. Exit.", template)
-                            exit()
+                if template_path is None:
+                    # Get template from default theme
+                    current_theme = 'default'
+                    theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
+                    template_path = os.path.join(theme_default, "%s.tpl" % template)
+
+                    if os.path.exists(template_path):
+                        self.log.debug("\t\tLoaded template '%s' from default theme", template)
+                    else:
+                        self.log.error("Template '%s' not found. Exit.", template)
+                        exit()
 
             # If template found, add it to cache
-            TEMPLATES[template] = open(template_path, 'r').read()
-            return TEMPLATES[template]
-
+            try:
+                TEMPLATES[template] = open(template_path, 'r').read()
+                return TEMPLATES[template]
+            except FileNotFoundError as error:
+                self.log.error(error)
+                exit()
