@@ -21,10 +21,12 @@ class Theme(Builder):
 
     def build(self):
         # Default pages
-        self.create_all_keys_page()
-        self.create_properties_page()
-        self.create_stats_page()
-        self.create_index_all()
-        self.create_index_page()
-        self.create_about_page()
-        self.create_help_page()
+        self.create_page_all_keys()
+        self.create_page_properties()
+        self.create_page_stats()
+        self.create_page_index_all()
+        self.create_page_index()
+        self.create_page_about_app()
+        self.create_page_about_theme()
+        self.create_page_about_kb4it()
+        self.create_page_help()

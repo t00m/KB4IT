@@ -121,12 +121,12 @@ class Builder(Service):
 
         return html
 
-    def create_index_all(self):
+    def create_page_index_all(self):
         """C0111: Missing function docstring (missing-docstring)."""
         doclist = self.srvdtb.get_documents()
         self.build_pagination('all', doclist)
 
-    def create_recents_page(self):
+    def create_page_recents(self):
         """Create recents page."""
         doclist = self.srvdtb.get_documents()[:60]
         self.build_pagination('recents', doclist, 'Recents')
@@ -206,23 +206,23 @@ class Builder(Service):
             CARDS += """%s""" % card_search_filter
         return CARDS
 
-    def create_about_page(self):
-        """C0111: Missing function docstring (missing-docstring)."""
-        TPL_ABOUT = self.template('PAGE_ABOUT')
-        theme = self.srvapp.get_theme_properties()
-        self.distribute('about', TPL_ABOUT % (VERSION, theme['name'], theme['version'], theme['description']))
+    # ~ def create_page_about(self):
+        # ~ """C0111: Missing function docstring (missing-docstring)."""
+        # ~ TPL_ABOUT = self.template('PAGE_ABOUT')
+        # ~ theme = self.srvapp.get_theme_properties()
+        # ~ self.distribute('about', TPL_ABOUT % (VERSION, theme['name'], theme['version'], theme['description']))
 
-    def create_help_page(self):
+    def create_page_help(self):
         """C0111: Missing function docstring (missing-docstring)."""
         TPL_HELP = self.template('PAGE_HELP')
         self.distribute('help', TPL_HELP)
 
-    def create_index_page(self):
+    def create_page_index(self):
         """C0111: Missing function docstring (missing-docstring)."""
         TPL_INDEX = self.template('PAGE_INDEX')
         self.distribute('index', TPL_INDEX)
 
-    def create_all_keys_page(self):
+    def create_page_all_keys(self):
         """C0111: Missing function docstring (missing-docstring)."""
         content = self.template('PAGE_KEYS')
         all_keys = self.srvdtb.get_all_keys()
@@ -245,7 +245,7 @@ class Builder(Service):
                     maxkvfreq = len(values)
         return maxkvfreq
 
-    def create_properties_page(self):
+    def create_page_properties(self):
         """Create properties page."""
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
@@ -266,7 +266,7 @@ class Builder(Service):
         content = TPL_PROPS_PAGE % (custom_buttons)
         self.distribute('properties', content)
 
-    def create_stats_page(self):
+    def create_page_stats(self):
         TPL_STATS_PAGE = self.template('PAGE_STATS')
         item = self.template('KEY_LEADER_ITEM')
         numdocs = self.srvapp.get_numdocs()
@@ -280,7 +280,7 @@ class Builder(Service):
         self.distribute('stats', stats)
 
 
-    def create_key_page(self, key, values):
+    def create_page_key(self, key, values):
         """Create key page."""
         source_dir = self.srvapp.get_source_path()
         num_values = len(values)
@@ -301,7 +301,7 @@ class Builder(Service):
         return html % (key, cloud, stats)
 
 
-    def create_key_body_page(self, key):
+    def create_page_key_body(self, key):
         """Create key page."""
         source_dir = self.srvapp.get_source_path()
         values = self.srvdtb.get_all_values_for_key(key)
@@ -439,3 +439,27 @@ class Builder(Service):
             except FileNotFoundError as error:
                 self.log.error(error)
                 exit()
+
+    def create_page_about_app(self):
+        page = self.template('PAGE_ABOUT_APP')
+        srcdir = self.srvapp.get_source_path()
+        about = os.path.join(srcdir, 'about.adoc')
+        try:
+            content = open(about, 'r').read()
+        except:
+            content = 'No info available'
+        self.distribute('about_app', page % content)
+
+    def create_page_about_theme(self):
+        page = self.template('PAGE_ABOUT_THEME')
+        theme = self.srvapp.get_theme_properties()
+        # ~ content = ''
+        # ~ for prop in theme:
+            # ~ field_prop = "| *%s*\n" % prop
+            # ~ field_value = "| %s\n\n" % theme[prop]
+            # ~ content += "%s%s" % (field_prop, field_value)
+        self.distribute('about_theme', page % (theme['name'], theme['description'], theme['version']))
+
+    def create_page_about_kb4it(self):
+        page = self.template('PAGE_ABOUT_KB4IT')
+        self.distribute('about_kb4it', page % VERSION)
