@@ -2,12 +2,12 @@
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                       <a href="#"><span class="uk-text-emphasis uk-text-truncate">%s</span></a>
+                       <a href="#"><span class="uk-text-bolder uk-text-truncate">%s</span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li>
                                     <!-- View Metadata Button :: START -->
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#modal-full-metadata" uk-toggle><span class="">Metadata</span></a>
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading" href="#modal-full-metadata" uk-toggle><span class="">Metadata</span></a>
                                     <div id="modal-full-metadata" class="uk-modal-full" uk-modal>
                                         <div class="uk-modal-dialog">
                                             <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
@@ -25,7 +25,7 @@
                                 </li>
                                 <li>
                                     <!-- View Asciidoc Source Button :: START -->
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#modal-full-source" uk-toggle><span class="">Source</span></a>
+                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading" href="#modal-full-source" uk-toggle><span class="">Source</span></a>
                                     <div id="modal-full-source" class="uk-modal-full" uk-modal>
                                         <div class="uk-modal-dialog">
                                             <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
@@ -48,20 +48,19 @@
             <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-link-heading" href="#">Help</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">About</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="help.html">Help</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-small">About this app</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="about.html">About</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-small">About this theme</span></a>
                                 </li>
-                                <!--
+                                <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="rss.xml"><span class="uk-margin-small-right" uk-icon="icon: rss"></span></a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-small">About KB4IT</span></a>
                                 </li>
-                                -->
                             </ul>
                         </div>
                     </li>

@@ -534,7 +534,7 @@ class Application(Service):
             FORCE_DOC_KEY_COMPILATION = True
             if FORCE_DOC_KEY_COMPILATION:
                 docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
-                html = self.srvthm.create_key_page(key, values)
+                html = self.srvthm.create_page_key(key, values)
                 with open(docname, 'w') as fkey:
                     fkey.write(html)
 
