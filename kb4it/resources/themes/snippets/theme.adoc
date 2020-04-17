@@ -1,0 +1,7 @@
+{
+    "id": "snippets",
+    "name": "Snippets",
+    "description": "A theme to build a site based on programming language snippets",
+    "version": "0.0.1",
+    "kb4it": ">=0.7.8"
+}
