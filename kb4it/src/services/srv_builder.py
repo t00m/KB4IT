@@ -13,14 +13,16 @@ import os
 import sys
 import math
 import time
-import datetime as dt
+import shutil
+import random
+import threading
 from datetime import datetime
 from kb4it.src.core.mod_env import GPATH, VERSION
 from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import valid_filename, guess_datetime
 from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
-from kb4it.src.core.mod_utils import delete_files
+from kb4it.src.core.mod_utils import delete_files, extract_toc
 
 TEMPLATES = {}
 
@@ -46,6 +48,7 @@ class Builder(Service):
         """Get services."""
         self.srvdtb = self.get_service('DB')
         self.srvapp = self.get_service('App')
+
 
     def distribute(self, name, content):
         """
@@ -130,6 +133,9 @@ class Builder(Service):
         """Create recents page."""
         doclist = self.srvdtb.get_documents()[:60]
         self.build_pagination('recents', doclist, 'Recents')
+
+    def generate_sources(self):
+        pass
 
     def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD'):
         PG_HEAD = self.template(custom_pagination_template)
@@ -463,3 +469,63 @@ class Builder(Service):
     def create_page_about_kb4it(self):
         page = self.template('PAGE_ABOUT_KB4IT')
         self.distribute('about_kb4it', page % VERSION)
+
+    def job_done(self, future):
+        """C0111: Missing function docstring (missing-docstring)."""
+        THEME_ID = self.srvapp.get_theme_property('id')
+        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
+        HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
+        now = datetime.now()
+        timestamp = get_human_datetime(now)
+        time.sleep(random.random())
+        x = future.result()
+        cur_thread = threading.current_thread().name
+        if cur_thread != x:
+            adoc, rc, j = x
+            # Add header and footer to compiled doc
+            htmldoc = adoc.replace('.adoc', '.html')
+            if os.path.exists(htmldoc):
+                adoc_title = open(adoc).readlines()[0]
+                title = adoc_title[2:-1]
+                htmldoctmp = "%s.tmp" % htmldoc
+                shutil.move(htmldoc, htmldoctmp)
+                source = open(htmldoctmp, 'r').read()
+                toc = extract_toc(source)
+                content = self.srvapp.apply_transformations(source)
+                try:
+                    if 'Metadata' in content:
+                        content = highlight_metadata_section(content)
+                except NameError as error:
+                    # Sometimes, weird links in asciidoctor sources
+                    # provoke compilation errors
+                    basename = os.path.basename(adoc)
+                    self.log.error("\t\tERROR!! Please, check source document '%s'.", basename)
+                    self.log.error("\t\tERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
+                finally:
+                    # Some pages don't have toc section. Ignore it.
+                    pass
+
+                with open(htmldoc, 'w') as fhtm:
+                    len_toc = len(toc)
+                    if len_toc > 0:
+                        TOC = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED') % toc
+                    else:
+                        TOC = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
+                    docname = os.path.basename(adoc)
+                    # ~ docsdir = os.path.join(self.srvapp.get_source_path(), 'sources')
+                    userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), docname))
+                    if os.path.exists(userdoc):
+                        source_code = open(userdoc, 'r').read()
+                        self.srvthm = self.get_service('Theme')
+                        meta_section = self.srvthm.create_metadata_section(docname)
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, meta_section, docname, source_code)
+                        fhtm.write(PAGE)
+                    else:
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_NODOC % (title)
+                        fhtm.write(PAGE)
+                    fhtm.write(content)
+                    HTML_FOOTER = self.template('HTML_FOOTER')
+                    fhtm.write(HTML_FOOTER % timestamp)
+                os.remove(htmldoctmp)
+                return x
