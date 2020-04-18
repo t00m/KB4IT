@@ -636,9 +636,19 @@ class Application(Service):
         # ~ self.log.info("\t\tCopied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
 
         # Copy global resources to target path
-        global_resources_dir = GPATH['RESOURCES']
+        # FIXME: copy common resources, default theme and choosen theme
         resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
-        copydir(global_resources_dir, resources_dir_target)
+        global_resources_dir = GPATH['RESOURCES']
+        self.log.error("GRD: %s", global_resources_dir)
+        # ~ COMMON_RES_DIR = os.path.join(global_resources_dir, 'common')
+        theme_target_dir = os.path.join(resources_dir_target, 'themes')
+        theme = self.get_theme_properties()
+        DEFAULT_THEME = os.path.join(GPATH['THEMES'], 'default')
+        CUSTOM_THEME_ID = theme['id']
+        CUSTOM_THEME_PATH = theme['path']
+        copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
+        copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
+        copydir(GPATH['COMMON'], os.path.join(resources_dir_target, 'common'))
         self.log.info("\t\tCopied global resources to target path")
 
         # Copy local resources to target path
