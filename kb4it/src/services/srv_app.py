@@ -250,64 +250,6 @@ class Application(Service):
         content = content.replace(self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
         return content
 
-    # ~ def job_done(self, future):
-        # ~ """C0111: Missing function docstring (missing-docstring)."""
-        # ~ THEME_ID = self.runtime['theme']['id']
-        # ~ HTML_HEADER_COMMON = self.srvbld.template('HTML_HEADER_COMMON')
-        # ~ HTML_HEADER_DOC = self.srvbld.template('HTML_HEADER_DOC')
-        # ~ HTML_HEADER_NODOC = self.srvbld.template('HTML_HEADER_NODOC')
-        # ~ now = datetime.datetime.now()
-        # ~ timestamp = get_human_datetime(now)
-        # ~ time.sleep(random.random())
-        # ~ x = future.result()
-        # ~ cur_thread = threading.current_thread().name
-        # ~ if cur_thread != x:
-            # ~ adoc, rc, j = x
-            # ~ # Add header and footer to compiled doc
-            # ~ htmldoc = adoc.replace('.adoc', '.html')
-            # ~ if os.path.exists(htmldoc):
-                # ~ adoc_title = open(adoc).readlines()[0]
-                # ~ title = adoc_title[2:-1]
-                # ~ htmldoctmp = "%s.tmp" % htmldoc
-                # ~ shutil.move(htmldoc, htmldoctmp)
-                # ~ source = open(htmldoctmp, 'r').read()
-                # ~ toc = extract_toc(source)
-                # ~ content = self.apply_transformations(source)
-                # ~ try:
-                    # ~ if 'Metadata' in content:
-                        # ~ content = highlight_metadata_section(content)
-                # ~ except NameError as error:
-                    # ~ # Sometimes, weird links in asciidoctor sources
-                    # ~ # provoke compilation errors
-                    # ~ basename = os.path.basename(adoc)
-                    # ~ self.log.error("\t\tERROR!! Please, check source document '%s'.", basename)
-                    # ~ self.log.error("\t\tERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
-                # ~ finally:
-                    # ~ # Some pages don't have toc section. Ignore it.
-                    # ~ pass
-
-                # ~ with open(htmldoc, 'w') as fhtm:
-                    # ~ len_toc = len(toc)
-                    # ~ if len_toc > 0:
-                        # ~ TOC = self.srvbld.template('HTML_HEADER_MENU_CONTENTS_ENABLED') % toc
-                    # ~ else:
-                        # ~ TOC = self.srvbld.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-                    # ~ docname = os.path.basename(adoc)
-                    # ~ userdoc = os.path.join(self.get_source_path(), docname)
-                    # ~ if os.path.exists(userdoc):
-                        # ~ source_code = open(userdoc, 'r').read()
-                        # ~ meta_section = self.srvthm.create_metadata_section(docname)
-                        # ~ PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, meta_section, docname, source_code)
-                        # ~ fhtm.write(PAGE)
-                    # ~ else:
-                        # ~ PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_NODOC % (title)
-                        # ~ fhtm.write(PAGE)
-                    # ~ fhtm.write(content)
-                    # ~ HTML_FOOTER = self.srvbld.template('HTML_FOOTER')
-                    # ~ fhtm.write(HTML_FOOTER % timestamp)
-                # ~ os.remove(htmldoctmp)
-                # ~ return x
-
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("Stage 1\tCheck environment")
@@ -571,7 +513,7 @@ class Application(Service):
             for doc in docs:
                 cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                 job = exe.submit(exec_cmd, (doc, cmd, num))
-                job.add_done_callback(self.srvthm.job_done)
+                job.add_done_callback(self.srvthm.build_page)
                 self.log.debug("\t\tJob[%4d]: %s will be compiled", num, os.path.basename(doc))
                 # ~ self.log.debug("\t\tJob[%4d]: %s", num, cmd)
                 jobs.append(job)

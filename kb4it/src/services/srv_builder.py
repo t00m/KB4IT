@@ -470,8 +470,10 @@ class Builder(Service):
         page = self.template('PAGE_ABOUT_KB4IT')
         self.distribute('about_kb4it', page % VERSION)
 
-    def job_done(self, future):
-        """C0111: Missing function docstring (missing-docstring)."""
+    def build_page(self, future):
+        """
+        Compile page from asciidoctor to HTML.
+        """
         THEME_ID = self.srvapp.get_theme_property('id')
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
         HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
