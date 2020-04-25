@@ -28,20 +28,21 @@ class Theme(Builder):
         self.log.warning("Oikos shouldn't call this method...")
 
     def build(self):
-        self.create_about_page()
-        self.create_help_page()
-        self.create_all_keys_page()
-        self.create_properties_page()
-        self.create_stats_page()
-        self.create_index_all()
-        self.create_index_page()
-        self.create_bookmarks_page()
-        self.create_authors_page()
+        self.create_page_about_app()
+        self.create_page_about_theme()
+        self.create_page_about_kb4it()
+        self.create_page_help()
+        self.create_page_properties()
+        self.create_page_stats()
+        self.create_page_index_all()
+        self.create_page_index()
+        self.create_page_bookmarks()
+        self.create_page_authors()
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
-        self.create_events_page()
-        # ~ self.create_blog_page()
-        self.create_recents_page()
+        self.create_page_events()
+        # ~ self.create_page_blog()
+        self.create_page_recents()
 
     def get_doc_card_event(self, doc):
         source_dir = self.srvapp.get_source_path()
@@ -164,7 +165,7 @@ class Theme(Builder):
             adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
             # ~ self.log.debug(adate)
 
-    def create_events_page(self):
+    def create_page_events(self):
         self.log.debug("\t\tBuilding events")
         doclist = []
         ecats = {}
@@ -193,12 +194,12 @@ class Theme(Builder):
         page = self.template('PAGE_EVENTS')
         self.distribute('events', page % HTML)
 
-    def create_recents_page(self):
+    def create_page_recents(self):
         """Create recents page."""
         doclist = self.srvdtb.get_documents()[:60]
         self.build_pagination('recents', doclist, 'Recents')
 
-    def create_bookmarks_page(self):
+    def create_page_bookmarks(self):
         """Create bookmarks page."""
         doclist = []
         for doc in self.srvdtb.get_documents():
@@ -207,7 +208,7 @@ class Theme(Builder):
                 doclist.append(doc)
         self.build_pagination('bookmarks', doclist, 'Bookmarks')
 
-    def create_authors_page(self):
+    def create_page_authors(self):
         PAGE_AUTHOR = self.template('PAGE_AUTHOR')
         SECTION_ETYPE = self.template('PAGE_AUTHOR_SECTION_EVENT_TYPE')
         SWITCHER_ETYPE = self.template('PAGE_AUTHOR_SWITCHER_EVENT_TYPE')

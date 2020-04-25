@@ -25,7 +25,7 @@ from kb4it.src.core.mod_srv import Service
 from kb4it.src.core.mod_utils import get_human_datetime
 from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_kbdict
 from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
-from kb4it.src.core.mod_utils import get_source_docs, get_metadata, get_hash_from_dict
+from kb4it.src.core.mod_utils import get_source_docs, get_asciidoctor_attributes, get_hash_from_dict
 from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
 from kb4it.src.core.mod_utils import file_timestamp
 from kb4it.src.core.mod_utils import guess_datetime, string_timestamp
@@ -81,11 +81,7 @@ class Application(Service):
         self.load_theme()
 
     def load_theme(self):
-        """
-        Load custom user theme, global theme or default.
-        If theme is based on another theme and it exists, it is also
-        loaded.
-        """
+        """Load custom user theme, global theme or default."""
 
         # custom theme requested by user via command line properties
         self.runtime['theme'] =  {}
@@ -124,30 +120,25 @@ class Application(Service):
         except KeyError:
             self.log.warning("No ignored_keys defined in this theme")
 
-        # Parent theme associated with this theme
-        try:
-            pid = self.runtime['theme']['parent_theme']
-        except KeyError:
-            pid = None
+        # ~ # Parent theme associated with this theme
+        # ~ try:
+            # ~ pid = self.runtime['theme']['parent_theme']
+        # ~ except KeyError:
+            # ~ pid = None
 
-        if pid is not None:
-            try:
-                parent_theme = {}
-                parent_theme['id'] = pid
-                parent_theme['path'] = self.search_theme(pid)
-                # ~ parent_theme_conf = os.path.join(parent_theme['path'], "theme.adoc")
-                # ~ with open(parent_theme_conf, 'r') as fth:
-                    # ~ theme = json.load(fth)
-                    # ~ for prop in theme:
-                        # ~ parent_theme[prop] = theme[prop]
-                parent_theme['templates'] = os.path.join(parent_theme['path'], 'templates')
-                if not os.path.exists(parent_theme['templates']):
-                    parent_theme = None
-            except:
-                parent_theme = None
-        else:
-            parent_theme = None
-        self.runtime['theme']['parent_theme'] = parent_theme
+        # ~ if pid is not None:
+            # ~ try:
+                # ~ parent_theme = {}
+                # ~ parent_theme['id'] = pid
+                # ~ parent_theme['path'] = self.search_theme(pid)
+                # ~ parent_theme['templates'] = os.path.join(parent_theme['path'], 'templates')
+                # ~ if not os.path.exists(parent_theme['templates']):
+                    # ~ parent_theme = None
+            # ~ except:
+                # ~ parent_theme = None
+        # ~ else:
+            # ~ parent_theme = None
+        # ~ self.runtime['theme']['parent_theme'] = parent_theme
 
 
         # Register theme service
@@ -310,7 +301,7 @@ class Application(Service):
 
             # Get metadata
             docpath = os.path.join(self.runtime['dir']['source'], docname)
-            keys = get_metadata(docpath)
+            keys = get_asciidoctor_attributes(docpath)
 
             # To track changes in a document, hashes for metadata and content are created.
             # Comparing them with those in the cache, KB4IT determines if a document must be
@@ -581,7 +572,6 @@ class Application(Service):
         # FIXME: copy common resources, default theme and choosen theme
         resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
         global_resources_dir = GPATH['RESOURCES']
-        self.log.error("GRD: %s", global_resources_dir)
         # ~ COMMON_RES_DIR = os.path.join(global_resources_dir, 'common')
         theme_target_dir = os.path.join(resources_dir_target, 'themes')
         theme = self.get_theme_properties()
@@ -601,7 +591,7 @@ class Application(Service):
             self.log.info("\t\tCopied local resources to target path")
 
         # Copy back all HTML files from target to cache
-        # Fixme: should cache contents be deletd before copying?
+        # Fixme: should cache contents be deleted before copying?
         pattern = os.path.join(self.runtime['dir']['target'], '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])

@@ -21,7 +21,6 @@ class Theme(Builder):
 
     def build(self):
         # Default pages
-        self.create_page_all_keys()
         self.create_page_properties()
         self.create_page_stats()
         self.create_page_index_all()

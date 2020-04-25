@@ -23,7 +23,6 @@ class Theme(Builder):
 
     def build(self):
         # Default pages
-        self.create_page_all_keys()
         self.create_page_properties()
         self.create_page_stats()
         self.create_page_index_all()
@@ -69,6 +68,27 @@ class Theme(Builder):
             raise
 
         return html
+
+    def create_page_key_body(self, key):
+        """Create key page."""
+        source_dir = self.srvapp.get_source_path()
+        values = self.srvdtb.get_all_values_for_key(key)
+        num_values = len(values)
+        html = self.template('BODY_KEY')
+
+        # TAB Cloud
+        cloud = self.create_tagcloud_from_key(key)
+
+        # TAB Stats
+        stats = ""
+        leader_row = self.template('LEADER_ROW')
+        for value in values:
+            docs = self.srvdtb.get_docs_by_key_value(key, value)
+            tpl_value_link = self.template('LEADER_ROW_VALUE_LINK')
+            value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
+            stats += leader_row % (value_link, len(docs))
+
+        return html % (cloud, stats)
 
     def get_doc_card(self, doc):
         source_dir = self.srvapp.get_source_path()

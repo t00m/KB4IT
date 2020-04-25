@@ -151,19 +151,6 @@ def get_font_size(frequency, max_frequency):
     return size
 
 
-def nosb(alist, lower=False):
-    """Return a new list of elements, forcing them to lowercase if necessary."""
-    newlist = []
-    for item in alist:
-        if len(item) > 0:
-            if lower:
-                item = item.lower()
-            newlist.append(item.strip())
-    newlist.sort(key=lambda y: y.lower())
-
-    return newlist
-
-
 def extract_toc(source):
     """C0111: Missing function docstring (missing-docstring)."""
     toc = ''
@@ -215,7 +202,7 @@ def delete_files(files):
             log.warning(error)
             log.warning(files)
 
-def get_metadata(docpath):
+def get_asciidoctor_attributes(docpath):
     """C0111: Missing function docstring (missing-docstring)."""
     props = {}
     try:
@@ -230,8 +217,8 @@ def get_metadata(docpath):
         for n in range(1, len(line)):
             if line[n].startswith(':'):
                 key = line[n][1:line[n].find(':', 1)]
-                alist = nosb(line[n][len(key)+2:-1].split(','))
-                props[key] = alist
+                values = line[n][len(key)+2:-1].split(',')
+                props[key] = [value.strip() for value in values]
             elif line[n].startswith(EOHMARK):
                 # Stop processing if EOHMARK is found
                 break
