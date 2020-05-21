@@ -78,14 +78,14 @@ class Application(Service):
         self.get_services()
 
         # Select theme
-        self.load_theme()
+        self.theme_load()
 
-    def load_theme(self):
+    def theme_load(self):
         """Load custom user theme, global theme or default."""
 
         # custom theme requested by user via command line properties
         self.runtime['theme'] =  {}
-        self.runtime['theme']['path'] = self.search_theme(self.parameters.THEME)
+        self.runtime['theme']['path'] = self.theme_search(self.parameters.THEME)
         if self.runtime['theme']['path'] is None:
             self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
             self.log.warning("Fallback to default theme")
@@ -120,27 +120,6 @@ class Application(Service):
         except KeyError:
             self.log.warning("No ignored_keys defined in this theme")
 
-        # ~ # Parent theme associated with this theme
-        # ~ try:
-            # ~ pid = self.runtime['theme']['parent_theme']
-        # ~ except KeyError:
-            # ~ pid = None
-
-        # ~ if pid is not None:
-            # ~ try:
-                # ~ parent_theme = {}
-                # ~ parent_theme['id'] = pid
-                # ~ parent_theme['path'] = self.search_theme(pid)
-                # ~ parent_theme['templates'] = os.path.join(parent_theme['path'], 'templates')
-                # ~ if not os.path.exists(parent_theme['templates']):
-                    # ~ parent_theme = None
-            # ~ except:
-                # ~ parent_theme = None
-        # ~ else:
-            # ~ parent_theme = None
-        # ~ self.runtime['theme']['parent_theme'] = parent_theme
-
-
         # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])
         try:
@@ -153,11 +132,25 @@ class Application(Service):
             raise
         self.log.info("Loaded theme '%s': %s", self.runtime['theme']['id'], self.runtime['theme']['path'])
 
-    def search_theme(self, theme):
+    def theme_search(self, theme):
         """Search custom theme"""
 
         if theme is None:
-            return None
+            # No custom theme passed in arguments. Autodetect.
+            self.log.debug("Autodetecting theme from source path")
+            source_path = self.runtime['dir']['source']
+            source_resources_path = os.path.join(source_path, 'resources')
+            source_themes_path = os.path.join(source_resources_path, 'themes')
+            all_themes = os.path.join(source_themes_path, '*')
+            self.log.debug("Looking for first theme ocurrence in: %s", all_themes)
+            try:
+                theme_path = glob.glob(all_themes)[0]
+                self.log.debug("Found theme path: %s", theme_path)
+                return theme_path
+            except:
+                theme_path = None
+                self.log.debug("Theme not found", theme_path)
+                return None
 
         found = False
 
