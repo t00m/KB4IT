@@ -1,0 +1,7 @@
+{
+    "id": "awesome",
+    "name": "Awesome Selhosted",
+    "description": "Theme for demo app Awesome Selhosted",
+    "version": "0.0.1",
+    "kb4it": "0.7.4"
+}
