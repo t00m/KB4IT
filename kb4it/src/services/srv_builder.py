@@ -60,7 +60,7 @@ class Builder(Service):
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        # ~ self.log.debug("\t\tPage '%s' saved in %s", name, PAGE_PATH)
+        self.log.debug("\t\tPage '%s' distributed to temporal directory: %s", name, PAGE_PATH)
 
     def distribute_to_source(self, name, content):
         """
@@ -75,7 +75,7 @@ class Builder(Service):
         self.temp_sources.append(PAGE_PATH)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-            # ~ self.log.debug("\t\tPage '%s' saved in %s", name, PAGE_PATH)
+            self.log.debug("\t\tPage '%s' distributed to source: %s", name, PAGE_PATH)
 
     def template(self, template):
         """Return the template content from default theme or user theme"""
