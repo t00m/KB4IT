@@ -13,10 +13,11 @@ Server module.
 
 import os
 import re
+import math
 import requests
 
 from kb4it.src.core.mod_env import LPATH
-from kb4it.src.core.mod_utils import valid_filename
+from kb4it.src.core.mod_utils import valid_filename, get_font_size
 from kb4it.src.services.srv_builder import Builder
 
 TAG_START = """<!-- BEGIN SOFTWARE LIST -->"""
@@ -25,11 +26,15 @@ TAG_END = """<!-- END SOFTWARE LIST -->"""
 AWESOME_README_INTERNET = 'https://raw.githubusercontent.com/awesome-selfhosted/awesome-selfhosted/master/README.md'
 
 class Theme(Builder):
+    index = ""
+
     def hello(self):
         self.log.debug("This is the theme techdoc")
 
     def generate_sources(self):
         """Generate pages from Awesome Selfhosted README.md"""
+
+        adoc = ""
 
         if not os.path.exists('src'):
             os.makedirs('src')
@@ -53,15 +58,28 @@ class Theme(Builder):
             # Get topic, category and subcategory
             if line.startswith('#'):
                 header = line[:line.find(' ')]
-                if len(header) == 2:
+                len_header = len(header)
+                if len_header == 2:
                     topic = line[line.find(' ')+1:]
                     category = ""
                     subcategory = ""
-                if len(header) == 3:
+                if len_header == 3:
                     category = line[line.find(' ')+1:]
                     subcategory = ""
-                if len(header) == 4:
+                if len_header == 4:
                     subcategory = line[line.find(' ')+1:]
+
+                # Fix wrong levels
+                if category == '' and subcategory != '':
+                    category = subcategory
+                    subcategory = ''
+
+                if len_header == 2:
+                    adoc += "\n\n== %s\n\n" % topic
+                elif len_header == 3:
+                    adoc += "\n\n=== %s\n\n" % category
+                elif len_header == 4:
+                    adoc += "\n\n==== %s\n\n" % subcategory
 
             # Get awesome selfhosted solutions properties
             if line.startswith('- '):
@@ -135,6 +153,14 @@ class Theme(Builder):
                 solution['description'] = description
                 self.write_page(solution)
 
+                this_solution = "\n* %s[%s]\n" % (solution['url'], solution['name'])
+                adoc += this_solution
+                # ~ - [Ackee](https://ackee.electerious.com) - Self-hosted analytics tool for those who care about privacy. ([Demo](http://demo.ackee.electerious.com), [Source Code](https://github.com/electerious/Ackee)) `MIT` `Nodejs`
+
+
+        self.index = adoc
+
+
 
     def build(self):
         # Default pages
@@ -145,8 +171,6 @@ class Theme(Builder):
         self.create_page_about_app()
         self.create_page_about_theme()
         self.create_page_about_kb4it()
-        # ~ self.create_page_help()
-        pass
 
 
     def download(self, url, filename):
@@ -172,8 +196,30 @@ class Theme(Builder):
                         )
         self.distribute_to_source(NAME, CONTENT)
 
+    def create_page_properties(self):
+        """Create properties page"""
+        self.properties = {}
+        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
+        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
+        max_frequency = self.get_maxkv_freq()
+        all_keys = self.srvdtb.get_all_keys()
+        custom_buttons = ''
+        for key in all_keys:
+            ignored_keys = self.srvdtb.get_ignored_keys()
+            if key not in ignored_keys:
+                html = self.create_tagcloud_from_key(key)
+                values = self.srvdtb.get_all_values_for_key(key)
+                frequency = len(values)
+                size = get_font_size(frequency, max_frequency)
+                proportion = int(math.log((frequency * 100) / max_frequency))
+                tooltip = "%d values" % len(values)
+                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
+                custom_buttons += button
+                self.properties[key] = html
+        content = TPL_PROPS_PAGE % (custom_buttons)
+        self.distribute('properties', content)
 
     def create_page_index(self):
         PAGE = self.template('PAGE_INDEX')
-        CONTENT = PAGE
+        CONTENT = PAGE % self.properties['Topic']
         self.distribute_to_source('index', CONTENT)
