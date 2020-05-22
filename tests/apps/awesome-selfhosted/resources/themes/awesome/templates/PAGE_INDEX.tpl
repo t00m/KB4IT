@@ -24,7 +24,7 @@
     </li> <!-- Index :: End -->
 
     <li> <!-- Cloud :: Start -->
-
+%s
     </li> <!-- Cloud :: End -->
 </ul>
 <!-- Tabs content :: END-->

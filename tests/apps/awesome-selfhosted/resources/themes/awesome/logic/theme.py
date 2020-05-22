@@ -160,11 +160,6 @@ class Theme(Builder):
                 self.solutions[name] = solution
                 self.write_page(solution)
 
-                # ~ this_solution = "\n* %s[%s]\n" % (solution['url'], solution['name'])
-                # ~ adoc += this_solution
-                # ~ - [Ackee](https://ackee.electerious.com) - Self-hosted analytics tool for those who care about privacy. ([Demo](http://demo.ackee.electerious.com), [Source Code](https://github.com/electerious/Ackee)) `MIT` `Nodejs`
-
-
         self.index = adoc
 
 
@@ -181,9 +176,13 @@ class Theme(Builder):
 
 
     def download(self, url, filename):
-        r = requests.get(url, allow_redirects=True, stream=True)
-        with open(filename, 'wb') as fout:
-            bytes_recvd = fout.write(r.content)
+        try:
+            r = requests.get(url, allow_redirects=True, stream=True)
+            with open(filename, 'wb') as fout:
+                bytes_recvd = fout.write(r.content)
+        except Exception as error:
+            self.log.error(error)
+            exit()
 
 
     def write_page(self, solution):
@@ -227,10 +226,14 @@ class Theme(Builder):
         content = TPL_PROPS_PAGE % (custom_buttons)
         self.distribute('properties', content)
 
+    def create_page_about_app(self):
+        """About app page."""
+        CONTENT = self.template('PAGE_ABOUT_APP')
+        self.distribute('about_app', CONTENT)
+
     def create_page_index(self):
         PAGE = self.template('PAGE_INDEX')
-        CONTENT = PAGE % (self.index) #, self.properties['Topic'])
-        self.log.error(self.solutions)
+        CONTENT = PAGE % (self.index, self.properties['Topic'])
         self.distribute('index', CONTENT)
 
 
@@ -249,6 +252,8 @@ class Theme(Builder):
         link_topic = LINK % ("uk-link-heading uk-text-meta", "Topic_%s.html" % valid_filename(doc).replace('.adoc', ''), "", topic)
         tooltip ="%s" % (title)
 
-        description = self.solutions[name]['description']
-        # ~ self.log.error("%s: %s" % (name, description))
+        try:
+            description = self.solutions[name]['description']
+        except:
+            description = ''
         return DOC_CARD % (tooltip, link_title, topic, description)
