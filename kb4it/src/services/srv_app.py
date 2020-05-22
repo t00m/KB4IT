@@ -464,7 +464,7 @@ class Application(Service):
                 with open(docname, 'w') as fkey:
                     fkey.write(html)
 
-
+        self.srvthm.build()
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -617,7 +617,6 @@ class Application(Service):
 
         self.stage_01_check_environment()
         self.srvthm.generate_sources()
-        self.srvthm.build()
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
         self.stage_04_processing()
