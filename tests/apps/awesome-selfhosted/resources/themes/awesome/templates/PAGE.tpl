@@ -1,5 +1,6 @@
 = %s
 
+:Name:          %s
 :Language:      %s
 :License:       %s
 :Topic:         %s

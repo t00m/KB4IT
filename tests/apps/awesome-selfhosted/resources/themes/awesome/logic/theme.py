@@ -27,6 +27,7 @@ AWESOME_README_INTERNET = 'https://raw.githubusercontent.com/awesome-selfhosted/
 
 class Theme(Builder):
     index = ""
+    solutions = {}
 
     def hello(self):
         self.log.debug("This is the theme techdoc")
@@ -55,6 +56,11 @@ class Theme(Builder):
                 n += 1
 
         for line in lines[s:e]:
+            # Uncomment for testing
+            n = 0
+            if n > 150:
+                break
+            n += 1
             # Get topic, category and subcategory
             if line.startswith('#'):
                 header = line[:line.find(' ')]
@@ -75,11 +81,11 @@ class Theme(Builder):
                     subcategory = ''
 
                 if len_header == 2:
-                    adoc += "\n\n== %s\n\n" % topic
+                    adoc += ". <<%s#, %s>>\n" % (valid_filename("Topic_%s" % topic), topic)
                 elif len_header == 3:
-                    adoc += "\n\n=== %s\n\n" % category
+                    adoc += ".. <<%s#, %s>>\n" % (valid_filename("Category_%s" % category), category)
                 elif len_header == 4:
-                    adoc += "\n\n==== %s\n\n" % subcategory
+                    adoc += "... <<%s#, %s>>\n" % (valid_filename("Subcategory_%s" % subcategory), subcategory)
 
             # Get awesome selfhosted solutions properties
             if line.startswith('- '):
@@ -139,7 +145,7 @@ class Theme(Builder):
                 # Solution name and url
                 es = line.find(')')
                 core = line[:es]
-                name = core[core.find('[')+1:core.find(']')]
+                name = core[core.find('[')+1:core.find(']')].strip()
                 url = core[len(name)+5:es]
                 solution['name'] = name
                 solution['url'] = url
@@ -151,10 +157,11 @@ class Theme(Builder):
                     ed = line.find('`')
                 description = line[2:ed].strip()
                 solution['description'] = description
+                self.solutions[name] = solution
                 self.write_page(solution)
 
-                this_solution = "\n* %s[%s]\n" % (solution['url'], solution['name'])
-                adoc += this_solution
+                # ~ this_solution = "\n* %s[%s]\n" % (solution['url'], solution['name'])
+                # ~ adoc += this_solution
                 # ~ - [Ackee](https://ackee.electerious.com) - Self-hosted analytics tool for those who care about privacy. ([Demo](http://demo.ackee.electerious.com), [Source Code](https://github.com/electerious/Ackee)) `MIT` `Nodejs`
 
 
@@ -183,6 +190,7 @@ class Theme(Builder):
         PAGE = self.template('PAGE')
         NAME = valid_filename(solution['name'])
         CONTENT = PAGE % (
+                            solution['name'],
                             solution['name'],
                             solution['language'],
                             solution['license'],
@@ -221,5 +229,26 @@ class Theme(Builder):
 
     def create_page_index(self):
         PAGE = self.template('PAGE_INDEX')
-        CONTENT = PAGE % self.properties['Topic']
-        self.distribute_to_source('index', CONTENT)
+        CONTENT = PAGE % (self.index) #, self.properties['Topic'])
+        self.log.error(self.solutions)
+        self.distribute('index', CONTENT)
+
+
+    def get_doc_card(self, doc):
+        """Get card for a given doc"""
+        source_dir = self.srvapp.get_source_path()
+        DOC_CARD = self.template('CARD_DOC')
+        DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
+        LINK = self.template('LINK')
+        name = self.srvdtb.get_values(doc, 'Name')[0]
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        topic = self.srvdtb.get_values(doc, 'Scope')[0]
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        subcategory = self.srvdtb.get_values(doc, 'Subategory')[0]
+        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
+        link_topic = LINK % ("uk-link-heading uk-text-meta", "Topic_%s.html" % valid_filename(doc).replace('.adoc', ''), "", topic)
+        tooltip ="%s" % (title)
+
+        description = self.solutions[name]['description']
+        # ~ self.log.error("%s: %s" % (name, description))
+        return DOC_CARD % (tooltip, link_title, topic, description)
