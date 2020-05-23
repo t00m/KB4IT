@@ -56,11 +56,6 @@ class Theme(Builder):
                 n += 1
 
         for line in lines[s:e]:
-            # Uncomment for testing
-            n = 0
-            if n > 150:
-                break
-            n += 1
             # Get topic, category and subcategory
             if line.startswith('#'):
                 header = line[:line.find(' ')]
