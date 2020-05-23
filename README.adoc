@@ -5,6 +5,8 @@
 _KB4IT_ is a static website generator based on Asciidoctor sources
 mainly for technical documentation purposes.
 
+You can see some demos https://github.com/t00m/kb4it-adocs[here].
+
 === Motivations
 
 * The main aim is to provide an easy way to write technical
