@@ -13,11 +13,11 @@ KB4IT module. Entry point.
 import os
 import sys
 import argparse
-from kb4it.src.core.mod_env import APP, LPATH, GPATH
-from kb4it.src.core.mod_log import get_logger
-from kb4it.src.services.srv_app import Application
-from kb4it.src.services.srv_db import KB4ITDB
-from kb4it.src.services.srv_builder import Builder
+from kb4it.core.env import APP, LPATH, GPATH
+from kb4it.core.log import get_logger
+from kb4it.services.app import Application
+from kb4it.services.database import KB4ITDB
+from kb4it.services.builder import Builder
 
 class KB4IT:
     """KB4IT Application class."""

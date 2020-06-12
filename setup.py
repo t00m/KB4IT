@@ -58,7 +58,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     download_url='https://github.com/t00m/KB4IT/archive/master.zip',
     license='GPLv3',
-    packages=['kb4it.src', 'kb4it.src.core', 'kb4it.src.services'],
+    packages=['kb4it', 'kb4it.core', 'kb4it.services'],
     # distutils does not support install_requires, but pip needs it to be
     # able to automatically install dependencies
     install_requires=[],
@@ -84,7 +84,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kb4it = kb4it.src.kb4it:main',
+            'kb4it = kb4it.kb4it:main',
             ],
         },
 )
