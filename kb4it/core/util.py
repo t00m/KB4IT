@@ -23,8 +23,8 @@ import threading
 import subprocess
 import traceback as tb
 from datetime import date, datetime
-from kb4it.src.core.mod_env import LPATH, GPATH, EOHMARK, FILE
-from kb4it.src.core.mod_log import get_logger
+from kb4it.core.env import LPATH, GPATH, EOHMARK, FILE
+from kb4it.core.log import get_logger
 
 log = get_logger('Utils')
 

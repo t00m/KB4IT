@@ -20,15 +20,15 @@ import tempfile
 import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.core.mod_env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
-from kb4it.src.core.mod_srv import Service
-from kb4it.src.core.mod_utils import get_human_datetime
-from kb4it.src.core.mod_utils import extract_toc, valid_filename, load_current_kbdict
-from kb4it.src.core.mod_utils import exec_cmd, delete_target_contents
-from kb4it.src.core.mod_utils import get_source_docs, get_asciidoctor_attributes, get_hash_from_dict
-from kb4it.src.core.mod_utils import save_current_kbdict, copy_docs, copydir
-from kb4it.src.core.mod_utils import file_timestamp
-from kb4it.src.core.mod_utils import guess_datetime, string_timestamp
+from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
+from kb4it.core.service import Service
+from kb4it.core.util import get_human_datetime
+from kb4it.core.util import extract_toc, valid_filename, load_current_kbdict
+from kb4it.core.util import exec_cmd, delete_target_contents
+from kb4it.core.util import get_source_docs, get_asciidoctor_attributes, get_hash_from_dict
+from kb4it.core.util import save_current_kbdict, copy_docs, copydir
+from kb4it.core.util import file_timestamp
+from kb4it.core.util import guess_datetime, string_timestamp
 
 
 class Application(Service):

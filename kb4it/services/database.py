@@ -9,8 +9,8 @@ RDF Graph In Memory database module.
 """
 
 
-from kb4it.src.core.mod_srv import Service
-from kb4it.src.core.mod_utils import guess_datetime, sort_dictionary
+from kb4it.core.service import Service
+from kb4it.core.util import guess_datetime, sort_dictionary
 
 
 class KB4ITDB(Service):

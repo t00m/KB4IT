@@ -15,7 +15,7 @@ import sys
 import glob
 
 
-ROOT = abspath(sys.modules[__name__].__file__ + "/../../../")
+ROOT = abspath(sys.modules[__name__].__file__ + "/../../")
 USER_DIR = os.path.expanduser('~')
 
 APP = {}

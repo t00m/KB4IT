@@ -10,8 +10,8 @@ Server module.
 # Description: Service class
 """
 
-from kb4it.src.core.mod_log import get_logger
-from kb4it.src.core.mod_utils import get_traceback
+from kb4it.core.log import get_logger
+from kb4it.core.util import get_traceback
 
 
 class Service:

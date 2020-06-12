@@ -17,12 +17,12 @@ import shutil
 import random
 import threading
 from datetime import datetime
-from kb4it.src.core.mod_env import GPATH, VERSION
-from kb4it.src.core.mod_srv import Service
-from kb4it.src.core.mod_utils import valid_filename, guess_datetime
-from kb4it.src.core.mod_utils import get_human_datetime, fuzzy_date_from_timestamp
-from kb4it.src.core.mod_utils import set_max_frequency, get_font_size
-from kb4it.src.core.mod_utils import delete_files, extract_toc
+from kb4it.core.env import GPATH, VERSION
+from kb4it.core.service import Service
+from kb4it.core.util import valid_filename, guess_datetime
+from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
+from kb4it.core.util import set_max_frequency, get_font_size
+from kb4it.core.util import delete_files, extract_toc
 
 TEMPLATES = {}
 
