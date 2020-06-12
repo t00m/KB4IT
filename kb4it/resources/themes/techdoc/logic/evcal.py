@@ -1,8 +1,8 @@
 import calendar
 from calendar import HTMLCalendar
 from datetime import datetime
-from kb4it.src.core.mod_srv import Service
-from kb4it.src.core.mod_utils import valid_filename, guess_datetime
+from kb4it.core.service import Service
+from kb4it.core.util import valid_filename, guess_datetime
 
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""

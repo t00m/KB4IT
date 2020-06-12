@@ -14,18 +14,20 @@ import os
 import sys
 import glob
 import uuid
-import nltk
+from urllib.parse import urlparse
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor as Executor
+
+import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from dateutil.parser import parse
 import feedparser
-from urllib.parse import urlparse
-from concurrent.futures import ThreadPoolExecutor as Executor
-from kb4it.src.services.srv_builder import Builder
-from kb4it.src.core.mod_utils import valid_filename, guess_datetime
-from kb4it.src.core.mod_utils import sort_dictionary
+
+from kb4it.services.builder import Builder
+from kb4it.core.util import valid_filename, guess_datetime
+from kb4it.core.util import sort_dictionary
 
 IGNORE = set()
 for token in tuple(nltk.corpus.stopwords.words('french')):

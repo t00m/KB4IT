@@ -10,7 +10,7 @@ Server module.
 # Description: techdoc theme scripts
 """
 
-from kb4it.src.services.srv_builder import Builder
+from kb4it.services.builder import Builder
 
 class Theme(Builder):
     def hello(self):

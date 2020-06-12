@@ -11,8 +11,9 @@ Server module.
 """
 
 import os
-from kb4it.src.services.srv_builder import Builder
-from kb4it.src.core.mod_utils import valid_filename
+
+from kb4it.services.builder import Builder
+from kb4it.core.util import valid_filename
 
 class Theme(Builder):
     def hello(self):
