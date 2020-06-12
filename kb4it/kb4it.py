@@ -157,3 +157,10 @@ def main():
     params = parser.parse_args()
     app = KB4IT(params)
     app.run()
+
+# Example:
+# ~ from kb4it.kb4it import KB4IT
+# ~ from argparse import Namespace
+# ~ params = Namespace(FORCE=True, LOGLEVEL='INFO', SORT_ATTRIBUTE=None, SOURCE_PATH='/tmp/myapp', TARGET_PATH='/tmp/output', THEME=None)
+# ~ kb = KB4IT(params)
+# ~ kb.run()
