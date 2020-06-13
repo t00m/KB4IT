@@ -13,6 +13,7 @@ KB4IT module. Entry point.
 import os
 import sys
 import argparse
+from argparse import Namespace
 from kb4it.core.env import APP, LPATH, GPATH
 from kb4it.core.log import get_logger
 from kb4it.services.app import Application
@@ -21,7 +22,7 @@ from kb4it.services.builder import Builder
 
 class KB4IT:
     """KB4IT Application class."""
-
+    ready = False
     params = None
     log = None
     source_path = None
@@ -29,23 +30,33 @@ class KB4IT:
     numdocs = 0
     tmpdir = None
 
-    def __init__(self, params):
+    def __init__(self, params=None):
         """Initialize KB4IT class."""
-        self.params = params
-        self.setup_logging(params.LOGLEVEL)
+        if params is not None:
+            self.params = params
+        else:
+            self.params = Namespace()
+        try:
+            self.setup_logging(params.LOGLEVEL)
+        except:
+            self.setup_logging('INFO')
         self.check_params()
         self.setup_services()
         self.setup_environment()
 
     def check_params(self):
-        source = os.path.abspath(self.params.SOURCE_PATH)
-        target = os.path.abspath(self.params.TARGET_PATH)
-        if source == target:
-            self.log.error("Error. Source and target paths are the same.")
-            self.log.error("Source path: %s", source)
-            self.log.error("Target path: %s", target)
-            self.log.error("Check, please!")
-            sys.exit(-1)
+        try:
+            source = os.path.abspath(self.params.SOURCE_PATH)
+            target = os.path.abspath(self.params.TARGET_PATH)
+            if source == target:
+                self.log.error("Error. Source and target paths are the same.")
+                self.log.error("Source path: %s", source)
+                self.log.error("Target path: %s", target)
+                self.log.error("Check, please!")
+                sys.exit(-1)
+            self.ready = True
+        except:
+            pass
 
     def get_params(self):
         """Return parametres."""
@@ -132,9 +143,13 @@ class KB4IT:
 
     def run(self):
         """Start application."""
-        srvapp = self.get_service('App')
-        srvapp.run()
-        self.stop()
+        if self.ready:
+            srvapp = self.get_service('App')
+            srvapp.run()
+            self.stop()
+
+    def get_version(self):
+        return '%s %s' % (APP['shortname'], APP['version'])
 
     def stop(self):
         """Stop registered services by executing the 'end' method (if any)."""
