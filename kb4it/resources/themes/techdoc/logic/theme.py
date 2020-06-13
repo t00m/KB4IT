@@ -14,13 +14,13 @@ import calendar
 from calendar import HTMLCalendar
 from datetime import datetime
 
-from kb4it.services.builder import Builder
+from kb4it.services.builder import KB4ITBuilder
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import valid_filename, get_human_datetime, guess_datetime
 from evcal import EventsCalendar
 
 
-class Theme(Builder):
+class Theme(KB4ITBuilder):
     # ~ def initialize(self):
         # ~ self.log.debug("Hi, Ich bin Thema 'techdoc'")
 

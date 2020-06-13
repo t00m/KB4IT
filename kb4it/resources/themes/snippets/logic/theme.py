@@ -12,10 +12,10 @@ Server module.
 
 import os
 
-from kb4it.services.builder import Builder
+from kb4it.services.builder import KB4ITBuilder
 from kb4it.core.util import valid_filename
 
-class Theme(Builder):
+class Theme(KB4ITBuilder):
     def hello(self):
         self.log.debug("This is the theme snippets")
 

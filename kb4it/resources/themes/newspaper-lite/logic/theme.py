@@ -25,7 +25,7 @@ from nltk.stem import PorterStemmer
 from dateutil.parser import parse
 import feedparser
 
-from kb4it.services.builder import Builder
+from kb4it.services.builder import KB4ITBuilder
 from kb4it.core.util import valid_filename, guess_datetime
 from kb4it.core.util import sort_dictionary
 
@@ -68,7 +68,7 @@ def get_tags(text):
     ltags.sort()
     return ltags
 
-class Theme(Builder):
+class Theme(KB4ITBuilder):
     feeds = {}
 
     def clean_source_dir(self):
