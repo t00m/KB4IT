@@ -31,7 +31,7 @@ from kb4it.core.util import file_timestamp
 from kb4it.core.util import guess_datetime, string_timestamp
 
 
-class Application(Service):
+class KB4ITApp(Service):
     """C0111: Missing function docstring (missing-docstring)."""
     runtime = {} # Dictionary of runtime properties
     kbdict_new = {} # New compilation cache

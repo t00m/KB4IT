@@ -16,12 +16,12 @@ import argparse
 from argparse import Namespace
 from kb4it.core.env import APP, LPATH, GPATH
 from kb4it.core.log import get_logger
-from kb4it.services.app import Application
+from kb4it.services.app import KB4ITApp
 from kb4it.services.database import KB4ITDB
 from kb4it.services.builder import Builder
 
 class KB4IT:
-    """KB4IT Application class."""
+    """KB4IT main class."""
     ready = False
     params = None
     log = None
@@ -87,7 +87,7 @@ class KB4IT:
         try:
             services = {
                 'DB': KB4ITDB(),
-                'App': Application(),
+                'App': KB4ITApp(),
                 'Builder': Builder(),
             }
             for name in services:
