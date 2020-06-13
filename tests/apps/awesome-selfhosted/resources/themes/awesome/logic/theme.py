@@ -18,14 +18,14 @@ import requests
 
 from kb4it.src.core.mod_env import LPATH
 from kb4it.src.core.mod_utils import valid_filename, get_font_size
-from kb4it.src.services.srv_builder import Builder
+from kb4it.services.builder import KB4ITBuilder
 
 TAG_START = """<!-- BEGIN SOFTWARE LIST -->"""
 TAG_END = """<!-- END SOFTWARE LIST -->"""
 
 AWESOME_README_INTERNET = 'https://raw.githubusercontent.com/awesome-selfhosted/awesome-selfhosted/master/README.md'
 
-class Theme(Builder):
+class Theme(KB4ITBuilder):
     index = ""
     solutions = {}
 

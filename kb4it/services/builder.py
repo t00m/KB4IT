@@ -26,7 +26,7 @@ from kb4it.core.util import delete_files, extract_toc
 
 TEMPLATES = {}
 
-class Builder(Service):
+class KB4ITBuilder(Service):
     """Build HTML blocks"""
 
     tmpdir = None

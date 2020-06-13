@@ -18,7 +18,7 @@ from kb4it.core.env import APP, LPATH, GPATH
 from kb4it.core.log import get_logger
 from kb4it.services.app import KB4ITApp
 from kb4it.services.database import KB4ITDB
-from kb4it.services.builder import Builder
+from kb4it.services.builder import KB4ITBuilder
 
 class KB4IT:
     """KB4IT main class."""
@@ -88,7 +88,7 @@ class KB4IT:
             services = {
                 'DB': KB4ITDB(),
                 'App': KB4ITApp(),
-                'Builder': Builder(),
+                'Builder': KB4ITBuilder(),
             }
             for name in services:
                 self.register_service(name, services[name])
