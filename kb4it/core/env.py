@@ -18,8 +18,24 @@ import glob
 ROOT = abspath(sys.modules[__name__].__file__ + "/../../")
 USER_DIR = os.path.expanduser('~')
 
+# App Info
 APP = {}
+APP['name'] = "Knowledge Base For IT"
 APP['shortname'] = "KB4IT"
+APP['description'] = "KB4IT is a static website generator based on \
+                      Asciidoctor sources mainly for technical \
+                      documentation purposes."
+APP['license'] = 'GPL v3'
+APP['license_long'] = "The code is licensed under the terms of the  GPL v3\n\
+                  so you're free to grab, extend, improve and fork the \
+                  code\nas you want"
+APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
+APP['desc'] = ""
+APP['version'] = '0.7.6'
+APP['author'] = 'Tomás Vírseda'
+APP['author_email'] = 'tomasvirseda@gmail.com'
+APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
+APP['website'] = 'https://github.com/t00m/KB4IT'
 
 # Local paths
 LPATH = {}
@@ -49,22 +65,6 @@ GPATH['THEMES'] = os.path.join(GPATH['RESOURCES'], 'themes')
 GPATH['APPDATA'] = os.path.join(GPATH['COMMON'], 'appdata')
 GPATH['RES'] = os.path.join(GPATH['DATA'], 'res')
 
-
-VERSION = open(os.path.join(GPATH['APPDATA'], 'VERSION'), 'r').read()
-
-# App Info
-APP['name'] = "Knowledge Base For IT"
-APP['description'] = "KB4IT is a static website generator based on \
-                      Asciidoctor sources mainly for technical \
-                      documentation purposes."
-APP['license'] = "The code is licensed under the terms of the  GPL v3\n\
-                  so you're free to grab, extend, improve and fork the \
-                  code\nas you want"
-APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
-APP['desc'] = ""
-APP['version'] = VERSION
-APP['authors'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
-APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 
 # Configuration, SAP Notes Database and Log files
 FILE = {}

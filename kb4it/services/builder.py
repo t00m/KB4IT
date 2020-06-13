@@ -17,7 +17,7 @@ import shutil
 import random
 import threading
 from datetime import datetime
-from kb4it.core.env import GPATH, VERSION
+from kb4it.core.env import APP, GPATH
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename, guess_datetime
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
@@ -509,5 +509,5 @@ class KB4ITBuilder(Service):
     def create_page_about_kb4it(self):
         """About KB4IT page."""
         page = self.template('PAGE_ABOUT_KB4IT')
-        self.distribute('about_kb4it', page % VERSION)
+        self.distribute('about_kb4it', page % APP['version'])
 
