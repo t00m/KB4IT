@@ -1,2 +1,2 @@
 pip3 install restview --user
-restview --long-description
+$HOME/.local/bin/restview -e 'python3 setup.py --long-description'

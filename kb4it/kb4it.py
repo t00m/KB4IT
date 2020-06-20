@@ -21,7 +21,20 @@ from kb4it.services.database import KB4ITDB
 from kb4it.services.builder import KB4ITBuilder
 
 class KB4IT:
-    """KB4IT main class."""
+    """
+    KB4IT main class
+
+    It can be executed from command line:
+    $HOME/.local/bin/kb4it -theme <None|THEME> -force -log DEBUG -sort <ATTRIBUTE> -source <SOURCE_PATH> -target <TARGET_PATH>
+
+    Or it can be called from another app as a library:
+    from kb4it.kb4it import KB4IT
+    from argparse import Namespace
+    params = Namespace(FORCE=True, LOGLEVEL='INFO', SORT_ATTRIBUTE=None, SOURCE_PATH='/tmp/myapp', TARGET_PATH='/tmp/output', THEME=None)
+    kb = KB4IT(params)
+    kb.run()
+    """
+
     ready = False
     params = None
     log = None
@@ -173,9 +186,3 @@ def main():
     app = KB4IT(params)
     app.run()
 
-# Example:
-# ~ from kb4it.kb4it import KB4IT
-# ~ from argparse import Namespace
-# ~ params = Namespace(FORCE=True, LOGLEVEL='INFO', SORT_ATTRIBUTE=None, SOURCE_PATH='/tmp/myapp', TARGET_PATH='/tmp/output', THEME=None)
-# ~ kb = KB4IT(params)
-# ~ kb.run()
