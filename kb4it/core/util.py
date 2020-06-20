@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Utils service.
-
 # File: srv_utils.py
 # Author: Tomás Vírseda
 # License: GPL v3

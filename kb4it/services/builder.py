@@ -60,7 +60,7 @@ class KB4ITBuilder(Service):
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("\t\tPage '%s' distributed to temporal directory: %s", name, PAGE_PATH)
+        self.log.debug("Page '%s' distributed to temporal directory: %s", name, PAGE_PATH)
 
     def distribute_to_source(self, name, content):
         """
@@ -75,7 +75,7 @@ class KB4ITBuilder(Service):
         self.temp_sources.append(PAGE_PATH)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-            self.log.debug("\t\tPage '%s' distributed to source: %s", name, PAGE_PATH)
+            self.log.debug("Page '%s' distributed to source: %s", name, PAGE_PATH)
 
     def template(self, template):
         """Return the template content from default theme or user theme"""
@@ -92,14 +92,14 @@ class KB4ITBuilder(Service):
             # If not found, get it from default theme
             template_path = os.path.join(theme['templates'], "%s.tpl" % template)
             if os.path.exists(template_path):
-                self.log.debug("\t\tLoaded template '%s' from theme '%s'", template, theme['id'])
+                self.log.debug("Loaded template '%s' from theme '%s'", template, theme['id'])
             else:
                 current_theme = 'default'
                 theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
                 template_path = os.path.join(theme_default, "%s.tpl" % template)
 
                 if os.path.exists(template_path):
-                    self.log.debug("\t\tLoaded template '%s' from default theme", template)
+                    self.log.debug("Loaded template '%s' from default theme", template)
                 else:
                     self.log.error("Template '%s' not found. Exit.", template)
                     exit()
@@ -144,8 +144,8 @@ class KB4ITBuilder(Service):
                     # Sometimes, weird links in asciidoctor sources
                     # provoke compilation errors
                     basename = os.path.basename(adoc)
-                    self.log.error("\t\tERROR!! Please, check source document '%s'.", basename)
-                    self.log.error("\t\tERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
+                    self.log.error("ERROR!! Please, check source document '%s'.", basename)
+                    self.log.error("ERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
                 finally:
                     # Some pages don't have toc section. Ignore it.
                     pass
@@ -241,7 +241,7 @@ class KB4ITBuilder(Service):
                 title = optional_title
             content = PG_HEAD % (title, PAGINATION, CARDS)
             self.distribute(name, content)
-        # ~ self.log.debug("\t\t\t  Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
+        # ~ self.log.debug("Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
 
     def build_cardset(self, doclist):
         """Default method to build pages paginated"""
@@ -443,7 +443,7 @@ class KB4ITBuilder(Service):
             html += self.template('METADATA_SECTION_FOOTER')
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
-            self.log.error("\t\t%s", msgerror)
+            self.log.error("%s", msgerror)
             html = ''
             raise
 
