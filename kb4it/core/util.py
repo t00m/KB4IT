@@ -55,9 +55,12 @@ def save_current_kbdict(kbdict, path, name=None):
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
     for doc in docs:
-        shutil.copy('%s' % doc, target)
-        log.debug("          %s copied to %s", doc, target)
-    log.debug("          %d documents copied to '%s'", len(docs), target)
+        try:
+            shutil.copy('%s' % doc, target)
+            log.debug("%s copied to %s", doc, target)
+        except:
+            log.warning("%s not found", doc)
+    log.debug("%d documents copied to '%s'", len(docs), target)
 
 
 def copydir(source, dest):
