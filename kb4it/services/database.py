@@ -26,6 +26,16 @@ class KB4ITDB(Service):
         params = self.app.get_params()
         self.sort_attribute = params.SORT_ATTRIBUTE
 
+    def del_document(self, doc):
+        """Delete a document node from database."""
+        adoc = "%s.adoc" % doc
+        try:
+            del(self.db[adoc])
+            self.log.debug("Document '%s' deleted", adoc)
+            self.sort_database()
+        except KeyError:
+            self.log.debug("Document '%s' doesn't exist", adoc)
+
     def add_document(self, doc):
         """Add a new document node to the database."""
         self.db[doc] = {}
@@ -39,7 +49,7 @@ class KB4ITDB(Service):
         except KeyError:
             self.db[doc][key] = [value]
 
-        self.log.debug("\t\t\tKey '%s' with value '%s' linked to document: %s", key, value, doc)
+        self.log.debug("Key '%s' with value '%s' linked to document: %s", key, value, doc)
 
     def get_blocked_keys(self):
         """Return blocked keys"""

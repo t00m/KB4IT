@@ -24,10 +24,10 @@ from datetime import date, datetime
 from kb4it.core.env import LPATH, GPATH, EOHMARK, FILE
 from kb4it.core.log import get_logger
 
-log = get_logger('Utils')
+log = get_logger('KB4ITUtil')
 
 
-def load_current_kbdict(source_path):
+def load_kbdict(source_path):
     """C0111: Missing function docstring (missing-docstring)."""
     source_path = valid_filename(source_path)
     KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % source_path)
@@ -39,7 +39,7 @@ def load_current_kbdict(source_path):
     log.debug("Current kbdict entries: %d", len(kbdict))
     return kbdict
 
-def save_current_kbdict(kbdict, path, name=None):
+def save_kbdict(kbdict, path, name=None):
     """C0111: Missing function docstring (missing-docstring)."""
     if name is None:
         target_path = valid_filename(path)
