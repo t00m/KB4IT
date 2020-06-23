@@ -26,10 +26,10 @@ from gi.repository import GObject
 from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime
-from kb4it.core.util import extract_toc, valid_filename, load_current_kbdict
+from kb4it.core.util import extract_toc, valid_filename, load_kbdict
 from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes, get_hash_from_dict
-from kb4it.core.util import save_current_kbdict, copy_docs, copydir
+from kb4it.core.util import save_kbdict, copy_docs, copydir
 from kb4it.core.util import file_timestamp
 from kb4it.core.util import guess_datetime, string_timestamp
 
@@ -45,7 +45,7 @@ class KB4ITApp(Service):
 
         # Get params from command line
         self.parameters = self.app.get_params()
-        self.log.debug(self.app.get_params())
+        self.log.debug("KB4IT params: %s", self.app.get_params())
 
         # Initialize directories
         self.runtime['dir'] = {}
@@ -73,7 +73,7 @@ class KB4ITApp(Service):
         self.runtime['docs']['cached'] = []
 
         # Load cache dictionary and initialize the new one
-        self.kbdict_cur = load_current_kbdict(self.runtime['dir']['source'])
+        self.kbdict_cur = load_kbdict(self.runtime['dir']['source'])
         self.kbdict_new['document'] = {}
         self.kbdict_new['metadata'] = {}
 
@@ -190,6 +190,9 @@ class KB4ITApp(Service):
     def get_theme_property(self, prop):
         return self.runtime['theme'][prop]
 
+    def get_cache_path(self):
+        return self.runtime['dir']['cache']
+
     def get_source_path(self):
         """Get asciidoctor sources path."""
         return self.runtime['dir']['source']
@@ -281,6 +284,33 @@ class KB4ITApp(Service):
         browsable throught its metadata.
         """
         self.log.debug("Stage 3\tPreprocessing")
+        self.log.debug("Clean cache:")
+        missing = []
+        try:
+            for docname in self.kbdict_cur['document']:
+                docpath = os.path.join(self.runtime['dir']['source'], docname)
+                if not os.path.exists(docpath):
+                    missing.append(docname)
+        except:
+            self.log.debug("Cache is empty")
+
+        for docname in missing:
+            del(self.kbdict_cur['document'][docname])
+            self.log.debug("Ignore missing document: %s", docname)
+            self.log.debug("Clean references to this document:")
+            for key in self.kbdict_cur['metadata']:
+                for value in self.kbdict_cur['metadata'][key]:
+                    documents = self.kbdict_cur['metadata'][key][value]
+                    if docname in documents:
+                        documents.remove(docname)
+                        self.log.debug("[%s][%s]: ignored reference to document: %s", key, value, docname)
+                        # ~ if len(documents) == 0:
+                            # ~ del(self.kbdict_cur['metadata'][key][value])
+                            # ~ self.log.debug("[%s][%s] is empty. Deleted.", key, value)
+                        # ~ else:
+                        self.kbdict_cur['metadata'][key][value] = documents
+        self.log.debug("Ignored %d documents", len(missing))
+
         tsdict = {}
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
@@ -351,6 +381,7 @@ class KB4ITApp(Service):
 
             # Get cached document path and check if it exists
             cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
+            self.log.debug("Cached document: %s", cached_document)
             cached_document_exists = os.path.exists(cached_document)
 
             # Compare the document with the one in the cache
@@ -402,8 +433,9 @@ class KB4ITApp(Service):
                 self.runtime['docs']['cached'].append(filename)
                 self.log.debug("Document %s is cached. It won't be compiled." % valid_filename(docname))
 
+        self.log.debug("Number of documents analyzed: %d", len(self.runtime['docs']['bag']))
         # Save current status for the next run
-        save_current_kbdict(self.kbdict_new, self.runtime['dir']['source'])
+        save_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort_database()
@@ -598,7 +630,7 @@ class KB4ITApp(Service):
         self.log.debug("Copying HTML files to cache...")
 
         # Copy JSON database to target path so it can be queried from others applications
-        save_current_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')
+        save_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')
         self.log.debug("Copied JSON database to target")
 
     def stage_09_remove_temporary_dir(self):
@@ -640,3 +672,20 @@ class KB4ITApp(Service):
 
     def is_running(self):
         return self.running
+
+    def delete_document(self, adoc):
+        # Remove source document
+        source_dir = self.get_source_path()
+        source_path = os.path.join(source_dir, "%s.adoc" % adoc)
+        os.unlink(source_path)
+        self.log.debug("Deleted source document: %s", source_path)
+
+        # Remove database document
+        self.srvdtb.del_document(adoc)
+        self.log.debug("Deleted document from database")
+
+        # Remove cache document
+        cache_dir = self.get_cache_path()
+        cached_path = os.path.join(cache_dir, "%s.html" % adoc)
+        os.unlink(cached_path)
+        self.log.debug("Deleted cached document: %s", cached_path)
