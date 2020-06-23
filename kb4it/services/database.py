@@ -39,6 +39,7 @@ class KB4ITDB(Service):
     def add_document(self, doc):
         """Add a new document node to the database."""
         self.db[doc] = {}
+        self.log.debug("* DOC[%s] added to database", doc)
 
     def add_document_key(self, doc, key, value):
         """Add a new key/value node for a given document."""
@@ -49,7 +50,7 @@ class KB4ITDB(Service):
         except KeyError:
             self.db[doc][key] = [value]
 
-        self.log.debug("Key '%s' with value '%s' linked to document: %s", key, value, doc)
+        self.log.debug("* DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys"""

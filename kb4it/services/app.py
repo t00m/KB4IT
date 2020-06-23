@@ -121,7 +121,7 @@ class KB4ITApp(Service):
                 self.log.debug("Ignoring key: %s", key)
                 self.srvdtb.ignore_key(key)
         except KeyError:
-            self.log.warning("No ignored_keys defined in this theme")
+            self.log.debug("No ignored_keys defined in this theme")
 
         # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])
@@ -261,14 +261,6 @@ class KB4ITApp(Service):
         self.log.debug("Stage 2\tGet Asciidoctor source documents")
         self.runtime['docs']['bag'] = get_source_docs(self.runtime['dir']['source'])
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
-        # ~ if self.runtime['docs']['count'] == 0:
-            # ~ themeid = self.get_theme_property('id')
-            # ~ if themeid == 'default':
-                # ~ self.log.error("No asciidoctor files found in: %s", self.runtime['dir']['source'])
-                # ~ self.log.error("Execution finished.")
-                # ~ sys.exit()
-            # ~ else:
-                # ~ self.log.warning("No source files found.")
         self.log.debug("Found %d asciidoctor documents", self.runtime['docs']['count'])
         for doc in self.runtime['docs']['bag']:
             self.log.debug("%s", doc)
@@ -285,37 +277,37 @@ class KB4ITApp(Service):
         """
         self.log.debug("Stage 3\tPreprocessing")
         self.log.debug("Clean cache:")
-        missing = []
-        try:
-            for docname in self.kbdict_cur['document']:
-                docpath = os.path.join(self.runtime['dir']['source'], docname)
-                if not os.path.exists(docpath):
-                    missing.append(docname)
-        except:
-            self.log.debug("Cache is empty")
 
-        for docname in missing:
-            del(self.kbdict_cur['document'][docname])
-            self.log.debug("Ignore missing document: %s", docname)
-            self.log.debug("Clean references to this document:")
-            for key in self.kbdict_cur['metadata']:
-                for value in self.kbdict_cur['metadata'][key]:
-                    documents = self.kbdict_cur['metadata'][key][value]
-                    if docname in documents:
-                        documents.remove(docname)
-                        self.log.debug("[%s][%s]: ignored reference to document: %s", key, value, docname)
-                        # ~ if len(documents) == 0:
-                            # ~ del(self.kbdict_cur['metadata'][key][value])
-                            # ~ self.log.debug("[%s][%s] is empty. Deleted.", key, value)
-                        # ~ else:
-                        self.kbdict_cur['metadata'][key][value] = documents
-        self.log.debug("Ignored %d documents", len(missing))
+        def clean_cache():
+            missing = []
+            try:
+                for docname in self.kbdict_cur['document']:
+                    docpath = os.path.join(self.runtime['dir']['source'], docname)
+                    if not os.path.exists(docpath):
+                        missing.append(docname)
+            except:
+                self.log.debug("Cache is empty")
+
+            for docname in missing:
+                del(self.kbdict_cur['document'][docname])
+                self.log.debug("Ignore missing document: %s", docname)
+                self.log.debug("Clean references to this document:")
+                for key in self.kbdict_cur['metadata']:
+                    for value in self.kbdict_cur['metadata'][key]:
+                        documents = self.kbdict_cur['metadata'][key][value]
+                        if docname in documents:
+                            documents.remove(docname)
+                            self.log.debug("[%s][%s]: ignored reference to document: %s", key, value, docname)
+                            self.kbdict_cur['metadata'][key][value] = documents
+            self.log.debug("Ignored %d documents", len(missing))
+
+        clean_cache()
 
         tsdict = {}
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
             self.kbdict_new['document'][docname] = {}
-            self.log.debug("Preprocessing DOC[%s]", docname)
+            self.log.debug("? DOC[%s] Preprocessing", docname)
 
             # Add a new document to the database
             self.srvdtb.add_document(docname)
@@ -379,67 +371,66 @@ class KB4ITApp(Service):
                         if value not in self.kbdict_new['metadata'][key]:
                             self.kbdict_new['metadata'][key][value] = [docname]
 
-            # Get cached document path and check if it exists
-            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
-            self.log.debug("Cached document: %s", cached_document)
-            cached_document_exists = os.path.exists(cached_document)
-
-            # Compare the document with the one in the cache
-            self.log.debug("Does document %s exist in cache? %s", docname, cached_document_exists)
-
-            if not cached_document_exists:
-                FORCE_DOC_COMPILATION = True
-            else:
-                try:
-                    # Compare timestamps for each source/cached document.
-                    #If timestamp differs, compile it again.
-                    SORT_ATTRIBUTE = self.runtime['sort_attribute']
-                    try:
-                        doc_ts_new = guess_datetime(self.kbdict_new['document'][docname][SORT_ATTRIBUTE])
-                    except:
-                        doc_ts_new = guess_datetime(self.kbdict_new['document'][docname]['Timestamp'])
-
-                    try:
-                        doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname][SORT_ATTRIBUTE])
-                    except:
-                        doc_ts_cur = guess_datetime(self.kbdict_cur['document'][docname]['Timestamp'])
-
-                    if doc_ts_new > doc_ts_cur:
-                        FORCE_DOC_COMPILATION = True
-                    else:
-                        FORCE_DOC_COMPILATION = False
-                except KeyError:
-                    FORCE_DOC_COMPILATION = True
-
-            # Save compilation status
-            self.kbdict_new['document'][docname]['compile'] = FORCE_DOC_COMPILATION
-
             # Force compilation (from command line)?
-            if self.parameters.FORCE == True:
-                FORCE_ALL = True
-            else:
-                FORCE_ALL = False
+            DOC_COMPILATION = False
+            FORCE_ALL = self.parameters.FORCE
+            if not FORCE_ALL:
+                # Get cached document path and check if it exists
+                cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
+                cached_document_exists = os.path.exists(cached_document)
+                # ~ self.log.debug("* DOC[%s] Cached? %s", docname, cached_document_exists)
 
-            if FORCE_DOC_COMPILATION or FORCE_ALL:
+                # Compare the document with the one in the cache
+                # ~ self.log.debug("Does document %s exist in cache? %s", docname, cached_document_exists)
+
+                if not cached_document_exists:
+                    DOC_COMPILATION = True
+                    REASON = "Not cached"
+                    # ~ self.log.debug("DOC[%s] not cached. Compile", docname)
+                else:
+                    try:
+                        hash_new = self.kbdict_new['document'][docname]['content_hash'] + self.kbdict_new['document'][docname]['metadata_hash']
+                        hash_cur = self.kbdict_cur['document'][docname]['content_hash'] + self.kbdict_cur['document'][docname]['metadata_hash']
+                        DOC_COMPILATION = hash_new != hash_cur
+                        REASON = "Hashes differ? %s" % DOC_COMPILATION
+                        # ~ self.log.debug("DOC[%s] cached. Hashes differ? %s. Compile? %s", docname, DOC_COMPILATION, DOC_COMPILATION)
+                    except Exception as warning:
+                        DOC_COMPILATION = True
+                        REASON = warning
+                # ~ self.log.debug("* DOC[%s] Compile? %s - Reason: %s", docname, DOC_COMPILATION, REASON)
+
+            COMPILE = DOC_COMPILATION or FORCE_ALL
+            # Save compilation status
+            self.kbdict_new['document'][docname]['compile'] = COMPILE
+
+            if COMPILE:
                 newadoc = srcadoc.replace(EOHMARK, '', 1)
 
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
-                self.log.debug("Document %s will be compiled again" % valid_filename(docname))
+                self.log.debug("+ DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             else:
                 filename = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
                 self.runtime['docs']['cached'].append(filename)
-                self.log.debug("Document %s is cached. It won't be compiled." % valid_filename(docname))
+                self.log.debug("= DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
 
-        self.log.debug("Number of documents analyzed: %d", len(self.runtime['docs']['bag']))
         # Save current status for the next run
         save_kbdict(self.kbdict_new, self.runtime['dir']['source'])
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort_database()
-        self.log.debug("Preprocessed %d docs", len(self.runtime['docs']['bag']))
+
+         # Documents preprocessing stats
+        self.log.debug("[PRE-PROCESSING STATS] Number of documents analyzed: %d", len(self.runtime['docs']['bag']))
+        keep_docs = compile_docs = 0
+        for docname in self.kbdict_new['document']:
+            if self.kbdict_new['document'][docname]['compile']:
+                compile_docs += 1
+            else:
+                keep_docs += 1
+        self.log.debug("[PRE-PROCESSING STATS] Keep: %d - Compile: %d", keep_docs, compile_docs)
 
 
     def stage_04_processing(self):
