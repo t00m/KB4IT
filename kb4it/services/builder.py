@@ -60,7 +60,7 @@ class KB4ITBuilder(Service):
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("Page '%s' distributed to temporal directory: %s", name, PAGE_PATH)
+        self.log.debug("PAGE[%s] distributed to temporary path", name)
 
     def distribute_to_source(self, name, content):
         """
@@ -75,7 +75,7 @@ class KB4ITBuilder(Service):
         self.temp_sources.append(PAGE_PATH)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-            self.log.debug("Page '%s' distributed to source: %s", name, PAGE_PATH)
+            self.log.debug("PAGE[%s] distributed to source path", name)
 
     def template(self, template):
         """Return the template content from default theme or user theme"""
@@ -92,16 +92,16 @@ class KB4ITBuilder(Service):
             # If not found, get it from default theme
             template_path = os.path.join(theme['templates'], "%s.tpl" % template)
             if os.path.exists(template_path):
-                self.log.debug("Loaded template '%s' from theme '%s'", template, theme['id'])
+                self.log.debug("THEME[%s] TPL[%s] loaded", theme['id'], template)
             else:
                 current_theme = 'default'
                 theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
                 template_path = os.path.join(theme_default, "%s.tpl" % template)
 
                 if os.path.exists(template_path):
-                    self.log.debug("Loaded template '%s' from default theme", template)
+                    self.log.debug("THEME['default'] TPL[%s] loaded", template)
                 else:
-                    self.log.error("Template '%s' not found. Exit.", template)
+                    self.log.error("TPL[%s] not found. Exit.", template)
                     exit()
 
             # If template found, add it to cache. Otherwise, exit.
@@ -174,7 +174,7 @@ class KB4ITBuilder(Service):
                 os.remove(htmldoctmp)
                 return x
 
-    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD'):
+    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD', fake=False):
         """
         Create a page with documents.
         If amount of documents is greater than 100, split it in several pages
@@ -182,6 +182,7 @@ class KB4ITBuilder(Service):
         PG_HEAD = self.template(custom_pagination_template)
         PG_CARD = self.template('CARD_PAGINATION')
         num_rel_docs = len(doclist)
+        pagelist = []
         if num_rel_docs < 100:
             total_pages = 1
             k = math.ceil(num_rel_docs/total_pages)
@@ -240,7 +241,10 @@ class KB4ITBuilder(Service):
             else:
                 title = optional_title
             content = PG_HEAD % (title, PAGINATION, CARDS)
-            self.distribute(name, content)
+            if not fake:
+                self.distribute(name, content)
+            pagelist.append(name)
+        return pagelist
         # ~ self.log.debug("Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
 
     def build_cardset(self, doclist):
