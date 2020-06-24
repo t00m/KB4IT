@@ -31,10 +31,10 @@ class KB4ITDB(Service):
         adoc = "%s.adoc" % doc
         try:
             del(self.db[adoc])
-            self.log.debug("Document '%s' deleted", adoc)
+            self.log.debug("DOC[%s] deleted from database", doc)
             self.sort_database()
         except KeyError:
-            self.log.debug("Document '%s' doesn't exist", adoc)
+            self.log.debug("DOC[%s] not found in database", doc)
 
     def add_document(self, doc):
         """Add a new document node to the database."""
