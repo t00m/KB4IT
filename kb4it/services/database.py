@@ -18,13 +18,16 @@ class KB4ITDB(Service):
 
     db = {}
     sorted_docs = []
-    blocked_keys = ['Title', 'Timestamp']
-    ignored_keys = blocked_keys
+    blocked_keys = []
+    ignored_keys = []
 
     def initialize(self):
         """Initialize database module."""
         params = self.app.get_params()
         self.sort_attribute = params.SORT_ATTRIBUTE
+        self.db = {}
+        self.sorted_docs = []
+        self.ignored_keys = self.blocked_keys = ['Title', 'Timestamp']
 
     def del_document(self, doc):
         """Delete a document node from database."""
@@ -142,7 +145,8 @@ class KB4ITDB(Service):
         """Return all keys in the database sorted alphabetically."""
         blocked_keys = self.get_blocked_keys()
         keys = set()
-        for doc in self.db:
+        database = self.get_documents()
+        for doc in database:
             for key in self.get_doc_keys(doc):
                 if key not in blocked_keys:
                     keys.add(key)
@@ -168,4 +172,3 @@ class KB4ITDB(Service):
             keys.append(key)
         keys.sort(key=lambda y: y.lower())
         return keys
-
