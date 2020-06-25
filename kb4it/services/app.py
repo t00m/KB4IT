@@ -482,7 +482,7 @@ class KB4ITApp(Service):
         ## Keys/Values
         for kvpath in KV_PATH:
             key, value, COMPILE_VALUE = kvpath
-            docs = self.kbdict_new['metadata'][key][value]
+            docs = self.get_kbdict_value(key, value, new=True)
             sorted_docs = self.srvdtb.sort_by_date(docs)
             basename = "%s_%s" % (valid_filename(key), valid_filename(value))
             if COMPILE_VALUE:
@@ -629,6 +629,36 @@ class KB4ITApp(Service):
         self.log.debug("Stage 8\tRemove temporary directory")
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.debug("Temporary directory %s deleted successfully", self.runtime['dir']['tmp'])
+
+    def reset(self):
+        """
+        WARNING!!!
+        Reset environment given source and target directories.
+        Delete:
+        - Source directory
+        - Target directory
+        - Temporary directory
+        - Cache directory
+        - KB4IT database file for this environment
+        WARNING!!!
+
+        Please, note: if you pass the wrong directory...
+        """
+        KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % valid_filename(self.runtime['dir']['source']))
+        delete_target_contents(self.runtime['dir']['cache'])
+        self.kbdict_new = {}
+        self.kbdict_cur = {}
+        self.log.info("DIR[%s] deleted", self.runtime['dir']['cache'])
+        delete_target_contents(self.runtime['dir']['tmp'])
+        self.log.info("DIR[%s] deleted", self.runtime['dir']['tmp'])
+        delete_target_contents(self.runtime['dir']['source'])
+        self.log.info("DIR[%s] deleted", self.runtime['dir']['source'])
+        delete_target_contents(self.runtime['dir']['target'])
+        self.log.info("DIR[%s] deleted", self.runtime['dir']['target'])
+        delete_target_contents(KB4IT_DB_FILE)
+        self.log.info("FILE[%s] deleted", KB4IT_DB_FILE)
+        self.log.info("KB4IT environment reset")
+
 
     def run(self):
         """Start script execution following this flow.
