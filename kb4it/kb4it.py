@@ -138,7 +138,6 @@ class KB4IT:
         """Check paramaters from command line."""
         self.params = params
         self.source_path = params.SOURCE_PATH
-
         self.target_path = params.TARGET_PATH
         if self.target_path is None:
             self.target_path = os.path.abspath(os.path.curdir + '/target')
@@ -158,8 +157,14 @@ class KB4IT:
         """Start application."""
         if self.ready:
             srvapp = self.get_service('App')
-            srvapp.run()
-            self.stop()
+            if self.params.RESET:
+                if self.params.FORCE:
+                    srvapp.reset()
+                else:
+                    self.log.warning("KB4IT environment NOT reset. You must force it!")
+            else:
+                srvapp.run()
+                self.stop()
 
     def get_version(self):
         return '%s %s' % (APP['shortname'], APP['version'])
@@ -174,11 +179,11 @@ class KB4IT:
 def main():
     """Execute application."""
     parser = argparse.ArgumentParser(description='KB4IT %s by Tomás Vírseda' % APP['version'])
-
+    parser.add_argument('-reset', action='store_true', dest='RESET', help='Reset environment')
     parser.add_argument('-force', action='store_true', dest='FORCE', help='Force a clean compilation')
     parser.add_argument('-theme', dest='THEME', help='Specify theme. Otherwise, it uses the default one', required=False)
     parser.add_argument('-source', dest='SOURCE_PATH', help='Source directory with asciidoctor source files', required=True)
-    parser.add_argument('-target', dest='TARGET_PATH', help='Target directory')
+    parser.add_argument('-target', dest='TARGET_PATH', help='Target directory', required=True)
     parser.add_argument('-sort', dest='SORT_ATTRIBUTE', help='Choose another attribute for sorting instead the default timestamp')
     parser.add_argument('-log', dest='LOGLEVEL', help='Increase output verbosity', action='store', default='INFO')
     parser.add_argument('-version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
