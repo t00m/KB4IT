@@ -185,14 +185,17 @@ def extract_toc(source):
 def delete_target_contents(target_path):
     """C0111: Missing function docstring (missing-docstring)."""
     if os.path.exists(target_path):
-        log.debug("\tTarget directory '%s' does not exists", target_path)
-        for file_object in os.listdir(target_path):
-            file_object_path = os.path.join(target_path, file_object)
-            if os.path.isfile(file_object_path):
-                os.unlink(file_object_path)
-            else:
-                shutil.rmtree(file_object_path)
-        log.debug("          Contents of directory '%s' deleted successfully", target_path)
+        if os.path.isdir(target_path):
+            for file_object in os.listdir(target_path):
+                file_object_path = os.path.join(target_path, file_object)
+                if os.path.isfile(file_object_path):
+                    os.unlink(file_object_path)
+                else:
+                    shutil.rmtree(file_object_path)
+            log.debug("Contents of directory '%s' deleted successfully", target_path)
+        elif os.path.isfile(target_path):
+            os.unlink(target_path)
+            log.debug("File '%s' deleted successfully", target_path)
 
 def delete_files(files):
     for path in files:
