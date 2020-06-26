@@ -21,8 +21,6 @@ import datetime
 import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from gi.repository import GObject
-
 from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime
