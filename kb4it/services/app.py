@@ -483,10 +483,18 @@ class KB4ITApp(Service):
             docs = self.get_kbdict_value(key, value, new=True)
             sorted_docs = self.srvdtb.sort_by_date(docs)
             basename = "%s_%s" % (valid_filename(key), valid_filename(value))
+            pagination = {}
+            pagination['basename'] = basename
+            pagination['doclist'] = sorted_docs
+            pagination['title'] = None
+            pagination['function'] = 'build_cardset'
+            pagination['template'] = 'PAGE_PAGINATION_HEAD'
             if COMPILE_VALUE:
-                self.srvthm.build_pagination(basename, sorted_docs)
+                pagination['fake'] = False
+                self.srvthm.build_pagination(pagination)
             else:
-                pagelist = self.srvthm.build_pagination(basename, sorted_docs, fake=True)
+                pagination['fake'] = True
+                pagelist = self.srvthm.build_pagination(pagination)
                 for page in pagelist:
                     docname = "%s.html" % page
                     filename = os.path.join(self.runtime['dir']['cache'], docname)

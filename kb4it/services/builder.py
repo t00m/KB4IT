@@ -174,14 +174,15 @@ class KB4ITBuilder(Service):
                 os.remove(htmldoctmp)
                 return x
 
-    def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD', fake=False):
+    # ~ def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD', fake=False):
+    def build_pagination(self, pagination):
         """
         Create a page with documents.
         If amount of documents is greater than 100, split it in several pages
         """
-        PG_HEAD = self.template(custom_pagination_template)
+        PG_HEAD = self.template(pagination['template'])
         PG_CARD = self.template('CARD_PAGINATION')
-        num_rel_docs = len(doclist)
+        num_rel_docs = len(pagination['doclist'])
         pagelist = []
         if num_rel_docs < 100:
             total_pages = 1
@@ -216,36 +217,36 @@ class KB4ITBuilder(Service):
                         cend = end
                     else:
                         if i == 0:
-                            PAGE = "%s.adoc" % basename
+                            PAGE = "%s.adoc" % pagination['basename']
                         else:
-                            PAGE = "%s-%d.adoc" % (basename, i)
+                            PAGE = "%s-%d.adoc" % (pagination['basename'], i)
                         PAGINATION += self.template('PAGINATION_PAGE_INACTIVE') % (i, start, end, num_rel_docs, PAGE.replace('adoc','html'), i)
             PAGINATION += self.template('PAGINATION_END')
 
             if current_page == 0:
-                name = "%s" % basename
+                name = "%s" % pagination['basename']
             else:
-                name = "%s-%d" % (basename, current_page)
+                name = "%s-%d" % (pagination['basename'], current_page)
             ps = cstart
             pe = cend
 
             if pe > 0:
                 # get build_cardset custom function or default
-                custom_build_cardset = "self.%s" % custom_function
-                CARDS = eval(custom_build_cardset)(doclist[ps:pe])
+                custom_build_cardset = "self.%s" % pagination['function']
+                CARDS = eval(custom_build_cardset)(pagination['doclist'][ps:pe])
             else:
                 CARDS = ""
 
-            if optional_title is None:
-                title = basename.replace('_', ' ')
+            if pagination['title'] is None:
+                title = pagination['basename'].replace('_', ' ')
             else:
-                title = optional_title
+                title = pagination['title']
             content = PG_HEAD % (title, PAGINATION, CARDS)
-            if not fake:
+            if not pagination['fake']:
                 self.distribute(name, content)
             pagelist.append(name)
         return pagelist
-        # ~ self.log.debug("Created '%s' page (%d pages with %d cards in each page)", basename, total_pages, k)
+        # ~ self.log.debug("Created '%s' page (%d pages with %d cards in each page)", pagination['basename'], total_pages, k)
 
     def build_cardset(self, doclist):
         """Default method to build pages paginated"""
@@ -307,12 +308,26 @@ class KB4ITBuilder(Service):
     def create_page_index_all(self):
         """Create a page with all documents"""
         doclist = self.srvdtb.get_documents()
-        self.build_pagination('all', doclist)
+        pagination = {}
+        pagination['basename'] = 'all'
+        pagination['doclist'] = doclist
+        pagination['title'] = 'All documents'
+        pagination['function'] = 'build_cardset'
+        pagination['template'] = 'PAGE_PAGINATION_HEAD'
+        pagination['fake'] = False
+        self.build_pagination(pagination)
 
     def create_page_recents(self):
         """Create a page with 60 documents sorted by date desc"""
         doclist = self.srvdtb.get_documents()[:60]
-        self.build_pagination('recents', doclist, 'Recents')
+        pagination = {}
+        pagination['basename'] = 'recents'
+        pagination['doclist'] = doclist
+        pagination['title'] = 'Recent documents'
+        pagination['function'] = 'build_cardset'
+        pagination['template'] = 'PAGE_PAGINATION_HEAD'
+        pagination['fake'] = False
+        self.build_pagination(pagination)
 
     def generate_sources(self):
         """Custom themes can use this method to generate source documents"""
