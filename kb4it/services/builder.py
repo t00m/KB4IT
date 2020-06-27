@@ -237,10 +237,10 @@ class KB4ITBuilder(Service):
             else:
                 CARDS = ""
 
-            if pagination['alt_title'] is None:
+            if pagination['title'] is None:
                 title = pagination['basename'].replace('_', ' ')
             else:
-                title = pagination['alt_title']
+                title = pagination['title']
             content = PG_HEAD % (title, PAGINATION, CARDS)
             if not pagination['fake']:
                 self.distribute(name, content)
@@ -311,7 +311,7 @@ class KB4ITBuilder(Service):
         pagination = {}
         pagination['basename'] = 'all'
         pagination['doclist'] = doclist
-        pagination['alt_title'] = 'All documents'
+        pagination['title'] = 'All documents'
         pagination['function'] = 'build_cardset'
         pagination['template'] = 'PAGE_PAGINATION_HEAD'
         pagination['fake'] = False
@@ -323,7 +323,7 @@ class KB4ITBuilder(Service):
         pagination = {}
         pagination['basename'] = 'recents'
         pagination['doclist'] = doclist
-        pagination['alt_title'] = 'Recent documents'
+        pagination['title'] = 'Recent documents'
         pagination['function'] = 'build_cardset'
         pagination['template'] = 'PAGE_PAGINATION_HEAD'
         pagination['fake'] = False

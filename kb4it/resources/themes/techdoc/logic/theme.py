@@ -124,7 +124,14 @@ class Theme(KB4ITBuilder):
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
 
                     # create html page
-                    self.build_pagination(EVENT_PAGE_DAY, docs, title)
+                    pagination = {}
+                    pagination['basename'] = EVENT_PAGE_DAY
+                    pagination['doclist'] = docs
+                    pagination['title'] = title
+                    pagination['function'] = 'build_cardset'
+                    pagination['template'] = 'PAGE_PAGINATION_HEAD'
+                    pagination['fake'] = False
+                    self.build_pagination(pagination)
 
                     # Generate HTML to display into the modal window
                     # ~ events_docs_html[y][m][d] = self.build_html_events(docs)
@@ -140,7 +147,14 @@ class Theme(KB4ITBuilder):
                     thismonth.extend(events_docs[year][month][day])
 
                 # create html page
-                self.build_pagination(EVENT_PAGE_MONTH, thismonth, title)
+                pagination = {}
+                pagination['basename'] = EVENT_PAGE_MONTH
+                pagination['doclist'] = thismonth
+                pagination['title'] = title
+                pagination['function'] = 'build_cardset'
+                pagination['template'] = 'PAGE_PAGINATION_HEAD'
+                pagination['fake'] = False
+                self.build_pagination(pagination)
 
         for year in sorted(dey.keys(), reverse=True):
             HTML = self.srvcal.build_year_pagination(dey.keys())
@@ -197,7 +211,14 @@ class Theme(KB4ITBuilder):
     def create_page_recents(self):
         """Create recents page."""
         doclist = self.srvdtb.get_documents()[:60]
-        self.build_pagination('recents', doclist, 'Recents')
+        pagination = {}
+        pagination['basename'] = 'recents'
+        pagination['doclist'] = doclist
+        pagination['title'] = 'Recents'
+        pagination['function'] = 'build_cardset'
+        pagination['template'] = 'PAGE_PAGINATION_HEAD'
+        pagination['fake'] = False
+        self.build_pagination(pagination)
 
     def create_page_bookmarks(self):
         """Create bookmarks page."""
@@ -206,7 +227,14 @@ class Theme(KB4ITBuilder):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
-        self.build_pagination('bookmarks', doclist, 'Bookmarks')
+        pagination = {}
+        pagination['basename'] = 'bookmarks'
+        pagination['doclist'] = doclist
+        pagination['title'] = 'Bookmarks'
+        pagination['function'] = 'build_cardset'
+        pagination['template'] = 'PAGE_PAGINATION_HEAD'
+        pagination['fake'] = False
+        self.build_pagination(pagination)
 
     def create_page_authors(self):
         PAGE_AUTHOR = self.template('PAGE_AUTHOR')
