@@ -1,6 +1,6 @@
 import calendar
-from calendar import HTMLCalendar
-from datetime import datetime
+from calendar import HTMLCalendar, monthrange
+from datetime import datetime, timedelta
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename, guess_datetime
 
@@ -12,7 +12,6 @@ class EventsCalendar(Service, HTMLCalendar):
         self.current_year = None
         self.ml = {}
         self.get_services()
-        print
 
     def set_events_days(self, events_days):
         """
@@ -82,9 +81,9 @@ class EventsCalendar(Service, HTMLCalendar):
         if withyear:
             month_name = datetime.strftime(dt, "%B %Y")
         else:
-            month_name = datetime.strftime(dt, "%B")
+            month_name = datetime.strftime(dt, "%B %Y")
 
-        if self.ml[themonth]:
+        if themonth in self.ml:
             link = LINK % ("uk-link-heading", "events_%4d%02d.html" % (theyear, themonth), "uk-text-uppercase uk-text-muted", month_name)
         else:
             # ~ link = LINK % ("uk-link-heading", "", "", month_name)
@@ -127,3 +126,37 @@ class EventsCalendar(Service, HTMLCalendar):
         for yp in sorted(years):
             ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM % (yp, yp)
         return EVENTCAL_YEAR_PAGINATION % ITEMS
+
+    def format_trimester(self, theyear, themonth):
+        """Return a formatted year as a table of tables."""
+        EVENTCAL_TABLE_YEAR = self.srvbld.template('EVENTCAL_TABLE_TRIMESTER')
+        EVENTCAL_TABLE_YEAR_TR_MONTHROW = self.srvbld.template('EVENTCAL_TABLE_YEAR_TR_MONTHROW')
+        EVENTCAL_TABLE_YEAR_TD_MONTH = self.srvbld.template('EVENTCAL_TABLE_YEAR_TD_MONTH')
+        dt_cur = datetime.strptime("%d.%d.01" % (theyear, themonth), "%Y.%m.%d")
+        dt_cur_lastday = dt_cur.replace(day = monthrange(dt_cur.year, dt_cur.month)[1]).date()
+        dt_prv = dt_cur - timedelta(days=1)
+        dt_nxt = dt_cur_lastday + timedelta(days=1)
+        # ~ print("Previous month: %d.%d" % (dt_prv.year, dt_prv.month))
+        # ~ print("Current month: %d.%d" % (dt_cur.year, dt_cur.month))
+        # ~ print("Next month: %d.%d" % (dt_nxt.year, dt_nxt.month))
+        v = []
+        MONTHS = ''
+        TD_YEAR_MONTH = ''
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_prv.year, dt_prv.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_cur.year, dt_cur.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_nxt.year, dt_nxt.month, withyear=True)
+        MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW % TD_YEAR_MONTH
+        v.append(EVENTCAL_TABLE_YEAR % MONTHS)
+        return ''.join(v)
+        # ~ v = []
+        # ~ width = max(width, 1)
+        # ~ MONTHS = ''
+        # ~ January = 1
+        # ~ for i in range(January, January+12, width):
+            # ~ months = range(i, min(i+width, 13))
+            # ~ TD_YEAR_MONTH = ''
+            # ~ for m in months:
+                # ~ TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(theyear, m, withyear=False)
+            # ~ MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW % TD_YEAR_MONTH
+        # ~ v.append(EVENTCAL_TABLE_YEAR % MONTHS)
+        # ~ return ''.join(v)
