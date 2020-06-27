@@ -486,7 +486,7 @@ class KB4ITApp(Service):
             pagination = {}
             pagination['basename'] = basename
             pagination['doclist'] = sorted_docs
-            pagination['alt_title'] = None
+            pagination['title'] = None
             pagination['function'] = 'build_cardset'
             pagination['template'] = 'PAGE_PAGINATION_HEAD'
             if COMPILE_VALUE:
