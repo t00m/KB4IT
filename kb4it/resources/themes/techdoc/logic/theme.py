@@ -158,15 +158,18 @@ class Theme(KB4ITBuilder):
                 pagination['fake'] = False
                 self.build_pagination(pagination)
 
+        self.srvcal.set_events_days(dey)
+        self.srvcal.set_events_docs(events_docs)
+
         for year in sorted(dey.keys(), reverse=True):
             HTML = self.srvcal.build_year_pagination(dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
             title = edt.strftime("Events on %Y")
             PAGE = self.template('PAGE_EVENTS_YEAR')
             EVENT_PAGE_YEAR = "events_%4d" % year
-            self.srvcal.set_events_days(dey[year])
-            self.srvcal.set_events_docs(events_docs[year])
-            self.srvcal.set_events_html(events_docs_html[year])
+            # ~ self.srvcal.set_events_days(dey[year])
+            # ~ self.srvcal.set_events_docs(events_docs[year])
+            # ~ self.srvcal.set_events_html(events_docs_html[year])
             HTML += self.srvcal.formatyearpage(year, 4)
             self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
 
