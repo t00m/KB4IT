@@ -10,6 +10,7 @@ class EventsCalendar(Service, HTMLCalendar):
     def initialize(self):
         super(HTMLCalendar, self).__init__(calendar.MONDAY)
         self.ml = {}
+        self.now = datetime.now()
         self.get_services()
 
     def set_events_days(self, events_days):
@@ -42,7 +43,9 @@ class EventsCalendar(Service, HTMLCalendar):
         cal_date = (self.month, day) # create a tuple of the calendar month and day
         EVENTCAL_TD_NODAY = self.srvbld.template('EVENTCAL_TD_NODAY')
         EVENTCAL_TD_DAY_LINK = self.srvbld.template('EVENTCAL_TD_DAY_LINK')
+        EVENTCAL_TD_DAY_LINK_TODAY = self.srvbld.template('EVENTCAL_TD_DAY_LINK_TODAY')
         EVENTCAL_TD_DAY_NOLINK = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK')
+        EVENTCAL_TD_DAY_NOLINK_TODAY = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK_TODAY')
         if cal_date in self.events_days[self.year]: # check if current calendar tuple date exist in our list of events days
             eday = day # if it does exist set the event day var with it
         if day == 0:
@@ -52,9 +55,15 @@ class EventsCalendar(Service, HTMLCalendar):
             # If yes, return link to page
             EVENT_PAGE = "events_%4d%02d%02d" % (self.year, self.month, day)
             EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
-            return EVENTCAL_TD_DAY_LINK % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
+            if self.month == self.now.month and day == self.now.day:
+                return EVENTCAL_TD_DAY_LINK_TODAY % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
+            else:
+                return EVENTCAL_TD_DAY_LINK % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
         else:
-            return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
+            if self.month == self.now.month and day == self.now.day:
+                return EVENTCAL_TD_DAY_NOLINK_TODAY % (self.cssclasses[weekday], day)
+            else:
+                return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
 
     def formatweek(self, theweek):
         """Return a complete week as a table row."""
@@ -83,12 +92,8 @@ class EventsCalendar(Service, HTMLCalendar):
         """Return a formatted month name."""
         LINK = self.srvbld.template('LINK')
         dt = guess_datetime("%4d-%02d-01" % (theyear, themonth))
-        if withyear:
-            month_name = datetime.strftime(dt, "%B %Y")
-        else:
-            month_name = datetime.strftime(dt, "%B %Y")
-
-        if themonth in self.ml[theyear]:
+        month_name = datetime.strftime(dt, "%B %Y")
+        if self.ml[theyear][themonth]:
             link = LINK % ("uk-link-heading", "events_%4d%02d.html" % (theyear, themonth), "uk-text-uppercase uk-text-muted", month_name)
         else:
             # ~ link = LINK % ("uk-link-heading", "", "", month_name)
