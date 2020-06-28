@@ -253,6 +253,7 @@ class KB4ITApp(Service):
         if not os.path.exists(self.runtime['dir']['target']):
             os.makedirs(self.runtime['dir']['target'])
         self.log.debug("Target directory: %s", self.runtime['dir']['target'])
+        self.log.info("Checked environment")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
@@ -262,6 +263,7 @@ class KB4ITApp(Service):
         self.log.debug("Found %d asciidoctor documents", self.runtime['docs']['count'])
         for doc in self.runtime['docs']['bag']:
             self.log.debug("%s", doc)
+        self.log.info("Got %d source documents", self.runtime['docs']['count'])
 
     def stage_03_preprocessing(self):
         """
@@ -422,6 +424,7 @@ class KB4ITApp(Service):
             else:
                 keep_docs += 1
         self.log.debug("[PRE-PROCESSING STATS] Keep: %d - Compile: %d", keep_docs, compile_docs)
+        self.log.info("Finish preprocessing source documents")
 
     def get_kbdict_value(self, key, value, new=True):
         if new:
@@ -500,7 +503,10 @@ class KB4ITApp(Service):
                     filename = os.path.join(self.runtime['dir']['cache'], docname)
                     self.runtime['docs']['cached'].append(filename)
 
+        self.log.info("Finish processing keys")
         self.srvthm.build()
+        self.log.info("Finish processing theme")
+
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -560,6 +566,7 @@ class KB4ITApp(Service):
         except ZeroDivisionError:
             self.log.debug("Compilation Avg. Speed: %d docs/sec",
                           int((totaldocs/1)))
+        self.log.info("Finish compiling")
 
     def stage_06_extras(self):
         """Include other stuff."""

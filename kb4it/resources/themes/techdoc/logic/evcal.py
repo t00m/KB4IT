@@ -1,6 +1,6 @@
 import calendar
-from calendar import HTMLCalendar
-from datetime import datetime
+from calendar import HTMLCalendar, monthrange
+from datetime import datetime, timedelta
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename, guess_datetime
 
@@ -9,10 +9,8 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def initialize(self):
         super(HTMLCalendar, self).__init__(calendar.MONDAY)
-        self.current_year = None
         self.ml = {}
         self.get_services()
-        print
 
     def set_events_days(self, events_days):
         """
@@ -20,10 +18,14 @@ class EventsCalendar(Service, HTMLCalendar):
         anywhere.
         """
         self.events_days = events_days #
-        for i in range(1,13):
-            self.ml[i] = False
-        for month, day in events_days:
-            self.ml[month] = True
+        # ~ for i in range(1,13):
+            # ~ self.ml[i] = False
+        for year in events_days:
+            self.ml[year] = {}
+            for i in range(1,13):
+                self.ml[year][i] = False
+            for month, day in events_days[year]:
+                self.ml[year][month] = True
 
     def set_events_docs(self, docs):
         self.events_docs = docs
@@ -41,12 +43,14 @@ class EventsCalendar(Service, HTMLCalendar):
         EVENTCAL_TD_NODAY = self.srvbld.template('EVENTCAL_TD_NODAY')
         EVENTCAL_TD_DAY_LINK = self.srvbld.template('EVENTCAL_TD_DAY_LINK')
         EVENTCAL_TD_DAY_NOLINK = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK')
-        if cal_date in self.events_days: # check if current calendar tuple date exist in our list of events days
+        if cal_date in self.events_days[self.year]: # check if current calendar tuple date exist in our list of events days
             eday = day # if it does exist set the event day var with it
         if day == 0:
             return EVENTCAL_TD_NODAY # day outside month
-        elif day == eday: # check if this is one of the events days, then change the
-            EVENT_PAGE = "events_%4d%02d%02d" % (self.current_year, self.month, day)
+        elif day == eday:
+            # Check if this is one of the events days.
+            # If yes, return link to page
+            EVENT_PAGE = "events_%4d%02d%02d" % (self.year, self.month, day)
             EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
             return EVENTCAL_TD_DAY_LINK % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
         else:
@@ -82,9 +86,9 @@ class EventsCalendar(Service, HTMLCalendar):
         if withyear:
             month_name = datetime.strftime(dt, "%B %Y")
         else:
-            month_name = datetime.strftime(dt, "%B")
+            month_name = datetime.strftime(dt, "%B %Y")
 
-        if self.ml[themonth]:
+        if themonth in self.ml[theyear]:
             link = LINK % ("uk-link-heading", "events_%4d%02d.html" % (theyear, themonth), "uk-text-uppercase uk-text-muted", month_name)
         else:
             # ~ link = LINK % ("uk-link-heading", "", "", month_name)
@@ -93,6 +97,7 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def formatmonth(self, theyear, themonth, withyear=False):
         """Override in order to add the month as a property."""
+        self.year = theyear
         self.month = themonth
         month = super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
         return month
@@ -117,7 +122,6 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def formatyearpage(self, theyear, width=4, css='calendar.css', encoding=None):
         """Return a formatted year as a complete HTML page."""
-        self.current_year = theyear
         return self.formatyear(theyear, width)
 
     def build_year_pagination(self, years):
@@ -127,3 +131,23 @@ class EventsCalendar(Service, HTMLCalendar):
         for yp in sorted(years):
             ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM % (yp, yp)
         return EVENTCAL_YEAR_PAGINATION % ITEMS
+
+    def format_trimester(self, theyear, themonth):
+        """Return a formatted year as a table of tables."""
+        EVENTCAL_TABLE_YEAR = self.srvbld.template('EVENTCAL_TABLE_TRIMESTER')
+        EVENTCAL_TABLE_YEAR_TR_MONTHROW = self.srvbld.template('EVENTCAL_TABLE_YEAR_TR_MONTHROW')
+        EVENTCAL_TABLE_YEAR_TD_MONTH = self.srvbld.template('EVENTCAL_TABLE_YEAR_TD_MONTH')
+        dt_cur = datetime.strptime("%d.%d.01" % (theyear, themonth), "%Y.%m.%d")
+        dt_cur_lastday = dt_cur.replace(day = monthrange(dt_cur.year, dt_cur.month)[1]).date()
+        dt_prv = dt_cur - timedelta(days=1)
+        dt_nxt = dt_cur_lastday + timedelta(days=1)
+        v = []
+        MONTHS = ''
+        TD_YEAR_MONTH = ''
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_prv.year, dt_prv.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_cur.year, dt_cur.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_nxt.year, dt_nxt.month, withyear=True)
+        MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW % TD_YEAR_MONTH
+        v.append(EVENTCAL_TABLE_YEAR % MONTHS)
+        return ''.join(v)
+
