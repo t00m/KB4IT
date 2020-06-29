@@ -66,7 +66,6 @@ class Theme(KB4ITBuilder):
         while now <= ldcm:
             try:
                 for doc in self.events_docs[now.year][now.month][now.day]:
-                    self.log.error("\tEvent now: %s", doc)
                     row = self.get_doc_event_row(doc)
                     ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
             except Exception as error:

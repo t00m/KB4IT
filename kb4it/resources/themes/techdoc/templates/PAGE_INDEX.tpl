@@ -11,7 +11,6 @@
 </div>
 ++++
 
-== Events
 ++++
 <!-- Trimester -->
 %s

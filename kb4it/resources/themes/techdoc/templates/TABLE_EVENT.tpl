@@ -1,4 +1,4 @@
-<table class="uk-table uk-table-striped uk-table-hover">
+<table class="uk-table uk-table-responsive uk-table-striped uk-table-divider uk-table-hover">
     <caption></caption>
     <thead>
         <tr>
