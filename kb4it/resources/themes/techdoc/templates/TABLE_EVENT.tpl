@@ -2,16 +2,16 @@
     <caption></caption>
     <thead>
         <tr>
-            <th>Date</th>
-            <th>Team</th>
-            <th>Title</th>
-            <th>Category</th>
-            <th>Scope</th>
+            <th class="uk-text-bold">Date</th>
+            <th class="uk-text-bold">Team</th>
+            <th class="uk-text-bold">Title</th>
+            <th class="uk-text-bold">Category</th>
+            <th class="uk-text-bold">Scope</th>
         </tr>
     </thead>
     <tfoot>
         <tr>
-            <td>Nº Events</td>
+            <td></td>
         </tr>
     </tfoot>
     <tbody>

@@ -62,21 +62,27 @@ class Theme(KB4ITBuilder):
 
         next_events = ""
         ROWS_EVENTS = ''
-        for day in range(now.day, ldcm.day):
-            try:
-                for doc in self.events_docs[now.year][now.month][day]:
-                    row = self.get_doc_event_row(doc)
-                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
-            except Exception as error:
-                pass
 
-        for day in range(fdnm.day, ldnm.day):
+        while now <= ldcm:
             try:
-                for doc in self.events_docs[fdnm.year][fdnm.month][day]:
+                for doc in self.events_docs[now.year][now.month][now.day]:
+                    self.log.error("\tEvent now: %s", doc)
                     row = self.get_doc_event_row(doc)
                     ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
             except Exception as error:
                 pass
+            delta = timedelta(days=1)
+            now += delta
+
+        while fdnm < ldnm:
+            try:
+                for doc in self.events_docs[fdnm.year][fdnm.month][fdnm.day]:
+                    row = self.get_doc_event_row(doc)
+                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+            except Exception as error:
+                pass
+            delta = timedelta(days=1)
+            fdnm += delta
 
         self.distribute('index', TPL_INDEX % (datetime.now().ctime(), trimester, TABLE_EVENTS % ROWS_EVENTS))
 
