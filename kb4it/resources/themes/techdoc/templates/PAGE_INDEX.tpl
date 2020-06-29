@@ -4,9 +4,18 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Events
-
 ++++
+<!-- Last update -->
+<div class="uk-flex-center">
+    <div class="uk-text-meta uk-text-right">KB updated on %s</div>
+</div>
+++++
+
+== Events
+++++
+<!-- Trimester -->
+%s
+
+<!-- Table of events -->
 %s
 ++++
-

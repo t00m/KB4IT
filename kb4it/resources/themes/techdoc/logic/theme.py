@@ -10,18 +10,25 @@ Server module.
 # Description: techdoc theme scripts
 """
 
+import os
 import calendar
-from calendar import HTMLCalendar
-from datetime import datetime
+from calendar import HTMLCalendar, monthrange
+from datetime import datetime, timedelta
 
 from kb4it.services.builder import KB4ITBuilder
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import valid_filename, get_human_datetime, guess_datetime
+from kb4it.core.util import file_timestamp
 from evcal import EventsCalendar
 
 
 class Theme(KB4ITBuilder):
+    dey = {} # Dictionary of day events per year
+    events_docs = {} # Dictionary storing a list of docs for a given date
+
     def build(self):
+        self.dey = {} # Dictionary of day events per year
+        self.events_docs = {} # Dictionary storing a list of docs for a given date
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
         self.create_page_events()
@@ -41,39 +48,66 @@ class Theme(KB4ITBuilder):
 
     def create_page_index(self):
         TPL_INDEX = self.template('PAGE_INDEX')
+        TABLE_EVENTS = self.template('TABLE_EVENT')
+        ROW_EVENT = self.template('TABLE_EVENT_ROW')
         OLD = """<table border="0" cellpadding="0" cellspacing="0" class="month">"""
         NEW = """<table border="0" cellpadding="0" cellspacing="0" width="100%" class="month">"""
-        now = datetime.now()
-        trimester = self.srvcal.format_trimester(now.year, now.month)
-        self.distribute('index', TPL_INDEX % trimester.replace(OLD, NEW))
+        now = datetime.now().date()
+        ldcm = now.replace(day = monthrange(now.year, now.month)[1]) # last day current month
+        fdnm = ldcm + timedelta(days=1) # first day next month
+        ldnm = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # last day next month
 
-    def get_doc_card_event(self, doc):
-        source_dir = self.srvapp.get_source_path()
-        DOC_CARD = self.template('CARD_DOC_EVENT')
-        DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
+        trimester = self.srvcal.format_trimester(now.year, now.month)
+        trimester = trimester.replace(OLD, NEW)
+
+        next_events = ""
+        ROWS_EVENTS = ''
+        for day in range(now.day, ldcm.day):
+            try:
+                for doc in self.events_docs[now.year][now.month][day]:
+                    row = self.get_doc_event_row(doc)
+                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+            except Exception as error:
+                pass
+
+        for day in range(fdnm.day, ldnm.day):
+            try:
+                for doc in self.events_docs[fdnm.year][fdnm.month][day]:
+                    row = self.get_doc_event_row(doc)
+                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+            except Exception as error:
+                pass
+
+        self.distribute('index', TPL_INDEX % (datetime.now().ctime(), trimester, TABLE_EVENTS % ROWS_EVENTS))
+
+    def get_doc_event_row(self, doc):
+        """Get card for a given doc"""
+        row = {}
         LINK = self.template('LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
+        tooltip ="%s" % (title)
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        link_title = DOC_CARD_LINK % (valid_filename(doc).replace('.adoc', ''), title)
-        if len(category) > 0 and len(scope) >0:
-            link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
-            link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
-            footer = DOC_CARD_FOOTER % (link_category, link_scope)
-        else:
-            footer = ''
+        team = self.srvdtb.get_values(doc, 'Team')[0]
 
         timestamp = self.srvdtb.get_doc_timestamp(doc)
-        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
-        tooltip ="%s" % (title)
-        return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
+        link_team = LINK % ("uk-link-heading uk-text-meta", "Team_%s.html" % valid_filename(team), '', team)
+        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), '', title)
+        link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), '', category)
+        link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), '', scope)
+
+        row['timestamp'] = timestamp
+        row['team'] = link_team
+        row['title'] = link_title
+        row['category'] = link_category
+        row['scope'] = link_scope
+        return row
 
     def build_events(self, doclist):
         SORT = self.srvapp.get_runtime_parameter('sort_attribute')
         # ~ self.log.debug("\t\t\t  Using custom build cardset function for events")
-        dey = {} # Dictionary of day events per year
-        events_docs = {} # Dictionary storing a list of docs for a given date
-        events_docs_html = {}
+        # ~ self.dey = {} # Dictionary of day events per year
+        # ~ self.events_docs = {} # Dictionary storing a list of docs for a given date
 
         # Get events dates
         for doc in doclist:
@@ -88,39 +122,36 @@ class Theme(KB4ITBuilder):
                 m = timestamp.month
                 d = timestamp.day
                 try:
-                    days_events = dey[y]
+                    days_events = self.dey[y]
                     days_events.append((m, d))
                 except:
                     days_events = []
                     days_events.append((m, d))
-                    dey[y] = days_events
+                    self.dey[y] = days_events
 
                 # Build dict of documents
-                if not y in events_docs:
-                    events_docs[y] = {}
-                    events_docs_html[y] = {}
+                if not y in self.events_docs:
+                    self.events_docs[y] = {}
 
-                if not m in events_docs[y]:
-                    events_docs[y][m] = {}
-                    events_docs_html[y][m] = {}
+                if not m in self.events_docs[y]:
+                    self.events_docs[y][m] = {}
 
-                if not d in events_docs[y][m]:
-                    events_docs[y][m][d] = []
-                    events_docs_html[y][m][d] = ''
+                if not d in self.events_docs[y][m]:
+                    self.events_docs[y][m][d] = []
 
-                docs = events_docs[y][m][d]
+                docs = self.events_docs[y][m][d]
                 docs.append(doc)
-                events_docs[y][m][d] = docs
+                self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
                 self.log.error(error)
                 self.log.error("Doc doesn't have a valid date field. Skip it.")
 
         # Build day event pages
-        for year in events_docs:
-            for month in events_docs[year]:
-                for day in events_docs[year][month]:
-                    docs = events_docs[year][month][day]
+        for year in self.events_docs:
+            for month in self.events_docs[year]:
+                for day in self.events_docs[year][month]:
+                    docs = self.events_docs[year][month][day]
                     edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                     title = edt.strftime("Events on %A, %B %d %Y")
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
@@ -135,18 +166,15 @@ class Theme(KB4ITBuilder):
                     pagination['fake'] = False
                     self.build_pagination(pagination)
 
-                    # Generate HTML to display into the modal window
-                    # ~ events_docs_html[y][m][d] = self.build_html_events(docs)
-
         # Build month event pages
-        for year in events_docs:
-            for month in events_docs[year]:
+        for year in self.events_docs:
+            for month in self.events_docs[year]:
                 thismonth = []
                 edt = guess_datetime("%4d.%02d.01" % (year, month))
                 title = edt.strftime("Events on %B, %Y")
                 EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
-                for day in events_docs[year][month]:
-                    thismonth.extend(events_docs[year][month][day])
+                for day in self.events_docs[year][month]:
+                    thismonth.extend(self.events_docs[year][month][day])
 
                 # create html page
                 pagination = {}
@@ -158,22 +186,19 @@ class Theme(KB4ITBuilder):
                 pagination['fake'] = False
                 self.build_pagination(pagination)
 
-        self.srvcal.set_events_days(dey)
-        self.srvcal.set_events_docs(events_docs)
+        self.srvcal.set_events_days(self.dey)
+        self.srvcal.set_events_docs(self.events_docs)
 
-        for year in sorted(dey.keys(), reverse=True):
-            HTML = self.srvcal.build_year_pagination(dey.keys())
+        for year in sorted(self.dey.keys(), reverse=True):
+            HTML = self.srvcal.build_year_pagination(self.dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
             title = edt.strftime("Events on %Y")
             PAGE = self.template('PAGE_EVENTS_YEAR')
             EVENT_PAGE_YEAR = "events_%4d" % year
-            # ~ self.srvcal.set_events_days(dey[year])
-            # ~ self.srvcal.set_events_docs(events_docs[year])
-            # ~ self.srvcal.set_events_html(events_docs_html[year])
             HTML += self.srvcal.formatyearpage(year, 4)
             self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
 
-        return dey
+        # ~ return self.dey
 
     def load_events_days(self, events_days, year):
         events_set = set()
@@ -207,8 +232,8 @@ class Theme(KB4ITBuilder):
 
                 doclist.append(doc)
                 title = self.srvdtb.get_values(doc, 'Title')[0]
-        dey = self.build_events(doclist)
-        HTML = self.srvcal.build_year_pagination(dey.keys())
+        self.build_events(doclist)
+        HTML = self.srvcal.build_year_pagination(self.dey.keys())
         page = self.template('PAGE_EVENTS')
         self.distribute('events', page % HTML)
 
