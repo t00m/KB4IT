@@ -7,7 +7,7 @@
     "description": "Theme for technical documentation with capabilities for blog posts, events, and tasks",
     "version": "0.0.3",
     "kb4it": ">=0.7.5",
-    "events": ["Change", "Email", "Incident", "Log", "Message", "Meeting", "Note", "Post", "Reminder", "Report", "Task"],
+    "events": ["Change", "Email", "Incident", "Message", "Meeting", "Note", "Post", "Reminder", "Report", "Task"],
     "ignored_keys": ["Published"],
     "date_attributes": ["Published"]
 }
