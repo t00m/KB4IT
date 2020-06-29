@@ -16,10 +16,9 @@
     <script src="resources/common/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
-<div>
-<div id="container-1" class="uk-container uk-container-center">
-    <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin" style="background-color: white;" uk-navbar>
+<div id="container-1" class="uk-container">
+    <div class="" id="kb4it-menu" uk-sticky="show-on-up: true">
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
@@ -28,27 +27,40 @@
                         </a>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-link-heading" href="properties.html">Properties</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="uk-padding-small">Events</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="recents.html">Recents</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Author.html"><span class="uk-padding-small">Authors</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Team.html"><span class="uk-padding-small">Teams</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="events.html">Events</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Tag.html"><span class="uk-padding-small">Tags</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-button uk-card uk-card-hover uk-button uk-card uk-card-hover uk-link-heading" href="stats.html">Stats</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Category.html"><span class="uk-padding-small">Category</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Scope.html"><span class="uk-padding-small">Scopes</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="properties.html"><span class="uk-padding-small">Properties</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="stats.html"><span class="uk-padding-small">Stats</span></a>
                                 </li>
                             </ul>
                         </div>
                     </li>
+                    <li>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="https://github.com/user/repository/new/master" target="_blank"><span uk-icon="plus"></span></a>
+                    </li>
+                    <li class="uk-nav-divider"></li>
                 </ul>
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
