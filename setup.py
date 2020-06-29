@@ -18,9 +18,6 @@ from setuptools import setup
 
 from kb4it.core.env import APP
 
-with open('kb4it/resources/common/appdata/VERSION', 'r') as fver:
-    VERSION = fver.read()
-
 with open('kb4it/resources/common/appdata/pypi/README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 

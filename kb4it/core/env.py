@@ -31,7 +31,7 @@ APP['license_long'] = "The code is licensed under the terms of the  GPL v3\n\
                   code\nas you want"
 APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
 APP['desc'] = ""
-APP['version'] = '0.7.6.5.1'
+APP['version'] = '0.7.6.6'
 APP['author'] = 'Tomás Vírseda'
 APP['author_email'] = 'tomasvirseda@gmail.com'
 APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]

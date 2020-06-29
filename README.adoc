@@ -30,6 +30,9 @@ directory. Browse it or copy it to your web server.
 * Serverless: There is no need for a web server. Of course, you can use
 one if you please.
 * Smart compiling: Only those documents added or modified are compiled.
+* Use the default themes or build your own custom theme
+* By modifying templates, it might be integrated with Github or Gitlab.
+
 
 ==== Cons
 
@@ -39,31 +42,54 @@ editor.
 * No dynamic search: KB4IT was developed to be as simple as possible. No
 dependencies at all excepting Asciidoctor (as text processor and
 publishing toolchain) and Python (the programming language used).
+* API is not stable
+* Most of the requirements are tailored to my own necessities which might
+not be the same as yours.
+
 
 === Installation
 
 ==== From source
 
-`+python3 setup.py install --user+`
+If you have used this app before, it might be necessary to uninstall it before:
+
+`pip3 uninstall kb4it -qy`
+
+Then, install it:
+
+`python3 setup.py install --user`
 
 ==== Pypi package
 
-`+pip3 install kb4it --user+`
+`pip3 install kb4it --user -U`
 
 === Execution
 
 The most typical usage would be:
 
-`+$HOME/.local/bin/kb4it -sp /path/to/asciidoctor/sources -tp /path/to/target/directory --log DEBUG+`
+`$HOME/.local/bin/kb4it -source /path/to/asciidoctor/sources -target /path/to/target/directory -log DEBUG`
+
+If templates remain the same, force a new compilation:
+
+`$HOME/.local/bin/kb4it -source /path/to/asciidoctor/sources -target /path/to/target/directory --log DEBUG  -force`
+
+If the directory containing the asciidoctor sources have a theme, it will be used.
 
 === Download
 
 Get the code from GitHub:
 
-`+git clone https://github.com/t00m/KB4IT+`
+`git clone https://github.com/t00m/KB4IT`
 
 === Credits
 
 * https://python.org[Python]
 * https://asciidoctor.org[Asciidoctor]
 * https://getuikit.com[UIKit]
+
+=== Contact
+
+* Tomás Vírseda (aka t00m) at tomasvirseda@gmail.com
+
+I would appreciate to hear from your comments.
+
