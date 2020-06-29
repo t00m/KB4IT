@@ -307,39 +307,54 @@ def fuzzy_date_from_timestamp(timestamp):
         d1 = guess_datetime(timestamp)
     else:
         d1 = timestamp
-    d2 = datetime.now()
-    rdate = d2 - d1
+
+    now = datetime.now()
+    if now >= d1:
+        rdate = now - d1
+        future = False
+    else:
+        rdate = d1 - now
+        future = True
+
     if rdate.days > 0:
         if rdate.days <= 31:
-            return "%d days ago" % int(rdate.days)
+            fuzzy = "%d days" % int(rdate.days)
 
         if rdate.days > 31 and rdate.days < 365:
-            return "%d months ago" % int((rdate.days/31))
+            fuzzy = "%d months" % int((rdate.days/31))
 
         if rdate.days >= 365:
             years = int(rdate.days/365)
             months = int( (rdate.days / years - 365) / 30 )
             if months > 0:
-                return "%d years and %d months ago" % (years, months)
+                fuzzy = "%d years and %d months" % (years, months)
             else:
                 if years > 1:
-                    return "%d years ago" % years
+                    fuzzy = "%d years" % years
                 else:
-                    return "1 year ago"
+                    fuzzy = "1 year ago"
 
-    hours = rdate.seconds / 3600
-    if int(hours) > 0:
-        return "%d hours ago" % int(hours)
+        if future:
+            return "In %s" % fuzzy
+        else:
+            return "%s ago" % fuzzy
 
-    minutes = rdate.seconds / 60
-    if int(minutes) > 0:
-        return "%d minutes ago" % int(minutes)
+    else:
+        hours = rdate.seconds / 3600
+        minutes = rdate.seconds / 60
+        if int(hours) > 0:
+            fuzzy = "%d hours" % int(hours)
+        elif int(minutes) > 0:
+            fuzzy = "%d minutes" % int(minutes)
+        elif int(rdate.seconds) > 0:
+            fuzzy = "%d seconds" % int(rdate.seconds)
+        elif int(rdate.seconds) == 0:
+            fuzzy = "Right now"
 
-    if int(rdate.seconds) > 0:
-        return "%d seconds ago" % int(rdate.seconds)
-
-    if int(rdate.seconds) == 0:
-        return "Right now"
+        if future:
+            return "In %s" % fuzzy
+        else:
+            return "%s ago" % fuzzy
 
 def sort_dictionary(adict, reverse=True):
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
