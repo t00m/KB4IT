@@ -130,6 +130,7 @@ class KB4ITBuilder(Service):
             adoc, rc, j = x
             # Add header and footer to compiled doc
             htmldoc = adoc.replace('.adoc', '.html')
+            basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
@@ -144,7 +145,6 @@ class KB4ITBuilder(Service):
                 except NameError as error:
                     # Sometimes, weird links in asciidoctor sources
                     # provoke compilation errors
-                    basename = os.path.basename(adoc)
                     self.log.error("ERROR!! Please, check source document '%s'.", basename)
                     self.log.error("ERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
                 finally:
@@ -157,14 +157,13 @@ class KB4ITBuilder(Service):
                         TOC = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED') % toc
                     else:
                         TOC = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-                    docname = os.path.basename(adoc)
-                    # ~ docsdir = os.path.join(self.srvapp.get_source_path(), 'sources')
-                    userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), docname))
+
+                    userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
                         self.srvthm = self.get_service('Theme')
-                        meta_section = self.srvthm.create_metadata_section(docname)
-                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, meta_section, docname, source_code)
+                        meta_section = self.srvthm.create_metadata_section(basename)
+                        PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_DOC % (title, basename, meta_section, basename, source_code)
                         fhtm.write(PAGE)
                     else:
                         PAGE = HTML_HEADER_COMMON % (title, THEME_ID, TOC) + HTML_HEADER_NODOC % (title)
@@ -175,7 +174,6 @@ class KB4ITBuilder(Service):
                 os.remove(htmldoctmp)
                 return x
 
-    # ~ def build_pagination(self, basename, doclist, optional_title=None, custom_function='build_cardset', custom_pagination_template='PAGE_PAGINATION_HEAD', fake=False):
     def build_pagination(self, pagination):
         """
         Create a page with documents.
