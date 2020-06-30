@@ -31,7 +31,7 @@ APP['license_long'] = "The code is licensed under the terms of the  GPL v3\n\
                   code\nas you want"
 APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
 APP['desc'] = ""
-APP['version'] = '0.7.6.6.1'
+APP['version'] = '0.7.6.7'
 APP['author'] = 'Tomás Vírseda'
 APP['author_email'] = 'tomasvirseda@gmail.com'
 APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
@@ -47,6 +47,7 @@ LPATH['PLUGINS'] = os.path.join(LPATH['VAR'], 'plugins')
 LPATH['LOG'] = os.path.join(LPATH['VAR'], 'log')
 LPATH['TMP'] = os.path.join(LPATH['VAR'], 'tmp')
 LPATH['CACHE'] = os.path.join(LPATH['VAR'], 'cache')
+LPATH['DISTRIBUTED'] = os.path.join(LPATH['CACHE'], 'distributed')
 LPATH['DB'] = os.path.join(LPATH['VAR'], 'db')
 LPATH['WWW'] = os.path.join(LPATH['VAR'], 'www')
 LPATH['EXPORT'] = os.path.join(LPATH['VAR'], 'export')
