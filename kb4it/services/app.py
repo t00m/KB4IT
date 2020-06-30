@@ -26,7 +26,8 @@ from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime
 from kb4it.core.util import extract_toc, valid_filename, load_kbdict
 from kb4it.core.util import exec_cmd, delete_target_contents
-from kb4it.core.util import get_source_docs, get_asciidoctor_attributes, get_hash_from_dict
+from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
+from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import save_kbdict, copy_docs, copydir
 from kb4it.core.util import file_timestamp
 from kb4it.core.util import guess_datetime, string_timestamp
@@ -68,7 +69,7 @@ class KB4ITApp(Service):
         self.runtime['docs'] = {}
         self.runtime['docs']['count'] = 0
         self.runtime['docs']['bag'] = []
-        self.runtime['docs']['cached'] = []
+        self.runtime['docs']['target'] = set()
 
         # Load cache dictionary and initialize the new one
         self.kbdict_cur = load_kbdict(self.runtime['dir']['source'])
@@ -80,6 +81,9 @@ class KB4ITApp(Service):
 
         # Select theme
         # ~ self.theme_load()
+
+    def add_target(self, filename):
+        self.runtime['docs']['target'].add(filename)
 
     def load_theme(self):
         """Load custom user theme, global theme or default."""
@@ -369,28 +373,22 @@ class KB4ITApp(Service):
                 # Get cached document path and check if it exists
                 cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
                 cached_document_exists = os.path.exists(cached_document)
-                # ~ self.log.debug("* DOC[%s] Cached? %s", docname, cached_document_exists)
 
                 # Compare the document with the one in the cache
-                # ~ self.log.debug("Does document %s exist in cache? %s", docname, cached_document_exists)
-
                 if not cached_document_exists:
                     DOC_COMPILATION = True
                     REASON = "Not cached"
-                    # ~ self.log.debug("DOC[%s] not cached. Compile", docname)
                 else:
                     try:
                         hash_new = self.kbdict_new['document'][docname]['content_hash'] + self.kbdict_new['document'][docname]['metadata_hash']
                         hash_cur = self.kbdict_cur['document'][docname]['content_hash'] + self.kbdict_cur['document'][docname]['metadata_hash']
                         DOC_COMPILATION = hash_new != hash_cur
                         REASON = "Hashes differ? %s" % DOC_COMPILATION
-                        # ~ self.log.debug("DOC[%s] cached. Hashes differ? %s. Compile? %s", docname, DOC_COMPILATION, DOC_COMPILATION)
                     except Exception as warning:
                         DOC_COMPILATION = True
                         REASON = warning
             else:
                 REASON = "Forced"
-                # ~ self.log.debug("* DOC[%s] Compile? %s - Reason: %s", docname, DOC_COMPILATION, REASON)
 
             COMPILE = DOC_COMPILATION or FORCE_ALL
             # Save compilation status
@@ -405,9 +403,8 @@ class KB4ITApp(Service):
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             else:
-                filename = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
-                self.runtime['docs']['cached'].append(filename)
                 self.log.debug("= DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
+            self.add_target(docname.replace('.adoc', '.html'))
 
         # Save current status for the next run
         save_kbdict(self.kbdict_new, self.runtime['dir']['source'])
@@ -469,16 +466,13 @@ class KB4ITApp(Service):
         ## Keys
         for kpath in K_PATH:
             key, values, COMPILE_KEY = kpath
+            docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
-                docname = "%s/%s.adoc" % (self.runtime['dir']['tmp'], valid_filename(key))
+                fpath = os.path.join(self.runtime['dir']['tmp'], docname)
                 html = self.srvthm.create_page_key(key, values)
-                with open(docname, 'w') as fkey:
+                with open(fpath, 'w') as fkey:
                     fkey.write(html)
-            else:
-                # Add key to cache
-                docname = "%s.html" % (valid_filename(key))
-                filename = os.path.join(self.runtime['dir']['cache'], docname)
-                self.runtime['docs']['cached'].append(filename)
+            self.add_target(docname.replace('.adoc', '.html'))
 
         ## Keys/Values
         for kvpath in KV_PATH:
@@ -494,14 +488,15 @@ class KB4ITApp(Service):
             pagination['template'] = 'PAGE_PAGINATION_HEAD'
             if COMPILE_VALUE:
                 pagination['fake'] = False
-                self.srvthm.build_pagination(pagination)
+                pagelist = self.srvthm.build_pagination(pagination)
             else:
                 pagination['fake'] = True
                 pagelist = self.srvthm.build_pagination(pagination)
-                for page in pagelist:
-                    docname = "%s.html" % page
-                    filename = os.path.join(self.runtime['dir']['cache'], docname)
-                    self.runtime['docs']['cached'].append(filename)
+
+            for page in pagelist:
+                docname = "%s.html" % page
+                filename = os.path.join(self.runtime['dir']['cache'], docname)
+                self.add_target(docname.replace('.adoc', '.html'))
 
         self.log.info("Finish processing keys")
         self.srvthm.build()
@@ -530,6 +525,7 @@ class KB4ITApp(Service):
                 adocprops += '-a %s ' % prop
         self.log.debug("Parameters passed to Asciidoctor: %s", adocprops)
 
+        distributed = self.srvthm.get_distributed()
         with Executor(max_workers=MAX_WORKERS) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
@@ -537,13 +533,28 @@ class KB4ITApp(Service):
             num = 1
             self.log.debug("Generating jobs. Please, wait")
             for doc in docs:
-                cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                job = exe.submit(exec_cmd, (doc, cmd, num))
-                job.add_done_callback(self.srvthm.build_page)
-                self.log.debug("Job[%4d]: %s will be compiled", num, os.path.basename(doc))
-                # ~ self.log.debug("Job[%4d]: %s", num, cmd)
-                jobs.append(job)
-                num = num + 1
+                COMPILE = True
+                basename = os.path.basename(doc)
+                if basename in distributed:
+                    distributed_file = os.path.join(LPATH['DISTRIBUTED'], basename)
+                    cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
+                    if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                        cached_hash = get_hash_from_file(distributed_file)
+                        current_hash = get_hash_from_file(doc)
+                        if cached_hash == current_hash:
+                            COMPILE = False
+
+                if COMPILE or self.parameters.FORCE:
+                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
+                    job = exe.submit(exec_cmd, (doc, cmd, num))
+                    job.add_done_callback(self.srvthm.build_page)
+                    self.log.debug("Job[%4d]: %s will be compiled", num, basename)
+                    # ~ self.log.debug("Job[%4d]: %s", num, cmd)
+                    jobs.append(job)
+                    num = num + 1
+                else:
+                    self.log.debug("%s cached. Avoid compiling", basename)
+
             self.log.debug("Created %d jobs. Starting compilation", num - 1)
             # ~ self.log.debug("%3s%% done", "0")
             for job in jobs:
@@ -559,18 +570,23 @@ class KB4ITApp(Service):
         comptime = dcompe - dcomps
         self.log.debug("100% done")
         self.log.debug("Compilation time: %d seconds", comptime.seconds)
-        self.log.debug("Number of compiled docs: %d", totaldocs)
+        self.log.debug("Number of compiled docs: %d", num - 1)
         try:
             self.log.debug("Compilation Avg. Speed: %d docs/sec",
-                          int((totaldocs/comptime.seconds)))
+                          int(((num-1)/comptime.seconds)))
         except ZeroDivisionError:
             self.log.debug("Compilation Avg. Speed: %d docs/sec",
-                          int((totaldocs/1)))
+                          int(((num-1)/1)))
         self.log.info("Finish compiling")
 
     def stage_06_extras(self):
         """Include other stuff."""
-        pass
+        delete_target_contents(LPATH['DISTRIBUTED'])
+        distributed = self.srvthm.get_distributed()
+        for adoc in distributed:
+            source = os.path.join(self.runtime['dir']['tmp'], adoc)
+            target = LPATH['DISTRIBUTED']
+            shutil.copy(source, target)
 
     def stage_07_clean_target(self):
         """Delete contents of target directory (if any)."""
@@ -590,19 +606,20 @@ class KB4ITApp(Service):
         copy_docs(files, docsdir)
         self.log.debug("Copy %d asciidoctor sources from source path to target path", len(files))
 
-        # Copy compiled documents to target path
+        # Copy compiled documents to cache path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
-        copy_docs(files, self.runtime['dir']['target'])
-        self.log.debug("Copy %d html files from temporary path to target path", len(files))
+        copy_docs(files, self.runtime['dir']['cache'])
+        self.log.debug("Copy %d html files from temporary path to cache path", len(files))
 
         # Copy cached documents to target path
-        copy_docs(self.runtime['docs']['cached'], self.runtime['dir']['target'])
-        self.log.debug("Copied %d cached documents successfully to target path", len(self.runtime['docs']['cached']))
-
-        # ???
-        # ~ copy_docs(self.runtime['docs']['bag'], self.runtime['dir']['target'])
-        # ~ self.log.debug("Copied %d Asciidoctor source docs copied to target path", len(self.runtime['docs']['bag']))
+        n = 0
+        for filename in self.runtime['docs']['target']:
+            source = os.path.join(self.runtime['dir']['cache'], filename)
+            target = os.path.join(self.runtime['dir']['target'], filename)
+            shutil.copy(source, target)
+            n += 1
+        self.log.debug("Copied %d cached documents successfully to target path", n)
 
         # Copy global resources to target path
         # FIXME: copy common resources, default theme and choosen theme
@@ -628,10 +645,11 @@ class KB4ITApp(Service):
 
         # Copy back all HTML files from target to cache
         # Fixme: should cache contents be deleted before copying?
+        delete_target_contents(self.runtime['dir']['cache'])
         pattern = os.path.join(self.runtime['dir']['target'], '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
-        self.log.debug("Copying HTML files to cache...")
+        self.log.debug("Copying HTML files back to cache...")
 
         # Copy JSON database to target path so it can be queried from others applications
         save_kbdict(self.kbdict_new, self.runtime['dir']['target'], 'kb4it')

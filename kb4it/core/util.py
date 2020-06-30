@@ -231,6 +231,16 @@ def get_asciidoctor_attributes(docpath):
         log.error("Document %s could not be processed" % docpath)
     return props
 
+def get_hash_from_file(path):
+    """Get the SHA256 hash for a given filename."""
+    if os.path.exists(path):
+        content = open(path, 'r').read()
+        m = hashlib.sha256()
+        m.update(content.encode())
+        return m.hexdigest()
+    else:
+        return None
+
 def get_hash_from_dict(adict):
     """Get the SHA256 hash for a given dictionary."""
     alist = []
