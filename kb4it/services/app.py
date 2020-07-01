@@ -301,6 +301,18 @@ class KB4ITApp(Service):
         tsdict = {}
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
+
+            # Get metadata
+            docpath = os.path.join(self.runtime['dir']['source'], docname)
+            keys = get_asciidoctor_attributes(docpath)
+
+            # Check if file is valid by checking Title
+            try:
+                keys['Title']
+            except KeyError:
+                self.runtime['docs']['count'] -= 1
+                continue
+
             self.kbdict_new['document'][docname] = {}
             self.log.debug("? DOC[%s] Preprocessing", docname)
 
@@ -315,10 +327,6 @@ class KB4ITApp(Service):
             # Get content
             with open(source) as source_adoc:
                 srcadoc = source_adoc.read()
-
-            # Get metadata
-            docpath = os.path.join(self.runtime['dir']['source'], docname)
-            keys = get_asciidoctor_attributes(docpath)
 
             # To track changes in a document, hashes for metadata and content are created.
             # Comparing them with those in the cache, KB4IT determines if a document must be

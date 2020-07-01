@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 """
+Utils functions used along the project.
+
 # File: srv_utils.py
 # Author: Tomás Vírseda
 # License: GPL v3
@@ -11,17 +14,14 @@ import os
 import re
 import glob
 import json
-import time
 import math
 import shutil
-import random
 import hashlib
 import operator
-import threading
 import subprocess
 import traceback as tb
-from datetime import date, datetime
-from kb4it.core.env import LPATH, GPATH, EOHMARK, FILE
+from datetime import datetime
+from kb4it.core.env import LPATH, EOHMARK
 from kb4it.core.log import get_logger
 
 log = get_logger('KB4ITUtil')
@@ -38,6 +38,7 @@ def load_kbdict(source_path):
         kbdict = {}
     log.debug("Current kbdict entries: %d", len(kbdict))
     return kbdict
+
 
 def save_kbdict(kbdict, path, name=None):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -58,7 +59,7 @@ def copy_docs(docs, target):
         try:
             shutil.copy('%s' % doc, target)
             log.debug("%s copied to %s", doc, target)
-        except:
+        except FileNotFoundError:
             log.warning("%s not found", doc)
     log.debug("%d documents copied to '%s'", len(docs), target)
 
@@ -115,10 +116,11 @@ def exec_cmd(data):
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
     outs, errs = process.communicate()
     if errs is None:
-        return doc, True, res
+        compiled = True
     else:
+        compiled = False
         log.debug("Compiling %s: Error: %s", doc, errs)
-        return doc, False, res
+    return doc, compiled, res
 
 
 def set_max_frequency(dkeyurl):
@@ -182,6 +184,7 @@ def extract_toc(source):
         toc = '\n'.join(items)
     return toc
 
+
 def delete_target_contents(target_path):
     """C0111: Missing function docstring (missing-docstring)."""
     if os.path.exists(target_path):
@@ -197,7 +200,9 @@ def delete_target_contents(target_path):
             os.unlink(target_path)
             log.debug("File '%s' deleted successfully", target_path)
 
+
 def delete_files(files):
+    """Delete a list of given files."""
     for path in files:
         try:
             if os.path.exists(path):
@@ -206,8 +211,9 @@ def delete_files(files):
             log.warning(error)
             log.warning(files)
 
+
 def get_asciidoctor_attributes(docpath):
-    """C0111: Missing function docstring (missing-docstring)."""
+    """Get Asciidoctor attributes from a given document."""
     props = {}
     try:
         # Get lines
@@ -226,10 +232,12 @@ def get_asciidoctor_attributes(docpath):
             elif line[n].startswith(EOHMARK):
                 # Stop processing if EOHMARK is found
                 break
-    except Exception as error:
-        log.error(error)
-        log.error("Document %s could not be processed" % docpath)
+    except IndexError as error:
+        basename = os.path.basename(docpath)
+        log.error("Document %s could not be processed. Empty?" % basename)
+        props = {}
     return props
+
 
 def get_hash_from_file(path):
     """Get the SHA256 hash for a given filename."""
@@ -240,6 +248,7 @@ def get_hash_from_file(path):
         return m.hexdigest()
     else:
         return None
+
 
 def get_hash_from_dict(adict):
     """Get the SHA256 hash for a given dictionary."""
@@ -254,6 +263,7 @@ def get_hash_from_dict(adict):
     m = hashlib.sha256()
     m.update(string.encode())
     return m.hexdigest()
+
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
@@ -270,9 +280,9 @@ def valid_filename(s):
     s = str(s).strip().replace(' ', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
 
-def guess_datetime(sdate):
-    """Guess datetime for a given string and return a normalized datetime"""
 
+def guess_datetime(sdate):
+    """Return (guess) a datetime object for a given string."""
     found = False
     patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
                 "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
@@ -282,8 +292,7 @@ def guess_datetime(sdate):
                 "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
                 "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
                 "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
-               ]
+                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f"]
     for pattern in patterns:
         if not found:
             try:
@@ -295,24 +304,28 @@ def guess_datetime(sdate):
                 timestamp = None
     return timestamp
 
+
 def file_timestamp(filename):
-    """Return last modification datetime normalized of a file"""
+    """Return last modification datetime normalized of a file."""
     t = os.path.getmtime(filename)
     sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
     return sdate
 
+
 def string_timestamp(string):
+    """Return datetime object from a given timestamp."""
     dt = guess_datetime(string)
     sdate = datetime.fromtimestamp(dt).strftime("%Y-%m-%d %H:%M:%S")
     return sdate
+
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
 
+
 def fuzzy_date_from_timestamp(timestamp):
-    # FIXME: Improve delta fuzzy dates
-    """C0111: Missing function docstring (missing-docstring)."""
+    """Get fuzzy human string from a given timestamp."""
     if type(timestamp) == str:
         d1 = guess_datetime(timestamp)
     else:
@@ -335,7 +348,7 @@ def fuzzy_date_from_timestamp(timestamp):
 
         if rdate.days >= 365:
             years = int(rdate.days/365)
-            months = int( (rdate.days / years - 365) / 30 )
+            months = int((rdate.days / years - 365) / 30)
             if months > 0:
                 fuzzy = "%d years and %d months" % (years, months)
             else:
@@ -345,10 +358,9 @@ def fuzzy_date_from_timestamp(timestamp):
                     fuzzy = "1 year ago"
 
         if future:
-            return "In %s" % fuzzy
+            fuzzy_string = "In %s" % fuzzy
         else:
-            return "%s ago" % fuzzy
-
+            fuzzy_string = "%s ago" % fuzzy
     else:
         hours = rdate.seconds / 3600
         minutes = rdate.seconds / 60
@@ -362,10 +374,12 @@ def fuzzy_date_from_timestamp(timestamp):
             fuzzy = "Right now"
 
         if future:
-            return "In %s" % fuzzy
+            fuzzy_string = "In %s" % fuzzy
         else:
-            return "%s ago" % fuzzy
+            fuzzy_string = "%s ago" % fuzzy
+
+    return fuzzy_string
 
 def sort_dictionary(adict, reverse=True):
+    """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
-
