@@ -5,13 +5,11 @@
 KB4IT module. Entry point.
 
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
-# Version: 0.4
 # License: GPLv3
-# Description: Build a static documentation site based on Asciidoctor
+# Description: Website static-generator based on Asciidoctor
 """
 
 import os
-import sys
 import argparse
 from argparse import Namespace
 from kb4it.core.env import APP, LPATH, GPATH
@@ -20,19 +18,32 @@ from kb4it.services.app import KB4ITApp
 from kb4it.services.database import KB4ITDB
 from kb4it.services.builder import KB4ITBuilder
 
+
 class KB4IT:
-    """
-    KB4IT main class
+    r"""
+    KB4IT main class.
 
     It can be executed from command line:
-    $HOME/.local/bin/kb4it -theme <None|THEME> -force -log DEBUG -sort <ATTRIBUTE> -source <SOURCE_PATH> -target <TARGET_PATH>
+    $HOME/.local/bin/kb4it -theme <None|THEME> -force -log DEBUG \
+                           -sort <ATTRIBUTE> -source <SOURCE_PATH>
+                           -target <TARGET_PATH>
 
     Or it can be called from another app as a library:
-    from kb4it.kb4it import KB4IT
-    from argparse import Namespace
-    params = Namespace(FORCE=True, LOGLEVEL='INFO', SORT_ATTRIBUTE=None, SOURCE_PATH='/tmp/myapp', TARGET_PATH='/tmp/output', THEME=None)
-    kb = KB4IT(params)
-    kb.run()
+    Eg.:
+
+    >>> from kb4it.kb4it import KB4IT
+    >>> from argparse import Namespace
+    >>> params = Namespace(
+                    RESET=False, \
+                    FORCE=True, \
+                    LOGLEVEL='INFO', \
+                    SORT_ATTRIBUTE=None, \
+                    SOURCE_PATH='tmp/sources', \
+                    TARGET_PATH='/tmp/output', \
+                    THEME='techdoc'
+                )
+    >>> kb = KB4IT(params)
+    >>> kb.run()
     """
 
     ready = False
@@ -51,25 +62,23 @@ class KB4IT:
             self.params = Namespace()
         try:
             self.setup_logging(params.LOGLEVEL)
-        except:
+        except TypeError:
             self.setup_logging('INFO')
         self.check_params()
         self.setup_services()
         self.setup_environment()
 
     def check_params(self):
-        try:
-            source = os.path.abspath(self.params.SOURCE_PATH)
-            target = os.path.abspath(self.params.TARGET_PATH)
-            if source == target:
-                self.log.error("Error. Source and target paths are the same.")
-                self.log.error("Source path: %s", source)
-                self.log.error("Target path: %s", target)
-                self.log.error("Check, please!")
-                sys.exit(-1)
-            self.ready = True
-        except:
-            pass
+        """Check arguments passed to the application."""
+        self.ready = True
+        source = os.path.abspath(self.params.SOURCE_PATH)
+        target = os.path.abspath(self.params.TARGET_PATH)
+        if source == target:
+            self.log.error("Error. Source and target paths are the same.")
+            self.log.error("Source path: %s", source)
+            self.log.error("Target path: %s", target)
+            self.log.error("Check, please!")
+            self.ready = False
 
     def get_params(self):
         """Return parametres."""
@@ -94,8 +103,7 @@ class KB4IT:
         self.log.debug("Log level set to: %s", severity.upper())
 
     def setup_services(self):
-        """Set up services."""
-        # Declare and register services
+        """Declare and register services."""
         self.services = {}
         try:
             services = {
@@ -134,25 +142,6 @@ class KB4IT:
         self.services[name].end()
         self.services[name] = None
 
-    def check_parameters(self, params):
-        """Check paramaters from command line."""
-        self.params = params
-        self.source_path = params.SOURCE_PATH
-        self.target_path = params.TARGET_PATH
-        if self.target_path is None:
-            self.target_path = os.path.abspath(os.path.curdir + '/target')
-            self.log.debug("\tNo target path provided. Using: %s", self.target_path)
-
-        if not os.path.exists(self.target_path):
-            os.makedirs(self.target_path)
-            self.log.debug("\tTarget path %s created", self.target_path)
-
-        self.log.debug("\tScript directory: %s", GPATH['ROOT'])
-        self.log.debug("\tResources directory: %s", GPATH['RESOURCES'])
-        self.log.debug("\tSource directory: %s", self.source_path)
-        self.log.debug("\tTarget directory: %s", self.target_path)
-        self.log.debug("\tTemporary directory: %s", self.tmpdir)
-
     def run(self):
         """Start application."""
         if self.ready:
@@ -167,6 +156,7 @@ class KB4IT:
                 self.stop()
 
     def get_version(self):
+        """Get KB4IT version."""
         return '%s %s' % (APP['shortname'], APP['version'])
 
     def stop(self):
@@ -177,17 +167,27 @@ class KB4IT:
 
 
 def main():
-    """Execute application."""
-    parser = argparse.ArgumentParser(description='KB4IT %s by Tomás Vírseda' % APP['version'])
-    parser.add_argument('-reset', action='store_true', dest='RESET', help='Reset environment')
-    parser.add_argument('-force', action='store_true', dest='FORCE', help='Force a clean compilation')
-    parser.add_argument('-theme', dest='THEME', help='Specify theme. Otherwise, it uses the default one', required=False)
-    parser.add_argument('-source', dest='SOURCE_PATH', help='Source directory with asciidoctor source files', required=True)
-    parser.add_argument('-target', dest='TARGET_PATH', help='Target directory', required=True)
-    parser.add_argument('-sort', dest='SORT_ATTRIBUTE', help='Choose another attribute for sorting instead the default timestamp')
-    parser.add_argument('-log', dest='LOGLEVEL', help='Increase output verbosity', action='store', default='INFO')
-    parser.add_argument('-version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
+    """Set up application arguments and execute."""
+    parser = argparse.ArgumentParser(
+        description='KB4IT %s by Tomás Vírseda' % APP['version'])
+    parser.add_argument('-reset', action='store_true', dest='RESET',
+                        help='Reset environment')
+    parser.add_argument('-force', action='store_true', dest='FORCE',
+                        help='Force a clean compilation')
+    parser.add_argument('-theme', dest='THEME', required=False,
+                        help='Specify theme')
+    parser.add_argument('-source', dest='SOURCE_PATH', required=True,
+                        help='Directory with Asciidoctor source files')
+    parser.add_argument('-target', dest='TARGET_PATH', required=True,
+                        help='Target directory')
+    parser.add_argument('-sort', dest='SORT_ATTRIBUTE',
+                        help='Sorting attribute')
+    parser.add_argument('-log', dest='LOGLEVEL', action='store',
+                        default='INFO',
+                        help='Increase output verbosity')
+    parser.add_argument('-version', action='version',
+                        version='%s %s' % (APP['shortname'],
+                                           APP['version']))
     params = parser.parse_args()
     app = KB4IT(params)
     app.run()
-
