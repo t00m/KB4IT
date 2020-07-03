@@ -74,10 +74,10 @@ class KB4IT:
         source = os.path.abspath(self.params.SOURCE_PATH)
         target = os.path.abspath(self.params.TARGET_PATH)
         if source == target:
-            self.log.error("Error. Source and target paths are the same.")
-            self.log.error("Source path: %s", source)
-            self.log.error("Target path: %s", target)
-            self.log.error("Check, please!")
+            self.log.error("[MAIN] - Error. Source and target paths are the same.")
+            self.log.error("[MAIN] - Source path: %s", source)
+            self.log.error("[MAIN] - Target path: %s", target)
+            self.log.error("[MAIN] - Check, please!")
             self.ready = False
 
     def get_params(self):
@@ -86,21 +86,23 @@ class KB4IT:
 
     def setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.debug("Setting up %s environment", APP['shortname'])
-        self.log.debug("Global path: %s", GPATH['ROOT'])
-        self.log.debug("Local path: %s", LPATH['ROOT'])
+        self.log.debug("[MAIN] - Setting up %s environment", APP['shortname'])
+        self.log.debug("[MAIN] - Global path: %s", GPATH['ROOT'])
+        self.log.debug("[MAIN] - Local path: %s", LPATH['ROOT'])
 
         # Create local paths if they do not exist
         for entry in LPATH:
-            self.log.debug("Checking if directory '%s' exists", LPATH[entry])
+
             if not os.path.exists(LPATH[entry]):
                 os.makedirs(LPATH[entry])
-                self.log.debug("Creating directory '%s'", LPATH[entry])
+                self.log.debug("[MAIN] - Creating directory '%s'", LPATH[entry])
+            else:
+                self.log.debug("[MAIN] - Directory '%s' already exists", LPATH[entry])
 
     def setup_logging(self, severity=None):
         """Set up logging."""
         self.log = get_logger(__class__.__name__, severity.upper())
-        self.log.debug("Log level set to: %s", severity.upper())
+        self.log.debug("[MAIN] - Log level set to: %s", severity.upper())
 
     def setup_services(self):
         """Declare and register services."""
@@ -114,7 +116,7 @@ class KB4IT:
             for name in services:
                 self.register_service(name, services[name])
         except Exception as error:
-            self.log.error(error)
+            self.log.error("[MAIN] - %s", error)
             raise
 
     def get_service(self, name):
@@ -126,16 +128,16 @@ class KB4IT:
                 service.start(self, logname, name)
             return service
         except KeyError as service:
-            self.log.error("Service %s not registered or not found", service)
+            self.log.error("[MAIN] - Service %s not registered or not found", service)
             raise
 
     def register_service(self, name, service):
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug("Service '%s' registered", name)
+            self.log.debug("[MAIN] - Service '%s' registered", name)
         except KeyError as error:
-            self.log.error(error)
+            self.log.error("[MAIN] - %s", error)
 
     def deregister_service(self, name):
         """Deregister a running service."""
@@ -150,7 +152,7 @@ class KB4IT:
                 if self.params.FORCE:
                     srvapp.reset()
                 else:
-                    self.log.warning("KB4IT environment NOT reset. You must force it!")
+                    self.log.warning("[MAIN] - KB4IT environment NOT reset. You must force it!")
             else:
                 srvapp.run()
                 self.stop()
@@ -163,7 +165,7 @@ class KB4IT:
         """Stop registered services by executing the 'end' method (if any)."""
         for name in self.services:
             self.deregister_service(name)
-        self.log.debug("KB4IT %s finished", APP['version'])
+        self.log.debug("[MAIN] - KB4IT %s finished", APP['version'])
 
 
 def main():

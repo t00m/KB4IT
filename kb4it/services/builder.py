@@ -67,7 +67,7 @@ class KB4ITBuilder(Service):
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-        self.log.debug("PAGE[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
+        self.log.debug("[BUILDER] - PAGE[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
         self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
         self.srvapp.add_target(PAGE_NAME.replace('.adoc', '.html'))
 
@@ -84,7 +84,7 @@ class KB4ITBuilder(Service):
         self.temp_sources.append(PAGE_PATH)
         with open(PAGE_PATH, 'w') as fpag:
             fpag.write(content)
-            self.log.debug("PAGE[%s] distributed to source path", name)
+            self.log.debug("[BUILDER] - PAGE[%s] distributed to source path", name)
 
     def template(self, template):
         """Return the template content from default theme or user theme"""
@@ -101,16 +101,16 @@ class KB4ITBuilder(Service):
             # If not found, get it from default theme
             template_path = os.path.join(theme['templates'], "%s.tpl" % template)
             if os.path.exists(template_path):
-                self.log.debug("THEME[%s] TPL[%s] loaded", theme['id'], template)
+                self.log.debug("[BUILDER] - THEME[%s] TPL[%s] loaded", theme['id'], template)
             else:
                 current_theme = 'default'
                 theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
                 template_path = os.path.join(theme_default, "%s.tpl" % template)
 
                 if os.path.exists(template_path):
-                    self.log.debug("THEME['default'] TPL[%s] loaded", template)
+                    self.log.debug("[BUILDER] - THEME['default'] TPL[%s] loaded", template)
                 else:
-                    self.log.error("TPL[%s] not found. Exit.", template)
+                    self.log.error("[BUILDER] - TPL[%s] not found. Exit.", template)
                     exit()
 
             # If template found, add it to cache. Otherwise, exit.
@@ -118,7 +118,7 @@ class KB4ITBuilder(Service):
                 TEMPLATES[template] = open(template_path, 'r').read()
                 return TEMPLATES[template]
             except FileNotFoundError as error:
-                self.log.error(error)
+                self.log.error("[BUILDER] - %s", error)
                 exit()
 
     def build_page(self, future):
@@ -153,8 +153,8 @@ class KB4ITBuilder(Service):
                 except NameError as error:
                     # Sometimes, weird links in asciidoctor sources
                     # provoke compilation errors
-                    self.log.error("ERROR!! Please, check source document '%s'.", basename)
-                    self.log.error("ERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
+                    self.log.error("[BUILDER] - ERROR!! Please, check source document '%s'.", basename)
+                    self.log.error("[BUILDER] - ERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
                 finally:
                     # Some pages don't have toc section. Ignore it.
                     pass
@@ -253,7 +253,7 @@ class KB4ITBuilder(Service):
                 self.distribute(name, content)
             pagelist.append(name)
 
-        self.log.debug("Created pagination page '%s' (%d pages with %d cards in each page)", pagination['basename'], total_pages, k)
+        self.log.debug("[BUILDER] - Created pagination page '%s' (%d pages with %d cards in each page)", pagination['basename'], total_pages, k)
 
         return pagelist
 
@@ -462,7 +462,7 @@ class KB4ITBuilder(Service):
                     labels = self.get_labels(values)
                     custom_props += ROW_CUSTOM_PROP % (valid_filename(key), key, labels)
                 except Exception as error:
-                    self.log.error("Key[%s]: %s", key, error)
+                    self.log.error("[BUILDER] - Key[%s]: %s", key, error)
             timestamp = self.srvdtb.get_doc_timestamp(doc)
             custom_props += ROW_CUSTOM_PROP_TIMESTAMP % ('Timestamp', timestamp)
             num_custom_props = len(custom_props)
@@ -471,7 +471,7 @@ class KB4ITBuilder(Service):
             html += self.template('METADATA_SECTION_FOOTER')
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
-            self.log.error("%s", msgerror)
+            self.log.error("[BUILDER] - %s", msgerror)
             html = ''
             raise
 

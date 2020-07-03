@@ -315,9 +315,9 @@ def file_timestamp(filename):
 def string_timestamp(string):
     """Return datetime object from a given timestamp."""
     dt = guess_datetime(string)
-    sdate = datetime.fromtimestamp(dt).strftime("%Y-%m-%d %H:%M:%S")
+    sdate = dt.strftime("%Y-%m-%d %H:%M:%S")
+    # ~ print ("%s -> %s" % (string, sdate))
     return sdate
-
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
@@ -379,6 +379,7 @@ def fuzzy_date_from_timestamp(timestamp):
             fuzzy_string = "%s ago" % fuzzy
 
     return fuzzy_string
+
 
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""

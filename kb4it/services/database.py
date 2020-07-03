@@ -34,15 +34,15 @@ class KB4ITDB(Service):
         adoc = "%s.adoc" % doc
         try:
             del(self.db[adoc])
-            self.log.debug("DOC[%s] deleted from database", doc)
+            self.log.debug("[DB] - DOC[%s] deleted from database", doc)
             self.sort_database()
         except KeyError:
-            self.log.debug("DOC[%s] not found in database", doc)
+            self.log.debug("[DB] - DOC[%s] not found in database", doc)
 
     def add_document(self, doc):
         """Add a new document node to the database."""
         self.db[doc] = {}
-        self.log.debug("* DOC[%s] added to database", doc)
+        self.log.debug("[DB] - DOC[%s] added to database", doc)
 
     def add_document_key(self, doc, key, value):
         """Add a new key/value node for a given document."""
@@ -53,7 +53,7 @@ class KB4ITDB(Service):
         except KeyError:
             self.db[doc][key] = [value]
 
-        self.log.debug("* DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
+        self.log.debug("[DB] - DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys"""
@@ -84,7 +84,7 @@ class KB4ITDB(Service):
             if ts is not None:
                 adict[doc] = ts
             else:
-                self.log.error("Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.error("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
         alist = sort_dictionary(adict)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
