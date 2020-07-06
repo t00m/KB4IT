@@ -7,20 +7,17 @@ Server module.
 # File: theme.py
 # Author: Tomás Vírseda
 # License: GPL v3
-# Description: techdoc theme scripts
+# Description: default theme script
 """
 
 from kb4it.services.builder import KB4ITBuilder
 
 class Theme(KB4ITBuilder):
-    def hello(self):
-        self.log.debug("This is the theme techdoc")
-
     def generate_sources(self):
         pass
 
     def build(self):
-        # Default pages
+        """Create standard pages for default theme"""
         self.create_page_properties()
         self.create_page_stats()
         self.create_page_index_all()
