@@ -13,26 +13,21 @@ import os
 from os.path import abspath
 import sys
 import glob
-import time
 import json
-import random
-import threading
 import shutil
 import tempfile
 import datetime
-import operator
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.core.service import Service
-from kb4it.core.util import get_human_datetime
-from kb4it.core.util import extract_toc, valid_filename, load_kbdict
+from kb4it.core.util import valid_filename, load_kbdict
 from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import save_kbdict, copy_docs, copydir
 from kb4it.core.util import file_timestamp
-from kb4it.core.util import guess_datetime, string_timestamp
+from kb4it.core.util import string_timestamp
 
 
 class KB4ITApp(Service):
@@ -40,21 +35,26 @@ class KB4ITApp(Service):
 
     This class manages the logic workflow.
     """
-
+    running = False
+    parameters = None
     runtime = {}  # Dictionary of runtime properties
     kbdict_new = {}  # New compilation cache
     kbdict_cur = {}  # Cached data
 
     def initialize(self):
         """Initialize application structure."""
+        # Status
+        self.running = False
+
         # Get params from command line
+
         self.parameters = self.app.get_params()
         for param, value in self.parameters._get_kwargs():
-            self.log.debug("[SETUP] - KB4IT param: %s = %s" % (param, value))
+            self.log.debug("[SETUP] - KB4IT param: %s = %s", param, value)
 
         # Initialize directories
         self.runtime['dir'] = {}
-        self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP']+'/')
+        self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP'] + '/')
         if self.parameters.TARGET_PATH is None:
             self.runtime['dir']['target'] = LPATH['WWW']
         else:
@@ -141,26 +141,25 @@ class KB4ITApp(Service):
         self.log.debug("[SETUP] - Loaded theme '%s'", self.runtime['theme']['id'])
 
     def theme_search(self, theme):
-        """Search custom theme"""
-
+        """Search custom theme."""
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug("[SETUP] - Autodetecting theme from source path")
-            source_path = self.runtime['dir']['source']
+            source_path = self.get_source_path()
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
             self.log.debug("[SETUP] - Looking for first theme ocurrence in: %s", all_themes)
             try:
                 theme_path = glob.glob(all_themes)[0]
-            except:
+            except IndexError:
                 theme_path = None
         else:
             self.log.debug("[SETUP] - Looking for theme: %s", theme)
             # Search in sources path
-            source_path = self.runtime['dir']['source']
+            source_path = self.get_source_path()
             theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
-            theme_path = os.path.join(self.runtime['dir']['source'], theme_rel_path)
+            theme_path = os.path.join(self.get_source_path(), theme_rel_path)
             if not os.path.exists(theme_path):
                 # Search for theme in KB4IT global theme
                 theme_path = os.path.join(GPATH['THEMES'], theme)
@@ -242,19 +241,19 @@ class KB4ITApp(Service):
         self.log.debug("[CHECKS] - Start")
         self.log.debug("[CHECKS] - Cache directory: %s", self.runtime['dir']['cache'])
         self.log.debug("[CHECKS] - Working directory: %s", self.runtime['dir']['tmp'])
-        self.log.debug("[CHECKS] - Source directory: %s", self.runtime['dir']['source'])
+        self.log.debug("[CHECKS] - Source directory: %s", self.get_source_path())
 
 
         # check if target directory exists. If not, create it:
-        if not os.path.exists(self.runtime['dir']['target']):
-            os.makedirs(self.runtime['dir']['target'])
-        self.log.debug("[CHECKS] - Target directory: %s", self.runtime['dir']['target'])
+        if not os.path.exists(self.get_target_path()):
+            os.makedirs(self.get_target_path())
+        self.log.debug("[CHECKS] - Target directory: %s", self.get_target_path())
         self.log.debug("[CHECKS] - End")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
         self.log.debug("[DOCS] - Start")
-        self.runtime['docs']['bag'] = get_source_docs(self.runtime['dir']['source'])
+        self.runtime['docs']['bag'] = get_source_docs(self.get_source_path())
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         self.log.info("[DOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.debug("[DOCS] - End")
@@ -274,7 +273,7 @@ class KB4ITApp(Service):
         def clean_cache():
             missing = []
             for docname in self.kbdict_cur['document']:
-                docpath = os.path.join(self.runtime['dir']['source'], docname)
+                docpath = os.path.join(self.get_source_path(), docname)
                 if not os.path.exists(docpath):
                     missing.append(docname)
             if len(missing) == 0:
@@ -287,12 +286,11 @@ class KB4ITApp(Service):
 
         clean_cache()
 
-        tsdict = {}
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
 
             # Get metadata
-            docpath = os.path.join(self.runtime['dir']['source'], docname)
+            docpath = os.path.join(self.get_source_path(), docname)
             keys = get_asciidoctor_attributes(docpath)
 
             # Check if file is valid by checking Title
@@ -330,12 +328,14 @@ class KB4ITApp(Service):
             for key in keys:
                 alist = keys[key]
                 for value in alist:
-                    nc = len(value.strip())
-                    if nc == 0:
+                    if len(value.strip()) == 0:
                         continue
 
-                    if key in self.runtime['theme']['date_attributes']:
+                    try:
+                        if key in self.runtime['theme']['date_attributes']:
                             value = string_timestamp(value)
+                    except KeyError:
+                        pass
 
                     if key == 'Tag':
                         value = value.lower()
@@ -399,7 +399,7 @@ class KB4ITApp(Service):
             self.add_target(docname.replace('.adoc', '.html'))
 
         # Save current status for the next run
-        save_kbdict(self.kbdict_new, self.runtime['dir']['source'])
+        save_kbdict(self.kbdict_new, self.get_source_path())
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort_database()
@@ -497,7 +497,6 @@ class KB4ITApp(Service):
 
             for page in pagelist:
                 docname = "%s.html" % page
-                filename = os.path.join(self.runtime['dir']['cache'], docname)
                 self.add_target(docname.replace('.adoc', '.html'))
 
         self.log.debug("[PROCESSING] - Finish processing keys")
@@ -522,7 +521,7 @@ class KB4ITApp(Service):
         for prop in ADOCPROPS:
             if ADOCPROPS[prop] is not None:
                 if '%s' in ADOCPROPS[prop]:
-                    adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop] % self.runtime['dir']['target'])
+                    adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop] % self.get_target_path())
                 else:
                     adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop])
             else:
@@ -569,7 +568,6 @@ class KB4ITApp(Service):
                     self.log.debug("[COMPILATON] - %3s%% done", str(pct))
 
         dcompe = datetime.datetime.now()
-        totaldocs = len(get_source_docs(self.runtime['dir']['tmp']))
         comptime = dcompe - dcomps
         duration = comptime.seconds
         if duration == 0:
@@ -580,10 +578,6 @@ class KB4ITApp(Service):
         self.log.info("[COMPILATON] - Stats - Compiled docs: %d", num - 1)
         self.log.info("[COMPILATON] - Stats - Avg. Speed: %d docs/sec", avgspeed)
         self.log.debug("[COMPILATON] - End")
-
-    def stage_06_extras(self):
-        """Include other stuff."""
-        pass
 
     def stage_07_clean_target(self):
         """Clean up stage."""
@@ -597,8 +591,8 @@ class KB4ITApp(Service):
             shutil.copy(source, target)
         self.log.debug("[CLEANUP] - Copy temporary files to distributed directory")
 
-        delete_target_contents(self.runtime['dir']['target'])
-        self.log.debug("[CLEANUP] - Deleted target contents in: %s", self.runtime['dir']['target'])
+        delete_target_contents(self.get_target_path())
+        self.log.debug("[CLEANUP] - Deleted target contents in: %s", self.get_target_path())
         self.log.debug("[CLEANUP] - End")
 
     def stage_08_refresh_target(self):
@@ -606,9 +600,9 @@ class KB4ITApp(Service):
         self.log.debug("[INSTALL] - Start")
 
         # Copy asciidocs documents to target path
-        pattern = os.path.join(self.runtime['dir']['source'], '*.adoc')
+        pattern = os.path.join(self.get_source_path(), '*.adoc')
         files = glob.glob(pattern)
-        docsdir = os.path.join(self.runtime['dir']['target'], 'sources')
+        docsdir = os.path.join(self.get_target_path(), 'sources')
         os.makedirs(docsdir)
         copy_docs(files, docsdir)
         self.log.debug("[INSTALL] - Copy %d asciidoctor sources to target path", len(files))
@@ -623,7 +617,7 @@ class KB4ITApp(Service):
         n = 0
         for filename in self.runtime['docs']['target']:
             source = os.path.join(self.runtime['dir']['cache'], filename)
-            target = os.path.join(self.runtime['dir']['target'], filename)
+            target = os.path.join(self.get_target_path(), filename)
             try:
                 shutil.copy(source, target)
             except FileNotFoundError as error:
@@ -633,9 +627,7 @@ class KB4ITApp(Service):
         self.log.debug("[INSTALL] - Copied %d cached documents successfully to target path", n)
 
         # Copy global resources to target path
-        resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
-        global_resources_dir = GPATH['RESOURCES']
-        # ~ COMMON_RES_DIR = os.path.join(global_resources_dir, 'common')
+        resources_dir_target = os.path.join(self.get_target_path(), 'resources')
         theme_target_dir = os.path.join(resources_dir_target, 'themes')
         theme = self.get_theme_properties()
         DEFAULT_THEME = os.path.join(GPATH['THEMES'], 'default')
@@ -647,23 +639,22 @@ class KB4ITApp(Service):
         self.log.debug("[INSTALL] - Copied global resources to target path")
 
         # Copy local resources to target path
-        source_resources_dir = os.path.join(self.runtime['dir']['source'], 'resources')
+        source_resources_dir = os.path.join(self.get_source_path(), 'resources')
         if os.path.exists(source_resources_dir):
-            resources_dir_target = os.path.join(self.runtime['dir']['target'], 'resources')
+            resources_dir_target = os.path.join(self.get_target_path(), 'resources')
             copydir(source_resources_dir, resources_dir_target)
             self.log.debug("[INSTALL] - Copied local resources to target path")
 
         # Copy back all HTML files from target to cache
         delete_target_contents(self.runtime['dir']['cache'])
-        pattern = os.path.join(self.runtime['dir']['target'], '*.html')
+        pattern = os.path.join(self.get_target_path(), '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
         self.log.debug("[INSTALL] - Copying HTML files back to cache...")
 
         # Copy JSON database to target path so it can be queried from
         # others applications
-        save_kbdict(self.kbdict_new,
-                    self.runtime['dir']['target'], 'kb4it')
+        save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
         self.log.debug("[INSTALL] - Copied JSON database to target")
         self.log.debug("[INSTALL] - End")
 
@@ -688,9 +679,9 @@ class KB4ITApp(Service):
         """
         self.kbdict_new = {}
         self.kbdict_cur = {}
-        filename = valid_filename(self.runtime['dir']['source'])
+        filename = valid_filename(self.get_source_path())
         kdbdict = 'kbdict-%s.json' % filename
-        KB4IT_DB_FILE = os.path.join(LPATH['DB'], kbdict)
+        KB4IT_DB_FILE = os.path.join(LPATH['DB'], kdbdict)
 
         delete_target_contents(self.runtime['dir']['cache'])
         self.log.info("[RESET] -DIR[%s] deleted", self.runtime['dir']['cache'])
@@ -698,11 +689,11 @@ class KB4ITApp(Service):
         delete_target_contents(self.runtime['dir']['tmp'])
         self.log.info("[RESET] -DIR[%s] deleted", self.runtime['dir']['tmp'])
 
-        delete_target_contents(self.runtime['dir']['source'])
-        self.log.info("[RESET] -DIR[%s] deleted", self.runtime['dir']['source'])
+        delete_target_contents(self.get_source_path())
+        self.log.info("[RESET] -DIR[%s] deleted", self.get_source_path())
 
-        delete_target_contents(self.runtime['dir']['target'])
-        self.log.info("[RESET] -DIR[%s] deleted", self.runtime['dir']['target'])
+        delete_target_contents(self.get_target_path())
+        self.log.info("[RESET] -DIR[%s] deleted", self.get_target_path())
 
         delete_target_contents(KB4IT_DB_FILE)
         self.log.info("[RESET] -FILE[%s] deleted", KB4IT_DB_FILE)
@@ -730,12 +721,11 @@ class KB4ITApp(Service):
         self.stage_03_preprocessing()
         self.stage_04_processing()
         self.stage_05_compilation()
-        self.stage_06_extras()
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
         self.stage_09_remove_temporary_dir()
         self.log.debug("[APP] - Browse your documentation repository:")
-        homepage = os.path.join(abspath(self.runtime['dir']['target']), 'index.html')
+        homepage = os.path.join(abspath(self.get_target_path()), 'index.html')
         self.log.info("[APP] - KB4IT homepage: %s", homepage)
         self.log.info("[APP] - KB4IT - Execution finished")
         self.running = False

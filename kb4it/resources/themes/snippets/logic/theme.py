@@ -90,7 +90,7 @@ class Theme(KB4ITBuilder):
         return html % (cloud, stats)
 
     def get_doc_card(self, doc):
-        """Get document CAR
+        """Get document card."""
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = self.template('CARD_DOC')
         DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
