@@ -110,9 +110,6 @@ class Theme(KB4ITBuilder):
 
     def build_events(self, doclist):
         SORT = self.srvapp.get_runtime_parameter('sort_attribute')
-        # ~ self.log.debug("\t\t\t  Using custom build cardset function for events")
-        # ~ self.dey = {} # Dictionary of day events per year
-        # ~ self.events_docs = {} # Dictionary storing a list of docs for a given date
 
         # Get events dates
         for doc in doclist:
@@ -149,8 +146,8 @@ class Theme(KB4ITBuilder):
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
-                self.log.error(error)
-                self.log.error("Doc doesn't have a valid date field. Skip it.")
+                self.log.debug("[THEME-TECHDOC] - %s", error)
+                self.log.debug("[THEME-TECHDOC] - Doc doesn't have a valid date field. Skip it.")
 
         # Build day event pages
         for year in self.events_docs:
@@ -214,7 +211,6 @@ class Theme(KB4ITBuilder):
             adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
 
     def create_page_events(self):
-        self.log.debug("\t\tBuilding events")
         doclist = []
         ecats = {}
         theme = self.srvapp.get_theme_properties()
@@ -222,7 +218,7 @@ class Theme(KB4ITBuilder):
             event_types = theme['events']
         except:
             event_types = []
-        self.log.debug("\t\tEvent types registered for this theme: %s", ', '.join(event_types))
+        self.log.debug("[THEME-TECHDOC] - Event types registered: %s", ', '.join(event_types))
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category in event_types:
@@ -241,6 +237,7 @@ class Theme(KB4ITBuilder):
         HTML = self.srvcal.build_year_pagination(self.dey.keys())
         page = self.template('PAGE_EVENTS')
         self.distribute('events', page % HTML)
+        self.log.debug("[THEME-TECHDOC] - Built %d events", len(doclist))
 
     def create_page_recents(self):
         """Create recents page."""
