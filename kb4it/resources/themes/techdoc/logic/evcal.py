@@ -59,17 +59,17 @@ class EventsCalendar(Service, HTMLCalendar):
                 # If yes, return link to page
                 EVENT_PAGE = "events_%4d%02d%02d" % (self.year, self.month, day)
                 EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
-                if self.month == self.now.month and day == self.now.day:
+                if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
                     return EVENTCAL_TD_DAY_LINK_TODAY % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
                 else:
                     return EVENTCAL_TD_DAY_LINK % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
             else:
-                if self.month == self.now.month and day == self.now.day:
+                if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
                     return EVENTCAL_TD_DAY_NOLINK_TODAY % (self.cssclasses[weekday], day)
                 else:
                     return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
         except:
-                if self.month == self.now.month and day == self.now.day:
+                if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
                     return EVENTCAL_TD_DAY_NOLINK_TODAY % (self.cssclasses[weekday], day)
                 else:
                     return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
