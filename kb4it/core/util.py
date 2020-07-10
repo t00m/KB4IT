@@ -221,21 +221,26 @@ def get_asciidoctor_attributes(docpath):
 
         # Add document title (first line) to graph
         title = line[0][2:-1]
-        props['Title'] = [title]
+        title = title.strip()
 
-        # read the rest of properties until watermark
-        for n in range(1, len(line)):
-            if line[n].startswith(':'):
-                key = line[n][1:line[n].find(':', 1)]
-                values = line[n][len(key)+2:-1].split(',')
-                props[key] = [value.strip() for value in values]
-            elif line[n].startswith(EOHMARK):
-                # Stop processing if EOHMARK is found
-                break
+        # Proceed only if document has a title
+        if len(title) > 0:
+            props['Title'] = [title]
+
+            # read the rest of properties until watermark
+            for n in range(1, len(line)):
+                if line[n].startswith(':'):
+                    key = line[n][1:line[n].find(':', 1)]
+                    values = line[n][len(key)+2:-1].split(',')
+                    props[key] = [value.strip() for value in values]
+                elif line[n].startswith(EOHMARK):
+                    # Stop processing if EOHMARK is found
+                    break
     except IndexError as error:
         basename = os.path.basename(docpath)
         log.error("Document %s could not be processed. Empty?" % basename)
         props = {}
+
     return props
 
 
