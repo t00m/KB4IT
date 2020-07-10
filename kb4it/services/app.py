@@ -243,7 +243,6 @@ class KB4ITApp(Service):
         self.log.debug("[CHECKS] - Working directory: %s", self.runtime['dir']['tmp'])
         self.log.debug("[CHECKS] - Source directory: %s", self.get_source_path())
 
-
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
             os.makedirs(self.get_target_path())
@@ -272,10 +271,14 @@ class KB4ITApp(Service):
 
         def clean_cache():
             missing = []
-            for docname in self.kbdict_cur['document']:
-                docpath = os.path.join(self.get_source_path(), docname)
-                if not os.path.exists(docpath):
-                    missing.append(docname)
+            try:
+                for docname in self.kbdict_cur['document']:
+                    docpath = os.path.join(self.get_source_path(), docname)
+                    if not os.path.exists(docpath):
+                        missing.append(docname)
+            except KeyError:
+                pass # skip
+
             if len(missing) == 0:
                 self.log.debug("[PREPROCESSING] - Cache is empty")
 
@@ -298,6 +301,7 @@ class KB4ITApp(Service):
                 keys['Title']
             except KeyError:
                 self.runtime['docs']['count'] -= 1
+                self.log.warning("[DOCS] - DOC[%s] doesn't has a title. Skip it.", docname)
                 continue
 
             self.kbdict_new['document'][docname] = {}
@@ -572,7 +576,7 @@ class KB4ITApp(Service):
         duration = comptime.seconds
         if duration == 0:
             duration = 1
-        avgspeed = int(((num-1)/duration))
+        avgspeed = int(((num - 1) / duration))
         self.log.debug("[COMPILATON] - 100% done")
         self.log.info("[COMPILATON] - Stats - Time: %d seconds", comptime.seconds)
         self.log.info("[COMPILATON] - Stats - Compiled docs: %d", num - 1)
