@@ -16,14 +16,11 @@ from kb4it.services.builder import KB4ITBuilder
 from kb4it.core.util import valid_filename
 
 class Theme(KB4ITBuilder):
-    def hello(self):
-        self.log.debug("This is the theme snippets")
-
     def generate_sources(self):
         pass
 
     def build(self):
-        # Default pages
+        """Create standard pages for this theme"""
         self.create_page_properties()
         self.create_page_stats()
         self.create_page_index_all()
@@ -34,6 +31,7 @@ class Theme(KB4ITBuilder):
         self.create_page_help()
 
     def create_page_index(self):
+        """Custom index page."""
         html = self.template('PAGE_INDEX')
         html_key = self.create_page_key_body('Module')
         source_dir = self.srvapp.get_source_path()
@@ -92,6 +90,7 @@ class Theme(KB4ITBuilder):
         return html % (cloud, stats)
 
     def get_doc_card(self, doc):
+        """Get document card."""
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = self.template('CARD_DOC')
         DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
