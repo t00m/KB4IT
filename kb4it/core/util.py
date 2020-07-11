@@ -138,18 +138,21 @@ def get_font_size(frequency, max_frequency):
     """Get font size for a word based in its frequency."""
     proportion = int(math.log((frequency * 100) / max_frequency))
 
-    if proportion < 1:
-        size = 8
-    elif proportion in range(1, 2):
+    if max_frequency == 1:
         size = 10
-    elif proportion in range(2, 3):
-        size = 18
-    elif proportion in range(3, 4):
-        size = 36
-    elif proportion in range(4, 5):
-        size = 72
     else:
-        size = 72
+        if proportion < 1:
+            size = 8
+        elif proportion in range(1, 2):
+            size = 10
+        elif proportion in range(2, 3):
+            size = 18
+        elif proportion in range(3, 4):
+            size = 36
+        elif proportion in range(4, 5):
+            size = 72
+        else:
+            size = 72
 
     return size
 
