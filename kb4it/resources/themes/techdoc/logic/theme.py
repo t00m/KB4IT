@@ -50,15 +50,15 @@ class Theme(KB4ITBuilder):
         TPL_INDEX = self.template('PAGE_INDEX')
         TABLE_EVENTS = self.template('TABLE_EVENT')
         ROW_EVENT = self.template('TABLE_EVENT_ROW')
-        OLD = """<table border="0" cellpadding="0" cellspacing="0" class="month">"""
-        NEW = """<table border="0" cellpadding="0" cellspacing="0" width="100%" class="month">"""
+        TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
+        TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
         now = datetime.now().date()
         ldcm = now.replace(day = monthrange(now.year, now.month)[1]) # last day current month
         fdnm = ldcm + timedelta(days=1) # first day next month
         ldnm = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # last day next month
 
         trimester = self.srvcal.format_trimester(now.year, now.month)
-        trimester = trimester.replace(OLD, NEW)
+        trimester = trimester.replace(TABLE_MONTH_OLD, TABLE_MONTH_NEW)
 
         next_events = ""
         ROWS_EVENTS = ''
@@ -280,11 +280,12 @@ class Theme(KB4ITBuilder):
                 categories = self.srvdtb.get_values(doc, 'Category')
                 for category in categories:
                     author_etypes.add(category)
-            header = """<ul class="uk-flex-center" uk-tab>\n"""
+            header = self.template('UK-TAB-CENTER')
+            items = ''
             for etype in sorted(list(author_etypes)):
-                header += """<li><a href="#">%s</a></li>\n""" % etype.title()
-            header += """</ul>\n"""
-            return sorted(list(author_etypes)), header
+                item = self.template('UK-TAB-ITEM')
+                items += item % etype.title()
+            return sorted(list(author_etypes)), header % items
 
         for author in authors:
             docs = self.srvdtb.get_docs_by_key_value('Author', author)
