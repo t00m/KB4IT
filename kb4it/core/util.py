@@ -36,7 +36,7 @@ def load_kbdict(source_path):
             kbdict = json.load(fkb)
     except FileNotFoundError:
         kbdict = {}
-    log.debug("Current kbdict entries: %d", len(kbdict))
+    log.debug("[UTIL] - Current kbdict entries: %d", len(kbdict))
     return kbdict
 
 
@@ -50,7 +50,7 @@ def save_kbdict(kbdict, path, name=None):
 
     with open(KB4IT_DB_FILE, 'w') as fkb:
         json.dump(kbdict, fkb)
-        log.debug("KBDICT %s saved", KB4IT_DB_FILE)
+        log.debug("[UTIL] - KBDICT %s saved", KB4IT_DB_FILE)
 
 
 def copy_docs(docs, target):
@@ -58,10 +58,10 @@ def copy_docs(docs, target):
     for doc in docs:
         try:
             shutil.copy('%s' % doc, target)
-            log.debug("%s copied to %s", doc, target)
+            log.debug("[UTIL] - %s copied to %s", doc, target)
         except FileNotFoundError:
-            log.warning("%s not found", doc)
-    log.debug("%d documents copied to '%s'", len(docs), target)
+            log.warning("[UTIL] -%s not found", doc)
+    log.debug("[UTIL] - %d documents copied to '%s'", len(docs), target)
 
 
 def copydir(source, dest):
@@ -83,7 +83,7 @@ def copydir(source, dest):
             try:
                 shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
             except PermissionError:
-                log.warning("Check permissions for file: %s", file)
+                log.warning("[UTIL] -Check permissions for file: %s", file)
 
 
 def get_source_docs(path):
@@ -94,7 +94,7 @@ def get_source_docs(path):
     pattern = os.path.join(path) + '*.adoc'
     docs = glob.glob(pattern)
     docs.sort(key=lambda y: y.lower())
-    log.debug("\tFound %d asciidoctor documents", len(docs))
+    log.debug("[UTIL] - Found %d asciidoctor documents", len(docs))
 
     return docs
 
@@ -119,7 +119,7 @@ def exec_cmd(data):
         compiled = True
     else:
         compiled = False
-        log.debug("Compiling %s: Error: %s", doc, errs)
+        log.debug("[UTIL] - Compiling %s: Error: %s", doc, errs)
     return doc, compiled, res
 
 
@@ -195,10 +195,10 @@ def delete_target_contents(target_path):
                     os.unlink(file_object_path)
                 else:
                     shutil.rmtree(file_object_path)
-            log.debug("Contents of directory '%s' deleted successfully", target_path)
+            log.debug("[UTIL] - Contents of directory '%s' deleted successfully", target_path)
         elif os.path.isfile(target_path):
             os.unlink(target_path)
-            log.debug("File '%s' deleted successfully", target_path)
+            log.debug("[UTIL] - File '%s' deleted successfully", target_path)
 
 
 def delete_files(files):
@@ -208,8 +208,8 @@ def delete_files(files):
             if os.path.exists(path):
                 os.unlink(path)
         except FileNotFoundError as error:
-            log.warning(error)
-            log.warning(files)
+            log.warning("[UTIL] - %s", error)
+            log.warning("[UTIL] - %s", files)
 
 
 def get_asciidoctor_attributes(docpath):
@@ -238,7 +238,7 @@ def get_asciidoctor_attributes(docpath):
                     break
     except IndexError as error:
         basename = os.path.basename(docpath)
-        log.error("Document %s could not be processed. Empty?" % basename)
+        log.error("[UTIL] - Document %s could not be processed. Empty?" % basename)
         props = {}
 
     return props
