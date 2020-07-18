@@ -11,6 +11,7 @@ KB4IT module. Entry point.
 
 import os
 import argparse
+import tempfile
 from argparse import Namespace
 from kb4it.core.env import APP, LPATH, GPATH
 from kb4it.core.log import get_logger
@@ -59,9 +60,11 @@ class KB4IT:
         if params is not None:
             self.params = params
         else:
-            self.params = Namespace()
+            tmp_source = os.path.join(LPATH['TMP'], 'source')
+            tmp_target = os.path.join(LPATH['TMP'], 'target')
+            self.params = Namespace(RESET=False, FORCE=False, LOGLEVEL='INFO', SORT_ATTRIBUTE=None, SOURCE_PATH=tmp_source, TARGET_PATH=tmp_target, THEME=None)
         try:
-            self.setup_logging(params.LOGLEVEL)
+            self.setup_logging(self.params.LOGLEVEL)
         except TypeError:
             self.setup_logging('INFO')
         self.check_params()
