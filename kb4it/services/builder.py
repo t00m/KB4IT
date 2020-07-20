@@ -354,8 +354,11 @@ class KB4ITBuilder(Service):
         """Create index page.
         To be replaced by custom code.
         """
-        TPL_INDEX = self.template('PAGE_INDEX')
-        self.distribute('index', TPL_INDEX)
+        srcdir = self.srvapp.get_source_path()
+        custom_index = os.path.join(srcdir, 'index.adoc')
+        if not os.path.exists(custom_index):
+            TPL_INDEX = self.template('PAGE_INDEX')
+            self.distribute('index', TPL_INDEX)
 
     def get_maxkv_freq(self):
         """Calculate max frequency for all keys"""
