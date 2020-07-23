@@ -1,4 +1,4 @@
-= %s
+= ${title}
 
 ++++
     <!-- KEY_PAGE.tpl -->
@@ -12,11 +12,11 @@
     <!-- Tabs content :: START-->
     <ul class="uk-switcher uk-margin">
         <li> <!-- Cloud :: Start -->
-%s
+${cloud}
         </li> <!-- Cloud :: End -->
 
         <li> <!-- Stats :: Start -->
-%s
+${stats}
         </li> <!-- Stats :: End-->
     </ul>
     <!-- Tabs content :: END-->

@@ -1,5 +1,5 @@
 
             <!-- WORDCLOUD.tpl :: START -->
             <div class="uk-flex-center" uk-grid="parallax: 150">
-%s
+${items}
             </div> <!-- WORDCLOUD.tpl :: END -->
