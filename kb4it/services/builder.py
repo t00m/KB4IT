@@ -302,8 +302,10 @@ class KB4ITBuilder(Service):
         if len_words > 0:
             lwords.sort(key=lambda y: y.lower())
             WORDCLOUD = self.template('WORDCLOUD')
-            WORDCLOUD_ITEM = self.template('WORDCLOUD_ITEM')
-            html_items = ''
+            # ~ WORDCLOUD_ITEM = self.template('WORDCLOUD_ITEM')
+            var = {}
+            var['items'] = []
+            # ~ html_items = ''
             for word in lwords:
                 frequency = len(dkeyurl[word])
                 size = get_font_size(frequency, max_frequency)
@@ -314,9 +316,11 @@ class KB4ITBuilder(Service):
                 item['tooltip'] = tooltip
                 item['size'] = size
                 item['word'] = word
-                html_item = WORDCLOUD_ITEM.render(item=item)
-                html_items += html_item
-            html = WORDCLOUD.render(items=html_items)
+                var['items'].append(item)
+                # ~ html_item = WORDCLOUD_ITEM.render(var=kbtplvar)
+                # ~ html_items += html_item
+            html = WORDCLOUD.render(var=var)
+            print(html)
         else:
             html = ''
 
