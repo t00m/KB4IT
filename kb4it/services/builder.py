@@ -25,6 +25,9 @@ from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import delete_files, extract_toc
 from kb4it.core.util import get_hash_from_file
 
+from mako.template import Template
+
+
 TEMPLATES = {}
 
 
@@ -118,7 +121,7 @@ class KB4ITBuilder(Service):
 
             # If template found, add it to cache. Otherwise, exit.
             try:
-                TEMPLATES[template] = open(template_path, 'r').read()
+                TEMPLATES[template] = Template(filename=template_path)
                 return TEMPLATES[template]
             except FileNotFoundError as error:
                 self.log.error("[BUILDER] - %s", error)
@@ -300,15 +303,20 @@ class KB4ITBuilder(Service):
             lwords.sort(key=lambda y: y.lower())
             WORDCLOUD = self.template('WORDCLOUD')
             WORDCLOUD_ITEM = self.template('WORDCLOUD_ITEM')
-            items = ''
+            html_items = ''
             for word in lwords:
                 frequency = len(dkeyurl[word])
                 size = get_font_size(frequency, max_frequency)
                 url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
                 tooltip = "%d documents" % frequency
-                item = WORDCLOUD_ITEM % (url, tooltip, size, word)
-                items += item
-            html = WORDCLOUD % items
+                item = {}
+                item['url'] = url
+                item['tooltip'] = tooltip
+                item['size'] = size
+                item['word'] = word
+                html_item = WORDCLOUD_ITEM.render(item=item)
+                html_items += html_item
+            html = WORDCLOUD.render(items=html_items)
         else:
             html = ''
 
