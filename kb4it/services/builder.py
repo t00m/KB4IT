@@ -193,38 +193,66 @@ class KB4ITBuilder(Service):
         Create a page with documents.
         If amount of documents is greater than 100, split it in several pages
         """
+        print("PG. TPL: %s" % pagination['template'])
         PG_HEAD = self.template(pagination['template'])
-        num_rel_docs = len(pagination['doclist'])
+        var = {}
+
+        # Pagination title
+        if pagination['title'] is None:
+            var['title'] = pagination['basename'].replace('_', ' ')
+        else:
+            var['title'] = pagination['title']
+
+        # Pagination basename
+        var['basename'] = pagination['basename']
+
+        # Number of related docs
+        var['num_rel_docs'] = len(pagination['doclist'])
+
+        # List of pages returned
         pagelist = []
-        if num_rel_docs < 100:
+
+        # Calculate k:
+        # k = 1 if number of documents < 100
+        # k = 12 if all documents fit in <= 10 pages
+        # k > 12 to fit all documents in 10 pages
+        if var['num_rel_docs'] < 100:
             total_pages = 1
-            k = math.ceil(num_rel_docs / total_pages)
+            k = math.ceil(var['num_rel_docs'] / total_pages)
         else:
             k = 12
-            total_pages = math.ceil(num_rel_docs / k)
+            total_pages = math.ceil(var['num_rel_docs'] / k)
             if total_pages > 10:
                 total_pages = 10
-                k = math.ceil(num_rel_docs / total_pages)
+                k = math.ceil(var['num_rel_docs'] / total_pages)
                 row = k % 3  # Always display rows with 3 elements at list
                 while row != 0:
                     k += 1
                     row = k % 3
-                total_pages = math.ceil(num_rel_docs / k)
+                total_pages = math.ceil(var['num_rel_docs'] / k)
             elif total_pages == 0:
                 total_pages = 1
-                k = math.ceil(num_rel_docs / total_pages)
+                k = math.ceil(var['num_rel_docs'] / total_pages)
+        var['k'] = k
+        var['total'] = total_pages
 
+        var['pg-head-items'] = []
         for current_page in range(total_pages):
-            PAGINATION = self.template('PAGINATION_START')
+            # ~ PAGINATION = self.template('PAGINATION_START')
+            page = {}
+            page['num'] = current_page
+            # ~ page['pg-head-items'] = ''
             if total_pages > 0:
                 for i in range(total_pages):
                     start = k * i  # lower limit
                     end = k * i + k  # upper limit
                     if i == current_page:
                         if total_pages - 1 == 0:
-                            PAGINATION += self.template('PAGINATION_NONE')
+                            pagination_none = self.template('PAGINATION_NONE')
+                            var['pg-head-items'] += pagination_none.render()
                         else:
-                            PAGINATION += self.template('PAGINATION_PAGE_ACTIVE') % (i, start, end, num_rel_docs, i)
+                            page_active = self.template('PAGINATION_PAGE_ACTIVE')
+                            var['pg-head-items'] +=  page_active.render(i, start, end, num_rel_docs, i)
                         cstart = start
                         cend = end
                     else:
@@ -232,8 +260,9 @@ class KB4ITBuilder(Service):
                             PAGE = "%s.adoc" % pagination['basename']
                         else:
                             PAGE = "%s-%d.adoc" % (pagination['basename'], i)
-                        PAGINATION += self.template('PAGINATION_PAGE_INACTIVE') % (i, start, end, num_rel_docs, PAGE.replace('adoc', 'html'), i)
-            PAGINATION += self.template('PAGINATION_END')
+                        page_inactive = self.template('PAGINATION_PAGE_INACTIVE')
+                        var['pg-head-items'] +=  page_inactive.render(i, start, end, num_rel_docs, PAGE.replace('adoc', 'html'), i)
+            # ~ PAGINATION += self.template('PAGINATION_END')
 
             if current_page == 0:
                 name = "%s" % pagination['basename']
@@ -245,17 +274,15 @@ class KB4ITBuilder(Service):
             if pe > 0:
                 # get build_cardset custom function or default
                 custom_build_cardset = "self.%s" % pagination['function']
-                CARDS = eval(custom_build_cardset)(pagination['doclist'][ps:pe])
+                var['pg-body-items'] = eval(custom_build_cardset)(pagination['doclist'][ps:pe])
             else:
-                CARDS = ""
+                var['pg-body-items'] = ""
 
-            if pagination['title'] is None:
-                title = pagination['basename'].replace('_', ' ')
-            else:
-                title = pagination['title']
-            content = PG_HEAD % (title, PAGINATION, CARDS)
+
+            # ~ content = PG_HEAD.render(var=var)
+            html = PG_HEAD.render(var=var)
             if not pagination['fake']:
-                self.distribute(name, content)
+                self.distribute(name, html)
             pagelist.append(name)
 
         self.log.debug("[BUILDER] - Created pagination page '%s' (%d pages with %d cards in each page)", pagination['basename'], total_pages, k)
@@ -268,8 +295,11 @@ class KB4ITBuilder(Service):
         CARDS = ""
         for doc in doclist:
             title = self.srvdtb.get_values(doc, 'Title')[0]
-            doc_card = self.get_doc_card(doc)
-            card_search_filter = CARD_DOC_FILTER_DATA_TITLE % (valid_filename(title), doc_card)
+            card = self.get_doc_card(doc)
+            var = {}
+            var['data-title'] = valid_filename(title)
+            var['card_doc'] = card
+            card_search_filter = CARD_DOC_FILTER_DATA_TITLE.render(var=var)
             CARDS += """%s""" % card_search_filter
         return CARDS
 
@@ -320,7 +350,6 @@ class KB4ITBuilder(Service):
                 # ~ html_item = WORDCLOUD_ITEM.render(var=kbtplvar)
                 # ~ html_items += html_item
             html = WORDCLOUD.render(var=var)
-            print(html)
         else:
             html = ''
 
@@ -421,21 +450,29 @@ class KB4ITBuilder(Service):
 
     def create_page_key(self, key, values):
         """Create key page."""
-        html = self.template('PAGE_KEY')
+        PAGE_KEY = self.template('PAGE_KEY')
+        var = {}
 
-        # TAB Cloud
+        # Title
+        var['title'] = key
+
+        # Tab Cloud
         cloud = self.create_tagcloud_from_key(key)
 
-        # TAB Stats
+        # Tab Leader
         stats = ""
-        leader_row = self.template('LEADER_ROW')
+        var['leader'] = []
         for value in values:
+            item = {}
             docs = self.srvdtb.get_docs_by_key_value(key, value)
-            tpl_value_link = self.template('LEADER_ROW_VALUE_LINK')
-            value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
-            stats += leader_row % (value_link, len(docs))
-
-        return html % (key, cloud, stats)
+            item['count'] = len(docs)
+            item['vfkey'] = valid_filename(key)
+            item['vfvalue'] = valid_filename(value)
+            item['name'] = value
+            var['leader'].append(item)
+        var['cloud'] = cloud
+        html = PAGE_KEY.render(var=var)
+        return html
 
     def get_html_values_from_key(self, doc, key):
         """Return the html link for a value."""
@@ -478,25 +515,39 @@ class KB4ITBuilder(Service):
 
     def get_doc_card(self, doc):
         """Get card for a given doc"""
+        var = {}
         DOC_CARD = self.template('CARD_DOC')
         DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
         LINK = self.template('LINK')
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        category = self.srvdtb.get_values(doc, 'Category')[0]
-        scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
-        if len(category) > 0 and len(scope) > 0:
-            link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
-            link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
-            footer = DOC_CARD_FOOTER % (link_category, link_scope)
+        var['title'] = self.srvdtb.get_values(doc, 'Title')[0]
+        var['category'] = self.srvdtb.get_values(doc, 'Category')[0]
+        var['scope'] = self.srvdtb.get_values(doc, 'Scope')[0]
+        var['content'] = ''
+        link = {}
+        link['class'] = "uk-link-heading uk-text-meta"
+        link['url'] = valid_filename(doc).replace('.adoc', '')
+        link['title'] = var['title']
+        link_title = LINK.render(var=link)
+        if len(var['category']) > 0 and len(var['scope']) > 0:
+            cat = {}
+            cat['class'] = "uk-link-heading uk-text-meta"
+            cat['url'] = "Category_%s.html" % valid_filename(category)
+            cat['title'] = var['category']
+            var['link_category'] = LINK.render(var=cat)
+
+            sco = {}
+            sco['class'] = "uk-link-heading uk-text-meta"
+            sco['url'] = "Category_%s.html" % valid_filename(scope)
+            sco['title'] = var['scope']
+            var['link_scope'] = LINK.render(var=sco)
         else:
-            footer = ''
+            var['link_category'] = ''
+            var['link_scope'] = ''
 
-        timestamp = self.srvdtb.get_doc_timestamp(doc)
-        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
-
-        tooltip = "%s" % (title)
-        return DOC_CARD % (tooltip, link_title, timestamp, fuzzy_date, footer)
+        var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+        var['fuzzy_date'] = fuzzy_date_from_timestamp(var['timestamp'])
+        var['tooltip'] = var['title']
+        return DOC_CARD.render(var=var)
 
     def get_labels(self, values):
         """C0111: Missing function docstring (missing-docstring)."""
