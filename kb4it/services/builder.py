@@ -193,7 +193,7 @@ class KB4ITBuilder(Service):
         Create a page with documents.
         If amount of documents is greater than 100, split it in several pages
         """
-        print("PG. TPL: %s" % pagination['template'])
+        # ~ print("PG. TPL: %s" % pagination['template'])
         PG_HEAD = self.template(pagination['template'])
         var = {}
 
@@ -420,18 +420,25 @@ class KB4ITBuilder(Service):
         max_frequency = self.get_maxkv_freq()
         all_keys = self.srvdtb.get_all_keys()
         custom_buttons = ''
+        var = {}
+        var['buttons'] = []
         for key in all_keys:
             ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
-                html = self.create_tagcloud_from_key(key)
+                vbtn = {}
+                vbtn['html'] = self.create_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
                 size = get_font_size(frequency, max_frequency)
                 proportion = int(math.log((frequency * 100) / max_frequency))
-                tooltip = "%d values" % len(values)
-                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
-                custom_buttons += button
-        content = TPL_PROPS_PAGE % (custom_buttons)
+                vbtn['key'] = key
+                vbtn['name'] = valid_filename(key)
+                vbtn['size'] = size
+                vbtn['tooltip'] = "%d values" % len(values)
+                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn) # % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
+                var['buttons'].append(button)
+        content = TPL_PROPS_PAGE.render(var=var)
+        print(content)
         self.distribute('properties', content)
 
     def create_page_stats(self):
@@ -531,13 +538,13 @@ class KB4ITBuilder(Service):
         if len(var['category']) > 0 and len(var['scope']) > 0:
             cat = {}
             cat['class'] = "uk-link-heading uk-text-meta"
-            cat['url'] = "Category_%s.html" % valid_filename(category)
+            cat['url'] = "Category_%s.html" % valid_filename(var['category'])
             cat['title'] = var['category']
             var['link_category'] = LINK.render(var=cat)
 
             sco = {}
             sco['class'] = "uk-link-heading uk-text-meta"
-            sco['url'] = "Category_%s.html" % valid_filename(scope)
+            sco['url'] = "Category_%s.html" % valid_filename(var['scope'])
             sco['title'] = var['scope']
             var['link_scope'] = LINK.render(var=sco)
         else:
