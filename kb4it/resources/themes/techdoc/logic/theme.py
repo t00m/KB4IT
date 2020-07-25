@@ -47,27 +47,28 @@ class Theme(KB4ITBuilder):
         self.create_page_recents()
 
     def create_page_index(self):
+        var = {}
         TPL_INDEX = self.template('PAGE_INDEX')
-        TABLE_EVENTS = self.template('TABLE_EVENT')
-        ROW_EVENT = self.template('TABLE_EVENT_ROW')
-        TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
-        TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
+        TPL_TABLE_EVENTS = self.template('TABLE_EVENT')
+        TPL_ROW_EVENT = self.template('TABLE_EVENT_ROW')
+        TPL_TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
+        TPL_TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
         now = datetime.now().date()
         ldcm = now.replace(day = monthrange(now.year, now.month)[1]) # last day current month
         fdnm = ldcm + timedelta(days=1) # first day next month
         ldnm = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # last day next month
 
         trimester = self.srvcal.format_trimester(now.year, now.month)
-        trimester = trimester.replace(TABLE_MONTH_OLD, TABLE_MONTH_NEW)
+        trimester = trimester.replace(TPL_TABLE_MONTH_OLD.render(), TPL_TABLE_MONTH_NEW.render())
 
         next_events = ""
         ROWS_EVENTS = ''
-
+        var['rows'] = []
         while now <= ldcm:
             try:
                 for doc in self.events_docs[now.year][now.month][now.day]:
                     row = self.get_doc_event_row(doc)
-                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+                    var['rows'].append(row)
             except Exception as error:
                 pass
             delta = timedelta(days=1)
@@ -77,13 +78,17 @@ class Theme(KB4ITBuilder):
             try:
                 for doc in self.events_docs[fdnm.year][fdnm.month][fdnm.day]:
                     row = self.get_doc_event_row(doc)
-                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+                    var['rows'].append(row)
             except Exception as error:
                 pass
             delta = timedelta(days=1)
             fdnm += delta
+        var['title'] = 'My KB4IT Repostiroy'
+        var['timestamp']
+        var['calendar_trimester'] = trimester
+        var['table_events'] = TPL_TABLE_EVENTS.render(var=var)
 
-        self.distribute('index', TPL_INDEX % (datetime.now().ctime(), trimester, TABLE_EVENTS % ROWS_EVENTS))
+        self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_doc_event_row(self, doc):
         """Get card for a given doc"""

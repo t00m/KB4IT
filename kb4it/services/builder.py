@@ -572,16 +572,18 @@ class KB4ITBuilder(Service):
         """Get card for a given doc"""
         var = {}
         TPL_DOC_CARD = self.template('CARD_DOC')
+        TPL_DOC_CARD_CLASS = self.template('CARD_DOC_CLASS')
         LINK = self.template('LINK')
 
-        var['title'] = self.srvdtb.get_values(doc, 'Title')[0]
+        title = self.srvdtb.get_values(doc, 'Title')[0]
         var['category'] = self.srvdtb.get_values(doc, 'Category')[0]
         var['scope'] = self.srvdtb.get_values(doc, 'Scope')[0]
         var['content'] = ''
         link = {}
-        link['class'] = "uk-link-heading uk-text-meta"
-        link['url'] = valid_filename(doc).replace('.adoc', '')
-        link['title'] = LINK.render(var=link)
+        link['class'] = TPL_DOC_CARD_CLASS.render()
+        link['url'] = valid_filename(doc).replace('.adoc', '.html')
+        link['title'] = title
+        var['title'] = LINK.render(var=link)
         # ~ link_title = LINK.render(var=link)
         if len(var['category']) > 0 and len(var['scope']) > 0:
             cat = {}
@@ -601,7 +603,7 @@ class KB4ITBuilder(Service):
 
         var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
         var['fuzzy_date'] = fuzzy_date_from_timestamp(var['timestamp'])
-        var['tooltip'] = var['title']
+        var['tooltip'] = title
         DOC_CARD = TPL_DOC_CARD.render(var=var)
         # ~ self.log.error(DOC_CARD)
         return DOC_CARD

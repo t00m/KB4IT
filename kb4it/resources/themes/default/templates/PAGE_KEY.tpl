@@ -13,7 +13,7 @@
     <ul class="uk-switcher uk-margin">
         <!-- Cloud :: Start -->
         <li>
-            $var['cloud']
+            ${var['cloud']}
         </li>
         <!-- Cloud :: End -->
         <!-- Leader :: Start -->

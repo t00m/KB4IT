@@ -15,6 +15,14 @@
         </tr>
     </tfoot>
     <tbody>
-%s
+% for row in var['rows']:
+        <tr>
+            <td>${row['timestamp']}</td>
+            <td>${row['team']}</td>
+            <td>${row['title']}</td>
+            <td>${row['category']}</td>
+            <td>${row['scope']}</td>
+        </tr>
+% endfor
     </tbody>
 </table>

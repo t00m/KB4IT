@@ -1,5 +1,8 @@
 LOCAL_PYTHON_PACKAGES=`python3 -c "import site; print(site.getsitepackages()[0])"`
 KB4IT_LIBRARY="$LOCAL_PYTHON_PACKAGES/kb4it-*"
+
+rm -rf ./kb4it/__pycache__ ./kb4it/__pycache__/__init__.cpython-38.pyc ./kb4it/core/__pycache__ ./kb4it/core/__pycache__/kbo.cpython-38.pyc ./kb4it/core/__pycache__/__init__.cpython-38.pyc ./kb4it/core/__pycache__/env.cpython-38.pyc ./tmp/html/resources/themes/default/logic/__pycache__ ./tmp/html/resources/themes/default/logic/__pycache__/theme.cpython-38.pyc
+rm -rf build dist
 echo -n "Uninstalling KB4IT... "
 pip3 uninstall kb4it -qy
 echo "Done."
