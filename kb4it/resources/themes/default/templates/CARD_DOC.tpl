@@ -4,7 +4,9 @@
                     <div class="uk-card-header">
                         <div class="uk-grid-small uk-flex-middle" uk-grid>
                             <div class="uk-width-expand">
-                                <div class="uk-text-break uk-text-truncate uk-text-bold uk-margin-remove-bottom" uk-tooltip="${var['tooltip']}">${var['title']}</div>
+                                <div class="uk-text-break uk-text-truncate uk-text-bold uk-margin-remove-bottom" uk-tooltip="${var['tooltip']}">
+                                    ${var['title']}
+                                </div>
                                 <p class="uk-text-meta uk-margin-remove-top">
                                     <time datetime="${var['timestamp']}">${var['fuzzy_date']}</time>
                                 </p>
