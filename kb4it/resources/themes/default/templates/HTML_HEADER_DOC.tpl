@@ -2,7 +2,7 @@
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate">%s</span></a><!-- %s -->
+                       <a href="#"><span class="uk-text-bolder uk-text-truncate">${var['title']}</span></a><!-- ${var['basename']} -->
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li>
@@ -15,7 +15,7 @@
                                                 <div class="uk-padding-large uk-background-muted">
                                                     <div class="uk-text-lead uk-text-center uk-text-danger">Metadata</div>
 <!-- METADATA :: START -->
-%s
+${var['meta_section']}
 <!-- METADATA :: END -->
                                                 </div>
                                             </div>
@@ -32,8 +32,8 @@
                                             <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                                 <div class="uk-padding-large uk-background-muted">
                                                     <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
-                                                    <div class="uk-text-lead">%s&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
-                                                    <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">%s</textarea>
+                                                    <div class="uk-text-lead">${var['basename']}&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
+                                                    <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_code']}</textarea>
                                                 </div>
                                             </div>
                                         </div>

@@ -1,10 +1,8 @@
             <!-- FOOTER :: START -->
             <div class="uk-flex uk-flex-center uk-flex-wrap">
-<!--
                 <div class="uk-card uk-card-body">
-                    <span class="uk-text-meta">Last update on %s</span>
+                    <span class="uk-text-meta">Last update on ${var['timestamp']}</span>
                 </div>
--->
             </div>
             <!-- FOOTER :: END -->
         </div>
