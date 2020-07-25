@@ -1,4 +1,4 @@
-= My KB4IT repository
+= ${var['title']}
 
 :Author:    t00mlabs
 

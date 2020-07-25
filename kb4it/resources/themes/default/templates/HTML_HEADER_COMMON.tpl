@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-    <title>KB4IT - %s</title>
+    <title>KB4IT - ${var['title']}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -24,7 +24,7 @@
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
                         <a class="uk-logo uk-card uk-card-hover" href="index.html">
-                            <img src="resources/themes/%s/images/logo.png" alt="">
+                            <img src="resources/themes/${var['theme']}/images/logo.png" alt="">
                         </a>
                     </li>
                     <li>
@@ -43,7 +43,7 @@
                 </ul>
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
-%s
+${var['menu_contents']}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>

@@ -1,3 +1,1 @@
-            <li data-title="${var['data-title']}">
-${var['card_doc']}
-            </li>
+            <li data-title="${var['data-title']}">${var['card_doc']}</li>

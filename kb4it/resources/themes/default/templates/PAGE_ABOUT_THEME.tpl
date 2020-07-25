@@ -1,9 +1,14 @@
-= About this theme
+= About theme ${var['theme']['name']}
 
-++++
-<div class="uk-flex uk-flex-center"><h1 class="uk-heading-large">%s</h1></div>
-<h1 class="uk-heading-small">Description</h1> <!-- Name -->
-<div class="uk-text-lead uk-text-primary">%s</div>
-<h1 class="uk-heading-small">Version</h1> <!-- Version -->
-<div class="uk-text-lead uk-text-primary">%s</div>
-++++
+[options="header", width="100%", cols="20%,80%"]
+|===
+| *Key*
+| *Value*
+% for key in var['theme']:
+
+| *${key}*
+| `${var['theme'][key]}`
+% endfor
+|===
+
+
