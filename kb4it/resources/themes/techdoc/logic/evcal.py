@@ -41,7 +41,7 @@ class EventsCalendar(Service, HTMLCalendar):
         """Return a day as a table cell."""
         eday = 0 # var for checking if it's a event day
         cal_date = (self.month, day) # create a tuple of the calendar month and day
-        EVENTCAL_TD_NODAY = self.srvbld.template('EVENTCAL_TD_NODAY')
+        EVENTCAL_TD_NODAY = self.srvbld.render_template('EVENTCAL_TD_NODAY')
         EVENTCAL_TD_DAY_LINK = self.srvbld.template('EVENTCAL_TD_DAY_LINK')
         EVENTCAL_TD_DAY_LINK_TODAY = self.srvbld.template('EVENTCAL_TD_DAY_LINK_TODAY')
         EVENTCAL_TD_DAY_NOLINK = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK')
@@ -52,6 +52,7 @@ class EventsCalendar(Service, HTMLCalendar):
         link['class'] = self.cssclasses[weekday]
         link['vfname'] = EVENT_PAGE_VALID_FNAME
         link['day'] = day
+        HTML = ''
         # check if current calendar tuple date exist in our list of events days
         try:
             self.events_days[self.year]
@@ -110,7 +111,11 @@ class EventsCalendar(Service, HTMLCalendar):
         month_name = datetime.strftime(dt, "%B %Y")
         try:
             self.ml[theyear][themonth]
-            link = LINK % ("uk-link-heading", "events_%4d%02d.html" % (theyear, themonth), "uk-text-uppercase uk-text-muted", month_name)
+            var = {}
+            var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
+            var['url'] = "events_%4d%02d.html" % (theyear, themonth)
+            var['title'] = month_name
+            link = LINK.render(var=var)
         except KeyError:
             # ~ link = LINK % ("uk-link-heading", "", "", month_name)
             link = """<span class="%s">%s</span>""" % ("uk-text-uppercase uk-text-muted", month_name)
