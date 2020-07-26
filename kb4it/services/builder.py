@@ -180,7 +180,7 @@ class KB4ITBuilder(Service):
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
                     if len_toc > 0:
-                        var['page_toc'] = toc
+                        var['content'] = toc
                         TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                     else:
@@ -190,7 +190,7 @@ class KB4ITBuilder(Service):
                     userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
 
                     var['title'] = title
-                    var['theme'] = THEME_ID
+                    var['theme'] = self.srvapp.get_theme_properties()
                     var['menu_contents'] = HTML_TOC
                     var['basename'] = basename
                     var['timestamp'] = timestamp

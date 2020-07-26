@@ -1,3 +1,3 @@
 <tr class="month-row">
-%s
+${var['content']}
 </tr>
