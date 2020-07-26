@@ -47,27 +47,28 @@ class Theme(KB4ITBuilder):
         self.create_page_recents()
 
     def create_page_index(self):
+        var = {}
         TPL_INDEX = self.template('PAGE_INDEX')
-        TABLE_EVENTS = self.template('TABLE_EVENT')
-        ROW_EVENT = self.template('TABLE_EVENT_ROW')
-        TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
-        TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
+        TPL_TABLE_EVENTS = self.template('TABLE_EVENT')
+        TPL_ROW_EVENT = self.template('TABLE_EVENT_ROW')
+        TPL_TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
+        TPL_TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
         now = datetime.now().date()
         ldcm = now.replace(day = monthrange(now.year, now.month)[1]) # last day current month
         fdnm = ldcm + timedelta(days=1) # first day next month
         ldnm = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # last day next month
 
         trimester = self.srvcal.format_trimester(now.year, now.month)
-        trimester = trimester.replace(TABLE_MONTH_OLD, TABLE_MONTH_NEW)
+        trimester = trimester.replace(TPL_TABLE_MONTH_OLD.render(), TPL_TABLE_MONTH_NEW.render())
 
         next_events = ""
         ROWS_EVENTS = ''
-
+        var['rows'] = []
         while now <= ldcm:
             try:
                 for doc in self.events_docs[now.year][now.month][now.day]:
                     row = self.get_doc_event_row(doc)
-                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+                    var['rows'].append(row)
             except Exception as error:
                 pass
             delta = timedelta(days=1)
@@ -77,13 +78,17 @@ class Theme(KB4ITBuilder):
             try:
                 for doc in self.events_docs[fdnm.year][fdnm.month][fdnm.day]:
                     row = self.get_doc_event_row(doc)
-                    ROWS_EVENTS += ROW_EVENT % (row['timestamp'], row['team'], row['title'], row['category'], row['scope'])
+                    var['rows'].append(row)
             except Exception as error:
                 pass
             delta = timedelta(days=1)
             fdnm += delta
+        var['title'] = 'My KB4IT Repostiroy'
+        var['timestamp'] = now
+        var['calendar_trimester'] = trimester
+        var['table_trimester'] = TPL_TABLE_EVENTS.render(var=var)
 
-        self.distribute('index', TPL_INDEX % (datetime.now().ctime(), trimester, TABLE_EVENTS % ROWS_EVENTS))
+        self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_doc_event_row(self, doc):
         """Get card for a given doc"""
@@ -192,13 +197,16 @@ class Theme(KB4ITBuilder):
         self.srvcal.set_events_docs(self.events_docs)
 
         for year in sorted(self.dey.keys(), reverse=True):
-            HTML = self.srvcal.build_year_pagination(self.dey.keys())
+            PAGE = self.template('PAGE_EVENTS_YEAR')
+            page_name = "events_%4d" % year
+            thisyear = {}
+            html = self.srvcal.build_year_pagination(self.dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
             title = edt.strftime("Events on %Y")
-            PAGE = self.template('PAGE_EVENTS_YEAR')
-            EVENT_PAGE_YEAR = "events_%4d" % year
-            HTML += self.srvcal.formatyearpage(year, 4)
-            self.distribute(EVENT_PAGE_YEAR, PAGE % (title, HTML))
+            thisyear['title'] = title
+            html += self.srvcal.formatyearpage(year, 4)
+            thisyear['content'] = html
+            self.distribute(page_name, PAGE.render(var=thisyear))
 
         # ~ return self.dey
 
@@ -235,8 +243,10 @@ class Theme(KB4ITBuilder):
                 title = self.srvdtb.get_values(doc, 'Title')[0]
         self.build_events(doclist)
         HTML = self.srvcal.build_year_pagination(self.dey.keys())
+        events = {}
+        events['content'] = HTML
         page = self.template('PAGE_EVENTS')
-        self.distribute('events', page % HTML)
+        self.distribute('events', page.render(var=events))
         self.log.debug("[THEME-TECHDOC] - Built %d events", len(doclist))
 
     def create_page_recents(self):
@@ -268,9 +278,11 @@ class Theme(KB4ITBuilder):
         self.build_pagination(pagination)
 
     def create_page_authors(self):
-        PAGE_AUTHOR = self.template('PAGE_AUTHOR')
-        SECTION_ETYPE = self.template('PAGE_AUTHOR_SECTION_EVENT_TYPE')
-        SWITCHER_ETYPE = self.template('PAGE_AUTHOR_SWITCHER_EVENT_TYPE')
+        TPL_PAGE_AUTHOR = self.template('PAGE_AUTHOR')
+        TPL_SECTION_ETYPE = self.template('PAGE_AUTHOR_SECTION_EVENT_TYPE')
+        TPL_SWITCHER_ETYPE = self.template('PAGE_AUTHOR_SWITCHER_EVENT_TYPE')
+        TPL_TAB_CENTER = self.template('TAB_CENTER')
+        TPL_TAB_ITEM = self.template('TAB_ITEM')
         authors = self.srvdtb.get_all_values_for_key('Author')
 
         def tab_header(docs):
@@ -280,12 +292,16 @@ class Theme(KB4ITBuilder):
                 categories = self.srvdtb.get_values(doc, 'Category')
                 for category in categories:
                     author_etypes.add(category)
-            header = self.template('UK-TAB-CENTER')
             items = ''
             for etype in sorted(list(author_etypes)):
-                item = self.template('UK-TAB-ITEM')
-                items += item % etype.title()
-            return sorted(list(author_etypes)), header % items
+                item = {}
+                item['name'] = etype.title()
+                items += TPL_TAB_ITEM.render(var=item)
+            tab = {}
+            tab['content'] = items
+            header = TPL_TAB_CENTER.render(var=tab)
+            authors = sorted(list(author_etypes))
+            return authors, header
 
         for author in authors:
             docs = self.srvdtb.get_docs_by_key_value('Author', author)
@@ -294,6 +310,7 @@ class Theme(KB4ITBuilder):
             # Registered event types
             content_author = ''
             for etype in author_etypes:
+                section = {}
                 items = ''
                 sect_items = 0
                 for doc in docs:
@@ -301,19 +318,22 @@ class Theme(KB4ITBuilder):
                     if etype in category:
                         items += self.get_doc_card_author(doc)
                         sect_items += 1
-                content_author += SECTION_ETYPE % (sect_items, len(docs), items)
+                section['count_items'] = sect_items
+                section['count_docs'] = len(docs)
+                section['items'] = items
+                content_author += TPL_SECTION_ETYPE.render(var=section)
 
-            # Others categories
-            # ~ others = set(docs) - used
-            # ~ items = ''
-            # ~ for doc in others:
-                # ~ items += self.get_doc_card_author(doc)
-            # ~ content_author += SECTION_ETYPE % (len(others), items)
-            content = SWITCHER_ETYPE % content_author
-            PAGE = PAGE_AUTHOR % (author, header, content)
-            # ~ self.log.error(content)
-            self.distribute(valid_filename("Author_%s" % author), PAGE)
+            page_author = {}
+            page_author['content'] = content_author
+            content = TPL_SWITCHER_ETYPE.render(var=page_author)
+            page = {}
+            page['title'] = author
+            page['header'] = header
+            page['content'] = content
 
+            html = TPL_PAGE_AUTHOR.render(var=page)
+            basename = valid_filename("Author_%s" % author)
+            self.distribute(basename, html)
 
     def get_doc_card_author(self, doc):
         source_dir = self.srvapp.get_source_path()

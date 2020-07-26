@@ -1,3 +1,3 @@
     <ul class="uk-switcher">
-%s
+        ${var['content']}
     </ul>

@@ -2,11 +2,11 @@
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate">%s</span></a>
+                       <a href="#"><span class="uk-text-bolder uk-text-truncate">${var['title']}</span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar">
                                 <li uk-tooltip="title: Edit document">
-                                    <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="https://github.com/user/repository/edit/master/%s">
+                                    <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['basename']}">
                                         <span class="" uk-icon="icon: file-edit; ratio: 2"></span>
                                     </a>
                                 </li>
@@ -22,7 +22,7 @@
                                                 <div class="uk-padding-large uk-background-muted">
                                                     <div class="uk-text-lead uk-text-center uk-text-danger">Metadata</div>
 <!-- METADATA :: START -->
-%s
+${var['meta_section']}
 <!-- METADATA :: END -->
                                                 </div>
                                             </div>
@@ -41,9 +41,9 @@
                                             <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                                 <div class="uk-padding-large uk-background-muted">
                                                     <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
-                                                    <div class="uk-text-lead">%s&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
+                                                    <div class="uk-text-lead">${var['basename']}&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
                                                     <textarea id="source-code" class="uk-width-1-1 uk-height-viewport" style="font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;">
-%s
+${var['source_code']}
                                                     </textarea>
                                                 </div>
                                             </div>
