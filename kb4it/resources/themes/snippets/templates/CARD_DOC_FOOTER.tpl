@@ -2,8 +2,8 @@
                             <div class="uk-card uk-padding-small uk-padding-remove-bottom">
                                 <div class="uk-flex uk-flex-right">
                                     <ul class="uk-breadcrumb">
-                                        <li uk-tooltip="Category">%s</li>
-                                        <li uk-tooltip="Scope">%s</li>
+                                        <li uk-tooltip="Category">${var['category']}</li>
+                                        <li uk-tooltip="Scope">${var['scope']}</li>
                                     </ul>
                                 </div>
                             </div>

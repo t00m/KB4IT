@@ -1,7 +1,7 @@
-= %s
+= ${var['title']}
 
 ++++
 <div class="uk-card">
-%s
+${var['content']}
 </div>
 ++++

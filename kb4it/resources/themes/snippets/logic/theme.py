@@ -32,11 +32,15 @@ class Theme(KB4ITBuilder):
 
     def create_page_index(self):
         """Custom index page."""
-        html = self.template('PAGE_INDEX')
+        TPL_PAGE_INDEX = self.template('PAGE_INDEX')
         html_key = self.create_page_key_body('Module')
         source_dir = self.srvapp.get_source_path()
         lang = os.path.basename(source_dir)
-        content = html % (lang, html_key)
+
+        page = {}
+        page['title'] = "Repository for %s snippets" % lang
+        page['content'] = html_key
+        content = TPL_PAGE_INDEX.render(var=page)
         self.distribute('index', content)
 
 
@@ -44,22 +48,24 @@ class Theme(KB4ITBuilder):
         """Return a html block for displaying core and custom keys."""
         try:
             doc_path = os.path.join(self.srvapp.get_source_path(), doc)
-            html = self.template('METADATA_SECTION_HEADER')
-            ROW_CUSTOM_PROP = self.template('METADATA_ROW_CUSTOM_PROPERTY')
-            ROW_CUSTOM_PROP_TIMESTAMP = self.template('METADATA_ROW_CUSTOM_PROPERTY_TIMESTAMP')
+            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
+            var = {}
+            var['items'] = []
             custom_keys = self.srvdtb.get_custom_keys(doc)
-            custom_props = ''
+            custom_props = []
             for key in custom_keys:
                 try:
                     values = self.get_html_values_from_key(doc, key)
                     labels = self.get_labels(values)
-                    custom_props += ROW_CUSTOM_PROP % (valid_filename(key), key, labels)
+                    custom = {}
+                    custom['vfkey'] = valid_filename(key)
+                    custom['key'] = key
+                    custom['labels'] = labels
+                    var['items'].append(custom)
                 except Exception as error:
                     self.log.error("Key[%s]: %s", key, error)
-            num_custom_props = len(custom_props)
-            if  num_custom_props > 1:
-                html += custom_props
-            html += self.template('METADATA_SECTION_FOOTER')
+            var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+            html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
             self.log.error("\t\t%s", msgerror)
@@ -73,39 +79,77 @@ class Theme(KB4ITBuilder):
         source_dir = self.srvapp.get_source_path()
         values = self.srvdtb.get_all_values_for_key(key)
         num_values = len(values)
-        html = self.template('BODY_KEY')
+        TPL_BODY_KEY = self.template('BODY_KEY')
 
         # TAB Cloud
         cloud = self.create_tagcloud_from_key(key)
 
         # TAB Stats
-        stats = ""
-        leader_row = self.template('LEADER_ROW')
+        leader_row = ""
+        TPL_LEADER_ROW = self.template('LEADER_ROW')
         for value in values:
             docs = self.srvdtb.get_docs_by_key_value(key, value)
-            tpl_value_link = self.template('LEADER_ROW_VALUE_LINK')
-            value_link = tpl_value_link % (valid_filename(key), valid_filename(value), value)
-            stats += leader_row % (value_link, len(docs))
+            TPL_VALUE_LINK = self.template('LEADER_ROW_VALUE_LINK')
+            row = {}
+            row['vfkey'] = valid_filename(key)
+            row['vfvalue'] = valid_filename(value)
+            row['title'] = value
+            value_link = TPL_VALUE_LINK.render(var=row)
 
-        return html % (cloud, stats)
+            leader = {}
+            leader['url'] = value_link
+            leader['count_docs'] = len(docs)
+            leader_row += TPL_LEADER_ROW.render(var=leader)
+
+        body = {}
+        body['cloud'] = cloud
+        body['leader'] = leader_row
+        return TPL_BODY_KEY.render(var=body)
 
     def get_doc_card(self, doc):
-        """Get document card."""
-        source_dir = self.srvapp.get_source_path()
-        DOC_CARD = self.template('CARD_DOC')
-        DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
+        """Get card for a given doc"""
+        var = {}
+        TPL_DOC_CARD = self.template('CARD_DOC')
+        TPL_DOC_CARD_CLASS = self.template('CARD_DOC_CLASS')
         LINK = self.template('LINK')
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        category = self.srvdtb.get_values(doc, 'Category')[0]
-        scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        tags = self.srvdtb.get_values(doc, 'Tag')
-        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
-        if len(category) > 0 and len(scope) > 0:
-            link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
-            link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
-            footer = DOC_CARD_FOOTER % (link_category, link_scope)
-        else:
-            footer = ''
 
-        tooltip ="%s" % (title)
-        return DOC_CARD % (tooltip, link_title, '', footer)
+        title = self.srvdtb.get_values(doc, 'Title')[0]
+        var['category'] = self.srvdtb.get_values(doc, 'Category')[0]
+        var['scope'] = self.srvdtb.get_values(doc, 'Scope')[0]
+        var['tags'] = []
+        link = {}
+        for tag in self.srvdtb.get_values(doc, 'Tag'):
+            link['class'] = TPL_DOC_CARD_CLASS.render()
+            link['url'] = "Tag_%s.html" % tag
+            link['title'] = tag
+            thistag = LINK.render(var=link)
+            var['tags'].append(thistag)
+        var['content'] = ''
+        link = {}
+        link['class'] = TPL_DOC_CARD_CLASS.render()
+        link['url'] = valid_filename(doc).replace('.adoc', '.html')
+        link['title'] = title
+        var['title'] = LINK.render(var=link)
+        # ~ link_title = LINK.render(var=link)
+        if len(var['category']) > 0 and len(var['scope']) > 0:
+            cat = {}
+            cat['class'] = "uk-link-heading uk-text-meta"
+            cat['url'] = "Category_%s.html" % valid_filename(var['category'])
+            cat['title'] = var['category']
+            var['link_category'] = LINK.render(var=cat)
+
+            sco = {}
+            sco['class'] = "uk-link-heading uk-text-meta"
+            sco['url'] = "Category_%s.html" % valid_filename(var['scope'])
+            sco['title'] = var['scope']
+            var['link_scope'] = LINK.render(var=sco)
+        else:
+            var['link_category'] = ''
+            var['link_scope'] = ''
+
+        # ~ var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+        # ~ var['fuzzy_date'] = fuzzy_date_from_timestamp(var['timestamp'])
+        var['tooltip'] = title
+        DOC_CARD = TPL_DOC_CARD.render(var=var)
+        # ~ self.log.error(DOC_CARD)
+        return DOC_CARD

@@ -6,7 +6,9 @@
         <div class="uk-grid-medium uk-flex-middle uk-child-width-expand" uk-grid>
             <div class="uk-width-expand">
                 <div class="uk-flex uk-flex-center uk-flex-wrap">
-%s
+% for button in var['buttons']:
+    ${button}
+% endfor
                 </div>
             </div>
         </div>
