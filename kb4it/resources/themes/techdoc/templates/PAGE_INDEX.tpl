@@ -7,7 +7,7 @@
 ++++
 <!-- Last update -->
 <div class="uk-flex-center">
-    <div class="uk-text-meta uk-text-right">KB updated on ${var['title']}</div>
+    <div class="uk-text-meta uk-text-right">KB updated on ${var['timestamp']}</div>
 </div>
 ++++
 
