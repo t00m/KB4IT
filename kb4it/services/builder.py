@@ -565,7 +565,6 @@ class KB4ITBuilder(Service):
             self.log.error("[BUILDER] - %s", msgerror)
             html = ''
             raise
-
         return html
 
     def get_doc_card(self, doc):
