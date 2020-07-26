@@ -343,12 +343,24 @@ class Theme(KB4ITBuilder):
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
-        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
-        link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), "", category)
-        link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), "", scope)
 
-        timestamp = self.srvdtb.get_doc_timestamp(doc)
-        fuzzy_date = fuzzy_date_from_timestamp(timestamp)
+        card = {}
+        card['data-title'] = "%s%s%s" % (title, category, scope)
+        link = {}
+        link['class'] = "uk-link-heading uk-text-meta"
+        link['url'] = "%s.html" % valid_filename(doc).replace('.adoc', '')
+        link['title'] = title
+        card['title'] = LINK.render(var=link)
 
-        tooltip ="%s" % (title)
-        return DOC_CARD % (title, tooltip, link_title, timestamp, fuzzy_date, link_scope)
+        link['url'] = "Category_%s.html" % valid_filename(category)
+        link['title'] = category
+        card['category'] = LINK.render(var=link)
+
+        link['url'] = "Scope_%s.html" % valid_filename(scope)
+        link['title'] = scope
+        card['scope'] = LINK.render(var=link)
+
+        card['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+        card['fuzzy_date'] = fuzzy_date_from_timestamp(card['timestamp'])
+        card['tooltip'] = title
+        return DOC_CARD.render(var=card) # % (title, tooltip, link_title, timestamp, fuzzy_date, link_scope)

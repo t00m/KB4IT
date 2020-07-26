@@ -584,7 +584,7 @@ class KB4ITBuilder(Service):
 
             sco = {}
             sco['class'] = "uk-link-heading uk-text-meta"
-            sco['url'] = "Category_%s.html" % valid_filename(var['scope'])
+            sco['url'] = "Scope_%s.html" % valid_filename(var['scope'])
             sco['title'] = var['scope']
             var['link_scope'] = LINK.render(var=sco)
         else:
