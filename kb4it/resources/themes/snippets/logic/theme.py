@@ -64,6 +64,7 @@ class Theme(KB4ITBuilder):
                     var['items'].append(custom)
                 except Exception as error:
                     self.log.error("Key[%s]: %s", key, error)
+            var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
             html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
