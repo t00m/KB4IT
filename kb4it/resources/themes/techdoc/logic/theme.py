@@ -53,7 +53,8 @@ class Theme(KB4ITBuilder):
         TPL_ROW_EVENT = self.template('TABLE_EVENT_ROW')
         TPL_TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
         TPL_TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
-        now = datetime.now().date()
+        timestamp = datetime.now()
+        now = timestamp.date()
         ldcm = now.replace(day = monthrange(now.year, now.month)[1]) # last day current month
         fdnm = ldcm + timedelta(days=1) # first day next month
         ldnm = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # last day next month
@@ -84,7 +85,7 @@ class Theme(KB4ITBuilder):
             delta = timedelta(days=1)
             fdnm += delta
         var['title'] = 'My KB4IT Repostiroy'
-        var['timestamp'] = now
+        var['timestamp'] = timestamp.ctime()
         var['calendar_trimester'] = trimester
         var['table_trimester'] = TPL_TABLE_EVENTS.render(var=var)
 
