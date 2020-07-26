@@ -4,7 +4,7 @@
         <!-- PAGINATION_HEAD.tpl :: START -->
         <!-- PAGINATION :: START -->
         <ul class="uk-pagination uk-flex-center" uk-margin>
-${var['pg-head-items']}
+            ${var['pg-head-items']}
         </ul>
         <!-- PAGINATION :: END -->
         <div uk-filter="target: .js-filter">
@@ -16,7 +16,7 @@ ${var['pg-head-items']}
             <!-- Search entry :: End -->
             <!-- Filtered rows :: Start -->
             <ul class="js-filter uk-child-width-1-3@m" uk-grid>
-${var['pg-body-items']}
+                ${var['pg-body-items']}
             </ul> <!-- Filtered rows :: End -->
         </div>
         <!-- PAGINATION_HEAD.tpl :: END -->

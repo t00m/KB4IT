@@ -1,12 +1,12 @@
-= %s
+= ${var['title']}
 
 ++++
 <!-- PAGE AUTHORS EVENT TYPES TAB HEADER :: START -->
-%s
+${var['header']}
 <!-- PAGE AUTHORS EVENT TYPES TAB HEADER :: END -->
 
 <!-- PAGE AUTHORS CONTENT :: START -->
-%s
+${var['content']}
 <!-- PAGE AUTHORS CONTENT :: END -->
 ++++
 

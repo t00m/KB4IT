@@ -1,3 +1,3 @@
 <div class="uk-flex uk-flex-center">
-%s
+${var['items']}
 </div>
