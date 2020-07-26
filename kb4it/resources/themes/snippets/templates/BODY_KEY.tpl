@@ -10,11 +10,11 @@
     <!-- Tabs content :: START-->
     <ul class="uk-switcher uk-margin">
         <li> <!-- Cloud :: Start -->
-%s
+${var['cloud']}
         </li> <!-- Cloud :: End -->
 
         <li> <!-- Stats :: Start -->
-%s
+${var['leader']}
         </li> <!-- Stats :: End-->
     </ul>
     <!-- Tabs content :: END-->

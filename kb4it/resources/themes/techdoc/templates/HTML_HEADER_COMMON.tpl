@@ -23,7 +23,7 @@
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
                         <a class="uk-logo uk-card uk-card-hover" href="index.html">
-                            <img src="resources/themes/${var['theme']}/images/logo.png" alt="">
+                            <img src="resources/themes/${var['theme']['id']}/images/logo.png" alt="">
                         </a>
                     </li>
                     <li>
