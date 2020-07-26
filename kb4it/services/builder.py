@@ -533,15 +533,10 @@ class KB4ITBuilder(Service):
     def create_metadata_section(self, doc):
         """Return a html block for displaying metadata (keys and values)."""
         try:
-            TPL_METADATA_SECTION_HEADER = self.template('METADATA_SECTION_HEADER')
-            # ~ print(dir(TPL_METADATA_SECTION_HEADER))
-            TPL_METADATA_ROW_CUSTOM_PROPERTY = self.template('METADATA_ROW_CUSTOM_PROPERTY')
-            ROW_CUSTOM_PROP_TIMESTAMP = self.template('METADATA_ROW_CUSTOM_PROPERTY_TIMESTAMP')
-            TPL_METADATA_SECTION_FOOTER = self.template('METADATA_SECTION_FOOTER')
-            html = TPL_METADATA_SECTION_HEADER.render()
+            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
             custom_keys = self.srvdtb.get_custom_keys(doc)
-            custom_props = ''
             var = {}
+            var['items'] = []
             for key in custom_keys:
                 ckey = {}
                 ckey['doc'] = doc
@@ -550,16 +545,12 @@ class KB4ITBuilder(Service):
                 try:
                     values = self.get_html_values_from_key(doc, key)
                     ckey['labels'] = self.get_labels(values)
-                    custom_props += TPL_METADATA_ROW_CUSTOM_PROPERTY.render(var=ckey)
+                    var['items'].append(ckey)
                 except Exception as error:
                     self.log.error("[BUILDER] - Key[%s]: %s", key, error)
                     raise
             var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
-            custom_props += ROW_CUSTOM_PROP_TIMESTAMP.render(var=var)
-            num_custom_props = len(custom_props)
-            if num_custom_props > 1:
-                html += custom_props
-            html += TPL_METADATA_SECTION_FOOTER.render()
+            html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
             self.log.error("[BUILDER] - %s", msgerror)
