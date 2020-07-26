@@ -111,6 +111,7 @@ class KB4ITApp(Service):
             theme = json.load(fth)
             for prop in theme:
                 self.runtime['theme'][prop] = theme[prop]
+        self.log.info("[APP] - Theme: %s" % self.runtime['theme']['name'])
 
         self.log.debug("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
 
