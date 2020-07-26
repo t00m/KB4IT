@@ -25,7 +25,7 @@ from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import delete_files, extract_toc
 from kb4it.core.util import get_hash_from_file
 
-from mako.template import Template
+from Cheetah.Template import Template
 
 
 TEMPLATES = {}
@@ -124,7 +124,7 @@ class KB4ITBuilder(Service):
 
             # If template found, add it to cache. Otherwise, exit.
             try:
-                TEMPLATES[template] = Template(filename=template_path)
+                TEMPLATES[template] = Template(file=template_path)
                 return TEMPLATES[template]
             except FileNotFoundError as error:
                 self.log.error("[BUILDER] - %s", error)
@@ -380,7 +380,7 @@ class KB4ITBuilder(Service):
                 item['size'] = size
                 item['word'] = word
                 var['items'].append(item)
-            html = TPL_WORDCLOUD.render(var=var)
+            html = TPL_WORDCLOUD.searchList(var)
         else:
             html = ''
 
