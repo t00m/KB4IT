@@ -1,20 +1,20 @@
-= %s
+= ${var['name']}
 
-:Name:          %s
-:Language:      %s
-:License:       %s
-:Topic:         %s
-:Category:      %s
-:Subcategory:   %s
+:Name:          ${var['name']}
+:Language:      ${var['language']}
+:License:       ${var['license']}
+:Topic:         ${var['topic']}
+:Category:      ${var['category']}
+:Subcategory:   ${var['subcategory']}
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
 == Description
 
-%s
+${var['description']}
 
 == References
 
-* Website: %s[%s]
-* Source code: %s[%s]
-* Demo: %s[%s]
+* Website: ${var['url']}[${var['name']}]
+* Source code: ${var['url_code']}[${var['url_code']}]
+* Demo: ${var['url_demo']}[${var['url_demo']}]

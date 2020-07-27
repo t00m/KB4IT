@@ -91,9 +91,12 @@ class KB4ITBuilder(Service):
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.srcdir, PAGE_NAME)
         self.temp_sources.append(PAGE_PATH)
-        with open(PAGE_PATH, 'w') as fpag:
-            fpag.write(content)
-            self.log.debug("[BUILDER] - PAGE[%s] distributed to source path", name)
+        try:
+            with open(PAGE_PATH, 'w') as fpag:
+                fpag.write(content)
+                self.log.debug("[BUILDER] - PAGE[%s] distributed to source path", name)
+        except OSError as error:
+            self.log.error(error)
 
     def template(self, template):
         """Return the template content from default theme or user theme"""
@@ -279,7 +282,7 @@ class KB4ITBuilder(Service):
                             page['page_num'] = i
                             page['page_start'] = start
                             page['page_end'] = end
-                            page['page_count_docs'] = num_rel_docs
+                            page['page_count_docs'] = var['num_rel_docs']
                             var['pg-head-items'] +=  TPL_PAGINATION_PAGE_ACTIVE.render(var=page)
                         cstart = start
                         cend = end
@@ -293,7 +296,7 @@ class KB4ITBuilder(Service):
                         page['page_num'] = i
                         page['page_start'] = start
                         page['page_end'] = end
-                        page['page_count_docs'] = num_rel_docs
+                        page['page_count_docs'] = var['num_rel_docs']
                         page['page_link'] = PAGE.replace('adoc', 'html')
                         var['pg-head-items'] +=  TPL_PAGINATION_PAGE_INACTIVE.render(var=page) #i, start, end, num_rel_docs, PAGE.replace('adoc', 'html'), i)
             # ~ PAGINATION += self.template('PAGINATION_END')
@@ -459,7 +462,7 @@ class KB4ITBuilder(Service):
             ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
                 vbtn = {}
-                vbtn['html'] = self.create_tagcloud_from_key(key)
+                vbtn['content'] = self.create_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
                 size = get_font_size(frequency, max_frequency)

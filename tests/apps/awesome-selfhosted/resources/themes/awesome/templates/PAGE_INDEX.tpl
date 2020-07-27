@@ -18,13 +18,13 @@
     <li> <!-- Index :: Start -->
 ++++
 
-%s
+${var['index']}
 
 ++++
     </li> <!-- Index :: End -->
 
     <li> <!-- Cloud :: Start -->
-%s
+${var['topic']}
     </li> <!-- Cloud :: End -->
 </ul>
 <!-- Tabs content :: END-->

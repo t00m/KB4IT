@@ -173,23 +173,60 @@ class KB4IT:
 
 def main():
     """Set up application arguments and execute."""
+    extra_usage = """
+
+Test application with these example commands:\n\n
+
+1) Simple usage: autodetect theme in sources. In any, use the default one.
+
+   $ kb4it /path/to/source /path/to/target
+
+2) Force a clean compilation when you upgrade KB4IT or change any template
+
+    $ kb4it /path/to/source /path/to/target -force
+
+3) Tell KB4IT to use a specific attribute for sorting the database
+
+    $ kb4it /path/to/source /path/to/target -sort Published
+
+4) Specifiy a theme:
+
+    $ kb4it /path/to/source /path/to/target -theme techdoc
+
+5) Increase or decrease log verbosity. Default: INFO
+
+    $ kb4it /path/to/source /path/to/target -log DEBUG
+    $ kb4it /path/to/source /path/to/target -log ERROR
+
+5) Combine them:
+
+    $ kb4it /path/to/source /path/to/target -theme techdoc -sort Publised -log DEBUG -force
+
+kb4it -theme techdoc -sort <date_attribute> -source <sources_dir> -target <target_dir> -log DEBUG
+
+"""
     parser = argparse.ArgumentParser(
-        description='KB4IT %s by Tomás Vírseda' % APP['version'])
+        prog='kb4it',
+        description='KB4IT v%s\nStatic but customizable website generator based on Asciidoctor sources' % APP['version'],
+        # ~ epilog=extra_usage,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    # Mandatory arguments
+    parser.add_argument('SOURCE_PATH', help='directory with Asciidoctor source files')
+    parser.add_argument('TARGET_PATH', help='target directory for output')
+
+    # Optional arguments
     parser.add_argument('-reset', action='store_true', dest='RESET',
-                        help='Reset environment')
+                        help='reset environment')
     parser.add_argument('-force', action='store_true', dest='FORCE',
-                        help='Force a clean compilation')
+                        help='force a clean compilation')
     parser.add_argument('-theme', dest='THEME', required=False,
-                        help='Specify theme')
-    parser.add_argument('-source', dest='SOURCE_PATH', required=True,
-                        help='Directory with Asciidoctor source files')
-    parser.add_argument('-target', dest='TARGET_PATH', required=True,
-                        help='Target directory')
+                        help='specify theme (techdoc, snippets, default, ...)')
     parser.add_argument('-sort', dest='SORT_ATTRIBUTE',
-                        help='Sorting attribute')
+                        help='sorting attribute (Published, Updated, ...)')
     parser.add_argument('-log', dest='LOGLEVEL', action='store',
                         default='INFO',
-                        help='Increase output verbosity')
+                        help='increase output verbosity (DEBUG | INFO | ERROR)')
     parser.add_argument('-version', action='version',
                         version='%s %s' % (APP['shortname'],
                                            APP['version']))
