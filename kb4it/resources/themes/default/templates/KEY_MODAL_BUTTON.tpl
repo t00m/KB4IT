@@ -10,7 +10,7 @@
                     </div>
                     <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                         <div class="uk-padding-large">
-${var['html']}
+${var['content']}
                         </div>
                     </div>
                 </div>
