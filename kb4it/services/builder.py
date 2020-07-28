@@ -161,6 +161,8 @@ class KB4ITBuilder(Service):
             basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
                 var = {}
+                var['page'] = {}
+                var['page']['brand'] = 't00mlabs'
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
                 htmldoctmp = "%s.tmp" % htmldoc
@@ -194,6 +196,11 @@ class KB4ITBuilder(Service):
 
                     var['title'] = title
                     var['theme'] = self.srvapp.get_theme_properties()
+                    var['page']['description'] = var['theme']['description']
+                    var['page']['author'] = var['theme']['author']
+                    var['page']['language'] = 'en'
+                    var['page']['title'] = title
+                    var['page']['brand'] = var['theme']['brand']
                     var['menu_contents'] = HTML_TOC
                     var['basename'] = basename
                     var['timestamp'] = timestamp
@@ -435,6 +442,9 @@ class KB4ITBuilder(Service):
             TPL_INDEX = self.template('PAGE_INDEX')
             var = {}
             var['title'] = 'Index'
+            var['theme'] = self.srvapp.get_theme_properties()
+            var['page'] = {}
+            var['page']['brand'] = var['theme']['brand']
             self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_maxkv_freq(self):
