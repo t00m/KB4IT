@@ -113,16 +113,16 @@ class KB4ITBuilder(Service):
             # If not found, get it from default theme
             template_path = os.path.join(theme['templates'], "%s.tpl" % template)
             if os.path.exists(template_path):
-                self.log.debug("[BUILDER] - THEME[%s] TPL[%s] loaded", theme['id'], template)
+                self.log.debug("[BUILDER] - THEME['%s'] TPL['%s'] loaded", theme['id'], template)
             else:
                 current_theme = 'default'
                 theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
                 template_path = os.path.join(theme_default, "%s.tpl" % template)
 
                 if os.path.exists(template_path):
-                    self.log.debug("[BUILDER] - THEME['default'] TPL[%s] loaded", template)
+                    self.log.debug("[BUILDER] - THEME['default'] TPL['%s'] loaded", template)
                 else:
-                    self.log.error("[BUILDER] - TPL[%s] not found. Exit.", template)
+                    self.log.error("[BUILDER] - TPL['%s'] not found. Exit.", template)
                     sys.exit()
 
             # If template found, add it to cache. Otherwise, exit.
@@ -136,6 +136,11 @@ class KB4ITBuilder(Service):
     def render_template(self, name):
         tpl = self.template(name)
         return tpl.render()
+
+    def get_mako_var(self):
+        var = {}
+        var['theme'] = self.srvapp.get_theme_properties()
+        return var
 
     def build_page(self, future):
         """
@@ -160,7 +165,9 @@ class KB4ITBuilder(Service):
             htmldoc = adoc.replace('.adoc', '.html')
             basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
-                var = {}
+                var = self.get_mako_var()
+                # ~ var['page'] = {}
+                # ~ var['page']['brand'] = 't00mlabs'
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
                 htmldoctmp = "%s.tmp" % htmldoc
@@ -193,7 +200,11 @@ class KB4ITBuilder(Service):
                     userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
 
                     var['title'] = title
-                    var['theme'] = self.srvapp.get_theme_properties()
+                    # ~ var['page']['description'] = var['theme']['description']
+                    # ~ var['page']['author'] = var['theme']['author']
+                    # ~ var['page']['language'] = 'en'
+                    # ~ var['page']['title'] = title
+                    # ~ var['page']['brand'] = var['theme']['brand']
                     var['menu_contents'] = HTML_TOC
                     var['basename'] = basename
                     var['timestamp'] = timestamp
@@ -435,6 +446,7 @@ class KB4ITBuilder(Service):
             TPL_INDEX = self.template('PAGE_INDEX')
             var = {}
             var['title'] = 'Index'
+            var['theme'] = self.srvapp.get_theme_properties()
             self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_maxkv_freq(self):
