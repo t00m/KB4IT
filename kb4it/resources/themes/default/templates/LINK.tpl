@@ -1,1 +1,1 @@
-<a class="%s" href="%s"><span class="%s">%s</span></a>
+<a class="${var['class']}" href="${var['url']}">${var['title']}</a>

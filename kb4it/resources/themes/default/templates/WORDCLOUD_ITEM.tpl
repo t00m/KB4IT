@@ -1,1 +1,0 @@
-                    <div class="uk-container-xsmall"><a class="uk-link-heading" style="text-decoration: none;" href="%s" uk-tooltip="%s"><span style="font-size:%dpt;">%s</span></a></div> <!-- WORDCLOUD_ITEM.tpl -->
