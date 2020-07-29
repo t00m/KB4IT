@@ -199,7 +199,6 @@ class Theme(KB4ITBuilder):
         for year in sorted(self.dey.keys(), reverse=True):
             PAGE = self.template('PAGE_EVENTS_YEAR')
             page_name = "events_%4d" % year
-            self.log.error(page_name)
             thisyear = {}
             html = self.srvcal.build_year_pagination(self.dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
