@@ -8,12 +8,12 @@
     <meta name="description" content="KB4IT document">
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="resources/common/uikit/css/uikit.min.css">
-    <link rel="stylesheet" href="resources/common/uikit/css/coderay-asciidoctor.css">
-    <link rel="stylesheet" href="resources/common/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="resources/common/uikit/css/kb4it.css">
-    <script src="resources/common/uikit/js/uikit.min.js"></script>
-    <script src="resources/common/uikit/js/uikit-icons.min.js"></script>
+    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/uikit.min.css">
+    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/coderay-asciidoctor.css">
+    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/themes/default/framework/uikit/uikit/css/kb4it.css">
+    <script src="resources/themes/default/framework/uikit/js/uikit.min.js"></script>
+    <script src="resources/themes/default/framework/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
 <div>
