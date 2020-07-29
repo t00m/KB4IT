@@ -16,8 +16,8 @@ import re
 import math
 import requests
 
-from kb4it.src.core.mod_env import LPATH
-from kb4it.src.core.mod_utils import valid_filename, get_font_size
+from kb4it.core.env import LPATH
+from kb4it.core.util import valid_filename, get_font_size
 from kb4it.services.builder import KB4ITBuilder
 
 TAG_START = """<!-- BEGIN SOFTWARE LIST -->"""
@@ -92,6 +92,8 @@ class Theme(KB4ITBuilder):
                 # Language
                 sl = line[:-1].rfind('`')
                 lang = line[sl+1:-1]
+                lang = lang.replace('#', '-SHARP')
+                lang = lang.replace('+', '-PLUS')
                 line = line[:sl-1]
                 solution['language'] = lang
 
@@ -179,23 +181,10 @@ class Theme(KB4ITBuilder):
             self.log.error(error)
             exit()
 
-
     def write_page(self, solution):
         PAGE = self.template('PAGE')
         NAME = valid_filename(solution['name'])
-        CONTENT = PAGE % (
-                            solution['name'],
-                            solution['name'],
-                            solution['language'],
-                            solution['license'],
-                            solution['topic'],
-                            solution['category'],
-                            solution['subcategory'],
-                            solution['description'],
-                            solution['url'], solution['name'],
-                            solution['url_code'], solution['url_code'],
-                            solution['url_demo'], solution['url_demo']
-                        )
+        CONTENT = PAGE.render(var=solution)
         self.distribute_to_source(NAME, CONTENT)
 
     def create_page_properties(self):
@@ -205,50 +194,101 @@ class Theme(KB4ITBuilder):
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
         max_frequency = self.get_maxkv_freq()
         all_keys = self.srvdtb.get_all_keys()
-        custom_buttons = ''
+        var = {}
+
+        custom_buttons = []
         for key in all_keys:
             ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
                 html = self.create_tagcloud_from_key(key)
+                # ~ self.log.error(html)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
                 size = get_font_size(frequency, max_frequency)
                 proportion = int(math.log((frequency * 100) / max_frequency))
                 tooltip = "%d values" % len(values)
-                button = TPL_KEY_MODAL_BUTTON % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
-                custom_buttons += button
-                self.properties[key] = html
-        content = TPL_PROPS_PAGE % (custom_buttons)
+                btn = {}
+                btn['vfkey'] = valid_filename(key)
+                btn['tooltip'] = tooltip
+                btn['size'] = size
+                btn['key'] = key
+                btn['content'] = html
+                button = TPL_KEY_MODAL_BUTTON.render(var=btn) # % (, tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
+                custom_buttons .append(button)
+                self.properties[key] = button
+        var['buttons'] = custom_buttons
+        content = TPL_PROPS_PAGE.render(var=var)
         self.distribute('properties', content)
 
     def create_page_about_app(self):
         """About app page."""
-        CONTENT = self.template('PAGE_ABOUT_APP')
+        CONTENT = self.render_template('PAGE_ABOUT_APP')
         self.distribute('about_app', CONTENT)
 
     def create_page_index(self):
         PAGE = self.template('PAGE_INDEX')
-        CONTENT = PAGE % (self.index, self.properties['Topic'])
+        var = {}
+        var['index'] = self.index
+        var['topic'] = self.create_tagcloud_from_key('Topic')
+        CONTENT = PAGE.render(var=var)
         self.distribute('index', CONTENT)
-
 
     def get_doc_card(self, doc):
         """Get card for a given doc"""
-        source_dir = self.srvapp.get_source_path()
-        DOC_CARD = self.template('CARD_DOC')
-        DOC_CARD_FOOTER = self.template('CARD_DOC_FOOTER')
+        var = {}
+        TPL_DOC_CARD = self.template('CARD_DOC')
+        TPL_DOC_CARD_CLASS = self.template('CARD_DOC_CLASS')
         LINK = self.template('LINK')
+
         name = self.srvdtb.get_values(doc, 'Name')[0]
         title = self.srvdtb.get_values(doc, 'Title')[0]
-        topic = self.srvdtb.get_values(doc, 'Scope')[0]
-        category = self.srvdtb.get_values(doc, 'Category')[0]
-        subcategory = self.srvdtb.get_values(doc, 'Subategory')[0]
-        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
-        link_topic = LINK % ("uk-link-heading uk-text-meta", "Topic_%s.html" % valid_filename(doc).replace('.adoc', ''), "", topic)
-        tooltip ="%s" % (title)
+        var['category'] = self.srvdtb.get_values(doc, 'Category')[0]
+        var['scope'] = self.srvdtb.get_values(doc, 'Scope')[0]
+        var['content'] = ''
+        link = {}
+        link['class'] = TPL_DOC_CARD_CLASS.render()
+        link['url'] = valid_filename(doc).replace('.adoc', '.html')
+        link['title'] = title
+        var['title'] = LINK.render(var=link)
+        # ~ link_title = LINK.render(var=link)
+        if len(var['category']) > 0 and len(var['scope']) > 0:
+            cat = {}
+            cat['class'] = "uk-link-heading uk-text-meta"
+            cat['url'] = "Category_%s.html" % valid_filename(var['category'])
+            cat['title'] = var['category']
+            var['link_category'] = LINK.render(var=cat)
 
-        try:
-            description = self.solutions[name]['description']
-        except:
-            description = ''
-        return DOC_CARD % (tooltip, link_title, topic, description)
+            sco = {}
+            sco['class'] = "uk-link-heading uk-text-meta"
+            sco['url'] = "Scope_%s.html" % valid_filename(var['scope'])
+            sco['title'] = var['scope']
+            var['link_scope'] = LINK.render(var=sco)
+        else:
+            var['link_category'] = ''
+            var['link_scope'] = ''
+
+        var['tooltip'] = title
+        var['description'] = self.solutions[name]['description']
+        DOC_CARD = TPL_DOC_CARD.render(var=var)
+        # ~ self.log.error(DOC_CARD)
+        return DOC_CARD
+
+    # ~ def get_doc_card(self, doc):
+        # ~ """Get card for a given doc"""
+        # ~ source_dir = self.srvapp.get_source_path()
+        # ~ DOC_CARD = self.template('CARD_DOC')
+        # ~ LINK = self.template('LINK')
+        # ~ name = self.srvdtb.get_values(doc, 'Name')[0]
+        # ~ title = self.srvdtb.get_values(doc, 'Title')[0]
+        # ~ topic = self.srvdtb.get_values(doc, 'Scope')[0]
+        # ~ category = self.srvdtb.get_values(doc, 'Category')[0]
+        # ~ subcategory = self.srvdtb.get_values(doc, 'Subategory')[0]
+        # ~ link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), "", title)
+        # ~ link_topic = LINK % ("uk-link-heading uk-text-meta", "Topic_%s.html" % valid_filename(doc).replace('.adoc', ''), "", topic)
+        # ~ tooltip ="%s" % (title)
+
+        # ~ try:
+            # ~ description = self.solutions[name]['description']
+        # ~ except:
+            # ~ description = ''
+        # ~ return DOC_CARD % (tooltip, link_title, topic, description)

@@ -1,5 +1,5 @@
-= Repository of %s snippets
+= ${var['title']}
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-%s
+${var['content']}

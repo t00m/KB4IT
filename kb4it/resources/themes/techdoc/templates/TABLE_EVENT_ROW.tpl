@@ -1,7 +1,0 @@
-        <tr>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-        </tr>

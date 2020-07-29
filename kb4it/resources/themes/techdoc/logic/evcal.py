@@ -41,11 +41,18 @@ class EventsCalendar(Service, HTMLCalendar):
         """Return a day as a table cell."""
         eday = 0 # var for checking if it's a event day
         cal_date = (self.month, day) # create a tuple of the calendar month and day
-        EVENTCAL_TD_NODAY = self.srvbld.template('EVENTCAL_TD_NODAY')
+        EVENTCAL_TD_NODAY = self.srvbld.render_template('EVENTCAL_TD_NODAY')
         EVENTCAL_TD_DAY_LINK = self.srvbld.template('EVENTCAL_TD_DAY_LINK')
         EVENTCAL_TD_DAY_LINK_TODAY = self.srvbld.template('EVENTCAL_TD_DAY_LINK_TODAY')
         EVENTCAL_TD_DAY_NOLINK = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK')
         EVENTCAL_TD_DAY_NOLINK_TODAY = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK_TODAY')
+        EVENT_PAGE = "events_%4d%02d%02d" % (self.year, self.month, day)
+        EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
+        link = {}
+        link['class'] = self.cssclasses[weekday]
+        link['vfname'] = EVENT_PAGE_VALID_FNAME
+        link['day'] = day
+        HTML = ''
         # check if current calendar tuple date exist in our list of events days
         try:
             self.events_days[self.year]
@@ -57,34 +64,34 @@ class EventsCalendar(Service, HTMLCalendar):
             elif day == eday:
                 # Check if this is one of the events days.
                 # If yes, return link to page
-                EVENT_PAGE = "events_%4d%02d%02d" % (self.year, self.month, day)
-                EVENT_PAGE_VALID_FNAME = valid_filename(EVENT_PAGE)
                 if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
-                    return EVENTCAL_TD_DAY_LINK_TODAY % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
+                    return EVENTCAL_TD_DAY_LINK_TODAY.render(var=link)
                 else:
-                    return EVENTCAL_TD_DAY_LINK % (self.cssclasses[weekday], EVENT_PAGE_VALID_FNAME, day)
+                    return EVENTCAL_TD_DAY_LINK.render(var=link)
             else:
                 if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
-                    return EVENTCAL_TD_DAY_NOLINK_TODAY % (self.cssclasses[weekday], day)
+                    return EVENTCAL_TD_DAY_NOLINK_TODAY.render(var=link)
                 else:
-                    return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
+                    return EVENTCAL_TD_DAY_NOLINK.render(var=link)
         except:
                 if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
-                    return EVENTCAL_TD_DAY_NOLINK_TODAY % (self.cssclasses[weekday], day)
+                    return EVENTCAL_TD_DAY_NOLINK_TODAY.render(var=link)
                 else:
-                    return EVENTCAL_TD_DAY_NOLINK % (self.cssclasses[weekday], day)
+                    return EVENTCAL_TD_DAY_NOLINK.render(var=link)
 
     def formatweek(self, theweek):
         """Return a complete week as a table row."""
+        week = {}
         EVENTCAL_TR_WEEK = self.srvbld.template('EVENTCAL_TR_WEEK')
-        s = ''.join(self.formatday(d, wd) for (d, wd) in theweek)
-        return EVENTCAL_TR_WEEK % s
+        week['content'] = ''.join(self.formatday(d, wd) for (d, wd) in theweek)
+        return EVENTCAL_TR_WEEK.render(var=week)
 
     def formatweekheader(self):
         """Return a header for a week as a table row."""
+        header = {}
         EVENTCAL_TR_WEEK_HEADER = self.srvbld.template('EVENTCAL_TR_WEEK_HEADER')
-        s = ''.join(self.formatweekday(i) for i in self.iterweekdays())
-        return EVENTCAL_TR_WEEK_HEADER % s
+        header['content'] = ''.join(self.formatweekday(i) for i in self.iterweekdays())
+        return EVENTCAL_TR_WEEK_HEADER.render(var=header)
 
     def formatweekday(self, nd):
         day_format = {}
@@ -104,7 +111,11 @@ class EventsCalendar(Service, HTMLCalendar):
         month_name = datetime.strftime(dt, "%B %Y")
         try:
             self.ml[theyear][themonth]
-            link = LINK % ("uk-link-heading", "events_%4d%02d.html" % (theyear, themonth), "uk-text-uppercase uk-text-muted", month_name)
+            var = {}
+            var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
+            var['url'] = "events_%4d%02d.html" % (theyear, themonth)
+            var['title'] = month_name
+            link = LINK.render(var=var)
         except KeyError:
             # ~ link = LINK % ("uk-link-heading", "", "", month_name)
             link = """<span class="%s">%s</span>""" % ("uk-text-uppercase uk-text-muted", month_name)
@@ -130,9 +141,15 @@ class EventsCalendar(Service, HTMLCalendar):
             months = range(i, min(i+width, 13))
             TD_YEAR_MONTH = ''
             for m in months:
-                TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(theyear, m, withyear=False)
-            MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW % TD_YEAR_MONTH
-        v.append(EVENTCAL_TABLE_YEAR % MONTHS)
+                thismonth = {}
+                thismonth['content'] = self.formatmonth(theyear, m, withyear=False)
+                TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH.render(var=thismonth)
+            td = {}
+            td['content'] = TD_YEAR_MONTH
+            MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW.render(var=td)
+        table = {}
+        table['content'] = MONTHS
+        v.append(EVENTCAL_TABLE_YEAR.render(var=table))
         return ''.join(v)
 
     def formatyearpage(self, theyear, width=4, css='calendar.css', encoding=None):
@@ -142,16 +159,23 @@ class EventsCalendar(Service, HTMLCalendar):
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.srvbld.template('EVENTCAL_YEAR_PAGINATION')
         EVENTCAL_YEAR_PAGINATION_ITEM = self.srvbld.template('EVENTCAL_YEAR_PAGINATION_ITEM')
+        var = {}
+        var['items'] = ''
         ITEMS = ''
         for yp in sorted(years):
-            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM % (yp, yp)
-        return EVENTCAL_YEAR_PAGINATION % ITEMS
+            item = {}
+            item['year'] = yp
+            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
+        var['items'] = ITEMS
+        return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def format_trimester(self, theyear, themonth):
+        # FIXME: CHECK TEMPLATE
         """Return a formatted year as a table of tables."""
         EVENTCAL_TABLE_YEAR = self.srvbld.template('EVENTCAL_TABLE_TRIMESTER')
         EVENTCAL_TABLE_YEAR_TR_MONTHROW = self.srvbld.template('EVENTCAL_TABLE_YEAR_TR_MONTHROW')
         EVENTCAL_TABLE_YEAR_TD_MONTH = self.srvbld.template('EVENTCAL_TABLE_YEAR_TD_MONTH')
+        var = {}
         dt_cur = datetime.strptime("%d.%d.01" % (theyear, themonth), "%Y.%m.%d")
         dt_cur_lastday = dt_cur.replace(day = monthrange(dt_cur.year, dt_cur.month)[1]).date()
         dt_prv = dt_cur - timedelta(days=1)
@@ -159,10 +183,15 @@ class EventsCalendar(Service, HTMLCalendar):
         v = []
         MONTHS = ''
         TD_YEAR_MONTH = ''
-        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_prv.year, dt_prv.month, withyear=True)
-        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_cur.year, dt_cur.month, withyear=True)
-        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH % self.formatmonth(dt_nxt.year, dt_nxt.month, withyear=True)
-        MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW % TD_YEAR_MONTH
-        v.append(EVENTCAL_TABLE_YEAR % MONTHS)
+        var['content'] = self.formatmonth(dt_prv.year, dt_prv.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH.render(var=var)
+        var['content'] = self.formatmonth(dt_cur.year, dt_cur.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH.render(var=var)
+        var['content'] = self.formatmonth(dt_nxt.year, dt_nxt.month, withyear=True)
+        TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH.render(var=var)
+        var['content'] = TD_YEAR_MONTH
+        MONTHS += EVENTCAL_TABLE_YEAR_TR_MONTHROW.render(var=var)
+        var['content'] = MONTHS
+        v.append(EVENTCAL_TABLE_YEAR.render(var=var))
         return ''.join(v)
 

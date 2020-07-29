@@ -1,3 +1,3 @@
 = About this app
 
-%s
+${var['content']}

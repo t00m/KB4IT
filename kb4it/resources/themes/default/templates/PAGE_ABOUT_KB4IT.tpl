@@ -11,7 +11,7 @@
 
 _KB4IT_ is a static website generator based on Asciidoctor sources mainly for technical documentation purposes.
 
-This website was build using KB4IT v%s
+This website was build using KB4IT v${var['kb4it_version']}
 
 For more information, visit my https://github.com/t00m/KB4IT[repository] at GitHub.
 
