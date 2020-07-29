@@ -50,7 +50,6 @@ class Theme(KB4ITBuilder):
         var = {}
         TPL_INDEX = self.template('PAGE_INDEX')
         TPL_TABLE_EVENTS = self.template('TABLE_EVENT')
-        TPL_ROW_EVENT = self.template('TABLE_EVENT_ROW')
         TPL_TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
         TPL_TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
         timestamp = datetime.now()
@@ -200,6 +199,7 @@ class Theme(KB4ITBuilder):
         for year in sorted(self.dey.keys(), reverse=True):
             PAGE = self.template('PAGE_EVENTS_YEAR')
             page_name = "events_%4d" % year
+            self.log.error(page_name)
             thisyear = {}
             html = self.srvcal.build_year_pagination(self.dey.keys())
             edt = guess_datetime("%4d.01.01" % year)
@@ -339,7 +339,6 @@ class Theme(KB4ITBuilder):
     def get_doc_card_author(self, doc):
         source_dir = self.srvapp.get_source_path()
         DOC_CARD = self.template('CARD_DOC_AUTHOR')
-        DOC_CARD_FOOTER = self.template('CARD_DOC_AUTHOR_FOOTER')
         LINK = self.template('LINK')
         title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
