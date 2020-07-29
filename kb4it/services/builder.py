@@ -165,15 +165,9 @@ class KB4ITBuilder(Service):
             htmldoc = adoc.replace('.adoc', '.html')
             basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
-<<<<<<< HEAD
-                var = {}
-                var['page'] = {}
-                var['page']['brand'] = 't00mlabs'
-=======
                 var = self.get_mako_var()
                 # ~ var['page'] = {}
                 # ~ var['page']['brand'] = 't00mlabs'
->>>>>>> cddfd0bb7c22c4aa699eb7b10553e8d20d41ae87
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
                 htmldoctmp = "%s.tmp" % htmldoc
@@ -206,20 +200,11 @@ class KB4ITBuilder(Service):
                     userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
 
                     var['title'] = title
-<<<<<<< HEAD
-                    var['theme'] = self.srvapp.get_theme_properties()
-                    var['page']['description'] = var['theme']['description']
-                    var['page']['author'] = var['theme']['author']
-                    var['page']['language'] = 'en'
-                    var['page']['title'] = title
-                    var['page']['brand'] = var['theme']['brand']
-=======
                     # ~ var['page']['description'] = var['theme']['description']
                     # ~ var['page']['author'] = var['theme']['author']
                     # ~ var['page']['language'] = 'en'
                     # ~ var['page']['title'] = title
                     # ~ var['page']['brand'] = var['theme']['brand']
->>>>>>> cddfd0bb7c22c4aa699eb7b10553e8d20d41ae87
                     var['menu_contents'] = HTML_TOC
                     var['basename'] = basename
                     var['timestamp'] = timestamp
@@ -462,11 +447,6 @@ class KB4ITBuilder(Service):
             var = {}
             var['title'] = 'Index'
             var['theme'] = self.srvapp.get_theme_properties()
-<<<<<<< HEAD
-            var['page'] = {}
-            var['page']['brand'] = var['theme']['brand']
-=======
->>>>>>> cddfd0bb7c22c4aa699eb7b10553e8d20d41ae87
             self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_maxkv_freq(self):
