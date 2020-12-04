@@ -9,4 +9,3 @@ ${var['header']}
 ${var['content']}
 <!-- PAGE AUTHORS CONTENT :: END -->
 ++++
-

@@ -6,7 +6,6 @@
             </div>
             <!-- FOOTER :: END -->
         </div>
-    </div>
     <!-- CONTENTS (Document) :: END -->
 <script>
 <!-- Necessary javascript for filtering results -->

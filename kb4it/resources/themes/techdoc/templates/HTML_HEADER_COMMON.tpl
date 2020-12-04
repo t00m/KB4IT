@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/uikit.min.css">
     <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/coderay-asciidoctor.css">
     <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="resources/themes/default/framework/uikit/uikit/css/kb4it.css">
+    <link rel="stylesheet" href="resources/themes/${var['theme']['id']}/css/custom.css">
     <script src="resources/themes/default/framework/uikit/js/uikit.min.js"></script>
     <script src="resources/themes/default/framework/uikit/js/uikit-icons.min.js"></script>
 </head>
@@ -34,7 +34,25 @@
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="uk-padding-small">Events</a>
                                 </li>
                                 <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="recents.html"><span class="uk-padding-small">Recents</a>
+                                </li>
+                                <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="bookmarks.html"><span class="uk-padding-small">Bookmarks</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Author.html"><span class="uk-padding-small">Authors</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Team.html"><span class="uk-padding-small">Teams</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Tag.html"><span class="uk-padding-small">Tags</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Category.html"><span class="uk-padding-small">Category</a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Scope.html"><span class="uk-padding-small">Scopes</a>
                                 </li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="properties.html"><span class="uk-padding-small">Properties</span></a>
@@ -46,7 +64,7 @@
                         </div>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="https://github.com/user/repository/new/master" target="_blank"><span uk-icon="plus"></span></a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/new/${var['theme']['git_branch']}/${var['theme']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
                     </li>
                     <li class="uk-nav-divider"></li>
                 </ul>
