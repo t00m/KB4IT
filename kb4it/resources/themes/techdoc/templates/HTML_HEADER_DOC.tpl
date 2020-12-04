@@ -2,11 +2,11 @@
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate">${var['title']}</span></a>
+                       <a href="#"><span id="doc-title" class="uk-text-bolder uk-text-truncate">${var['title']}</span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar">
                                 <li uk-tooltip="title: Edit document">
-                                    <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['basename']}">
+                                    <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['theme']['git_path']}/${var['basename']}" target="_blank">
                                         <span class="" uk-icon="icon: file-edit; ratio: 2"></span>
                                     </a>
                                 </li>

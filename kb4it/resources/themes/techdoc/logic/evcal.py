@@ -18,9 +18,7 @@ class EventsCalendar(Service, HTMLCalendar):
         Attach the list of event days as a property, so we can access it
         anywhere.
         """
-        self.events_days = events_days #
-        # ~ for i in range(1,13):
-            # ~ self.ml[i] = False
+        self.events_days = events_days
         for year in events_days:
             self.ml[year] = {}
             for i in range(1,13):
@@ -41,7 +39,7 @@ class EventsCalendar(Service, HTMLCalendar):
         """Return a day as a table cell."""
         eday = 0 # var for checking if it's a event day
         cal_date = (self.month, day) # create a tuple of the calendar month and day
-        EVENTCAL_TD_NODAY = self.srvbld.render_template('EVENTCAL_TD_NODAY')
+        EVENTCAL_TD_NODAY = self.srvbld.template('EVENTCAL_TD_NODAY')
         EVENTCAL_TD_DAY_LINK = self.srvbld.template('EVENTCAL_TD_DAY_LINK')
         EVENTCAL_TD_DAY_LINK_TODAY = self.srvbld.template('EVENTCAL_TD_DAY_LINK_TODAY')
         EVENTCAL_TD_DAY_NOLINK = self.srvbld.template('EVENTCAL_TD_DAY_NOLINK')
@@ -53,27 +51,25 @@ class EventsCalendar(Service, HTMLCalendar):
         link['vfname'] = EVENT_PAGE_VALID_FNAME
         link['day'] = day
         HTML = ''
-        # check if current calendar tuple date exist in our list of events days
-        try:
-            self.events_days[self.year]
-            if cal_date in self.events_days[self.year]:
-                eday = day # if it does exist set the event day var with it
+        if day == 0:
+            return EVENTCAL_TD_NODAY.render(var=link) # day outside month
+        else:
+            try:
+                self.events_days[self.year]
+                if cal_date in self.events_days[self.year]:
+                    eday = day
 
-            if day == 0:
-                return EVENTCAL_TD_NODAY # day outside month
-            elif day == eday:
-                # Check if this is one of the events days.
-                # If yes, return link to page
-                if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
-                    return EVENTCAL_TD_DAY_LINK_TODAY.render(var=link)
+                if day == eday:
+                    if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
+                        return EVENTCAL_TD_DAY_LINK_TODAY.render(var=link)
+                    else:
+                        return EVENTCAL_TD_DAY_LINK.render(var=link)
                 else:
-                    return EVENTCAL_TD_DAY_LINK.render(var=link)
-            else:
-                if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
-                    return EVENTCAL_TD_DAY_NOLINK_TODAY.render(var=link)
-                else:
-                    return EVENTCAL_TD_DAY_NOLINK.render(var=link)
-        except:
+                    if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
+                        return EVENTCAL_TD_DAY_NOLINK_TODAY.render(var=link)
+                    else:
+                        return EVENTCAL_TD_DAY_NOLINK.render(var=link)
+            except Exception as error:
                 if self.year == self.now.year and self.month == self.now.month and day == self.now.day:
                     return EVENTCAL_TD_DAY_NOLINK_TODAY.render(var=link)
                 else:
@@ -83,7 +79,12 @@ class EventsCalendar(Service, HTMLCalendar):
         """Return a complete week as a table row."""
         week = {}
         EVENTCAL_TR_WEEK = self.srvbld.template('EVENTCAL_TR_WEEK')
-        week['content'] = ''.join(self.formatday(d, wd) for (d, wd) in theweek)
+        week['content'] = ''
+        for d, wd in theweek:
+            try:
+                week['content'] += self.formatday(d, wd)
+            except Exception as error:
+                pass
         return EVENTCAL_TR_WEEK.render(var=week)
 
     def formatweekheader(self):
@@ -109,16 +110,23 @@ class EventsCalendar(Service, HTMLCalendar):
         LINK = self.srvbld.template('LINK')
         dt = guess_datetime("%4d-%02d-01" % (theyear, themonth))
         month_name = datetime.strftime(dt, "%B %Y")
+        var = {}
+        var['title'] = month_name
         try:
-            self.ml[theyear][themonth]
-            var = {}
-            var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
-            var['url'] = "events_%4d%02d.html" % (theyear, themonth)
-            var['title'] = month_name
-            link = LINK.render(var=var)
+            events = self.ml[theyear][themonth]
+
+            if events:
+                var['class'] = "uk-link-heading uk-text-uppercase"
+                var['url'] = "events_%4d%02d.html" % (theyear, themonth)
+            else:
+                var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
+                var['url'] = "#"
         except KeyError:
-            # ~ link = LINK % ("uk-link-heading", "", "", month_name)
-            link = """<span class="%s">%s</span>""" % ("uk-text-uppercase uk-text-muted", month_name)
+            # FIXME: Use template
+            var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
+            var['url'] = "#"
+
+        link = LINK.render(var=var)
         return link
 
     def formatmonth(self, theyear, themonth, withyear=False):
@@ -170,7 +178,6 @@ class EventsCalendar(Service, HTMLCalendar):
         return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def format_trimester(self, theyear, themonth):
-        # FIXME: CHECK TEMPLATE
         """Return a formatted year as a table of tables."""
         EVENTCAL_TABLE_YEAR = self.srvbld.template('EVENTCAL_TABLE_TRIMESTER')
         EVENTCAL_TABLE_YEAR_TR_MONTHROW = self.srvbld.template('EVENTCAL_TABLE_YEAR_TR_MONTHROW')

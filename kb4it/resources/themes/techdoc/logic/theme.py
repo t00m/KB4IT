@@ -42,6 +42,7 @@ class Theme(KB4ITBuilder):
         self.create_page_index()
         self.create_page_bookmarks()
         self.create_page_authors()
+        self.create_page_categories()
         # ~ self.create_page_events()
         # ~ self.create_page_blog()
         self.create_page_recents()
@@ -90,6 +91,7 @@ class Theme(KB4ITBuilder):
 
         self.distribute('index', TPL_INDEX.render(var=var))
 
+
     def get_doc_event_row(self, doc):
         """Get card for a given doc"""
         row = {}
@@ -99,11 +101,13 @@ class Theme(KB4ITBuilder):
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         team = self.srvdtb.get_values(doc, 'Team')[0]
+        status = self.srvdtb.get_values(doc, 'Status')[0]
 
         timestamp = self.srvdtb.get_doc_timestamp(doc)
         link_team = LINK % ("uk-link-heading uk-text-meta", "Team_%s.html" % valid_filename(team), '', team)
         link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), '', title)
         link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), '', category)
+        link_status = LINK % ("uk-link-heading uk-text-meta", "Status_%s.html" % valid_filename(status), '', status)
         link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), '', scope)
 
         row['timestamp'] = timestamp
@@ -111,11 +115,11 @@ class Theme(KB4ITBuilder):
         row['title'] = link_title
         row['category'] = link_category
         row['scope'] = link_scope
+        row['status'] = link_status
         return row
 
     def build_events(self, doclist):
         SORT = self.srvapp.get_runtime_parameter('sort_attribute')
-
         # Get events dates
         for doc in doclist:
             props = self.srvdtb.get_doc_properties(doc)
@@ -182,8 +186,6 @@ class Theme(KB4ITBuilder):
                 EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
                 for day in self.events_docs[year][month]:
                     thismonth.extend(self.events_docs[year][month][day])
-
-                # create html page
                 pagination = {}
                 pagination['basename'] = EVENT_PAGE_MONTH
                 pagination['doclist'] = thismonth
@@ -192,6 +194,7 @@ class Theme(KB4ITBuilder):
                 pagination['template'] = 'PAGE_PAGINATION_HEAD'
                 pagination['fake'] = False
                 self.build_pagination(pagination)
+
 
         self.srvcal.set_events_days(self.dey)
         self.srvcal.set_events_docs(self.events_docs)
@@ -207,8 +210,6 @@ class Theme(KB4ITBuilder):
             html += self.srvcal.formatyearpage(year, 4)
             thisyear['content'] = html
             self.distribute(page_name, PAGE.render(var=thisyear))
-
-        # ~ return self.dey
 
     def load_events_days(self, events_days, year):
         events_set = set()
@@ -247,7 +248,6 @@ class Theme(KB4ITBuilder):
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
         self.distribute('events', page.render(var=events))
-        self.log.debug("[THEME-TECHDOC] - Built %d events", len(doclist))
 
     def create_page_recents(self):
         """Create recents page."""
@@ -334,6 +334,70 @@ class Theme(KB4ITBuilder):
             html = TPL_PAGE_AUTHOR.render(var=page)
             basename = valid_filename("Author_%s" % author)
             self.distribute(basename, html)
+
+
+    def create_page_categories(self):
+        PAGE_CATEGORY = self.template('PAGE_CATEGORY')
+        SECTION_ETYPE = self.template('PAGE_CATEGORY_SECTION_SCOPE_TYPE')
+        SWITCHER_ETYPE = self.template('PAGE_CATEGORY_SWITCHER_SCOPE_TYPE')
+        categories = self.srvdtb.get_all_values_for_key('Category')
+        #self.log.error(categories)
+
+        def tab_header(docs):
+            scopes_category = set()
+            for doc in docs:
+                scopes = self.srvdtb.get_values(doc, 'Scope')
+                for scope in scopes:
+                    scopes_category.add(scope)
+            header = """<ul class="uk-flex-center" uk-tab>\n"""
+            for scope in sorted(list(scopes_category)):
+                header += """<li><a href="#">%s</a></li>\n""" % scope.title()
+            header += """</ul>\n"""
+            return sorted(list(scopes_category)), header
+
+        for category in categories:
+            docs = self.srvdtb.get_docs_by_key_value('Category', category)
+            scopes_category, header = tab_header(docs)
+            #self.log.error("FOR-CATEGORY: %s -> %d docs in scopes: %s", category, len(docs), scopes_category)
+
+            content_category = ''
+            for this_scope in scopes_category:
+                items = ''
+                sect_items = 0
+                for doc in docs:
+                    scopes = self.srvdtb.get_values(doc, 'Scope')
+                    for scope in scopes:
+                        if scope in this_scope:
+                            items += self.get_doc_card_author(doc)
+                            sect_items += 1
+                switcher = {}
+                switcher['sect_items'] = sect_items
+                switcher['len_docs'] = len(docs)
+                switcher['items'] = items
+                content_category +=  SECTION_ETYPE.render(var=switcher)
+                # ~ content_category += SECTION_ETYPE % (sect_items, len(docs), items)
+
+            # Distribute
+            page_category = {}
+            page_category['content'] = content_category
+            content = SWITCHER_ETYPE.render(var=page_category)
+
+            page = {}
+            page['title'] = category
+            page['header'] = header
+            page['content'] = content
+
+            html = PAGE_CATEGORY.render(var=page)
+            basename = valid_filename("Category_%s" % category)
+            self.distribute(basename, html)
+
+            # ~ content = SWITCHER_ETYPE % content_category
+            # ~ self.log.error("CATEGORY: %s", category)
+            # ~ self.log.error("HEADER: %s", header)
+            # ~ self.log.error("CONTENT: %s", category)
+            # ~ PAGE = PAGE_CATEGORY % (category, header, content)
+            # ~ self.distribute(valid_filename("Category_%s" % category), PAGE)
+
 
     def get_doc_card_author(self, doc):
         source_dir = self.srvapp.get_source_path()
