@@ -580,9 +580,12 @@ class KB4ITBuilder(Service):
         TPL_DOC_CARD_CLASS = self.template('CARD_DOC_CLASS')
         LINK = self.template('LINK')
 
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        var['category'] = self.srvdtb.get_values(doc, 'Category')[0]
-        var['scope'] = self.srvdtb.get_values(doc, 'Scope')[0]
+        title = self.srvdtb.get_values(doc, 'Title')[0]     
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        var['category'] = category
+        var['scope'] = scope
+        var['data-title'] = "%s%s%s" % (title, category, scope)
         var['content'] = ''
         link = {}
         link['class'] = TPL_DOC_CARD_CLASS.render()

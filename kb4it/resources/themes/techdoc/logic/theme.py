@@ -39,14 +39,12 @@ class Theme(KB4ITBuilder):
         self.create_page_properties()
         self.create_page_stats()
         self.create_page_index_all()
-        self.create_page_index()
-        self.create_page_bookmarks()
-        # ~ self.create_page_authors()
+        self.create_page_index()        
         self.create_page_etype('Author', 'Category')
-        self.create_page_categories()
-        # ~ self.create_page_events()
-        # ~ self.create_page_blog()
+        self.create_page_etype('Category', 'Scope')
+        self.create_page_etype('Team', 'Scope')
         self.create_page_recents()
+        self.create_page_bookmarks()
 
     def create_page_index(self):
         var = {}
@@ -315,8 +313,8 @@ class Theme(KB4ITBuilder):
                 items = ''
                 sect_items = 0
                 for doc in docs:
-                    category = self.srvdtb.get_values(doc, 'Category')
-                    if etype_item in category:
+                    subkey_item = self.srvdtb.get_values(doc, subkey.title())
+                    if etype_item in subkey_item:
                         items += self.get_doc_card(doc)
                         sect_items += 1
                 section['count_items'] = sect_items
@@ -335,145 +333,3 @@ class Theme(KB4ITBuilder):
             html = TPL_PAGE_ETYPE.render(var=page)
             basename = valid_filename("%s_%s" % (key.title(), key_item))
             self.distribute(basename, html)
-
-
-    def create_page_authors(self):
-        TPL_PAGE_AUTHOR = self.template('PAGE_AUTHOR')
-        TPL_SECTION_ETYPE = self.template('PAGE_AUTHOR_SECTION_EVENT_TYPE')
-        TPL_SWITCHER_ETYPE = self.template('PAGE_AUTHOR_SWITCHER_EVENT_TYPE')
-        TPL_TAB_CENTER = self.template('TAB_CENTER')
-        TPL_TAB_ITEM = self.template('TAB_ITEM')
-        authors = self.srvdtb.get_all_values_for_key('Author')
-
-        def tab_header(docs):
-            author_etypes = set()
-            event_types = self.srvapp.get_theme_property('events')
-            for doc in docs:
-                categories = self.srvdtb.get_values(doc, 'Category')
-                for category in categories:
-                    author_etypes.add(category)
-            items = ''
-            for etype in sorted(list(author_etypes)):
-                item = {}
-                item['name'] = etype.title()
-                items += TPL_TAB_ITEM.render(var=item)
-            tab = {}
-            tab['content'] = items
-            header = TPL_TAB_CENTER.render(var=tab)
-            authors = sorted(list(author_etypes))
-            return authors, header
-
-        for author in authors:
-            docs = self.srvdtb.get_docs_by_key_value('Author', author)
-            author_etypes, header = tab_header(docs)
-
-            # Registered event types
-            content_author = ''
-            for etype in author_etypes:
-                section = {}
-                items = ''
-                sect_items = 0
-                for doc in docs:
-                    category = self.srvdtb.get_values(doc, 'Category')
-                    if etype in category:
-                        items += self.get_doc_card_author(doc)
-                        sect_items += 1
-                section['count_items'] = sect_items
-                section['count_docs'] = len(docs)
-                section['items'] = items
-                content_author += TPL_SECTION_ETYPE.render(var=section)
-
-            page_author = {}
-            page_author['content'] = content_author
-            content = TPL_SWITCHER_ETYPE.render(var=page_author)
-            page = {}
-            page['title'] = author
-            page['header'] = header
-            page['content'] = content
-
-            html = TPL_PAGE_AUTHOR.render(var=page)
-            basename = valid_filename("Author_%s" % author)
-            self.distribute(basename, html)
-
-
-    def create_page_categories(self):
-        PAGE_CATEGORY = self.template('PAGE_CATEGORY')
-        SECTION_ETYPE = self.template('PAGE_CATEGORY_SECTION_SCOPE_TYPE')
-        SWITCHER_ETYPE = self.template('PAGE_CATEGORY_SWITCHER_SCOPE_TYPE')
-        categories = self.srvdtb.get_all_values_for_key('Category')
-        #FIXME: convert inline html to templates
-
-        def tab_header(docs):
-            scopes_category = set()
-            for doc in docs:
-                scopes = self.srvdtb.get_values(doc, 'Scope')
-                for scope in scopes:
-                    scopes_category.add(scope)
-            header = """<ul class="uk-flex-center" uk-tab>\n"""
-            for scope in sorted(list(scopes_category)):
-                header += """<li><a href="#">%s</a></li>\n""" % scope.title()
-            header += """</ul>\n"""
-            return sorted(list(scopes_category)), header
-
-        for category in categories:
-            docs = self.srvdtb.get_docs_by_key_value('Category', category)
-            scopes_category, header = tab_header(docs)
-
-            content_category = ''
-            for this_scope in scopes_category:
-                items = ''
-                sect_items = 0
-                for doc in docs:
-                    scopes = self.srvdtb.get_values(doc, 'Scope')
-                    for scope in scopes:
-                        if scope in this_scope:
-                            items += self.get_doc_card_author(doc)
-                            sect_items += 1
-                switcher = {}
-                switcher['sect_items'] = sect_items
-                switcher['len_docs'] = len(docs)
-                switcher['items'] = items
-                content_category +=  SECTION_ETYPE.render(var=switcher)
-
-            # Distribute
-            page_category = {}
-            page_category['content'] = content_category
-            content = SWITCHER_ETYPE.render(var=page_category)
-
-            page = {}
-            page['title'] = category
-            page['header'] = header
-            page['content'] = content
-
-            html = PAGE_CATEGORY.render(var=page)
-            basename = valid_filename("Category_%s" % category)
-            self.distribute(basename, html)
-
-    def get_doc_card_author(self, doc):
-        source_dir = self.srvapp.get_source_path()
-        DOC_CARD = self.template('CARD_DOC_AUTHOR')
-        LINK = self.template('LINK')
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        category = self.srvdtb.get_values(doc, 'Category')[0]
-        scope = self.srvdtb.get_values(doc, 'Scope')[0]
-
-        card = {}
-        card['data-title'] = "%s%s%s" % (title, category, scope)
-        link = {}
-        link['class'] = "uk-link-heading uk-text-meta"
-        link['url'] = "%s.html" % valid_filename(doc).replace('.adoc', '')
-        link['title'] = title
-        card['title'] = LINK.render(var=link)
-
-        link['url'] = "Category_%s.html" % valid_filename(category)
-        link['title'] = category
-        card['category'] = LINK.render(var=link)
-
-        link['url'] = "Scope_%s.html" % valid_filename(scope)
-        link['title'] = scope
-        card['scope'] = LINK.render(var=link)
-
-        card['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
-        card['fuzzy_date'] = fuzzy_date_from_timestamp(card['timestamp'])
-        card['tooltip'] = title
-        return DOC_CARD.render(var=card) # % (title, tooltip, link_title, timestamp, fuzzy_date, link_scope)
