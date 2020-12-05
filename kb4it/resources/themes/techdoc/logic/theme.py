@@ -41,7 +41,8 @@ class Theme(KB4ITBuilder):
         self.create_page_index_all()
         self.create_page_index()
         self.create_page_bookmarks()
-        self.create_page_authors()
+        # ~ self.create_page_authors()
+        self.create_page_etype('Author', 'Category')
         self.create_page_categories()
         # ~ self.create_page_events()
         # ~ self.create_page_blog()
@@ -277,6 +278,65 @@ class Theme(KB4ITBuilder):
         pagination['fake'] = False
         self.build_pagination(pagination)
 
+    def create_page_etype(self, key, subkey):
+        TPL_PAGE_ETYPE = self.template('PAGE_ETYPE')
+        TPL_SECTION_ETYPE = self.template('PAGE_SECTION_EVENT_TYPE')
+        TPL_SWITCHER_ETYPE = self.template('PAGE_SWITCHER_EVENT_TYPE')
+        TPL_TAB_CENTER = self.template('TAB_CENTER')
+        TPL_TAB_ITEM = self.template('TAB_ITEM')
+        key_list = self.srvdtb.get_all_values_for_key(key.title())
+
+        def tab_header(docs):
+            etypes_set = set()
+            event_types = self.srvapp.get_theme_property('events')
+            for doc in docs:
+                subkey_list = self.srvdtb.get_values(doc, subkey.title())
+                for subkey_item in subkey_list:
+                    etypes_set.add(subkey_item)
+            items = ''
+            for etype in sorted(list(etypes_set)):
+                item = {}
+                item['name'] = etype.title()
+                items += TPL_TAB_ITEM.render(var=item)
+            tab = {}
+            tab['content'] = items
+            header = TPL_TAB_CENTER.render(var=tab)
+            key_list = sorted(list(etypes_set))
+            return key_list, header
+
+        for key_item in key_list:
+            docs = self.srvdtb.get_docs_by_key_value(key.title(), key_item)
+            etypes_set, header = tab_header(docs)
+
+            # Registered event types
+            content_key = ''
+            for etype_item in etypes_set:
+                section = {}
+                items = ''
+                sect_items = 0
+                for doc in docs:
+                    category = self.srvdtb.get_values(doc, 'Category')
+                    if etype_item in category:
+                        items += self.get_doc_card(doc)
+                        sect_items += 1
+                section['count_items'] = sect_items
+                section['count_docs'] = len(docs)
+                section['items'] = items
+                content_key += TPL_SECTION_ETYPE.render(var=section)
+
+            page_key = {}
+            page_key['content'] = content_key
+            content = TPL_SWITCHER_ETYPE.render(var=page_key)
+            page = {}
+            page['title'] = key_item
+            page['header'] = header
+            page['content'] = content
+
+            html = TPL_PAGE_ETYPE.render(var=page)
+            basename = valid_filename("%s_%s" % (key.title(), key_item))
+            self.distribute(basename, html)
+
+
     def create_page_authors(self):
         TPL_PAGE_AUTHOR = self.template('PAGE_AUTHOR')
         TPL_SECTION_ETYPE = self.template('PAGE_AUTHOR_SECTION_EVENT_TYPE')
@@ -341,7 +401,7 @@ class Theme(KB4ITBuilder):
         SECTION_ETYPE = self.template('PAGE_CATEGORY_SECTION_SCOPE_TYPE')
         SWITCHER_ETYPE = self.template('PAGE_CATEGORY_SWITCHER_SCOPE_TYPE')
         categories = self.srvdtb.get_all_values_for_key('Category')
-        #self.log.error(categories)
+        #FIXME: convert inline html to templates
 
         def tab_header(docs):
             scopes_category = set()
@@ -358,7 +418,6 @@ class Theme(KB4ITBuilder):
         for category in categories:
             docs = self.srvdtb.get_docs_by_key_value('Category', category)
             scopes_category, header = tab_header(docs)
-            #self.log.error("FOR-CATEGORY: %s -> %d docs in scopes: %s", category, len(docs), scopes_category)
 
             content_category = ''
             for this_scope in scopes_category:
@@ -375,7 +434,6 @@ class Theme(KB4ITBuilder):
                 switcher['len_docs'] = len(docs)
                 switcher['items'] = items
                 content_category +=  SECTION_ETYPE.render(var=switcher)
-                # ~ content_category += SECTION_ETYPE % (sect_items, len(docs), items)
 
             # Distribute
             page_category = {}
@@ -390,14 +448,6 @@ class Theme(KB4ITBuilder):
             html = PAGE_CATEGORY.render(var=page)
             basename = valid_filename("Category_%s" % category)
             self.distribute(basename, html)
-
-            # ~ content = SWITCHER_ETYPE % content_category
-            # ~ self.log.error("CATEGORY: %s", category)
-            # ~ self.log.error("HEADER: %s", header)
-            # ~ self.log.error("CONTENT: %s", category)
-            # ~ PAGE = PAGE_CATEGORY % (category, header, content)
-            # ~ self.distribute(valid_filename("Category_%s" % category), PAGE)
-
 
     def get_doc_card_author(self, doc):
         source_dir = self.srvapp.get_source_path()
