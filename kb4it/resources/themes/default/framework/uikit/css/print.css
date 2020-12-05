@@ -19,14 +19,19 @@
         display: none;
     }
 
-/*
     #kb4it-menu {
         display: none;
     }
-*/
 
+/*
     h1, h2, h3, h4, h5 {
       page-break-after: avoid;
+    }
+*/
+
+    #print-title {
+        visibility: visible;
+        display: inline;
     }
 
     /*Reset Style*/

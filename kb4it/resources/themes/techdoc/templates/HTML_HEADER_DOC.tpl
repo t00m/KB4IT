@@ -84,3 +84,4 @@ ${var['source_code']}
     </div>
 </div>
 <div class="uk-container uk-container-center">
+<h1 id="print-title" class="uk-text-center" style="visibility: hidden;">${var['title']}</h1>
