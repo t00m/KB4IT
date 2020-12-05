@@ -235,6 +235,7 @@ class KB4ITApp(Service):
         content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
         content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
         content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
+        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_NEW'))
         return content
 
     def stage_01_check_environment(self):
