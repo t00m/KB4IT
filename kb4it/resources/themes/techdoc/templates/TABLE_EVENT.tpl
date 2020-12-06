@@ -2,11 +2,11 @@
     <caption></caption>
     <thead>
         <tr>
-            <th class="uk-text-bold">Date</th>
-            <th class="uk-text-bold">Team</th>
-            <th class="uk-text-bold">Title</th>
-            <th class="uk-text-bold">Category</th>
-            <th class="uk-text-bold">Scope</th>
+            <th class="uk-text-bold uk-text-primary">Date</th>
+            <th class="uk-text-bold uk-text-primary">Team</th>
+            <th class="uk-text-bold uk-text-primary">Title</th>
+            <th class="uk-text-bold uk-text-primary">Category</th>
+            <th class="uk-text-bold uk-text-primary">Scope</th>
         </tr>
     </thead>
     <tfoot>
@@ -17,11 +17,11 @@
     <tbody>
 % for row in var['rows']:
         <tr>
-            <td>${row['timestamp']}</td>
-            <td>${row['team']}</td>
-            <td>${row['title']}</td>
-            <td>${row['category']}</td>
-            <td>${row['scope']}</td>
+            <td class="uk-text-meta">${row['timestamp']}</td>
+            <td class="uk-text-meta">${row['team']}</td>
+            <td class="uk-text-meta">${row['title']}</td>
+            <td class="uk-text-meta">${row['category']}</td>
+            <td class="uk-text-meta">${row['scope']}</td>
         </tr>
 % endfor
     </tbody>

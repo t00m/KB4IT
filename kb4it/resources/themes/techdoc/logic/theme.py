@@ -64,30 +64,49 @@ class Theme(KB4ITBuilder):
         next_events = ""
         ROWS_EVENTS = ''
         var['rows'] = []
-        while now <= ldcm:
-            try:
-                for doc in self.events_docs[now.year][now.month][now.day]:
-                    row = self.get_doc_event_row(doc)
-                    var['rows'].append(row)
-            except Exception as error:
-                pass
-            delta = timedelta(days=1)
-            now += delta
+        
+        # FIXME: Get number of events to display from theme.conf
+        max_events = 10
+        n = 0
+        for year in self.events_docs:
+            for month in self.events_docs[year]:
+                for day in self.events_docs[year][month]:
+                    for doc in self.events_docs[year][month][day]:
+                        try:
+                            if n < max_events:
+                                row = self.get_doc_event_row(doc)
+                                var['rows'].append(row)
+                                n = n + 1
+                            else:
+                                break
+                        except Exception as error:
+                            self.log.error(error)                            
 
-        while fdnm < ldnm:
-            try:
-                for doc in self.events_docs[fdnm.year][fdnm.month][fdnm.day]:
-                    row = self.get_doc_event_row(doc)
-                    var['rows'].append(row)
-            except Exception as error:
-                pass
-            delta = timedelta(days=1)
-            fdnm += delta
+        # ~ while now <= ldcm:
+            # ~ try:
+                # ~ for doc in self.events_docs[now.year][now.month][now.day]:
+                    # ~ row = self.get_doc_event_row(doc)
+                    # ~ var['rows'].append(row)
+            # ~ except Exception as error:
+                # ~ pass
+            # ~ delta = timedelta(days=1)
+            # ~ now += delta
+
+        # ~ while fdnm < ldnm:
+            # ~ try:
+                # ~ for doc in self.events_docs[fdnm.year][fdnm.month][fdnm.day]:
+                    # ~ row = self.get_doc_event_row(doc)
+                    # ~ var['rows'].append(row)
+            # ~ except Exception as error:
+                # ~ pass
+            # ~ delta = timedelta(days=1)
+            # ~ fdnm += delta
+            
+        #FIXME: Get repository title from theme.conf
         var['title'] = 'My KB4IT Repostiroy'
         var['timestamp'] = timestamp.ctime()
         var['calendar_trimester'] = trimester
         var['table_trimester'] = TPL_TABLE_EVENTS.render(var=var)
-
         self.distribute('index', TPL_INDEX.render(var=var))
 
 
@@ -95,26 +114,40 @@ class Theme(KB4ITBuilder):
         """Get card for a given doc"""
         row = {}
         LINK = self.template('LINK')
-        title = self.srvdtb.get_values(doc, 'Title')[0]
-        tooltip ="%s" % (title)
-        category = self.srvdtb.get_values(doc, 'Category')[0]
-        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        link = {}
+        link['class'] = "uk-link-heading uk-text-meta"       
+
+        # Date  
+        row['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+                
+        # Team
         team = self.srvdtb.get_values(doc, 'Team')[0]
-        status = self.srvdtb.get_values(doc, 'Status')[0]
+        link['url'] = "Team_%s.html" % valid_filename(team)
+        link['title'] = team
+        row['team'] = LINK.render(var=link)
+        
+        # Title   
+        title = self.srvdtb.get_values(doc, 'Title')[0]  
+        link['url'] = "%s.html" % valid_filename(doc).replace('.adoc', '')
+        link['title'] = title
+        row['title'] = LINK.render(var=link)
+        
+        # Category  
+        category = self.srvdtb.get_values(doc, 'Category')[0]
+        link['url'] = "Category_%s.html" % valid_filename(category)
+        link['title'] = category
+        row['category'] = LINK.render(var=link)
+        
+        # Scope
+        scope = self.srvdtb.get_values(doc, 'Scope')[0]
+        link['url'] = "Scope_%s.html" % valid_filename(scope)
+        link['title'] = scope
+        row['scope'] = LINK.render(var=link)
 
-        timestamp = self.srvdtb.get_doc_timestamp(doc)
-        link_team = LINK % ("uk-link-heading uk-text-meta", "Team_%s.html" % valid_filename(team), '', team)
-        link_title = LINK % ("uk-link-heading uk-text-meta", "%s.html" % valid_filename(doc).replace('.adoc', ''), '', title)
-        link_category = LINK % ("uk-link-heading uk-text-meta", "Category_%s.html" % valid_filename(category), '', category)
-        link_status = LINK % ("uk-link-heading uk-text-meta", "Status_%s.html" % valid_filename(status), '', status)
-        link_scope = LINK % ("uk-link-heading uk-text-meta", "Scope_%s.html" % valid_filename(scope), '', scope)
-
-        row['timestamp'] = timestamp
-        row['team'] = link_team
-        row['title'] = link_title
-        row['category'] = link_category
-        row['scope'] = link_scope
-        row['status'] = link_status
+        # Status        
+        # ~ status = self.srvdtb.get_values(doc, 'Status')[0]
+        # ~ row['status'] = link_status
+        
         return row
 
     def build_events(self, doclist):
