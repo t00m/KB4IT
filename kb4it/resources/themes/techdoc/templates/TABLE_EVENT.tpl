@@ -7,6 +7,7 @@
             <th class="uk-text-bold uk-text-primary">Title</th>
             <th class="uk-text-bold uk-text-primary">Category</th>
             <th class="uk-text-bold uk-text-primary">Scope</th>
+            <th class="uk-text-bold uk-text-primary">Status</th>
         </tr>
     </thead>
     <tfoot>
@@ -22,6 +23,7 @@
             <td class="uk-text-meta">${row['title']}</td>
             <td class="uk-text-meta">${row['category']}</td>
             <td class="uk-text-meta">${row['scope']}</td>
+            <td class="uk-text-meta">${row['status']}</td>
         </tr>
 % endfor
     </tbody>
