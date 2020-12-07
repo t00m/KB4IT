@@ -39,7 +39,7 @@ class Theme(KB4ITBuilder):
         self.create_page_properties()
         self.create_page_stats()
         self.create_page_index_all()
-        self.create_page_index()        
+        self.create_page_index()
         self.create_page_etype('Author', 'Category')
         self.create_page_etype('Category', 'Scope')
         self.create_page_etype('Team', 'Scope')
@@ -64,7 +64,7 @@ class Theme(KB4ITBuilder):
         next_events = ""
         ROWS_EVENTS = ''
         var['rows'] = []
-        
+
         # FIXME: Get number of events to display from theme.conf
         max_events = 10
         n = 0
@@ -80,7 +80,7 @@ class Theme(KB4ITBuilder):
                             else:
                                 break
                         except Exception as error:
-                            self.log.error(error)                            
+                            self.log.error(error)
 
         # ~ while now <= ldcm:
             # ~ try:
@@ -101,7 +101,7 @@ class Theme(KB4ITBuilder):
                 # ~ pass
             # ~ delta = timedelta(days=1)
             # ~ fdnm += delta
-            
+
         #FIXME: Get repository title from theme.conf
         var['title'] = 'My KB4IT Repostiroy'
         var['timestamp'] = timestamp.ctime()
@@ -115,39 +115,41 @@ class Theme(KB4ITBuilder):
         row = {}
         LINK = self.template('LINK')
         link = {}
-        link['class'] = "uk-link-heading uk-text-meta"       
+        link['class'] = "uk-link-heading uk-text-meta"
 
-        # Date  
+        # Date
         row['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
-                
+
         # Team
         team = self.srvdtb.get_values(doc, 'Team')[0]
         link['url'] = "Team_%s.html" % valid_filename(team)
         link['title'] = team
         row['team'] = LINK.render(var=link)
-        
-        # Title   
-        title = self.srvdtb.get_values(doc, 'Title')[0]  
+
+        # Title
+        title = self.srvdtb.get_values(doc, 'Title')[0]
         link['url'] = "%s.html" % valid_filename(doc).replace('.adoc', '')
         link['title'] = title
         row['title'] = LINK.render(var=link)
-        
-        # Category  
+
+        # Category
         category = self.srvdtb.get_values(doc, 'Category')[0]
         link['url'] = "Category_%s.html" % valid_filename(category)
         link['title'] = category
         row['category'] = LINK.render(var=link)
-        
+
         # Scope
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         link['url'] = "Scope_%s.html" % valid_filename(scope)
         link['title'] = scope
         row['scope'] = LINK.render(var=link)
 
-        # Status        
-        # ~ status = self.srvdtb.get_values(doc, 'Status')[0]
-        # ~ row['status'] = link_status
-        
+        # Status
+        status = self.srvdtb.get_values(doc, 'Status')[0]
+        link['url'] = "Status_%s.html" % valid_filename(status)
+        link['title'] = status
+        row['status'] = LINK.render(var=link)
+
         return row
 
     def build_events(self, doclist):
