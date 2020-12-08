@@ -647,7 +647,19 @@ class KB4ITBuilder(Service):
         """About theme page."""
         TPL_PAGE_ABOUT_THEME = self.template('PAGE_ABOUT_THEME')
         var = {}
-        var['theme'] = self.srvapp.get_theme_properties()
+        var['theme'] = {}
+        
+        theme = self.srvapp.get_theme_properties()        
+        for key in theme:
+            value = theme[key]
+            try:
+                if not os.path.exists(value):
+                    var['theme'][key] = value
+            except:
+                if isinstance(value, list):
+                    var['theme'][key] = ', '.join(value)
+                else:
+                    var['theme'][key] = value
         content = TPL_PAGE_ABOUT_THEME.render(var=var)
         self.distribute('about_theme', content)
 
