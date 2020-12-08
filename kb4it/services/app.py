@@ -218,7 +218,8 @@ class KB4ITApp(Service):
 
     def apply_transformations(self, source):
         """Apply CSS transformation to the compiled page."""
-        content = source.replace(self.srvbld.render_template('HTML_TAG_TOC_OLD'), self.srvbld.render_template('HTML_TAG_TOC_NEW'))
+        content = source.replace(self.srvbld.render_template('HTML_TAG_A_OLD'), self.srvbld.render_template('HTML_TAG_A_NEW'))
+        content = content.replace(self.srvbld.render_template('HTML_TAG_TOC_OLD'), self.srvbld.render_template('HTML_TAG_TOC_NEW'))
         content = content.replace(self.srvbld.render_template('HTML_TAG_SECT1_OLD'), self.srvbld.render_template('HTML_TAG_SECT1_NEW'))
         content = content.replace(self.srvbld.render_template('HTML_TAG_SECT2_OLD'), self.srvbld.render_template('HTML_TAG_SECT2_NEW'))
         content = content.replace(self.srvbld.render_template('HTML_TAG_SECT3_OLD'), self.srvbld.render_template('HTML_TAG_SECT3_NEW'))

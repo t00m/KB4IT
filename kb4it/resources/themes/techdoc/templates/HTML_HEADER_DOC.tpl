@@ -1,6 +1,11 @@
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
+                    <li uk-tooltip="title: Print document">
+                        <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="#" onclick="window.print()" target="_blank">
+                            <span class="" uk-icon="icon: print; ratio: 1"></span>
+                        </a>
+                    </li>
                     <li uk-tooltip="title: Edit document">
                         <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['theme']['git_path']}/${var['basename']}" target="_blank">
                             <span class="" uk-icon="icon: file-edit; ratio: 1"></span>

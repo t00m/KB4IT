@@ -1,8 +1,8 @@
 {
     "id": "techdoc",
     "name": "Technical documentation",
-    "author": "[Author Name]",
-    "email": "[Author email]",
+    "author": "Tomás Vírseda",
+    "email": "tomasvirseda@gmail.com",
     "website": "",
     "description": "Theme for technical documentation with capabilities for blog posts, events, tasks, etc...",
     "version": "0.0.8",
