@@ -230,11 +230,16 @@ class KB4ITBuilder(Service):
         Create a page with documents.
         If amount of documents is greater than 100, split it in several pages
         """
-        # ~ print("PG. TPL: %s" % pagination['template'])
         TPL_PG_HEAD = self.template(pagination['template'])
         var = {}
 
-        # Pagination title
+        # Custom pagination title por key pages
+        try:
+            var['title_key'] = pagination['key']
+            var['title_value'] = pagination['value']
+        except Exception as error:
+            pass
+
         if pagination['title'] is None:
             var['title'] = pagination['basename'].replace('_', ' ')
         else:
@@ -272,13 +277,11 @@ class KB4ITBuilder(Service):
                 k = math.ceil(var['num_rel_docs'] / total_pages)
         var['k'] = k
         var['total'] = total_pages
-
         var['pg-head-items'] = ''
         for current_page in range(total_pages):
-            # ~ PAGINATION = self.template('PAGINATION_START')
             page = {}
             page['num'] = current_page
-            # ~ page['pg-head-items'] = ''
+            var['pg-head-items'] = ''
             if total_pages > 0:
                 for i in range(total_pages):
                     start = k * i  # lower limit
@@ -310,7 +313,6 @@ class KB4ITBuilder(Service):
                         page['page_count_docs'] = var['num_rel_docs']
                         page['page_link'] = PAGE.replace('adoc', 'html')
                         var['pg-head-items'] +=  TPL_PAGINATION_PAGE_INACTIVE.render(var=page) #i, start, end, num_rel_docs, PAGE.replace('adoc', 'html'), i)
-            # ~ PAGINATION += self.template('PAGINATION_END')
 
             if current_page == 0:
                 name = "%s" % pagination['basename']
@@ -426,6 +428,10 @@ class KB4ITBuilder(Service):
 
     def generate_sources(self):
         """Custom themes can use this method to generate source documents"""
+        pass
+
+    def generate_pages(self):
+        """Custom themes can use this method to generate final pages"""
         pass
 
     def create_page_help(self):
@@ -580,7 +586,7 @@ class KB4ITBuilder(Service):
         TPL_DOC_CARD_CLASS = self.template('CARD_DOC_CLASS')
         LINK = self.template('LINK')
 
-        title = self.srvdtb.get_values(doc, 'Title')[0]     
+        title = self.srvdtb.get_values(doc, 'Title')[0]
         category = self.srvdtb.get_values(doc, 'Category')[0]
         scope = self.srvdtb.get_values(doc, 'Scope')[0]
         var['category'] = category
@@ -591,7 +597,10 @@ class KB4ITBuilder(Service):
         link['class'] = TPL_DOC_CARD_CLASS.render()
         link['url'] = valid_filename(doc).replace('.adoc', '.html')
         link['title'] = title
+        var['link'] = link
+        var['link_rendered'] = LINK.render(var=link)
         var['title'] = LINK.render(var=link)
+        var['title_nolink'] = title
         # ~ link_title = LINK.render(var=link)
         if len(var['category']) > 0 and len(var['scope']) > 0:
             cat = {}
@@ -613,7 +622,6 @@ class KB4ITBuilder(Service):
         var['fuzzy_date'] = fuzzy_date_from_timestamp(var['timestamp'])
         var['tooltip'] = title
         DOC_CARD = TPL_DOC_CARD.render(var=var)
-        # ~ self.log.error(DOC_CARD)
         return DOC_CARD
 
     def get_labels(self, values):
@@ -648,8 +656,8 @@ class KB4ITBuilder(Service):
         TPL_PAGE_ABOUT_THEME = self.template('PAGE_ABOUT_THEME')
         var = {}
         var['theme'] = {}
-        
-        theme = self.srvapp.get_theme_properties()        
+
+        theme = self.srvapp.get_theme_properties()
         for key in theme:
             value = theme[key]
             try:
