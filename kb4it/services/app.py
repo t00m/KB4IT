@@ -493,6 +493,8 @@ class KB4ITApp(Service):
             sorted_docs = self.srvdtb.sort_by_date(docs)
             basename = "%s_%s" % (valid_filename(key), valid_filename(value))
             pagination = {}
+            pagination['key'] = key
+            pagination['value'] = value
             pagination['basename'] = basename
             pagination['doclist'] = sorted_docs
             pagination['title'] = None
@@ -730,6 +732,7 @@ class KB4ITApp(Service):
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
         self.stage_04_processing()
+        self.srvthm.generate_pages()
         self.stage_05_compilation()
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
