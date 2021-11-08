@@ -29,7 +29,7 @@ APP['license_long'] = "The code is licensed under the terms of the  GPL v3\n\
                   code\nas you want"
 APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
 APP['desc'] = ""
-APP['version'] = '0.7.8.1'
+APP['version'] = '0.7.8.3.4'
 APP['author'] = 'Tomás Vírseda'
 APP['author_email'] = 'tomasvirseda@gmail.com'
 APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
@@ -75,8 +75,11 @@ MAX_WORKERS = 30
 EOHMARK = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
 ADOCPROPS = {
     'source-highlighter': 'coderay',
+    'coderay-css': 'class',
+    'coderay-linenums-mode': 'table',
     'toc': 'left',
     'toclevels': '2',
     'icons': 'font',
     'linkcss': None,
+    'experimental': None,
 }

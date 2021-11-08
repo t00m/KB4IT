@@ -9,6 +9,7 @@ Module with the application logic.
 # Description: module holding the application logic
 """
 
+import re
 import os
 from os.path import abspath
 import sys
@@ -218,25 +219,27 @@ class KB4ITApp(Service):
 
     def apply_transformations(self, source):
         """Apply CSS transformation to the compiled page."""
-        content = source.replace(self.srvbld.render_template('HTML_TAG_A_OLD'), self.srvbld.render_template('HTML_TAG_A_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_TOC_OLD'), self.srvbld.render_template('HTML_TAG_TOC_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_SECT1_OLD'), self.srvbld.render_template('HTML_TAG_SECT1_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_SECT2_OLD'), self.srvbld.render_template('HTML_TAG_SECT2_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_SECT3_OLD'), self.srvbld.render_template('HTML_TAG_SECT3_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_SECT4_OLD'), self.srvbld.render_template('HTML_TAG_SECT4_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_SECTIONBODY_OLD'), self.srvbld.render_template('HTML_TAG_SECTIONBODY_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_PRE_OLD'), self.srvbld.render_template('HTML_TAG_PRE_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_H2_OLD'), self.srvbld.render_template('HTML_TAG_H2_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_H3_OLD'), self.srvbld.render_template('HTML_TAG_H3_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_H4_OLD'), self.srvbld.render_template('HTML_TAG_H4_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_TABLE_OLD'), self.srvbld.render_template('HTML_TAG_TABLE_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_TABLE_OLD_2'), self.srvbld.render_template('HTML_TAG_TABLE_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_TIP_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
-        content = content.replace(self.srvbld.render_template('HTML_TAG_ADMONITION_OLD'), self.srvbld.render_template('HTML_TAG_ADMONITION_NEW'))
+        tpl = self.srvbld.render_template
+        content = source.replace(tpl('HTML_TAG_A_OLD'), tpl('HTML_TAG_A_NEW'))
+        content = content.replace(tpl('HTML_TAG_TOC_OLD'), tpl('HTML_TAG_TOC_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT1_OLD'), tpl('HTML_TAG_SECT1_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT2_OLD'), tpl('HTML_TAG_SECT2_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT3_OLD'), tpl('HTML_TAG_SECT3_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT4_OLD'), tpl('HTML_TAG_SECT4_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECTIONBODY_OLD'), tpl('HTML_TAG_SECTIONBODY_NEW'))
+        content = content.replace(tpl('HTML_TAG_PRE_OLD'), tpl('HTML_TAG_PRE_NEW'))
+        content = content.replace(tpl('HTML_TAG_H2_OLD'), tpl('HTML_TAG_H2_NEW'))
+        content = content.replace(tpl('HTML_TAG_H3_OLD'), tpl('HTML_TAG_H3_NEW'))
+        content = content.replace(tpl('HTML_TAG_H4_OLD'), tpl('HTML_TAG_H4_NEW'))
+        content = content.replace(tpl('HTML_TAG_TABLE_OLD'), tpl('HTML_TAG_TABLE_NEW'))
+        content = content.replace(tpl('HTML_TAG_TABLE_OLD_2'), tpl('HTML_TAG_TABLE_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), tpl('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_TIP_OLD'), tpl('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), tpl('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), tpl('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_OLD'), tpl('HTML_TAG_ADMONITION_NEW'))
+        content = content.replace(tpl('HTML_TAG_IMG_OLD'), tpl('HTML_TAG_IMG_NEW'))
         return content
 
     def stage_01_check_environment(self):
