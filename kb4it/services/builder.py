@@ -231,11 +231,7 @@ class KB4ITBuilder(Service):
                         var['page']['toc'] = toc
                         var['page']['is_document'] = True
                         var['content'] = toc
-                        kbdict = load_kbdict(self.srvapp.get_source_path())
-                        try:
-                            properties = kbdict['document'][basename]
-                        except KeyError:
-                            properties = {}
+                        properties = self.srvapp.get_document_properties(basename)
                         var['page']['properties'] = properties
                         TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
