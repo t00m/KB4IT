@@ -23,7 +23,7 @@ from kb4it.core.util import valid_filename
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import delete_files, extract_toc
-from kb4it.core.util import get_hash_from_file
+from kb4it.core.util import get_hash_from_file, load_kbdict
 
 from mako.template import Template
 
@@ -142,6 +142,42 @@ class KB4ITBuilder(Service):
         var['theme'] = self.srvapp.get_theme_properties()
         return var
 
+    def page_hook_pre(self, var):
+        """ Insert html code before the content
+        This method can be overwriten by custom themes.
+        Document properites are available:
+        '''
+        if var['page']['is_document']:
+            if len(var['page']['properties']) > 0:
+                self.log.info("%s: %s", var['page']['title'], var['page']['properties'])
+        '''
+        """
+        # FIXME: Delete this POC
+        # ~ notice = ""
+        # ~ if len(var['page']['properties']) > 0:
+            # ~ category = var['page']['properties']['Category'][0]
+            # ~ scope = var['page']['properties']['Scope'][0]
+            # ~ author = var['page']['properties']['Author'][0]
+            # ~ when = var['page']['properties']['Published'][0]
+            # ~ notice = """<div uk-alert class="uk-card uk-card-body uk-card-hover uk-border-rounded uk-text-lead">
+                        # ~ <a class="uk-alert-close" uk-close></a>
+                        # ~ <p>%s about %s written by %s on %s</p>
+                        # ~ </div>""" % (category, scope, author, when)
+        # ~ return notice
+        return """<!-- Page hook pre -->"""
+
+    def page_hook_post(self, var):
+        """ Insert html code after the content
+        This method can be overwriten by custom themes.
+        Document properites are available:
+        '''
+        if var['page']['is_document']:
+            if len(var['page']['properties']) > 0:
+                self.log.info("%s: %s", var['page']['title'], var['page']['properties'])
+        '''
+        """
+        return """<!-- Page hook post -->"""
+
     def build_page(self, future):
         """
         Build the final HTML Page
@@ -166,10 +202,12 @@ class KB4ITBuilder(Service):
             basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
                 var = self.get_mako_var()
-                # ~ var['page'] = {}
-                # ~ var['page']['brand'] = 't00mlabs'
+                var['page'] = {}
                 adoc_title = open(adoc).readlines()[0]
                 title = adoc_title[2:-1]
+                var['page']['title'] = title
+                var['page']['source_adoc'] = adoc
+                var['page']['source_html'] = htmldoc
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
@@ -190,14 +228,26 @@ class KB4ITBuilder(Service):
                 with open(htmldoc, 'w') as fhtm:
                     len_toc = len(toc)
                     if len_toc > 0:
+                        var['page']['toc'] = toc
+                        var['page']['is_document'] = True
                         var['content'] = toc
+                        kbdict = load_kbdict(self.srvapp.get_source_path())
+                        try:
+                            properties = kbdict['document'][basename]
+                        except KeyError:
+                            properties = {}
+                        var['page']['properties'] = properties
                         TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                     else:
+                        var['page']['toc'] = ''
+                        var['page']['is_document'] = False
+                        var['page']['properties'] = {}
                         TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
 
                     userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
+
 
                     var['title'] = title
                     # ~ var['page']['description'] = var['theme']['description']
@@ -208,6 +258,8 @@ class KB4ITBuilder(Service):
                     var['menu_contents'] = HTML_TOC
                     var['basename'] = basename
                     var['timestamp'] = timestamp
+
+                    # Write page header
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
                         var['source_code'] = source_code
@@ -219,8 +271,15 @@ class KB4ITBuilder(Service):
                     else:
                         PAGE = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_NODOC.render(var=var)
                         fhtm.write(PAGE)
+
+                    # Insert pre & post hooks content
+                    content = self.page_hook_pre(var) + content
+                    content = content + self.page_hook_post(var)
+
+                    # Write content
                     fhtm.write(content)
 
+                    # Write page footer
                     fhtm.write(HTML_FOOTER.render(var=var))
                 os.remove(htmldoctmp)
                 return x
