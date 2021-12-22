@@ -770,10 +770,3 @@ class KB4ITApp(Service):
             self.log.debug("DOC[%s] deleted from cache directory", adoc)
         except FileNotFoundError:
             self.log.debug("DOC[%s] not found in cache directory", adoc)
-
-    def get_document_properties(self, basename):
-        try:
-            properties = self.kbdict_cur['document'][basename]
-        except KeyError:
-            properties = {}
-        return properties
