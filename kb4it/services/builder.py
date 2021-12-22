@@ -17,6 +17,13 @@ import shutil
 import random
 import threading
 from datetime import datetime
+try:
+    import html5lib
+    import webencodings
+    from bs4 import BeautifulSoup as bs
+    TIDY = True
+except:
+    TIDY = False
 from kb4it.core.env import APP, GPATH
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename
@@ -142,39 +149,15 @@ class KB4ITBuilder(Service):
         var['theme'] = self.srvapp.get_theme_properties()
         return var
 
-    def page_hook_pre(self, var):
-        """ Insert html code before the content
+    def page_hook_pre(self, basename):
+        """ Insert html code before the content.
         This method can be overwriten by custom themes.
-        Document properites are available:
-        '''
-        if var['page']['is_document']:
-            if len(var['page']['properties']) > 0:
-                self.log.info("%s: %s", var['page']['title'], var['page']['properties'])
-        '''
         """
-        # FIXME: Delete this POC
-        # ~ notice = ""
-        # ~ if len(var['page']['properties']) > 0:
-            # ~ category = var['page']['properties']['Category'][0]
-            # ~ scope = var['page']['properties']['Scope'][0]
-            # ~ author = var['page']['properties']['Author'][0]
-            # ~ when = var['page']['properties']['Published'][0]
-            # ~ notice = """<div uk-alert class="uk-card uk-card-body uk-card-hover uk-border-rounded uk-text-lead">
-                        # ~ <a class="uk-alert-close" uk-close></a>
-                        # ~ <p>%s about %s written by %s on %s</p>
-                        # ~ </div>""" % (category, scope, author, when)
-        # ~ return notice
         return """<!-- Page hook pre -->"""
 
     def page_hook_post(self, var):
-        """ Insert html code after the content
+        """ Insert html code after the content.
         This method can be overwriten by custom themes.
-        Document properites are available:
-        '''
-        if var['page']['is_document']:
-            if len(var['page']['properties']) > 0:
-                self.log.info("%s: %s", var['page']['title'], var['page']['properties'])
-        '''
         """
         return """<!-- Page hook post -->"""
 
@@ -217,6 +200,7 @@ class KB4ITBuilder(Service):
                     if 'Metadata' in content:
                         content = highlight_metadata_section(content)
                 except NameError as error:
+                    # FIXME
                     # Sometimes, weird links in asciidoctor sources
                     # provoke compilation errors
                     self.log.error("[BUILDER] - ERROR!! Please, check source document '%s'.", basename)
@@ -231,7 +215,7 @@ class KB4ITBuilder(Service):
                         var['page']['toc'] = toc
                         var['page']['is_document'] = True
                         var['content'] = toc
-                        properties = self.srvapp.get_document_properties(basename)
+                        properties = self.srvdtb.get_doc_properties(basename)
                         var['page']['properties'] = properties
                         TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
@@ -244,17 +228,12 @@ class KB4ITBuilder(Service):
 
                     userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
 
-
                     var['title'] = title
-                    # ~ var['page']['description'] = var['theme']['description']
-                    # ~ var['page']['author'] = var['theme']['author']
-                    # ~ var['page']['language'] = 'en'
-                    # ~ var['page']['title'] = title
-                    # ~ var['page']['brand'] = var['theme']['brand']
                     var['menu_contents'] = HTML_TOC
                     var['basename'] = basename
                     var['timestamp'] = timestamp
 
+                    HTML_SRC = "" # HTML Source Code
                     # Write page header
                     if os.path.exists(userdoc):
                         source_code = open(userdoc, 'r').read()
@@ -262,21 +241,33 @@ class KB4ITBuilder(Service):
                         self.srvthm = self.get_service('Theme')
                         meta_section = self.srvthm.create_metadata_section(basename)
                         var['meta_section'] = meta_section
-                        PAGE = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_DOC.render(var=var)
-                        fhtm.write(PAGE)
+                        HEADER = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_DOC.render(var=var)
+                        # ~ fhtm.write(PAGE)
                     else:
-                        PAGE = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_NODOC.render(var=var)
-                        fhtm.write(PAGE)
+                        HEADER = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_NODOC.render(var=var)
+                        # ~ fhtm.write(PAGE)
+                    HTML_SRC += HEADER
 
                     # Insert pre & post hooks content
-                    content = self.page_hook_pre(var) + content
-                    content = content + self.page_hook_post(var)
+                    BODY = self.page_hook_pre(var) + content
+                    BODY = BODY + self.page_hook_post(var)
+                    HTML_SRC += BODY
 
                     # Write content
-                    fhtm.write(content)
+                    # ~ fhtm.write(content)
 
                     # Write page footer
-                    fhtm.write(HTML_FOOTER.render(var=var))
+                    FOOTER = HTML_FOOTER.render(var=var)
+                    HTML_SRC += FOOTER
+
+                    # Prettify code?
+                    if TIDY:
+                        soup = bs(HTML_SRC, 'html5lib')
+                        HTML_SRC = soup.prettify(formatter='html5')
+
+                    # Write page
+                    fhtm.write(HTML_SRC)
+
                 os.remove(htmldoctmp)
                 return x
 
