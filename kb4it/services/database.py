@@ -106,7 +106,10 @@ class KB4ITDB(Service):
 
     def get_doc_properties(self, doc):
         """Return a dictionary with the properties of a given doc."""
-        return self.db[doc]
+        try:
+            return self.db[doc]
+        except:
+            return []
 
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""
