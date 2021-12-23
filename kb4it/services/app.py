@@ -87,17 +87,23 @@ class KB4ITApp(Service):
         self.get_services()
 
         # Load theme
-        self.load_theme()
+        # ~ self.load_theme()
 
     def add_target(self, filename):
         """Every doc converted into a page must be added to the target list."""
         self.runtime['docs']['target'].add(filename)
 
-    def load_theme(self):
+    def list_themes(self):
+        self.log.info("[APP] - List of themes availables")
+
+    def load_theme(self, theme_name=None):
         """Load custom user theme, global theme or default."""
+        if theme_name is None:
+            theme_name = self.parameters.THEME
+
         # custom theme requested by user via command line properties
         self.runtime['theme'] = {}
-        self.runtime['theme']['path'] = self.theme_search(self.parameters.THEME)
+        self.runtime['theme']['path'] = self.theme_search(theme_name)
         if self.runtime['theme']['path'] is None:
             self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
             self.log.warning("[SETUP] - Fallback to default theme")
