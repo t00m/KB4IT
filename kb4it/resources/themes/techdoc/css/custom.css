@@ -1,5 +1,9 @@
 /* Custom stylesheet for techdoc theme and derivatives */
 
+body {
+    overflow-y: scroll;
+}
+
 pre {
     padding: 10px;
     overflow: auto;

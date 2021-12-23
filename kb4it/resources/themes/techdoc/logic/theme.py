@@ -11,6 +11,10 @@ Server module.
 """
 
 import os
+import time
+import random
+import shutil
+import threading
 import calendar
 from calendar import HTMLCalendar, monthrange
 from datetime import datetime, timedelta
@@ -19,6 +23,7 @@ from kb4it.services.builder import KB4ITBuilder
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import valid_filename, get_human_datetime, guess_datetime
 from kb4it.core.util import file_timestamp
+from kb4it.core.util import extract_toc
 from evcal import EventsCalendar
 
 
@@ -368,3 +373,72 @@ class Theme(KB4ITBuilder):
             html = TPL_PAGE_ETYPE.render(var=page)
             basename = valid_filename("%s_%s" % (key.title(), key_item))
             self.distribute(basename, html)
+
+    def page_hook_pre(self, var):
+        # ~ self.log.error("Page hook pre: %s", basename)
+        basename = var['basename']
+        html = ""
+        try:
+            properties = self.srvdtb.get_doc_properties(basename)
+            if len(properties) > 0:
+                category = ' and '.join(self.srvdtb.get_values(basename, 'Category'))
+                scope = ' and '.join(self.srvdtb.get_values(basename, 'Scope'))
+                author = ' and '.join(self.srvdtb.get_values(basename, 'Author'))
+                when = ' and '.join(self.srvdtb.get_values(basename, 'Published'))
+                notice = """<div class="uk-alert-primary uk-card uk-card-body uk-border-rounded" uk-alert>
+                            <a class="uk-alert-close" uk-close></a>
+                            <p>%s about %s written by %s on %s</p>
+                            </div>""" % (category, scope, author, when)
+                html += """<!-- This is the nav containing the toggling elements -->
+<ul class="uk-subnav uk-subnav-pill" uk-switcher>
+    <li><a href="#">Document</a></li>
+    <li><a href="#">Related</a></li>
+    <li><a href="#">Metadata</a></li>
+    <li><a href="#">Source</a></li>
+</ul>
+<!-- This is the container of the content items -->
+<ul class="uk-switcher uk-margin">
+    <li>
+            """
+        except KeyError as error:
+            self.log.warning("Page '%s' has no metadata", basename)
+
+        return html
+
+    def page_hook_post(self, var):
+        basename = var['basename']
+        try:
+            metadata_section = var['meta_section']
+            source = var['source_code']
+        except:
+            metadata_section = ''
+
+        html = ""
+        try:
+            properties = self.srvdtb.get_doc_properties(basename)
+            if len(properties) > 0:
+                tags = properties['Tag']
+                docs = set()
+                related = """<ul class="uk-list uk-list-striped">"""
+                for tag in tags:
+                    for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
+                        docs.add(doc)
+                for doc in docs:
+                    title = self.srvdtb.get_values(doc, 'Title')[0]
+                    link = doc.replace('.adoc', '.html')
+                    related += '<li><a class="uk-link-toggle" href="%s">%s</a>' % (link, title)
+                related += "</ul>"
+
+                html = """
+</li>
+<li>
+%s
+</li>
+<li>%s</li>
+<li><pre>%s</pre></li>
+</ul>
+                    """ % (related, metadata_section, source)
+        except KeyError as error:
+            self.log.warning("Page '%s' has no metadata", basename)
+
+        return html

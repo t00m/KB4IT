@@ -13,7 +13,7 @@ ${var['pg-head-items']}
             <a id="filter" href="#" class="uk-active" uk-filter-control="" hidden></a>
             <!-- Search entry :: End -->
             <!-- Filtered rows :: Start -->
-            <ul class="js-filter uk-child-width-1-3@m" uk-grid>
+            <ul class="js-filter uk-child-width-1-1@m" uk-grid>
 ${var['pg-body-items']}
             </ul> <!-- Filtered rows :: End -->
         </div>

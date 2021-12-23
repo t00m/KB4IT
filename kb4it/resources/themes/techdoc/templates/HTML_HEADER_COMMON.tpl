@@ -8,10 +8,10 @@
     <meta name="description" content="KB4IT document">
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/uikit.min.css">
-    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/coderay-asciidoctor.css">
+    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/uikit.min.css" />
+    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/coderay-asciidoctor.css" />
     <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="resources/themes/${var['theme']['id']}/css/custom.css">
+    <link rel="stylesheet" href="resources/themes/${var['theme']['id']}/css/custom.css" />
     <script src="resources/themes/default/framework/uikit/js/uikit.min.js"></script>
     <script src="resources/themes/default/framework/uikit/js/uikit-icons.min.js"></script>
 </head>
@@ -64,7 +64,7 @@
                         </div>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/new/${var['theme']['git_branch']}/${var['theme']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/new/${var['theme']['git_branch']}/${var['theme']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
                     </li>
                     <li class="uk-nav-divider"></li>
                 </ul>
