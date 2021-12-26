@@ -74,23 +74,40 @@ class KB4IT:
     def setup_logging(self, severity=None):
         """Set up logging."""
         self.log = get_logger(__class__.__name__, severity.upper())
-        self.log.debug("[MAIN] - Log level set to: %s", severity.upper())
+        self.log.debug("[MAIN / INIT] - Log level set to: %s", severity.upper())
 
     def check_params(self):
         """Check arguments passed to the application."""
         for key in vars(self.params):
-            self.log.debug("[MAIN] - Parameter '%s' = '%s'", key, vars(self.params)[key])
+            self.log.debug("[MAIN / CHECK] - Parameter '%s' = '%s'", key, vars(self.params)[key])
 
         if not self.params.LIST_THEMES:
+            # Check source path
+            try:
+                source = os.path.abspath(self.params.SOURCE_PATH)
+            except:
+                self.log.error("[MAIN / CHECK] - Error. Source path '%s' not valid", self.params.SOURCE_PATH)
+                return False
+
+            # Check target path
+            try:
+                target = os.path.abspath(self.params.TARGET_PATH)
+            except:
+                self.log.error("[MAIN / CHECK] - Error. Target path '%s' not valid", self.params.TARGET_PATH)
+                return False
+
+            # Check if theme was passed. If not, it will be autodetected
+            if self.params.THEME is None:
+                self.log.warning("[MAIN / CHECK] - Theme will be autodetected from source directory")
+
             self.ready = True
-            source = os.path.abspath(self.params.SOURCE_PATH)
-            target = os.path.abspath(self.params.TARGET_PATH)
             if source == target:
-                self.log.error("[MAIN] - Error. Source and target paths are the same.")
-                self.log.error("[MAIN] - Source path: %s", source)
-                self.log.error("[MAIN] - Target path: %s", target)
-                self.log.error("[MAIN] - Check, please!")
+                self.log.error("[MAIN / CHECK] - Error. Source and target paths are the same.")
+                self.log.error("[MAIN / CHECK] - Source path: %s", source)
+                self.log.error("[MAIN / CHECK] - Target path: %s", target)
+                self.log.error("[MAIN / CHECK] - Check, please!")
                 self.ready = False
+                return True
 
     def get_params(self):
         """Return parametres."""
@@ -148,8 +165,10 @@ class KB4IT:
 
     def deregister_service(self, name):
         """Deregister a running service."""
-        self.services[name].end()
-        self.services[name] = None
+        if self.services[name] is not None:
+            self.services[name].end()
+            self.services[name] = None
+            self.log.debug("Service '%s' unregistered", name)
 
     def run(self):
         """Start application."""
@@ -164,12 +183,12 @@ class KB4IT:
                 srvapp.run()
                 self.stop()
         else:
-            self.log.debug("[MAIN] - Read-Only Action requested")
             if self.params.LIST_THEMES:
                 self.params.SOURCE_PATH = LPATH['TMP_SOURCE']
                 self.params.TARGET_PATH = LPATH['TMP_TARGET']
                 srvapp = self.get_service('App')
                 srvapp.list_themes()
+        self.stop()
 
     def get_version(self):
         """Get KB4IT version."""
@@ -224,22 +243,21 @@ kb4it -theme techdoc -sort <date_attribute> -source <sources_dir> -target <targe
 
 
     group_kb4it = parser.add_argument_group('KB4IT required arguments')
-    group_theme = parser.add_mutually_exclusive_group()
+    group_opt = parser.add_mutually_exclusive_group()
 
     # KB4IT arguments
 
     group_kb4it.add_argument('-S', '--source', help='directory with Asciidoctor source files', dest='SOURCE_PATH')
     group_kb4it.add_argument('-T', '--target', help='target directory for output', dest='TARGET_PATH')
-    group_kb4it.add_argument('-r', '--reset', action='store_true', dest='RESET', help='reset environment')
-    group_kb4it.add_argument('-f', '--force', action='store_true', dest='FORCE', help='force a clean compilation')
-    group_kb4it.add_argument('-t', '--theme', dest='THEME', required=False, help='specify theme (techdoc, snippets, default, ...)')
-    group_kb4it.add_argument('-s', '--sort', dest='SORT_ATTRIBUTE', help='sorting attribute (Published, Updated, ...)')
-    group_kb4it.add_argument('-log', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='Control output verbosity. Default to INFO')
-    group_kb4it.add_argument('-v', '--version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
 
     # Optional arguments
-    group_theme.add_argument('-l', '--list-themes', action='store_true', dest='LIST_THEMES', required=False,
-                        help='List all installed themes')
+    group_opt.add_argument('-l', '--list-themes', action='store_true', dest='LIST_THEMES', required=False, help='List all installed themes')
+    group_opt.add_argument('-log', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='Control output verbosity. Default to INFO')
+    group_opt.add_argument('-r', '--reset', action='store_true', dest='RESET', help='reset environment')
+    group_opt.add_argument('-f', '--force', action='store_true', dest='FORCE', help='force a clean compilation')
+    group_opt.add_argument('-v', '--version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
+    group_opt.add_argument('-t', '--theme', dest='THEME', required=False, help='specify theme (techdoc, snippets, default, ...)')
+    group_opt.add_argument('-s', '--sort', dest='SORT_ATTRIBUTE', help='sorting attribute (Published, Updated, ...)')
 
     params = parser.parse_args()
     app = KB4IT(params)

@@ -65,9 +65,10 @@ class Service:
 
         Use finalize for writting a custom end method
         """
-        self.started = False
-        self.finalize()
-        self.log.debug("[SERVICE] - Service %s finished" , self.logname)
+        if self.started:
+            self.started = False
+            self.finalize()
+            self.log.debug("[SERVICE] - Service %s finished" , self.logname)
 
     def initialize(self):
         """Initialize service.

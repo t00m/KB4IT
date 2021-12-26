@@ -96,6 +96,32 @@ class KB4ITApp(Service):
     def list_themes(self):
         self.log.info("[APP] - List of themes availables")
 
+        # ~ self.log.info("[APP] - Installed globally (%s)", GPATH['THEMES'])
+        global_themes = os.listdir(GPATH['THEMES'])
+        n = 0
+        for dirname in global_themes:
+            try:
+                self.load_theme(dirname)
+                self.log.info("[APP] - (G) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
+                n += 1
+            except Exception as error:
+                pass
+                # ~ self.log.error("[APP] - Theme Id: '%s' NOT valid", dirname)
+
+        # ~ self.log.info("[APP] - Installed locally (%s)", LPATH['THEMES'])
+        local_themes = os.listdir(LPATH['THEMES'])
+        if len(local_themes) > 0:
+            for dirname in local_themes:
+                try:
+                    self.load_theme(dirname)
+                    self.log.info("[APP] - (L) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
+                    n += 1
+                except Exception as error:
+                    pass
+                    # ~ self.log.error("[APP] - Theme Id: '%s' NOT valid", dirname)
+        if n == 0:
+            self.log.info("[APP] - No themes available")
+
     def load_theme(self, theme_name=None):
         """Load custom user theme, global theme or default."""
         if theme_name is None:
@@ -105,6 +131,7 @@ class KB4ITApp(Service):
         self.runtime['theme'] = {}
         self.runtime['theme']['path'] = self.theme_search(theme_name)
         if self.runtime['theme']['path'] is None:
+            return None
             self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
             self.log.warning("[SETUP] - Fallback to default theme")
 
@@ -118,7 +145,7 @@ class KB4ITApp(Service):
             theme = json.load(fth)
             for prop in theme:
                 self.runtime['theme'][prop] = theme[prop]
-        self.log.info("[APP] - Theme: %s" % self.runtime['theme']['name'])
+        self.log.debug("[APP] - Theme: %s" % self.runtime['theme']['name'])
 
         self.log.debug("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
 
