@@ -81,9 +81,9 @@ class KB4ITBuilder(Service):
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
-            except:
-                raise
-        self.log.debug("[BUILDER] - PAGE[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
+            except Exception as error:
+                self.log.error(error)
+        self.log.debug("[BUILDER] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
         self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
         self.srvapp.add_target(PAGE_NAME.replace('.adoc', '.html'))
 
@@ -116,29 +116,17 @@ class KB4ITBuilder(Service):
         try:
             return TEMPLATES[template]
         except KeyError:
-            # Get template from custom theme
-            # If not found, get it from default theme
+            # Get template from theme
             template_path = os.path.join(theme['templates'], "%s.tpl" % template)
-            if os.path.exists(template_path):
-                self.log.debug("[BUILDER] - THEME['%s'] TPL['%s'] loaded", theme['id'], template)
-            else:
-                current_theme = 'default'
-                theme_default = os.path.join(GPATH['THEMES'], os.path.join('default', 'templates'))
-                template_path = os.path.join(theme_default, "%s.tpl" % template)
 
-                if os.path.exists(template_path):
-                    self.log.debug("[BUILDER] - THEME['default'] TPL['%s'] loaded", template)
-                else:
-                    self.log.error("[BUILDER] - TPL['%s'] not found. Exit.", template)
-                    sys.exit()
-
-            # If template found, add it to cache. Otherwise, exit.
+            # If found, add template to cache. Otherwise, exit.
             try:
                 TEMPLATES[template] = Template(filename=template_path)
+                self.log.debug("[BUILDER] - Template[%s] loaded for Theme[%s]", template, theme['id'])
                 return TEMPLATES[template]
             except FileNotFoundError as error:
-                self.log.error("[BUILDER] - %s", error)
-                sys.exit()
+                self.log.error("[BUILDER] - Template[%s] not found", template)
+                self.srvapp.stop()
 
     def render_template(self, name):
         tpl = self.template(name)
@@ -267,6 +255,7 @@ class KB4ITBuilder(Service):
 
                     # Write page
                     fhtm.write(HTML_SRC)
+                    self.log.debug("[BUILDER] - Document[%s] created successfully", basename)
 
                 os.remove(htmldoctmp)
                 return x

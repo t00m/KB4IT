@@ -51,7 +51,7 @@ class KB4ITApp(Service):
 
         self.parameters = self.app.get_params()
         for param, value in self.parameters._get_kwargs():
-            self.log.debug("[SETUP] - KB4IT param: %s = %s", param, value)
+            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, value)
 
         # Initialize directories
         self.runtime['dir'] = {}
@@ -70,7 +70,7 @@ class KB4ITApp(Service):
             self.runtime['sort_attribute'] = 'Timestamp'
         else:
             self.runtime['sort_attribute'] = self.parameters.SORT_ATTRIBUTE
-        self.log.debug("[SETUP] - Using sort attribute: %s", self.runtime['sort_attribute'])
+        self.log.debug("[SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
 
         # Initialize docs structure
         self.runtime['docs'] = {}
@@ -145,9 +145,9 @@ class KB4ITApp(Service):
             theme = json.load(fth)
             for prop in theme:
                 self.runtime['theme'][prop] = theme[prop]
-        self.log.debug("[APP] - Theme: %s" % self.runtime['theme']['name'])
+        self.log.debug("[SETUP / THEME] - Name: %s" % self.runtime['theme']['name'])
 
-        self.log.debug("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+        self.log.info("[SETUP / THEME] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
 
         # Get theme directories
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
@@ -158,10 +158,10 @@ class KB4ITApp(Service):
         try:
             ignored_keys = self.runtime['theme']['ignored_keys']
             for key in ignored_keys:
-                self.log.debug("[SETUP] - Ignored key(s) defined by this theme: %s", key)
+                self.log.debug("[SETUP / THEME] - Ignored key(s) defined by this theme: %s", key)
                 self.srvdtb.ignore_key(key)
         except KeyError:
-            self.log.debug("[SETUP] - No ignored_keys defined in this theme")
+            self.log.debug("[SETUP / THEME] - No ignored_keys defined in this theme")
 
         # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])
@@ -170,12 +170,12 @@ class KB4ITApp(Service):
             self.app.register_service('Theme', Theme())
             self.srvthm = self.get_service('Theme')
         except Exception as error:
-            self.log.warning("[SETUP] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
-            self.log.error("[SETUP] - %s", error)
+            self.log.warning("[SETUP / THEME] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
+            self.log.error("[SETUP / THEME] - %s", error)
             raise
-        self.log.debug("[SETUP] - Loaded theme '%s'", self.runtime['theme']['id'])
+        self.log.debug("[SETUP / THEME] - Loaded theme '%s'", self.runtime['theme']['id'])
 
-    def theme_search(self, theme):
+    def theme_search(self, theme=None):
         """Search custom theme."""
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
@@ -201,7 +201,7 @@ class KB4ITApp(Service):
                 if not os.path.exists(theme_path):
                     # No theme found
                     theme_path = None
-
+        self.log.debug("[THEME] - Path to theme: %s", theme_path)
         return theme_path
 
     def get_runtime_properties(self):
@@ -277,24 +277,50 @@ class KB4ITApp(Service):
 
     def stage_01_check_environment(self):
         """Check environment."""
-        self.log.debug("[CHECKS] - Start")
-        self.log.debug("[CHECKS] - Cache directory: %s", self.runtime['dir']['cache'])
-        self.log.debug("[CHECKS] - Working directory: %s", self.runtime['dir']['tmp'])
-        self.log.debug("[CHECKS] - Source directory: %s", self.get_source_path())
+        self.log.info("[SETUP] - Start")
+        self.log.debug("[SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
+        self.log.debug("[SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+
+        # Check if source directory exists. If not, stop application
+        if not os.path.exists(self.get_source_path()):
+            self.log.error("[SETUP] - Source directory '%s' doesn't exist.", self.get_source_path())
+            self.app.stop()
+        self.log.debug("[SETUP] - Source directory: %s", self.get_source_path())
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
             os.makedirs(self.get_target_path())
-        self.log.debug("[CHECKS] - Target directory: %s", self.get_target_path())
-        self.log.debug("[CHECKS] - End")
+        self.log.debug("[SETUP] - Target directory: %s", self.get_target_path())
+
+        # if no theme defined by params, try to autodetect it.
+        # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
+        theme_name = self.parameters.THEME
+        if theme_name is None:
+            self.log.debug("[SETUP] - Theme not provided. Autodetect it.")
+            theme_path = self.theme_search()
+            if theme_path is not None:
+                self.load_theme(os.path.basename(theme_path))
+                self.log.debug("[SETUP] Theme found and loaded")
+            else:
+                self.log.error("[SETUP] - Theme not found")
+                self.app.stop()
+        else:
+            theme_path = self.theme_search(theme_name)
+            if theme_path is not None:
+                self.load_theme(os.path.basename(theme_path))
+            else:
+                self.log.error("[SETUP] - Theme not found")
+                self.app.stop()
+
+        self.log.info("[SETUP] - End")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
-        self.log.debug("[DOCS] - Start")
+        self.log.info("[DOCS] - Start")
         self.runtime['docs']['bag'] = get_source_docs(self.get_source_path())
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         self.log.info("[DOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
-        self.log.debug("[DOCS] - End")
+        self.log.info("[DOCS] - End")
 
     def stage_03_preprocessing(self):
         """
@@ -306,7 +332,7 @@ class KB4ITApp(Service):
         In this way, after being compiled into HTML, final adocs are
         browsable throught its metadata.
         """
-        self.log.debug("[PREPROCESSING] - Start")
+        self.log.info("[PREPROCESSING] - Start")
 
         def clean_cache():
             missing = []
@@ -456,7 +482,7 @@ class KB4ITApp(Service):
             else:
                 keep_docs += 1
         self.log.info("[PREPROCESSING] - Stats - Keep: %d - Compile: %d", keep_docs, compile_docs)
-        self.log.debug("[PREPROCESSING] - End")
+        self.log.info("[PREPROCESSING] - End")
 
     def get_kbdict_value(self, key, value, new=True):
         """
@@ -482,7 +508,7 @@ class KB4ITApp(Service):
 
     def stage_04_processing(self):
         """Process all documents."""
-        self.log.debug("[PROCESSING] - Start")
+        self.log.info("[PROCESSING] - Start")
         all_keys = set(self.srvdtb.get_all_keys())
         ign_keys = set(self.srvdtb.get_ignored_keys())
         available_keys = list(all_keys - ign_keys)
@@ -546,24 +572,27 @@ class KB4ITApp(Service):
 
         self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
-        self.srvthm.build()
         self.log.debug("[PROCESSING] - End processing theme")
         self.log.info("[PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
-        self.log.debug("[PROCESSING] - End")
+        self.log.info("[PROCESSING] - End")
+        self.srvthm.build()
+
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
-        self.log.debug("[COMPILATON] - Start")
+        self.log.info("[COMPILATION] - Start")
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
         # ~ resources_dir_source = GPATH['THEMES']
         resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
         shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
-        self.log.debug("[COMPILATON] - Resources copied to '%s'", resources_dir_tmp)
+        self.log.debug("[COMPILATION] - Resources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
+        self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor:")
         for prop in ADOCPROPS:
+            self.log.debug("[COMPILATION] - Key[%s] = Value[%s]", prop, ADOCPROPS[prop])
             if ADOCPROPS[prop] is not None:
                 if '%s' in ADOCPROPS[prop]:
                     adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop] % self.get_target_path())
@@ -571,7 +600,7 @@ class KB4ITApp(Service):
                     adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop])
             else:
                 adocprops += '-a %s ' % prop
-        self.log.debug("[COMPILATON] - Parameters passed to Asciidoctor: %s", adocprops)
+        # ~ self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         distributed = self.srvthm.get_distributed()
         with Executor(max_workers=MAX_WORKERS) as exe:
@@ -579,7 +608,7 @@ class KB4ITApp(Service):
             jobs = []
             jobcount = 0
             num = 1
-            self.log.debug("[COMPILATON] - Generating jobs. Please, wait")
+            self.log.debug("[COMPILATION] - Generating jobs. Please, wait")
             for doc in docs:
                 COMPILE = True
                 basename = os.path.basename(doc)
@@ -596,37 +625,40 @@ class KB4ITApp(Service):
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     job = exe.submit(exec_cmd, (doc, cmd, num))
                     job.add_done_callback(self.srvthm.build_page)
-                    self.log.debug("[COMPILATON] - Job[%4d]: %s will be compiled", num, basename)
+                    self.log.debug("[COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
                     jobs.append(job)
                     num = num + 1
                 else:
-                    self.log.debug("[COMPILATON] - %s cached. Avoid compiling", basename)
+                    self.log.debug("[COMPILATION] - Document[%s] cached. Avoid compiling", basename)
 
-            self.log.debug("[COMPILATON] - Created %d jobs. Starting compilation", num - 1)
-            # ~ self.log.debug("[COMPILATON] - %3s%% done", "0")
-            for job in jobs:
-                adoc, res, jobid = job.result()
-                self.log.info("[COMPILATON] - Job[%d/%d]: %s compiled successfully", jobid, num - 1, os.path.basename(adoc))
-                jobcount += 1
-                if jobcount % MAX_WORKERS == 0:
-                    pct = int(jobcount * 100 / len(docs))
-                    self.log.debug("[COMPILATON] - %3s%% done", str(pct))
+            if num-1 > 0:
+                self.log.debug("[COMPILATION] - Created %d jobs. Starting compilation", num - 1)
+                # ~ self.log.debug("[COMPILATION] - %3s%% done", "0")
+                for job in jobs:
+                    adoc, res, jobid = job.result()
+                    self.log.info("[COMPILATION] - Job[%d/%d]: %s compiled successfully", jobid, num - 1, os.path.basename(adoc))
+                    jobcount += 1
+                    if jobcount % MAX_WORKERS == 0:
+                        pct = int(jobcount * 100 / len(docs))
+                        self.log.debug("[COMPILATION] - %3s%% done", str(pct))
 
-        dcompe = datetime.datetime.now()
-        comptime = dcompe - dcomps
-        duration = comptime.seconds
-        if duration == 0:
-            duration = 1
-        avgspeed = int(((num - 1) / duration))
-        self.log.debug("[COMPILATON] - 100% done")
-        self.log.info("[COMPILATON] - Stats - Time: %d seconds", comptime.seconds)
-        self.log.info("[COMPILATON] - Stats - Compiled docs: %d", num - 1)
-        self.log.info("[COMPILATON] - Stats - Avg. Speed: %d docs/sec", avgspeed)
-        self.log.debug("[COMPILATON] - End")
+                dcompe = datetime.datetime.now()
+                comptime = dcompe - dcomps
+                duration = comptime.seconds
+                if duration == 0:
+                    duration = 1
+                avgspeed = int(((num - 1) / duration))
+                self.log.debug("[COMPILATION] - 100% done")
+                self.log.info("[COMPILATION] - Stats - Time: %d seconds", comptime.seconds)
+                self.log.info("[COMPILATION] - Stats - Compiled docs: %d", num - 1)
+                self.log.info("[COMPILATION] - Stats - Avg. Speed: %d docs/sec", avgspeed)
+                self.log.info("[COMPILATION] - End")
+            else:
+                self.log.debug("[COMPILATION] - Nothing to do.")
 
     def stage_07_clean_target(self):
         """Clean up stage."""
-        self.log.debug("[CLEANUP] - Start")
+        self.log.info("[CLEANUP] - Start")
         delete_target_contents(LPATH['DISTRIBUTED'])
         self.log.debug("[CLEANUP] - Distributed files deleted")
         distributed = self.srvthm.get_distributed()
@@ -638,11 +670,11 @@ class KB4ITApp(Service):
 
         delete_target_contents(self.get_target_path())
         self.log.debug("[CLEANUP] - Deleted target contents in: %s", self.get_target_path())
-        self.log.debug("[CLEANUP] - End")
+        self.log.info("[CLEANUP] - End")
 
     def stage_08_refresh_target(self):
         """Refresh target."""
-        self.log.debug("[INSTALL] - Start")
+        self.log.info("[INSTALL] - Start")
 
         # Copy asciidocs documents to target path
         pattern = os.path.join(self.get_source_path(), '*.adoc')
@@ -701,12 +733,14 @@ class KB4ITApp(Service):
         # others applications
         save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
         self.log.debug("[INSTALL] - Copied JSON database to target")
-        self.log.debug("[INSTALL] - End")
+        self.log.info("[INSTALL] - End")
 
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
+        self.log.info("[POST-INSTALL] - Start")
         shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.debug("[POST-INSTALL] - Temporary directory deleted successfully")
+        self.log.info("[POST-INSTALL] - End")
 
     def reset(self):
         """WARNING.
@@ -803,3 +837,7 @@ class KB4ITApp(Service):
             self.log.debug("DOC[%s] deleted from cache directory", adoc)
         except FileNotFoundError:
             self.log.debug("DOC[%s] not found in cache directory", adoc)
+
+    def stop(self):
+        self.log.info("[APP] - Execution finished")
+        self.app.stop()
