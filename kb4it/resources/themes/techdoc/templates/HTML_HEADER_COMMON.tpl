@@ -8,12 +8,12 @@
     <meta name="description" content="KB4IT document">
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/uikit.min.css">
-    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/coderay-asciidoctor.css">
-    <link rel="stylesheet" href="resources/themes/default/framework/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="resources/themes/${var['theme']['id']}/css/custom.css">
-    <script src="resources/themes/default/framework/uikit/js/uikit.min.js"></script>
-    <script src="resources/themes/default/framework/uikit/js/uikit-icons.min.js"></script>
+    <link rel="stylesheet" href="${var['theme']['framework']}/uikit/css/uikit.min.css">
+    <link rel="stylesheet" href="${var['theme']['framework']}/uikit/css/coderay-asciidoctor.css">
+    <link rel="stylesheet" href="${var['theme']['framework']}/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="${var['theme']['framework']}/uikit/css/custom.css">
+    <script src="${var['theme']['framework']}/uikit/js/uikit.min.js"></script>
+    <script src="${var['theme']['framework']}/uikit/js/uikit-icons.min.js"></script>
 </head>
 <body>
 <div id="container-1" class="uk-container">
@@ -23,7 +23,7 @@
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
                         <a class="uk-logo uk-card uk-card-hover" href="index.html">
-                            <img src="resources/themes/${var['theme']['id']}/images/logo.png" alt="">
+                            <img src="${var['theme']['images']}/images/logo.png" alt="">
                         </a>
                     </li>
                     <li>
