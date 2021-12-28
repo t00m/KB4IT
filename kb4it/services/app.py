@@ -151,6 +151,8 @@ class KB4ITApp(Service):
 
         # Get theme directories
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
+        self.runtime['theme']['framework'] = os.path.join(self.runtime['theme']['path'], 'framework')
+        self.runtime['theme']['images'] = os.path.join(self.runtime['theme']['path'], 'images')
         self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
 
         # Get date-based attributes from theme. Date attributes aren't
