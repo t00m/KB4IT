@@ -83,7 +83,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kb4it = kb4it.kb4it:main',
+            'kb4it = kb4it.main:main',
             ],
         },
 )
