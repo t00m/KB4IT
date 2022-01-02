@@ -31,7 +31,7 @@ from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
 
 
-class KB4ITApp(Service):
+class Backend(Service):
     """KB4I Application Class.
 
     This class manages the logic workflow.
@@ -85,7 +85,8 @@ class KB4ITApp(Service):
 
         # Get services
         self.get_services()
-
+        self.log.info("[APP] - KB4IT v%s", APP['version'])
+        self.log.info("[APP] - Execution started")
         # Load theme
         # ~ self.load_theme()
 
@@ -96,7 +97,7 @@ class KB4ITApp(Service):
     def list_themes(self):
         self.log.info("[APP] - List of themes availables")
 
-        # ~ self.log.info("[APP] - Installed globally (%s)", GPATH['THEMES'])
+        self.log.debug("[APP] - Installed globally (%s)", GPATH['THEMES'])
         global_themes = os.listdir(GPATH['THEMES'])
         n = 0
         for dirname in global_themes:
@@ -106,9 +107,9 @@ class KB4ITApp(Service):
                 n += 1
             except Exception as error:
                 pass
-                # ~ self.log.error("[APP] - Theme Id: '%s' NOT valid", dirname)
+                self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
 
-        # ~ self.log.info("[APP] - Installed locally (%s)", LPATH['THEMES'])
+        self.log.debug("[APP] - Installed locally (%s)", LPATH['THEMES'])
         local_themes = os.listdir(LPATH['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
@@ -117,10 +118,10 @@ class KB4ITApp(Service):
                     self.log.info("[APP] - (L) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
                     n += 1
                 except Exception as error:
-                    pass
-                    # ~ self.log.error("[APP] - Theme Id: '%s' NOT valid", dirname)
+                    self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
         if n == 0:
             self.log.info("[APP] - No themes available")
+        self.app.stop()
 
     def load_theme(self, theme_name=None):
         """Load custom user theme, global theme or default."""
@@ -147,7 +148,7 @@ class KB4ITApp(Service):
                 self.runtime['theme'][prop] = theme[prop]
         self.log.debug("[SETUP] - Name: %s" % self.runtime['theme']['name'])
 
-        self.log.info("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+        self.log.debug("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
 
         # Get theme directories
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
@@ -247,36 +248,6 @@ class KB4ITApp(Service):
         """Get current number of valid documents."""
         return self.runtime['docs']['count']
 
-    def highlight_metadata_section(self, source):
-        """Apply CSS transformation to metadata section."""
-        content = source.replace(self.srvbld.render_template('HTML_TAG_METADATA_OLD'), self.srvbld.render_template('HTML_TAG_METADATA_NEW'), 1)
-        return content
-
-    def apply_transformations(self, source):
-        """Apply CSS transformation to the compiled page."""
-        tpl = self.srvbld.render_template
-        content = source.replace(tpl('HTML_TAG_A_OLD'), tpl('HTML_TAG_A_NEW'))
-        content = content.replace(tpl('HTML_TAG_TOC_OLD'), tpl('HTML_TAG_TOC_NEW'))
-        content = content.replace(tpl('HTML_TAG_SECT1_OLD'), tpl('HTML_TAG_SECT1_NEW'))
-        content = content.replace(tpl('HTML_TAG_SECT2_OLD'), tpl('HTML_TAG_SECT2_NEW'))
-        content = content.replace(tpl('HTML_TAG_SECT3_OLD'), tpl('HTML_TAG_SECT3_NEW'))
-        content = content.replace(tpl('HTML_TAG_SECT4_OLD'), tpl('HTML_TAG_SECT4_NEW'))
-        content = content.replace(tpl('HTML_TAG_SECTIONBODY_OLD'), tpl('HTML_TAG_SECTIONBODY_NEW'))
-        content = content.replace(tpl('HTML_TAG_PRE_OLD'), tpl('HTML_TAG_PRE_NEW'))
-        content = content.replace(tpl('HTML_TAG_H2_OLD'), tpl('HTML_TAG_H2_NEW'))
-        content = content.replace(tpl('HTML_TAG_H3_OLD'), tpl('HTML_TAG_H3_NEW'))
-        content = content.replace(tpl('HTML_TAG_H4_OLD'), tpl('HTML_TAG_H4_NEW'))
-        content = content.replace(tpl('HTML_TAG_TABLE_OLD'), tpl('HTML_TAG_TABLE_NEW'))
-        content = content.replace(tpl('HTML_TAG_TABLE_OLD_2'), tpl('HTML_TAG_TABLE_NEW'))
-        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), tpl('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
-        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_TIP_OLD'), tpl('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
-        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
-        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), tpl('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
-        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), tpl('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
-        content = content.replace(tpl('HTML_TAG_ADMONITION_OLD'), tpl('HTML_TAG_ADMONITION_NEW'))
-        content = content.replace(tpl('HTML_TAG_IMG_OLD'), tpl('HTML_TAG_IMG_NEW'))
-        return content
-
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("[SETUP] - Start")
@@ -286,6 +257,7 @@ class KB4ITApp(Service):
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
             self.log.error("[SETUP] - Source directory '%s' doesn't exist.", self.get_source_path())
+            self.log.info("[SETUP] - End")
             self.app.stop()
         self.log.debug("[SETUP] - Source directory: %s", self.get_source_path())
 
@@ -305,6 +277,7 @@ class KB4ITApp(Service):
                 self.log.debug("[SETUP] Theme found and loaded")
             else:
                 self.log.error("[SETUP] - Theme not found")
+                self.log.info("[SETUP] - End")
                 self.app.stop()
         else:
             theme_path = self.theme_search(theme_name)
@@ -312,6 +285,7 @@ class KB4ITApp(Service):
                 self.load_theme(os.path.basename(theme_path))
             else:
                 self.log.error("[SETUP] - Theme not found")
+                self.log.info("[SETUP] - End")
                 self.app.stop()
 
         self.log.info("[SETUP] - End")
@@ -747,9 +721,11 @@ class KB4ITApp(Service):
     def cleanup(self):
         """Clean KB4IT temporary environment.
         """
-
-        delete_target_contents(self.runtime['dir']['tmp'])
-        self.log.info("[CLEANUP] - KB4IT Workspace clean")
+        try:
+            delete_target_contents(self.runtime['dir']['tmp'])
+        except  Exception as KeyError:
+            pass
+        self.log.debug("[CLEANUP] - KB4IT Workspace clean")
 
     def reset(self):
         """WARNING.
@@ -800,8 +776,6 @@ class KB4ITApp(Service):
         7. Refresh target directory
         8. Remove temporary directory
         """
-        self.log.info("[APP] - KB4IT v%s", APP['version'])
-        self.log.info("[APP] - Execution started")
         self.running = True
         self.stage_01_check_environment()
         self.srvthm.generate_sources()

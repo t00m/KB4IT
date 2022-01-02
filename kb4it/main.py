@@ -16,36 +16,14 @@ import tempfile
 from argparse import Namespace
 from kb4it.core.env import APP, LPATH, GPATH
 from kb4it.core.log import get_logger
-from kb4it.services.app import KB4ITApp
+from kb4it.services.backend import Backend
+from kb4it.services.frontend import Frontend
 from kb4it.services.database import KB4ITDB
 from kb4it.services.builder import KB4ITBuilder
 
 
 class KB4IT:
-    r"""
-    KB4IT main class.
-
-    It can be executed from command line:
-    $HOME/.local/bin/kb4it -theme <None|THEME> -force -log DEBUG \
-                           -sort <ATTRIBUTE> -source <SOURCE_PATH>
-                           -target <TARGET_PATH>
-
-    Or it can be called from another app as a library:
-    Eg.:
-
-    >>> from kb4it.kb4it import KB4IT
-    >>> from argparse import Namespace
-    >>> params = Namespace(
-                    RESET=False, \
-                    FORCE=True, \
-                    LOGLEVEL='INFO', \
-                    SORT_ATTRIBUTE=None, \
-                    SOURCE_PATH='tmp/sources', \
-                    TARGET_PATH='/tmp/output', \
-                    THEME='techdoc'
-                )
-    >>> kb = KB4IT(params)
-    >>> kb.run()
+    """KB4IT main class.
     """
 
     ready = False
@@ -62,9 +40,9 @@ class KB4IT:
         self.setup_logging(self.params.LOGLEVEL)
         self.log.debug("[CONTROLLER] - KB4IT %s started", APP['version'])
         self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
-        self.setup_services()
         self.setup_environment()
         self.check_params()
+        self.setup_services()
 
     def setup_logging(self, severity=None):
         """Set up logging."""
@@ -91,10 +69,6 @@ class KB4IT:
                 self.log.error("[CONTROLLER] - Invalid argments. See help.")
                 self.log.error("[CONTROLLER] - Error. Target path '%s' not valid", self.params.TARGET_PATH)
                 return False
-
-            # Check if theme was passed. If not, it will be autodetected
-            # ~ if self.params.THEME is None:
-                # ~ self.log.warning("[CONTROLLER] - Theme will be autodetected from source directory")
 
             self.ready = True
             if source == target:
@@ -130,7 +104,8 @@ class KB4IT:
         try:
             services = {
                 'DB': KB4ITDB(),
-                'App': KB4ITApp(),
+                'Backend': Backend(),
+                'Frontend': Frontend(),
                 'Builder': KB4ITBuilder(),
             }
             for name in services:
@@ -143,8 +118,6 @@ class KB4IT:
         """Get or start a registered service."""
         try:
             service = self.services[name]
-            # ~ print(dir(service))
-            # ~ print(service.__module__)
             logname = service.__class__.__name__
             if not service.is_started():
                 service.start(self, logname, name)
@@ -163,15 +136,20 @@ class KB4IT:
 
     def deregister_service(self, name):
         """Deregister a running service."""
-        if self.services[name] is not None:
-            self.services[name].end()
-            self.services[name] = None
-            self.log.debug("[CONTROLLER] - Service '%s' unregistered", name)
+        service = self.services[name]
+        registered = service is not None
+        started = service.is_started()
+        self.log.debug("[CONTROLLER] - Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
+        if registered and started:
+            # ~ self.log.debug("Service '%s' started? %s", name, service.is_started())
+            service.end()
+        service = None
+        self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
 
     def run(self):
         """Start application."""
         if self.ready:
-            srvapp = self.get_service('App')
+            srvapp = self.get_service('Backend')
             if self.params.RESET:
                 if self.params.FORCE:
                     srvapp.reset()
@@ -184,7 +162,7 @@ class KB4IT:
             if self.params.LIST_THEMES:
                 self.params.SOURCE_PATH = LPATH['TMP_SOURCE']
                 self.params.TARGET_PATH = LPATH['TMP_TARGET']
-                srvapp = self.get_service('App')
+                srvapp = self.get_service('Backend')
                 srvapp.list_themes()
         self.stop()
 
@@ -202,61 +180,24 @@ class KB4IT:
 
 def main():
     """Set up application arguments and execute."""
-    extra_usage = """
-
-Test application with these example commands:\n\n
-
-1) Simple usage: autodetect theme in sources. In any, use the default one.
-
-   $ kb4it /path/to/source /path/to/target
-
-2) Force a clean compilation when you upgrade KB4IT or change any template
-
-    $ kb4it /path/to/source /path/to/target -force
-
-3) Tell KB4IT to use a specific attribute for sorting the database
-
-    $ kb4it /path/to/source /path/to/target -sort Published
-
-4) Specifiy a theme:
-
-    $ kb4it /path/to/source /path/to/target -theme techdoc
-
-5) Increase or decrease log verbosity. Default: INFO
-
-    $ kb4it /path/to/source /path/to/target -log DEBUG
-    $ kb4it /path/to/source /path/to/target -log ERROR
-
-5) Combine them:
-
-    $ kb4it /path/to/source /path/to/target -theme techdoc -sort Publised -log DEBUG -force
-
-kb4it -theme techdoc -sort <date_attribute> -source <sources_dir> -target <target_dir> -log DEBUG
-
-"""
+    extra_usage = """"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
         description='KB4IT v%s\nStatic but customizable website generator based on Asciidoctor sources' % APP['version'],
-        # ~ epilog=extra_usage,
+        epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-
-    group_kb4it = parser.add_argument_group('KB4IT arguments')
-    # ~ group_opt = parser.add_mutually_exclusive_group()
-
     # KB4IT arguments
-
-    group_kb4it.add_argument('-S', '--source', help='directory with Asciidoctor source files', dest='SOURCE_PATH')
-    group_kb4it.add_argument('-T', '--target', help='target directory for output', dest='TARGET_PATH')
-
-    # Optional arguments
-    group_kb4it.add_argument('-l', '--list-themes', action='store_true', dest='LIST_THEMES', required=False, help='List all installed themes')
-    group_kb4it.add_argument('-L', '--log', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='Control output verbosity. Default to INFO')
-    group_kb4it.add_argument('-R', '--reset', action='store_true', dest='RESET', help='reset environment')
-    group_kb4it.add_argument('-F', '--force', action='store_true', dest='FORCE', help='force a clean compilation')
-    group_kb4it.add_argument('-v', '--version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
-    group_kb4it.add_argument('-t', '--theme', dest='THEME', required=False, help='specify theme (techdoc, snippets, default, ...)')
-    group_kb4it.add_argument('-s', '--sort', dest='SORT_ATTRIBUTE', help='sorting attribute (Published, Updated, ...)')
+    kb4it_options = parser.add_argument_group('KB4IT Options')
+    kb4it_options.add_argument('-S', '--source', help='directory with Asciidoctor source files', dest='SOURCE_PATH')
+    kb4it_options.add_argument('-T', '--target', help='target directory for output', dest='TARGET_PATH')
+    kb4it_options.add_argument('-s', '--sort', dest='SORT_ATTRIBUTE', help='sorting attribute (Published, Updated, ...)')
+    kb4it_options.add_argument('-t', '--theme', dest='THEME', required=False, help='specify theme (techdoc, snippets, default, ...)')
+    kb4it_options.add_argument('-l', '--list-themes', action='store_true', dest='LIST_THEMES', required=False, help='List all installed themes')
+    kb4it_options.add_argument('-L', '--log', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='Control output verbosity. Default to INFO')
+    kb4it_options.add_argument('-F', '--force', action='store_true', dest='FORCE', help='force a clean compilation')
+    kb4it_options.add_argument('-R', '--reset', action='store_true', dest='RESET', help='reset environment')
+    kb4it_options.add_argument('-v', '--version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
 
     params = parser.parse_args()
     app = KB4IT(params)

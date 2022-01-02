@@ -67,7 +67,7 @@ class KB4ITBuilder(Service):
     def get_services(self):
         """Get services."""
         self.srvdtb = self.get_service('DB')
-        self.srvapp = self.get_service('App')
+        self.srvapp = self.get_service('Backend')
 
     def distribute(self, name, content):
         """
@@ -149,6 +149,37 @@ class KB4ITBuilder(Service):
         """
         return """<!-- Page hook post -->"""
 
+    def apply_transformations(self, source):
+        """Apply CSS transformation to the compiled page."""
+        # FIXME
+        tpl = self.render_template
+        content = source.replace(tpl('HTML_TAG_A_OLD'), tpl('HTML_TAG_A_NEW'))
+        content = content.replace(tpl('HTML_TAG_TOC_OLD'), tpl('HTML_TAG_TOC_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT1_OLD'), tpl('HTML_TAG_SECT1_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT2_OLD'), tpl('HTML_TAG_SECT2_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT3_OLD'), tpl('HTML_TAG_SECT3_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECT4_OLD'), tpl('HTML_TAG_SECT4_NEW'))
+        content = content.replace(tpl('HTML_TAG_SECTIONBODY_OLD'), tpl('HTML_TAG_SECTIONBODY_NEW'))
+        content = content.replace(tpl('HTML_TAG_PRE_OLD'), tpl('HTML_TAG_PRE_NEW'))
+        content = content.replace(tpl('HTML_TAG_H2_OLD'), tpl('HTML_TAG_H2_NEW'))
+        content = content.replace(tpl('HTML_TAG_H3_OLD'), tpl('HTML_TAG_H3_NEW'))
+        content = content.replace(tpl('HTML_TAG_H4_OLD'), tpl('HTML_TAG_H4_NEW'))
+        content = content.replace(tpl('HTML_TAG_TABLE_OLD'), tpl('HTML_TAG_TABLE_NEW'))
+        content = content.replace(tpl('HTML_TAG_TABLE_OLD_2'), tpl('HTML_TAG_TABLE_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_NOTE_OLD'), tpl('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_TIP_OLD'), tpl('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_OLD'), tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_CAUTION_OLD'), tpl('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_WARNING_OLD'), tpl('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
+        content = content.replace(tpl('HTML_TAG_ADMONITION_OLD'), tpl('HTML_TAG_ADMONITION_NEW'))
+        content = content.replace(tpl('HTML_TAG_IMG_OLD'), tpl('HTML_TAG_IMG_NEW'))
+        return content
+
+    def highlight_metadata_section(self, source):
+        """Apply CSS transformation to metadata section."""
+        content = source.replace(self.srvbld.render_template('HTML_TAG_METADATA_OLD'), self.srvbld.render_template('HTML_TAG_METADATA_NEW'), 1)
+        return content
+
     def build_page(self, future):
         """
         Build the final HTML Page
@@ -183,10 +214,10 @@ class KB4ITBuilder(Service):
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
                 toc = extract_toc(source)
-                content = self.srvapp.apply_transformations(source)
+                content = self.apply_transformations(source)
                 try:
                     if 'Metadata' in content:
-                        content = highlight_metadata_section(content)
+                        content = self.highlight_metadata_section(content)
                 except NameError as error:
                     # FIXME
                     # Sometimes, weird links in asciidoctor sources
