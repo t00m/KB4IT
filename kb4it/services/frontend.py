@@ -37,37 +37,44 @@ class Frontend(Service):
     This class manages the Frontend (Themes).
     """
 
+    def get_services(self):
+        """Get services needed."""
+        self.srvdtb = self.get_service('DB')
+        self.backend = self.get_service('Backend')
 
     def initialize(self):
         """"""
+        self.get_services()
+        self.runtime = self.backend.get_runtime_properties()
 
     def theme_list(self):
         self.log.info("[THEME] - List of themes availables")
 
-        self.log.debug("[APP] - Installed globally (%s)", GPATH['THEMES'])
+        self.log.debug("[THEME] - Installed globally (%s)", GPATH['THEMES'])
         global_themes = os.listdir(GPATH['THEMES'])
         n = 0
         for dirname in global_themes:
             try:
-                self.load_theme(dirname)
-                self.log.info("[APP] - (G) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
+                self.theme_load(dirname)
+                self.log.info("[THEME] - (G) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
                 n += 1
             except Exception as error:
-                pass
-                self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
+                # ~ self.print_traceback()
+                self.log.debug("[THEME] - Theme Id: '%s' NOT valid", dirname)
 
-        self.log.debug("[APP] - Installed locally (%s)", LPATH['THEMES'])
+        self.log.debug("[THEME] - Installed locally (%s)", LPATH['THEMES'])
         local_themes = os.listdir(LPATH['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
                 try:
-                    self.load_theme(dirname)
+                    self.theme_load(dirname)
                     self.log.info("[THEME] - (L) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
                     n += 1
                 except Exception as error:
+                    self.print_traceback()
                     self.log.debug("[THEME] - Theme Id: '%s' NOT valid", dirname)
         if n == 0:
-            self.log.info("[APP] - No themes available")
+            self.log.info("[THEME] - No themes available")
         self.app.stop()
 
     def theme_load(self, theme_name=None):
@@ -130,7 +137,7 @@ class Frontend(Service):
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug("[THEME] - Autodetecting theme from source path")
-            source_path = self.get_source_path()
+            source_path = self.backend.get_source_path()
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
@@ -142,9 +149,9 @@ class Frontend(Service):
         else:
             self.log.debug("[THEME] - Looking for theme: %s", theme)
             # Search in sources path
-            source_path = self.get_source_path()
+            source_path = self.backend.get_source_path()
             theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
-            theme_path = os.path.join(self.get_source_path(), theme_rel_path)
+            theme_path = os.path.join(self.backend.get_source_path(), theme_rel_path)
             if not os.path.exists(theme_path):
                 # Search for theme in KB4IT global theme
                 theme_path = os.path.join(GPATH['THEMES'], theme)

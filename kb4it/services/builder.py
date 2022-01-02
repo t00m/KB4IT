@@ -50,8 +50,8 @@ class KB4ITBuilder(Service):
     def initialize(self):
         """Initialize Builder class."""
         self.get_services()
-        self.tmpdir = self.srvapp.get_temp_path()
-        self.srcdir = self.srvapp.get_source_path()
+        self.tmpdir = self.srvbck.get_temp_path()
+        self.srcdir = self.srvbck.get_source_path()
         self.now = datetime.now()
         self.distributed = {}
 
@@ -67,7 +67,7 @@ class KB4ITBuilder(Service):
     def get_services(self):
         """Get services."""
         self.srvdtb = self.get_service('DB')
-        self.srvapp = self.get_service('Backend')
+        self.srvbck = self.get_service('Backend')
 
     def distribute(self, name, content):
         """
@@ -85,7 +85,7 @@ class KB4ITBuilder(Service):
                 self.log.error(error)
         self.log.debug("[BUILDER] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
         self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
-        self.srvapp.add_target(PAGE_NAME.replace('.adoc', '.html'))
+        self.srvbck.add_target(PAGE_NAME.replace('.adoc', '.html'))
 
     def distribute_to_source(self, name, content):
         """
@@ -108,7 +108,7 @@ class KB4ITBuilder(Service):
     def template(self, template):
         """Return the template content from default theme or user theme"""
 
-        properties = self.srvapp.get_runtime_properties()
+        properties = self.srvbck.get_runtime_properties()
         theme = properties['theme']
         current_theme = theme['id']
 
@@ -126,7 +126,7 @@ class KB4ITBuilder(Service):
                 return TEMPLATES[template]
             except FileNotFoundError as error:
                 self.log.error("[BUILDER] - Template[%s] not found", template)
-                self.srvapp.stop()
+                self.srvbck.stop()
 
     def render_template(self, name):
         tpl = self.template(name)
@@ -134,7 +134,7 @@ class KB4ITBuilder(Service):
 
     def get_mako_var(self):
         var = {}
-        var['theme'] = self.srvapp.get_theme_properties()
+        var['theme'] = self.srvbck.get_theme_properties()
         return var
 
     def page_hook_pre(self, basename):
@@ -187,7 +187,7 @@ class KB4ITBuilder(Service):
         At this point, the Builder receives an HTML page but without
         header/footer. Then, it finishes the page.
         """
-        THEME_ID = self.srvapp.get_theme_property('id')
+        THEME_ID = self.srvbck.get_theme_property('id')
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
         HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
         HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
@@ -245,7 +245,7 @@ class KB4ITBuilder(Service):
                         TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
 
-                    userdoc = os.path.join(os.path.join(self.srvapp.get_source_path(), basename))
+                    userdoc = os.path.join(os.path.join(self.srvbck.get_source_path(), basename))
 
                     var['title'] = title
                     var['menu_contents'] = HTML_TOC
@@ -512,13 +512,13 @@ class KB4ITBuilder(Service):
         """Create index page.
         To be replaced by custom code.
         """
-        srcdir = self.srvapp.get_source_path()
+        srcdir = self.srvbck.get_source_path()
         custom_index = os.path.join(srcdir, 'index.adoc')
         if not os.path.exists(custom_index):
             TPL_INDEX = self.template('PAGE_INDEX')
             var = {}
             var['title'] = 'Index'
-            var['theme'] = self.srvapp.get_theme_properties()
+            var['theme'] = self.srvbck.get_theme_properties()
             self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_maxkv_freq(self):
@@ -566,7 +566,7 @@ class KB4ITBuilder(Service):
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         # ~ TPL_ITEM = self.template('KEY_LEADER_ITEM')
         var = {}
-        var['count_docs'] = self.srvapp.get_numdocs()
+        var['count_docs'] = self.srvbck.get_numdocs()
         keys = self.srvdtb.get_all_keys()
         var['count_keys'] = len(keys)
         var['leader_items'] = []
@@ -708,7 +708,7 @@ class KB4ITBuilder(Service):
         To be replaced by custom code.
         """
         PAGE_ABOUT_APP = self.template('PAGE_ABOUT_APP')
-        srcdir = self.srvapp.get_source_path()
+        srcdir = self.srvbck.get_source_path()
         about = os.path.join(srcdir, 'about.adoc')
         var = {}
         try:
@@ -723,7 +723,7 @@ class KB4ITBuilder(Service):
         var = {}
         var['theme'] = {}
 
-        theme = self.srvapp.get_theme_properties()
+        theme = self.srvbck.get_theme_properties()
         for key in theme:
             value = theme[key]
             try:

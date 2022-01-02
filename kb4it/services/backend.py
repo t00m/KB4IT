@@ -106,7 +106,7 @@ class Backend(Service):
                 self.log.info("[APP] - (G) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
                 n += 1
             except Exception as error:
-                pass
+                self.print_traceback()
                 self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
 
         self.log.debug("[APP] - Installed locally (%s)", LPATH['THEMES'])
@@ -121,7 +121,6 @@ class Backend(Service):
                     self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
         if n == 0:
             self.log.info("[APP] - No themes available")
-        self.app.stop()
 
     def load_theme(self, theme_name=None):
         """Load custom user theme, global theme or default."""
