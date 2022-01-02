@@ -162,8 +162,8 @@ class KB4IT:
             if self.params.LIST_THEMES:
                 self.params.SOURCE_PATH = LPATH['TMP_SOURCE']
                 self.params.TARGET_PATH = LPATH['TMP_TARGET']
-                srvapp = self.get_service('Backend')
-                srvapp.list_themes()
+                frontend = self.get_service('Frontend')
+                frontend.theme_list()
         self.stop()
 
     def get_version(self):
