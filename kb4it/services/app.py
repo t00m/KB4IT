@@ -145,9 +145,9 @@ class KB4ITApp(Service):
             theme = json.load(fth)
             for prop in theme:
                 self.runtime['theme'][prop] = theme[prop]
-        self.log.debug("[SETUP / THEME] - Name: %s" % self.runtime['theme']['name'])
+        self.log.debug("[SETUP] - Name: %s" % self.runtime['theme']['name'])
 
-        self.log.info("[SETUP / THEME] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+        self.log.info("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
 
         # Get theme directories
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
@@ -160,10 +160,10 @@ class KB4ITApp(Service):
         try:
             ignored_keys = self.runtime['theme']['ignored_keys']
             for key in ignored_keys:
-                self.log.debug("[SETUP / THEME] - Ignored key(s) defined by this theme: %s", key)
+                self.log.debug("[SETUP] - Ignored key(s) defined by this theme: %s", key)
                 self.srvdtb.ignore_key(key)
         except KeyError:
-            self.log.debug("[SETUP / THEME] - No ignored_keys defined in this theme")
+            self.log.debug("[SETUP] - No ignored_keys defined in this theme")
 
         # Register theme service
         sys.path.insert(0, self.runtime['theme']['logic'])
@@ -172,10 +172,10 @@ class KB4ITApp(Service):
             self.app.register_service('Theme', Theme())
             self.srvthm = self.get_service('Theme')
         except Exception as error:
-            self.log.warning("[SETUP / THEME] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
-            self.log.error("[SETUP / THEME] - %s", error)
+            self.log.warning("[SETUP] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
+            self.log.error("[SETUP] - %s", error)
             raise
-        self.log.debug("[SETUP / THEME] - Loaded theme '%s'", self.runtime['theme']['id'])
+        self.log.debug("[SETUP] - Loaded theme '%s'", self.runtime['theme']['id'])
 
     def theme_search(self, theme=None):
         """Search custom theme."""
@@ -744,6 +744,13 @@ class KB4ITApp(Service):
         self.log.debug("[POST-INSTALL] - Temporary directory deleted successfully")
         self.log.info("[POST-INSTALL] - End")
 
+    def cleanup(self):
+        """Clean KB4IT temporary environment.
+        """
+
+        delete_target_contents(self.runtime['dir']['tmp'])
+        self.log.info("[CLEANUP] - KB4IT Workspace clean")
+
     def reset(self):
         """WARNING.
 
@@ -765,21 +772,21 @@ class KB4ITApp(Service):
         KB4IT_DB_FILE = os.path.join(LPATH['DB'], kdbdict)
 
         delete_target_contents(self.runtime['dir']['cache'])
-        self.log.info("[RESET] -DIR[%s] deleted", self.runtime['dir']['cache'])
+        self.log.info("[RESET] - DIR[%s] deleted", self.runtime['dir']['cache'])
 
         delete_target_contents(self.runtime['dir']['tmp'])
-        self.log.info("[RESET] -DIR[%s] deleted", self.runtime['dir']['tmp'])
+        self.log.info("[RESET] - DIR[%s] deleted", self.runtime['dir']['tmp'])
 
         delete_target_contents(self.get_source_path())
-        self.log.info("[RESET] -DIR[%s] deleted", self.get_source_path())
+        self.log.info("[RESET] - DIR[%s] deleted", self.get_source_path())
 
         delete_target_contents(self.get_target_path())
-        self.log.info("[RESET] -DIR[%s] deleted", self.get_target_path())
+        self.log.info("[RESET] - DIR[%s] deleted", self.get_target_path())
 
         delete_target_contents(KB4IT_DB_FILE)
-        self.log.info("[RESET] -FILE[%s] deleted", KB4IT_DB_FILE)
+        self.log.info("[RESET] - FILE[%s] deleted", KB4IT_DB_FILE)
 
-        self.log.info("KB4IT environment reset")
+        self.log.info("[RESET] - KB4IT environment reset")
 
     def run(self):
         """Start script execution following this flow.
@@ -840,6 +847,7 @@ class KB4ITApp(Service):
         except FileNotFoundError:
             self.log.debug("DOC[%s] not found in cache directory", adoc)
 
-    def stop(self):
+    def end(self):
+        self.cleanup()
         self.log.info("[APP] - Execution finished")
-        self.app.stop()
+        # ~ self.app.stop()
