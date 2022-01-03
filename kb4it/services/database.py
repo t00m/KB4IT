@@ -13,7 +13,7 @@ from kb4it.core.service import Service
 from kb4it.core.util import guess_datetime, sort_dictionary
 
 
-class KB4ITDB(Service):
+class Database(Service):
     """KB4IT database class."""
 
     db = {}

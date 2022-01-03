@@ -85,126 +85,10 @@ class Backend(Service):
 
         # Get services
         self.get_services()
-        self.log.info("[APP] - KB4IT v%s", APP['version'])
-        self.log.info("[APP] - Execution started")
-        # Load theme
-        # ~ self.load_theme()
 
     def add_target(self, filename):
         """Every doc converted into a page must be added to the target list."""
         self.runtime['docs']['target'].add(filename)
-
-    def list_themes(self):
-        self.log.info("[APP] - List of themes availables")
-
-        self.log.debug("[APP] - Installed globally (%s)", GPATH['THEMES'])
-        global_themes = os.listdir(GPATH['THEMES'])
-        n = 0
-        for dirname in global_themes:
-            try:
-                self.load_theme(dirname)
-                self.log.info("[APP] - (G) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
-                n += 1
-            except Exception as error:
-                self.print_traceback()
-                self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
-
-        self.log.debug("[APP] - Installed locally (%s)", LPATH['THEMES'])
-        local_themes = os.listdir(LPATH['THEMES'])
-        if len(local_themes) > 0:
-            for dirname in local_themes:
-                try:
-                    self.load_theme(dirname)
-                    self.log.info("[APP] - (L) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
-                    n += 1
-                except Exception as error:
-                    self.log.debug("[APP] - Theme Id: '%s' NOT valid", dirname)
-        if n == 0:
-            self.log.info("[APP] - No themes available")
-
-    def load_theme(self, theme_name=None):
-        """Load custom user theme, global theme or default."""
-        if theme_name is None:
-            theme_name = self.parameters.THEME
-
-        # custom theme requested by user via command line properties
-        self.runtime['theme'] = {}
-        self.runtime['theme']['path'] = self.theme_search(theme_name)
-        if self.runtime['theme']['path'] is None:
-            return None
-            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
-            self.log.warning("[SETUP] - Fallback to default theme")
-
-        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
-        if not os.path.exists(theme_conf):
-            self.log.error("[SETUP] - Theme config file not found: %s", theme_conf)
-            sys.exit(-1)
-
-        # load theme configuration
-        with open(theme_conf, 'r') as fth:
-            theme = json.load(fth)
-            for prop in theme:
-                self.runtime['theme'][prop] = theme[prop]
-        self.log.debug("[SETUP] - Name: %s" % self.runtime['theme']['name'])
-
-        self.log.debug("[SETUP] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
-
-        # Get theme directories
-        self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
-        self.runtime['theme']['framework'] = os.path.join(self.runtime['theme']['path'], 'framework')
-        self.runtime['theme']['images'] = os.path.join(self.runtime['theme']['path'], 'images')
-        self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
-
-        # Get date-based attributes from theme. Date attributes aren't
-        # displayed as properties but used to build events pages.
-        try:
-            ignored_keys = self.runtime['theme']['ignored_keys']
-            for key in ignored_keys:
-                self.log.debug("[SETUP] - Ignored key(s) defined by this theme: %s", key)
-                self.srvdtb.ignore_key(key)
-        except KeyError:
-            self.log.debug("[SETUP] - No ignored_keys defined in this theme")
-
-        # Register theme service
-        sys.path.insert(0, self.runtime['theme']['logic'])
-        try:
-            from theme import Theme
-            self.app.register_service('Theme', Theme())
-            self.srvthm = self.get_service('Theme')
-        except Exception as error:
-            self.log.warning("[SETUP] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
-            self.log.error("[SETUP] - %s", error)
-            raise
-        self.log.debug("[SETUP] - Loaded theme '%s'", self.runtime['theme']['id'])
-
-    def theme_search(self, theme=None):
-        """Search custom theme."""
-        if theme is None:
-            # No custom theme passed in arguments. Autodetect.
-            self.log.debug("[SETUP] - Autodetecting theme from source path")
-            source_path = self.get_source_path()
-            source_resources_path = os.path.join(source_path, 'resources')
-            source_themes_path = os.path.join(source_resources_path, 'themes')
-            all_themes = os.path.join(source_themes_path, '*')
-            self.log.debug("[SETUP] - Looking for first theme ocurrence in: %s", all_themes)
-            try:
-                theme_path = glob.glob(all_themes)[0]
-            except IndexError:
-                theme_path = None
-        else:
-            self.log.debug("[SETUP] - Looking for theme: %s", theme)
-            # Search in sources path
-            source_path = self.get_source_path()
-            theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
-            theme_path = os.path.join(self.get_source_path(), theme_rel_path)
-            if not os.path.exists(theme_path):
-                # Search for theme in KB4IT global theme
-                theme_path = os.path.join(GPATH['THEMES'], theme)
-                if not os.path.exists(theme_path):
-                    # No theme found
-                    theme_path = None
-        self.log.debug("[THEME] - Path to theme: %s", theme_path)
-        return theme_path
 
     def get_runtime_properties(self):
         """Get all properties."""
@@ -242,6 +126,7 @@ class Backend(Service):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
+        self.srvfes = self.get_service('Frontend')
 
     def get_numdocs(self):
         """Get current number of valid documents."""
@@ -270,18 +155,18 @@ class Backend(Service):
         theme_name = self.parameters.THEME
         if theme_name is None:
             self.log.debug("[SETUP] - Theme not provided. Autodetect it.")
-            theme_path = self.theme_search()
+            theme_path = self.srvfes.theme_search()
             if theme_path is not None:
-                self.load_theme(os.path.basename(theme_path))
+                self.srvfes.theme_load(os.path.basename(theme_path))
                 self.log.debug("[SETUP] Theme found and loaded")
             else:
                 self.log.error("[SETUP] - Theme not found")
                 self.log.info("[SETUP] - End")
                 self.app.stop()
         else:
-            theme_path = self.theme_search(theme_name)
+            theme_path = self.srvfes.theme_search(theme_name)
             if theme_path is not None:
-                self.load_theme(os.path.basename(theme_path))
+                self.srvfes.theme_load(os.path.basename(theme_path))
             else:
                 self.log.error("[SETUP] - Theme not found")
                 self.log.info("[SETUP] - End")
@@ -777,6 +662,7 @@ class Backend(Service):
         """
         self.running = True
         self.stage_01_check_environment()
+        self.srvthm = self.get_service('Theme')
         self.srvthm.generate_sources()
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
@@ -809,7 +695,7 @@ class Backend(Service):
 
         # Remove database document
         self.srvdtb.del_document(adoc)
-        # ~ self.log.debug("DOC[%s] deleted from database", adoc)
+        self.log.debug("DOC[%s] deleted from database", adoc)
 
         # Remove cache document
         cache_dir = self.get_cache_path()
@@ -822,5 +708,3 @@ class Backend(Service):
 
     def end(self):
         self.cleanup()
-        self.log.info("[APP] - Execution finished")
-        # ~ self.app.stop()

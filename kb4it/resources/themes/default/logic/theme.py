@@ -10,9 +10,9 @@ Server module.
 # Description: default theme script
 """
 
-from kb4it.services.builder import KB4ITBuilder
+from kb4it.services.builder import Builder
 
-class Theme(KB4ITBuilder):
+class Theme(Builder):
     def generate_sources(self):
         pass
 
