@@ -29,7 +29,7 @@ from kb4it.core.service import Service
 from kb4it.core.util import valid_filename
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import set_max_frequency, get_font_size
-from kb4it.core.util import delete_files, extract_toc
+from kb4it.core.util import delete_files
 from kb4it.core.util import get_hash_from_file, load_kbdict
 
 from mako.template import Template
@@ -38,20 +38,20 @@ from mako.template import Template
 TEMPLATES = {}
 
 
-class KB4ITBuilder(Service):
+class Builder(Service):
     """Build HTML blocks"""
 
     tmpdir = None
     srvdtb = None
-    srvapp = None
+    backend = None
     temp_sources = []
     distributed = None
 
     def initialize(self):
         """Initialize Builder class."""
         self.get_services()
-        self.tmpdir = self.srvbck.get_temp_path()
-        self.srcdir = self.srvbck.get_source_path()
+        self.tmpdir = self.srvbes.get_temp_path()
+        self.srcdir = self.srvbes.get_source_path()
         self.now = datetime.now()
         self.distributed = {}
 
@@ -67,7 +67,7 @@ class KB4ITBuilder(Service):
     def get_services(self):
         """Get services."""
         self.srvdtb = self.get_service('DB')
-        self.srvbck = self.get_service('Backend')
+        self.srvbes = self.get_service('Backend')
 
     def distribute(self, name, content):
         """
@@ -85,7 +85,7 @@ class KB4ITBuilder(Service):
                 self.log.error(error)
         self.log.debug("[BUILDER] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
         self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
-        self.srvbck.add_target(PAGE_NAME.replace('.adoc', '.html'))
+        self.srvbes.add_target(PAGE_NAME.replace('.adoc', '.html'))
 
     def distribute_to_source(self, name, content):
         """
@@ -108,7 +108,7 @@ class KB4ITBuilder(Service):
     def template(self, template):
         """Return the template content from default theme or user theme"""
 
-        properties = self.srvbck.get_runtime_properties()
+        properties = self.srvbes.get_runtime_properties()
         theme = properties['theme']
         current_theme = theme['id']
 
@@ -126,7 +126,7 @@ class KB4ITBuilder(Service):
                 return TEMPLATES[template]
             except FileNotFoundError as error:
                 self.log.error("[BUILDER] - Template[%s] not found", template)
-                self.srvbck.stop()
+                self.app.stop()
 
     def render_template(self, name):
         tpl = self.template(name)
@@ -134,7 +134,7 @@ class KB4ITBuilder(Service):
 
     def get_mako_var(self):
         var = {}
-        var['theme'] = self.srvbck.get_theme_properties()
+        var['theme'] = self.srvbes.get_theme_properties()
         return var
 
     def page_hook_pre(self, basename):
@@ -180,6 +180,43 @@ class KB4ITBuilder(Service):
         content = source.replace(self.srvbld.render_template('HTML_TAG_METADATA_OLD'), self.srvbld.render_template('HTML_TAG_METADATA_NEW'), 1)
         return content
 
+    def extract_toc(self, source):
+        """Extract TOC from Asciidoctor generated HTML code and 
+        make it theme dependent."""
+        toc = ''
+        items = []
+        lines = source.split('\n')
+        s = e = n = 0
+        var = self.get_mako_var()
+        TOC_LI_TOP = self.template('HTML_TOC_LI')
+        TOC_SECTLEVEL1 = self.template('HTML_TOC_SECTLEVEL1')
+        TOC_SECTLEVEL2 = self.template('HTML_TOC_SECTLEVEL2')
+        TOC_SECTLEVEL3 = self.template('HTML_TOC_SECTLEVEL3')
+        TOC_SECTLEVEL4 = self.template('HTML_TOC_SECTLEVEL4')
+
+        for line in lines:
+            if line.find("toctitle") > 0:
+                s = n + 1
+            if s > 0:
+                if line.startswith('</div>') and n > s:
+                    e = n
+                    break
+            n = n + 1
+
+        if s > 0 and e > s:
+            for line in lines[s:e]:
+                if line.startswith('<li><a href='):
+                    modifier = """<li><a class="uk-link-heading" """
+                    line = line.replace("<li><a ", TOC_LI_TOP.render(var=var))
+                else:
+                    line = line.replace("sectlevel1", TOC_SECTLEVEL1.render(var=var))
+                    line = line.replace("sectlevel2", TOC_SECTLEVEL2.render(var=var))
+                    line = line.replace("sectlevel3", TOC_SECTLEVEL3.render(var=var))
+                    line = line.replace("sectlevel4", TOC_SECTLEVEL4.render(var=var))
+                items.append(line)
+            toc = '\n'.join(items)
+        return toc
+
     def build_page(self, future):
         """
         Build the final HTML Page
@@ -187,7 +224,7 @@ class KB4ITBuilder(Service):
         At this point, the Builder receives an HTML page but without
         header/footer. Then, it finishes the page.
         """
-        THEME_ID = self.srvbck.get_theme_property('id')
+        THEME_ID = self.srvbes.get_theme_property('id')
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
         HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
         HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
@@ -213,7 +250,7 @@ class KB4ITBuilder(Service):
                 htmldoctmp = "%s.tmp" % htmldoc
                 shutil.move(htmldoc, htmldoctmp)
                 source = open(htmldoctmp, 'r').read()
-                toc = extract_toc(source)
+                toc = self.extract_toc(source)
                 content = self.apply_transformations(source)
                 try:
                     if 'Metadata' in content:
@@ -245,7 +282,7 @@ class KB4ITBuilder(Service):
                         TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                         HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
 
-                    userdoc = os.path.join(os.path.join(self.srvbck.get_source_path(), basename))
+                    userdoc = os.path.join(os.path.join(self.srvbes.get_source_path(), basename))
 
                     var['title'] = title
                     var['menu_contents'] = HTML_TOC
@@ -512,13 +549,13 @@ class KB4ITBuilder(Service):
         """Create index page.
         To be replaced by custom code.
         """
-        srcdir = self.srvbck.get_source_path()
+        srcdir = self.srvbes.get_source_path()
         custom_index = os.path.join(srcdir, 'index.adoc')
         if not os.path.exists(custom_index):
             TPL_INDEX = self.template('PAGE_INDEX')
             var = {}
             var['title'] = 'Index'
-            var['theme'] = self.srvbck.get_theme_properties()
+            var['theme'] = self.srvbes.get_theme_properties()
             self.distribute('index', TPL_INDEX.render(var=var))
 
     def get_maxkv_freq(self):
@@ -566,7 +603,7 @@ class KB4ITBuilder(Service):
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         # ~ TPL_ITEM = self.template('KEY_LEADER_ITEM')
         var = {}
-        var['count_docs'] = self.srvbck.get_numdocs()
+        var['count_docs'] = self.srvbes.get_numdocs()
         keys = self.srvdtb.get_all_keys()
         var['count_keys'] = len(keys)
         var['leader_items'] = []
@@ -708,7 +745,7 @@ class KB4ITBuilder(Service):
         To be replaced by custom code.
         """
         PAGE_ABOUT_APP = self.template('PAGE_ABOUT_APP')
-        srcdir = self.srvbck.get_source_path()
+        srcdir = self.srvbes.get_source_path()
         about = os.path.join(srcdir, 'about.adoc')
         var = {}
         try:
@@ -723,7 +760,7 @@ class KB4ITBuilder(Service):
         var = {}
         var['theme'] = {}
 
-        theme = self.srvbck.get_theme_properties()
+        theme = self.srvbes.get_theme_properties()
         for key in theme:
             value = theme[key]
             try:

@@ -18,8 +18,8 @@ from kb4it.core.env import APP, LPATH, GPATH
 from kb4it.core.log import get_logger
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
-from kb4it.services.database import KB4ITDB
-from kb4it.services.builder import KB4ITBuilder
+from kb4it.services.database import Database
+from kb4it.services.builder import Builder
 
 
 class KB4IT:
@@ -103,16 +103,19 @@ class KB4IT:
         self.services = {}
         try:
             services = {
-                'DB': KB4ITDB(),
+                'DB': Database(),
                 'Backend': Backend(),
                 'Frontend': Frontend(),
-                'Builder': KB4ITBuilder(),
+                'Builder': Builder(),
             }
             for name in services:
                 self.register_service(name, services[name])
         except Exception as error:
             self.log.error("[CONTROLLER] - %s", error)
             raise
+
+    def get_services(self):
+        return self.services
 
     def get_service(self, name):
         """Get or start a registered service."""
@@ -141,7 +144,6 @@ class KB4IT:
         started = service.is_started()
         self.log.debug("[CONTROLLER] - Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
         if registered and started:
-            # ~ self.log.debug("Service '%s' started? %s", name, service.is_started())
             service.end()
         service = None
         self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
@@ -149,14 +151,14 @@ class KB4IT:
     def run(self):
         """Start application."""
         if self.ready:
-            srvapp = self.get_service('Backend')
+            backend = self.get_service('Backend')
             if self.params.RESET:
                 if self.params.FORCE:
-                    srvapp.reset()
+                    backend.reset()
                 else:
                     self.log.warning("[CONTROLLER] - KB4IT environment NOT reset. You must force it!")
             else:
-                srvapp.run()
+                backend.run()
                 self.stop()
         else:
             if self.params.LIST_THEMES:
