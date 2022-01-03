@@ -206,7 +206,6 @@ class Builder(Service):
         if s > 0 and e > s:
             for line in lines[s:e]:
                 if line.startswith('<li><a href='):
-                    modifier = """<li><a class="uk-link-heading" """
                     line = line.replace("<li><a ", TOC_LI_TOP.render(var=var))
                 else:
                     line = line.replace("sectlevel1", TOC_SECTLEVEL1.render(var=var))
