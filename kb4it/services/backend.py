@@ -525,7 +525,10 @@ class Backend(Service):
         for adoc in distributed:
             source = os.path.join(self.runtime['dir']['tmp'], adoc)
             target = LPATH['DISTRIBUTED']
-            shutil.copy(source, target)
+            try:
+                shutil.copy(source, target)
+            except:
+                self.log.warning("Missing source file: %s", source)
         self.log.debug("[CLEANUP] - Copy temporary files to distributed directory")
 
         delete_target_contents(self.get_target_path())
