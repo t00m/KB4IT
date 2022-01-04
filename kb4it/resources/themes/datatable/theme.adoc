@@ -1,0 +1,7 @@
+{
+    "id": "datatable",
+    "name": "DataTable",
+    "description": "KB4IT theme with Bootstrap and DataTable component",
+    "version": "0.0.1",
+    "kb4it": "0.8.0"
+}
