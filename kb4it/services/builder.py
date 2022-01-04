@@ -82,10 +82,25 @@ class Builder(Service):
             try:
                 fpag.write(content)
             except Exception as error:
-                self.log.error(error)
-        self.log.debug("[BUILDER] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
+                self.log.error("[DISTRIBUTE] - %s", error)
         self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
         self.srvbes.add_target(PAGE_NAME.replace('.adoc', '.html'))
+        self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
+
+    def distribute_html(self, name, content):
+        """
+        Distribute html file to the temporary directory.
+        """
+        PAGE_NAME = "%s.html" % name
+        PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
+        with open(PAGE_PATH, 'w') as fpag:
+            try:
+                fpag.write(content)
+            except Exception as error:
+                self.log.error("[DISTRIBUTE] - %s", error)
+        self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
+        self.srvbes.add_target(PAGE_NAME)
+        self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
 
     def distribute_to_source(self, name, content):
         """
@@ -123,10 +138,10 @@ class Builder(Service):
             try:
                 TEMPLATES[template] = Template(filename=template_path)
                 self.log.debug("[BUILDER] - Template[%s] loaded for Theme[%s]", template, theme['id'])
-                return TEMPLATES[template]
             except FileNotFoundError as error:
+                TEMPLATES[template] = Template("")
                 self.log.error("[BUILDER] - Template[%s] not found", template)
-                self.app.stop()
+            return TEMPLATES[template]
 
     def render_template(self, name):
         tpl = self.template(name)
@@ -181,7 +196,7 @@ class Builder(Service):
         return content
 
     def extract_toc(self, source):
-        """Extract TOC from Asciidoctor generated HTML code and 
+        """Extract TOC from Asciidoctor generated HTML code and
         make it theme dependent."""
         toc = ''
         items = []
@@ -223,25 +238,36 @@ class Builder(Service):
         At this point, the Builder receives an HTML page but without
         header/footer. Then, it finishes the page.
         """
-        THEME_ID = self.srvbes.get_theme_property('id')
-        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-        HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
-        HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
-        HTML_FOOTER = self.template('HTML_FOOTER')
-        now = datetime.now()
-        timestamp = get_human_datetime(now)
+
         time.sleep(random.random())
         x = future.result()
+
+        return x
+
+        # ~ THEME_ID = self.srvbes.get_theme_property('id')
+        # ~ HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        # ~ HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
+        # ~ HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
+        # ~ HTML_FOOTER = self.template('HTML_FOOTER')
+        # ~ now = datetime.now()
+        # ~ timestamp = get_human_datetime(now)
+
         cur_thread = threading.current_thread().name
         if cur_thread != x:
             adoc, rc, j = x
+            self.log.debug("[BUILD] - Received[%s]", adoc)
             # Add header and footer to compiled doc
             htmldoc = adoc.replace('.adoc', '.html')
             basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
                 var = self.get_mako_var()
                 var['page'] = {}
-                adoc_title = open(adoc).readlines()[0]
+                try:
+                    adoc_title = open(adoc).readlines()[0]
+                except Exception as error:
+                    self.log.error("[BUILD] - %s => %s", adoc, error)
+                    return x
+
                 title = adoc_title[2:-1]
                 var['page']['title'] = title
                 var['page']['source_adoc'] = adoc
@@ -331,6 +357,9 @@ class Builder(Service):
         """
         Create a page with documents.
         If amount of documents is greater than 100, split it in several pages
+        """
+        return []
+
         """
         TPL_PG_HEAD = self.template(pagination['template'])
         var = {}
@@ -440,9 +469,11 @@ class Builder(Service):
         self.log.debug("[BUILDER] - Created pagination page '%s' (%d pages with %d cards in each page)", pagination['basename'], total_pages, k)
 
         return pagelist
+        """
 
     def build_cardset(self, doclist):
         """Default method to build pages paginated"""
+        return "<!-- CARDSET -->"
         CARD_DOC_FILTER_DATA_TITLE = self.template('CARD_DOC_FILTER_DATA_TITLE')
         CARDS = ""
         for doc in doclist:
