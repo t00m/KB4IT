@@ -1,0 +1,7 @@
+{
+    "id": "simple",
+    "name": "Simple",
+    "description": "A simple UIKit theme for KB4IT",
+    "version": "0.0.2",
+    "kb4it": "0.8"
+}
