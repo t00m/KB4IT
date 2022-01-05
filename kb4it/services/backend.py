@@ -32,9 +32,7 @@ from kb4it.core.util import string_timestamp
 
 
 class Backend(Service):
-    """KB4I Application Class.
-
-    This class manages the logic workflow.
+    """Backend class for managing the main logic workflow. 
     """
     running = False
     parameters = None
@@ -213,7 +211,7 @@ class Backend(Service):
             self.log.debug("[PREPROCESSING] - Clean up cache")
 
         clean_cache()
-
+        self.log.debug("Docs in bag: %s", ', '.join(self.runtime['docs']['bag']))
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
 
@@ -395,47 +393,48 @@ class Backend(Service):
 
         # To compile or not to compile :)
         # # Keys
-        for kpath in K_PATH:
-            key, values, COMPILE_KEY = kpath
-            docname = "%s.adoc" % valid_filename(key)
-            if COMPILE_KEY:
-                fpath = os.path.join(self.runtime['dir']['tmp'], docname)
-                html = self.srvthm.create_page_key(key, values)
-                with open(fpath, 'w') as fkey:
-                    fkey.write(html)
-            self.add_target(docname.replace('.adoc', '.html'))
+        # ~ for kpath in K_PATH:
+            # ~ key, values, COMPILE_KEY = kpath
+            # ~ docname = "%s.adoc" % valid_filename(key)
+            # ~ if COMPILE_KEY:
+                # ~ fpath = os.path.join(self.runtime['dir']['tmp'], docname)
+                # ~ html = self.srvthm.create_page_key(key, values)
+                # ~ with open(fpath, 'w') as fkey:
+                    # ~ fkey.write(html)
+            # ~ self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
-        for kvpath in KV_PATH:
-            key, value, COMPILE_VALUE = kvpath
-            docs = self.get_kbdict_value(key, value, new=True)
-            sorted_docs = self.srvdtb.sort_by_date(docs)
-            basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-            pagination = {}
-            pagination['key'] = key
-            pagination['value'] = value
-            pagination['basename'] = basename
-            pagination['doclist'] = sorted_docs
-            pagination['title'] = None
-            pagination['function'] = 'build_cardset'
-            pagination['template'] = 'PAGE_PAGINATION_HEAD'
-            if COMPILE_VALUE:
-                pagination['fake'] = False
-                pagelist = self.srvthm.build_pagination(pagination)
-            else:
-                pagination['fake'] = True
-                pagelist = self.srvthm.build_pagination(pagination)
+        # ~ for kvpath in KV_PATH:
+            # ~ key, value, COMPILE_VALUE = kvpath
+            # ~ docs = self.get_kbdict_value(key, value, new=True)
+            # ~ sorted_docs = self.srvdtb.sort_by_date(docs)
+            # ~ basename = "%s_%s" % (valid_filename(key), valid_filename(value))
+            # ~ pagination = {}
+            # ~ pagination['key'] = key
+            # ~ pagination['value'] = value
+            # ~ pagination['basename'] = basename
+            # ~ pagination['doclist'] = sorted_docs
+            # ~ pagination['title'] = None
+            # ~ pagination['function'] = 'build_cardset'
+            # ~ pagination['template'] = 'PAGE_PAGINATION_HEAD'
+            # ~ if COMPILE_VALUE:
+                # ~ pagination['fake'] = False
+                # ~ pagelist = self.srvthm.build_pagination(pagination)
+            # ~ else:
+                # ~ pagination['fake'] = True
+                # ~ pagelist = self.srvthm.build_pagination(pagination)
 
-            for page in pagelist:
-                docname = "%s.html" % page
-                self.add_target(docname.replace('.adoc', '.html'))
+            # ~ for page in pagelist:
+                # ~ docname = "%s.html" % page
+                # ~ self.add_target(docname.replace('.adoc', '.html'))
 
-        self.log.debug("[PROCESSING] - Finish processing keys")
+        # ~ self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
+        self.srvthm.build()
         self.log.debug("[PROCESSING] - End processing theme")
         self.log.info("[PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.info("[PROCESSING] - End")
-        self.srvthm.build()
+        
 
 
     def stage_05_compilation(self):

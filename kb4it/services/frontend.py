@@ -125,9 +125,7 @@ class Frontend(Service):
         sys.path.insert(0, self.runtime['theme']['logic'])
         try:
             from theme import Theme
-            self.log.debug(type(Theme))
             self.app.register_service('Theme', Theme())
-            self.log.warning("Registered Service Theme")
             self.srvthm = self.get_service('Theme')
         except Exception as error:
             self.log.warning("[THEME] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
