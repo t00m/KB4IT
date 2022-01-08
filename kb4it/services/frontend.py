@@ -41,12 +41,12 @@ class Frontend(Service):
     def get_services(self):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
-        self.backend = self.get_service('Backend')
+        self.srvbes = self.get_service('Backend')
 
     def initialize(self):
         """"""
         self.get_services()
-        self.runtime = self.backend.get_runtime_properties()
+        self.runtime = self.srvbes.get_runtime()
 
     def theme_list(self):
         self.log.info("[THEME] - List of themes availables")
@@ -138,7 +138,7 @@ class Frontend(Service):
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug("[THEME] - Autodetecting theme from source path")
-            source_path = self.backend.get_source_path()
+            source_path = self.srvbes.get_source_path()
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
@@ -150,9 +150,9 @@ class Frontend(Service):
         else:
             self.log.debug("[THEME] - Looking for theme: %s", theme)
             # Search in sources path
-            source_path = self.backend.get_source_path()
+            source_path = self.srvbes.get_source_path()
             theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
-            theme_path = os.path.join(self.backend.get_source_path(), theme_rel_path)
+            theme_path = os.path.join(self.srvbes.get_source_path(), theme_rel_path)
             if not os.path.exists(theme_path):
                 # Search for theme in KB4IT global theme
                 theme_path = os.path.join(GPATH['THEMES'], theme)

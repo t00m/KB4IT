@@ -1,6 +1,9 @@
-= ${var['title']}
+= Page Key ${var['title']}
 
 ++++
-    <!-- KEY_PAGE.tpl -->
+<p>${var['title']}</p>
 ++++
+
+
+
 

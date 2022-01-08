@@ -112,9 +112,9 @@ def exec_cmd(data):
     Return:
     - document
     - True if success, False if not
-    - res is the output
+    - num is the job number
     """
-    doc, cmd, res = data
+    doc, cmd, num = data
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
     outs, errs = process.communicate()
     if errs is None:
@@ -122,7 +122,7 @@ def exec_cmd(data):
     else:
         compiled = False
         log.debug("[UTIL] - Compiling %s: Error: %s", doc, errs)
-    return doc, compiled, res
+    return doc, compiled, num
 
 
 def set_max_frequency(dkeyurl):

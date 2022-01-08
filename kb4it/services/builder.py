@@ -12,10 +12,8 @@ Builder service.
 import os
 import sys
 import math
-import time
 import shutil
-import random
-import threading
+
 from datetime import datetime
 try:
     import html5lib
@@ -31,6 +29,7 @@ from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import delete_files
 from kb4it.core.util import get_hash_from_file, load_kbdict
+from kb4it.core.util import get_asciidoctor_attributes
 
 from mako.template import Template
 
@@ -123,28 +122,30 @@ class Builder(Service):
     def template(self, template):
         """Return the template content from default theme or user theme"""
 
-        properties = self.srvbes.get_runtime_properties()
+        properties = self.srvbes.get_runtime()
         theme = properties['theme']
         current_theme = theme['id']
 
         # Try to get the template from cache
         try:
-            return TEMPLATES[template]
+            tpl = TEMPLATES[template]
+            # ~ self.log.debug("[TEMPLATES] - Template[%s] loaded from cache", template)
+            return tpl
         except KeyError:
             try:
                 # Get template from theme
                 template_path = os.path.join(theme['templates'], "%s.tpl" % template)
                 TEMPLATES[template] = Template(filename=template_path)
-                self.log.debug("[BUILDER] - Template[%s] loaded for Theme[%s] and added to the cache", template, theme['id'])
+                self.log.debug("[TEMPLATES] - Template[%s] loaded for Theme[%s] and added to the cache", template, theme['id'])
             except FileNotFoundError as error:
                 try:
                     # Try with global templates
                     template_path = os.path.join(GPATH['TEMPLATES'], "%s.tpl" % template)
                     TEMPLATES[template] = Template(filename=template_path)
-                    self.log.debug("[BUILDER] - Global Template[%s] loaded and added to the cache", template)
+                    self.log.debug("[TEMPLATES] - Global Template[%s] loaded and added to the cache", template)
                 except FileNotFoundError as error:
                     TEMPLATES[template] = Template("")
-                    self.log.warning("[BUILDER] - Template[%s] not found. Returning empty template!", template)
+                    self.log.warning("[TEMPLATES] - Template[%s] not found. Returning empty template!", template)
                 
             return TEMPLATES[template]
 
@@ -155,6 +156,7 @@ class Builder(Service):
     def get_mako_var(self):
         var = {}
         var['theme'] = self.srvbes.get_theme_properties()
+        # ~ self.log.debug(var['theme'])
         return var
 
     def page_hook_pre(self, basename):
@@ -224,27 +226,65 @@ class Builder(Service):
         html = TPL_PAGE_KEY.render(var=var)
         self.log.debug("PageKey[%s]:\n%s", key, html)
         return html
+    
+    def transform(self, content, var):
+        """Transform output document HTML source code.
+        This method can be overwriten by custom themes.
+        """
+        self.log.debug("[BUILD] - Page[%s] - No transformation invoked", var['basename_html'])
+        return content, var
         
-    def build_page(self, future):
+    def build_page(self, adoc):
         """
         Build the final HTML Page
 
         At this point, the Builder receives an HTML page but without
         header/footer. Then, it finishes the page.
         """
+        basename_adoc = os.path.basename(adoc)
+        htmldoc = adoc.replace('.adoc', '.html')
+        basename_html = basename_adoc.replace('.adoc', '.html')
+        
+        if not os.path.exists(htmldoc):
+            self.log.error("[BUILD] - Source[%s] not converted to HTML properly", basename_adoc)
+        else:
+            self.log.debug("[BUILD] - Page[%s] transformation started", basename_html)
+            THEME_ID = self.srvbes.get_theme_property('id')
+            HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+            HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
+            HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
+            HTML_FOOTER = self.template('HTML_FOOTER')
+            now = datetime.now()
+            timestamp = get_human_datetime(now)            
+            keys = get_asciidoctor_attributes(adoc)        
+            var = self.get_mako_var()
+            var['keys'] = keys
+            var['title'] = ', '.join(keys['Title'])
+            var['menu_contents'] = ""
+            var['basename'] = basename_adoc
+            var['basename_html'] = basename_html
+            var['meta_section'] = ""
+            var['source_code'] = ""
+            var['timestamp'] = timestamp
+            
+            HTML = ""
+            content = open(htmldoc, 'r').read()
+            BODY, var = self.transform(content, var)
+            HEADER = HTML_HEADER_COMMON.render(var=var)
+            FOOTER = HTML_FOOTER.render(var=var)
+            
+            HTML += HEADER
+            HTML += BODY
+            HTML += FOOTER
+            
+            with open(htmldoc, 'w') as fhtml:
+                fhtml.write(HTML)
+            self.log.debug("[BUILD] - Page[%s] transformation finished", basename_html)
+        return 
 
-        time.sleep(random.random())
-        x = future.result()
+            
 
-        return x
 
-        # ~ THEME_ID = self.srvbes.get_theme_property('id')
-        # ~ HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-        # ~ HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
-        # ~ HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
-        # ~ HTML_FOOTER = self.template('HTML_FOOTER')
-        # ~ now = datetime.now()
-        # ~ timestamp = get_human_datetime(now)
 
         cur_thread = threading.current_thread().name
         if cur_thread != x:

@@ -15,9 +15,12 @@ from os.path import abspath
 import sys
 import glob
 import json
+import time
+import random
 import shutil
 import tempfile
 import datetime
+import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
@@ -88,7 +91,7 @@ class Backend(Service):
         """Every doc converted into a page must be added to the target list."""
         self.runtime['docs']['target'].add(filename)
 
-    def get_runtime_properties(self):
+    def get_runtime(self):
         """Get all properties."""
         return self.runtime
 
@@ -390,18 +393,19 @@ class Backend(Service):
             COMPILE_KEY = COMPILE_KEY or FORCE_ALL
             K_PATH.append((key, values, COMPILE_KEY))
             self.log.debug("[PROCESSING] - KEY[%s] Compile? %s", key, COMPILE_KEY)
-
-        # To compile or not to compile :)
+        self.runtime['K_PATH'] = K_PATH
+        self.runtime['KV_PATH'] = KV_PATH
+        
         # # Keys
-        # ~ for kpath in K_PATH:
-            # ~ key, values, COMPILE_KEY = kpath
-            # ~ docname = "%s.adoc" % valid_filename(key)
-            # ~ if COMPILE_KEY:
-                # ~ fpath = os.path.join(self.runtime['dir']['tmp'], docname)
-                # ~ html = self.srvthm.create_page_key(key, values)
-                # ~ with open(fpath, 'w') as fkey:
-                    # ~ fkey.write(html)
-            # ~ self.add_target(docname.replace('.adoc', '.html'))
+        for kpath in K_PATH:
+            key, values, COMPILE_KEY = kpath
+            docname = "%s.adoc" % valid_filename(key)
+            if COMPILE_KEY:
+                fpath = os.path.join(self.runtime['dir']['tmp'], docname)
+                html = self.srvthm.create_page_key(key, values)
+                with open(fpath, 'w') as fkey:
+                    fkey.write(html)
+            self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
         # ~ for kvpath in KV_PATH:
@@ -481,10 +485,12 @@ class Backend(Service):
                             COMPILE = False
 
                 if COMPILE or self.parameters.FORCE:
-                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                    job = exe.submit(exec_cmd, (doc, cmd, num))
-                    job.add_done_callback(self.srvthm.build_page)
+                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)                    
+                    # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
+                    data = (doc, cmd, num)
                     self.log.debug("[COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
+                    job = exe.submit(self.compilation_started, data)
+                    job.add_done_callback(self.compilation_finished)                    
                     jobs.append(job)
                     num = num + 1
                 else:
@@ -514,6 +520,23 @@ class Backend(Service):
                 self.log.info("[COMPILATION] - End")
             else:
                 self.log.debug("[COMPILATION] - Nothing to do.")
+
+    def compilation_started(self, data):
+        (doc, cmd, num) = data
+        basename = os.path.basename(doc)        
+        res = exec_cmd(data)
+        return res
+
+    def compilation_finished(self, future):
+        time.sleep(random.random())
+        cur_thread = threading.current_thread().name
+        x = future.result()
+        if cur_thread != x:
+            adoc, rc, num = x
+            basename = os.path.basename(adoc)
+            # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
+            self.srvthm.build_page(adoc)
+            return x
 
     def stage_07_clean_target(self):
         """Clean up stage."""

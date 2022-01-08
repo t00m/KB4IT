@@ -1,7 +1,7 @@
 {
-    "id": "default",
-    "name": "Default",
-    "description": "Default theme for KB4IT",
+    "id": "uikit",
+    "name": "Theme based on UIKit",
+    "description": "Simple theme based on UIKit toolkit ",
     "version": "0.0.1",
-    "kb4it": "0.7.4"
+    "kb4it": "0.8"
 }
