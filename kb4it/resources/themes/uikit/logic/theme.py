@@ -52,7 +52,7 @@ class Theme(Builder):
         content = content.replace(tpl('HTML_TAG_H2_ADOC'), tpl('HTML_TAG_H2_NEW'))
         content = content.replace(tpl('HTML_TAG_H3_ADOC'), tpl('HTML_TAG_H3_NEW'))
         content = content.replace(tpl('HTML_TAG_H4_ADOC'), tpl('HTML_TAG_H4_NEW'))
-        content = content.replace(tpl('HTML_TAG_TABLE_ADOC'), tpl('HTML_TAG_TABLE_NEW'))        
+        content = content.replace(tpl('HTML_TAG_TABLE_ADOC'), tpl('HTML_TAG_TABLE_NEW'))
         content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_NOTE_ADOC'), tpl('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
         content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_TIP_ADOC'), tpl('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
         content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_ADOC'), tpl('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
@@ -61,7 +61,7 @@ class Theme(Builder):
         content = content.replace(tpl('HTML_TAG_ADMONITION_ADOC'), tpl('HTML_TAG_ADMONITION_NEW'))
         content = content.replace(tpl('HTML_TAG_IMG_ADOC'), tpl('HTML_TAG_IMG_NEW'))
         return content, var
-        
+
     def transform(self, content, var):
         # ~ content, var = self.highlight_metadata_section(content, var)
         content, var = self.apply_transformations(content, var)
@@ -94,13 +94,31 @@ class Theme(Builder):
         # ~ self.log.debug("HTML PageKey[%s]:\n%s", key, html)
         return html
 
+    def create_page_index(self, var):
+        """Create key page."""
+        var['title'] = 'Index'
+        var['menu_contents'] = ''
+        var['basename'] = ''
+        var['meta_section'] = ''
+        var['source_code'] = ''
+        var['timestamp'] = ''
+        TPL_PAGE_HEADER = self.template('HTML_HEADER_COMMON')
+        TPL_PAGE_FOOTER  = self.template('HTML_FOOTER')
+        TPL_PAGE_INDEX = self.template('PAGE_INDEX')
+        head = TPL_PAGE_HEADER.render(var=var)
+        body = TPL_PAGE_INDEX.render(var=var)
+        foot = TPL_PAGE_FOOTER.render(var=var)
+        page = head + body + foot
+        self.distribute_html('index', page)
+
     def build(self):
         """Create standard pages for default theme"""
+        var = self.get_theme_var()
         self.log.debug("This is the default theme")
         # ~ self.create_page_properties()
         # ~ self.create_page_stats()
         # ~ self.create_page_index_all()
-        # ~ self.create_page_index()
+        self.create_page_index(var)
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
         # ~ self.create_page_about_kb4it()

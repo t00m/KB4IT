@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-    <title>KB4IT - ${var['title'][0]}</title>
+    <title>KB4IT - ${var['title']}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -14,6 +14,27 @@
     <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/custom.css" />
     <script src="${var['theme']['path']}/framework/uikit/js/uikit.min.js"></script>
     <script src="${var['theme']['path']}/framework/uikit/js/uikit-icons.min.js"></script>
+    <script src="${var['theme']['path']}/framework/datatables/js/jquery-3.5.1.js"></script>
+    <script src="${var['theme']['path']}/framework/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="${var['theme']['path']}/framework/datatables/js/dataTables.uikit.min.js"></script>
+    <script type="text/javascript" class="init">
+        $(document).ready(function() {
+            $('#kb4it-datatable').DataTable( {
+                //~ "dom": '<"top"i>rt<"bottom"flp><"clear">',
+                serverSide: false,
+                ordering: true,
+                searching: true,
+                //~ data:           data,
+                deferRender:    true,
+                scrollY:        450,
+                scrollCollapse: true,
+                scroller:       true,
+                stateSave: false,
+                paging:   true,
+                info:     true
+            } );
+        } );
+    </script>
 </head>
 <body>
 <div>
@@ -121,3 +142,5 @@ ${var['meta_section']}
     </div>
 </div>
 <div class="uk-container uk-container-center">
+<div class="uk-container">
+</div>

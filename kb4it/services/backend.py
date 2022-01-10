@@ -35,7 +35,7 @@ from kb4it.core.util import string_timestamp
 
 
 class Backend(Service):
-    """Backend class for managing the main logic workflow. 
+    """Backend class for managing the main logic workflow.
     """
     running = False
     parameters = None
@@ -345,6 +345,9 @@ class Backend(Service):
         self.log.info("[PREPROCESSING] - Stats - Keep: %d - Compile: %d", keep_docs, compile_docs)
         self.log.info("[PREPROCESSING] - End")
 
+    def get_kb_dict(self):
+        return self.kbdict_new
+
     def get_kbdict_value(self, key, value, new=True):
         """
         Get a value for a given key from KB dictionary.
@@ -395,7 +398,7 @@ class Backend(Service):
             self.log.debug("[PROCESSING] - KEY[%s] Compile? %s", key, COMPILE_KEY)
         self.runtime['K_PATH'] = K_PATH
         self.runtime['KV_PATH'] = KV_PATH
-        
+
         # # Keys
         for kpath in K_PATH:
             key, values, COMPILE_KEY = kpath
@@ -438,7 +441,7 @@ class Backend(Service):
         self.log.debug("[PROCESSING] - End processing theme")
         self.log.info("[PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.info("[PROCESSING] - End")
-        
+
 
 
     def stage_05_compilation(self):
@@ -485,12 +488,12 @@ class Backend(Service):
                             COMPILE = False
 
                 if COMPILE or self.parameters.FORCE:
-                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)                    
+                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
                     self.log.debug("[COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
                     job = exe.submit(self.compilation_started, data)
-                    job.add_done_callback(self.compilation_finished)                    
+                    job.add_done_callback(self.compilation_finished)
                     jobs.append(job)
                     num = num + 1
                 else:
@@ -523,7 +526,7 @@ class Backend(Service):
 
     def compilation_started(self, data):
         (doc, cmd, num) = data
-        basename = os.path.basename(doc)        
+        basename = os.path.basename(doc)
         res = exec_cmd(data)
         return res
 

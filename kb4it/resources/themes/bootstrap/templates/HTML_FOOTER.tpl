@@ -1,4 +1,6 @@
 <!-- FOOTER :: START -->
+<div class="uk-container">
+</div>
 <!-- Bootstrap core JavaScript-->
 <!--
 <script src="${var['theme']['path']}/framework/DataTables/jQuery-3.6.0/jquery-3.6.0.min.js"></script>

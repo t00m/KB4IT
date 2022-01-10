@@ -45,6 +45,7 @@ class Builder(Service):
     backend = None
     temp_sources = []
     distributed = None
+    theme_var = {}
 
     def initialize(self):
         """Initialize Builder class."""
@@ -146,18 +147,17 @@ class Builder(Service):
                 except FileNotFoundError as error:
                     TEMPLATES[template] = Template("")
                     self.log.warning("[TEMPLATES] - Template[%s] not found. Returning empty template!", template)
-                
+
             return TEMPLATES[template]
 
     def render_template(self, name):
         tpl = self.template(name)
         return tpl.render()
 
-    def get_mako_var(self):
-        var = {}
-        var['theme'] = self.srvbes.get_theme_properties()
-        # ~ self.log.debug(var['theme'])
-        return var
+    def get_theme_var(self):
+        self.theme_var['theme'] = self.srvbes.get_theme_properties()
+        self.theme_var['kbdict'] = self.srvbes.get_kb_dict()
+        return self.theme_var
 
     def page_hook_pre(self, basename):
         """ Insert html code before the content.
@@ -178,7 +178,7 @@ class Builder(Service):
         items = []
         lines = source.split('\n')
         s = e = n = 0
-        var = self.get_mako_var()
+        var = self.get_theme_var()
         TOC_LI_TOP = self.template('HTML_TOC_LI')
         TOC_SECTLEVEL1 = self.template('HTML_TOC_SECTLEVEL1')
         TOC_SECTLEVEL2 = self.template('HTML_TOC_SECTLEVEL2')
@@ -226,14 +226,14 @@ class Builder(Service):
         html = TPL_PAGE_KEY.render(var=var)
         self.log.debug("PageKey[%s]:\n%s", key, html)
         return html
-    
+
     def transform(self, content, var):
         """Transform output document HTML source code.
         This method can be overwriten by custom themes.
         """
         self.log.debug("[BUILD] - Page[%s] - No transformation invoked", var['basename_html'])
         return content, var
-        
+
     def build_page(self, adoc):
         """
         Build the final HTML Page
@@ -244,7 +244,7 @@ class Builder(Service):
         basename_adoc = os.path.basename(adoc)
         htmldoc = adoc.replace('.adoc', '.html')
         basename_html = basename_adoc.replace('.adoc', '.html')
-        
+
         if not os.path.exists(htmldoc):
             self.log.error("[BUILD] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
@@ -255,9 +255,9 @@ class Builder(Service):
             HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
             HTML_FOOTER = self.template('HTML_FOOTER')
             now = datetime.now()
-            timestamp = get_human_datetime(now)            
-            keys = get_asciidoctor_attributes(adoc)        
-            var = self.get_mako_var()
+            timestamp = get_human_datetime(now)
+            keys = get_asciidoctor_attributes(adoc)
+            var = self.get_theme_var()
             var['keys'] = keys
             var['title'] = ', '.join(keys['Title'])
             var['menu_contents'] = ""
@@ -266,23 +266,23 @@ class Builder(Service):
             var['meta_section'] = ""
             var['source_code'] = ""
             var['timestamp'] = timestamp
-            
+
             HTML = ""
             content = open(htmldoc, 'r').read()
             BODY, var = self.transform(content, var)
             HEADER = HTML_HEADER_COMMON.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
-            
+
             HTML += HEADER
             HTML += BODY
             HTML += FOOTER
-            
+
             with open(htmldoc, 'w') as fhtml:
                 fhtml.write(HTML)
             self.log.debug("[BUILD] - Page[%s] transformation finished", basename_html)
-        return 
+        return
 
-            
+
 
 
 
@@ -294,7 +294,7 @@ class Builder(Service):
             htmldoc = adoc.replace('.adoc', '.html')
             basename = os.path.basename(adoc)
             if os.path.exists(htmldoc):
-                var = self.get_mako_var()
+                var = self.get_theme_var()
                 var['page'] = {}
                 try:
                     adoc_title = open(adoc).readlines()[0]
