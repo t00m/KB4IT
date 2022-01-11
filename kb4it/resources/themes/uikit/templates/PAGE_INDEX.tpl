@@ -1,5 +1,5 @@
 <div class ="uk-container uk-overflow-auto">
-    <table id="kb4it-datatable" class="uk-table uk-table-hover uk-table-striped" style="width:100%">
+    <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">
         <thead>
             <tr>
                 <th><span class="uk-text-bold">Document</span></th>
@@ -11,25 +11,33 @@
             </tr>
         </thead>
         <tbody>
-
             % for item in var['kbdict']['document']:
                 <%
                     from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
+                    def get_key_value(var, item, key):
+                        try:
+                            return var['kbdict']['document'][item][key]
+                        except:
+                            return ''
+                            
                     title = var['kbdict']['document'][item]['Title'][0]
-                    team = ', '.join(var['kbdict']['document'][item]['Team'])
-                    title_url = """<a class="uk-link" href="%s">%s</a>""" % (item.replace('.adoc', '.html'), title)
-                    published = var['kbdict']['document'][item]['Published'][0]
-                    author = ', '.join(var['kbdict']['document'][item]['Author'])
-                    category = ', '.join(var['kbdict']['document'][item]['Category'])
-                    scope = ', '.join(var['kbdict']['document'][item]['Scope'])
+                    team = ', '.join(get_key_value(var, item, 'Team'))                    
+                    title_url = item.replace('.adoc', '.html')
+                    try:
+                        published = var['kbdict']['document'][item]['Published'][0][0:10]
+                    except:
+                        published = ''
+                    author = ', '.join(get_key_value(var, item, 'Author'))    
+                    category = ', '.join(get_key_value(var, item, 'Category'))    
+                    scope = ', '.join(get_key_value(var, item, 'Scope'))    
                 %>
                 <tr>
-                    <td class="uk-text-meta">${title_url}</td>
-                    <td class="uk-text-meta">${team}</td>
-                    <td class="uk-text-meta uk-table-expand">${published}</td>
-                    <td class="uk-text-meta">${author}</td>
-                    <td class="uk-text-meta">${category}</td>
-                    <td class="uk-text-meta">${scope}</td>
+                    <td><a class="uk-link-toggle" href="${title_url}"><span class="uk-text-small uk-text-truncate">${title}</span></a></td>
+                    <td><a class="uk-link-toggle" href="#"><span class="uk-text-small">${team}</span></a></td>
+                    <td><a class="uk-link-toggle" href="#"><span class="uk-text-small">${published}</span></a></td>
+                    <td><a class="uk-link-toggle" href="#"><span class="uk-text-small">${author}</span></a></td>
+                    <td><a class="uk-link-toggle" href="#"><span class="uk-text-small">${category}</span></a></td>
+                    <td><a class="uk-link-toggle" href="#"><span class="uk-text-small">${scope}</span></a></td>
                 </tr>
             % endfor
         </tbody>

@@ -37,13 +37,12 @@
     </script>
 </head>
 <body class="">
-<div class="container-fluid">
+<div class="container-lg">
     <div class="vstack gap-3">
-      <div class="collapse bg-light border" id="navbarToggleExternalContent">
-
-        <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+      <div class="bg-light border" id="navbarToggleExternalContent"> <!-- 1st -->
+       <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
           <div class="container-fluid">
-            <a class="navbar-brand" href="#">Navbar</a>
+                <a class="navbar-brand" href="#"><img src="${var['theme']['path']}/images/logo.png" class="hover-shadow hover-zoom"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
@@ -76,19 +75,9 @@
               </form>
             </div>
           </div>
-        </nav>
-
+       </nav> 
       </div>
-
-        <nav class="navbar navbar-dark bg-dark">
-          <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="true" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-          </div>
-        </nav>
-
-      <div class="bg-light border">
+      <div class="bg-light border"> <!-- 2nd -->
         <div class="accordion" id="accordionExample">
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
@@ -138,6 +127,6 @@
           </div>
         </div>
       </div>
-      <div class="bg-light border">Third item</div>
+      <div class="bg-light border">Third item</div> <!-- 3rd -->
     </div>
 </div>

@@ -20,18 +20,18 @@
     <script type="text/javascript" class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {
-                //~ "dom": '<"top"i>rt<"bottom"flp><"clear">',
+                dom: 'BPQrftp',
                 serverSide: false,
                 ordering: true,
                 searching: true,
                 //~ data:           data,
                 deferRender:    true,
-                scrollY:        450,
-                scrollCollapse: true,
-                scroller:       true,
+                scrollY:        400,
+                scrollCollapse: false,
+                scroller:       false,
                 stateSave: false,
                 paging:   true,
-                info:     true
+                info:     false
             } );
         } );
     </script>
