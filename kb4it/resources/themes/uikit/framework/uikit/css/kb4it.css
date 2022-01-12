@@ -20,6 +20,10 @@ pre {
     margin: 10px;
 }*/
 
+body {
+    overflow-y: scroll; /* Show vertical scrollbar */
+}
+
 pre {
     padding: 10px;
     overflow: auto;

@@ -1,3 +1,6 @@
+= Index
+
+++++
 <div class ="uk-container uk-overflow-auto">
     <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">
         <thead>
@@ -53,3 +56,4 @@
         </tfoot>
     </table>
 </div>
+++++

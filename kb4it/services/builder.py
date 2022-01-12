@@ -69,7 +69,7 @@ class Builder(Service):
         self.srvdtb = self.get_service('DB')
         self.srvbes = self.get_service('Backend')
 
-    def distribute(self, name, content):
+    def distribute_adoc(self, name, content):
         """
         Distribute source file to temporary directory.
 
@@ -387,6 +387,121 @@ class Builder(Service):
                 os.remove(htmldoctmp)
                 return x
 
+    def create_page_properties(self):
+        """Create properties page"""
+        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
+        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
+        max_frequency = self.get_maxkv_freq()
+        all_keys = self.srvdtb.get_all_keys()
+        custom_buttons = ''
+        var = {}
+        var['buttons'] = []
+        for key in all_keys:
+            ignored_keys = self.srvdtb.get_ignored_keys()
+            if key not in ignored_keys:
+                vbtn = {}
+                vbtn['content'] = self.create_tagcloud_from_key(key)
+                values = self.srvdtb.get_all_values_for_key(key)
+                frequency = len(values)
+                size = get_font_size(frequency, max_frequency)
+                proportion = int(math.log((frequency * 100) / max_frequency))
+                vbtn['key'] = key
+                vbtn['vfkey'] = valid_filename(key)
+                vbtn['size'] = size
+                vbtn['tooltip'] = "%d values" % len(values)
+                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn) # % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
+                var['buttons'].append(button)
+        content = TPL_PROPS_PAGE.render(var=var)
+        # ~ print(content)
+        self.distribute_adoc('properties', content)
+
+    def create_tagcloud_from_key(self, key):
+        """Create a tag cloud based on key values."""
+        dkeyurl = {}
+        for doc in self.srvdtb.get_documents():
+            tags = self.srvdtb.get_values(doc, key)
+            url = os.path.basename(doc)[:-5]
+            for tag in tags:
+                try:
+                    urllist = dkeyurl[tag]
+                    surllist = set(urllist)
+                    surllist.add(url)
+                    dkeyurl[tag] = list(surllist)
+                except KeyError:
+                    surllist = set()
+                    surllist.add(url)
+                    dkeyurl[tag] = list(surllist)
+
+        max_frequency = set_max_frequency(dkeyurl)
+        lwords = []
+
+        for word in dkeyurl:
+            len_word = len(word)
+            if len_word > 0:
+                lwords.append(word)
+
+        len_words = len(lwords)
+        if len_words > 0:
+            lwords.sort(key=lambda y: y.lower())
+            TPL_WORDCLOUD = self.template('WORDCLOUD')
+            var = {}
+            var['items'] = []
+            # ~ html_items = ''
+            for word in lwords:
+                frequency = len(dkeyurl[word])
+                size = get_font_size(frequency, max_frequency)
+                url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
+                tooltip = "%d documents" % frequency
+                item = {}
+                item['url'] = url
+                item['tooltip'] = tooltip
+                item['size'] = size
+                item['word'] = word
+                var['items'].append(item)
+            html = TPL_WORDCLOUD.render(var=var)
+        else:
+            html = ''
+
+        return html
+
+    def get_maxkv_freq(self):
+        """Calculate max frequency for all keys"""
+        maxkvfreq = 0
+        all_keys = self.srvdtb.get_all_keys()
+        for key in all_keys:
+            blocked_keys = self.srvdtb.get_blocked_keys()
+            if key not in blocked_keys:
+                values = self.srvdtb.get_all_values_for_key(key)
+                if len(values) > maxkvfreq:
+                    maxkvfreq = len(values)
+        return maxkvfreq
+
+    def create_page_stats(self):
+        """Create stats page"""
+        TPL_PAGE_STATS = self.template('PAGE_STATS')
+        var = {}
+        var['count_docs'] = self.srvbes.get_numdocs()
+        keys = self.srvdtb.get_all_keys()
+        var['count_keys'] = len(keys)
+        var['leader_items'] = []
+        for key in keys:
+            values = self.srvdtb.get_all_values_for_key(key)
+            item = {}
+            item['key'] = key
+            item['vfkey'] = valid_filename(key)
+            item['count_values'] = len(values)
+            var['leader_items'].append(item)
+        stats = TPL_PAGE_STATS.render(var=var)
+        self.distribute_adoc('stats', stats)
+
+    def create_page_index_all(self):
+        """Create a page with all documents"""
+        doclist = self.srvdtb.get_documents()
+        TPL_PAGE_ALL = self.template('PAGE_ALL')
+        var = self.get_theme_var()        
+        page = TPL_PAGE_ALL.render(var=var)
+        self.distribute_adoc('all', page)
+        
     def generate_sources(self):
         """Custom themes can use this method to generate source documents"""
         pass

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/uikit.min.css" />
     <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/coderay-asciidoctor.css" />
     <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/custom.css" />
+    <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/kb4it.css" />
     <script src="${var['theme']['path']}/framework/uikit/js/uikit.min.js"></script>
     <script src="${var['theme']['path']}/framework/uikit/js/uikit-icons.min.js"></script>
     <script src="${var['theme']['path']}/framework/datatables/js/jquery-3.5.1.js"></script>

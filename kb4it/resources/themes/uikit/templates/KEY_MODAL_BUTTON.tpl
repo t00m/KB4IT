@@ -4,7 +4,7 @@
             <a class="uk-link-heading" href="#modal-full-${var['vfkey']}" uk-tooltip="${var['tooltip']}" uk-toggle><span style="font-size:${var['size']}pt;">${var['key']}</span></a>
             <div id="modal-full-${var['vfkey']}" class="uk-modal-container" uk-modal>
                 <div class="uk-modal-dialog" uk-overflow-auto>
-                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary" type="button" uk-close></button>
+                    <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary uk-border-rounded" type="button" uk-close></button>
                     <div class="uk-modal-header uk-light uk-background-secondary">
                         <h2 class="uk-modal-title"><a href="${var['vfkey']}.html">${var['key']}</a></h2>
                     </div>
