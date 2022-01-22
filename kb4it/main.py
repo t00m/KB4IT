@@ -158,7 +158,10 @@ class KB4IT:
                 else:
                     self.log.warning("[CONTROLLER] - KB4IT environment NOT reset. You must force it!")
             else:
-                backend.run()
+                try:
+                    backend.run()
+                except Exception as error:
+                    pass
                 self.stop()
         else:
             if self.params.LIST_THEMES:

@@ -97,13 +97,16 @@ class Frontend(Service):
             sys.exit(-1)
 
         # load theme configuration
-        with open(theme_conf, 'r') as fth:
-            theme = json.load(fth)
-            for prop in theme:
-                self.runtime['theme'][prop] = theme[prop]
-        self.log.debug("[THEME] - Name: %s" % self.runtime['theme']['name'])
-
-        self.log.debug("[THEME] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+        try:
+            with open(theme_conf, 'r') as fth:
+                theme = json.load(fth)
+                for prop in theme:
+                    self.runtime['theme'][prop] = theme[prop]
+            self.log.debug("[THEME] - Name: %s" % self.runtime['theme']['name'])
+            self.log.debug("[THEME] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+        except:
+            self.log.error("[THEME] - Theme configuration file not valid: %s", theme_conf)
+            return
 
         # Get theme directories
         self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
@@ -116,8 +119,8 @@ class Frontend(Service):
         try:
             ignored_keys = self.runtime['theme']['ignored_keys']
             for key in ignored_keys:
-                self.log.debug("[THEME] - Ignored key(s) defined by this theme: %s", key)
                 self.srvdtb.ignore_key(key)
+            self.log.debug("[THEME] - Ignored keys defined by this theme: %s", ', '.join(ignored_keys))
         except KeyError:
             self.log.debug("[THEME] - No ignored_keys defined in this theme")
 

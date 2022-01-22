@@ -13,7 +13,6 @@ import os
 import sys
 import math
 import shutil
-
 from datetime import datetime
 try:
     import html5lib
@@ -45,7 +44,6 @@ class Builder(Service):
     backend = None
     temp_sources = []
     distributed = None
-    theme_var = {}
 
     def initialize(self):
         """Initialize Builder class."""
@@ -87,15 +85,29 @@ class Builder(Service):
         self.srvbes.add_target(PAGE_NAME.replace('.adoc', '.html'))
         self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
 
-    def distribute_html(self, name, content):
+    def distribute_html(self, name, content, var):
         """
         Distribute html file to the temporary directory.
         """
+        var['menu_contents'] = ''
+        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
+        HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
+        HTML_FOOTER = self.template('HTML_FOOTER')
+
+        HTML = ""
+        HEADER = HTML_HEADER_COMMON.render(var=var)
+        FOOTER = HTML_FOOTER.render(var=var)
+
+        HTML += HEADER
+        HTML += content
+        HTML += FOOTER
+
         PAGE_NAME = "%s.html" % name
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
-                fpag.write(content)
+                fpag.write(HTML)
             except Exception as error:
                 self.log.error("[DISTRIBUTE] - %s", error)
         self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
@@ -153,11 +165,12 @@ class Builder(Service):
     def render_template(self, name):
         tpl = self.template(name)
         return tpl.render()
-
+        
     def get_theme_var(self):
-        self.theme_var['theme'] = self.srvbes.get_theme_properties()
-        self.theme_var['kbdict'] = self.srvbes.get_kb_dict()
-        return self.theme_var
+        var = {}
+        var['theme'] = self.srvbes.get_theme_properties()
+        var['kbdict'] = self.srvbes.get_kb_dict()
+        return var
 
     def page_hook_pre(self, basename):
         """ Insert html code before the content.
@@ -178,7 +191,7 @@ class Builder(Service):
         items = []
         lines = source.split('\n')
         s = e = n = 0
-        var = self.get_theme_var()
+        var = {}
         TOC_LI_TOP = self.template('HTML_TOC_LI')
         TOC_SECTLEVEL1 = self.template('HTML_TOC_SECTLEVEL1')
         TOC_SECTLEVEL2 = self.template('HTML_TOC_SECTLEVEL2')
@@ -224,7 +237,7 @@ class Builder(Service):
             var['key_values'][k_value]['vfvalue'] = valid_filename(value)
             var['key_values'][k_value]['name'] = value
         html = TPL_PAGE_KEY.render(var=var)
-        self.log.debug("PageKey[%s]:\n%s", key, html)
+        # ~ self.log.debug("PageKey[%s]:\n%s", key, html)
         return html
 
     def transform(self, content, var):
@@ -238,37 +251,63 @@ class Builder(Service):
         """
         Build the final HTML Page
 
-        At this point, the Builder receives an HTML page but without
-        header/footer. Then, it finishes the page.
+        At this point, the compilation for the asciidoc document has
+        finished successfully, and therefore the html page can be built.
+        
+        The Builder receives the asciidoc document filepath. It means,
+        that another file with extension .html should also exist.
+        
+        The html page is built by inserting the html header at the 
+        beguinning, appending the footer at the end, and applying the 
+        necessary transformations.
+        
+        Finally, the html page created by asciidoctor is overwritten.
         """
+        
+        hdoc = adoc.replace('.adoc', '.html')
         basename_adoc = os.path.basename(adoc)
-        htmldoc = adoc.replace('.adoc', '.html')
-        basename_html = basename_adoc.replace('.adoc', '.html')
+        basename_hdoc = os.path.basename(hdoc)
+        exists_adoc = os.path.exists(adoc) # it should be true
+        exists_hdoc = os.path.exists(hdoc) # it should be true
 
-        if not os.path.exists(htmldoc):
+
+        if not exists_hdoc:
             self.log.error("[BUILD] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.debug("[BUILD] - Page[%s] transformation started", basename_html)
+            self.log.debug("[BUILD] - Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
             HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
             HTML_FOOTER = self.template('HTML_FOOTER')
+            var = self.get_theme_var()
             now = datetime.now()
             timestamp = get_human_datetime(now)
             keys = get_asciidoctor_attributes(adoc)
-            var = self.get_theme_var()
+            source = open(hdoc, 'r').read()
+            toc = self.extract_toc(source)
+            var['toc'] = toc
+            if len(toc) > 0:
+                var['has_toc'] = True
+                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
+                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
+            else:
+                var['has_toc'] = False
+                TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
+                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
+            self.log.debug("HTML_TOC: %s", HTML_TOC)
+            var['menu_contents'] = HTML_TOC
             var['keys'] = keys
             var['title'] = ', '.join(keys['Title'])
-            var['menu_contents'] = ""
             var['basename'] = basename_adoc
-            var['basename_html'] = basename_html
+            var['basename_hdoc'] = basename_hdoc
             var['meta_section'] = ""
             var['source_code'] = ""
             var['timestamp'] = timestamp
+            self.log.debug("has_toc[%s]? %s", basename_hdoc, var['has_toc'])
 
             HTML = ""
-            content = open(htmldoc, 'r').read()
+            content = open(hdoc, 'r').read()
             BODY, var = self.transform(content, var)
             HEADER = HTML_HEADER_COMMON.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
@@ -277,115 +316,9 @@ class Builder(Service):
             HTML += BODY
             HTML += FOOTER
 
-            with open(htmldoc, 'w') as fhtml:
+            with open(hdoc, 'w') as fhtml:
                 fhtml.write(HTML)
-            self.log.debug("[BUILD] - Page[%s] transformation finished", basename_html)
-        return
-
-
-
-
-
-        cur_thread = threading.current_thread().name
-        if cur_thread != x:
-            adoc, rc, j = x
-            self.log.debug("[BUILD] - Received[%s]", adoc)
-            # Add header and footer to compiled doc
-            htmldoc = adoc.replace('.adoc', '.html')
-            basename = os.path.basename(adoc)
-            if os.path.exists(htmldoc):
-                var = self.get_theme_var()
-                var['page'] = {}
-                try:
-                    adoc_title = open(adoc).readlines()[0]
-                except Exception as error:
-                    self.log.error("[BUILD] - %s => %s", adoc, error)
-                    return x
-
-                title = adoc_title[2:-1]
-                var['page']['title'] = title
-                var['page']['source_adoc'] = adoc
-                var['page']['source_html'] = htmldoc
-                htmldoctmp = "%s.tmp" % htmldoc
-                shutil.move(htmldoc, htmldoctmp)
-                source = open(htmldoctmp, 'r').read()
-                toc = self.extract_toc(source)
-                content = self.apply_transformations(source)
-                try:
-                    if 'Metadata' in content:
-                        content = self.highlight_metadata_section(content)
-                except NameError as error:
-                    # FIXME
-                    # Sometimes, weird links in asciidoctor sources
-                    # provoke compilation errors
-                    self.log.error("[BUILDER] - ERROR!! Please, check source document '%s'.", basename)
-                    self.log.error("[BUILDER] - ERROR!! It didn't compile successfully. Usually, it is because of malformed urls.")
-                finally:
-                    # Some pages don't have toc section. Ignore it.
-                    pass
-
-                with open(htmldoc, 'w') as fhtm:
-                    len_toc = len(toc)
-                    if len_toc > 0:
-                        var['page']['toc'] = toc
-                        var['page']['is_document'] = True
-                        var['content'] = toc
-                        properties = self.srvdtb.get_doc_properties(basename)
-                        var['page']['properties'] = properties
-                        TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-                        HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                    else:
-                        var['page']['toc'] = ''
-                        var['page']['is_document'] = False
-                        var['page']['properties'] = {}
-                        TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-                        HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
-
-                    userdoc = os.path.join(os.path.join(self.srvbes.get_source_path(), basename))
-
-                    var['title'] = title
-                    var['menu_contents'] = HTML_TOC
-                    var['basename'] = basename
-                    var['timestamp'] = timestamp
-
-                    HTML_SRC = "" # HTML Source Code
-                    # Write page header
-                    if os.path.exists(userdoc):
-                        source_code = open(userdoc, 'r').read()
-                        var['source_code'] = source_code
-                        self.srvthm = self.get_service('Theme')
-                        meta_section = self.srvthm.create_metadata_section(basename)
-                        var['meta_section'] = meta_section
-                        HEADER = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_DOC.render(var=var)
-                        # ~ fhtm.write(PAGE)
-                    else:
-                        HEADER = HTML_HEADER_COMMON.render(var=var) + HTML_HEADER_NODOC.render(var=var)
-                        # ~ fhtm.write(PAGE)
-                    HTML_SRC += HEADER
-
-                    # Insert pre & post hooks content
-                    BODY = self.page_hook_pre(var) + content
-                    BODY = BODY + self.page_hook_post(var)
-                    HTML_SRC += BODY
-
-                    # Write content
-                    # ~ fhtm.write(content)
-
-                    # Write page footer
-                    FOOTER = HTML_FOOTER.render(var=var)
-                    HTML_SRC += FOOTER
-
-                    # Prettify code?
-                    if TIDY:
-                        soup = bs(HTML_SRC, 'html5lib')
-                        HTML_SRC = soup.prettify(formatter='html5')
-
-                    # Write page
-                    fhtm.write(HTML_SRC)
-                    self.log.debug("[BUILDER] - Document[%s] created successfully", basename)
-
-                os.remove(htmldoctmp)
-                return x
+            self.log.debug("[BUILD] - Page[%s] transformation finished", basename_hdoc)
 
     def create_page_properties(self):
         """Create properties page"""

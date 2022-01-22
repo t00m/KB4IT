@@ -195,26 +195,25 @@ class Backend(Service):
         """
         self.log.info("[PREPROCESSING] - Start")
 
-        def clean_cache():
-            missing = []
-            try:
-                for docname in self.kbdict_cur['document']:
-                    docpath = os.path.join(self.get_source_path(), docname)
-                    if not os.path.exists(docpath):
-                        missing.append(docname)
-            except KeyError:
-                pass # skip
+        # Clean cache
+        missing = []
+        try:
+            for docname in self.kbdict_cur['document']:
+                docpath = os.path.join(self.get_source_path(), docname)
+                if not os.path.exists(docpath):
+                    missing.append(docname)
+        except KeyError:
+            pass # skip
 
-            if len(missing) == 0:
-                self.log.debug("[PREPROCESSING] - Cache is empty")
-
+        if len(missing) == 0:
+            self.log.debug("[PREPROCESSING] - Cache is empty")
+        else:
             for docname in missing:
                 docname = docname.replace('.adoc', '')
                 self.delete_document(docname)
-            self.log.debug("[PREPROCESSING] - Clean up cache")
+            self.log.debug("[PREPROCESSING] - Cache cleaned up")
 
-        clean_cache()
-        self.log.debug("Docs in bag: %s", ', '.join(self.runtime['docs']['bag']))
+        # Preprocessing 
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
 
@@ -222,7 +221,7 @@ class Backend(Service):
             docpath = os.path.join(self.get_source_path(), docname)
             keys = get_asciidoctor_attributes(docpath)
 
-            # Check if file is valid by checking Title
+            # If not document doesn't have a title, skip it.
             try:
                 keys['Title']
             except KeyError:
@@ -236,21 +235,20 @@ class Backend(Service):
             # Add a new document to the database
             self.srvdtb.add_document(docname)
 
-            # Get datetime timestamp from filesystem and add it as
-            # attribute
+            # Get datetime timestamp from filesystem and add it as attribute
             timestamp = file_timestamp(source)
             self.srvdtb.add_document_key(docname, 'Timestamp', timestamp)
 
             # Get content
             with open(source) as source_adoc:
-                srcadoc = source_adoc.read()
+                content = source_adoc.read()
 
             # To track changes in a document, hashes for metadata and content are created.
             # Comparing them with those in the cache, KB4IT determines if a document must be
             # compiled again. Very useful to reduce the compilation time.
 
             # Get Document Content and Metadata Hashes
-            self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': srcadoc})
+            self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': content})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
             self.kbdict_new['document'][docname]['Timestamp'] = timestamp
 
@@ -320,7 +318,7 @@ class Backend(Service):
             self.kbdict_new['document'][docname]['compile'] = COMPILE
 
             if COMPILE:
-                newadoc = srcadoc.replace(EOHMARK, '', 1)
+                newadoc = content.replace(EOHMARK, '', 1)
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
                 with open(target, 'w') as target_adoc:
