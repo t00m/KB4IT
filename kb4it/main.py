@@ -161,7 +161,8 @@ class KB4IT:
                 try:
                     backend.run()
                 except Exception as error:
-                    pass
+                    self.log.error(error)
+                    raise
                 self.stop()
         else:
             if self.params.LIST_THEMES:

@@ -74,6 +74,7 @@ class Builder(Service):
         Use this method when the source asciidoctor file doesn't have to
         be analyzed.
         """
+        self.log.debug("[DIST-ADOC] %s", name) 
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
@@ -295,7 +296,6 @@ class Builder(Service):
                 var['has_toc'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
-            self.log.debug("HTML_TOC: %s", HTML_TOC)
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
             var['title'] = ', '.join(keys['Title'])
@@ -304,7 +304,6 @@ class Builder(Service):
             var['meta_section'] = ""
             var['source_code'] = ""
             var['timestamp'] = timestamp
-            self.log.debug("has_toc[%s]? %s", basename_hdoc, var['has_toc'])
 
             HTML = ""
             content = open(hdoc, 'r').read()
@@ -442,3 +441,15 @@ class Builder(Service):
     def generate_pages(self):
         """Custom themes can use this method to generate final pages"""
         pass
+
+    def build_page_key_value(self, var):
+        pagelist = []
+        TPL_PAGE_KEY_VALUE = self.template(var['template'])
+        adoc = TPL_PAGE_KEY_VALUE.render(var=var)
+        # ~ self.log.debug(adoc)
+        if not var['fake']:
+            self.distribute_adoc(var['basename'], adoc)
+        pagelist.append(var['basename'])
+        self.log.debug("[BUILDER] - Created page key-value '%s'", var['basename'])
+
+        return pagelist

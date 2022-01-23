@@ -90,6 +90,7 @@ class Backend(Service):
     def add_target(self, filename):
         """Every doc converted into a page must be added to the target list."""
         self.runtime['docs']['target'].add(filename)
+        self.log.debug("[TARGET] - Added page: %s", filename)
 
     def get_runtime(self):
         """Get all properties."""
@@ -409,29 +410,21 @@ class Backend(Service):
             self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
-        # ~ for kvpath in KV_PATH:
-            # ~ key, value, COMPILE_VALUE = kvpath
-            # ~ docs = self.get_kbdict_value(key, value, new=True)
-            # ~ sorted_docs = self.srvdtb.sort_by_date(docs)
-            # ~ basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-            # ~ pagination = {}
-            # ~ pagination['key'] = key
-            # ~ pagination['value'] = value
-            # ~ pagination['basename'] = basename
-            # ~ pagination['doclist'] = sorted_docs
-            # ~ pagination['title'] = None
-            # ~ pagination['function'] = 'build_cardset'
-            # ~ pagination['template'] = 'PAGE_PAGINATION_HEAD'
-            # ~ if COMPILE_VALUE:
-                # ~ pagination['fake'] = False
-                # ~ pagelist = self.srvthm.build_pagination(pagination)
-            # ~ else:
-                # ~ pagination['fake'] = True
-                # ~ pagelist = self.srvthm.build_pagination(pagination)
-
-            # ~ for page in pagelist:
-                # ~ docname = "%s.html" % page
-                # ~ self.add_target(docname.replace('.adoc', '.html'))
+        for kvpath in KV_PATH:
+            key, value, COMPILE_VALUE = kvpath
+            docs = self.get_kbdict_value(key, value, new=True)
+            sorted_docs = self.srvdtb.sort_by_date(docs)
+            basename = "%s_%s" % (valid_filename(key), valid_filename(value))
+            var = {}
+            var['key'] = key
+            var['value'] = value
+            var['title'] = '%s: %s' % (key, value)
+            var['basename'] = basename
+            var['doclist'] = sorted_docs
+            var['function'] = 'build_cardset'
+            var['template'] = 'PAGE_KEY_VALUE'
+            var['fake'] = not COMPILE_VALUE
+            pagelist = self.srvthm.build_page_key_value(var)
 
         # ~ self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
