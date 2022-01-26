@@ -87,6 +87,10 @@ class Backend(Service):
         # Get services
         self.get_services()
 
+    def get_targets(self):
+        """Get list of documents converted to pages"""
+        return self.runtime['docs']['target']
+
     def add_target(self, filename):
         """Every doc converted into a page must be added to the target list."""
         self.runtime['docs']['target'].add(filename)
@@ -404,7 +408,7 @@ class Backend(Service):
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
-                html = self.srvthm.create_page_key(key, values)
+                html = self.srvthm.build_page_key(key, values)
                 with open(fpath, 'w') as fkey:
                     fkey.write(html)
             self.add_target(docname.replace('.adoc', '.html'))
@@ -446,7 +450,8 @@ class Backend(Service):
                 adocprops += '-a %s ' % prop
         # ~ self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
-        distributed = self.srvthm.get_distributed()
+        # ~ distributed = self.srvthm.get_distributed()
+        distributed = self.get_targets()
         with Executor(max_workers=MAX_WORKERS) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
@@ -524,7 +529,8 @@ class Backend(Service):
         self.log.info("[CLEANUP] - Start")
         delete_target_contents(LPATH['DISTRIBUTED'])
         self.log.debug("[CLEANUP] - Distributed files deleted")
-        distributed = self.srvthm.get_distributed()
+        # ~ distributed = self.srvthm.get_distributed()
+        distributed = self.get_targets()
         for adoc in distributed:
             source = os.path.join(self.runtime['dir']['tmp'], adoc)
             target = LPATH['DISTRIBUTED']
@@ -673,7 +679,6 @@ class Backend(Service):
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
         self.stage_04_processing()
-        self.srvthm.generate_pages()
         self.stage_05_compilation()
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
@@ -714,3 +719,51 @@ class Backend(Service):
 
     def end(self):
         self.cleanup()
+
+
+    # ~ def distribute_html(self, name, content, var):
+        # ~ """
+        # ~ Distribute html file to the temporary directory.
+        # ~ """
+        # ~ var['menu_contents'] = ''
+        # ~ HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        # ~ HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
+        # ~ HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
+        # ~ HTML_FOOTER = self.template('HTML_FOOTER')
+
+        # ~ HTML = ""
+        # ~ HEADER = HTML_HEADER_COMMON.render(var=var)
+        # ~ FOOTER = HTML_FOOTER.render(var=var)
+
+        # ~ HTML += HEADER
+        # ~ HTML += content
+        # ~ HTML += FOOTER
+
+        # ~ PAGE_NAME = "%s.html" % name
+        # ~ PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), PAGE_NAME)
+        # ~ with open(PAGE_PATH, 'w') as fpag:
+            # ~ try:
+                # ~ fpag.write(HTML)
+            # ~ except Exception as error:
+                # ~ self.log.error("[DISTRIBUTE] - %s", error)
+        # ~ self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
+        # ~ self.srvbes.add_target(PAGE_NAME)
+        # ~ self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
+
+    # ~ def distribute_to_source(self, name, content):
+        # ~ """
+        # ~ Distribute source file to user source directory.
+        # ~ Use this method when the source asciidoctor file has to
+        # ~ be analyzed to extract its properties.
+        # ~ File path reference will be saved and deleted at the end of the
+        # ~ execution.
+        # ~ """
+        # ~ PAGE_NAME = "%s.adoc" % name
+        # ~ PAGE_PATH = os.path.join(self.srvbes.get_source_path(), PAGE_NAME)
+        # ~ self.temp_sources.append(PAGE_PATH)
+        # ~ try:
+            # ~ with open(PAGE_PATH, 'w') as fpag:
+                # ~ fpag.write(content)
+                # ~ self.log.debug("[BUILDER] - PAGE[%s] distributed to source path", name)
+        # ~ except OSError as error:
+            # ~ self.log.error(error)

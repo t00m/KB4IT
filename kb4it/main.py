@@ -142,7 +142,7 @@ class KB4IT:
         service = self.services[name]
         registered = service is not None
         started = service.is_started()
-        self.log.debug("[CONTROLLER] - Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
+        # ~ self.log.debug("[CONTROLLER] - Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
         if registered and started:
             service.end()
         service = None
