@@ -411,21 +411,8 @@ class Backend(Service):
 
         # # Keys/Values
         for kvpath in KV_PATH:
-            key, value, COMPILE_VALUE = kvpath
-            docs = self.get_kbdict_value(key, value, new=True)
-            sorted_docs = self.srvdtb.sort_by_date(docs)
-            basename = "%s_%s" % (valid_filename(key), valid_filename(value))
-            var = {}
-            var['key'] = key
-            var['value'] = value
-            var['title'] = '%s: %s' % (key, value)
-            var['basename'] = basename
-            var['doclist'] = sorted_docs
-            var['function'] = 'build_cardset'
-            var['template'] = 'PAGE_KEY_VALUE'
-            var['fake'] = not COMPILE_VALUE
-            pagelist = self.srvthm.build_page_key_value(var)
-
+            self.srvthm.build_page_key_value(kvpath)
+            
         # ~ self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
         self.srvthm.build()

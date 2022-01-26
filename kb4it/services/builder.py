@@ -38,20 +38,12 @@ TEMPLATES = {}
 
 class Builder(Service):
     """Build HTML blocks"""
-
-    tmpdir = None
-    srvdtb = None
-    backend = None
     temp_sources = []
-    distributed = None
+    distributed = {}
 
     def initialize(self):
         """Initialize Builder class."""
         self.get_services()
-        self.tmpdir = self.srvbes.get_temp_path()
-        self.srcdir = self.srvbes.get_source_path()
-        self.now = datetime.now()
-        self.distributed = {}
 
     def get_distributed(self):
         """Get a list of pages distributed"""
@@ -76,7 +68,7 @@ class Builder(Service):
         """
         self.log.debug("[DIST-ADOC] %s", name) 
         PAGE_NAME = "%s.adoc" % name
-        PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
+        PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
@@ -105,7 +97,7 @@ class Builder(Service):
         HTML += FOOTER
 
         PAGE_NAME = "%s.html" % name
-        PAGE_PATH = os.path.join(self.tmpdir, PAGE_NAME)
+        PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(HTML)
@@ -124,7 +116,7 @@ class Builder(Service):
         execution.
         """
         PAGE_NAME = "%s.adoc" % name
-        PAGE_PATH = os.path.join(self.srcdir, PAGE_NAME)
+        PAGE_PATH = os.path.join(self.srvbes.get_source_path(), PAGE_NAME)
         self.temp_sources.append(PAGE_PATH)
         try:
             with open(PAGE_PATH, 'w') as fpag:
@@ -173,17 +165,17 @@ class Builder(Service):
         var['kbdict'] = self.srvbes.get_kb_dict()
         return var
 
-    def page_hook_pre(self, basename):
+    def page_hook_pre(self, var):
         """ Insert html code before the content.
         This method can be overwriten by custom themes.
         """
-        return """<!-- Page hook pre -->"""
+        return var
 
     def page_hook_post(self, var):
         """ Insert html code after the content.
         This method can be overwriten by custom themes.
         """
-        return """<!-- Page hook post -->"""
+        return var
 
     def extract_toc(self, source):
         """Extract TOC from Asciidoctor generated HTML code and
@@ -225,8 +217,6 @@ class Builder(Service):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY_KB4IT')
         var = {}
-
-        # Title
         var['title'] = key
         var['key_values'] = {}
         for value in values:
@@ -237,8 +227,7 @@ class Builder(Service):
             var['key_values'][k_value]['vfkey'] = valid_filename(key)
             var['key_values'][k_value]['vfvalue'] = valid_filename(value)
             var['key_values'][k_value]['name'] = value
-        html = TPL_PAGE_KEY.render(var=var)
-        # ~ self.log.debug("PageKey[%s]:\n%s", key, html)
+        html = TPL_PAGE_KEY.render(var=var)        
         return html
 
     def transform(self, content, var):
@@ -280,6 +269,7 @@ class Builder(Service):
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
             HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
+            HTML_BODY = self.template('HTML_BODY')
             HTML_FOOTER = self.template('HTML_FOOTER')
             var = self.get_theme_var()
             now = datetime.now()
@@ -304,10 +294,15 @@ class Builder(Service):
             var['meta_section'] = ""
             var['source_code'] = ""
             var['timestamp'] = timestamp
-
+            var['content'] = open(hdoc, 'r').read()
+            
             HTML = ""
-            content = open(hdoc, 'r').read()
-            BODY, var = self.transform(content, var)
+
+            # Insert pre & post hooks content
+            var = self.page_hook_pre(var)
+            BODY = HTML_BODY.render(var=var)
+            var = self.page_hook_post(var)
+                    
             HEADER = HTML_HEADER_COMMON.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
 
@@ -442,14 +437,21 @@ class Builder(Service):
         """Custom themes can use this method to generate final pages"""
         pass
 
-    def build_page_key_value(self, var):
-        pagelist = []
-        TPL_PAGE_KEY_VALUE = self.template(var['template'])
-        adoc = TPL_PAGE_KEY_VALUE.render(var=var)
-        # ~ self.log.debug(adoc)
-        if not var['fake']:
-            self.distribute_adoc(var['basename'], adoc)
-        pagelist.append(var['basename'])
-        self.log.debug("[BUILDER] - Created page key-value '%s'", var['basename'])
-
-        return pagelist
+    def build_page_key_value(self, kvpath):
+        key, value, COMPILE_VALUE = kvpath
+        TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')        
+        docs = self.srvbes.get_kbdict_value(key, value, new=True)
+        sorted_docs = self.srvdtb.sort_by_date(docs)
+        pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
+        var = self.get_theme_var()
+        var['key'] = key
+        var['value'] = value
+        var['title'] = '%s: %s' % (key, value)
+        var['pagename'] = pagename
+        var['doclist'] = sorted_docs
+        var['compile'] = COMPILE_VALUE
+        var['has_toc'] = False                
+        if var['compile']:
+            adoc = TPL_PAGE_KEY_VALUE.render(var=var)
+            self.distribute_adoc(var['pagename'], adoc)
+            self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])

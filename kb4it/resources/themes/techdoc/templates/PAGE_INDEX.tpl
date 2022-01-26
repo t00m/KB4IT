@@ -2,6 +2,12 @@
 
 ++++
 <div class ="uk-container uk-overflow-auto">
+${var['trimester']}
+</div>
+++++
+
+++++
+<div class ="uk-container uk-overflow-auto">
     <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">
         <thead>
             <tr>
@@ -45,14 +51,6 @@
             % endfor
         </tbody>
         <tfoot>
-            <tr>
-                <th><span class="uk-text-bold">Document</span></th>
-                <th>Team</th>
-                <th>Published</th>
-                <th>Author</th>
-                <th>Category</th>
-                <th>Scope</th>
-            </tr>
         </tfoot>
     </table>
 </div>
