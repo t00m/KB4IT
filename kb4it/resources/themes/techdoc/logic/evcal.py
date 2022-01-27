@@ -9,12 +9,17 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def initialize(self):
         super(HTMLCalendar, self).__init__(calendar.MONDAY)
-        self.ml = {}
+        self.ml = {} # ??
         self.now = datetime.now()
         self.get_services()
 
+    def get_services(self):
+        self.srvbld = self.get_service('Builder')
+        
     def set_events_days(self, events_days):
         """
+        FIXME: Document this method properly
+        
         Attach the list of event days as a property, so we can access it
         anywhere.
         """
@@ -31,9 +36,6 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def set_events_html(self, html):
         self.events_html = html
-
-    def get_services(self):
-        self.srvbld = self.get_service('Builder')
 
     def formatday(self, day, weekday):
         """Return a day as a table cell."""

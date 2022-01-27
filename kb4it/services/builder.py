@@ -34,7 +34,7 @@ class Builder(Service):
         self.get_services()
 
     def finalize(self):
-        """Clean up"""
+        """Clean up."""
         pass
 
     def get_services(self):

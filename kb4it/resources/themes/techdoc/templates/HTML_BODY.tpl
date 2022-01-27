@@ -25,7 +25,14 @@ ${var['source_adoc']}</code>
                 </div>
             </div>
         </li>
-        <li>${var['actions']}</li>
+        <li>
+            <ul>
+                <li>Edit</li>
+                <li>Print</li>
+                <li>Source</li>
+                <li>Delete</li>
+            </ul>
+        </li>
     </ul>
 % else:
     ${var['source_html']}
