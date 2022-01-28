@@ -11,9 +11,9 @@
     "ignored_keys": ["Published", "Updated"],
     "date_attributes": ["Published"],
     "parent_theme": "techdoc",
-    "git_server": "gitlab.techdoc.lu",
-    "git_user": "tvirsedagarc",
-    "git_repo": "sap-basis",
-    "git_path": "docs",
-    "git_branch": "master"
+    "git_server": "",
+    "git_user": "",
+    "git_repo": "",
+    "git_path": "",
+    "git_branch": ""
 }

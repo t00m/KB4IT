@@ -378,31 +378,34 @@ class Theme(Builder):
                 var['has_toc'] = True
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
+                var['metadata'] = self.create_metadata_section(basename_adoc)
             else:
                 var['has_toc'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
+                var['metadata'] = ""
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
             var['title'] = ', '.join(keys['Title'])
-            var['basename'] = basename_adoc
+            var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
-            var['meta_section'] = ""
+            var['related'] = self.get_related(var)            
+            var['source'] = ''
+            var['actions'] = ''
             var['source_adoc'] = source_adoc
             var['source_html'] = source_html
             var['timestamp'] = timestamp
             var = self.apply_transformations(var)
-            
-            HTML = ""
 
             # Insert pre & post hooks content
-            var = self.page_hook_pre(var)
-            BODY = HTML_BODY.render(var=var)
-            var = self.page_hook_post(var)
+            # ~ var = self.page_hook_pre(var)            
+            # ~ var = self.page_hook_post(var)
                     
             HEADER = HTML_HEADER_COMMON.render(var=var)
+            BODY = HTML_BODY.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
 
+            HTML = ""
             HTML += HEADER
             HTML += BODY
             HTML += FOOTER
@@ -446,3 +449,81 @@ class Theme(Builder):
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
+
+    def get_related(self, var):
+        basename = var['basename_adoc']
+        properties = self.srvdtb.get_doc_properties(basename)
+        if len(properties) > 0:   
+            try:         
+                tags = properties['Tag']
+                has_tags = True
+            except:
+                tags = []
+                has_tags = False
+        else:
+            has_tags = False
+        
+        if has_tags:
+            related = """<ul class="uk-list uk-list-striped">"""
+            docs = set()
+            for tag in tags:
+                for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
+                    docs.add(doc)
+            for doc in docs:
+                title = self.srvdtb.get_values(doc, 'Title')[0]
+                link = doc.replace('.adoc', '.html')
+                related += '<li><a class="uk-link-toggle" href="%s">%s</a>' % (link, title)
+            related += "</ul>"
+        else:
+            related = """<div class="uk-alert-danger" uk-alert><a class="uk-alert-close" uk-close></a><p>No related documents found</p></div>"""
+        return related
+
+    def get_labels(self, values):
+        """C0111: Missing function docstring (missing-docstring)."""
+        var = {}
+        label_links = ''
+        TPL_METADATA_VALUE_LINK = self.template('METADATA_VALUE_LINK')
+        for page, text in values:
+            var['link_url'] = valid_filename(page)
+            var['link_name'] = text
+            if len(text) != 0:
+                label_links += TPL_METADATA_VALUE_LINK.render(var=var)
+        return label_links
+
+    def get_html_values_from_key(self, doc, key):
+        """Return the html link for a value."""
+        html = []
+
+        values = self.srvdtb.get_values(doc, key)
+        for value in values:
+            url = "%s_%s.html" % (key, value)
+            html.append((url, value))
+        return html
+
+    def create_metadata_section(self, doc):
+        """Return a html block for displaying metadata (keys and values)."""
+        try:
+            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
+            custom_keys = self.srvdtb.get_custom_keys(doc)
+            var = {}
+            var['items'] = []
+            for key in custom_keys:
+                ckey = {}
+                ckey['doc'] = doc
+                ckey['key'] = key
+                ckey['vfkey'] = valid_filename(key)
+                try:
+                    values = self.get_html_values_from_key(doc, key)
+                    ckey['labels'] = self.get_labels(values)
+                    var['items'].append(ckey)
+                except Exception as error:
+                    self.log.error("[BUILDER] - Key[%s]: %s", key, error)
+                    raise
+            var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+            html = TPL_METADATA_SECTION.render(var=var)
+        except Exception as error:
+            msgerror = "%s -> %s" % (doc, error)
+            self.log.error("[BUILDER] - %s", msgerror)
+            html = ''
+            raise
+        return html

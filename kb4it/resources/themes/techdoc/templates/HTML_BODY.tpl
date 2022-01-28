@@ -1,7 +1,7 @@
 <!-- Template HTML_BODY_DOC.tpl :: START -->
 % if var['has_toc']:
     <!-- This is the nav containing the toggling elements -->
-    <ul class="uk-subnav uk-subnav-pill" uk-switcher>
+    <ul class="uk-tab" uk-switcher>
         <li><a href="#">Document</a></li>
         <li><a href="#">Related</a></li>
         <li><a href="#">Metadata</a></li>

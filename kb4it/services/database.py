@@ -98,10 +98,14 @@ class Database(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
+        # FIXME
         try:
             timestamp = self.db[doc][self.sort_attribute][0]
         except:
-            timestamp = self.db[doc]['Timestamp'][0]
+            try:
+                timestamp = self.db[doc]['Timestamp'][0]
+            except:
+                timestamp = ''
         return timestamp
 
     def get_doc_properties(self, doc):
@@ -165,9 +169,12 @@ class Database(Service):
         return self.sort_by_date(docs)
 
     def get_doc_keys(self, doc):
-        """Return a list of keys for a given doc sorted alphabetically."""
+        """Return a list of keys for a given doc sorted alphabetically."""        
         keys = []
-        for key in self.db[doc]:
-            keys.append(key)
-        keys.sort(key=lambda y: y.lower())
+        try:
+            for key in self.db[doc]:
+                keys.append(key)
+            keys.sort(key=lambda y: y.lower())
+        except Exception as error:
+            self.log.warning("Doc[%s] => %s", doc, error)
         return keys
