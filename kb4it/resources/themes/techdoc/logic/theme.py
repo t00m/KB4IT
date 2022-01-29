@@ -451,8 +451,8 @@ class Theme(Builder):
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
 
     def get_related(self, var):
-        basename = var['basename_adoc']
-        properties = self.srvdtb.get_doc_properties(basename)
+        this_doc = var['basename_adoc']
+        properties = self.srvdtb.get_doc_properties(this_doc)
         if len(properties) > 0:   
             try:         
                 tags = properties['Tag']
@@ -469,6 +469,7 @@ class Theme(Builder):
             for tag in tags:
                 for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
                     docs.add(doc)
+            docs.remove(this_doc)
             for doc in docs:
                 title = self.srvdtb.get_values(doc, 'Title')[0]
                 link = doc.replace('.adoc', '.html')
