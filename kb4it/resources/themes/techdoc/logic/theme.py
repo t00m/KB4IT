@@ -453,6 +453,9 @@ class Theme(Builder):
     def get_related(self, var):
         this_doc = var['basename_adoc']
         properties = self.srvdtb.get_doc_properties(this_doc)
+        has_tags = False
+        has_docs = False
+        
         if len(properties) > 0:   
             try:         
                 tags = properties['Tag']
@@ -470,13 +473,22 @@ class Theme(Builder):
                 for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
                     docs.add(doc)
             docs.remove(this_doc)
+            
+            if len(docs) > 0:
+                has_docs = True
+            else:
+                has_docs = False
+        else:
+            has_docs = False
+        
+        if has_docs:
             for doc in docs:
                 title = self.srvdtb.get_values(doc, 'Title')[0]
                 link = doc.replace('.adoc', '.html')
                 related += '<li><a class="uk-link-toggle" href="%s">%s</a>' % (link, title)
             related += "</ul>"
         else:
-            related = """<div class="uk-alert-danger" uk-alert><a class="uk-alert-close" uk-close></a><p>No related documents found</p></div>"""
+            related = """<div class="uk-alert-danger" uk-alert><p>No documents found.</p></div>"""
         return related
 
     def get_labels(self, values):
