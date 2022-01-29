@@ -1,4 +1,4 @@
-<table id="kb4it-datatable" class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-hover">
+<table class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-hover">
 <thead>
     <tr>
         <th><span class="uk-text-bold">Key</span></th>
