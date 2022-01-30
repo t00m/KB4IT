@@ -91,7 +91,7 @@ class Theme(Builder):
         self.srvcal = self.get_service('EvCal')
         self.create_page_properties()
         self.create_page_stats()
-        self.create_page_index_all()
+        # ~ self.create_page_index_all()
         self.create_page_index(var)
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
@@ -387,10 +387,9 @@ class Theme(Builder):
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
             var['related'] = self.get_related(var)            
-            var['source'] = ''
-            var['actions'] = ''
             var['source_adoc'] = source_adoc
             var['source_html'] = source_html
+            var['actions'] = self.get_page_actions(var)
             var['timestamp'] = timestamp
             var = self.apply_transformations(var)
 
@@ -446,6 +445,12 @@ class Theme(Builder):
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
+    
+    def get_page_actions(self, var):
+        TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')    
+        this_doc = var['basename_adoc']
+        actions = TPL_SECTION_ACTIONS.render(var=var)
+        return actions
 
     def get_related(self, var):
         """Get a list of related documents for each tag"""
