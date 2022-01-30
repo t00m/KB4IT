@@ -23,9 +23,6 @@ from kb4it.core.util import valid_filename
 from evcal import EventsCalendar
 
 class Theme(Builder):
-    def generate_sources(self):
-        pass
-
     def highlight_metadata_section(self, content, var):
         """Apply CSS transformation to metadata section."""
         HTML_TAG_METADATA_ADOC = self.template('HTML_TAG_METADATA_ADOC').render(var=var)
@@ -451,44 +448,36 @@ class Theme(Builder):
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
 
     def get_related(self, var):
+        """Get a list of related documents for each tag"""
+        TPL_SECTION_RELATED = self.template('SECTION_RELATED')        
         this_doc = var['basename_adoc']
         properties = self.srvdtb.get_doc_properties(this_doc)
-        has_tags = False
-        has_docs = False
+        var['has_tags'] = False
+        var['has_docs'] = False
+        var['related'] = {}
         
         if len(properties) > 0:   
             try:         
                 tags = properties['Tag']
-                has_tags = True
+                var['has_tags'] = True
             except:
                 tags = []
-                has_tags = False
-        else:
-            has_tags = False
         
-        if has_tags:
-            related = """<ul class="uk-list uk-list-striped">"""
-            docs = set()
+        if var['has_tags']:                        
             for tag in tags:
                 for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
-                    docs.add(doc)
-            docs.remove(this_doc)
-            
-            if len(docs) > 0:
-                has_docs = True
-            else:
-                has_docs = False
-        else:
-            has_docs = False
-        
-        if has_docs:
-            for doc in docs:
-                title = self.srvdtb.get_values(doc, 'Title')[0]
-                link = doc.replace('.adoc', '.html')
-                related += '<li><a class="uk-link-toggle" href="%s">%s</a>' % (link, title)
-            related += "</ul>"
-        else:
-            related = """<div class="uk-alert-danger" uk-alert><p>No documents found.</p></div>"""
+                    if doc != this_doc:
+                        var['has_docs'] = True
+                        try:
+                            docs = var['related'][tag]
+                            docs.add(doc)
+                            var['related'][tag] = docs
+                        except:
+                            docs = set()
+                            docs.add(doc)
+                            var['related'][tag] = docs
+        var['srvdtb'] = self.srvdtb
+        related = TPL_SECTION_RELATED.render(var=var)
         return related
 
     def get_labels(self, values):
