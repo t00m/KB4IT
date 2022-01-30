@@ -40,7 +40,7 @@
 <div>
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
-        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin" style="background-color: white;" uk-navbar>
+        <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
@@ -72,7 +72,7 @@ ${var['menu_contents']}
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate">${var['title']}</span></a>
+                       <a href="#"><span class="uk-text-bolder uk-text-truncate uk-invisible">${var['title']}</span></a>
                     </li>
                 </u>
                 <!-- DOCUMENT TITLE :: END -->

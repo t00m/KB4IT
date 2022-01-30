@@ -2,7 +2,7 @@
 % if var['has_toc']:
 <div class="uk-flex uk-flex-center">
     <div class="uk-card uk-card-body"><button class="uk-button uk-button-primary uk-border-rounded"><span uk-icon="icon: pencil"></span><span class="uk-text-bold"> Edit</span></button></div>
-    <div class="uk-card uk-card-body"><button class="uk-button uk-button-primary uk-border-rounded"><span uk-icon="icon: print"></span><span class="uk-text-bold"> Print</span></button></div>
+    <div class="uk-card uk-card-body"><button class="uk-button uk-button-primary uk-border-rounded" onclick="window.print()"><span uk-icon="icon: print"></span><span class="uk-text-bold"> Print</span></button></div>
     <div class="uk-card uk-card-body">
         <!-- View Asciidoc Source Button :: START -->
         <a class="uk-button uk-button-primary uk-border-rounded" href="#modal-full-source" uk-toggle><span uk-icon="icon: code"></span><span class="uk-text-bold"> Source</span></a>
@@ -19,7 +19,8 @@
             </div>
         </div> 
         <!-- View Source Button :: END -->
-    </div>
+    </div>    
+    <div class="uk-card uk-card-body"></div>
     <div class="uk-card uk-card-body"><button class="uk-button uk-button-danger uk-border-rounded"><span uk-icon="icon: trash"></span><span class="uk-text-bold"> Delete</span></button></div>
 </div>
 % endif
