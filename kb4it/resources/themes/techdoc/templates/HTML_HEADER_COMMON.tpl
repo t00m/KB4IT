@@ -72,7 +72,12 @@ ${var['menu_contents']}
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
+                        % if var['has_toc']:
+                            ${var['actions']}
+                        % endif
+<!--
                        <a href="#"><span class="uk-text-bolder uk-text-truncate uk-invisible">${var['title']}</span></a>
+-->
                     </li>
                 </u>
                 <!-- DOCUMENT TITLE :: END -->

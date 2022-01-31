@@ -10,12 +10,13 @@
     <tbody>
     % for tag in var['related']:        
             <tr>
-                <td class="10%">
+                <td width="10%">
                     <a class="uk-link-text" href="Tag_${tag}.html">
                         <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">${tag}</div>
                     </a>
                 </td>
                 <td width="90%">
+                    <div class="uk-flex" uk-grid>
                     <%
                         llinks = []
                     %> 
@@ -23,14 +24,15 @@
                         <% 
                             title = var['srvdtb'].get_values(doc, 'Title')[0]
                             href = doc.replace('.adoc', '.html')
-                            link = """<a class="uk-link-text" href="%s">%s</a>""" % (href, title)
+                            link = """<div class="uk-text-meta uk-link-toggle uk-card-body uk-card-small uk-margin-remove uk-padding-small uk-padding-remove-top"><a class="uk-link-heading" href="%s">%s</a></div>""" % (href, title)
                             llinks.append(link)
                         %>                        
                     % endfor                    
                     <%
-                        links = ', '.join(llinks)
+                        links = ''.join(llinks)
                     %>
-                    <div class="uk-text-meta">${links}</div>
+                    ${links}
+                    </div>
                 </td>
             </tr>        
     % endfor
