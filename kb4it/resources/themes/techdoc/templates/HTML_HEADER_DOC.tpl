@@ -32,7 +32,7 @@ ${var['meta_section']}
                                             <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                                 <div class="uk-padding-large uk-background-muted">
                                                     <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
-                                                    <div class="uk-text-lead">${var['basename']}&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
+                                                    <div class="uk-text-lead" uk-tooltip="title: Copy to clipboard">${var['basename']}&nbsp;<a onclick="copyToClipboard()" class="uk-icon-link uk-margin-small-right" uk-icon="copy"></a></div>
                                                     <textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_code']}</textarea>
                                                 </div>
                                             </div>
