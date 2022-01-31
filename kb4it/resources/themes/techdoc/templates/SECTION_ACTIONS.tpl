@@ -4,8 +4,8 @@
     <div class="uk-card-small uk-card-body"><a href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['theme']['git_path']}/${var['basename_adoc']}" target="_blank"><span uk-icon="icon: pencil"></span></span></a></div>
     <div class="uk-card-small uk-card-body">
         <!-- Metadata Button :: START -->
-        <a class="" href="#modal-full-source" uk-toggle><span uk-icon="icon: hashtag"></span></a>
-        <div id="modal-full-source" class="uk-modal-full" uk-modal>
+        <a class="" href="#modal-metadata" uk-toggle><span uk-icon="icon: hashtag"></span></a>
+        <div id="modal-metadata" class="uk-modal-full" uk-modal>
             <div class="uk-modal-dialog">
                 <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                 <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
