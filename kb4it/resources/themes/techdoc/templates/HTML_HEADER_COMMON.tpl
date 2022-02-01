@@ -67,11 +67,13 @@
 ${var['menu_contents']}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
+                % if var['has_toc']:
                 <ul class="uk-navbar-nav" uk-tooltip="title: Go to top">
                     <li class="uk-link-toggle">
                         <a class="uk-link-heading" href="" uk-totop></a>
                     </li>
                 </ul>
+                % endif
             </div>
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->

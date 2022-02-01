@@ -412,18 +412,20 @@ class Theme(Builder):
 
     def build_page_key(self, key, values):
         """Create page for a key."""
-        TPL_PAGE_KEY = self.template('PAGE_KEY_KB4IT')
+        TPL_PAGE_KEY = self.template('PAGE_KEY')
         var = self.get_theme_var()
-        var['title'] = key
+        var['title'] = key        
+        var['cloud'] = self.create_tagcloud_from_key(key)
+        var['leader'] = []
         var['key_values'] = {}
         for value in values:
-            k_value = "%s_%s" % (valid_filename(key), valid_filename(value))
-            var['key_values'][k_value] = {}
+            item = {}            
             docs = self.srvdtb.get_docs_by_key_value(key, value)
-            var['key_values'][k_value]['count'] = len(docs)
-            var['key_values'][k_value]['vfkey'] = valid_filename(key)
-            var['key_values'][k_value]['vfvalue'] = valid_filename(value)
-            var['key_values'][k_value]['name'] = value
+            item['count'] = len(docs)
+            item['vfkey'] = valid_filename(key)
+            item['vfvalue'] = valid_filename(value)
+            item['name'] = value
+            var['leader'].append(item)
         html = TPL_PAGE_KEY.render(var=var)        
         return html
         
