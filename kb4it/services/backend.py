@@ -518,10 +518,12 @@ class Backend(Service):
         cur_thread = threading.current_thread().name
         x = future.result()
         if cur_thread != x:
-            adoc, rc, num = x
-            basename = os.path.basename(adoc)
+            path_hdoc, rc, num = x
+            basename = os.path.basename(path_hdoc)
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
-            self.srvthm.build_page(adoc)
+            html = self.srvthm.build_page(path_hdoc)
+            # ~ with open(path_hdoc, 'w') as fhtml:
+                # ~ fhtml.write(html)
             return x
 
     def stage_07_clean_target(self):

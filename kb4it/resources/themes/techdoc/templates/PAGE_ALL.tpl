@@ -10,9 +10,9 @@
             </tr>
         </thead>
         <tbody>
-            % for item in var['kbdict']['document']:
+            % for item in var['repo']['document']:
                 <%
-                    title = var['kbdict']['document'][item]['Title'][0]
+                    title = var['repo']['document'][item]['Title'][0]
                     title_url = item.replace('.adoc', '.html')
                 %>
                 <tr>

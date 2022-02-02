@@ -68,7 +68,7 @@ class Theme(Builder):
         # ~ var['title'] = key
         # ~ return self.template('PAGE_KEY_KB4IT').render(var=var)
 
-    def create_page_index(self, var):
+    def build_page_index(self, var):
         """Create key page."""
         var = self.get_theme_var()
         # ~ TPL_INDEX = self.template('PAGE_INDEX')
@@ -89,34 +89,35 @@ class Theme(Builder):
         self.log.debug("This is the Techdoc theme")
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
-        self.create_page_properties()
-        self.create_page_stats()
-        # ~ self.create_page_index_all()
-        self.create_page_index(var)
+        self.build_page_properties()
+        self.build_page_stats()
+        self.build_page_bookmarks()
+        # ~ self.build_page_index_all()
+        self.build_page_index(var)
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
         # ~ self.create_page_about_kb4it()
         # ~ self.create_page_help()
 
-    def create_page_key(self, key, values):
-        """Create page for a key."""
-        TPL_PAGE_KEY = self.template('PAGE_KEY_KB4IT')
-        var = {}
+    # ~ def create_page_key(self, key, values):
+        # ~ """Create page for a key."""
+        # ~ TPL_PAGE_KEY = self.template('PAGE_KEY_KB4IT')
+        # ~ var = {}
 
-        # Title
-        var['title'] = key
-        var['key_values'] = {}
-        for value in values:
-            k_value = "%s_%s" % (valid_filename(key), valid_filename(value))
-            var['key_values'][k_value] = {}
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            var['key_values'][k_value]['count'] = len(docs)
-            var['key_values'][k_value]['vfkey'] = valid_filename(key)
-            var['key_values'][k_value]['vfvalue'] = valid_filename(value)
-            var['key_values'][k_value]['name'] = value
-        html = TPL_PAGE_KEY.render(var=var)
+        # ~ # Title
+        # ~ var['title'] = key
+        # ~ var['key_values'] = {}
+        # ~ for value in values:
+            # ~ k_value = "%s_%s" % (valid_filename(key), valid_filename(value))
+            # ~ var['key_values'][k_value] = {}
+            # ~ docs = self.srvdtb.get_docs_by_key_value(key, value)
+            # ~ var['key_values'][k_value]['count'] = len(docs)
+            # ~ var['key_values'][k_value]['vfkey'] = valid_filename(key)
+            # ~ var['key_values'][k_value]['vfvalue'] = valid_filename(value)
+            # ~ var['key_values'][k_value]['name'] = value
+        # ~ html = TPL_PAGE_KEY.render(var=var)
         # ~ self.log.debug("PageKey[%s]:\n%s", key, html)
-        return html
+        # ~ return html
 
     def page_hook_pre(self, var):
         var['related'] = ''
@@ -180,7 +181,7 @@ class Theme(Builder):
         # ~ return html
 
 
-    def create_page_properties(self):
+    def build_page_properties(self):
         """Create properties page"""
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
@@ -193,7 +194,7 @@ class Theme(Builder):
             ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
                 vbtn = {}
-                vbtn['content'] = self.create_tagcloud_from_key(key)
+                vbtn['content'] = self.build_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
                 size = get_font_size(frequency, max_frequency)
@@ -208,7 +209,7 @@ class Theme(Builder):
         # ~ print(content)
         self.distribute_adoc('properties', content)
 
-    def create_tagcloud_from_key(self, key):
+    def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
         dkeyurl = {}
         for doc in self.srvdtb.get_documents():
@@ -269,7 +270,7 @@ class Theme(Builder):
                     maxkvfreq = len(values)
         return maxkvfreq
 
-    def create_page_stats(self):
+    def build_page_stats(self):
         """Create stats page"""
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         var = self.get_theme_var()
@@ -287,7 +288,7 @@ class Theme(Builder):
         stats = TPL_PAGE_STATS.render(var=var)
         self.distribute_adoc('stats', stats)
 
-    def create_page_index_all(self):
+    def build_page_index_all(self):
         """Create a page with all documents"""
         doclist = self.srvdtb.get_documents()
         TPL_PAGE_ALL = self.template('PAGE_ALL')
@@ -375,7 +376,7 @@ class Theme(Builder):
                 var['has_toc'] = True
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                var['metadata'] = self.create_metadata_section(basename_adoc)
+                var['metadata'] = self.build_metadata_section(basename_adoc)
             else:
                 var['has_toc'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
@@ -405,17 +406,21 @@ class Theme(Builder):
             HTML += HEADER
             HTML += BODY
             HTML += FOOTER
-
+            
             with open(path_hdoc, 'w') as fhtml:
                 fhtml.write(HTML)
+                
             self.log.debug("[BUILD] - Page[%s] transformation finished", basename_hdoc)
+
+            # ~ return HTML
+            
 
     def build_page_key(self, key, values):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY')
         var = self.get_theme_var()
         var['title'] = key        
-        var['cloud'] = self.create_tagcloud_from_key(key)
+        var['cloud'] = self.build_tagcloud_from_key(key)
         var['leader'] = []
         var['key_values'] = {}
         for value in values:
@@ -447,6 +452,24 @@ class Theme(Builder):
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
+    
+    def build_page_bookmarks(self):
+        """Create bookmarks page."""
+        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')  
+        var = self.get_theme_var()
+        bookmarks = {}
+        for doc in self.srvdtb.get_documents():
+            bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
+            if bookmark == 'Yes' or bookmark == 'True':
+                bookmarks[doc] = {}
+                bookmarks[doc] = self.srvdtb.get_doc_properties(doc)
+                bookmarks[doc]['URL'] = doc.replace('.adoc', '.html')
+        var['page']['title'] = 'Bookmarks'
+        var['repo']['bookmarks'] = bookmarks
+        bookmarks = TPL_PAGE_BOOKMARKS.render(var=var)
+        self.distribute_adoc('bookmarks', bookmarks)
+        self.log.debug("[BUILDER] - Created page for bookmarks")
+        return bookmarks
     
     def get_page_actions(self, var):
         TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')    
@@ -509,7 +532,7 @@ class Theme(Builder):
             html.append((url, value))
         return html
 
-    def create_metadata_section(self, doc):
+    def build_metadata_section(self, doc):
         """Return a html block for displaying metadata (keys and values)."""
         try:
             TPL_METADATA_SECTION = self.template('METADATA_SECTION')

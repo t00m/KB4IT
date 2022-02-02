@@ -101,7 +101,8 @@ class Builder(Service):
         """Create a new variable for rendering templates."""
         var = {}
         var['theme'] = self.srvbes.get_theme_properties()
-        var['kbdict'] = self.srvbes.get_kb_dict()
+        var['repo'] = self.srvbes.get_kb_dict()
+        var['page'] = {}
         return var
 
     def page_hook_pre(self, var):
@@ -138,7 +139,8 @@ class Builder(Service):
         
         This method must be overwriten by custom themes.
         """
-        pass
+        # ~ html = ''
+        # ~ return html
 
     def build_page_key_value(self, kvpath):
         """

@@ -91,7 +91,7 @@ class Frontend(Service):
             self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
             self.log.warning("[THEME] - Fallback to default theme")
 
-        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.adoc")
+        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.json")
         if not os.path.exists(theme_conf):
             self.log.error("[THEME] - Theme config file not found: %s", theme_conf)
             sys.exit(-1)
