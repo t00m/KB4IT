@@ -11,6 +11,7 @@ KB4IT module. Entry point.
 
 import os
 import sys
+import json
 import argparse
 import tempfile
 from argparse import Namespace
@@ -29,17 +30,23 @@ class KB4IT:
     ready = False
     params = None
     log = None
-    source_path = None
-    target_path = None
+    repo = {}
     numdocs = 0
     tmpdir = None
 
     def __init__(self, params=None):
         """Initialize KB4IT class."""
         self.params = params
-        self.setup_logging(self.params.LOGLEVEL)
+
+        # Initialize log
+        try:
+            self.setup_logging(self.params.LOGLEVEL)
+        except:
+            self.setup_logging(self.params.INFO)
         self.log.debug("[CONTROLLER] - KB4IT %s started", APP['version'])
         self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+
+        # Start up
         self.setup_environment()
         self.check_params()
         self.setup_services()
@@ -54,34 +61,50 @@ class KB4IT:
             self.log.debug("[CONTROLLER] - Parameter[%s] Value[%s]", key, vars(self.params)[key])
 
         if not self.params.LIST_THEMES:
-            # Check source path
+            # Get repository configuration path. Mandatory
             try:
-                source = os.path.abspath(self.params.SOURCE_PATH)
-            except:
-                self.log.error("[CONTROLLER] - Invalid argments. See help.")
-                self.log.error("[CONTROLLER] - Error. Source path '%s' not valid", self.params.SOURCE_PATH)
-                return False
+                repo_path = os.path.abspath(self.params.REPO_CONF_PATH)
+                self.log.debug("[CONTROLLER] - Repository configuration path: %s", repo_path)
+                if not os.path.exists(repo_path):
+                    self.log.error("[CONTROLLER] - Repository configuration path doesn't exist.")
+                    self.stop()
+            except Exception as error:
+                self.log.error("[CONTROLLER] - Error: %s", error)
+                self.log.error("[CONTROLLER] - The repository config path is mandatory.")
+                self.log.error("[CONTROLLER] - Error. Repository configuration path '%s' is not valid", self.params.REPO_CONF_PATH)
+                self.stop()
 
-            # Check target path
+            with open(repo_path, 'r') as conf:
+                self.repo = json.load(conf)
+
+            # Check source and target paths
             try:
-                target = os.path.abspath(self.params.TARGET_PATH)
-            except:
-                self.log.error("[CONTROLLER] - Invalid argments. See help.")
-                self.log.error("[CONTROLLER] - Error. Target path '%s' not valid", self.params.TARGET_PATH)
-                return False
+                title = repo['title']
+                source = repo['source']
+                target = repo['target']
+                theme = repo['theme']
+                sort = repo['sort']
+            except Exeption as error:
+                self.log.error("[CONTROLLER] - Repository configuration is not valid. Check and fix, please:")
+                self.log.error("[CONTROLLER] - It must contain a title, a valid source and target paths, a valid theme name and the sorting property.")
+                self.log.error("[CONTROLLER] - Error: %s", error)
+                self.stop()
 
-            self.ready = True
             if source == target:
-                self.log.error("[CONTROLLER] - Error. Source and target paths are the same.")
+                self.log.error("[CONTROLLER] - Error. Source and target paths are the same. That is not possible.")
                 self.log.error("[CONTROLLER] - Source path: %s", source)
                 self.log.error("[CONTROLLER] - Target path: %s", target)
                 self.log.error("[CONTROLLER] - Check, please!")
-                self.ready = False
-                return True
+                self.stop()
+
+            self.log.debug("[CONTROLLER] - Preliminar checks passed.")
+            self.ready = True
+        else:
+            self.ready = False
 
     def get_params(self):
         """Return parametres."""
-        return self.params
+        return self.repo
 
     def setup_environment(self):
         """Set up KB4IT environment."""
@@ -91,7 +114,6 @@ class KB4IT:
 
         # Create local paths if they do not exist
         for entry in LPATH:
-
             if not os.path.exists(LPATH[entry]):
                 os.makedirs(LPATH[entry])
                 self.log.debug("[CONTROLLER] - Directory[%s] created", LPATH[entry])
@@ -178,23 +200,27 @@ class KB4IT:
 
     def stop(self):
         """Stop registered services by executing the 'end' method (if any)."""
-        for name in self.services:
-            self.deregister_service(name)
+        try:
+            for name in self.services:
+                self.deregister_service(name)
+        except AttributeError:
+            # KB4IT wasn't even started
+            pass
         self.log.debug("[CONTROLLER] - KB4IT %s finished", APP['version'])
         sys.exit()
-
 
 def main():
     """Set up application arguments and execute."""
     extra_usage = """"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description='KB4IT v%s\nStatic but customizable website generator based on Asciidoctor sources' % APP['version'],
+        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % APP['version'],
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # KB4IT arguments
     kb4it_options = parser.add_argument_group('KB4IT Options')
+    kb4it_options.add_argument('-r', '--repo', help='Repository config file', dest='REPO_CONF_PATH')
     kb4it_options.add_argument('-S', '--source', help='directory with Asciidoctor source files', dest='SOURCE_PATH')
     kb4it_options.add_argument('-T', '--target', help='target directory for output', dest='TARGET_PATH')
     kb4it_options.add_argument('-s', '--sort', dest='SORT_ATTRIBUTE', help='sorting attribute (Published, Updated, ...)')

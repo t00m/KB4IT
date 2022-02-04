@@ -51,16 +51,13 @@ class Backend(Service):
         # Get params from command line
 
         self.parameters = self.app.get_params()
-        for param, value in self.parameters._get_kwargs():
-            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, value)
+        for param in self.parameters:
+            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.repo[param])
 
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP'] + '/')
-        if self.parameters.TARGET_PATH is None:
-            self.runtime['dir']['target'] = LPATH['WWW']
-        else:
-            self.runtime['dir']['target'] = os.path.realpath(self.parameters.TARGET_PATH)
+        self.runtime['dir']['target'] = self.repo['target']
         self.runtime['dir']['source'] = os.path.realpath(self.parameters.SOURCE_PATH)
         self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
         if not os.path.exists(self.runtime['dir']['cache']):
@@ -218,7 +215,7 @@ class Backend(Service):
                 self.delete_document(docname)
             self.log.debug("[PREPROCESSING] - Cache cleaned up")
 
-        # Preprocessing 
+        # Preprocessing
         for source in self.runtime['docs']['bag']:
             docname = os.path.basename(source)
 
@@ -416,7 +413,7 @@ class Backend(Service):
         # # Keys/Values
         for kvpath in KV_PATH:
             self.srvthm.build_page_key_value(kvpath)
-            
+
         # ~ self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
         self.srvthm.build()

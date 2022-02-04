@@ -51,7 +51,7 @@ class Frontend(Service):
     def theme_list(self):
         self.log.info("[THEME] - List of themes availables")
 
-        self.log.debug("[THEME] - Installed globally (%s)", GPATH['THEMES'])
+        self.log.info("[THEME] - Installed globally (%s)", GPATH['THEMES'])
         global_themes = os.listdir(GPATH['THEMES'])
         n = 0
         for dirname in global_themes:
@@ -63,7 +63,7 @@ class Frontend(Service):
                 # ~ self.print_traceback()
                 self.log.debug("[THEME] - Theme Id: '%s' NOT valid", dirname)
 
-        self.log.debug("[THEME] - Installed locally (%s)", LPATH['THEMES'])
+        self.log.info("[THEME] - Installed locally (%s)", LPATH['THEMES'])
         local_themes = os.listdir(LPATH['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
@@ -93,48 +93,47 @@ class Frontend(Service):
 
         theme_conf = os.path.join(self.runtime['theme']['path'], "theme.json")
         if not os.path.exists(theme_conf):
-            self.log.error("[THEME] - Theme config file not found: %s", theme_conf)
-            sys.exit(-1)
+            self.log.warning("[THEME] - Theme config file not found: %s", theme_conf)
+        else:
+            # load theme configuration
+            try:
+                with open(theme_conf, 'r') as fth:
+                    theme = json.load(fth)
+                    for prop in theme:
+                        self.runtime['theme'][prop] = theme[prop]
+                self.log.debug("[THEME] - Name: %s" % self.runtime['theme']['name'])
+                self.log.debug("[THEME] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+            except:
+                self.log.error("[THEME] - Theme configuration file not valid: %s", theme_conf)
+                return
 
-        # load theme configuration
-        try:
-            with open(theme_conf, 'r') as fth:
-                theme = json.load(fth)
-                for prop in theme:
-                    self.runtime['theme'][prop] = theme[prop]
-            self.log.debug("[THEME] - Name: %s" % self.runtime['theme']['name'])
-            self.log.debug("[THEME] - Theme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
-        except:
-            self.log.error("[THEME] - Theme configuration file not valid: %s", theme_conf)
-            return
+            # Get theme directories
+            self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
+            self.runtime['theme']['framework'] = os.path.join(self.runtime['theme']['path'], 'framework')
+            self.runtime['theme']['images'] = os.path.join(self.runtime['theme']['path'], 'images')
+            self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
 
-        # Get theme directories
-        self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
-        self.runtime['theme']['framework'] = os.path.join(self.runtime['theme']['path'], 'framework')
-        self.runtime['theme']['images'] = os.path.join(self.runtime['theme']['path'], 'images')
-        self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
+            # Get date-based attributes from theme. Date attributes aren't
+            # displayed as properties but used to build events pages.
+            try:
+                ignored_keys = self.runtime['theme']['ignored_keys']
+                for key in ignored_keys:
+                    self.srvdtb.ignore_key(key)
+                self.log.debug("[THEME] - Ignored keys defined by this theme: %s", ', '.join(ignored_keys))
+            except KeyError:
+                self.log.debug("[THEME] - No ignored_keys defined in this theme")
 
-        # Get date-based attributes from theme. Date attributes aren't
-        # displayed as properties but used to build events pages.
-        try:
-            ignored_keys = self.runtime['theme']['ignored_keys']
-            for key in ignored_keys:
-                self.srvdtb.ignore_key(key)
-            self.log.debug("[THEME] - Ignored keys defined by this theme: %s", ', '.join(ignored_keys))
-        except KeyError:
-            self.log.debug("[THEME] - No ignored_keys defined in this theme")
-
-        # Register theme service
-        sys.path.insert(0, self.runtime['theme']['logic'])
-        try:
-            from theme import Theme
-            self.app.register_service('Theme', Theme())
-            self.srvthm = self.get_service('Theme')
-        except Exception as error:
-            self.log.warning("[THEME] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
-            self.log.error("[THEME] - %s", error)
-            raise
-        self.log.debug("[THEME] - Loaded theme '%s'", self.runtime['theme']['id'])
+            # Register theme service
+            sys.path.insert(0, self.runtime['theme']['logic'])
+            try:
+                from theme import Theme
+                self.app.register_service('Theme', Theme())
+                self.srvthm = self.get_service('Theme')
+            except Exception as error:
+                self.log.warning("[THEME] - Theme scripts for '%s' couldn't be loaded", self.runtime['theme']['id'])
+                self.log.error("[THEME] - %s", error)
+                raise
+            self.log.debug("[THEME] - Loaded theme '%s'", self.runtime['theme']['id'])
 
     def theme_search(self, theme=None):
         """Search custom theme."""
