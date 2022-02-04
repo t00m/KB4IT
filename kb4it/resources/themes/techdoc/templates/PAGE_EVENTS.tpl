@@ -1,0 +1,5 @@
+= Events
+
+++++
+${var['content']}
+++++

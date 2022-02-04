@@ -20,9 +20,13 @@ from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import valid_filename
+from kb4it.core.util import guess_datetime
 from evcal import EventsCalendar
 
 class Theme(Builder):
+    dey = {} # Dictionary of day events per year
+    events_docs = {} # Dictionary storing a list of docs for a given date
+
     def highlight_metadata_section(self, content, var):
         """Apply CSS transformation to metadata section."""
         HTML_TAG_METADATA_ADOC = self.template('HTML_TAG_METADATA_ADOC').render(var=var)
@@ -72,9 +76,9 @@ class Theme(Builder):
         """Create key page."""
         var = self.get_theme_var()
         # ~ TPL_INDEX = self.template('PAGE_INDEX')
-        TPL_TABLE_EVENTS = self.template('TABLE_EVENT')
-        TPL_TABLE_MONTH_OLD = self.template('TABLE_MONTH_OLD')
-        TPL_TABLE_MONTH_NEW = self.template('TABLE_MONTH_NEW')
+        TPL_TABLE_EVENTS = self.template('EVENTCAL_TABLE_EVENT')
+        TPL_TABLE_MONTH_OLD = self.template('EVENTCAL_TABLE_MONTH_OLD')
+        TPL_TABLE_MONTH_NEW = self.template('EVENTCAL_TABLE_MONTH_NEW')
         timestamp = datetime.now()
         now = timestamp.date()
         result = self.srvcal.format_trimester(now.year, now.month)
@@ -83,12 +87,135 @@ class Theme(Builder):
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
 
+    def build_events(self, doclist):
+        TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
+        TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
+        SORT = self.srvbes.get_runtime_parameter('sort_attribute')
+        # Get events dates
+        for doc in doclist:
+            props = self.srvdtb.get_doc_properties(doc)
+            timestamp = self.srvdtb.get_doc_timestamp(doc)
+            # Build dict of events for a given date as a list of tuples
+            # (month, day) indexed by year
+            # Also, build a dict to store those docs ocurring in that date
+            try:
+                timestamp = guess_datetime(timestamp)
+                y = timestamp.year
+                m = timestamp.month
+                d = timestamp.day
+                try:
+                    days_events = self.dey[y]
+                    days_events.append((m, d))
+                except:
+                    days_events = []
+                    days_events.append((m, d))
+                    self.dey[y] = days_events
+
+                # Build dict of documents
+                if not y in self.events_docs:
+                    self.events_docs[y] = {}
+
+                if not m in self.events_docs[y]:
+                    self.events_docs[y][m] = {}
+
+                if not d in self.events_docs[y][m]:
+                    self.events_docs[y][m][d] = []
+
+                docs = self.events_docs[y][m][d]
+                docs.append(doc)
+                self.events_docs[y][m][d] = docs
+            except Exception as error:
+                # Doc doesn't have a valid date field. Skip it.
+                self.log.error("[THEME-TECHDOC] - %s", error)
+                self.log.error("[THEME-TECHDOC] - Doc doesn't have a valid date field. Skip it.")
+
+        # Build day event pages
+        for year in self.events_docs:
+            for month in self.events_docs[year]:
+                for day in self.events_docs[year][month]:
+                    var = self.get_theme_var()                    
+                    var['doclist'] = self.events_docs[year][month][day]
+                    edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
+                    var['title'] = edt.strftime("Events on %A, %B %d %Y")
+                    EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
+                    html = TPL_PAGE_EVENTS_DAYS.render(var=var)
+                    self.distribute_adoc(EVENT_PAGE_DAY, html)
+
+        # Build month event pages
+        for year in self.events_docs:
+            for month in self.events_docs[year]:
+                var = self.get_theme_var()  
+                docs = []
+                edt = guess_datetime("%4d.%02d.01" % (year, month))
+                var['title'] = edt.strftime("Events on %B, %Y")                
+                for day in self.events_docs[year][month]:
+                    docs.extend(self.events_docs[year][month][day])
+                var['doclist'] = docs
+                EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
+                html = TPL_PAGE_EVENTS_DAYS.render(var=var)
+                self.distribute_adoc(EVENT_PAGE_MONTH, html)
+
+        self.srvcal.set_events_days(self.dey)
+        self.srvcal.set_events_docs(self.events_docs)
+
+        for year in sorted(self.dey.keys(), reverse=True):
+            PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
+            page_name = "events_%4d" % year
+            thisyear = {}
+            html = self.srvcal.build_year_pagination(self.dey.keys())
+            edt = guess_datetime("%4d.01.01" % year)
+            title = edt.strftime("Events on %Y")
+            thisyear['title'] = title
+            html += self.srvcal.formatyearpage(year, 4)
+            thisyear['content'] = html
+            self.distribute_adoc(page_name, PAGE.render(var=thisyear))
+
+    def load_events_days(self, events_days, year):
+        events_set = set()
+        for event_day in events_days:
+            events_set.add(event_day)
+
+        for month, day in events_set:
+            adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
+
+    def build_page_events(self):
+        doclist = []
+        ecats = {}
+        theme = self.srvbes.get_theme_properties()
+        try:
+            event_types = theme['events']
+        except:
+            event_types = []
+        self.log.info("[THEME-TECHDOC] - Event types registered: %s", ', '.join(event_types))
+        
+        for doc in self.srvdtb.get_documents():
+            category = self.srvdtb.get_values(doc, 'Category')[0]
+            if category in event_types:
+                try:
+                    docs = ecats[category]
+                    docs.add(doc)
+                    ecats[category] = docs
+                except:
+                    docs = set()
+                    docs.add(doc)
+                    ecats[category] = docs
+
+                doclist.append(doc)
+                title = self.srvdtb.get_values(doc, 'Title')[0]
+        self.build_events(doclist)
+        HTML = self.srvcal.build_year_pagination(self.dey.keys())
+        events = {}
+        events['content'] = HTML
+        page = self.template('PAGE_EVENTS')
+        self.distribute_adoc('events', page.render(var=events))
+
     def build(self):
         """Create standard pages for default theme"""
         var = self.get_theme_var()
         self.log.debug("This is the Techdoc theme")
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
+        self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()

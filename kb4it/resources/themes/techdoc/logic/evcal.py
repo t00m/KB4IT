@@ -97,6 +97,7 @@ class EventsCalendar(Service, HTMLCalendar):
         return EVENTCAL_TR_WEEK_HEADER.render(var=header)
 
     def formatweekday(self, nd):
+        EVENTCAL_WEEKDAY_HEADER = self.srvbld.template('EVENTCAL_WEEKDAY_HEADER')
         day_format = {}
         day_format[0] = ("mon", "Monday", "M")
         day_format[1] = ("tue", "Tuesday", "T")
@@ -105,30 +106,27 @@ class EventsCalendar(Service, HTMLCalendar):
         day_format[4] = ("fri", "Friday", "F")
         day_format[5] = ("sat", "Saturday", "S")
         day_format[6] = ("sun", "Sunday", "S")
-        return """<th class="%s"><a class="uk-link-heading uk-text-bolder uk-link-muted" href="#" uk-tooltip="%s">%s</a></th>""" % day_format[nd]
+        return EVENTCAL_WEEKDAY_HEADER.render(var=day_format[nd])
 
     def formatmonthname(self, theyear, themonth, withyear=True):
         """Return a formatted month name."""
-        LINK = self.srvbld.template('LINK')
+        LINK_URL = self.srvbld.template('LINK')
+        LINK_CLASS = self.srvbld.render_template('EVENTCAL_MONTHNAME_A_CLASS')
         dt = guess_datetime("%4d-%02d-01" % (theyear, themonth))
         month_name = datetime.strftime(dt, "%B %Y")
         var = {}
         var['title'] = month_name
+        var['class'] = LINK_CLASS
         try:
-            events = self.ml[theyear][themonth]
-
-            if events:
-                var['class'] = "uk-link-heading uk-text-uppercase"
+            events = self.ml[theyear][themonth]                        
+            if events:                
                 var['url'] = "events_%4d%02d.html" % (theyear, themonth)
             else:
-                var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
                 var['url'] = "#"
         except KeyError:
-            # FIXME: Use template
-            var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
             var['url'] = "#"
 
-        link = LINK.render(var=var)
+        link = LINK_URL.render(var=var)
         return link
 
     def formatmonth(self, theyear, themonth, withyear=False):

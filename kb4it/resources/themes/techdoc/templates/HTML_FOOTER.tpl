@@ -1,12 +1,14 @@
-            <!-- FOOTER :: START -->
+<!-- FOOTER :: START -->
             <div class="uk-flex uk-flex-center uk-flex-wrap">
+<!--
                 <div class="uk-card uk-card-body">
                     <span class="uk-text-meta">Last update on ${var['timestamp']}</span>
                 </div>
+-->
             </div>
-            <!-- FOOTER :: END -->
+<!-- FOOTER :: END -->
         </div>
-    <!-- CONTENTS (Document) :: END -->
+<!-- CONTENTS (Document) :: END -->
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
