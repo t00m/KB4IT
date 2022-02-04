@@ -26,7 +26,7 @@
                 searching: true,
                 //~ data:           data,
                 deferRender:    true,
-                scrollY:        500,
+                scrollY:        450,
                 scrollCollapse: false,
                 scroller:       false,
                 stateSave: false,
@@ -37,7 +37,7 @@
     </script>
 </head>
 <body>
-<div class="uk-background-muted">
+<div class="uk-background-muted uk-height-viewport">
 <div id="container-1" class="uk-container uk-container-center">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
