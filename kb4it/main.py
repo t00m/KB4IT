@@ -79,12 +79,12 @@ class KB4IT:
 
             # Check source and target paths
             try:
-                title = repo['title']
-                source = repo['source']
-                target = repo['target']
-                theme = repo['theme']
-                sort = repo['sort']
-            except Exeption as error:
+                title = self.repo['title']
+                source = self.repo['source']
+                target = self.repo['target']
+                theme = self.repo['theme']
+                sort = self.repo['sort']
+            except Exception as error:
                 self.log.error("[CONTROLLER] - Repository configuration is not valid. Check and fix, please:")
                 self.log.error("[CONTROLLER] - It must contain a title, a valid source and target paths, a valid theme name and the sorting property.")
                 self.log.error("[CONTROLLER] - Error: %s", error)

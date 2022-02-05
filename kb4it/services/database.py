@@ -25,7 +25,7 @@ class Database(Service):
     def initialize(self):
         """Initialize database module."""
         params = self.app.get_params()
-        self.sort_attribute = params.SORT_ATTRIBUTE
+        self.sort_attribute = params['sort']
         self.db = {}
         self.sorted_docs = []
         self.ignored_keys = self.blocked_keys = ['Title', 'Timestamp']
@@ -169,7 +169,7 @@ class Database(Service):
         return self.sort_by_date(docs)
 
     def get_doc_keys(self, doc):
-        """Return a list of keys for a given doc sorted alphabetically."""        
+        """Return a list of keys for a given doc sorted alphabetically."""
         keys = []
         try:
             for key in self.db[doc]:

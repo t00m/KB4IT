@@ -54,8 +54,8 @@ class Service:
         self.app = app
         self.logname = logname
         self.section_name = section_name
-        params = self.app.get_params()
-        severity = params.LOGLEVEL
+        repo = self.app.get_params()
+        severity = repo['logging']
         self.log = get_logger(logname, severity)
         self.initialize()
         self.log.debug("[SERVICE] - Service %s started" , logname)

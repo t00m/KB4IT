@@ -52,22 +52,22 @@ class Backend(Service):
 
         self.parameters = self.app.get_params()
         for param in self.parameters:
-            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.repo[param])
+            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
 
         # Initialize directories
         self.runtime['dir'] = {}
         self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP'] + '/')
-        self.runtime['dir']['target'] = self.repo['target']
-        self.runtime['dir']['source'] = os.path.realpath(self.parameters.SOURCE_PATH)
+        self.runtime['dir']['target'] = self.parameters['target']
+        self.runtime['dir']['source'] = os.path.realpath(self.parameters['source'])
         self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
         if not os.path.exists(self.runtime['dir']['cache']):
             os.makedirs(self.runtime['dir']['cache'])
 
         # if SORT attribute is given, use it instead of the OS timestamp
-        if self.parameters.SORT_ATTRIBUTE is None:
+        if self.parameters['sort'] is None:
             self.runtime['sort_attribute'] = 'Timestamp'
         else:
-            self.runtime['sort_attribute'] = self.parameters.SORT_ATTRIBUTE
+            self.runtime['sort_attribute'] = self.parameters['sort']
         self.log.debug("[SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
 
         # Initialize docs structure
@@ -155,7 +155,7 @@ class Backend(Service):
 
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
-        theme_name = self.parameters.THEME
+        theme_name = self.parameters['theme']
         if theme_name is None:
             self.log.debug("[SETUP] - Theme not provided. Autodetect it.")
             theme_path = self.srvfes.theme_search()
@@ -293,7 +293,7 @@ class Backend(Service):
 
             # Force compilation (from command line)?
             DOC_COMPILATION = False
-            FORCE_ALL = self.parameters.FORCE
+            FORCE_ALL = self.parameters['force']
             if not FORCE_ALL:
                 # Get cached document path and check if it exists
                 cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
@@ -381,7 +381,7 @@ class Backend(Service):
 
         for key in sorted(available_keys):
             COMPILE_KEY = False
-            FORCE_ALL = self.parameters.FORCE
+            FORCE_ALL = self.parameters['force']
             values = self.srvdtb.get_all_values_for_key(key)
             for value in values:
                 COMPILE_VALUE = False
@@ -467,7 +467,7 @@ class Backend(Service):
                         if cached_hash == current_hash:
                             COMPILE = False
 
-                if COMPILE or self.parameters.FORCE:
+                if COMPILE or self.parameters['force']:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
