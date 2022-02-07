@@ -8,15 +8,15 @@
     <meta name="description" content="KB4IT document">
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/uikit.min.css" />
-    <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/coderay-asciidoctor.css" />
-    <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="${var['theme']['path']}/framework/uikit/css/kb4it.css" />
-    <script src="${var['theme']['path']}/framework/uikit/js/uikit.min.js"></script>
-    <script src="${var['theme']['path']}/framework/uikit/js/uikit-icons.min.js"></script>
-    <script src="${var['theme']['path']}/framework/datatables/js/jquery-3.5.1.js"></script>
-    <script src="${var['theme']['path']}/framework/datatables/js/jquery.dataTables.min.js"></script>
-    <script src="${var['theme']['path']}/framework/datatables/js/dataTables.uikit.min.js"></script>
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/coderay-asciidoctor.css" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/kb4it.css" />
+    <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
+    <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
+    <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
+    <script src="resources/themes/techdoc/framework/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
     <script type="text/javascript" class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {

@@ -98,14 +98,20 @@ class Database(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        # FIXME
-        try:
-            timestamp = self.db[doc][self.sort_attribute][0]
-        except:
+        found = False
+        timestamp = ''
+        for sort_attribute in self.sort_attribute:
+            try:
+                timestamp = self.db[doc][sort_attribute][0]
+                found = True
+            except:
+                pass
+
+        if not found:
             try:
                 timestamp = self.db[doc]['Timestamp'][0]
             except:
-                timestamp = ''
+                pass
         return timestamp
 
     def get_doc_properties(self, doc):
