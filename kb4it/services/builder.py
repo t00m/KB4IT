@@ -102,7 +102,9 @@ class Builder(Service):
         var = {}
         var['theme'] = self.srvbes.get_theme_properties()
         var['repo'] = self.srvbes.get_kb_dict()
+        var['conf'] = self.app.get_params()
         var['page'] = {}
+        var['page']['title'] = ''
         return var
 
     def page_hook_pre(self, var):

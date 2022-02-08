@@ -12,6 +12,7 @@ Server module.
 
 import os
 import math
+import pprint
 from datetime import datetime
 
 from kb4it.services.builder import Builder
@@ -84,6 +85,9 @@ class Theme(Builder):
         result = self.srvcal.format_trimester(now.year, now.month)
         trimester = result.replace(TPL_TABLE_MONTH_OLD.render(), TPL_TABLE_MONTH_NEW.render())
         var['trimester'] = trimester
+        self.log.debug("Page Index Title: %s", var['conf']['title'])
+        var['page']['title'] = var['conf']['title']
+        pprint.pprint(var['page'])
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
 
@@ -511,7 +515,7 @@ class Theme(Builder):
                 var['metadata'] = ""
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
-            var['title'] = ', '.join(keys['Title'])
+            var['page']['title'] = ', '.join(keys['Title'])
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
             var['related'] = self.get_related(var)            

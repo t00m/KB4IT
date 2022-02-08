@@ -1,7 +1,7 @@
 <!DOCTYPE Html>
 <html lang="en">
 <head>
-    <title>KB4IT - ${var['title']}</title>
+    <title>KB4IT - ${var['page']['title']}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">
@@ -107,7 +107,7 @@ ${var['menu_contents']}
                             ${var['actions']}
                         % endif
 <!--
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate uk-invisible">${var['title']}</span></a>
+                       <a href="#"><span class="uk-text-bolder uk-text-truncate uk-invisible">${var['page']['title']}</span></a>
 -->
                     </li>
                 </u>

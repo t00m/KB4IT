@@ -1,7 +1,7 @@
 <!-- Template SECTION_ACTIONS.tpl :: START -->
 % if var['has_toc']:
 <div class="uk-flex uk-flex-center">
-    <div class="uk-card-small uk-card-body"><a href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['theme']['git_path']}/${var['basename_adoc']}" target="_blank"><span uk-icon="icon: pencil; ratio: 1.5;"></span></span></a></div>
+    <div class="uk-card-small uk-card-body"><a href="https://${var['conf']['git_server']}/${var['conf']['git_user']}/${var['conf']['git_repo']}/edit/${var['conf']['git_branch']}/${var['conf']['git_path']}/${var['basename_adoc']}" target="_blank"><span uk-icon="icon: pencil; ratio: 1.5;"></span></span></a></div>
     <div class="uk-card-small uk-card-body">
         <!-- Metadata Button :: START -->
         <a class="" href="#modal-metadata" uk-toggle><span uk-icon="icon: hashtag; ratio: 1.5;"></span></a>
