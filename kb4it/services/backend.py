@@ -101,6 +101,10 @@ class Backend(Service):
         """Get value for a given parameter."""
         return self.runtime[parameter]
 
+    def get_repo_parameters(self):
+        """Get repository parameters."""
+        return self.parameters
+        
     def get_theme_properties(self):
         """Get all properties from loaded theme."""
         return self.runtime['theme']

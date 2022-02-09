@@ -86,7 +86,7 @@ class Database(Service):
             if ts is not None:
                 adict[doc] = ts
             else:
-                self.log.error("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.error("[DB] - Doc '%s' doesn't have a valid timestamp? (%s)", doc, ts)
         alist = sort_dictionary(adict)
         for doc, timestamp in alist:
             sorted_docs.append(doc)

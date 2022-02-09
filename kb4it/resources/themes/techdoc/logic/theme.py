@@ -185,9 +185,10 @@ class Theme(Builder):
     def build_page_events(self):
         doclist = []
         ecats = {}
-        theme = self.srvbes.get_theme_properties()
+        repo = self.srvbes.get_repo_parameters()
+        self.log.debug("Repository parameters: %s", repo)
         try:
-            event_types = theme['events']
+            event_types = repo['events']
         except:
             event_types = []
         self.log.info("[THEME-TECHDOC] - Event types registered: %s", ', '.join(event_types))
