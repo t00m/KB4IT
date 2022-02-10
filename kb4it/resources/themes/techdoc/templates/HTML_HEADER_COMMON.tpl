@@ -103,12 +103,15 @@ ${var['menu_contents']}
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                        % if var['has_toc']:
-                            ${var['actions']}
-                        % endif
-<!--
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate uk-invisible">${var['page']['title']}</span></a>
--->
+                        <div class="uk-child-width-expand@s uk-text-center" uk-grid>
+                            <div class="uk-card uk-card-small">
+                                <div class="uk-card uk-card-small"><a href="#"><span class="uk-text-bolder uk-text-truncate">${var['page']['title']}</span></a></div>                                
+                                <div class="uk-card uk-card-small">
+% if var['has_toc']:
+    ${var['actions']}
+% endif
+                                </div>
+                            </div>
                     </li>
                 </u>
                 <!-- DOCUMENT TITLE :: END -->
