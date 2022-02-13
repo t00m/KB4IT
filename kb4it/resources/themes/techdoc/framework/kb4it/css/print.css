@@ -23,16 +23,20 @@
         display: none;
     }
 
-/*
+
     h1, h2, h3, h4, h5 {
       page-break-after: avoid;
     }
-*/
 
     #print-title {
         visibility: visible;
         display: inline;
     }
+    
+    #kb4it-page-title {
+        display: block;  
+    }
+
 
     /*Reset Style*/
     body {
@@ -49,3 +53,6 @@
         display: none ;
         }
 }
+
+#noprint { display: none; }
+#print { display: block; }

@@ -9,9 +9,9 @@
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/coderay-asciidoctor.css" />
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/print.css" type="text/css" media="print" />
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/kb4it.css" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/coderay-asciidoctor.css" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
     <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
     <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
     <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
@@ -39,6 +39,7 @@
 <body>
 <div class="uk-background-muted uk-height-viewport">
 <div id="container-1" class="uk-container uk-container-center">
+    <div id="print" class="uk-flex uk-flex-center"><span class="uk-text-lead">${var['page']['title']}</span></div>
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">

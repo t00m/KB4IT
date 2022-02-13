@@ -24,8 +24,15 @@ body {
     overflow-y: scroll; /* Show vertical scrollbar */
 }
 
+    #kb4it-page-title {
+        display: none;  
+    }
+    
 pre {
     padding: 10px;
     overflow: auto;
     margin: 10px;
 }
+
+#noprint { display: block; }
+#print { display: none; }

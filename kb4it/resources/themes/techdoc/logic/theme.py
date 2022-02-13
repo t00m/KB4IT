@@ -73,6 +73,27 @@ class Theme(Builder):
         # ~ var['title'] = key
         # ~ return self.template('PAGE_KEY_KB4IT').render(var=var)
 
+    def build_datatable(self, headers=[], rows=[]):
+        TPL_DATATABLE = self.template('DATATABLE')
+        TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
+        TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
+        
+        datatable = {}
+        datatable['header'] = ''
+        for item in headers:
+            var = {}
+            var['item'] = item
+            datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var=var)
+            
+        datatable['rows'] = ''
+        for row in rows:
+            var = {}
+            var['item'] = {}
+            var['item']['url'] = row[0]
+            var['item']['title'] = row[1]
+            datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=var)
+        return TPL_DATATABLE.render(var=datatable)
+
     def build_page_index(self, var):
         """Create key page."""
         var = self.get_theme_var()
@@ -87,7 +108,6 @@ class Theme(Builder):
         var['trimester'] = trimester
         self.log.debug("Page Index Title: %s", var['conf']['title'])
         var['page']['title'] = var['conf']['title']
-        pprint.pprint(var['page'])
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
 
@@ -587,7 +607,7 @@ class Theme(Builder):
     
     def build_page_bookmarks(self):
         """Create bookmarks page."""
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')  
+        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
         var = self.get_theme_var()
         bookmarks = {}
         for doc in self.srvdtb.get_documents():
@@ -596,12 +616,26 @@ class Theme(Builder):
                 bookmarks[doc] = {}
                 bookmarks[doc] = self.srvdtb.get_doc_properties(doc)
                 bookmarks[doc]['URL'] = doc.replace('.adoc', '.html')
+        headers = ['Document', 'Team', 'Published', 'Category', 'Scope']
+        rows = ['Document', 'Team', 'Published', 'Category', 'Scope']
+        datatable = self.build_datatable(headers, rows)
+        for doc in bookmarks:
+            self.log.error(doc)
+            # ~ title = bookmarks[doc]['Title'][0]
+            # ~ title_url = bookmarks[doc]['URL']
+            # ~ row = []
+            # ~ row.append()
+            # ~ row.append()
+            # ~ row.append(bookmarks[doc]['Team'][0])
+            # ~ row.append(bookmarks[doc]['Title'][0])
         var['page']['title'] = 'Bookmarks'
-        var['repo']['bookmarks'] = bookmarks
-        bookmarks = TPL_PAGE_BOOKMARKS.render(var=var)
-        self.distribute_adoc('bookmarks', bookmarks)
+        # ~ var['repo']['bookmarks'] = bookmarks
+        var['page']['dt_bookmarks'] = datatable
+        page = TPL_PAGE_BOOKMARKS.render(var=var)
+        self.log.error("PAGE: %s", page)
+        self.distribute_adoc('bookmarks', page)
         self.log.debug("[BUILDER] - Created page for bookmarks")
-        return bookmarks
+        # ~ return page
     
     def get_page_actions(self, var):
         TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')    
