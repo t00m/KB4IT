@@ -63,7 +63,7 @@ class KB4IT:
         if not self.params.LIST_THEMES:
             # Get repository configuration path. Mandatory
             try:
-                repo_path = os.path.abspath(self.params.REPO_CONF_PATH)
+                repo_path = os.path.abspath(self.params.REPO_PATH)
                 self.log.debug("[CONTROLLER] - Repository configuration path: %s", repo_path)
                 if not os.path.exists(repo_path):
                     self.log.error("[CONTROLLER] - Repository configuration path doesn't exist.")
@@ -220,16 +220,9 @@ def main():
 
     # KB4IT arguments
     kb4it_options = parser.add_argument_group('KB4IT Options')
-    kb4it_options.add_argument('-r', '--repo', help='Repository config file', dest='REPO_CONF_PATH')
-    kb4it_options.add_argument('-S', '--source', help='directory with Asciidoctor source files', dest='SOURCE_PATH')
-    kb4it_options.add_argument('-T', '--target', help='target directory for output', dest='TARGET_PATH')
-    kb4it_options.add_argument('-s', '--sort', dest='SORT_ATTRIBUTE', help='sorting attribute (Published, Updated, ...)')
-    kb4it_options.add_argument('-t', '--theme', dest='THEME', required=False, help='specify theme (techdoc, snippets, default, ...)')
-    kb4it_options.add_argument('-l', '--list-themes', action='store_true', dest='LIST_THEMES', required=False, help='List all installed themes')
-    kb4it_options.add_argument('-L', '--log', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', help='Control output verbosity. Default to INFO')
-    kb4it_options.add_argument('-F', '--force', action='store_true', dest='FORCE', help='force a clean compilation')
-    kb4it_options.add_argument('-R', '--reset', action='store_true', dest='RESET', help='reset environment')
-    kb4it_options.add_argument('-v', '--version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
+    kb4it_options.add_argument('-r', help='Repository config file', dest='REPO_PATH')
+    kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
+    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
 
     params = parser.parse_args()
     app = KB4IT(params)
