@@ -620,7 +620,8 @@ class Theme(Builder):
         rows = ['Document', 'Team', 'Published', 'Category', 'Scope']
         datatable = self.build_datatable(headers, rows)
         for doc in bookmarks:
-            self.log.error(doc)
+            self.log.error(self.srvdtb.get_doc_properties(doc))
+            # ~ self.log.error(doc)
             # ~ title = bookmarks[doc]['Title'][0]
             # ~ title_url = bookmarks[doc]['URL']
             # ~ row = []
@@ -632,7 +633,7 @@ class Theme(Builder):
         # ~ var['repo']['bookmarks'] = bookmarks
         var['page']['dt_bookmarks'] = datatable
         page = TPL_PAGE_BOOKMARKS.render(var=var)
-        self.log.error("PAGE: %s", page)
+        # ~ self.log.error("PAGE: %s", page)
         self.distribute_adoc('bookmarks', page)
         self.log.debug("[BUILDER] - Created page for bookmarks")
         # ~ return page

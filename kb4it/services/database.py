@@ -11,6 +11,7 @@ RDF Graph In Memory database module.
 
 from kb4it.core.service import Service
 from kb4it.core.util import guess_datetime, sort_dictionary
+from kb4it.core.util import valid_filename
 
 
 class Database(Service):
@@ -115,11 +116,24 @@ class Database(Service):
         return timestamp
 
     def get_doc_properties(self, doc):
-        """Return a dictionary with the properties of a given doc."""
+        """Return a dictionary with the properties of a given doc.
+        Additionally, the dictionary will contain an extra entry foreach
+        property with its Url:
+        """
+        props = {}
         try:
-            return self.db[doc]
-        except:
-            return []
+            for key in self.db[doc]:
+                props[key] = self.db[doc][key]
+                key_url = "%s_Url" % key
+                if key == 'Title':
+                    props[key_url] = doc.replace('.adoc', '.html')
+                else:
+                    props[key_url] = "%s_%s.html" % (key, valid_filename(self.db[doc][key]))
+        except Exception as warning:
+            # ~ self.log.warning(warning)
+            pass
+        
+        return props
 
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""
