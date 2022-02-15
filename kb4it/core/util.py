@@ -22,7 +22,7 @@ import subprocess
 import traceback as tb
 import pprint
 from datetime import datetime
-from bs4 import BeautifulSoup as bs
+# ~ from bs4 import BeautifulSoup as bs
 from kb4it.core.env import LPATH, EOHMARK
 from kb4it.core.log import get_logger
 
