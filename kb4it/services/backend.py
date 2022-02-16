@@ -52,7 +52,7 @@ class Backend(Service):
 
         self.parameters = self.app.get_params()
         for param in self.parameters:
-            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
+            self.log.info("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
 
         # Initialize directories
         self.runtime['dir'] = {}
@@ -349,6 +349,9 @@ class Backend(Service):
         self.log.info("[PREPROCESSING] - Stats - Keep: %d - Compile: %d", keep_docs, compile_docs)
         self.log.info("[PREPROCESSING] - End")
 
+    def get_ignored_keys(self):
+        return self.ignored_keys
+
     def get_kb_dict(self):
         return self.kbdict_new
 
@@ -377,9 +380,15 @@ class Backend(Service):
     def stage_04_processing(self):
         """Process all documents."""
         self.log.info("[PROCESSING] - Start")
+        repo = self.get_repo_parameters()
         all_keys = set(self.srvdtb.get_all_keys())
-        ign_keys = set(self.srvdtb.get_ignored_keys())
-        available_keys = list(all_keys - ign_keys)
+        ign_default_keys = set(self.srvdtb.get_ignored_keys())
+        ign_theme_keys = set(repo['ignored_keys'])
+        self.ignored_keys = ign_default_keys.union(ign_theme_keys)
+        available_keys = list(all_keys - self.ignored_keys)
+        self.log.info("All keys: %s", all_keys)
+        self.log.info("Ign keys: %s", ', '.join(list(self.ignored_keys)))
+        self.log.info("Avl keys: %s", available_keys)
         K_PATH = []
         KV_PATH = []
 
