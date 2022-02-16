@@ -1,0 +1,40 @@
+{
+    "theme": "techdoc",
+    "title": "Repository for KB4IT testing",
+    "source": "/home/t00m/Documents/devel/github/KB4IT/sap.small",
+    "target": "/home/t00m/Documents/devel/github/KB4IT/output",
+    "sort": [
+        "Published",
+        "Updated"
+    ],
+    "events": [
+        "Change",
+        "Diary",
+        "Email",
+        "Incident",
+        "Message",
+        "Meeting",
+        "Note",
+        "Post",
+        "Procedure",
+        "Reminder",
+        "Report",
+        "Task"
+    ],
+    "ignored_keys": [
+        "Published",
+        "Updated"
+    ],
+    "date_attributes": [
+        "Date",
+        "Updated",
+        "Published"
+    ],
+    "git_server": "",
+    "git_user": "",
+    "git_repo": "",
+    "git_branch": "",
+    "git_path": "",
+    "logging": "INFO",
+    "force": true
+}
