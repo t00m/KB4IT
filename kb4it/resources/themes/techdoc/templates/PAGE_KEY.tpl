@@ -3,7 +3,9 @@
 ++++
 <!-- KEY_PAGE.tpl -->
 <!-- Tabs header :: START-->
+<!--
 <div class="uk-flex uk-flex-center"><h1 class="uk-text-large">${var['title']}</h1></div>
+-->
 <ul class="uk uk-flex-center" uk-tab>
     <li><a href="#">Cloud</a></li>
     <li><a href="#">Table</a></li>
