@@ -174,18 +174,12 @@ class KB4IT:
         """Start application."""
         if self.ready:
             backend = self.get_service('Backend')
-            if self.params.RESET:
-                if self.params.FORCE:
-                    backend.reset()
-                else:
-                    self.log.warning("[CONTROLLER] - KB4IT environment NOT reset. You must force it!")
-            else:
-                try:
-                    backend.run()
-                except Exception as error:
-                    self.log.error(error)
-                    raise
-                self.stop()
+            try:
+                backend.run()
+            except Exception as error:
+                self.log.error(error)
+                raise
+            self.stop()
         else:
             if self.params.LIST_THEMES:
                 self.params.SOURCE_PATH = LPATH['TMP_SOURCE']
@@ -222,6 +216,7 @@ def main():
     kb4it_options = parser.add_argument_group('KB4IT Options')
     kb4it_options.add_argument('-r', help='Repository config file', dest='REPO_PATH')
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
+    kb4it_options.add_argument('-L', help='Control output verbosity. Default to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
     kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
 
     params = parser.parse_args()
