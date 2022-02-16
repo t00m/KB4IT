@@ -123,16 +123,19 @@ class Database(Service):
         props = {}
         try:
             for key in self.db[doc]:
-                props[key] = self.db[doc][key]
-                key_url = "%s_Url" % key
                 if key == 'Title':
+                    props[key] = self.db[doc][key][0]
+                    key_url = "%s_Url" % key
                     props[key_url] = doc.replace('.adoc', '.html')
                 else:
-                    props[key_url] = "%s_%s.html" % (key, valid_filename(self.db[doc][key]))
+                    props[key] = self.db[doc][key]
+                    for value in self.db[doc][key]:
+                        key_value_url = "%s_%s_Url" % (key, value)
+                        props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
         except Exception as warning:
-            # ~ self.log.warning(warning)
+            # FIXME: Document why it is not necessary
             pass
-        
+
         return props
 
     def get_values(self, doc, key):
