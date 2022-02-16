@@ -73,26 +73,44 @@ class Theme(Builder):
         # ~ var['title'] = key
         # ~ return self.template('PAGE_KEY_KB4IT').render(var=var)
 
-    def build_datatable(self, headers=[], rows=[]):
+    def build_datatable(self, headers=[], data={}):
+        TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
         TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
-        
+
         datatable = {}
         datatable['header'] = ''
         for item in headers:
             var = {}
             var['item'] = item
             datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var=var)
-            
+
         datatable['rows'] = ''
-        for row in rows:
-            var = {}
-            var['item'] = {}
-            var['item']['url'] = row[0]
-            var['item']['title'] = row[1]
-            datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=var)
+        for doc in data:
+            for key in headers:
+                item = {}
+                if key == 'Title':
+                    item['title'] = data[doc][key]
+                    item['url'] = data[doc]['%s_Url' % key]
+                    datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
+                else:
+                    link = {}
+                    link['class'] = 'uk-link-heading'
+                    field = []
+                    try:
+                        for value in data[doc][key]:
+                            link['title'] = value
+                            link['url'] = data[doc]['%s_%s_Url' % (key, value)]
+                            field.append(TPL_LINK.render(var=link))
+                    except KeyError:
+                        field = ''
+                    datatable['rows'] += "<td>%s</td>" % ', '.join(field)
+                # TPL_DATATABLE_BODY_ITEM.render(var=item)
+
+                # ~ self.log.error("\t%s -> %s", item['title'], item['url'])
         return TPL_DATATABLE.render(var=datatable)
+
 
     def build_page_index(self, var):
         """Create key page."""
@@ -157,7 +175,7 @@ class Theme(Builder):
         for year in self.events_docs:
             for month in self.events_docs[year]:
                 for day in self.events_docs[year][month]:
-                    var = self.get_theme_var()                    
+                    var = self.get_theme_var()
                     var['doclist'] = self.events_docs[year][month][day]
                     edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                     var['title'] = edt.strftime("Events on %A, %B %d %Y")
@@ -168,10 +186,10 @@ class Theme(Builder):
         # Build month event pages
         for year in self.events_docs:
             for month in self.events_docs[year]:
-                var = self.get_theme_var()  
+                var = self.get_theme_var()
                 docs = []
                 edt = guess_datetime("%4d.%02d.01" % (year, month))
-                var['title'] = edt.strftime("Events on %B, %Y")                
+                var['title'] = edt.strftime("Events on %B, %Y")
                 for day in self.events_docs[year][month]:
                     docs.extend(self.events_docs[year][month][day])
                 var['doclist'] = docs
@@ -211,8 +229,8 @@ class Theme(Builder):
             event_types = repo['events']
         except:
             event_types = []
-        self.log.info("[THEME-TECHDOC] - Event types registered: %s", ', '.join(event_types))
-        
+        self.log.info("[THEME-TECHDOC] - Event types: %s", ', '.join(event_types))
+
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category in event_types:
@@ -277,7 +295,7 @@ class Theme(Builder):
         var['source'] = ''
         var['actions'] = ''
         return var
-        
+
         # ~ self.log.error("Page hook pre: %s", basename)
         # ~ basename = var['basename']
         # ~ html = ""
@@ -343,7 +361,7 @@ class Theme(Builder):
         var = self.get_theme_var()
         var['buttons'] = []
         for key in all_keys:
-            ignored_keys = self.srvdtb.get_ignored_keys()
+            ignored_keys = self.srvbes.get_ignored_keys()
             if key not in ignored_keys:
                 vbtn = {}
                 vbtn['content'] = self.build_tagcloud_from_key(key)
@@ -444,10 +462,10 @@ class Theme(Builder):
         """Create a page with all documents"""
         doclist = self.srvdtb.get_documents()
         TPL_PAGE_ALL = self.template('PAGE_ALL')
-        var = self.get_theme_var()        
+        var = self.get_theme_var()
         page = TPL_PAGE_ALL.render(var=var)
         self.distribute_adoc('all', page)
-        
+
     def extract_toc(self, source):
         """Extract TOC from Asciidoctor generated HTML code and
         make it theme dependent."""
@@ -490,14 +508,14 @@ class Theme(Builder):
 
         At this point, the compilation for the asciidoc document has
         finished successfully, and therefore the html page can be built.
-        
+
         The Builder receives the asciidoc document filepath. It means,
         that another file with extension .html should also exist.
-        
-        The html page is built by inserting the html header at the 
-        beguinning, appending the footer at the end, and applying the 
+
+        The html page is built by inserting the html header at the
+        beguinning, appending the footer at the end, and applying the
         necessary transformations.
-        
+
         Finally, the html page created by asciidoctor is overwritten.
         """
         path_hdoc = path_adoc.replace('.adoc', '.html')
@@ -539,7 +557,7 @@ class Theme(Builder):
             var['page']['title'] = ', '.join(keys['Title'])
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
-            var['related'] = self.get_related(var)            
+            var['related'] = self.get_related(var)
             var['source_adoc'] = source_adoc
             var['source_html'] = source_html
             var['actions'] = self.get_page_actions(var)
@@ -547,9 +565,9 @@ class Theme(Builder):
             var = self.apply_transformations(var)
 
             # Insert pre & post hooks content
-            # ~ var = self.page_hook_pre(var)            
+            # ~ var = self.page_hook_pre(var)
             # ~ var = self.page_hook_post(var)
-                    
+
             HEADER = HTML_HEADER_COMMON.render(var=var)
             BODY = HTML_BODY.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
@@ -558,37 +576,37 @@ class Theme(Builder):
             HTML += HEADER
             HTML += BODY
             HTML += FOOTER
-            
+
             with open(path_hdoc, 'w') as fhtml:
                 fhtml.write(HTML)
-                
+
             self.log.debug("[BUILD] - Page[%s] transformation finished", basename_hdoc)
 
             # ~ return HTML
-            
+
 
     def build_page_key(self, key, values):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY')
         var = self.get_theme_var()
-        var['title'] = key        
+        var['title'] = key
         var['cloud'] = self.build_tagcloud_from_key(key)
         var['leader'] = []
         var['key_values'] = {}
         for value in values:
-            item = {}            
+            item = {}
             docs = self.srvdtb.get_docs_by_key_value(key, value)
             item['count'] = len(docs)
             item['vfkey'] = valid_filename(key)
             item['vfvalue'] = valid_filename(value)
             item['name'] = value
             var['leader'].append(item)
-        html = TPL_PAGE_KEY.render(var=var)        
+        html = TPL_PAGE_KEY.render(var=var)
         return html
-        
+
     def build_page_key_value(self, kvpath):
         key, value, COMPILE_VALUE = kvpath
-        TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')        
+        TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
         docs = self.srvbes.get_kbdict_value(key, value, new=True)
         sorted_docs = self.srvdtb.sort_by_date(docs)
         pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
@@ -599,12 +617,12 @@ class Theme(Builder):
         var['pagename'] = pagename
         var['doclist'] = sorted_docs
         var['compile'] = COMPILE_VALUE
-        var['has_toc'] = False                
+        var['has_toc'] = False
         if var['compile']:
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
-    
+
     def build_page_bookmarks(self):
         """Create bookmarks page."""
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
@@ -613,54 +631,41 @@ class Theme(Builder):
         for doc in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
-                bookmarks[doc] = {}
                 bookmarks[doc] = self.srvdtb.get_doc_properties(doc)
-                bookmarks[doc]['URL'] = doc.replace('.adoc', '.html')
-        headers = ['Document', 'Team', 'Published', 'Category', 'Scope']
-        rows = ['Document', 'Team', 'Published', 'Category', 'Scope']
-        datatable = self.build_datatable(headers, rows)
-        for doc in bookmarks:
-            self.log.error(self.srvdtb.get_doc_properties(doc))
-            # ~ self.log.error(doc)
-            # ~ title = bookmarks[doc]['Title'][0]
-            # ~ title_url = bookmarks[doc]['URL']
-            # ~ row = []
-            # ~ row.append()
-            # ~ row.append()
-            # ~ row.append(bookmarks[doc]['Team'][0])
-            # ~ row.append(bookmarks[doc]['Title'][0])
+        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+        datatable = self.build_datatable(headers, bookmarks)
+
         var['page']['title'] = 'Bookmarks'
-        # ~ var['repo']['bookmarks'] = bookmarks
         var['page']['dt_bookmarks'] = datatable
         page = TPL_PAGE_BOOKMARKS.render(var=var)
         # ~ self.log.error("PAGE: %s", page)
         self.distribute_adoc('bookmarks', page)
         self.log.debug("[BUILDER] - Created page for bookmarks")
-        # ~ return page
-    
+        return page
+
     def get_page_actions(self, var):
-        TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')    
+        TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
         this_doc = var['basename_adoc']
         actions = TPL_SECTION_ACTIONS.render(var=var)
         return actions
 
     def get_related(self, var):
         """Get a list of related documents for each tag"""
-        TPL_SECTION_RELATED = self.template('SECTION_RELATED')        
+        TPL_SECTION_RELATED = self.template('SECTION_RELATED')
         this_doc = var['basename_adoc']
         properties = self.srvdtb.get_doc_properties(this_doc)
         var['has_tags'] = False
         var['has_docs'] = False
         var['related'] = {}
-        
-        if len(properties) > 0:   
-            try:         
+
+        if len(properties) > 0:
+            try:
                 tags = properties['Tag']
                 var['has_tags'] = True
             except:
                 tags = []
-        
-        if var['has_tags']:                        
+
+        if var['has_tags']:
             for tag in tags:
                 for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
                     if doc != this_doc:
