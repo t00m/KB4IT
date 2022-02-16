@@ -25,11 +25,14 @@ class Database(Service):
 
     def initialize(self):
         """Initialize database module."""
-        params = self.app.get_params()
-        self.sort_attribute = params['sort']
-        self.db = {}
+        try:
+            repo = self.app.get_repo_conf()
+            self.sort_attribute = repo['sort']
+        except:
+            pass
         self.sorted_docs = []
         self.ignored_keys = self.blocked_keys = ['Title', 'Timestamp']
+        self.db = {}
 
     def del_document(self, doc):
         """Delete a document node from database."""

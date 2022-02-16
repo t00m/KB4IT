@@ -42,7 +42,8 @@ class KB4IT:
         try:
             self.setup_logging(self.params.LOGLEVEL)
         except:
-            self.setup_logging(self.params.INFO)
+            self.setup_logging(severity='INFO')
+
         self.log.debug("[CONTROLLER] - KB4IT %s started", APP['version'])
         self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
 
@@ -102,8 +103,12 @@ class KB4IT:
         else:
             self.ready = False
 
-    def get_params(self):
-        """Return parametres."""
+    def get_app_conf(self):
+        """Return app configuration"""
+        return self.params
+
+    def get_repo_conf(self):
+        """Return repos configuration"""
         return self.repo
 
     def setup_environment(self):
@@ -182,8 +187,8 @@ class KB4IT:
             self.stop()
         else:
             if self.params.LIST_THEMES:
-                self.params.SOURCE_PATH = LPATH['TMP_SOURCE']
-                self.params.TARGET_PATH = LPATH['TMP_TARGET']
+                self.repo['source'] = LPATH['TMP_SOURCE']
+                self.repo['target'] = LPATH['TMP_TARGET']
                 frontend = self.get_service('Frontend')
                 frontend.theme_list()
         self.stop()

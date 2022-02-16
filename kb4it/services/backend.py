@@ -50,9 +50,9 @@ class Backend(Service):
 
         # Get params from command line
 
-        self.parameters = self.app.get_params()
+        self.parameters = self.app.get_repo_conf()
         for param in self.parameters:
-            self.log.info("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
+            self.log.debug("[SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
 
         # Initialize directories
         self.runtime['dir'] = {}
@@ -64,10 +64,14 @@ class Backend(Service):
             os.makedirs(self.runtime['dir']['cache'])
 
         # if SORT attribute is given, use it instead of the OS timestamp
-        if self.parameters['sort'] is None:
-            self.runtime['sort_attribute'] = 'Timestamp'
-        else:
+        try:
             self.runtime['sort_attribute'] = self.parameters['sort']
+        except:
+            self.runtime['sort_attribute'] = 'Timestamp'
+        # ~ if self.parameters['sort'] is None:
+            # ~ self.runtime['sort_attribute'] = 'Timestamp'
+        # ~ else:
+            # ~ self.runtime['sort_attribute'] = self.parameters['sort']
         self.log.debug("[SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
 
         # Initialize docs structure
@@ -104,7 +108,7 @@ class Backend(Service):
     def get_repo_parameters(self):
         """Get repository parameters."""
         return self.parameters
-        
+
     def get_theme_properties(self):
         """Get all properties from loaded theme."""
         return self.runtime['theme']

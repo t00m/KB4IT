@@ -41,7 +41,7 @@ class Builder(Service):
         """Get services."""
         self.srvdtb = self.get_service('DB')
         self.srvbes = self.get_service('Backend')
-        
+
     def generate_sources(self):
         """Custom themes can use this method to generate source documents"""
         pass
@@ -53,7 +53,7 @@ class Builder(Service):
         Use this method when the source asciidoctor file doesn't have to
         be analyzed.
         """
-        self.log.debug("[DIST-ADOC] %s", name) 
+        self.log.debug("[DIST-ADOC] %s", name)
         PAGE_NAME = "%s.adoc" % name
         PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), PAGE_NAME)
         with open(PAGE_PATH, 'w') as fpag:
@@ -96,13 +96,13 @@ class Builder(Service):
     def render_template(self, name, var={}):
         tpl = self.template(name)
         return tpl.render(var=var)
-        
+
     def get_theme_var(self):
         """Create a new variable for rendering templates."""
         var = {}
         var['theme'] = self.srvbes.get_theme_properties()
         var['repo'] = self.srvbes.get_kb_dict()
-        var['conf'] = self.app.get_params()
+        var['conf'] = self.app.get_app_conf()
         var['page'] = {}
         var['page']['title'] = ''
         return var
@@ -129,16 +129,16 @@ class Builder(Service):
 
         At this point, the compilation for the asciidoc document has
         finished successfully, and therefore the html page can be built.
-        
+
         The Builder receives the asciidoc document filepath. It means,
         that another file with extension .html should also exist.
-        
-        The html page is built by inserting the html header at the 
-        beguinning, appending the footer at the end, and applying the 
+
+        The html page is built by inserting the html header at the
+        beguinning, appending the footer at the end, and applying the
         necessary transformations.
-        
+
         Finally, the html page created by asciidoctor is overwritten.
-        
+
         This method must be overwriten by custom themes.
         """
         # ~ html = ''
