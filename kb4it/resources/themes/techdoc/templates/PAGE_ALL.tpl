@@ -10,14 +10,14 @@
             </tr>
         </thead>
         <tbody>
-            % for item in var['repo']['document']:
+            % for item in var['kbdict']['document']:
                 <%
-                    title = var['repo']['document'][item]['Title'][0]
+                    title = var['kbdict']['document'][item]['Title'][0]
                     title_url = item.replace('.adoc', '.html')
                 %>
                 <tr>
                     <td><a class="uk-link-toggle" href="#"><span class="uk-text-small">${item}</span></a></td>
-                    <td><a class="uk-link-toggle" href="${title_url}"><span class="uk-text-small uk-text-truncate">${title}</span></a></td>                    
+                    <td><a class="uk-link-toggle" href="${title_url}"><span class="uk-text-small uk-text-truncate">${title}</span></a></td>
                 </tr>
             % endfor
         </tbody>

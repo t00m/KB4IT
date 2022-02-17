@@ -101,7 +101,8 @@ class Builder(Service):
         """Create a new variable for rendering templates."""
         var = {}
         var['theme'] = self.srvbes.get_theme_properties()
-        var['repo'] = self.srvbes.get_kb_dict()
+        var['kbdict'] = self.srvbes.get_kb_dict()
+        var['repo'] = self.srvbes.get_repo_parameters()
         var['conf'] = self.app.get_app_conf()
         var['page'] = {}
         var['page']['title'] = ''

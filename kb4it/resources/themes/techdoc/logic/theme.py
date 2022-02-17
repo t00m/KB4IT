@@ -13,7 +13,8 @@ Server module.
 import os
 import math
 import pprint
-from datetime import datetime
+from datetime import datetime, timedelta
+from calendar import monthrange
 
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
@@ -88,6 +89,7 @@ class Theme(Builder):
 
         datatable['rows'] = ''
         for doc in data:
+            datatable['rows'] += '<tr>'
             for key in headers:
                 item = {}
                 if key == 'Title':
@@ -106,6 +108,7 @@ class Theme(Builder):
                     except KeyError:
                         field = ''
                     datatable['rows'] += "<td>%s</td>" % ', '.join(field)
+            datatable['rows'] += '</tr>'
                 # TPL_DATATABLE_BODY_ITEM.render(var=item)
 
                 # ~ self.log.error("\t%s -> %s", item['title'], item['url'])
@@ -114,7 +117,6 @@ class Theme(Builder):
 
     def build_page_index(self, var):
         """Create key page."""
-        var = self.get_theme_var()
         # ~ TPL_INDEX = self.template('PAGE_INDEX')
         TPL_TABLE_EVENTS = self.template('EVENTCAL_TABLE_EVENT')
         TPL_TABLE_MONTH_OLD = self.template('EVENTCAL_TABLE_MONTH_OLD')
@@ -124,8 +126,25 @@ class Theme(Builder):
         result = self.srvcal.format_trimester(now.year, now.month)
         trimester = result.replace(TPL_TABLE_MONTH_OLD.render(), TPL_TABLE_MONTH_NEW.render())
         var['trimester'] = trimester
-        self.log.debug("Page Index Title: %s", var['conf']['title'])
-        var['page']['title'] = var['conf']['title']
+
+        dt_now = datetime.now().replace(day=1) # Current datetime
+        ldpm = dt_now - timedelta(days=1) # Last day previous month
+        fdpm = ldpm.replace(day=1, hour=0, minute=0, second=0, microsecond=1) # First moment of the first day of the previous month
+        dt_cur_lastday = dt_now.replace(day = monthrange(dt_now.year, dt_now.month)[1]) # Last day current datetime
+        fdnm = dt_cur_lastday + timedelta(days=1) # First day next month
+        dt_nxt = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # Last day next month
+        ldnm = dt_nxt.replace(hour=23, minute=59, second=59, microsecond=999999) # Last moment of the last day of the next month
+
+        documents = {}
+        for doc in self.srvdtb.get_documents():
+            ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
+            if ts >= fdpm and ts <= ldnm:
+                documents[doc] = self.srvdtb.get_doc_properties(doc)
+        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+        datatable = self.build_datatable(headers, documents)
+        var['page']['dt_documents'] = datatable
+
+        var['page']['title'] = var['repo']['title']
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
 
@@ -564,10 +583,6 @@ class Theme(Builder):
             var['timestamp'] = timestamp
             var = self.apply_transformations(var)
 
-            # Insert pre & post hooks content
-            # ~ var = self.page_hook_pre(var)
-            # ~ var = self.page_hook_post(var)
-
             HEADER = HTML_HEADER_COMMON.render(var=var)
             BODY = HTML_BODY.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
@@ -581,9 +596,6 @@ class Theme(Builder):
                 fhtml.write(HTML)
 
             self.log.debug("[BUILD] - Page[%s] transformation finished", basename_hdoc)
-
-            # ~ return HTML
-
 
     def build_page_key(self, key, values):
         """Create page for a key."""

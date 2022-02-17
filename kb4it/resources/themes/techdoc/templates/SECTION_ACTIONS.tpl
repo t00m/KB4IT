@@ -1,14 +1,14 @@
 <!-- Template SECTION_ACTIONS.tpl :: START -->
 % if var['has_toc']:
 <div class="uk-flex uk-flex-center">
-    <ul class="uk-iconnav">        
-        <li><!-- Edit Button :: START --> 
-            <a class="uk-link-toggle" href="https://${var['conf']['git_server']}/${var['conf']['git_user']}/${var['conf']['git_repo']}/edit/${var['conf']['git_branch']}/${var['conf']['git_path']}/${var['basename_adoc']}" target="_blank"><span class="uk-link-heading" uk-icon="icon: pencil; ratio: 1.0;"></span></span></a>
-        </li><!-- Edit Button :: END -->                 
-        <li><!-- Print Button :: START -->   
+    <ul class="uk-iconnav">
+        <li><!-- Edit Button :: START -->
+            <a class="uk-link-toggle" href="https://${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank"><span class="uk-link-heading" uk-icon="icon: pencil; ratio: 1.0;"></span></span></a>
+        </li><!-- Edit Button :: END -->
+        <li><!-- Print Button :: START -->
             <a class="uk-link-toggle"  onclick="window.print()"><span class="uk-link-heading" uk-icon="icon: print; ratio: 1.0;"></span></a>
-        </li><!-- Print Button :: END -->           
-        <li><!-- Metadata Button :: START -->   
+        </li><!-- Print Button :: END -->
+        <li><!-- Metadata Button :: START -->
             <a class="uk-link-toggle" href="#modal-metadata" uk-toggle><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
             <div id="modal-metadata" class="uk-modal-full" uk-modal>
                 <div class="uk-modal-dialog">
@@ -20,7 +20,7 @@
                         </div>
                     </div>
                 </div>
-            </div>            
+            </div>
         </li><!-- Metadata Button :: END -->
         <li><!-- View Asciidoc Source Button :: START -->
             <a class="uk-link-toggle" href="#modal-full-source" uk-toggle><span class="uk-link-heading" uk-icon="icon: code; ratio: 1.0;"></span></a>

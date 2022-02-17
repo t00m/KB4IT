@@ -21,20 +21,20 @@
                     from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
                     def get_key_value(var, item, key):
                         try:
-                            return var['repo']['document'][item][key]
+                            return var['kbdict']['document'][item][key]
                         except:
                             return ''
-                            
-                    title = var['repo']['document'][item]['Title'][0]
-                    team = ', '.join(get_key_value(var, item, 'Team'))                    
+
+                    title = var['kbdict']['document'][item]['Title'][0]
+                    team = ', '.join(get_key_value(var, item, 'Team'))
                     title_url = item.replace('.adoc', '.html')
                     try:
-                        published = var['repo']['document'][item]['Published'][0][0:10]
+                        published = var['kbdict']['document'][item]['Published'][0][0:10]
                     except:
                         published = ''
-                    author = ', '.join(get_key_value(var, item, 'Author'))    
-                    category = ', '.join(get_key_value(var, item, 'Category'))    
-                    scope = ', '.join(get_key_value(var, item, 'Scope'))    
+                    author = ', '.join(get_key_value(var, item, 'Author'))
+                    category = ', '.join(get_key_value(var, item, 'Category'))
+                    scope = ', '.join(get_key_value(var, item, 'Scope'))
                 %>
                 <tr class="">
                     <td><a class="uk-link-toggle" href="${title_url}"><span class="uk-text-small uk-text-truncate">${title}</span></a></td>
