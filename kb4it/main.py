@@ -72,7 +72,7 @@ class KB4IT:
             except Exception as error:
                 self.log.error("[CONTROLLER] - Error: %s", error)
                 self.log.error("[CONTROLLER] - The repository config path is mandatory.")
-                self.log.error("[CONTROLLER] - Error. Repository configuration path '%s' is not valid", self.params.REPO_CONF_PATH)
+                self.log.error("[CONTROLLER] - Error. Repository configuration path is not valid")
                 self.stop()
 
             with open(repo_path, 'r') as conf:
