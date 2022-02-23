@@ -20,17 +20,17 @@
     <script type="text/javascript" class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {
-                dom: 'BPQrftp',
+                dom: "<'bottom'flp><'clear'>i",
                 serverSide: false,
                 ordering: true,
                 searching: true,
                 //~ data:           data,
                 deferRender:    true,
-                scrollY:        450,
+                scrollY:        400,
                 scrollCollapse: false,
                 scroller:       false,
                 stateSave: false,
-                paging:   true,
+                paging:   false,
                 info:     true
             } );
         } );
@@ -106,7 +106,7 @@ ${var['menu_contents']}
                     <li>
                         <div class="uk-child-width-expand@s uk-text-center" uk-grid>
                             <div class="uk-card uk-card-small">
-                                <div class="uk-card uk-card-small"><a href="#"><span class="uk-text-bolder uk-text-truncate">${var['page']['title']}</span></a></div>                                
+                                <div class="uk-card uk-card-small"><a href="#"><span class="uk-text-bolder uk-text-truncate">${var['page']['title']}</span></a></div>
                                 <div class="uk-card uk-card-small">
 % if var['has_toc']:
     ${var['actions']}

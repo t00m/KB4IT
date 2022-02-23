@@ -1,1 +1,1 @@
-<th><span class="uk-text-bold">${var['item']}</span></th>
+<th class=""><span class="uk-text-bold uk-text-meta">${var['item']}</span></th>

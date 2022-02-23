@@ -1,1 +1,1 @@
-<td><a class="uk-link-heading" href="${var['url']}"><span class="uk-text-small uk-text-truncate">${var['title']}</span></a></td>
+<td class=""><a class="uk-link-heading" href="${var['url']}"><span class="uk-text-meta uk-text-truncate uk-text-bold">${var['title']}</span></a></td>
