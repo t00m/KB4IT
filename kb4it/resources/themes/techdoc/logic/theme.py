@@ -594,6 +594,7 @@ class Theme(Builder):
 
             with open(path_hdoc, 'w') as fhtml:
                 fhtml.write(HTML)
+                self.log.debug("[BUILD] Page[%s] saved to: %s", basename_hdoc, path_hdoc)
 
             self.log.debug("[BUILD] - Page[%s] transformation finished", basename_hdoc)
 
@@ -613,8 +614,13 @@ class Theme(Builder):
             item['vfvalue'] = valid_filename(value)
             item['name'] = value
             var['leader'].append(item)
-        html = TPL_PAGE_KEY.render(var=var)
-        return html
+        # ~ html = TPL_PAGE_KEY.render(var=var)
+
+        adoc = TPL_PAGE_KEY.render(var=var)
+        var['pagename'] = "%s" % valid_filename(key)
+        self.distribute_adoc(var['pagename'], adoc)
+        self.log.debug("[BUILDER] - Created page key '%s'", var['pagename'])
+        # ~ return html
 
     def build_page_key_value(self, kvpath):
         key, value, COMPILE_VALUE = kvpath

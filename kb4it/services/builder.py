@@ -53,16 +53,17 @@ class Builder(Service):
         Use this method when the source asciidoctor file doesn't have to
         be analyzed.
         """
-        self.log.debug("[DIST-ADOC] %s", name)
-        PAGE_NAME = "%s.adoc" % name
-        PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), PAGE_NAME)
+        ADOC_NAME = "%s.adoc" % name
+        self.log.debug("[DISTRIBUTE] Received Doc[%s]", ADOC_NAME)
+        PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), ADOC_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
             except Exception as error:
                 self.log.error("[DISTRIBUTE] - %s", error)
-        self.srvbes.add_target(PAGE_NAME.replace('.adoc', '.html'))
-        self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
+        PAGE_NAME = ADOC_NAME.replace('.adoc', '.html')
+        self.srvbes.add_target(PAGE_NAME)
+        self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
 
     def template(self, template):
         """Return the template content from chosen theme"""
@@ -80,16 +81,16 @@ class Builder(Service):
                 # Get template from theme
                 template_path = os.path.join(theme['templates'], "%s.tpl" % template)
                 self.templates[template] = Template(filename=template_path)
-                self.log.debug("[TEMPLATES] - Template[%s] loaded for Theme[%s] and added to the cache", template, theme['id'])
+                # ~ self.log.debug("[TEMPLATES] - Template[%s] loaded for Theme[%s] and added to the cache", template, theme['id'])
             except FileNotFoundError as error:
                 try:
                     # Try with global templates
                     template_path = os.path.join(GPATH['TEMPLATES'], "%s.tpl" % template)
                     self.templates[template] = Template(filename=template_path)
-                    self.log.debug("[TEMPLATES] - Global Template[%s] loaded and added to the cache", template)
+                    # ~ self.log.debug("[TEMPLATES] - Global Template[%s] loaded and added to the cache", template)
                 except FileNotFoundError as error:
                     self.templates[template] = Template("")
-                    self.log.warning("[TEMPLATES] - Template[%s] not found. Returning empty template!", template)
+                    self.log.error("[TEMPLATES] - Template[%s] not found. Returning empty template!", template)
 
             return self.templates[template]
 

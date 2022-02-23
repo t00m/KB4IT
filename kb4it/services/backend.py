@@ -422,14 +422,18 @@ class Backend(Service):
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
-                html = self.srvthm.build_page_key(key, values)
-                with open(fpath, 'w') as fkey:
-                    fkey.write(html)
+                # ~ html = self.srvthm.build_page_key(key, values)
+                self.srvthm.build_page_key(key, values)
+                # ~ with open(fpath, 'w') as fkey:
+                    # ~ fkey.write(html)
             self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
         for kvpath in KV_PATH:
             self.srvthm.build_page_key_value(kvpath)
+            key, value, COMPILE_VALUE = kvpath
+            docname = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+            self.add_target(docname.replace('.adoc', '.html'))
 
         # ~ self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
@@ -545,7 +549,6 @@ class Backend(Service):
         self.log.info("[CLEANUP] - Start")
         delete_target_contents(LPATH['DISTRIBUTED'])
         self.log.debug("[CLEANUP] - Distributed files deleted")
-        # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
         for adoc in distributed:
             source = os.path.join(self.runtime['dir']['tmp'], adoc)
@@ -553,7 +556,7 @@ class Backend(Service):
             try:
                 shutil.copy(source, target)
             except:
-                self.log.warning("Missing source file: %s", source)
+                self.log.warning("[CLEANUP] - Missing source file: %s", source)
         self.log.debug("[CLEANUP] - Copy temporary files to distributed directory")
 
         delete_target_contents(self.get_target_path())
