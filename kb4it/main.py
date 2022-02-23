@@ -44,8 +44,8 @@ class KB4IT:
         except:
             self.setup_logging(severity='INFO')
 
-        self.log.debug("[CONTROLLER] - KB4IT %s started", APP['version'])
-        self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+        self.log.info("[CONTROLLER] - KB4IT %s started", APP['version'])
+        self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
 
         # Start up
         self.setup_environment()

@@ -146,8 +146,8 @@ class Backend(Service):
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("[SETUP] - Start")
-        self.log.debug("[SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
-        self.log.debug("[SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+        self.log.info("[SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
+        self.log.info("[SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
@@ -159,7 +159,7 @@ class Backend(Service):
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
             os.makedirs(self.get_target_path())
-        self.log.debug("[SETUP] - Target directory: %s", self.get_target_path())
+        self.log.info("[SETUP] - Target directory: %s", self.get_target_path())
 
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
@@ -390,9 +390,9 @@ class Backend(Service):
         ign_theme_keys = set(repo['ignored_keys'])
         self.ignored_keys = ign_default_keys.union(ign_theme_keys)
         available_keys = list(all_keys - self.ignored_keys)
-        self.log.info("All keys: %s", all_keys)
-        self.log.info("Ign keys: %s", ', '.join(list(self.ignored_keys)))
-        self.log.info("Avl keys: %s", available_keys)
+        # ~ self.log.info("All keys: %s", all_keys)
+        # ~ self.log.info("Ign keys: %s", ', '.join(list(self.ignored_keys)))
+        # ~ self.log.info("Avl keys: %s", available_keys)
         K_PATH = []
         KV_PATH = []
 
@@ -555,8 +555,11 @@ class Backend(Service):
             target = LPATH['DISTRIBUTED']
             try:
                 shutil.copy(source, target)
-            except:
-                self.log.warning("[CLEANUP] - Missing source file: %s", source)
+            except Exception as warning:
+                # FIXME
+                # ~ self.log.warning(warning)
+                # ~ self.log.warning("[CLEANUP] - Missing source file: %s", source)
+                pass
         self.log.debug("[CLEANUP] - Copy temporary files to distributed directory")
 
         delete_target_contents(self.get_target_path())
