@@ -63,17 +63,6 @@ class Theme(Builder):
         var['source_html'] = content
         return var
 
-    # ~ def transform(self, content, var):
-        # ~ content, var = self.highlight_metadata_section(content, var)
-        # ~ content, var = self.apply_transformations(content, var)
-        # ~ return content, var
-
-    # ~ def create_page_key(self, key, values):
-        # ~ """Create key page."""
-        # ~ var = self.get_theme_var()
-        # ~ var['title'] = key
-        # ~ return self.template('PAGE_KEY_KB4IT').render(var=var)
-
     def build_datatable(self, headers=[], data={}):
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
@@ -109,9 +98,7 @@ class Theme(Builder):
                         field = ''
                     datatable['rows'] += "<td>%s</td>" % ', '.join(field)
             datatable['rows'] += '</tr>'
-                # TPL_DATATABLE_BODY_ITEM.render(var=item)
 
-                # ~ self.log.error("\t%s -> %s", item['title'], item['url'])
         return TPL_DATATABLE.render(var=datatable)
 
 
@@ -208,7 +195,7 @@ class Theme(Builder):
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
                             break
-
+                    self.log.info("[EVENTS] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
@@ -220,7 +207,7 @@ class Theme(Builder):
                         self.distribute_adoc(EVENT_PAGE_DAY, html)
                     else:
                         self.distribute_html(pagename)
-                self.log.debug("[EVENTS] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
+
 
         # Build month event pages
         for year in self.events_docs:
@@ -249,7 +236,8 @@ class Theme(Builder):
             EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
-            if year in must_compile_year:
+            # ~ self.log.info("Year[%d] in Years[%s]: %s", year, must_compile_year, year in must_compile_year)
+            if str(year) in must_compile_year:
                 thisyear = {}
                 html = self.srvcal.build_year_pagination(self.dey.keys())
                 edt = guess_datetime("%4d.01.01" % year)
@@ -319,26 +307,6 @@ class Theme(Builder):
         # ~ self.create_page_about_kb4it()
         # ~ self.create_page_help()
 
-    # ~ def create_page_key(self, key, values):
-        # ~ """Create page for a key."""
-        # ~ TPL_PAGE_KEY = self.template('PAGE_KEY_KB4IT')
-        # ~ var = {}
-
-        # ~ # Title
-        # ~ var['title'] = key
-        # ~ var['key_values'] = {}
-        # ~ for value in values:
-            # ~ k_value = "%s_%s" % (valid_filename(key), valid_filename(value))
-            # ~ var['key_values'][k_value] = {}
-            # ~ docs = self.srvdtb.get_docs_by_key_value(key, value)
-            # ~ var['key_values'][k_value]['count'] = len(docs)
-            # ~ var['key_values'][k_value]['vfkey'] = valid_filename(key)
-            # ~ var['key_values'][k_value]['vfvalue'] = valid_filename(value)
-            # ~ var['key_values'][k_value]['name'] = value
-        # ~ html = TPL_PAGE_KEY.render(var=var)
-        # ~ self.log.debug("PageKey[%s]:\n%s", key, html)
-        # ~ return html
-
     def page_hook_pre(self, var):
         var['related'] = ''
         var['metadata'] = ''
@@ -346,60 +314,8 @@ class Theme(Builder):
         var['actions'] = ''
         return var
 
-        # ~ self.log.error("Page hook pre: %s", basename)
-        # ~ basename = var['basename']
-        # ~ html = ""
-        # ~ try:
-            # ~ properties = self.srvdtb.get_doc_properties(basename)
-            # ~ if len(properties) > 0:
-                # ~ category = ' and '.join(self.srvdtb.get_values(basename, 'Category'))
-                # ~ scope = ' and '.join(self.srvdtb.get_values(basename, 'Scope'))
-                # ~ author = ' and '.join(self.srvdtb.get_values(basename, 'Author'))
-                # ~ when = ' and '.join(self.srvdtb.get_values(basename, 'Published'))
-                # ~ notice = """<div class="uk-alert-primary uk-card uk-card-body uk-border-rounded" uk-alert>
-
-
     def page_hook_post(self, var):
         return var
-        # ~ basename = var['basename']
-        # ~ try:
-            # ~ metadata_section = var['meta_section']
-            # ~ source = var['source_code']
-        # ~ except:
-            # ~ metadata_section = ''
-
-        # ~ html = ""
-        # ~ try:
-            # ~ properties = self.srvdtb.get_doc_properties(basename)
-            # ~ if len(properties) > 0:
-                # ~ tags = properties['Tag']
-                # ~ docs = set()
-                # ~ related = """<table id="kb4it-datatable" class="uk-table uk-table-responsive uk-table-striped uk-table-divider uk-table-hover">"""
-                # ~ related += """<thead><tr><th class="uk-text-bold uk-text-primary"></th></tr></thead>"""
-                # ~ related += """<tbody>"""
-                # ~ for tag in tags:
-                    # ~ for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
-                        # ~ docs.add(doc)
-                # ~ for doc in docs:
-                    # ~ title = self.srvdtb.get_values(doc, 'Title')[0]
-                    # ~ link = doc.replace('.adoc', '.html')
-                    # ~ related += """<tr><td><a class="uk-link-toggle" href="%s">%s</a></td></tr>""" % (link, title)
-                # ~ related += """</tbody></table>"""
-
-                # ~ html = """
-                # ~ </li>
-                # ~ <li>
-                # ~ %s
-                # ~ </li>
-                # ~ <li>%s</li>
-                # ~ <li><pre>%s</pre></li>
-                # ~ </ul>
-                                    # ~ """ % (related, metadata_section, source)
-        # ~ except KeyError as error:
-            # ~ self.log.warning("Page '%s' has no metadata", basename)
-
-        # ~ return html
-
 
     def build_page_properties(self):
         """Create properties page"""
@@ -423,7 +339,7 @@ class Theme(Builder):
                 vbtn['vfkey'] = valid_filename(key)
                 vbtn['size'] = size
                 vbtn['tooltip'] = "%d values" % len(values)
-                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn) # % (valid_filename(key), tooltip, size, key, valid_filename(key), valid_filename(key), key, html)
+                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn)
                 var['buttons'].append(button)
         content = TPL_PROPS_PAGE.render(var=var)
         # ~ print(content)
