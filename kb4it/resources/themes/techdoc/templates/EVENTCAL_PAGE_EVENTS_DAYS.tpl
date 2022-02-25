@@ -2,7 +2,6 @@
 
 ++++
 <!-- EVENTCAL_PAGE_EVENTS_DAYS.tpl :: START -->
-<div class="uk-flex uk-flex-center"><h1 class="uk-text-large">${var['title']}</h1></div>
 <div class ="uk-container uk-overflow-auto">
     <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">
         <thead>

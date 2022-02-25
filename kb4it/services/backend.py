@@ -23,7 +23,7 @@ import datetime
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
+from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK, TMPNAME
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename, load_kbdict
 from kb4it.core.util import exec_cmd, delete_target_contents
@@ -56,12 +56,23 @@ class Backend(Service):
 
         # Initialize directories
         self.runtime['dir'] = {}
-        self.runtime['dir']['tmp'] = tempfile.mkdtemp(prefix=LPATH['TMP'] + '/')
-        self.runtime['dir']['target'] = self.parameters['target']
         self.runtime['dir']['source'] = os.path.realpath(self.parameters['source'])
-        self.runtime['dir']['cache'] = os.path.join(LPATH['CACHE'], valid_filename(self.runtime['dir']['source']))
-        if not os.path.exists(self.runtime['dir']['cache']):
-            os.makedirs(self.runtime['dir']['cache'])
+        self.runtime['dir']['target'] = os.path.realpath(self.parameters['target'])
+
+        PROJECT = valid_filename(self.runtime['dir']['source'])
+        WORKDIR = os.path.join(LPATH['WORK'], PROJECT)
+        self.runtime['dir']['work'] = WORKDIR
+        self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
+        self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
+        self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
+        self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
+
+
+        for entry in self.runtime['dir']:
+            if entry not in ['source', 'target']:
+                dirname = self.runtime['dir'][entry]
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
 
         # if SORT attribute is given, use it instead of the OS timestamp
         try:
@@ -92,10 +103,12 @@ class Backend(Service):
         """Get list of documents converted to pages"""
         return self.runtime['docs']['target']
 
-    def add_target(self, filename):
-        """Every doc converted into a page must be added to the target list."""
-        self.runtime['docs']['target'].add(filename)
-        self.log.debug("[TARGET] - Added page: %s", filename)
+    def add_target(self, kbfile):
+        """All objects received by this method will be appended to the
+        list of objects that will be copied to the target directory.
+        """
+        self.runtime['docs']['target'].add(kbfile)
+        self.log.debug("[TARGET] - Added page: %s", kbfile)
 
     def get_runtime(self):
         """Get all properties."""
@@ -116,6 +129,10 @@ class Backend(Service):
     def get_theme_property(self, prop):
         """Get value for a given property from loaded theme."""
         return self.runtime['theme'][prop]
+
+    def get_www_path(self):
+        """Get temporary target directory."""
+        return self.runtime['dir']['www']
 
     def get_cache_path(self):
         """Get cache path."""
@@ -148,13 +165,15 @@ class Backend(Service):
         self.log.info("[SETUP] - Start")
         self.log.info("[SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
         self.log.info("[SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+        self.log.info("[SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
+        self.log.info("[SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
             self.log.error("[SETUP] - Source directory '%s' doesn't exist.", self.get_source_path())
             self.log.info("[SETUP] - End")
             self.app.stop()
-        self.log.debug("[SETUP] - Source directory: %s", self.get_source_path())
+        self.log.info("[SETUP] - Source directory: %s", self.get_source_path())
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
@@ -334,6 +353,8 @@ class Backend(Service):
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
             self.log.debug("[PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
+
+            # Add compiled page to the target list
             self.add_target(docname.replace('.adoc', '.html'))
 
         # Save current status for the next run
@@ -422,10 +443,9 @@ class Backend(Service):
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
-                # ~ html = self.srvthm.build_page_key(key, values)
                 self.srvthm.build_page_key(key, values)
-                # ~ with open(fpath, 'w') as fkey:
-                    # ~ fkey.write(html)
+
+            # Add compiled page to the target list
             self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
@@ -433,9 +453,11 @@ class Backend(Service):
             self.srvthm.build_page_key_value(kvpath)
             key, value, COMPILE_VALUE = kvpath
             docname = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+
+            # Add compiled page to the target list
             self.add_target(docname.replace('.adoc', '.html'))
 
-        # ~ self.log.debug("[PROCESSING] - Finish processing keys")
+        self.log.debug("[PROCESSING] - Finish processing keys")
         self.log.debug("[PROCESSING] - Start processing theme")
         self.srvthm.build()
         self.log.debug("[PROCESSING] - End processing theme")
@@ -480,7 +502,7 @@ class Backend(Service):
                 COMPILE = True
                 basename = os.path.basename(doc)
                 if basename in distributed:
-                    distributed_file = os.path.join(LPATH['DISTRIBUTED'], basename)
+                    distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
                     cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
                     if os.path.exists(distributed_file) and os.path.exists(cached_file):
                         cached_hash = get_hash_from_file(distributed_file)
@@ -547,12 +569,15 @@ class Backend(Service):
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.info("[CLEANUP] - Start")
-        delete_target_contents(LPATH['DISTRIBUTED'])
+        pattern = os.path.join(self.get_source_path(), '*.*')
+        extra = glob.glob(pattern)
+        copy_docs(extra, self.get_cache_path())
+        delete_target_contents(self.runtime['dir']['dist'])
         self.log.debug("[CLEANUP] - Distributed files deleted")
         distributed = self.get_targets()
         for adoc in distributed:
             source = os.path.join(self.runtime['dir']['tmp'], adoc)
-            target = LPATH['DISTRIBUTED']
+            target = self.runtime['dir']['www']
             try:
                 shutil.copy(source, target)
             except Exception as warning:
@@ -576,26 +601,33 @@ class Backend(Service):
         docsdir = os.path.join(self.get_target_path(), 'sources')
         os.makedirs(docsdir)
         copy_docs(files, docsdir)
-        self.log.debug("[INSTALL] - Copy %d asciidoctor sources to target path", len(files))
+        self.log.info("[INSTALL] - Copy %d asciidoctor sources to target path", len(files))
 
         # Copy compiled documents to cache path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        self.log.debug("[INSTALL] - Copy %d html files from temporary path to cache path", len(files))
+        self.log.info("[INSTALL] - Copy %d html files from temporary path to cache path", len(files))
+
+        # Copy objects in temporary target to cache path
+        pattern = os.path.join(self.runtime['dir']['www'], '*.*')
+        files = glob.glob(pattern)
+        copy_docs(files, self.runtime['dir']['cache'])
+        self.log.info("[INSTALL] - Copy %d html files from temporary target to cache path", len(files))
 
         # Copy cached documents to target path
         n = 0
-        for filename in self.runtime['docs']['target']:
+        for filename in sorted(self.runtime['docs']['target']):
             source = os.path.join(self.runtime['dir']['cache'], filename)
             target = os.path.join(self.get_target_path(), filename)
             try:
                 shutil.copy(source, target)
+                self.log.debug("%s -> %s", source, target)
             except FileNotFoundError as error:
                 self.log.error(error)
                 self.log.error("[INSTALL] - Consider to run the command again with the option -force")
             n += 1
-        self.log.debug("[INSTALL] - Copied %d cached documents successfully to target path", n)
+        self.log.info("[INSTALL] - Copied %d cached documents successfully to target path", n)
 
         # Copy global resources to target path
         resources_dir_target = os.path.join(self.get_target_path(), 'resources')
@@ -607,26 +639,26 @@ class Backend(Service):
         copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
         copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
         copydir(GPATH['COMMON'], os.path.join(resources_dir_target, 'common'))
-        self.log.debug("[INSTALL] - Copied global resources to target path")
+        self.log.info("[INSTALL] - Copied global resources to target path")
 
         # Copy local resources to target path
         source_resources_dir = os.path.join(self.get_source_path(), 'resources')
         if os.path.exists(source_resources_dir):
             resources_dir_target = os.path.join(self.get_target_path(), 'resources')
             copydir(source_resources_dir, resources_dir_target)
-            self.log.debug("[INSTALL] - Copied local resources to target path")
+            self.log.info("[INSTALL] - Copied local resources to target path")
 
         # Copy back all HTML files from target to cache
         delete_target_contents(self.runtime['dir']['cache'])
         pattern = os.path.join(self.get_target_path(), '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
-        self.log.debug("[INSTALL] - Copying HTML files back to cache...")
+        self.log.info("[INSTALL] - Copying HTML files back to cache...")
 
         # Copy JSON database to target path so it can be queried from
         # others applications
         save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
-        self.log.debug("[INSTALL] - Copied JSON database to target")
+        self.log.info("[INSTALL] - Copied JSON database to target")
         self.log.info("[INSTALL] - End")
 
     def stage_09_remove_temporary_dir(self):
@@ -641,6 +673,8 @@ class Backend(Service):
         """
         try:
             delete_target_contents(self.runtime['dir']['tmp'])
+            delete_target_contents(self.runtime['dir']['www'])
+            delete_target_contents(self.runtime['dir']['dist'])
         except  Exception as KeyError:
             pass
         self.log.debug("[CLEANUP] - KB4IT Workspace clean")
@@ -741,51 +775,3 @@ class Backend(Service):
 
     def end(self):
         self.cleanup()
-
-
-    # ~ def distribute_html(self, name, content, var):
-        # ~ """
-        # ~ Distribute html file to the temporary directory.
-        # ~ """
-        # ~ var['menu_contents'] = ''
-        # ~ HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-        # ~ HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
-        # ~ HTML_HEADER_NODOC = self.template('HTML_HEADER_NODOC')
-        # ~ HTML_FOOTER = self.template('HTML_FOOTER')
-
-        # ~ HTML = ""
-        # ~ HEADER = HTML_HEADER_COMMON.render(var=var)
-        # ~ FOOTER = HTML_FOOTER.render(var=var)
-
-        # ~ HTML += HEADER
-        # ~ HTML += content
-        # ~ HTML += FOOTER
-
-        # ~ PAGE_NAME = "%s.html" % name
-        # ~ PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), PAGE_NAME)
-        # ~ with open(PAGE_PATH, 'w') as fpag:
-            # ~ try:
-                # ~ fpag.write(HTML)
-            # ~ except Exception as error:
-                # ~ self.log.error("[DISTRIBUTE] - %s", error)
-        # ~ self.distributed[PAGE_NAME] = get_hash_from_file(PAGE_PATH)
-        # ~ self.srvbes.add_target(PAGE_NAME)
-        # ~ self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", os.path.basename(PAGE_PATH))
-
-    # ~ def distribute_to_source(self, name, content):
-        # ~ """
-        # ~ Distribute source file to user source directory.
-        # ~ Use this method when the source asciidoctor file has to
-        # ~ be analyzed to extract its properties.
-        # ~ File path reference will be saved and deleted at the end of the
-        # ~ execution.
-        # ~ """
-        # ~ PAGE_NAME = "%s.adoc" % name
-        # ~ PAGE_PATH = os.path.join(self.srvbes.get_source_path(), PAGE_NAME)
-        # ~ self.temp_sources.append(PAGE_PATH)
-        # ~ try:
-            # ~ with open(PAGE_PATH, 'w') as fpag:
-                # ~ fpag.write(content)
-                # ~ self.log.debug("[BUILDER] - PAGE[%s] distributed to source path", name)
-        # ~ except OSError as error:
-            # ~ self.log.error(error)

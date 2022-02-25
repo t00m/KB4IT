@@ -46,6 +46,12 @@ class Builder(Service):
         """Custom themes can use this method to generate source documents"""
         pass
 
+    def distribute_html(self, pagename):
+        shutil.copy(pagename, self.srvbes.get_www_path())
+        # Add compiled page to the target list
+        self.srvbes.add_target(os.path.basename(pagename))
+        self.log.debug("[DISTRIBUTE] - Page[%s] copied to temporary target directory", os.path.basename(pagename))
+
     def distribute_adoc(self, name, content):
         """
         Distribute source file to temporary directory.
@@ -54,7 +60,7 @@ class Builder(Service):
         be analyzed.
         """
         ADOC_NAME = "%s.adoc" % name
-        self.log.debug("[DISTRIBUTE] Received Doc[%s]", ADOC_NAME)
+        self.log.debug("[DISTRIBUTE] - Received Doc[%s]", ADOC_NAME)
         PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), ADOC_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
@@ -62,8 +68,10 @@ class Builder(Service):
             except Exception as error:
                 self.log.error("[DISTRIBUTE] - %s", error)
         PAGE_NAME = ADOC_NAME.replace('.adoc', '.html')
+
+        # Add compiled page to the target list
         self.srvbes.add_target(PAGE_NAME)
-        self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
+        # ~ self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
 
     def template(self, template):
         """Return the template content from chosen theme"""

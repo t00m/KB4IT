@@ -12,9 +12,11 @@ Environment module.
 import os
 from os.path import abspath
 import sys
+import tempfile
 
 ROOT = abspath(sys.modules[__name__].__file__ + "/../../")
 USER_DIR = os.path.expanduser('~')
+TMPNAME = next(tempfile._get_candidate_names())
 
 # App Info
 APP = {}
@@ -40,19 +42,24 @@ LPATH = {}
 LPATH['ROOT'] = os.path.join(USER_DIR, ".%s" % APP['shortname'].lower())
 LPATH['ETC'] = os.path.join(LPATH['ROOT'], 'etc')
 LPATH['VAR'] = os.path.join(LPATH['ROOT'], 'var')
+LPATH['WORK'] = os.path.join(LPATH['VAR'], 'work')
 LPATH['DB'] = os.path.join(LPATH['VAR'], 'db')
 LPATH['PLUGINS'] = os.path.join(LPATH['VAR'], 'plugins')
 LPATH['LOG'] = os.path.join(LPATH['VAR'], 'log')
-LPATH['TMP'] = os.path.join(LPATH['VAR'], 'tmp')
-LPATH['TMP_SOURCE'] = os.path.join(LPATH['TMP'], 'source')
-LPATH['TMP_TARGET'] = os.path.join(LPATH['TMP'], 'target')
-LPATH['CACHE'] = os.path.join(LPATH['VAR'], 'cache')
-LPATH['DISTRIBUTED'] = os.path.join(LPATH['CACHE'], 'distributed')
-LPATH['DB'] = os.path.join(LPATH['VAR'], 'db')
-LPATH['WWW'] = os.path.join(LPATH['VAR'], 'www')
-LPATH['EXPORT'] = os.path.join(LPATH['VAR'], 'export')
+LPATH['TMP'] = os.path.join(LPATH['VAR'], 'log')
+
+# ~ LPATH['WWW'] = os.path.join(LPATH['VAR'], 'www')
+# ~ LPATH['EXPORT'] = os.path.join(LPATH['VAR'], 'export')
 LPATH['OPT'] = os.path.join(LPATH['ROOT'], 'opt')
 LPATH['THEMES'] = os.path.join(LPATH['OPT'], 'themes')
+
+LPATH['TMP_SOURCE'] = os.path.join(LPATH['TMP'], 'source')
+LPATH['TMP_TARGET'] = os.path.join(LPATH['TMP'], 'target')
+
+# ~ LPATH['CACHE'] = os.path.join(LPATH['VAR'], 'cache')
+# ~ LPATH['DISTRIBUTED'] = os.path.join(LPATH['CACHE'], TMPNAME, 'distributed')
+# ~ LPATH['TMP'] = os.path.join(LPATH['VAR'], 'tmp', TMPNAME)
+
 
 # Global paths
 GPATH = {}

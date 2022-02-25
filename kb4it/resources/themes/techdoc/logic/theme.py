@@ -190,46 +190,77 @@ class Theme(Builder):
                 self.log.error("[THEME-TECHDOC] - %s", error)
                 self.log.error("[THEME-TECHDOC] - Doc doesn't have a valid date field. Skip it.")
 
+        kbdict = self.srvbes.get_kb_dict()
         # Build day event pages
+        must_compile_month = set()
+        must_compile_year = set()
         for year in self.events_docs:
             for month in self.events_docs[year]:
                 for day in self.events_docs[year][month]:
-                    var = self.get_theme_var()
-                    var['doclist'] = self.events_docs[year][month][day]
-                    edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
-                    var['title'] = edt.strftime("Events on %A, %B %d %Y")
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
-                    html = TPL_PAGE_EVENTS_DAYS.render(var=var)
-                    self.distribute_adoc(EVENT_PAGE_DAY, html)
+                    pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_DAY)
+                    doclist = self.events_docs[year][month][day]
+
+                    must_compile_day = False
+                    for doc in doclist:
+                        doc_changed = kbdict['document'][doc]['compile']
+                        doc_not_cached = not os.path.exists(pagename)
+                        if doc_changed or doc_not_cached:
+                            must_compile_day = True
+                            break
+
+                    if must_compile_day:
+                        must_compile_month.add("%4d%02d" % (year, month))
+                        must_compile_year.add("%4d" % (year))
+                        edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
+                        var = self.get_theme_var()
+                        var['doclist'] = doclist
+                        var['title'] = edt.strftime("Events on %A, %B %d %Y")
+                        html = TPL_PAGE_EVENTS_DAYS.render(var=var)
+                        self.distribute_adoc(EVENT_PAGE_DAY, html)
+                    else:
+                        self.distribute_html(pagename)
+                self.log.debug("[EVENTS] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
 
         # Build month event pages
         for year in self.events_docs:
             for month in self.events_docs[year]:
-                var = self.get_theme_var()
-                docs = []
-                edt = guess_datetime("%4d.%02d.01" % (year, month))
-                var['title'] = edt.strftime("Events on %B, %Y")
-                for day in self.events_docs[year][month]:
-                    docs.extend(self.events_docs[year][month][day])
-                var['doclist'] = docs
+                thismonth = "%4d%02d" % (year, month)
                 EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
-                html = TPL_PAGE_EVENTS_DAYS.render(var=var)
-                self.distribute_adoc(EVENT_PAGE_MONTH, html)
+                if thismonth in must_compile_month:
+                    var = self.get_theme_var()
+                    docs = []
+                    edt = guess_datetime("%4d.%02d.01" % (year, month))
+                    var['title'] = edt.strftime("Events on %B, %Y")
+                    for day in self.events_docs[year][month]:
+                        docs.extend(self.events_docs[year][month][day])
+                    var['doclist'] = docs
+                    html = TPL_PAGE_EVENTS_DAYS.render(var=var)
+                    self.distribute_adoc(EVENT_PAGE_MONTH, html)
+                else:
+                    pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
+                    self.distribute_html(pagename)
 
         self.srvcal.set_events_days(self.dey)
         self.srvcal.set_events_docs(self.events_docs)
 
+        # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
+            EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
-            thisyear = {}
-            html = self.srvcal.build_year_pagination(self.dey.keys())
-            edt = guess_datetime("%4d.01.01" % year)
-            title = edt.strftime("Events on %Y")
-            thisyear['title'] = title
-            html += self.srvcal.formatyearpage(year, 4)
-            thisyear['content'] = html
-            self.distribute_adoc(page_name, PAGE.render(var=thisyear))
+            if year in must_compile_year:
+                thisyear = {}
+                html = self.srvcal.build_year_pagination(self.dey.keys())
+                edt = guess_datetime("%4d.01.01" % year)
+                title = edt.strftime("Events on %Y")
+                thisyear['title'] = title
+                html += self.srvcal.formatyearpage(year, 4)
+                thisyear['content'] = html
+                self.distribute_adoc(page_name, PAGE.render(var=thisyear))
+            else:
+                pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
+                self.distribute_html(pagename)
 
     def load_events_days(self, events_days, year):
         events_set = set()
@@ -248,7 +279,7 @@ class Theme(Builder):
             event_types = repo['events']
         except:
             event_types = []
-        self.log.info("[THEME-TECHDOC] - Event types: %s", ', '.join(event_types))
+        self.log.debug("[THEME] - Event types: %s", ', '.join(event_types))
 
         for doc in self.srvdtb.get_documents():
             category = self.srvdtb.get_values(doc, 'Category')[0]
