@@ -57,9 +57,6 @@
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="uk-padding-small">Events</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="recents.html"><span class="uk-padding-small">Recents</a>
-                                </li>
-                                <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="bookmarks.html"><span class="uk-padding-small">Bookmarks</a>
                                 </li>
                                 <li class="uk-link-toggle">
