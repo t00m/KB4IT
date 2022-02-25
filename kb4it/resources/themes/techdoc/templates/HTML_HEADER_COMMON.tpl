@@ -46,11 +46,11 @@
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle">
                         <a class="uk-logo uk-card uk-card-hover" href="index.html">
-                            <img src="resources/themes/${var['theme']['id']}/images/logo.png" alt="">
+                            <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}">
                         </a>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">Go To</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
@@ -85,6 +85,9 @@
                                 </li>
                             </ul>
                         </div>
+                    </li>
+                    <li>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
                     </li>
                 </ul>
                 <ul class="uk-navbar-nav">
@@ -124,7 +127,7 @@ ${var['menu_contents']}
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">About</a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="info"></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
