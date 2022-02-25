@@ -44,8 +44,8 @@
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
-                    <li class="uk-link-toggle">
-                        <a class="uk-logo uk-card uk-card-hover" href="index.html">
+                    <li class="uk-link-toggle uk-inline-clip uk-transition-toggle">
+                        <a class="uk-logo uk-card uk-card-hover uk-transition-scale-up uk-transition-opaque" href="index.html">
                             <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}">
                         </a>
                     </li>
