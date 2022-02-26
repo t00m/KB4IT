@@ -474,7 +474,10 @@ class Backend(Service):
         # copy online resources to target path
         # ~ resources_dir_source = GPATH['THEMES']
         resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
-        shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
+        #if path already exists, remove it before copying with copytree()
+        if os.path.exists(resources_dir_tmp):
+            shutil.rmtree(resources_dir_tmp)
+            shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
         self.log.debug("[COMPILATION] - Resources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
