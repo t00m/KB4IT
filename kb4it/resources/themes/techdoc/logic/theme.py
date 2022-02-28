@@ -63,7 +63,7 @@ class Theme(Builder):
         var['source_html'] = content
         return var
 
-    def build_datatable(self, headers=[], data={}):
+    def build_datatable(self, headers=[], doclist=[]):
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -76,23 +76,26 @@ class Theme(Builder):
             var['item'] = item
             datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var=var)
 
+        documents = {}
+        for doc in doclist:
+            documents[doc] = self.srvdtb.get_doc_properties(doc)
         datatable['rows'] = ''
-        for doc in data:
+        for doc in documents:
             datatable['rows'] += '<tr>'
             for key in headers:
                 item = {}
                 if key == 'Title':
-                    item['title'] = data[doc][key]
-                    item['url'] = data[doc]['%s_Url' % key]
+                    item['title'] = documents[doc][key]
+                    item['url'] = documents[doc]['%s_Url' % key]
                     datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
                 else:
                     link = {}
                     link['class'] = 'uk-link-heading'
                     field = []
                     try:
-                        for value in data[doc][key]:
+                        for value in documents[doc][key]:
                             link['title'] = value
-                            link['url'] = data[doc]['%s_%s_Url' % (key, value)]
+                            link['url'] = documents[doc]['%s_%s_Url' % (key, value)]
                             field.append(TPL_LINK.render(var=link))
                     except KeyError:
                         field = ''
@@ -122,13 +125,13 @@ class Theme(Builder):
         dt_nxt = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # Last day next month
         ldnm = dt_nxt.replace(hour=23, minute=59, second=59, microsecond=999999) # Last moment of the last day of the next month
 
-        documents = {}
+        doclist = []
         for doc in self.srvdtb.get_documents():
             ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
             if ts >= fdpm and ts <= ldnm:
-                documents[doc] = self.srvdtb.get_doc_properties(doc)
+                doclist.append(doc)
         headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
-        datatable = self.build_datatable(headers, documents)
+        datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
         var['page']['title'] = var['repo']['title']
@@ -187,7 +190,6 @@ class Theme(Builder):
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
-
                     must_compile_day = False
                     for doc in doclist:
                         doc_changed = kbdict['document'][doc]['compile']
@@ -201,8 +203,9 @@ class Theme(Builder):
                         must_compile_year.add("%4d" % (year))
                         edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
-                        var['doclist'] = doclist
-                        var['title'] = edt.strftime("Events on %A, %B %d %Y")
+                        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+                        var['page']['datatable'] = self.build_datatable(headers, doclist)
+                        var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
                         self.distribute_adoc(EVENT_PAGE_DAY, html)
                     else:
@@ -216,13 +219,15 @@ class Theme(Builder):
                 EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
                 if thismonth in must_compile_month:
                     var = self.get_theme_var()
-                    docs = []
+                    doclist = []
                     edt = guess_datetime("%4d.%02d.01" % (year, month))
-                    var['title'] = edt.strftime("Events on %B, %Y")
                     for day in self.events_docs[year][month]:
-                        docs.extend(self.events_docs[year][month][day])
+                        doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
-                    html = TPL_PAGE_EVENTS_DAYS.render(var=var)
+                    headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+                    var['page']['datatable'] = self.build_datatable(headers, doclist)
+                    var['page']['title'] = edt.strftime("Events on %B, %Y")
+                    html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
                     self.distribute_adoc(EVENT_PAGE_MONTH, html)
                 else:
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
@@ -504,6 +509,7 @@ class Theme(Builder):
             now = datetime.now()
             timestamp = get_human_datetime(now)
             keys = get_asciidoctor_attributes(path_adoc)
+            # ~ self.log.error("%s -> %s", path_adoc, keys)
             source_adoc = open(path_adoc, 'r').read()
             source_html = open(path_hdoc, 'r').read()
             toc = self.extract_toc(source_html)
@@ -520,7 +526,10 @@ class Theme(Builder):
                 var['metadata'] = ""
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
-            var['page']['title'] = ', '.join(keys['Title'])
+            try:
+                var['page']['title'] = ', '.join(keys['Title'])
+            except:
+                pass
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
             var['related'] = self.get_related(var)
@@ -583,6 +592,14 @@ class Theme(Builder):
         var['doclist'] = sorted_docs
         var['compile'] = COMPILE_VALUE
         var['has_toc'] = False
+
+        doclist = []
+        for doc in sorted_docs:
+            doclist.append(doc)
+        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+        datatable = self.build_datatable(headers, doclist)
+        var['page']['dt_documents'] = datatable
+
         if var['compile']:
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
@@ -592,13 +609,13 @@ class Theme(Builder):
         """Create bookmarks page."""
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
         var = self.get_theme_var()
-        bookmarks = {}
+        doclist = []
         for doc in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
-                bookmarks[doc] = self.srvdtb.get_doc_properties(doc)
+                doclist.append(doc)
         headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
-        datatable = self.build_datatable(headers, bookmarks)
+        datatable = self.build_datatable(headers, doclist)
 
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable
