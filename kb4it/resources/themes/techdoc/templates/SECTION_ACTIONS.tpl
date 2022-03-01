@@ -3,7 +3,7 @@
 <div class="uk-flex uk-flex-center">
     <ul class="uk-iconnav">
         <li><!-- Edit Button :: START -->
-            <a class="uk-link-toggle" href="https://${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank"><span class="uk-link-heading" uk-icon="icon: pencil; ratio: 1.0;"></span></span></a>
+            <a class="uk-link-toggle" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank"><span class="uk-link-heading" uk-icon="icon: pencil; ratio: 1.0;"></span></span></a>
         </li><!-- Edit Button :: END -->
         <li><!-- Print Button :: START -->
             <a class="uk-link-toggle"  onclick="window.print()"><span class="uk-link-heading" uk-icon="icon: print; ratio: 1.0;"></span></a>
