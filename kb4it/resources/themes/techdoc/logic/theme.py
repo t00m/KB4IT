@@ -130,7 +130,7 @@ class Theme(Builder):
             ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
             if ts >= fdpm and ts <= ldnm:
                 doclist.append(doc)
-        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
@@ -197,13 +197,13 @@ class Theme(Builder):
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
                             break
-                    self.log.info("[EVENTS] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
+                    self.log.debug("[EVENTS] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
                         edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
-                        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+                        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
@@ -224,7 +224,7 @@ class Theme(Builder):
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
-                    headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+                    headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
@@ -596,7 +596,7 @@ class Theme(Builder):
         doclist = []
         for doc in sorted_docs:
             doclist.append(doc)
-        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
@@ -614,7 +614,7 @@ class Theme(Builder):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
-        headers = ['Title', 'Team', 'Published', 'Category', 'Scope']
+        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
         datatable = self.build_datatable(headers, doclist)
 
         var['page']['title'] = 'Bookmarks'
