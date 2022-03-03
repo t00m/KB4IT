@@ -661,20 +661,16 @@ class Theme(Builder):
             except:
                 tags = []
 
+        doclist = set()
         if var['has_tags']:
             for tag in tags:
                 for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
                     if doc != this_doc:
+                        doclist.add(doc)
                         var['has_docs'] = True
-                        try:
-                            docs = var['related'][tag]
-                            docs.add(doc)
-                            var['related'][tag] = docs
-                        except:
-                            docs = set()
-                            docs.add(doc)
-                            var['related'][tag] = docs
-        var['srvdtb'] = self.srvdtb
+        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        datatable = self.build_datatable(headers, doclist)
+        var['page']['datatable'] = datatable
         related = TPL_SECTION_RELATED.render(var=var)
         return related
 
