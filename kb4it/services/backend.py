@@ -403,6 +403,7 @@ class Backend(Service):
         return alist
 
     def stage_04_processing(self):
+        # FIXME: When a value is deleted, the key associated is not updated!
         """Process all documents."""
         self.log.info("[PROCESSING] - Start")
         repo = self.get_repo_parameters()
@@ -425,15 +426,19 @@ class Backend(Service):
                 COMPILE_VALUE = False
                 key_value_docs_new = self.get_kbdict_value(key, value, new=True)
                 key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
-                if key_value_docs_new != key_value_docs_cur:
+                VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
+
+                if VALUE_COMPARISON:
+                    self.log.error("[PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
                     COMPILE_VALUE = True
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
                 KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug("[PROCESSING] - KEY[%s] VALUE[%s] Compile? %s", key, value, COMPILE_VALUE)
+                self.log.debug("[PROCESSING] - Key[%s] Value[%s] Compile? %s", key, value, COMPILE_VALUE)
             COMPILE_KEY = COMPILE_KEY or FORCE_ALL
             K_PATH.append((key, values, COMPILE_KEY))
-            self.log.debug("[PROCESSING] - KEY[%s] Compile? %s", key, COMPILE_KEY)
+            if COMPILE_KEY:
+                self.log.info("[PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
         self.runtime['K_PATH'] = K_PATH
         self.runtime['KV_PATH'] = KV_PATH
 
