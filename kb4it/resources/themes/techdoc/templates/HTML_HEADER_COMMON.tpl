@@ -31,7 +31,8 @@
                 scroller:       false,
                 stateSave: false,
                 paging:   false,
-                info:     true
+                info:     true,
+                order: [[ 0, "desc" ]]
             } );
         } );
     </script>
