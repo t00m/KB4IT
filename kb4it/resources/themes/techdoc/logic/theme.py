@@ -64,6 +64,15 @@ class Theme(Builder):
         return var
 
     def build_datatable(self, headers=[], doclist=[]):
+        """Given a list of columns, it builds a datatable.
+        First column is always a date field, which is got by using the
+        method get_doc_timestamp from the database module. It means
+        that, firstly, it will retrieve the first date property defined
+        by the theme (or one of the next ones defined if the first isn't
+        found). If none is found, it will retrieve the timestamp of the
+        file from the OS).
+        So, it is not necessary to pass a date property in the headers.
+        """
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -71,6 +80,9 @@ class Theme(Builder):
 
         datatable = {}
         datatable['header'] = ''
+        repo = self.srvbes.get_repo_parameters()
+        sort_attr = repo['sort'][0]
+        headers.insert(0, sort_attr)
         for item in headers:
             var = {}
             var['item'] = item
@@ -82,7 +94,9 @@ class Theme(Builder):
         datatable['rows'] = ''
         for doc in documents:
             datatable['rows'] += '<tr>'
-            for key in headers:
+            timestamp = self.srvdtb.get_doc_timestamp(doc)
+            datatable['rows'] += """<td class="">%s</td>""" % timestamp
+            for key in headers[1:]:
                 item = {}
                 if key == 'Title':
                     item['title'] = documents[doc][key]
@@ -99,7 +113,7 @@ class Theme(Builder):
                             field.append(TPL_LINK.render(var=link))
                     except KeyError:
                         field = ''
-                    datatable['rows'] += "<td>%s</td>" % ', '.join(field)
+                    datatable['rows'] += """<td class="">%s</td>""" % ', '.join(field)
             datatable['rows'] += '</tr>'
 
         return TPL_DATATABLE.render(var=datatable)
@@ -130,7 +144,7 @@ class Theme(Builder):
             ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
             if ts >= fdpm and ts <= ldnm:
                 doclist.append(doc)
-        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
+        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
@@ -203,7 +217,7 @@ class Theme(Builder):
                         must_compile_year.add("%4d" % (year))
                         edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
-                        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
+                        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
@@ -224,7 +238,7 @@ class Theme(Builder):
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
-                    headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
+                    headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
@@ -596,7 +610,7 @@ class Theme(Builder):
         doclist = []
         for doc in sorted_docs:
             doclist.append(doc)
-        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
+        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
@@ -614,7 +628,7 @@ class Theme(Builder):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
-        headers = ['Title', 'Team', 'Updated', 'Category', 'Scope']
+        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
 
         var['page']['title'] = 'Bookmarks'
