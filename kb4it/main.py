@@ -21,21 +21,9 @@ from kb4it.services.database import Database
 from kb4it.services.builder import Builder
 
 
-def get_version():
-    """Get KB4IT version."""
-    return '%s %s' % (APP['shortname'], APP['version'])
-
-
 class KB4IT:
     """KB4IT main class.
     """
-
-    ready = False
-    params = None
-    log = None
-    repo = {}
-    numdocs = 0
-    tmpdir = None
 
     def __init__(self, params=None):
         """Initialize KB4IT class.
