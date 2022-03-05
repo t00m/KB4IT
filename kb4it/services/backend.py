@@ -380,6 +380,28 @@ class Backend(Service):
     def get_kb_dict(self):
         return self.kbdict_new
 
+    def get_kbdict_key(self, key, new=True):
+        """
+        Return values for a given key from KB dictionary.
+
+        If new is True, it will return the value from the kbdict just
+        generated during the execution.
+
+        If new is False, it will return the value from the kbdict saved
+        in the previous execution.
+        """
+        if new:
+            kbdict = self.kbdict_new
+        else:
+            kbdict = self.kbdict_cur
+
+        try:
+            alist = kbdict['metadata'][key]
+        except KeyError:
+            alist = []
+
+        return alist
+
     def get_kbdict_value(self, key, value, new=True):
         """
         Get a value for a given key from KB dictionary.
@@ -403,8 +425,12 @@ class Backend(Service):
         return alist
 
     def stage_04_processing(self):
-        # FIXME: When a value is deleted, the key associated is not updated!
-        """Process all documents."""
+        """Process all keys/values got from documents.
+
+        The algorithm detects which keys/values have changed and compile
+        them again. This avoid recompile the whole database, saving time
+        and CPU.
+        """
         self.log.info("[PROCESSING] - Start")
         repo = self.get_repo_parameters()
         all_keys = set(self.srvdtb.get_all_keys())
@@ -418,10 +444,20 @@ class Backend(Service):
         K_PATH = []
         KV_PATH = []
 
+
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_ALL = self.parameters['force']
             values = self.srvdtb.get_all_values_for_key(key)
+
+            # Compare keys values for the current run and the cache
+            # Otherwise, the key is not recompiled when a value is deleted
+            rknew = sorted(self.get_kbdict_key(key, new=True))
+            rkold = sorted(self.get_kbdict_key(key, new=False))
+            if rknew != rkold:
+                COMPILE_KEY = True
+            self.log.debug("[PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
+
             for value in values:
                 COMPILE_VALUE = False
                 key_value_docs_new = self.get_kbdict_value(key, value, new=True)
@@ -429,7 +465,7 @@ class Backend(Service):
                 VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
 
                 if VALUE_COMPARISON:
-                    self.log.error("[PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
+                    self.log.debug("[PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
                     COMPILE_VALUE = True
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
