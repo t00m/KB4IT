@@ -15,11 +15,11 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def get_services(self):
         self.srvbld = self.get_service('Builder')
-
+        
     def set_events_days(self, events_days):
         """
         FIXME: Document this method properly
-
+        
         Attach the list of event days as a property, so we can access it
         anywhere.
         """
@@ -118,8 +118,8 @@ class EventsCalendar(Service, HTMLCalendar):
         var['title'] = month_name
         var['class'] = LINK_CLASS
         try:
-            events = self.ml[theyear][themonth]
-            if events:
+            events = self.ml[theyear][themonth]                        
+            if events:                
                 var['url'] = "events_%4d%02d.html" % (theyear, themonth)
             else:
                 var['url'] = "#"
@@ -201,3 +201,4 @@ class EventsCalendar(Service, HTMLCalendar):
         var['content'] = MONTHS
         v.append(EVENTCAL_TABLE_YEAR.render(var=var))
         return ''.join(v)
+

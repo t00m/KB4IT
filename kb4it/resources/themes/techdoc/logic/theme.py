@@ -3,10 +3,11 @@
 
 """
 Server module.
+
 # File: theme.py
 # Author: Tomás Vírseda
 # License: GPL v3
-# Description: Techdoc theme for KB4IT
+# Description: default theme script
 """
 
 import os
@@ -489,13 +490,17 @@ class Theme(Builder):
     def build_page(self, path_adoc):
         """
         Build the final HTML Page
+
         At this point, the compilation for the asciidoc document has
         finished successfully, and therefore the html page can be built.
+
         The Builder receives the asciidoc document filepath. It means,
         that another file with extension .html should also exist.
+
         The html page is built by inserting the html header at the
         beguinning, appending the footer at the end, and applying the
         necessary transformations.
+
         Finally, the html page created by asciidoctor is overwritten.
         """
         path_hdoc = path_adoc.replace('.adoc', '.html')
