@@ -44,8 +44,8 @@ def add_data(root_data):
 
     return dir_files
 
-
-DATA_FILES = add_data('kb4it/resources')
+DATA_FILES =  ['kb4it/VERSION']
+DATA_FILES += add_data('kb4it/resources')
 
 setup(
     name=APP['shortname'],
