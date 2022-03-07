@@ -1,0 +1,1 @@
+<th class=""><span class="uk-text-bold uk-text-meta">${var['item']}</span></th>
