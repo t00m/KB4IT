@@ -3,7 +3,6 @@
 
 """
 Setup KB4IT project.
-
 # File: setup.py.
 # Author: Tomás Vírseda
 # License: GPL v3
@@ -83,7 +82,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kb4it = kb4it.kb4it:main',
+            'kb4it = kb4it.main:main',
             ],
         },
 )

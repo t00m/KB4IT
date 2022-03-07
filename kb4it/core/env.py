@@ -12,9 +12,11 @@ Environment module.
 import os
 from os.path import abspath
 import sys
+import tempfile
 
 ROOT = abspath(sys.modules[__name__].__file__ + "/../../")
 USER_DIR = os.path.expanduser('~')
+TMPNAME = next(tempfile._get_candidate_names())
 
 # App Info
 APP = {}
@@ -29,7 +31,7 @@ APP['license_long'] = "The code is licensed under the terms of the  GPL v3\n\
                   code\nas you want"
 APP['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
 APP['desc'] = ""
-APP['version'] = '0.7.8.5'
+APP['version'] = open('%s' % os.path.join(ROOT, 'VERSION')).read()
 APP['author'] = 'Tomás Vírseda'
 APP['author_email'] = 'tomasvirseda@gmail.com'
 APP['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
@@ -40,17 +42,24 @@ LPATH = {}
 LPATH['ROOT'] = os.path.join(USER_DIR, ".%s" % APP['shortname'].lower())
 LPATH['ETC'] = os.path.join(LPATH['ROOT'], 'etc')
 LPATH['VAR'] = os.path.join(LPATH['ROOT'], 'var')
+LPATH['WORK'] = os.path.join(LPATH['VAR'], 'work')
 LPATH['DB'] = os.path.join(LPATH['VAR'], 'db')
 LPATH['PLUGINS'] = os.path.join(LPATH['VAR'], 'plugins')
 LPATH['LOG'] = os.path.join(LPATH['VAR'], 'log')
-LPATH['TMP'] = os.path.join(LPATH['VAR'], 'tmp')
-LPATH['CACHE'] = os.path.join(LPATH['VAR'], 'cache')
-LPATH['DISTRIBUTED'] = os.path.join(LPATH['CACHE'], 'distributed')
-LPATH['DB'] = os.path.join(LPATH['VAR'], 'db')
-LPATH['WWW'] = os.path.join(LPATH['VAR'], 'www')
-LPATH['EXPORT'] = os.path.join(LPATH['VAR'], 'export')
+LPATH['TMP'] = os.path.join(LPATH['VAR'], 'log')
+
+# ~ LPATH['WWW'] = os.path.join(LPATH['VAR'], 'www')
+# ~ LPATH['EXPORT'] = os.path.join(LPATH['VAR'], 'export')
 LPATH['OPT'] = os.path.join(LPATH['ROOT'], 'opt')
 LPATH['THEMES'] = os.path.join(LPATH['OPT'], 'themes')
+
+LPATH['TMP_SOURCE'] = os.path.join(LPATH['TMP'], 'source')
+LPATH['TMP_TARGET'] = os.path.join(LPATH['TMP'], 'target')
+
+# ~ LPATH['CACHE'] = os.path.join(LPATH['VAR'], 'cache')
+# ~ LPATH['DISTRIBUTED'] = os.path.join(LPATH['CACHE'], TMPNAME, 'distributed')
+# ~ LPATH['TMP'] = os.path.join(LPATH['VAR'], 'tmp', TMPNAME)
+
 
 # Global paths
 GPATH = {}
@@ -60,6 +69,7 @@ GPATH['RESOURCES'] = os.path.join(GPATH['ROOT'], 'resources')
 GPATH['ONLINE'] = os.path.join(GPATH['RESOURCES'], 'online')
 GPATH['IMAGES'] = os.path.join(GPATH['ONLINE'], 'images')
 GPATH['COMMON'] = os.path.join(GPATH['RESOURCES'], 'common')
+GPATH['TEMPLATES'] = os.path.join(GPATH['COMMON'], 'templates')
 GPATH['THEMES'] = os.path.join(GPATH['RESOURCES'], 'themes')
 GPATH['APPDATA'] = os.path.join(GPATH['COMMON'], 'appdata')
 GPATH['RES'] = os.path.join(GPATH['DATA'], 'res')

@@ -3,7 +3,6 @@
 
 """
 Utils functions used along the project.
-
 # File: srv_utils.py
 # Author: Tomás Vírseda
 # License: GPL v3
@@ -20,7 +19,9 @@ import hashlib
 import operator
 import subprocess
 import traceback as tb
+import pprint
 from datetime import datetime
+# ~ from bs4 import BeautifulSoup as bs
 from kb4it.core.env import LPATH, EOHMARK
 from kb4it.core.log import get_logger
 
@@ -66,7 +67,6 @@ def copy_docs(docs, target):
 
 def copydir(source, dest):
     """Copy a directory structure overwriting existing files.
-
     https://gist.github.com/dreikanter/5650973#gistcomment-835606
     """
     for root, dirs, files in os.walk(source):
@@ -106,13 +106,12 @@ def get_traceback():
 
 def exec_cmd(data):
     """Execute an operating system command.
-
     Return:
     - document
     - True if success, False if not
-    - res is the output
+    - num is the job number
     """
-    doc, cmd, res = data
+    doc, cmd, num = data
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
     outs, errs = process.communicate()
     if errs is None:
@@ -120,7 +119,7 @@ def exec_cmd(data):
     else:
         compiled = False
         log.debug("[UTIL] - Compiling %s: Error: %s", doc, errs)
-    return doc, compiled, res
+    return doc, compiled, num
 
 
 def set_max_frequency(dkeyurl):
@@ -156,36 +155,58 @@ def get_font_size(frequency, max_frequency):
 
     return size
 
+# ~ def ul_to_dict(ul):
+    # ~ node = ul
+    # ~ result = {}
+    # ~ for li in ul.find_all("li", recursive=False):
+        # ~ key = next(li.stripped_strings)
+        # ~ ul = li.find("ul")
+        # ~ a = li.find("a")
+        # ~ result[key] = {}
+        # ~ if ul:
+            # ~ result[key]['child'] = ul_to_dict(ul)
+        # ~ else:
+            # ~ result[key]['child'] = None
+        # ~ result[key]['href'] = a['href']
+    # ~ return result
 
-def extract_toc(source):
-    """C0111: Missing function docstring (missing-docstring)."""
-    toc = ''
-    items = []
-    lines = source.split('\n')
-    s = e = n = 0
+# ~ def extract_toc(source):
+    # ~ """C0111: Missing function docstring (missing-docstring)."""
+    # ~ toc = ''
+    # ~ items = []
+    # ~ lines = source.split('\n')
+    # ~ s = e = n = 0
 
-    for line in lines:
-        if line.find("toctitle") > 0:
-            s = n + 1
-        if s > 0:
-            if line.startswith('</div>') and n > s:
-                e = n
-                break
-        n = n + 1
+    # ~ for line in lines:
+        # ~ if line.find("toctitle") > 0:
+            # ~ s = n + 1
+        # ~ if s > 0:
+            # ~ if line.startswith('</div>') and n > s:
+                # ~ e = n
+                # ~ break
+        # ~ n = n + 1
+    # ~ html = ''.join(lines[s:e])
+    # ~ if s > 0 and e > s:
+        # ~ soup = bs(source, 'html5lib').ul
+        # ~ menu = ul_to_dict(soup)
+        # ~ thistoc = {}
+        # ~ for line in lines[s:e]:
+            # ~ if line.startswith('<li><a href='):
+                # ~ modifier = """<li><a class="uk-link-heading" """
+                # ~ line = line.replace("<li><a ", modifier)
+            # ~ else:
+                # ~ line = line.replace("sectlevel1", "uk-nav uk-nav-default")
+                # ~ line = line.replace("sectlevel2", "uk-nav-sub")
+                # ~ line = line.replace("sectlevel3", "uk-nav-sub")
+                # ~ line = line.replace("sectlevel4", "uk-nav-sub")
+            # ~ items.append(line)
+        # ~ toc = '\n'.join(items)
+        # ~ print("<EXTRACT_TOC>")
+        # ~ pprint.pprint(menu)
+        # ~ print("<EXTRACT_TOC/>")
 
-    if s > 0 and e > s:
-        for line in lines[s:e]:
-            if line.startswith('<li><a href='):
-                modifier = """<li><a class="uk-link-heading" """
-                line = line.replace("<li><a ", modifier)
-            else:
-                line = line.replace("sectlevel1", "uk-nav uk-nav-default")
-                line = line.replace("sectlevel2", "uk-nav-sub")
-                line = line.replace("sectlevel3", "uk-nav-sub")
-                line = line.replace("sectlevel4", "uk-nav-sub")
-            items.append(line)
-        toc = '\n'.join(items)
-    return toc
+    # ~ return toc
+
 
 
 def delete_target_contents(target_path):
@@ -275,13 +296,11 @@ def get_hash_from_dict(adict):
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
-
     Remove leading and trailing spaces; convert other spaces to
     underscores; and remove anything that is not an alphanumeric, dash,
     underscore, or dot.
     >>> valid_filename("john's portrait in 2004.jpg")
     'johns_portrait_in_2004.jpg'
-
     Borrowed from:
     https://github.com/django/django/blob/master/django/utils/text.py
     """
@@ -301,7 +320,7 @@ def guess_datetime(sdate):
                 "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
                 "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
                 "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
-                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
+                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ", "%B, %Y"]
 
     for pattern in patterns:
         if not found:

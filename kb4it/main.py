@@ -176,6 +176,7 @@ class KB4IT:
             self.stop()
         else:
             if self.params.LIST_THEMES:
+                self.repo = {}
                 self.repo['source'] = LPATH['TMP_SOURCE']
                 self.repo['target'] = LPATH['TMP_TARGET']
                 frontend = self.get_service('Frontend')
