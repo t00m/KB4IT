@@ -22,7 +22,7 @@ import traceback as tb
 import pprint
 from datetime import datetime
 # ~ from bs4 import BeautifulSoup as bs
-from kb4it.core.env import LPATH, EOHMARK
+from kb4it.core.env import ENV  # LPATH, EOHMARK
 from kb4it.core.log import get_logger
 
 log = get_logger('KB4ITUtil')
@@ -31,7 +31,7 @@ log = get_logger('KB4ITUtil')
 def load_kbdict(source_path):
     """C0111: Missing function docstring (missing-docstring)."""
     source_path = valid_filename(source_path)
-    KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % source_path)
+    KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
     try:
         with open(KB4IT_DB_FILE, 'r') as fkb:
             kbdict = json.load(fkb)
@@ -45,7 +45,7 @@ def save_kbdict(kbdict, path, name=None):
     """C0111: Missing function docstring (missing-docstring)."""
     if name is None:
         target_path = valid_filename(path)
-        KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % target_path)
+        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % target_path)
     else:
         KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
 
@@ -257,7 +257,7 @@ def get_asciidoctor_attributes(docpath):
                     key = line[n][1:line[n].find(':', 1)]
                     values = line[n][len(key)+2:-1].split(',')
                     props[key] = [value.strip() for value in values]
-                elif line[n].startswith(EOHMARK):
+                elif line[n].startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     break
     except IndexError as error:

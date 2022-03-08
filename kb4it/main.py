@@ -13,7 +13,7 @@ import os
 import sys
 import json
 import argparse
-from kb4it.core.env import APP, LPATH, GPATH
+from kb4it.core.env import ENV  # APP, LPATH, GPATH
 from kb4it.core.log import get_logger
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
@@ -36,7 +36,7 @@ class KB4IT:
 
         # Initialize log
         self.__setup_logging(self.params.LOGLEVEL)
-        self.log.info("[CONTROLLER] - KB4IT %s started", APP['version'])
+        self.log.info("[CONTROLLER] - KB4IT %s started", ENV['APP']['version'])
         self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
 
         # Start up
@@ -105,12 +105,12 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.debug("[CONTROLLER] - Setting up %s environment", APP['shortname'])
-        self.log.debug("[CONTROLLER] - Global path[%s]", GPATH['ROOT'])
-        self.log.debug("[CONTROLLER] - Local path[%s]", LPATH['ROOT'])
+        self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
+        self.log.debug("[CONTROLLER] - Global path[%s]", ENV['GPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - Local path[%s]", ENV['LPATH']['ROOT'])
 
         # Create local paths if they do not exist
-        for key, path in LPATH.items():
+        for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
                 self.log.debug("[CONTROLLER] - LPATH[%s] Dir[%s]: created", key, path)
@@ -177,8 +177,8 @@ class KB4IT:
         else:
             if self.params.LIST_THEMES:
                 self.repo = {}
-                self.repo['source'] = LPATH['TMP_SOURCE']
-                self.repo['target'] = LPATH['TMP_TARGET']
+                self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
+                self.repo['target'] = ENV['LPATH']['TMP_TARGET']
                 frontend = self.get_service('Frontend')
                 frontend.theme_list()
         self.stop()
@@ -191,7 +191,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.debug("[CONTROLLER] - KB4IT %s finished", APP['version'])
+        self.log.debug("[CONTROLLER] - KB4IT %s finished", ENV['APP']['version'])
         sys.exit()
 
 
@@ -200,7 +200,7 @@ def main():
     extra_usage = """"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % APP['version'],
+        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['version'],
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -209,7 +209,7 @@ def main():
     kb4it_options.add_argument('-r', help='Repository config file', dest='REPO_PATH')
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
-    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (APP['shortname'], APP['version']))
+    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
 
     params = parser.parse_args()
     app = KB4IT(params)

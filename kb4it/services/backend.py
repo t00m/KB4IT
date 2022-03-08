@@ -22,7 +22,7 @@ import datetime
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from kb4it.core.env import LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK, TMPNAME
+from kb4it.core.env import ENV  # LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK, TMPNAME
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename, load_kbdict
 from kb4it.core.util import exec_cmd, delete_target_contents
@@ -59,7 +59,7 @@ class Backend(Service):
         self.runtime['dir']['target'] = os.path.realpath(self.parameters['target'])
 
         PROJECT = valid_filename(self.runtime['dir']['source'])
-        WORKDIR = os.path.join(LPATH['WORK'], PROJECT)
+        WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
         self.runtime['dir']['work'] = WORKDIR
         self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
         self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
@@ -344,7 +344,7 @@ class Backend(Service):
             self.kbdict_new['document'][docname]['compile'] = COMPILE
 
             if COMPILE:
-                newadoc = content.replace(EOHMARK, '', 1)
+                newadoc = content.replace(ENV['CONF']['EOHMARK'], '', 1)
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
                 with open(target, 'w') as target_adoc:
@@ -510,25 +510,25 @@ class Backend(Service):
         #if path already exists, remove it before copying with copytree()
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
-            shutil.copytree(GPATH['RESOURCES'], resources_dir_tmp)
+            shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
         self.log.debug("[COMPILATION] - Resources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
         self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor:")
-        for prop in ADOCPROPS:
-            self.log.debug("[COMPILATION] - Key[%s] = Value[%s]", prop, ADOCPROPS[prop])
-            if ADOCPROPS[prop] is not None:
-                if '%s' in ADOCPROPS[prop]:
-                    adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop] % self.get_target_path())
+        for prop in ENV['CONF']['ADOCPROPS']:
+            self.log.debug("[COMPILATION] - Key[%s] = Value[%s]", prop, ENV['CONF']['ADOCPROPS'][prop])
+            if ENV['CONF']['ADOCPROPS'][prop] is not None:
+                if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
+                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_target_path())
                 else:
-                    adocprops += '-a %s=%s ' % (prop, ADOCPROPS[prop])
+                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
             else:
                 adocprops += '-a %s ' % prop
         # ~ self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
-        with Executor(max_workers=MAX_WORKERS) as exe:
+        with Executor(max_workers=ENV['CONF']['MAX_WORKERS']) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
@@ -565,7 +565,7 @@ class Backend(Service):
                     adoc, res, jobid = job.result()
                     self.log.info("[COMPILATION] - Job[%d/%d]: %s compiled successfully", jobid, num - 1, os.path.basename(adoc))
                     jobcount += 1
-                    if jobcount % MAX_WORKERS == 0:
+                    if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
                         pct = int(jobcount * 100 / len(docs))
                         self.log.debug("[COMPILATION] - %3s%% done", str(pct))
 
@@ -669,12 +669,12 @@ class Backend(Service):
         resources_dir_target = os.path.join(self.get_target_path(), 'resources')
         theme_target_dir = os.path.join(resources_dir_target, 'themes')
         theme = self.get_theme_properties()
-        DEFAULT_THEME = os.path.join(GPATH['THEMES'], 'default')
+        DEFAULT_THEME = os.path.join(ENV['GPATH']['THEMES'], 'default')
         CUSTOM_THEME_ID = theme['id']
         CUSTOM_THEME_PATH = theme['path']
         copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
         copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
-        copydir(GPATH['COMMON'], os.path.join(resources_dir_target, 'common'))
+        copydir(ENV['GPATH']['COMMON'], os.path.join(resources_dir_target, 'common'))
         self.log.info("[INSTALL] - Copied global resources to target path")
 
         # Copy local resources to target path
@@ -731,7 +731,7 @@ class Backend(Service):
         self.kbdict_cur = {}
         filename = valid_filename(self.get_source_path())
         kdbdict = 'kbdict-%s.json' % filename
-        KB4IT_DB_FILE = os.path.join(LPATH['DB'], kdbdict)
+        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], kdbdict)
 
         delete_target_contents(self.runtime['dir']['cache'])
         self.log.info("[RESET] - DIR[%s] deleted", self.runtime['dir']['cache'])

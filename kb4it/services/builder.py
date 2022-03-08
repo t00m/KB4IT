@@ -19,7 +19,7 @@ try:
     TIDY = True
 except:
     TIDY = False
-from kb4it.core.env import APP, GPATH
+from kb4it.core.env import ENV  # APP, GPATH
 from kb4it.core.service import Service
 from mako.template import Template
 
@@ -91,7 +91,7 @@ class Builder(Service):
             except FileNotFoundError as error:
                 try:
                     # Try with global templates
-                    template_path = os.path.join(GPATH['TEMPLATES'], "%s.tpl" % template)
+                    template_path = os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template)
                     self.templates[template] = Template(filename=template_path)
                     # ~ self.log.debug("[TEMPLATES] - Global Template[%s] loaded and added to the cache", template)
                 except FileNotFoundError as error:

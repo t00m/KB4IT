@@ -19,7 +19,7 @@ import tempfile
 import datetime
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from kb4it.core.env import LPATH, GPATH #, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
+from kb4it.core.env import ENV  # LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
 from kb4it.core.service import Service
 # ~ from kb4it.core.util import valid_filename, load_kbdict
 # ~ from kb4it.core.util import exec_cmd, delete_target_contents
@@ -49,8 +49,8 @@ class Frontend(Service):
     def theme_list(self):
         self.log.info("[THEME] - List of themes availables")
 
-        self.log.info("[THEME] - Installed globally (%s)", GPATH['THEMES'])
-        global_themes = os.listdir(GPATH['THEMES'])
+        self.log.info("[THEME] - Installed globally (%s)", ENV['GPATH']['THEMES'])
+        global_themes = os.listdir(ENV['GPATH']['THEMES'])
         n = 0
         for dirname in global_themes:
             try:
@@ -61,8 +61,8 @@ class Frontend(Service):
                 # ~ self.print_traceback()
                 self.log.debug("[THEME] - Theme Id: '%s' NOT valid", dirname)
 
-        self.log.info("[THEME] - Installed locally (%s)", LPATH['THEMES'])
-        local_themes = os.listdir(LPATH['THEMES'])
+        self.log.info("[THEME] - Installed locally (%s)", ENV['LPATH']['THEMES'])
+        local_themes = os.listdir(ENV['LPATH']['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
                 try:
@@ -86,7 +86,7 @@ class Frontend(Service):
         self.runtime['theme']['path'] = self.theme_search(theme_name)
         if self.runtime['theme']['path'] is None:
             return None
-            self.runtime['theme']['path'] = os.path.join(GPATH['THEMES'], 'default')
+            self.runtime['theme']['path'] = os.path.join(ENV['GPATH']['THEMES'], 'default')
             self.log.warning("[THEME] - Fallback to default theme")
 
         theme_conf = os.path.join(self.runtime['theme']['path'], "theme.json")
@@ -155,7 +155,7 @@ class Frontend(Service):
             theme_path = os.path.join(self.srvbes.get_source_path(), theme_rel_path)
             if not os.path.exists(theme_path):
                 # Search for theme in KB4IT global theme
-                theme_path = os.path.join(GPATH['THEMES'], theme)
+                theme_path = os.path.join(ENV['GPATH']['THEMES'], theme)
                 if not os.path.exists(theme_path):
                     # No theme found
                     theme_path = None

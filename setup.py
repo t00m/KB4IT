@@ -15,7 +15,7 @@ import os
 import glob
 from setuptools import setup
 
-from kb4it.core.env import APP
+from kb4it.core.env import ENV
 
 with open('pypi/README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
@@ -47,15 +47,15 @@ DATA_FILES =  ['kb4it/VERSION']
 DATA_FILES += add_data('kb4it/resources')
 
 setup(
-    name=APP['shortname'],
-    version=APP['version'],
-    author=APP['author'],
-    author_email=APP['author_email'],
-    url=APP['website'],
+    name=ENV['APP']['shortname'],
+    version=ENV['APP']['version'],
+    author=ENV['APP']['author'],
+    author_email=ENV['APP']['author_email'],
+    url=ENV['APP']['website'],
     description='A static website generator based on Asciidoctor sources.',
     long_description=LONG_DESCRIPTION,
     download_url='https://github.com/t00m/KB4IT/archive/master.zip',
-    license=APP['license'],
+    license=ENV['APP']['license'],
     packages=['kb4it', 'kb4it.core', 'kb4it.services'],
     # distutils does not support install_requires, but pip needs it to be
     # able to automatically install dependencies
