@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import semver
 current = open('kb4it/VERSION', 'r').read()
 print("Current version: %s" % current)
