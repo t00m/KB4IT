@@ -307,33 +307,6 @@ def valid_filename(s):
     s = str(s).strip().replace(' ', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
 
-
-def guess_datetime(sdate):
-    """Return (guess) a datetime object for a given string."""
-    found = False
-    patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
-                "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
-                "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
-                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S",
-                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
-                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
-                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
-                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ", "%B, %Y"]
-
-    for pattern in patterns:
-        if not found:
-            try:
-                td = datetime.strptime(sdate, pattern)
-                ts = td.strftime("%Y-%m-%d %H:%M:%S")
-                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-                found = True
-            except ValueError:
-                timestamp = None
-    return timestamp
-
-
 def file_timestamp(filename):
     """Return last modification datetime normalized of a file."""
     t = os.path.getmtime(filename)

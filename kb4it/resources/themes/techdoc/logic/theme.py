@@ -15,6 +15,7 @@ import math
 import pprint
 from datetime import datetime, timedelta
 from calendar import monthrange
+from dateutil.parser import parse as guess_datetime
 
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
@@ -22,7 +23,6 @@ from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import get_human_datetime, fuzzy_date_from_timestamp
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import valid_filename
-from kb4it.core.util import guess_datetime
 from evcal import EventsCalendar
 
 class Theme(Builder):

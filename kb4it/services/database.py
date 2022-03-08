@@ -7,9 +7,10 @@ RDF Graph In Memory database module.
 # Description: In-memory database module
 """
 
+from dateutil.parser import parse as guess_datetime
 
 from kb4it.core.service import Service
-from kb4it.core.util import guess_datetime, sort_dictionary
+from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
 
 

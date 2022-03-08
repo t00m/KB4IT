@@ -1,8 +1,10 @@
 import calendar
 from calendar import HTMLCalendar, monthrange
 from datetime import datetime, timedelta
+from dateutil.parser import parse as guess_datetime
+
 from kb4it.core.service import Service
-from kb4it.core.util import valid_filename, guess_datetime
+from kb4it.core.util import valid_filename
 
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""
@@ -15,11 +17,11 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def get_services(self):
         self.srvbld = self.get_service('Builder')
-        
+
     def set_events_days(self, events_days):
         """
         FIXME: Document this method properly
-        
+
         Attach the list of event days as a property, so we can access it
         anywhere.
         """
@@ -118,8 +120,8 @@ class EventsCalendar(Service, HTMLCalendar):
         var['title'] = month_name
         var['class'] = LINK_CLASS
         try:
-            events = self.ml[theyear][themonth]                        
-            if events:                
+            events = self.ml[theyear][themonth]
+            if events:
                 var['url'] = "events_%4d%02d.html" % (theyear, themonth)
             else:
                 var['url'] = "#"
