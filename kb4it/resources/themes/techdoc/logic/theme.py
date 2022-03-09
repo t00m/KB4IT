@@ -323,8 +323,14 @@ class Theme(Builder):
         self.build_page_index(var)
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
-        # ~ self.create_page_about_kb4it()
+        self.create_page_about_kb4it()
         # ~ self.create_page_help()
+
+    def create_page_about_kb4it(self):
+        """About KB4IT page."""
+        TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
+        var = self.get_theme_var()
+        self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
 
     def page_hook_pre(self, var):
         var['related'] = ''

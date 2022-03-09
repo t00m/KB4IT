@@ -79,26 +79,29 @@ class Builder(Service):
 
         # Try to get the template from cache
         try:
-            tpl = self.templates[template]
-            # ~ self.log.debug("[TEMPLATES] - Template[%s] loaded from cache", template)
-            return tpl
-        except KeyError:
-            try:
-                # Get template from theme
-                template_path = os.path.join(theme['templates'], "%s.tpl" % template)
-                self.templates[template] = Template(filename=template_path)
-                # ~ self.log.debug("[TEMPLATES] - Template[%s] loaded for Theme[%s] and added to the cache", template, theme['id'])
-            except FileNotFoundError as error:
-                try:
-                    # Try with global templates
-                    template_path = os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template)
-                    self.templates[template] = Template(filename=template_path)
-                    # ~ self.log.debug("[TEMPLATES] - Global Template[%s] loaded and added to the cache", template)
-                except FileNotFoundError as error:
-                    self.templates[template] = Template("")
-                    self.log.error("[TEMPLATES] - Template[%s] not found. Returning empty template!", template)
-
             return self.templates[template]
+            # ~ self.log.debug("[TEMPLATES] - Template[%s] loaded from cache", template)
+
+        except KeyError:
+            templates = []
+            templates.append(os.path.join(theme['templates'], "%s.tpl" % template)) # From theme
+            templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template)) # From common templates dir
+            TEMPLATE_FOUND = False
+            for template_path in templates:
+                try:
+                    self.templates[template] = Template(filename=template_path)
+                    TEMPLATE_FOUND = True
+                    self.log.debug("[TEMPLATES] - Template[%s] found and added to the cache", template)
+                    break
+                except:
+                    self.templates[template] = Template("")
+                    TEMPLATE_FOUND = False
+
+        if not TEMPLATE_FOUND:
+            self.log.error("[TEMPLATES] - Template[%s] not found", template)
+
+        return self.templates[template]
+
 
     def render_template(self, name, var={}):
         tpl = self.template(name)
@@ -110,6 +113,7 @@ class Builder(Service):
         var['theme'] = self.srvbes.get_theme_properties()
         var['kbdict'] = self.srvbes.get_kb_dict()
         var['repo'] = self.srvbes.get_repo_parameters()
+        var['env'] = ENV
         var['conf'] = self.app.get_app_conf()
         var['page'] = {}
         var['page']['title'] = ''

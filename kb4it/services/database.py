@@ -201,5 +201,5 @@ class Database(Service):
                 keys.append(key)
             keys.sort(key=lambda y: y.lower())
         except Exception as error:
-            self.log.warning("Doc[%s] => %s", doc, error)
+            self.log.debug("Doc[%s] is not in the database (system page?)", doc)
         return keys
