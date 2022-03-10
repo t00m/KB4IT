@@ -68,6 +68,7 @@ class KB4IT:
             with open(repo_path, 'r') as conf:
                 try:
                     self.repo = json.load(conf)
+                    self.repo['force'] = self.params.FORCE
                 except json.decoder.JSONDecodeError:
                     self.log.error("[CONTROLLER] - Repository config file couldn't be read")
                     self.stop()
@@ -207,6 +208,7 @@ def main():
     # KB4IT arguments
     kb4it_options = parser.add_argument_group('KB4IT Options')
     kb4it_options.add_argument('-r', help='Repository config file', dest='REPO_PATH')
+    kb4it_options.add_argument('-f', action='store_true', dest='FORCE', help='Force a clean compilation', default=False)
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
     kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
