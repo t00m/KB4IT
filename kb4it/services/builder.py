@@ -12,13 +12,13 @@ import os
 import sys
 import shutil
 from datetime import datetime
-try:
-    import html5lib
-    import webencodings
-    from bs4 import BeautifulSoup as bs
-    TIDY = True
-except:
-    TIDY = False
+# ~ try:
+    # ~ import html5lib
+    # ~ import webencodings
+    # ~ from bs4 import BeautifulSoup as bs
+    # ~ TIDY = True
+# ~ except:
+    # ~ TIDY = False
 from kb4it.core.env import ENV  # APP, GPATH
 from kb4it.core.service import Service
 from mako.template import Template

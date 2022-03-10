@@ -1,10 +1,10 @@
 import calendar
 from calendar import HTMLCalendar, monthrange
 from datetime import datetime, timedelta
-from dateutil.parser import parse as guess_datetime
 
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename
+from kb4it.core.util import guess_datetime
 
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""

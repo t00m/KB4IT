@@ -25,13 +25,14 @@ class KB4IT:
     """KB4IT main class.
     """
 
-    def __init__(self, params=None):
+    def __init__(self, params: argparse.Namespace):
         """Initialize KB4IT class.
 
         Setup environment.
         Initialize main log.
         Register main services.
         """
+        print(type(params))
         self.params = params
 
         # Initialize log
