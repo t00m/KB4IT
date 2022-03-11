@@ -32,7 +32,6 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
-        print(type(params))
         self.params = params
 
         # Initialize log
