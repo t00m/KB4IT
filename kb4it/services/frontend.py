@@ -47,9 +47,9 @@ class Frontend(Service):
         self.runtime = self.srvbes.get_runtime()
 
     def theme_list(self):
-        self.log.info("[THEME] - List of themes availables")
+        self.log.debug("[THEME] - List of themes availables")
 
-        self.log.info("[THEME] - Installed globally (%s)", ENV['GPATH']['THEMES'])
+        self.log.debug("[THEME] - Installed globally (%s)", ENV['GPATH']['THEMES'])
         global_themes = os.listdir(ENV['GPATH']['THEMES'])
         n = 0
         for dirname in global_themes:
@@ -61,7 +61,7 @@ class Frontend(Service):
                 # ~ self.print_traceback()
                 self.log.debug("[THEME] - Theme Id: '%s' NOT valid", dirname)
 
-        self.log.info("[THEME] - Installed locally (%s)", ENV['LPATH']['THEMES'])
+        self.log.debug("[THEME] - Installed locally (%s)", ENV['LPATH']['THEMES'])
         local_themes = os.listdir(ENV['LPATH']['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
