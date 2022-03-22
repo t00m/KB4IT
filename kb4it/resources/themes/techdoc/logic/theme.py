@@ -328,7 +328,7 @@ class Theme(Builder):
         # ~ self.build_page_index_all()
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
-        # ~ self.create_page_about_kb4it()
+        self.create_page_about_kb4it()
         # ~ self.create_page_help()
 
     def create_page_about_kb4it(self):
@@ -608,7 +608,7 @@ class Theme(Builder):
         var['pagename'] = "%s" % valid_filename(key)
         self.distribute_adoc(var['pagename'], adoc)
         self.log.debug("[BUILDER] - Created page key '%s'", var['pagename'])
-        self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
+        #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
     def build_page_key_value(self, kvpath):
@@ -637,7 +637,7 @@ class Theme(Builder):
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
-        self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
+        #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""

@@ -592,7 +592,7 @@ class Backend(Service):
         (doc, cmd, num) = data
         basename = os.path.basename(doc)
         res = exec_cmd(data)
-        self.log.info("Start MEM %s: %d Mb", basename, get_process_memory())
+        #self.log.info("Start MEM %s: %d Mb", basename, get_process_memory())
         return res
 
     def compilation_finished(self, future):
