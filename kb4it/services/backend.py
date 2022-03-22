@@ -31,7 +31,7 @@ from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import save_kbdict, copy_docs, copydir
 from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
-
+# ~ from kb4it.core.util import get_process_memory
 
 class Backend(Service):
     """Backend class for managing the main logic workflow.
@@ -371,6 +371,10 @@ class Backend(Service):
         self.log.info("[PREPROCESSING] - Stats - Keep: %d - Compile: %d", keep_docs, compile_docs)
         self.log.info("[PREPROCESSING] - End")
 
+        # Delete
+        del(self.runtime['docs']['bag'])
+        # ~ self.kbdict_new = None
+
     def get_ignored_keys(self):
         return self.ignored_keys
 
@@ -474,6 +478,7 @@ class Backend(Service):
         for kpath in K_PATH:
             key, values, COMPILE_KEY = kpath
             docname = "%s.adoc" % valid_filename(key)
+            COMPILE_KEY = True # FIXME: Force Key compiling
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
                 self.srvthm.build_page_key(key, values)
@@ -550,13 +555,13 @@ class Backend(Service):
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
-                    self.log.debug("[COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
+                    self.log.info("[COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
                     job = exe.submit(self.compilation_started, data)
                     job.add_done_callback(self.compilation_finished)
                     jobs.append(job)
                     num = num + 1
                 else:
-                    self.log.debug("[COMPILATION] - Document[%s] cached. Avoid compiling", basename)
+                    self.log.info("[COMPILATION] - Document[%s] cached. Avoid compiling", basename)
 
             if num-1 > 0:
                 self.log.debug("[COMPILATION] - Created %d jobs. Starting compilation", num - 1)
@@ -587,6 +592,7 @@ class Backend(Service):
         (doc, cmd, num) = data
         basename = os.path.basename(doc)
         res = exec_cmd(data)
+        self.log.info("Start MEM %s: %d Mb", basename, get_process_memory())
         return res
 
     def compilation_finished(self, future):
@@ -596,6 +602,7 @@ class Backend(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
+            # ~ self.log.info("End MEM %s: %d Mb", basename, get_process_memory())
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
             html = self.srvthm.build_page(path_hdoc)
             # ~ with open(path_hdoc, 'w') as fhtml:

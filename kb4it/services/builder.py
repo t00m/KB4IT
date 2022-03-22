@@ -10,6 +10,7 @@ Builder service.
 
 import os
 import sys
+import copy
 import shutil
 from datetime import datetime
 # ~ try:
@@ -26,6 +27,7 @@ from mako.template import Template
 
 class Builder(Service):
     """Build HTML blocks"""
+    theme_var = {}
     templates = {}
 
     def initialize(self):
@@ -108,16 +110,19 @@ class Builder(Service):
         return tpl.render(var=var)
 
     def get_theme_var(self):
+        # FIXME: concurrent.futures MemoryError
+        # https://stackoverflow.com/questions/37445540/memory-usage-with-concurrent-futures-threadpoolexecutor-in-python3
         """Create a new variable for rendering templates."""
-        var = {}
-        var['theme'] = self.srvbes.get_theme_properties()
-        var['kbdict'] = self.srvbes.get_kb_dict()
-        var['repo'] = self.srvbes.get_repo_parameters()
-        var['env'] = ENV
-        var['conf'] = self.app.get_app_conf()
-        var['page'] = {}
-        var['page']['title'] = ''
-        return var
+        theme_var = {}
+        theme_var['theme'] = self.srvbes.get_theme_properties()
+        # ~ var['kbdict'] = srvbes.get_kb_dict()
+        theme_var['repo'] = self.srvbes.get_repo_parameters()
+        theme_var['env'] = ENV
+        theme_var['conf'] = self.app.get_app_conf()
+        theme_var['page'] = {}
+        theme_var['page']['title'] = ''
+
+        return theme_var
 
     def page_hook_pre(self, var):
         """ Insert html code before the content.

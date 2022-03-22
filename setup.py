@@ -59,12 +59,7 @@ setup(
     packages=['kb4it', 'kb4it.core', 'kb4it.services'],
     # distutils does not support install_requires, but pip needs it to be
     # able to automatically install dependencies
-    install_requires=[
-        'mako==1.1.4',
-        'semver==2.13.0'],
-        #'webencodings==0.5.1',
-        #'html5lib==1.1',
-        #'beautifulsoup4==4.10.0'],
+    install_requires=['mako==1.1.4'],
     include_package_data=True,
     data_files=DATA_FILES,
     zip_safe=False,

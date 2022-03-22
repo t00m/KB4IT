@@ -58,7 +58,7 @@ class KB4IT:
             if self.params.REPO_PATH is None:
                 self.log.error("[CONTROLLER] - Repository config path parameter (-r) is mandatory.")
                 self.stop()
-
+            self.log.error(self.params.REPO_PATH)
             repo_path = os.path.abspath(self.params.REPO_PATH)
             self.log.debug("[CONTROLLER] - Repository configuration path: %s", repo_path)
             if not os.path.exists(repo_path):
@@ -207,8 +207,8 @@ def main():
 
     # KB4IT arguments
     kb4it_options = parser.add_argument_group('KB4IT Options')
-    kb4it_options.add_argument('-r', help='Repository config file', dest='REPO_PATH')
-    kb4it_options.add_argument('-f', action='store_true', dest='FORCE', help='Force a clean compilation', default=False)
+    kb4it_options.add_argument('-r', help='Repository config file', action='store', dest='REPO_PATH')
+    kb4it_options.add_argument('-f', help='Force a clean compilation', action='store_true', dest='FORCE', default=False)
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
     kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))

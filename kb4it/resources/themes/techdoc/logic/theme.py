@@ -24,12 +24,16 @@ from kb4it.core.util import get_human_datetime
 from kb4it.core.util import fuzzy_date_from_timestamp
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import valid_filename
+# ~ from kb4it.core.util import get_process_memory
 
 from evcal import EventsCalendar
 
 class Theme(Builder):
     dey = {} # Dictionary of day events per year
     events_docs = {} # Dictionary storing a list of docs for a given date
+
+    # ~ def initialize(self):
+
 
     def highlight_metadata_section(self, content, var):
         """Apply CSS transformation to metadata section."""
@@ -39,10 +43,9 @@ class Theme(Builder):
         self.log.debug("[TRANSFORM] - Page[%s]: Highlight metadata", var['basename_html'])
         return content, var
 
-    def apply_transformations(self, var):
+    def apply_transformations(self, content):
         """Apply CSS transformation to the compiled page."""
         tpl = self.render_template
-        content = var['source_html']
         content = content.replace(tpl('HTML_TAG_A_ADOC'), tpl('HTML_TAG_A_NEW'))
         content = content.replace(tpl('HTML_TAG_TOC_ADOC'), tpl('HTML_TAG_TOC_NEW'))
         content = content.replace(tpl('HTML_TAG_SECT1_ADOC'), tpl('HTML_TAG_SECT1_NEW'))
@@ -62,8 +65,7 @@ class Theme(Builder):
         content = content.replace(tpl('HTML_TAG_ADMONITION_ICON_WARNING_ADOC'), tpl('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
         content = content.replace(tpl('HTML_TAG_ADMONITION_ADOC'), tpl('HTML_TAG_ADMONITION_NEW'))
         content = content.replace(tpl('HTML_TAG_IMG_ADOC'), tpl('HTML_TAG_IMG_NEW'))
-        var['source_html'] = content
-        return var
+        return content
 
     def build_datatable(self, headers=[], doclist=[]):
         """Given a list of columns, it builds a datatable.
@@ -314,18 +316,19 @@ class Theme(Builder):
     def build(self):
         """Create standard pages for default theme"""
         var = self.get_theme_var()
-        self.log.debug("This is the Techdoc theme")
+        self.log.info("This is the Techdoc theme")
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
-        # ~ self.build_page_index_all()
         self.build_page_index(var)
+
+        # ~ self.build_page_index_all()
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
-        self.create_page_about_kb4it()
+        # ~ self.create_page_about_kb4it()
         # ~ self.create_page_help()
 
     def create_page_about_kb4it(self):
@@ -532,8 +535,13 @@ class Theme(Builder):
             timestamp = get_human_datetime(now)
             keys = get_asciidoctor_attributes(path_adoc)
             # ~ self.log.error("%s -> %s", path_adoc, keys)
-            source_adoc = open(path_adoc, 'r').read()
-            source_html = open(path_hdoc, 'r').read()
+
+            with open(path_adoc, 'r') as fpa:
+                source_adoc = fpa.read()
+
+            with open(path_hdoc, 'r') as fph:
+                source_html = fph.read()
+
             toc = self.extract_toc(source_html)
             var['toc'] = toc
             if len(toc) > 0:
@@ -554,12 +562,14 @@ class Theme(Builder):
                 pass
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
-            var['related'] = self.get_related(var)
+            var['related'] = self.get_related(basename_adoc)
             var['source_adoc'] = source_adoc
-            var['source_html'] = source_html
-            var['actions'] = self.get_page_actions(var)
+            var['source_html'] = self.apply_transformations(source_html) # <---
+            actions = self.get_page_actions(var)
+            var['actions'] = actions
             var['timestamp'] = timestamp
-            var = self.apply_transformations(var)
+            # ~ var = self.apply_transformations(var)
+            # ~ self.log.error("MEMVAR[%s] = %s", basename_adoc, get_process_memory())
 
             HEADER = HTML_HEADER_COMMON.render(var=var)
             BODY = HTML_BODY.render(var=var)
@@ -598,6 +608,7 @@ class Theme(Builder):
         var['pagename'] = "%s" % valid_filename(key)
         self.distribute_adoc(var['pagename'], adoc)
         self.log.debug("[BUILDER] - Created page key '%s'", var['pagename'])
+        self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
     def build_page_key_value(self, kvpath):
@@ -626,6 +637,7 @@ class Theme(Builder):
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
+        self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
@@ -649,38 +661,33 @@ class Theme(Builder):
 
     def get_page_actions(self, var):
         TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
-        this_doc = var['basename_adoc']
-        actions = TPL_SECTION_ACTIONS.render(var=var)
-        return actions
+        return TPL_SECTION_ACTIONS.render(var=var)
 
-    def get_related(self, var):
+    def get_related(self, doc):
         """Get a list of related documents for each tag"""
         TPL_SECTION_RELATED = self.template('SECTION_RELATED')
-        this_doc = var['basename_adoc']
-        properties = self.srvdtb.get_doc_properties(this_doc)
-        var['has_tags'] = False
-        var['has_docs'] = False
-        var['related'] = {}
+        properties = self.srvdtb.get_doc_properties(doc)
+        has_tags = False
+        has_docs = False
+        var = {}
 
         if len(properties) > 0:
             try:
                 tags = properties['Tag']
-                var['has_tags'] = True
+                has_tags = True
             except:
                 tags = []
 
         doclist = set()
-        if var['has_tags']:
+        if has_tags:
             for tag in tags:
-                for doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
+                for this_doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
                     if doc != this_doc:
-                        doclist.add(doc)
-                        var['has_docs'] = True
+                        doclist.add(this_doc)
+                        has_docs = True
         headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
-        datatable = self.build_datatable(headers, doclist)
-        var['page']['datatable'] = datatable
-        related = TPL_SECTION_RELATED.render(var=var)
-        return related
+        var['datatable'] = self.build_datatable(headers, doclist)
+        return TPL_SECTION_RELATED.render(var=var)
 
     def get_labels(self, values):
         """C0111: Missing function docstring (missing-docstring)."""

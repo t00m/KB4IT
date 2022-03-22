@@ -14,6 +14,7 @@ import re
 import glob
 import json
 import math
+# ~ import psutil
 import shutil
 import hashlib
 import operator
@@ -405,6 +406,12 @@ def fuzzy_date_from_timestamp(timestamp):
             fuzzy_string = "%s ago" % fuzzy
 
     return fuzzy_string
+
+def get_process_memory():
+    process = psutil.Process(os.getpid())
+    mem_bytes = int(process.memory_info().rss)
+    mem_mb = int(mem_bytes/1024/1024)
+    return mem_mb
 
 
 def sort_dictionary(adict, reverse=True):
