@@ -12,9 +12,15 @@ Environment module.
 import os
 from os.path import abspath
 import sys
+import psutil
 import tempfile
 
 ENV = {}
+
+# Process
+ENV['PS'] = {}
+ENV['PS']['PID'] = psutil.Process().pid
+ENV['PS']['NAME'] = psutil.Process().name()
 
 # Configuration
 ENV['CONF'] = {}
@@ -33,7 +39,6 @@ ENV['CONF']['ADOCPROPS'] = {
     'linkcss': None,
     'experimental': None,
 }
-
 
 # App Info
 ENV['APP'] = {}

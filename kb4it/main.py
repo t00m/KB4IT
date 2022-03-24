@@ -38,6 +38,7 @@ class KB4IT:
         self.__setup_logging(self.params.LOGLEVEL)
         self.log.info("[CONTROLLER] - KB4IT %s started", ENV['APP']['version'])
         self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+        self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
 
         # Start up
         self.__setup_environment()
