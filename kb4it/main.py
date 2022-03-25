@@ -145,7 +145,6 @@ class KB4IT:
             pid = open(pidfile, 'r').read()
             try:
                 # Previous Pid file exists and process exists. Exit
-                self.log.info("PID: %s", pid)
                 ps = psutil.Process(int(pid))
                 can_run = False
             except psutil.NoSuchProcess:
@@ -162,9 +161,9 @@ class KB4IT:
             # Write current Pid to file
             with open(pidfile, 'w') as fpid:
                 fpid.write(str(ENV['PS']['PID']))
-            self.log.debug("%s can be executed", ENV['APP']['shortname'])
+            self.log.info("[CONTROLLER] - Decision: Go")
         else:
-            self.log.info("%s already in execution. Try later", ENV['APP']['shortname'])
+            self.log.info("[CONTROLLER] - Decision: No Go")
             self.stop()
 
     def get_services(self):
@@ -248,7 +247,7 @@ def main():
     kb4it_options = parser.add_argument_group('KB4IT Options')
     kb4it_options.add_argument('-r', help='Repository config file', action='store', dest='REPO_PATH')
     kb4it_options.add_argument('-f', help='Force a clean compilation', action='store_true', dest='FORCE', default=False)
-    kb4it_options.add_argument('-w', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % WORKERS, action='store', dest='WORKERS', default=WORKERS)
+    kb4it_options.add_argument('-w', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % WORKERS, type=int, action='store', dest='WORKERS', default=int(WORKERS))
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
     kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
