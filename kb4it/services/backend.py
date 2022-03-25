@@ -533,7 +533,8 @@ class Backend(Service):
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
-        with Executor(max_workers=ENV['CONF']['MAX_WORKERS']) as exe:
+        params = self.app.get_app_conf()
+        with Executor(max_workers=params.WORKERS) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0

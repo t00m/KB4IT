@@ -16,6 +16,7 @@ import psutil
 import argparse
 from kb4it.core.env import ENV  # APP, LPATH, GPATH
 from kb4it.core.log import get_logger
+from kb4it.core.util import get_default_workers
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
@@ -37,15 +38,17 @@ class KB4IT:
 
         # Initialize log
         self.__setup_logging(self.params.LOGLEVEL)
-        self.log.info("[CONTROLLER] - KB4IT %s started", ENV['APP']['version'])
-        self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
-        self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
-        self.log.info("[CONTROLLER] - MaxWorkers: %d (default)", ENV['CONF']['MAX_WORKERS'])
 
         # Start up
         self.__setup_environment()
         self.__check_params()
         self.__setup_services()
+
+        self.log.info("[CONTROLLER] - KB4IT %s started", ENV['APP']['version'])
+        self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+        self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
+        self.log.info("[CONTROLLER] - MaxWorkers: %d (default)", self.params.WORKERS)
+
         self.__gonogo()
 
     def __setup_logging(self, severity=None):
@@ -142,13 +145,14 @@ class KB4IT:
             pid = open(pidfile, 'r').read()
             try:
                 # Previous Pid file exists and process exists. Exit
-                self.log.info("PID: %s (%s)", pid, type(pid))
+                self.log.info("PID: %s", pid)
                 ps = psutil.Process(int(pid))
                 can_run = False
             except psutil.NoSuchProcess:
                 # Previous Pid file exists but not the process. Continue
                 can_run = True
             except ValueError:
+                # Pid file is empty
                 can_run = True
         else:
             # Previous Pid file doesn't exist. Continue
@@ -238,10 +242,13 @@ def main():
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    WORKERS = get_default_workers()
+
     # KB4IT arguments
     kb4it_options = parser.add_argument_group('KB4IT Options')
     kb4it_options.add_argument('-r', help='Repository config file', action='store', dest='REPO_PATH')
     kb4it_options.add_argument('-f', help='Force a clean compilation', action='store_true', dest='FORCE', default=False)
+    kb4it_options.add_argument('-w', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % WORKERS, action='store', dest='WORKERS', default=WORKERS)
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
     kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))

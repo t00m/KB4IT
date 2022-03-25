@@ -14,7 +14,7 @@ import re
 import glob
 import json
 import math
-# ~ import psutil
+import psutil
 import shutil
 import hashlib
 import operator
@@ -104,6 +104,14 @@ def get_traceback():
     """Get traceback."""
     return tb.format_exc()
 
+def get_default_workers():
+    """Calculate default number or workers.
+    Workers = Number of CPU / 2
+    Minimum workers = 1
+    """
+    ncpu = psutil.cpu_count()
+    workers = ncpu/2
+    return math.ceil(workers)
 
 def exec_cmd(data):
     """Execute an operating system command.
