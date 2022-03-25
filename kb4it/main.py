@@ -12,6 +12,7 @@ KB4IT module. Entry point.
 import os
 import sys
 import json
+import psutil
 import argparse
 from kb4it.core.env import ENV  # APP, LPATH, GPATH
 from kb4it.core.log import get_logger
@@ -45,6 +46,7 @@ class KB4IT:
         self.__setup_environment()
         self.__check_params()
         self.__setup_services()
+        self.__gonogo()
 
     def __setup_logging(self, severity=None):
         """Set up logging."""
@@ -131,6 +133,35 @@ class KB4IT:
         }
         for name, klass in services.items():
             self.register_service(name, klass)
+
+    def __gonogo(self):
+        """Go/No-Go decision making"""
+        can_run = False
+        pidfile = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
+        if os.path.exists(pidfile):
+            pid = open(pidfile, 'r').read()
+            try:
+                # Previous Pid file exists and process exists. Exit
+                self.log.info("PID: %s (%s)", pid, type(pid))
+                ps = psutil.Process(int(pid))
+                can_run = False
+            except psutil.NoSuchProcess:
+                # Previous Pid file exists but not the process. Continue
+                can_run = True
+            except ValueError:
+                can_run = True
+        else:
+            # Previous Pid file doesn't exist. Continue
+            can_run = True
+
+        if can_run:
+            # Write current Pid to file
+            with open(pidfile, 'w') as fpid:
+                fpid.write(str(ENV['PS']['PID']))
+            self.log.debug("%s can be executed", ENV['APP']['shortname'])
+        else:
+            self.log.info("%s already in execution. Try later", ENV['APP']['shortname'])
+            self.stop()
 
     def get_services(self):
         """Get all registered services"""
