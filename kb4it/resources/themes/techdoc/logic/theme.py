@@ -323,8 +323,7 @@ class Theme(Builder):
         self.build_page_stats()
         self.build_page_bookmarks()
         self.build_page_index(var)
-
-        # ~ self.build_page_index_all()
+        self.build_page_index_all()
         # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
         self.create_page_about_kb4it()
@@ -455,11 +454,18 @@ class Theme(Builder):
 
     def build_page_index_all(self):
         """Create a page with all documents"""
-        doclist = self.srvdtb.get_documents()
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
+        doclist = []
+        for doc in self.srvdtb.get_documents():
+            doclist.append(doc)
+        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        datatable = self.build_datatable(headers, doclist)
+        var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
         self.distribute_adoc('all', page)
+        self.log.debug("[BUILDER] - Created page for bookmarks")
+        return page
 
     def extract_toc(self, source):
         """Extract TOC from Asciidoctor generated HTML code and
