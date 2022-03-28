@@ -478,7 +478,6 @@ class Backend(Service):
         for kpath in K_PATH:
             key, values, COMPILE_KEY = kpath
             docname = "%s.adoc" % valid_filename(key)
-            COMPILE_KEY = True # FIXME: Force Key compiling
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
                 self.srvthm.build_page_key(key, values)
