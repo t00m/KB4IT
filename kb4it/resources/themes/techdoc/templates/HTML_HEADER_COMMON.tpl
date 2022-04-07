@@ -76,6 +76,9 @@
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Scope.html"><span class="uk-padding-small">Scopes</a>
                                 </li>
                                 <li class="uk-link-toggle">
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Topic.html"><span class="uk-padding-small">Topics</a>
+                                </li>
+                                <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Author.html"><span class="uk-padding-small">Authors</a>
                                 </li>
                                 <li class="uk-link-toggle">
