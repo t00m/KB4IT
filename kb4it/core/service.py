@@ -9,9 +9,13 @@ Server module.
 # Description: Service class
 """
 
-from kb4it.core.log import get_logger
-from kb4it.core.util import get_traceback
+import traceback as tb
 
+from kb4it.core.log import get_logger
+
+def get_traceback():
+    """Get traceback."""
+    return tb.format_exc()
 
 class Service:
     """

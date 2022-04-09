@@ -19,40 +19,12 @@ import shutil
 import hashlib
 import operator
 import subprocess
-import traceback as tb
 import pprint
 from datetime import datetime
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
 log = get_logger('KB4ITUtil')
-
-
-def load_kbdict(source_path):
-    """C0111: Missing function docstring (missing-docstring)."""
-    source_path = valid_filename(source_path)
-    KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
-    try:
-        with open(KB4IT_DB_FILE, 'r') as fkb:
-            kbdict = json.load(fkb)
-    except FileNotFoundError:
-        kbdict = {}
-    log.debug("[UTIL] - Current kbdict entries: %d", len(kbdict))
-    return kbdict
-
-
-def save_kbdict(kbdict, path, name=None):
-    """C0111: Missing function docstring (missing-docstring)."""
-    if name is None:
-        target_path = valid_filename(path)
-        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % target_path)
-    else:
-        KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
-
-    with open(KB4IT_DB_FILE, 'w') as fkb:
-        json.dump(kbdict, fkb)
-        log.debug("[UTIL] - KBDICT %s saved", KB4IT_DB_FILE)
-
 
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -97,20 +69,6 @@ def get_source_docs(path):
     log.debug("[UTIL] - Found %d asciidoctor documents", len(docs))
 
     return docs
-
-
-def get_traceback():
-    """Get traceback."""
-    return tb.format_exc()
-
-def get_default_workers():
-    """Calculate default number or workers.
-    Workers = Number of CPU / 2
-    Minimum workers = 1
-    """
-    ncpu = psutil.cpu_count()
-    workers = ncpu/2
-    return math.ceil(workers)
 
 def exec_cmd(data):
     """Execute an operating system command.
@@ -356,63 +314,6 @@ def string_timestamp(string):
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
-
-
-def fuzzy_date_from_timestamp(timestamp):
-    """Get fuzzy human string from a given timestamp."""
-    if type(timestamp) == str:
-        d1 = guess_datetime(timestamp)
-    else:
-        d1 = timestamp
-
-    now = datetime.now()
-    if now >= d1:
-        rdate = now - d1
-        future = False
-    else:
-        rdate = d1 - now
-        future = True
-
-    if rdate.days > 0:
-        if rdate.days <= 31:
-            fuzzy = "%d days" % int(rdate.days)
-
-        if rdate.days > 31 and rdate.days < 365:
-            fuzzy = "%d months" % int((rdate.days/31))
-
-        if rdate.days >= 365:
-            years = int(rdate.days/365)
-            months = int((rdate.days / years - 365) / 30)
-            if months > 0:
-                fuzzy = "%d years and %d months" % (years, months)
-            else:
-                if years > 1:
-                    fuzzy = "%d years" % years
-                else:
-                    fuzzy = "1 year ago"
-
-        if future:
-            fuzzy_string = "In %s" % fuzzy
-        else:
-            fuzzy_string = "%s ago" % fuzzy
-    else:
-        hours = rdate.seconds / 3600
-        minutes = rdate.seconds / 60
-        if int(hours) > 0:
-            fuzzy = "%d hours" % int(hours)
-        elif int(minutes) > 0:
-            fuzzy = "%d minutes" % int(minutes)
-        elif int(rdate.seconds) > 0:
-            fuzzy = "%d seconds" % int(rdate.seconds)
-        elif int(rdate.seconds) == 0:
-            fuzzy = "Right now"
-
-        if future:
-            fuzzy_string = "In %s" % fuzzy
-        else:
-            fuzzy_string = "%s ago" % fuzzy
-
-    return fuzzy_string
 
 def get_process_memory():
     process = psutil.Process(os.getpid())

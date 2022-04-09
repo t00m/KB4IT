@@ -12,16 +12,24 @@ KB4IT module. Entry point.
 import os
 import sys
 import json
+import math
 import psutil
 import argparse
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from kb4it.core.util import get_default_workers
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
 from kb4it.services.builder import Builder
 
+def get_default_workers():
+    """Calculate default number or workers.
+    Workers = Number of CPU / 2
+    Minimum workers = 1
+    """
+    ncpu = psutil.cpu_count()
+    workers = ncpu/2
+    return math.ceil(workers)
 
 class KB4IT:
     """KB4IT main class.

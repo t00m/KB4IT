@@ -24,11 +24,11 @@ from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import valid_filename, load_kbdict
+from kb4it.core.util import valid_filename
 from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict
-from kb4it.core.util import save_kbdict, copy_docs, copydir
+from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
 
@@ -91,12 +91,37 @@ class Backend(Service):
         self.runtime['docs']['target'] = set()
 
         # Load cache dictionary and initialize the new one
-        self.kbdict_cur = load_kbdict(self.runtime['dir']['source'])
+        self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
         self.kbdict_new['document'] = {}
         self.kbdict_new['metadata'] = {}
 
         # Get services
         self.get_services()
+
+    def load_kbdict(self, source_path):
+        """C0111: Missing function docstring (missing-docstring)."""
+        source_path = valid_filename(source_path)
+        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
+        try:
+            with open(KB4IT_DB_FILE, 'r') as fkb:
+                kbdict = json.load(fkb)
+        except FileNotFoundError:
+            kbdict = {}
+        self.log.debug("[UTIL] - Current kbdict entries: %d", len(kbdict))
+        return kbdict
+
+
+    def save_kbdict(self, kbdict, path, name=None):
+        """C0111: Missing function docstring (missing-docstring)."""
+        if name is None:
+            target_path = valid_filename(path)
+            KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % target_path)
+        else:
+            KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
+
+        with open(KB4IT_DB_FILE, 'w') as fkb:
+            json.dump(kbdict, fkb)
+            self.log.debug("[UTIL] - KBDICT %s saved", KB4IT_DB_FILE)
 
     def get_targets(self):
         """Get list of documents converted to pages"""
@@ -355,7 +380,7 @@ class Backend(Service):
             self.add_target(docname.replace('.adoc', '.html'))
 
         # Save current status for the next run
-        save_kbdict(self.kbdict_new, self.get_source_path())
+        self.save_kbdict(self.kbdict_new, self.get_source_path())
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort_database()
@@ -700,7 +725,7 @@ class Backend(Service):
 
         # Copy JSON database to target path so it can be queried from
         # others applications
-        save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
+        self.save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
         self.log.info("[INSTALL] - Copied JSON database to target")
         self.log.info("[INSTALL] - End")
 
