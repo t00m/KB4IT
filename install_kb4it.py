@@ -29,11 +29,6 @@ def which(program):
 tests = []
 results = {}
 
-# ~ test
-# ~ condition
-# ~ passed
-# ~ error
-
 def test_python_3():
     results['python-3'] = {}
     results['python-3']['condition'] = "Python 3 installed"
@@ -60,10 +55,18 @@ tests.append('test_pip')
 for test in tests:
     eval("%s()" % test)
 
+can_install = True
 print("%-15s %-25s %-6s %-34s" % ("Test", "Condition", "Passed", "Error"))
 print("%15s %25s %6s %34s" % (15*"=", 25*"=", 6*"=", 34*"="))
 for test in results:
+    can_install = can_install and results[test]['passed']
     print("%-15s %-25s %-6s %-34s" % (test, results[test]['condition'], results[test]['passed'], results[test]['error']))
 
-# ~ os.system("python3 -m pip install . --user")
+print()
+
+if can_install:
+    print("All tests were successfull. KB4IT can be installed")
+else:
+    print("Some tests were not successfull. Please, check")
+
 
