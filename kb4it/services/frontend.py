@@ -19,16 +19,8 @@ import tempfile
 import datetime
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from kb4it.core.env import ENV  # LPATH, GPATH, APP, ADOCPROPS, MAX_WORKERS, EOHMARK
+from kb4it.core.env import ENV
 from kb4it.core.service import Service
-# ~ from kb4it.core.util import valid_filename, load_kbdict
-# ~ from kb4it.core.util import exec_cmd, delete_target_contents
-# ~ from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
-# ~ from kb4it.core.util import get_hash_from_file, get_hash_from_dict
-# ~ from kb4it.core.util import save_kbdict, copy_docs, copydir
-# ~ from kb4it.core.util import file_timestamp
-# ~ from kb4it.core.util import string_timestamp
-
 
 class Frontend(Service):
     """KB4I Application Class.

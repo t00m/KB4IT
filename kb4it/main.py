@@ -14,7 +14,7 @@ import sys
 import json
 import psutil
 import argparse
-from kb4it.core.env import ENV  # APP, LPATH, GPATH
+from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 from kb4it.core.util import get_default_workers
 from kb4it.services.backend import Backend

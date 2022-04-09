@@ -20,9 +20,11 @@ from datetime import datetime
     # ~ TIDY = True
 # ~ except:
     # ~ TIDY = False
-from kb4it.core.env import ENV  # APP, GPATH
-from kb4it.core.service import Service
+
 from mako.template import Template
+
+from kb4it.core.env import ENV
+from kb4it.core.service import Service
 
 
 class Builder(Service):

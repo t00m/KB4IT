@@ -22,8 +22,7 @@ import subprocess
 import traceback as tb
 import pprint
 from datetime import datetime
-# ~ from bs4 import BeautifulSoup as bs
-from kb4it.core.env import ENV  # LPATH, EOHMARK
+from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
 log = get_logger('KB4ITUtil')
