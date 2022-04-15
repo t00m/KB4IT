@@ -73,7 +73,6 @@ class KB4IT:
             if self.params.REPO_PATH is None:
                 self.log.error("[CONTROLLER] - Repository config path parameter (-r) is mandatory.")
                 self.stop()
-            self.log.error(self.params.REPO_PATH)
             repo_path = os.path.abspath(self.params.REPO_PATH)
             self.log.debug("[CONTROLLER] - Repository configuration path: %s", repo_path)
             if not os.path.exists(repo_path):
@@ -148,6 +147,7 @@ class KB4IT:
     def __gonogo(self):
         """Go/No-Go decision making"""
         can_run = False
+        no_go_reason = ''
         pidfile = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
         if os.path.exists(pidfile):
             pid = open(pidfile, 'r').read()
@@ -155,6 +155,7 @@ class KB4IT:
                 # Previous Pid file exists and process exists. Exit
                 ps = psutil.Process(int(pid))
                 can_run = False
+                no_go_reason = 'Previous Pid file (%s) exists and process exists' % pidfile
             except psutil.NoSuchProcess:
                 # Previous Pid file exists but not the process. Continue
                 can_run = True
@@ -171,7 +172,8 @@ class KB4IT:
                 fpid.write(str(ENV['PS']['PID']))
             self.log.info("[CONTROLLER] - Decision: Go")
         else:
-            self.log.info("[CONTROLLER] - Decision: No Go")
+            self.log.error("[CONTROLLER] - Decision: No Go")
+            self.log.error("Reason: %s", no_go_reason)
             self.stop()
 
     def get_services(self):
