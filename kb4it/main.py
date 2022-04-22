@@ -45,6 +45,8 @@ class KB4IT:
         self.params = params
 
         # Initialize log
+        if 'LOGLEVEL' not in self.params:
+            self.params.LOGLEVEL = 'DEBUG'
         self.__setup_logging(self.params.LOGLEVEL)
 
         # Start up
@@ -65,6 +67,13 @@ class KB4IT:
 
     def __check_params(self):
         """Check arguments passed to the application."""
+        if 'LIST_THEMES' not in self.params:
+            self.params.LIST_THEMES = False
+        if 'FORCE' not in self.params:
+            self.params.FORCE = False
+        if 'WORKERS' not in self.params:
+            self.params.WORKERS = get_default_workers()
+
         for key in vars(self.params):
             self.log.debug("[CONTROLLER] - Parameter[%s] Value[%s]", key, vars(self.params)[key])
 
