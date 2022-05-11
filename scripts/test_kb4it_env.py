@@ -69,4 +69,4 @@ if can_install:
 else:
     print("Some tests were not successfull. Please, check")
 
-
+#apt install python3-pip

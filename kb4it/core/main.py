@@ -35,18 +35,22 @@ class KB4IT:
     """KB4IT main class.
     """
 
-    def __init__(self, params: argparse.Namespace):
+    def __init__(self, params: argparse.Namespace = None):
         """Initialize KB4IT class.
 
         Setup environment.
         Initialize main log.
         Register main services.
         """
-        self.params = params
+        if params is not None:
+            self.params = params
+        else:
+            self.params = argparse.Namespace()
+            self.params.REPO_PATH = None
 
         # Initialize log
         if 'LOGLEVEL' not in self.params:
-            self.params.LOGLEVEL = 'DEBUG'
+            self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.LOGLEVEL)
 
         # Start up
@@ -80,7 +84,7 @@ class KB4IT:
         if not self.params.LIST_THEMES:
             # Get repository configuration path. Mandatory
             if self.params.REPO_PATH is None:
-                self.log.error("[CONTROLLER] - Repository config path parameter (-r) is mandatory.")
+                self.log.error("[CONTROLLER] - Repository config path parameter is missing.")
                 self.stop()
             repo_path = os.path.abspath(self.params.REPO_PATH)
             self.log.debug("[CONTROLLER] - Repository configuration path: %s", repo_path)
