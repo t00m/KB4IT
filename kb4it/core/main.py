@@ -17,6 +17,7 @@ import psutil
 import argparse
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
+from kb4it.core.util import timestamp
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
@@ -58,7 +59,7 @@ class KB4IT:
         self.__check_params()
         self.__setup_services()
 
-        self.log.info("[CONTROLLER] - KB4IT %s started", ENV['APP']['version'])
+        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
         self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
         self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
         self.log.info("[CONTROLLER] - MaxWorkers: %d (default)", self.params.WORKERS)
@@ -251,7 +252,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.debug("[CONTROLLER] - KB4IT %s finished", ENV['APP']['version'])
+        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
         sys.exit()
 
 

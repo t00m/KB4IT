@@ -279,6 +279,9 @@ def file_timestamp(filename):
     sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
     return sdate
 
+def timestamp():
+    return datetime.now().isoformat()
+
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
     found = False
