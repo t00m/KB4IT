@@ -114,14 +114,13 @@ ${var['menu_contents']}
                         <div class="uk-child-width-expand@s uk-text-center" uk-grid>
                             <div class="uk-card uk-card-small">
                                 <div class="uk-card uk-card-small"><a class="uk-link-toggle uk-text-primary" href="#"><span class="uk-text-bolder uk-text-truncate">${var['page']['title']}</span></a></div>
-                                <div class="uk-navbar-dropdown">
-                                    <ul class="uk-nav uk-navbar-dropdown-nav">
-
 % if var['has_toc']:
+                                <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
+                                    <ul class="uk-nav uk-navbar-dropdown-nav">
     ${var['actions']}
-% endif
                                     </ul>
                                 </div>
+% endif
                             </div>
                     </li>
                 </u>
