@@ -88,8 +88,8 @@ class Builder(Service):
 
         except KeyError:
             templates = []
-            templates.append(os.path.join(theme['templates'], "%s.tpl" % template)) # From theme
-            templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template)) # From common templates dir
+            templates.append(os.path.join(theme['templates'], "%s.tpl" % template))  # From theme
+            templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template))  # From common templates dir
             TEMPLATE_FOUND = False
             for template_path in templates:
                 try:
@@ -105,7 +105,6 @@ class Builder(Service):
             self.log.error("[TEMPLATES] - Template[%s] not found", template)
 
         return self.templates[template]
-
 
     def render_template(self, name, var={}):
         tpl = self.template(name)

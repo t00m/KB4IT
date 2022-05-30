@@ -67,7 +67,6 @@ class Backend(Service):
         self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
         self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
-
         for entry in self.runtime['dir']:
             if entry not in ['source', 'target']:
                 dirname = self.runtime['dir'][entry]
@@ -110,7 +109,6 @@ class Backend(Service):
             kbdict = {}
         self.log.debug("[BACKEND/CONF] - Current kbdict entries: %d", len(kbdict))
         return kbdict
-
 
     def save_kbdict(self, kbdict, path, name=None):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -255,7 +253,7 @@ class Backend(Service):
                 if not os.path.exists(docpath):
                     missing.append(docname)
         except KeyError:
-            pass # skip
+            pass  # skip
 
         if len(missing) == 0:
             self.log.debug("[BACKEND/PREPROCESSING] - Cache is empty")
@@ -466,7 +464,6 @@ class Backend(Service):
         K_PATH = []
         KV_PATH = []
 
-
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_ALL = self.parameters['force']
@@ -526,8 +523,6 @@ class Backend(Service):
         self.log.debug("[BACKEND/PROCESSING] - End processing theme at %s", timestamp())
         self.log.info("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.info("[BACKEND/PROCESSING] - End at %s", timestamp())
-
-
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -744,7 +739,7 @@ class Backend(Service):
             delete_target_contents(self.runtime['dir']['tmp'])
             delete_target_contents(self.runtime['dir']['www'])
             delete_target_contents(self.runtime['dir']['dist'])
-        except  Exception as KeyError:
+        except Exception as KeyError:
             pass
         self.log.debug("[BACKEND/CLEANUP] - KB4IT Workspace clean")
 

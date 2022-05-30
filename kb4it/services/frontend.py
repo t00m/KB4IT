@@ -22,6 +22,7 @@ from concurrent.futures import ThreadPoolExecutor as Executor
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
 
+
 class Frontend(Service):
     """KB4I Application Class.
     This class manages the Frontend (Themes).
