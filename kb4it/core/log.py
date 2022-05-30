@@ -27,7 +27,6 @@ def get_logger(name, level=None):
             severity = logging.DEBUG
     else:
         severity = logging.INFO
-    # ~ pattern = "%(levelname)7s | %(lineno)4d | %(name)-15s | %(asctime)s | %(message)s"
     pattern = "%(levelname)7s | %(lineno)4d | %(name)-15s | %(message)s"
     logging.basicConfig(level=logging.DEBUG, format=pattern)
     log = logging.getLogger(name)

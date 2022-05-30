@@ -13,9 +13,11 @@ import traceback as tb
 
 from kb4it.core.log import get_logger
 
+
 def get_traceback():
     """Get traceback."""
     return tb.format_exc()
+
 
 class Service:
     """
@@ -62,7 +64,7 @@ class Service:
         severity = conf.LOGLEVEL
         self.log = get_logger(logname, severity)
         self.initialize()
-        self.log.debug("[SERVICE] - Service %s started" , logname)
+        self.log.debug("[SERVICE] - Service %s started", logname)
 
     def end(self):
         """End service.
@@ -71,7 +73,7 @@ class Service:
         if self.started:
             self.started = False
             self.finalize()
-            self.log.debug("[SERVICE] - Service %s finished" , self.logname)
+            self.log.debug("[SERVICE] - Service %s finished", self.logname)
 
     def initialize(self):
         """Initialize service.

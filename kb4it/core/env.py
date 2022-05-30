@@ -27,7 +27,7 @@ ENV['CONF'] = {}
 ENV['CONF']['ROOT'] = abspath(sys.modules[__name__].__file__ + "/../../")
 ENV['CONF']['USER_DIR'] = os.path.expanduser('~')
 ENV['CONF']['TMPNAME'] = next(tempfile._get_candidate_names())
-ENV['CONF']['MAX_WORKERS'] = psutil.cpu_count() # Avoid MemoryError for ThreadPoolExecutor
+ENV['CONF']['MAX_WORKERS'] = psutil.cpu_count()  # Avoid MemoryError for ThreadPoolExecutor
 ENV['CONF']['EOHMARK'] = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
 ENV['CONF']['ADOCPROPS'] = {
     'source-highlighter': 'coderay',
@@ -92,4 +92,3 @@ ENV['GPATH']['TEMPLATES'] = os.path.join(ENV['GPATH']['COMMON'], 'templates')
 ENV['GPATH']['THEMES'] = os.path.join(ENV['GPATH']['RESOURCES'], 'themes')
 ENV['GPATH']['APPDATA'] = os.path.join(ENV['GPATH']['COMMON'], 'appdata')
 ENV['GPATH']['RES'] = os.path.join(ENV['GPATH']['DATA'], 'res')
-

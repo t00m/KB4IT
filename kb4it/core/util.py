@@ -26,6 +26,7 @@ from kb4it.core.log import get_logger
 
 log = get_logger('KB4ITUtil')
 
+
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
     for doc in docs:
@@ -69,6 +70,7 @@ def get_source_docs(path):
     log.debug("[UTIL] - Found %d asciidoctor documents", len(docs))
 
     return docs
+
 
 def exec_cmd(data):
     """Execute an operating system command.
@@ -174,7 +176,6 @@ def get_font_size(frequency, max_frequency):
     # ~ return toc
 
 
-
 def delete_target_contents(target_path):
     """C0111: Missing function docstring (missing-docstring)."""
     if os.path.exists(target_path):
@@ -273,14 +274,17 @@ def valid_filename(s):
     s = str(s).strip().replace(' ', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
 
+
 def file_timestamp(filename):
     """Return last modification datetime normalized of a file."""
     t = os.path.getmtime(filename)
     sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
     return sdate
 
+
 def timestamp():
     return datetime.now().isoformat()
+
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
@@ -307,6 +311,7 @@ def guess_datetime(sdate):
                 timestamp = None
     return timestamp
 
+
 def string_timestamp(string):
     """Return datetime object from a given timestamp."""
     dt = guess_datetime(string)
@@ -314,9 +319,11 @@ def string_timestamp(string):
     # ~ print ("%s -> %s" % (string, sdate))
     return sdate
 
+
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
+
 
 def get_process_memory():
     process = psutil.Process(os.getpid())

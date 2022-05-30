@@ -23,6 +23,7 @@ from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
 from kb4it.services.builder import Builder
 
+
 def get_default_workers():
     """Calculate default number or workers.
     Workers = Number of CPU / 2
@@ -32,11 +33,10 @@ def get_default_workers():
     workers = ncpu/2
     return math.ceil(workers)
 
-class KB4IT:
-    """KB4IT main class.
-    """
 
-    def __init__(self, params: argparse.Namespace = None):
+class KB4IT:
+    """KB4IT main class."""
+    def __init__(self, params: argparse.Namespace=None):
         """Initialize KB4IT class.
 
         Setup environment.
