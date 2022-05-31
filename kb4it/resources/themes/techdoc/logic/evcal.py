@@ -153,6 +153,7 @@ class EventsCalendar(Service, HTMLCalendar):
             for m in months:
                 thismonth = {}
                 thismonth['content'] = self.formatmonth(theyear, m, withyear=False)
+                # self.log.error(thismonth)
                 TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH.render(var=thismonth)
             td = {}
             td['content'] = TD_YEAR_MONTH
