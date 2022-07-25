@@ -34,5 +34,21 @@ pre {
     margin: 10px;
 }
 
+table.month{
+        border-collapse: separate;
+            border-spacing: 3px;
+}
+
+table.month{
+    font-family: monospace;
+    border-collapse: separate;
+    border-spacing: 3px;
+}
+
+table.month tbody tr th {
+    background-color: lightgray;
+    border: 1px solid gray;
+}
+
 #noprint { display: block; }
 #print { display: none; }
