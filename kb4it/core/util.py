@@ -14,7 +14,6 @@ import re
 import glob
 import json
 import math
-import psutil
 import shutil
 import hashlib
 import operator
@@ -323,13 +322,6 @@ def string_timestamp(string):
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
-
-
-def get_process_memory():
-    process = psutil.Process(os.getpid())
-    mem_bytes = int(process.memory_info().rss)
-    mem_mb = int(mem_bytes/1024/1024)
-    return mem_mb
 
 
 def sort_dictionary(adict, reverse=True):

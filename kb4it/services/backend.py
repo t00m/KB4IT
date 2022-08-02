@@ -613,7 +613,6 @@ class Backend(Service):
         (doc, cmd, num) = data
         basename = os.path.basename(doc)
         res = exec_cmd(data)
-        #self.log.info("Start MEM %s: %d Mb", basename, get_process_memory())
         return res
 
     def compilation_finished(self, future):
@@ -623,7 +622,6 @@ class Backend(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            # ~ self.log.info("End MEM %s: %d Mb", basename, get_process_memory())
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
             html = self.srvthm.build_page(path_hdoc)
             # ~ with open(path_hdoc, 'w') as fhtml:

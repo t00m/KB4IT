@@ -12,23 +12,24 @@ Environment module.
 import os
 from os.path import abspath
 import sys
-import psutil
 import tempfile
+import multiprocessing
 
 ENV = {}
 
 # Process
 ENV['PS'] = {}
-ENV['PS']['PID'] = psutil.Process().pid
-ENV['PS']['NAME'] = psutil.Process().name()
+pid = os.getpid()
+ENV['PS']['PID'] = os.getpid()
+ENV['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read()
 
 # Configuration
 ENV['CONF'] = {}
 ENV['CONF']['ROOT'] = abspath(sys.modules[__name__].__file__ + "/../../")
 ENV['CONF']['USER_DIR'] = os.path.expanduser('~')
 ENV['CONF']['TMPNAME'] = next(tempfile._get_candidate_names())
-ENV['CONF']['MAX_WORKERS'] = psutil.cpu_count()  # Avoid MemoryError for ThreadPoolExecutor
-ENV['CONF']['EOHMARK'] = """// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"""
+ENV['CONF']['MAX_WORKERS'] = multiprocessing.cpu_count()  # Avoid MemoryError
+ENV['CONF']['EOHMARK'] = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
 ENV['CONF']['ADOCPROPS'] = {
     'source-highlighter': 'coderay',
     'coderay-css': 'class',

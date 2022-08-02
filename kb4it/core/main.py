@@ -13,7 +13,7 @@ import os
 import sys
 import json
 import math
-import psutil
+import multiprocessing
 import argparse
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
@@ -29,7 +29,7 @@ def get_default_workers():
     Workers = Number of CPU / 2
     Minimum workers = 1
     """
-    ncpu = psutil.cpu_count()
+    ncpu = multiprocessing.cpu_count()
     workers = ncpu/2
     return math.ceil(workers)
 
@@ -165,16 +165,10 @@ class KB4IT:
         pidfile = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
         if os.path.exists(pidfile):
             pid = open(pidfile, 'r').read()
-            try:
-                # Previous Pid file exists and process exists. Exit
-                ps = psutil.Process(int(pid))
+            if os.path.exists('/proc/%s'):
                 can_run = False
-                no_go_reason = 'Previous Pid file (%s) exists and process exists' % pidfile
-            except psutil.NoSuchProcess:
-                # Previous Pid file exists but not the process. Continue
-                can_run = True
-            except ValueError:
-                # Pid file is empty
+                no_go_reason = 'Previous process (%s) still running?' % pid
+            else:
                 can_run = True
         else:
             # Previous Pid file doesn't exist. Continue
