@@ -13,13 +13,6 @@ import sys
 import copy
 import shutil
 from datetime import datetime
-# ~ try:
-    # ~ import html5lib
-    # ~ import webencodings
-    # ~ from bs4 import BeautifulSoup as bs
-    # ~ TIDY = True
-# ~ except:
-    # ~ TIDY = False
 
 from mako.template import Template
 

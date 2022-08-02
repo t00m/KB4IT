@@ -122,58 +122,6 @@ def get_font_size(frequency, max_frequency):
 
     return size
 
-# ~ def ul_to_dict(ul):
-    # ~ node = ul
-    # ~ result = {}
-    # ~ for li in ul.find_all("li", recursive=False):
-        # ~ key = next(li.stripped_strings)
-        # ~ ul = li.find("ul")
-        # ~ a = li.find("a")
-        # ~ result[key] = {}
-        # ~ if ul:
-            # ~ result[key]['child'] = ul_to_dict(ul)
-        # ~ else:
-            # ~ result[key]['child'] = None
-        # ~ result[key]['href'] = a['href']
-    # ~ return result
-
-# ~ def extract_toc(source):
-    # ~ """C0111: Missing function docstring (missing-docstring)."""
-    # ~ toc = ''
-    # ~ items = []
-    # ~ lines = source.split('\n')
-    # ~ s = e = n = 0
-
-    # ~ for line in lines:
-        # ~ if line.find("toctitle") > 0:
-            # ~ s = n + 1
-        # ~ if s > 0:
-            # ~ if line.startswith('</div>') and n > s:
-                # ~ e = n
-                # ~ break
-        # ~ n = n + 1
-    # ~ html = ''.join(lines[s:e])
-    # ~ if s > 0 and e > s:
-        # ~ soup = bs(source, 'html5lib').ul
-        # ~ menu = ul_to_dict(soup)
-        # ~ thistoc = {}
-        # ~ for line in lines[s:e]:
-            # ~ if line.startswith('<li><a href='):
-                # ~ modifier = """<li><a class="uk-link-heading" """
-                # ~ line = line.replace("<li><a ", modifier)
-            # ~ else:
-                # ~ line = line.replace("sectlevel1", "uk-nav uk-nav-default")
-                # ~ line = line.replace("sectlevel2", "uk-nav-sub")
-                # ~ line = line.replace("sectlevel3", "uk-nav-sub")
-                # ~ line = line.replace("sectlevel4", "uk-nav-sub")
-            # ~ items.append(line)
-        # ~ toc = '\n'.join(items)
-        # ~ print("<EXTRACT_TOC>")
-        # ~ pprint.pprint(menu)
-        # ~ print("<EXTRACT_TOC/>")
-
-    # ~ return toc
-
 
 def delete_target_contents(target_path):
     """C0111: Missing function docstring (missing-docstring)."""
