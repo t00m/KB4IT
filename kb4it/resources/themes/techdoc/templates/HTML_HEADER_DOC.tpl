@@ -2,7 +2,7 @@
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
-                       <a href="#"><span class="uk-text-bolder uk-text-truncate">${var['title']}</span></a><!-- ${var['basename']} -->
+                       <a href="#"><span class="uk-text-primary uk-text-small uk-text-truncate">${var['title']}</span></a><!-- ${var['basename']} -->
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li>
