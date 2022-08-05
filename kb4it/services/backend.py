@@ -230,7 +230,14 @@ class Backend(Service):
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
-        self.runtime['docs']['bag'] = get_source_docs(self.get_source_path())
+        sources_path = self.get_source_path()
+        self.runtime['docs']['bag'] = get_source_docs(sources_path)
+        about_app_source = os.path.join(sources_path, 'about_app.adoc')
+        if not os.path.exists(about_app_source):
+            about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
+            shutil.copy(about_app_default, about_app_source)
+            self.log.warning("Added default 'About App' to your sources")
+
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.info("[BACKEND/SOURCEDOCS] - End at %s", timestamp())

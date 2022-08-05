@@ -322,7 +322,6 @@ class Theme(Builder):
         self.build_page_bookmarks()
         self.build_page_index(var)
         self.build_page_index_all()
-        # ~ self.create_page_about_app()
         # ~ self.create_page_about_theme()
         self.create_page_about_kb4it()
         # ~ self.create_page_help()
@@ -645,6 +644,7 @@ class Theme(Builder):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
+        self.log.info("Found %d bookmarks", len(doclist))
         headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
 
