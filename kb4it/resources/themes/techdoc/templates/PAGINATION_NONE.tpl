@@ -1,2 +1,2 @@
-<li class="uk-active" hidden></li>
+<li class="uk-active"></li>
 

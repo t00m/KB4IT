@@ -1,20 +1,27 @@
 import calendar
 from calendar import HTMLCalendar, monthrange
 from datetime import datetime, timedelta
+
 from kb4it.core.service import Service
-from kb4it.core.util import valid_filename, guess_datetime
+from kb4it.core.util import valid_filename
+from kb4it.core.util import guess_datetime
 
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""
 
     def initialize(self):
         super(HTMLCalendar, self).__init__(calendar.MONDAY)
-        self.ml = {}
+        self.ml = {} # ??
         self.now = datetime.now()
         self.get_services()
 
+    def get_services(self):
+        self.srvbld = self.get_service('Builder')
+
     def set_events_days(self, events_days):
         """
+        FIXME: Document this method properly
+
         Attach the list of event days as a property, so we can access it
         anywhere.
         """
@@ -31,9 +38,6 @@ class EventsCalendar(Service, HTMLCalendar):
 
     def set_events_html(self, html):
         self.events_html = html
-
-    def get_services(self):
-        self.srvbld = self.get_service('Builder')
 
     def formatday(self, day, weekday):
         """Return a day as a table cell."""
@@ -95,6 +99,7 @@ class EventsCalendar(Service, HTMLCalendar):
         return EVENTCAL_TR_WEEK_HEADER.render(var=header)
 
     def formatweekday(self, nd):
+        EVENTCAL_WEEKDAY_HEADER = self.srvbld.template('EVENTCAL_WEEKDAY_HEADER')
         day_format = {}
         day_format[0] = ("mon", "Monday", "M")
         day_format[1] = ("tue", "Tuesday", "T")
@@ -103,30 +108,27 @@ class EventsCalendar(Service, HTMLCalendar):
         day_format[4] = ("fri", "Friday", "F")
         day_format[5] = ("sat", "Saturday", "S")
         day_format[6] = ("sun", "Sunday", "S")
-        return """<th class="%s"><a class="uk-link-heading uk-text-bolder uk-link-muted" href="#" uk-tooltip="%s">%s</a></th>""" % day_format[nd]
+        return EVENTCAL_WEEKDAY_HEADER.render(var=day_format[nd])
 
     def formatmonthname(self, theyear, themonth, withyear=True):
         """Return a formatted month name."""
-        LINK = self.srvbld.template('LINK')
+        LINK_URL = self.srvbld.template('LINK')
+        LINK_CLASS = self.srvbld.render_template('EVENTCAL_MONTHNAME_A_CLASS')
         dt = guess_datetime("%4d-%02d-01" % (theyear, themonth))
         month_name = datetime.strftime(dt, "%B %Y")
         var = {}
         var['title'] = month_name
+        var['class'] = LINK_CLASS
         try:
             events = self.ml[theyear][themonth]
-
             if events:
-                var['class'] = "uk-link-heading uk-text-uppercase"
                 var['url'] = "events_%4d%02d.html" % (theyear, themonth)
             else:
-                var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
                 var['url'] = "#"
         except KeyError:
-            # FIXME: Use template
-            var['class'] = "uk-link-heading uk-text-uppercase uk-text-muted"
             var['url'] = "#"
 
-        link = LINK.render(var=var)
+        link = LINK_URL.render(var=var)
         return link
 
     def formatmonth(self, theyear, themonth, withyear=False):
@@ -151,6 +153,7 @@ class EventsCalendar(Service, HTMLCalendar):
             for m in months:
                 thismonth = {}
                 thismonth['content'] = self.formatmonth(theyear, m, withyear=False)
+                # self.log.error(thismonth)
                 TD_YEAR_MONTH += EVENTCAL_TABLE_YEAR_TD_MONTH.render(var=thismonth)
             td = {}
             td['content'] = TD_YEAR_MONTH

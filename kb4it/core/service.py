@@ -3,21 +3,25 @@
 
 """
 Server module.
-
 # File: mod_srv.py
 # Author: Tomás Vírseda
 # License: GPL v3
 # Description: Service class
 """
 
+import traceback as tb
+
 from kb4it.core.log import get_logger
-from kb4it.core.util import get_traceback
+
+
+def get_traceback():
+    """Get traceback."""
+    return tb.format_exc()
 
 
 class Service:
     """
     Service class.
-
     It is the base class for those modules acting as services.
     Different modules (GUI, Database, Ask, etc...) share same methods
     which is useful to start/stop them, simplify logging and, comunicate
@@ -39,7 +43,6 @@ class Service:
     def is_started(self):
         """
         Check if service is started.
-
         Return True or False if service is running / not running
         """
         return self.started
@@ -54,31 +57,32 @@ class Service:
         self.app = app
         self.logname = logname
         self.section_name = section_name
-        params = self.app.get_params()
-        severity = params.LOGLEVEL
+        # ~ repo = self.app.get_repo_conf()
+        # ~ print(repo)
+        conf = self.app.get_app_conf()
+        # ~ severity = repo['logging']
+        severity = conf.LOGLEVEL
         self.log = get_logger(logname, severity)
         self.initialize()
-        self.log.debug("[SERVICE] - Service %s started" , logname)
+        self.log.debug("[SERVICE] - Service %s started", logname)
 
     def end(self):
         """End service.
-
         Use finalize for writting a custom end method
         """
-        self.started = False
-        self.finalize()
-        self.log.debug("[SERVICE] - Service %s finished" , self.logname)
+        if self.started:
+            self.started = False
+            self.finalize()
+            self.log.debug("[SERVICE] - Service %s finished", self.logname)
 
     def initialize(self):
         """Initialize service.
-
         All clases derived from Service class must implement this method
         """
         self.log.debug("[SERVICE] - Service %s started", self.logname)
 
     def finalize(self):
         """Finalize service.
-
         All clases derived from Service class must implement this method
         """
         pass

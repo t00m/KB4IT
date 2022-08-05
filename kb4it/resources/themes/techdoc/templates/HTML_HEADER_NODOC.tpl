@@ -1,13 +1,10 @@
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
-<span id="nodoc-title" class="uk-text-danger uk-text-truncate uk-text-bolder">${var['title']}</span>
+<span class="uk-text-danger uk-text-truncate uk-text-bolder">${var['title']}</span>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
             <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
-                    <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
-                    </li>
                     <li>
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">About</a>
                         <div class="uk-navbar-dropdown">

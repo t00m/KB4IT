@@ -3,7 +3,6 @@
 
 """
 Utils functions used along the project.
-
 # File: srv_utils.py
 # Author: Tomás Vírseda
 # License: GPL v3
@@ -19,38 +18,12 @@ import shutil
 import hashlib
 import operator
 import subprocess
-import traceback as tb
+import pprint
 from datetime import datetime
-from kb4it.core.env import LPATH, EOHMARK
+from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
 log = get_logger('KB4ITUtil')
-
-
-def load_kbdict(source_path):
-    """C0111: Missing function docstring (missing-docstring)."""
-    source_path = valid_filename(source_path)
-    KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % source_path)
-    try:
-        with open(KB4IT_DB_FILE, 'r') as fkb:
-            kbdict = json.load(fkb)
-    except FileNotFoundError:
-        kbdict = {}
-    log.debug("[UTIL] - Current kbdict entries: %d", len(kbdict))
-    return kbdict
-
-
-def save_kbdict(kbdict, path, name=None):
-    """C0111: Missing function docstring (missing-docstring)."""
-    if name is None:
-        target_path = valid_filename(path)
-        KB4IT_DB_FILE = os.path.join(LPATH['DB'], 'kbdict-%s.json' % target_path)
-    else:
-        KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
-
-    with open(KB4IT_DB_FILE, 'w') as fkb:
-        json.dump(kbdict, fkb)
-        log.debug("[UTIL] - KBDICT %s saved", KB4IT_DB_FILE)
 
 
 def copy_docs(docs, target):
@@ -66,7 +39,6 @@ def copy_docs(docs, target):
 
 def copydir(source, dest):
     """Copy a directory structure overwriting existing files.
-
     https://gist.github.com/dreikanter/5650973#gistcomment-835606
     """
     for root, dirs, files in os.walk(source):
@@ -99,20 +71,14 @@ def get_source_docs(path):
     return docs
 
 
-def get_traceback():
-    """Get traceback."""
-    return tb.format_exc()
-
-
 def exec_cmd(data):
     """Execute an operating system command.
-
     Return:
     - document
     - True if success, False if not
-    - res is the output
+    - num is the job number
     """
-    doc, cmd, res = data
+    doc, cmd, num = data
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
     outs, errs = process.communicate()
     if errs is None:
@@ -120,7 +86,7 @@ def exec_cmd(data):
     else:
         compiled = False
         log.debug("[UTIL] - Compiling %s: Error: %s", doc, errs)
-    return doc, compiled, res
+    return doc, compiled, num
 
 
 def set_max_frequency(dkeyurl):
@@ -155,37 +121,6 @@ def get_font_size(frequency, max_frequency):
             size = 72
 
     return size
-
-
-def extract_toc(source):
-    """C0111: Missing function docstring (missing-docstring)."""
-    toc = ''
-    items = []
-    lines = source.split('\n')
-    s = e = n = 0
-
-    for line in lines:
-        if line.find("toctitle") > 0:
-            s = n + 1
-        if s > 0:
-            if line.startswith('</div>') and n > s:
-                e = n
-                break
-        n = n + 1
-
-    if s > 0 and e > s:
-        for line in lines[s:e]:
-            if line.startswith('<li><a href='):
-                modifier = """<li><a class="uk-link-heading" """
-                line = line.replace("<li><a ", modifier)
-            else:
-                line = line.replace("sectlevel1", "uk-nav uk-nav-default")
-                line = line.replace("sectlevel2", "uk-nav-sub")
-                line = line.replace("sectlevel3", "uk-nav-sub")
-                line = line.replace("sectlevel4", "uk-nav-sub")
-            items.append(line)
-        toc = '\n'.join(items)
-    return toc
 
 
 def delete_target_contents(target_path):
@@ -236,7 +171,7 @@ def get_asciidoctor_attributes(docpath):
                     key = line[n][1:line[n].find(':', 1)]
                     values = line[n][len(key)+2:-1].split(',')
                     props[key] = [value.strip() for value in values]
-                elif line[n].startswith(EOHMARK):
+                elif line[n].startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     break
     except IndexError as error:
@@ -275,18 +210,27 @@ def get_hash_from_dict(adict):
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
-
     Remove leading and trailing spaces; convert other spaces to
     underscores; and remove anything that is not an alphanumeric, dash,
     underscore, or dot.
     >>> valid_filename("john's portrait in 2004.jpg")
     'johns_portrait_in_2004.jpg'
-
     Borrowed from:
     https://github.com/django/django/blob/master/django/utils/text.py
     """
     s = str(s).strip().replace(' ', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
+
+
+def file_timestamp(filename):
+    """Return last modification datetime normalized of a file."""
+    t = os.path.getmtime(filename)
+    sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
+    return sdate
+
+
+def timestamp():
+    return datetime.now().isoformat()
 
 
 def guess_datetime(sdate):
@@ -315,13 +259,6 @@ def guess_datetime(sdate):
     return timestamp
 
 
-def file_timestamp(filename):
-    """Return last modification datetime normalized of a file."""
-    t = os.path.getmtime(filename)
-    sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
-    return sdate
-
-
 def string_timestamp(string):
     """Return datetime object from a given timestamp."""
     dt = guess_datetime(string)
@@ -329,66 +266,10 @@ def string_timestamp(string):
     # ~ print ("%s -> %s" % (string, sdate))
     return sdate
 
+
 def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
-
-
-def fuzzy_date_from_timestamp(timestamp):
-    """Get fuzzy human string from a given timestamp."""
-    if type(timestamp) == str:
-        d1 = guess_datetime(timestamp)
-    else:
-        d1 = timestamp
-
-    now = datetime.now()
-    if now >= d1:
-        rdate = now - d1
-        future = False
-    else:
-        rdate = d1 - now
-        future = True
-
-    if rdate.days > 0:
-        if rdate.days <= 31:
-            fuzzy = "%d days" % int(rdate.days)
-
-        if rdate.days > 31 and rdate.days < 365:
-            fuzzy = "%d months" % int((rdate.days/31))
-
-        if rdate.days >= 365:
-            years = int(rdate.days/365)
-            months = int((rdate.days / years - 365) / 30)
-            if months > 0:
-                fuzzy = "%d years and %d months" % (years, months)
-            else:
-                if years > 1:
-                    fuzzy = "%d years" % years
-                else:
-                    fuzzy = "1 year ago"
-
-        if future:
-            fuzzy_string = "In %s" % fuzzy
-        else:
-            fuzzy_string = "%s ago" % fuzzy
-    else:
-        hours = rdate.seconds / 3600
-        minutes = rdate.seconds / 60
-        if int(hours) > 0:
-            fuzzy = "%d hours" % int(hours)
-        elif int(minutes) > 0:
-            fuzzy = "%d minutes" % int(minutes)
-        elif int(rdate.seconds) > 0:
-            fuzzy = "%d seconds" % int(rdate.seconds)
-        elif int(rdate.seconds) == 0:
-            fuzzy = "Right now"
-
-        if future:
-            fuzzy_string = "In %s" % fuzzy
-        else:
-            fuzzy_string = "%s ago" % fuzzy
-
-    return fuzzy_string
 
 
 def sort_dictionary(adict, reverse=True):

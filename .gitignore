@@ -1,0 +1,5 @@
+KB4IT.egg-info/
+build/
+dist/
+kb4it/__pycache__/
+kb4it/core/__pycache__/

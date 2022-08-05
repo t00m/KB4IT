@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 RDF Graph In Memory database module.
-
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
 # Description: In-memory database module
 """
 
-
 from kb4it.core.service import Service
-from kb4it.core.util import guess_datetime, sort_dictionary
+from kb4it.core.util import sort_dictionary
+from kb4it.core.util import valid_filename
+from kb4it.core.util import guess_datetime
 
 
-class KB4ITDB(Service):
+class Database(Service):
     """KB4IT database class."""
 
     db = {}
@@ -24,11 +24,14 @@ class KB4ITDB(Service):
 
     def initialize(self):
         """Initialize database module."""
-        params = self.app.get_params()
-        self.sort_attribute = params.SORT_ATTRIBUTE
-        self.db = {}
+        try:
+            repo = self.app.get_repo_conf()
+            self.sort_attribute = repo['sort']
+        except:
+            pass
         self.sorted_docs = []
         self.ignored_keys = self.blocked_keys = ['Title', 'Timestamp']
+        self.db = {}
 
     def del_document(self, doc):
         """Delete a document node from database."""
@@ -71,7 +74,6 @@ class KB4ITDB(Service):
     def sort_database(self):
         """
         Build a list of documents.
-
         Documents sorted by the given date attribute in descending order.
         """
         self.sorted_docs = self.sort_by_date(list(self.db.keys()))
@@ -86,7 +88,7 @@ class KB4ITDB(Service):
             if ts is not None:
                 adict[doc] = ts
             else:
-                self.log.error("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.error("[DB] - Doc '%s' doesn't have a valid timestamp? (%s)", doc, ts)
         alist = sort_dictionary(adict)
         for doc, timestamp in alist:
             sorted_docs.append(doc)
@@ -98,18 +100,44 @@ class KB4ITDB(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        try:
-            timestamp = self.db[doc][self.sort_attribute][0]
-        except:
-            timestamp = self.db[doc]['Timestamp'][0]
+        found = False
+        timestamp = ''
+        for sort_attribute in self.sort_attribute:
+            try:
+                timestamp = self.db[doc][sort_attribute][0]
+                found = True
+            except:
+                pass
+
+        if not found:
+            try:
+                timestamp = self.db[doc]['Timestamp'][0]
+            except:
+                pass
         return timestamp
 
     def get_doc_properties(self, doc):
-        """Return a dictionary with the properties of a given doc."""
+        """Return a dictionary with the properties of a given doc.
+        Additionally, the dictionary will contain an extra entry foreach
+        property with its Url:
+        """
+        props = {}
         try:
-            return self.db[doc]
-        except:
-            return []
+            for key in self.db[doc]:
+                if key == 'Title':
+                    props[key] = self.db[doc][key][0]
+                    key_url = "%s_Url" % key
+                    props[key_url] = doc.replace('.adoc', '.html')
+                else:
+                    props[key] = self.db[doc][key]
+                    for value in self.db[doc][key]:
+                        key_value_url = "%s_%s_Url" % (key, value)
+                        props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
+        except Exception as warning:
+            # FIXME: Document why it is not necessary
+            pass
+
+        return props
 
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""
@@ -167,7 +195,10 @@ class KB4ITDB(Service):
     def get_doc_keys(self, doc):
         """Return a list of keys for a given doc sorted alphabetically."""
         keys = []
-        for key in self.db[doc]:
-            keys.append(key)
-        keys.sort(key=lambda y: y.lower())
+        try:
+            for key in self.db[doc]:
+                keys.append(key)
+            keys.sort(key=lambda y: y.lower())
+        except Exception as error:
+            self.log.debug("Doc[%s] is not in the database (system page?)", doc)
         return keys
