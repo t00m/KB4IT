@@ -50,5 +50,9 @@ table.month tbody tr th {
     border: 1px solid gray;
 }
 
+table#kb4it-datatable {
+    font-size: smaller;
+}
+
 #noprint { display: block; }
 #print { display: none; }
