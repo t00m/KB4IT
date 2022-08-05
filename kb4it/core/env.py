@@ -21,7 +21,7 @@ ENV = {}
 ENV['PS'] = {}
 pid = os.getpid()
 ENV['PS']['PID'] = os.getpid()
-ENV['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read()
+ENV['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read().strip()
 
 # Configuration
 ENV['CONF'] = {}
