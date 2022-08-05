@@ -1,4 +1,4 @@
-<table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped uk-text-meta" style="width: 100%">
+<table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped uk-text-small" style="width: 100%">
     <thead class="">
         <tr class="">
             ${var['header']}

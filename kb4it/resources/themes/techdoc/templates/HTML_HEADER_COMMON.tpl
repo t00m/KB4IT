@@ -139,9 +139,11 @@ ${var['menu_contents']}
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-small">About this app</span></a>
                                 </li>
+                                <!--
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-small">About this theme</span></a>
                                 </li>
+                                -->
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-small">About KB4IT</span></a>
