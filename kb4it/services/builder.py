@@ -9,10 +9,7 @@ Builder service.
 """
 
 import os
-import sys
-import copy
 import shutil
-from datetime import datetime
 
 from mako.template import Template
 
@@ -156,3 +153,9 @@ class Builder(Service):
         This method must be overwriten by custom themes.
         """
         pass
+
+    def create_page_about_kb4it(self):
+        """About KB4IT page."""
+        TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
+        var = self.get_theme_var()
+        self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))

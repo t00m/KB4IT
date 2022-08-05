@@ -12,7 +12,6 @@ Server module.
 
 import os
 import math
-import pprint
 from datetime import datetime, timedelta
 from calendar import monthrange
 
@@ -22,13 +21,13 @@ from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_human_datetime
 from kb4it.core.util import get_asciidoctor_attributes
-from kb4it.core.util import valid_filename
 
 from evcal import EventsCalendar
 
+
 class Theme(Builder):
-    dey = {} # Dictionary of day events per year
-    events_docs = {} # Dictionary storing a list of docs for a given date
+    dey = {}  # Dictionary of day events per year
+    events_docs = {}  # Dictionary storing a list of docs for a given date
 
     # ~ def initialize(self):
 
@@ -327,12 +326,6 @@ class Theme(Builder):
         # ~ self.create_page_about_theme()
         self.create_page_about_kb4it()
         # ~ self.create_page_help()
-
-    def create_page_about_kb4it(self):
-        """About KB4IT page."""
-        TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
-        var = self.get_theme_var()
-        self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
 
     def page_hook_pre(self, var):
         var['related'] = ''
