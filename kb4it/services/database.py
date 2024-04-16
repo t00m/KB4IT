@@ -82,17 +82,23 @@ class Database(Service):
         """Build a list of documents sorted by timestamp desc."""
         sorted_docs = []
         adict = {}
+        can_sort = True
         for doc in doclist:
             sdate = self.get_doc_timestamp(doc)
             ts = guess_datetime(sdate)
             if ts is not None:
                 adict[doc] = ts
             else:
-                self.log.error("[DB] - Doc '%s' doesn't have a valid timestamp? (%s)", doc, ts)
-        alist = sort_dictionary(adict)
-        for doc, timestamp in alist:
-            sorted_docs.append(doc)
-        return sorted_docs
+                self.log.warning("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.warning("[DB] - Sorting is disabled")
+                can_sort = False
+        if can_sort:
+            alist = sort_dictionary(adict)
+            for doc, timestamp in alist:
+                sorted_docs.append(doc)
+            return sorted_docs
+        else:
+            return doclist
 
     def get_documents(self):
         """Return the list of sorted docs."""
