@@ -58,6 +58,7 @@ class Frontend(Service):
         local_themes = os.listdir(ENV['LPATH']['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
+                self.log.debug("Looking for a theme in %s", dirname)
                 try:
                     self.theme_load(dirname)
                     self.log.info("[THEME] - (L) Theme Id: '%s' (%s - %s)", self.runtime['theme']['id'], self.runtime['theme']['name'], self.runtime['theme']['description'])
@@ -145,12 +146,17 @@ class Frontend(Service):
             # Search in sources path
             source_path = self.srvbes.get_source_path()
             theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
-            theme_path = os.path.join(self.srvbes.get_source_path(), theme_rel_path)
-            if not os.path.exists(theme_path):
-                # Search for theme in KB4IT global theme
-                theme_path = os.path.join(ENV['GPATH']['THEMES'], theme)
-                if not os.path.exists(theme_path):
-                    # No theme found
+            theme_path_source = os.path.join(source_path, theme_rel_path, theme)
+            theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)
+            theme_path_global = os.path.join(ENV['GPATH']['THEMES'], theme)
+            self.log.debug("S[%s] O[%s] G[%s]", theme_path_source, theme_path_opt, theme_path_global)
+            found = False
+            for path in [theme_path_source, theme_path_opt, theme_path_global]:
+                theme_config = os.path.join(path, 'theme.json')
+                if not os.path.exists(theme_config):
                     theme_path = None
+                else:
+                    theme_path = path
+                    break
         self.log.debug("[THEME] - Path to theme: %s", theme_path)
         return theme_path

@@ -252,23 +252,26 @@ class Backend(Service):
         """
         self.log.info("[BACKEND/PREPROCESSING] - Start at %s", timestamp())
 
-        # Clean cache
-        missing = []
-        try:
-            for docname in self.kbdict_cur['document']:
-                docpath = os.path.join(self.get_source_path(), docname)
-                if not os.path.exists(docpath):
-                    missing.append(docname)
-        except KeyError:
-            pass  # skip
+        def _clean_cache():
+            # Clean cache
+            missing = []
+            try:
+                for docname in self.kbdict_cur['document']:
+                    docpath = os.path.join(self.get_source_path(), docname)
+                    if not os.path.exists(docpath):
+                        missing.append(docname)
+            except KeyError:
+                pass  # skip
 
-        if len(missing) == 0:
-            self.log.debug("[BACKEND/PREPROCESSING] - Cache is empty")
-        else:
-            for docname in missing:
-                docname = docname.replace('.adoc', '')
-                self.delete_document(docname)
-            self.log.debug("[BACKEND/PREPROCESSING] - Cache cleaned up")
+            if len(missing) == 0:
+                self.log.debug("[BACKEND/PREPROCESSING] - Cache is empty")
+            else:
+                for docname in missing:
+                    docname = docname.replace('.adoc', '')
+                    self.delete_document(docname)
+                self.log.debug("[BACKEND/PREPROCESSING] - Cache cleaned up")
+
+        _clean_cache()
 
         # Preprocessing
         for source in self.runtime['docs']['bag']:
@@ -278,12 +281,12 @@ class Backend(Service):
             docpath = os.path.join(self.get_source_path(), docname)
             keys = get_asciidoctor_attributes(docpath)
 
-            # If not document doesn't have a title, skip it.
+            # If document doesn't have a title, skip it.
             try:
                 keys['Title']
             except KeyError:
                 self.runtime['docs']['count'] -= 1
-                self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't has a title. Skip it.", docname)
+                self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", docname)
                 continue
 
             self.kbdict_new['document'][docname] = {}
