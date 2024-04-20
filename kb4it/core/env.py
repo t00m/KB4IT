@@ -43,6 +43,11 @@ ENV['CONF']['ADOCPROPS'] = {
 
 # App Info
 ENV['APP'] = {}
+# ~ ENV['APP']['ID'] = '@APP_ID@'
+# ~ ENV['APP']['VERSION'] = '@VERSION@'
+# ~ ENV['APP']['PGKDATADIR'] = '@pkgdatadir@'
+# ~ ENV['APP']['LOCALEDIR'] = '@localedir@'
+# ~ print(ENV)
 ENV['APP']['name'] = "Knowledge Base For IT"
 ENV['APP']['shortname'] = "KB4IT"
 ENV['APP']['description'] = "KB4IT is a static website generator based on \
