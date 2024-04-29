@@ -10,6 +10,7 @@ Log module.
 """
 
 import logging
+from rich.logging import RichHandler
 
 
 def get_logger(name, level=None):
@@ -27,8 +28,8 @@ def get_logger(name, level=None):
             severity = logging.DEBUG
     else:
         severity = logging.INFO
-    pattern = "%(levelname)7s | %(lineno)4d | %(name)-15s | %(message)s"
-    logging.basicConfig(level=logging.DEBUG, format=pattern)
+    # ~ pattern = "%(levelname)7s | %(lineno)4d | %(name)-15s | %(message)s"
+    logging.basicConfig(level=logging.DEBUG, format="%(message)s", handlers=[RichHandler()])
     log = logging.getLogger(name)
     log.setLevel(severity)
 
