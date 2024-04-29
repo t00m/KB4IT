@@ -15,7 +15,7 @@ import json
 import math
 import multiprocessing
 import argparse
-from kb4it.core.env import ENV
+# ~ from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 from kb4it.core.util import timestamp
 from kb4it.services.backend import Backend
@@ -36,13 +36,15 @@ def get_default_workers():
 
 class KB4IT:
     """KB4IT main class."""
-    def __init__(self, params: argparse.Namespace=None):
+    def __init__(self, ENV: dict, params: argparse.Namespace=None):
         """Initialize KB4IT class.
 
         Setup environment.
         Initialize main log.
         Register main services.
         """
+        self.env = ENV
+
         if params is not None:
             self.params = params
         else:
@@ -59,12 +61,21 @@ class KB4IT:
         self.__check_params()
         self.__setup_services()
 
-        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['VERSION'], timestamp())
         self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
         self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
         self.log.info("[CONTROLLER] - MaxWorkers: %d (default)", self.params.WORKERS)
 
         self.__gonogo()
+
+    def get_envvar(self, key: str):
+        try:
+            return self.env[key]
+        except KeyError:
+            return None
+
+    def get_env(self):
+        return self.env
 
     def __setup_logging(self, severity=None):
         """Set up logging."""
@@ -134,6 +145,7 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
+        ENV = self.get_env()
         self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
         self.log.debug("[CONTROLLER] - Global path[%s]", ENV['GPATH']['ROOT'])
         self.log.debug("[CONTROLLER] - Local path[%s]", ENV['LPATH']['ROOT'])
@@ -160,6 +172,7 @@ class KB4IT:
 
     def __gonogo(self):
         """Go/No-Go decision making"""
+        ENV = self.get_env()
         can_run = False
         no_go_reason = ''
         pidfile = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
@@ -221,6 +234,7 @@ class KB4IT:
 
     def run(self):
         """Start application."""
+        ENV = self.get_env()
         if self.ready:
             backend = self.get_service('Backend')
             try:
@@ -239,6 +253,7 @@ class KB4IT:
         self.stop()
 
     def stop(self):
+        ENV = self.get_env()
         """Stop registered services by executing the 'end' method (if any)."""
         try:
             for name in self.services:
@@ -246,16 +261,16 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
+        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['VERSION'], timestamp())
         sys.exit()
 
 
-def main():
+def main(ENV: dict):
     """Set up application arguments and execute."""
     extra_usage = """"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['version'],
+        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['VERSION'],
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -268,8 +283,8 @@ def main():
     kb4it_options.add_argument('-w', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % WORKERS, type=int, action='store', dest='WORKERS', default=int(WORKERS))
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
-    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
+    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['VERSION']))
 
     params = parser.parse_args()
-    app = KB4IT(params)
+    app = KB4IT(ENV, params)
     app.run()

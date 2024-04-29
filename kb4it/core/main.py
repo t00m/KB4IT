@@ -15,7 +15,7 @@ import json
 import math
 import multiprocessing
 import argparse
-from kb4it.core.env import ENV
+# ~ from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 from kb4it.core.util import timestamp
 from kb4it.services.backend import Backend
@@ -59,7 +59,7 @@ class KB4IT:
         self.__check_params()
         self.__setup_services()
 
-        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['VERSION'], timestamp())
         self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
         self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
         self.log.info("[CONTROLLER] - MaxWorkers: %d (default)", self.params.WORKERS)
@@ -246,7 +246,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
+        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['VERSION'], timestamp())
         sys.exit()
 
 
@@ -255,7 +255,7 @@ def main():
     extra_usage = """"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['version'],
+        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['VERSION'],
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -268,7 +268,7 @@ def main():
     kb4it_options.add_argument('-w', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % WORKERS, type=int, action='store', dest='WORKERS', default=int(WORKERS))
     kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
     kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
-    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
+    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['VERSION']))
 
     params = parser.parse_args()
     app = KB4IT(params)

@@ -13,7 +13,7 @@ import shutil
 
 from mako.template import Template
 
-from kb4it.core.env import ENV
+# ~ from kb4it.core.env import ENV
 from kb4it.core.service import Service
 
 
@@ -67,6 +67,7 @@ class Builder(Service):
 
     def template(self, template):
         """Return the template content from chosen theme"""
+        ENV = self.app.get_env()
         properties = self.srvbes.get_runtime()
         theme = properties['theme']
         current_theme = theme['id']
@@ -104,6 +105,7 @@ class Builder(Service):
         # FIXME: concurrent.futures MemoryError
         # https://stackoverflow.com/questions/37445540/memory-usage-with-concurrent-futures-threadpoolexecutor-in-python3
         """Create a new variable for rendering templates."""
+        ENV = self.app.get_env()
         theme_var = {}
         theme_var['theme'] = self.srvbes.get_theme_properties()
         # ~ var['kbdict'] = srvbes.get_kb_dict()
