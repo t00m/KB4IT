@@ -5,6 +5,9 @@ project('kb4it',
                    ],
 )
 
+# run dependency check script
+meson.add_install_script('check_dependencies.py')
+
 #~ r = run_command('spacy', 'validate', check: true)
 #~ output = r.stdout().strip()
 #~ errortxt = r.stderr().strip()
