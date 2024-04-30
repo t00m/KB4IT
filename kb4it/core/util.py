@@ -20,8 +20,10 @@ import operator
 import subprocess
 import pprint
 from datetime import datetime
-from kb4it.core.env import ENV
+# ~ from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
+
+EOHMARK = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
 
 log = get_logger('KB4ITUtil')
 
@@ -171,7 +173,7 @@ def get_asciidoctor_attributes(docpath):
                     key = line[n][1:line[n].find(':', 1)]
                     values = line[n][len(key)+2:-1].split(',')
                     props[key] = [value.strip() for value in values]
-                elif line[n].startswith(ENV['CONF']['EOHMARK']):
+                elif line[n].startswith(EOHMARK):
                     # Stop processing if EOHMARK is found
                     break
     except IndexError as error:

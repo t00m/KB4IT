@@ -22,7 +22,7 @@ import datetime
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from kb4it.core.env import ENV
+# ~ from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import timestamp
 from kb4it.core.util import valid_filename
@@ -45,6 +45,7 @@ class Backend(Service):
 
     def initialize(self):
         """Initialize application structure."""
+        ENV = self.app.get_env()
         # Status
         self.running = False
 
@@ -100,6 +101,7 @@ class Backend(Service):
 
     def load_kbdict(self, source_path):
         """C0111: Missing function docstring (missing-docstring)."""
+        ENV = self.app.get_env()
         source_path = valid_filename(source_path)
         KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
         try:
@@ -112,6 +114,7 @@ class Backend(Service):
 
     def save_kbdict(self, kbdict, path, name=None):
         """C0111: Missing function docstring (missing-docstring)."""
+        ENV = self.app.get_env()
         if name is None:
             target_path = valid_filename(path)
             KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % target_path)
@@ -185,6 +188,7 @@ class Backend(Service):
 
     def stage_01_check_environment(self):
         """Check environment."""
+        ENV = self.app.get_env()
         self.log.info("[BACKEND/SETUP] - Start at %s", timestamp())
         self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
         self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
@@ -229,6 +233,7 @@ class Backend(Service):
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor source documents."""
+        ENV = self.app.get_env()
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
         sources_path = self.get_source_path()
         self.runtime['docs']['bag'] = get_source_docs(sources_path)
@@ -251,6 +256,7 @@ class Backend(Service):
         browsable throught its metadata.
         """
         self.log.info("[BACKEND/PREPROCESSING] - Start at %s", timestamp())
+        ENV = self.app.get_env()
 
         # Clean cache
         missing = []
@@ -459,6 +465,7 @@ class Backend(Service):
         and CPU.
         """
         self.log.info("[BACKEND/PROCESSING] - Start at %s", timestamp())
+        ENV = self.app.get_env()
         repo = self.get_repo_parameters()
         all_keys = set(self.srvdtb.get_all_keys())
         ign_default_keys = set(self.srvdtb.get_ignored_keys())
@@ -533,6 +540,7 @@ class Backend(Service):
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
+        ENV = self.app.get_env()
         self.log.info("[BACKEND/COMPILATION] - Start at %s", timestamp())
         dcomps = datetime.datetime.now()
 
@@ -638,6 +646,7 @@ class Backend(Service):
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.info("[BACKEND/CLEANUP] - Start at %s", timestamp())
+        ENV = self.app.get_env()
         pattern = os.path.join(self.get_source_path(), '*.*')
         extra = glob.glob(pattern)
         copy_docs(extra, self.get_cache_path())

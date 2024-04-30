@@ -19,7 +19,7 @@ import tempfile
 import datetime
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from kb4it.core.env import ENV
+# ~ from kb4it.core.env import ENV
 from kb4it.core.service import Service
 
 
@@ -41,6 +41,7 @@ class Frontend(Service):
 
     def theme_list(self):
         self.log.debug("[THEME] - List of themes availables")
+        ENV = self.app.get_env()
 
         self.log.debug("[THEME] - Installed globally (%s)", ENV['GPATH']['THEMES'])
         global_themes = os.listdir(ENV['GPATH']['THEMES'])
@@ -71,6 +72,8 @@ class Frontend(Service):
 
     def theme_load(self, theme_name=None):
         """Load custom user theme, global theme or default."""
+        ENV = self.app.get_env()
+
         if theme_name is None:
             theme_name = self.parameters.THEME
 
@@ -128,6 +131,8 @@ class Frontend(Service):
 
     def theme_search(self, theme=None):
         """Search custom theme."""
+        ENV = self.app.get_env()
+
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug("[THEME] - Autodetecting theme from source path")
