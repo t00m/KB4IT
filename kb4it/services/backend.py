@@ -282,8 +282,10 @@ class Backend(Service):
             keys = get_asciidoctor_attributes(docpath)
 
             # If document doesn't have a title, skip it.
+            has_title = False
             try:
                 keys['Title']
+                has_title = True
             except KeyError:
                 self.runtime['docs']['count'] -= 1
                 self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", docname)
@@ -313,6 +315,9 @@ class Backend(Service):
             self.kbdict_new['document'][docname]['Timestamp'] = ts
 
             # Generate caches
+            if has_title:
+                self.srvdtb.add_document_key(docname, 'Title', keys['Title'][0])
+
             for key in keys:
                 alist = keys[key]
                 for value in alist:
