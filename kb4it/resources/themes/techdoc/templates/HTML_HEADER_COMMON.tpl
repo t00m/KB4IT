@@ -47,7 +47,7 @@
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle uk-inline-clip uk-transition-toggle">
                         <a class="uk-logo uk-card uk-card-hover uk-transition-scale-up uk-transition-opaque" href="index.html">
-                            <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px">
+                            <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" height="24px">
                         </a>
                     </li>
                     <li>
