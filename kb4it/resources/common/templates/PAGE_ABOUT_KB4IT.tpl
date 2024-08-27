@@ -9,7 +9,7 @@
 
 === Description
 
-_KB4IT_ is a static website generator mainly for technical documentation purposes. 
+_KB4IT_ is a static website generator mainly for technical documentation purposes.
 
 It is based on https://docs.asciidoctor.org/asciidoc/latest/[AsciiDoc] sources and it uses https://asciidoctor.org[Asciidoctor] for processing them.
 
@@ -19,7 +19,7 @@ For more information, visit my Git https://github.com/t00m/KB4IT[repository].
 
 === Copyright
 
-Copyright (C) 2019-2022 mailto:tomasvirseda@gmail.com[Tomás Vírseda]
+Copyright (C) 2019-2024 mailto:tomas.virseda@gmail.com[Tomás Vírseda]
 
 === License
 
