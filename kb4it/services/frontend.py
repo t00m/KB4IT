@@ -136,20 +136,22 @@ class Frontend(Service):
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
-            self.log.debug("[THEME] - Looking for first theme ocurrence in: %s", all_themes)
+            self.log.debug(f"[THEME] - Looking for first theme ocurrence in: {all_themes}")
             try:
                 theme_path = glob.glob(all_themes)[0]
             except IndexError:
                 theme_path = None
         else:
-            self.log.debug("[THEME] - Looking for theme: %s", theme)
+            self.log.debug(f"[THEME] - Looking for theme: '{theme}'")
             # Search in sources path
             source_path = self.srvbes.get_source_path()
-            theme_rel_path = os.path.join(os.path.join('resources', 'themes'), theme)
-            theme_path_source = os.path.join(source_path, theme_rel_path, theme)
+            theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
+            theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
             theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)
             theme_path_global = os.path.join(ENV['GPATH']['THEMES'], theme)
-            self.log.debug("S[%s] O[%s] G[%s]", theme_path_source, theme_path_opt, theme_path_global)
+            self.log.debug(f"[THEME] - From sources: {theme_path_source}")
+            self.log.debug(f"[THEME] - From optional: {theme_path_opt}") # DEPRECATE
+            self.log.debug(f"[THEME] - From global: {theme_path_global}")
             found = False
             for path in [theme_path_source, theme_path_opt, theme_path_global]:
                 theme_config = os.path.join(path, 'theme.json')
@@ -158,5 +160,5 @@ class Frontend(Service):
                 else:
                     theme_path = path
                     break
-        self.log.debug("[THEME] - Path to theme: %s", theme_path)
+        self.log.debug(f"[THEME] - Path to theme '{theme}' found in: {theme_path}")
         return theme_path
