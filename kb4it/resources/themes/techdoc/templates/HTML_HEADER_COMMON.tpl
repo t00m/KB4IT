@@ -47,7 +47,7 @@
                 <ul class="uk-navbar-nav">
                     <li class="uk-link-toggle uk-inline-clip uk-transition-toggle">
                         <a class="uk-logo uk-card uk-card-hover uk-transition-scale-up uk-transition-opaque" href="index.html">
-                            <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" height="24px">
+                            <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px" height="24px">
                         </a>
                     </li>
                     <li>
@@ -91,11 +91,11 @@
                         </div>
                     </li>
 
-% if var['repo']['git'] == 'true':                     
+% if var['repo']['git'] == 'true':
                     <li>
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
                     </li>
-% endif             
+% endif
                 </ul>
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
