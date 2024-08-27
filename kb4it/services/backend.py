@@ -49,7 +49,7 @@ class Backend(Service):
         self.running = False
 
         # Get params from command line
-        self.log.info("[BACKEND] - Started at %s", timestamp())
+        self.log.debug("[BACKEND] - Started at %s", timestamp())
         self.parameters = self.app.get_repo_conf()
         for param in self.parameters:
             self.log.debug("[BACKEND/SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
@@ -564,7 +564,7 @@ class Backend(Service):
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
         params = self.app.get_app_conf()
-        with Executor(max_workers=params.WORKERS) as exe:
+        with Executor(max_workers=params.NUM_WORKERS) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
