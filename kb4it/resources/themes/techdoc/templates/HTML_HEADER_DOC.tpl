@@ -13,7 +13,7 @@
                                             <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                                             <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                                 <div class="uk-padding-large uk-background-muted">
-                                                    <div class="uk-text-lead uk-text-center uk-text-danger">Metadata</div>
+                                                    <div class="uk-text-lead uk-text-center uk-text-danger">Meta</div>
 <!-- METADATA :: START -->
 ${var['meta_section']}
 <!-- METADATA :: END -->
