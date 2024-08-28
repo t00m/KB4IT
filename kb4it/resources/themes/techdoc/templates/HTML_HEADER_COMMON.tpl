@@ -38,6 +38,7 @@
     </script>
 </head>
 <body>
+<!-- Template version ${var['env']['APP']['version']} -->
 <div class="uk-background-muted uk-height-viewport">
 <div id="container-1" class="uk-container uk-container-center">
     <div id="print" class="uk-flex uk-flex-center"><span class="uk-text-lead">${var['page']['title']}</span></div>

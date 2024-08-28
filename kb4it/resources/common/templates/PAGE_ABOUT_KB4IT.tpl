@@ -9,11 +9,11 @@
 
 === Description
 
-_KB4IT_ is a static website generator mainly for technical documentation purposes.
+*KB4IT* is a static website generator mainly for technical documentation purposes.
 
 It is based on https://docs.asciidoctor.org/asciidoc/latest/[AsciiDoc] sources and it uses https://asciidoctor.org[Asciidoctor] for processing them.
 
-This website was built using `KB4IT ${var['env']['APP']['version']}`
+This website was built using KB4IT ${var['env']['APP']['version']}
 
 For more information, visit my Git https://github.com/t00m/KB4IT[repository].
 
