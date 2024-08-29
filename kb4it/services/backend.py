@@ -15,6 +15,7 @@ import sys
 import glob
 import json
 import time
+import errno
 import random
 import shutil
 import tempfile
@@ -378,11 +379,10 @@ class Backend(Service):
             self.kbdict_new['document'][docname]['compile'] = COMPILE
 
             if COMPILE:
-                newadoc = content.replace(ENV['CONF']['EOHMARK'], '', 1)
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
                 with open(target, 'w') as target_adoc:
-                    target_adoc.write(newadoc)
+                    target_adoc.write(content)
             self.log.debug("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
 
             # Add compiled page to the target list
@@ -633,9 +633,13 @@ class Backend(Service):
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
-            html = self.srvthm.build_page(path_hdoc)
-            # ~ with open(path_hdoc, 'w') as fhtml:
-                # ~ fhtml.write(html)
+            try:
+                html = self.srvthm.build_page(path_hdoc)
+            except MemoryError:
+                self.log.error("Memory exhausted!")
+                self.log.error("Please, consider using less workers or add more memory to your system")
+                self.log.error("The application will exit now...")
+                sys.exit(errno.ENOMEM)
             return x
 
     def stage_07_clean_target(self):
