@@ -1,0 +1,10 @@
+{
+    "id": "restaurant",
+    "name": "Restaurant Theme",
+    "author": "[Tomás Vírseda]",
+    "email": "[tomasvirseda@gmail.com]",
+    "website": "",
+    "description": "Review your menu",
+    "version": "0.'0.1",
+    "kb4it": ">=0.7.9"
+}
