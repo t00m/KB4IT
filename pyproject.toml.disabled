@@ -1,0 +1,29 @@
+[build-system]
+
+[project]
+name = "KB4IT"
+dynamic = ["0.7.9+build.114"]
+description = 'static website generator mainly for technical documentation purposes based on asccidoc sources'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Tomás Vírseda", email = "tomas.virseda@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/t00m/temporary#readme"
+Issues = "https://github.com/t00m/temporary/issues"
+Source = "https://github.com/t00m/temporary"
+

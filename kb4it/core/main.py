@@ -89,8 +89,10 @@ class KB4IT:
                         self.repo['force'] = self.params.FORCE
                         repo_exists = True
                         self.log.debug("[CONTROLLER] - Repository configuration found and loaded")
-                    except json.decoder.JSONDecodeError:
+                    except json.decoder.JSONDecodeError as error:
                         self.log.error("[CONTROLLER] - Repository config file couldn't be read")
+                        self.log.error(f"[CONTROLLER] - JSON Error: {error}")
+                        self.stop()
 
         if not repo_exists:
             # Create a fake repository
@@ -215,16 +217,16 @@ class KB4IT:
         elif self.params.INIT:
             initialize = False
             theme, repo_path = self.params.INIT
-            self.log.debug(f"Theme argument passed: {theme}")
-            self.log.debug(f"Repo path argument passed: {repo_path}")
+            self.log.debug(f"[APP] - Theme argument passed: {theme}")
+            self.log.debug(f"[APP] - Repo path argument passed: {repo_path}")
             theme_path = frontend.theme_search(theme=theme)
             if theme_path is None:
-                self.log.error(f"Theme '{theme}' doesn't exist.")
-                self.log.info("This is the list of themes available:")
+                self.log.error(f"[APP] - Theme '{theme}' doesn't exist.")
+                self.log.info("[APP] - This is the list of themes available:")
                 frontend.theme_list()
             else:
                 if not os.path.exists(repo_path):
-                    self.log.error(f"Repository path '{repo_path}' does not exist")
+                    self.log.error(f"[APP] - Repository path '{repo_path}' does not exist")
                 else:
                     initialize = True
 

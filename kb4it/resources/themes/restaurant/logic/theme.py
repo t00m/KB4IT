@@ -15,11 +15,13 @@ import csv
 import sys
 import math
 import requests
+import tempfile
 from string import Template
 from datetime import datetime, timedelta
 from calendar import monthrange
 
 from kb4it.services.builder import Builder
+from kb4it.core.env import ENV
 from kb4it.core.util import valid_filename
 from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import guess_datetime
@@ -31,6 +33,11 @@ from evcal import EventsCalendar
 TPL_MENU = """= $title
 
 :Lunch: $lunch
+:Dinner: $dinner
+:Ingredient: $ingredients
+:Lunch: $lunch
+:Served: $served
+
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
@@ -44,6 +51,7 @@ class Theme(Builder):
     events_docs = {}  # Dictionary storing a list of docs for a given date
 
     # ~ def initialize(self):
+        # ~ pass
 
     def get_sheet(self, url, outDir, outFile):
         response = requests.get(url)
@@ -54,21 +62,133 @@ class Theme(Builder):
             tmp_filepath = os.path.join(outDir, f'tmp_{outFile}')
             with open(tmp_filepath, 'wb') as f:
                 f.write(response.content)
+                self.log.info(f'Temporay CSV file saved to: {tmp_filepath}')
 
             # Save CSV with quotes and use semicolon as delimiter
             with open(tmp_filepath, 'r') as csv_in, \
                  open(filepath, 'w', newline='') as csv_out:
                 reader = csv.reader(csv_in)
-                writer = csv.writer(csv_out,
-                                    delimiter=';',
-                                    quotechar='"',
-                                    quoting=csv.QUOTE_ALL)
+                writer = csv.writer(csv_out, delimiter=';')
                 for row in reader:
                     writer.writerow(row)
+            self.log.info(f'Final CSV file saved to: {filepath}')
         else:
-            print(f'Error downloading Google Sheet: {response.status_code}')
+            self.log.error(f'Error downloading Google Sheet: {response.status_code}')
             filepath = None
         return filepath
+
+    def get_ingredients(self, meals, dingredients):
+        ingredients = ''
+        singredients = set()
+        lingredients = []
+        for meal in meals.split(','):
+            meal = meal.strip()
+            if len(meal) == 0:
+                continue
+            else:
+                try:
+                    ingredients = dingredients[meal]
+                except Exception as error:
+                    lingredients = []
+
+                for ingredient in ingredients:
+                    singredients.add(ingredient)
+
+                if len(lingredients) == 0:
+                    self.log.warning(f"Meal '{meal}' doesn't have any ingredient")
+
+                lingredients += list(singredients)
+
+        return lingredients
+
+    def generate_sources(self):
+        """Custom themes can use this method to generate source documents"""
+        self.log.info("[THEME] - Generating sources...")
+        data_dir = tempfile.mkdtemp(dir=ENV['LPATH']['TMP'], suffix='')
+        repo_config = self.srvbes.get_repo_parameters()
+        source_dir = repo_config['source']
+        url_meals = repo_config['meals']
+        url_ingredients = repo_config['ingredients']
+        self.log.info(f"[THEME] - Meals: {url_meals}")
+        self.log.info(f"[THEME] - Ingredients: {url_ingredients}")
+        self.log.info(f"[THEME] - Temporary data dir: {data_dir}")
+        fmeals = self.get_sheet(url_meals, data_dir, "meals.csv")
+        fingredients = self.get_sheet(url_ingredients, data_dir, "ingredients.csv")
+        self.log.info(f'Meals data: {fmeals}')
+        self.log.info(f'Ingredients data: {fingredients}')
+
+        dingredients = {}
+        with open(fingredients, 'r') as csv_ing:
+            lines = csv_ing.readlines()
+            n = 0
+            for line in lines:
+                if n > 0:
+                    row = line.split(';')
+                    meals = row[0]
+                    ingredients = row[1]
+
+                    for meal in meals.split(','):
+                        try:
+                            dingredients[meal]
+                        except:
+                            dingredients[meal] = [ingredient.strip() for ingredient in ingredients.split(',')]
+
+                n += 1
+
+        with open(fmeals, 'r') as csv_meals:
+            lines = csv_meals.readlines()
+            menu = Template(TPL_MENU)
+            n = 0
+            for line in lines:
+                if n > 0:
+                    row = line.split(';')
+                    try:
+                        sdate = f'{row[0]}'
+                    except:
+                        continue
+
+                    # Lunch
+                    try:
+                        lunches = f'{row[1]}'
+                        lingredients = self.get_ingredients(lunches, dingredients)
+                    except Exception as error:
+                        lunches = ''
+                    have_lunch = len(lunches) > 0
+                    # ~ self.log.info(f"Lunch on {sdate}: {lunches}")
+
+                    # Dinner
+                    try:
+                        dinners = f'{row[2]}'
+                        lingredients += self.get_ingredients(dinners, dingredients)
+                    except:
+                        dinners = ''
+                    have_dinner = len(dinners) > 0
+                    # ~ self.log.info(f"Dinner on {sdate}: {dinners}")
+
+                    try:
+                        notes = f'{row[3]}'
+                    except:
+                        notes = ''
+
+                    meals = set()
+                    for meal in lunches.split(','):
+                        if len(meal) > 0:
+                            meals.add(meal)
+                    for meal in dinners.split(','):
+                        if len(meal) > 0:
+                            meals.add(meal)
+
+                    write_entry = have_lunch or have_dinner
+                    if write_entry:
+                        td = datetime.strptime(sdate, "%d/%m/%Y")
+                        filename = td.strftime("%Y%m%d.adoc")
+                        source_file = os.path.join(source_dir, filename)
+                        with open(source_file, 'w') as fmenu:
+                            this_menu = menu.substitute(title=sdate, lunch=lunches, dinner=dinners, meal=', '.join(list(meals)), ingredients=', '.join(lingredients), served=sdate, notes=notes)
+                            fmenu.write(this_menu)
+                    # ~ self.log.info(f"{sdate}\t - Lunch ({have_lunch}) / Dinner ({have_dinner})\t> Write entry? {write_entry}")
+                n += 1
+        # ~ sys.exit(0)
 
     def highlight_metadata_section(self, content, var):
         """Apply CSS transformation to metadata section."""
@@ -173,21 +293,22 @@ class Theme(Builder):
 
         dt_now = datetime.now().replace(day=1) # Current datetime
         ldpm = dt_now - timedelta(days=1) # Last day previous month
-        fdpm = ldpm.replace(day=1, hour=0, minute=0, second=0, microsecond=1) # First moment of the first day of the previous month
+        fdpm = ldpm.replace(day=1, hour=0, minute=0, second=0, microsecond=1) # First day of the previous month
         dt_cur_lastday = dt_now.replace(day = monthrange(dt_now.year, dt_now.month)[1]) # Last day current datetime
         fdnm = dt_cur_lastday + timedelta(days=1) # First day next month
         dt_nxt = fdnm.replace(day = monthrange(fdnm.year, fdnm.month)[1]) # Last day next month
         ldnm = dt_nxt.replace(hour=23, minute=59, second=59, microsecond=999999) # Last moment of the last day of the next month
-
+        self.log.info(f"Choosing documents between '{fdpm}' and '{ldnm}'")
+        self.srvdtb.sort_database()
         doclist = []
         for doc in self.srvdtb.get_documents():
             ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
             if ts >= fdpm and ts <= ldnm:
                 doclist.append(doc)
+        # ~ doclist = self.srvdtb.sort_by_date(doclist)
         headers = ['Lunch', 'Dinner']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
-
         var['page']['title'] = var['repo']['title']
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
@@ -257,7 +378,7 @@ class Theme(Builder):
                         must_compile_year.add("%4d" % (year))
                         edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
-                        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+                        headers = ['Lunch', 'Dinner']
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
@@ -278,7 +399,7 @@ class Theme(Builder):
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
-                    headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+                    headers = ['Lunch', 'Dinner']
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
@@ -367,9 +488,10 @@ class Theme(Builder):
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
         self.build_page_events()
-        self.build_page_properties()
+        # ~ self.build_page_properties()
         self.build_page_stats()
-        self.build_page_bookmarks()
+        self.build_page_lunches()
+        self.build_page_dinners()
         self.build_page_index(var)
         self.build_page_index_all()
         # ~ self.create_page_about_theme()
@@ -377,11 +499,13 @@ class Theme(Builder):
         # ~ self.create_page_help()
 
     def page_hook_pre(self, var):
-        var['related'] = ''
-        var['metadata'] = ''
-        var['source'] = ''
-        var['actions'] = ''
-        return var
+        # ~ var['related'] = ''
+        # ~ var['metadata'] = ''
+        # ~ var['source'] = ''
+        # ~ var['actions'] = ''
+        # ~ return var
+        pass
+
 
     def page_hook_post(self, var):
         return var
@@ -500,12 +624,12 @@ class Theme(Builder):
         doclist = []
         for doc in self.srvdtb.get_documents():
             doclist.append(doc)
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = ['Lunch', 'Dinner']
         datatable = self.build_datatable(headers, doclist)
         var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
         self.distribute_adoc('all', page)
-        self.log.debug("[BUILDER] - Created page for bookmarks")
+        # ~ self.log.debug("[BUILDER] - Created page for bookmarks")
         return page
 
     def extract_toc(self, source):
@@ -653,7 +777,7 @@ class Theme(Builder):
         adoc = TPL_PAGE_KEY.render(var=var)
         var['pagename'] = "%s" % valid_filename(key)
         self.distribute_adoc(var['pagename'], adoc)
-        self.log.debug("[BUILDER] - Created page key '%s'", var['pagename'])
+        self.log.info("[BUILDER] - Created page key '%s'", var['pagename'])
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
@@ -675,7 +799,7 @@ class Theme(Builder):
         doclist = []
         for doc in sorted_docs:
             doclist.append(doc)
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = ['Lunch', 'Dinner']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
@@ -685,25 +809,44 @@ class Theme(Builder):
             self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
 
-    def build_page_bookmarks(self):
-        """Create bookmarks page."""
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
+    def build_page_lunches(self):
+        """Create lunches page."""
+        TPL_PAGE_LUNCHES = self.template('PAGE_LUNCHES')
         var = self.get_theme_var()
         doclist = []
         for doc in self.srvdtb.get_documents():
-            bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
-            if bookmark == 'Yes' or bookmark == 'True':
+            lunch = self.srvdtb.get_values(doc, 'Lunch')[0]
+            if len(lunch) > 0:
                 doclist.append(doc)
-        self.log.info("Found %d bookmarks", len(doclist))
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        self.log.info("Found %d lunches", len(doclist))
+        headers = ['Lunch']
         datatable = self.build_datatable(headers, doclist)
 
-        var['page']['title'] = 'Bookmarks'
-        var['page']['dt_bookmarks'] = datatable
-        page = TPL_PAGE_BOOKMARKS.render(var=var)
-        # ~ self.log.error("PAGE: %s", page)
-        self.distribute_adoc('bookmarks', page)
-        self.log.debug("[BUILDER] - Created page for bookmarks")
+        var['page']['title'] = 'Lunches'
+        var['page']['dt_lunches'] = datatable
+        page = TPL_PAGE_LUNCHES.render(var=var)
+        self.distribute_adoc('lunches', page)
+        self.log.debug("[BUILDER] - Created page for lunches")
+        return page
+
+    def build_page_dinners(self):
+        """Create dinners page."""
+        TPL_PAGE_DINNERS = self.template('PAGE_DINNERS')
+        var = self.get_theme_var()
+        doclist = []
+        for doc in self.srvdtb.get_documents():
+            lunch = self.srvdtb.get_values(doc, 'Dinner')[0]
+            if len(lunch) > 0:
+                doclist.append(doc)
+        self.log.info("Found %d dinners", len(doclist))
+        headers = ['Dinner']
+        datatable = self.build_datatable(headers, doclist)
+
+        var['page']['title'] = 'Dinners'
+        var['page']['dt_dinners'] = datatable
+        page = TPL_PAGE_DINNERS.render(var=var)
+        self.distribute_adoc('dinners', page)
+        self.log.debug("[BUILDER] - Created page for dinners")
         return page
 
     def get_page_actions(self, var):
@@ -732,7 +875,7 @@ class Theme(Builder):
                     if doc != this_doc:
                         doclist.add(this_doc)
                         has_docs = True
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = ['Lunch', 'Dinner']
         var['datatable'] = self.build_datatable(headers, doclist)
         return TPL_SECTION_RELATED.render(var=var)
 

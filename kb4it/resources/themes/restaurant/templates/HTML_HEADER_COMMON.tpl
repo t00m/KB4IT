@@ -47,27 +47,31 @@
             <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px" height="24px"></a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="index.html"><img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px" height="24px"></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="uk-padding-small">Events</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="lunch.html"><span class="uk-padding-small">Lunch menus</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="lunches.html"><span class="uk-padding-small">Lunch menus</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="dinner.html"><span class="uk-padding-small">Dinner menus</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="dinners.html"><span class="uk-padding-small">Dinner menus</a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="ingredients.html"><span class="uk-padding-small">Ingredients</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Ingredient.html"><span class="uk-padding-small">Ingredients</a>
                                 </li>
+<!--
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="properties.html"><span class="uk-padding-small">Properties</span></a>
                                 </li>
+-->
+<!--
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="stats.html"><span class="uk-padding-small">Stats</span></a>
                                 </li>
+-->
                             </ul>
                         </div>
                     </li>

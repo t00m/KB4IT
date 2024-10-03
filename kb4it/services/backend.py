@@ -206,21 +206,25 @@ class Backend(Service):
 
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
-        theme_name = self.parameters['theme']
-        if theme_name is None:
-            self.log.debug("[BACKEND/SETUP] - Theme not provided. Autodetect it.")
-            theme_path = self.srvfes.theme_search()
+        self.log.debug(f"[BACKEND/SETUP] - Parameters: {self.parameters}")
+        try:
+            theme_name = self.parameters['theme']
+            self.log.info(f"[BACKEND/SETUP] - Theme name from parameters: {theme_name}")
+            theme_path = self.srvfes.theme_search(theme_name=theme_name)
+            self.log.info(f"[BACKEND/SETUP] - Theme path: {theme_path}")
             if theme_path is not None:
-                self.srvfes.theme_load(os.path.basename(theme_path))
-                self.log.debug("[BACKEND/SETUP] Theme found and loaded")
+                theme_name = self.srvfes.theme_load(theme_path)
+                self.log.info(f"[BACKEND/SETUP] - {theme_name} found and loaded")
             else:
                 self.log.error("[BACKEND/SETUP] - Theme not found")
                 self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
                 self.app.stop()
-        else:
-            theme_path = self.srvfes.theme_search(theme_name)
+        except KeyError as error:
+            self.log.error(f"[BACKEND/SETUP] - Error: {error}")
+            theme_path = self.srvfes.theme_search(theme_name=None)
             if theme_path is not None:
-                self.srvfes.theme_load(os.path.basename(theme_path))
+                theme_name = self.srvfes.theme_load(theme_path)
+                self.log.info(f"[BACKEND/SETUP] - {theme_name} found and loaded")
             else:
                 self.log.error("[BACKEND/SETUP] - Theme not found")
                 self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
@@ -392,6 +396,7 @@ class Backend(Service):
         self.save_kbdict(self.kbdict_new, self.get_source_path())
 
         # Build a list of documents sorted by timestamp
+        self.log.info("Sort documents")
         self.srvdtb.sort_database()
 
         # Documents preprocessing stats

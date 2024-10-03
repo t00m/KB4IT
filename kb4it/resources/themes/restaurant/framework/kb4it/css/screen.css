@@ -25,9 +25,9 @@ body {
 }
 
     #kb4it-page-title {
-        display: none;  
+        display: none;
     }
-    
+
 pre {
     padding: 10px;
     overflow: auto;
@@ -48,6 +48,10 @@ table.month{
 table.month tbody tr th {
     background-color: lightgray;
     border: 1px solid gray;
+}
+
+.uk-table-small td, .uk-table-small th {
+  padding: 5px 6px;
 }
 
 table#kb4it-datatable {

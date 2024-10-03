@@ -92,10 +92,13 @@ class Database(Service):
                 self.log.warning("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
                 self.log.warning("[DB] - Sorting is disabled")
                 can_sort = False
+        self.log.info(f"Got {len(doclist)} documents. Can they be sorted? {can_sort}")
+        self.log.info(f"\tOriginal list: {doclist}")
         if can_sort:
             alist = sort_dictionary(adict)
             for doc, timestamp in alist:
                 sorted_docs.append(doc)
+            self.log.info(f"\t  Sorted list: {sorted_docs}")
             return sorted_docs
         else:
             return doclist

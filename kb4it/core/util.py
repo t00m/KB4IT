@@ -274,4 +274,4 @@ def get_human_datetime(dt):
 
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
-    return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
+    return sorted(adict.items(), key=operator.itemgetter(1))#, reverse=reverse)
