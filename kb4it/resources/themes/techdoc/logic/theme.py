@@ -60,7 +60,10 @@ class Theme(Builder):
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_WARNING_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_ADOC'), self.render_template('HTML_TAG_ADMONITION_NEW'))
+        content = content.replace(self.render_template('HTML_TAG_ADMONITION_IMPORTANT_ADOC'), self.render_template('HTML_TAG_ADMONITION_IMPORTANT_NEW'))
+        content = content.replace(self.render_template('HTML_TAG_ADMONITION_CAUTION_ADOC'), self.render_template('HTML_TAG_ADMONITION_CAUTION_NEW'))
+        content = content.replace(self.render_template('HTML_TAG_ADMONITION_NOTE_ADOC'), self.render_template('HTML_TAG_ADMONITION_NOTE_NEW'))
+        content = content.replace(self.render_template('HTML_TAG_ADMONITION_WARNING_ADOC'), self.render_template('HTML_TAG_ADMONITION_WARNING_NEW'))
         content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
         return content
 

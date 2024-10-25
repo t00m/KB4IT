@@ -56,3 +56,5 @@ table#kb4it-datatable {
 
 #noprint { display: block; }
 #print { display: none; }
+
+.admonitionblock { border: 1px solid gray; }
