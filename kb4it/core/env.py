@@ -31,9 +31,9 @@ ENV['CONF']['TMPNAME'] = next(tempfile._get_candidate_names())
 ENV['CONF']['MAX_WORKERS'] = multiprocessing.cpu_count()  # Avoid MemoryError
 ENV['CONF']['EOHMARK'] = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
 ENV['CONF']['ADOCPROPS'] = {
-    'source-highlighter': 'coderay',
-    'coderay-css': 'class',
-    'coderay-linenums-mode': 'table',
+#    'source-highlighter': 'coderay',
+#    'coderay-css': 'class',
+#    'coderay-linenums-mode': 'table',
     'toc': 'left',
     'toclevels': '2',
     'icons': 'font',
