@@ -57,4 +57,35 @@ table#kb4it-datatable {
 #noprint { display: block; }
 #print { display: none; }
 
-.admonitionblock { border: 1px solid gray; }
+.admonitionblock { border: 3px solid black; }
+
+.uk-alert-warning { 
+                    background-color: orange; 
+                    color: black;
+                }
+
+.uk-alert-primary { 
+                    background-color: lightblue; 
+                    color: black;
+                }
+
+.uk-alert-caution { 
+                    background-color: purple; 
+                    color: white;
+                }
+
+.uk-alert-danger {
+                    background-color: red;
+                    color: white;
+                }
+
+.uk-alert-note { 
+                    background-color: yellow; 
+                    color: black;
+                }
+
+.content pre{
+    background: black;
+    color: lightgreen;
+}
+

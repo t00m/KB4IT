@@ -569,7 +569,6 @@ class Theme(Builder):
             var['timestamp'] = timestamp
             # ~ var = self.apply_transformations(var)
             # ~ self.log.error("MEMVAR[%s] = %s", basename_adoc, get_process_memory())
-
             HEADER = HTML_HEADER_COMMON.render(var=var)
             BODY = HTML_BODY.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
