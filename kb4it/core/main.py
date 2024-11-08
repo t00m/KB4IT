@@ -182,6 +182,7 @@ class KB4IT:
             return service
         except Exception as error:
             self.log.error("[CONTROLLER] - Service %s not registered or not found", error)
+            raise
             return None
 
     def register_service(self, name, service):

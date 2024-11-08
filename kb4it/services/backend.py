@@ -108,6 +108,9 @@ class Backend(Service):
                 kbdict = json.load(fkb)
         except FileNotFoundError:
             kbdict = {}
+        except Exception as error:
+            self.log.error(f"[BACKEND/CONF] - There was an error reading file {KB4IT_DB_FILE}")
+            sys.exit()
         self.log.debug("[BACKEND/CONF] - Current kbdict entries: %d", len(kbdict))
         return kbdict
 
