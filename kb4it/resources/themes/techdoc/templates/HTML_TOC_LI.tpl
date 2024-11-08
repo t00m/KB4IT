@@ -1,1 +1,1 @@
-<!-- TOC TOP --><li><a class="uk-link-heading" 
+<!-- TOC TOP --><li class="uk-link-toggle"><a class="uk-link-heading" 
