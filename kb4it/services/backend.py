@@ -209,7 +209,11 @@ class Backend(Service):
 
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
-        theme_name = self.parameters['theme']
+        try:
+            theme_name = self.parameters['theme']
+        except KeyError:
+            theme_name = 'techdoc'
+
         if theme_name is None:
             self.log.debug("[BACKEND/SETUP] - Theme not provided. Autodetect it.")
             theme_path = self.srvfes.theme_search()
