@@ -285,7 +285,7 @@ def main():
     # KB4IT options
     kb4it_options = parser.add_argument_group('KB4IT Options')
     kb4it_options.add_argument('-f', '--force', help='Force a clean compilation', action='store_true', dest='FORCE', required=False, default=False)
-    kb4it_options.add_argument('-i', '--init', help='Initialize repository', nargs=2, metavar=('THEME', 'REPO_PATH'), dest='INIT', required=False)#, default=['techdoc', '/path/to/repo'])
+    kb4it_options.add_argument('-i', '--init', help='Initialize repository', nargs=2, metavar=('THEME', 'REPO_PATH'), dest='INIT', required=False)
     kb4it_options.add_argument('-l', '--list-themes', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False, default=False)
     kb4it_options.add_argument('-r', '--repo', help='Use this repository config file', action='store', dest='REPO_CONFIG')
     kb4it_options.add_argument('-w', '--workers', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % NUM_WORKERS, type=int, action='store', dest='NUM_WORKERS', default=int(NUM_WORKERS), required=False)
