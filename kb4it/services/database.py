@@ -87,7 +87,7 @@ class Database(Service):
             sdate = self.get_doc_timestamp(doc)
             ts = guess_datetime(sdate)
             if ts is not None:
-                adict[doc] = ts
+                adict[doc] = ts.strftime("%Y%m%d")
             else:
                 self.log.warning("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
                 self.log.warning("[DB] - Sorting is disabled")
