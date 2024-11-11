@@ -248,7 +248,7 @@ class KB4IT:
                     json.dump(repoconf, fc, sort_keys=True, indent=4)
                 os.makedirs(bin_dir, exist_ok=True)
                 with open(script, 'w') as fs:
-                    fs.write(f'kb4it -r {config_file} -L DEBUG')
+                    fs.write(f'kb4it -r {config_file} -L INFO')
                 os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
                 self.log.info("Repository initialized")
                 self.log.info(f"You can compile it by executing: {script}")
