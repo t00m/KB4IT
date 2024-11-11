@@ -43,6 +43,7 @@ class Backend(Service):
     runtime = {}  # Dictionary of runtime properties
     kbdict_new = {}  # New compilation cache
     kbdict_cur = {}  # Cached data
+    FK = set()
 
     def initialize(self):
         """Initialize application structure."""
@@ -486,29 +487,37 @@ class Backend(Service):
             FORCE_ALL = self.parameters['force']
             values = self.srvdtb.get_all_values_for_key(key)
 
-            # Compare keys values for the current run and the cache
-            # Otherwise, the key is not recompiled when a value is deleted
-            rknew = sorted(self.get_kbdict_key(key, new=True))
-            rkold = sorted(self.get_kbdict_key(key, new=False))
-            if rknew != rkold:
+            if key in self.FK:
                 COMPILE_KEY = True
-            self.log.debug("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
+                COMPILE_VALUE = True
+                K_PATH.append((key, values, COMPILE_KEY))
+                for value in values:
+                    KV_PATH.append((key, value, COMPILE_VALUE))
+            else:
+                # Compare keys values for the current run and the cache
+                # Otherwise, the key is not recompiled when a value is deleted
+                rknew = sorted(self.get_kbdict_key(key, new=True))
+                rkold = sorted(self.get_kbdict_key(key, new=False))
+                if rknew != rkold:
+                    COMPILE_KEY = True
+                self.log.debug("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
 
-            for value in values:
-                COMPILE_VALUE = False
-                key_value_docs_new = self.get_kbdict_value(key, value, new=True)
-                key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
-                VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
+                for value in values:
+                    COMPILE_VALUE = False
+                    key_value_docs_new = self.get_kbdict_value(key, value, new=True)
+                    key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
+                    VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
 
-                if VALUE_COMPARISON:
-                    self.log.debug("[BACKEND/PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
-                    COMPILE_VALUE = True
-                COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
-                COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
-                KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug("[BACKEND/PROCESSING] - Key[%s] Value[%s] Compile? %s", key, value, COMPILE_VALUE)
-            COMPILE_KEY = COMPILE_KEY or FORCE_ALL
-            K_PATH.append((key, values, COMPILE_KEY))
+                    if VALUE_COMPARISON:
+                        self.log.debug("[BACKEND/PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
+                        COMPILE_VALUE = True
+                    COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
+                    COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
+                    KV_PATH.append((key, value, COMPILE_VALUE))
+                    self.log.debug("[BACKEND/PROCESSING] - Key[%s] Value[%s] Compile? %s", key, value, COMPILE_VALUE)
+                COMPILE_KEY = COMPILE_KEY or FORCE_ALL
+                K_PATH.append((key, values, COMPILE_KEY))
+
             if COMPILE_KEY:
                 self.log.info("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
         self.runtime['K_PATH'] = K_PATH
@@ -568,7 +577,6 @@ class Backend(Service):
                 adocprops += '-a %s ' % prop
         # ~ self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
-        # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
         params = self.app.get_app_conf()
         with Executor(max_workers=params.NUM_WORKERS) as exe:
@@ -590,6 +598,10 @@ class Backend(Service):
                             COMPILE = False
 
                 if COMPILE or self.parameters['force']:
+                    changed_keys = self.srvdtb.get_doc_keys(os.path.basename(doc))
+                    for key in changed_keys:
+                        self.FK.add(key)
+                    # ~ self.log.error(f"Force compiling keys for {doc}: {changed_keys}")
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
@@ -814,6 +826,7 @@ class Backend(Service):
         self.srvthm.generate_sources()
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
+        self.stage_05_compilation()
         self.stage_04_processing()
         self.stage_05_compilation()
         self.stage_07_clean_target()
