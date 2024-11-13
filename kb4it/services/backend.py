@@ -72,8 +72,10 @@ class Backend(Service):
         for entry in self.runtime['dir']:
             if entry not in ['source', 'target']:
                 dirname = self.runtime['dir'][entry]
+                self.log.error(f"[BACKEND/SETUP] - Create directory {dirname}?")
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
+                    self.log.error(f"[BACKEND/SETUP] - Directory {dirname} created")
 
         # if SORT attribute is given, use it instead of the OS timestamp
         try:
@@ -529,6 +531,9 @@ class Backend(Service):
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
+                self.log.error(f"[BACKEND/PROCESSING KEYS] - {key}: {fpath}")
+                # ~ with open(fpath, 'w') as ftmpdoc:
+                    # ~ ftmpdoc.write(
                 self.srvthm.build_page_key(key, values)
 
             # Add compiled page to the target list
@@ -549,6 +554,32 @@ class Backend(Service):
         self.log.debug("[BACKEND/PROCESSING] - End processing theme at %s", timestamp())
         self.log.info("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.info("[BACKEND/PROCESSING] - End at %s", timestamp())
+
+    def stage_detect_changes(self, doc):
+        """Get a doc from the temporary path and analyze if it must
+        be compiled again. If only the title changes, compile the
+        keys
+
+        INCOMPLETE
+        """
+        self.log.error("[BACKEND/DETECT] - Analyzing doc '%s'", doc)
+        distributed = self.get_targets()
+        params = self.app.get_app_conf()
+        COMPILE = True
+        basename = os.path.basename(doc)
+        if basename in distributed:
+            distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
+            cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
+            if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                cached_hash = get_hash_from_file(distributed_file)
+                current_hash = get_hash_from_file(doc)
+                if cached_hash == current_hash:
+                    COMPILE = False
+
+                if COMPILE or self.parameters['force']:
+                    changed_keys = self.srvdtb.get_doc_keys(os.path.basename(doc))
+                    for key in changed_keys:
+                        self.FK.add(key)
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -580,12 +611,14 @@ class Backend(Service):
         distributed = self.get_targets()
         params = self.app.get_app_conf()
         with Executor(max_workers=params.NUM_WORKERS) as exe:
+            self.log.error(f"[BACKEND/COMPILATION] - Temporary working dir: {self.runtime['dir']['tmp']}")
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
             num = 1
             self.log.debug("[BACKEND/COMPILATION] - Generating jobs. Please, wait")
             for doc in docs:
+                self.stage_detect_changes(doc)
                 COMPILE = True
                 basename = os.path.basename(doc)
                 if basename in distributed:
@@ -759,15 +792,15 @@ class Backend(Service):
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.info("[BACKEND/POST-INSTALL] - Start at %s", timestamp())
-        shutil.rmtree(self.runtime['dir']['tmp'])
-        self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
+        # ~ shutil.rmtree(self.runtime['dir']['tmp'])
+        # ~ self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
         self.log.info("[BACKEND/POST-INSTALL] - End at %s", timestamp())
 
     def cleanup(self):
         """Clean KB4IT temporary environment.
         """
         try:
-            delete_target_contents(self.runtime['dir']['tmp'])
+            # ~ delete_target_contents(self.runtime['dir']['tmp'])
             delete_target_contents(self.runtime['dir']['www'])
             delete_target_contents(self.runtime['dir']['dist'])
         except Exception as KeyError:
