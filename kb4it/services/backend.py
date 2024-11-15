@@ -84,10 +84,6 @@ class Backend(Service):
             self.runtime['sort_attribute'] = self.parameters['sort']
         except:
             self.runtime['sort_attribute'] = 'Timestamp'
-        # ~ if self.parameters['sort'] is None:
-            # ~ self.runtime['sort_attribute'] = 'Timestamp'
-        # ~ else:
-            # ~ self.runtime['sort_attribute'] = self.parameters['sort']
         self.log.debug("[BACKEND/SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
 
         # Initialize docs structure
@@ -110,11 +106,15 @@ class Backend(Service):
         """C0111: Missing function docstring (missing-docstring)."""
         source_path = valid_filename(source_path)
         KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
+
         try:
             with open(KB4IT_DB_FILE, 'r') as fkb:
                 kbdict = json.load(fkb)
+            # ~ self.log.debug(f"[BACKEND/CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
         except FileNotFoundError:
             kbdict = {}
+            kbdict['document'] = {}
+            kbdict['metadata'] = {}
         except Exception as error:
             self.log.error(f"[BACKEND/CONF] - There was an error reading file {KB4IT_DB_FILE}")
             sys.exit()
