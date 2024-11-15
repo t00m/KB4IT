@@ -63,7 +63,7 @@ class KB4IT:
         self.__check_params()
         self.__setup_services()
 
-        self.log.debug("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
         self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
         self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
         self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
@@ -163,8 +163,8 @@ class KB4IT:
                 fpid.write(str(ENV['PS']['PID']))
             self.log.debug("[CONTROLLER] - Decision: Go")
         else:
-            self.log.error("[CONTROLLER] - Decision: No Go")
-            self.log.error("Reason: %s", no_go_reason)
+            self.log.error(f"[CONTROLLER] - Decision: No Go")
+            self.log.error(f"[CONTROLLER] - Reason: {no_go_reason}")
             self.stop()
 
     def get_services(self):
@@ -216,23 +216,22 @@ class KB4IT:
         elif self.params.INIT:
             initialize = False
             theme, repo_path = self.params.INIT
-            self.log.debug(f"Theme argument passed: {theme}")
-            self.log.debug(f"Repo path argument passed: {repo_path}")
+            self.log.debug(f"[CONTROLLER] - Theme argument passed: {theme}")
+            self.log.debug(f"[CONTROLLER] - Repo path argument passed: {repo_path}")
             theme_path = frontend.theme_search(theme=theme)
             if theme_path is None:
-                self.log.error(f"Theme '{theme}' doesn't exist.")
-                self.log.info("This is the list of themes available:")
+                self.log.error(f"[CONTROLLER] - Theme '{theme}' doesn't exist.")
+                self.log.info("[CONTROLLER] - This is the list of themes available:")
                 frontend.theme_list()
             else:
                 if not os.path.exists(repo_path):
-                    self.log.error(f"Repository path '{repo_path}' does not exist")
+                    self.log.error(f"[CONTROLLER] - Repository path '{repo_path}' does not exist")
                 else:
                     initialize = True
 
             if initialize:
-                self.log.info(f"Repository path: {repo_path}")
-                self.log.info(f"Theme path: {theme_path}")
-                self.log.info(f"Applying theme '{theme}' in repository path '{repo_path}'")
+                self.log.info(f"[CONTROLLER] - Repository path: {repo_path}")
+                self.log.info(f"[CONTROLLER] - Using theme '{theme}' from path '{theme_path}'")
                 repo_demo = os.path.join(theme_path, 'example', 'repo')
                 copydir(repo_demo, repo_path)
                 source_dir = os.path.join(repo_path, 'source')
@@ -250,10 +249,12 @@ class KB4IT:
                 with open(script, 'w') as fs:
                     fs.write(f'kb4it -r {config_file} -L INFO')
                 os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
-                self.log.info("Repository initialized")
-                self.log.info(f"You can compile it by executing: {script}")
-                self.log.info(f"Check your repository settings in: {config_file}")
-                self.log.info(f"For more KB4IT options, execute: kb4it -h")
+                self.log.info(f"[CONTROLLER] - Repository initialized")
+                self.log.info(f"[CONTROLLER] - You can compile it by executing '{script}'")
+                self.log.info(f"[CONTROLLER] - Add your documents in '{source_dir}'")
+                self.log.info(f"[CONTROLLER] - Documents to be published in '{target_dir}'")
+                self.log.info(f"[CONTROLLER] - Check your repository settings in '{config_file}'")
+                self.log.info(f"[CONTROLLER] - For more KB4IT options, execute: kb4it -h")
         else:
             backend = self.get_service('Backend')
             backend.run()
