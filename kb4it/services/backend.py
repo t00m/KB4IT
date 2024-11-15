@@ -70,12 +70,14 @@ class Backend(Service):
         self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
         for entry in self.runtime['dir']:
+            create_directory = False
+            dirname = self.runtime['dir'][entry]
             if entry not in ['source', 'target']:
                 dirname = self.runtime['dir'][entry]
-                self.log.error(f"[BACKEND/SETUP] - Create directory {dirname}?")
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
-                    self.log.error(f"[BACKEND/SETUP] - Directory {dirname} created")
+                    create_directory = True
+            self.log.debug(f"[BACKEND/SETUP] - Create directory {dirname}? {create_directory}")
 
         # if SORT attribute is given, use it instead of the OS timestamp
         try:
@@ -96,8 +98,10 @@ class Backend(Service):
 
         # Load cache dictionary and initialize the new one
         self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
+        self.log.error(f"[BACKEND/SETUP] - Loaded current kbdict with {len(self.kbdict_cur['document'])} docs and {len(self.kbdict_cur['metadata'])} metadata")
         self.kbdict_new['document'] = {}
         self.kbdict_new['metadata'] = {}
+        self.log.error(f"[BACKEND/SETUP] - Created new kbdict for this execution")
 
         # Get services
         self.get_services()
