@@ -94,10 +94,10 @@ class Backend(Service):
 
         # Load cache dictionary and initialize the new one
         self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
-        self.log.error(f"[BACKEND/SETUP] - Loaded current kbdict with {len(self.kbdict_cur['document'])} docs and {len(self.kbdict_cur['metadata'])} metadata")
+        self.log.debug(f"[BACKEND/SETUP] - Loaded current kbdict with {len(self.kbdict_cur['document'])} docs and {len(self.kbdict_cur['metadata'])} metadata")
         self.kbdict_new['document'] = {}
         self.kbdict_new['metadata'] = {}
-        self.log.error(f"[BACKEND/SETUP] - Created new kbdict for this execution")
+        self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for this execution")
 
         # Get services
         self.get_services()
@@ -214,6 +214,11 @@ class Backend(Service):
             os.makedirs(self.get_target_path())
         self.log.info("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
 
+        if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
+            self.log.error("[BACKEND/SETUP] - No config file especified")
+            self.log.error("[BACKEND/SETUP] - End at %s", timestamp())
+            sys.exit()
+
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
         try:
@@ -243,17 +248,18 @@ class Backend(Service):
         self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
 
     def stage_02_get_source_documents(self):
-        """Get Asciidoctor source documents."""
+        """Get Asciidoctor documents from source directory."""
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
-        sources_path = self.get_source_path()
-        self.runtime['docs']['bag'] = get_source_docs(sources_path)
-        about_app_source = os.path.join(sources_path, 'about_app.adoc')
+        self.runtime['docs']['bag'] = get_source_docs(self.get_source_path())
+        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
+
+        # If 'about_app.adoc' doesn't exist, create one from template
+        about_app_source = os.path.join(self.get_source_path(), 'about_app.adoc')
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
             self.log.warning("Added default 'About App' to your sources")
 
-        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.info("[BACKEND/SOURCEDOCS] - End at %s", timestamp())
 
