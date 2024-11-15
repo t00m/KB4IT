@@ -58,8 +58,8 @@ def copydir(source, dest):
                 log.warning("[UTIL] -Check permissions for file: %s", file)
 
 
-def get_source_docs(path):
-    """C0111: Missing function docstring (missing-docstring)."""
+def get_source_docs(path: str):
+    """Get asciidoc documents from a given path"""
     if path[:-1] != os.path.sep:
         path = path + os.path.sep
 
