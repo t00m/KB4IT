@@ -285,7 +285,9 @@ class Theme(Builder):
         doclist = []
         ecats = {}
         repo = self.srvbes.get_repo_parameters()
-        self.log.debug("[THEME] - Repository parameters: %s", repo)
+        self.log.debug("[THEME] - Repository parameters:")
+        for parameter in repo:
+            self.log.debug(f"[THEME] - Parameter[{parameter}] = {repo[parameter]}")
         try:
             event_types = repo['events']
         except:
@@ -458,7 +460,7 @@ class Theme(Builder):
         var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
         self.distribute_adoc('all', page)
-        self.log.debug("[THEME] -Created page for bookmarks")
+        self.log.debug("[THEME] - Created page for bookmarks")
         return page
 
     def extract_toc(self, source):
@@ -520,9 +522,9 @@ class Theme(Builder):
         exists_hdoc = os.path.exists(path_hdoc) # it should be true
 
         if not exists_hdoc:
-            self.log.error("[THEME] -Source[%s] not converted to HTML properly", basename_adoc)
+            self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.debug("[THEME] -Page[%s] transformation started", basename_hdoc)
+            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
@@ -580,9 +582,9 @@ class Theme(Builder):
 
             with open(path_hdoc, 'w') as fhtml:
                 fhtml.write(HTML)
-                self.log.debug("[BUILD] Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+                self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
 
-            self.log.debug("[THEME] -Page[%s] transformation finished", basename_hdoc)
+            self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     def build_page_key(self, key, values):
         """Create page for a key."""
@@ -605,7 +607,7 @@ class Theme(Builder):
         adoc = TPL_PAGE_KEY.render(var=var)
         var['pagename'] = "%s" % valid_filename(key)
         self.distribute_adoc(var['pagename'], adoc)
-        self.log.debug("[THEME] -Created page key '%s'", var['pagename'])
+        self.log.debug("[THEME] - Created page key '%s'", var['pagename'])
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
@@ -634,7 +636,7 @@ class Theme(Builder):
         if var['compile']:
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
-            self.log.debug("[THEME] -Created page key-value '%s'", var['pagename'])
+            self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
 
     def build_page_bookmarks(self):
@@ -655,7 +657,7 @@ class Theme(Builder):
         page = TPL_PAGE_BOOKMARKS.render(var=var)
         # ~ self.log.error("PAGE: %s", page)
         self.distribute_adoc('bookmarks', page)
-        self.log.debug("[THEME] -Created page for bookmarks")
+        self.log.debug("[THEME] - Created page for bookmarks")
         return page
 
     def get_page_actions(self, var):

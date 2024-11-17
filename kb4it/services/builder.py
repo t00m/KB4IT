@@ -43,7 +43,7 @@ class Builder(Service):
         shutil.copy(pagename, self.srvbes.get_www_path())
         # Add compiled page to the target list
         self.srvbes.add_target(os.path.basename(pagename))
-        self.log.debug("[DISTRIBUTE] - Page[%s] copied to temporary target directory", os.path.basename(pagename))
+        self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] copied to temporary target directory", os.path.basename(pagename))
 
     def distribute_adoc(self, name, content):
         """
@@ -52,18 +52,18 @@ class Builder(Service):
         be analyzed.
         """
         ADOC_NAME = "%s.adoc" % name
-        self.log.debug("[DISTRIBUTE] - Received Doc[%s]", ADOC_NAME)
+        self.log.debug("[BUILDER/DISTRIBUTE] - Received Doc[%s]", ADOC_NAME)
         PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), ADOC_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
             except Exception as error:
-                self.log.error("[DISTRIBUTE] - %s", error)
+                self.log.error("[BUILDER/DISTRIBUTE] - %s", error)
         PAGE_NAME = ADOC_NAME.replace('.adoc', '.html')
 
         # Add compiled page to the target list
         self.srvbes.add_target(PAGE_NAME)
-        # ~ self.log.debug("[DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
+        # ~ self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
 
     def template(self, template):
         """Return the template content from chosen theme"""
@@ -74,7 +74,7 @@ class Builder(Service):
         # Try to get the template from cache
         try:
             return self.templates[template]
-            # ~ self.log.debug("[TEMPLATES] - Template[%s] loaded from cache", template)
+            # ~ self.log.debug("[BUILDER/TEMPLATES] - Template[%s] loaded from cache", template)
 
         except KeyError:
             templates = []
@@ -85,14 +85,14 @@ class Builder(Service):
                 try:
                     self.templates[template] = Template(filename=template_path)
                     TEMPLATE_FOUND = True
-                    self.log.debug("[TEMPLATES] - Template[%s] found and added to the cache", template)
+                    self.log.debug("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
                     break
                 except:
                     self.templates[template] = Template("")
                     TEMPLATE_FOUND = False
 
         if not TEMPLATE_FOUND:
-            self.log.error("[TEMPLATES] - Template[%s] not found", template)
+            self.log.error("[BUILDER/TEMPLATES] - Template[%s] not found", template)
 
         return self.templates[template]
 

@@ -33,6 +33,7 @@ from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
+from kb4it.core.util import json_load, json_save
 
 
 class Backend(Service):
@@ -108,9 +109,10 @@ class Backend(Service):
         KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
 
         try:
-            with open(KB4IT_DB_FILE, 'r') as fkb:
-                kbdict = json.load(fkb)
-            # ~ self.log.debug(f"[BACKEND/CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
+            # ~ with open(KB4IT_DB_FILE, 'r') as fkb:
+                # ~ kbdict = json.load(fkb)
+            kbdict = json_load(KB4IT_DB_FILE)
+            self.log.debug(f"[BACKEND/CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
         except FileNotFoundError:
             kbdict = {}
             kbdict['document'] = {}
@@ -129,9 +131,10 @@ class Backend(Service):
         else:
             KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
 
-        with open(KB4IT_DB_FILE, 'w') as fkb:
-            json.dump(kbdict, fkb)
-            self.log.debug("[BACKEND/CONF] - KBDICT %s saved", KB4IT_DB_FILE)
+        # ~ with open(KB4IT_DB_FILE, 'w') as fkb:
+            # ~ json.dump(kbdict, fkb)
+        json_save(KB4IT_DB_FILE, kbdict)
+        self.log.debug("[BACKEND/CONF] - KBDICT %s saved", KB4IT_DB_FILE)
 
     def get_targets(self):
         """Get list of documents converted to pages"""
@@ -142,7 +145,7 @@ class Backend(Service):
         list of objects that will be copied to the target directory.
         """
         self.runtime['docs']['target'].add(kbfile)
-        self.log.debug("[TARGET] - Added page: %s", kbfile)
+        self.log.debug("[BACKEND/TARGET] - Added page: %s", kbfile)
 
     def get_runtime(self):
         """Get all properties."""
@@ -196,6 +199,7 @@ class Backend(Service):
 
     def stage_01_check_environment(self):
         """Check environment."""
+        self.log.info("[BACKEND/STAGE 01 CHECK ENVIRONMENT")
         self.log.info("[BACKEND/SETUP] - Start at %s", timestamp())
         self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
         self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
@@ -249,7 +253,14 @@ class Backend(Service):
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
+        self.log.info("[BACKEND/STAGE 02 GET SOURCE DOCUMENTS")
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
+
+        # Firstly, allow theme to generate documents
+        self.srvthm = self.get_service('Theme')
+        self.srvthm.generate_sources()
+
+        # Then, get them
         self.runtime['docs']['bag'] = get_source_docs(self.get_source_path())
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
 
@@ -271,28 +282,10 @@ class Backend(Service):
         In this way, after being compiled into HTML, final adocs are
         browsable throught its metadata.
         """
+        self.log.info("[BACKEND/STAGE 03 PREPROCESSING")
         self.log.info("[BACKEND/PREPROCESSING] - Start at %s", timestamp())
 
-        def _clean_cache():
-            # Clean cache
-            missing = []
-            try:
-                for docname in self.kbdict_cur['document']:
-                    docpath = os.path.join(self.get_source_path(), docname)
-                    if not os.path.exists(docpath):
-                        missing.append(docname)
-            except KeyError:
-                pass  # skip
-
-            if len(missing) == 0:
-                self.log.debug("[BACKEND/PREPROCESSING] - Cache is empty")
-            else:
-                for docname in missing:
-                    docname = docname.replace('.adoc', '')
-                    self.delete_document(docname)
-                self.log.debug("[BACKEND/PREPROCESSING] - Cache cleaned up")
-
-        _clean_cache()
+        self.clean_cache()
 
         # Preprocessing
         for source in self.runtime['docs']['bag']:
@@ -304,7 +297,8 @@ class Backend(Service):
 
             # If document doesn't have a title, skip it.
             try:
-                keys['Title']
+                title = keys['Title'][0]
+                self.log.info(f"[BACKEND/PREPROCESSING] - Document '{title}' will be processed")
             except KeyError:
                 self.runtime['docs']['count'] -= 1
                 self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", docname)
@@ -313,7 +307,7 @@ class Backend(Service):
             self.kbdict_new['document'][docname] = {}
             self.log.debug("[PREPROCESSING] - DOC[%s] Preprocessing", docname)
 
-            # Add a new document to the database
+            # Add a new document node to the database
             self.srvdtb.add_document(docname)
 
             # Get datetime timestamp from filesystem and add it as attribute
@@ -335,27 +329,25 @@ class Backend(Service):
 
             # Generate caches
             for key in keys:
-                alist = keys[key]
-                for value in alist:
-                    if len(value.strip()) == 0:
-                        continue
+                values = keys[key]
+                for value in [value for value in values if len(value.strip()) > 0]:
 
-                    try:
-                        if key in self.runtime['theme']['date_attributes']:
-                            value = string_timestamp(value)
-                    except KeyError:
-                        pass
+                    # ~ try:
+                        # ~ if key in self.runtime['theme']['date_attributes']:
+                            # ~ value = string_timestamp(value)
+                    # ~ except KeyError:
+                        # ~ pass
 
-                    if key == 'Tag':
-                        value = value.lower()
+                    # ~ if key == 'Tag':
+                        # ~ value = value.lower()
                     self.srvdtb.add_document_key(docname, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
                     try:
-                        values = self.kbdict_new['document'][docname][key]
-                        if value not in values:
-                            values.append(value)
-                        self.kbdict_new['document'][docname][key] = sorted(values)
+                        key_values = self.kbdict_new['document'][docname][key]
+                        if value not in key_values:
+                            key_values.append(value)
+                        self.kbdict_new['document'][docname][key] = sorted(key_values)
                     except KeyError:
                         self.kbdict_new['document'][docname][key] = [value]
 
@@ -381,22 +373,24 @@ class Backend(Service):
                 # Compare the document with the one in the cache
                 if not cached_document_exists:
                     DOC_COMPILATION = True
-                    REASON = "Not cached"
+                    REASON = "Document not cached"
                 else:
                     try:
                         hash_new = self.kbdict_new['document'][docname]['content_hash'] + self.kbdict_new['document'][docname]['metadata_hash']
                         hash_cur = self.kbdict_cur['document'][docname]['content_hash'] + self.kbdict_cur['document'][docname]['metadata_hash']
                         DOC_COMPILATION = hash_new != hash_cur
-                        REASON = "Hashes differ? %s" % DOC_COMPILATION
+                        REASON = "Does document hashes differ? %s" % DOC_COMPILATION
                     except Exception as warning:
                         DOC_COMPILATION = True
                         REASON = warning
             else:
-                REASON = "Forced"
+                REASON = "Compilation forced by user"
 
             COMPILE = DOC_COMPILATION or FORCE_ALL
+
             # Save compilation status
             self.kbdict_new['document'][docname]['compile'] = COMPILE
+            self.kbdict_new['document'][docname]['compile_reason'] = REASON
 
             if COMPILE:
                 # Write new adoc to temporary dir
@@ -427,7 +421,7 @@ class Backend(Service):
 
         # Delete
         del(self.runtime['docs']['bag'])
-        # ~ self.kbdict_new = None
+
 
     def get_ignored_keys(self):
         return self.ignored_keys
@@ -481,6 +475,7 @@ class Backend(Service):
         them again. This avoid recompile the whole database, saving time
         and CPU.
         """
+        self.log.info("[BACKEND/STAGE 04 PROCESSING")
         self.log.info("[BACKEND/PROCESSING] - Start at %s", timestamp())
         repo = self.get_repo_parameters()
         all_keys = set(self.srvdtb.get_all_keys())
@@ -541,7 +536,7 @@ class Backend(Service):
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
-                self.log.error(f"[BACKEND/PROCESSING KEYS] - {key}: {fpath}")
+                self.log.debug(f"[BACKEND/PROCESSING KEYS] - {key}: {fpath}")
                 # ~ with open(fpath, 'w') as ftmpdoc:
                     # ~ ftmpdoc.write(
                 self.srvthm.build_page_key(key, values)
@@ -565,34 +560,35 @@ class Backend(Service):
         self.log.info("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.info("[BACKEND/PROCESSING] - End at %s", timestamp())
 
-    def stage_detect_changes(self, doc):
-        """Get a doc from the temporary path and analyze if it must
-        be compiled again. If only the title changes, compile the
-        keys
+    # ~ def stage_detect_changes(self, doc):
+        # ~ """Get a doc from the temporary path and analyze if it must
+        # ~ be compiled again. If only the title changes, compile the
+        # ~ keys
 
-        INCOMPLETE
-        """
-        self.log.error("[BACKEND/DETECT] - Analyzing doc '%s'", doc)
-        distributed = self.get_targets()
-        params = self.app.get_app_conf()
-        COMPILE = True
-        basename = os.path.basename(doc)
-        if basename in distributed:
-            distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
-            cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
-            if os.path.exists(distributed_file) and os.path.exists(cached_file):
-                cached_hash = get_hash_from_file(distributed_file)
-                current_hash = get_hash_from_file(doc)
-                if cached_hash == current_hash:
-                    COMPILE = False
+        # ~ INCOMPLETE
+        # ~ """
+        # ~ self.log.debug("[BACKEND/DETECT] - Analyzing doc '%s'", doc)
+        # ~ distributed = self.get_targets()
+        # ~ params = self.app.get_app_conf()
+        # ~ COMPILE = True
+        # ~ basename = os.path.basename(doc)
+        # ~ if basename in distributed:
+            # ~ distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
+            # ~ cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
+            # ~ if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                # ~ cached_hash = get_hash_from_file(distributed_file)
+                # ~ current_hash = get_hash_from_file(doc)
+                # ~ if cached_hash == current_hash:
+                    # ~ COMPILE = False
 
-                if COMPILE or self.parameters['force']:
-                    changed_keys = self.srvdtb.get_doc_keys(os.path.basename(doc))
-                    for key in changed_keys:
-                        self.FK.add(key)
+                # ~ if COMPILE or self.parameters['force']:
+                    # ~ changed_keys = self.srvdtb.get_doc_keys(os.path.basename(doc))
+                    # ~ for key in changed_keys:
+                        # ~ self.FK.add(key)
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
+        self.log.info("[BACKEND/STAGE 05 COMPILATION")
         self.log.info("[BACKEND/COMPILATION] - Start at %s", timestamp())
         dcomps = datetime.datetime.now()
 
@@ -621,29 +617,41 @@ class Backend(Service):
         distributed = self.get_targets()
         params = self.app.get_app_conf()
         with Executor(max_workers=params.NUM_WORKERS) as exe:
-            self.log.error(f"[BACKEND/COMPILATION] - Temporary working dir: {self.runtime['dir']['tmp']}")
+            # ~ self.log.error(f"[BACKEND/COMPILATION] - Temporary working dir: {self.runtime['dir']['tmp']}")
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
             num = 1
             self.log.debug("[BACKEND/COMPILATION] - Generating jobs. Please, wait")
             for doc in docs:
-                self.stage_detect_changes(doc)
+                # ~ self.stage_detect_changes(doc)
                 COMPILE = True
                 basename = os.path.basename(doc)
-                if basename in distributed:
-                    distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
-                    cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
-                    if os.path.exists(distributed_file) and os.path.exists(cached_file):
-                        cached_hash = get_hash_from_file(distributed_file)
+                target_file = basename.replace('.adoc', '.html')
+                self.log.debug(f"[BACKEND/COMPILATION] - Doc '{basename}")
+                if target_file in distributed:
+                    distributed_file = os.path.join(self.runtime['dir']['dist'], target_file)
+                    cached_file = os.path.join(self.runtime['dir']['tmp'], target_file)
+                    self.log.debug(f"[BACKEND/COMPILATION] - Does '{distributed_file} exists? {os.path.exists(distributed_file)}")
+                    self.log.debug(f"[BACKEND/COMPILATION] - Does '{cached_file} exists? {os.path.exists(cached_file)}")
+                    # ~ if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                    if os.path.exists(cached_file):
+                        self.log.debug(f"[BACKEND/COMPILATION] - Doc '{basename} already distributed an cached")
+                        cached_hash = get_hash_from_file(cached_file)
                         current_hash = get_hash_from_file(doc)
                         if cached_hash == current_hash:
                             COMPILE = False
+                        else:
+                            self.log.debug(f"[BACKEND/COMPILATION] - Doc '{basename} hashes differs from cache")
+                    else:
+                        self.log.debug(f"[BACKEND/COMPILATION] - Doc '{basename} not distributed nor cached")
+                else:
+                    self.log.debug(f"[BACKEND/COMPILATION] - Doc '{basename} not distributed yet")
 
                 if COMPILE or self.parameters['force']:
                     changed_keys = self.srvdtb.get_doc_keys(os.path.basename(doc))
-                    for key in changed_keys:
-                        self.FK.add(key)
+                    # ~ for key in changed_keys:
+                        # ~ self.FK.add(key)
                     # ~ self.log.error(f"Force compiling keys for {doc}: {changed_keys}")
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
@@ -706,6 +714,7 @@ class Backend(Service):
 
     def stage_07_clean_target(self):
         """Clean up stage."""
+        self.log.info("[BACKEND/STAGE 07 CLEAN TARGET")
         self.log.info("[BACKEND/CLEANUP] - Start at %s", timestamp())
         pattern = os.path.join(self.get_source_path(), '*.*')
         extra = glob.glob(pattern)
@@ -731,6 +740,7 @@ class Backend(Service):
 
     def stage_08_refresh_target(self):
         """Refresh target."""
+        self.log.info("[BACKEND/STAGE 08 REFRESH TARGET")
         self.log.info("[BACKEND/INSTALL] - Start at %s", timestamp())
 
         # Copy asciidocs documents to target path
@@ -760,7 +770,7 @@ class Backend(Service):
             target = os.path.join(self.get_target_path(), filename)
             try:
                 shutil.copy(source, target)
-                self.log.debug("%s -> %s", source, target)
+                self.log.debug(f"[BACKEND/INSTALL] - Copy '{source}' -> '{target}'")
             except FileNotFoundError as error:
                 self.log.error(error)
                 self.log.error("[BACKEND/INSTALL] - Consider to run the command again with the option -force")
@@ -801,6 +811,7 @@ class Backend(Service):
 
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
+        self.log.info("[BACKEND/STAGE 09 POST-INSTALLATION TASKS")
         self.log.info("[BACKEND/POST-INSTALL] - Start at %s", timestamp())
         # ~ shutil.rmtree(self.runtime['dir']['tmp'])
         # ~ self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
@@ -865,13 +876,11 @@ class Backend(Service):
         """
         self.running = True
         self.stage_01_check_environment()
-        self.srvthm = self.get_service('Theme')
-        self.srvthm.generate_sources()
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
-        self.stage_05_compilation()
         self.stage_04_processing()
         self.stage_05_compilation()
+        # ~ self.stage_05_compilation()
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
         self.stage_09_remove_temporary_dir()
@@ -885,29 +894,48 @@ class Backend(Service):
         """Return current execution status."""
         return self.running
 
-    def delete_document(self, adoc):
+    def delete_document(self, docname):
         """Remove a document from database and also from cache."""
         # Remove source document
         try:
             source_dir = self.get_source_path()
-            source_path = os.path.join(source_dir, "%s.adoc" % adoc)
+            source_path = os.path.join(source_dir, f"{docname}.adoc")
             os.unlink(source_path)
-            self.log.debug("DOC[%s] deleted from source directory", adoc)
+            self.log.debug(f"DOC[{docname}] deleted from source directory")
         except FileNotFoundError:
-            self.log.debug("DOC[%s] not found in source directory", adoc)
+            self.log.debug(f"DOC[{docname}] not found in source directory")
 
         # Remove database document
-        self.srvdtb.del_document(adoc)
-        self.log.debug("DOC[%s] deleted from database", adoc)
+        self.srvdtb.del_document({docname})
+        self.log.debug(f"DOC[{docname}] deleted from database")
 
         # Remove cache document
         cache_dir = self.get_cache_path()
-        cached_path = os.path.join(cache_dir, "%s.html" % adoc)
+        cached_path = os.path.join(cache_dir, f"{docname}.html")
         try:
             os.unlink(cached_path)
-            self.log.debug("DOC[%s] deleted from cache directory", adoc)
+            self.log.debug(f"DOC[{docname}] deleted from cache directory")
         except FileNotFoundError:
-            self.log.debug("DOC[%s] not found in cache directory", adoc)
+            self.log.debug(f"DOC[{docname}] not found in cache directory")
+
+    def clean_cache(self):
+        # Clean cache
+        missing = []
+        try:
+            for docname in self.kbdict_cur['document']:
+                docpath = os.path.join(self.get_source_path(), docname)
+                if not os.path.exists(docpath):
+                    missing.append(docname)
+        except KeyError:
+            pass  # skip
+
+        if len(missing) == 0:
+            self.log.debug("[BACKEND/PREPROCESSING] - Cache is empty")
+        else:
+            for docname in missing:
+                docname = docname.replace('.adoc', '')
+                self.delete_document(docname)
+            self.log.debug("[BACKEND/PREPROCESSING] - Cache cleaned up")
 
     def end(self):
         self.cleanup()

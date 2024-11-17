@@ -38,15 +38,15 @@ class Database(Service):
         adoc = "%s.adoc" % doc
         try:
             del self.db[adoc]
-            self.log.debug("[DB] - DOC[%s] deleted from database", doc)
+            self.log.debug("[DATABASE] - DOC[%s] deleted from database", doc)
             self.sort_database()
         except KeyError:
-            self.log.debug("[DB] - DOC[%s] not found in database", doc)
+            self.log.debug("[DATABASE] - DOC[%s] not found in database", doc)
 
     def add_document(self, doc):
         """Add a new document node to the database."""
         self.db[doc] = {}
-        self.log.debug("[DB] - DOC[%s] added to database", doc)
+        self.log.debug("[DATABASE] - DOC[%s] added to database", doc)
 
     def add_document_key(self, doc, key, value):
         """Add a new key/value node for a given document."""
@@ -57,7 +57,7 @@ class Database(Service):
         except KeyError:
             self.db[doc][key] = [value]
 
-        self.log.debug("[DB] - DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
+        self.log.debug("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -89,8 +89,8 @@ class Database(Service):
             if ts is not None:
                 adict[doc] = ts.strftime("%Y%m%d")
             else:
-                self.log.warning("[DB] - Doc '%s' doesn't have a valid timestamp?", doc)
-                self.log.warning("[DB] - Sorting is disabled")
+                self.log.warning("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.warning("[DATABASE] - Sorting is disabled")
                 can_sort = False
         if can_sort:
             alist = sort_dictionary(adict)
@@ -206,5 +206,5 @@ class Database(Service):
                 keys.append(key)
             keys.sort(key=lambda y: y.lower())
         except Exception as error:
-            self.log.debug("Doc[%s] is not in the database (system page?)", doc)
+            self.log.debug("[DATABASE] - Doc[%s] is not in the database (system page?)", doc)
         return keys

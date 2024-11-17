@@ -149,6 +149,16 @@ def delete_files(files):
             log.warning("[UTIL] - %s", error)
             log.warning("[UTIL] - %s", files)
 
+def json_load(filepath: str) -> {}:
+    """Load into a dictionary a file in json format"""
+    with open(filepath) as fin:
+        adict = json.load(fin)
+    return adict
+
+def json_save(filepath: str, adict: {}) -> {}:
+    """Save dictionary into a file in json format"""
+    with open(filepath, 'w') as fout:
+        json.dump(adict, fout, sort_keys=True, indent=4)
 
 def get_asciidoctor_attributes(docpath):
     """Get Asciidoctor attributes from a given document."""
