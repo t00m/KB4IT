@@ -1,5 +1,7 @@
 = ${var['title']}
 
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
 ++++
         <!-- PAGINATION_HEAD.tpl :: START -->
         <!-- PAGINATION :: START -->

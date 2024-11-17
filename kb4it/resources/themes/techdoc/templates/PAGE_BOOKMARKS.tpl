@@ -1,5 +1,7 @@
 = Bookmarks
 
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
 ++++
 <!-- PAGE_BOOKMARKS.tpl :: START -->
 <div class ="uk-container uk-overflow-auto">

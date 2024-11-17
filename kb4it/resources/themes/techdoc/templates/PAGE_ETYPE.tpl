@@ -1,5 +1,7 @@
 = ${var['title']}
 
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
 ++++
 <!-- PAGE AUTHORS EVENT TYPES TAB HEADER :: START -->
 ${var['header']}

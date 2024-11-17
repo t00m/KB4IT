@@ -1,4 +1,5 @@
 = How to write asciidoc documents for KB4IT
+
 :Author:        t00mlabs
 :Category:      Help
 :Scope:         Technical documentation

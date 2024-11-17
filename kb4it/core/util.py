@@ -152,19 +152,22 @@ def delete_files(files):
 
 def get_asciidoctor_attributes(docpath):
     """Get Asciidoctor attributes from a given document."""
+    basename = os.path.basename(docpath)
     props = {}
     try:
-        # Get lines
         line = open(docpath, 'r').readlines()
-
-        # Add document title (first line) to graph
-        title = line[0][2:-1]
-        title = title.strip()
+        title_found = False
+        title_line = line[0]
+        if title_line.startswith('= '):
+            title = title_line[2:-1].strip()
+            if len(title) > 0:
+                log.error(title)
+                props['Title'] = [title]
+                title_found = True
 
         # Proceed only if document has a title
-        if len(title) > 0:
-            props['Title'] = [title]
-
+        if title_found:
+            end_of_header_found = False
             # read the rest of properties until watermark
             for n in range(1, len(line)):
                 if line[n].startswith(':'):
@@ -173,11 +176,17 @@ def get_asciidoctor_attributes(docpath):
                     props[key] = [value.strip() for value in values]
                 elif line[n].startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
+                    end_of_header_found = True
                     break
+            if not end_of_header_found:
+                log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
+                props = None
+        else:
+            log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
+            props = None
     except IndexError as error:
-        basename = os.path.basename(docpath)
-        log.error("[UTIL] - Document %s could not be processed. Empty?" % basename)
-        props = {}
+        log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
+        props = None
 
     return props
 
