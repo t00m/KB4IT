@@ -161,7 +161,6 @@ def get_asciidoctor_attributes(docpath):
         if title_line.startswith('= '):
             title = title_line[2:-1].strip()
             if len(title) > 0:
-                log.error(title)
                 props['Title'] = [title]
                 title_found = True
 
