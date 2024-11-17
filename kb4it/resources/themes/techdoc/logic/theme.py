@@ -37,7 +37,7 @@ class Theme(Builder):
         HTML_TAG_METADATA_ADOC = self.template('HTML_TAG_METADATA_ADOC').render(var=var)
         HTML_TAG_METADATA_NEW = self.template('HTML_TAG_METADATA_NEW').render(var=var)
         content = content.replace(HTML_TAG_METADATA_ADOC, HTML_TAG_METADATA_NEW, 1)
-        self.log.debug("[TRANSFORM] - Page[%s]: Highlight metadata", var['basename_html'])
+        self.log.debug("[THEME] - Page[%s]: Highlight metadata", var['basename_html'])
         return content, var
 
     def apply_transformations(self, content):
@@ -195,8 +195,8 @@ class Theme(Builder):
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
-                self.log.error("[THEME-TECHDOC] - %s", error)
-                self.log.error("[THEME-TECHDOC] - Doc doesn't have a valid date field. Skip it.")
+                self.log.error("[THEME] - %s", error)
+                self.log.error("[THEME] - Doc doesn't have a valid date field. Skip it.")
 
         kbdict = self.srvbes.get_kb_dict()
         # Build day event pages
@@ -215,7 +215,7 @@ class Theme(Builder):
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
                             break
-                    self.log.debug("[EVENTS] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
+                    self.log.debug("[THEME] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
@@ -285,7 +285,7 @@ class Theme(Builder):
         doclist = []
         ecats = {}
         repo = self.srvbes.get_repo_parameters()
-        self.log.debug("Repository parameters: %s", repo)
+        self.log.debug("[THEME] - Repository parameters: %s", repo)
         try:
             event_types = repo['events']
         except:
@@ -316,7 +316,7 @@ class Theme(Builder):
     def build(self):
         """Create standard pages for default theme"""
         var = self.get_theme_var()
-        self.log.info("This is the Techdoc theme")
+        self.log.info("[THEME] - This is the Techdoc theme")
         self.app.register_service('EvCal', EventsCalendar())
         self.srvcal = self.get_service('EvCal')
         self.build_page_events()
@@ -458,7 +458,7 @@ class Theme(Builder):
         var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
         self.distribute_adoc('all', page)
-        self.log.debug("[BUILDER] - Created page for bookmarks")
+        self.log.debug("[THEME] -Created page for bookmarks")
         return page
 
     def extract_toc(self, source):
@@ -520,9 +520,9 @@ class Theme(Builder):
         exists_hdoc = os.path.exists(path_hdoc) # it should be true
 
         if not exists_hdoc:
-            self.log.error("[BUILD] - Source[%s] not converted to HTML properly", basename_adoc)
+            self.log.error("[THEME] -Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.debug("[BUILD] - Page[%s] transformation started", basename_hdoc)
+            self.log.debug("[THEME] -Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
@@ -582,7 +582,7 @@ class Theme(Builder):
                 fhtml.write(HTML)
                 self.log.debug("[BUILD] Page[%s] saved to: %s", basename_hdoc, path_hdoc)
 
-            self.log.debug("[BUILD] - Page[%s] transformation finished", basename_hdoc)
+            self.log.debug("[THEME] -Page[%s] transformation finished", basename_hdoc)
 
     def build_page_key(self, key, values):
         """Create page for a key."""
@@ -605,7 +605,7 @@ class Theme(Builder):
         adoc = TPL_PAGE_KEY.render(var=var)
         var['pagename'] = "%s" % valid_filename(key)
         self.distribute_adoc(var['pagename'], adoc)
-        self.log.debug("[BUILDER] - Created page key '%s'", var['pagename'])
+        self.log.debug("[THEME] -Created page key '%s'", var['pagename'])
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
@@ -634,7 +634,7 @@ class Theme(Builder):
         if var['compile']:
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
-            self.log.debug("[BUILDER] - Created page key-value '%s'", var['pagename'])
+            self.log.debug("[THEME] -Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
 
     def build_page_bookmarks(self):
@@ -646,7 +646,7 @@ class Theme(Builder):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
-        self.log.info("Found %d bookmarks", len(doclist))
+        self.log.info("[THEME] - Found %d bookmarks", len(doclist))
         headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
 
@@ -655,7 +655,7 @@ class Theme(Builder):
         page = TPL_PAGE_BOOKMARKS.render(var=var)
         # ~ self.log.error("PAGE: %s", page)
         self.distribute_adoc('bookmarks', page)
-        self.log.debug("[BUILDER] - Created page for bookmarks")
+        self.log.debug("[THEME] -Created page for bookmarks")
         return page
 
     def get_page_actions(self, var):
@@ -727,13 +727,13 @@ class Theme(Builder):
                     ckey['labels'] = self.get_labels(values)
                     var['items'].append(ckey)
                 except Exception as error:
-                    self.log.error("[BUILDER] - Key[%s]: %s", key, error)
+                    self.log.error("[THEME] - Key[%s]: %s", key, error)
                     raise
             var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
             html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
-            self.log.error("[BUILDER] - %s", msgerror)
+            self.log.error("[THEME] - %s", msgerror)
             html = ''
             raise
         return html
