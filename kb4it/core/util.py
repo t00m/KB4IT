@@ -165,9 +165,9 @@ def get_asciidoctor_attributes(docpath):
     basename = os.path.basename(docpath)
     props = {}
     try:
-        line = open(docpath, 'r').readlines()
+        lines = open(docpath, 'r').readlines()
         title_found = False
-        title_line = line[0]
+        title_line = lines[0]
         if title_line.startswith('= '):
             title = title_line[2:-1].strip()
             if len(title) > 0:
@@ -178,17 +178,21 @@ def get_asciidoctor_attributes(docpath):
         if title_found:
             end_of_header_found = False
             # read the rest of properties until watermark
-            for n in range(1, len(line)):
-                if line[n].startswith(':'):
-                    key = line[n][1:line[n].find(':', 1)]
-                    values = line[n][len(key)+2:-1].split(',')
+            for n in range(1, len(lines)):
+                line = lines[n].strip()
+                # ~ log.info(line)
+                if line.startswith(':'):
+                    key = line[1:line.find(':', 1)]
+                    values = line[len(key)+2:].split(',')
                     props[key] = [value.strip() for value in values]
-                elif line[n].startswith(ENV['CONF']['EOHMARK']):
+                elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
+                    # ~ log.info(f"{basename}: EOHMARK found")
                     break
             if not end_of_header_found:
                 log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
+                raise
                 props = None
         else:
             log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
@@ -196,7 +200,7 @@ def get_asciidoctor_attributes(docpath):
     except IndexError as error:
         log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
         props = None
-
+    # ~ log.info(f"{basename}: {props}")
     return props
 
 
