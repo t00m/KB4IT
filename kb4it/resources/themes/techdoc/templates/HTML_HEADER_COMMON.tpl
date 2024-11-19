@@ -52,14 +52,14 @@
                         </a>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="">Events</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="">Events</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="bookmarks.html"><span class="">Bookmarks</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="bookmarks.html"><span class="">Bookmarks</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="properties.html"><span class="">Properties</span></a>
@@ -68,25 +68,25 @@
                                     <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="stats.html"><span class="">Stats</span></a>
                                 </li>
                                 <li class="uk-link-toggle uk-nav-divider">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Tag.html"><span class="">Tags</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Tag.html"><span class="">Tags</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Category.html"><span class="">Category</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Category.html"><span class="">Category</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Scope.html"><span class="">Scopes</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Scope.html"><span class="">Scopes</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Topic.html"><span class="">Topics</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Topic.html"><span class="">Topics</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Product.html"><span class="">Products</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Product.html"><span class="">Products</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Author.html"><span class="">Authors</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Author.html"><span class="">Authors</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Team.html"><span class="">Teams</a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Team.html"><span class="">Teams</span></a>
                                 </li>
                             </ul>
                         </div>
@@ -126,8 +126,9 @@ ${var['menu_contents']}
                                 </div>
 % endif
                             </div>
+                        </div>
                     </li>
-                </u>
+                </ul>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
 
@@ -137,7 +138,7 @@ ${var['menu_contents']}
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
                     </li>
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="info"></a>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="info"></span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">

@@ -1,6 +1,6 @@
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
-<span class="uk-text-danger uk-text-truncate uk-text-bolder">${var['title']}</span>
+                <span class="uk-text-danger uk-text-truncate uk-text-bolder">${var['title']}</span>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
             <div class="uk-navbar-right noprint">
