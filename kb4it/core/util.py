@@ -192,7 +192,6 @@ def get_asciidoctor_attributes(docpath):
                     break
             if not end_of_header_found:
                 log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
-                raise
                 props = None
         else:
             log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
