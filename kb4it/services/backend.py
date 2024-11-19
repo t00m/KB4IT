@@ -15,6 +15,7 @@ import sys
 import glob
 import json
 import time
+import errno
 import random
 import shutil
 import tempfile
@@ -32,7 +33,8 @@ from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
-
+from kb4it.core.util import json_load, json_save
+from kb4it.core.util import timeit
 
 class Backend(Service):
     """Backend class for managing the main logic workflow.
@@ -69,20 +71,20 @@ class Backend(Service):
         self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
         for entry in self.runtime['dir']:
+            create_directory = False
+            dirname = self.runtime['dir'][entry]
             if entry not in ['source', 'target']:
                 dirname = self.runtime['dir'][entry]
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
+                    create_directory = True
+            self.log.debug(f"[BACKEND/SETUP] - Create directory {dirname}? {create_directory}")
 
         # if SORT attribute is given, use it instead of the OS timestamp
         try:
             self.runtime['sort_attribute'] = self.parameters['sort']
         except:
             self.runtime['sort_attribute'] = 'Timestamp'
-        # ~ if self.parameters['sort'] is None:
-            # ~ self.runtime['sort_attribute'] = 'Timestamp'
-        # ~ else:
-            # ~ self.runtime['sort_attribute'] = self.parameters['sort']
         self.log.debug("[BACKEND/SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
 
         # Initialize docs structure
@@ -93,8 +95,11 @@ class Backend(Service):
 
         # Load cache dictionary and initialize the new one
         self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
+        self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
+
         self.kbdict_new['document'] = {}
         self.kbdict_new['metadata'] = {}
+        self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
 
         # Get services
         self.get_services()
@@ -104,10 +109,15 @@ class Backend(Service):
         source_path = valid_filename(source_path)
         KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
         try:
-            with open(KB4IT_DB_FILE, 'r') as fkb:
-                kbdict = json.load(fkb)
+            kbdict = json_load(KB4IT_DB_FILE)
+            self.log.debug(f"[BACKEND/CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
         except FileNotFoundError:
             kbdict = {}
+            kbdict['document'] = {}
+            kbdict['metadata'] = {}
+        except Exception as error:
+            self.log.error(f"[BACKEND/CONF] - There was an error reading file {KB4IT_DB_FILE}")
+            sys.exit()
         self.log.debug("[BACKEND/CONF] - Current kbdict entries: %d", len(kbdict))
         return kbdict
 
@@ -119,9 +129,8 @@ class Backend(Service):
         else:
             KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
 
-        with open(KB4IT_DB_FILE, 'w') as fkb:
-            json.dump(kbdict, fkb)
-            self.log.debug("[BACKEND/CONF] - KBDICT %s saved", KB4IT_DB_FILE)
+        json_save(KB4IT_DB_FILE, kbdict)
+        self.log.debug("[BACKEND/CONF] - KBDICT %s saved", KB4IT_DB_FILE)
 
     def get_targets(self):
         """Get list of documents converted to pages"""
@@ -132,7 +141,7 @@ class Backend(Service):
         list of objects that will be copied to the target directory.
         """
         self.runtime['docs']['target'].add(kbfile)
-        self.log.debug("[TARGET] - Added page: %s", kbfile)
+        self.log.debug("[BACKEND/TARGET] - Added page: %s", kbfile)
 
     def get_runtime(self):
         """Get all properties."""
@@ -184,6 +193,7 @@ class Backend(Service):
         """Get current number of valid documents."""
         return self.runtime['docs']['count']
 
+    @timeit
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("[BACKEND/SETUP] - Start at %s", timestamp())
@@ -204,9 +214,18 @@ class Backend(Service):
             os.makedirs(self.get_target_path())
         self.log.info("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
 
+        if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
+            self.log.error("[BACKEND/SETUP] - No config file especified")
+            self.log.error("[BACKEND/SETUP] - End at %s", timestamp())
+            sys.exit()
+
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
-        theme_name = self.parameters['theme']
+        try:
+            theme_name = self.parameters['theme']
+        except KeyError:
+            theme_name = 'techdoc'
+
         if theme_name is None:
             self.log.debug("[BACKEND/SETUP] - Theme not provided. Autodetect it.")
             theme_path = self.srvfes.theme_search()
@@ -228,21 +247,35 @@ class Backend(Service):
 
         self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
 
+    @timeit
     def stage_02_get_source_documents(self):
-        """Get Asciidoctor source documents."""
+        """Get Asciidoctor documents from source directory."""
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
+
+        # Firstly, allow theme to generate documents
+        # ~ self.srvthm = self.get_service('Theme')
+        self.srvthm.generate_sources()
+
+        # Then, get them
         sources_path = self.get_source_path()
         self.runtime['docs']['bag'] = get_source_docs(sources_path)
+        basenames = []
+        for filepath in self.runtime['docs']['bag']:
+            basenames.append(os.path.basename(filepath))
+        self.runtime['docs']['filenames'] = basenames
+        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
+
+        # If 'about_app.adoc' doesn't exist, create one from template
         about_app_source = os.path.join(sources_path, 'about_app.adoc')
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
             self.log.warning("Added default 'About App' to your sources")
 
-        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.info("[BACKEND/SOURCEDOCS] - End at %s", timestamp())
 
+    @timeit
     def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
@@ -422,10 +455,6 @@ class Backend(Service):
         self.log.info("[BACKEND/PREPROCESSING] - Stats - Keep: %d - Compile: %d", keep_docs, compile_docs)
         self.log.info("[BACKEND/PREPROCESSING] - End %s", timestamp())
 
-        # Delete
-        del(self.runtime['docs']['bag'])
-        # ~ self.kbdict_new = None
-
     def get_ignored_keys(self):
         return self.ignored_keys
 
@@ -472,6 +501,7 @@ class Backend(Service):
 
         return alist
 
+    @timeit
     def stage_04_processing(self):
         """Process all keys/values got from documents.
         The algorithm detects which keys/values have changed and compile
@@ -552,6 +582,7 @@ class Backend(Service):
         self.log.info("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.info("[BACKEND/PROCESSING] - End at %s", timestamp())
 
+    @timeit
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         self.log.info("[BACKEND/COMPILATION] - Start at %s", timestamp())
@@ -651,11 +682,16 @@ class Backend(Service):
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
-            html = self.srvthm.build_page(path_hdoc)
-            # ~ with open(path_hdoc, 'w') as fhtml:
-                # ~ fhtml.write(html)
+            try:
+                html = self.srvthm.build_page(path_hdoc)
+            except MemoryError:
+                self.log.error("Memory exhausted!")
+                self.log.error("Please, consider using less workers or add more memory to your system")
+                self.log.error("The application will exit now...")
+                sys.exit(errno.ENOMEM)
             return x
 
+    @timeit
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.info("[BACKEND/CLEANUP] - Start at %s", timestamp())
@@ -681,6 +717,7 @@ class Backend(Service):
         self.log.debug("[BACKEND/CLEANUP] - Deleted target contents in: %s", self.get_target_path())
         self.log.info("[BACKEND/CLEANUP] - End at %s", timestamp())
 
+    @timeit
     def stage_08_refresh_target(self):
         """Refresh target."""
         self.log.info("[BACKEND/INSTALL] - Start at %s", timestamp())
@@ -751,6 +788,7 @@ class Backend(Service):
         self.log.info("[BACKEND/INSTALL] - Copied JSON database to target")
         self.log.info("[BACKEND/INSTALL] - End at %s", timestamp())
 
+    @timeit
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.info("[BACKEND/POST-INSTALL] - Start at %s", timestamp())
