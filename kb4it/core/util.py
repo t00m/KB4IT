@@ -22,9 +22,21 @@ import pprint
 from datetime import datetime
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
+from functools import wraps
+import time
 
 log = get_logger('KB4ITUtil')
 
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        log.info(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        return result
+    return timeit_wrapper
 
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
