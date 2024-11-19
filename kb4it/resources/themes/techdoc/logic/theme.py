@@ -649,7 +649,7 @@ class Theme(Builder):
             bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
-        self.log.info("[THEME] - Found %d bookmarks", len(doclist))
+        self.log.debug("[THEME] - Found %d bookmarks", len(doclist))
         headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
 

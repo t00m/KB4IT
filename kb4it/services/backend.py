@@ -272,7 +272,7 @@ class Backend(Service):
                     self.delete_document(docname)
                 self.log.debug("[BACKEND/PREPROCESSING] - Cache cleaned up")
 
-        _clean_cache()
+        #_clean_cache()
 
         # Preprocessing
         for source in self.runtime['docs']['bag']:
@@ -288,14 +288,14 @@ class Backend(Service):
             # If document doesn't have a title, skip it.
             try:
                 title = keys['Title'][0]
-                self.log.info(f"[BACKEND/PREPROCESSING] - Document '{docname}: {title}' will be processed")
+                #self.log.info(f"[BACKEND/PREPROCESSING] - Document '{docname}: {title}' will be processed")
             except KeyError:
                 self.runtime['docs']['count'] -= 1
                 self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", docname)
                 continue
 
             self.kbdict_new['document'][docname] = {}
-            self.log.debug("[PREPROCESSING] - DOC[%s] Preprocessing", docname)
+            self.log.debug("[BACKEND/PREPROCESSING] - DOC[%s] Preprocessing", docname)
 
             # Add a new document to the database
             self.srvdtb.add_document(docname)
@@ -392,7 +392,6 @@ class Backend(Service):
                 try:
                     title_cur = self.kbdict_cur['document'][docname]['Title']
                     title_new = self.kbdict_new['document'][docname]['Title']
-                    self.log.info(f"{title_new} != {title_cur}? {title_new != title_cur}")
                     if title_new != title_cur:
                         for key in keys:
                             if key != 'Title':
