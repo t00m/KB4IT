@@ -148,7 +148,7 @@ class Theme(Builder):
             ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
             if ts >= fdpm and ts <= ldnm:
                 doclist.append(doc)
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = ['Title', 'Category', 'Scope', 'Topic']
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
