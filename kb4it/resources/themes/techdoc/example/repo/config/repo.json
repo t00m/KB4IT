@@ -1,0 +1,17 @@
+{
+    "events": ["Change", "Course", "Incident", "Issue", "Note", "Post", "Procedure", "Project", "Reminder", "Report", "Task", "Template"],
+    "sort": ["Updated"],
+    "title": "Website title",
+    "target": "/home/user/Documents/repository/target",
+    "source": "/home/user/Documents/repository/source",
+    "theme": "techdoc",
+    "logo": "resources/images/logo.svg",
+    "logo_alt": "",
+    "git": "false",
+    "git_server": "",
+    "git_user": "",
+    "git_repo": "",
+    "git_branch": "",
+    "git_path": "",
+    "ignored_keys": ["Updated"]
+}

@@ -1,6 +1,11 @@
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
+                    <li uk-tooltip="title: Edit document">
+                        <a class="uk-card uk-card-hover uk-button uk-card uk-card-hover uk-border-rounded uk-link-heading uk-padding" href="https://${var['theme']['git_server']}/${var['theme']['git_user']}/${var['theme']['git_repo']}/edit/${var['theme']['git_branch']}/${var['theme']['git_path']}/${var['basename']}" target="_blank">
+                            <span class="uk-text-bold uk-text-primary uk-text-truncate" uk-icon="icon: file-edit; ratio: 1">${var['title']}</span>
+                        </a>
+                    </li>
                     <li>
                        <a href="#"><span class="uk-text-primary uk-text-small uk-text-truncate">${var['title']}</span></a><!-- ${var['basename']} -->
                         <div class="uk-navbar-dropdown">
@@ -13,7 +18,7 @@
                                             <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                                             <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                                 <div class="uk-padding-large uk-background-muted">
-                                                    <div class="uk-text-lead uk-text-center uk-text-danger">Metadata</div>
+                                                    <div class="uk-text-lead uk-text-center uk-text-danger">Meta</div>
 <!-- METADATA :: START -->
 ${var['meta_section']}
 <!-- METADATA :: END -->
@@ -52,14 +57,14 @@ ${var['meta_section']}
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-small">About this app</span></a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-small">About this theme</span></a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-none">About this theme</span></a>
                                 </li>
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-small">About KB4IT</span></a>
+                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
                                 </li>
                             </ul>
                         </div>

@@ -1,5 +1,7 @@
 = Stats
 
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
 ++++
     <!-- INDEX_TAB_STATS.tpl :: START -->
     <div class="uk-grid-small" uk-grid>

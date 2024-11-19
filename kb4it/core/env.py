@@ -31,9 +31,9 @@ ENV['CONF']['TMPNAME'] = next(tempfile._get_candidate_names())
 ENV['CONF']['MAX_WORKERS'] = multiprocessing.cpu_count()  # Avoid MemoryError
 ENV['CONF']['EOHMARK'] = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
 ENV['CONF']['ADOCPROPS'] = {
-    'source-highlighter': 'coderay',
-    'coderay-css': 'class',
-    'coderay-linenums-mode': 'table',
+#    'source-highlighter': 'coderay',
+#    'coderay-css': 'class',
+#    'coderay-linenums-mode': 'table',
     'toc': 'left',
     'toclevels': '2',
     'icons': 'font',
@@ -71,7 +71,8 @@ ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
 ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
 ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
 ENV['LPATH']['OPT'] = os.path.join(ENV['LPATH']['ROOT'], 'opt')
-ENV['LPATH']['THEMES'] = os.path.join(ENV['LPATH']['OPT'], 'themes')
+ENV['LPATH']['RESOURCES'] = os.path.join(ENV['LPATH']['OPT'], 'resources')
+ENV['LPATH']['THEMES'] = os.path.join(ENV['LPATH']['RESOURCES'], 'themes')
 ENV['LPATH']['TMP_SOURCE'] = os.path.join(ENV['LPATH']['TMP'], 'source')
 ENV['LPATH']['TMP_TARGET'] = os.path.join(ENV['LPATH']['TMP'], 'target')
 # ~ ENV['LPATH']['WWW'] = os.path.join(ENV['LPATH']['VAR'], 'www')

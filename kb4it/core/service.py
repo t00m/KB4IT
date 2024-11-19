@@ -57,10 +57,7 @@ class Service:
         self.app = app
         self.logname = logname
         self.section_name = section_name
-        # ~ repo = self.app.get_repo_conf()
-        # ~ print(repo)
         conf = self.app.get_app_conf()
-        # ~ severity = repo['logging']
         severity = conf.LOGLEVEL
         self.log = get_logger(logname, severity)
         self.initialize()

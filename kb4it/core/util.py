@@ -22,9 +22,21 @@ import pprint
 from datetime import datetime
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
+from functools import wraps
+import time
 
 log = get_logger('KB4ITUtil')
 
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        log.info(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        return result
+    return timeit_wrapper
 
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
@@ -58,8 +70,8 @@ def copydir(source, dest):
                 log.warning("[UTIL] -Check permissions for file: %s", file)
 
 
-def get_source_docs(path):
-    """C0111: Missing function docstring (missing-docstring)."""
+def get_source_docs(path: str):
+    """Get asciidoc documents from a given path"""
     if path[:-1] != os.path.sep:
         path = path + os.path.sep
 
@@ -149,36 +161,57 @@ def delete_files(files):
             log.warning("[UTIL] - %s", error)
             log.warning("[UTIL] - %s", files)
 
+def json_load(filepath: str) -> {}:
+    """Load into a dictionary a file in json format"""
+    with open(filepath) as fin:
+        adict = json.load(fin)
+    return adict
+
+def json_save(filepath: str, adict: {}) -> {}:
+    """Save dictionary into a file in json format"""
+    with open(filepath, 'w') as fout:
+        json.dump(adict, fout, sort_keys=True, indent=4)
 
 def get_asciidoctor_attributes(docpath):
     """Get Asciidoctor attributes from a given document."""
+    basename = os.path.basename(docpath)
     props = {}
     try:
-        # Get lines
-        line = open(docpath, 'r').readlines()
-
-        # Add document title (first line) to graph
-        title = line[0][2:-1]
-        title = title.strip()
+        lines = open(docpath, 'r').readlines()
+        title_found = False
+        title_line = lines[0]
+        if title_line.startswith('= '):
+            title = title_line[2:-1].strip()
+            if len(title) > 0:
+                props['Title'] = [title]
+                title_found = True
 
         # Proceed only if document has a title
-        if len(title) > 0:
-            props['Title'] = [title]
-
+        if title_found:
+            end_of_header_found = False
             # read the rest of properties until watermark
-            for n in range(1, len(line)):
-                if line[n].startswith(':'):
-                    key = line[n][1:line[n].find(':', 1)]
-                    values = line[n][len(key)+2:-1].split(',')
+            for n in range(1, len(lines)):
+                line = lines[n].strip()
+                # ~ log.info(line)
+                if line.startswith(':'):
+                    key = line[1:line.find(':', 1)]
+                    values = line[len(key)+2:].split(',')
                     props[key] = [value.strip() for value in values]
-                elif line[n].startswith(ENV['CONF']['EOHMARK']):
+                elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
+                    end_of_header_found = True
+                    # ~ log.info(f"{basename}: EOHMARK found")
                     break
+            if not end_of_header_found:
+                log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
+                props = None
+        else:
+            log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
+            props = None
     except IndexError as error:
-        basename = os.path.basename(docpath)
-        log.error("[UTIL] - Document %s could not be processed. Empty?" % basename)
-        props = {}
-
+        log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
+        props = None
+    # ~ log.info(f"{basename}: {props}")
     return props
 
 

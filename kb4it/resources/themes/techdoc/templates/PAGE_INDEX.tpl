@@ -1,5 +1,7 @@
 = ${var['repo']['title']}
 
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
 ++++
 <div class ="uk-container uk-overflow-auto">
         ${var['trimester']}

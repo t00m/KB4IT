@@ -57,30 +57,37 @@ before:
 
 Then, install it:
 
-`python3 setup.py install --user`
+`pip install . --user`
+
 
 ==== Pypi package
 
 `pip3 install kb4it --user -U`
 
+
+
 === Execution
 
-The most typical usage would be:
+=== Prepare your repository
 
-`$HOME/.local/bin/kb4it -source /path/to/asciidoctor/sources -target /path/to/target/directory -log DEBUG`
+. Create a repository: `mkdir /home/$USER/Documents/myrepo`
+. Create config directory (where the configuration will be stored): `mkdir /home/$USER/Documents/myrepo/config`
+. Create source directory (where the documents will be stored): `mkdir /home/$USER/Documents/myrepo/target`
+. Create target directory (where the website will built): `mkdir /home/$USER/Documents/myrepo/target`
+. Setup repository configuration: `kb4it -init techdoc /home/$USER/Documents/myrepo/config`
++
+This will copy theme directory structure example to your repository. It will also create a script to generate the website. 
+The directory structure is just an example. It can be modified.
+. Finally, compile your repository: `kb4it -r /home/$USER/Documents/myrepo/config/repo.json`
++
+_(See kb4it -v for more options)_
 
-If templates remain the same, force a new compilation:
 
-`$HOME/.local/bin/kb4it -source /path/to/asciidoctor/sources -target /path/to/target/directory --log DEBUG  -force`
+=== Known bugs
 
-If the directory containing the asciidoctor sources have a theme, it
-will be used. However, you can specify one:
+* Setup repository configuration: *not implemented yet*. Copy example file manually and edit it.
+* When a document or any of its properties is modified, the document will be recompiled. However, those property pages linking to this document will display the original title. The only workaround right now pass by forcing KB4IT to recompile the whole repository with the `-f` option.
 
-`$HOME/.local/bin/kb4it -source /path/to/asciidoctor/sources -target /path/to/target/directory -theme mytheme -log DEBUG`
-
-You can also specify any_datetime_attribute to sort your documents:
-
-`$HOME/.local/bin/kb4it -source /path/to/asciidoctor/sources -target /path/to/target/directory -sort Published -log DEBUG`
 
 === Download
 

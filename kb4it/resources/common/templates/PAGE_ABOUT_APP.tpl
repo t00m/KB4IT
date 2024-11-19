@@ -1,5 +1,8 @@
 = About this app
 
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+
 ++++
 <div class="uk-alert-danger" uk-alert>
    <p>

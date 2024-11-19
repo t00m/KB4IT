@@ -13,11 +13,13 @@ import os
 import sys
 import json
 import math
+import stat
+import json
 import multiprocessing
 import argparse
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from kb4it.core.util import timestamp
+from kb4it.core.util import timestamp, copydir
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
@@ -36,6 +38,8 @@ def get_default_workers():
 
 class KB4IT:
     """KB4IT main class."""
+    repo = {}
+
     def __init__(self, params: argparse.Namespace=None):
         """Initialize KB4IT class.
 
@@ -47,7 +51,7 @@ class KB4IT:
             self.params = params
         else:
             self.params = argparse.Namespace()
-            self.params.REPO_PATH = None
+            self.params.REPO_CONFIG = None
 
         # Initialize log
         if 'LOGLEVEL' not in self.params:
@@ -60,9 +64,9 @@ class KB4IT:
         self.__setup_services()
 
         self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
-        self.log.info("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
-        self.log.info("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
-        self.log.info("[CONTROLLER] - MaxWorkers: %d (default)", self.params.WORKERS)
+        self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+        self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
+        self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
 
         self.__gonogo()
 
@@ -72,57 +76,36 @@ class KB4IT:
 
     def __check_params(self):
         """Check arguments passed to the application."""
-        if 'LIST_THEMES' not in self.params:
-            self.params.LIST_THEMES = False
-        if 'FORCE' not in self.params:
-            self.params.FORCE = False
-        if 'WORKERS' not in self.params:
-            self.params.WORKERS = get_default_workers()
 
         for key in vars(self.params):
             self.log.debug("[CONTROLLER] - Parameter[%s] Value[%s]", key, vars(self.params)[key])
 
-        if not self.params.LIST_THEMES:
-            # Get repository configuration path. Mandatory
-            if self.params.REPO_PATH is None:
-                self.log.error("[CONTROLLER] - Repository config path parameter is missing.")
-                self.stop()
-            repo_path = os.path.abspath(self.params.REPO_PATH)
-            self.log.debug("[CONTROLLER] - Repository configuration path: %s", repo_path)
-            if not os.path.exists(repo_path):
-                self.log.error("[CONTROLLER] - Repository configuration path doesn't exist.")
-                self.stop()
+        repo_exists = False
+        if self.params.REPO_CONFIG:
+            if os.path.exists(self.params.REPO_CONFIG):
+                with open(self.params.REPO_CONFIG, 'r') as conf:
+                    try:
+                        self.repo = json.load(conf)
+                        self.repo['force'] = self.params.FORCE
+                        repo_exists = True
+                        self.log.debug("[CONTROLLER] - Repository configuration found and loaded")
+                    except json.decoder.JSONDecodeError:
+                        self.log.error("[CONTROLLER] - Repository config file couldn't be read")
 
-            with open(repo_path, 'r') as conf:
-                try:
-                    self.repo = json.load(conf)
-                    self.repo['force'] = self.params.FORCE
-                except json.decoder.JSONDecodeError:
-                    self.log.error("[CONTROLLER] - Repository config file couldn't be read")
-                    self.stop()
+        if not repo_exists:
+            # Create a fake repository
+            self.repo = {}
+            self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
+            self.repo['target'] = ENV['LPATH']['TMP_TARGET']
+            self.repo['force'] = False
+            self.log.debug("[CONTROLLER] - Repository configuration not found. Fake configuration built")
 
-            # Check source and target paths
-            mandatory = ['title', 'source', 'target', 'theme', 'sort']
-            for key in mandatory:
-                if key in self.repo:
-                    self.log.debug("[CONTROLLER] - Repository Key[%s]: Found!", key)
-                else:
-                    self.log.error("[CONTROLLER] - Repository configuration is not valid. Check and fix, please:")
-                    self.log.error("[CONTROLLER] - It must contain a title, a valid source and target paths, a valid theme name and the sorting property.")
-                    self.log.error("[CONTROLLER] - Key missing: %s", key)
-                    self.stop()
+        if not 'workers' in self.repo:
+            self.repo['workers'] = self.params.NUM_WORKERS
 
-            if self.repo['source'] == self.repo['target']:
-                self.log.error("[CONTROLLER] - Error. Source and target paths are the same. That is not possible.")
-                self.log.error("[CONTROLLER] - Source path: %s", self.repo['source'])
-                self.log.error("[CONTROLLER] - Target path: %s", self.repo['target'])
-                self.log.error("[CONTROLLER] - Check, please!")
-                self.stop()
 
-            self.log.debug("[CONTROLLER] - Preliminar checks passed.")
-            self.ready = True
-        else:
-            self.ready = False
+        self.log.debug("[CONTROLLER] - Params checked.")
+
 
     def get_app_conf(self):
         """Return app configuration"""
@@ -178,10 +161,10 @@ class KB4IT:
             # Write current Pid to file
             with open(pidfile, 'w') as fpid:
                 fpid.write(str(ENV['PS']['PID']))
-            self.log.info("[CONTROLLER] - Decision: Go")
+            self.log.debug("[CONTROLLER] - Decision: Go")
         else:
-            self.log.error("[CONTROLLER] - Decision: No Go")
-            self.log.error("Reason: %s", no_go_reason)
+            self.log.error(f"[CONTROLLER] - Decision: No Go")
+            self.log.error(f"[CONTROLLER] - Reason: {no_go_reason}")
             self.stop()
 
     def get_services(self):
@@ -191,13 +174,15 @@ class KB4IT:
     def get_service(self, name):
         """Get or start a registered service."""
         try:
+            self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
             service = self.services[name]
             logname = service.__class__.__name__
             if not service.is_started():
                 service.start(self, logname, name)
             return service
-        except KeyError as service:
-            self.log.error("[CONTROLLER] - Service %s not registered or not found", service)
+        except Exception as error:
+            self.log.error("[CONTROLLER] - Service %s not registered or not found", error)
+            raise
             return None
 
     def register_service(self, name, service):
@@ -221,21 +206,58 @@ class KB4IT:
 
     def run(self):
         """Start application."""
-        if self.ready:
-            backend = self.get_service('Backend')
-            try:
-                backend.run()
-            except Exception as error:
-                self.log.error(error)
-                raise
-            self.stop()
-        else:
-            if self.params.LIST_THEMES:
-                self.repo = {}
-                self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
-                self.repo['target'] = ENV['LPATH']['TMP_TARGET']
-                frontend = self.get_service('Frontend')
+        frontend = self.get_service('Frontend')
+
+        if self.params.LIST_THEMES:
+            self.repo = {}
+            self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
+            self.repo['target'] = ENV['LPATH']['TMP_TARGET']
+            frontend.theme_list()
+        elif self.params.INIT:
+            initialize = False
+            theme, repo_path = self.params.INIT
+            self.log.debug(f"[CONTROLLER] - Theme argument passed: {theme}")
+            self.log.debug(f"[CONTROLLER] - Repo path argument passed: {repo_path}")
+            theme_path = frontend.theme_search(theme=theme)
+            if theme_path is None:
+                self.log.error(f"[CONTROLLER] - Theme '{theme}' doesn't exist.")
+                self.log.info("[CONTROLLER] - This is the list of themes available:")
                 frontend.theme_list()
+            else:
+                if not os.path.exists(repo_path):
+                    self.log.error(f"[CONTROLLER] - Repository path '{repo_path}' does not exist")
+                else:
+                    initialize = True
+
+            if initialize:
+                self.log.info(f"[CONTROLLER] - Repository path: {repo_path}")
+                self.log.info(f"[CONTROLLER] - Using theme '{theme}' from path '{theme_path}'")
+                repo_demo = os.path.join(theme_path, 'example', 'repo')
+                copydir(repo_demo, repo_path)
+                source_dir = os.path.join(repo_path, 'source')
+                target_dir = os.path.join(repo_path, 'target')
+                bin_dir = os.path.join(repo_path, 'bin')
+                script = os.path.join(bin_dir, 'compile.sh')
+                config_file = os.path.join(repo_path, 'config', 'repo.json')
+                with open(config_file, 'r') as fc:
+                    repoconf = json.load(fc)
+                repoconf['source'] = source_dir
+                repoconf['target'] = target_dir
+                with open(config_file, 'w') as fc:
+                    json.dump(repoconf, fc, sort_keys=True, indent=4)
+                os.makedirs(bin_dir, exist_ok=True)
+                with open(script, 'w') as fs:
+                    fs.write(f'kb4it -r {config_file} -L INFO')
+                os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
+                self.log.info(f"[CONTROLLER] - Repository initialized")
+                self.log.info(f"[CONTROLLER] - You can compile it by executing '{script}'")
+                self.log.info(f"[CONTROLLER] - Add your documents in '{source_dir}'")
+                self.log.info(f"[CONTROLLER] - Documents to be published in '{target_dir}'")
+                self.log.info(f"[CONTROLLER] - Check your repository settings in '{config_file}'")
+                self.log.info(f"[CONTROLLER] - For more KB4IT options, execute: kb4it -h")
+        else:
+            backend = self.get_service('Backend')
+            backend.run()
         self.stop()
 
     def stop(self):
@@ -252,23 +274,24 @@ class KB4IT:
 
 def main():
     """Set up application arguments and execute."""
-    extra_usage = """"""
+    extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
         description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['version'],
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    WORKERS = get_default_workers()
+    NUM_WORKERS = get_default_workers()
 
-    # KB4IT arguments
+    # KB4IT options
     kb4it_options = parser.add_argument_group('KB4IT Options')
-    kb4it_options.add_argument('-r', help='Repository config file', action='store', dest='REPO_PATH')
-    kb4it_options.add_argument('-f', help='Force a clean compilation', action='store_true', dest='FORCE', default=False)
-    kb4it_options.add_argument('-w', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % WORKERS, type=int, action='store', dest='WORKERS', default=int(WORKERS))
-    kb4it_options.add_argument('-l', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False)
-    kb4it_options.add_argument('-L', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO')
-    kb4it_options.add_argument('-v', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
+    kb4it_options.add_argument('-f', '--force', help='Force a clean compilation', action='store_true', dest='FORCE', required=False, default=False)
+    kb4it_options.add_argument('-i', '--init', help='Initialize repository', nargs=2, metavar=('THEME', 'REPO_PATH'), dest='INIT', required=False)
+    kb4it_options.add_argument('-l', '--list-themes', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False, default=False)
+    kb4it_options.add_argument('-r', '--repo', help='Use this repository config file', action='store', dest='REPO_CONFIG')
+    kb4it_options.add_argument('-w', '--workers', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % NUM_WORKERS, type=int, action='store', dest='NUM_WORKERS', default=int(NUM_WORKERS), required=False)
+    kb4it_options.add_argument('-L', '--log-level', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', required=False)
+    kb4it_options.add_argument('-v', '--version', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
 
     params = parser.parse_args()
     app = KB4IT(params)
