@@ -281,6 +281,9 @@ class Backend(Service):
             # Get metadata
             docpath = os.path.join(self.get_source_path(), docname)
             keys = get_asciidoctor_attributes(docpath)
+            if keys is None:
+                self.log.error(f"[BACKEND/PREPROCESSING] - Document '{docname}' not compliant: please, check errors")
+                continue
 
             # If document doesn't have a title, skip it.
             try:
@@ -386,13 +389,17 @@ class Backend(Service):
                 with open(target, 'w') as target_adoc:
                     target_adoc.write(newadoc)
 
-                title_cur = self.kbdict_cur['document'][docname]['Title']
-                title_new = self.kbdict_new['document'][docname]['Title']
-                self.log.info(f"{title_new} != {title_cur}? {title_new != title_cur}")
-                if title_new != title_cur:
-                    for key in keys:
-                        if key != 'Title':
-                            self.FK.add(key)
+                try:
+                    title_cur = self.kbdict_cur['document'][docname]['Title']
+                    title_new = self.kbdict_new['document'][docname]['Title']
+                    self.log.info(f"{title_new} != {title_cur}? {title_new != title_cur}")
+                    if title_new != title_cur:
+                        for key in keys:
+                            if key != 'Title':
+                                self.FK.add(key)
+                except KeyError:
+                    # Very likely there is no kbdict, so this step is skipped
+                    pass
 
             self.log.debug("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
 
@@ -484,8 +491,6 @@ class Backend(Service):
         # ~ self.log.info("Avl keys: %s", available_keys)
         K_PATH = []
         KV_PATH = []
-
-        self.log.info(f"FK: {self.FK}")
 
         for key in sorted(available_keys):
             COMPILE_KEY = False
