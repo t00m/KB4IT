@@ -416,11 +416,10 @@ class Backend(Service):
             self.kbdict_new['document'][docname]['compile'] = COMPILE
 
             if COMPILE:
-                newadoc = content.replace(ENV['CONF']['EOHMARK'], '', 1)
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
                 with open(target, 'w') as target_adoc:
-                    target_adoc.write(newadoc)
+                    target_adoc.write(content)
 
                 try:
                     title_cur = self.kbdict_cur['document'][docname]['Title']
