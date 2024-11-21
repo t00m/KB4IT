@@ -141,7 +141,7 @@ class Backend(Service):
         list of objects that will be copied to the target directory.
         """
         self.runtime['docs']['target'].add(kbfile)
-        self.log.debug("[BACKEND/TARGET] - Added page: %s", kbfile)
+        self.log.debug("[BACKEND/TARGET] - Added resource: %s", kbfile)
 
     def get_runtime(self):
         """Get all properties."""
