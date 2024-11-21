@@ -1,17 +1,45 @@
 {
-    "events": ["Change", "Course", "Incident", "Issue", "Note", "Post", "Procedure", "Project", "Reminder", "Report", "Task", "Template"],
-    "sort": ["Updated"],
-    "title": "Website title",
-    "target": "/home/user/Documents/repository/target",
-    "source": "/home/user/Documents/repository/source",
-    "theme": "techdoc",
-    "logo": "resources/images/logo.svg",
-    "logo_alt": "",
+    "datatable": [
+        "Title",
+        "Category",
+        "Scope",
+        "Topic"
+    ],
+    "events": [
+        "Call",
+        "Change",
+        "Event",
+        "Incident",
+        "Issue",
+        "Maintenance",
+        "Meeting",
+        "Milestone",
+        "Normal change",
+        "Note",
+        "Post",
+        "Procedure",
+        "Project",
+        "Reminder",
+        "Report",
+        "Task",
+        "Urgent change"
+    ],
     "git": "false",
-    "git_server": "",
-    "git_user": "",
-    "git_repo": "",
     "git_branch": "",
     "git_path": "",
-    "ignored_keys": ["Updated"]
+    "git_repo": "",
+    "git_server": "",
+    "git_user": "",
+    "ignored_keys": [
+        "Updated"
+    ],
+    "logo": "resources/themes/techdoc/images/logo.svg",
+    "logo_alt": "",
+    "sort": [
+        "Updated"
+    ],
+    "source": "/tmp/test2/source",
+    "target": "/tmp/test2/target",
+    "theme": "techdoc",
+    "title": "IT Notes"
 }

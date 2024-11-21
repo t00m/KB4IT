@@ -83,8 +83,12 @@ class Theme(Builder):
         TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
 
         datatable = {}
-        datatable['header'] = ''
         repo = self.srvbes.get_repo_parameters()
+
+        # Add datatable hearders
+        datatable['header'] = ''
+        if len(headers) == 0:
+            headers = repo['datatable']
         sort_attr = repo['sort'][0]
         headers.insert(0, sort_attr)
         for item in headers:
@@ -92,6 +96,7 @@ class Theme(Builder):
             var['item'] = item
             datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var=var)
 
+        # Add datatable body
         documents = {}
         for doc in doclist:
             documents[doc] = self.srvdtb.get_doc_properties(doc)
@@ -154,7 +159,7 @@ class Theme(Builder):
             ts = guess_datetime(self.srvdtb.get_doc_timestamp(doc))
             if ts >= fdpm and ts <= ldnm:
                 doclist.append(doc)
-        headers = ['Title', 'Category', 'Scope', 'Topic']
+        headers = []
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
