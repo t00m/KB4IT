@@ -302,7 +302,7 @@ def string_timestamp(string):
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
-    return "%s" % dt.strftime("%a, %b %d, %Y at %H:%M")
+    return "%s" % dt.strftime("%A, %B %d, %Y at %H:%M")
 
 
 def sort_dictionary(adict, reverse=True):
