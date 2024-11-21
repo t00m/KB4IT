@@ -55,43 +55,33 @@
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
+% for key in var['kb']['keys']['theme']:
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="events.html"><span class="">Events</span></a>
+                                    <a class="uk-link-heading" href="${key}.html"><span class="">  By ${key}</span></a>
+                                </li>
+% endfor
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="star"></span></a>
+                        <div class="uk-navbar-dropdown">
+                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="events.html"><span class="">Events</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="bookmarks.html"><span class="">Bookmarks</span></a>
+                                    <a class="uk-link-heading" href="bookmarks.html"><span class="">Bookmarks</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="properties.html"><span class="">Properties</span></a>
+                                    <a class="uk-link-heading" href="properties.html"><span class="">Properties</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="stats.html"><span class="">Stats</span></a>
-                                </li>
-                                <li class="uk-link-toggle uk-nav-divider">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Tag.html"><span class="">Tags</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Category.html"><span class="">Category</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Scope.html"><span class="">Scopes</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Topic.html"><span class="">Topics</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Product.html"><span class="">Products</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Author.html"><span class="">Authors</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="Team.html"><span class="">Teams</span></a>
+                                    <a class="uk-link-heading" href="stats.html"><span class="">Stats</span></a>
                                 </li>
                             </ul>
                         </div>
                     </li>
-
 % if var['repo']['git'] == 'true':
                     <li>
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
@@ -142,16 +132,16 @@ ${var['menu_contents']}
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
+                                    <a class="uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
                                 </li>
                                 <!--
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-none">About this theme</span></a>
+                                    <a class="uk-link-heading" href="about_theme.html"><span class="uk-padding-none">About this theme</span></a>
                                 </li>
                                 -->
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
+                                    <a class="uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
                                 </li>
                             </ul>
                         </div>

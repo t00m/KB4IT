@@ -25,7 +25,7 @@ from kb4it.core.log import get_logger
 from functools import wraps
 import time
 
-log = get_logger('KB4ITUtil')
+log = get_logger('Util')
 
 def timeit(func):
     @wraps(func)

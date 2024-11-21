@@ -106,12 +106,14 @@ class Builder(Service):
         """Create a new variable for rendering templates."""
         theme_var = {}
         theme_var['theme'] = self.srvbes.get_theme_properties()
-        # ~ var['kbdict'] = srvbes.get_kb_dict()
         theme_var['repo'] = self.srvbes.get_repo_parameters()
         theme_var['env'] = ENV
         theme_var['conf'] = self.app.get_app_conf()
         theme_var['page'] = {}
         theme_var['page']['title'] = ''
+        theme_var['kb'] = {}
+        theme_var['kb']['keys'] = self.srvdtb.get_keys()
+        # ~ self.log.info(f"Keys: {theme_var['kb']['keys']}")
 
         return theme_var
 
