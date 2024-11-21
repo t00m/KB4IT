@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/coderay-asciidoctor.css" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/TimelineJS/css/timeline.css" />
     <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
     <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
     <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
