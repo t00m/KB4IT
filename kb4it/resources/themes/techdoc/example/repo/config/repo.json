@@ -6,15 +6,10 @@
         "Topic"
     ],
     "events": [
-        "Call",
         "Change",
-        "Event",
+        "Course",
         "Incident",
         "Issue",
-        "Maintenance",
-        "Meeting",
-        "Milestone",
-        "Normal change",
         "Note",
         "Post",
         "Procedure",
@@ -22,9 +17,8 @@
         "Reminder",
         "Report",
         "Task",
-        "Urgent change"
     ],
-    "git": "false",
+    "git": false,
     "git_branch": "",
     "git_path": "",
     "git_repo": "",
@@ -38,8 +32,9 @@
     "sort": [
         "Updated"
     ],
-    "source": "/tmp/test2/source",
-    "target": "/tmp/test2/target",
+    "source": "/path/to/source/dir",
+    "target": "/path/to/target/dir",
     "theme": "techdoc",
-    "title": "IT Notes"
+    "title": "IT Notes",
+    "webserver": false
 }
