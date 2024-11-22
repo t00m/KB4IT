@@ -630,9 +630,10 @@ class Backend(Service):
                         if cached_hash == current_hash:
                             COMPILE = False
 
+
                 if COMPILE or self.parameters['force']:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                    # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
+                    self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
                     self.log.info("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
                     job = exe.submit(self.compilation_started, data)

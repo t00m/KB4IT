@@ -1,4 +1,4 @@
-= ${var['repo']['title']}
+= ${var['page']['title']}
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
@@ -15,9 +15,6 @@
 % else:
 
 ++++
-<div class ="uk-container uk-overflow-auto">
-        ${var['trimester']}
-</div>
 <div class ="uk-container uk-overflow-auto">
 ${var['page']['dt_documents']}
 </div>

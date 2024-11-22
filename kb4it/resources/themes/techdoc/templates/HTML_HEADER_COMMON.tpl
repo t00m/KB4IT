@@ -1,7 +1,7 @@
-<!DOCTYPE Html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>KB4IT - ${var['page']['title']}</title>
+    <title>${var['repo']['title']} - ${var['page']['title']}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Asciidoctor 2.0.10">

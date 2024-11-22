@@ -63,7 +63,7 @@ class Builder(Service):
 
         # Add compiled page to the target list
         self.srvbes.add_target(PAGE_NAME)
-        # ~ self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
+        self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
 
     def template(self, template):
         """Return the template content from chosen theme"""

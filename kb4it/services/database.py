@@ -54,8 +54,8 @@ class Database(Service):
         except KeyError:
             self.log.debug("[DATABASE] - DOC[%s] not found in database", doc)
 
-    def add_document(self, doc):
-        """Add a new document node to the database."""
+    def add_document(self, doc: str):
+        """Add a new document node to the database ('name.adoc')"""
         self.db[doc] = {}
         self.log.debug("[DATABASE] - DOC[%s] added to database", doc)
 
