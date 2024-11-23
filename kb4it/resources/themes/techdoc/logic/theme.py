@@ -20,6 +20,9 @@ from kb4it.core.util import valid_filename
 from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_human_datetime
+from kb4it.core.util import get_human_datetime_day
+from kb4it.core.util import get_human_datetime_month
+from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import json_save
 
@@ -151,9 +154,9 @@ class Theme(Builder):
             timeline_content = timeline.get_all()
             json_save(timeline_filepath, timeline_content)
             self.srvbes.add_target('timeline_main.json')
-        else:
-            for doc in self.srvdtb.get_documents():
-                doclist.append(doc)
+
+        for doc in self.srvdtb.get_documents():
+            doclist.append(doc)
 
         headers = []
         datatable = self.build_datatable(headers, doclist)
@@ -238,6 +241,11 @@ class Theme(Builder):
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
                         self.distribute_adoc(EVENT_PAGE_DAY, html)
+
+                        human_title = get_human_datetime_day(edt)
+                        self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.adoc")
+                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
+                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'System', '')
                     else:
                         self.distribute_html(pagename)
 
@@ -259,6 +267,12 @@ class Theme(Builder):
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
                     self.distribute_adoc(EVENT_PAGE_MONTH, html)
+
+                    human_title = get_human_datetime_month(edt)
+                    self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.adoc")
+                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'Title', f"Events on {human_title}")
+                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'System', '')
+
                 else:
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
                     self.distribute_html(pagename)
@@ -281,6 +295,12 @@ class Theme(Builder):
                 html += self.srvcal.formatyearpage(year, 4)
                 thisyear['content'] = html
                 self.distribute_adoc(page_name, PAGE.render(var=thisyear))
+
+                human_title = get_human_datetime_year(edt)
+                self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'System', '')
+
             else:
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(pagename)
@@ -485,6 +505,11 @@ class Theme(Builder):
         var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
         self.distribute_adoc('all', page)
+
+        self.srvdtb.add_document('all.adoc')
+        self.srvdtb.add_document_key('all.adoc', 'Title', 'All documents')
+        self.srvdtb.add_document_key('all.adoc', 'System', '')
+
         self.log.debug("[THEME] - Created page for bookmarks")
         return page
 
@@ -636,6 +661,11 @@ class Theme(Builder):
         adoc = TPL_PAGE_KEY.render(var=var)
         var['pagename'] = "%s" % valid_filename(key)
         self.distribute_adoc(var['pagename'], adoc)
+
+        self.srvdtb.add_document(f"{var['pagename']}.adoc")
+        self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
+        self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'System', '')
+
         self.log.debug("[THEME] - Created page key '%s'", var['pagename'])
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
@@ -665,6 +695,11 @@ class Theme(Builder):
         if var['compile']:
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
             self.distribute_adoc(var['pagename'], adoc)
+
+            self.srvdtb.add_document(f"{var['pagename']}.adoc")
+            self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
+            self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'System', '')
+
             self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
 

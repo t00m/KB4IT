@@ -304,6 +304,17 @@ def get_human_datetime(dt):
     """Return datetime for humans."""
     return "%s" % dt.strftime("%A, %B %d, %Y at %H:%M")
 
+def get_human_datetime_day(dt):
+    """Return day datetime for humans"""
+    return "%s" % dt.strftime("%A, %B %d, %Y")
+
+def get_human_datetime_month(dt):
+    """Return month datetime for humans"""
+    return "%s" % dt.strftime("%B, %Y")
+
+def get_human_datetime_year(dt):
+    """Return year datetime for humans"""
+    return "%s" % dt.strftime("%Y")
 
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
