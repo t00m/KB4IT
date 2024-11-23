@@ -236,7 +236,7 @@ class Theme(Builder):
                         must_compile_year.add("%4d" % (year))
                         edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
-                        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+                        headers = []
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
@@ -262,7 +262,7 @@ class Theme(Builder):
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
-                    headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+                    headers = []
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
@@ -500,7 +500,7 @@ class Theme(Builder):
         doclist = []
         for doc in self.srvdtb.get_documents():
             doclist.append(doc)
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = []
         datatable = self.build_datatable(headers, doclist)
         var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
@@ -688,7 +688,7 @@ class Theme(Builder):
         doclist = []
         for doc in sorted_docs:
             doclist.append(doc)
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = []
         datatable = self.build_datatable(headers, doclist)
         var['page']['dt_documents'] = datatable
 
@@ -713,7 +713,7 @@ class Theme(Builder):
             if bookmark == 'Yes' or bookmark == 'True':
                 doclist.append(doc)
         self.log.debug("[THEME] - Found %d bookmarks", len(doclist))
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = []
         datatable = self.build_datatable(headers, doclist)
 
         var['page']['title'] = 'Bookmarks'
@@ -755,7 +755,7 @@ class Theme(Builder):
                     if doc != this_doc:
                         doclist.add(this_doc)
                         has_docs = True
-        headers = ['Title', 'Team', 'Category', 'Scope', 'Topic']
+        headers = []
         var['datatable'] = self.build_datatable(headers, doclist)
         return TPL_SECTION_RELATED.render(var=var)
 
