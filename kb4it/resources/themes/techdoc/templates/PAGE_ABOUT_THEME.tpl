@@ -1,5 +1,7 @@
 = About theme ${var['theme']['name']}
 
+:System:
+
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
 [options="header", width="100%", cols="20%,80%"]

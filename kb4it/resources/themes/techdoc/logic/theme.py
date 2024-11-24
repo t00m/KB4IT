@@ -88,13 +88,13 @@ class Theme(Builder):
 
         datatable = {}
         repo = self.srvbes.get_repo_parameters()
-
         # Add datatable hearders
         datatable['header'] = ''
         if len(headers) == 0:
             headers = repo['datatable']
-        sort_attr = repo['sort'][0]
-        headers.insert(0, sort_attr)
+        # ~ sort_attr = repo['sort'][0]
+        # ~ headers.insert(0, sort_attr)
+
         for item in headers:
             var = {}
             var['item'] = item
@@ -586,7 +586,6 @@ class Theme(Builder):
             timestamp = get_human_datetime(now)
             # ~ keys = get_asciidoctor_attributes(path_adoc)
             keys = self.srvdtb.get_doc_properties(basename_adoc)
-            # ~ self.log.error("%s -> %s", path_adoc, keys)
 
             with open(path_adoc, 'r') as fpa:
                 source_adoc = fpa.read()
@@ -719,7 +718,6 @@ class Theme(Builder):
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable
         page = TPL_PAGE_BOOKMARKS.render(var=var)
-        # ~ self.log.error("PAGE: %s", page)
         self.distribute_adoc('bookmarks', page)
         self.log.debug("[THEME] - Created page for bookmarks")
 

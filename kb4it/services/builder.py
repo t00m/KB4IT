@@ -67,8 +67,8 @@ class Builder(Service):
 
     def template(self, template):
         """Return the template content from chosen theme"""
-        properties = self.srvbes.get_runtime()
-        theme = properties['theme']
+        runtime = self.srvbes.get_runtime()
+        theme = runtime['theme']
         current_theme = theme['id']
 
         # Try to get the template from cache
@@ -104,6 +104,7 @@ class Builder(Service):
         # FIXME: concurrent.futures MemoryError
         # https://stackoverflow.com/questions/37445540/memory-usage-with-concurrent-futures-threadpoolexecutor-in-python3
         """Create a new variable for rendering templates."""
+        repo = self.srvbes.get_repo_parameters()
         theme_var = {}
         theme_var['theme'] = self.srvbes.get_theme_properties()
         theme_var['repo'] = self.srvbes.get_repo_parameters()
@@ -113,6 +114,14 @@ class Builder(Service):
         theme_var['page']['title'] = ''
         theme_var['kb'] = {}
         theme_var['kb']['keys'] = self.srvdtb.get_keys()
+
+        # Only pass to theme those keys used by documents
+        kbdict = self.srvbes.get_kb_dict()
+        metadata = kbdict['metadata']
+        ignored_keys = set(self.srvdtb.get_ignored_keys())
+        blocked_keys = set(self.srvdtb.get_blocked_keys())
+        used_keys = set(metadata.keys())
+        theme_var['kb']['keys']['menu'] = list(used_keys - blocked_keys - ignored_keys) #repo['menu']
         # ~ self.log.info(f"Keys: {theme_var['kb']['keys']}")
 
         return theme_var

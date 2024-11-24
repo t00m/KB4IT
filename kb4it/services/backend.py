@@ -251,19 +251,11 @@ class Backend(Service):
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
+        sources_path = self.get_source_path()
 
         # Firstly, allow theme to generate documents
         # ~ self.srvthm = self.get_service('Theme')
         self.srvthm.generate_sources()
-
-        # Then, get them
-        sources_path = self.get_source_path()
-        self.runtime['docs']['bag'] = get_source_docs(sources_path)
-        basenames = []
-        for filepath in self.runtime['docs']['bag']:
-            basenames.append(os.path.basename(filepath))
-        self.runtime['docs']['filenames'] = basenames
-        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
 
         # If 'about_app.adoc' doesn't exist, create one from template
         about_app_source = os.path.join(sources_path, 'about_app.adoc')
@@ -271,6 +263,17 @@ class Backend(Service):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
             self.log.warning("Added default 'About App' to your sources")
+
+        # Then, get them
+        self.runtime['docs']['bag'] = get_source_docs(sources_path)
+        basenames = []
+        for filepath in self.runtime['docs']['bag']:
+            basenames.append(os.path.basename(filepath))
+        self.runtime['docs']['filenames'] = basenames
+        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
+
+
+
 
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.info("[BACKEND/SOURCEDOCS] - End at %s", timestamp())

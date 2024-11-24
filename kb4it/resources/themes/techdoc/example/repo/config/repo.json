@@ -1,5 +1,6 @@
 {
     "datatable": [
+        "Update",
         "Title",
         "Category",
         "Scope",
@@ -13,10 +14,9 @@
         "Note",
         "Post",
         "Procedure",
-        "Project",
         "Reminder",
         "Report",
-        "Task",
+        "Task"
     ],
     "git": false,
     "git_branch": "",
@@ -29,12 +29,37 @@
     ],
     "logo": "resources/themes/techdoc/images/logo.svg",
     "logo_alt": "",
+    "menu": [
+        "Author",
+        "Category",
+        "Command",
+        "Component",
+        "Database",
+        "OS",
+        "Periodicity",
+        "Priority",
+        "Product",
+        "Scope",
+        "Server",
+        "SID",
+        "Status",
+        "Tag",
+        "Team",
+        "Topic",
+        "User"
+    ],
     "sort": [
         "Updated"
     ],
     "source": "/path/to/source/dir",
     "target": "/path/to/target/dir",
     "theme": "techdoc",
-    "title": "IT Notes",
+    "timeline": [
+      "Change",
+      "Incident",
+      "Note",
+      "Task"
+    ],
+    "title": "KB4IT",
     "webserver": false
 }
