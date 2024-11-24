@@ -141,7 +141,7 @@ class Backend(Service):
         list of objects that will be copied to the target directory.
         """
         self.runtime['docs']['target'].add(kbfile)
-        self.log.debug("[BACKEND/TARGET] - Added page: %s", kbfile)
+        self.log.debug("[BACKEND/TARGET] - Added resource: %s", kbfile)
 
     def get_runtime(self):
         """Get all properties."""
@@ -251,19 +251,11 @@ class Backend(Service):
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
+        sources_path = self.get_source_path()
 
         # Firstly, allow theme to generate documents
         # ~ self.srvthm = self.get_service('Theme')
         self.srvthm.generate_sources()
-
-        # Then, get them
-        sources_path = self.get_source_path()
-        self.runtime['docs']['bag'] = get_source_docs(sources_path)
-        basenames = []
-        for filepath in self.runtime['docs']['bag']:
-            basenames.append(os.path.basename(filepath))
-        self.runtime['docs']['filenames'] = basenames
-        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
 
         # If 'about_app.adoc' doesn't exist, create one from template
         about_app_source = os.path.join(sources_path, 'about_app.adoc')
@@ -271,6 +263,17 @@ class Backend(Service):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
             self.log.warning("Added default 'About App' to your sources")
+
+        # Then, get them
+        self.runtime['docs']['bag'] = get_source_docs(sources_path)
+        basenames = []
+        for filepath in self.runtime['docs']['bag']:
+            basenames.append(os.path.basename(filepath))
+        self.runtime['docs']['filenames'] = basenames
+        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
+
+
+
 
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.info("[BACKEND/SOURCEDOCS] - End at %s", timestamp())
@@ -416,11 +419,10 @@ class Backend(Service):
             self.kbdict_new['document'][docname]['compile'] = COMPILE
 
             if COMPILE:
-                newadoc = content.replace(ENV['CONF']['EOHMARK'], '', 1)
                 # Write new adoc to temporary dir
                 target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
                 with open(target, 'w') as target_adoc:
-                    target_adoc.write(newadoc)
+                    target_adoc.write(content)
 
                 try:
                     title_cur = self.kbdict_cur['document'][docname]['Title']
@@ -631,9 +633,10 @@ class Backend(Service):
                         if cached_hash == current_hash:
                             COMPILE = False
 
+
                 if COMPILE or self.parameters['force']:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                    # ~ self.log.debug("[COMPILATION] - CMD[%s]", cmd)
+                    self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
                     self.log.info("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
                     job = exe.submit(self.compilation_started, data)

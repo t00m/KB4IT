@@ -1,17 +1,65 @@
 {
-    "events": ["Change", "Course", "Incident", "Issue", "Note", "Post", "Procedure", "Project", "Reminder", "Report", "Task", "Template"],
-    "sort": ["Updated"],
-    "title": "Website title",
-    "target": "/home/user/Documents/repository/target",
-    "source": "/home/user/Documents/repository/source",
-    "theme": "techdoc",
-    "logo": "resources/images/logo.svg",
-    "logo_alt": "",
-    "git": "false",
-    "git_server": "",
-    "git_user": "",
-    "git_repo": "",
+    "datatable": [
+        "Updated",
+        "Title",
+        "Category",
+        "Scope",
+        "Topic"
+    ],
+    "events": [
+        "Change",
+        "Course",
+        "Incident",
+        "Issue",
+        "Note",
+        "Post",
+        "Procedure",
+        "Reminder",
+        "Report",
+        "Task"
+    ],
+    "git": false,
     "git_branch": "",
     "git_path": "",
-    "ignored_keys": ["Updated"]
+    "git_repo": "",
+    "git_server": "",
+    "git_user": "",
+    "ignored_keys": [
+        "Updated"
+    ],
+    "logo": "resources/themes/techdoc/images/logo.svg",
+    "logo_alt": "",
+    "menu": [
+        "Author",
+        "Category",
+        "Command",
+        "Component",
+        "Database",
+        "OS",
+        "Periodicity",
+        "Priority",
+        "Product",
+        "Scope",
+        "Server",
+        "SID",
+        "Status",
+        "Tag",
+        "Team",
+        "Topic",
+        "User"
+    ],
+    "sort": [
+        "Updated"
+    ],
+    "source": "/path/to/source/dir",
+    "target": "/path/to/target/dir",
+    "theme": "techdoc",
+    "timeline": [
+      "Change",
+      "Incident",
+      "Note",
+      "Task"
+    ],
+    "title": "KB4IT",
+    "webserver": false
 }
