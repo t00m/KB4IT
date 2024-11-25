@@ -83,7 +83,7 @@
                             </ul>
                         </div>
                     </li>
-% if var['repo']['git'] == 'true':
+% if var['repo']['git'] == True:
                     <li>
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
                     </li>
