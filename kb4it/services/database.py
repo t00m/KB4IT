@@ -133,6 +133,9 @@ class Database(Service):
                 pass
         return timestamp
 
+    def is_system(self, doc):
+        return 'System' in self.get_doc_properties(doc).keys()
+
     def get_doc_properties(self, doc):
         """Return a dictionary with the properties of a given doc.
         Additionally, the dictionary will contain an extra entry foreach
