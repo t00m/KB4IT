@@ -38,7 +38,7 @@ class Timeline(Service):
                     self.log.error(f"[THEME/TIMELINE] - Error in document '{doc}' with timestamp {timestamp}")
                     continue
                 human_date = get_human_datetime(dt)
-                text = f"<p>Saved in Category <b>{category}</b> on {human_date}</p><p>Access to <a href='{url}'>document</a></p>"
+                text = f"<p>Saved in Category <b>{category}</b> on {human_date}</p><p>Access to <a href='{url}' target='_top'>document</a></p>"
                 event['start_date'] = {}
                 event['start_date']['year'] = str(dt.year)
                 event['start_date']['month'] = str(dt.month)
