@@ -25,6 +25,8 @@ class Timeline(Service):
         data['events'] = []
 
         for doc in self.srvdtb.get_documents():
+            if self.srvdtb.is_system(doc):
+                continue
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category in event_types:
                 event = {}
@@ -32,6 +34,9 @@ class Timeline(Service):
                 url = f"{doc.replace('.adoc', '.html')}"
                 timestamp = self.srvdtb.get_values(doc, sortby)[0]
                 dt = guess_datetime(timestamp)
+                if dt is None:
+                    self.log.error(f"[THEME/TIMELINE] - Error in document '{doc}' with timestamp {timestamp}")
+                    continue
                 human_date = get_human_datetime(dt)
                 text = f"<p>Saved in Category <b>{category}</b> on {human_date}</p><p>Access to <a href='{url}'>document</a></p>"
                 event['start_date'] = {}
@@ -45,21 +50,4 @@ class Timeline(Service):
                 data['events'].append(event)
 
         return data
-
-
-        # ~ return """{
-    # ~ "events": [
-        # ~ {
-            # ~ "start_date": { "year": "2024", "month": "11", "day": "20" },
-            # ~ "text": { "headline": "CRM Production Migration", "text": "<p>Description of event 1.a i</p><p>asdlkfjalsdkfjalsdkfadlfka adklasdf asdñlfkadsñf</p><p><a href='index.html'>Document</a></p>" },
-            # ~ "group": "Migration"
-       # ~ },
-        # ~ {
-            # ~ "start_date": { "year": "2024", "month": "11", "day": "01" },
-            # ~ "text": { "headline": "Additonal Application Server Installation", "text": "<p>Description of event 1.a i</p><p>asdlkfjalsdkfjalsdkfadlfka adklasdf asdñlfkadsñf</p>" },
-            # ~ "group": "Installation"
-       # ~ }
-    # ~ ]
-# ~ }"""
-
 
