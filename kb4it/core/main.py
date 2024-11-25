@@ -111,9 +111,12 @@ class KB4IT:
         """Return app configuration"""
         return self.params
 
-    def get_repo_conf(self):
+    def get_repo_config_dict(self):
         """Return repos configuration"""
         return self.repo
+
+    def get_repo_config_file(self):
+        return self.params.REPO_CONFIG
 
     def __setup_environment(self):
         """Set up KB4IT environment."""

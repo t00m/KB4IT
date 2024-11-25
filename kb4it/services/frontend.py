@@ -36,8 +36,9 @@ class Frontend(Service):
 
     def initialize(self):
         """"""
-        self.get_services()
-        self.runtime = self.srvbes.get_runtime()
+        # ~ self.get_services()
+        # ~ self.runtime = self.srvbes.get_runtime()
+        pass
 
     def theme_list(self):
         self.log.debug("[FRONTEND] - List of themes availables")

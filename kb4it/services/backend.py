@@ -53,56 +53,12 @@ class Backend(Service):
 
         # Get params from command line
         self.log.info("[BACKEND] - Started at %s", timestamp())
-        self.parameters = self.app.get_repo_conf()
+        self.parameters = self.app.get_repo_config_dict()
         for param in self.parameters:
             self.log.debug("[BACKEND/SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
 
         # Initialize directories
         self.runtime['dir'] = {}
-        self.runtime['dir']['source'] = os.path.realpath(self.parameters['source'])
-        self.runtime['dir']['target'] = os.path.realpath(self.parameters['target'])
-
-        PROJECT = valid_filename(self.runtime['dir']['source'])
-        WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
-        self.runtime['dir']['work'] = WORKDIR
-        self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
-        self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
-        self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
-        self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
-
-        for entry in self.runtime['dir']:
-            create_directory = False
-            dirname = self.runtime['dir'][entry]
-            if entry not in ['source', 'target']:
-                dirname = self.runtime['dir'][entry]
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-                    create_directory = True
-            self.log.debug(f"[BACKEND/SETUP] - Create directory {dirname}? {create_directory}")
-
-        # if SORT attribute is given, use it instead of the OS timestamp
-        try:
-            self.runtime['sort_attribute'] = self.parameters['sort']
-        except:
-            self.runtime['sort_attribute'] = 'Timestamp'
-        self.log.debug("[BACKEND/SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
-
-        # Initialize docs structure
-        self.runtime['docs'] = {}
-        self.runtime['docs']['count'] = 0
-        self.runtime['docs']['bag'] = []
-        self.runtime['docs']['target'] = set()
-
-        # Load cache dictionary and initialize the new one
-        self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
-        self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
-
-        self.kbdict_new['document'] = {}
-        self.kbdict_new['metadata'] = {}
-        self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
-
-        # Get services
-        self.get_services()
 
     def load_kbdict(self, source_path):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -151,9 +107,9 @@ class Backend(Service):
         """Get value for a given parameter."""
         return self.runtime[parameter]
 
-    def get_repo_parameters(self):
-        """Get repository parameters."""
-        return self.parameters
+    # ~ def get_repo_parameters(self):
+        # ~ """Get repository parameters."""
+        # ~ return self.parameters
 
     def get_theme_properties(self):
         """Get all properties from loaded theme."""
@@ -197,27 +153,9 @@ class Backend(Service):
     def stage_01_check_environment(self):
         """Check environment."""
         self.log.info("[BACKEND/SETUP] - Start at %s", timestamp())
-        self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
-        self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
-        self.log.info("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
-        self.log.info("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
 
-        # Check if source directory exists. If not, stop application
-        if not os.path.exists(self.get_source_path()):
-            self.log.error("[BACKEND/SETUP] - Source directory '%s' doesn't exist.", self.get_source_path())
-            self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
-            self.app.stop()
-        self.log.info("[BACKEND/SETUP] - Source directory: %s", self.get_source_path())
-
-        # check if target directory exists. If not, create it:
-        if not os.path.exists(self.get_target_path()):
-            os.makedirs(self.get_target_path())
-        self.log.info("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
-
-        if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
-            self.log.error("[BACKEND/SETUP] - No config file especified")
-            self.log.error("[BACKEND/SETUP] - End at %s", timestamp())
-            sys.exit()
+        # Get theme
+        self.srvthm = self.get_service('Theme')
 
         # if no theme defined by params, try to autodetect it.
         # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
@@ -244,6 +182,82 @@ class Backend(Service):
                 self.log.error("[BACKEND/SETUP] - Theme not found")
                 self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
                 self.app.stop()
+
+        go = self.srvthm.check_config()
+        if not go:
+            self.log.error("Your repository config file:")
+            self.log.error(f"{self.app.get_repo_config_file()}")
+            self.log.error(f"[BACKEND/SETUP] - End at {timestamp()}")
+            sys.exit(-1)
+        self.log.info("[BACKEND/SETUP] - Repository configuration checks passed")
+
+        # Finish setting up environment
+        self.runtime['dir']['source'] = os.path.realpath(self.parameters['source'])
+        self.runtime['dir']['target'] = os.path.realpath(self.parameters['target'])
+
+        PROJECT = valid_filename(self.runtime['dir']['source'])
+        WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
+        self.runtime['dir']['work'] = WORKDIR
+        self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
+        self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
+        self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
+        self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
+
+        for entry in self.runtime['dir']:
+            create_directory = False
+            dirname = self.runtime['dir'][entry]
+            if entry not in ['source', 'target']:
+                dirname = self.runtime['dir'][entry]
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
+                    create_directory = True
+            self.log.debug(f"[BACKEND/SETUP] - Create directory {dirname}? {create_directory}")
+
+        self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
+        self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+        self.log.info("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
+        self.log.info("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
+
+        # Check if source directory exists. If not, stop application
+        if not os.path.exists(self.get_source_path()):
+            self.log.error("[BACKEND/SETUP] - Source directory '%s' doesn't exist.", self.get_source_path())
+            self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
+            self.app.stop()
+        self.log.info("[BACKEND/SETUP] - Source directory: %s", self.get_source_path())
+
+        # check if target directory exists. If not, create it:
+        if not os.path.exists(self.get_target_path()):
+            os.makedirs(self.get_target_path())
+        self.log.info("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
+
+        if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
+            self.log.error("[BACKEND/SETUP] - No config file especified")
+            self.log.error("[BACKEND/SETUP] - End at %s", timestamp())
+            sys.exit()
+
+        # if SORT attribute is given, use it instead of the OS timestamp
+        try:
+            self.runtime['sort_attribute'] = self.parameters['sort']
+        except:
+            self.runtime['sort_attribute'] = 'Timestamp'
+        self.log.debug("[BACKEND/SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
+
+        # Get services
+        self.get_services()
+
+        # Initialize docs structure
+        self.runtime['docs'] = {}
+        self.runtime['docs']['count'] = 0
+        self.runtime['docs']['bag'] = []
+        self.runtime['docs']['target'] = set()
+
+        # Load cache dictionary and initialize the new one
+        self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
+        self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
+
+        self.kbdict_new['document'] = {}
+        self.kbdict_new['metadata'] = {}
+        self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
 
         self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
 
@@ -511,7 +525,7 @@ class Backend(Service):
         and CPU.
         """
         self.log.info("[BACKEND/PROCESSING] - Start at %s", timestamp())
-        repo = self.get_repo_parameters()
+        repo = self.app.get_repo_config_dict()
         all_keys = set(self.srvdtb.get_all_keys())
         ign_default_keys = set(self.srvdtb.get_ignored_keys())
         ign_theme_keys = set(repo['ignored_keys'])
@@ -858,8 +872,6 @@ class Backend(Service):
         """
         self.running = True
         self.stage_01_check_environment()
-        self.srvthm = self.get_service('Theme')
-        self.srvthm.generate_sources()
         self.stage_02_get_source_documents()
         self.stage_03_preprocessing()
         self.stage_04_processing()

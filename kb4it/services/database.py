@@ -25,13 +25,13 @@ class Database(Service):
     def initialize(self):
         """Initialize database module."""
         try:
-            repo = self.app.get_repo_conf()
+            repo = self.app.get_repo_config_dict()
             self.sort_attribute = repo['sort']
         except:
             pass
         self.sorted_docs = []
         self.srvbes = self.get_service('Backend')
-        repoconf = self.srvbes.get_repo_parameters()
+        repoconf = self.app.get_repo_config_dict() #self.app.get_repo_config_dict()
         self.keys['all'] = []
         self.keys['blocked'] = ['Timestamp', 'Title']
         self.keys['custom'] = []

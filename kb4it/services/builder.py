@@ -104,10 +104,10 @@ class Builder(Service):
         # FIXME: concurrent.futures MemoryError
         # https://stackoverflow.com/questions/37445540/memory-usage-with-concurrent-futures-threadpoolexecutor-in-python3
         """Create a new variable for rendering templates."""
-        repo = self.srvbes.get_repo_parameters()
+        repo = self.app.get_repo_config_dict()
         theme_var = {}
         theme_var['theme'] = self.srvbes.get_theme_properties()
-        theme_var['repo'] = self.srvbes.get_repo_parameters()
+        theme_var['repo'] = self.app.get_repo_config_dict()
         theme_var['env'] = ENV
         theme_var['conf'] = self.app.get_app_conf()
         theme_var['page'] = {}
@@ -121,7 +121,10 @@ class Builder(Service):
         ignored_keys = set(self.srvdtb.get_ignored_keys())
         blocked_keys = set(self.srvdtb.get_blocked_keys())
         used_keys = set(metadata.keys())
-        theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys)) 
+        if len(repo['menu']) > 0:
+            theme_var['kb']['keys']['menu'] = repo['menu']
+        else:
+            theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys))
         # ~ self.log.info(f"Keys: {theme_var['kb']['keys']}")
 
         return theme_var
