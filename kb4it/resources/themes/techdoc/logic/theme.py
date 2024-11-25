@@ -106,7 +106,7 @@ class Theme(Builder):
             documents[doc] = self.srvdtb.get_doc_properties(doc)
         datatable['rows'] = ''
         for doc in documents:
-            if 'System' in documents[doc]:
+            if self.srvdtb.is_system(doc):
                 continue
             datatable['rows'] += '<tr>'
             timestamp = self.srvdtb.get_doc_timestamp(doc)
