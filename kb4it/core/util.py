@@ -319,3 +319,17 @@ def get_human_datetime_year(dt):
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
+
+def ellipsize_text(text, max_length):
+    if len(text) <= max_length:
+        return text
+    
+    # Number of characters to show on each side of the ellipsis
+    split_length = (max_length - 3) // 2
+    
+    # Handle odd max_length cases
+    start = text[:split_length]
+    end = text[-split_length:] if max_length % 2 == 0 else text[-split_length - 1:]
+    
+    return f"{start}...{end}"
+
