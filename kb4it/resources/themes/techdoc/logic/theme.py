@@ -25,6 +25,7 @@ from kb4it.core.util import get_human_datetime_month
 from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import json_save
+from kb4it.core.util import ellipsize_text
 
 from evcal import EventsCalendar
 from timeline import Timeline
@@ -88,6 +89,8 @@ class Theme(Builder):
 
         datatable = {}
         repo = self.srvbes.get_repo_parameters()
+        sort_attribute = repo['sort']
+       
         # Add datatable hearders
         datatable['header'] = ''
         if len(headers) == 0:
@@ -110,11 +113,13 @@ class Theme(Builder):
                 continue
             datatable['rows'] += '<tr>'
             timestamp = self.srvdtb.get_doc_timestamp(doc)
-            datatable['rows'] += """<td class="">%s</td>""" % timestamp
+            ts_title = timestamp[:10]
+            ts_link = f"events_{ts_title.replace('-', '')}.html" 
+            datatable['rows'] += f"""<td class=""><div uk-tooltip="{timestamp}"><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></div></td>""" 
             for key in headers[1:]:
                 item = {}
                 if key == 'Title':
-                    item['title'] = documents[doc][key]
+                    item['title'] = f"<div uk-tooltip='{documents[doc][key]}'>{ellipsize_text(documents[doc][key], 80)}</div>"
                     item['url'] = documents[doc]['%s_Url' % key]
                     datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
                 else:
@@ -327,6 +332,8 @@ class Theme(Builder):
         self.log.debug("[THEME] - Event types: %s", ', '.join(event_types))
 
         for doc in self.srvdtb.get_documents():
+            if self.srvdtb.is_system(doc):
+                continue
             category = self.srvdtb.get_values(doc, 'Category')[0]
             if category in event_types:
                 try:
