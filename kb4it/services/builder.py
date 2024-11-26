@@ -121,7 +121,7 @@ class Builder(Service):
         ignored_keys = set(self.srvdtb.get_ignored_keys())
         blocked_keys = set(self.srvdtb.get_blocked_keys())
         used_keys = set(metadata.keys())
-        theme_var['kb']['keys']['menu'] = list(used_keys - blocked_keys - ignored_keys) #repo['menu']
+        theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys)) 
         # ~ self.log.info(f"Keys: {theme_var['kb']['keys']}")
 
         return theme_var

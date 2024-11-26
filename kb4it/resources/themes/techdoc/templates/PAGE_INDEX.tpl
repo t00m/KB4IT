@@ -21,7 +21,9 @@
         <script>
             var options = {
                     start_at_end: true,
-                initial_zoom: "2"
+		    zoom_sequence: [0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89], 
+		    initial_zoom: 10,
+		    scale_factor: 1
                 }
             var timeline = new TL.Timeline('timeline-embed', 'timeline_main.json', options);
         </script>

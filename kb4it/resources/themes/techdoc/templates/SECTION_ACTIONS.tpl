@@ -1,6 +1,6 @@
 <!-- Template SECTION_ACTIONS.tpl :: START -->
 % if var['has_toc']:
-  % if var['repo']['git'] == 'true':
+  % if var['repo']['git']:
         <li class="uk-link-toggle uk-button uk-button-default uk-button-small uk-width-1-1 uk-border-rounded uk-margin-small"><!-- Edit Button :: START -->
             <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank"><div class="uk-grid-medium uk-flex-middle" uk-grid><div class="uk-width-auto uk-padding-remove-top uk-padding-remove-bottom"><span class="uk-link-heading" uk-icon="icon: pencil; ratio: 1.0;"></span></div><div class="uk-width-auto uk-padding-small uk-padding-remove-top uk-padding-remove-bottom">Edit</div></div></a>
         </li><!-- Edit Button :: END -->
