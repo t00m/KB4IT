@@ -113,9 +113,14 @@ class Theme(Builder):
                 continue
             datatable['rows'] += '<tr>'
             timestamp = self.srvdtb.get_doc_timestamp(doc)
-            ts_title = timestamp[:10]
+            ts_title = timestamp[:16]
             ts_link = f"events_{ts_title.replace('-', '')}.html"
-            datatable['rows'] += f"""<td class=""><div uk-tooltip="{timestamp}"><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></div></td>"""
+            datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
+            #datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}"><span><div uk-tooltip="{timestamp}">{ts_title}</div></span></a></td>"""
+            #item = {}
+            #item['title'] = f"<div uk-tooltip='{timestamp}'>{ts_title}</div>"
+            #item['url'] = ts_link
+            #datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
             for key in headers[1:]:
                 item = {}
                 if key == 'Title':
