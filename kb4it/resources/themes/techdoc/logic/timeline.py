@@ -43,6 +43,9 @@ class Timeline(Service):
                 event['start_date']['year'] = str(dt.year)
                 event['start_date']['month'] = str(dt.month)
                 event['start_date']['day'] = str(dt.day)
+                event['start_date']['hour'] = str(dt.hour)
+                event['start_date']['minute'] = str(dt.minute)
+                event['start_date']['second'] = str(dt.second)
                 event['text'] = {}
                 event['text']['headline'] = title
                 event['text']['text'] = text

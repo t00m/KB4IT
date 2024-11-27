@@ -52,13 +52,13 @@ class Builder(Service):
         be analyzed.
         """
         ADOC_NAME = "%s.adoc" % name
-        self.log.debug("[BUILDER/DISTRIBUTE] - Received Doc[%s]", ADOC_NAME)
+        self.log.debug(f"[BUILDER/DISTRIBUTE] - Received Doc[{ADOC_NAME}]")
         PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), ADOC_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
             except Exception as error:
-                self.log.error("[BUILDER/DISTRIBUTE] - %s", error)
+                self.log.error(f"[BUILDER/DISTRIBUTE] - {error}")
         PAGE_NAME = ADOC_NAME.replace('.adoc', '.html')
 
         # Add compiled page to the target list
@@ -121,7 +121,7 @@ class Builder(Service):
         ignored_keys = set(self.srvdtb.get_ignored_keys())
         blocked_keys = set(self.srvdtb.get_blocked_keys())
         used_keys = set(metadata.keys())
-        theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys)) 
+        theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys))
         # ~ self.log.info(f"Keys: {theme_var['kb']['keys']}")
 
         return theme_var
