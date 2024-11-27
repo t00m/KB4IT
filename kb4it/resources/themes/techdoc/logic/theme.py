@@ -114,13 +114,8 @@ class Theme(Builder):
             datatable['rows'] += '<tr>'
             timestamp = self.srvdtb.get_doc_timestamp(doc)
             ts_title = timestamp[:16]
-            ts_link = f"events_{ts_title.replace('-', '')}.html"
+            ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
             datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
-            #datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}"><span><div uk-tooltip="{timestamp}">{ts_title}</div></span></a></td>"""
-            #item = {}
-            #item['title'] = f"<div uk-tooltip='{timestamp}'>{ts_title}</div>"
-            #item['url'] = ts_link
-            #datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
             for key in headers[1:]:
                 item = {}
                 if key == 'Title':
@@ -596,7 +591,6 @@ class Theme(Builder):
             var = self.get_theme_var()
             now = datetime.now()
             timestamp = get_human_datetime(now)
-            # ~ keys = get_asciidoctor_attributes(path_adoc)
             keys = self.srvdtb.get_doc_properties(basename_adoc)
 
             with open(path_adoc, 'r') as fpa:
@@ -624,7 +618,7 @@ class Theme(Builder):
             var['keys'] = keys
             try:
                 var['page']['title'] = keys['Title']
-            except:
+            except Exception as error:
                 pass
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
@@ -634,8 +628,7 @@ class Theme(Builder):
             actions = self.get_page_actions(var)
             var['actions'] = actions
             var['timestamp'] = timestamp
-            # ~ var = self.apply_transformations(var)
-            # ~ self.log.error("MEMVAR[%s] = %s", basename_adoc, get_process_memory())
+
             HEADER = HTML_HEADER_COMMON.render(var=var)
             BODY = HTML_BODY.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
