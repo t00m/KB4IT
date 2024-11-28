@@ -32,12 +32,17 @@ class Frontend(Service):
     def get_services(self):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
-        self.srvbes = self.get_service('Backend')
+        # ~ self.srvbes = self.get_service('Backend')
 
     def initialize(self):
         """"""
-        self.get_services()
-        self.runtime = self.srvbes.get_runtime()
+        # ~ self.get_services()
+        # ~ self.runtime = self.srvbes.get_runtime()
+        pass
+
+    def set_config(self, repo: dict, runtime: dict):
+        self.repo = repo
+        self.runtime = runtime
 
     def theme_list(self):
         self.log.debug("[FRONTEND] - List of themes availables")
@@ -132,7 +137,7 @@ class Frontend(Service):
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug("[FRONTEND] - Autodetecting theme from source path")
-            source_path = self.srvbes.get_source_path()
+            source_path = self.runtime['dir']['source']
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
@@ -144,7 +149,7 @@ class Frontend(Service):
         else:
             self.log.debug(f"[FRONTEND] - Looking for theme: '{theme}'")
             # Search in sources path
-            source_path = self.srvbes.get_source_path()
+            source_path = self.runtime['dir']['source']
             theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
             theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
             theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)

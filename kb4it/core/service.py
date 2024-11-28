@@ -57,7 +57,7 @@ class Service:
         self.app = app
         self.logname = logname
         self.section_name = section_name
-        conf = self.app.get_app_conf()
+        conf = self.app.get_app_params()
         severity = conf.LOGLEVEL
         self.log = get_logger(logname, severity)
         self.initialize()

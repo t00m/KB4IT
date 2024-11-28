@@ -52,15 +52,22 @@ class Backend(Service):
         self.running = False
 
         # Get params from command line
+        self.params = self.app.get_app_params()
+        repo_config_file = self.params.REPO_CONFIG_FILE
+        try:
+            self.repo = json_load(repo_config_file)
+        except Exception as error:
+            self.log.error(f"[BACKEND/SETUP] - Error reading repository config file: '{repo_config_file}")
+            sys.exit(-1)
+
         self.log.info("[BACKEND] - Started at %s", timestamp())
-        self.parameters = self.app.get_repo_conf()
-        for param in self.parameters:
-            self.log.debug("[BACKEND/SETUP] - KB4IT Param[%s] Value[%s]", param, self.parameters[param])
+        for param in self.repo:
+            self.log.debug(f"[BACKEND/SETUP] - Repo Parameter[{param}]: {self.repo[param]}")
 
         # Initialize directories
         self.runtime['dir'] = {}
-        self.runtime['dir']['source'] = os.path.realpath(self.parameters['source'])
-        self.runtime['dir']['target'] = os.path.realpath(self.parameters['target'])
+        self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
+        self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
 
         PROJECT = valid_filename(self.runtime['dir']['source'])
         WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
@@ -82,12 +89,13 @@ class Backend(Service):
 
         # if SORT attribute is given, use it instead of the OS timestamp
         try:
-            self.runtime['sort_attribute'] = self.parameters['sort']
+            self.runtime['sort_attribute'] = self.repo['sort']
         except:
             # ~ self.runtime['sort_attribute'] = 'Timestamp'
             self.log.error("[BACKEND/SETUP] - No timestamp property defined for sorting")
             sys.exit(-1)
-        self.log.debug("[BACKEND/SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
+
+        self.log.debug("[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
 
         # Initialize docs structure
         self.runtime['docs'] = {}
@@ -105,6 +113,10 @@ class Backend(Service):
 
         # Get services
         self.get_services()
+
+        # Initialize Frontend and Database
+        self.srvfes.set_config(self.repo, self.runtime)
+        self.srvdtb.set_config(self.repo, self.runtime)
 
     def load_kbdict(self, source_path):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -155,7 +167,7 @@ class Backend(Service):
 
     def get_repo_parameters(self):
         """Get repository parameters."""
-        return self.parameters
+        return self.repo
 
     def get_theme_properties(self):
         """Get all properties from loaded theme."""
@@ -222,9 +234,9 @@ class Backend(Service):
             sys.exit()
 
         # if no theme defined by params, try to autodetect it.
-        # ~ self.log.debug("[SETUP] - Paramters: %s", self.parameters)
+        # ~ self.log.debug("[SETUP] - Paramters: %s", self.repo)
         try:
-            theme_name = self.parameters['theme']
+            theme_name = self.repo['theme']
         except KeyError:
             theme_name = 'techdoc'
 
@@ -394,7 +406,7 @@ class Backend(Service):
 
             # Force compilation (from command line)?
             DOC_COMPILATION = False
-            FORCE_ALL = self.parameters['force']
+            FORCE_ALL = self.params.FORCE
             if not FORCE_ALL:
                 # Get cached document path and check if it exists
                 cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
@@ -528,7 +540,7 @@ class Backend(Service):
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_KEY = key in self.FK
-            FORCE_ALL = self.parameters['force'] or FORCE_KEY
+            FORCE_ALL = self.params.FORCE or FORCE_KEY
             values = self.srvdtb.get_all_values_for_key(key)
 
             # Compare keys values for the current run and the cache
@@ -616,8 +628,8 @@ class Backend(Service):
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
-        params = self.app.get_app_conf()
-        with Executor(max_workers=params.NUM_WORKERS) as exe:
+        # ~ params = self.app.get_app_conf()
+        with Executor(max_workers=self.params.NUM_WORKERS) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
@@ -636,7 +648,7 @@ class Backend(Service):
                             COMPILE = False
 
 
-                if COMPILE or self.parameters['force']:
+                if COMPILE or self.params.FORCE:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
@@ -759,7 +771,7 @@ class Backend(Service):
                 self.log.error(error)
                 self.log.error("[BACKEND/INSTALL] - Consider to run the command again with the option -force")
             n += 1
-        self.log.info("[BACKEND/INSTALL] - Copied %d cached documents successfully to target path", n)
+        self.log.info(f"[BACKEND/INSTALL] - Copied {n} cached documents successfully to target path")
 
         # Copy global resources to target path
         resources_dir_target = os.path.join(self.get_target_path(), 'resources')

@@ -51,7 +51,7 @@ class KB4IT:
             self.params = params
         else:
             self.params = argparse.Namespace()
-            self.params.REPO_CONFIG = None
+            self.params.REPO_CONFIG_FILE = None
 
         # Initialize log
         if 'LOGLEVEL' not in self.params:
@@ -77,43 +77,13 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
+        self.log.debug("[CONTROLLER] - Command line parameters:")
         for key in vars(self.params):
-            self.log.debug("[CONTROLLER] - Parameter[%s] Value[%s]", key, vars(self.params)[key])
+            self.log.debug(f"[CONTROLLER] - {key}: {vars(self.params)[key]}")
 
-        repo_exists = False
-        if self.params.REPO_CONFIG:
-            if os.path.exists(self.params.REPO_CONFIG):
-                with open(self.params.REPO_CONFIG, 'r') as conf:
-                    try:
-                        self.repo = json.load(conf)
-                        self.repo['force'] = self.params.FORCE
-                        repo_exists = True
-                        self.log.debug("[CONTROLLER] - Repository configuration found and loaded")
-                    except json.decoder.JSONDecodeError:
-                        self.log.error("[CONTROLLER] - Repository config file couldn't be read")
-
-        if not repo_exists:
-            # Create a fake repository
-            self.repo = {}
-            self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
-            self.repo['target'] = ENV['LPATH']['TMP_TARGET']
-            self.repo['force'] = False
-            self.log.debug("[CONTROLLER] - Repository configuration not found. Fake configuration built")
-
-        if not 'workers' in self.repo:
-            self.repo['workers'] = self.params.NUM_WORKERS
-
-
-        self.log.debug("[CONTROLLER] - Params checked.")
-
-
-    def get_app_conf(self):
+    def get_app_params(self):
         """Return app configuration"""
         return self.params
-
-    def get_repo_conf(self):
-        """Return repos configuration"""
-        return self.repo
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
@@ -209,9 +179,6 @@ class KB4IT:
         frontend = self.get_service('Frontend')
 
         if self.params.LIST_THEMES:
-            self.repo = {}
-            self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
-            self.repo['target'] = ENV['LPATH']['TMP_TARGET']
             frontend.theme_list()
         elif self.params.INIT:
             initialize = False
@@ -288,7 +255,7 @@ def main():
     kb4it_options.add_argument('-f', '--force', help='Force a clean compilation', action='store_true', dest='FORCE', required=False, default=False)
     kb4it_options.add_argument('-i', '--init', help='Initialize repository', nargs=2, metavar=('THEME', 'REPO_PATH'), dest='INIT', required=False)
     kb4it_options.add_argument('-l', '--list-themes', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False, default=False)
-    kb4it_options.add_argument('-r', '--repo', help='Use this repository config file', action='store', dest='REPO_CONFIG')
+    kb4it_options.add_argument('-r', '--repo', help='Use this repository config file', action='store', dest='REPO_CONFIG_FILE')
     kb4it_options.add_argument('-w', '--workers', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % NUM_WORKERS, type=int, action='store', dest='NUM_WORKERS', default=int(NUM_WORKERS), required=False)
     kb4it_options.add_argument('-L', '--log-level', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', required=False)
     kb4it_options.add_argument('-v', '--version', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))

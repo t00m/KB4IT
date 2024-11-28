@@ -109,7 +109,7 @@ class Builder(Service):
         theme_var['theme'] = self.srvbes.get_theme_properties()
         theme_var['repo'] = self.srvbes.get_repo_parameters()
         theme_var['env'] = ENV
-        theme_var['conf'] = self.app.get_app_conf()
+        theme_var['conf'] = self.app.get_app_params()
         theme_var['page'] = {}
         theme_var['page']['title'] = ''
         theme_var['kb'] = {}

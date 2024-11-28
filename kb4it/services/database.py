@@ -24,20 +24,19 @@ class Database(Service):
 
     def initialize(self):
         """Initialize database module."""
-        try:
-            repo = self.app.get_repo_conf()
-            self.sort_attribute = repo['sort']
-        except:
-            pass
+        pass
+
+    def set_config(self, repo:dict, runtime: dict):
+        self.repo = repo
+        self.runtime = runtime
+        self.sort_attribute = repo['sort']
         self.sorted_docs = []
-        self.srvbes = self.get_service('Backend')
-        repoconf = self.srvbes.get_repo_parameters()
         self.keys['all'] = []
         self.keys['blocked'] = ['Title']
         self.keys['custom'] = []
         self.keys['theme'] = []
         try:
-            self.keys['ignored'] = repoconf['ignored_keys']
+            self.keys['ignored'] = self.repo['ignored_keys']
         except:
             # FIXME: raises error when the command line option -r
             # is not passed
@@ -121,7 +120,7 @@ class Database(Service):
         try:
             return self.db[doc][self.sort_attribute][0]
         except KeyError as error:
-            self.log.error(f"Document '{doc}' doesn't have the sort attribute '{error}")
+            self.log.error(f"Document '{doc}' doesn't have the sort attribute {error}")
             return ''
 
 
