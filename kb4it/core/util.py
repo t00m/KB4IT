@@ -320,7 +320,7 @@ def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
 
-def ellipsize_text(text, max_length):
+def ellipsize_text(text: str, max_length: int=70):
     if len(text) <= max_length:
         return text
     
