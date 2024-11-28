@@ -616,6 +616,8 @@ class Theme(Builder):
                 var['metadata'] = ""
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
+            var['page']['title'] = 'No title found...'
+            var['page']['title-tooltip'] = 'No title found...'
             try:
                 var['page']['title'] = ellipsize_text(keys['Title'])
                 var['page']['title-tooltip'] = keys['Title']

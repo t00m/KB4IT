@@ -170,3 +170,8 @@ class Builder(Service):
         TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
         var = self.get_theme_var()
         self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
+
+        self.srvdtb.add_document('about_kb4it.adoc')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'Updated', '2024-11-28 17:45:00')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'System', 'Yes')

@@ -42,7 +42,7 @@
 <!-- Template version ${var['env']['APP']['version']} -->
 <div class="uk-background-muted uk-height-viewport">
 <div id="container-1" class="uk-container uk-container-center">
-    <div id="print" class="uk-flex uk-flex-center"><span class="uk-text-lead">${var['page']['title']}</span></div>
+    <div id="print" class="uk-flex uk-flex-center"><span class="uk-text-lead"><a href="#" text="${var['page']['title-tooltip']}" uk-tooltip>${var['page']['title']}</a></span></div>
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">

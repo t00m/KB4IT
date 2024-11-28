@@ -33,7 +33,7 @@ class Database(Service):
         self.srvbes = self.get_service('Backend')
         repoconf = self.srvbes.get_repo_parameters()
         self.keys['all'] = []
-        self.keys['blocked'] = ['Timestamp', 'Title']
+        self.keys['blocked'] = ['Title']
         self.keys['custom'] = []
         self.keys['theme'] = []
         try:
@@ -96,6 +96,7 @@ class Database(Service):
         can_sort = True
         for doc in doclist:
             sdate = self.get_doc_timestamp(doc)
+            # ~ self.log.error(f"sdate = {sdate} type = {type(sdate)}")
             ts = guess_datetime(sdate)
             if ts is not None:
                 adict[doc] = ts.strftime("%Y%m%d")
@@ -117,21 +118,12 @@ class Database(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        found = False
-        timestamp = ''
-        for sort_attribute in self.sort_attribute:
-            try:
-                timestamp = self.db[doc][sort_attribute][0]
-                found = True
-            except:
-                pass
+        try:
+            return self.db[doc][self.sort_attribute][0]
+        except KeyError as error:
+            self.log.error(f"Document '{doc}' doesn't have the sort attribute '{error}")
+            return ''
 
-        if not found:
-            try:
-                timestamp = self.db[doc]['Timestamp'][0]
-            except:
-                pass
-        return timestamp
 
     def is_system(self, doc):
         return 'System' in self.get_doc_properties(doc).keys()

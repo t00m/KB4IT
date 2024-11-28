@@ -84,7 +84,9 @@ class Backend(Service):
         try:
             self.runtime['sort_attribute'] = self.parameters['sort']
         except:
-            self.runtime['sort_attribute'] = 'Timestamp'
+            # ~ self.runtime['sort_attribute'] = 'Timestamp'
+            self.log.error("[BACKEND/SETUP] - No timestamp property defined for sorting")
+            sys.exit(-1)
         self.log.debug("[BACKEND/SETUP] - Sort attribute[%s]", self.runtime['sort_attribute'])
 
         # Initialize docs structure
@@ -337,8 +339,8 @@ class Backend(Service):
             self.srvdtb.add_document(docname)
 
             # Get datetime timestamp from filesystem and add it as attribute
-            ts = file_timestamp(source)
-            self.srvdtb.add_document_key(docname, 'Timestamp', ts)
+            # ~ ts = file_timestamp(source)
+            # ~ self.srvdtb.add_document_key(docname, 'Timestamp', ts)
 
             # Get content
             with open(source) as source_adoc:
@@ -351,7 +353,7 @@ class Backend(Service):
             # Get Document Content and Metadata Hashes
             self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': content})
             self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
-            self.kbdict_new['document'][docname]['Timestamp'] = ts
+            # ~ self.kbdict_new['document'][docname]['Timestamp'] = ts
 
             # Generate caches
             for key in keys:
@@ -678,7 +680,7 @@ class Backend(Service):
         return res
 
     def compilation_finished(self, future):
-        time.sleep(1) #random.random())
+        time.sleep(0.5) #random.random())
         cur_thread = threading.current_thread().name
         x = future.result()
         if cur_thread != x:
