@@ -678,7 +678,7 @@ class Backend(Service):
         return res
 
     def compilation_finished(self, future):
-        time.sleep(random.random())
+        time.sleep(1) #random.random())
         cur_thread = threading.current_thread().name
         x = future.result()
         if cur_thread != x:
@@ -795,7 +795,7 @@ class Backend(Service):
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.info("[BACKEND/POST-INSTALL] - Start at %s", timestamp())
-        shutil.rmtree(self.runtime['dir']['tmp'])
+        #shutil.rmtree(self.runtime['dir']['tmp'])
         self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
         self.log.info("[BACKEND/POST-INSTALL] - End at %s", timestamp())
 
