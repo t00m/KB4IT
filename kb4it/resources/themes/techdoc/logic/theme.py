@@ -617,7 +617,8 @@ class Theme(Builder):
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
             try:
-                var['page']['title'] = keys['Title']
+                var['page']['title'] = ellipsize_text(keys['Title'])
+                var['page']['title-tooltip'] = keys['Title']
             except Exception as error:
                 pass
             var['basename_adoc'] = basename_adoc
