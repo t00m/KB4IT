@@ -144,7 +144,7 @@ class KB4IT:
         """Get all registered services"""
         return self.services
 
-    def get_service(self, name: str, params:dict):
+    def get_service(self, name: str, params:dict = {}):
         """Get or start a registered service."""
         self.log.info(f"[CONTROLLER] - Getting service '{name}'")
         try:
@@ -180,6 +180,10 @@ class KB4IT:
         self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
 
     def run(self):
+        self.srvbes = self.get_service('Backend')
+        adict = {}
+        adict['runtime'] = 'test'
+        self.srvfes = self.get_service('Frontend', adict) 
         """Start application."""
         """
         frontend = self.get_service('Frontend')

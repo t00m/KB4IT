@@ -51,7 +51,7 @@ class Service:
         """Print traceback."""
         self.log.debug("[SERVICE] - %s", get_traceback())
 
-    def start(self, app, logname:str, section_name:str, params:dict):
+    def start(self, app, logname:str, section_name:str, params:dict = {}):
         """Start service."""
         self.started = True
         self.app = app

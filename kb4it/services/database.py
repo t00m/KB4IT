@@ -22,7 +22,7 @@ class Database(Service):
     sorted_docs = []
 
 
-    def initialize(self):
+    def initialize(self, params: dict = {}):
         """Initialize database module."""
         pass
 

@@ -46,7 +46,7 @@ class Backend(Service):
     kbdict_cur = {}  # Cached data
     FK = set()
 
-    def initialize(self):
+    def initialize(self, params: dict = {}):
         """Initialize application structure."""
 
         self.log.info("[BACKEND] - Started at %s", timestamp())
