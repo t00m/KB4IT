@@ -5,7 +5,47 @@
 
 #!/bin/bash
 
-detect_distro() {
+uninstall_kb4it() {
+    if [ -f /etc/os-release ]; then
+        # Read the os-release file
+        . /etc/os-release
+        case "$ID" in
+            debian)
+                echo "Uninstalling KB4IT in Debian"
+                pip uninstall kb4it -y --break-system-packages
+                ;;
+            ubuntu)
+                echo "Unistalling KB4IT in Ubuntu (based on Debian)"
+                pip uninstall kb4it -y --break-system-packages
+                ;;
+            rhel | redhat)
+                echo "Uninstalling KB4IT in Red Hat Enterprise Linux"
+                pip uninstall kb4it -y
+                ;;
+            centos)
+                echo "Uninstalling KB4IT in CentOS"
+                pip uninstall kb4it -y
+                ;;
+            arch)
+                echo "Uninstalling KB4IT in Arch Linux"
+                echo "No instructions provided. Open a ticket (and if possible the command):"
+                echo "https://github.com/t00m/KB4IT/issues"
+                ;;
+            *)
+                echo "Unknown Linux distribution: $ID"
+                echo "Open a ticket (and if possible the command):"
+                echo "https://github.com/t00m/KB4IT/issues"
+                ;;
+        esac
+    else
+        echo "/etc/os-release not found. Cannot detect distribution."
+        echo "Open a ticket (and if possible the command):"
+        echo "https://github.com/t00m/KB4IT/issues"
+    fi
+}
+
+
+install_kb4it() {
     if [ -f /etc/os-release ]; then
         # Read the os-release file
         . /etc/os-release
@@ -51,7 +91,7 @@ echo "Installing KB4IT from sources in user space (no root/admin privileges need
 echo ""
 echo "Uninstalling previous version"
 echo "-----------------------------"
-pip uninstall kb4it -y --break-system-packages
+uninstall_kb4it
 echo ""
 echo "Cleaning environment"
 echo "-----------------"
@@ -62,7 +102,7 @@ echo ""
 
 echo "Installing KB4IT"
 echo "----------------"
-detect_distro
+install_kb4it
 echo ""
 echo "Installation finished"
 echo "---------------------"
