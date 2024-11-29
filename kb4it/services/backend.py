@@ -61,8 +61,10 @@ class Backend(Service):
             sys.exit(-1)
 
         self.log.info("[BACKEND] - Started at %s", timestamp())
+
+        self.log.info(f"[BACKEND/SETUP] - Repository parameters:")
         for param in self.repo:
-            self.log.debug(f"[BACKEND/SETUP] - Repo Parameter[{param}]: {self.repo[param]}")
+            self.log.info(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
 
         # Initialize directories
         self.runtime['dir'] = {}
@@ -77,6 +79,7 @@ class Backend(Service):
         self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
         self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
+        self.log.info(f"[BACKEND/SETUP] - Checking directories:")
         for entry in self.runtime['dir']:
             create_directory = False
             dirname = self.runtime['dir'][entry]
@@ -85,7 +88,7 @@ class Backend(Service):
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
                     create_directory = True
-            self.log.debug(f"[BACKEND/SETUP] - Create directory {dirname}? {create_directory}")
+            self.log.info(f"[BACKEND/SETUP] - \tCreate directory {dirname}? {create_directory}")
 
         # if SORT attribute is given, use it instead of the OS timestamp
         try:
@@ -210,11 +213,11 @@ class Backend(Service):
     @timeit
     def stage_01_check_environment(self):
         """Check environment."""
-        self.log.info("[BACKEND/SETUP] - Start at %s", timestamp())
-        self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
-        self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
-        self.log.info("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
-        self.log.info("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
+        self.log.info("[BACKEND/STAGE 1 - CHECKS] - Start at %s", timestamp())
+        #self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
+        #self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+        #self.log.info("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
+        #self.log.info("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
@@ -264,7 +267,7 @@ class Backend(Service):
     @timeit
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
-        self.log.info("[BACKEND/SOURCEDOCS] - Start at %s", timestamp())
+        self.log.info("[BACKEND/STAGE 2 - SOURCES] - Start at %s", timestamp())
         sources_path = self.get_source_path()
 
         # Firstly, allow theme to generate documents

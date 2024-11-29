@@ -58,15 +58,17 @@ class KB4IT:
             self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.LOGLEVEL)
 
+        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+
         # Start up
         self.__setup_environment()
         self.__check_params()
         self.__setup_services()
 
-        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
-        self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
-        self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
-        self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
+        #self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        #self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+        #self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
+        #self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
 
         self.__gonogo()
 
@@ -77,9 +79,9 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        self.log.debug("[CONTROLLER] - Command line parameters:")
+        self.log.info("[CONTROLLER] - Command line parameters:")
         for key in vars(self.params):
-            self.log.debug(f"[CONTROLLER] - {key}: {vars(self.params)[key]}")
+            self.log.info(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
 
     def get_app_params(self):
         """Return app configuration"""
