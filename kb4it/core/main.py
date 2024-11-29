@@ -17,6 +17,7 @@ import stat
 import json
 import multiprocessing
 import argparse
+import traceback
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 from kb4it.core.util import timestamp, copydir
@@ -143,19 +144,21 @@ class KB4IT:
         """Get all registered services"""
         return self.services
 
-    def get_service(self, name):
+    def get_service(self, name: str, params:dict):
         """Get or start a registered service."""
+        self.log.info(f"[CONTROLLER] - Getting service '{name}'")
         try:
-            self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
             service = self.services[name]
             logname = service.__class__.__name__
             if not service.is_started():
-                service.start(self, logname, name)
+                service.start(self, logname, name, params)
             return service
         except Exception as error:
-            self.log.error("[CONTROLLER] - Service %s not registered or not found", error)
-            raise
-            return None
+            self.log.error(f"[CONTROLLER] - Service {name} not registered")
+            self.log.error(f"[CONTROLLER] - \t{error}")
+            self.stop(error=True)
+            #raise
+            #return None
 
     def register_service(self, name, service):
         """Register a new service."""
@@ -178,6 +181,7 @@ class KB4IT:
 
     def run(self):
         """Start application."""
+        """
         frontend = self.get_service('Frontend')
 
         if self.params.LIST_THEMES:
@@ -227,10 +231,17 @@ class KB4IT:
         else:
             backend = self.get_service('Backend')
             backend.run()
+        """
         self.stop()
 
-    def stop(self):
+    def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
+        if error:
+            self.log.error("[CONTROLLER] - Execution aborted because of serious errors")
+            self.log.error(f"[CONTROLLER] - \tTraceback:\n{traceback.print_exc()}")
+            self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {timestamp()}")
+            sys.exit(-1)
+
         try:
             for name in self.services:
                 self.deregister_service(name)

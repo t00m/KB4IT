@@ -34,11 +34,12 @@ class Frontend(Service):
         self.srvdtb = self.get_service('DB')
         # ~ self.srvbes = self.get_service('Backend')
 
-    def initialize(self):
+    def initialize(self, params:dict):
         """"""
         # ~ self.get_services()
         # ~ self.runtime = self.srvbes.get_runtime()
-        pass
+        self.log.info("[FRONTEND] - Paramters received:")
+        self.log.info(f"[FRONTEND] - \t{params}")
 
     def set_config(self, repo: dict, runtime: dict):
         self.repo = repo

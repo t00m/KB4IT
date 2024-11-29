@@ -48,6 +48,9 @@ class Backend(Service):
 
     def initialize(self):
         """Initialize application structure."""
+
+        self.log.info("[BACKEND] - Started at %s", timestamp())
+
         # Status
         self.running = False
 
@@ -62,6 +65,11 @@ class Backend(Service):
 
         self.log.info("[BACKEND] - Started at %s", timestamp())
 
+        # Get services
+        #self.srvfes = self.get_service('Frontend')
+        #self.srvfes.set_config(self.repo) #, self.runtime)
+        self.get_services()
+
         self.log.info(f"[BACKEND/SETUP] - Repository parameters:")
         for param in self.repo:
             self.log.info(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
@@ -70,6 +78,11 @@ class Backend(Service):
         self.runtime['dir'] = {}
         self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
         self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
+        
+        srvparams = {}
+        srvparams['repo'] = self.repo
+        srvparams['runtime'] = self.runtime
+        self.srvfes = self.get_service('Frontend', params)
 
         PROJECT = valid_filename(self.runtime['dir']['source'])
         WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
@@ -115,10 +128,10 @@ class Backend(Service):
         self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
 
         # Get services
-        self.get_services()
+        # self.get_services()
 
         # Initialize Frontend and Database
-        self.srvfes.set_config(self.repo, self.runtime)
+        #self.srvfes.set_config(self.repo, self.runtime)
         self.srvdtb.set_config(self.repo, self.runtime)
 
     def load_kbdict(self, source_path):
@@ -204,7 +217,7 @@ class Backend(Service):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
-        self.srvfes = self.get_service('Frontend')
+        #self.srvfes = self.get_service('Frontend')
 
     def get_numdocs(self):
         """Get current number of valid documents."""
