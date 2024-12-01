@@ -39,100 +39,90 @@ from kb4it.core.util import timeit
 class Backend(Service):
     """Backend class for managing the main logic workflow.
     """
-    running = False
-    parameters = None
-    runtime = {}  # Dictionary of runtime properties
-    kbdict_new = {}  # New compilation cache
-    kbdict_cur = {}  # Cached data
-    FK = set()
+    running = False     # Backend running?
+    runtime = {}        # Dictionary of runtime properties
+    kbdict_new = {}     # New compilation cache
+    kbdict_cur = {}     # Cached data
+    force_keys = set()  # List of keys which must be compiled (forced)
 
-    def initialize(self, params: dict = {}):
+    def initialize(self):
         """Initialize application structure."""
 
         self.log.info("[BACKEND] - Started at %s", timestamp())
 
-        # Status
-        self.running = False
-
         # Get params from command line
         self.params = self.app.get_app_params()
-        repo_config_file = self.params.REPO_CONFIG_FILE
+
+        # Get repository config file (if any)
         try:
+            repo_config_file = self.params.REPO_CONFIG_FILE
             self.repo = json_load(repo_config_file)
+            self.log.info(f"[BACKEND/SETUP] - Repository config file: '{repo_config_file}")
+            self.log.info(f"[BACKEND/SETUP] - Repository parameters:")
+            for param in self.repo:
+                self.log.info(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
+            repo_config_exists = True
         except Exception as error:
-            self.log.error(f"[BACKEND/SETUP] - Error reading repository config file: '{repo_config_file}")
-            sys.exit(-1)
+            self.log.warning(f"[BACKEND/SETUP] -Repository config file not found in command line params")
+            repo_config_exists = False
 
-        self.log.info("[BACKEND] - Started at %s", timestamp())
-
-        # Get services
-        #self.srvfes = self.get_service('Frontend')
-        #self.srvfes.set_config(self.repo) #, self.runtime)
-        self.get_services()
-
-        self.log.info(f"[BACKEND/SETUP] - Repository parameters:")
-        for param in self.repo:
-            self.log.info(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
-
-        # Initialize directories
+        # Initialize runtime dictionary
         self.runtime['dir'] = {}
-        self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
-        self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
-        
-        srvparams = {}
-        srvparams['repo'] = self.repo
-        srvparams['runtime'] = self.runtime
-        self.srvfes = self.get_service('Frontend', params)
+        if repo_config_exists:
+            self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
+            self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
 
-        PROJECT = valid_filename(self.runtime['dir']['source'])
-        WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
-        self.runtime['dir']['work'] = WORKDIR
-        self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
-        self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
-        self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
-        self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
+            PROJECT = valid_filename(self.runtime['dir']['source'])
+            WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
+            self.runtime['dir']['work'] = WORKDIR
+            self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
+            self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
+            self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
+            self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
-        self.log.info(f"[BACKEND/SETUP] - Checking directories:")
-        for entry in self.runtime['dir']:
-            create_directory = False
-            dirname = self.runtime['dir'][entry]
-            if entry not in ['source', 'target']:
+            self.log.info(f"[BACKEND/SETUP] - Checking directories:")
+            for entry in self.runtime['dir']:
+                create_directory = False
                 dirname = self.runtime['dir'][entry]
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-                    create_directory = True
-            self.log.info(f"[BACKEND/SETUP] - \tCreate directory {dirname}? {create_directory}")
+                if entry not in ['source', 'target']:
+                    dirname = self.runtime['dir'][entry]
+                    if not os.path.exists(dirname):
+                        os.makedirs(dirname)
+                        create_directory = True
+                self.log.info(f"[BACKEND/SETUP] - \tCreate directory {dirname}? {create_directory}")
 
-        # if SORT attribute is given, use it instead of the OS timestamp
-        try:
-            self.runtime['sort_attribute'] = self.repo['sort']
-        except:
-            # ~ self.runtime['sort_attribute'] = 'Timestamp'
-            self.log.error("[BACKEND/SETUP] - No timestamp property defined for sorting")
-            sys.exit(-1)
+            # if SORT attribute is given, use it instead of the OS timestamp
+            try:
+                self.runtime['sort_attribute'] = self.repo['sort']
+            except:
+                # ~ self.runtime['sort_attribute'] = 'Timestamp'
+                self.log.error("[BACKEND/SETUP] - No property defined for sorting")
+                sys.exit(-1)
 
-        self.log.debug("[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
+            self.log.debug("[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
 
-        # Initialize docs structure
-        self.runtime['docs'] = {}
-        self.runtime['docs']['count'] = 0
-        self.runtime['docs']['bag'] = []
-        self.runtime['docs']['target'] = set()
+            # Initialize docs structure
+            self.runtime['docs'] = {}
+            self.runtime['docs']['count'] = 0
+            self.runtime['docs']['bag'] = []
+            self.runtime['docs']['target'] = set()
 
-        # Load cache dictionary and initialize the new one
-        self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
-        self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
+            # Load cache dictionary and initialize the new one
+            self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
+            self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
 
-        self.kbdict_new['document'] = {}
-        self.kbdict_new['metadata'] = {}
-        self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
+            self.kbdict_new['document'] = {}
+            self.kbdict_new['metadata'] = {}
+            self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
 
-        # Get services
-        # self.get_services()
+            # Get services
+            self.get_services()
+        else:
+            self.runtime['dir']['source'] = '/dev/null'
 
-        # Initialize Frontend and Database
-        #self.srvfes.set_config(self.repo, self.runtime)
-        self.srvdtb.set_config(self.repo, self.runtime)
+    def set_config(self, config: dict):
+        self.repo = config['repo']
+        self.runtime = config['runtime']
 
     def load_kbdict(self, source_path):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -173,9 +163,13 @@ class Backend(Service):
         self.runtime['docs']['target'].add(kbfile)
         self.log.debug("[BACKEND/TARGET] - Added resource: %s", kbfile)
 
-    def get_runtime(self):
+    def get_runtime_dict(self):
         """Get all properties."""
         return self.runtime
+
+    def get_repo_dict(self):
+        """Get all properties."""
+        return self.repo
 
     def get_runtime_parameter(self, parameter):
         """Get value for a given parameter."""
@@ -217,7 +211,6 @@ class Backend(Service):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
-        #self.srvfes = self.get_service('Frontend')
 
     def get_numdocs(self):
         """Get current number of valid documents."""
@@ -460,7 +453,7 @@ class Backend(Service):
                     if title_new != title_cur:
                         for key in keys:
                             if key != 'Title':
-                                self.FK.add(key)
+                                self.force_keys.add(key)
                 except KeyError:
                     # Very likely there is no kbdict, so this step is skipped
                     pass
@@ -555,7 +548,7 @@ class Backend(Service):
 
         for key in sorted(available_keys):
             COMPILE_KEY = False
-            FORCE_KEY = key in self.FK
+            FORCE_KEY = key in self.force_keys
             FORCE_ALL = self.params.FORCE or FORCE_KEY
             values = self.srvdtb.get_all_values_for_key(key)
 

@@ -29,21 +29,10 @@ class Frontend(Service):
     """
     srvthm = None
 
-    def get_services(self):
-        """Get services needed."""
-        self.srvdtb = self.get_service('DB')
-        # ~ self.srvbes = self.get_service('Backend')
-
-    def initialize(self, params:dict):
+    def initialize(self):
         """"""
-        # ~ self.get_services()
-        # ~ self.runtime = self.srvbes.get_runtime()
-        self.log.info("[FRONTEND] - Paramters received:")
-        self.log.info(f"[FRONTEND] - \t{params}")
-
-    def set_config(self, repo: dict, runtime: dict):
-        self.repo = repo
-        self.runtime = runtime
+        self.srvbes = self.get_service('Backend')
+        self.runtime = self.srvbes.get_runtime_dict()
 
     def theme_list(self):
         self.log.debug("[FRONTEND] - List of themes availables")
@@ -59,6 +48,7 @@ class Frontend(Service):
             except Exception as error:
                 # ~ self.print_traceback()
                 self.log.debug("[FRONTEND] - Theme Id: '%s' NOT valid", dirname)
+                raise
 
         self.log.debug("[FRONTEND] - Installed locally (%s)", ENV['LPATH']['THEMES'])
         local_themes = os.listdir(ENV['LPATH']['THEMES'])
@@ -113,13 +103,13 @@ class Frontend(Service):
 
             # Get date-based attributes from theme. Date attributes aren't
             # displayed as properties but used to build events pages.
-            try:
-                ignored_keys = self.runtime['theme']['ignored_keys']
-                for key in ignored_keys:
-                    self.srvdtb.ignore_key(key)
-                self.log.debug("[FRONTEND] - Ignored keys defined by this theme: %s", ', '.join(ignored_keys))
-            except KeyError:
-                self.log.debug("[FRONTEND] - No ignored_keys defined in this theme")
+            # ~ try:
+                # ~ ignored_keys = self.runtime['theme']['ignored_keys']
+                # ~ for key in ignored_keys:
+                    # ~ self.srvdtb.ignore_key(key)
+                # ~ self.log.debug("[FRONTEND] - Ignored keys defined by this theme: %s", ', '.join(ignored_keys))
+            # ~ except KeyError:
+                # ~ self.log.debug("[FRONTEND] - No ignored_keys defined in this theme")
 
             # Register theme service
             sys.path.insert(0, self.runtime['theme']['logic'])

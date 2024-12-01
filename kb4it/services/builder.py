@@ -22,7 +22,7 @@ class Builder(Service):
     theme_var = {}
     templates = {}
 
-    def initialize(self, params: dict = {}):
+    def initialize(self):
         """Initialize Builder class."""
         self.get_services()
 
@@ -67,7 +67,7 @@ class Builder(Service):
 
     def template(self, template):
         """Return the template content from chosen theme"""
-        runtime = self.srvbes.get_runtime()
+        runtime = self.srvbes.get_runtime_dict()
         theme = runtime['theme']
         current_theme = theme['id']
 

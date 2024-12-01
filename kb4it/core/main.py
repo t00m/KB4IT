@@ -14,7 +14,6 @@ import sys
 import json
 import math
 import stat
-import json
 import multiprocessing
 import argparse
 import traceback
@@ -80,9 +79,9 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        self.log.info("[CONTROLLER] - Command line parameters:")
+        self.log.debug("[CONTROLLER] - Command line parameters:")
         for key in vars(self.params):
-            self.log.info(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
+            self.log.debug(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
 
     def get_app_params(self):
         """Return app configuration"""
@@ -144,14 +143,14 @@ class KB4IT:
         """Get all registered services"""
         return self.services
 
-    def get_service(self, name: str, params:dict = {}):
+    def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        self.log.info(f"[CONTROLLER] - Getting service '{name}'")
+        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
         try:
             service = self.services[name]
             logname = service.__class__.__name__
             if not service.is_started():
-                service.start(self, logname, name, params)
+                service.start(self, name)
             return service
         except Exception as error:
             self.log.error(f"[CONTROLLER] - Service {name} not registered")
@@ -180,12 +179,9 @@ class KB4IT:
         self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
 
     def run(self):
-        self.srvbes = self.get_service('Backend')
-        adict = {}
-        adict['runtime'] = 'test'
-        self.srvfes = self.get_service('Frontend', adict) 
         """Start application."""
-        """
+
+        self.srvbes = self.get_service('Backend')
         frontend = self.get_service('Frontend')
 
         if self.params.LIST_THEMES:
@@ -235,7 +231,6 @@ class KB4IT:
         else:
             backend = self.get_service('Backend')
             backend.run()
-        """
         self.stop()
 
     def stop(self, error=False):
@@ -252,31 +247,60 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
+        self.log.info("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
         sys.exit()
-
 
 def main():
     """Set up application arguments and execute."""
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['version'],
+        description=f'KB4IT v{ENV["APP"]["version"]}\nCustomizable static website generator based on Asciidoctor sources',
         epilog=extra_usage,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    NUM_WORKERS = get_default_workers()
+    # Define global parameters
+    parser.add_argument(
+        '-w', '--workers',
+        help=f'Number of workers. Default is CPUs available/2. Default: {get_default_workers()}',
+        type=int,
+        default=get_default_workers()
+    )
+    parser.add_argument(
+        '-L', '--log-level',
+        help='Control output verbosity. Default set to INFO',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+        default='INFO'
+    )
+    parser.add_argument(
+        '-v', '--version',
+        action='version',
+        version=f'{ENV["APP"]["shortname"]} {ENV["APP"]["version"]}'
+    )
 
-    # KB4IT options
-    kb4it_options = parser.add_argument_group('KB4IT Options')
-    kb4it_options.add_argument('-f', '--force', help='Force a clean compilation', action='store_true', dest='FORCE', required=False, default=False)
-    kb4it_options.add_argument('-i', '--init', help='Initialize repository', nargs=2, metavar=('THEME', 'REPO_PATH'), dest='INIT', required=False)
-    kb4it_options.add_argument('-l', '--list-themes', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False, default=False)
-    kb4it_options.add_argument('-r', '--repo', help='Use this repository config file', action='store', dest='REPO_CONFIG_FILE')
-    kb4it_options.add_argument('-w', '--workers', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % NUM_WORKERS, type=int, action='store', dest='NUM_WORKERS', default=int(NUM_WORKERS), required=False)
-    kb4it_options.add_argument('-L', '--log-level', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', required=False)
-    kb4it_options.add_argument('-v', '--version', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
+    # Add subcommands for actions
+    subparsers = parser.add_subparsers(dest='action', required=True, help='Action to perform')
 
+    # Initialize repository
+    init_parser = subparsers.add_parser('init', help='Initialize repository')
+    init_parser.add_argument('theme', help='Theme to use for initialization')
+    init_parser.add_argument('repo_path', help='Path to the repository')
+
+    # Clean build
+    clean_parser = subparsers.add_parser('clean', help='Clean the build')
+    clean_parser.add_argument('-f', '--force', help='Force a clean compilation', action='store_true')
+
+    # List themes
+    subparsers.add_parser('list-themes', help='List all installed themes')
+
+    # Main program logic
     params = parser.parse_args()
+
+    # Dispatch to the appropriate action handler
     app = KB4IT(params)
     app.run()
+
+# ~ if __name__ == '__main__':
+    # ~ main()
+

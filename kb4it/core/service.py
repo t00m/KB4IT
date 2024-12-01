@@ -51,17 +51,16 @@ class Service:
         """Print traceback."""
         self.log.debug("[SERVICE] - %s", get_traceback())
 
-    def start(self, app, logname:str, section_name:str, params:dict = {}):
+    def start(self, app, name:str):
         """Start service."""
         self.started = True
         self.app = app
-        self.logname = logname
-        self.section_name = section_name
+        self.logname = name
         conf = self.app.get_app_params()
         severity = conf.LOGLEVEL
-        self.log = get_logger(logname, severity)
-        self.initialize(params)
-        self.log.debug("[SERVICE] - Service %s started", logname)
+        self.log = get_logger(name, severity)
+        self.initialize()
+        self.log.debug("[SERVICE] - Service %s started", name)
 
     def end(self):
         """End service.
@@ -84,8 +83,7 @@ class Service:
         """
         pass
 
-    def get_service(self, name, *argv, **kwargs):
+    def get_service(self, name):
         """Get service name."""
-        self.log.info(f"[SERVICE] - Name: {name} - kwargs: {kwargs}")
-        return self.app.get_service(name, **kwargs)
+        return self.app.get_service(name)
 
