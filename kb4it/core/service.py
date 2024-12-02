@@ -56,7 +56,7 @@ class Service:
         self.started = True
         self.app = app
         self.logname = name
-        conf = self.app.get_app_params()
+        conf = self.app.get_params()
         severity = conf.log_level
         self.log = get_logger(name, severity)
         self.initialize()

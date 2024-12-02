@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-RDF Graph In Memory database module.
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: In-memory database module
+# Description: In-memory database for KB4IT
 """
 
 from kb4it.core.service import Service

@@ -13,17 +13,17 @@ import os
 import sys
 import json
 import math
-import stat
 import multiprocessing
 import argparse
 import traceback
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from kb4it.core.util import timestamp, copydir
+from kb4it.core.util import timestamp
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
 from kb4it.services.builder import Builder
+from kb4it.services.workflow import Workflow
 
 
 def get_default_workers():
@@ -84,23 +84,23 @@ class KB4IT:
         for key in vars(self.params):
             self.log.debug(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
 
-    def get_app_params(self):
+    def get_params(self):
         """Return app configuration"""
         return self.params
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
         self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
-        self.log.debug("[CONTROLLER] - Global path[%s]", ENV['GPATH']['ROOT'])
-        self.log.debug("[CONTROLLER] - Local path[%s]", ENV['LPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.debug("[CONTROLLER] - LPATH[%s] Dir[%s]: created", key, path)
+                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
             else:
-                self.log.debug("[CONTROLLER] - LPATH[%s] Dir[%s]: already exists", key, path)
+                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
 
     def __setup_services(self):
         """Declare and register services."""
@@ -110,6 +110,7 @@ class KB4IT:
             'Backend': Backend(),
             'Frontend': Frontend(),
             'Builder': Builder(),
+            'Workflow': Workflow(),
         }
         for name, klass in services.items():
             self.register_service(name, klass)
@@ -183,56 +184,13 @@ class KB4IT:
         """Start application."""
 
         action = self.params.action
-        
         self.log.debug(f"[CONTROLLER] - Executing action: {action}")
-        
-        self.srvbes = self.get_service('Backend')
-        frontend = self.get_service('Frontend')
+        workflow = self.get_service('Workflow')
 
         if action == 'themes':
-            return frontend.theme_list()
+            workflow.list_themes()
         elif action == 'create':
-            initialize = False
-            theme, repo_path = self.params.INIT
-            self.log.debug(f"[CONTROLLER] - Theme argument passed: {theme}")
-            self.log.debug(f"[CONTROLLER] - Repo path argument passed: {repo_path}")
-            theme_path = frontend.theme_search(theme=theme)
-            if theme_path is None:
-                self.log.error(f"[CONTROLLER] - Theme '{theme}' doesn't exist.")
-                self.log.info("[CONTROLLER] - This is the list of themes available:")
-                frontend.theme_list()
-            else:
-                if not os.path.exists(repo_path):
-                    self.log.error(f"[CONTROLLER] - Repository path '{repo_path}' does not exist")
-                else:
-                    initialize = True
-
-            if initialize:
-                self.log.info(f"[CONTROLLER] - Repository path: {repo_path}")
-                self.log.info(f"[CONTROLLER] - Using theme '{theme}' from path '{theme_path}'")
-                repo_demo = os.path.join(theme_path, 'example', 'repo')
-                copydir(repo_demo, repo_path)
-                source_dir = os.path.join(repo_path, 'source')
-                target_dir = os.path.join(repo_path, 'target')
-                bin_dir = os.path.join(repo_path, 'bin')
-                script = os.path.join(bin_dir, 'compile.sh')
-                config_file = os.path.join(repo_path, 'config', 'repo.json')
-                with open(config_file, 'r') as fc:
-                    repoconf = json.load(fc)
-                repoconf['source'] = source_dir
-                repoconf['target'] = target_dir
-                with open(config_file, 'w') as fc:
-                    json.dump(repoconf, fc, sort_keys=True, indent=4)
-                os.makedirs(bin_dir, exist_ok=True)
-                with open(script, 'w') as fs:
-                    fs.write(f'kb4it -r {config_file} -L INFO')
-                os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
-                self.log.info(f"[CONTROLLER] - Repository initialized")
-                self.log.info(f"[CONTROLLER] - You can compile it by executing '{script}'")
-                self.log.info(f"[CONTROLLER] - Add your documents in '{source_dir}'")
-                self.log.info(f"[CONTROLLER] - Documents to be published in '{target_dir}'")
-                self.log.info(f"[CONTROLLER] - Check your repository settings in '{config_file}'")
-                self.log.info(f"[CONTROLLER] - For more KB4IT options, execute: kb4it -h")
+            workflow.create_repository()
         elif action == 'build':
             pass
         else:
@@ -289,8 +247,8 @@ def main():
 
     # Add subcommands for actions
     subparsers = parser.add_subparsers(
-        dest='action', 
-        required=True, 
+        dest='action',
+        required=True,
         help='Action to perform'
     )
 
@@ -304,7 +262,7 @@ def main():
 
     # run repository workflow
     workflow_parser = subparsers.add_parser(
-        'build', 
+        'build',
         help='Run workflow for a given repository',
         description='Based on your repository configuration, compile and build the website',
         epilog='Example:\n\n'

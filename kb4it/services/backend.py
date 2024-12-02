@@ -48,10 +48,10 @@ class Backend(Service):
     def initialize(self):
         """Initialize application structure."""
 
-        self.log.info("[BACKEND] - Started at %s", timestamp())
+        self.log.debug("[BACKEND] - Started at %s", timestamp())
 
         # Get params from command line
-        self.params = self.app.get_app_params()
+        self.params = self.app.get_params()
 
         # Get repository config file (if any)
         try:
@@ -63,7 +63,7 @@ class Backend(Service):
                 self.log.info(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
             repo_config_exists = True
         except Exception as error:
-            self.log.warning(f"[BACKEND/SETUP] -Repository config file not found in command line params")
+            self.log.debug(f"[BACKEND/SETUP] - Repository config file not found in command line params")
             repo_config_exists = False
 
         # Initialize runtime dictionary
