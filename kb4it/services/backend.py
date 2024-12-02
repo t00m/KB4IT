@@ -924,5 +924,11 @@ class Backend(Service):
         except FileNotFoundError:
             self.log.debug("DOC[%s] not found in cache directory", adoc)
 
+    def busy(self):
+        self.running = True
+
+    def free(self):
+        self.running = False
+
     def end(self):
         self.cleanup()

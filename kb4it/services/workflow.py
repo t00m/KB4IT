@@ -72,3 +72,39 @@ class Workflow(Service):
             self.log.info(f"[WORKFLOW] - \tDocuments to be published in '{target_dir}'")
             self.log.info(f"[WORKFLOW] - \tCheck your repository settings in '{config_file}'")
             self.log.info(f"[WORKFLOW] - \tFor more KB4IT options, execute: kb4it -h")
+
+    def build_website(self):
+        self.log.info("[WORKFLOW] - KB4IT action: build website")
+        params = self.app.get_params()
+        config = params.config
+        force =  params.force
+        workers = params.workers
+        self.log.debug(f"[WORKFLOW] - \tRepository config file: {config}")
+        self.log.debug(f"[WORKFLOW] - \tForce compilation: {force}")
+        self.log.debug(f"[WORKFLOW] - \tNumber of workers: {workers}")
+
+        """Build workflow:
+        1. Check environment
+        2. Get source documents
+        3. Preprocess documents (get metadata)
+        4. Process documents in a temporary dir
+        5. Compile documents to html with asciidoctor
+        6. Delete contents of target directory (if any)
+        7. Refresh target directory
+        8. Remove temporary directory
+        """
+        backend = self.get_service('Backend')
+        backend.busy()
+        backend.stage_01_check_environment()
+        theme = self.get_service('Theme')
+        theme.generate_sources()
+        backend.stage_02_get_source_documents()
+        backend.stage_03_preprocessing()
+        backend.stage_04_processing()
+        backend.stage_05_compilation()
+        backend.stage_07_clean_target()
+        backend.stage_08_refresh_target()
+        backend.stage_09_remove_temporary_dir()
+        homepage = os.path.join(abspath(self.get_target_path()), 'index.html')
+        self.log.info("[WORKFLOW] - Repository website: %s", homepage)
+        backend.free()

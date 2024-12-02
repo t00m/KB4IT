@@ -192,10 +192,7 @@ class KB4IT:
         elif action == 'create':
             workflow.create_repository()
         elif action == 'build':
-            pass
-        else:
-            backend = self.get_service('Backend')
-            backend.run()
+            workflow.build_website()
         self.stop()
 
     def stop(self, error=False):
