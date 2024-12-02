@@ -47,6 +47,7 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
+        print(params)
         if params is not None:
             self.params = params
         else:
@@ -54,9 +55,9 @@ class KB4IT:
             self.params.REPO_CONFIG_FILE = None
 
         # Initialize log
-        if 'LOGLEVEL' not in self.params:
+        if 'log_level' not in vars(self.params):
             self.params.LOGLEVEL = 'INFO'
-        self.__setup_logging(self.params.LOGLEVEL)
+        self.__setup_logging(self.params.log_level)
 
         self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
 
@@ -181,12 +182,16 @@ class KB4IT:
     def run(self):
         """Start application."""
 
+        action = self.params.action
+        
+        self.log.debug(f"[CONTROLLER] - Executing action: {action}")
+        
         self.srvbes = self.get_service('Backend')
         frontend = self.get_service('Frontend')
 
-        if self.params.LIST_THEMES:
-            frontend.theme_list()
-        elif self.params.INIT:
+        if action == 'themes':
+            return frontend.theme_list()
+        elif action == 'create':
             initialize = False
             theme, repo_path = self.params.INIT
             self.log.debug(f"[CONTROLLER] - Theme argument passed: {theme}")
@@ -228,6 +233,8 @@ class KB4IT:
                 self.log.info(f"[CONTROLLER] - Documents to be published in '{target_dir}'")
                 self.log.info(f"[CONTROLLER] - Check your repository settings in '{config_file}'")
                 self.log.info(f"[CONTROLLER] - For more KB4IT options, execute: kb4it -h")
+        elif action == 'build':
+            pass
         else:
             backend = self.get_service('Backend')
             backend.run()
@@ -250,6 +257,14 @@ class KB4IT:
         self.log.info("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
         sys.exit()
 
+class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Custom formatter to replace section titles in the help output."""
+
+    def add_arguments(self, actions):
+        if any(action.dest == 'action' for action in actions):
+            self._root_section.heading = 'Actions available'
+        super().add_arguments(actions)
+
 def main():
     """Set up application arguments and execute."""
     extra_usage = """Thanks for using KB4IT!\n"""
@@ -260,13 +275,6 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    # Define global parameters
-    parser.add_argument(
-        '-w', '--workers',
-        help=f'Number of workers. Default is CPUs available/2. Default: {get_default_workers()}',
-        type=int,
-        default=get_default_workers()
-    )
     parser.add_argument(
         '-L', '--log-level',
         help='Control output verbosity. Default set to INFO',
@@ -280,27 +288,53 @@ def main():
     )
 
     # Add subcommands for actions
-    subparsers = parser.add_subparsers(dest='action', required=True, help='Action to perform')
+    subparsers = parser.add_subparsers(
+        dest='action', 
+        required=True, 
+        help='Action to perform'
+    )
 
     # Initialize repository
-    init_parser = subparsers.add_parser('init', help='Initialize repository')
+    init_parser = subparsers.add_parser('create', help='Initialize a new repository')
     init_parser.add_argument('theme', help='Theme to use for initialization')
     init_parser.add_argument('repo_path', help='Path to the repository')
 
-    # Clean build
-    clean_parser = subparsers.add_parser('clean', help='Clean the build')
-    clean_parser.add_argument('-f', '--force', help='Force a clean compilation', action='store_true')
-
     # List themes
-    subparsers.add_parser('list-themes', help='List all installed themes')
+    subparsers.add_parser('themes', help='List all installed themes')
 
-    # Main program logic
-    params = parser.parse_args()
+    # run repository workflow
+    workflow_parser = subparsers.add_parser(
+        'build', 
+        help='Run workflow for a given repository',
+        description='Based on your repository configuration, compile and build the website',
+        epilog='Example:\n\n'
+               ' - Compile a repository with 10 workers. Do not force a clean compilation:\n'
+               '   kb4it run-workflow /home/jsmith/Documents/myrepo/config/repo.json false --workers=10\n'
+    )
+    workflow_parser.add_argument(
+        'config',
+        help='Path to the repository config file (mandatory)'
+    )
+    workflow_parser.add_argument(
+        '-f', '--force',
+        action='store_true',
+        default=False,
+        help='Force a clean compilation'
+    )
+    workflow_parser.add_argument(
+        '-w', '--workers',
+        help=f'Number of workers. Default is CPUs available/2. Default: {get_default_workers()}',
+        type=int,
+        default=get_default_workers()
+    )
+
 
     # Dispatch to the appropriate action handler
-    app = KB4IT(params)
-    app.run()
-
-# ~ if __name__ == '__main__':
-    # ~ main()
+    try:
+        params = parser.parse_args()
+        app = KB4IT(params)
+        app.run()
+    except SystemExit as error:
+        if error.code != 0 and error.code is not None:
+            print("Run 'kb4it <action name> --help' to get help for a specific command.")
 
