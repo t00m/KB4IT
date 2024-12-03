@@ -23,6 +23,8 @@ import datetime
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
+from memory_profiler import profile
+
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import timestamp
@@ -217,6 +219,7 @@ class Backend(Service):
         return self.runtime['docs']['count']
 
     @timeit
+    @profile
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
@@ -272,6 +275,7 @@ class Backend(Service):
         self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
 
     @timeit
+    @profile
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.info("[BACKEND/STAGE 2 - SOURCES] - Start at %s", timestamp())
@@ -303,6 +307,7 @@ class Backend(Service):
         self.log.info("[BACKEND/SOURCEDOCS] - End at %s", timestamp())
 
     @timeit
+    @profile
     def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
@@ -528,6 +533,7 @@ class Backend(Service):
         return alist
 
     @timeit
+    @profile
     def stage_04_processing(self):
         """Process all keys/values got from documents.
         The algorithm detects which keys/values have changed and compile
@@ -609,6 +615,7 @@ class Backend(Service):
         self.log.info("[BACKEND/PROCESSING] - End at %s", timestamp())
 
     @timeit
+    @profile
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         self.log.info("[BACKEND/COMPILATION] - Start at %s", timestamp())
@@ -719,6 +726,7 @@ class Backend(Service):
             return x
 
     @timeit
+    @profile
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.info("[BACKEND/CLEANUP] - Start at %s", timestamp())
@@ -745,6 +753,7 @@ class Backend(Service):
         self.log.info("[BACKEND/CLEANUP] - End at %s", timestamp())
 
     @timeit
+    @profile
     def stage_08_refresh_target(self):
         """Refresh target."""
         self.log.info("[BACKEND/INSTALL] - Start at %s", timestamp())
@@ -816,6 +825,7 @@ class Backend(Service):
         self.log.info("[BACKEND/INSTALL] - End at %s", timestamp())
 
     @timeit
+    @profile
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.info("[BACKEND/POST-INSTALL] - Start at %s", timestamp())
