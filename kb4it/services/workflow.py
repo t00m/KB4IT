@@ -105,6 +105,6 @@ class Workflow(Service):
         backend.stage_07_clean_target()
         backend.stage_08_refresh_target()
         backend.stage_09_remove_temporary_dir()
-        homepage = os.path.join(abspath(self.get_target_path()), 'index.html')
+        homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
         self.log.info("[WORKFLOW] - Repository website: %s", homepage)
         backend.free()

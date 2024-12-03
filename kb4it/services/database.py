@@ -23,11 +23,9 @@ class Database(Service):
 
     def initialize(self):
         """Initialize database module."""
-        pass
-
-    def set_config(self, repo:dict, runtime: dict):
-        self.repo = repo
-        self.runtime = runtime
+        backend = self.get_service('Backend')
+        repo = backend.get_repo_dict()
+        runtime = backend.get_runtime_dict()
         self.sort_attribute = repo['sort']
         self.sorted_docs = []
         self.keys['all'] = []
@@ -35,7 +33,7 @@ class Database(Service):
         self.keys['custom'] = []
         self.keys['theme'] = []
         try:
-            self.keys['ignored'] = self.repo['ignored_keys']
+            self.keys['ignored'] = repo['ignored_keys']
         except:
             # FIXME: raises error when the command line option -r
             # is not passed
@@ -94,7 +92,6 @@ class Database(Service):
         can_sort = True
         for doc in doclist:
             sdate = self.get_doc_timestamp(doc)
-            # ~ self.log.error(f"sdate = {sdate} type = {type(sdate)}")
             ts = guess_datetime(sdate)
             if ts is not None:
                 adict[doc] = ts.strftime("%Y%m%d")

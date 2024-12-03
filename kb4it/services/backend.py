@@ -55,7 +55,7 @@ class Backend(Service):
 
         # Get repository config file (if any)
         try:
-            repo_config_file = self.params.REPO_CONFIG_FILE
+            repo_config_file = self.params.config
             self.repo = json_load(repo_config_file)
             self.log.info(f"[BACKEND/SETUP] - Repository config file: '{repo_config_file}")
             self.log.info(f"[BACKEND/SETUP] - Repository parameters:")
@@ -219,6 +219,7 @@ class Backend(Service):
     @timeit
     def stage_01_check_environment(self):
         """Check environment."""
+        frontend = self.get_service('Frontend')
         self.log.info("[BACKEND/STAGE 1 - CHECKS] - Start at %s", timestamp())
         #self.log.info("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
         #self.log.info("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
@@ -251,18 +252,18 @@ class Backend(Service):
 
         if theme_name is None:
             self.log.debug("[BACKEND/SETUP] - Theme not provided. Autodetect it.")
-            theme_path = self.srvfes.theme_search()
+            theme_path = frontend.theme_search()
             if theme_path is not None:
-                self.srvfes.theme_load(os.path.basename(theme_path))
+                frontend.theme_load(os.path.basename(theme_path))
                 self.log.debug("[BACKEND/SETUP] Theme found and loaded")
             else:
                 self.log.error("[BACKEND/SETUP] - Theme not found")
                 self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
                 self.app.stop()
         else:
-            theme_path = self.srvfes.theme_search(theme_name)
+            theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
-                self.srvfes.theme_load(os.path.basename(theme_path))
+                frontend.theme_load(os.path.basename(theme_path))
             else:
                 self.log.error("[BACKEND/SETUP] - Theme not found")
                 self.log.info("[BACKEND/SETUP] - End at %s", timestamp())
@@ -277,7 +278,7 @@ class Backend(Service):
         sources_path = self.get_source_path()
 
         # Firstly, allow theme to generate documents
-        # ~ self.srvthm = self.get_service('Theme')
+        self.srvthm = self.get_service('Theme')
         self.srvthm.generate_sources()
 
         # If 'about_app.adoc' doesn't exist, create one from template
@@ -415,7 +416,7 @@ class Backend(Service):
 
             # Force compilation (from command line)?
             DOC_COMPILATION = False
-            FORCE_ALL = self.params.FORCE
+            FORCE_ALL = self.params.force
             if not FORCE_ALL:
                 # Get cached document path and check if it exists
                 cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
@@ -549,7 +550,7 @@ class Backend(Service):
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_KEY = key in self.force_keys
-            FORCE_ALL = self.params.FORCE or FORCE_KEY
+            FORCE_ALL = self.params.force or FORCE_KEY
             values = self.srvdtb.get_all_values_for_key(key)
 
             # Compare keys values for the current run and the cache
@@ -638,7 +639,7 @@ class Backend(Service):
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
         # ~ params = self.app.get_app_conf()
-        with Executor(max_workers=self.params.NUM_WORKERS) as exe:
+        with Executor(max_workers=self.params.workers) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
@@ -657,7 +658,7 @@ class Backend(Service):
                             COMPILE = False
 
 
-                if COMPILE or self.params.FORCE:
+                if COMPILE or self.params.force:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
