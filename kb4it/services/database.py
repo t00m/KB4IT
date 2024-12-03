@@ -24,9 +24,13 @@ class Database(Service):
     def initialize(self):
         """Initialize database module."""
         backend = self.get_service('Backend')
-        repo = backend.get_repo_dict()
         runtime = backend.get_runtime_dict()
-        self.sort_attribute = repo['sort']
+        try:
+            repo = backend.get_repo_dict()
+            self.sort_attribute = repo['sort']
+        except AttributeError:
+            repo = {}
+            self.sort_attribute = ''
         self.sorted_docs = []
         self.keys['all'] = []
         self.keys['blocked'] = ['Title']
