@@ -100,8 +100,8 @@ class Database(Service):
             if ts is not None:
                 adict[doc] = ts.strftime("%Y%m%d")
             else:
-                self.log.warning("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
-                self.log.warning("[DATABASE] - Sorting is disabled")
+                self.log.debug("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.debug("[DATABASE] - Sorting is disabled")
                 can_sort = False
         if can_sort:
             alist = sort_dictionary(adict)
@@ -120,7 +120,8 @@ class Database(Service):
         try:
             return self.db[doc][self.sort_attribute][0]
         except KeyError as error:
-            self.log.error(f"Document '{doc}' doesn't have the sort attribute {error}")
+            self.log.debug(f"[DATABASE] - Document '{doc}' doesn't have the sort attribute {error}")
+            #FIXME: should return a datetime.now() timestamp as a fix?
             return ''
 
 
