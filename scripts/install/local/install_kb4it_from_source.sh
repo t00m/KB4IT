@@ -23,6 +23,10 @@ uninstall_kb4it() {
                 pip uninstall kb4it -y
                 ;;
             centos)
+                echo "Uninstalling KB4IT in Fedora"
+                pip uninstall kb4it -y
+                ;;
+	    fedora)
                 echo "Uninstalling KB4IT in CentOS"
                 pip uninstall kb4it -y
                 ;;
@@ -64,6 +68,10 @@ install_kb4it() {
                 ;;
             centos)
                 echo "CentOS"
+                pip3 install . --user --trusted-host files.pythonhosted.org --trusted-host pypi.org
+                ;;
+            fedora)
+                echo "Fedora"
                 pip3 install . --user --trusted-host files.pythonhosted.org --trusted-host pypi.org
                 ;;
             arch)
