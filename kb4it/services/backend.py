@@ -23,7 +23,7 @@ import datetime
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-#from memory_profiler import profile
+from memory_profiler import profile
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
@@ -37,6 +37,8 @@ from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.util import timeit
+
+fp=open('memory_profiler.log','w+')
 
 class Backend(Service):
     """Backend class for managing the main logic workflow.
@@ -219,7 +221,7 @@ class Backend(Service):
         return self.runtime['docs']['count']
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
@@ -275,7 +277,7 @@ class Backend(Service):
         self.log.debug("[BACKEND/SETUP] - End at %s", timestamp())
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.debug("[BACKEND/STAGE 2 - SOURCES] - Start at %s", timestamp())
@@ -307,7 +309,7 @@ class Backend(Service):
         self.log.debug("[BACKEND/SOURCEDOCS] - End at %s", timestamp())
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
@@ -412,7 +414,7 @@ class Backend(Service):
                     try:
                         documents = self.kbdict_new['metadata'][key][value]
                         documents.append(docname)
-                        self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
+                        self.kbdict_new[key][value] = documents #sorted(documents, key=lambda y: y.lower())
                     except KeyError:
                         if key not in self.kbdict_new['metadata']:
                             self.kbdict_new['metadata'][key] = {}
@@ -533,7 +535,7 @@ class Backend(Service):
         return alist
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_04_processing(self):
         """Process all keys/values got from documents.
         The algorithm detects which keys/values have changed and compile
@@ -615,7 +617,7 @@ class Backend(Service):
         self.log.debug("[BACKEND/PROCESSING] - End at %s", timestamp())
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         self.log.info("[BACKEND/COMPILATION] - Start at %s", timestamp())
@@ -726,7 +728,7 @@ class Backend(Service):
             return x
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.debug("[BACKEND/CLEANUP] - Start at %s", timestamp())
@@ -753,7 +755,7 @@ class Backend(Service):
         self.log.debug("[BACKEND/CLEANUP] - End at %s", timestamp())
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_08_refresh_target(self):
         """Refresh target."""
         self.log.debug("[BACKEND/INSTALL] - Start at %s", timestamp())
@@ -825,7 +827,7 @@ class Backend(Service):
         self.log.debug("[BACKEND/INSTALL] - End at %s", timestamp())
 
     @timeit
-    #@profile
+    @profile(stream=fp)
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.debug("[BACKEND/POST-INSTALL] - Start at %s", timestamp())
