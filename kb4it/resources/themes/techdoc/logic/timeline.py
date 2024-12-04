@@ -20,7 +20,7 @@ class Timeline(Service):
     def get_all(self):
         repo = self.srvbes.get_repo_parameters()
         event_types = repo['timeline']
-        sortby = repo['sort'][0]
+        sortby = repo['sort']
         data = {}
         data['events'] = []
 

@@ -13,17 +13,17 @@ import os
 import sys
 import json
 import math
-import stat
-import json
 import multiprocessing
 import argparse
+import traceback
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from kb4it.core.util import timestamp, copydir
+from kb4it.core.util import timestamp
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
 from kb4it.services.builder import Builder
+from kb4it.services.workflow import Workflow
 
 
 def get_default_workers():
@@ -51,22 +51,28 @@ class KB4IT:
             self.params = params
         else:
             self.params = argparse.Namespace()
-            self.params.REPO_CONFIG = None
+            self.params.REPO_CONFIG_FILE = None
 
         # Initialize log
-        if 'LOGLEVEL' not in self.params:
+        if 'log_level' not in vars(self.params):
             self.params.LOGLEVEL = 'INFO'
-        self.__setup_logging(self.params.LOGLEVEL)
+        self.__setup_logging(self.params.log_level)
+
+        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {timestamp()} using PID {ENV['SYS']['PS']['PID']}")
+        self.log.debug(f"[CONTROLLER] - Python environment:")
+        self.log.debug(f"[CONTROLLER] - \tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
+        self.log.debug(f"[CONTROLLER] - Platform:")
+        self.log.debug(f"[CONTROLLER] - \tOperating System: {ENV['SYS']['PLATFORM']['OS']}")
 
         # Start up
         self.__setup_environment()
         self.__check_params()
         self.__setup_services()
 
-        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
-        self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
-        self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
-        self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
+        #self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        #self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
+        #self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
+        #self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
 
         self.__gonogo()
 
@@ -77,57 +83,27 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
+        self.log.debug("[CONTROLLER] - Command line parameters:")
         for key in vars(self.params):
-            self.log.debug("[CONTROLLER] - Parameter[%s] Value[%s]", key, vars(self.params)[key])
+            self.log.debug(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
 
-        repo_exists = False
-        if self.params.REPO_CONFIG:
-            if os.path.exists(self.params.REPO_CONFIG):
-                with open(self.params.REPO_CONFIG, 'r') as conf:
-                    try:
-                        self.repo = json.load(conf)
-                        self.repo['force'] = self.params.FORCE
-                        repo_exists = True
-                        self.log.debug("[CONTROLLER] - Repository configuration found and loaded")
-                    except json.decoder.JSONDecodeError:
-                        self.log.error("[CONTROLLER] - Repository config file couldn't be read")
-
-        if not repo_exists:
-            # Create a fake repository
-            self.repo = {}
-            self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
-            self.repo['target'] = ENV['LPATH']['TMP_TARGET']
-            self.repo['force'] = False
-            self.log.debug("[CONTROLLER] - Repository configuration not found. Fake configuration built")
-
-        if not 'workers' in self.repo:
-            self.repo['workers'] = self.params.NUM_WORKERS
-
-
-        self.log.debug("[CONTROLLER] - Params checked.")
-
-
-    def get_app_conf(self):
+    def get_params(self):
         """Return app configuration"""
         return self.params
-
-    def get_repo_conf(self):
-        """Return repos configuration"""
-        return self.repo
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
         self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
-        self.log.debug("[CONTROLLER] - Global path[%s]", ENV['GPATH']['ROOT'])
-        self.log.debug("[CONTROLLER] - Local path[%s]", ENV['LPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.debug("[CONTROLLER] - LPATH[%s] Dir[%s]: created", key, path)
+                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
             else:
-                self.log.debug("[CONTROLLER] - LPATH[%s] Dir[%s]: already exists", key, path)
+                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
 
     def __setup_services(self):
         """Declare and register services."""
@@ -137,6 +113,7 @@ class KB4IT:
             'Backend': Backend(),
             'Frontend': Frontend(),
             'Builder': Builder(),
+            'Workflow': Workflow(),
         }
         for name, klass in services.items():
             self.register_service(name, klass)
@@ -160,7 +137,7 @@ class KB4IT:
         if can_run:
             # Write current Pid to file
             with open(pidfile, 'w') as fpid:
-                fpid.write(str(ENV['PS']['PID']))
+                fpid.write(str(ENV['SYS']['PS']['PID']))
             self.log.debug("[CONTROLLER] - Decision: Go")
         else:
             self.log.error(f"[CONTROLLER] - Decision: No Go")
@@ -171,19 +148,21 @@ class KB4IT:
         """Get all registered services"""
         return self.services
 
-    def get_service(self, name):
+    def get_service(self, name: str = {}):
         """Get or start a registered service."""
+        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
         try:
-            self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
             service = self.services[name]
             logname = service.__class__.__name__
             if not service.is_started():
-                service.start(self, logname, name)
+                service.start(self, name)
             return service
         except Exception as error:
-            self.log.error("[CONTROLLER] - Service %s not registered or not found", error)
-            raise
-            return None
+            self.log.error(f"[CONTROLLER] - Service {name} not registered")
+            self.log.error(f"[CONTROLLER] - \t{error}")
+            self.stop(error=True)
+            #raise
+            #return None
 
     def register_service(self, name, service):
         """Register a new service."""
@@ -206,62 +185,27 @@ class KB4IT:
 
     def run(self):
         """Start application."""
-        frontend = self.get_service('Frontend')
 
-        if self.params.LIST_THEMES:
-            self.repo = {}
-            self.repo['source'] = ENV['LPATH']['TMP_SOURCE']
-            self.repo['target'] = ENV['LPATH']['TMP_TARGET']
-            frontend.theme_list()
-        elif self.params.INIT:
-            initialize = False
-            theme, repo_path = self.params.INIT
-            self.log.debug(f"[CONTROLLER] - Theme argument passed: {theme}")
-            self.log.debug(f"[CONTROLLER] - Repo path argument passed: {repo_path}")
-            theme_path = frontend.theme_search(theme=theme)
-            if theme_path is None:
-                self.log.error(f"[CONTROLLER] - Theme '{theme}' doesn't exist.")
-                self.log.info("[CONTROLLER] - This is the list of themes available:")
-                frontend.theme_list()
-            else:
-                if not os.path.exists(repo_path):
-                    self.log.error(f"[CONTROLLER] - Repository path '{repo_path}' does not exist")
-                else:
-                    initialize = True
+        action = self.params.action
+        self.log.debug(f"[CONTROLLER] - Executing action: {action}")
+        workflow = self.get_service('Workflow')
 
-            if initialize:
-                self.log.info(f"[CONTROLLER] - Repository path: {repo_path}")
-                self.log.info(f"[CONTROLLER] - Using theme '{theme}' from path '{theme_path}'")
-                repo_demo = os.path.join(theme_path, 'example', 'repo')
-                copydir(repo_demo, repo_path)
-                source_dir = os.path.join(repo_path, 'source')
-                target_dir = os.path.join(repo_path, 'target')
-                bin_dir = os.path.join(repo_path, 'bin')
-                script = os.path.join(bin_dir, 'compile.sh')
-                config_file = os.path.join(repo_path, 'config', 'repo.json')
-                with open(config_file, 'r') as fc:
-                    repoconf = json.load(fc)
-                repoconf['source'] = source_dir
-                repoconf['target'] = target_dir
-                with open(config_file, 'w') as fc:
-                    json.dump(repoconf, fc, sort_keys=True, indent=4)
-                os.makedirs(bin_dir, exist_ok=True)
-                with open(script, 'w') as fs:
-                    fs.write(f'kb4it -r {config_file} -L INFO')
-                os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
-                self.log.info(f"[CONTROLLER] - Repository initialized")
-                self.log.info(f"[CONTROLLER] - You can compile it by executing '{script}'")
-                self.log.info(f"[CONTROLLER] - Add your documents in '{source_dir}'")
-                self.log.info(f"[CONTROLLER] - Documents to be published in '{target_dir}'")
-                self.log.info(f"[CONTROLLER] - Check your repository settings in '{config_file}'")
-                self.log.info(f"[CONTROLLER] - For more KB4IT options, execute: kb4it -h")
-        else:
-            backend = self.get_service('Backend')
-            backend.run()
+        if action == 'themes':
+            workflow.list_themes()
+        elif action == 'create':
+            workflow.create_repository()
+        elif action == 'build':
+            workflow.build_website()
         self.stop()
 
-    def stop(self):
+    def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
+        if error:
+            self.log.error("[CONTROLLER] - Execution aborted because of serious errors")
+            self.log.error(f"[CONTROLLER] - \tTraceback:\n{traceback.print_exc()}")
+            self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {timestamp()}")
+            sys.exit(-1)
+
         try:
             for name in self.services:
                 self.deregister_service(name)
@@ -271,28 +215,84 @@ class KB4IT:
         self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
         sys.exit()
 
+class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Custom formatter to replace section titles in the help output."""
+
+    def add_arguments(self, actions):
+        if any(action.dest == 'action' for action in actions):
+            self._root_section.heading = 'Actions available'
+        super().add_arguments(actions)
 
 def main():
     """Set up application arguments and execute."""
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description='KB4IT v%s\nCustomizable static website generator based on Asciidoctor sources' % ENV['APP']['version'],
+        description=f'KB4IT v{ENV["APP"]["version"]}\nCustomizable static website generator based on Asciidoctor sources',
         epilog=extra_usage,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    NUM_WORKERS = get_default_workers()
+    parser.add_argument(
+        '-L', '--log-level',
+        help='Control output verbosity. Default set to INFO',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+        default='INFO'
+    )
+    parser.add_argument(
+        '-v', '--version',
+        action='version',
+        version=f'{ENV["APP"]["shortname"]} {ENV["APP"]["version"]}'
+    )
 
-    # KB4IT options
-    kb4it_options = parser.add_argument_group('KB4IT Options')
-    kb4it_options.add_argument('-f', '--force', help='Force a clean compilation', action='store_true', dest='FORCE', required=False, default=False)
-    kb4it_options.add_argument('-i', '--init', help='Initialize repository', nargs=2, metavar=('THEME', 'REPO_PATH'), dest='INIT', required=False)
-    kb4it_options.add_argument('-l', '--list-themes', help='List all installed themes', action='store_true', dest='LIST_THEMES', required=False, default=False)
-    kb4it_options.add_argument('-r', '--repo', help='Use this repository config file', action='store', dest='REPO_CONFIG')
-    kb4it_options.add_argument('-w', '--workers', help='Number of workers. Default is CPUs available/2. Default number of workers in this machine: %d' % NUM_WORKERS, type=int, action='store', dest='NUM_WORKERS', default=int(NUM_WORKERS), required=False)
-    kb4it_options.add_argument('-L', '--log-level', help='Control output verbosity. Default set to INFO', dest='LOGLEVEL', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO', required=False)
-    kb4it_options.add_argument('-v', '--version', help='Show current version', action='version', version='%s %s' % (ENV['APP']['shortname'], ENV['APP']['version']))
+    # Add subcommands for actions
+    subparsers = parser.add_subparsers(
+        dest='action',
+        required=True,
+        help='Action to perform'
+    )
 
-    params = parser.parse_args()
-    app = KB4IT(params)
-    app.run()
+    # Initialize repository
+    init_parser = subparsers.add_parser('create', help='Initialize a new repository')
+    init_parser.add_argument('theme', help='Theme to use for initialization')
+    init_parser.add_argument('repo_path', help='Path to the repository')
+
+    # List themes
+    subparsers.add_parser('themes', help='List all installed themes')
+
+    # run repository workflow
+    workflow_parser = subparsers.add_parser(
+        'build',
+        help='Run workflow for a given repository',
+        description='Based on your repository configuration, compile and build the website',
+        epilog='Example:\n\n'
+               ' - Compile a repository with 10 workers. Do not force a clean compilation:\n'
+               '   kb4it run-workflow /home/jsmith/Documents/myrepo/config/repo.json false --workers=10\n'
+    )
+    workflow_parser.add_argument(
+        'config',
+        help='Path to the repository config file (mandatory)'
+    )
+    workflow_parser.add_argument(
+        '-f', '--force',
+        action='store_true',
+        default=False,
+        help='Force a clean compilation'
+    )
+    workflow_parser.add_argument(
+        '-w', '--workers',
+        help=f'Number of workers. Default is CPUs available/2. Default: {get_default_workers()}',
+        type=int,
+        default=get_default_workers()
+    )
+
+
+    # Dispatch to the appropriate action handler
+    try:
+        params = parser.parse_args()
+        app = KB4IT(params)
+        app.run()
+    except SystemExit as error:
+        if error.code != 0 and error.code is not None:
+            print("Run 'kb4it <action name> --help' to get help for a specific command.")
+

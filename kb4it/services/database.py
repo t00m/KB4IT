@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-RDF Graph In Memory database module.
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: In-memory database module
+# Description: In-memory database for KB4IT
 """
 
 from kb4it.core.service import Service
@@ -24,20 +23,21 @@ class Database(Service):
 
     def initialize(self):
         """Initialize database module."""
+        backend = self.get_service('Backend')
+        runtime = backend.get_runtime_dict()
         try:
-            repo = self.app.get_repo_conf()
+            repo = backend.get_repo_dict()
             self.sort_attribute = repo['sort']
-        except:
-            pass
+        except AttributeError:
+            repo = {}
+            self.sort_attribute = ''
         self.sorted_docs = []
-        self.srvbes = self.get_service('Backend')
-        repoconf = self.srvbes.get_repo_parameters()
         self.keys['all'] = []
-        self.keys['blocked'] = ['Timestamp', 'Title']
+        self.keys['blocked'] = ['Title']
         self.keys['custom'] = []
         self.keys['theme'] = []
         try:
-            self.keys['ignored'] = repoconf['ignored_keys']
+            self.keys['ignored'] = repo['ignored_keys']
         except:
             # FIXME: raises error when the command line option -r
             # is not passed
@@ -100,8 +100,8 @@ class Database(Service):
             if ts is not None:
                 adict[doc] = ts.strftime("%Y%m%d")
             else:
-                self.log.warning("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
-                self.log.warning("[DATABASE] - Sorting is disabled")
+                self.log.debug("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
+                self.log.debug("[DATABASE] - Sorting is disabled")
                 can_sort = False
         if can_sort:
             alist = sort_dictionary(adict)
@@ -117,21 +117,13 @@ class Database(Service):
 
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
-        found = False
-        timestamp = ''
-        for sort_attribute in self.sort_attribute:
-            try:
-                timestamp = self.db[doc][sort_attribute][0]
-                found = True
-            except:
-                pass
+        try:
+            return self.db[doc][self.sort_attribute][0]
+        except KeyError as error:
+            self.log.debug(f"[DATABASE] - Document '{doc}' doesn't have the sort attribute {error}")
+            #FIXME: should return a datetime.now() timestamp as a fix?
+            return ''
 
-        if not found:
-            try:
-                timestamp = self.db[doc]['Timestamp'][0]
-            except:
-                pass
-        return timestamp
 
     def is_system(self, doc):
         return 'System' in self.get_doc_properties(doc).keys()

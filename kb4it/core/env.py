@@ -12,16 +12,33 @@ Environment module.
 import os
 from os.path import abspath
 import sys
+import platform
 import tempfile
 import multiprocessing
 
 ENV = {}
 
-# Process
-ENV['PS'] = {}
+# System info
+ENV['SYS'] = {}
+
+ENV['SYS']['PLATFORM'] = {}
+ENV['SYS']['PLATFORM']['NODE'] = platform.node()
+try:
+    ENV['SYS']['PLATFORM']['OS'] = platform.freedesktop_os_release()['PRETTY_NAME']
+except FileNotFoundError:
+    print("KB4IT only runs in GNU/Linux systems")
+    sys.exit(-1)
+
+## Python
+ENV['SYS']['PYTHON'] = {}
+ENV['SYS']['PYTHON']['VERSION'] = sys.version
+ENV['SYS']['PYTHON']['PATH'] = sys.path
+
+# KB4IT current process
 pid = os.getpid()
-ENV['PS']['PID'] = os.getpid()
-ENV['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read().strip()
+ENV['SYS']['PS'] = {}
+ENV['SYS']['PS']['PID'] = os.getpid()
+ENV['SYS']['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read().strip()
 
 # Configuration
 ENV['CONF'] = {}
@@ -94,3 +111,7 @@ ENV['GPATH']['TEMPLATES'] = os.path.join(ENV['GPATH']['COMMON'], 'templates')
 ENV['GPATH']['THEMES'] = os.path.join(ENV['GPATH']['RESOURCES'], 'themes')
 ENV['GPATH']['APPDATA'] = os.path.join(ENV['GPATH']['COMMON'], 'appdata')
 ENV['GPATH']['RES'] = os.path.join(ENV['GPATH']['DATA'], 'res')
+
+
+ENV['FILE'] = {}
+ENV['FILE']['LOG'] = os.path.join(ENV['LPATH']['LOG'], f"{ENV['APP']['shortname'].lower()}.log")

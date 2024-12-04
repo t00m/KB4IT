@@ -67,7 +67,7 @@ class Builder(Service):
 
     def template(self, template):
         """Return the template content from chosen theme"""
-        runtime = self.srvbes.get_runtime()
+        runtime = self.srvbes.get_runtime_dict()
         theme = runtime['theme']
         current_theme = theme['id']
 
@@ -109,7 +109,7 @@ class Builder(Service):
         theme_var['theme'] = self.srvbes.get_theme_properties()
         theme_var['repo'] = self.srvbes.get_repo_parameters()
         theme_var['env'] = ENV
-        theme_var['conf'] = self.app.get_app_conf()
+        theme_var['conf'] = self.app.get_params()
         theme_var['page'] = {}
         theme_var['page']['title'] = ''
         theme_var['kb'] = {}
@@ -170,3 +170,8 @@ class Builder(Service):
         TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
         var = self.get_theme_var()
         self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
+
+        self.srvdtb.add_document('about_kb4it.adoc')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'Updated', '2024-11-28 17:45:00')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'System', 'Yes')

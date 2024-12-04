@@ -48,9 +48,7 @@
         "Topic",
         "User"
     ],
-    "sort": [
-        "Updated"
-    ],
+    "sort": "Updated",
     "source": "/path/to/source/dir",
     "target": "/path/to/target/dir",
     "theme": "techdoc",

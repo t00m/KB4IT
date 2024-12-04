@@ -1,10 +1,10 @@
 {
     "id": "techdoc",
-    "name": "Techdoc Theme",
+    "name": "Techdoc",
     "author": "[Tomás Vírseda]",
     "email": "[tomasvirseda@gmail.com]",
-    "website": "",
-    "description": "Techdoc theme for technical documentation",
-    "version": "0.1.0",
+    "website": "https://github.com/t00m/KB4IT",
+    "description": "Theme for technical documentation",
+    "version": "0.3.0",
     "kb4it": ">=0.8"
 }
