@@ -11,6 +11,7 @@ Log module.
 
 import logging
 
+from kb4it.core.env import ENV
 
 def get_logger(name, level=None):
     """Return a new logger."""
@@ -27,16 +28,21 @@ def get_logger(name, level=None):
             severity = logging.DEBUG
     else:
         severity = logging.INFO
-    pattern = "%(levelname)7s | %(lineno)4d | %(name)-15s | %(message)s"
-    logging.basicConfig(level=logging.DEBUG, format=pattern)
+    pattern = "%(levelname)7s | %(lineno)4d | %(name)-10s | %(asctime)s.%(msecs)03d | %(message)s"
+    logging.basicConfig(level=logging.DEBUG, 
+                        format=pattern,
+                        filename=ENV['FILE']['LOG'],
+                        datefmt='%d/%m/%Y %I:%M:%S',
+                        filemode='w'
+                       )
     log = logging.getLogger(name)
-    log.setLevel(severity)
-
-    # ~ log.debug("Logger '%s' started with severity '%s'", name, level)
-    # ~ formatter = logging.Formatter(pattern)
-    # ~ fhl = logging.FileHandler(FILE['LOG'])
-    # ~ fhl.setFormatter(formatter)
-    # ~ fhl.setLevel(logging.DEBUG)
-    # ~ log.addHandler(fhl)
-
+    log.setLevel(logging.DEBUG)
+    
+    # Create a console (stream) handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(severity)  # Set the severity level for console logging
+    formatter = logging.Formatter(pattern)
+    console_handler.setFormatter(formatter)
+    log.addHandler(console_handler)
+    
     return log
