@@ -47,7 +47,6 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
-        print(params)
         if params is not None:
             self.params = params
         else:
@@ -59,7 +58,11 @@ class KB4IT:
             self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.log_level)
 
-        self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {timestamp()} using PID {ENV['SYS']['PS']['PID']}")
+        self.log.debug(f"[CONTROLLER] - Python environment:")
+        self.log.debug(f"[CONTROLLER] - \tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
+        self.log.debug(f"[CONTROLLER] - Platform:")
+        self.log.debug(f"[CONTROLLER] - \tOperating System: {ENV['SYS']['PLATFORM']['OS']}")
 
         # Start up
         self.__setup_environment()
@@ -134,7 +137,7 @@ class KB4IT:
         if can_run:
             # Write current Pid to file
             with open(pidfile, 'w') as fpid:
-                fpid.write(str(ENV['PS']['PID']))
+                fpid.write(str(ENV['SYS']['PS']['PID']))
             self.log.debug("[CONTROLLER] - Decision: Go")
         else:
             self.log.error(f"[CONTROLLER] - Decision: No Go")
@@ -209,7 +212,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.info("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
+        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
         sys.exit()
 
 class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
