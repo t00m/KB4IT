@@ -34,7 +34,7 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        log.info(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        log.debug(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
         return result
     return timeit_wrapper
 
@@ -265,6 +265,9 @@ def file_timestamp(filename):
 def timestamp():
     return datetime.now().isoformat()
 
+def log_timestamp():
+    now = datetime.now()
+    return now.strftime("%Y%m%d_%H%M%S")
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
