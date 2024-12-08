@@ -21,12 +21,12 @@ class Workflow(Service):
         pass
 
     def list_themes(self):
-        self.log.info("[WORKFLOW] - KB4IT action: list available themes")
+        self.log.workflow("[WORKFLOW] - KB4IT action: list available themes")
         frontend = self.get_service('Frontend')
         frontend.theme_list()
 
     def create_repository(self):
-        self.log.info("[WORKFLOW] - KB4IT action: create new repository")
+        self.log.workflow("[WORKFLOW] - KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
         frontend = self.app.get_service('Frontend')
         params = self.app.get_params()
@@ -74,7 +74,7 @@ class Workflow(Service):
             self.log.info(f"[WORKFLOW] - \tFor more KB4IT options, execute: kb4it -h")
 
     def build_website(self):
-        self.log.info("[WORKFLOW] - KB4IT action: build website")
+        self.log.workflow("[WORKFLOW] - KB4IT action: build website")
         params = self.app.get_params()
         config = params.config
         force =  params.force
@@ -100,11 +100,13 @@ class Workflow(Service):
         theme.generate_sources()
         backend.stage_02_get_source_documents()
         backend.stage_03_preprocessing()
-        backend.stage_04_processing()
-        backend.stage_05_compilation()
-        backend.stage_07_clean_target()
-        backend.stage_08_refresh_target()
-        backend.stage_09_remove_temporary_dir()
+        #TODO
+        #FIXME
+        # ~ backend.stage_04_processing()
+        # ~ backend.stage_05_compilation()
+        # ~ backend.stage_07_clean_target()
+        # ~ backend.stage_08_refresh_target()
+        # ~ backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
         self.log.info("[WORKFLOW] - Repository website: %s", homepage)
         backend.free()

@@ -10,6 +10,7 @@ from kb4it.core.service import Service
 from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
 from kb4it.core.util import guess_datetime
+from kb4it.core.util import timeit
 
 
 class Database(Service):
@@ -57,7 +58,7 @@ class Database(Service):
     def add_document(self, doc: str):
         """Add a new document node to the database ('name.adoc')"""
         self.db[doc] = {}
-        self.log.debug("[DATABASE] - DOC[%s] added to database", doc)
+        self.log.trace("[DATABASE] - DOC[%s] added to database", doc)
 
     def add_document_key(self, doc, key, value):
         """Add a new key/value node for a given document."""
@@ -68,7 +69,7 @@ class Database(Service):
         except KeyError:
             self.db[doc][key] = [value]
 
-        self.log.debug("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
+        self.log.trace("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -82,6 +83,7 @@ class Database(Service):
         """Add given key to ignored keys list."""
         self.keys['ignored'].append(key)
 
+    @timeit
     def sort_database(self):
         """
         Build a list of documents.
@@ -120,7 +122,7 @@ class Database(Service):
         try:
             return self.db[doc][self.sort_attribute][0]
         except KeyError as error:
-            self.log.debug(f"[DATABASE] - Document '{doc}' doesn't have the sort attribute {error}")
+            self.log.warning(f"[DATABASE] - Document '{doc}' doesn't have the sort attribute {error}")
             #FIXME: should return a datetime.now() timestamp as a fix?
             return ''
 

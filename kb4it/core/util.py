@@ -34,7 +34,10 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        log.debug(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        if total_time > 0.01:
+            log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        else:
+            log.trace(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
         return result
     return timeit_wrapper
 
@@ -172,6 +175,7 @@ def json_save(filepath: str, adict: {}) -> {}:
     with open(filepath, 'w') as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
+# ~ @timeit
 def get_asciidoctor_attributes(docpath):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
@@ -192,7 +196,6 @@ def get_asciidoctor_attributes(docpath):
             # read the rest of properties until watermark
             for n in range(1, len(lines)):
                 line = lines[n].strip()
-                # ~ log.info(line)
                 if line.startswith(':'):
                     key = line[1:line.find(':', 1)]
                     values = line[len(key)+2:].split(',')
@@ -200,7 +203,6 @@ def get_asciidoctor_attributes(docpath):
                 elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
-                    # ~ log.info(f"{basename}: EOHMARK found")
                     break
             if not end_of_header_found:
                 log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
@@ -211,7 +213,6 @@ def get_asciidoctor_attributes(docpath):
     except IndexError as error:
         log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
         props = None
-    # ~ log.info(f"{basename}: {props}")
     return props
 
 
@@ -225,7 +226,7 @@ def get_hash_from_file(path):
     else:
         return None
 
-
+# ~ @timeit
 def get_hash_from_dict(adict):
     """Get the SHA256 hash for a given dictionary."""
     alist = []
@@ -326,13 +327,13 @@ def sort_dictionary(adict, reverse=True):
 def ellipsize_text(text: str, max_length: int=70):
     if len(text) <= max_length:
         return text
-    
+
     # Number of characters to show on each side of the ellipsis
     split_length = (max_length - 3) // 2
-    
+
     # Handle odd max_length cases
     start = text[:split_length]
     end = text[-split_length:] if max_length % 2 == 0 else text[-split_length - 1:]
-    
+
     return f"{start}...{end}"
 

@@ -58,7 +58,7 @@ class KB4IT:
             self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.log_level)
 
-        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {timestamp()} using PID {ENV['SYS']['PS']['PID']}")
+        self.log.workflow(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {timestamp()} using PID {ENV['SYS']['PS']['PID']}")
         self.log.debug(f"[CONTROLLER] - Python environment:")
         self.log.debug(f"[CONTROLLER] - \tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] - Platform:")
@@ -83,9 +83,9 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        self.log.debug("[CONTROLLER] - Command line parameters:")
+        self.log.trace("[CONTROLLER] - Command line parameters:")
         for key in vars(self.params):
-            self.log.debug(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
+            self.log.trace(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
 
     def get_params(self):
         """Return app configuration"""
@@ -93,17 +93,17 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
-        self.log.debug("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
-        self.log.debug("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
+        self.log.trace("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
+        self.log.trace("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
+        self.log.trace("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
+                self.log.trace("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
             else:
-                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
+                self.log.trace("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
 
     def __setup_services(self):
         """Declare and register services."""
@@ -150,7 +150,7 @@ class KB4IT:
 
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
+        self.log.trace(f"[CONTROLLER] - Getting service '{name}'")
         try:
             service = self.services[name]
             logname = service.__class__.__name__
@@ -168,7 +168,7 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug("[CONTROLLER] - Service[%s] registered", name)
+            self.log.trace("[CONTROLLER] - Service[%s] registered", name)
         except KeyError as error:
             self.log.error("[CONTROLLER] - %s", error)
 
@@ -181,7 +181,7 @@ class KB4IT:
         if registered and started:
             service.end()
         service = None
-        self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
+        self.log.trace("[CONTROLLER] - Service[%s] unregistered", name)
 
     def run(self):
         """Start application."""
@@ -212,7 +212,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
+        self.log.workflow("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
         sys.exit()
 
 class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
@@ -236,7 +236,7 @@ def main():
     parser.add_argument(
         '-L', '--log-level',
         help='Control output verbosity. Default set to INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'WORKFLOW', 'PERF', 'TRACE'],
         default='INFO'
     )
     parser.add_argument(
