@@ -14,16 +14,19 @@ import re
 import glob
 import json
 import math
+import time
+import uuid
+import pickle
 import shutil
 import hashlib
 import operator
 import subprocess
 import pprint
+from functools import wraps
 from datetime import datetime
+
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from functools import wraps
-import time
 
 log = get_logger('Util')
 
@@ -34,8 +37,8 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        if total_time > 0.01:
-            log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        if total_time > 0.1:
+            log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds") # - {args} - {kwargs}")
         else:
             log.trace(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
         return result
@@ -226,21 +229,10 @@ def get_hash_from_file(path):
     else:
         return None
 
-# ~ @timeit
+@timeit
 def get_hash_from_dict(adict):
-    """Get the SHA256 hash for a given dictionary."""
-    alist = []
-    for key in adict:
-        alist.append(key.lower())
-        elements = adict[key]
-        for elem in elements:
-            alist.append(elem.lower())
-    alist.sort(key=lambda y: y.lower())
-    string = ' '.join(alist)
-    m = hashlib.sha256()
-    m.update(string.encode())
-    return m.hexdigest()
-
+    """Get the MD5  hash for a given dictionary."""
+    return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
