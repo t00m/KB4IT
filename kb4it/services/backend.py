@@ -341,62 +341,10 @@ class Backend(Service):
             content = source_adoc.read()
 
         self.stage_03_00_preprocess_document_hashes(docname, content, keys)
-
         self.stage_03_00_preprocess_document_caches(docname, keys)
+        self.stage_03_00_preprocess_document_compile(docname, content, keys)
 
-
-
-        # Force compilation (from command line)?
-        DOC_COMPILATION = False
-        FORCE_ALL = self.params.force
-        if not FORCE_ALL:
-            # Get cached document path and check if it exists
-            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
-            cached_document_exists = os.path.exists(cached_document)
-
-            # Compare the document with the one in the cache
-            if not cached_document_exists:
-                DOC_COMPILATION = True
-                REASON = "Not cached"
-            else:
-                try:
-                    hash_new = self.kbdict_new['document'][docname]['content_hash'] + self.kbdict_new['document'][docname]['metadata_hash']
-                    hash_cur = self.kbdict_cur['document'][docname]['content_hash'] + self.kbdict_cur['document'][docname]['metadata_hash']
-                    DOC_COMPILATION = hash_new != hash_cur
-                    REASON = "Hashes differ? %s" % DOC_COMPILATION
-                except Exception as warning:
-                    DOC_COMPILATION = True
-                    REASON = warning
-        else:
-            REASON = "Forced"
-
-        COMPILE = DOC_COMPILATION or FORCE_ALL
-        # Save compilation status
-        try:
-            self.kbdict_new['document'][docname]['compile'] = COMPILE
-        except KeyError as keyerror:
-            #FIXME: check
-            self.log.error(keyerror)
-            raise
-
-        if COMPILE:
-            # Write new adoc to temporary dir
-            target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
-            with open(target, 'w') as target_adoc:
-                target_adoc.write(content)
-
-            try:
-                title_cur = self.kbdict_cur['document'][docname]['Title']
-                title_new = self.kbdict_new['document'][docname]['Title']
-                if title_new != title_cur:
-                    for key in keys:
-                        if key != 'Title':
-                            self.force_keys.add(key)
-            except KeyError:
-                # Very likely there is no kbdict, so this step is skipped
-                pass
-
-        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
+        # self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
 
         # Add compiled page to the target list
         self.add_target(docname.replace('.adoc', '.html'))
@@ -458,7 +406,59 @@ class Backend(Service):
                         self.kbdict_new['metadata'][key] = {}
                     if value not in self.kbdict_new['metadata'][key]:
                         self.kbdict_new['metadata'][key][value] = [docname]
+    
+    @timeit
+    def stage_03_00_preprocess_document_compile(self, docname: str, content:str, keys:list):
+        # Force compilation (from command line)?
+        DOC_COMPILATION = False
+        FORCE_ALL = self.params.force
+        if not FORCE_ALL:
+            # Get cached document path and check if it exists
+            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
+            cached_document_exists = os.path.exists(cached_document)
 
+            # Compare the document with the one in the cache
+            if not cached_document_exists:
+                DOC_COMPILATION = True
+                REASON = "Not cached"
+            else:
+                try:
+                    hash_new = self.kbdict_new['document'][docname]['content_hash'] + self.kbdict_new['document'][docname]['metadata_hash']
+                    hash_cur = self.kbdict_cur['document'][docname]['content_hash'] + self.kbdict_cur['document'][docname]['metadata_hash']
+                    DOC_COMPILATION = hash_new != hash_cur
+                    REASON = "Hashes differ? %s" % DOC_COMPILATION
+                except Exception as warning:
+                    DOC_COMPILATION = True
+                    REASON = warning
+        else:
+            REASON = "Forced"
+
+        COMPILE = DOC_COMPILATION or FORCE_ALL
+        # Save compilation status
+        try:
+            self.kbdict_new['document'][docname]['compile'] = COMPILE
+        except KeyError as keyerror:
+            #FIXME: check
+            self.log.error(keyerror)
+            raise
+
+        if COMPILE:
+            # Write new adoc to temporary dir
+            target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
+            with open(target, 'w') as target_adoc:
+                target_adoc.write(content)
+
+            try:
+                title_cur = self.kbdict_cur['document'][docname]['Title']
+                title_new = self.kbdict_new['document'][docname]['Title']
+                if title_new != title_cur:
+                    for key in keys:
+                        if key != 'Title':
+                            self.force_keys.add(key)
+            except KeyError:
+                # Very likely there is no kbdict, so this step is skipped
+                pass
+        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
 
     @timeit
     @profile(stream=fp)
