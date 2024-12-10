@@ -26,6 +26,7 @@ from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import json_save
 from kb4it.core.util import ellipsize_text
+from kb4it.core.util import timeit
 
 from evcal import EventsCalendar
 from timeline import Timeline
@@ -72,6 +73,7 @@ class Theme(Builder):
         content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
         return content
 
+    @timeit
     def build_datatable(self, headers=[], doclist=[]):
         """Given a list of columns, it builds a datatable.
         First column is always a date field, which is got by using the
@@ -646,6 +648,7 @@ class Theme(Builder):
 
             self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
+    @timeit
     def build_page_key(self, key, values):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY')
@@ -676,6 +679,7 @@ class Theme(Builder):
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
+    @timeit
     def build_page_key_value(self, kvpath):
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
@@ -691,11 +695,11 @@ class Theme(Builder):
         var['compile'] = COMPILE_VALUE
         var['has_toc'] = False
 
-        doclist = []
-        for doc in sorted_docs:
-            doclist.append(doc)
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
+        #doclist = []
+        #for doc in sorted_docs:
+        #    doclist.append(doc)
+        #headers = []
+        datatable = self.build_datatable([], sorted_docs)
         var['page']['dt_documents'] = datatable
 
         if var['compile']:

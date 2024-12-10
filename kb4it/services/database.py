@@ -20,6 +20,7 @@ class Database(Service):
     keys = {}
     sort_attribute = None
     sorted_docs = []
+    properties = {}
 
 
     def initialize(self):
@@ -130,28 +131,32 @@ class Database(Service):
     def is_system(self, doc):
         return 'System' in self.get_doc_properties(doc).keys()
 
+    @timeit
     def get_doc_properties(self, doc):
         """Return a dictionary with the properties of a given doc.
         Additionally, the dictionary will contain an extra entry foreach
         property with its Url:
         """
-        props = {}
         try:
-            for key in self.db[doc]:
-                if key == 'Title':
-                    props[key] = self.db[doc][key][0]
-                    key_url = "%s_Url" % key
-                    props[key_url] = doc.replace('.adoc', '.html')
-                else:
-                    props[key] = self.db[doc][key]
-                    for value in self.db[doc][key]:
-                        key_value_url = "%s_%s_Url" % (key, value)
-                        props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
-        except Exception as warning:
-            # FIXME: Document why it is not necessary
-            pass
-
-        return props
+            return self.properties[doc]
+        except KeyError:
+            props = {}
+            try:
+                for key in self.db[doc]:
+                    if key == 'Title':
+                        props[key] = self.db[doc][key][0]
+                        key_url = "%s_Url" % key
+                        props[key_url] = doc.replace('.adoc', '.html')
+                    else:
+                        props[key] = self.db[doc][key]
+                        for value in self.db[doc][key]:
+                            key_value_url = "%s_%s_Url" % (key, value)
+                            props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
+            except Exception as warning:
+                # FIXME: Document why it is not necessary
+                pass
+            self.properties[doc] = props
+            return self.properties[doc]
 
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""

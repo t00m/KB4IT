@@ -563,23 +563,7 @@ class Backend(Service):
         return alist
 
     @timeit
-    @profile(stream=fp)
-    def stage_04_processing(self):
-        """Process all keys/values got from documents.
-        The algorithm detects which keys/values have changed and compile
-        them again. This avoid recompile the whole database, saving time
-        and CPU.
-        """
-        self.log.trace("[BACKEND/PROCESSING] - Start at %s", timestamp())
-        repo = self.get_repo_parameters()
-        all_keys = set(self.srvdtb.get_all_keys())
-        ign_default_keys = set(self.srvdtb.get_ignored_keys())
-        ign_theme_keys = set(repo['ignored_keys'])
-        self.ignored_keys = ign_default_keys.union(ign_theme_keys)
-        available_keys = list(all_keys - self.ignored_keys)
-        # ~ self.log.trace("All keys: %s", all_keys)
-        # ~ self.log.trace("Ign keys: %s", ', '.join(list(self.ignored_keys)))
-        # ~ self.log.trace("Avl keys: %s", available_keys)
+    def stage_04_processing_00_analyze_keys(self, available_keys):
         K_PATH = []
         KV_PATH = []
 
@@ -614,11 +598,32 @@ class Backend(Service):
             K_PATH.append((key, values, COMPILE_KEY))
             if COMPILE_KEY:
                 self.log.trace("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
-        self.runtime['K_PATH'] = K_PATH
-        self.runtime['KV_PATH'] = KV_PATH
+        return K_PATH, KV_PATH
+
+
+    @timeit
+    @profile(stream=fp)
+    def stage_04_processing(self):
+        """Process all keys/values got from documents.
+        The algorithm detects which keys/values have changed and compile
+        them again. This avoid recompile the whole database, saving time
+        and CPU.
+        """
+        self.log.trace("[BACKEND/PROCESSING] - Start at %s", timestamp())
+        repo = self.get_repo_parameters()
+        all_keys = set(self.srvdtb.get_all_keys())
+        ign_default_keys = set(self.srvdtb.get_ignored_keys())
+        ign_theme_keys = set(repo['ignored_keys'])
+        self.ignored_keys = ign_default_keys.union(ign_theme_keys)
+        available_keys = list(all_keys - self.ignored_keys)
+        # ~ self.log.trace("All keys: %s", all_keys)
+        # ~ self.log.trace("Ign keys: %s", ', '.join(list(self.ignored_keys)))
+        # ~ self.log.trace("Avl keys: %s", available_keys)
+
+        self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys) 
 
         # # Keys
-        for kpath in K_PATH:
+        for kpath in self.runtime['K_PATH']:
             key, values, COMPILE_KEY = kpath
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
@@ -629,7 +634,7 @@ class Backend(Service):
             self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
-        for kvpath in KV_PATH:
+        for kvpath in self.runtime['KV_PATH']:
             self.srvthm.build_page_key_value(kvpath)
             key, value, COMPILE_VALUE = kvpath
             docname = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))

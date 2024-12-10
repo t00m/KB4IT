@@ -102,7 +102,7 @@ class Workflow(Service):
         backend.stage_03_preprocessing()
         #TODO
         #FIXME
-        # ~ backend.stage_04_processing()
+        backend.stage_04_processing()
         # ~ backend.stage_05_compilation()
         # ~ backend.stage_07_clean_target()
         # ~ backend.stage_08_refresh_target()
