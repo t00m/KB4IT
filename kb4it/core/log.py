@@ -15,7 +15,7 @@ from kb4it.core.env import ENV
 
 # Define custom log levels
 TRACE = 5
-PERF = 25
+PERF = 45
 WORKFLOW = 35
 
 logging.addLevelName(TRACE, "TRACE")
