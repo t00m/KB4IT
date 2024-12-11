@@ -11,6 +11,7 @@ from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
 from kb4it.core.util import guess_datetime
 from kb4it.core.util import timeit
+from kb4it.core.util import get_hash_from_list
 
 
 class Database(Service):
@@ -20,7 +21,11 @@ class Database(Service):
     keys = {}
     sort_attribute = None
     sorted_docs = []
-    properties = {}
+    cache_props = {}
+    cache_docs_by_kvpath = {}
+    cache_keys_by_doc = {}
+    cache_docs_sorted_by_date = {}
+    cache_all_values_for_key = {}
 
 
     def initialize(self):
@@ -90,32 +95,41 @@ class Database(Service):
         Build a list of documents.
         Documents sorted by the given date attribute in descending order.
         """
-        self.sorted_docs = self.sort_by_date(list(self.db.keys()))
+        if len(self.sorted_docs) == 0:
+            self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     def sort_by_date(self, doclist):
         """Build a list of documents sorted by timestamp desc."""
-        sorted_docs = []
-        adict = {}
-        can_sort = True
-        for doc in doclist:
-            sdate = self.get_doc_timestamp(doc)
-            ts = guess_datetime(sdate)
-            if ts is not None:
-                adict[doc] = ts.strftime("%Y%m%d")
+        md5hash = get_hash_from_list(doclist)
+        try:
+            return self.cache_docs_sorted_by_date[md5hash]
+        except KeyError:
+            sorted_docs = []
+            adict = {}
+            can_sort = True
+            for doc in doclist:
+                sdate = self.get_doc_timestamp(doc)
+                ts = guess_datetime(sdate)
+                if ts is not None:
+                    adict[doc] = ts.strftime("%Y%m%d")
+                else:
+                    self.log.debug("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
+                    self.log.debug("[DATABASE] - Sorting is disabled")
+                    can_sort = False
+            if can_sort:
+                alist = sort_dictionary(adict)
+                for doc, timestamp in alist:
+                    sorted_docs.append(doc)
+                self.cache_docs_sorted_by_date[md5hash] = sorted_docs
+                return self.cache_docs_sorted_by_date[md5hash]
             else:
-                self.log.debug("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
-                self.log.debug("[DATABASE] - Sorting is disabled")
-                can_sort = False
-        if can_sort:
-            alist = sort_dictionary(adict)
-            for doc, timestamp in alist:
-                sorted_docs.append(doc)
-            return sorted_docs
-        else:
-            return doclist
+                self.cache_docs_sorted_by_date[md5hash] = doclist
+                return self.cache_docs_sorted_by_date[md5hash]
 
+    @timeit
     def get_documents(self):
         """Return the list of sorted docs."""
+        self.sort_database()
         return self.sorted_docs
 
     def get_doc_timestamp(self, doc):
@@ -138,7 +152,7 @@ class Database(Service):
         property with its Url:
         """
         try:
-            return self.properties[doc]
+            return self.cache_props[doc]
         except KeyError:
             props = {}
             try:
@@ -155,8 +169,8 @@ class Database(Service):
             except Exception as warning:
                 # FIXME: Document why it is not necessary
                 pass
-            self.properties[doc] = props
-            return self.properties[doc]
+            self.cache_props[doc] = props
+            return self.cache_props[doc]
 
     def get_values(self, doc, key):
         """Return a list of values given a document and a key."""
@@ -167,15 +181,19 @@ class Database(Service):
 
     def get_all_values_for_key(self, key):
         """Return a list of all values for a given key sorted alphabetically."""
-        values = []
-        for doc in self.db:
-            try:
-                values.extend(self.db[doc][key])
-            except KeyError:
-                pass
-        values = list(set(values))
-        values.sort(key=lambda y: y.lower())
-        return values
+        try:
+            return self.cache_all_values_for_key[key]
+        except KeyError:
+            values = []
+            for doc in self.db:
+                try:
+                    values.extend(self.db[doc][key])
+                except KeyError:
+                    pass
+            values = list(set(values))
+            values.sort(key=lambda y: y.lower())
+            self.cache_all_values_for_key[key] = values
+            return self.cache_all_values_for_key[key]
 
     def get_custom_keys(self, doc):
         """Return a list of custom keys sorted alphabetically."""
@@ -235,24 +253,34 @@ class Database(Service):
         self.keys['theme'] = keys
         return self.keys['theme']
 
+    @timeit
     def get_docs_by_key_value(self, key, value):
         """Return a list documents for a given key/value sorted by date."""
-        docs = []
-        for doc in self.db:
-            try:
-                if value in self.db[doc][key]:
-                    docs.append(doc)
-            except KeyError:
-                pass
-        return self.sort_by_date(docs)
+        kvpath = f"{key}-{value}"
+        try:
+            return self.cache_docs_by_kvpath[kvpath]
+        except KeyError:
+            docs = []
+            for doc in self.db:
+                try:
+                    if value in self.db[doc][key]:
+                        docs.append(doc)
+                except KeyError:
+                    pass
+            self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
 
     def get_doc_keys(self, doc):
         """Return a list of keys for a given doc sorted alphabetically."""
-        keys = []
         try:
-            for key in self.db[doc]:
-                keys.append(key)
-            keys.sort(key=lambda y: y.lower())
-        except Exception as error:
-            self.log.debug("[DATABASE] - Doc[%s] is not in the database (system page?)", doc)
-        return keys
+            return self.cache_keys_by_doc[doc]
+        except KeyError:
+            keys = []
+            try:
+                for key in self.db[doc]:
+                    keys.append(key)
+                keys.sort(key=lambda y: y.lower())
+            except Exception as error:
+                self.log.debug("[DATABASE] - Doc[%s] is not in the database (system page?)", doc)
+            self.cache_keys_by_doc[doc] = keys
+            return self.cache_keys_by_doc[doc]
+

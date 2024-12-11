@@ -681,6 +681,7 @@ class Theme(Builder):
 
     @timeit
     def build_page_key_value(self, kvpath):
+        #self.log.perf(f"[THEME] - build_page_key_value: {kvpath}")
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
         docs = self.srvbes.get_kbdict_value(key, value, new=True)

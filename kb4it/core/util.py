@@ -235,6 +235,9 @@ def get_hash_from_dict(adict):
     """Get the MD5  hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
+def get_hash_from_list(alist):
+    return hashlib.md5(pickle.dumps(alist)).hexdigest()
+
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
     Remove leading and trailing spaces; convert other spaces to

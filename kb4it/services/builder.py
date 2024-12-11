@@ -15,6 +15,7 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
+from kb4it.core.util import timeit
 
 
 class Builder(Service):
@@ -45,6 +46,7 @@ class Builder(Service):
         self.srvbes.add_target(os.path.basename(pagename))
         self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] copied to temporary target directory", os.path.basename(pagename))
 
+    @timeit
     def distribute_adoc(self, name, content):
         """
         Distribute source file to temporary directory.
