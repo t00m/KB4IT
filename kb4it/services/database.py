@@ -98,10 +98,13 @@ class Database(Service):
         if len(self.sorted_docs) == 0:
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
+    @timeit
     def sort_by_date(self, doclist):
         """Build a list of documents sorted by timestamp desc."""
-        md5hash = get_hash_from_list(doclist)
+        md5hash = get_hash_from_list(sorted(doclist))
         try:
+            self.cache_docs_sorted_by_date[md5hash]
+            self.log.perf(f"Cached: {md5hash}")
             return self.cache_docs_sorted_by_date[md5hash]
         except KeyError:
             sorted_docs = []
@@ -179,6 +182,7 @@ class Database(Service):
         except KeyError:
             return ['']
 
+    @timeit
     def get_all_values_for_key(self, key):
         """Return a list of all values for a given key sorted alphabetically."""
         try:
