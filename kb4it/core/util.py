@@ -39,10 +39,16 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
+<<<<<<< HEAD
         #log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
         if total_time > 0.05:
             log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}") # - {args}")
             log.perf(f"[PERFORMANCE] {args}")
+=======
+        # ~ log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        if total_time > 0.05:
+            log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds") # - {args}")
+>>>>>>> 9554beb783dada90ef58d7e70aa96c494cfa0123
         else:
             log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
             #log.trace(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
@@ -239,6 +245,7 @@ def get_hash_from_dict(adict):
     """Get the MD5  hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
+@timeit
 def get_hash_from_list(alist):
     return hashlib.md5(pickle.dumps(alist)).hexdigest()
 

@@ -319,6 +319,7 @@ class Backend(Service):
 
         if keys is None:
             self.log.error(f"[BACKEND/PREPROCESSING] - Document '{docname}' not compliant: please, check errors")
+            return
 
         # If document doesn't have a title, skip it.
         try:
@@ -408,7 +409,7 @@ class Backend(Service):
                         self.kbdict_new['metadata'][key] = {}
                     if value not in self.kbdict_new['metadata'][key]:
                         self.kbdict_new['metadata'][key][value] = [docname]
-    
+
     @timeit
     def stage_03_00_preprocess_document_compile(self, docname: str, content:str, keys:list):
         # Force compilation (from command line)?
@@ -626,7 +627,7 @@ class Backend(Service):
         # ~ self.log.trace("Ign keys: %s", ', '.join(list(self.ignored_keys)))
         # ~ self.log.trace("Avl keys: %s", available_keys)
 
-        self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys) 
+        self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
 
         # # Keys
         for kpath in self.runtime['K_PATH']:
