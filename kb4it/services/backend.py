@@ -38,6 +38,8 @@ from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.util import timeit
 
+from pyinstrument import Profiler
+
 fp=open('memory_profiler.log','w+')
 
 class Backend(Service):
@@ -494,9 +496,13 @@ class Backend(Service):
         #_clean_cache()
 
         # Preprocessing
+        #profiler = Profiler()
         for source in self.runtime['docs']['bag']:
             self.log.workflow(f"Preprocessing {source}")
+            #profiler.start()
             self.stage_03_00_preprocess_document(source)
+            #profiler.stop()
+            #profiler.print()
 
 
         # Save current status for the next run

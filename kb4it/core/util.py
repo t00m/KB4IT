@@ -30,6 +30,8 @@ from kb4it.core.log import get_logger
 
 log = get_logger('Util')
 
+cache_dt = {}
+
 def timeit(func):
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
@@ -38,10 +40,12 @@ def timeit(func):
         end_time = time.perf_counter()
         total_time = end_time - start_time
         #log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
-        if total_time > 0.1:
-            log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds") # - {args}")
+        if total_time > 0.05:
+            log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}") # - {args}")
+            log.perf(f"[PERFORMANCE] {args}")
         else:
-            log.trace(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+            log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+            #log.trace(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
         return result
     return timeit_wrapper
 
@@ -268,6 +272,9 @@ def log_timestamp():
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
+    if sdate in cache_dt:
+        return cache_dt[sdate]
+     
     found = False
     patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
                 "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
@@ -289,6 +296,7 @@ def guess_datetime(sdate):
                 found = True
             except ValueError:
                 timestamp = None
+    cache_dt[sdate] = timestamp
     return timestamp
 
 

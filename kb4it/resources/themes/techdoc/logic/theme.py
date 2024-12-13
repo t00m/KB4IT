@@ -84,6 +84,7 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
+        return
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
