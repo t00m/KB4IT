@@ -238,7 +238,7 @@ def main():
     parser.add_argument(
         '-L', '--log-level',
         help='Control output verbosity. Default set to INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'WORKFLOW', 'PERF', 'TRACE'],
+        choices=['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'WORKFLOW', 'PERF', 'STORY'],
         default='INFO'
     )
     parser.add_argument(

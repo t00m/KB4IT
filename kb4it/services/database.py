@@ -248,22 +248,15 @@ class Database(Service):
     def get_docs_by_key_value(self, key, value):
         """Return a list documents for a given key/value sorted by date."""
         kvpath = f"{key}-{value}"
-        self.log.info(f"Getting documents for: {kvpath}")
         cached = kvpath in self.cache_docs_by_kvpath
-        self.log.info(f"{key}-{value} cached? {cached}")
         if not cached:
             docs = []
             for doc in self.db:
-                self.log.info(f"\tAnalysing doc: {doc}")
                 if key in self.db[doc]:
                     if value in self.db[doc][key]:
                         docs.append(doc)
-                    else:
-                        self.log.info(f"\t\tValue '{value}' not found for [{doc}][{key}]")
-                else:
-                    self.log.info(f"\t\tKey '{key}' not found for [{doc}]")
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
-            self.log.info(f"RESULT: {self.cache_docs_by_kvpath[kvpath]}")
+            self.log.debug(f"Found {len(self.cache_docs_by_kvpath[kvpath])} docs for K[{key}] V[{value}]")
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_doc_keys(self, doc):

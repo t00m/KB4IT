@@ -660,7 +660,6 @@ class Theme(Builder):
     @timeit
     def build_page_key(self, key, values):
         """Create page for a key."""
-        self.log.perf(f"build_page_key: {key}: {values}")
         TPL_PAGE_KEY = self.template('PAGE_KEY')
         var = self.get_theme_var()
         var['title'] = key

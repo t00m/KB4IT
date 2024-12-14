@@ -40,13 +40,11 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        if total_time > 1:
-            log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}") # - {args}")
-            # ~ if func.__name__ == 'build_page_key_value':
-                # ~ print(args)
-                # ~ raise
-        else:
-            log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ if total_time > 1:
+            # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ else:
+            # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
     return timeit_wrapper
 
