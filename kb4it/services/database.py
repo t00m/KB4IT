@@ -9,9 +9,13 @@
 from kb4it.core.service import Service
 from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
-from kb4it.core.util import guess_datetime
-from kb4it.core.util import timeit
+# ~ from kb4it.core.util import guess_datetime
+# ~ from kb4it.core.util import timeit
 from kb4it.core.util import get_hash_from_list
+from kb4it.core.util import get_timestamp_yyyymmdd
+
+from pyinstrument import Profiler
+profiler = Profiler()
 
 
 class Database(Service):
@@ -89,7 +93,7 @@ class Database(Service):
         """Add given key to ignored keys list."""
         self.keys['ignored'].append(key)
 
-    @timeit
+    # ~ @timeit
     def sort_database(self):
         """
         Build a list of documents.
@@ -98,43 +102,26 @@ class Database(Service):
         if len(self.sorted_docs) == 0:
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
-    @timeit
+    # ~ # ~ @timeit
     def sort_by_date(self, doclist):
         """Build a list of documents sorted by timestamp desc."""
         md5hash = get_hash_from_list(sorted(doclist))
-        try:
-            self.cache_docs_sorted_by_date[md5hash]
-            self.log.perf(f"Cached: {md5hash}")
-            return self.cache_docs_sorted_by_date[md5hash]
-        except KeyError:
-            sorted_docs = []
+        if not md5hash in self.cache_docs_sorted_by_date:
             adict = {}
-            can_sort = True
             for doc in doclist:
                 sdate = self.get_doc_timestamp(doc)
-                ts = guess_datetime(sdate)
-                if ts is not None:
-                    adict[doc] = ts.strftime("%Y%m%d")
-                else:
-                    self.log.debug("[DATABASE] - Doc '%s' doesn't have a valid timestamp?", doc)
-                    self.log.debug("[DATABASE] - Sorting is disabled")
-                    can_sort = False
-            if can_sort:
-                alist = sort_dictionary(adict)
-                for doc, timestamp in alist:
-                    sorted_docs.append(doc)
-                self.cache_docs_sorted_by_date[md5hash] = sorted_docs
-                return self.cache_docs_sorted_by_date[md5hash]
-            else:
-                self.cache_docs_sorted_by_date[md5hash] = doclist
-                return self.cache_docs_sorted_by_date[md5hash]
+                adict[doc] = sdate[:10].replace('-', '')
+            sorted_docs = [doc for doc, _ in sort_dictionary(adict)]
+            self.cache_docs_sorted_by_date[md5hash] = sorted_docs
+        return self.cache_docs_sorted_by_date[md5hash]
 
-    @timeit
+    # ~ @timeit
     def get_documents(self):
         """Return the list of sorted docs."""
         self.sort_database()
         return self.sorted_docs
 
+    # ~ @timeit
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
         try:
@@ -148,7 +135,7 @@ class Database(Service):
     def is_system(self, doc):
         return 'System' in self.get_doc_properties(doc).keys()
 
-    @timeit
+    # ~ @timeit
     def get_doc_properties(self, doc):
         """Return a dictionary with the properties of a given doc.
         Additionally, the dictionary will contain an extra entry foreach
@@ -182,7 +169,7 @@ class Database(Service):
         except KeyError:
             return ['']
 
-    @timeit
+    # ~ @timeit
     def get_all_values_for_key(self, key):
         """Return a list of all values for a given key sorted alphabetically."""
         try:
@@ -257,21 +244,27 @@ class Database(Service):
         self.keys['theme'] = keys
         return self.keys['theme']
 
-    @timeit
+    # ~ @timeit
     def get_docs_by_key_value(self, key, value):
         """Return a list documents for a given key/value sorted by date."""
         kvpath = f"{key}-{value}"
-        try:
-            return self.cache_docs_by_kvpath[kvpath]
-        except KeyError:
+        self.log.info(f"Getting documents for: {kvpath}")
+        cached = kvpath in self.cache_docs_by_kvpath
+        self.log.info(f"{key}-{value} cached? {cached}")
+        if not cached:
             docs = []
             for doc in self.db:
-                try:
+                self.log.info(f"\tAnalysing doc: {doc}")
+                if key in self.db[doc]:
                     if value in self.db[doc][key]:
                         docs.append(doc)
-                except KeyError:
-                    pass
+                    else:
+                        self.log.info(f"\t\tValue '{value}' not found for [{doc}][{key}]")
+                else:
+                    self.log.info(f"\t\tKey '{key}' not found for [{doc}]")
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
+            self.log.info(f"RESULT: {self.cache_docs_by_kvpath[kvpath]}")
+        return self.cache_docs_by_kvpath[kvpath]
 
     def get_doc_keys(self, doc):
         """Return a list of keys for a given doc sorted alphabetically."""

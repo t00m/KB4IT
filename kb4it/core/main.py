@@ -18,7 +18,8 @@ import argparse
 import traceback
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from kb4it.core.util import timestamp
+from kb4it.core.util import now
+from kb4it.core.util import timeit
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
@@ -58,7 +59,7 @@ class KB4IT:
             self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.log_level)
 
-        self.log.workflow(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {timestamp()} using PID {ENV['SYS']['PS']['PID']}")
+        self.log.workflow(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {now()} using PID {ENV['SYS']['PS']['PID']}")
         self.log.debug(f"[CONTROLLER] - Python environment:")
         self.log.debug(f"[CONTROLLER] - \tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] - Platform:")
@@ -69,7 +70,7 @@ class KB4IT:
         self.__check_params()
         self.__setup_services()
 
-        #self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], timestamp())
+        #self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], now())
         #self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
         #self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
         #self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
@@ -183,6 +184,7 @@ class KB4IT:
         service = None
         self.log.trace("[CONTROLLER] - Service[%s] unregistered", name)
 
+    @timeit
     def run(self):
         """Start application."""
 
@@ -203,7 +205,7 @@ class KB4IT:
         if error:
             self.log.error("[CONTROLLER] - Execution aborted because of serious errors")
             self.log.error(f"[CONTROLLER] - \tTraceback:\n{traceback.print_exc()}")
-            self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {timestamp()}")
+            self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
             sys.exit(-1)
 
         try:
@@ -212,7 +214,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.workflow("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], timestamp())
+        self.log.workflow("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], now())
         sys.exit()
 
 class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):

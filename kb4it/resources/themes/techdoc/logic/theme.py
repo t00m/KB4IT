@@ -18,7 +18,7 @@ from calendar import monthrange
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
 from kb4it.core.util import set_max_frequency, get_font_size
-from kb4it.core.util import guess_datetime
+# ~ from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_human_datetime
 from kb4it.core.util import get_human_datetime_day
 from kb4it.core.util import get_human_datetime_month
@@ -27,6 +27,7 @@ from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import json_save
 from kb4it.core.util import ellipsize_text
 from kb4it.core.util import timeit
+from kb4it.core.util import get_year, get_month, get_day
 
 from evcal import EventsCalendar
 from timeline import Timeline
@@ -84,7 +85,6 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
-        return
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -190,10 +190,10 @@ class Theme(Builder):
             # (month, day) indexed by year
             # Also, build a dict to store those docs ocurring in that date
             try:
-                timestamp = guess_datetime(timestamp)
-                y = timestamp.year
-                m = timestamp.month
-                d = timestamp.day
+                # ~ timestamp = guess_datetime(timestamp)
+                y = get_year(timestamp)
+                m = get_month(timestamp)
+                d = get_day(timestamp)
                 try:
                     days_events = self.dey[y]
                     days_events.append((m, d))
@@ -217,8 +217,10 @@ class Theme(Builder):
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
+                self.log.error(f"Timestamp: {timestamp}")
                 self.log.error("[THEME] - %s", error)
                 self.log.error("[THEME] - Doc doesn't have a valid date field. Skip it.")
+                raise
 
         kbdict = self.srvbes.get_kb_dict()
         # Build day event pages
@@ -241,15 +243,17 @@ class Theme(Builder):
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
-                        edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
+                        # ~ edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
                         headers = []
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
-                        var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
+                        var['page']['title'] = f"Events on {day}/{month}/{year}"
+                        # ~ var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
                         self.distribute_adoc(EVENT_PAGE_DAY, html)
 
-                        human_title = get_human_datetime_day(edt)
+                        #FIXME
+                        human_title = "FIXME" # get_human_datetime_day(edt)
                         self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.adoc")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'System', 'Yes')
@@ -265,17 +269,19 @@ class Theme(Builder):
                 if thismonth in must_compile_month:
                     var = self.get_theme_var()
                     doclist = []
-                    edt = guess_datetime("%4d.%02d.01" % (year, month))
+                    # ~ edt = guess_datetime("%4d.%02d.01" % (year, month))
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
                     headers = []
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
-                    var['page']['title'] = edt.strftime("Events on %B, %Y")
+                    # ~ var['page']['title'] = edt.strftime("Events on %B, %Y")
+                    var['page']['title'] = f"Events on {month}/{year}"
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
                     self.distribute_adoc(EVENT_PAGE_MONTH, html)
 
-                    human_title = get_human_datetime_month(edt)
+                    #FIXME
+                    human_title = 'FIXME' #get_human_datetime_month(edt)
                     self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.adoc")
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'Title', f"Events on {human_title}")
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'System', 'Yes')
@@ -296,14 +302,16 @@ class Theme(Builder):
             if str(year) in must_compile_year:
                 thisyear = {}
                 html = self.srvcal.build_year_pagination(self.dey.keys())
-                edt = guess_datetime("%4d.01.01" % year)
-                title = edt.strftime("Events on %Y")
+                # ~ edt = guess_datetime("%4d.01.01" % year)
+                # ~ title = edt.strftime("Events on %Y")
+                title = f"Events on {year}"
                 thisyear['title'] = title
                 html += self.srvcal.formatyearpage(year, 4)
                 thisyear['content'] = html
                 self.distribute_adoc(page_name, PAGE.render(var=thisyear))
 
-                human_title = get_human_datetime_year(edt)
+                #FIXME
+                human_title = 'FIXME' #get_human_datetime_year(edt)
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'System', 'Yes')
@@ -312,13 +320,13 @@ class Theme(Builder):
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(pagename)
 
-    def load_events_days(self, events_days, year):
-        events_set = set()
-        for event_day in events_days:
-            events_set.add(event_day)
+    # ~ def load_events_days(self, events_days, year):
+        # ~ events_set = set()
+        # ~ for event_day in events_days:
+            # ~ events_set.add(event_day)
 
-        for month, day in events_set:
-            adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
+        # ~ for month, day in events_set:
+            # ~ adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
 
     def build_page_events(self):
         doclist = []

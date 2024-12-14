@@ -12,6 +12,7 @@ import stat
 
 from kb4it.core.service import Service
 from kb4it.core.util import copydir
+from kb4it.core.util import timeit
 
 class Workflow(Service):
     """KB4IT workflow class."""
@@ -73,6 +74,7 @@ class Workflow(Service):
             self.log.info(f"[WORKFLOW] - \tCheck your repository settings in '{config_file}'")
             self.log.info(f"[WORKFLOW] - \tFor more KB4IT options, execute: kb4it -h")
 
+    @timeit
     def build_website(self):
         self.log.workflow("[WORKFLOW] - KB4IT action: build website")
         params = self.app.get_params()
@@ -103,10 +105,10 @@ class Workflow(Service):
         #TODO
         #FIXME
         backend.stage_04_processing()
-        # ~ backend.stage_05_compilation()
-        # ~ backend.stage_07_clean_target()
-        # ~ backend.stage_08_refresh_target()
-        # ~ backend.stage_09_remove_temporary_dir()
+        backend.stage_05_compilation()
+        backend.stage_07_clean_target()
+        backend.stage_08_refresh_target()
+        backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
         self.log.info("[WORKFLOW] - Repository website: %s", homepage)
         backend.free()

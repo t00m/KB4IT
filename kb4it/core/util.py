@@ -31,6 +31,7 @@ from kb4it.core.log import get_logger
 log = get_logger('Util')
 
 cache_dt = {}
+cache_ts_ymd = {}
 
 def timeit(func):
     @wraps(func)
@@ -39,19 +40,13 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-<<<<<<< HEAD
-        #log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
-        if total_time > 0.05:
+        if total_time > 1:
             log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}") # - {args}")
-            log.perf(f"[PERFORMANCE] {args}")
-=======
-        # ~ log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
-        if total_time > 0.05:
-            log.perf(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds") # - {args}")
->>>>>>> 9554beb783dada90ef58d7e70aa96c494cfa0123
+            # ~ if func.__name__ == 'build_page_key_value':
+                # ~ print(args)
+                # ~ raise
         else:
             log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
-            #log.trace(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
         return result
     return timeit_wrapper
 
@@ -263,15 +258,24 @@ def valid_filename(s):
     return re.sub(r'(?u)[^-\w.]', '', s)
 
 
-def file_timestamp(filename):
-    """Return last modification datetime normalized of a file."""
-    t = os.path.getmtime(filename)
-    sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
-    return sdate
+# ~ def file_timestamp(filename):
+    # ~ """Return last modification datetime normalized of a file."""
+    # ~ t = os.path.getmtime(filename)
+    # ~ sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
+    # ~ return sdate
 
 
-def timestamp():
+def now():
     return datetime.now().isoformat()
+
+def get_year(timestamp: str):
+    return int(timestamp[:4])
+
+def get_month(timestamp: str):
+    return int(timestamp[4:6])
+
+def get_day(timestamp: str):
+    return int(timestamp[6:8])
 
 def log_timestamp():
     now = datetime.now()
@@ -281,8 +285,7 @@ def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
     if sdate in cache_dt:
         return cache_dt[sdate]
-     
-    found = False
+
     patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
                 "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
                 "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
@@ -293,13 +296,14 @@ def guess_datetime(sdate):
                 "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
                 "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
                 "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
-
+    found = False
     for pattern in patterns:
         if not found:
             try:
-                td = datetime.strptime(sdate, pattern)
-                ts = td.strftime("%Y-%m-%d %H:%M:%S")
-                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.strptime(sdate, pattern)
+                # ~ td = datetime.strptime(sdate, pattern)
+                # ~ ts = td.strftime("%Y-%m-%d %H:%M:%S")
+                # ~ timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
                 found = True
             except ValueError:
                 timestamp = None
@@ -331,6 +335,12 @@ def get_human_datetime_year(dt):
     """Return year datetime for humans"""
     return "%s" % dt.strftime("%Y")
 
+def get_timestamp_yyyymmdd(dt):
+    if not dt in cache_ts_ymd:
+        cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
+    return cache_ts_ymd[dt]
+
+@timeit
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
