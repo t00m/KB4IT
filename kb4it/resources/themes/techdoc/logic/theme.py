@@ -32,6 +32,8 @@ from kb4it.core.util import get_year, get_month, get_day
 from evcal import EventsCalendar
 from timeline import Timeline
 
+from pyinstrument import Profiler
+
 class Theme(Builder):
     dey = {}  # Dictionary of day events per year
     events_docs = {}  # Dictionary storing a list of docs for a given date
@@ -566,6 +568,7 @@ class Theme(Builder):
             toc = '\n'.join(items)
         return toc
 
+    @timeit
     def build_page(self, path_adoc):
         """
         Build the final HTML Page
@@ -582,6 +585,8 @@ class Theme(Builder):
 
         Finally, the html page created by asciidoctor is overwritten.
         """
+        # ~ profiler = Profiler()
+        # ~ profiler.start()
         path_hdoc = path_adoc.replace('.adoc', '.html')
         basename_adoc = os.path.basename(path_adoc)
         basename_hdoc = os.path.basename(path_hdoc)
@@ -656,6 +661,8 @@ class Theme(Builder):
                 self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
 
             self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
+        # ~ profiler.stop()
+        # ~ profiler.print()
 
     @timeit
     def build_page_key(self, key, values):
@@ -690,6 +697,8 @@ class Theme(Builder):
 
     @timeit
     def build_page_key_value(self, kvpath):
+        profiler = Profiler()
+        profiler.start()
         #self.log.perf(f"[THEME] - build_page_key_value: {kvpath}")
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
@@ -722,6 +731,8 @@ class Theme(Builder):
 
             self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
+        profiler.stop()
+        profiler.print()
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""

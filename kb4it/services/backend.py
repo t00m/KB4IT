@@ -663,6 +663,8 @@ class Backend(Service):
     @profile(stream=fp)
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
+        # ~ profiler = Profiler()
+
         self.log.info("[BACKEND/COMPILATION] - Start at %s", now())
         dcomps = datetime.datetime.now()
 
@@ -711,6 +713,7 @@ class Backend(Service):
 
 
                 if COMPILE or self.params.force:
+                    # ~ profiler.start()
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     self.log.trace("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
@@ -719,6 +722,8 @@ class Backend(Service):
                     job.add_done_callback(self.compilation_finished)
                     jobs.append(job)
                     num = num + 1
+                    # ~ profiler.stop()
+                    # ~ profiler.print()
                 else:
                     self.log.trace("[BACKEND/COMPILATION] - Document[%s] cached. Avoid compiling", basename)
 
