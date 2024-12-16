@@ -19,13 +19,12 @@ import traceback
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 from kb4it.core.util import now
-from kb4it.core.util import timeit
+from kb4it.core.perf import timeit
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
 from kb4it.services.builder import Builder
 from kb4it.services.workflow import Workflow
-
 
 def get_default_workers():
     """Calculate default number or workers.

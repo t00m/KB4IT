@@ -36,7 +36,7 @@ from kb4it.core.util import copy_docs, copydir
 # ~ from kb4it.core.util import file_timestamp
 # ~ from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
-from kb4it.core.util import timeit
+from kb4it.core.perf import timeit
 
 from pyinstrument import Profiler
 
@@ -357,6 +357,7 @@ class Backend(Service):
         docpath = os.path.join(self.get_source_path(), docname)
         keys = get_asciidoctor_attributes(docpath)
         self.log.trace(f"[BACKEND/PREPROCESSING] Document '{docname} keys: {keys}")
+        print(f"{docname}: {keys}")
         return keys
 
     @timeit

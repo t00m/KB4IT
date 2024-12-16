@@ -26,7 +26,7 @@ from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import json_save
 from kb4it.core.util import ellipsize_text
-from kb4it.core.util import timeit
+from kb4it.core.perf import timeit
 from kb4it.core.util import get_year, get_month, get_day
 
 from evcal import EventsCalendar
@@ -118,6 +118,7 @@ class Theme(Builder):
                 continue
             datatable['rows'] += '<tr>'
             timestamp = self.srvdtb.get_doc_timestamp(doc)
+            print(f"{doc}: {timestamp}")
             ts_title = timestamp[:16]
             ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
             datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
@@ -697,8 +698,8 @@ class Theme(Builder):
 
     @timeit
     def build_page_key_value(self, kvpath):
-        profiler = Profiler()
-        profiler.start()
+        #profiler = Profiler()
+        #profiler.start()
         #self.log.perf(f"[THEME] - build_page_key_value: {kvpath}")
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
@@ -731,8 +732,8 @@ class Theme(Builder):
 
             self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
-        profiler.stop()
-        profiler.print()
+        #profiler.stop()
+        #profiler.print()
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
