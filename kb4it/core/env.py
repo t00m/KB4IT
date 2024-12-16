@@ -21,6 +21,19 @@ ENV = {}
 # System info
 ENV['SYS'] = {}
 
+## Python
+ENV['SYS']['PYTHON'] = {}
+ENV['SYS']['PYTHON']['VERSION'] = sys.version
+ENV['SYS']['PYTHON']['PATH'] = sys.path
+
+MAJOR = sys.version_info.major
+MINOR = sys.version_info.minor
+
+supported = MAJOR == 3 and MINOR >= 11
+if not supported:
+    print("KB4IT only runs in with Python version >= 3.11")
+    sys.exit(-1)
+
 ENV['SYS']['PLATFORM'] = {}
 ENV['SYS']['PLATFORM']['NODE'] = platform.node()
 try:
@@ -28,11 +41,10 @@ try:
 except FileNotFoundError:
     print("KB4IT only runs in GNU/Linux systems")
     sys.exit(-1)
-
-## Python
-ENV['SYS']['PYTHON'] = {}
-ENV['SYS']['PYTHON']['VERSION'] = sys.version
-ENV['SYS']['PYTHON']['PATH'] = sys.path
+except AttributeError:
+    print("KB4IT couldn't start. Check traceback")
+    raise
+    sys.exit(-1)
 
 # KB4IT current process
 pid = os.getpid()
