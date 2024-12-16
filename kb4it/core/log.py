@@ -15,7 +15,7 @@ from kb4it.core.env import ENV
 
 # Define custom log levels
 STORY = 55
-TRACE = 5
+TRACE = 15
 PERF = 45
 WORKFLOW = 35
 
