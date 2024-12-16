@@ -305,7 +305,6 @@ def guess_datetime(sdate):
                 found = True
             except ValueError:
                 timestamp = None
-    log.info(f"Timestamp for {sdate}: {timestamp}")
     cache_dt[sdate] = timestamp
     return timestamp
 

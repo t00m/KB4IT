@@ -357,7 +357,6 @@ class Backend(Service):
         docpath = os.path.join(self.get_source_path(), docname)
         keys = get_asciidoctor_attributes(docpath)
         self.log.trace(f"[BACKEND/PREPROCESSING] Document '{docname} keys: {keys}")
-        print(f"{docname}: {keys}")
         return keys
 
     @timeit
@@ -381,11 +380,12 @@ class Backend(Service):
 
                 try:
                     if key in self.runtime['sort_attribute']:
-                        # ~ value = string_timestamp(value)
-                        value = value[:10].replace('-', '')
+                        value = string_timestamp(value)
+                        # ~ value = value[:10].replace('-', '')
                 except:
-                    self.log.error(f"Key involved: {key}")
-                    self.log.error(f"Key involved: {self.runtime['theme']}")
+                    # FIXME
+                    self.log.error(f"FIXME!! Key involved: {key}")
+                    # ~ self.log.error(f"Key involved: {self.runtime['theme']}")
 
                 if key == 'Tag':
                     value = value.lower()
