@@ -118,7 +118,7 @@ class Theme(Builder):
                 continue
             datatable['rows'] += '<tr>'
             timestamp = self.srvdtb.get_doc_timestamp(doc)
-            print(f"{doc}: {timestamp}")
+            # ~ print(f"{doc}: {timestamp}")
             ts_title = timestamp[:16]
             ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
             datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""

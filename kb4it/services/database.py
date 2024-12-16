@@ -9,7 +9,7 @@
 from kb4it.core.service import Service
 from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
-# ~ from kb4it.core.util import guess_datetime
+from kb4it.core.util import guess_datetime
 # ~ from kb4it.core.util import timeit
 from kb4it.core.util import get_hash_from_list
 from kb4it.core.util import get_timestamp_yyyymmdd
@@ -110,7 +110,8 @@ class Database(Service):
             adict = {}
             for doc in doclist:
                 sdate = self.get_doc_timestamp(doc)
-                adict[doc] = sdate[:10].replace('-', '')
+                dt = guess_datetime(sdate)
+                adict[doc] = dt #.strftime("%Y%m%d")
             sorted_docs = [doc for doc, _ in sort_dictionary(adict)]
             self.cache_docs_sorted_by_date[md5hash] = sorted_docs
         return self.cache_docs_sorted_by_date[md5hash]

@@ -298,13 +298,14 @@ def guess_datetime(sdate):
     for pattern in patterns:
         if not found:
             try:
-                timestamp = datetime.strptime(sdate, pattern)
-                # ~ td = datetime.strptime(sdate, pattern)
-                # ~ ts = td.strftime("%Y-%m-%d %H:%M:%S")
-                # ~ timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+                # ~ timestamp = datetime.strptime(sdate, pattern)
+                td = datetime.strptime(sdate, pattern)
+                ts = td.strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
                 found = True
             except ValueError:
                 timestamp = None
+    log.info(f"Timestamp for {sdate}: {timestamp}")
     cache_dt[sdate] = timestamp
     return timestamp
 
