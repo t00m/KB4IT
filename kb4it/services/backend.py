@@ -269,6 +269,7 @@ class Backend(Service):
                 self.log.trace("[BACKEND/SETUP] - End at %s", now())
                 self.app.stop()
 
+        self.log.story(f"We will use theme {theme_name}")
         self.log.trace("[BACKEND/SETUP] - End at %s", now())
 
     @timeit
@@ -296,11 +297,8 @@ class Backend(Service):
             basenames.append(os.path.basename(filepath))
         self.runtime['docs']['filenames'] = basenames
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
-
-
-
-
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
+        self.log.story(f"We found {self.runtime['docs']['count']} documents in the repository")
         self.log.trace("[BACKEND/SOURCEDOCS] - End at %s", now())
 
     @timeit
@@ -504,6 +502,13 @@ class Backend(Service):
             else:
                 keep_docs += 1
         self.log.info("[BACKEND/PREPROCESSING] - Stats - Keep: %d - Compile: %d", keep_docs, compile_docs)
+        if compile_docs == 0:
+            self.log.story("There are no changes in the repository. None of the documents will be compiled again")
+        else:
+            if compile_docs < keep_docs:
+                self.log.story(f"There are changes in the repository. {compile_docs} documents will be compiled again")
+            else:
+                self.log.story(f"All documents will be compiled again")
         self.log.trace("[BACKEND/PREPROCESSING] - End %s", now())
 
     def get_ignored_keys(self):
@@ -607,17 +612,15 @@ class Backend(Service):
         ign_theme_keys = set(repo['ignored_keys'])
         self.ignored_keys = ign_default_keys.union(ign_theme_keys)
         available_keys = list(all_keys - self.ignored_keys)
-        # ~ self.log.trace("All keys: %s", all_keys)
-        # ~ self.log.trace("Ign keys: %s", ', '.join(list(self.ignored_keys)))
-        # ~ self.log.trace("Avl keys: %s", available_keys)
-
         self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
 
-        # # Keys
+        # Keys
+        keys_with_compile_true = 0
         for kpath in self.runtime['K_PATH']:
             key, values, COMPILE_KEY = kpath
             docname = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
+                keys_with_compile_true += 1
                 fpath = os.path.join(self.runtime['dir']['tmp'], docname)
                 self.srvthm.build_page_key(key, values)
 
@@ -625,13 +628,19 @@ class Backend(Service):
             self.add_target(docname.replace('.adoc', '.html'))
 
         # # Keys/Values
+        pairs_with_compile_true = 0
         for kvpath in self.runtime['KV_PATH']:
             self.srvthm.build_page_key_value(kvpath)
             key, value, COMPILE_VALUE = kvpath
+            if COMPILE_VALUE:
+                pairs_with_compile_true += 1
             docname = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
 
             # Add compiled page to the target list
             self.add_target(docname.replace('.adoc', '.html'))
+
+        self.log.story(f"{keys_with_compile_true} keys will be compiled")
+        self.log.story(f"{pairs_with_compile_true} key/value pairs will be compiled")
 
         self.log.trace("[BACKEND/PROCESSING] - Finish processing keys")
         self.log.trace("[BACKEND/PROCESSING] - Start processing theme at %s", now())
