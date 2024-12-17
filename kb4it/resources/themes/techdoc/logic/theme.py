@@ -18,7 +18,7 @@ from calendar import monthrange
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
 from kb4it.core.util import set_max_frequency, get_font_size
-# ~ from kb4it.core.util import guess_datetime
+from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_human_datetime
 from kb4it.core.util import get_human_datetime_day
 from kb4it.core.util import get_human_datetime_month
@@ -192,10 +192,13 @@ class Theme(Builder):
             # (month, day) indexed by year
             # Also, build a dict to store those docs ocurring in that date
             try:
-                # ~ timestamp = guess_datetime(timestamp)
-                y = get_year(timestamp)
-                m = get_month(timestamp)
-                d = get_day(timestamp)
+                timestamp = guess_datetime(timestamp)
+                y = timestamp.year
+                m = timestamp.month
+                d = timestamp.day
+                # ~ y = get_year(timestamp)
+                # ~ m = get_month(timestamp)
+                # ~ d = get_day(timestamp)
                 try:
                     days_events = self.dey[y]
                     days_events.append((m, d))
@@ -219,9 +222,8 @@ class Theme(Builder):
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
-                self.log.error(f"Timestamp: {timestamp}")
                 self.log.error("[THEME] - %s", error)
-                self.log.error("[THEME] - Doc doesn't have a valid date field. Skip it.")
+                self.log.error("[THEME] - Doc doesn't have a valid date field ('{timestamp}'). Skip it.")
                 raise
 
         kbdict = self.srvbes.get_kb_dict()
@@ -245,17 +247,17 @@ class Theme(Builder):
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
-                        # ~ edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
+                        edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
                         var = self.get_theme_var()
                         headers = []
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
-                        var['page']['title'] = f"Events on {day}/{month}/{year}"
-                        # ~ var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
+                        # ~ var['page']['title'] = f"Events on {day}/{month}/{year}"
+                        var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
                         self.distribute_adoc(EVENT_PAGE_DAY, html)
 
                         #FIXME
-                        human_title = "FIXME" # get_human_datetime_day(edt)
+                        human_title = get_human_datetime_day(edt)
                         self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.adoc")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'System', 'Yes')
@@ -271,19 +273,18 @@ class Theme(Builder):
                 if thismonth in must_compile_month:
                     var = self.get_theme_var()
                     doclist = []
-                    # ~ edt = guess_datetime("%4d.%02d.01" % (year, month))
+                    edt = guess_datetime("%4d.%02d.01" % (year, month))
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                     var['doclist'] = docs
                     headers = []
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
-                    # ~ var['page']['title'] = edt.strftime("Events on %B, %Y")
-                    var['page']['title'] = f"Events on {month}/{year}"
+                    var['page']['title'] = edt.strftime("Events on %B, %Y")
+                    # ~ var['page']['title'] = f"Events on {month}/{year}"
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
                     self.distribute_adoc(EVENT_PAGE_MONTH, html)
 
-                    #FIXME
-                    human_title = 'FIXME' #get_human_datetime_month(edt)
+                    human_title = get_human_datetime_month(edt)
                     self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.adoc")
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'Title', f"Events on {human_title}")
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'System', 'Yes')
@@ -304,16 +305,15 @@ class Theme(Builder):
             if str(year) in must_compile_year:
                 thisyear = {}
                 html = self.srvcal.build_year_pagination(self.dey.keys())
-                # ~ edt = guess_datetime("%4d.01.01" % year)
-                # ~ title = edt.strftime("Events on %Y")
-                title = f"Events on {year}"
+                edt = guess_datetime("%4d.01.01" % year)
+                title = edt.strftime("Events on %Y")
+                # ~ title = f"Events on {year}"
                 thisyear['title'] = title
                 html += self.srvcal.formatyearpage(year, 4)
                 thisyear['content'] = html
                 self.distribute_adoc(page_name, PAGE.render(var=thisyear))
 
-                #FIXME
-                human_title = 'FIXME' #get_human_datetime_year(edt)
+                human_title = get_human_datetime_year(edt)
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'System', 'Yes')
@@ -596,7 +596,7 @@ class Theme(Builder):
         if not exists_hdoc:
             self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
+            self.log.trace("[THEME] - Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
@@ -617,18 +617,19 @@ class Theme(Builder):
             # It extracts the TOC from the generated HTML document.
             # If the HTML doesn't have a TOC, it means that it is not a
             # user document, but a page generated by the theme.
-            toc = self.extract_toc(source_html)
-            var['toc'] = toc
-            if len(toc) > 0:
-                var['has_toc'] = True
-                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                var['metadata'] = self.build_metadata_section(basename_adoc)
-            else:
+            if self.srvdtb.is_system(basename_adoc):
                 var['has_toc'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
                 var['metadata'] = ""
+            else:
+                toc = self.extract_toc(source_html)
+                var['toc'] = toc
+                var['has_toc'] = True
+                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
+                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
+                var['metadata'] = self.build_metadata_section(basename_adoc)
+
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
             var['page']['title'] = 'No title found...'
@@ -815,7 +816,7 @@ class Theme(Builder):
         """Return a html block for displaying metadata (keys and values)."""
         try:
             TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(doc)
+            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(doc))
             var = {}
             var['items'] = []
             for key in custom_keys:
@@ -830,7 +831,7 @@ class Theme(Builder):
                 except Exception as error:
                     self.log.error("[THEME] - Key[%s]: %s", key, error)
                     raise
-            var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+            # ~ var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
             html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)

@@ -23,6 +23,7 @@ class Database(Service):
 
     db = {}
     keys = {}
+    keys_doc = {}
     sort_attribute = None
     sorted_docs = []
     cache_props = {}
@@ -109,9 +110,10 @@ class Database(Service):
         if not md5hash in self.cache_docs_sorted_by_date:
             adict = {}
             for doc in doclist:
-                sdate = self.get_doc_timestamp(doc)
-                dt = guess_datetime(sdate)
-                adict[doc] = dt #.strftime("%Y%m%d")
+                if not self.is_system(doc):
+                    sdate = self.get_doc_timestamp(doc)
+                    dt = guess_datetime(sdate)
+                    adict[doc] = dt #.strftime("%Y%m%d")
             sorted_docs = [doc for doc, _ in sort_dictionary(adict)]
             self.cache_docs_sorted_by_date[md5hash] = sorted_docs
         return self.cache_docs_sorted_by_date[md5hash]
@@ -189,17 +191,17 @@ class Database(Service):
 
     def get_custom_keys(self, doc):
         """Return a list of custom keys sorted alphabetically."""
-        if len(self.keys['custom']) > 0:
-            return self.keys['custom']
-
-        custom_keys = []
-        keys = self.get_doc_keys(doc)
-        for key in keys:
-            if key not in self.keys['ignored']:
-                custom_keys.append(key)
-        custom_keys.sort(key=lambda y: y.lower())
-        self.keys['custom'] = custom_keys
-        return self.keys['custom']
+        try:
+            return self.keys_doc[doc]
+        except KeyError:
+            custom_keys = []
+            keys = self.get_doc_keys(doc)
+            for key in keys:
+                if key not in self.keys['ignored']:
+                    custom_keys.append(key)
+            custom_keys.sort(key=lambda y: y.lower())
+            self.keys_doc[doc] = custom_keys
+            return self.keys_doc[doc]
 
     def get_keys(self):
         """Return dictionary of keys (ignored, theme, and all)"""

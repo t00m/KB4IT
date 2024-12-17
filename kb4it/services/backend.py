@@ -34,7 +34,7 @@ from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import copy_docs, copydir
 # ~ from kb4it.core.util import file_timestamp
-# ~ from kb4it.core.util import string_timestamp
+from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.perf import timeit
 
@@ -294,7 +294,7 @@ class Backend(Service):
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
-            self.log.warning("Added default 'About App' to your sources")
+            self.log.warning("[BACKEND/SOURCEDOCS] - Added default 'About App' to your sources")
 
         # Then, get them
         self.runtime['docs']['bag'] = get_source_docs(sources_path)
@@ -378,14 +378,8 @@ class Backend(Service):
                 if len(value.strip()) == 0:
                     continue
 
-                try:
-                    if key in self.runtime['sort_attribute']:
-                        value = string_timestamp(value)
-                        # ~ value = value[:10].replace('-', '')
-                except:
-                    # FIXME
-                    self.log.error(f"FIXME!! Key involved: {key}")
-                    # ~ self.log.error(f"Key involved: {self.runtime['theme']}")
+                if key == self.runtime['sort_attribute']:
+                    value = string_timestamp(value)
 
                 if key == 'Tag':
                     value = value.lower()
@@ -501,7 +495,7 @@ class Backend(Service):
         # Preprocessing
         #profiler = Profiler()
         for source in self.runtime['docs']['bag']:
-            self.log.workflow(f"Preprocessing {source}")
+            self.log.workflow(f"[BACKEND/PREPROCESSING] - {os.path.basename(source)}")
             #profiler.start()
             self.stage_03_00_preprocess_document(source)
             #profiler.stop()
