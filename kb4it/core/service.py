@@ -60,7 +60,7 @@ class Service:
         severity = conf.log_level
         self.log = get_logger(name, severity)
         self.initialize()
-        self.log.debug("[SERVICE] - Service %s started", name)
+        self.log.trace("[SERVICE] - Service %s started", name)
 
     def end(self):
         """End service.

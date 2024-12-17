@@ -12,6 +12,7 @@ import stat
 
 from kb4it.core.service import Service
 from kb4it.core.util import copydir
+from kb4it.core.util import timeit
 
 class Workflow(Service):
     """KB4IT workflow class."""
@@ -21,12 +22,12 @@ class Workflow(Service):
         pass
 
     def list_themes(self):
-        self.log.info("[WORKFLOW] - KB4IT action: list available themes")
+        self.log.workflow("[WORKFLOW] - KB4IT action: list available themes")
         frontend = self.get_service('Frontend')
         frontend.theme_list()
 
     def create_repository(self):
-        self.log.info("[WORKFLOW] - KB4IT action: create new repository")
+        self.log.workflow("[WORKFLOW] - KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
         frontend = self.app.get_service('Frontend')
         params = self.app.get_params()
@@ -73,8 +74,9 @@ class Workflow(Service):
             self.log.info(f"[WORKFLOW] - \tCheck your repository settings in '{config_file}'")
             self.log.info(f"[WORKFLOW] - \tFor more KB4IT options, execute: kb4it -h")
 
+    @timeit
     def build_website(self):
-        self.log.info("[WORKFLOW] - KB4IT action: build website")
+        self.log.workflow("[WORKFLOW] - KB4IT action: build website")
         params = self.app.get_params()
         config = params.config
         force =  params.force
@@ -95,11 +97,16 @@ class Workflow(Service):
         """
         backend = self.get_service('Backend')
         backend.busy()
+        repo = backend.get_repo_parameters()
+        repo_title = repo['title']
+        self.log.story(f"Building a website for {repo_title}")
         backend.stage_01_check_environment()
         theme = self.get_service('Theme')
         theme.generate_sources()
         backend.stage_02_get_source_documents()
         backend.stage_03_preprocessing()
+        #TODO
+        #FIXME
         backend.stage_04_processing()
         backend.stage_05_compilation()
         backend.stage_07_clean_target()
@@ -107,4 +114,5 @@ class Workflow(Service):
         backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
         self.log.info("[WORKFLOW] - Repository website: %s", homepage)
+        self.log.story(f"Browse {repo_title} website at {homepage}")
         backend.free()

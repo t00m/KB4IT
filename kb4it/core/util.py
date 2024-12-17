@@ -14,18 +14,24 @@ import re
 import glob
 import json
 import math
+import time
+import uuid
+import pickle
 import shutil
 import hashlib
 import operator
 import subprocess
 import pprint
+from functools import wraps
 from datetime import datetime
+
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
-from functools import wraps
-import time
 
 log = get_logger('Util')
+
+cache_dt = {}
+cache_ts_ymd = {}
 
 def timeit(func):
     @wraps(func)
@@ -34,7 +40,11 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        log.debug(f"[PERFORMANCE] Stage {func.__name__} took {total_time:.4f} seconds")
+        # ~ if total_time > 1:
+            # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ else:
+            # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
     return timeit_wrapper
 
@@ -172,6 +182,7 @@ def json_save(filepath: str, adict: {}) -> {}:
     with open(filepath, 'w') as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
+# ~ @timeit
 def get_asciidoctor_attributes(docpath):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
@@ -192,7 +203,6 @@ def get_asciidoctor_attributes(docpath):
             # read the rest of properties until watermark
             for n in range(1, len(lines)):
                 line = lines[n].strip()
-                # ~ log.info(line)
                 if line.startswith(':'):
                     key = line[1:line.find(':', 1)]
                     values = line[len(key)+2:].split(',')
@@ -200,7 +210,6 @@ def get_asciidoctor_attributes(docpath):
                 elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
-                    # ~ log.info(f"{basename}: EOHMARK found")
                     break
             if not end_of_header_found:
                 log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
@@ -211,7 +220,6 @@ def get_asciidoctor_attributes(docpath):
     except IndexError as error:
         log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
         props = None
-    # ~ log.info(f"{basename}: {props}")
     return props
 
 
@@ -225,21 +233,14 @@ def get_hash_from_file(path):
     else:
         return None
 
-
+@timeit
 def get_hash_from_dict(adict):
-    """Get the SHA256 hash for a given dictionary."""
-    alist = []
-    for key in adict:
-        alist.append(key.lower())
-        elements = adict[key]
-        for elem in elements:
-            alist.append(elem.lower())
-    alist.sort(key=lambda y: y.lower())
-    string = ' '.join(alist)
-    m = hashlib.sha256()
-    m.update(string.encode())
-    return m.hexdigest()
+    """Get the MD5  hash for a given dictionary."""
+    return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
+@timeit
+def get_hash_from_list(alist):
+    return hashlib.md5(pickle.dumps(alist)).hexdigest()
 
 def valid_filename(s):
     """Return the given string converted to a string that can be used for a clean filename.
@@ -255,15 +256,24 @@ def valid_filename(s):
     return re.sub(r'(?u)[^-\w.]', '', s)
 
 
-def file_timestamp(filename):
-    """Return last modification datetime normalized of a file."""
-    t = os.path.getmtime(filename)
-    sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
-    return sdate
+# ~ def file_timestamp(filename):
+    # ~ """Return last modification datetime normalized of a file."""
+    # ~ t = os.path.getmtime(filename)
+    # ~ sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
+    # ~ return sdate
 
 
-def timestamp():
+def now():
     return datetime.now().isoformat()
+
+def get_year(timestamp: str):
+    return int(timestamp[:4])
+
+def get_month(timestamp: str):
+    return int(timestamp[4:6])
+
+def get_day(timestamp: str):
+    return int(timestamp[6:8])
 
 def log_timestamp():
     now = datetime.now()
@@ -271,7 +281,9 @@ def log_timestamp():
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
-    found = False
+    if sdate in cache_dt:
+        return cache_dt[sdate]
+
     patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
                 "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
                 "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
@@ -282,16 +294,18 @@ def guess_datetime(sdate):
                 "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
                 "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
                 "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
-
+    found = False
     for pattern in patterns:
         if not found:
             try:
+                # ~ timestamp = datetime.strptime(sdate, pattern)
                 td = datetime.strptime(sdate, pattern)
                 ts = td.strftime("%Y-%m-%d %H:%M:%S")
                 timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
                 found = True
             except ValueError:
                 timestamp = None
+    cache_dt[sdate] = timestamp
     return timestamp
 
 
@@ -319,6 +333,12 @@ def get_human_datetime_year(dt):
     """Return year datetime for humans"""
     return "%s" % dt.strftime("%Y")
 
+def get_timestamp_yyyymmdd(dt):
+    if not dt in cache_ts_ymd:
+        cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
+    return cache_ts_ymd[dt]
+
+@timeit
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
@@ -326,13 +346,13 @@ def sort_dictionary(adict, reverse=True):
 def ellipsize_text(text: str, max_length: int=70):
     if len(text) <= max_length:
         return text
-    
+
     # Number of characters to show on each side of the ellipsis
     split_length = (max_length - 3) // 2
-    
+
     # Handle odd max_length cases
     start = text[:split_length]
     end = text[-split_length:] if max_length % 2 == 0 else text[-split_length - 1:]
-    
+
     return f"{start}...{end}"
 

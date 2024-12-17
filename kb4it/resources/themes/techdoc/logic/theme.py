@@ -26,6 +26,8 @@ from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import json_save
 from kb4it.core.util import ellipsize_text
+from kb4it.core.perf import timeit
+from kb4it.core.util import get_year, get_month, get_day
 
 from evcal import EventsCalendar
 from timeline import Timeline
@@ -72,6 +74,7 @@ class Theme(Builder):
         content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
         return content
 
+    @timeit
     def build_datatable(self, headers=[], doclist=[]):
         """Given a list of columns, it builds a datatable.
         First column is always a date field, which is got by using the
@@ -191,6 +194,9 @@ class Theme(Builder):
                 y = timestamp.year
                 m = timestamp.month
                 d = timestamp.day
+                # ~ y = get_year(timestamp)
+                # ~ m = get_month(timestamp)
+                # ~ d = get_day(timestamp)
                 try:
                     days_events = self.dey[y]
                     days_events.append((m, d))
@@ -215,7 +221,8 @@ class Theme(Builder):
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
                 self.log.error("[THEME] - %s", error)
-                self.log.error("[THEME] - Doc doesn't have a valid date field. Skip it.")
+                self.log.error("[THEME] - Doc doesn't have a valid date field ('{timestamp}'). Skip it.")
+                raise
 
         kbdict = self.srvbes.get_kb_dict()
         # Build day event pages
@@ -242,10 +249,12 @@ class Theme(Builder):
                         var = self.get_theme_var()
                         headers = []
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
+                        # ~ var['page']['title'] = f"Events on {day}/{month}/{year}"
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
                         self.distribute_adoc(EVENT_PAGE_DAY, html)
 
+                        #FIXME
                         human_title = get_human_datetime_day(edt)
                         self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.adoc")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
@@ -269,6 +278,7 @@ class Theme(Builder):
                     headers = []
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
+                    # ~ var['page']['title'] = f"Events on {month}/{year}"
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
                     self.distribute_adoc(EVENT_PAGE_MONTH, html)
 
@@ -295,6 +305,7 @@ class Theme(Builder):
                 html = self.srvcal.build_year_pagination(self.dey.keys())
                 edt = guess_datetime("%4d.01.01" % year)
                 title = edt.strftime("Events on %Y")
+                # ~ title = f"Events on {year}"
                 thisyear['title'] = title
                 html += self.srvcal.formatyearpage(year, 4)
                 thisyear['content'] = html
@@ -309,13 +320,13 @@ class Theme(Builder):
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(pagename)
 
-    def load_events_days(self, events_days, year):
-        events_set = set()
-        for event_day in events_days:
-            events_set.add(event_day)
+    # ~ def load_events_days(self, events_days, year):
+        # ~ events_set = set()
+        # ~ for event_day in events_days:
+            # ~ events_set.add(event_day)
 
-        for month, day in events_set:
-            adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
+        # ~ for month, day in events_set:
+            # ~ adate = guess_datetime("%d.%02d.%02d" % (year, month, day))
 
     def build_page_events(self):
         doclist = []
@@ -370,7 +381,6 @@ class Theme(Builder):
         self.build_page_bookmarks()
         self.build_page_index(var)
         self.build_page_index_all()
-        # ~ self.create_page_about_theme()
         self.create_page_about_kb4it()
         # ~ self.create_page_help()
 
@@ -555,6 +565,7 @@ class Theme(Builder):
             toc = '\n'.join(items)
         return toc
 
+    @timeit
     def build_page(self, path_adoc):
         """
         Build the final HTML Page
@@ -571,6 +582,8 @@ class Theme(Builder):
 
         Finally, the html page created by asciidoctor is overwritten.
         """
+        # ~ profiler = Profiler()
+        # ~ profiler.start()
         path_hdoc = path_adoc.replace('.adoc', '.html')
         basename_adoc = os.path.basename(path_adoc)
         basename_hdoc = os.path.basename(path_hdoc)
@@ -580,7 +593,7 @@ class Theme(Builder):
         if not exists_hdoc:
             self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
+            self.log.trace("[THEME] - Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_HEADER_DOC = self.template('HTML_HEADER_DOC')
@@ -601,18 +614,19 @@ class Theme(Builder):
             # It extracts the TOC from the generated HTML document.
             # If the HTML doesn't have a TOC, it means that it is not a
             # user document, but a page generated by the theme.
-            toc = self.extract_toc(source_html)
-            var['toc'] = toc
-            if len(toc) > 0:
-                var['has_toc'] = True
-                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                var['metadata'] = self.build_metadata_section(basename_adoc)
-            else:
+            if self.srvdtb.is_system(basename_adoc):
                 var['has_toc'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
                 var['metadata'] = ""
+            else:
+                toc = self.extract_toc(source_html)
+                var['toc'] = toc
+                var['has_toc'] = True
+                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
+                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
+                var['metadata'] = self.build_metadata_section(basename_adoc)
+
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
             var['page']['title'] = 'No title found...'
@@ -645,7 +659,10 @@ class Theme(Builder):
                 self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
 
             self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
+        # ~ profiler.stop()
+        # ~ profiler.print()
 
+    @timeit
     def build_page_key(self, key, values):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY')
@@ -676,7 +693,11 @@ class Theme(Builder):
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
         # ~ return html
 
+    @timeit
     def build_page_key_value(self, kvpath):
+        #profiler = Profiler()
+        #profiler.start()
+        #self.log.perf(f"[THEME] - build_page_key_value: {kvpath}")
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
         docs = self.srvbes.get_kbdict_value(key, value, new=True)
@@ -691,11 +712,11 @@ class Theme(Builder):
         var['compile'] = COMPILE_VALUE
         var['has_toc'] = False
 
-        doclist = []
-        for doc in sorted_docs:
-            doclist.append(doc)
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
+        #doclist = []
+        #for doc in sorted_docs:
+        #    doclist.append(doc)
+        #headers = []
+        datatable = self.build_datatable([], sorted_docs)
         var['page']['dt_documents'] = datatable
 
         if var['compile']:
@@ -708,6 +729,8 @@ class Theme(Builder):
 
             self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
+        #profiler.stop()
+        #profiler.print()
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
@@ -790,7 +813,7 @@ class Theme(Builder):
         """Return a html block for displaying metadata (keys and values)."""
         try:
             TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(doc)
+            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(doc))
             var = {}
             var['items'] = []
             for key in custom_keys:
@@ -805,7 +828,7 @@ class Theme(Builder):
                 except Exception as error:
                     self.log.error("[THEME] - Key[%s]: %s", key, error)
                     raise
-            var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
+            # ~ var['timestamp'] = self.srvdtb.get_doc_timestamp(doc)
             html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (doc, error)
