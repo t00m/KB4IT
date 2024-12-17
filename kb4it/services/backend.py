@@ -282,6 +282,7 @@ class Backend(Service):
         self.srvthm.generate_sources()
 
         # If 'about_app.adoc' doesn't exist, create one from template
+        # FIXME: if no file exists, tell theme
         about_app_source = os.path.join(sources_path, 'about_app.adoc')
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
