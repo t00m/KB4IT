@@ -32,8 +32,6 @@ from kb4it.core.util import get_year, get_month, get_day
 from evcal import EventsCalendar
 from timeline import Timeline
 
-from pyinstrument import Profiler
-
 class Theme(Builder):
     dey = {}  # Dictionary of day events per year
     events_docs = {}  # Dictionary storing a list of docs for a given date

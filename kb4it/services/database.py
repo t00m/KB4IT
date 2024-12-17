@@ -14,9 +14,6 @@ from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_hash_from_list
 from kb4it.core.util import get_timestamp_yyyymmdd
 
-from pyinstrument import Profiler
-profiler = Profiler()
-
 
 class Database(Service):
     """KB4IT database class."""

@@ -58,7 +58,7 @@ class KB4IT:
             self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.log_level)
 
-        self.log.workflow(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {now()} using PID {ENV['SYS']['PS']['PID']}")
+        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {now()} using PID {ENV['SYS']['PS']['PID']}")
         self.log.debug(f"[CONTROLLER] - Python environment:")
         self.log.debug(f"[CONTROLLER] - \tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] - Platform:")
@@ -213,7 +213,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             pass
-        self.log.workflow("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], now())
+        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], now())
         sys.exit()
 
 class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):

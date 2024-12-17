@@ -23,8 +23,6 @@ import datetime
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-from memory_profiler import profile
-
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import now
@@ -33,14 +31,10 @@ from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict
 from kb4it.core.util import copy_docs, copydir
-# ~ from kb4it.core.util import file_timestamp
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.perf import timeit
 
-from pyinstrument import Profiler
-
-fp=open('memory_profiler.log','w+')
 
 class Backend(Service):
     """Backend class for managing the main logic workflow.
@@ -223,7 +217,6 @@ class Backend(Service):
         return self.runtime['docs']['count']
 
     @timeit
-    @profile(stream=fp)
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
@@ -279,7 +272,6 @@ class Backend(Service):
         self.log.trace("[BACKEND/SETUP] - End at %s", now())
 
     @timeit
-    @profile(stream=fp)
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.trace("[BACKEND/STAGE 2 - SOURCES] - Start at %s", now())
@@ -460,7 +452,6 @@ class Backend(Service):
         self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
 
     @timeit
-    @profile(stream=fp)
     def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
@@ -493,14 +484,9 @@ class Backend(Service):
         #_clean_cache()
 
         # Preprocessing
-        #profiler = Profiler()
         for source in self.runtime['docs']['bag']:
             self.log.workflow(f"[BACKEND/PREPROCESSING] - {os.path.basename(source)}")
-            #profiler.start()
             self.stage_03_00_preprocess_document(source)
-            #profiler.stop()
-            #profiler.print()
-
 
         # Save current status for the next run
         self.save_kbdict(self.kbdict_new, self.get_source_path())
@@ -607,7 +593,6 @@ class Backend(Service):
 
 
     @timeit
-    @profile(stream=fp)
     def stage_04_processing(self):
         """Process all keys/values got from documents.
         The algorithm detects which keys/values have changed and compile
@@ -655,11 +640,8 @@ class Backend(Service):
         self.log.trace("[BACKEND/PROCESSING] - End at %s", now())
 
     @timeit
-    @profile(stream=fp)
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
-        # ~ profiler = Profiler()
-
         self.log.info("[BACKEND/COMPILATION] - Start at %s", now())
         dcomps = datetime.datetime.now()
 
@@ -708,7 +690,6 @@ class Backend(Service):
 
 
                 if COMPILE or self.params.force:
-                    # ~ profiler.start()
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     self.log.trace("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
@@ -717,8 +698,6 @@ class Backend(Service):
                     job.add_done_callback(self.compilation_finished)
                     jobs.append(job)
                     num = num + 1
-                    # ~ profiler.stop()
-                    # ~ profiler.print()
                 else:
                     self.log.trace("[BACKEND/COMPILATION] - Document[%s] cached. Avoid compiling", basename)
 
@@ -771,7 +750,6 @@ class Backend(Service):
             return x
 
     @timeit
-    @profile(stream=fp)
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.trace("[BACKEND/CLEANUP] - Start at %s", now())
@@ -798,7 +776,6 @@ class Backend(Service):
         self.log.trace("[BACKEND/CLEANUP] - End at %s", now())
 
     @timeit
-    @profile(stream=fp)
     def stage_08_refresh_target(self):
         """Refresh target."""
         self.log.trace("[BACKEND/INSTALL] - Start at %s", now())
@@ -870,7 +847,6 @@ class Backend(Service):
         self.log.trace("[BACKEND/INSTALL] - End at %s", now())
 
     @timeit
-    @profile(stream=fp)
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
         self.log.trace("[BACKEND/POST-INSTALL] - Start at %s", now())
