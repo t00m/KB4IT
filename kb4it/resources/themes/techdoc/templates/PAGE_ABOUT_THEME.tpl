@@ -1,6 +1,6 @@
 = About theme ${var['theme']['name']}
 
-:System:    Yes
+:SystemPage:    Yes
 :Updated:       2024-08-26 12:00:00
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE

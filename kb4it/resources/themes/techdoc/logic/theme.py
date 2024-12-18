@@ -144,7 +144,7 @@ class Theme(Builder):
 
     def build_page_index(self, var):
         """Create key page."""
-        timeline = self.get_service('Timeline')
+        # ~ timeline = self.get_service('Timeline')
         repo = self.srvbes.get_repo_parameters()
         runtime = self.srvbes.get_runtime_dict()
         use_webserver = repo['webserver']
@@ -176,7 +176,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document('index.adoc')
         self.srvdtb.add_document_key('index.adoc', 'Title', 'Index')
-        self.srvdtb.add_document_key('index.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -258,7 +258,7 @@ class Theme(Builder):
                         human_title = get_human_datetime_day(edt)
                         self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.adoc")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'System', 'Yes')
+                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'SystemPage', 'Yes')
                     else:
                         self.distribute_html(pagename)
 
@@ -285,7 +285,7 @@ class Theme(Builder):
                     human_title = get_human_datetime_month(edt)
                     self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.adoc")
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'Title', f"Events on {human_title}")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'System', 'Yes')
+                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'SystemPage', 'Yes')
 
                 else:
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
@@ -314,7 +314,7 @@ class Theme(Builder):
                 human_title = get_human_datetime_year(edt)
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'System', 'Yes')
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
@@ -366,7 +366,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document('events.adoc')
         self.srvdtb.add_document_key('events.adoc', 'Title', 'Events')
-        self.srvdtb.add_document_key('events.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
 
     def build(self):
         """Create standard pages for default theme"""
@@ -424,7 +424,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document('properties.adoc')
         self.srvdtb.add_document_key('properties.adoc', 'Title', 'Properties')
-        self.srvdtb.add_document_key('properties.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('properties.adoc', 'SystemPage', 'Yes')
 
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -491,7 +491,7 @@ class Theme(Builder):
         """Create stats page"""
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         var = self.get_theme_var()
-        var['count_docs'] = self.srvbes.get_numdocs()
+        var['count_docs'] = self.srvdtb.get_documents_count() #self.srvbes.get_numdocs()
         keys = self.srvdtb.get_all_keys()
         var['count_keys'] = len(keys)
         var['leader_items'] = []
@@ -507,7 +507,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document('stats.adoc')
         self.srvdtb.add_document_key('stats.adoc', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('stats.adoc', 'SystemPage', 'Yes')
 
     def build_page_index_all(self):
         """Create a page with all documents"""
@@ -524,7 +524,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document('all.adoc')
         self.srvdtb.add_document_key('all.adoc', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('all.adoc', 'SystemPage', 'Yes')
 
         self.log.debug("[THEME] - Created page for bookmarks")
         return page
@@ -687,7 +687,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document(f"{var['pagename']}.adoc")
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
-        self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'System', 'Yes')
+        self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
 
         self.log.debug("[THEME] - Created page key '%s'", var['pagename'])
         #self.log.error("K-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
@@ -725,7 +725,7 @@ class Theme(Builder):
 
             self.srvdtb.add_document(f"{var['pagename']}.adoc")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
-            self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'System', 'Yes')
+            self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
 
             self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
         #self.log.error("KV-MEMVAR[%s] = %s", var['pagename'], get_process_memory())
@@ -753,7 +753,7 @@ class Theme(Builder):
 
         self.srvdtb.add_document('bookmarks.adoc')
         self.srvdtb.add_document_key('bookmarks.adoc', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('bookmarks.adoc', 'SystemPage', 'Yes')
 
         return page
 
