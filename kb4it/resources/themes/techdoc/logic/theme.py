@@ -175,7 +175,7 @@ class Theme(Builder):
         self.distribute_adoc('index', page)
 
         self.srvdtb.add_document('index.adoc')
-        self.srvdtb.add_document_key('index.adoc', 'Title', 'Index')
+        self.srvdtb.add_document_key('index.adoc', 'Title', var['repo']['title'])
         self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
 
     def build_events(self, doclist):
