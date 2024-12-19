@@ -57,10 +57,10 @@
                     <li>
                         <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></span></a>
                         <div class="uk-navbar-dropdown">
-                            <ul class="uk-nav uk-navbar-dropdown-nav">
+                            <ul class="uk-nav uk-navbar-dropdown-nav uk-padding-small uk-column-1-2">
 % for key in var['kb']['keys']['menu']:
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="${key}.html"><span class="">  By ${key}</span></a>
+                                    <a class="uk-link-heading" href="${key}.html"><span class="">${key}</span></a>
                                 </li>
 % endfor
                             </ul>
