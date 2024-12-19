@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 
 from bs4 import BeautifulSoup
+from lxml import etree
 
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
@@ -33,6 +34,8 @@ from kb4it.core.util import get_year, get_month, get_day
 
 from evcal import EventsCalendar
 from timeline import Timeline
+
+parser = etree.HTMLParser()
 
 class Theme(Builder):
     dey = {}  # Dictionary of day events per year
@@ -657,11 +660,11 @@ class Theme(Builder):
             HTML += FOOTER
 
             with open(path_hdoc, 'w') as fhtml:
-                soup = BeautifulSoup(HTML, 'html5lib')
-                fhtml.write(soup.prettify())
+                tree = etree.fromstring(HTML, parser)
+                pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+                fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
                 self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
-
-            self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
+                self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     @timeit
     def build_page_key(self, key, values):
