@@ -15,6 +15,8 @@ import math
 from datetime import datetime, timedelta
 from calendar import monthrange
 
+from bs4 import BeautifulSoup
+
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
 from kb4it.core.util import set_max_frequency, get_font_size
@@ -655,12 +657,11 @@ class Theme(Builder):
             HTML += FOOTER
 
             with open(path_hdoc, 'w') as fhtml:
-                fhtml.write(HTML)
+                soup = BeautifulSoup(HTML, 'html5lib')
+                fhtml.write(soup.prettify())
                 self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
 
             self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
-        # ~ profiler.stop()
-        # ~ profiler.print()
 
     @timeit
     def build_page_key(self, key, values):
