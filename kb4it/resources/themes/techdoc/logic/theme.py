@@ -789,7 +789,9 @@ class Theme(Builder):
                         has_docs = True
         headers = []
         var['datatable'] = self.build_datatable(headers, doclist)
-        return TPL_SECTION_RELATED.render(var=var)
+        html_related = TPL_SECTION_RELATED.render(var=var)
+        # ~ self.log.story(html_related)
+        return html_related
 
     def get_labels(self, values):
         """C0111: Missing function docstring (missing-docstring)."""
