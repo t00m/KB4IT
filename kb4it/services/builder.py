@@ -116,6 +116,7 @@ class Builder(Service):
         theme_var['page']['title'] = ''
         theme_var['kb'] = {}
         theme_var['kb']['keys'] = self.srvdtb.get_keys()
+        theme_var['count_docs'] = self.srvdtb.get_documents_count()
 
         # Only pass to theme those keys used by documents
         kbdict = self.srvbes.get_kb_dict()
@@ -176,4 +177,4 @@ class Builder(Service):
         self.srvdtb.add_document('about_kb4it.adoc')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'Updated', '2024-11-28 17:45:00')
-        self.srvdtb.add_document_key('about_kb4it.adoc', 'System', 'Yes')
+        self.srvdtb.add_document_key('about_kb4it.adoc', 'SystemPage', 'Yes')

@@ -9,7 +9,7 @@
             <a class="uk-link-heading"  onclick="window.print()"><div class="uk-grid-medium uk-flex-middle" uk-grid><div class="uk-width-auto uk-padding-remove-top uk-padding-remove-bottom"><span class="uk-link-heading" uk-icon="icon: print; ratio: 1.0;"></span></div><div class="uk-width-auto uk-padding-small uk-padding-remove-top uk-padding-remove-bottom">Print</div></div></a>
         </li><!-- Print Button :: END -->
         <li class="uk-link-toggle uk-button uk-button-default uk-button-small uk-width-1-1 uk-border-rounded uk-margin-small"><!-- Metadata Button :: START -->
-            <a class=""uk-link-heading"" href="#modal-metadata" uk-toggle><div class="uk-grid-medium uk-flex-middle" uk-grid><div class="uk-width-auto uk-padding-remove-top uk-padding-remove-bottom"><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></div><div class="uk-width-auto uk-padding-small uk-padding-remove-top uk-padding-remove-bottom">Meta</div></div></a>
+            <a class="uk-link-heading" href="#modal-metadata" uk-toggle><div class="uk-grid-medium uk-flex-middle" uk-grid><div class="uk-width-auto uk-padding-remove-top uk-padding-remove-bottom"><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></div><div class="uk-width-auto uk-padding-small uk-padding-remove-top uk-padding-remove-bottom">Meta</div></div></a>
             <div id="modal-metadata" class="uk-modal-full" uk-modal>
                 <div class="uk-modal-dialog">
                     <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>

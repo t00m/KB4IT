@@ -1,6 +1,6 @@
 = About this app
 
-:System: Yes
+:SystemPage: Yes
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 

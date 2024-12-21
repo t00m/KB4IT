@@ -42,7 +42,7 @@ class Database(Service):
             self.sort_attribute = ''
         self.sorted_docs = []
         self.keys['all'] = []
-        self.keys['blocked'] = ['Title']
+        self.keys['blocked'] = ['Title', 'SystemPage']
         self.keys['custom'] = []
         self.keys['theme'] = []
         try:
@@ -121,6 +121,9 @@ class Database(Service):
         self.sort_database()
         return self.sorted_docs
 
+    def get_documents_count(self):
+        return len(self.get_documents())
+
     # ~ @timeit
     def get_doc_timestamp(self, doc):
         """Get timestamp for a given document."""
@@ -133,7 +136,7 @@ class Database(Service):
 
 
     def is_system(self, doc):
-        return 'System' in self.get_doc_properties(doc).keys()
+        return 'SystemPage' in self.get_doc_properties(doc).keys()
 
     # ~ @timeit
     def get_doc_properties(self, doc):

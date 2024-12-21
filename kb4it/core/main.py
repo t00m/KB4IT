@@ -212,7 +212,7 @@ class KB4IT:
                 self.deregister_service(name)
         except AttributeError:
             # KB4IT wasn't even started
-            pass
+            raise
         self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], now())
         sys.exit()
 
