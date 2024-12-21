@@ -570,7 +570,7 @@ class Theme(Builder):
             toc = '\n'.join(items)
         return toc
 
-    @timeit
+    # ~ @timeit
     def build_page(self, path_adoc):
         """
         Build the final HTML Page
@@ -587,8 +587,6 @@ class Theme(Builder):
 
         Finally, the html page created by asciidoctor is overwritten.
         """
-        # ~ profiler = Profiler()
-        # ~ profiler.start()
         path_hdoc = path_adoc.replace('.adoc', '.html')
         basename_adoc = os.path.basename(path_adoc)
         basename_hdoc = os.path.basename(path_hdoc)
@@ -609,6 +607,7 @@ class Theme(Builder):
             now = datetime.now()
             timestamp = get_human_datetime(now)
             keys = self.srvdtb.get_doc_properties(basename_adoc)
+            system_page = self.srvdtb.is_system(basename_adoc)
 
             with open(path_adoc, 'r') as fpa:
                 source_adoc = fpa.read()
@@ -643,7 +642,10 @@ class Theme(Builder):
                 pass
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
-            var['related'] = self.get_related(basename_adoc)
+            if not system_page:
+                var['related'] = self.get_related(basename_adoc)
+            else:
+                var['related'] = ''
             var['source_adoc'] = source_adoc
             var['source_html'] = self.apply_transformations(source_html) # <---
             actions = self.get_page_actions(var)
@@ -666,7 +668,7 @@ class Theme(Builder):
                 self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
                 self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
-    @timeit
+    # ~ @timeit
     def build_page_key(self, key, values):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY')
@@ -765,32 +767,26 @@ class Theme(Builder):
         TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
         return TPL_SECTION_ACTIONS.render(var=var)
 
-    def get_related(self, doc):
+    def get_related(self, docId):
         """Get a list of related documents for each tag"""
         TPL_SECTION_RELATED = self.template('SECTION_RELATED')
-        properties = self.srvdtb.get_doc_properties(doc)
-        has_tags = False
-        has_docs = False
-        var = {}
-
-        if len(properties) > 0:
-            try:
-                tags = properties['Tag']
-                has_tags = True
-            except:
-                tags = []
-
+        blocked_keys = self.srvdtb.get_blocked_keys()
         doclist = set()
-        if has_tags:
-            for tag in tags:
-                for this_doc in self.srvdtb.get_docs_by_key_value('Tag', tag):
-                    if doc != this_doc:
-                        doclist.add(this_doc)
-                        has_docs = True
+        doc_keys = self.srvdtb.get_doc_properties(docId)
+        filtered_keys = [key for key in doc_keys if key not in blocked_keys]
+        for key in filtered_keys:
+            for value in self.srvdtb.get_values(docId, key):
+                for doc in self.srvdtb.get_docs_by_key_value(key, value):
+                    doclist.add(doc)
+
+        doclist.remove(docId)
+        self.log.debug(f"Found {len(doclist)} related docs for '{docId}")
+        self.log.trace(f"Related documents for '{docId}': {doclist}")
+
         headers = []
+        var = self.get_theme_var()
         var['datatable'] = self.build_datatable(headers, doclist)
         html_related = TPL_SECTION_RELATED.render(var=var)
-        # ~ self.log.story(html_related)
         return html_related
 
     def get_labels(self, values):

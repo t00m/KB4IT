@@ -20,6 +20,7 @@ import random
 import shutil
 import tempfile
 import datetime
+import traceback
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
@@ -215,6 +216,14 @@ class Backend(Service):
     def get_numdocs(self):
         """Get current number of valid documents."""
         return self.runtime['docs']['count']
+
+    def get_documents(self):
+        """Get current number of valid documents."""
+        try:
+            return self.runtime['docs']['bag']
+        except:
+            self.log.warning("Runtime dictionary not yet initialiased")
+            return []
 
     @timeit
     def stage_01_check_environment(self):
@@ -757,6 +766,10 @@ class Backend(Service):
                 self.log.error("Please, consider using less workers or add more memory to your system")
                 self.log.error("The application will exit now...")
                 sys.exit(errno.ENOMEM)
+            except Exception as error:
+                self.log.error(error)
+                self.log.error(traceback.format_exc())
+                raise
             return x
 
     @timeit
