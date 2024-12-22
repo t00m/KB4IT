@@ -87,7 +87,7 @@ class Builder(Service):
                 try:
                     self.templates[template] = Template(filename=template_path)
                     TEMPLATE_FOUND = True
-                    self.log.debug("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
+                    self.log.trace("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
                     break
                 except:
                     self.templates[template] = Template("")

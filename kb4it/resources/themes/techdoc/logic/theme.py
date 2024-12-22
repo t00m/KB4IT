@@ -642,10 +642,11 @@ class Theme(Builder):
                 pass
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
-            if not system_page:
-                var['related'] = self.get_related(basename_adoc)
-            else:
-                var['related'] = ''
+            # DISABLED
+            # ~ if not system_page:
+                # ~ var['related'] = self.get_related(basename_adoc)
+            # ~ else:
+                # ~ var['related'] = ''
             var['source_adoc'] = source_adoc
             var['source_html'] = self.apply_transformations(source_html) # <---
             actions = self.get_page_actions(var)
@@ -665,7 +666,7 @@ class Theme(Builder):
                 tree = etree.fromstring(HTML, parser)
                 pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
                 fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-                self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+                self.log.trace("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
                 self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
@@ -769,6 +770,16 @@ class Theme(Builder):
 
     def get_related(self, docId):
         """Get a list of related documents for each tag"""
+        # DISABLED:
+        # Related section code works.
+        # However, because of the workflow do not detect which sources
+        # have been added or removed, if any of the remaining sources do
+        # not change, the related section will not be rebuilt again.
+        # As a consecuence, documents displayed in the related section
+        # might not exist. Or the other way around, the new documents
+        # might exist, but they are not referenced.
+        # Workaround: just browse the metadata from the document menu
+
         TPL_SECTION_RELATED = self.template('SECTION_RELATED')
         blocked_keys = self.srvdtb.get_blocked_keys()
         doclist = set()
