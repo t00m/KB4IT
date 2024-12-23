@@ -88,6 +88,7 @@
                             </ul>
                         </div>
                     </li>
+
 <!-- Only display if num of documents -->
 % if var['count_docs'] > 0:
 % endif
@@ -95,7 +96,7 @@
                 </ul>
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
-${var['menu_contents']}
+                    ${var['actions']}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
                 % if var['has_toc']:
@@ -116,7 +117,7 @@ ${var['menu_contents']}
 % if var['has_toc']:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
-    ${var['actions']}
+    ${var['toc']}
                                     </ul>
                                 </div>
 % endif
