@@ -13,44 +13,30 @@ import logging
 
 from kb4it.core.env import ENV
 
-# Define custom log levels
+# Custom log levels
 STORY = 55
-TRACE = 15
+TRACE = 5
 PERF = 45
 WORKFLOW = 35
-
 
 logging.addLevelName(TRACE, "TRACE")
 logging.addLevelName(STORY, "STORY")
 logging.addLevelName(PERF, "PERF")
 logging.addLevelName(WORKFLOW, "WORKFLOW")
 
-# Helper functions for new logging levels
-def trace(msg, *args, **kwargs):
-    logging.log(TRACE, msg, *args, **kwargs)
-
-def perf(msg, *args, **kwargs):
-    logging.log(PERF, msg, *args, **kwargs)
-
-def workflow(msg, *args, **kwargs):
-    logging.log(WORKFLOW, msg, *args, **kwargs)
-
-def story(msg, *args, **kwargs):
-    logging.log(STORY, msg, *args, **kwargs)
-
 # Custom Logger class to add new logging methods
 class CustomLogger(logging.getLoggerClass()):
     def trace(self, msg, *args, **kwargs):
-        self.log(TRACE, msg, *args, **kwargs)
+        self.log(TRACE, msg, *args, stacklevel=2, **kwargs)
 
     def perf(self, msg, *args, **kwargs):
-        self.log(PERF, msg, *args, **kwargs)
+        self.log(PERF, msg, *args, stacklevel=2, **kwargs)
 
     def workflow(self, msg, *args, **kwargs):
-        self.log(WORKFLOW, msg, *args, **kwargs)
+        self.log(WORKFLOW, msg, *args, stacklevel=2, **kwargs)
 
     def story(self, msg, *args, **kwargs):
-        self.log(STORY, msg, *args, **kwargs)
+        self.log(STORY, msg, *args, stacklevel=2, **kwargs)
 
 # Set CustomLogger as the default logger class
 logging.setLoggerClass(CustomLogger)

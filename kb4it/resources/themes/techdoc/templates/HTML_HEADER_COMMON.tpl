@@ -47,55 +47,56 @@
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">
                 <ul class="uk-navbar-nav">
-                    <li class="uk-link-toggle uk-inline-clip uk-transition-toggle">
+                    <li>
                         <a class="uk-logo uk-card uk-card-hover uk-transition-scale-up uk-transition-opaque" href="index.html">
                             <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px" height="24px">
                         </a>
-                    </li>
-<!-- Only display if num of documents -->
-% if var['count_docs'] > 0:
-                    <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="database"></span></a>
-                        <div class="uk-navbar-dropdown">
-                            <ul class="uk-nav uk-navbar-dropdown-nav uk-padding-small uk-column-1-2">
-% for key in var['kb']['keys']['menu']:
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="${key}.html"><span class="">${key}</span></a>
-                                </li>
-% endfor
-                            </ul>
-                        </div>
-                    </li>
-                    <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="star"></span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="events.html"><span class="">Events</span></a>
+                                    <a class="uk-link-heading" href="events.html"><span uk-icon="calendar"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Events</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="bookmarks.html"><span class="">Bookmarks</span></a>
+                                    <a class="uk-link-heading" href="bookmarks.html"><span uk-icon="bookmark"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Bookmarks</span></a>
                                 </li>
+% if var['repo']['git'] == True:
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="properties.html"><span class="">Properties</span></a>
+                                    <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Add new document</span></a>
                                 </li>
+% endif
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="stats.html"><span class="">Stats</span></a>
+                                    <a class="uk-link-heading" href="#"><span uk-icon="database"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Properties</span></a>
+                                    <div class="uk-navbar-dropdown" uk-dropdown="pos: right-top">
+                                        <ul class="uk-nav uk-navbar-dropdown-nav uk-padding-small uk-column-1-2">
+            % for key in var['kb']['keys']['menu']:
+                                            <li class="uk-link-toggle">
+                                                <a class="uk-link-heading" href="${key}.html"><span class="">${key}</span></a>
+                                            </li>
+            % endfor
+                                        </ul>
+                                    </div>
+                                </li>
+<!--
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="properties.html"><span uk-icon="bag"></span><span class="">Properties</span></a>
+                                </li>
+-->
+                                <li class="uk-nav-divider"></li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="stats.html"><span uk-icon="list"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Stats</span></a>
                                 </li>
                             </ul>
                         </div>
                     </li>
-% if var['repo']['git'] == True:
-                    <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span></a>
-                    </li>
-% endif
+
+<!-- Only display if num of documents -->
+% if var['count_docs'] > 0:
 % endif
 <!-- Only display if num of documents -->
                 </ul>
                 <ul class="uk-navbar-nav">
                     <!-- MENU CONTENTS :: START -->
-${var['menu_contents']}
+                    ${var['actions']}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
                 % if var['has_toc']:
@@ -116,7 +117,7 @@ ${var['menu_contents']}
 % if var['has_toc']:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
-    ${var['actions']}
+    ${var['toc']}
                                     </ul>
                                 </div>
 % endif
