@@ -53,17 +53,18 @@
                         </a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
+% if var['repo']['git'] == True:
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Add new document</span></a>
+                                </li>
+                                <li class="uk-nav-divider"></li>
+% endif
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="events.html"><span uk-icon="calendar"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Events</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="bookmarks.html"><span uk-icon="bookmark"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Bookmarks</span></a>
                                 </li>
-% if var['repo']['git'] == True:
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Add new document</span></a>
-                                </li>
-% endif
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="#"><span uk-icon="database"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Properties</span></a>
                                     <div class="uk-navbar-dropdown" uk-dropdown="pos: right-top">

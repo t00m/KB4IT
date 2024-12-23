@@ -15,7 +15,6 @@ import math
 from datetime import datetime, timedelta
 from calendar import monthrange
 
-from bs4 import BeautifulSoup
 from lxml import etree
 
 from kb4it.services.builder import Builder
