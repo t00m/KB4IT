@@ -16,12 +16,15 @@
     }
 
     #kb4it-doc-metadata {
-        display: none;
+        visibility: visible;
+        display: table;
     }
 
+/*
     #kb4it-menu {
         display: none;
     }
+*/
 
 
     h1, h2, h3, h4, h5 {
@@ -32,9 +35,12 @@
         visibility: visible;
         display: inline;
     }
-    
-    #kb4it-page-title {
-        display: block;  
+
+    .kb4it-page-title {
+        display: block;
+        font: 18px Arial, Helvetica,"Lucida Grande", serif;
+        color: #000;
+        padding-top: 2em;
     }
 
 
@@ -50,9 +56,20 @@
     }
 
     .noprint {
-        display: none ;
-        }
+        display: none;
+    }
+
+    .print {
+        display: block;
+    }
+
+    #noprint {
+        display: none;
+    }
+
+    #print {
+        display: block;
+    }
+
 }
 
-#noprint { display: none; }
-#print { display: block; }

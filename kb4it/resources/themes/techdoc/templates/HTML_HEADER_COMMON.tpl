@@ -42,7 +42,6 @@
 <!-- Template version ${var['env']['APP']['version']} -->
 <div class="uk-background-muted uk-height-viewport">
 <div id="container-1" class="uk-container uk-container-center">
-    <div id="print" class="uk-flex uk-flex-center"><span class="uk-text-lead"><a href="#" text="${var['page']['title-tooltip']}" uk-tooltip>${var['page']['title']}</a></span></div>
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
             <div class="uk-navbar-left noprint">
@@ -114,7 +113,7 @@
                     <li>
                         <div class="uk-child-width-expand@s uk-text-center" uk-grid>
                             <div class="uk-card uk-card-small">
-                                <a class="uk-link-toggle uk-text-primary" href="#"><span class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
+                                <a class="uk-link-toggle uk-text-primary" href="#"><span class="kb4it-page-title uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
 % if var['has_toc']:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">

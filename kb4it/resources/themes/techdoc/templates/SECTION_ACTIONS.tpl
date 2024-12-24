@@ -7,11 +7,6 @@
         </li>
         <!-- Edit Button :: END -->
   % endif
-        <!-- Print Button :: START -->
-        <li class="uk-link-toggle" uk-tooltip="title: Print documnent">
-          <a class="uk-link-heading"  onclick="window.print()"><span uk-icon="print"></span></a>
-        </li>
-        <!-- Print Button :: END -->
         <!-- Metadata Button :: START -->
         <li class="uk-link-toggle" uk-tooltip="title: Document properties">
             <a class="uk-link-heading" href="#modal-metadata" uk-toggle><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
