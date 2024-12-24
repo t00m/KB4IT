@@ -6,18 +6,18 @@
             <div class="uk-navbar-right noprint">
                 <ul class="uk-navbar-nav">
                     <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#">About</a>
+                        <a class="uk-button uk-card uk-card-small uk-card-hover uk-link-heading" href="#">About</a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
+                                    <a class="uk-card uk-card-small uk-card-hover uk-border-rounded uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-none">About this theme</span></a>
+                                    <a class="uk-card uk-card-small uk-card-hover uk-border-rounded uk-link-heading" href="about_theme.html"><span class="uk-padding-none">About this theme</span></a>
                                 </li>
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-card uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
+                                    <a class="uk-card uk-card-small uk-card-hover uk-border-rounded uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
                                 </li>
                             </ul>
                         </div>

@@ -1,5 +1,5 @@
                         <!-- DOC_CARD.tpl :: START -->
-                        <div data-title="${var['data-title']}" class="uk-card uk-card-hover" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="">
+                        <div data-title="${var['data-title']}" class="uk-card uk-card-small uk-card-hover" uk-scrollspy="target: > div; cls: uk-animation-fade; delay: 100" style="">
                             <div class="uk-card-header">
                                 <div class="uk-grid-small uk-flex-middle" uk-grid>
                                     <div class="uk-width-expand">

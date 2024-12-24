@@ -1,7 +1,7 @@
 <!-- FOOTER :: START -->
             <div class="uk-flex uk-flex-center uk-flex-wrap">
 <!--
-                <div class="uk-card uk-card-body">
+                <div class="uk-card uk-card-small uk-card-body">
                     <span class="uk-text-meta">Last update on ${var['timestamp']}</span>
                 </div>
 -->
