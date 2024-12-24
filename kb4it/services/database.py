@@ -51,6 +51,7 @@ class Database(Service):
             # FIXME: raises error when the command line option -r
             # is not passed
             self.keys['ignored'] = []
+        self.ignore_key('Title')
         self.db = {}
 
     def del_document(self, doc):
