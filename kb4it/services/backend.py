@@ -729,11 +729,12 @@ class Backend(Service):
                 # ~ self.log.trace("[COMPILATION] - %3s%% done", "0")
                 for job in jobs:
                     adoc, res, jobid = job.result()
-                    self.log.trace("[BACKEND/COMPILATION] - Job[%d/%d]: %s compiled successfully", jobid, num - 1, os.path.basename(adoc))
+                    self.log.debug(f"[BACKEND/COMPILATION] - {os.path.basename(adoc)} compiled successfully")
                     jobcount += 1
                     if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
                         pct = int(jobcount * 100 / len(docs))
-                        self.log.info("[BACKEND/COMPILATION] - %3s%% done", str(pct))
+                        # ~ self.log.info("[BACKEND/COMPILATION] - %3s%% done", str(pct))
+                        self.log.info("[BACKEND/COMPILATION] - %3s%% done (job %d/%d)", str(pct), jobid, num - 1)
 
                 dcompe = datetime.datetime.now()
                 comptime = dcompe - dcomps
