@@ -41,20 +41,20 @@
 <body>
 <!-- Template version ${var['env']['APP']['version']} -->
 <div class="uk-background-muted uk-height-viewport">
-<div id="container-1" class="uk-container uk-container-center">
+<div id="container-1" class="uk-container uk-container-center noprint">
     <div id="kb4it-menu" style="z-index: 980;" uk-sticky="show-on-up: true">
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-margin uk-box-shadow-large" style="background-color: white;" uk-navbar>
-            <div class="uk-navbar-left noprint">
-                <ul class="uk-navbar-nav">
-                    <li>
-                        <a class="uk-logo uk-card uk-card-hover uk-transition-scale-up uk-transition-opaque" href="index.html">
+            <div class="uk-navbar-left">
+                <ul class="uk-navbar-nav noprint">
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-logo uk-transition-scale-up uk-transition-opaque" href="index.html">
                             <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px" height="24px">
                         </a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
 % if var['repo']['git'] == True:
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Add new document</span></a>
+                                    <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank"><span uk-icon="plus"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">New document</span></a>
                                 </li>
                                 <li class="uk-nav-divider"></li>
 % endif
@@ -94,11 +94,12 @@
 % endif
 <!-- Only display if num of documents -->
                 </ul>
-                <ul class="uk-navbar-nav">
+                <ul class="uk-navbar-nav noprint">
                     <!-- MENU CONTENTS :: START -->
                     ${var['actions']}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
+<!--
                 % if var['has_toc']:
                 <ul class="uk-navbar-nav" uk-tooltip="title: Go to top">
                     <li class="uk-link-toggle">
@@ -106,14 +107,15 @@
                     </li>
                 </ul>
                 % endif
+-->
             </div>
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
-                    <li>
+                    <li class="uk-card uk-card-small uk-padding-small uk-padding-remove-vertical">
                         <div class="uk-child-width-expand@s uk-text-center" uk-grid>
                             <div class="uk-card uk-card-small">
-                                <a class="uk-link-toggle uk-text-primary" href="#"><span class="kb4it-page-title uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
+                                <a class="uk-link-toggle uk-text-primary" href="#"><span id="kb4it-page-title" class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
 % if var['has_toc']:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
@@ -127,24 +129,18 @@
                 </ul>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
-
-            <div class="uk-navbar-right noprint">
-                <ul class="uk-navbar-nav">
-                    <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
+            <div class="uk-navbar-right">
+                <ul class="uk-navbar-nav noprint">
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
                     </li>
-                    <li>
-                        <a class="uk-button uk-card uk-card-hover uk-link-heading" href="#"><span uk-icon="info"></span></a>
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-link-heading" href="#"><span uk-icon="info"></span></a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
                                 </li>
-                                <!--
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about_theme.html"><span class="uk-padding-none">About this theme</span></a>
-                                </li>
-                                -->
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
@@ -158,5 +154,6 @@
     </div>
 </div>
 <div class="uk-container uk-container-center">
-<div class="uk-container">
-</div>
+    <div id="container-2" class="uk-container uk-container-center uk-flex uk-flex-center uk-hidden">
+        <span class="uk-text-lead">${var['page']['title']}</span>
+    </div>
