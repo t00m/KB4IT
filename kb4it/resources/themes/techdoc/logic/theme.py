@@ -112,14 +112,14 @@ class Theme(Builder):
 
         # Add datatable body
         documents = {}
-        for doc in doclist:
-            documents[doc] = self.srvdtb.get_doc_properties(doc)
+        for docId in doclist:
+            documents[docId] = self.srvdtb.get_doc_properties(docId)
         datatable['rows'] = ''
-        for doc in documents:
-            if self.srvdtb.is_system(doc):
+        for docId in documents:
+            if self.srvdtb.is_system(docId):
                 continue
             datatable['rows'] += '<tr>'
-            timestamp = self.srvdtb.get_doc_timestamp(doc)
+            timestamp = self.srvdtb.get_doc_timestamp(docId)
             if timestamp is None:
                 continue
             ts_title = timestamp[:16]
@@ -128,17 +128,17 @@ class Theme(Builder):
             for key in headers[1:]:
                 item = {}
                 if key == 'Title':
-                    item['title'] = f"<div uk-tooltip='{documents[doc][key]}'>{ellipsize_text(documents[doc][key], 80)}</div>"
-                    item['url'] = documents[doc]['%s_Url' % key]
+                    item['title'] = f"<div uk-tooltip='{documents[docId][key]}'>{ellipsize_text(documents[docId][key], 80)}</div>"
+                    item['url'] = documents[docId]['%s_Url' % key]
                     datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
                 else:
                     link = {}
                     link['class'] = 'uk-link-heading'
                     field = []
                     try:
-                        for value in documents[doc][key]:
+                        for value in documents[docId][key]:
                             link['title'] = value
-                            link['url'] = documents[doc]['%s_%s_Url' % (key, value)]
+                            link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
                             field.append(TPL_LINK.render(var=link))
                     except KeyError:
                         field = ''
@@ -177,8 +177,8 @@ class Theme(Builder):
             # ~ json_save(timeline_filepath, timeline_content)
             # ~ self.srvbes.add_target('timeline_main.json')
 
-        # ~ for doc in self.srvdtb.get_documents():
-            # ~ doclist.append(doc)
+        # ~ for docId in self.srvdtb.get_documents():
+            # ~ doclist.append(docId)
 
         headers = []
         datatable = self.build_datatable(headers, doclist)
@@ -197,9 +197,9 @@ class Theme(Builder):
         TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
         SORT = self.srvbes.get_runtime_parameter('sort_attribute')
         # Get events dates
-        for doc in doclist:
-            props = self.srvdtb.get_doc_properties(doc)
-            timestamp = self.srvdtb.get_doc_timestamp(doc)
+        for docId in doclist:
+            props = self.srvdtb.get_doc_properties(docId)
+            timestamp = self.srvdtb.get_doc_timestamp(docId)
             if timestamp is None:
                 continue
             # Build dict of events for a given date as a list of tuples
@@ -229,7 +229,7 @@ class Theme(Builder):
                     self.events_docs[y][m][d] = []
 
                 docs = self.events_docs[y][m][d]
-                docs.append(doc)
+                docs.append(docId)
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
@@ -248,8 +248,8 @@ class Theme(Builder):
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
                     must_compile_day = False
-                    for doc in doclist:
-                        doc_changed = kbdict['document'][doc]['compile']
+                    for docId in doclist:
+                        doc_changed = kbdict['document'][docId]['compile']
                         doc_not_cached = not os.path.exists(pagename)
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
@@ -342,22 +342,22 @@ class Theme(Builder):
             event_types = []
         self.log.debug("[THEME] - Event types: %s", ', '.join(event_types))
 
-        for doc in self.srvdtb.get_documents():
-            if self.srvdtb.is_system(doc):
+        for docId in self.srvdtb.get_documents():
+            if self.srvdtb.is_system(docId):
                 continue
-            category = self.srvdtb.get_values(doc, 'Category')[0]
+            category = self.srvdtb.get_values(docId, 'Category')[0]
             if category in event_types:
                 try:
                     docs = ecats[category]
-                    docs.add(doc)
+                    docs.add(docId)
                     ecats[category] = docs
                 except:
                     docs = set()
-                    docs.add(doc)
+                    docs.add(docId)
                     ecats[category] = docs
 
-                doclist.append(doc)
-                title = self.srvdtb.get_values(doc, 'Title')[0]
+                doclist.append(docId)
+                title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
         HTML = self.srvcal.build_year_pagination(self.dey.keys())
         events = {}
@@ -429,9 +429,9 @@ class Theme(Builder):
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
         dkeyurl = {}
-        for doc in self.srvdtb.get_documents():
-            tags = self.srvdtb.get_values(doc, key)
-            url = os.path.basename(doc)[:-5]
+        for docId in self.srvdtb.get_documents():
+            tags = self.srvdtb.get_values(docId, key)
+            url = os.path.basename(docId)[:-5]
             for tag in tags:
                 try:
                     urllist = dkeyurl[tag]
@@ -513,8 +513,8 @@ class Theme(Builder):
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
         doclist = []
-        for doc in self.srvdtb.get_documents():
-            doclist.append(doc)
+        for docId in self.srvdtb.get_documents():
+            doclist.append(docId)
         headers = []
         datatable = self.build_datatable(headers, doclist)
         var['content'] = datatable
@@ -717,10 +717,10 @@ class Theme(Builder):
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
         var = self.get_theme_var()
         doclist = []
-        for doc in self.srvdtb.get_documents():
-            bookmark = self.srvdtb.get_values(doc, 'Bookmark')[0]
+        for docId in self.srvdtb.get_documents():
+            bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
             if bookmark == 'Yes' or bookmark == 'True':
-                doclist.append(doc)
+                doclist.append(docId)
         self.log.debug("[THEME] - Found %d bookmarks", len(doclist))
         headers = []
         datatable = self.build_datatable(headers, doclist)
@@ -760,8 +760,8 @@ class Theme(Builder):
         filtered_keys = [key for key in doc_keys if key not in blocked_keys]
         for key in filtered_keys:
             for value in self.srvdtb.get_values(docId, key):
-                for doc in self.srvdtb.get_docs_by_key_value(key, value):
-                    doclist.add(doc)
+                for docId in self.srvdtb.get_docs_by_key_value(key, value):
+                    doclist.add(docId)
 
         doclist.remove(docId)
         self.log.debug(f"Found {len(doclist)} related docs for '{docId}")
@@ -785,30 +785,30 @@ class Theme(Builder):
                 label_links += TPL_METADATA_VALUE_LINK.render(var=var)
         return label_links
 
-    def get_html_values_from_key(self, doc, key):
+    def get_html_values_from_key(self, docId, key):
         """Return the html link for a value."""
         html = []
 
-        values = self.srvdtb.get_values(doc, key)
+        values = self.srvdtb.get_values(docId, key)
         for value in values:
             url = "%s_%s.html" % (key, value)
             html.append((url, value))
         return html
 
-    def build_metadata_section(self, doc):
+    def build_metadata_section(self, docId):
         """Return a html block for displaying metadata (keys and values)."""
         try:
             TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(doc))
+            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(docId))
             var = {}
             var['items'] = []
             for key in custom_keys:
                 ckey = {}
-                ckey['doc'] = doc
+                ckey['doc'] = docId
                 ckey['key'] = key
                 ckey['vfkey'] = valid_filename(key)
                 try:
-                    values = self.get_html_values_from_key(doc, key)
+                    values = self.get_html_values_from_key(docId, key)
                     ckey['labels'] = self.get_labels(values)
                     var['items'].append(ckey)
                 except Exception as error:
@@ -816,7 +816,7 @@ class Theme(Builder):
                     raise
             html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
-            msgerror = "%s -> %s" % (doc, error)
+            msgerror = "%s -> %s" % (docId, error)
             self.log.error("[THEME] - %s", msgerror)
             html = ''
             raise

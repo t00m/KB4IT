@@ -54,31 +54,31 @@ class Database(Service):
         self.ignore_key('Title')
         self.db = {}
 
-    def del_document(self, doc):
+    def del_document(self, docId):
         """Delete a document node from database."""
-        adoc = "%s.adoc" % doc
+        adoc = "%s.adoc" % docId
         try:
             del self.db[adoc]
-            self.log.debug("[DATABASE] - DOC[%s] deleted from database", doc)
+            self.log.debug("[DATABASE] - DOC[%s] deleted from database", docId)
             self.sort_database()
         except KeyError:
-            self.log.debug("[DATABASE] - DOC[%s] not found in database", doc)
+            self.log.debug("[DATABASE] - DOC[%s] not found in database", docId)
 
-    def add_document(self, doc: str):
+    def add_document(self, docId: str):
         """Add a new document node to the database ('name.adoc')"""
-        self.db[doc] = {}
-        self.log.trace("[DATABASE] - DOC[%s] added to database", doc)
+        self.db[docId] = {}
+        self.log.trace("[DATABASE] - DOC[%s] added to database", docId)
 
-    def add_document_key(self, doc, key, value):
+    def add_document_key(self, docId, key, value):
         """Add a new key/value node for a given document."""
         try:
-            alist = self.db[doc][key]
+            alist = self.db[docId][key]
             alist.append(value)
-            self.db[doc][key] = alist
+            self.db[docId][key] = alist
         except KeyError:
-            self.db[doc][key] = [value]
+            self.db[docId][key] = [value]
 
-        self.log.trace("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", doc, key, value)
+        self.log.trace("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -107,14 +107,14 @@ class Database(Service):
         md5hash = get_hash_from_list(sorted(doclist))
         if not md5hash in self.cache_docs_sorted_by_date:
             adict = {}
-            for doc in doclist:
-                if not self.is_system(doc):
-                    sdate = self.get_doc_timestamp(doc)
+            for docId in doclist:
+                if not self.is_system(docId):
+                    sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
                         continue
                     dt = guess_datetime(sdate)
-                    adict[doc] = dt #.strftime("%Y%m%d")
-            sorted_docs = [doc for doc, _ in sort_dictionary(adict)]
+                    adict[docId] = dt #.strftime("%Y%m%d")
+            sorted_docs = [docId for docId, _ in sort_dictionary(adict)]
             self.cache_docs_sorted_by_date[md5hash] = sorted_docs
         return self.cache_docs_sorted_by_date[md5hash]
 
@@ -136,40 +136,40 @@ class Database(Service):
             self.log.trace(f"[DATABASE] - Document '{docId}' doesn't have the sort attribute {error}")
             return None
 
-    def is_system(self, doc):
-        return 'SystemPage' in self.get_doc_properties(doc).keys()
+    def is_system(self, docId):
+        return 'SystemPage' in self.get_doc_properties(docId).keys()
 
     # ~ @timeit
-    def get_doc_properties(self, doc):
-        """Return a dictionary with the properties of a given doc.
+    def get_doc_properties(self, docId):
+        """Return a dictionary with the properties of a given docId.
         Additionally, the dictionary will contain an extra entry foreach
         property with its Url:
         """
         try:
-            return self.cache_props[doc]
+            return self.cache_props[docId]
         except KeyError:
             props = {}
             try:
-                for key in self.db[doc]:
+                for key in self.db[docId]:
                     if key == 'Title':
-                        props[key] = self.db[doc][key][0]
+                        props[key] = self.db[docId][key][0]
                         key_url = "%s_Url" % key
-                        props[key_url] = doc.replace('.adoc', '.html')
+                        props[key_url] = docId.replace('.adoc', '.html')
                     else:
-                        props[key] = self.db[doc][key]
-                        for value in self.db[doc][key]:
+                        props[key] = self.db[docId][key]
+                        for value in self.db[docId][key]:
                             key_value_url = "%s_%s_Url" % (key, value)
                             props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
             except Exception as warning:
                 # FIXME: Document why it is not necessary
                 pass
-            self.cache_props[doc] = props
-            return self.cache_props[doc]
+            self.cache_props[docId] = props
+            return self.cache_props[docId]
 
-    def get_values(self, doc, key):
+    def get_values(self, docId, key):
         """Return a list of values given a document and a key."""
         try:
-            return self.db[doc][key]
+            return self.db[docId][key]
         except KeyError:
             return ['']
 
@@ -180,9 +180,9 @@ class Database(Service):
             return self.cache_all_values_for_key[key]
         except KeyError:
             values = []
-            for doc in self.db:
+            for docId in self.db:
                 try:
-                    values.extend(self.db[doc][key])
+                    values.extend(self.db[docId][key])
                 except KeyError:
                     pass
             values = list(set(values))
@@ -190,19 +190,19 @@ class Database(Service):
             self.cache_all_values_for_key[key] = values
             return self.cache_all_values_for_key[key]
 
-    def get_custom_keys(self, doc):
+    def get_custom_keys(self, docId):
         """Return a list of custom keys sorted alphabetically."""
         try:
-            return self.keys_doc[doc]
+            return self.keys_doc[docId]
         except KeyError:
             custom_keys = []
-            keys = self.get_doc_keys(doc)
+            keys = self.get_doc_keys(docId)
             for key in keys:
                 if key not in self.keys['ignored']:
                     custom_keys.append(key)
             custom_keys.sort(key=lambda y: y.lower())
-            self.keys_doc[doc] = custom_keys
-            return self.keys_doc[doc]
+            self.keys_doc[docId] = custom_keys
+            return self.keys_doc[docId]
 
     def get_keys(self):
         """Return dictionary of keys (ignored, theme, and all)"""
@@ -217,8 +217,8 @@ class Database(Service):
 
         keys = set()
         database = self.get_documents()
-        for doc in database:
-            for key in self.get_doc_keys(doc):
+        for docId in database:
+            for key in self.get_doc_keys(docId):
                 if key not in self.keys['blocked']:
                     keys.add(key)
         keys = list(keys)
@@ -255,10 +255,10 @@ class Database(Service):
         cached = kvpath in self.cache_docs_by_kvpath
         if not cached:
             docs = []
-            for doc in self.db:
-                if key in self.db[doc]:
-                    if value in self.db[doc][key]:
-                        docs.append(doc)
+            for docId in self.db:
+                if key in self.db[docId]:
+                    if value in self.db[docId][key]:
+                        docs.append(docId)
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
             self.log.debug(f"Found {len(self.cache_docs_by_kvpath[kvpath])} docs for K[{key}] V[{value}]")
         return self.cache_docs_by_kvpath[kvpath]
@@ -274,18 +274,18 @@ class Database(Service):
                 doclist.append(docId)
         return doclist
 
-    def get_doc_keys(self, doc):
-        """Return a list of keys for a given doc sorted alphabetically."""
+    def get_doc_keys(self, docId):
+        """Return a list of keys for a given docId sorted alphabetically."""
         try:
-            return self.cache_keys_by_doc[doc]
+            return self.cache_keys_by_doc[docId]
         except KeyError:
             keys = []
             try:
-                for key in self.db[doc]:
+                for key in self.db[docId]:
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
             except Exception as error:
-                self.log.debug("[DATABASE] - Doc[%s] is not in the database (system page?)", doc)
-            self.cache_keys_by_doc[doc] = keys
-            return self.cache_keys_by_doc[doc]
+                self.log.debug("[DATABASE] - Doc[%s] is not in the database (system page?)", docId)
+            self.cache_keys_by_doc[docId] = keys
+            return self.cache_keys_by_doc[docId]
 
