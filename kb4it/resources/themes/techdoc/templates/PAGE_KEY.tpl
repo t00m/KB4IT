@@ -27,13 +27,15 @@
         <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">
             <thead>
                 <tr class="">
-                    <th><span class="uk-text-bold uk-text-primary">Value</span></th>
+                    <th class=""><span class="uk-text-bold uk-text-primary">Value</span></th>
+                    <th class="uk-width-small"><span class="uk-text-bold uk-text-primary">Documents</span></th>
                 </tr>
             </thead>
             <tbody>
                 % for item in var['leader']:
-                    <tr class="">
-                        <td><a class="uk-link-heading" href="${item['vfkey']}_${item['vfvalue']}.html">${item['name']}</a></td>
+                    <tr class="uk-width-small">
+                        <td class=""><a class="uk-link-heading" href="${item['vfkey']}_${item['vfvalue']}.html">${item['name']}</a></td>
+                        <td class="uk-width-small uk-text-right"><span class="uk-text-right">${item['count']}</span></td>
                     </tr>
                 % endfor
             </tbody>

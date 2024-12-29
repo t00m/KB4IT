@@ -21,7 +21,7 @@
     <script type="text/javascript" class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {
-                dom: "<'bottom'flp><'clear'>i",
+                dom: '<"kbfilter"flrtip>',
                 serverSide: false,
                 ordering: true,
                 searching: true,
@@ -65,7 +65,7 @@
                                     <a class="uk-link-heading" href="bookmarks.html"><span uk-icon="bookmark"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Bookmarks</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="#"><span uk-icon="database"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Properties</span></a>
+                                    <a class="uk-link-heading" href="properties.html"><span uk-icon="database"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Properties</span></a>
                                     <div class="uk-navbar-dropdown" uk-dropdown="pos: right-top">
                                         <ul class="uk-nav uk-navbar-dropdown-nav uk-padding-small uk-column-1-2">
             % for key in var['kb']['keys']['menu']:
