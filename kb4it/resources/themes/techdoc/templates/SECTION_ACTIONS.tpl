@@ -2,18 +2,13 @@
 % if var['has_toc']:
   % if var['repo']['git']:
         <!-- Edit Button :: START -->
-        <li class="uk-link-toggle" uk-tooltip="title: Edit document">
+        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Edit document">
             <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank"><span uk-icon="pencil"></span></a>
         </li>
         <!-- Edit Button :: END -->
   % endif
-        <!-- Print Button :: START -->
-        <li class="uk-link-toggle" uk-tooltip="title: Print documnent">
-          <a class="uk-link-heading"  onclick="window.print()"><span uk-icon="print"></span></a>
-        </li>
-        <!-- Print Button :: END -->
         <!-- Metadata Button :: START -->
-        <li class="uk-link-toggle" uk-tooltip="title: Document properties">
+        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Document properties">
             <a class="uk-link-heading" href="#modal-metadata" uk-toggle><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
             <div id="modal-metadata" class="uk-modal-full" uk-modal>
                 <div class="uk-modal-dialog">
@@ -29,7 +24,7 @@
         </li>
         <!-- Metadata Button :: END -->
         <!-- View Asciidoc Source Button :: START -->
-        <li class="uk-link-toggle" uk-tooltip="title: Document source">
+        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Document source">
             <a class="uk-link-heading" href="#modal-full-source" uk-toggle><span class="uk-link-heading" uk-icon="icon: code; ratio: 1.0;"></span></a>
             <div id="modal-full-source" class="uk-modal-full" uk-modal>
                 <div class="uk-modal-dialog">

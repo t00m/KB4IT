@@ -312,65 +312,66 @@ class Backend(Service):
 
     @timeit
     def stage_03_00_preprocess_document(self, source: str):
-        docname = os.path.basename(source)
+        adocId = os.path.basename(source)
 
         # Get metadata
-        keys = self.stage_03_00_preprocess_document_metadata(docname)
+        keys = self.stage_03_00_preprocess_document_metadata(adocId)
 
         if keys is None:
-            self.log.error(f"[BACKEND/PREPROCESSING] - Document '{docname}' not compliant: please, check errors")
+            self.log.error(f"[BACKEND/PREPROCESSING] - Document '{adocId}' not compliant: please, check errors")
             return
 
         # If document doesn't have a title, skip it.
         try:
             title = keys['Title'][0]
-            self.log.trace(f"[BACKEND/PREPROCESSING] - Document '{docname}: {title}' will be processed")
+            self.log.trace(f"[BACKEND/PREPROCESSING] - Document '{adocId}: {title}' will be processed")
         except KeyError:
             self.runtime['docs']['count'] -= 1
-            self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", docname)
+            self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", adocId)
 
-        self.kbdict_new['document'][docname] = {}
-        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Preprocessing", docname)
+        self.kbdict_new['document'][adocId] = {}
+        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Preprocessing", adocId)
 
         # Add a new document to the database
-        self.srvdtb.add_document(docname)
+        self.srvdtb.add_document(adocId)
 
         # Get datetime timestamp from filesystem and add it as attribute
         # ~ ts = file_timestamp(source)
-        # ~ self.srvdtb.add_document_key(docname, 'Timestamp', ts)
+        # ~ self.srvdtb.add_document_key(adocId, 'Timestamp', ts)
 
         # Get content
         with open(source) as source_adoc:
             content = source_adoc.read()
 
-        self.stage_03_00_preprocess_document_hashes(docname, content, keys)
-        self.stage_03_00_preprocess_document_caches(docname, keys)
-        self.stage_03_00_preprocess_document_compile(docname, content, keys)
+        self.stage_03_00_preprocess_document_hashes(adocId, content, keys)
+        self.stage_03_00_preprocess_document_caches(adocId, keys)
+        self.stage_03_00_preprocess_document_compile(adocId, content, keys)
 
-        # self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
+        # ~ self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", adocId, COMPILE, REASON)
 
         # Add compiled page to the target list
-        self.add_target(docname.replace('.adoc', '.html'))
+        htmlId = adocId.replace('.adoc', '.html')
+        self.add_target(htmlId)
 
     @timeit
-    def stage_03_00_preprocess_document_metadata(self, docname: str):
-        docpath = os.path.join(self.get_source_path(), docname)
+    def stage_03_00_preprocess_document_metadata(self, adocId: str):
+        docpath = os.path.join(self.get_source_path(), adocId)
         keys = get_asciidoctor_attributes(docpath)
-        self.log.trace(f"[BACKEND/PREPROCESSING] Document '{docname} keys: {keys}")
+        self.log.trace(f"[BACKEND/PREPROCESSING] Document '{adocId} keys: {keys}")
         return keys
 
     @timeit
-    def stage_03_00_preprocess_document_hashes(self, docname: str, content: str, keys: list):
+    def stage_03_00_preprocess_document_hashes(self, adocId: str, content: str, keys: list):
         # To track changes in a document, hashes for metadata and content are created.
         # Comparing them with those in the cache, KB4IT determines if a document must be
         # compiled again. Very useful to reduce the compilation time.
 
         # Get Document Content and Metadata Hashes
-        self.kbdict_new['document'][docname]['content_hash'] = get_hash_from_dict({'content': content})
-        self.kbdict_new['document'][docname]['metadata_hash'] = get_hash_from_dict(keys)
+        self.kbdict_new['document'][adocId]['content_hash'] = get_hash_from_dict({'content': content})
+        self.kbdict_new['document'][adocId]['metadata_hash'] = get_hash_from_dict(keys)
 
     @timeit
-    def stage_03_00_preprocess_document_caches(self, docname: str, keys: list):
+    def stage_03_00_preprocess_document_caches(self, adocId: str, keys: list):
         # Generate caches
         for key in keys:
             alist = keys[key]
@@ -384,36 +385,37 @@ class Backend(Service):
                 if key == 'Tag':
                     value = value.lower()
 
-                self.srvdtb.add_document_key(docname, key, value)
+                self.srvdtb.add_document_key(adocId, key, value)
 
                 # For each document and for each key/value linked to that document add an entry to kbdic['document']
                 try:
-                    values = self.kbdict_new['document'][docname][key]
+                    values = self.kbdict_new['document'][adocId][key]
                     if value not in values:
                         values.append(value)
-                    self.kbdict_new['document'][docname][key] = sorted(values)
+                    self.kbdict_new['document'][adocId][key] = sorted(values)
                 except KeyError:
-                    self.kbdict_new['document'][docname][key] = [value]
+                    self.kbdict_new['document'][adocId][key] = [value]
 
                 # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                 try:
                     documents = self.kbdict_new['metadata'][key][value]
-                    documents.append(docname)
+                    documents.append(adocId)
                     self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
                 except KeyError:
                     if key not in self.kbdict_new['metadata']:
                         self.kbdict_new['metadata'][key] = {}
                     if value not in self.kbdict_new['metadata'][key]:
-                        self.kbdict_new['metadata'][key][value] = [docname]
+                        self.kbdict_new['metadata'][key][value] = [adocId]
 
     @timeit
-    def stage_03_00_preprocess_document_compile(self, docname: str, content:str, keys:list):
+    def stage_03_00_preprocess_document_compile(self, adocId: str, content:str, keys:list):
         # Force compilation (from command line)?
         DOC_COMPILATION = False
         FORCE_ALL = self.params.force
         if not FORCE_ALL:
             # Get cached document path and check if it exists
-            cached_document = os.path.join(self.runtime['dir']['cache'], docname.replace('.adoc', '.html'))
+            htmlId = adocId.replace('.adoc', '.html')
+            cached_document = os.path.join(self.runtime['dir']['cache'], htmlId)
             cached_document_exists = os.path.exists(cached_document)
 
             # Compare the document with the one in the cache
@@ -422,8 +424,8 @@ class Backend(Service):
                 REASON = "Not cached"
             else:
                 try:
-                    hash_new = self.kbdict_new['document'][docname]['content_hash'] + self.kbdict_new['document'][docname]['metadata_hash']
-                    hash_cur = self.kbdict_cur['document'][docname]['content_hash'] + self.kbdict_cur['document'][docname]['metadata_hash']
+                    hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
+                    hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
                     DOC_COMPILATION = hash_new != hash_cur
                     REASON = "Hashes differ? %s" % DOC_COMPILATION
                 except Exception as warning:
@@ -435,7 +437,7 @@ class Backend(Service):
         COMPILE = DOC_COMPILATION or FORCE_ALL
         # Save compilation status
         try:
-            self.kbdict_new['document'][docname]['compile'] = COMPILE
+            self.kbdict_new['document'][adocId]['compile'] = COMPILE
         except KeyError as keyerror:
             #FIXME: check
             self.log.error(keyerror)
@@ -443,13 +445,13 @@ class Backend(Service):
 
         if COMPILE:
             # Write new adoc to temporary dir
-            target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(docname))
+            target = "%s/%s" % (self.runtime['dir']['tmp'], valid_filename(adocId))
             with open(target, 'w') as target_adoc:
                 target_adoc.write(content)
 
             try:
-                title_cur = self.kbdict_cur['document'][docname]['Title']
-                title_new = self.kbdict_new['document'][docname]['Title']
+                title_cur = self.kbdict_cur['document'][adocId]['Title']
+                title_new = self.kbdict_new['document'][adocId]['Title']
                 if title_new != title_cur:
                     for key in keys:
                         if key != 'Title':
@@ -457,7 +459,7 @@ class Backend(Service):
             except KeyError:
                 # Very likely there is no kbdict, so this step is skipped
                 pass
-        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", docname, COMPILE, REASON)
+        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", adocId, COMPILE, REASON)
 
     @timeit
     def stage_03_preprocessing(self):
@@ -474,19 +476,19 @@ class Backend(Service):
             # ~ # Clean cache
             # ~ missing = []
             # ~ try:
-                # ~ for docname in self.kbdict_cur['document']:
-                    # ~ docpath = os.path.join(self.get_source_path(), docname)
+                # ~ for adocId in self.kbdict_cur['document']:
+                    # ~ docpath = os.path.join(self.get_source_path(), adocId)
                     # ~ if not os.path.exists(docpath):
-                        # ~ missing.append(docname)
+                        # ~ missing.append(adocId)
             # ~ except KeyError:
                 # ~ pass  # skip
 
             # ~ if len(missing) == 0:
                 # ~ self.log.trace("[BACKEND/PREPROCESSING] - Cache is empty")
             # ~ else:
-                # ~ for docname in missing:
-                    # ~ docname = docname.replace('.adoc', '')
-                    # ~ self.delete_document(docname)
+                # ~ for adocId in missing:
+                    # ~ adocId = adocId.replace('.adoc', '')
+                    # ~ self.delete_document(adocId)
                 # ~ self.log.trace("[BACKEND/PREPROCESSING] - Cache cleaned up")
 
         #_clean_cache()
@@ -505,8 +507,8 @@ class Backend(Service):
         # Documents preprocessing stats
         self.log.trace("[BACKEND/PREPROCESSING] - Stats - Documents analyzed: %d", len(self.runtime['docs']['bag']))
         keep_docs = compile_docs = 0
-        for docname in self.kbdict_new['document']:
-            if self.kbdict_new['document'][docname]['compile']:
+        for adocId in self.kbdict_new['document']:
+            if self.kbdict_new['document'][adocId]['compile']:
                 compile_docs += 1
             else:
                 keep_docs += 1
@@ -627,14 +629,15 @@ class Backend(Service):
         keys_with_compile_true = 0
         for kpath in self.runtime['K_PATH']:
             key, values, COMPILE_KEY = kpath
-            docname = "%s.adoc" % valid_filename(key)
+            adocId = "%s.adoc" % valid_filename(key)
             if COMPILE_KEY:
                 keys_with_compile_true += 1
-                fpath = os.path.join(self.runtime['dir']['tmp'], docname)
+                fpath = os.path.join(self.runtime['dir']['tmp'], adocId)
                 self.srvthm.build_page_key(key, values)
 
             # Add compiled page to the target list
-            self.add_target(docname.replace('.adoc', '.html'))
+            htmlId = adocId.replace('.adoc', '.html')
+            self.add_target(htmlId)
 
         # # Keys/Values
         pairs_with_compile_true = 0
@@ -643,10 +646,11 @@ class Backend(Service):
             key, value, COMPILE_VALUE = kvpath
             if COMPILE_VALUE:
                 pairs_with_compile_true += 1
-            docname = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
+            adocId = "%s_%s.adoc" % (valid_filename(key), valid_filename(value))
 
             # Add compiled page to the target list
-            self.add_target(docname.replace('.adoc', '.html'))
+            htmlId = adocId.replace('.adoc', '.html')
+            self.add_target(htmlId)
 
         self.log.story(f"{keys_with_compile_true} keys will be compiled")
         self.log.story(f"{pairs_with_compile_true} key/value pairs will be compiled")
@@ -725,11 +729,12 @@ class Backend(Service):
                 # ~ self.log.trace("[COMPILATION] - %3s%% done", "0")
                 for job in jobs:
                     adoc, res, jobid = job.result()
-                    self.log.trace("[BACKEND/COMPILATION] - Job[%d/%d]: %s compiled successfully", jobid, num - 1, os.path.basename(adoc))
+                    self.log.debug(f"[BACKEND/COMPILATION] - {os.path.basename(adoc)} compiled successfully")
                     jobcount += 1
                     if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
                         pct = int(jobcount * 100 / len(docs))
-                        self.log.info("[BACKEND/COMPILATION] - %3s%% done", str(pct))
+                        # ~ self.log.info("[BACKEND/COMPILATION] - %3s%% done", str(pct))
+                        self.log.info("[BACKEND/COMPILATION] - %3s%% done (job %d/%d)", str(pct), jobid, num - 1)
 
                 dcompe = datetime.datetime.now()
                 comptime = dcompe - dcomps

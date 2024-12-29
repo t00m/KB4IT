@@ -1,10 +1,10 @@
 <!-- Template HTML_BODY_DOC.tpl :: START -->
 % if var['has_toc']:
-<!--
-    <div class="uk-flex uk-flex-center"><h1 class="uk-text-large">${var['page']['title']}</h1></div>
--->
+
+<div id="kb4it-doc-metadata" class="uk-hidden" style="border: 1px solid transparent;">${var['metadata']}</div>
+
     <!-- This is the nav containing the toggling elements -->
-    <ul class="uk-flex uk-flex-center uk-tab noprint" uk-switcher>
+    <ul class="uk-flex uk-flex-center uk-tab noprint uk-hidden" uk-switcher>
         <li><a href="#">Document</a></li>
 <!-- <li><a href="#">Related</a></li> -->
     </ul>

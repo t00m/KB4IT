@@ -24,10 +24,6 @@ body {
     overflow-y: scroll; /* Show vertical scrollbar */
 }
 
-    #kb4it-page-title {
-        display: none;  
-    }
-    
 pre {
     padding: 10px;
     overflow: auto;
@@ -35,8 +31,8 @@ pre {
 }
 
 table.month{
-        border-collapse: separate;
-            border-spacing: 3px;
+    border-collapse: separate;
+    border-spacing: 3px;
 }
 
 table.month{
@@ -54,38 +50,44 @@ table#kb4it-datatable {
     font-size: smaller;
 }
 
-#noprint { display: block; }
-#print { display: none; }
+.admonitionblock {
+    border: 3px solid black;
+}
 
-.admonitionblock { border: 3px solid black; }
+.uk-alert-warning {
+    background-color: orange;
+    color: black;
+}
 
-.uk-alert-warning { 
-                    background-color: orange; 
-                    color: black;
-                }
+.uk-alert-primary {
+    background-color: lightblue;
+    color: black;
+}
 
-.uk-alert-primary { 
-                    background-color: lightblue; 
-                    color: black;
-                }
-
-.uk-alert-caution { 
-                    background-color: purple; 
-                    color: white;
-                }
+.uk-alert-caution {
+    background-color: purple;
+    color: white;
+}
 
 .uk-alert-danger {
-                    background-color: red;
-                    color: white;
-                }
+    background-color: red;
+    color: white;
+}
 
-.uk-alert-note { 
-                    background-color: yellow; 
-                    color: black;
-                }
+.uk-alert-note {
+    background-color: yellow;
+    color: black;
+}
 
 .content pre{
     background: black;
     color: lightgreen;
+}
+
+#kb4it-page-title {
+    display: inline;
+    font: 18px Arial, Helvetica,"Lucida Grande", serif;
+    color: #000;
+    padding-top: 2em;
 }
 
