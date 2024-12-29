@@ -55,7 +55,7 @@ def get_logger(name, level=None):
             'ERROR': logging.ERROR,
             'CRITICAL': logging.CRITICAL
         }
-        severity = level_dict.get(level, logging.DEBUG)  # Default to DEBUG if level is unknown
+        severity = level_dict.get(level, logging.DEBUG)
     else:
         severity = logging.INFO
 
@@ -71,7 +71,7 @@ def get_logger(name, level=None):
 
     # Create a console (stream) handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(severity)  # Set the severity level for console logging
+    console_handler.setLevel(severity)
     formatter = logging.Formatter(pattern)
     console_handler.setFormatter(formatter)
     log.addHandler(console_handler)
