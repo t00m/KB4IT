@@ -110,6 +110,8 @@ class Database(Service):
             for doc in doclist:
                 if not self.is_system(doc):
                     sdate = self.get_doc_timestamp(doc)
+                    if sdate is None:
+                        continue
                     dt = guess_datetime(sdate)
                     adict[doc] = dt #.strftime("%Y%m%d")
             sorted_docs = [doc for doc, _ in sort_dictionary(adict)]
@@ -126,15 +128,13 @@ class Database(Service):
         return len(self.get_documents())
 
     # ~ @timeit
-    def get_doc_timestamp(self, doc):
+    def get_doc_timestamp(self, docId) -> str:
         """Get timestamp for a given document."""
         try:
-            return self.db[doc][self.sort_attribute][0]
+            return self.db[docId][self.sort_attribute][0]
         except KeyError as error:
-            self.log.warning(f"[DATABASE] - Document '{doc}' doesn't have the sort attribute {error}")
-            #FIXME: should return a datetime.now() timestamp as a fix?
-            return ''
-
+            self.log.trace(f"[DATABASE] - Document '{docId}' doesn't have the sort attribute {error}")
+            return None
 
     def is_system(self, doc):
         return 'SystemPage' in self.get_doc_properties(doc).keys()
@@ -262,6 +262,17 @@ class Database(Service):
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
             self.log.debug(f"Found {len(self.cache_docs_by_kvpath[kvpath])} docs for K[{key}] V[{value}]")
         return self.cache_docs_by_kvpath[kvpath]
+
+    def get_docs_by_date_range(self, ds, de) -> []:
+        doclist = []
+        for docId in self.db:
+            ts = self.get_doc_timestamp(docId)
+            if ts is None:
+                continue
+            dt = guess_datetime(ts)
+            if dt >= ds and dt <= de:
+                doclist.append(docId)
+        return doclist
 
     def get_doc_keys(self, doc):
         """Return a list of keys for a given doc sorted alphabetically."""
