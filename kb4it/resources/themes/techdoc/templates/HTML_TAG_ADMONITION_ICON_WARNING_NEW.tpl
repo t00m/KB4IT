@@ -1,1 +1,1 @@
-<i uk-icon="warning" class="uk-text-warning uk-margin-right uk-icon-button"
+<i uk-icon="warning" class="uk-margin-right uk-icon-button"

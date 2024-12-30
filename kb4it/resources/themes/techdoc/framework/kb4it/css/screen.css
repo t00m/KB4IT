@@ -1,24 +1,4 @@
 /* KB4IT.css custom stylesheet based on Asciidoctor default stylesheet */
-/* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
-
-/*
-address, dl, fieldset, figure, ol, p, ul {
-    margin: 0 0 00px 0;
-}
-*/
-
-/*
-pre {
-    font: .875rem/1.5 Consolas,monaco,monospace;
-    color: #000;
-    overflow: auto;
-    padding: 10px;
-    border: 1px solid #b3b0b0;
-    border-radius: 3px;
-    background: #ffec8b;
-    padding: 20px;
-    margin: 10px;
-}*/
 
 body {
     overflow-y: scroll; /* Show vertical scrollbar */
@@ -51,35 +31,6 @@ table#kb4it-datatable {
     font-size: smaller;
 }
 
-.admonitionblock {
-    border: 3px solid black;
-}
-
-.uk-alert-warning {
-    background-color: orange;
-    color: black;
-}
-
-.uk-alert-primary {
-    background-color: lightblue;
-    color: black;
-}
-
-.uk-alert-caution {
-    background-color: purple;
-    color: white;
-}
-
-.uk-alert-danger {
-    background-color: red;
-    color: white;
-}
-
-.uk-alert-note {
-    background-color: yellow;
-    color: black;
-}
-
 .content pre{
     background: black;
     color: lightgreen;
@@ -92,47 +43,34 @@ table#kb4it-datatable {
     padding-top: 2em;
 }
 
-
-.admonitionblock.note {
-    background-color: #ffffba; /* Light gray background */
+.admonitionblock {
+    border: 3px solid black;
     color: black;
     padding: 15px; /* Add padding */
     font-family: Arial, sans-serif; /* Font style */
     margin: 10px 0; /* Space around the div */
+}
+
+.admonitionblock.note {
+    background-color: #ffffba; /* Light gray background */
   }
 
 .admonitionblock.tip {
     background-color:  #baffc9; /* Light gray background */
-    color: black;
-    padding: 15px; /* Add padding */
-    font-family: Arial, sans-serif; /* Font style */
-    margin: 10px 0; /* Space around the div */
   }
 
 .admonitionblock.important {
     background-color: #bae1ff; /* Light gray background */
-    color: black;
-    padding: 15px; /* Add padding */
-    font-family: Arial, sans-serif; /* Font style */
-    margin: 10px 0; /* Space around the div */
   }
 
 .admonitionblock.caution {
     background-color: #ffb3ba;
-    color: black;
-    padding: 15px; /* Add padding */
-    font-family: Arial, sans-serif; /* Font style */
-    margin: 10px 0; /* Space around the div */
   }
 
 .admonitionblock.warning {
     background-color: lightorange;
-    color: black;
-    padding: 15px; /* Add padding */
-    font-family: Arial, sans-serif; /* Font style */
-    margin: 10px 0; /* Space around the div */
   }
 
-.uk-icon {
+.admonitionblock .uk-icon {
     border: 1px solid black;
 }

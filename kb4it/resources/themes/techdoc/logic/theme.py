@@ -74,6 +74,7 @@ class Theme(Builder):
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_IMPORTANT_ADOC'), self.render_template('HTML_TAG_ADMONITION_IMPORTANT_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_CAUTION_ADOC'), self.render_template('HTML_TAG_ADMONITION_CAUTION_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_NOTE_ADOC'), self.render_template('HTML_TAG_ADMONITION_NOTE_NEW'))
+        content = content.replace(self.render_template('HTML_TAG_ADMONITION_TIP_ADOC'), self.render_template('HTML_TAG_ADMONITION_TIP_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_WARNING_ADOC'), self.render_template('HTML_TAG_ADMONITION_WARNING_NEW'))
         content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
         return content
