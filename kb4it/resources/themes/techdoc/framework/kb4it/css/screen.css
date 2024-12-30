@@ -132,3 +132,7 @@ table#kb4it-datatable {
     font-family: Arial, sans-serif; /* Font style */
     margin: 10px 0; /* Space around the div */
   }
+
+.uk-icon {
+    border: 1px solid black;
+}
