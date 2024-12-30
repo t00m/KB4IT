@@ -9,6 +9,13 @@ pre {
     overflow: auto;
     margin: 10px 0; /* Space around the div */
     border: 3px solid black;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+pre code {
+    background-color: black;
+    color: #52ff00;
+    font-family: "Lucida Console", "Courier New", monospace;
 }
 
 table.month{
@@ -52,24 +59,24 @@ table#kb4it-datatable {
 }
 
 .admonitionblock.note {
-    background-color: #ffffba; /* Light gray background */
-  }
+    background-color: #ffffba;
+}
 
 .admonitionblock.tip {
-    background-color:  #baffc9; /* Light gray background */
-  }
+    background-color:  #baffc9;
+}
 
 .admonitionblock.important {
-    background-color: #bae1ff; /* Light gray background */
-  }
+    background-color: #bae1ff;
+}
 
 .admonitionblock.caution {
     background-color: #ffb3ba;
-  }
+}
 
 .admonitionblock.warning {
-    background-color: lightorange;
-  }
+    background-color: orange;
+}
 
 .admonitionblock .uk-icon {
     border: 1px solid black;
