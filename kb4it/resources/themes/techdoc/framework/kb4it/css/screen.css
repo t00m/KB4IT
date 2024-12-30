@@ -25,9 +25,10 @@ body {
 }
 
 pre {
-    padding: 10px;
+    padding: 15px;
     overflow: auto;
-    margin: 10px;
+    margin: 10px 0; /* Space around the div */
+    border: 3px solid black;
 }
 
 table.month{
@@ -91,3 +92,43 @@ table#kb4it-datatable {
     padding-top: 2em;
 }
 
+
+.admonitionblock.note {
+    background-color: #ffffba; /* Light gray background */
+    color: black;
+    padding: 15px; /* Add padding */
+    font-family: Arial, sans-serif; /* Font style */
+    margin: 10px 0; /* Space around the div */
+  }
+
+.admonitionblock.tip {
+    background-color:  #baffc9; /* Light gray background */
+    color: black;
+    padding: 15px; /* Add padding */
+    font-family: Arial, sans-serif; /* Font style */
+    margin: 10px 0; /* Space around the div */
+  }
+
+.admonitionblock.important {
+    background-color: #bae1ff; /* Light gray background */
+    color: black;
+    padding: 15px; /* Add padding */
+    font-family: Arial, sans-serif; /* Font style */
+    margin: 10px 0; /* Space around the div */
+  }
+
+.admonitionblock.caution {
+    background-color: #ffb3ba;
+    color: black;
+    padding: 15px; /* Add padding */
+    font-family: Arial, sans-serif; /* Font style */
+    margin: 10px 0; /* Space around the div */
+  }
+
+.admonitionblock.warning {
+    background-color: lightorange;
+    color: black;
+    padding: 15px; /* Add padding */
+    font-family: Arial, sans-serif; /* Font style */
+    margin: 10px 0; /* Space around the div */
+  }
