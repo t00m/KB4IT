@@ -39,8 +39,9 @@ table#kb4it-datatable {
 }
 
 .content pre{
-    background: black;
-    color: lightgreen;
+    background-color: black;
+    color: #52ff00;
+    font-family: "Lucida Console", "Courier New", monospace;
 }
 
 #kb4it-page-title {
@@ -79,5 +80,39 @@ table#kb4it-datatable {
 }
 
 .admonitionblock .uk-icon {
+    border: 1px solid black;
+}
+
+
+#kb-sect1 {
+    border: 1px solid transparent;
+}
+
+#kb-sect2 {
+    border: 1px solid transparent;
+}
+
+#kb-sect3 {
+    border: 1px solid transparent;
+}
+
+#kb-sect4 {
+    border: 1px solid transparent;
+}
+
+
+#kb-sect1:hover {
+    border: 1px solid black;
+}
+
+#kb-sect2:hover {
+    border: 1px solid black;
+}
+
+#kb-sect3:hover {
+    border: 1px solid black;
+}
+
+#kb-sect4:hover {
     border: 1px solid black;
 }
