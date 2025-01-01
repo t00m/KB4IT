@@ -97,7 +97,7 @@
                         <div class="uk-child-width-expand@s uk-text-center" uk-grid>
                             <div class="uk-card uk-card-small">
                                 <a class="uk-link-toggle uk-text-primary" href="#"><span id="kb4it-page-title" class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
-% if var['has_toc']:
+% if var['has_toc'] and len(var['toc']) > 0:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
 ${var['toc']}
