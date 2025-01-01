@@ -34,8 +34,26 @@ table.month tbody tr th {
     border: 1px solid gray;
 }
 
-table#kb4it-datatable {
+#kb4it-datatable {
     font-size: smaller;
+}
+
+#kb4it-table-metadata {
+    border: 2px solid black;
+    font-size: smaller;
+}
+
+#kb4it-table-metadata  td {
+    border: 1px solid lightgray;
+    font-size: smaller;
+}
+
+#kb4it-table-metadata td span {
+    color: gray;
+}
+
+#kb4it-table-metadata td span:hover {
+    color: blue;
 }
 
 .content pre{

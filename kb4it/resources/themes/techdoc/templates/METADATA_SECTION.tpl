@@ -1,4 +1,4 @@
-<table class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-small uk-card-hover">
+<table id="kb4it-table-metadata" class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-small uk-card-hover">
 <thead class="">
     <tr class="">
         <th class="uk-width-small"><span class="uk-text-bold">Property</span></th>
