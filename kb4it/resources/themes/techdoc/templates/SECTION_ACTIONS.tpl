@@ -11,7 +11,7 @@
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Document properties">
             <a class="uk-link-heading" href="#modal-metadata" uk-toggle><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
             <div id="modal-metadata" class="uk-modal-full" uk-modal>
-                <div class="uk-modal-dialog">
+                <div class="uk-modal-dialog uk-height-viewport">
                     <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                     <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                         <div class="uk-padding-large uk-background-muted">
@@ -27,7 +27,7 @@
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Document source">
             <a class="uk-link-heading" href="#modal-full-source" uk-toggle><span class="uk-link-heading" uk-icon="icon: code; ratio: 1.0;"></span></a>
             <div id="modal-full-source" class="uk-modal-full" uk-modal>
-                <div class="uk-modal-dialog">
+                <div class="uk-modal-dialog uk-height-viewport">
                     <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                     <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                         <div class="uk-padding-large uk-background-muted">
