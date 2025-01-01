@@ -612,10 +612,12 @@ class Theme(Builder):
 
             # Do not show metadata for system pages
             if self.srvdtb.is_system(basename_adoc):
+                var['SystemPage'] = True
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
                 var['metadata'] = ""
             else:
+                var['SystemPage'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 var['metadata'] = self.build_metadata_section(basename_adoc)

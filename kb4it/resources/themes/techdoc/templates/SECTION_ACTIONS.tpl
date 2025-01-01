@@ -1,5 +1,5 @@
 <!-- Template SECTION_ACTIONS.tpl :: START -->
-% if var['has_toc']:
+% if not var['SystemPage']:
   % if var['repo']['git']:
         <!-- Edit Button :: START -->
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Edit document">
