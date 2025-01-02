@@ -158,7 +158,7 @@ class Theme(Builder):
         filenames = runtime['docs']['filenames']
         now = datetime.now()
         de = datetime.strptime("31.12.9999", "%d.%m.%Y")
-        ds = datetime.strptime(f"1.1.{now.year}", "%d.%m.%Y")
+        ds = now - timedelta(days=365)
         var['dt_start'] = ds
         var['dt_end'] = de
         var['dt_now'] = now
