@@ -23,4 +23,6 @@ Copyright (C) 2019-2025 mailto:tomas.virseda@gmail.com[Tomás Vírseda]
 
 === License
 
-The code is licensed under the terms of the https://www.gnu.org/licenses/gpl-3.0.en.html[`GPL v3`] so you're free to *grab*, *extend*, *improve* and *fork* the code as you want as long as it stays as GPLv3.
+The code is licensed under the terms of the https://www.gnu.org/licenses/gpl-3.0.en.html[`GPL v3`].
+
+IMPORTANT: you're free to *grab*, *extend*, *improve* and *fork* the code as you want as long as it stays as GPLv3.
