@@ -19,7 +19,7 @@ For more information, visit my Git https://github.com/t00m/KB4IT[repository].
 
 === Copyright
 
-Copyright (C) 2019-2024 mailto:tomas.virseda@gmail.com[Tomás Vírseda]
+Copyright (C) 2019-2025 mailto:tomas.virseda@gmail.com[Tomás Vírseda]
 
 === License
 
