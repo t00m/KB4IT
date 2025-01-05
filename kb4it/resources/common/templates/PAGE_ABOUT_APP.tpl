@@ -14,4 +14,4 @@ As a result, it created one. This one. The one you are reading now.
 
 === Solution
 
-Modify the contents of the filename <i>about_app.adoc</i> in your sources directory with the desired content.
+Modify the contents of the filename _about_app.adoc_ in your sources directory with the desired content.
