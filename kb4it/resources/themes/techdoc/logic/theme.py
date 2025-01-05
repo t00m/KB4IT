@@ -40,17 +40,6 @@ class Theme(Builder):
     dey = {}  # Dictionary of day events per year
     events_docs = {}  # Dictionary storing a list of docs for a given date
 
-    # ~ def initialize(self):
-
-
-    def highlight_metadata_section(self, content, var):
-        """Apply CSS transformation to metadata section."""
-        HTML_TAG_METADATA_ADOC = self.template('HTML_TAG_METADATA_ADOC').render(var=var)
-        HTML_TAG_METADATA_NEW = self.template('HTML_TAG_METADATA_NEW').render(var=var)
-        content = content.replace(HTML_TAG_METADATA_ADOC, HTML_TAG_METADATA_NEW, 1)
-        self.log.debug("[THEME] - Page[%s]: Highlight metadata", var['basename_html'])
-        return content, var
-
     def apply_transformations(self, content):
         """Apply CSS transformation to the compiled page."""
         content = content.replace(self.render_template('HTML_TAG_A_ADOC'), self.render_template('HTML_TAG_A_NEW'))
@@ -162,7 +151,7 @@ class Theme(Builder):
         var['dt_start'] = ds
         var['dt_end'] = de
         var['dt_now'] = now
-	
+
         doclist = self.srvdtb.get_documents()
         if len(doclist) > 500:
             doclist = self.srvdtb.get_docs_by_date_range(ds, de)
