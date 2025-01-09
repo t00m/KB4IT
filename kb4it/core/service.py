@@ -60,7 +60,7 @@ class Service:
         severity = conf.log_level
         self.log = get_logger(name, severity)
         self.initialize()
-        self.log.trace("[SERVICE] - Service %s started", name)
+        self.log.debug("[SERVICE] - Service %s started", name)
 
     def end(self):
         """End service.
@@ -72,7 +72,7 @@ class Service:
             self.log.debug("[SERVICE] - Service %s finished", self.logname)
 
     def initialize(self, **kwargs):
-        """Initialize service.
+        """Initialize servicHe.
         All clases derived from Service class must implement this method
         """
         self.log.debug("[SERVICE] - Service %s started", self.logname)

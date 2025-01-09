@@ -49,7 +49,7 @@ class Backend(Service):
     def initialize(self):
         """Initialize application structure."""
 
-        self.log.trace("[BACKEND] - Started at %s", now())
+        self.log.debug("[BACKEND] - Started at %s", now())
 
         # Get params from command line
         self.params = self.app.get_params()
@@ -58,13 +58,17 @@ class Backend(Service):
         try:
             repo_config_file = self.params.config
             self.repo = json_load(repo_config_file)
-            self.log.trace(f"[BACKEND/SETUP] - Repository config file: '{repo_config_file}")
-            self.log.trace(f"[BACKEND/SETUP] - Repository parameters:")
+            self.log.debug(f"[BACKEND/SETUP] - Repository config file: '{repo_config_file}")
+            self.log.debug(f"[BACKEND/SETUP] - Repository parameters:")
             for param in self.repo:
-                self.log.trace(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
+                self.log.debug(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
             repo_config_exists = True
+        except FileNotFoundError as error:
+            self.log.error(f"[BACKEND/SETUP] - Repository config file not found: {error}")
+            sys.exit(-1)
         except Exception as error:
-            self.log.trace(f"[BACKEND/SETUP] - Repository config file not found in command line params")
+            self.log.error(f"[BACKEND/SETUP] - Repository config file not found in command line params")
+            raise
             repo_config_exists = False
 
         # Initialize runtime dictionary
@@ -81,7 +85,7 @@ class Backend(Service):
             self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
             self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
-            self.log.trace(f"[BACKEND/SETUP] - Checking directories:")
+            self.log.debug(f"[BACKEND/SETUP] - Checking directories:")
             for entry in self.runtime['dir']:
                 create_directory = False
                 dirname = self.runtime['dir'][entry]
@@ -90,17 +94,18 @@ class Backend(Service):
                     if not os.path.exists(dirname):
                         os.makedirs(dirname)
                         create_directory = True
-                self.log.trace(f"[BACKEND/SETUP] - \tCreate directory {dirname}? {create_directory}")
+                self.log.debug(f"[BACKEND/SETUP] - \tCreate directory {dirname}? {create_directory}")
 
             # if SORT attribute is given, use it instead of the OS timestamp
             try:
                 self.runtime['sort_attribute'] = self.repo['sort']
+                self.runtime['sort_enabled'] = True
             except:
-                # ~ self.runtime['sort_attribute'] = 'Timestamp'
+                self.runtime['sort_enabled'] = False
                 self.log.error("[BACKEND/SETUP] - No property defined for sorting")
                 sys.exit(-1)
 
-            self.log.trace("[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
+            self.log.debug("[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
 
             # Initialize docs structure
             self.runtime['docs'] = {}
@@ -110,11 +115,11 @@ class Backend(Service):
 
             # Load cache dictionary and initialize the new one
             self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
-            self.log.trace(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
+            self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
 
             self.kbdict_new['document'] = {}
             self.kbdict_new['metadata'] = {}
-            self.log.trace(f"[BACKEND/SETUP] - Created new kbdict for current execution")
+            self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
 
             # Get services
             self.get_services()
@@ -131,7 +136,7 @@ class Backend(Service):
         KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], 'kbdict-%s.json' % source_path)
         try:
             kbdict = json_load(KB4IT_DB_FILE)
-            self.log.trace(f"[BACKEND/CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
+            self.log.debug(f"[BACKEND/CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
         except FileNotFoundError:
             kbdict = {}
             kbdict['document'] = {}
@@ -139,7 +144,7 @@ class Backend(Service):
         except Exception as error:
             self.log.error(f"[BACKEND/CONF] - There was an error reading file {KB4IT_DB_FILE}")
             sys.exit()
-        self.log.trace("[BACKEND/CONF] - Current kbdict entries: %d", len(kbdict))
+        self.log.debug("[BACKEND/CONF] - Current kbdict entries: %d", len(kbdict))
         return kbdict
 
     def save_kbdict(self, kbdict, path, name=None):
@@ -151,7 +156,7 @@ class Backend(Service):
             KB4IT_DB_FILE = os.path.join(path, '%s.json' % name)
 
         json_save(KB4IT_DB_FILE, kbdict)
-        self.log.trace("[BACKEND/CONF] - KBDICT %s saved", KB4IT_DB_FILE)
+        self.log.debug("[BACKEND/CONF] - KBDICT %s saved", KB4IT_DB_FILE)
 
     def get_targets(self):
         """Get list of documents converted to pages"""
@@ -162,7 +167,7 @@ class Backend(Service):
         list of objects that will be copied to the target directory.
         """
         self.runtime['docs']['target'].add(kbfile)
-        self.log.trace("[BACKEND/TARGET] - Added resource: %s", kbfile)
+        self.log.debug("[BACKEND/TARGET] - Added resource: %s", kbfile)
 
     def get_runtime_dict(self):
         """Get all properties."""
@@ -229,23 +234,23 @@ class Backend(Service):
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
-        self.log.trace("[BACKEND/STAGE 1 - CHECKS] - Start at %s", now())
-        #self.log.trace("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
-        #self.log.trace("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
-        #self.log.trace("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
-        #self.log.trace("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
+        self.log.debug("[BACKEND/STAGE 1 - CHECKS] - Start at %s", now())
+        #self.log.debug("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
+        #self.log.debug("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+        #self.log.debug("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
+        #self.log.debug("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
             self.log.error("[BACKEND/SETUP] - Source directory '%s' doesn't exist.", self.get_source_path())
-            self.log.trace("[BACKEND/SETUP] - End at %s", now())
+            self.log.debug("[BACKEND/SETUP] - End at %s", now())
             self.app.stop()
-        self.log.trace("[BACKEND/SETUP] - Source directory: %s", self.get_source_path())
+        self.log.debug("[BACKEND/SETUP] - Source directory: %s", self.get_source_path())
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
             os.makedirs(self.get_target_path())
-        self.log.trace("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
+        self.log.debug("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
 
         if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
             self.log.error("[BACKEND/SETUP] - No config file especified")
@@ -253,21 +258,21 @@ class Backend(Service):
             sys.exit()
 
         # if no theme defined by params, try to autodetect it.
-        # ~ self.log.trace("[SETUP] - Paramters: %s", self.repo)
+        # ~ self.log.debug("[SETUP] - Paramters: %s", self.repo)
         try:
             theme_name = self.repo['theme']
         except KeyError:
             theme_name = 'techdoc'
 
         if theme_name is None:
-            self.log.trace("[BACKEND/SETUP] - Theme not provided. Autodetect it.")
+            self.log.debug("[BACKEND/SETUP] - Theme not provided. Autodetect it.")
             theme_path = frontend.theme_search()
             if theme_path is not None:
                 frontend.theme_load(os.path.basename(theme_path))
-                self.log.trace("[BACKEND/SETUP] Theme found and loaded")
+                self.log.debug("[BACKEND/SETUP] Theme found and loaded")
             else:
                 self.log.error("[BACKEND/SETUP] - Theme not found")
-                self.log.trace("[BACKEND/SETUP] - End at %s", now())
+                self.log.debug("[BACKEND/SETUP] - End at %s", now())
                 self.app.stop()
         else:
             theme_path = frontend.theme_search(theme_name)
@@ -275,16 +280,16 @@ class Backend(Service):
                 frontend.theme_load(os.path.basename(theme_path))
             else:
                 self.log.error("[BACKEND/SETUP] - Theme not found")
-                self.log.trace("[BACKEND/SETUP] - End at %s", now())
+                self.log.debug("[BACKEND/SETUP] - End at %s", now())
                 self.app.stop()
 
         self.log.story(f"We will use theme {theme_name}")
-        self.log.trace("[BACKEND/SETUP] - End at %s", now())
+        self.log.debug("[BACKEND/SETUP] - End at %s", now())
 
     @timeit
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
-        self.log.trace("[BACKEND/STAGE 2 - SOURCES] - Start at %s", now())
+        self.log.debug("[BACKEND/STAGE 2 - SOURCES] - Start at %s", now())
         sources_path = self.get_source_path()
 
         # Firstly, allow theme to generate documents
@@ -308,29 +313,33 @@ class Backend(Service):
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
         self.log.info("[BACKEND/SOURCEDOCS] - Found %d asciidoctor documents", self.runtime['docs']['count'])
         self.log.story(f"We found {self.runtime['docs']['count']} documents in the repository")
-        self.log.trace("[BACKEND/SOURCEDOCS] - End at %s", now())
+        self.log.debug("[BACKEND/SOURCEDOCS] - End at %s", now())
 
     @timeit
     def stage_03_00_preprocess_document(self, source: str):
         adocId = os.path.basename(source)
 
         # Get metadata
-        keys = self.stage_03_00_preprocess_document_metadata(adocId)
+        keys = self.stage_03_00_preprocess_document_metadata(adocId, tolerant=True)
 
         if keys is None:
             self.log.error(f"[BACKEND/PREPROCESSING] - Document '{adocId}' not compliant: please, check errors")
             return
 
-        # If document doesn't have a title, skip it.
-        try:
-            title = keys['Title'][0]
-            self.log.trace(f"[BACKEND/PREPROCESSING] - Document '{adocId}: {title}' will be processed")
-        except KeyError:
-            self.runtime['docs']['count'] -= 1
-            self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", adocId)
+        runtime = self.get_runtime_dict()
+        sort_enabled = runtime['sort_enabled']
+        if sort_enabled:
+            sort_attribute = runtime['sort_attribute']
+            try:
+                adate = keys[sort_attribute][0]
+            except KeyError:
+                adate = '1970-01-01 00:00:00'
+        else:
+            adate = '1970-01-01 00:00:00'
+
 
         self.kbdict_new['document'][adocId] = {}
-        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Preprocessing", adocId)
+        self.log.debug("[BACKEND/PREPROCESSING] - DOC[%s] Preprocessing", adocId)
 
         # Add a new document to the database
         self.srvdtb.add_document(adocId)
@@ -347,18 +356,42 @@ class Backend(Service):
         self.stage_03_00_preprocess_document_caches(adocId, keys)
         self.stage_03_00_preprocess_document_compile(adocId, content, keys)
 
-        # ~ self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", adocId, COMPILE, REASON)
+        # ~ self.log.debug("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", adocId, COMPILE, REASON)
 
         # Add compiled page to the target list
         htmlId = adocId.replace('.adoc', '.html')
         self.add_target(htmlId)
 
     @timeit
-    def stage_03_00_preprocess_document_metadata(self, adocId: str):
+    def stage_03_00_preprocess_document_metadata(self, adocId: str, tolerant: bool):
         docpath = os.path.join(self.get_source_path(), adocId)
-        keys = get_asciidoctor_attributes(docpath)
-        self.log.trace(f"[BACKEND/PREPROCESSING] Document '{adocId} keys: {keys}")
+        keys = get_asciidoctor_attributes(docpath, tolerant)
+        self.log.debug(f"[BACKEND/PREPROCESSING] Document '{adocId} keys: {keys}")
+        sort_attribute = self.get_sort_attribute()
+
+        # If document doesn't have a title, skip it.
+        try:
+            title = keys['Title'][0]
+            self.log.debug(f"[BACKEND/PREPROCESSING] - Document '{adocId}: {title}' will be processed")
+        except (KeyError, TypeError):
+            self.runtime['docs']['count'] -= 1
+            self.log.warning("[BACKEND/PREPROCESSING] - DOC[%s] doesn't have a title. Skip it.", adocId)
+
+
+        self.log.debug(sort_attribute)
+        if sort_attribute is not None:
+            try:
+                keys[sort_attribute]
+            except (KeyError, TypeError):
+                keys[sort_attribute] = ["1978-09-28 23:00:00"]
+
+        self.log.debug(keys)
         return keys
+
+    def get_sort_attribute(self):
+        runtime = self.get_runtime_dict()
+        sort_attribute = runtime['sort_attribute']
+        return sort_attribute
 
     @timeit
     def stage_03_00_preprocess_document_hashes(self, adocId: str, content: str, keys: list):
@@ -378,7 +411,7 @@ class Backend(Service):
             for value in alist:
                 if len(value.strip()) == 0:
                     continue
-
+                self.log.debug(f"Doc['{adocId}'] Key['{key}'] Value['{value}']")
                 if key == self.runtime['sort_attribute']:
                     value = string_timestamp(value)
 
@@ -459,7 +492,7 @@ class Backend(Service):
             except KeyError:
                 # Very likely there is no kbdict, so this step is skipped
                 pass
-        self.log.trace("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", adocId, COMPILE, REASON)
+        self.log.debug("[BACKEND/PREPROCESSING] - DOC[%s] Compile? %s. Reason: %s", adocId, COMPILE, REASON)
 
     @timeit
     def stage_03_preprocessing(self):
@@ -470,7 +503,7 @@ class Backend(Service):
         In this way, after being compiled into HTML, final adocs are
         browsable throught its metadata.
         """
-        self.log.trace("[BACKEND/PREPROCESSING] - Start at %s", now())
+        self.log.debug("[BACKEND/PREPROCESSING] - Start at %s", now())
 
         # ~ def _clean_cache():
             # ~ # Clean cache
@@ -484,12 +517,12 @@ class Backend(Service):
                 # ~ pass  # skip
 
             # ~ if len(missing) == 0:
-                # ~ self.log.trace("[BACKEND/PREPROCESSING] - Cache is empty")
+                # ~ self.log.debug("[BACKEND/PREPROCESSING] - Cache is empty")
             # ~ else:
                 # ~ for adocId in missing:
                     # ~ adocId = adocId.replace('.adoc', '')
                     # ~ self.delete_document(adocId)
-                # ~ self.log.trace("[BACKEND/PREPROCESSING] - Cache cleaned up")
+                # ~ self.log.debug("[BACKEND/PREPROCESSING] - Cache cleaned up")
 
         #_clean_cache()
 
@@ -505,7 +538,7 @@ class Backend(Service):
         self.srvdtb.sort_database()
 
         # Documents preprocessing stats
-        self.log.trace("[BACKEND/PREPROCESSING] - Stats - Documents analyzed: %d", len(self.runtime['docs']['bag']))
+        self.log.debug("[BACKEND/PREPROCESSING] - Stats - Documents analyzed: %d", len(self.runtime['docs']['bag']))
         keep_docs = compile_docs = 0
         for adocId in self.kbdict_new['document']:
             if self.kbdict_new['document'][adocId]['compile']:
@@ -520,7 +553,7 @@ class Backend(Service):
                 self.log.story(f"There are changes in the repository. {compile_docs} documents will be compiled again")
             else:
                 self.log.story(f"All documents will be compiled again")
-        self.log.trace("[BACKEND/PREPROCESSING] - End %s", now())
+        self.log.debug("[BACKEND/PREPROCESSING] - End %s", now())
 
     def get_ignored_keys(self):
         return self.ignored_keys
@@ -587,7 +620,7 @@ class Backend(Service):
             rkold = sorted(self.get_kbdict_key(key, new=False))
             if rknew != rkold:
                 COMPILE_KEY = True
-            self.log.trace("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
+            self.log.debug("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
 
             for value in values:
                 COMPILE_VALUE = False
@@ -596,16 +629,16 @@ class Backend(Service):
                 VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
 
                 if VALUE_COMPARISON:
-                    self.log.trace("[BACKEND/PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
+                    self.log.debug("[BACKEND/PROCESSING] - Key[%s] Value[%s] new != old? %s", key, value, VALUE_COMPARISON)
                     COMPILE_VALUE = True
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
                 KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.trace("[BACKEND/PROCESSING] - Key[%s] Value[%s] Compile? %s", key, value, COMPILE_VALUE)
+                self.log.debug("[BACKEND/PROCESSING] - Key[%s] Value[%s] Compile? %s", key, value, COMPILE_VALUE)
             COMPILE_KEY = COMPILE_KEY or FORCE_ALL
             K_PATH.append((key, values, COMPILE_KEY))
             if COMPILE_KEY:
-                self.log.trace("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
+                self.log.debug("[BACKEND/PROCESSING] - Key[%s] Compile? %s", key, COMPILE_KEY)
         return K_PATH, KV_PATH
 
 
@@ -616,7 +649,7 @@ class Backend(Service):
         them again. This avoid recompile the whole database, saving time
         and CPU.
         """
-        self.log.trace("[BACKEND/PROCESSING] - Start at %s", now())
+        self.log.debug("[BACKEND/PROCESSING] - Start at %s", now())
         repo = self.get_repo_parameters()
         all_keys = set(self.srvdtb.get_all_keys())
         ign_default_keys = set(self.srvdtb.get_ignored_keys())
@@ -655,12 +688,12 @@ class Backend(Service):
         self.log.story(f"{keys_with_compile_true} keys will be compiled")
         self.log.story(f"{pairs_with_compile_true} key/value pairs will be compiled")
 
-        self.log.trace("[BACKEND/PROCESSING] - Finish processing keys")
-        self.log.trace("[BACKEND/PROCESSING] - Start processing theme at %s", now())
+        self.log.debug("[BACKEND/PROCESSING] - Finish processing keys")
+        self.log.debug("[BACKEND/PROCESSING] - Start processing theme at %s", now())
         self.srvthm.build()
-        self.log.trace("[BACKEND/PROCESSING] - End processing theme at %s", now())
-        self.log.trace("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
-        self.log.trace("[BACKEND/PROCESSING] - End at %s", now())
+        self.log.debug("[BACKEND/PROCESSING] - End processing theme at %s", now())
+        self.log.debug("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
+        self.log.debug("[BACKEND/PROCESSING] - End at %s", now())
 
     @timeit
     def stage_05_compilation(self):
@@ -675,12 +708,12 @@ class Backend(Service):
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
             shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
-        self.log.trace("[BACKEND/COMPILATION] - Resources copied to '%s'", resources_dir_tmp)
+        self.log.debug("[BACKEND/COMPILATION] - Resources copied to '%s'", resources_dir_tmp)
 
         adocprops = ''
-        self.log.trace("[BACKEND/COMPILATION] - Parameters passed to Asciidoctor:")
+        self.log.debug("[BACKEND/COMPILATION] - Parameters passed to Asciidoctor:")
         for prop in ENV['CONF']['ADOCPROPS']:
-            self.log.trace("[BACKEND/COMPILATION] - Key[%s] = Value[%s]", prop, ENV['CONF']['ADOCPROPS'][prop])
+            self.log.debug("[BACKEND/COMPILATION] - Key[%s] = Value[%s]", prop, ENV['CONF']['ADOCPROPS'][prop])
             if ENV['CONF']['ADOCPROPS'][prop] is not None:
                 if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
                     adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_target_path())
@@ -688,7 +721,7 @@ class Backend(Service):
                     adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
             else:
                 adocprops += '-a %s ' % prop
-        # ~ self.log.trace("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
+        # ~ self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
@@ -698,7 +731,7 @@ class Backend(Service):
             jobs = []
             jobcount = 0
             num = 1
-            self.log.trace("[BACKEND/COMPILATION] - Generating jobs. Please, wait")
+            self.log.debug("[BACKEND/COMPILATION] - Generating jobs. Please, wait")
             for doc in docs:
                 COMPILE = True
                 basename = os.path.basename(doc)
@@ -714,19 +747,19 @@ class Backend(Service):
 
                 if COMPILE or self.params.force:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                    self.log.trace("[COMPILATION] - CMD[%s]", cmd)
+                    self.log.debug("[COMPILATION] - CMD[%s]", cmd)
                     data = (doc, cmd, num)
-                    self.log.trace("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
+                    self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
                     job = exe.submit(self.compilation_started, data)
                     job.add_done_callback(self.compilation_finished)
                     jobs.append(job)
                     num = num + 1
                 else:
-                    self.log.trace("[BACKEND/COMPILATION] - Document[%s] cached. Avoid compiling", basename)
+                    self.log.debug("[BACKEND/COMPILATION] - Document[%s] cached. Avoid compiling", basename)
 
             if num-1 > 0:
                 self.log.info("[BACKEND/COMPILATION] - Created %d jobs. Starting compilation at %s", num - 1, now())
-                # ~ self.log.trace("[COMPILATION] - %3s%% done", "0")
+                # ~ self.log.debug("[COMPILATION] - %3s%% done", "0")
                 for job in jobs:
                     adoc, res, jobid = job.result()
                     self.log.debug(f"[BACKEND/COMPILATION] - {os.path.basename(adoc)} compiled successfully")
@@ -743,9 +776,9 @@ class Backend(Service):
                     duration = 1
                 avgspeed = int(((num - 1) / duration))
                 #self.log.info("[BACKEND/COMPILATION] - 100% done")
-                self.log.trace("[BACKEND/COMPILATION] - Stats - Time: %d seconds", comptime.seconds)
-                self.log.trace("[BACKEND/COMPILATION] - Stats - Compiled docs: %d", num - 1)
-                self.log.trace("[BACKEND/COMPILATION] - Stats - Avg. Speed: %d docs/sec", avgspeed)
+                self.log.debug("[BACKEND/COMPILATION] - Stats - Time: %d seconds", comptime.seconds)
+                self.log.debug("[BACKEND/COMPILATION] - Stats - Compiled docs: %d", num - 1)
+                self.log.debug("[BACKEND/COMPILATION] - Stats - Avg. Speed: %d docs/sec", avgspeed)
                 self.log.info("[BACKEND/COMPILATION] - End at %s", now())
             else:
                 self.log.info("[COMPILATION] - Nothing to do.")
@@ -763,7 +796,7 @@ class Backend(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            # ~ self.log.trace("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
+            # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
             try:
                 html = self.srvthm.build_page(path_hdoc)
             except MemoryError:
@@ -780,12 +813,12 @@ class Backend(Service):
     @timeit
     def stage_07_clean_target(self):
         """Clean up stage."""
-        self.log.trace("[BACKEND/CLEANUP] - Start at %s", now())
+        self.log.debug("[BACKEND/CLEANUP] - Start at %s", now())
         pattern = os.path.join(self.get_source_path(), '*.*')
         extra = glob.glob(pattern)
         copy_docs(extra, self.get_cache_path())
         delete_target_contents(self.runtime['dir']['dist'])
-        self.log.trace("[BACKEND/CLEANUP] - Distributed files deleted")
+        self.log.debug("[BACKEND/CLEANUP] - Distributed files deleted")
         distributed = self.get_targets()
         for adoc in distributed:
             source = os.path.join(self.runtime['dir']['tmp'], adoc)
@@ -797,16 +830,16 @@ class Backend(Service):
                 # ~ self.log.warning(warning)
                 # ~ self.log.warning("[CLEANUP] - Missing source file: %s", source)
                 pass
-        self.log.trace("[BACKEND/CLEANUP] - Copy temporary files to distributed directory")
+        self.log.debug("[BACKEND/CLEANUP] - Copy temporary files to distributed directory")
 
         delete_target_contents(self.get_target_path())
-        self.log.trace("[BACKEND/CLEANUP] - Deleted target contents in: %s", self.get_target_path())
-        self.log.trace("[BACKEND/CLEANUP] - End at %s", now())
+        self.log.debug("[BACKEND/CLEANUP] - Deleted target contents in: %s", self.get_target_path())
+        self.log.debug("[BACKEND/CLEANUP] - End at %s", now())
 
     @timeit
     def stage_08_refresh_target(self):
         """Refresh target."""
-        self.log.trace("[BACKEND/INSTALL] - Start at %s", now())
+        self.log.debug("[BACKEND/INSTALL] - Start at %s", now())
 
         # Copy asciidocs documents to target path
         pattern = os.path.join(self.get_source_path(), '*.adoc')
@@ -814,19 +847,19 @@ class Backend(Service):
         docsdir = os.path.join(self.get_target_path(), 'sources')
         os.makedirs(docsdir)
         copy_docs(files, docsdir)
-        self.log.trace("[BACKEND/INSTALL] - Copy %d asciidoctor sources to target path", len(files))
+        self.log.debug("[BACKEND/INSTALL] - Copy %d asciidoctor sources to target path", len(files))
 
         # Copy compiled documents to cache path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        self.log.trace("[BACKEND/INSTALL] - Copy %d html files from temporary path to cache path", len(files))
+        self.log.debug("[BACKEND/INSTALL] - Copy %d html files from temporary path to cache path", len(files))
 
         # Copy objects in temporary target to cache path
         pattern = os.path.join(self.runtime['dir']['www'], '*.*')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        self.log.trace("[BACKEND/INSTALL] - Copy %d html files from temporary target to cache path", len(files))
+        self.log.debug("[BACKEND/INSTALL] - Copy %d html files from temporary target to cache path", len(files))
 
         # Copy cached documents to target path
         n = 0
@@ -835,12 +868,12 @@ class Backend(Service):
             target = os.path.join(self.get_target_path(), filename)
             try:
                 shutil.copy(source, target)
-                self.log.trace("%s -> %s", source, target)
+                self.log.debug("%s -> %s", source, target)
             except FileNotFoundError as error:
                 self.log.error(error)
                 self.log.error("[BACKEND/INSTALL] - Consider to run the command again with the option -force")
             n += 1
-        self.log.trace(f"[BACKEND/INSTALL] - Copied {n} cached documents successfully to target path")
+        self.log.debug(f"[BACKEND/INSTALL] - Copied {n} cached documents successfully to target path")
 
         # Copy global resources to target path
         resources_dir_target = os.path.join(self.get_target_path(), 'resources')
@@ -852,35 +885,35 @@ class Backend(Service):
         copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
         copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
         copydir(ENV['GPATH']['COMMON'], os.path.join(resources_dir_target, 'common'))
-        self.log.trace("[BACKEND/INSTALL] - Copied global resources to target path")
+        self.log.debug("[BACKEND/INSTALL] - Copied global resources to target path")
 
         # Copy local resources to target path
         source_resources_dir = os.path.join(self.get_source_path(), 'resources')
         if os.path.exists(source_resources_dir):
             resources_dir_target = os.path.join(self.get_target_path(), 'resources')
             copydir(source_resources_dir, resources_dir_target)
-            self.log.trace("[BACKEND/INSTALL] - Copied local resources to target path")
+            self.log.debug("[BACKEND/INSTALL] - Copied local resources to target path")
 
         # Copy back all HTML files from target to cache
         delete_target_contents(self.runtime['dir']['cache'])
         pattern = os.path.join(self.get_target_path(), '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
-        self.log.trace("[BACKEND/INSTALL] - Copying HTML files back to cache...")
+        self.log.debug("[BACKEND/INSTALL] - Copying HTML files back to cache...")
 
         # Copy JSON database to target path so it can be queried from
         # others applications
         self.save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
-        self.log.trace("[BACKEND/INSTALL] - Copied JSON database to target")
-        self.log.trace("[BACKEND/INSTALL] - End at %s", now())
+        self.log.debug("[BACKEND/INSTALL] - Copied JSON database to target")
+        self.log.debug("[BACKEND/INSTALL] - End at %s", now())
 
     @timeit
     def stage_09_remove_temporary_dir(self):
         """Remove temporary dir."""
-        self.log.trace("[BACKEND/POST-INSTALL] - Start at %s", now())
+        self.log.debug("[BACKEND/POST-INSTALL] - Start at %s", now())
         #shutil.rmtree(self.runtime['dir']['tmp'])
-        self.log.trace("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
-        self.log.trace("[BACKEND/POST-INSTALL] - End at %s", now())
+        self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
+        self.log.debug("[BACKEND/POST-INSTALL] - End at %s", now())
 
     def cleanup(self):
         """Clean KB4IT temporary environment.
@@ -891,7 +924,7 @@ class Backend(Service):
             delete_target_contents(self.runtime['dir']['dist'])
         except Exception as KeyError:
             pass
-        self.log.trace("[BACKEND/CLEANUP] - KB4IT Workspace clean")
+        self.log.debug("[BACKEND/CLEANUP] - KB4IT Workspace clean")
 
     def reset(self):
         """WARNING.
@@ -912,21 +945,21 @@ class Backend(Service):
         KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], kdbdict)
 
         delete_target_contents(self.runtime['dir']['cache'])
-        self.log.trace("[BACKEND/RESET] - DIR[%s] deleted", self.runtime['dir']['cache'])
+        self.log.debug("[BACKEND/RESET] - DIR[%s] deleted", self.runtime['dir']['cache'])
 
         delete_target_contents(self.runtime['dir']['tmp'])
-        self.log.trace("[BACKEND/RESET] - DIR[%s] deleted", self.runtime['dir']['tmp'])
+        self.log.debug("[BACKEND/RESET] - DIR[%s] deleted", self.runtime['dir']['tmp'])
 
         delete_target_contents(self.get_source_path())
-        self.log.trace("[BACKEND/RESET] - DIR[%s] deleted", self.get_source_path())
+        self.log.debug("[BACKEND/RESET] - DIR[%s] deleted", self.get_source_path())
 
         delete_target_contents(self.get_target_path())
-        self.log.trace("[BACKEND/RESET] - DIR[%s] deleted", self.get_target_path())
+        self.log.debug("[BACKEND/RESET] - DIR[%s] deleted", self.get_target_path())
 
         delete_target_contents(KB4IT_DB_FILE)
-        self.log.trace("[BACKEND/RESET] - FILE[%s] deleted", KB4IT_DB_FILE)
+        self.log.debug("[BACKEND/RESET] - FILE[%s] deleted", KB4IT_DB_FILE)
 
-        self.log.trace("[BACKEND/RESET] - KB4IT environment reset")
+        self.log.debug("[BACKEND/RESET] - KB4IT environment reset")
 
     def run(self):
         """Start script execution following this flow.
@@ -950,10 +983,10 @@ class Backend(Service):
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
         self.stage_09_remove_temporary_dir()
-        #self.log.trace("[BACKEND/APP] - Browse your documentation repository:")
+        #self.log.debug("[BACKEND/APP] - Browse your documentation repository:")
         #homepage = os.path.join(abspath(self.get_target_path()), 'index.html')
-        #self.log.trace("[BACKEND/APP] - KB4IT homepage: %s", homepage)
-        self.log.trace("[BACKEND/APP] - KB4IT - Execution finished at %s", now())
+        #self.log.debug("[BACKEND/APP] - KB4IT homepage: %s", homepage)
+        self.log.debug("[BACKEND/APP] - KB4IT - Execution finished at %s", now())
         self.running = False
 
     def is_running(self):
@@ -967,22 +1000,22 @@ class Backend(Service):
             source_dir = self.get_source_path()
             source_path = os.path.join(source_dir, "%s.adoc" % adoc)
             os.unlink(source_path)
-            self.log.trace("DOC[%s] deleted from source directory", adoc)
+            self.log.debug("DOC[%s] deleted from source directory", adoc)
         except FileNotFoundError:
-            self.log.trace("DOC[%s] not found in source directory", adoc)
+            self.log.debug("DOC[%s] not found in source directory", adoc)
 
         # Remove database document
         self.srvdtb.del_document(adoc)
-        self.log.trace("DOC[%s] deleted from database", adoc)
+        self.log.debug("DOC[%s] deleted from database", adoc)
 
         # Remove cache document
         cache_dir = self.get_cache_path()
         cached_path = os.path.join(cache_dir, "%s.html" % adoc)
         try:
             os.unlink(cached_path)
-            self.log.trace("DOC[%s] deleted from cache directory", adoc)
+            self.log.debug("DOC[%s] deleted from cache directory", adoc)
         except FileNotFoundError:
-            self.log.trace("DOC[%s] not found in cache directory", adoc)
+            self.log.debug("DOC[%s] not found in cache directory", adoc)
 
     def busy(self):
         self.running = True

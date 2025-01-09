@@ -29,16 +29,13 @@ class Database(Service):
     cache_docs_sorted_by_date = {}
     cache_all_values_for_key = {}
 
-
     def initialize(self):
         """Initialize database module."""
-        backend = self.get_service('Backend')
-        runtime = backend.get_runtime_dict()
-        try:
-            repo = backend.get_repo_dict()
-            self.sort_attribute = repo['sort']
-        except AttributeError:
-            repo = {}
+        self.srvbes = self.get_service('Backend')
+        runtime = self.srvbes.get_runtime_dict()
+        if runtime['sort_enabled']:
+            self.sort_attribute = runtime['sort_attribute']
+        else:
             self.sort_attribute = ''
         self.sorted_docs = []
         self.keys['all'] = []
@@ -67,7 +64,7 @@ class Database(Service):
     def add_document(self, docId: str):
         """Add a new document node to the database ('name.adoc')"""
         self.db[docId] = {}
-        self.log.trace("[DATABASE] - DOC[%s] added to database", docId)
+        self.log.debug("[DATABASE] - DOC[%s] added to database", docId)
 
     def add_document_key(self, docId, key, value):
         """Add a new key/value node for a given document."""
@@ -78,7 +75,7 @@ class Database(Service):
         except KeyError:
             self.db[docId][key] = [value]
 
-        self.log.trace("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
+        self.log.debug("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -98,8 +95,12 @@ class Database(Service):
         Build a list of documents.
         Documents sorted by the given date attribute in descending order.
         """
+        runtime = self.srvbes.get_runtime_dict()
         if len(self.sorted_docs) == 0:
-            self.sorted_docs = self.sort_by_date(list(self.db.keys()))
+            if runtime['sort_enabled']:
+                self.sorted_docs = self.sort_by_date(list(self.db.keys()))
+            else:
+                self.sorted_docs = list(self.db.keys())
 
     # ~ # ~ @timeit
     def sort_by_date(self, doclist):
@@ -133,7 +134,7 @@ class Database(Service):
         try:
             return self.db[docId][self.sort_attribute][0]
         except KeyError as error:
-            self.log.trace(f"[DATABASE] - Document '{docId}' doesn't have the sort attribute {error}")
+            self.log.debug(f"[DATABASE] - Document '{docId}' doesn't have the sort attribute {error}")
             return None
 
     def is_system(self, docId):
@@ -289,3 +290,5 @@ class Database(Service):
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 
+    def get_sort_attribute(self):
+        return self.sort_attribute

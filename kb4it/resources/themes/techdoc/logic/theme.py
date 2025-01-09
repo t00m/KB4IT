@@ -79,6 +79,7 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
+        self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -108,19 +109,31 @@ class Theme(Builder):
         for docId in documents:
             if self.srvdtb.is_system(docId):
                 continue
+
             datatable['rows'] += '<tr>'
-            timestamp = self.srvdtb.get_doc_timestamp(docId)
-            if timestamp is None:
-                continue
-            ts_title = timestamp[:16]
-            ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-            datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
-            for key in headers[1:]:
+            if sort_attribute in headers:
+
+                timestamp = self.srvdtb.get_doc_timestamp(docId)
+                if timestamp is None:
+                    continue
+                ts_title = timestamp[:16]
+                ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
+                final_headers = headers[1:]
+            else:
+                final_headers = headers
+
+
+            for key in final_headers:
                 item = {}
                 if key == 'Title':
-                    item['title'] = f"<div uk-tooltip='{documents[docId][key]}'>{ellipsize_text(documents[docId][key], 80)}</div>"
-                    item['url'] = documents[docId]['%s_Url' % key]
-                    datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
+                    try:
+                        item['title'] = f"<div uk-tooltip='{documents[docId][key]}'>{ellipsize_text(documents[docId][key], 80)}</div>"
+                        item['url'] = documents[docId]['%s_Url' % key]
+                        datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
+                    except:
+                        self.log.error(f"DOC['{docId}'] Keys[{item}")
+                        raise
                 else:
                     link = {}
                     link['class'] = 'uk-link-heading'
@@ -581,7 +594,7 @@ class Theme(Builder):
         if not exists_hdoc:
             self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.trace("[THEME] - Page[%s] transformation started", basename_hdoc)
+            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
@@ -643,7 +656,7 @@ class Theme(Builder):
                 tree = etree.fromstring(HTML, parser)
                 pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
                 fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-                self.log.trace("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+                self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
                 self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
@@ -709,21 +722,25 @@ class Theme(Builder):
         doclist = []
         for docId in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
-            if bookmark == 'Yes' or bookmark == 'True':
+            doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
+            self.log.debug(f"Doc['{docId}'] bookmarked? {bookmark} [{doc_bookmarked}]")
+            if doc_bookmarked:
                 doclist.append(docId)
+
         self.log.debug("[THEME] - Found %d bookmarks", len(doclist))
         headers = []
         datatable = self.build_datatable(headers, doclist)
+
+        self.srvdtb.add_document('bookmarks.adoc')
+        self.srvdtb.add_document_key('bookmarks.adoc', 'Title', 'Bookmarks')
+        self.srvdtb.add_document_key('bookmarks.adoc', 'SystemPage', 'Yes')
 
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable
         page = TPL_PAGE_BOOKMARKS.render(var=var)
         self.distribute_adoc('bookmarks', page)
-        self.log.debug("[THEME] - Created page for bookmarks")
 
-        self.srvdtb.add_document('bookmarks.adoc')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'SystemPage', 'Yes')
+        self.log.debug("[THEME] - Created page for bookmarks")
 
         return page
 
@@ -755,7 +772,7 @@ class Theme(Builder):
 
         doclist.remove(docId)
         self.log.debug(f"Found {len(doclist)} related docs for '{docId}")
-        self.log.trace(f"Related documents for '{docId}': {doclist}")
+        self.log.debug(f"Related documents for '{docId}': {doclist}")
 
         headers = []
         var = self.get_theme_var()
