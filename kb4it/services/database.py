@@ -33,10 +33,13 @@ class Database(Service):
         """Initialize database module."""
         self.srvbes = self.get_service('Backend')
         runtime = self.srvbes.get_runtime_dict()
-        if runtime['sort_enabled']:
-            self.sort_attribute = runtime['sort_attribute']
-        else:
-            self.sort_attribute = ''
+        self.sort_attribute = ''
+        try:
+            if runtime['sort_enabled']:
+                self.sort_attribute = runtime['sort_attribute']
+        except KeyError:
+            pass
+
         self.sorted_docs = []
         self.keys['all'] = []
         self.keys['blocked'] = ['Title', 'SystemPage']

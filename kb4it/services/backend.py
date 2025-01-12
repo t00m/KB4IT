@@ -66,6 +66,13 @@ class Backend(Service):
         except FileNotFoundError as error:
             self.log.error(f"[BACKEND/SETUP] - Repository config file not found: {error}")
             sys.exit(-1)
+        except AttributeError as error:
+            # ~ self.log.error(f"[BACKEND/SETUP] Something is wrong in the app code. Anomalous behaviour.")
+            # ~ self.log.error(f"[BACKEND/SETUP] Error: {error}")
+            # ~ self.log.error(f"Params:\n{self.params}")
+            # ~ raise
+            # ~ sys.exit(-1)
+            repo_config_exists = False
         except Exception as error:
             self.log.error(f"[BACKEND/SETUP] - Repository config file not found in command line params")
             raise
