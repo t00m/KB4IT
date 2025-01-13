@@ -21,7 +21,7 @@ latest_pip=$(ls /usr/bin/pip3.* 2>/dev/null | sort -V | tail -n 1)
 echo "PIP: $latest_pip"
 
 # Find all installed PIPX versions
-latest_pipx=$(ls /usr/bin/pipx 2>/dev/null | sort -V | tail -n 1)
+latest_pipx=$(which pipx 2>/dev/null | sort -V | tail -n 1)
 echo "PIPX: $latest_pipx"
 
 # Check if a pipx version was found
