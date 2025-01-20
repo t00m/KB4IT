@@ -197,6 +197,8 @@ class KB4IT:
             workflow.create_repository()
         elif action == 'build':
             workflow.build_website()
+        elif action == 'apps':
+            raise NotImplementedError
         self.stop()
 
     def stop(self, error=False):
@@ -260,6 +262,10 @@ def main():
 
     # List themes
     subparsers.add_parser('themes', help='List all installed themes')
+
+    # List apps for a specific theme
+    theme_apps = subparsers.add_parser('apps', help='List all apps for a specific theme')
+    theme_apps.add_argument('theme', help='Theme to query')
 
     # run repository workflow
     workflow_parser = subparsers.add_parser(
