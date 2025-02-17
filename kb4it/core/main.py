@@ -190,7 +190,6 @@ class KB4IT:
         action = self.params.action
         self.log.debug(f"[CONTROLLER] - Executing action: {action}")
         workflow = self.get_service('Workflow')
-
         if action == 'themes':
             workflow.list_themes()
         elif action == 'create':
@@ -198,7 +197,8 @@ class KB4IT:
         elif action == 'build':
             workflow.build_website()
         elif action == 'apps':
-            raise NotImplementedError
+            # ~ raise NotImplementedError
+            workflow.list_apps(self.params.theme)
         self.stop()
 
     def stop(self, error=False):

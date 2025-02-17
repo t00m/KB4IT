@@ -20,6 +20,7 @@ import datetime
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
+from kb4it.core.util import json_load
 from kb4it.core.service import Service
 
 
@@ -35,7 +36,7 @@ class Frontend(Service):
         self.runtime = backend.get_runtime_dict()
 
     def theme_list(self):
-        self.log.debug("[FRONTEND] - List of themes availables")
+        self.log.debug("[FRONTEND] - List of themes available")
 
         self.log.debug("[FRONTEND] - 1) Search themes installed globally (%s)", ENV['GPATH']['THEMES'])
         global_themes = os.listdir(ENV['GPATH']['THEMES'])
@@ -64,6 +65,21 @@ class Frontend(Service):
                     self.log.debug("[FRONTEND] - Theme Id: '%s' NOT valid", dirname)
         if n == 0:
             self.log.info("[FRONTEND] - No themes available")
+        self.app.stop()
+
+    def apps_list(self, theme: str):
+        theme_path = self.theme_search(theme)
+        if theme_path is not None:
+            self.log.workflow(f"[FRONTEND] - List of apps available for theme '{theme}'")
+            self.log.debug(f"Theme '{theme}' path: {theme_path}")
+            apps_path = os.path.join(theme_path, 'apps', '*.json')
+            apps = glob.glob(apps_path)
+            for app in apps:
+                app_name = os.path.basename(app)[:-5]
+                self.log.workflow(f"[FRONTEND] - \tApp: '{app_name}'")
+        else:
+            self.log.error(f"Theme '{theme}' not found")
+
         self.app.stop()
 
     def theme_load(self, theme_name=None):

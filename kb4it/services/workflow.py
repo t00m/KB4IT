@@ -26,6 +26,11 @@ class Workflow(Service):
         frontend = self.get_service('Frontend')
         frontend.theme_list()
 
+    def list_apps(self, theme):
+        self.log.debug(f"[WORKFLOW] - KB4IT action: list available apps for theme '{theme}'")
+        frontend = self.get_service('Frontend')
+        frontend.apps_list(theme)
+
     def create_repository(self):
         self.log.workflow("[WORKFLOW] - KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
