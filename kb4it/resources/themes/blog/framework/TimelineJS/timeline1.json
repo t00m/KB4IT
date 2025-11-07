@@ -1,0 +1,18 @@
+{
+    "events": [
+        {
+            "start_date": { "year": "2024", "month": "11", "day": "20" },
+            "text": { "headline": "CRM Production Migration", "text": "<p>Description of event 1.a i</p><p>asdlkfjalsdkfjalsdkfadlfka adklasdf asdñlfkadsñf</p><p><a href='http://localhost/index.html'>Document</a></p>" },
+            "group": "Migration",
+            "url": "https://localhost/index.html",
+            "caption": "This is a caption",
+            "credit": "Tomás Vírseda",
+            "link_target": "http://localhost/index.html"
+       },
+        {
+            "start_date": { "year": "2024", "month": "11", "day": "01" },
+            "text": { "headline": "Additonal Application Server Installation", "text": "<p>Description of event 1.a i</p><p>asdlkfjalsdkfjalsdkfadlfka adklasdf asdñlfkadsñf</p>" },
+            "group": "Installation"
+       }
+    ]
+}
