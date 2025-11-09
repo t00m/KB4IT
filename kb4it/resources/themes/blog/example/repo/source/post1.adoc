@@ -15,8 +15,6 @@
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
 
-== Introduction
-
 This is a post example for KB4IT TechBlog theme.
 
 These are common guidelines:
