@@ -392,7 +392,7 @@ class Backend(Service):
             except (KeyError, TypeError):
                 keys[sort_attribute] = ["1978-09-28 23:00:00"]
 
-        self.log.debug(keys)
+        self.log.debug(f"Document {adocId}: {keys}")
         return keys
 
     def get_sort_attribute(self):
