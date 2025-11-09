@@ -1,6 +1,6 @@
-= Document example
+= Cloud administration
 
-:Author:        John Doe
+:Author:        Tomás Vírseda
 :Category:      Post
 :Scope:         Cloud Administration
 :Topic:         Architecture

@@ -153,7 +153,7 @@ class Theme(Builder):
 
     def build_page_index(self, var):
         """Create key page."""
-        TPL_BODY_INDEX_POST = self.template('HTML_BODY_INDEX_POST')
+        TPL_POST = self.template('HTML_BODY_INDEX_POST')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
         runtime = self.srvbes.get_runtime_dict()
@@ -167,34 +167,18 @@ class Theme(Builder):
         var['page']['title'] = var['repo']['title']
 
         doclist = self.srvdtb.get_documents()
-        html_post = ""
+        html = TPL_INDEX.render(var=var)
         for post in doclist:
             var['post'] = {}
-            self.log.error(f"Post filename: {post}")
+            self.log.error(f"Processing post filename: {post}")
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
-            html = TPL_INDEX.render(var=var)
+            html += TPL_POST.render(var=var)
+        # ~ self.log.error(f"VAR:\n{var}\n")
             # ~ self.log.error(f"Properties: {metadata}")
         # ~ self.log.error(f"doclist: {doclist}")
 
-        # ~ var['page']['title'] = var['repo']['title']
-        # ~ html = TPL_HEADER.render(var=var)
-        # ~ html += html_post
-        # ~ html += TPL_FOOTER.render(var=var)
-        # ~ page = self.template('PAGE_INDEX').render(var=var)
-        # ~ html = """== Hola carabola\n\nTest"""
-        # ~ self.log.error(f"html_post: {html}")
-        # ~ var['source_html'] = html_post
-        # ~ html = TPL_BODY.render(var=var)
-        # ~ self.distribute_adoc('index', html_post)
-
-        # ~ headers = []
-        # ~ datatable = self.build_datatable(headers, doclist)
-        # ~ var['page']['dt_documents'] = datatable
-
-
-        # ~ page = self.template('PAGE_BODY').render(var=var)
         self.distribute_adoc('index', html)
 
         self.srvdtb.add_document('index.adoc')
