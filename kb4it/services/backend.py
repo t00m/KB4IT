@@ -696,9 +696,6 @@ class Backend(Service):
         self.log.story(f"{pairs_with_compile_true} key/value pairs will be compiled")
 
         self.log.debug("[BACKEND/PROCESSING] - Finish processing keys")
-        self.log.debug("[BACKEND/PROCESSING] - Start processing theme at %s", now())
-        self.srvthm.build()
-        self.log.debug("[BACKEND/PROCESSING] - End processing theme at %s", now())
         self.log.debug("[BACKEND/PROCESSING] - Target docs: %d", len(self.runtime['docs']['target']))
         self.log.debug("[BACKEND/PROCESSING] - End at %s", now())
 
@@ -728,7 +725,7 @@ class Backend(Service):
                     adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
             else:
                 adocprops += '-a %s ' % prop
-        # ~ self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
+        self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
@@ -808,8 +805,8 @@ class Backend(Service):
                 # Make a copy of asciidoctor output before starting the transformation
                 source = os.path.join(self.runtime['dir']['tmp'], f"{basename.replace('.adoc', '.html')}")
                 target = os.path.join(self.runtime['dir']['tmp'], f"{basename.replace('.adoc', '_body.html')}")
-                self.log.error(f"{source} -> {target}")
                 shutil.copy(source, target)
+                self.log.debug(f"Backup {basename} to {target}")
                 html = self.srvthm.build_page(path_hdoc)
             except MemoryError:
                 self.log.error("Memory exhausted!")
@@ -821,6 +818,12 @@ class Backend(Service):
                 self.log.error(traceback.format_exc())
                 raise
             return x
+
+    @timeit
+    def stage_06_theme(self):
+        self.log.debug("[BACKEND/PROCESSING] - Start processing theme at %s", now())
+        self.srvthm.build()
+        self.log.debug("[BACKEND/PROCESSING] - End processing theme at %s", now())
 
     @timeit
     def stage_07_clean_target(self):
@@ -851,7 +854,7 @@ class Backend(Service):
     @timeit
     def stage_08_refresh_target(self):
         """Refresh target."""
-        self.log.debug("[BACKEND/INSTALL] - Start at %s", now())
+        self.log.info("[BACKEND/INSTALL] - Start at %s", now())
 
         # Copy asciidocs documents to target path
         pattern = os.path.join(self.get_source_path(), '*.adoc')
@@ -859,19 +862,19 @@ class Backend(Service):
         docsdir = os.path.join(self.get_target_path(), 'sources')
         os.makedirs(docsdir)
         copy_docs(files, docsdir)
-        self.log.debug("[BACKEND/INSTALL] - Copy %d asciidoctor sources to target path", len(files))
+        self.log.info("[BACKEND/INSTALL] - Copy %d asciidoctor sources to target path", len(files))
 
         # Copy compiled documents to cache path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        self.log.debug("[BACKEND/INSTALL] - Copy %d html files from temporary path to cache path", len(files))
+        self.log.info("[BACKEND/INSTALL] - Copy %d html files from temporary path to cache path", len(files))
 
         # Copy objects in temporary target to cache path
-        pattern = os.path.join(self.runtime['dir']['www'], '*.*')
+        pattern = os.path.join(self.runtime['dir']['tmp'], '*.*')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        self.log.debug("[BACKEND/INSTALL] - Copy %d html files from temporary target to cache path", len(files))
+        self.log.info("[BACKEND/INSTALL] - Copy %d html files from temporary target to cache path", len(files))
 
         # Copy cached documents to target path
         n = 0
@@ -885,7 +888,7 @@ class Backend(Service):
                 self.log.error(error)
                 self.log.error("[BACKEND/INSTALL] - Consider to run the command again with the option -force")
             n += 1
-        self.log.debug(f"[BACKEND/INSTALL] - Copied {n} cached documents successfully to target path")
+        self.log.info(f"[BACKEND/INSTALL] - Copied {n} cached documents successfully to target path")
 
         # Copy global resources to target path
         resources_dir_target = os.path.join(self.get_target_path(), 'resources')
@@ -897,7 +900,7 @@ class Backend(Service):
         copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
         copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
         copydir(ENV['GPATH']['COMMON'], os.path.join(resources_dir_target, 'common'))
-        self.log.debug("[BACKEND/INSTALL] - Copied global resources to target path")
+        self.log.info("[BACKEND/INSTALL] - Copied global resources to target path")
 
         # Copy local resources to target path
         source_resources_dir = os.path.join(self.get_source_path(), 'resources')
@@ -905,19 +908,20 @@ class Backend(Service):
             resources_dir_target = os.path.join(self.get_target_path(), 'resources')
             copydir(source_resources_dir, resources_dir_target)
             self.log.debug("[BACKEND/INSTALL] - Copied local resources to target path")
+        self.log.info("[BACKEND/INSTALL] - Copied local resources to target path")
 
         # Copy back all HTML files from target to cache
         delete_target_contents(self.runtime['dir']['cache'])
         pattern = os.path.join(self.get_target_path(), '*.html')
         html_files = glob.glob(pattern)
         copy_docs(html_files, self.runtime['dir']['cache'])
-        self.log.debug("[BACKEND/INSTALL] - Copying HTML files back to cache...")
+        self.log.info("[BACKEND/INSTALL] - Copying HTML files back to cache...")
 
         # Copy JSON database to target path so it can be queried from
         # others applications
         self.save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
-        self.log.debug("[BACKEND/INSTALL] - Copied JSON database to target")
-        self.log.debug("[BACKEND/INSTALL] - End at %s", now())
+        self.log.info("[BACKEND/INSTALL] - Copied JSON database to target")
+        self.log.info("[BACKEND/INSTALL] - End at %s", now())
 
     # ~ @timeit
     # ~ def stage_09_remove_temporary_dir(self):
@@ -931,9 +935,9 @@ class Backend(Service):
         """Clean KB4IT temporary environment.
         """
         try:
-            # ~ delete_target_contents(self.runtime['dir']['tmp'])
-            # ~ delete_target_contents(self.runtime['dir']['www'])
-            # ~ delete_target_contents(self.runtime['dir']['dist'])
+            delete_target_contents(self.runtime['dir']['tmp'])
+            delete_target_contents(self.runtime['dir']['www'])
+            delete_target_contents(self.runtime['dir']['dist'])
             pass
         except Exception as KeyError:
             pass
@@ -1038,3 +1042,4 @@ class Backend(Service):
 
     def end(self):
         self.cleanup()
+        pass

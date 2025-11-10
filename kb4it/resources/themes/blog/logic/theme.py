@@ -17,6 +17,7 @@ from calendar import monthrange
 
 from lxml import etree
 
+from kb4it.core.env import ENV
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
 from kb4it.core.util import set_max_frequency, get_font_size
@@ -175,15 +176,22 @@ class Theme(Builder):
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
-            fbody = os.path.join(self.srvbes.get_temp_path(), post.replace('.adoc', '_body.html'))
-            var['post']['body'] = open(fbody).read()
+            # ~ fbody = os.path.join(self.srvbes.get_temp_path(), post.replace('.adoc', '_body.html'))
+            fbody = os.path.join(self.srvbes.get_temp_path(), post)
+            text = open(fbody).readlines()
+            n = 0
+            for line in text:
+                if line.startswith(ENV['CONF']['EOHMARK']):
+                    break;
+                n += 1
+            cbody = ''.join(text[n+1:])
+            var['post']['body'] =  cbody
             html += TPL_POST.render(var=var)
         # ~ self.log.error(f"VAR:\n{var}\n")
             # ~ self.log.error(f"Properties: {metadata}")
         # ~ self.log.error(f"doclist: {doclist}")
 
         self.distribute_adoc('index', html)
-
         self.srvdtb.add_document('index.adoc')
         self.srvdtb.add_document_key('index.adoc', 'Title', var['repo']['title'])
         # ~ self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
@@ -374,7 +382,7 @@ class Theme(Builder):
         self.srvcal = self.get_service('EvCal')
         # ~ self.build_page_events()
         # ~ self.build_page_properties()
-        self.build_page_stats()
+        # ~ self.build_page_stats()
         # ~ self.build_page_bookmarks()
         self.build_page_index(var)
         # ~ self.build_page_index_all()

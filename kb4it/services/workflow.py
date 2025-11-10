@@ -113,6 +113,7 @@ class Workflow(Service):
         #TODO
         #FIXME
         backend.stage_04_processing()
+        backend.stage_06_theme()
         backend.stage_05_compilation()
         backend.stage_07_clean_target()
         backend.stage_08_refresh_target()
