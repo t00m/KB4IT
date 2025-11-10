@@ -1,4 +1,4 @@
-= Cloud monitoring
+= Cloud decommissioning
 
 :Author:        t00m
 :Category:      Post
@@ -14,9 +14,12 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
+== Capítulo 1
 
-This is a another post example for KB4IT TechBlog theme.
+_Hola_
 
-These are common guidelines:
+== Capítulo 2
 
-* http://www.example.com[Lorem ipsum]
+=== Subcapítulo 2 punto uno
+
+*Adios*

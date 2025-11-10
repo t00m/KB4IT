@@ -4,10 +4,10 @@
 <article class="post-card uk-card uk-card-default uk-card-body uk-margin-medium-bottom">
     <h2 class="uk-card-title">${var['post']['Title']}</h2>
     <div class="post-meta uk-margin-small-bottom">
-        <span>By ${var['post']['Author'][0]}</span> | <span>${var['post']['Updated'][0]}</span>
+        <span>By ${var['post']['Author'][0]}</span> | <span>${var['post']['Updated'][0]} </span> | <span>${var['post']['filename']}</span>
     </div>
     <p class="uk-text-justify">
-        UIkit is a lightweight and modular front-end framework for developing fast and powerful web interfaces. In this article, we'll explore the basics of UIkit 3 and how to get started with creating beautiful, responsive layouts.
+        ${var['post']['body']}
     </p>
     <div class="uk-flex uk-flex-between uk-flex-middle">
         <div>

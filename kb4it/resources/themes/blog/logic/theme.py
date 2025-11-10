@@ -170,10 +170,13 @@ class Theme(Builder):
         html = TPL_INDEX.render(var=var)
         for post in doclist:
             var['post'] = {}
+            var['post']['filename'] = post
             self.log.error(f"Processing post filename: {post}")
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
+            fbody = os.path.join(self.srvbes.get_temp_path(), post.replace('.adoc', '_body.html'))
+            var['post']['body'] = open(fbody).read()
             html += TPL_POST.render(var=var)
         # ~ self.log.error(f"VAR:\n{var}\n")
             # ~ self.log.error(f"Properties: {metadata}")

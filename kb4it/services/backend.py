@@ -805,6 +805,11 @@ class Backend(Service):
             basename = os.path.basename(path_hdoc)
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
             try:
+                # Make a copy of asciidoctor output before starting the transformation
+                source = os.path.join(self.runtime['dir']['tmp'], f"{basename.replace('.adoc', '.html')}")
+                target = os.path.join(self.runtime['dir']['tmp'], f"{basename.replace('.adoc', '_body.html')}")
+                self.log.error(f"{source} -> {target}")
+                shutil.copy(source, target)
                 html = self.srvthm.build_page(path_hdoc)
             except MemoryError:
                 self.log.error("Memory exhausted!")
@@ -914,21 +919,22 @@ class Backend(Service):
         self.log.debug("[BACKEND/INSTALL] - Copied JSON database to target")
         self.log.debug("[BACKEND/INSTALL] - End at %s", now())
 
-    @timeit
-    def stage_09_remove_temporary_dir(self):
-        """Remove temporary dir."""
-        self.log.debug("[BACKEND/POST-INSTALL] - Start at %s", now())
-        #shutil.rmtree(self.runtime['dir']['tmp'])
-        self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
-        self.log.debug("[BACKEND/POST-INSTALL] - End at %s", now())
+    # ~ @timeit
+    # ~ def stage_09_remove_temporary_dir(self):
+        # ~ """Remove temporary dir."""
+        # ~ self.log.debug("[BACKEND/POST-INSTALL] - Start at %s", now())
+        # ~ #shutil.rmtree(self.runtime['dir']['tmp'])
+        # ~ self.log.debug("[BACKEND/POST-INSTALL] - Temporary directory deleted successfully")
+        # ~ self.log.debug("[BACKEND/POST-INSTALL] - End at %s", now())
 
     def cleanup(self):
         """Clean KB4IT temporary environment.
         """
         try:
-            delete_target_contents(self.runtime['dir']['tmp'])
-            delete_target_contents(self.runtime['dir']['www'])
-            delete_target_contents(self.runtime['dir']['dist'])
+            # ~ delete_target_contents(self.runtime['dir']['tmp'])
+            # ~ delete_target_contents(self.runtime['dir']['www'])
+            # ~ delete_target_contents(self.runtime['dir']['dist'])
+            pass
         except Exception as KeyError:
             pass
         self.log.debug("[BACKEND/CLEANUP] - KB4IT Workspace clean")
@@ -989,7 +995,7 @@ class Backend(Service):
         self.stage_05_compilation()
         self.stage_07_clean_target()
         self.stage_08_refresh_target()
-        self.stage_09_remove_temporary_dir()
+        # ~ self.stage_09_remove_temporary_dir()
         #self.log.debug("[BACKEND/APP] - Browse your documentation repository:")
         #homepage = os.path.join(abspath(self.get_target_path()), 'index.html')
         #self.log.debug("[BACKEND/APP] - KB4IT homepage: %s", homepage)
