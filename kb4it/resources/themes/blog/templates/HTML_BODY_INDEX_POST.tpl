@@ -7,7 +7,7 @@
         <span>By ${var['post']['Author'][0]}</span> | <span>${var['post']['Updated'][0]} </span> | <span>${var['post']['filename']}</span>
     </div>
     <p class="uk-text-justify">
-        ${var['post']['body']}
+
     </p>
     <div class="uk-flex uk-flex-between uk-flex-middle">
         <div>

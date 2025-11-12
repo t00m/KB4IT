@@ -301,7 +301,7 @@ class Backend(Service):
 
         # Firstly, allow theme to generate documents
         self.srvthm = self.get_service('Theme')
-        self.srvthm.generate_sources()
+        # ~ self.srvthm.generate_sources()
 
         # If 'about_app.adoc' doesn't exist, create one from template
         # FIXME: if no file exists, tell theme
@@ -990,15 +990,15 @@ class Backend(Service):
         8. Remove temporary directory
         """
         self.running = True
-        self.stage_01_check_environment()
-        self.srvthm = self.get_service('Theme')
-        self.srvthm.generate_sources()
-        self.stage_02_get_source_documents()
-        self.stage_03_preprocessing()
-        self.stage_04_processing()
-        self.stage_05_compilation()
-        self.stage_07_clean_target()
-        self.stage_08_refresh_target()
+        # ~ self.stage_01_check_environment()
+        # ~ self.srvthm = self.get_service('Theme')
+        # ~ self.srvthm.generate_sources()
+        # ~ self.stage_02_get_source_documents()
+        # ~ self.stage_03_preprocessing()
+        # ~ self.stage_04_processing()
+        # ~ self.stage_05_compilation()
+        # ~ self.stage_07_clean_target()
+        # ~ self.stage_08_refresh_target()
         # ~ self.stage_09_remove_temporary_dir()
         #self.log.debug("[BACKEND/APP] - Browse your documentation repository:")
         #homepage = os.path.join(abspath(self.get_target_path()), 'index.html')
