@@ -99,7 +99,7 @@ class Backend(Service):
                 if entry not in ['source', 'target']:
                     dirname = self.runtime['dir'][entry]
                     if not os.path.exists(dirname):
-                        os.makedirs(dirname)
+                        os.makedirs(dirname, exist_ok=True)
                         create_directory = True
                 self.log.debug(f"[BACKEND/SETUP] - \tCreate directory {dirname}? {create_directory}")
 
@@ -256,7 +256,7 @@ class Backend(Service):
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
-            os.makedirs(self.get_target_path())
+            os.makedirs(self.get_target_path(), exist_ok=True)
         self.log.debug("[BACKEND/SETUP] - Target directory: %s", self.get_target_path())
 
         if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
@@ -725,6 +725,7 @@ class Backend(Service):
                     adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
             else:
                 adocprops += '-a %s ' % prop
+        self.runtime['adocprops'] = adocprops
         self.log.debug("[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         # ~ distributed = self.srvthm.get_distributed()
@@ -789,7 +790,6 @@ class Backend(Service):
 
     def compilation_started(self, data):
         (doc, cmd, num) = data
-        basename = os.path.basename(doc)
         res = exec_cmd(data)
         return res
 
@@ -802,11 +802,6 @@ class Backend(Service):
             basename = os.path.basename(path_hdoc)
             # ~ self.log.debug("[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
             try:
-                # Make a copy of asciidoctor output before starting the transformation
-                source = os.path.join(self.runtime['dir']['tmp'], f"{basename.replace('.adoc', '.html')}")
-                target = os.path.join(self.runtime['dir']['tmp'], f"{basename.replace('.adoc', '_body.html')}")
-                shutil.copy(source, target)
-                self.log.debug(f"Backup {basename} to {target}")
                 html = self.srvthm.build_page(path_hdoc)
             except MemoryError:
                 self.log.error("Memory exhausted!")
@@ -860,7 +855,7 @@ class Backend(Service):
         pattern = os.path.join(self.get_source_path(), '*.adoc')
         files = glob.glob(pattern)
         docsdir = os.path.join(self.get_target_path(), 'sources')
-        os.makedirs(docsdir)
+        os.makedirs(docsdir, exist_ok=True)
         copy_docs(files, docsdir)
         self.log.info("[BACKEND/INSTALL] - Copy %d asciidoctor sources to target path", len(files))
 

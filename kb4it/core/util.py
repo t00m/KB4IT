@@ -65,14 +65,14 @@ def copydir(source, dest):
     """
     for root, dirs, files in os.walk(source):
         if not os.path.isdir(root):
-            os.makedirs(root)
+            os.makedirs(root, exist_ok=True)
 
         for file in files:
             rel_path = root.replace(source, '').lstrip(os.sep)
             dest_path = os.path.join(dest, rel_path)
 
             if not os.path.isdir(dest_path):
-                os.makedirs(dest_path)
+                os.makedirs(dest_path, exist_ok=True)
 
             try:
                 shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))

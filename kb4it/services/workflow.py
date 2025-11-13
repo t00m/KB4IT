@@ -110,13 +110,12 @@ class Workflow(Service):
         theme.generate_sources()
         backend.stage_02_get_source_documents()
         backend.stage_03_preprocessing()
-        #TODO
-        #FIXME
         backend.stage_04_processing()
         backend.stage_06_theme()
         backend.stage_05_compilation()
         backend.stage_07_clean_target()
         backend.stage_08_refresh_target()
+        theme.post_activities()
         # ~ backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
         self.log.info("[WORKFLOW] - Repository website: %s", homepage)
