@@ -40,6 +40,9 @@ class Builder(Service):
         """Custom themes can use this method to generate source documents"""
         pass
 
+    def post_activities(self):
+        pass
+
     def distribute_html(self, pagename):
         shutil.copy(pagename, self.srvbes.get_www_path())
         # Add compiled page to the target list
