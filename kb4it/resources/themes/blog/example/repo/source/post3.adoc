@@ -3,7 +3,7 @@
 :Author:        Tomás Vírseda
 :Category:      Post
 :Scope:         Cloud Administration
-:Topic:         Normal
+:Topic:         Monitoring
 :Status:        Draft
 :Priority:      Normal
 :Team:          Linux
@@ -17,6 +17,8 @@
 
 This is a another post example for KB4IT TechBlog theme.
 
-These are common guidelines:
+== References
+
+=== Common guidelines:
 
 * http://www.example.com[Lorem ipsum]
