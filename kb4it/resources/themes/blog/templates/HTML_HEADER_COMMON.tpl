@@ -16,7 +16,7 @@
 </head>
 <body>
     <!-- Blog container :: START -->
-    <div class="blog-container uk-container">
+    <div class="blog-container uk-container" uk-height-viewport="expand: true">
         <!-- GRID :: START -->
         <div class="uk-grid">
             <!-- Main Content Column :: START-->
