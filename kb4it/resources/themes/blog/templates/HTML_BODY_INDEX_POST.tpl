@@ -2,9 +2,11 @@
 <!-- Template HTML_BODY_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
 <article class="post-card uk-card uk-card-default uk-card-body uk-margin-medium-bottom">
-    <h2 class="uk-card-title">${var['post']['Title']}</h2>
+    <h2 class="uk-card-title"><a href="${var['post']['filename'].replace('adoc','html')}">${var['post']['Title']}</a></h2>
     <div class="post-meta uk-margin-small-bottom">
-        <span>By ${var['post']['Author'][0]}</span> | <span>${var['post']['Updated'][0]} </span> | <span>${var['post']['filename']}</span>
+        <span>By <a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span> |
+        <span>${var['post']['Updated'][0]}</span>
+        <span></span>
     </div>
     <p class="uk-text-justify">
         ${var['post']['body']}
