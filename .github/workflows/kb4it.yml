@@ -10,17 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # Checkout repository
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # 2. Install dependencies (adjust if kb4it requires more)
+      # Install Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
 
-      # 3. Install your kb4it program or dependencies
+      # Install setuptools
+      - name: Install setuptools
+        run: pip install --upgrade setuptools
+
+      # Install requirements
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      # 3. Install kb4it
       - name: Install kb4it
         run: python setup.py install --user
 
