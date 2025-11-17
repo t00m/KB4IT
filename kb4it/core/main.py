@@ -83,9 +83,9 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        self.log.trace("[CONTROLLER] - Command line parameters:")
+        self.log.debug("[CONTROLLER] - Command line parameters:")
         for key in vars(self.params):
-            self.log.trace(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
+            self.log.debug(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
 
     def get_params(self):
         """Return app configuration"""
@@ -93,17 +93,17 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.trace("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
-        self.log.trace("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
-        self.log.trace("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
+        self.log.debug("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
+        self.log.debug("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.trace("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
+                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
             else:
-                self.log.trace("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
+                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
 
     def __setup_services(self):
         """Declare and register services."""
@@ -150,7 +150,7 @@ class KB4IT:
 
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        self.log.trace(f"[CONTROLLER] - Getting service '{name}'")
+        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
         try:
             service = self.services[name]
             logname = service.__class__.__name__
@@ -168,7 +168,7 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.trace("[CONTROLLER] - Service[%s] registered", name)
+            self.log.debug("[CONTROLLER] - Service[%s] registered", name)
         except KeyError as error:
             self.log.error("[CONTROLLER] - %s", error)
 
@@ -181,7 +181,7 @@ class KB4IT:
         if registered and started:
             service.end()
         service = None
-        self.log.trace("[CONTROLLER] - Service[%s] unregistered", name)
+        self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
 
     @timeit
     def run(self):
@@ -190,13 +190,15 @@ class KB4IT:
         action = self.params.action
         self.log.debug(f"[CONTROLLER] - Executing action: {action}")
         workflow = self.get_service('Workflow')
-
         if action == 'themes':
             workflow.list_themes()
         elif action == 'create':
             workflow.create_repository()
         elif action == 'build':
             workflow.build_website()
+        elif action == 'apps':
+            # ~ raise NotImplementedError
+            workflow.list_apps(self.params.theme)
         self.stop()
 
     def stop(self, error=False):
@@ -260,6 +262,10 @@ def main():
 
     # List themes
     subparsers.add_parser('themes', help='List all installed themes')
+
+    # List apps for a specific theme
+    theme_apps = subparsers.add_parser('apps', help='List all apps for a specific theme')
+    theme_apps.add_argument('theme', help='Theme to query')
 
     # run repository workflow
     workflow_parser = subparsers.add_parser(

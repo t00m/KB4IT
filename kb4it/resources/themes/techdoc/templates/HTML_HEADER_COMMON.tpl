@@ -76,11 +76,6 @@
                                         </ul>
                                     </div>
                                 </li>
-<!--
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="properties.html"><span uk-icon="bag"></span><span class="">Properties</span></a>
-                                </li>
--->
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="stats.html"><span uk-icon="list"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Stats</span></a>
@@ -88,26 +83,12 @@
                             </ul>
                         </div>
                     </li>
-
-<!-- Only display if num of documents -->
-% if var['count_docs'] > 0:
-% endif
-<!-- Only display if num of documents -->
                 </ul>
                 <ul class="uk-navbar-nav noprint">
                     <!-- MENU CONTENTS :: START -->
                     ${var['actions']}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
-<!--
-                % if var['has_toc']:
-                <ul class="uk-navbar-nav" uk-tooltip="title: Go to top">
-                    <li class="uk-link-toggle">
-                        <a class="uk-link-heading" href="" uk-totop></a>
-                    </li>
-                </ul>
-                % endif
--->
             </div>
             <div class="uk-navbar-center">
                 <!-- DOCUMENT TITLE :: START -->
@@ -116,10 +97,10 @@
                         <div class="uk-child-width-expand@s uk-text-center" uk-grid>
                             <div class="uk-card uk-card-small">
                                 <a class="uk-link-toggle uk-text-primary" href="#"><span id="kb4it-page-title" class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
-% if var['has_toc']:
+% if var['has_toc'] and len(var['toc']) > 0:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
-    ${var['toc']}
+${var['toc']}
                                     </ul>
                                 </div>
 % endif
@@ -140,6 +121,9 @@
                             <ul class="uk-nav uk-navbar-dropdown-nav">
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="help.html"><span class="uk-padding-none">Help</span></a>
                                 </li>
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">

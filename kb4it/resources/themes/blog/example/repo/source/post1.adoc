@@ -1,0 +1,27 @@
+= Cloud administration
+
+:Author:        Tomás Vírseda
+:Category:      Post
+:Scope:         Cloud Administration
+:Topic:         Architecture
+:Status:        Draft
+:Priority:      Very high
+:Team:          Linux
+:Tag:           cloud, service
+:Public:        No
+:Project:       Maintenance
+:Updated:       2024-12-17 18:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+This is a post example for KB4IT TechBlog theme.
+
+== Common guidelines:
+
+* After the title (=),
+* Define your own properties. This theme uses some of them by default, but you can add as many as you want.
+* Do not forget to add `// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE` after the last property.
+* Then, start by writing the paragraphs you need by using asciidoc format
+* Do NOT forget to save your documes with `.adoc` extension

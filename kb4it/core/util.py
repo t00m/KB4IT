@@ -65,14 +65,14 @@ def copydir(source, dest):
     """
     for root, dirs, files in os.walk(source):
         if not os.path.isdir(root):
-            os.makedirs(root)
+            os.makedirs(root, exist_ok=True)
 
         for file in files:
             rel_path = root.replace(source, '').lstrip(os.sep)
             dest_path = os.path.join(dest, rel_path)
 
             if not os.path.isdir(dest_path):
-                os.makedirs(dest_path)
+                os.makedirs(dest_path, exist_ok=True)
 
             try:
                 shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
@@ -183,7 +183,7 @@ def json_save(filepath: str, adict: {}) -> {}:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
 # ~ @timeit
-def get_asciidoctor_attributes(docpath):
+def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
     props = {}
@@ -195,6 +195,12 @@ def get_asciidoctor_attributes(docpath):
             title = title_line[2:-1].strip()
             if len(title) > 0:
                 props['Title'] = [title]
+                title_found = True
+
+        # Tolerate no title
+        if not title_found:
+            if tolerant:
+                props['Title'] = ['No title found']
                 title_found = True
 
         # Proceed only if document has a title
@@ -211,15 +217,17 @@ def get_asciidoctor_attributes(docpath):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
                     break
+
             if not end_of_header_found:
-                log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
-                props = None
+                if tolerant:
+                    log.warning(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
+                else:
+                    log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
         else:
             log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
-            props = None
     except IndexError as error:
         log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
-        props = None
+
     return props
 
 
@@ -278,6 +286,10 @@ def get_day(timestamp: str):
 def log_timestamp():
     now = datetime.now()
     return now.strftime("%Y%m%d_%H%M%S")
+
+def kb4it_timestamp():
+    now = datetime.now()
+    return now.strftime("%Y-%m-%d %H:%M:%S")
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""

@@ -26,6 +26,11 @@ class Workflow(Service):
         frontend = self.get_service('Frontend')
         frontend.theme_list()
 
+    def list_apps(self, theme):
+        self.log.debug(f"[WORKFLOW] - KB4IT action: list available apps for theme '{theme}'")
+        frontend = self.get_service('Frontend')
+        frontend.apps_list(theme)
+
     def create_repository(self):
         self.log.workflow("[WORKFLOW] - KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
@@ -105,13 +110,13 @@ class Workflow(Service):
         theme.generate_sources()
         backend.stage_02_get_source_documents()
         backend.stage_03_preprocessing()
-        #TODO
-        #FIXME
         backend.stage_04_processing()
+        backend.stage_06_theme()
         backend.stage_05_compilation()
         backend.stage_07_clean_target()
         backend.stage_08_refresh_target()
-        backend.stage_09_remove_temporary_dir()
+        theme.post_activities()
+        # ~ backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
         self.log.info("[WORKFLOW] - Repository website: %s", homepage)
         self.log.story(f"Browse {repo_title} website at {homepage}")

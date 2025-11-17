@@ -1,0 +1,108 @@
+= SAP Basis App for KB4IT
+
+:Author:	Tomás Vírseda
+:Description:	SAP Basis documentation repository for KB4IT using Techdoc theme
+:Version:	0.1
+:Topic:		IT
+:Category:      App
+:Scope:         SAP Administration
+:Updated:       2025-14-01 
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== SAP Basis theme configuration file
+
+----
+{
+    "datatable": [
+        "Updated",
+        "Title",
+        "Category",
+        "Project",
+        "Topic"
+    ],
+    "events": [
+        "Change",
+        "Incident",
+        "Issue",
+        "Meeting",
+        "Note",
+        "Post",
+        "Procedure",
+        "Project",
+        "Reminder",
+        "Report",
+        "Task"
+    ],
+    "git": true,
+    "git_branch": "main",
+    "git_path": "docs",
+    "git_repo": "sap-basis",
+    "git_server": "https://gitlab_server.com",
+    "git_user": "user",
+    "ignored_keys": [
+        "Updated",
+        "Bookmark",
+        "Content Repository",
+        "date",
+        "Dump",
+        "Infocube",
+        "Job",
+        "Program",
+        "Public",
+        "Repository",
+        "revdate",
+        "revnumber",
+        "RFC",
+        "Service",
+        "Role",
+        "Stack",
+        "Table",
+        "Tablespace",
+        "TaskList",
+        "Ticket",
+        "UnixService",
+        "Update",
+        "Variant",
+        "version"
+    ],
+    "logo": "resources/themes/techdoc/images/logo.svg",
+    "logo_alt": "",
+    "menu": [
+        "Author",
+        "Category",
+        "Command",
+        "Component",
+        "Database",
+        "OS",
+        "Periodicity",
+        "Priority",
+        "Product",
+        "Scope",
+        "Server",
+        "SID",
+        "Status",
+        "Tag",
+        "Team",
+        "Topic",
+        "User"
+    ],
+    "sort": "Updated",
+    "source": "/home/sapdoc/sap-basis/docs",
+    "target": "/app/sapdoc/html/sap/docs",
+    "theme": "techdoc",
+    "timeline": [
+        "Note"
+    ],
+    "timeline": [
+      "Change",
+      "Incident",
+      "Note",
+      "Task",
+      "Meeting"
+    ],
+    "title": "SAP Basis Documentation Repository",
+    "webserver": true
+}
+----
+

@@ -40,17 +40,6 @@ class Theme(Builder):
     dey = {}  # Dictionary of day events per year
     events_docs = {}  # Dictionary storing a list of docs for a given date
 
-    # ~ def initialize(self):
-
-
-    def highlight_metadata_section(self, content, var):
-        """Apply CSS transformation to metadata section."""
-        HTML_TAG_METADATA_ADOC = self.template('HTML_TAG_METADATA_ADOC').render(var=var)
-        HTML_TAG_METADATA_NEW = self.template('HTML_TAG_METADATA_NEW').render(var=var)
-        content = content.replace(HTML_TAG_METADATA_ADOC, HTML_TAG_METADATA_NEW, 1)
-        self.log.debug("[THEME] - Page[%s]: Highlight metadata", var['basename_html'])
-        return content, var
-
     def apply_transformations(self, content):
         """Apply CSS transformation to the compiled page."""
         content = content.replace(self.render_template('HTML_TAG_A_ADOC'), self.render_template('HTML_TAG_A_NEW'))
@@ -74,6 +63,7 @@ class Theme(Builder):
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_IMPORTANT_ADOC'), self.render_template('HTML_TAG_ADMONITION_IMPORTANT_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_CAUTION_ADOC'), self.render_template('HTML_TAG_ADMONITION_CAUTION_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_NOTE_ADOC'), self.render_template('HTML_TAG_ADMONITION_NOTE_NEW'))
+        content = content.replace(self.render_template('HTML_TAG_ADMONITION_TIP_ADOC'), self.render_template('HTML_TAG_ADMONITION_TIP_NEW'))
         content = content.replace(self.render_template('HTML_TAG_ADMONITION_WARNING_ADOC'), self.render_template('HTML_TAG_ADMONITION_WARNING_NEW'))
         content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
         return content
@@ -89,6 +79,7 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
+        self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -118,19 +109,31 @@ class Theme(Builder):
         for docId in documents:
             if self.srvdtb.is_system(docId):
                 continue
+
             datatable['rows'] += '<tr>'
-            timestamp = self.srvdtb.get_doc_timestamp(docId)
-            if timestamp is None:
-                continue
-            ts_title = timestamp[:16]
-            ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-            datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
-            for key in headers[1:]:
+            if sort_attribute in headers:
+
+                timestamp = self.srvdtb.get_doc_timestamp(docId)
+                if timestamp is None:
+                    continue
+                ts_title = timestamp[:16]
+                ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
+                final_headers = headers[1:]
+            else:
+                final_headers = headers
+
+
+            for key in final_headers:
                 item = {}
                 if key == 'Title':
-                    item['title'] = f"<div uk-tooltip='{documents[docId][key]}'>{ellipsize_text(documents[docId][key], 80)}</div>"
-                    item['url'] = documents[docId]['%s_Url' % key]
-                    datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
+                    try:
+                        item['title'] = f"<div uk-tooltip='{documents[docId][key]}'>{ellipsize_text(documents[docId][key], 80)}</div>"
+                        item['url'] = documents[docId]['%s_Url' % key]
+                        datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
+                    except:
+                        self.log.error(f"DOC['{docId}'] Keys[{item}")
+                        raise
                 else:
                     link = {}
                     link['class'] = 'uk-link-heading'
@@ -157,13 +160,14 @@ class Theme(Builder):
         filenames = runtime['docs']['filenames']
         now = datetime.now()
         de = datetime.strptime("31.12.9999", "%d.%m.%Y")
-        ds = datetime.strptime(f"1.1.{now.year}", "%d.%m.%Y")
+        ds = now - timedelta(days=365)
         var['dt_start'] = ds
         var['dt_end'] = de
         var['dt_now'] = now
 
-        doclist = self.srvdtb.get_docs_by_date_range(ds, de)
-        self.log.info(doclist)
+        doclist = self.srvdtb.get_documents()
+        if len(doclist) > 500:
+            doclist = self.srvdtb.get_docs_by_date_range(ds, de)
 
         if 'index.adoc' in filenames:
             self.log.info("[THEME] - Index page generated by the user. Skip auto generation")
@@ -383,7 +387,7 @@ class Theme(Builder):
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()
-        # ~ self.create_page_help()
+        self.create_page_help()
 
     def page_hook_pre(self, var):
         var['related'] = ''
@@ -590,7 +594,7 @@ class Theme(Builder):
         if not exists_hdoc:
             self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
         else:
-            self.log.trace("[THEME] - Page[%s] transformation started", basename_hdoc)
+            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
@@ -607,18 +611,17 @@ class Theme(Builder):
             with open(path_hdoc, 'r') as fph:
                 source_html = fph.read()
 
-            # It extracts the TOC from the generated HTML document.
-            # If the HTML doesn't have a TOC, it means that it is not a
-            # user document, but a page generated by the theme.
+            var['toc'] = self.extract_toc(source_html)
+            var['has_toc'] = True
+
+            # Do not show metadata for system pages
             if self.srvdtb.is_system(basename_adoc):
-                var['has_toc'] = False
+                var['SystemPage'] = True
                 TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
                 var['metadata'] = ""
             else:
-                toc = self.extract_toc(source_html)
-                var['toc'] = toc
-                var['has_toc'] = True
+                var['SystemPage'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 var['metadata'] = self.build_metadata_section(basename_adoc)
@@ -653,7 +656,7 @@ class Theme(Builder):
                 tree = etree.fromstring(HTML, parser)
                 pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
                 fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-                self.log.trace("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+                self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
                 self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
@@ -719,21 +722,25 @@ class Theme(Builder):
         doclist = []
         for docId in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
-            if bookmark == 'Yes' or bookmark == 'True':
+            doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
+            self.log.debug(f"Doc['{docId}'] bookmarked? {bookmark} [{doc_bookmarked}]")
+            if doc_bookmarked:
                 doclist.append(docId)
+
         self.log.debug("[THEME] - Found %d bookmarks", len(doclist))
         headers = []
         datatable = self.build_datatable(headers, doclist)
+
+        self.srvdtb.add_document('bookmarks.adoc')
+        self.srvdtb.add_document_key('bookmarks.adoc', 'Title', 'Bookmarks')
+        self.srvdtb.add_document_key('bookmarks.adoc', 'SystemPage', 'Yes')
 
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable
         page = TPL_PAGE_BOOKMARKS.render(var=var)
         self.distribute_adoc('bookmarks', page)
-        self.log.debug("[THEME] - Created page for bookmarks")
 
-        self.srvdtb.add_document('bookmarks.adoc')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'SystemPage', 'Yes')
+        self.log.debug("[THEME] - Created page for bookmarks")
 
         return page
 
@@ -765,7 +772,7 @@ class Theme(Builder):
 
         doclist.remove(docId)
         self.log.debug(f"Found {len(doclist)} related docs for '{docId}")
-        self.log.trace(f"Related documents for '{docId}': {doclist}")
+        self.log.debug(f"Related documents for '{docId}': {doclist}")
 
         headers = []
         var = self.get_theme_var()

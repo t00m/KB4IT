@@ -1,0 +1,25 @@
+= Cloud decommissioning
+
+:Author:        t00m
+:Category:      Post
+:Scope:         Cloud Administration
+:Topic:         Administration
+:Status:        Draft
+:Priority:      Normal
+:Team:          Linux
+:Tag:           cloud, service
+:Public:        No
+:Project:       Maintenance
+:Updated:       2025-10-10 09:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Capítulo 1
+
+_Hola_
+
+== Capítulo 2
+
+=== Subcapítulo 2 punto uno
+
+*Adios*

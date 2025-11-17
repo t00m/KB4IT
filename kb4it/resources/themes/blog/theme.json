@@ -1,0 +1,10 @@
+{
+    "id": "blog",
+    "name": "Blog",
+    "author": "[Tomás Vírseda]",
+    "email": "[tomasvirseda@gmail.com]",
+    "website": "https://github.com/t00m/KB4IT",
+    "description": "Theme for creating simple blogs",
+    "version": "0.1.0",
+    "kb4it": ">=0.8"
+}

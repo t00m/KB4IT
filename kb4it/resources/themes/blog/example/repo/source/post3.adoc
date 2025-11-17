@@ -1,0 +1,24 @@
+= Cloud monitoring
+
+:Author:        Tomás Vírseda
+:Category:      Post
+:Scope:         Cloud Administration
+:Topic:         Monitoring
+:Status:        Draft
+:Priority:      Normal
+:Team:          Linux
+:Tag:           cloud, service
+:Public:        No
+:Project:       Maintenance
+:Updated:       2025-10-10 08:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+
+This is a another post example for KB4IT TechBlog theme.
+
+== References
+
+=== Common guidelines:
+
+* http://www.example.com[Lorem ipsum]

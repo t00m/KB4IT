@@ -40,6 +40,9 @@ class Builder(Service):
         """Custom themes can use this method to generate source documents"""
         pass
 
+    def post_activities(self):
+        pass
+
     def distribute_html(self, pagename):
         shutil.copy(pagename, self.srvbes.get_www_path())
         # Add compiled page to the target list
@@ -87,7 +90,7 @@ class Builder(Service):
                 try:
                     self.templates[template] = Template(filename=template_path)
                     TEMPLATE_FOUND = True
-                    self.log.trace("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
+                    self.log.debug("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
                     break
                 except:
                     self.templates[template] = Template("")
@@ -168,13 +171,20 @@ class Builder(Service):
         """
         pass
 
+    def create_page_help(self):
+        """KB4IT help page."""
+        TPL_PAGE_HELP = self.template('PAGE_HELP')
+        var = self.get_theme_var()
+        self.distribute_adoc('help', TPL_PAGE_HELP.render(var=var))
+        self.srvdtb.add_document('help.adoc')
+        self.srvdtb.add_document_key('help.adoc', 'Title', 'KB4IT Help')
+        self.srvdtb.add_document_key('help.adoc', 'SystemPage', 'Yes')
+
     def create_page_about_kb4it(self):
         """About KB4IT page."""
         TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
         var = self.get_theme_var()
         self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
-
         self.srvdtb.add_document('about_kb4it.adoc')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
-        self.srvdtb.add_document_key('about_kb4it.adoc', 'Updated', '2024-11-28 17:45:00')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'SystemPage', 'Yes')
