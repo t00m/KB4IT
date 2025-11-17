@@ -1,4 +1,4 @@
-name: Build KB4IT website
+name: check-kb4it-version
 
 on:
   push:
@@ -18,15 +18,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      - name: Install pipx
-        uses: threeal/pipx-install-action@v2.0.0
-
+          python-version: "3.14"
 
       # 3. Install your kb4it program or dependencies
       - name: Install kb4it
-        run: pipx install . --force
+        run: python setup.py install --user
 
       # 4. Execute kb4it
       - name: Run kb4it
