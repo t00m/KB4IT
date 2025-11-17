@@ -1,0 +1,39 @@
+name: Build KB4IT website
+
+on:
+  push:
+    branches: [ master ]    # choose your branch
+    # paths: ["docs/**"]  # optional: run ONLY if specific directory changes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # 2. Install dependencies (adjust if kb4it requires more)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pipx
+        uses: threeal/pipx-install-action@v2.0.0
+
+
+      # 3. Install your kb4it program or dependencies
+      - name: Install kb4it
+        run: pipx install . --force
+
+      # 4. Execute kb4it
+      - name: Run kb4it
+        run: kb4it -v
+
+      # OPTIONAL: deploy the generated website
+      #~ - name: Upload artifact
+        #~ uses: actions/upload-pages-artifact@v3
+        #~ with:
+          #~ path: ./site

@@ -2,6 +2,9 @@
 
 === Introduction
 
+WARNING: This program is far from being complete. Under heavy (and slow) development.
+
+
 _KB4IT_ is a static website generator based on Asciidoctor sources
 mainly for technical documentation purposes.
 

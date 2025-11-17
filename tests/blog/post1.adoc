@@ -1,0 +1,14 @@
+= Cloud administration
+
+:Author:        Tomás Vírseda
+:Category:      Post
+:Topic:         Architecture
+:Tag:           github, actions
+:Updated:       2025-11-17 21:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+This is a post example for KB4IT TechBlog theme.
+
