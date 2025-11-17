@@ -9,6 +9,7 @@ Log module.
 # Description: log module
 """
 
+import os
 import logging
 
 from kb4it.core.env import ENV
@@ -59,10 +60,14 @@ def get_logger(name, level=None):
     else:
         severity = logging.INFO
 
+    logfile = ENV['FILE']['LOG']
+    logdir = os.path.dirname(logfile)
+    if not os.path.exists(logdir):
+        logfile = os.path.basename(logfile)
     pattern = "%(levelname)10s | %(lineno)4d | %(name)-10s | %(asctime)s.%(msecs)03d | %(message)s"
     logging.basicConfig(level=logging.DEBUG,
                         format=pattern,
-                        filename=ENV['FILE']['LOG'],
+                        filename=logfile,
                         datefmt='%d/%m/%Y %I:%M:%S',
                         filemode='w'
                        )
