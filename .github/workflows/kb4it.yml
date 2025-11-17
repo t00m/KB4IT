@@ -20,9 +20,9 @@ jobs:
         with:
           python-version: "3.14"
 
-      # Install setuptools
-      - name: Install setuptools
-        run: pip install --upgrade setuptools
+      # Install pipx
+      - name: Install pipx
+        run: pip install pipx --user
 
       # Install requirements
       - name: Install requirements
@@ -30,7 +30,7 @@ jobs:
 
       # 3. Install kb4it
       - name: Install kb4it
-        run: python setup.py install --user
+        run: pipx install . --force
 
       # 4. Execute kb4it
       - name: Run kb4it
