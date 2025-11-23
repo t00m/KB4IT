@@ -160,12 +160,6 @@ class Theme(Builder):
         repo = self.srvbes.get_repo_parameters()
         runtime = self.srvbes.get_runtime_dict()
         filenames = runtime['docs']['filenames']
-        now = datetime.now()
-        de = datetime.strptime("31.12.9999", "%d.%m.%Y")
-        ds = now - timedelta(days=365)
-        var['dt_start'] = ds
-        var['dt_end'] = de
-        var['dt_now'] = now
         var['page']['title'] = var['repo']['title']
 
         doclist = self.srvdtb.get_documents()
@@ -184,6 +178,9 @@ class Theme(Builder):
             body_mark = "<!-- BODY :: START -->"
             body_start = html_content.find("<!-- BODY :: START -->")
             body_end = html_content.find("<!-- BODY :: END -->")
+            timestamp = var['post']['Updated'][0]
+            dt = guess_datetime(timestamp)
+            var['post']['updated_human'] = get_human_datetime(dt)
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
                 html += TPL_POST.render(var=var)
