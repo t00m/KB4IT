@@ -1,8 +1,8 @@
                 </div>
                 <!-- Sidebar Column :: START-->
-                <div class="uk-width-1-3@m">
+                <div class="uk-width-1-3@m" uk-height-viewport="expand: true">
                   <div class="uk-sticky" uk-sticky="offset: 40">
-                    <h2 class="uk-heading-line uk-text-center"><span>My Simple Blog</span></h2>
+                    <h2 class="uk-heading-line uk-text-center"><a href="index.html"><span>My Simple Blog</span></a></h2>
                     <div class="sidebar">
                       <h3 class="sidebar-title">About</h3>
                       <p>Welcome to my simple blog. Here I share thoughts on web development, design, and technology.</p>
@@ -18,6 +18,10 @@
                                 <span class="tag"><a href="Tag_${tag}.html">${tag}</a></span>
                             % endfor
                         </div>
+                      <div class="uk-text-center uk-card uk-card-body uk-card-big">
+                        <hr class="uk-divider-icon"> 
+                        <span class="uk-text-small uk-text-muted">Blog updated on<br/>${var['repo']['updated']}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

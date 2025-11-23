@@ -10,12 +10,14 @@ Builder service.
 
 import os
 import shutil
+from datetime import datetime
 
 from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import timeit
+from kb4it.core.util import get_human_datetime
 
 
 class Builder(Service):
@@ -120,6 +122,7 @@ class Builder(Service):
         theme_var['kb'] = {}
         theme_var['kb']['keys'] = self.srvdtb.get_keys()
         theme_var['count_docs'] = self.srvdtb.get_documents_count()
+        theme_var['repo']['updated'] = get_human_datetime(datetime.now())
 
         # Only pass to theme those keys used by documents
         kbdict = self.srvbes.get_kb_dict()
