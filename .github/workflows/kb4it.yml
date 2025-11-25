@@ -28,15 +28,15 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements.txt
 
-      # 3. Install kb4it
+      # Install KB4IT
       - name: Install kb4it
         run: pipx install . --force
 
-      # 4. Execute kb4it
+      # Execute KB4IT
       - name: Run kb4it
         run: kb4it -v
 
-      # OPTIONAL: deploy the generated website
+      # Deploy the generated website
       #~ - name: Upload artifact
         #~ uses: actions/upload-pages-artifact@v3
         #~ with:
