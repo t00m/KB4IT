@@ -9,10 +9,11 @@ body {
 .post-card {
     background: white;
     border-radius: 8px;
+    border: 1px solid transparent;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 .post-card:hover {
-    <!-- transform: translateY(-5px); -->
+    border: 1px solid black;
 }
 .post-meta {
     color: #666;
