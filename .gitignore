@@ -3,3 +3,6 @@ build/
 dist/
 kb4it/__pycache__/
 kb4it/core/__pycache__/
+# pixi environments
+.pixi/*
+!.pixi/config.toml
