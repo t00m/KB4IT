@@ -193,6 +193,7 @@ class Theme(Builder):
         with open(index_file, 'w') as fout:
             fout.write(html)
         self.log.debug(f"INDEX FILE: {index_file}")
+        self.log.debug(html)
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
         self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
@@ -645,12 +646,11 @@ class Theme(Builder):
 
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys
-            var['page']['title'] = 'No title found...'
-            var['page']['title-tooltip'] = 'No title found...'
             try:
                 var['page']['title'] = ellipsize_text(keys['Title'])
                 var['page']['title-tooltip'] = keys['Title']
             except Exception as error:
+                # ~ self.log.error(error)
                 pass
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
