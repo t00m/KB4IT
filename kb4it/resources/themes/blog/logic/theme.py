@@ -193,7 +193,6 @@ class Theme(Builder):
         with open(index_file, 'w') as fout:
             fout.write(html)
         self.log.debug(f"INDEX FILE: {index_file}")
-        self.log.debug(html)
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
         self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
