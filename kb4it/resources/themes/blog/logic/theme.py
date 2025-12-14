@@ -181,6 +181,13 @@ class Theme(Builder):
             timestamp = var['post']['Updated'][0]
             dt = guess_datetime(timestamp)
             var['post']['updated_human'] = get_human_datetime(dt)
+            var['post']['updated_day_text'] = f"{dt.day}"
+            var['post']['updated_day'] = f"{dt.year}{dt.month}{dt.day}"
+            var['post']['updated_month_text'] = f"{dt.month}"
+            var['post']['updated_month'] = f"{dt.year}{dt.month}"
+            var['post']['updated_year_text'] = f"{dt.year}"
+            var['post']['updated_year'] = f"{dt.year}"
+            var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
                 html += TPL_POST.render(var=var)
@@ -395,11 +402,11 @@ class Theme(Builder):
         self.app.register_service('Timeline', Timeline())
         self.srvcal = self.get_service('EvCal')
         self.build_page_events()
-        # ~ self.build_page_properties()
-        # ~ self.build_page_stats()
+        self.build_page_properties()
+        self.build_page_stats()
         # ~ self.build_page_bookmarks()
         # ~ self.build_page_index(var)
-        # ~ self.build_page_index_all()
+        self.build_page_index_all()
         # ~ self.create_page_about_kb4it()
         # ~ self.create_page_help()
         pass
