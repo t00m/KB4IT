@@ -2,6 +2,9 @@
 <!-- Template HTML_BODY_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
 <article class="post-card uk-card uk-card-default uk-card-body uk-margin-medium-bottom">
+    <h2 class="uk-card-title uk-text-center">
+        <a class="uk-link-toggle" href="${var['post']['Title_Url']}"><span class="uk-link-heading">${var['post']['Title']}</span></a>
+    </h2>
     % if len(var['post']['body'].strip()) > 0:
         <div class="uk-text-justify">
             ${var['post']['body'].strip()}
