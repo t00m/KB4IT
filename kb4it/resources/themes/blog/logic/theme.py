@@ -154,7 +154,17 @@ class Theme(Builder):
 
 
     def build_page_index(self, var):
-        """Create key page."""
+        """Create blog index page.
+
+        At this point, all posts have been already converted to HTML.
+        So, it doesn't make sense to compile again asciidoc sources.
+        Instead, thanks to 'some marks' left in post templates, the body
+        code is extracted and reinjected in the index page.
+        Probably this ins't the best approach. Need a deep review.
+
+        Another workaround would be to create a datatable with all post.
+        """
+        self.log.info("[THEME] - Create Index page")
         TPL_POST = self.template('HTML_BODY_INDEX_POST')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
@@ -165,16 +175,22 @@ class Theme(Builder):
         doclist = self.srvdtb.get_documents()
         html = TPL_INDEX.render(var=var)
         for post in doclist:
+            self.log.info(f"[THEME] - \tProcessing file '{post}'")
             var['post'] = {}
             var['post']['filename'] = post
-            self.log.debug(f"Processing post filename: {post}")
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
+            adoc_filepath = os.path.join(self.srvbes.get_source_path(), post)
+            self.log.debug(f"[THEME] - \tADOC file path '{adoc_filepath}'")
+            adoc_content = open(adoc_filepath, 'r').read()
+            # ~ self.log.info(f"[THEME] - ADOC post content:\n{adoc_content}")
 
             html_filename = post.replace('.adoc', '.html')
             html_filepath = os.path.join(self.srvbes.get_target_path(), html_filename)
+            self.log.debug(f"[THEME] - \tHTML file path '{html_filepath}'")
             html_content = open(html_filepath, 'r').read()
+            # ~ self.log.info(f"[THEME] - HTML post content '{html_content}'")
             body_mark = "<!-- BODY :: START -->"
             body_start = html_content.find("<!-- BODY :: START -->")
             body_end = html_content.find("<!-- BODY :: END -->")
@@ -199,19 +215,15 @@ class Theme(Builder):
         index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        self.log.debug(f"INDEX FILE: {index_file}")
+        self.log.debug(f"[THEME] Index file: {index_file}")
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
         self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
         self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, html_filename)
         res = exec_cmd(data)
         self.build_page(index_file)
-        # ~ html = self.srvthm.build_page(path_hdoc)
+        self.log.info("[THEME] - Index page created")
 
-        # ~ self.distribute_adoc('index', html)
-        # ~ self.srvdtb.add_document('index.adoc')
-        # ~ self.srvdtb.add_document_key('index.adoc', 'Title', var['repo']['title'])
-        # ~ self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -591,7 +603,7 @@ class Theme(Builder):
         return toc
 
     # ~ @timeit
-    def build_page(self, path_adoc):
+    def build_page(self, path_adoc, var={}):
         """
         Build the final HTML Page
 
@@ -621,7 +633,9 @@ class Theme(Builder):
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
             HTML_FOOTER = self.template('HTML_FOOTER')
-            var = self.get_theme_var()
+            if len(var) == 0:
+                var = self.get_theme_var()
+
             var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
             var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
             now = datetime.now()
