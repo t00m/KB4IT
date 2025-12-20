@@ -12,13 +12,13 @@
     var['post']['updated_year'] = f"{dt.year}"
     var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
 %>
-<!-- Template HTML_BODY_INDEX.tpl :: START -->
+<!-- Template POST_HTML_SINGLE.tpl :: START -->
 <!-- Blog Post :: START -->
 <div class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
 
         <!-- Header -->
-        <header class="uk-margin-small-bottom">
+        <header class="uk-margin-small-bottom uk-background-muted">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
                 <div class="uk-width">
                     <h5 class="uk-card-title uk-margin-remove uk-text-center">
@@ -36,8 +36,25 @@
                                 <span uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
+                            <li>
+                                <span uk-icon="star"></span>
+                                <span class="uk-margin-small-left">
+                                % for i, topic in enumerate(var['post']['Topic']):
+                                    <a href="Topic_${topic}.html">${topic}</a>${"," if i < len(var['post']['Topic'])-1 else ""}
+                                % endfor
+                                </span>
+                            </li>
+                            <li>
+                                <span uk-icon="tag"></span>
+                                <span class="uk-margin-small-left">
+                                % for i, tag in enumerate(var['post']['Tag']):
+                                    <a href="Tag_${tag}.html">${tag}</a>${"," if i < len(var['post']['Tag'])-1 else ""}
+                                % endfor
+                                </span>
+                            </li>
                         </ul>
                     </div>
+                    <!-- Tags and Topics -->
                 </div>
             </div>
             <hr>
@@ -54,23 +71,9 @@
         <footer class="uk-margin-small-top uk-text-muted">
             <hr>
             <div class="uk-flex uk-flex-between uk-flex-middle">
-
-                <div class="uk-width">
-                    <ul class="uk-subnav uk-subnav-divider uk-margin-small-top uk-flex-center uk-text-meta">
-                           <li>
-                            <span uk-icon="tag"></span>
-                            <span class="uk-margin-small-left">
-                        % for i, tag in enumerate(var['post']['Tag']):
-                            <a href="Tag_${tag}.html">${tag}</a>${"," if i < len(var['post']['Tag'])-1 else ""}
-                        % endfor
-                            </span>
-                        </li>
-                    </ul>
-                </div>
-
             </div>
         </footer>
     </div>
 </div>
 <p></p>
-<!-- Template HTML_BODY_POST.tpl :: END -->
+<!-- Template POST_HTML_SINGLE.tpl :: END -->
