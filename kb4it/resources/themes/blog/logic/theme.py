@@ -206,7 +206,7 @@ class Theme(Builder):
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
         self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
-        self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, html_filename)
+        self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, index_file)
         res = exec_cmd(data)
         self.build_page(index_file)
         self.log.info("[THEME] - Index page created")
