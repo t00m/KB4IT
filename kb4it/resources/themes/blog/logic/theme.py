@@ -614,91 +614,107 @@ class Theme(Builder):
 
         if not exists_hdoc:
             self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
+            return
+
+        self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
+        THEME_ID = self.srvbes.get_theme_property('id')
+        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        HTML_BODY = self.template('HTML_BODY')
+        HTML_BODY_POST = self.template('POST_HTML_SINGLE')
+        HTML_FOOTER = self.template('HTML_FOOTER')
+
+        if len(var) == 0:
+            var = self.get_theme_var()
+
+        var['count_docs'] = self.srvdtb.get_documents_count()
+        keys = self.srvdtb.get_all_keys()
+        var['count_keys'] = len(keys)
+        var['leader_items'] = []
+        for key in keys:
+            if key == 'Updated':
+                continue
+            values = self.srvdtb.get_all_values_for_key(key)
+            item = {}
+            item['key'] = key
+            item['vfkey'] = valid_filename(key)
+            item['count_values'] = len(values)
+            var['leader_items'].append(item)
+
+        var['post'] = {}
+        var['post']['Category'] = []
+        var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
+        var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
+        now = datetime.now()
+        timestamp = get_human_datetime(now)
+        keys = self.srvdtb.get_doc_properties(basename_adoc)
+        system_page = self.srvdtb.is_system(basename_adoc)
+
+        with open(path_adoc, 'r') as fpa:
+            source_adoc = fpa.read()
+
+        with open(path_hdoc, 'r') as fph:
+            source_html = fph.read()
+
+        var['toc'] = self.extract_toc(source_html)
+        var['has_toc'] = True
+
+        # Do not show metadata for system pages
+        if self.srvdtb.is_system(basename_adoc):
+            var['SystemPage'] = True
+            TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
+            HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
+            var['metadata'] = ""
         else:
-            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
-            THEME_ID = self.srvbes.get_theme_property('id')
-            HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-            HTML_BODY = self.template('HTML_BODY')
-            HTML_BODY_POST = self.template('POST_HTML_SINGLE')
-            HTML_FOOTER = self.template('HTML_FOOTER')
-            if len(var) == 0:
-                var = self.get_theme_var()
+            var['SystemPage'] = False
+            TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
+            HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
+            var['metadata'] = self.build_metadata_section(basename_adoc)
 
-            var['post'] = {}
-            var['post']['Category'] = []
-            var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
-            var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
-            now = datetime.now()
-            timestamp = get_human_datetime(now)
-            keys = self.srvdtb.get_doc_properties(basename_adoc)
-            system_page = self.srvdtb.is_system(basename_adoc)
+        var['menu_contents'] = HTML_TOC
+        try:
+            var['keys'] = keys
+            if 'Post' in keys['Category']:
+                for key in keys:
+                    var['post'][key] = keys[key]
+        except Exception as error:
+            var['keys'] = keys
+        try:
+            var['page']['title'] = ellipsize_text(keys['Title'])
+            var['page']['title-tooltip'] = keys['Title']
+        except Exception as error:
+            # ~ self.log.error(error)
+            pass
+        var['basename_adoc'] = basename_adoc
+        var['basename_hdoc'] = basename_hdoc
+        var['source_adoc'] = source_adoc
+        var['source_html'] = self.apply_transformations(source_html) # <---
+        actions = self.get_page_actions(var)
+        var['actions'] = actions
+        var['timestamp'] = timestamp
 
-            with open(path_adoc, 'r') as fpa:
-                source_adoc = fpa.read()
-
-            with open(path_hdoc, 'r') as fph:
-                source_html = fph.read()
-
-            var['toc'] = self.extract_toc(source_html)
-            var['has_toc'] = True
-
-            # Do not show metadata for system pages
-            if self.srvdtb.is_system(basename_adoc):
-                var['SystemPage'] = True
-                TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
-                var['metadata'] = ""
+        HEADER = HTML_HEADER_COMMON.render(var=var)
+        try:
+            if 'Post' in var['post']['Category']:
+                BODY = HTML_BODY_POST.render(var=var)
             else:
-                var['SystemPage'] = False
-                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                var['metadata'] = self.build_metadata_section(basename_adoc)
-
-            var['menu_contents'] = HTML_TOC
-            try:
-                var['keys'] = keys
-                if 'Post' in keys['Category']:
-                    for key in keys:
-                        var['post'][key] = keys[key]
-            except Exception as error:
-                var['keys'] = keys
-            try:
-                var['page']['title'] = ellipsize_text(keys['Title'])
-                var['page']['title-tooltip'] = keys['Title']
-            except Exception as error:
-                # ~ self.log.error(error)
-                pass
-            var['basename_adoc'] = basename_adoc
-            var['basename_hdoc'] = basename_hdoc
-            var['source_adoc'] = source_adoc
-            var['source_html'] = self.apply_transformations(source_html) # <---
-            actions = self.get_page_actions(var)
-            var['actions'] = actions
-            var['timestamp'] = timestamp
-
-            HEADER = HTML_HEADER_COMMON.render(var=var)
-            try:
-                if 'Post' in var['post']['Category']:
-                    BODY = HTML_BODY_POST.render(var=var)
-                else:
-                    BODY = HTML_BODY.render(var=var)
-            except Exception as error:
-                self.log.error(f"{basename_adoc} > {error}")
-                raise
                 BODY = HTML_BODY.render(var=var)
-            FOOTER = HTML_FOOTER.render(var=var)
+        except Exception as error:
+            self.log.error(f"{basename_adoc} > {error}")
+            raise
+            BODY = HTML_BODY.render(var=var)
+        FOOTER = HTML_FOOTER.render(var=var)
 
-            HTML = ""
-            HTML += HEADER
-            HTML += BODY
-            HTML += FOOTER
+        HTML = ""
+        HTML += HEADER
+        HTML += BODY
+        HTML += FOOTER
 
-            with open(path_hdoc, 'w') as fhtml:
-                tree = etree.fromstring(HTML, parser)
-                pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
-                fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-                self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
-                self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
+        with open(path_hdoc, 'w') as fhtml:
+            tree = etree.fromstring(HTML, parser)
+            pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+            fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
+            self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+            self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
     def build_page_key(self, key, values):

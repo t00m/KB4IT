@@ -6,18 +6,33 @@
                     <div class="sidebar">
                       <h5 class="sidebar-title">About</h5>
                       <p class="uk-text-small">${var['repo']['tagline']}</p>
-                      <h5 class="sidebar-title">Topics</h5>
-                          <div>
-                            % for topic in var['topics']:
-                                <span class="tag"><a href="Topic_${topic}.html">${topic}</a></span>
-                            % endfor
+
+
+                        <!-- INDEX_TAB_STATS.tpl :: START -->
+                        <div class="uk-grid-small uk-text-meta" uk-grid>
+                            <div class="uk-width-expand uk-text-bold" uk-leader>
+                                <a class="uk-link-heading" href="all.html">Documents</a>
+                            </div>
+                            <div>
+                                <a href="all.html">${var['count_docs']}</a>
+                            </div> <!-- Num of documents -->
                         </div>
-                      <h5 class="sidebar-title">Tags</h5>
-                          <div>
-                            % for tag in var['tags']:
-                                <span class="tag"><a href="Tag_${tag}.html">${tag}</a></span>
-                            % endfor
+                        <div class="uk-grid-small uk-text-meta" uk-grid>
+                            <div class="uk-width-expand uk-text-bold" uk-leader>
+                                <a class="uk-link-heading" href="properties.html">Properties</a>
+                            </div>
+                            <div><a href="properties.html">${var['count_keys']}</a></div> <!-- Num of properties or keys -->
                         </div>
+                        <!-- Property leader items -->
+                    % for item in var['leader_items']:
+                        <div class="uk-grid-small uk-text-meta" uk-grid>
+                            <div class="uk-width-1-6@m"></div>
+                            <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="${item['vfkey']}.html">${item['key']}</a></div>
+                            <div><a href="${item['vfkey']}.html">${item['count_values']}</a></div>
+                        </div>
+                    % endfor
+                        <!-- Property leader items -->
+
                       <div class="uk-text-center uk-card uk-card-body uk-card-big">
                         <hr class="uk-divider-icon">
                         <span class="uk-text-small uk-text-muted">Blog updated on<br/>${var['repo']['updated']}</span>
