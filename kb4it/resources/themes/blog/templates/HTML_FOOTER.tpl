@@ -2,10 +2,10 @@
                 <!-- Sidebar Column :: START-->
                 <div class="uk-width-1-3@m" uk-height-viewport="expand: true">
                   <div class="uk-sticky" uk-sticky="offset: 40">
-                    <h2 class="uk-heading-line uk-text-center"><a href="index.html"><span>My Simple Blog</span></a></h2>
+                    <h2 class="uk-heading-line uk-text-center"><a class="uk-link-toggle" href="index.html"><span class="uk-link-heading">${var['repo']['title']}</span></a></h2>
                     <div class="sidebar">
                       <h5 class="sidebar-title">About</h5>
-                      <p class="uk-text-small">Welcome to my simple blog. Here I share thoughts on web development, design, and technology.</p>
+                      <p class="uk-text-small">${var['repo']['tagline']}</p>
                       <h5 class="sidebar-title">Topics</h5>
                           <div>
                             % for topic in var['topics']:
