@@ -50,7 +50,7 @@
                                 <span uk-icon="tag"></span>
                                 <span class="uk-margin-small-left">
                                 % for i, tag in enumerate(var['post']['Tag']):
-                                    <a href="Tag_${tag}.html">${tag}</a>${"," if i < len(var['post']['Tag'])-1 else ""}
+                                    <a href="Tag_${valid_filename(tag)}.html">${tag}</a>${"," if i < len(var['post']['Tag'])-1 else ""}
                                 % endfor
                                 </span>
                             </li>
