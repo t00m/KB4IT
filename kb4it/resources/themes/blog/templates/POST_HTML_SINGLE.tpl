@@ -25,6 +25,7 @@
                     <h5 class="uk-card-title uk-margin-remove uk-text-center">
                         <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
                             <span class="uk-link-heading">${var['post']['Title']}</span>
+                            <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank"><span uk-icon="pencil"></span></a>
                         </a>
                     </h5>
                     <div class="uk-width">
