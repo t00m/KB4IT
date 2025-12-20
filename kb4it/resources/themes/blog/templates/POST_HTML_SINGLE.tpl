@@ -1,6 +1,7 @@
 <%
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
+    from kb4it.core.util import valid_filename
     timestamp = var['post']['Updated'][0]
     dt = guess_datetime(timestamp)
     var['post']['updated_human'] = get_human_datetime(dt)

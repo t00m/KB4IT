@@ -170,7 +170,7 @@ class Theme(Builder):
         repo = self.srvbes.get_repo_parameters()
         runtime = self.srvbes.get_runtime_dict()
         filenames = runtime['docs']['filenames']
-        var['page']['title'] = var['repo']['title']
+        var['page']['title'] = "Index"
 
         doclist = self.srvdtb.get_documents()
         html = TPL_INDEX.render(var=var)
@@ -208,7 +208,7 @@ class Theme(Builder):
         data = (index_file, cmd, 1)
         self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, index_file)
         res = exec_cmd(data)
-        self.build_page(index_file)
+        self.build_page(index_file, var)
         self.log.info("[THEME] - Index page created")
 
 
@@ -676,6 +676,7 @@ class Theme(Builder):
             if 'Post' in keys['Category']:
                 for key in keys:
                     var['post'][key] = keys[key]
+                var['page']['title'] = var['post']['title']
         except Exception as error:
             var['keys'] = keys
         try:
