@@ -196,14 +196,15 @@ class Theme(Builder):
             body_end = html_content.find("<!-- BODY :: END -->")
             timestamp = var['post']['Updated'][0]
             dt = guess_datetime(timestamp)
-            var['post']['updated_human'] = get_human_datetime(dt)
-            var['post']['updated_day_text'] = f"{dt.day}"
-            var['post']['updated_day'] = f"{dt.year}{dt.month}{dt.day}"
-            var['post']['updated_month_text'] = f"{dt.month}"
-            var['post']['updated_month'] = f"{dt.year}{dt.month}"
-            var['post']['updated_year_text'] = f"{dt.year}"
-            var['post']['updated_year'] = f"{dt.year}"
-            var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
+            # ~ self.srvdtb.add_document_key(post, 'updated_human', get_human_datetime(dt))
+            # ~ var['post']['updated_human'] = get_human_datetime(dt)
+            # ~ var['post']['updated_day_text'] = f"{dt.day}"
+            # ~ var['post']['updated_day'] = f"{dt.year}{dt.month}{dt.day}"
+            # ~ var['post']['updated_month_text'] = f"{dt.month}"
+            # ~ var['post']['updated_month'] = f"{dt.year}{dt.month}"
+            # ~ var['post']['updated_year_text'] = f"{dt.year}"
+            # ~ var['post']['updated_year'] = f"{dt.year}"
+            # ~ var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
                 html += TPL_POST.render(var=var)
@@ -632,10 +633,13 @@ class Theme(Builder):
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
+            HTML_BODY_POST = self.template('HTML_BODY_POST')
             HTML_FOOTER = self.template('HTML_FOOTER')
             if len(var) == 0:
                 var = self.get_theme_var()
 
+            var['post'] = {}
+            var['post']['Category'] = []
             var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
             var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
             now = datetime.now()
@@ -663,9 +667,16 @@ class Theme(Builder):
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 var['metadata'] = self.build_metadata_section(basename_adoc)
+            self.log.info(f"{basename_adoc} >  is System Page? {var['SystemPage']}")
 
             var['menu_contents'] = HTML_TOC
-            var['keys'] = keys
+            try:
+                var['keys'] = keys
+                if 'Post' in keys['Category']:
+                    for key in keys:
+                        var['post'][key] = keys[key]
+            except Exception as error:
+                var['keys'] = keys
             try:
                 var['page']['title'] = ellipsize_text(keys['Title'])
                 var['page']['title-tooltip'] = keys['Title']
@@ -681,7 +692,16 @@ class Theme(Builder):
             var['timestamp'] = timestamp
 
             HEADER = HTML_HEADER_COMMON.render(var=var)
-            BODY = HTML_BODY.render(var=var)
+            try:
+                self.log.info(f"{basename_adoc} >  Category: {var['post']['Category']}")
+                if 'Post' in var['post']['Category']:
+                    BODY = HTML_BODY_POST.render(var=var)
+                else:
+                    BODY = HTML_BODY.render(var=var)
+            except Exception as error:
+                self.log.error(f"{basename_adoc} > {error}")
+                raise
+                BODY = HTML_BODY.render(var=var)
             FOOTER = HTML_FOOTER.render(var=var)
 
             HTML = ""

@@ -12,7 +12,6 @@
     var['post']['updated_year'] = f"{dt.year}"
     var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
 %>
-++++
 <!-- Template HTML_BODY_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
 <div class="uk-card uk-card-small uk-card-body post-card">
@@ -46,7 +45,9 @@
 
         <!-- Body -->
         <article class="uk-article">
-            ${var['post']['body'].strip()}
+            <!-- BODY :: START -->
+            ${var['source_html']}
+            <!-- BODY :: END -->
         </article>
 
         <!-- Footer -->
@@ -72,5 +73,4 @@
     </div>
 </div>
 <p></p>
-<!-- Template HTML_BODY_INDEX.tpl :: END -->
-++++
+<!-- Template HTML_BODY_POST.tpl :: END -->
