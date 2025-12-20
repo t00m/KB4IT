@@ -4,12 +4,17 @@
                   <div class="uk-sticky" uk-sticky="offset: 40">
                     <h2 class="uk-heading-line uk-text-center"><a class="uk-link-toggle" href="index.html"><span class="uk-link-heading">${var['repo']['title']}</span></a></h2>
                     <div class="sidebar">
+<!--
                       <h5 class="sidebar-title">About</h5>
                       <p class="uk-text-small">${var['repo']['tagline']}</p>
 
+-->
 
                         <!-- INDEX_TAB_STATS.tpl :: START -->
                         <div class="uk-grid-small uk-text-meta" uk-grid>
+                            <div class="uk-width-expand uk-text-bold" uk-leader>
+                                <a class="uk-link-heading" href="events.html">Events</a>
+                            </div>
                             <div class="uk-width-expand uk-text-bold" uk-leader>
                                 <a class="uk-link-heading" href="all.html">Documents</a>
                             </div>
