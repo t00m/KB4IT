@@ -1,6 +1,7 @@
 <%
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
+    from kb4it.core.util import valid_filename
     timestamp = var['post']['Updated'][0]
     dt = guess_datetime(timestamp)
     var['post']['updated_human'] = get_human_datetime(dt)
@@ -41,7 +42,7 @@
                                 <span uk-icon="star"></span>
                                 <span class="uk-margin-small-left">
                                 % for i, topic in enumerate(var['post']['Topic']):
-                                    <a href="Topic_${topic}.html">${topic}</a>${"," if i < len(var['post']['Topic'])-1 else ""}
+                                    <a href="Topic_${valid_filename(topic)}.html">${topic}</a>${"," if i < len(var['post']['Topic'])-1 else ""}
                                 % endfor
                                 </span>
                             </li>
