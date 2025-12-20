@@ -165,7 +165,7 @@ class Theme(Builder):
         Another workaround would be to create a datatable with all post.
         """
         self.log.info("[THEME] - Create Index page")
-        TPL_POST = self.template('HTML_BODY_INDEX_POST')
+        TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
         runtime = self.srvbes.get_runtime_dict()
@@ -182,32 +182,18 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             adoc_filepath = os.path.join(self.srvbes.get_source_path(), post)
-            self.log.debug(f"[THEME] - \tADOC file path '{adoc_filepath}'")
             adoc_content = open(adoc_filepath, 'r').read()
-            # ~ self.log.info(f"[THEME] - ADOC post content:\n{adoc_content}")
-
             html_filename = post.replace('.adoc', '.html')
             html_filepath = os.path.join(self.srvbes.get_target_path(), html_filename)
-            self.log.debug(f"[THEME] - \tHTML file path '{html_filepath}'")
             html_content = open(html_filepath, 'r').read()
-            # ~ self.log.info(f"[THEME] - HTML post content '{html_content}'")
             body_mark = "<!-- BODY :: START -->"
             body_start = html_content.find("<!-- BODY :: START -->")
             body_end = html_content.find("<!-- BODY :: END -->")
             timestamp = var['post']['Updated'][0]
             dt = guess_datetime(timestamp)
-            # ~ self.srvdtb.add_document_key(post, 'updated_human', get_human_datetime(dt))
-            # ~ var['post']['updated_human'] = get_human_datetime(dt)
-            # ~ var['post']['updated_day_text'] = f"{dt.day}"
-            # ~ var['post']['updated_day'] = f"{dt.year}{dt.month}{dt.day}"
-            # ~ var['post']['updated_month_text'] = f"{dt.month}"
-            # ~ var['post']['updated_month'] = f"{dt.year}{dt.month}"
-            # ~ var['post']['updated_year_text'] = f"{dt.year}"
-            # ~ var['post']['updated_year'] = f"{dt.year}"
-            # ~ var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
-                html += TPL_POST.render(var=var)
+                html += TPL_POST_ADOC.render(var=var)
             except Exception:
                 self.log.error(f"Ignoring {post}. No metadata found")
 
@@ -633,7 +619,7 @@ class Theme(Builder):
             THEME_ID = self.srvbes.get_theme_property('id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
-            HTML_BODY_POST = self.template('HTML_BODY_POST')
+            HTML_BODY_POST = self.template('POST_HTML_SINGLE')
             HTML_FOOTER = self.template('HTML_FOOTER')
             if len(var) == 0:
                 var = self.get_theme_var()
@@ -667,7 +653,6 @@ class Theme(Builder):
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 var['metadata'] = self.build_metadata_section(basename_adoc)
-            self.log.info(f"{basename_adoc} >  is System Page? {var['SystemPage']}")
 
             var['menu_contents'] = HTML_TOC
             try:
@@ -693,7 +678,6 @@ class Theme(Builder):
 
             HEADER = HTML_HEADER_COMMON.render(var=var)
             try:
-                self.log.info(f"{basename_adoc} >  Category: {var['post']['Category']}")
                 if 'Post' in var['post']['Category']:
                     BODY = HTML_BODY_POST.render(var=var)
                 else:
