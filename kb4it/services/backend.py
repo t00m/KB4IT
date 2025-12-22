@@ -16,12 +16,14 @@ import glob
 import json
 import time
 import errno
+import pprint
 import random
 import shutil
 import tempfile
 import datetime
 import traceback
 import threading
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
@@ -35,6 +37,7 @@ from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.perf import timeit
+from kb4it.core.cache import CacheManager
 
 
 class Backend(Service):
@@ -65,14 +68,12 @@ class Backend(Service):
                 self.log.debug(f"[BACKEND/SETUP] - \tParameter[{param}]: {self.repo[param]}")
             repo_config_exists = True
         except FileNotFoundError as error:
-            self.log.error(f"[BACKEND/SETUP] - Repository config file not found: {error}")
+            self.log.error(f"[BACKEND/SETUP] - Repository config file not found")
+            self.log.error(f"[BACKEND/SETUP] - {error}")
             sys.exit(-1)
         except AttributeError as error:
-            # ~ self.log.error(f"[BACKEND/SETUP] Something is wrong in the app code. Anomalous behaviour.")
-            # ~ self.log.error(f"[BACKEND/SETUP] Error: {error}")
-            # ~ self.log.error(f"Params:\n{self.params}")
-            # ~ raise
-            # ~ sys.exit(-1)
+            self.log.error(f"[BACKEND/SETUP] - Repository config couldn't be read")
+            self.log.error(f"[BACKEND/SETUP] - Repository config file: {self.params.config}")
             repo_config_exists = False
         except Exception as error:
             self.log.error(f"[BACKEND/SETUP] - Repository config file not found in command line params")
@@ -93,6 +94,13 @@ class Backend(Service):
             self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
             self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
 
+            # Setup Cache Manager
+            self.cache_mgr = CacheManager(
+                cache_dir=Path(self.runtime['dir']['cache']),
+                db_dir=Path(ENV['LPATH']['DB']),
+                project_name=valid_filename(self.runtime['dir']['source'])
+            )
+
             self.log.debug(f"[BACKEND/SETUP] - Checking directories:")
             for entry in self.runtime['dir']:
                 create_directory = False
@@ -111,9 +119,11 @@ class Backend(Service):
             except:
                 self.runtime['sort_enabled'] = False
                 self.log.error("[BACKEND/SETUP] - No property defined for sorting")
+                self.log.error("[BACKEND/SETUP] - Property 'sort' not found in repo config dict")
                 sys.exit(-1)
 
-            self.log.debug("[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
+            self.log.debug(f"[BACKEND/SETUP] - Sort enabled: {self.runtime['sort_enabled']}")
+            self.log.debug(f"[BACKEND/SETUP] - Sort attribute: {self.runtime['sort_attribute']}")
 
             # Initialize docs structure
             self.runtime['docs'] = {}
@@ -121,10 +131,11 @@ class Backend(Service):
             self.runtime['docs']['bag'] = []
             self.runtime['docs']['target'] = set()
 
-            # Load cache dictionary and initialize the new one
+            # Load cache dictionary from last run
             self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
             self.log.debug(f"[BACKEND/SETUP] - Loaded kbdict from last run with {len(self.kbdict_cur['document'])} documents")
 
+            # And initialize the new one
             self.kbdict_new['document'] = {}
             self.kbdict_new['metadata'] = {}
             self.log.debug(f"[BACKEND/SETUP] - Created new kbdict for current execution")
@@ -243,10 +254,10 @@ class Backend(Service):
         """Check environment."""
         frontend = self.get_service('Frontend')
         self.log.debug("[BACKEND/STAGE 1 - CHECKS] - Start at %s", now())
-        #self.log.debug("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
-        #self.log.debug("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
-        #self.log.debug("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
-        #self.log.debug("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
+        self.log.debug("[BACKEND/SETUP] - Cache directory: %s", self.runtime['dir']['cache'])
+        self.log.debug("[BACKEND/SETUP] - Working directory: %s", self.runtime['dir']['tmp'])
+        self.log.debug("[BACKEND/SETUP] - Distribution directory: %s", self.runtime['dir']['dist'])
+        self.log.debug("[BACKEND/SETUP] - Temporary target directory: %s", self.runtime['dir']['www'])
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
@@ -410,6 +421,13 @@ class Backend(Service):
         # Get Document Content and Metadata Hashes
         self.kbdict_new['document'][adocId]['content_hash'] = get_hash_from_dict({'content': content})
         self.kbdict_new['document'][adocId]['metadata_hash'] = get_hash_from_dict(keys)
+        self.cache_mgr.add_entry(
+            doc_id=adocId,
+            content_hash=self.cache_mgr.compute_hash(content),
+            metadata_hash=self.cache_mgr.compute_hash(keys),
+            compiled_path='',
+            metadata=keys
+        )
 
     @timeit
     def stage_03_00_preprocess_document_caches(self, adocId: str, keys: list):
@@ -925,6 +943,7 @@ class Backend(Service):
         self.log.info("[BACKEND/INSTALL] - Copied JSON database to target")
         self.log.info("[BACKEND/INSTALL] - End at %s", now())
 
+
     # ~ @timeit
     # ~ def stage_09_remove_temporary_dir(self):
         # ~ """Remove temporary dir."""
@@ -1040,6 +1059,9 @@ class Backend(Service):
         self.running = True
 
     def free(self):
+        # Cache Manager Stats
+        self.cache_mgr.print_cache_report()
+
         self.running = False
 
     def end(self):
