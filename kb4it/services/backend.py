@@ -40,14 +40,15 @@ from kb4it.core.perf import timeit
 class Backend(Service):
     """Backend class for managing the main logic workflow.
     """
-    running = False     # Backend running?
-    runtime = {}        # Dictionary of runtime properties
-    kbdict_new = {}     # New compilation cache
-    kbdict_cur = {}     # Cached data
-    force_keys = set()  # List of keys which must be compiled (forced)
 
     def initialize(self):
         """Initialize application structure."""
+
+        self.running = False     # Backend running?
+        self.runtime = {}        # Dictionary of runtime properties
+        self.kbdict_new = {}     # New compilation cache
+        self.kbdict_cur = {}     # Cached data
+        self.force_keys = set()  # List of keys which must be compiled (forced)
 
         self.log.debug("[BACKEND] - Started at %s", now())
 
