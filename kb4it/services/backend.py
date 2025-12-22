@@ -850,7 +850,9 @@ class Backend(Service):
     def stage_08_refresh_target(self):
         """Refresh target."""
         self.log.info("[BACKEND/INSTALL] - Start at %s", now())
-
+        self.log.debug(f"[BACKEND/INSTALL] - Temporary path: {self.runtime['dir']['tmp']}")
+        self.log.debug(f"[BACKEND/INSTALL] - Cache path: {self.runtime['dir']['cache']}")
+        self.log.debug(f"[BACKEND/INSTALL] - Target path: {self.runtime['dir']['target']}")
         # Copy asciidocs documents to target path
         pattern = os.path.join(self.get_source_path(), '*.adoc')
         files = glob.glob(pattern)
@@ -863,12 +865,16 @@ class Backend(Service):
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        self.log.info("[BACKEND/INSTALL] - Copy %d html files from temporary path to cache path", len(files))
+        for file in files:
+            self.log.debug(f"[BACKEND/INSTALL] - \tCopied '{os.path.basename(file)}' from temporary path to cache path")
+        self.log.info("[BACKEND/INSTALL] - Copied %d html files from temporary path to cache path", len(files))
 
         # Copy objects in temporary target to cache path
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.*')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
+        for file in files:
+            self.log.debug(f"[BACKEND/INSTALL] - \tCopied '{os.path.basename(file)}' from temporary target to cache path")
         self.log.info("[BACKEND/INSTALL] - Copy %d html files from temporary target to cache path", len(files))
 
         # Copy cached documents to target path
@@ -878,7 +884,7 @@ class Backend(Service):
             target = os.path.join(self.get_target_path(), filename)
             try:
                 shutil.copy(source, target)
-                self.log.debug("%s -> %s", source, target)
+                self.log.debug("%s -> %s", os.path.basename(source), os.path.basename(target))
             except FileNotFoundError as error:
                 self.log.error(error)
                 self.log.error("[BACKEND/INSTALL] - Consider to run the command again with the option -force")

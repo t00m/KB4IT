@@ -154,24 +154,35 @@ class Theme(Builder):
 
 
     def build_page_index(self, var):
-        """Create key page."""
-        TPL_POST = self.template('HTML_BODY_INDEX_POST')
+        """Create blog index page.
+
+        At this point, all posts have been already converted to HTML.
+        So, it doesn't make sense to compile again asciidoc sources.
+        Instead, thanks to 'some marks' left in post templates, the body
+        code is extracted and reinjected in the index page.
+        Probably this ins't the best approach. Need a deep review.
+
+        Another workaround would be to create a datatable with all post.
+        """
+        self.log.info("[THEME] - Create Index page")
+        TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
         runtime = self.srvbes.get_runtime_dict()
         filenames = runtime['docs']['filenames']
-        var['page']['title'] = var['repo']['title']
+        var['page']['title'] = "Index"
 
         doclist = self.srvdtb.get_documents()
         html = TPL_INDEX.render(var=var)
         for post in doclist:
+            self.log.info(f"[THEME] - \tProcessing file '{post}'")
             var['post'] = {}
             var['post']['filename'] = post
-            self.log.debug(f"Processing post filename: {post}")
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
-
+            adoc_filepath = os.path.join(self.srvbes.get_source_path(), post)
+            adoc_content = open(adoc_filepath, 'r').read()
             html_filename = post.replace('.adoc', '.html')
             html_filepath = os.path.join(self.srvbes.get_target_path(), html_filename)
             html_content = open(html_filepath, 'r').read()
@@ -180,10 +191,9 @@ class Theme(Builder):
             body_end = html_content.find("<!-- BODY :: END -->")
             timestamp = var['post']['Updated'][0]
             dt = guess_datetime(timestamp)
-            var['post']['updated_human'] = get_human_datetime(dt)
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
-                html += TPL_POST.render(var=var)
+                html += TPL_POST_ADOC.render(var=var)
             except Exception:
                 self.log.error(f"Ignoring {post}. No metadata found")
 
@@ -192,20 +202,15 @@ class Theme(Builder):
         index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        self.log.debug(f"INDEX FILE: {index_file}")
-        self.log.debug(html)
+        self.log.debug(f"[THEME] Index file: {index_file}")
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
         self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
-        self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, html_filename)
+        self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, index_file)
         res = exec_cmd(data)
-        self.build_page(index_file)
-        # ~ html = self.srvthm.build_page(path_hdoc)
+        self.build_page(index_file, var)
+        self.log.info("[THEME] - Index page created")
 
-        # ~ self.distribute_adoc('index', html)
-        # ~ self.srvdtb.add_document('index.adoc')
-        # ~ self.srvdtb.add_document_key('index.adoc', 'Title', var['repo']['title'])
-        # ~ self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -396,11 +401,11 @@ class Theme(Builder):
         self.app.register_service('Timeline', Timeline())
         self.srvcal = self.get_service('EvCal')
         self.build_page_events()
-        # ~ self.build_page_properties()
-        # ~ self.build_page_stats()
+        self.build_page_properties()
+        self.build_page_stats()
         # ~ self.build_page_bookmarks()
         # ~ self.build_page_index(var)
-        # ~ self.build_page_index_all()
+        self.build_page_index_all()
         # ~ self.create_page_about_kb4it()
         # ~ self.create_page_help()
         pass
@@ -585,7 +590,7 @@ class Theme(Builder):
         return toc
 
     # ~ @timeit
-    def build_page(self, path_adoc):
+    def build_page(self, path_adoc, var={}):
         """
         Build the final HTML Page
 
@@ -609,72 +614,108 @@ class Theme(Builder):
 
         if not exists_hdoc:
             self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
-        else:
-            self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
-            THEME_ID = self.srvbes.get_theme_property('id')
-            HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-            HTML_BODY = self.template('HTML_BODY')
-            HTML_FOOTER = self.template('HTML_FOOTER')
+            return
+
+        self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
+        THEME_ID = self.srvbes.get_theme_property('id')
+        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        HTML_BODY = self.template('HTML_BODY')
+        HTML_BODY_POST = self.template('POST_HTML_SINGLE')
+        HTML_FOOTER = self.template('HTML_FOOTER')
+
+        if len(var) == 0:
             var = self.get_theme_var()
-            var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
-            var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
-            now = datetime.now()
-            timestamp = get_human_datetime(now)
-            keys = self.srvdtb.get_doc_properties(basename_adoc)
-            system_page = self.srvdtb.is_system(basename_adoc)
 
-            with open(path_adoc, 'r') as fpa:
-                source_adoc = fpa.read()
+        var['count_docs'] = self.srvdtb.get_documents_count()
+        keys = self.srvdtb.get_all_keys()
+        var['count_keys'] = len(keys)
+        var['leader_items'] = []
+        for key in keys:
+            if key == 'Updated':
+                continue
+            values = self.srvdtb.get_all_values_for_key(key)
+            item = {}
+            item['key'] = key
+            item['vfkey'] = valid_filename(key)
+            item['count_values'] = len(values)
+            var['leader_items'].append(item)
 
-            with open(path_hdoc, 'r') as fph:
-                source_html = fph.read()
+        var['post'] = {}
+        var['post']['Category'] = []
+        var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
+        var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
+        now = datetime.now()
+        timestamp = get_human_datetime(now)
+        keys = self.srvdtb.get_doc_properties(basename_adoc)
+        system_page = self.srvdtb.is_system(basename_adoc)
 
-            var['toc'] = self.extract_toc(source_html)
-            var['has_toc'] = True
+        with open(path_adoc, 'r') as fpa:
+            source_adoc = fpa.read()
 
-            # Do not show metadata for system pages
-            if self.srvdtb.is_system(basename_adoc):
-                var['SystemPage'] = True
-                TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
-                var['metadata'] = ""
-            else:
-                var['SystemPage'] = False
-                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                var['metadata'] = self.build_metadata_section(basename_adoc)
+        with open(path_hdoc, 'r') as fph:
+            source_html = fph.read()
 
-            var['menu_contents'] = HTML_TOC
+        var['toc'] = self.extract_toc(source_html)
+        var['has_toc'] = True
+
+        # Do not show metadata for system pages
+        if self.srvdtb.is_system(basename_adoc):
+            var['SystemPage'] = True
+            TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
+            HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
+            var['metadata'] = ""
+        else:
+            var['SystemPage'] = False
+            TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
+            HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
+            var['metadata'] = self.build_metadata_section(basename_adoc)
+
+        var['menu_contents'] = HTML_TOC
+        try:
             var['keys'] = keys
-            try:
-                var['page']['title'] = ellipsize_text(keys['Title'])
-                var['page']['title-tooltip'] = keys['Title']
-            except Exception as error:
-                # ~ self.log.error(error)
-                pass
-            var['basename_adoc'] = basename_adoc
-            var['basename_hdoc'] = basename_hdoc
-            var['source_adoc'] = source_adoc
-            var['source_html'] = self.apply_transformations(source_html) # <---
-            actions = self.get_page_actions(var)
-            var['actions'] = actions
-            var['timestamp'] = timestamp
+            if 'Post' in keys['Category']:
+                for key in keys:
+                    var['post'][key] = keys[key]
+                var['page']['title'] = var['post']['title']
+        except Exception as error:
+            var['keys'] = keys
+        try:
+            var['page']['title'] = ellipsize_text(keys['Title'])
+            var['page']['title-tooltip'] = keys['Title']
+        except Exception as error:
+            # ~ self.log.error(error)
+            pass
+        var['basename_adoc'] = basename_adoc
+        var['basename_hdoc'] = basename_hdoc
+        var['source_adoc'] = source_adoc
+        var['source_html'] = self.apply_transformations(source_html) # <---
+        actions = self.get_page_actions(var)
+        var['actions'] = actions
+        var['timestamp'] = timestamp
 
-            HEADER = HTML_HEADER_COMMON.render(var=var)
+        HEADER = HTML_HEADER_COMMON.render(var=var)
+        try:
+            if 'Post' in var['post']['Category']:
+                BODY = HTML_BODY_POST.render(var=var)
+            else:
+                BODY = HTML_BODY.render(var=var)
+        except Exception as error:
+            self.log.error(f"{basename_adoc} > {error}")
+            raise
             BODY = HTML_BODY.render(var=var)
-            FOOTER = HTML_FOOTER.render(var=var)
+        FOOTER = HTML_FOOTER.render(var=var)
 
-            HTML = ""
-            HTML += HEADER
-            HTML += BODY
-            HTML += FOOTER
+        HTML = ""
+        HTML += HEADER
+        HTML += BODY
+        HTML += FOOTER
 
-            with open(path_hdoc, 'w') as fhtml:
-                tree = etree.fromstring(HTML, parser)
-                pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
-                fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-                self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
-                self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
+        with open(path_hdoc, 'w') as fhtml:
+            tree = etree.fromstring(HTML, parser)
+            pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+            fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
+            self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+            self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
     def build_page_key(self, key, values):

@@ -31,6 +31,7 @@
       "Post",
       "Note"
     ],
+    "tagline": "My public notes",
     "title": "My Blog",
     "webserver": false
 }

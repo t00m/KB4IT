@@ -1,1 +1,1 @@
-<h2 class="uk-card-title" 
+<h2 class="uk-card-title"
