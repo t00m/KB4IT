@@ -37,7 +37,7 @@ from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.perf import timeit
-from kb4it.core.cache import CacheManager
+from kb4it.services.cache import CacheManager
 
 
 class Backend(Service):

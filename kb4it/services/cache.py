@@ -54,5 +54,29 @@ class KB4ITObject:
 class CacheManager(Service):
     """KB4IT Cache Manager"""
 
-    def initialize(self):
+    def initialize(self, cache_dir, db_dir, source_dir):
         """"""
+        self.cache_dir = cache_dir
+        self.db_dir = db_dir
+        self.source_dir = source_dir
+        self.new = {}
+        self.old = self._load(source_dir)
+
+
+    def _load(self, path):
+        """C0111: Missing function docstring (missing-docstring)."""
+        project_name = valid_filename(path)
+        cache_file = os.path.join(self.db_dir, f"kbdict-{project_name}.json")
+        try:
+            kbdict = json_load(cache_file)
+            self.log.debug(f"[CACHE] - Cache loaded from file '{cache_file}'")
+        except FileNotFoundError:
+            kbdict = {}
+            kbdict['document'] = {}
+            kbdict['metadata'] = {}
+            self.log.debug(f"[CACHE] - Cache file not found. Created a new one")
+        except Exception as error:
+            self.log.error(f"[CACHE] - There was an error reading the cache file '{cache_file}'")
+            sys.exit()
+        self.log.debug(f"[CACHE] - Entries loaded: {len(kbdict)}")
+        return kbdict
