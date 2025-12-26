@@ -77,11 +77,13 @@ class Builder(Service):
         runtime = self.srvbes.get_runtime_dict()
         theme = runtime['theme']
         current_theme = theme['id']
+        TEMPLATE_FOUND = False
 
         # Try to get the template from cache
         try:
-            return self.templates[template]
-            # ~ self.log.debug("[BUILDER/TEMPLATES] - Template[%s] loaded from cache", template)
+            self.templates[template]
+            TEMPLATE_FOUND = True
+            # ~ self.log.debug(f"[BUILDER/TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
         except KeyError:
             templates = []
             templates.append(os.path.join(theme['templates'], "%s.tpl" % template))  # From theme
