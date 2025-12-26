@@ -122,9 +122,9 @@ class Frontend(Service):
                 from theme import Theme
                 self.app.register_service('Theme', Theme())
                 srvthm = self.get_service('Theme')
-                self.log.debug("[FRONTEND] - \tTheme '%s' loaded successfully", self.runtime['theme']['id'])
+                self.log.debug("[FRONTEND] - Theme '%s' loaded successfully", self.runtime['theme']['id'])
             except Exception as error:
-                self.log.error("[FRONTEND] - \tTheme '%s' couldn't be loaded", self.runtime['theme']['id'])
+                self.log.error("[FRONTEND] - Theme '%s' couldn't be loaded", self.runtime['theme']['id'])
                 self.log.error("[FRONTEND] - %s", error)
                 raise
             # ~ self.log.debug("[FRONTEND] - Loaded theme '%s'", self.runtime['theme']['id'])
