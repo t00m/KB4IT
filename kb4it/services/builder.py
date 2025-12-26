@@ -77,29 +77,31 @@ class Builder(Service):
         runtime = self.srvbes.get_runtime_dict()
         theme = runtime['theme']
         current_theme = theme['id']
+        TEMPLATE_FOUND = False
 
         # Try to get the template from cache
         try:
-            return self.templates[template]
-            # ~ self.log.debug("[BUILDER/TEMPLATES] - Template[%s] loaded from cache", template)
-
+            self.templates[template]
+            TEMPLATE_FOUND = True
+            # ~ self.log.debug(f"[BUILDER/TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
         except KeyError:
             templates = []
             templates.append(os.path.join(theme['templates'], "%s.tpl" % template))  # From theme
             templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template))  # From common templates dir
             TEMPLATE_FOUND = False
             for template_path in templates:
-                try:
-                    self.templates[template] = Template(filename=template_path)
-                    TEMPLATE_FOUND = True
-                    self.log.debug("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
-                    break
-                except:
-                    self.templates[template] = Template("")
-                    TEMPLATE_FOUND = False
+                if not TEMPLATE_FOUND:
+                    try:
+                        self.templates[template] = Template(filename=template_path)
+                        TEMPLATE_FOUND = True
+                        self.log.debug("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
+                        break
+                    except:
+                        self.templates[template] = Template("")
 
         if not TEMPLATE_FOUND:
             self.log.error("[BUILDER/TEMPLATES] - Template[%s] not found", template)
+            sys.exit(-1)
 
         return self.templates[template]
 
