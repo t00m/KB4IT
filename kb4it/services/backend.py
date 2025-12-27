@@ -633,26 +633,26 @@ class Backend(Service):
         for kpath in self.runtime['K_PATH']:
             key, values, COMPILE_KEY = kpath
             adocId = f"{valid_filename(key)}.adoc"
+            htmlId = adocId.replace('.adoc', '.html')
             if COMPILE_KEY:
                 self.srvthm.build_page_key(key, values)
                 keys_with_compile_true += 1
 
-                # Add compiled page to the target list
-                htmlId = adocId.replace('.adoc', '.html')
-                self.add_target(htmlId)
+            # Add compiled page to the target list
+            self.add_target(htmlId)
 
         # # Keys/Values
         pairs_with_compile_true = 0
         for kvpath in self.runtime['KV_PATH']:
             key, value, COMPILE_VALUE = kvpath
+            adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
+            htmlId = adocId.replace('.adoc', '.html')
             if COMPILE_VALUE:
                 self.srvthm.build_page_key_value(kvpath)
                 pairs_with_compile_true += 1
-                adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
 
-                # Add compiled page to the target list
-                htmlId = adocId.replace('.adoc', '.html')
-                self.add_target(htmlId)
+            # Add compiled page to the target list
+            self.add_target(htmlId)
 
         self.log.debug(f"[BACKEND/PROCESSING] - {keys_with_compile_true} keys will be compiled")
         self.log.debug(f"[BACKEND/PROCESSING] - {pairs_with_compile_true} key/value pairs will be compiled")
