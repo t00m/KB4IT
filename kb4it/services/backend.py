@@ -85,13 +85,31 @@ class Backend(Service):
             self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
             self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
 
+            ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
+            ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
+            ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
+            ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
+            ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
+            ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
+
             PROJECT = valid_filename(self.runtime['dir']['source'])
             WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
-            self.runtime['dir']['work'] = WORKDIR
-            self.runtime['dir']['tmp'] = os.path.join(WORKDIR, 'tmp')
-            self.runtime['dir']['www'] = os.path.join(WORKDIR, 'www')
-            self.runtime['dir']['dist'] = os.path.join(WORKDIR, 'dist')
-            self.runtime['dir']['cache'] = os.path.join(WORKDIR, 'cache')
+            dir_src = Path(self.runtime['dir']['source'])
+            dir_root = dir_src.parent.absolute()
+            dir_var = Path.joinpath(dir_root, 'var')
+            dir_work = Path.joinpath(dir_var, 'work')
+            dir_project = Path.joinpath(dir_work, PROJECT)
+            dir_tmp = Path.joinpath(dir_project, 'tmp')
+            dir_cache = Path.joinpath(dir_project, 'cache')
+            dir_www = Path.joinpath(dir_project, 'www')
+            dir_dist = Path.joinpath(dir_project, 'dist')
+
+
+            self.runtime['dir']['work'] = dir_project
+            self.runtime['dir']['tmp'] = dir_tmp
+            self.runtime['dir']['www'] = dir_www
+            self.runtime['dir']['dist'] = dir_dist
+            self.runtime['dir']['cache'] = dir_cache
 
             self.log.debug(f"[BACKEND/SETUP] - Checking directories:")
             for entry in self.runtime['dir']:
