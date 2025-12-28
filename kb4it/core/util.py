@@ -22,6 +22,7 @@ import hashlib
 import operator
 import subprocess
 import pprint
+from pathlib import Path
 from functools import wraps
 from datetime import datetime
 
@@ -82,6 +83,9 @@ def copydir(source, dest):
 
 def get_source_docs(path: str):
     """Get asciidoc documents from a given path"""
+    if isinstance(path, Path):
+        path = str(path)
+
     if path[:-1] != os.path.sep:
         path = path + os.path.sep
 
