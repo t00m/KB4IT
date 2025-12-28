@@ -32,7 +32,7 @@ from kb4it.core.util import now
 from kb4it.core.util import valid_filename
 from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
-from kb4it.core.util import get_hash_from_file, get_hash_from_dict
+from kb4it.core.util import get_hash_from_file, get_hash_from_dict, get_hash_from_list
 from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
@@ -345,13 +345,15 @@ class Backend(Service):
         # Add to cache
         # Old cache
         self.kbdict_new['document'][adocId] = {}
+        self.kbdict_new['document'][adocId]['content'] = content
+        self.kbdict_new['document'][adocId]['keys'] = keys
 
         # Add to the in-memory database
         self.srvdtb.add_document(adocId)
 
         self.stage_03_00_preprocess_document_hashes(adocId, content, keys)
         self.stage_03_00_preprocess_document_caches(adocId, keys)
-        self.stage_03_00_preprocess_document_compile(adocId, content, keys)
+        # ~ self.stage_03_00_preprocess_document_compile(adocId, content, keys)
 
         # Add compiled page to the target list
         htmlId = adocId.replace('.adoc', '.html')
@@ -448,8 +450,8 @@ class Backend(Service):
                 try:
                     hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
                     hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
-                    self.log.debug(f"[BACKEND-CACHE] - {adocId}: '{hash_cur}'")
-                    self.log.debug(f"[BACKEND-CACHE] - {adocId}: '{hash_new}'")
+                    self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
+                    self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
                     DOC_COMPILATION = hash_new != hash_cur
                     REASON = f"Hashes differ? {DOC_COMPILATION}"
                 except Exception as warning:
@@ -503,6 +505,26 @@ class Backend(Service):
 
         # Save current status for the next run
         self.save_kbdict(self.kbdict_new, self.get_source_path())
+
+        # Force compilation for all documents?
+        # ~ self.log.debug(f"BACKEND/PREPROCESSING - KB Old keys: {sorted(list(self.kbdict_cur['metadata'].keys()))}")
+        # ~ self.log.debug(f"BACKEND/PREPROCESSING - KB New keys: {sorted(list(self.kbdict_new['metadata'].keys()))}")
+        keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
+        keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
+        keys_hash_differ = keys_hash_cur != keys_hash_new
+        if keys_hash_differ:
+            self.log.info("[BACKEND/PREPROCESSING] - Hash for old keys differs from hash for new ones. Force compilation!")
+            self.log.debug("[BACKEND/PREPROCESSING] - New keys differ with previous execution.")
+            self.log.debug("[BACKEND/PREPROCESSING] - Force compilation for all documents.")
+            self.log.debug("[BACKEND/PREPROCESSING] - This is expected to ensure integrity")
+            self.params.force = True
+
+        # Compiling strategy
+        for filepath in self.runtime['docs']['bag']:
+            adocId = os.path.basename(filepath)
+            content = self.kbdict_new['document'][adocId]['content']
+            keys = self.kbdict_new['document'][adocId]['keys']
+            self.stage_03_00_preprocess_document_compile(adocId, content, keys)
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort_database()
