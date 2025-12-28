@@ -104,7 +104,7 @@ class Workflow(Service):
         backend.busy()
         repo = backend.get_repo_parameters()
         repo_title = repo['title']
-        self.log.story(f"Building a website for {repo_title}")
+        self.log.info(f"[WORKFLOW] - Building a website for {repo_title}")
         backend.stage_01_check_environment()
         theme = self.get_service('Theme')
         theme.generate_sources()
@@ -118,6 +118,5 @@ class Workflow(Service):
         theme.post_activities()
         # ~ backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
-        self.log.info("[WORKFLOW] - Repository website: %s", homepage)
-        self.log.story(f"Browse {repo_title} website at {homepage}")
+        self.log.info(f"[WORKFLOW] - URL for website repository: {homepage}")
         backend.free()
