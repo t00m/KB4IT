@@ -58,21 +58,21 @@ class KB4IT:
             self.params.LOGLEVEL = 'INFO'
         self.__setup_logging(self.params.log_level)
 
-        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {now()} using PID {ENV['SYS']['PS']['PID']}")
-        self.log.debug(f"[CONTROLLER] - Python environment:")
-        self.log.debug(f"[CONTROLLER] - \tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
-        self.log.debug(f"[CONTROLLER] - Platform:")
-        self.log.debug(f"[CONTROLLER] - \tOperating System: {ENV['SYS']['PLATFORM']['OS']}")
+        self.log.debug(f"KB4IT {ENV['APP']['version']} started at {now()} using PID {ENV['SYS']['PS']['PID']}")
+        self.log.debug(f"Python environment:")
+        self.log.debug(f"\tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
+        self.log.debug(f"Platform:")
+        self.log.debug(f"\tOperating System: {ENV['SYS']['PLATFORM']['OS']}")
 
         # Start up
         self.__setup_environment()
         self.__check_params()
         self.__setup_services()
 
-        #self.log.info("[CONTROLLER] - KB4IT %s started at %s", ENV['APP']['version'], now())
-        #self.log.debug("[CONTROLLER] - Log level set to %s", self.params.LOGLEVEL)
-        #self.log.debug("[CONTROLLER] - Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
-        #self.log.debug("[CONTROLLER] - MaxWorkers: %d (default)", self.params.NUM_WORKERS)
+        #self.log.info("KB4IT %s started at %s", ENV['APP']['version'], now())
+        #self.log.debug("Log level set to %s", self.params.LOGLEVEL)
+        #self.log.debug("Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
+        #self.log.debug("MaxWorkers: %d (default)", self.params.NUM_WORKERS)
 
         self.__gonogo()
 
@@ -83,9 +83,9 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        self.log.debug("[CONTROLLER] - Command line parameters:")
+        self.log.debug("Command line parameters:")
         for key in vars(self.params):
-            self.log.debug(f"[CONTROLLER] - \t{key}: {vars(self.params)[key]}")
+            self.log.debug(f"\t{key}: {vars(self.params)[key]}")
 
     def get_params(self):
         """Return app configuration"""
@@ -93,17 +93,17 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.debug("[CONTROLLER] - Setting up %s environment", ENV['APP']['shortname'])
-        self.log.debug("[CONTROLLER] - \tGlobal path[%s]", ENV['GPATH']['ROOT'])
-        self.log.debug("[CONTROLLER] - \tLocal path[%s]", ENV['LPATH']['ROOT'])
+        self.log.debug("Setting up %s environment", ENV['APP']['shortname'])
+        self.log.debug("\tGlobal path[%s]", ENV['GPATH']['ROOT'])
+        self.log.debug("\tLocal path[%s]", ENV['LPATH']['ROOT'])
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: created", key, path)
+                self.log.debug("\tLPATH[%s] Dir[%s]: created", key, path)
             else:
-                self.log.debug("[CONTROLLER] - \tLPATH[%s] Dir[%s]: already exists", key, path)
+                self.log.debug("\tLPATH[%s] Dir[%s]: already exists", key, path)
 
     def __setup_services(self):
         """Declare and register services."""
@@ -138,10 +138,10 @@ class KB4IT:
             # Write current Pid to file
             with open(pidfile, 'w') as fpid:
                 fpid.write(str(ENV['SYS']['PS']['PID']))
-            self.log.debug("[CONTROLLER] - Decision: Go")
+            self.log.debug("Decision: Go")
         else:
-            self.log.error(f"[CONTROLLER] - Decision: No Go")
-            self.log.error(f"[CONTROLLER] - Reason: {no_go_reason}")
+            self.log.error(f"Decision: No Go")
+            self.log.error(f"Reason: {no_go_reason}")
             self.stop()
 
     def get_services(self):
@@ -150,7 +150,7 @@ class KB4IT:
 
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
+        self.log.debug(f"Getting service '{name}'")
         try:
             service = self.services[name]
             logname = service.__class__.__name__
@@ -158,8 +158,8 @@ class KB4IT:
                 service.start(self, name)
             return service
         except Exception as error:
-            self.log.error(f"[CONTROLLER] - Service {name} not registered")
-            self.log.error(f"[CONTROLLER] - \t{error}")
+            self.log.error(f"Service {name} not registered")
+            self.log.error(f"\t{error}")
             self.stop(error=True)
             #raise
             #return None
@@ -168,27 +168,27 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug("[CONTROLLER] - Service[%s] registered", name)
+            self.log.debug("Service[%s] registered", name)
         except KeyError as error:
-            self.log.error("[CONTROLLER] - %s", error)
+            self.log.error("%s", error)
 
     def deregister_service(self, name):
         """Deregister a running service."""
         service = self.services[name]
         registered = service is not None
         started = service.is_started()
-        # ~ self.log.debug("[CONTROLLER] - Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
+        # ~ self.log.debug("Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
         if registered and started:
             service.end()
         service = None
-        self.log.debug("[CONTROLLER] - Service[%s] unregistered", name)
+        self.log.debug("Service[%s] unregistered", name)
 
-    @timeit
+    # ~ @timeit
     def run(self):
         """Start application."""
 
         action = self.params.action
-        self.log.debug(f"[CONTROLLER] - Executing action: {action}")
+        self.log.debug(f"Executing action: {action}")
         workflow = self.get_service('Workflow')
         if action == 'themes':
             workflow.list_themes()
@@ -204,9 +204,9 @@ class KB4IT:
     def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
-            self.log.error("[CONTROLLER] - Execution aborted because of serious errors")
-            self.log.error(f"[CONTROLLER] - \tTraceback:\n{traceback.print_exc()}")
-            self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
+            self.log.error("Execution aborted because of serious errors")
+            self.log.error(f"\tTraceback:\n{traceback.print_exc()}")
+            self.log.error(f"KB4IT {ENV['APP']['version']} finished at {now()}")
             sys.exit(-1)
 
         try:
@@ -215,7 +215,7 @@ class KB4IT:
         except AttributeError:
             # KB4IT wasn't even started
             raise
-        self.log.debug("[CONTROLLER] - KB4IT %s finished at %s", ENV['APP']['version'], now())
+        self.log.debug("KB4IT %s finished at %s", ENV['APP']['version'], now())
         sys.exit()
 
 class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):

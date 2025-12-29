@@ -45,7 +45,7 @@ def timeit(func):
             # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         # ~ else:
             # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
-        log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
     return timeit_wrapper
 
@@ -163,6 +163,8 @@ def delete_target_contents(target_path):
         elif os.path.isfile(target_path):
             os.unlink(target_path)
             log.debug("[UTIL] - File '%s' deleted successfully", target_path)
+    else:
+        log.error(f"Target path {target_path} does not exist")
 
 
 def delete_files(files):
@@ -245,12 +247,12 @@ def get_hash_from_file(path):
     else:
         return None
 
-@timeit
+# ~ @timeit
 def get_hash_from_dict(adict):
     """Get the MD5  hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
-@timeit
+# ~ @timeit
 def get_hash_from_list(alist):
     return hashlib.md5(pickle.dumps(alist)).hexdigest()
 
@@ -354,7 +356,7 @@ def get_timestamp_yyyymmdd(dt):
         cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
     return cache_ts_ymd[dt]
 
-@timeit
+# ~ @timeit
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)

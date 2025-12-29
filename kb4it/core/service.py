@@ -30,6 +30,8 @@ class Service:
 
     def __init__(self, app=None):
         """Initialize Service instance."""
+
+        self.modname = self.__class__.__name__
         if app is not None:
             self.app = app
 
@@ -44,7 +46,7 @@ class Service:
 
     def print_traceback(self):
         """Print traceback."""
-        self.log.debug("[SERVICE] - %s", get_traceback())
+        self.log.debug(f"Traceback:\n{get_traceback()}")
 
     def start(self, app, name:str):
         """Start service."""
@@ -52,9 +54,9 @@ class Service:
         self.app = app
         conf = self.app.get_params()
         severity = conf.log_level
-        self.log = get_logger(f"{self.__class__.__name__}", severity)
+        self.log = get_logger(f"{self.modname}", severity)
         self.initialize()
-        self.log.debug("[SERVICE] - Started")
+        self.log.debug(f"Service {self.modname} started")
 
     def end(self):
         """End service.
@@ -63,7 +65,7 @@ class Service:
         if self.started:
             self.started = False
             self.finalize()
-            self.log.debug("[SERVICE] - Finished")
+            self.log.debug(f"Service {self.modname} finished")
 
     def initialize(self, **kwargs):
         """Initialize service.
