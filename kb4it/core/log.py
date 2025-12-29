@@ -64,7 +64,7 @@ def get_logger(name, level=None):
     logdir = os.path.dirname(logfile)
     if not os.path.exists(logdir):
         logfile = os.path.basename(logfile)
-    pattern = "%(levelname)10s | %(lineno)4d | %(name)-10s | %(asctime)s.%(msecs)03d | %(message)s"
+    pattern = "%(levelname)10s | %(lineno)4d | %(name)-15s | %(asctime)s.%(msecs)03d | %(message)s"
     logging.basicConfig(level=logging.DEBUG,
                         format=pattern,
                         filename=logfile,
