@@ -54,7 +54,7 @@ class Service:
         self.app = app
         conf = self.app.get_params()
         severity = conf.log_level
-        self.log = get_logger(f"{self.modname}", severity)
+        self.log = get_logger(f"{self.modname}")
         self.initialize()
         self.log.debug(f"Service {self.modname} started")
 

@@ -131,6 +131,7 @@ class Backend(Service):
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
             self.log.debug(f"Copy current log {ENV['FILE']['LOG']} to {app_log_file} ...")
+            print(open(ENV['FILE']['LOG']).read())
             shutil.copy(ENV['FILE']['LOG'], self.runtime['dir']['log'])
             self.log.debug(f"Redirecting output to: {app_log_file}")
             redirect_logs(app_log_file)

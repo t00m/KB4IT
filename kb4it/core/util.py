@@ -54,7 +54,7 @@ def copy_docs(docs, target):
     for doc in docs:
         try:
             shutil.copy('%s' % doc, target)
-            log.debug("[UTIL] - %s copied to %s", doc, target)
+            log.debug(f"Copied Source[{os.path.basename(doc)}] to Cache[{os.path.basename(target)}]")
         except FileNotFoundError:
             log.warning("[UTIL] -%s not found", doc)
     log.debug("[UTIL] - %d documents copied to '%s'", len(docs), target)

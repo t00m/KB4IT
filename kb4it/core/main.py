@@ -17,6 +17,7 @@ import multiprocessing
 import argparse
 import traceback
 from kb4it.core.env import ENV
+from kb4it.core.log import setup_logging
 from kb4it.core.log import get_logger
 from kb4it.core.util import now
 from kb4it.core.perf import timeit
@@ -25,6 +26,8 @@ from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
 from kb4it.services.builder import Builder
 from kb4it.services.workflow import Workflow
+
+setup_logging(level="DEBUG")
 
 def get_default_workers():
     """Calculate default number or workers.
@@ -78,7 +81,7 @@ class KB4IT:
 
     def __setup_logging(self, severity=None):
         """Set up logging."""
-        self.log = get_logger(__class__.__name__, severity.upper())
+        self.log = get_logger(__class__.__name__)
 
     def __check_params(self):
         """Check arguments passed to the application."""

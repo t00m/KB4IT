@@ -3,67 +3,72 @@
 
 """
 Log module.
-# File: mod_log.py
-# Author: Tomás Vírseda
-# License: GPL v3
-# Description: log module
+File: mod_log.py
+Author: Tomás Vírseda
+License: GPL v3
 """
 
-import os
 import logging
-
 from kb4it.core.env import ENV
 
-_PATTERN = "%(levelname)10s | %(lineno)4d | %(name)-15s | %(asctime)s.%(msecs)03d | %(message)s"
+_PATTERN = (
+    "%(levelname)10s | %(lineno)4d | %(name)-20s | "
+    "%(asctime)s.%(msecs)03d | %(message)s"
+)
+
+_DATEFMT = "%d/%m/%Y %H:%M:%S"
 
 
-def get_logger(name, level='INFO') -> logging.Logger:
-    """Return a new logger with custom levels."""
-    level_dict = {
-            'DEBUG': logging.DEBUG,
-            'INFO': logging.INFO,
-            'WARNING': logging.WARNING,
-            'ERROR': logging.ERROR,
-            'CRITICAL': logging.CRITICAL
-        }
-    severity = level_dict.get(level, logging.DEBUG)
-    logger = logging.getLogger(name)
-    logger.setLevel(severity)
-
-    # Prevent duplicate handlers
-    if not logger.handlers:
-        handler = logging.StreamHandler()  # temporary / console
-        formatter = logging.Formatter(
-            _PATTERN,
-            datefmt="%d/%m/%Y %H:%M:%S"
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-
-        file_handler = logging.FileHandler(ENV['FILE']['LOG'], mode="w")
-        file_handler.setFormatter(formatter)
-        root = logging.getLogger()
-        root.addHandler(file_handler)
-
-
-    logger.propagate = True
-    return logger
-
-def redirect_logs(logfile: str):
+def setup_logging(
+    level: str = "INFO",
+    logfile: str | None = None,
+):
+    """
+    Configure root logger once.
+    """
     root = logging.getLogger()
+    root.setLevel(getattr(logging, level.upper(), logging.INFO))
 
-    formatter = logging.Formatter(
-        _PATTERN,
-        datefmt="%d/%m/%Y %H:%M:%S"
-    )
+    if root.handlers:
+        return  # Already configured
 
-    # Remove ALL file/stream handlers
-    for handler in root.handlers[:]:
-        handler.close()
-        root.removeHandler(handler)
+    formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
 
-    # Add new file handler
-    file_handler = logging.FileHandler(logfile, mode="a", delay=True)
+    # Console handler
+    console = logging.StreamHandler()
+    console.setFormatter(formatter)
+    root.addHandler(console)
+
+    # File handler
+    logfile = logfile or ENV["FILE"]["LOG"]
+    file_handler = logging.FileHandler(logfile, mode="w")
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)
-    root.setLevel(logging.DEBUG)
+
+
+def get_logger(name: str) -> logging.Logger:
+    """
+    Return a named logger.
+    """
+    return logging.getLogger(name)
+
+
+def redirect_logs(logfile: str):
+    """
+    Redirect file logging to a new file at runtime.
+    """
+    root = logging.getLogger()
+
+    formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
+
+    # Remove only existing FileHandlers
+    for handler in root.handlers[:]:
+        if isinstance(handler, logging.FileHandler):
+            handler.flush()
+            handler.close()
+            root.removeHandler(handler)
+
+    # Add new file handler
+    file_handler = logging.FileHandler(logfile, mode="a")
+    file_handler.setFormatter(formatter)
+    root.addHandler(file_handler)
