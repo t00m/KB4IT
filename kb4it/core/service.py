@@ -56,7 +56,7 @@ class Service:
         severity = conf.log_level
         self.log = get_logger(f"{self.modname}")
         self.initialize()
-        self.log.debug(f"Service {self.modname} started")
+        # ~ self.log.debug(f"Service {self.modname} started")
 
     def end(self):
         """End service.
@@ -65,7 +65,7 @@ class Service:
         if self.started:
             self.started = False
             self.finalize()
-            self.log.debug(f"Service {self.modname} finished")
+            # ~ self.log.debug(f"Service {self.modname} finished")
 
     def initialize(self, **kwargs):
         """Initialize service.

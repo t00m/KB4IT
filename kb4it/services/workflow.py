@@ -81,15 +81,6 @@ class Workflow(Service):
 
     # ~ @timeit
     def build_website(self):
-        self.log.info("KB4IT action: build website")
-        params = self.app.get_params()
-        config = params.config
-        force =  params.force
-        workers = params.workers
-        self.log.debug(f"Repository config file: {config}")
-        self.log.debug(f"Force compilation: {force}")
-        self.log.debug(f"Number of workers: {workers}")
-
         """Build workflow:
         1. Check environment
         2. Get source documents
@@ -104,19 +95,32 @@ class Workflow(Service):
         backend.busy()
         repo = backend.get_repo_parameters()
         repo_title = repo['title']
-        self.log.info(f"Building a website for {repo_title}")
+        repo_theme = repo['theme']
+        self.log.info(f"Building a website for repository '{repo_title}'")
+        self.log.info(f"Using theme '{repo_theme}'")
+        self.log.info(f"Check environment")
         backend.stage_01_check_environment()
+        self.log.info(f"Allow theme to generate sources")
         theme = self.get_service('Theme')
         theme.generate_sources()
+        self.log.info(f"Get source documents")
         backend.stage_02_get_source_documents()
+        self.log.info(f"Preprocessing")
         backend.stage_03_preprocessing()
+        self.log.info(f"Backend processing")
         backend.stage_04_processing()
+        self.log.info(f"Theme processing")
         backend.stage_06_theme()
+        self.log.info(f"Compilation")
         backend.stage_05_compilation()
+        self.log.info(f"Clean up target")
         backend.stage_07_clean_target()
+        self.log.info(f"Refresh target")
         backend.stage_08_refresh_target()
+        self.log.info(f"Theme post activities")
         theme.post_activities()
-        # ~ backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
+        self.log.info(f"Website for repository '{repo_title}' built:")
         self.log.info(f"URL for website repository: {homepage}")
+        self.log.info(f"The End")
         backend.free()

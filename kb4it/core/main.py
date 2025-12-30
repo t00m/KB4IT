@@ -27,7 +27,6 @@ from kb4it.services.database import Database
 from kb4it.services.builder import Builder
 from kb4it.services.workflow import Workflow
 
-setup_logging(level="DEBUG")
 
 def get_default_workers():
     """Calculate default number or workers.
@@ -59,13 +58,11 @@ class KB4IT:
         # Initialize log
         if 'log_level' not in vars(self.params):
             self.params.LOGLEVEL = 'INFO'
-        self.__setup_logging(self.params.log_level)
-
-        self.log.debug(f"KB4IT {ENV['APP']['version']} started at {now()} using PID {ENV['SYS']['PS']['PID']}")
-        self.log.debug(f"Python environment:")
-        self.log.debug(f"\tVersion: {ENV['SYS']['PYTHON']['VERSION']}")
-        self.log.debug(f"Platform:")
-        self.log.debug(f"\tOperating System: {ENV['SYS']['PLATFORM']['OS']}")
+        setup_logging(self.params.log_level)
+        self.log = get_logger(__class__.__name__)
+        self.log.debug(f"KB4IT {ENV['APP']['version']}")
+        self.log.debug(f"CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
+        self.log.debug(f"CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
 
         # Start up
         self.__setup_environment()
@@ -86,9 +83,8 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        self.log.debug("Command line parameters:")
         for key in vars(self.params):
-            self.log.debug(f"\t{key}: {vars(self.params)[key]}")
+            self.log.debug(f"CONF[CMDLINE] PARAM[{key}] VALUE[{vars(self.params)[key]}]")
 
     def get_params(self):
         """Return app configuration"""
@@ -96,17 +92,16 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.debug("Setting up %s environment", ENV['APP']['shortname'])
-        self.log.debug("\tGlobal path[%s]", ENV['GPATH']['ROOT'])
-        self.log.debug("\tLocal path[%s]", ENV['LPATH']['ROOT'])
+        self.log.debug(f"CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
+        self.log.debug(f"CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.debug("\tLPATH[%s] Dir[%s]: created", key, path)
-            else:
-                self.log.debug("\tLPATH[%s] Dir[%s]: already exists", key, path)
+                self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] created")
+            # ~ else:
+                # ~ self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] already exists")
 
     def __setup_services(self):
         """Declare and register services."""
@@ -125,9 +120,9 @@ class KB4IT:
         """Go/No-Go decision making"""
         can_run = False
         no_go_reason = ''
-        pidfile = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
-        if os.path.exists(pidfile):
-            pid = open(pidfile, 'r').read()
+        PIDFILE = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
+        if os.path.exists(PIDFILE):
+            pid = open(PIDFILE, 'r').read()
             if os.path.exists('/proc/%s'):
                 can_run = False
                 no_go_reason = 'Previous process (%s) still running?' % pid
@@ -139,12 +134,12 @@ class KB4IT:
 
         if can_run:
             # Write current Pid to file
-            with open(pidfile, 'w') as fpid:
-                fpid.write(str(ENV['SYS']['PS']['PID']))
-            self.log.debug("Decision: Go")
+            PIDNUM = ENV['SYS']['PS']['PID']
+            with open(PIDFILE, 'w') as fpid:
+                fpid.write(str(PIDNUM))
+            self.log.debug(f"CONF[ENV] PID[{PIDNUM}] FILE[{PIDFILE}]")
         else:
-            self.log.error(f"Decision: No Go")
-            self.log.error(f"Reason: {no_go_reason}")
+            self.log.error(f"{no_go_reason}")
             self.stop()
 
     def get_services(self):
@@ -171,7 +166,7 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug("Service[%s] registered", name)
+            # ~ self.log.debug("Service[%s] registered", name)
         except KeyError as error:
             self.log.error("%s", error)
 
@@ -191,7 +186,6 @@ class KB4IT:
         """Start application."""
 
         action = self.params.action
-        self.log.debug(f"Executing action: {action}")
         workflow = self.get_service('Workflow')
         if action == 'themes':
             workflow.list_themes()
@@ -242,7 +236,7 @@ def main():
     parser.add_argument(
         '-L', '--log-level',
         help='Control output verbosity. Default set to INFO',
-        choices=['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'WORKFLOW', 'PERF', 'STORY'],
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
         default='INFO'
     )
     parser.add_argument(

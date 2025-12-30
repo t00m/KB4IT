@@ -26,8 +26,21 @@ def setup_logging(
     """
     Configure root logger once.
     """
+
+    if level is not None:
+        level_dict = {
+            'DEBUG': logging.DEBUG,
+            'INFO': logging.INFO,
+            'WARNING': logging.WARNING,
+            'ERROR': logging.ERROR,
+            'CRITICAL': logging.CRITICAL
+        }
+        severity = level_dict.get(level, logging.DEBUG)
+    else:
+        severity = logging.INFO
+
     root = logging.getLogger()
-    root.setLevel(getattr(logging, level.upper(), logging.INFO))
+    root.setLevel(getattr(logging, level.upper(), severity))
 
     if root.handlers:
         return  # Already configured

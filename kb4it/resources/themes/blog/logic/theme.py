@@ -81,7 +81,7 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
-        self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
+        # ~ self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -164,7 +164,6 @@ class Theme(Builder):
 
         Another workaround would be to create a datatable with all post.
         """
-        self.log.info(" - Create Index page")
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
@@ -175,7 +174,6 @@ class Theme(Builder):
         doclist = self.srvdtb.get_documents()
         html = TPL_INDEX.render(var=var)
         for post in doclist:
-            self.log.info(f" - \tProcessing file '{post}'")
             var['post'] = {}
             var['post']['filename'] = post
             metadata = self.srvdtb.get_doc_properties(post)
@@ -194,23 +192,19 @@ class Theme(Builder):
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
                 html += TPL_POST_ADOC.render(var=var)
+                self.log.debug(f"DOC[{post}] add to index page")
             except Exception:
-                self.log.error(f"Ignoring {post}. No metadata found")
+                self.log.warning(f"DOC[{post}] ignored. No metadata found")
 
         runtime = self.srvbes.get_runtime_dict()
         adocprops = runtime['adocprops']
         index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        self.log.debug(f" Index file: {index_file}")
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
-        self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
-        self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, index_file)
         res = exec_cmd(data)
         self.build_page(index_file, var)
-        self.log.info(" - Index page created")
-
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -253,8 +247,8 @@ class Theme(Builder):
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
-                self.log.error(" - %s", error)
-                self.log.error(" - Doc doesn't have a valid date field ('{timestamp}'). Skip it.")
+                self.log.error(f"DOC[{os.path.basename(docId)}] doesn't have a valid date field ('{timestamp}'). Skip it.")
+                self.log.error(error)
                 raise
 
         kbdict = self.srvbes.get_kb_dict()
@@ -274,7 +268,7 @@ class Theme(Builder):
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
                             break
-                    self.log.debug(" - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
+                    # ~ self.log.debug(f"DOC[{EVENT_PAGE_DAY}.adoc] targeting RESOURCE[{os.path.basename(pagename)}] COMPILE[{must_compile_day}]")
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
@@ -353,14 +347,11 @@ class Theme(Builder):
         doclist = []
         ecats = {}
         repo = self.srvbes.get_repo_parameters()
-        self.log.debug(" - Repository parameters:")
-        for parameter in repo:
-            self.log.debug(f" - Parameter[{parameter}] = {repo[parameter]}")
         try:
             event_types = repo['events']
         except:
             event_types = []
-        self.log.debug(" - Event types: %s", ', '.join(event_types))
+        # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
 
         for docId in self.srvdtb.get_documents():
             if self.srvdtb.is_system(docId):
@@ -390,8 +381,10 @@ class Theme(Builder):
         self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
 
     def post_activities(self):
+        self.log.debug("[POSTPROCESSING THEME] - START")
         var = self.get_theme_var()
         self.build_page_index(var)
+        self.log.debug("[POSTPROCESSING THEME] - END")
 
     def build(self):
         """Create standard pages for default theme"""
@@ -550,7 +543,7 @@ class Theme(Builder):
         self.srvdtb.add_document_key('all.adoc', 'Title', 'All documents')
         self.srvdtb.add_document_key('all.adoc', 'SystemPage', 'Yes')
 
-        self.log.debug("Created page for all documents")
+        # ~ self.log.debug("Created page for all documents")
         return page
 
     def extract_toc(self, source):
@@ -616,7 +609,7 @@ class Theme(Builder):
             self.log.error(" - Source[%s] not converted to HTML properly", basename_adoc)
             return
 
-        self.log.debug(" - Page[%s] transformation started", basename_hdoc)
+        # ~ self.log.debug(" - Page[%s] transformation started", basename_hdoc)
         THEME_ID = self.srvbes.get_theme_property('id')
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
         HTML_BODY = self.template('HTML_BODY')
@@ -714,8 +707,8 @@ class Theme(Builder):
             tree = etree.fromstring(HTML, parser)
             pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
             fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-            self.log.debug(" - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
-            self.log.debug(" - Page[%s] transformation finished", basename_hdoc)
+            # ~ self.log.debug(" - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+            # ~ self.log.debug(" - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
     def build_page_key(self, key, values):
@@ -743,7 +736,7 @@ class Theme(Builder):
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
 
-        self.log.debug(" - Created page key '%s'", var['pagename'])
+        # ~ self.log.debug(" - Created page key '%s'", var['pagename'])
 
     # ~ @timeit
     def build_page_key_value(self, kvpath):
@@ -771,7 +764,7 @@ class Theme(Builder):
             self.srvdtb.add_document(f"{var['pagename']}.adoc")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
-            self.log.debug(" - Created page key-value '%s'", var['pagename'])
+            self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
@@ -781,7 +774,7 @@ class Theme(Builder):
         for docId in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
             doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
-            self.log.debug(f"Doc['{docId}'] bookmarked? {bookmark} [{doc_bookmarked}]")
+            self.log.debug(f"DOC['{docId}'] bookmarked? {bookmark} [{doc_bookmarked}]")
             if doc_bookmarked:
                 doclist.append(docId)
 
@@ -889,7 +882,8 @@ class Theme(Builder):
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""
-        self.log.debug("No sources generated by this theme")
+        # ~ self.log.debug("No sources generated by this theme")
+        pass
 
     def check_config(self):
         go = True

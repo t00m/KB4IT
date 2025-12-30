@@ -105,7 +105,7 @@ class Frontend(Service):
                     theme = json.load(fth)
                     for prop in theme:
                         self.runtime['theme'][prop] = theme[prop]
-                self.log.debug(" - \tTheme %s v%s for KB4IT v%s", theme['name'], theme['version'], theme['kb4it'])
+                self.log.debug(f"CONF[THEME] NAME[{theme['name']}] VERSION[{theme['version']}]")
             except:
                 self.log.error(" - \tTheme configuration file not valid: %s", theme_conf)
                 return
@@ -122,11 +122,10 @@ class Frontend(Service):
                 from theme import Theme
                 self.app.register_service('Theme', Theme())
                 srvthm = self.get_service('Theme')
-                self.log.debug("Theme '%s' loaded successfully", self.runtime['theme']['id'])
+                # ~ self.log.debug("Theme '%s' loaded successfully", self.runtime['theme']['id'])
             except Exception as error:
-                self.log.error("Theme '%s' couldn't be loaded:", self.runtime['theme']['id'])
                 self.log.error(error)
-                raise
+                self.app.stop()
             # ~ self.log.debug(" - Loaded theme '%s'", self.runtime['theme']['id'])
 
     def theme_search(self, theme=None):
@@ -144,7 +143,7 @@ class Frontend(Service):
             except IndexError:
                 theme_path = None
         else:
-            self.log.debug(f" - \tFound directory for theme: '{theme}'")
+            # ~ self.log.debug(f" - \tFound directory for theme: '{theme}'")
             # Search in sources path
             source_path = self.runtime['dir']['source']
             theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
@@ -162,5 +161,5 @@ class Frontend(Service):
                 else:
                     theme_path = path
                     break
-        self.log.debug(f" - \tPath to theme '{theme}' found in: {theme_path}")
+        # ~ self.log.debug(f"CONF[THEME] NAME[{theme}] DIR[{theme_path}]")
         return theme_path

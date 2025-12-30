@@ -94,7 +94,7 @@ class Builder(Service):
                     try:
                         self.templates[template] = Template(filename=template_path)
                         TEMPLATE_FOUND = True
-                        self.log.debug(f"TEMPLATE[{template}] cached")
+                        # ~ self.log.debug(f"TEMPLATE[{template}] cached")
                         break
                     except:
                         self.templates[template] = Template("")

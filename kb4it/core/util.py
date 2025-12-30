@@ -57,7 +57,7 @@ def copy_docs(docs, target):
             # log.debug(f"Copied {doc} to {target}")
         except FileNotFoundError:
             log.warning(f"File {doc} not found")
-    log.debug(f"{len(docs)} documents copied to '{target}'")
+    # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
 
 
 def copydir(source, dest):
@@ -149,8 +149,9 @@ def get_font_size(frequency, max_frequency):
     return size
 
 
-def delete_target_contents(target_path):
+def delete_target_contents(target_path) -> bool:
     """C0111: Missing function docstring (missing-docstring)."""
+    error = False
     if os.path.exists(target_path):
         if os.path.isdir(target_path):
             for file_object in os.listdir(target_path):
@@ -159,12 +160,14 @@ def delete_target_contents(target_path):
                     os.unlink(file_object_path)
                 else:
                     shutil.rmtree(file_object_path)
-            log.debug("[UTIL] - Contents of directory '%s' deleted successfully", target_path)
+            # ~ log.debug("[UTIL] - Contents of directory '%s' deleted successfully", target_path)
         elif os.path.isfile(target_path):
             os.unlink(target_path)
-            log.debug("[UTIL] - File '%s' deleted successfully", target_path)
+            # ~ log.debug("[UTIL] - File '%s' deleted successfully", target_path)
     else:
         log.error(f"Target path {target_path} does not exist")
+        error = True
+    return True
 
 
 def delete_files(files):
@@ -175,7 +178,7 @@ def delete_files(files):
                 os.unlink(path)
         except FileNotFoundError as error:
             log.warning("[UTIL] - %s", error)
-            log.warning("[UTIL] - %s", files)
+            log.warning("[UTIL] - %s", path)
 
 def json_load(filepath: str) -> {}:
     """Load into a dictionary a file in json format"""
