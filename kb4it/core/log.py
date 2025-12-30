@@ -40,7 +40,8 @@ def setup_logging(
         severity = logging.INFO
 
     root = logging.getLogger()
-    root.setLevel(getattr(logging, level.upper(), severity))
+    root.setLevel(logging.DEBUG)
+    # ~ root.setLevel(getattr(logging, level.upper(), severity))
 
     if root.handlers:
         return  # Already configured
@@ -50,6 +51,7 @@ def setup_logging(
     # Console handler
     console = logging.StreamHandler()
     console.setFormatter(formatter)
+    console.setLevel(severity)
     root.addHandler(console)
 
     # File handler
@@ -84,4 +86,5 @@ def redirect_logs(logfile: str):
     # Add new file handler
     file_handler = logging.FileHandler(logfile, mode="a")
     file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
     root.addHandler(file_handler)
