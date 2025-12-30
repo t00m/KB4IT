@@ -131,8 +131,7 @@ class Backend(Service):
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
             self.log.debug(f"Copy current log {ENV['FILE']['LOG']} to {app_log_file} ...")
-            print(open(ENV['FILE']['LOG']).read())
-            shutil.copy(ENV['FILE']['LOG'], self.runtime['dir']['log'])
+            shutil.copy(ENV['FILE']['LOG'], app_log_file)
             self.log.debug(f"Redirecting output to: {app_log_file}")
             redirect_logs(app_log_file)
 
@@ -205,12 +204,12 @@ class Backend(Service):
         """Get list of documents converted to pages"""
         return self.runtime['docs']['target']
 
-    def add_target(self, kbfile):
+    def add_target(self, adocId, htmlId):
         """All objects received by this method will be appended to the
         list of objects that will be copied to the target directory.
         """
-        self.runtime['docs']['target'].add(kbfile)
-        self.log.debug(f"[TARGET] - Added resource: {kbfile}")
+        self.runtime['docs']['target'].add(htmlId)
+        self.log.debug(f"DOC[{adocId}] targets to RESOURCE[{htmlId}]")
 
     def get_runtime_dict(self):
         """Get all properties."""
@@ -278,25 +277,25 @@ class Backend(Service):
         """Check environment."""
         frontend = self.get_service('Frontend')
         self.log.debug(f"[CHECKS] - START")
-        self.log.debug(f"[CHECKS]   Cache directory: {self.runtime['dir']['cache']}")
-        self.log.debug(f"[CHECKS]   Working directory:{self.runtime['dir']['tmp']}")
-        self.log.debug(f"[CHECKS]   Distribution directory: {self.runtime['dir']['dist']}")
-        self.log.debug(f"[CHECKS]   Temporary target directory: {self.runtime['dir']['www']}")
+        self.log.debug(f"Cache directory: {self.runtime['dir']['cache']}")
+        self.log.debug(f"Working directory:{self.runtime['dir']['tmp']}")
+        self.log.debug(f"Distribution directory: {self.runtime['dir']['dist']}")
+        self.log.debug(f"Temporary target directory: {self.runtime['dir']['www']}")
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_source_path()):
-            self.log.error(f"[CHECKS]   Source directory '{self.get_source_path()}' doesn't exist.")
+            self.log.error(f"Source directory '{self.get_source_path()}' doesn't exist.")
             self.log.debug(f"[CHECKS] - END")
             self.app.stop()
-        self.log.debug(f"[CHECKS]   Source directory: {self.get_source_path()}")
+        self.log.debug(f"Source directory: {self.get_source_path()}")
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_target_path()):
             os.makedirs(self.get_target_path(), exist_ok=True)
-        self.log.debug(f"[CHECKS]   Target directory: {self.get_target_path()}")
+        self.log.debug(f"Target directory: {self.get_target_path()}")
 
         if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
-            self.log.error("[CHECKS]   No config file especified")
+            self.log.error("No config file especified")
             self.log.error(f"[CHECKS] - END")
             self.app.stop()
 
@@ -308,13 +307,13 @@ class Backend(Service):
             theme_name = 'techdoc'
 
         if theme_name is None:
-            self.log.debug(f"[CHECKS]   Theme not provided. Autodetect it.")
+            self.log.debug(f"Theme not provided. Autodetect it.")
             theme_path = frontend.theme_search()
             if theme_path is not None:
                 frontend.theme_load(os.path.basename(theme_path))
-                self.log.debug(f"[CHECKS]   Theme found and loaded")
+                self.log.debug(f"Theme found and loaded")
             else:
-                self.log.error(f"[CHECKS]   Theme '{theme_name}' not found")
+                self.log.error(f"Theme '{theme_name}' not found")
                 self.log.error(f"[CHECKS] - END")
                 self.app.stop()
         else:
@@ -322,17 +321,17 @@ class Backend(Service):
             if theme_path is not None:
                 frontend.theme_load(os.path.basename(theme_path))
             else:
-                self.log.error(f"[CHECKS]   Theme '{theme_name}' not found")
+                self.log.error(f"Theme '{theme_name}' not found")
                 self.log.error(f"[CHECKS] - END")
                 self.app.stop()
 
-        self.log.info(f"[CHECKS]   Using theme {theme_name}")
+        self.log.info(f"Using theme {theme_name}")
         self.log.debug(f"[CHECKS] - END")
 
     # ~ @timeit
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
-        self.log.debug(f"[STAGE 2 - SOURCES] - Start at {now()}")
+        self.log.debug(f"[SOURCES] - START")
         sources_path = self.get_source_path()
 
         # Firstly, allow theme to generate documents
@@ -344,7 +343,7 @@ class Backend(Service):
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
-            self.log.warning("[SOURCEDOCS] - Added default 'About App' to your sources")
+            self.log.warning("  - Added missing 'About App' to your sources")
 
         # Then, get them
         self.runtime['docs']['bag'] = get_source_docs(sources_path)
@@ -353,23 +352,20 @@ class Backend(Service):
             basenames.append(os.path.basename(filepath))
         self.runtime['docs']['filenames'] = basenames
         self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
-        self.log.info(f"[SOURCEDOCS] - Found {self.runtime['docs']['count']} asciidoctor documents")
-        self.log.debug(f"[SOURCEDOCS] - We found {self.runtime['docs']['count']} documents in the repository")
-        self.log.debug(f"[SOURCEDOCS] - End at {now()}")
+        self.log.info(f"Found {self.runtime['docs']['count']} asciidoctor documents in source directory")
+        self.log.debug(f"[SOURCES] - END")
 
     # ~ @timeit
     def stage_03_00_preprocess_document(self, filepath: str):
-        self.log.debug(f"[PREPROCESSING] - DOC[{filepath}] Preprocessing")
-
         # Get Id
         adocId = os.path.basename(filepath)
 
         # Get metadata
         keys = self.stage_03_00_preprocess_document_metadata(adocId, tolerant=True)
         if keys is None:
-            self.log.error(f"[PREPROCESSING] - Document '{adocId}' not compliant: please, check errors")
+            self.log.error(f"DOC[{adocId}] not compliant: no keys found")
             return
-
+        
         # Get content
         with open(filepath) as source_adoc:
             content = source_adoc.read()
@@ -385,27 +381,25 @@ class Backend(Service):
 
         self.stage_03_00_preprocess_document_hashes(adocId, content, keys)
         self.stage_03_00_preprocess_document_caches(adocId, keys)
-        # ~ self.stage_03_00_preprocess_document_compile(adocId, content, keys)
 
         # Add compiled page to the target list
         htmlId = adocId.replace('.adoc', '.html')
-        self.add_target(htmlId)
+        self.add_target(adocId, htmlId)
 
     # ~ @timeit
     def stage_03_00_preprocess_document_metadata(self, adocId: str, tolerant: bool):
         docpath = os.path.join(self.get_source_path(), adocId)
         keys = get_asciidoctor_attributes(docpath, tolerant)
-        self.log.debug(f"[PREPROCESSING] Document '{adocId} keys: {keys}")
 
         # If document doesn't have a title, skip it.
         try:
             title = keys['Title'][0]
-            self.log.debug(f"[PREPROCESSING] - Document '{adocId}: {title}' will be processed")
+            self.log.debug(f"DOC[{adocId}] Title[{title}]")
         except (KeyError, TypeError):
             self.runtime['docs']['count'] -= 1
-            self.log.warning(f"[PREPROCESSING] - DOC[{adocId}] doesn't have a title. Skip it.")
+            self.log.warning(f"DOC[{adocId}] doesn't have a title. Skip it.")
 
-        self.log.debug(f"Document {adocId}: {keys}")
+        self.log.debug(f"DOC[{adocId}] has {len(keys)} keys")
         return keys
 
     def get_sort_attribute(self):
@@ -424,6 +418,7 @@ class Backend(Service):
         metadata_hash = get_hash_from_dict(keys)
         self.kbdict_new['document'][adocId]['content_hash'] = content_hash
         self.kbdict_new['document'][adocId]['metadata_hash'] = metadata_hash
+        self.log.debug(f"DOC[{adocId}] HASH[{content_hash}{metadata_hash}]")
 
 
     # ~ @timeit
@@ -434,7 +429,7 @@ class Backend(Service):
             for value in alist:
                 if len(value.strip()) == 0:
                     continue
-                self.log.debug(f"Doc['{adocId}'] Key['{key}'] Value['{value}']")
+                #self.log.debug(f"Doc['{adocId}'] Key['{key}'] Value['{value}']")
                 if key == self.runtime['sort_attribute']:
                     value = string_timestamp(value)
 
@@ -482,8 +477,8 @@ class Backend(Service):
                 try:
                     hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
                     hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
-                    self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
-                    self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
+                    #self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
+                    #self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
                     DOC_COMPILATION = hash_new != hash_cur
                     REASON = f"Hashes differ? {DOC_COMPILATION}"
                 except Exception as warning:
@@ -496,9 +491,9 @@ class Backend(Service):
         # Save compilation status
         try:
             self.kbdict_new['document'][adocId]['compile'] = COMPILE
-        except KeyError as keyerror:
+        except KeyError as error:
             #FIXME: check
-            self.log.error(keyerror)
+            self.log.error(f"DOC[{adocId}]: {error}")
             raise
 
         if COMPILE:
@@ -517,7 +512,7 @@ class Backend(Service):
             except KeyError:
                 # Very likely there is no kbdict, so this step is skipped
                 pass
-        self.log.debug(f"[PREPROCESSING] - DOC[{adocId}] Compile? {COMPILE}. Reason: {REASON}")
+        self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
 
     # ~ @timeit
     def stage_03_preprocessing(self):
@@ -528,11 +523,10 @@ class Backend(Service):
         In this way, after being compiled into HTML, final adocs are
         browsable throught its metadata.
         """
-        self.log.debug(f"[PREPROCESSING] - Start at {now()}")
+        self.log.debug(f"[PREPROCESSING]")
 
         # Preprocessing
         for filepath in self.runtime['docs']['bag']:
-            self.log.info(f"[PREPROCESSING] - {os.path.basename(filepath)}")
             self.stage_03_00_preprocess_document(filepath)
 
         # Save current status for the next run
@@ -545,10 +539,7 @@ class Backend(Service):
         keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
         keys_hash_differ = keys_hash_cur != keys_hash_new
         if keys_hash_differ:
-            self.log.info("[PREPROCESSING] - Hash for old keys differs from hash for new ones. Force compilation!")
-            self.log.debug("[PREPROCESSING] - New keys differ with previous execution.")
-            self.log.debug("[PREPROCESSING] - Force compilation for all documents.")
-            self.log.debug("[PREPROCESSING] - This is expected to ensure integrity")
+            self.log.info("Keys hashes mismatch. Force compilation!")
             self.params.force = True
 
         # Compiling strategy
@@ -562,22 +553,23 @@ class Backend(Service):
         self.srvdtb.sort_database()
 
         # Documents preprocessing stats
-        self.log.debug(f"[PREPROCESSING] - Stats - Documents analyzed: {len(self.runtime['docs']['bag'])}")
+        self.log.debug(f"Stats:")
+        self.log.debug(f"  - Documents analyzed: {len(self.runtime['docs']['bag'])}")
         keep_docs = compile_docs = 0
         for adocId in self.kbdict_new['document']:
             if self.kbdict_new['document'][adocId]['compile']:
                 compile_docs += 1
             else:
                 keep_docs += 1
-        self.log.info(f"[PREPROCESSING] - Stats - Keep: {keep_docs} - Compile: {compile_docs}")
-        if compile_docs == 0:
-            self.log.debug(f"[PREPROCESSING] - No changes in the repository")
-        else:
-            if compile_docs < keep_docs:
-                self.log.info(f"[PREPROCESSING] - There are changes in the repository. {compile_docs} documents will be compiled again")
-            else:
-                self.log.info(f"[PREPROCESSING] - All documents will be compiled again")
-        self.log.debug(f"[PREPROCESSING] - End {now()}")
+        self.log.info(f"  - Keep: {keep_docs} - Compile: {compile_docs}")
+        #if compile_docs == 0:
+        #    self.log.debug(f"    - No changes in the repository")
+        #else:
+        #    if compile_docs < keep_docs:
+        #        self.log.info(f"    - There are changes in the repository. {compile_docs} documents will be compiled again")
+        #    else:
+        #        self.log.info(f"[PREPROCESSING] - All documents will be compiled again")
+        self.log.debug(f"[PREPROCESSING] - END")
 
     def get_ignored_keys(self):
         return self.ignored_keys
@@ -644,7 +636,7 @@ class Backend(Service):
             rkold = sorted(self.get_kbdict_key(key, new=False))
             if rknew != rkold:
                 COMPILE_KEY = True
-            self.log.debug(f"[PROCESSING] - Key[{key}] Compile? {COMPILE_KEY}")
+            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
 
             for value in values:
                 COMPILE_VALUE = False
@@ -653,16 +645,16 @@ class Backend(Service):
                 VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
 
                 if VALUE_COMPARISON:
-                    self.log.debug(f"[PROCESSING] - Key[{key}] Value[{value}] new != old? {VALUE_COMPARISON}")
+                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}]")
                     COMPILE_VALUE = True
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
                 KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug(f"[PROCESSING] - Key[{key}] Value[{value}] Compile? {COMPILE_VALUE}")
+                self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
             COMPILE_KEY = COMPILE_KEY or FORCE_ALL
             K_PATH.append((key, values, COMPILE_KEY))
             if COMPILE_KEY:
-                self.log.debug(f"[PROCESSING] - Key[{key}] Compile? {COMPILE_KEY}")
+                self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
         return K_PATH, KV_PATH
 
 
@@ -673,7 +665,7 @@ class Backend(Service):
         them again. This avoid recompile the whole database, saving time
         and CPU.
         """
-        self.log.debug(f"[PROCESSING] - Start at {now()}")
+        self.log.debug(f"[PROCESSING] - START")
         repo = self.get_repo_parameters()
         all_keys = set(self.srvdtb.get_all_keys())
         ign_default_keys = set(self.srvdtb.get_ignored_keys())
@@ -693,7 +685,7 @@ class Backend(Service):
                 keys_with_compile_true += 1
 
             # Add compiled page to the target list
-            self.add_target(htmlId)
+            self.add_target(adocId, htmlId)
 
         # # Keys/Values
         pairs_with_compile_true = 0
@@ -706,18 +698,19 @@ class Backend(Service):
                 pairs_with_compile_true += 1
 
             # Add compiled page to the target list
-            self.add_target(htmlId)
+            self.add_target(adocId, htmlId)
 
-        self.log.debug(f"[PROCESSING] - {keys_with_compile_true} keys will be compiled")
-        self.log.debug(f"[PROCESSING] - {pairs_with_compile_true} key/value pairs will be compiled")
-        self.log.debug(f"[PROCESSING] - Finish processing keys")
-        self.log.debug(f"[PROCESSING] - Target docs: {len(self.runtime['docs']['target'])}")
-        self.log.debug(f"[PROCESSING] - End at {now()}")
+        self.log.debug(f"Stats:")
+        self.log.debug(f" - {keys_with_compile_true} keys will be compiled")
+        self.log.debug(f" - {pairs_with_compile_true} key/value pairs will be compiled")
+        self.log.debug(f" - Finish processing keys")
+        self.log.debug(f" - Target docs: {len(self.runtime['docs']['target'])}")
+        self.log.debug(f"[PROCESSINNG] - END")
 
     # ~ @timeit
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
-        self.log.info(f"[COMPILATION] - Start at {now()}")
+        self.log.info(f"[COMPILATION] - START")
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
@@ -727,12 +720,12 @@ class Backend(Service):
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
             shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
-        self.log.debug(f"[COMPILATION] - Resources copied to '%s'", resources_dir_tmp)
+        self.log.debug(f"Global resources copied to {resources_dir_tmp}")
 
         adocprops = ''
-        self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor:")
+        self.log.debug(f"Parameters passed to Asciidoctor:")
         for prop in ENV['CONF']['ADOCPROPS']:
-            self.log.debug(f"[COMPILATION] - Key[%s] = Value[%s]", prop, ENV['CONF']['ADOCPROPS'][prop])
+            self.log.debug(f" - PARAMETER[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
             if ENV['CONF']['ADOCPROPS'][prop] is not None:
                 if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
                     adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_target_path())
@@ -741,7 +734,7 @@ class Backend(Service):
             else:
                 adocprops += '-a %s ' % prop
         self.runtime['adocprops'] = adocprops
-        self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
+        #self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
@@ -751,7 +744,7 @@ class Backend(Service):
             jobs = []
             jobcount = 0
             num = 1
-            self.log.debug(f"[COMPILATION] - Generating jobs. Please, wait")
+            self.log.debug(f"Generating jobs")
             for doc in docs:
                 COMPILE = True
                 basename = os.path.basename(doc)
@@ -767,27 +760,27 @@ class Backend(Service):
 
                 if COMPILE or self.params.force:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                    self.log.debug(f"[COMPILATION] - CMD[%s]", cmd)
+                    #self.log.debug(f"CMD[%s]", cmd)
                     data = (doc, cmd, num)
-                    self.log.debug(f"[COMPILATION] - Job[%4d] Document[%s] will be compiled", num, basename)
+                    self.log.debug(f"JOB[%4d] DOC[%s] will be compiled", num, basename)
                     job = exe.submit(self.compilation_started, data)
                     job.add_done_callback(self.compilation_finished)
                     jobs.append(job)
                     num = num + 1
                 else:
-                    self.log.debug(f"[COMPILATION] - Document[{basename}] cached. Avoid compiling")
+                    self.log.debug(f"DOC[{basename}] cached. Avoid compiling")
 
             if num-1 > 0:
-                self.log.info("[COMPILATION] - Created %d jobs. Starting compilation at %s", num - 1, now())
+                self.log.info("Created %d jobs. Starting compilation at %s", num - 1, now())
                 # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
                 for job in jobs:
                     adoc, res, jobid = job.result()
-                    self.log.debug(f"[COMPILATION] - {os.path.basename(adoc)} compiled successfully")
+                    self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
                     jobcount += 1
                     if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
                         pct = int(jobcount * 100 / len(docs))
                         # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
-                        self.log.info("[COMPILATION] - %3s%% done (job %d/%d)", str(pct), jobid, num - 1)
+                        self.log.info("Compilation progress: %3s%% done (job %d/%d)", str(pct), jobid, num - 1)
 
                 dcompe = datetime.datetime.now()
                 comptime = dcompe - dcomps
@@ -796,12 +789,13 @@ class Backend(Service):
                     duration = 1
                 avgspeed = int(((num - 1) / duration))
                 #self.log.info("[COMPILATION] - 100% done")
-                self.log.debug(f"[COMPILATION] - Stats - Time: {comptime.seconds} seconds")
-                self.log.debug(f"[COMPILATION] - Stats - Compiled docs: {num - 1}")
-                self.log.debug(f"[COMPILATION] - Stats - Avg. Speed: {avgspeed} docs/sec")
-                self.log.info(f"[COMPILATION] - End at {now()}")
+                self.log.debug(f"Stats:")
+                self.log.debug(f" - Stats - Time: {comptime.seconds} seconds")
+                self.log.debug(f" - Stats - Compiled docs: {num - 1}")
+                self.log.debug(f" - Stats - Avg. Speed: {avgspeed} docs/sec")
             else:
-                self.log.info("[COMPILATION] - Nothing to do.")
+                self.log.info("Nothing to compile")
+            self.log.info(f"COMPILATION - END")
 
     def compilation_started(self, data):
         (doc, cmd, num) = data
@@ -888,8 +882,8 @@ class Backend(Service):
         pattern = os.path.join(self.runtime['dir']['tmp'], '*.*')
         files = glob.glob(pattern)
         copy_docs(files, self.runtime['dir']['cache'])
-        for file in files:
-            self.log.debug(f"[INSTALL] - \tCopied '{os.path.basename(file)}' from temporary target to cache path")
+        #for file in files:
+        #    self.log.debug(f"[INSTALL] - \tCopied '{os.path.basename(file)}' from temporary target to cache path")
         self.log.info(f"[INSTALL] - Copy {len(files)} html files from temporary target to cache path")
 
         # Copy cached documents to target path

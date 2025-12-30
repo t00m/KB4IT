@@ -153,7 +153,7 @@ class KB4IT:
 
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        self.log.debug(f"Getting service '{name}'")
+        #self.log.debug(f"Getting service '{name}'")
         try:
             service = self.services[name]
             logname = service.__class__.__name__
@@ -184,7 +184,7 @@ class KB4IT:
         if registered and started:
             service.end()
         service = None
-        self.log.debug("Service[%s] unregistered", name)
+        #self.log.debug("Service[%s] unregistered", name)
 
     # ~ @timeit
     def run(self):

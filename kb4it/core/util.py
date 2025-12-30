@@ -53,11 +53,11 @@ def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
     for doc in docs:
         try:
-            shutil.copy('%s' % doc, target)
-            log.debug(f"Copied Source[{os.path.basename(doc)}] to Cache[{os.path.basename(target)}]")
+            shutil.copy(doc, target)
+            # log.debug(f"Copied {doc} to {target}")
         except FileNotFoundError:
-            log.warning("[UTIL] -%s not found", doc)
-    log.debug("[UTIL] - %d documents copied to '%s'", len(docs), target)
+            log.warning(f"File {doc} not found")
+    log.debug(f"{len(docs)} documents copied to '{target}'")
 
 
 def copydir(source, dest):
@@ -78,7 +78,7 @@ def copydir(source, dest):
             try:
                 shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
             except PermissionError:
-                log.warning("[UTIL] -Check permissions for file: %s", file)
+                log.warning(f"Check permissions for file {file}")
 
 
 def get_source_docs(path: str):
@@ -92,7 +92,7 @@ def get_source_docs(path: str):
     pattern = os.path.join(path) + '*.adoc'
     docs = glob.glob(pattern)
     docs.sort(key=lambda y: y.lower())
-    log.debug("[UTIL] - Found %d asciidoctor documents", len(docs))
+    #log.debug("Found %d asciidoctor documents", len(docs))
 
     return docs
 
