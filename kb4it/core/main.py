@@ -49,6 +49,7 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
+        self.__setup_environment()
         if params is not None:
             self.params = params
         else:
@@ -65,7 +66,7 @@ class KB4IT:
         self.log.debug(f"CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
 
         # Start up
-        self.__setup_environment()
+        #self.__setup_environment()
         self.__check_params()
         self.__setup_services()
 
@@ -92,14 +93,14 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        self.log.debug(f"CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
-        self.log.debug(f"CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
+        #self.log.debug(f"CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
+        #self.log.debug(f"CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] created")
+                #self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] created")
             # ~ else:
                 # ~ self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] already exists")
 
