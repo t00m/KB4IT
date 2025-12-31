@@ -59,7 +59,7 @@ class KB4IT:
         # Initialize log
         if 'log_level' not in vars(self.params):
             self.params.LOGLEVEL = 'INFO'
-        setup_logging(self.params.log_level)
+        setup_logging(self.params.log_level, ENV["FILE"]["LOG"])
         self.log = get_logger(__class__.__name__)
         self.log.debug(f"KB4IT {ENV['APP']['version']}")
         self.log.debug(f"CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
