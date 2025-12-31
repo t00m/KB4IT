@@ -124,6 +124,7 @@ class Backend(Service):
 
             # Activate application log
             app_log_file = Path.joinpath(dir_log, f"{PROJECT}.log")
+            self.set_app_log_file(app_log_file)
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
@@ -160,6 +161,12 @@ class Backend(Service):
             self.get_services()
         else:
             self.runtime['dir']['source'] = '/dev/null'
+
+    def set_app_log_file(self, logfile: str):
+        self.app_log_file = logfile
+
+    def get_app_log_file(self):
+        return self.app_log_file
 
     def set_config(self, config: dict):
         self.repo = config['repo']
