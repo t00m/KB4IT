@@ -61,5 +61,6 @@
         <!-- GRID :: END -->
     </div>
     <!-- Blog container :: END -->
+<script>hljs.highlightAll();</script>
 </body>
 </html>
