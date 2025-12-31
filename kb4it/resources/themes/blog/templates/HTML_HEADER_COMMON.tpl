@@ -9,8 +9,10 @@
   <meta name="description" content="KB4IT document">
   <meta name="author" content="KB4IT by t00m">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet"href="resources/themes/blog/framework/Highlight/styles/github-dark.css">
   <link rel="stylesheet" href="resources/themes/blog/css/blog.css">
   <link rel="stylesheet" href="resources/themes/blog/framework/uikit/css/uikit.min.css">
+  <script src="resources/themes/blog/framework/Highlight/highlight.js"></script>
   <script src="resources/themes/blog/framework/uikit/js/uikit.min.js"></script>
   <script src="resources/themes/blog/framework/uikit/js/uikit-icons.min.js"></script>
 </head>

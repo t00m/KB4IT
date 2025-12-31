@@ -3,13 +3,12 @@
 
 """
 Log module.
-File: mod_log.py
+File: log.py
 Author: Tomás Vírseda
 License: GPL v3
 """
 
 import logging
-from kb4it.core.env import ENV
 
 _PATTERN = (
     "%(levelname)10s | %(lineno)4d | %(name)-20s | "
@@ -41,7 +40,6 @@ def setup_logging(
 
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
-    # ~ root.setLevel(getattr(logging, level.upper(), severity))
 
     if root.handlers:
         return  # Already configured
@@ -55,7 +53,6 @@ def setup_logging(
     root.addHandler(console)
 
     # File handler
-    logfile = logfile or ENV["FILE"]["LOG"]
     file_handler = logging.FileHandler(logfile, mode="w")
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)
@@ -70,7 +67,7 @@ def get_logger(name: str) -> logging.Logger:
 
 def redirect_logs(logfile: str):
     """
-    Redirect file logging to a new file at runtime.
+    Redirect logging to a new file at runtime.
     """
     root = logging.getLogger()
 

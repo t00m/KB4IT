@@ -67,17 +67,24 @@ class Backend(Service):
                 self.log.debug(f"CONF[REPO] PARAM[{param}] VALUE[{self.repo[param]}]")
             repo_config_exists = True
         except FileNotFoundError as error:
-            self.log.error(f"    Repository config file not found")
-            self.log.error(f"    {error}")
-            sys.exit(-1)
+            self.log.error(f"Repository config file not found")
+            self.log.error(f"{error}")
+            self.app.stop()
         except AttributeError as error:
-            self.log.error(f"    Repository config couldn't be read")
-            self.log.error(f"    Repository config file: {self.params.config}")
+            self.log.error(f"Repository config couldn't be read")
+            self.log.error(f"Repository config file: {self.params.config}")
             repo_config_exists = False
         except Exception as error:
             self.log.error(f"    Repository config file not found in command line params")
             raise
             repo_config_exists = False
+        
+        if repo_config_exists:
+            try:
+               self.params.force = self.repo['force']
+               self.log.debug(f"CONF[REPO] PARAM[force] set to {self.params.force}")
+            except KeyError:
+                pass 
 
         # Initialize runtime dictionary
         self.runtime['dir'] = {}
