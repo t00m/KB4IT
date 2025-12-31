@@ -28,13 +28,10 @@ class Service:
     each other easily.
     """
 
-    log = None
-    logname = None
-    section = None
-    section_name = None
-
     def __init__(self, app=None):
         """Initialize Service instance."""
+
+        self.modname = self.__class__.__name__
         if app is not None:
             self.app = app
 
@@ -49,18 +46,17 @@ class Service:
 
     def print_traceback(self):
         """Print traceback."""
-        self.log.debug("[SERVICE] - %s", get_traceback())
+        self.log.debug(f"Traceback:\n{get_traceback()}")
 
     def start(self, app, name:str):
         """Start service."""
         self.started = True
         self.app = app
-        self.logname = name
         conf = self.app.get_params()
         severity = conf.log_level
-        self.log = get_logger(name, severity)
+        self.log = get_logger(f"{self.modname}")
         self.initialize()
-        self.log.debug("[SERVICE] - Service %s started", name)
+        # ~ self.log.debug(f"Service {self.modname} started")
 
     def end(self):
         """End service.
@@ -69,13 +65,13 @@ class Service:
         if self.started:
             self.started = False
             self.finalize()
-            self.log.debug("[SERVICE] - Service %s finished", self.logname)
+            # ~ self.log.debug(f"Service {self.modname} finished")
 
     def initialize(self, **kwargs):
-        """Initialize servicHe.
+        """Initialize service.
         All clases derived from Service class must implement this method
         """
-        self.log.debug("[SERVICE] - Service %s started", self.logname)
+        pass
 
     def finalize(self):
         """Finalize service.

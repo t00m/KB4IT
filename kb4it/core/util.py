@@ -22,6 +22,7 @@ import hashlib
 import operator
 import subprocess
 import pprint
+from pathlib import Path
 from functools import wraps
 from datetime import datetime
 
@@ -44,7 +45,7 @@ def timeit(func):
             # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         # ~ else:
             # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
-        log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
     return timeit_wrapper
 
@@ -52,11 +53,11 @@ def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
     for doc in docs:
         try:
-            shutil.copy('%s' % doc, target)
-            log.debug("[UTIL] - %s copied to %s", doc, target)
+            shutil.copy(doc, target)
+            # log.debug(f"Copied {doc} to {target}")
         except FileNotFoundError:
-            log.warning("[UTIL] -%s not found", doc)
-    log.debug("[UTIL] - %d documents copied to '%s'", len(docs), target)
+            log.warning(f"File {doc} not found")
+    # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
 
 
 def copydir(source, dest):
@@ -77,18 +78,21 @@ def copydir(source, dest):
             try:
                 shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
             except PermissionError:
-                log.warning("[UTIL] -Check permissions for file: %s", file)
+                log.warning(f"Check permissions for file {file}")
 
 
 def get_source_docs(path: str):
     """Get asciidoc documents from a given path"""
+    if isinstance(path, Path):
+        path = str(path)
+
     if path[:-1] != os.path.sep:
         path = path + os.path.sep
 
     pattern = os.path.join(path) + '*.adoc'
     docs = glob.glob(pattern)
     docs.sort(key=lambda y: y.lower())
-    log.debug("[UTIL] - Found %d asciidoctor documents", len(docs))
+    #log.debug("Found %d asciidoctor documents", len(docs))
 
     return docs
 
@@ -145,8 +149,9 @@ def get_font_size(frequency, max_frequency):
     return size
 
 
-def delete_target_contents(target_path):
+def delete_target_contents(target_path) -> bool:
     """C0111: Missing function docstring (missing-docstring)."""
+    error = False
     if os.path.exists(target_path):
         if os.path.isdir(target_path):
             for file_object in os.listdir(target_path):
@@ -155,10 +160,14 @@ def delete_target_contents(target_path):
                     os.unlink(file_object_path)
                 else:
                     shutil.rmtree(file_object_path)
-            log.debug("[UTIL] - Contents of directory '%s' deleted successfully", target_path)
+            # ~ log.debug("[UTIL] - Contents of directory '%s' deleted successfully", target_path)
         elif os.path.isfile(target_path):
             os.unlink(target_path)
-            log.debug("[UTIL] - File '%s' deleted successfully", target_path)
+            # ~ log.debug("[UTIL] - File '%s' deleted successfully", target_path)
+    else:
+        log.error(f"Target path {target_path} does not exist")
+        error = True
+    return True
 
 
 def delete_files(files):
@@ -169,7 +178,7 @@ def delete_files(files):
                 os.unlink(path)
         except FileNotFoundError as error:
             log.warning("[UTIL] - %s", error)
-            log.warning("[UTIL] - %s", files)
+            log.warning("[UTIL] - %s", path)
 
 def json_load(filepath: str) -> {}:
     """Load into a dictionary a file in json format"""
@@ -241,12 +250,12 @@ def get_hash_from_file(path):
     else:
         return None
 
-@timeit
+# ~ @timeit
 def get_hash_from_dict(adict):
     """Get the MD5  hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
-@timeit
+# ~ @timeit
 def get_hash_from_list(alist):
     return hashlib.md5(pickle.dumps(alist)).hexdigest()
 
@@ -350,7 +359,7 @@ def get_timestamp_yyyymmdd(dt):
         cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
     return cache_ts_ymd[dt]
 
-@timeit
+# ~ @timeit
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)

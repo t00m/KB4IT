@@ -45,13 +45,13 @@ class Builder(Service):
     def post_activities(self):
         pass
 
-    def distribute_html(self, pagename):
-        shutil.copy(pagename, self.srvbes.get_www_path())
+    def distribute_html(self, adocId, htmlId):
+        shutil.copy(htmlId, self.srvbes.get_www_path())
         # Add compiled page to the target list
-        self.srvbes.add_target(os.path.basename(pagename))
-        self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] copied to temporary target directory", os.path.basename(pagename))
+        self.srvbes.add_target(adocId, os.path.basename(htmlId))
+        #self.log.debug(f"DOC[{adocId}] targeting RESOURCE[{os.path.basename(htmlId)}] was copied to temporary target directory")
 
-    @timeit
+    # ~ @timeit
     def distribute_adoc(self, name, content):
         """
         Distribute source file to temporary directory.
@@ -59,18 +59,18 @@ class Builder(Service):
         be analyzed.
         """
         ADOC_NAME = "%s.adoc" % name
-        self.log.debug(f"[BUILDER/DISTRIBUTE] - Received Doc[{ADOC_NAME}]")
+        #self.log.debug(f"DOC[{ADOC_NAME}] received")
         PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), ADOC_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
             except Exception as error:
-                self.log.error(f"[BUILDER/DISTRIBUTE] - {error}")
+                self.log.error(f"DOC[{ADOC_NAME}] ERROR[{error}]")
         PAGE_NAME = ADOC_NAME.replace('.adoc', '.html')
 
         # Add compiled page to the target list
-        self.srvbes.add_target(PAGE_NAME)
-        self.log.debug("[BUILDER/DISTRIBUTE] - Page[%s] distributed to temporary path", PAGE_NAME)
+        self.srvbes.add_target(ADOC_NAME, PAGE_NAME)
+        #self.log.debug(f"DOC[{ADOC_NAME}] targets RESOURCE[{PAGE_NAME}] distributed to temporary path")
 
     def template(self, template):
         """Return the template content from chosen theme"""
@@ -83,7 +83,7 @@ class Builder(Service):
         try:
             self.templates[template]
             TEMPLATE_FOUND = True
-            # ~ self.log.debug(f"[BUILDER/TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
+            # ~ self.log.debug(f"[TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
         except KeyError:
             templates = []
             templates.append(os.path.join(theme['templates'], "%s.tpl" % template))  # From theme
@@ -94,13 +94,13 @@ class Builder(Service):
                     try:
                         self.templates[template] = Template(filename=template_path)
                         TEMPLATE_FOUND = True
-                        self.log.debug("[BUILDER/TEMPLATES] - Template[%s] found and added to the cache", template)
+                        # ~ self.log.debug(f"TEMPLATE[{template}] cached")
                         break
                     except:
                         self.templates[template] = Template("")
 
         if not TEMPLATE_FOUND:
-            self.log.error("[BUILDER/TEMPLATES] - Template[%s] not found", template)
+            self.log.error(f"TEMPLATE[{template}] not found")
             sys.exit(-1)
 
         return self.templates[template]
@@ -193,3 +193,4 @@ class Builder(Service):
         self.srvdtb.add_document('about_kb4it.adoc')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'SystemPage', 'Yes')
+

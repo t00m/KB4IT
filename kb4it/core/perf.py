@@ -16,6 +16,6 @@ def timeit(func):
             # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         # ~ else:
             # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
-        log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
     return timeit_wrapper

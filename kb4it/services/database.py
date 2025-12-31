@@ -59,15 +59,15 @@ class Database(Service):
         adoc = "%s.adoc" % docId
         try:
             del self.db[adoc]
-            self.log.debug("[DATABASE] - DOC[%s] deleted from database", docId)
+            self.log.debug("DOC[%s] deleted from database", docId)
             self.sort_database()
         except KeyError:
-            self.log.debug("[DATABASE] - DOC[%s] not found in database", docId)
+            self.log.debug("DOC[%s] not found in database", docId)
 
     def add_document(self, docId: str):
         """Add a new document node to the database ('name.adoc')"""
         self.db[docId] = {}
-        self.log.debug("[DATABASE] - DOC[%s] added to database", docId)
+        self.log.debug("DOC[%s] added to database", docId)
 
     def add_document_key(self, docId, key, value):
         """Add a new key/value node for a given document."""
@@ -78,7 +78,7 @@ class Database(Service):
         except KeyError:
             self.db[docId][key] = [value]
 
-        self.log.debug("[DATABASE] - DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
+        self.log.debug("DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -137,7 +137,7 @@ class Database(Service):
         try:
             return self.db[docId][self.sort_attribute][0]
         except KeyError as error:
-            self.log.debug(f"[DATABASE] - Document '{docId}' doesn't have the sort attribute {error}")
+            self.log.debug(f"Document '{docId}' doesn't have the sort attribute {error}")
             return None
 
     def is_system(self, docId):
@@ -269,7 +269,7 @@ class Database(Service):
                     if value in self.db[docId][key]:
                         docs.append(docId)
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
-            self.log.debug(f"Found {len(self.cache_docs_by_kvpath[kvpath])} docs for K[{key}] V[{value}]")
+            self.log.debug(f"KEY[{key}] VALUE[{value}]: search returned {len(self.cache_docs_by_kvpath[kvpath])} documents")
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_docs_by_date_range(self, ds, de) -> []:
@@ -293,8 +293,8 @@ class Database(Service):
                 for key in self.db[docId]:
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
-            except Exception as error:
-                self.log.debug("[DATABASE] - Doc[%s] is not in the database (system page?)", docId)
+            except Exception as warning:
+                self.log.debug("DOC[%s] is not in the database", docId)
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 

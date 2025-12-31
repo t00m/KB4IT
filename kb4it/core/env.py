@@ -68,6 +68,7 @@ ENV['CONF']['ADOCPROPS'] = {
     'icons': 'font',
     'linkcss': None,
     'experimental': None,
+    'source-highlighter': 'highlight.js',
 }
 
 # App Info

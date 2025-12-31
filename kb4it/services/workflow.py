@@ -22,39 +22,39 @@ class Workflow(Service):
         pass
 
     def list_themes(self):
-        self.log.workflow("[WORKFLOW] - KB4IT action: list available themes")
+        self.log.info("KB4IT action: list available themes")
         frontend = self.get_service('Frontend')
         frontend.theme_list()
 
     def list_apps(self, theme):
-        self.log.debug(f"[WORKFLOW] - KB4IT action: list available apps for theme '{theme}'")
+        self.log.debug(f"KB4IT action: list available apps for theme '{theme}'")
         frontend = self.get_service('Frontend')
         frontend.apps_list(theme)
 
     def create_repository(self):
-        self.log.workflow("[WORKFLOW] - KB4IT action: create new repository")
+        self.log.info("KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
         frontend = self.app.get_service('Frontend')
         params = self.app.get_params()
         initialize = False
         theme, repo_path = params.theme, params.repo_path
-        self.log.debug(f"[WORKFLOW] - \tTheme: {theme}")
-        self.log.debug(f"[WORKFLOW] - \tRepository path: {repo_path}")
+        self.log.debug(f"Theme: {theme}")
+        self.log.debug(f"Repository path: {repo_path}")
         theme_path = frontend.theme_search(theme=theme)
         if theme_path is None:
-            self.log.error(f"[WORKFLOW] - \tTheme '{theme}' doesn't exist.")
-            self.log.info("[WORKFLOW] - \tThis is the list of themes available:")
+            self.log.error(f"Theme '{theme}' doesn't exist.")
+            self.log.info("This is the list of themes available:")
             frontend.theme_list()
         else:
             if not os.path.exists(repo_path):
-                self.log.warning(f"[WORKFLOW] - \tRepository path '{repo_path}' does not exist")
+                self.log.warning(f"Repository path '{repo_path}' does not exist")
                 os.makedirs(repo_path, exist_ok=True)
-                self.log.warning(f"[WORKFLOW] - \tRepository path '{repo_path}' created")
+                self.log.warning(f"Repository path '{repo_path}' created")
             initialize = True
 
         if initialize:
-            self.log.info(f"[WORKFLOW] - Repository path: {repo_path}")
-            self.log.info(f"[WORKFLOW] - Using theme '{theme}' from path '{theme_path}'")
+            self.log.info(f"Repository path: {repo_path}")
+            self.log.info(f"Using theme '{theme}' from path '{theme_path}'")
             repo_demo = os.path.join(theme_path, 'example', 'repo')
             copydir(repo_demo, repo_path)
             source_dir = os.path.join(repo_path, 'source')
@@ -72,24 +72,15 @@ class Workflow(Service):
             with open(script, 'w') as fs:
                 fs.write(f'kb4it -L INFO build {config_file}')
             os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
-            self.log.info(f"[WORKFLOW] - \tRepository initialized")
-            self.log.info(f"[WORKFLOW] - \tYou can compile it by executing '{script}'")
-            self.log.info(f"[WORKFLOW] - \tAdd your documents in '{source_dir}'")
-            self.log.info(f"[WORKFLOW] - \tDocuments to be published in '{target_dir}'")
-            self.log.info(f"[WORKFLOW] - \tCheck your repository settings in '{config_file}'")
-            self.log.info(f"[WORKFLOW] - \tFor more KB4IT options, execute: kb4it -h")
+            self.log.info(f"Repository initialized")
+            self.log.info(f"You can compile it by executing '{script}'")
+            self.log.info(f"Add your documents in '{source_dir}'")
+            self.log.info(f"Documents to be published in '{target_dir}'")
+            self.log.info(f"Check your repository settings in '{config_file}'")
+            self.log.info(f"For more KB4IT options, execute: kb4it -h")
 
-    @timeit
+    # ~ @timeit
     def build_website(self):
-        self.log.workflow("[WORKFLOW] - KB4IT action: build website")
-        params = self.app.get_params()
-        config = params.config
-        force =  params.force
-        workers = params.workers
-        self.log.debug(f"[WORKFLOW] - \tRepository config file: {config}")
-        self.log.debug(f"[WORKFLOW] - \tForce compilation: {force}")
-        self.log.debug(f"[WORKFLOW] - \tNumber of workers: {workers}")
-
         """Build workflow:
         1. Check environment
         2. Get source documents
@@ -104,19 +95,33 @@ class Workflow(Service):
         backend.busy()
         repo = backend.get_repo_parameters()
         repo_title = repo['title']
-        self.log.info(f"[WORKFLOW] - Building a website for {repo_title}")
+        repo_theme = repo['theme']
+        self.log.info(f"Building a website for repository '{repo_title}'")
+        self.log.info(f"Using theme '{repo_theme}'")
+        self.log.info(f"Check environment")
         backend.stage_01_check_environment()
+        self.log.info(f"Allow theme to generate sources")
         theme = self.get_service('Theme')
         theme.generate_sources()
+        self.log.info(f"Get source documents")
         backend.stage_02_get_source_documents()
+        self.log.info(f"Preprocessing")
         backend.stage_03_preprocessing()
+        self.log.info(f"Backend processing")
         backend.stage_04_processing()
+        self.log.info(f"Theme processing")
         backend.stage_06_theme()
+        self.log.info(f"Compilation")
         backend.stage_05_compilation()
+        self.log.info(f"Clean up target")
         backend.stage_07_clean_target()
+        self.log.info(f"Refresh target")
         backend.stage_08_refresh_target()
+        self.log.info(f"Theme post activities")
         theme.post_activities()
-        # ~ backend.stage_09_remove_temporary_dir()
         homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
-        self.log.info(f"[WORKFLOW] - URL for website repository: {homepage}")
+        self.log.info(f"Repository website built")
+        self.log.info(f"URL: {homepage}")
+        self.log.info(f"Full log: {backend.get_app_log_file()}")
+        self.log.info(f"The End")
         backend.free()

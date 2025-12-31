@@ -9,6 +9,7 @@
 <!-- FOOTER :: END -->
         </div>
 <!-- CONTENTS (Document) :: END -->
+<script>hljs.highlightAll();</script>
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->

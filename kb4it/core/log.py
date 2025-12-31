@@ -3,53 +3,32 @@
 
 """
 Log module.
-# File: mod_log.py
-# Author: Tomás Vírseda
-# License: GPL v3
-# Description: log module
+File: mod_log.py
+Author: Tomás Vírseda
+License: GPL v3
 """
 
-import os
 import logging
-
 from kb4it.core.env import ENV
 
-# Custom log levels
-STORY = 55
-TRACE = 5
-PERF = 45
-WORKFLOW = 35
+_PATTERN = (
+    "%(levelname)10s | %(lineno)4d | %(name)-20s | "
+    "%(asctime)s.%(msecs)03d | %(message)s"
+)
 
-logging.addLevelName(TRACE, "TRACE")
-logging.addLevelName(STORY, "STORY")
-logging.addLevelName(PERF, "PERF")
-logging.addLevelName(WORKFLOW, "WORKFLOW")
+_DATEFMT = "%d/%m/%Y %H:%M:%S"
 
-# Custom Logger class to add new logging methods
-class CustomLogger(logging.getLoggerClass()):
-    def trace(self, msg, *args, **kwargs):
-        self.log(TRACE, msg, *args, stacklevel=2, **kwargs)
 
-    def perf(self, msg, *args, **kwargs):
-        self.log(PERF, msg, *args, stacklevel=2, **kwargs)
+def setup_logging(
+    level: str = "INFO",
+    logfile: str | None = None,
+):
+    """
+    Configure root logger once.
+    """
 
-    def workflow(self, msg, *args, **kwargs):
-        self.log(WORKFLOW, msg, *args, stacklevel=2, **kwargs)
-
-    def story(self, msg, *args, **kwargs):
-        self.log(STORY, msg, *args, stacklevel=2, **kwargs)
-
-# Set CustomLogger as the default logger class
-logging.setLoggerClass(CustomLogger)
-
-def get_logger(name, level=None):
-    """Return a new logger with custom levels."""
     if level is not None:
         level_dict = {
-            'TRACE': TRACE,
-            'STORY': STORY,
-            'PERF': PERF,
-            'WORKFLOW': WORKFLOW,
             'DEBUG': logging.DEBUG,
             'INFO': logging.INFO,
             'WARNING': logging.WARNING,
@@ -60,25 +39,52 @@ def get_logger(name, level=None):
     else:
         severity = logging.INFO
 
-    logfile = ENV['FILE']['LOG']
-    logdir = os.path.dirname(logfile)
-    if not os.path.exists(logdir):
-        logfile = os.path.basename(logfile)
-    pattern = "%(levelname)10s | %(lineno)4d | %(name)-10s | %(asctime)s.%(msecs)03d | %(message)s"
-    logging.basicConfig(level=logging.DEBUG,
-                        format=pattern,
-                        filename=logfile,
-                        datefmt='%d/%m/%Y %I:%M:%S',
-                        filemode='w'
-                       )
-    log = logging.getLogger(name)
-    log.setLevel(logging.DEBUG)
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    # ~ root.setLevel(getattr(logging, level.upper(), severity))
 
-    # Create a console (stream) handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(severity)
-    formatter = logging.Formatter(pattern)
-    console_handler.setFormatter(formatter)
-    log.addHandler(console_handler)
+    if root.handlers:
+        return  # Already configured
 
-    return log
+    formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
+
+    # Console handler
+    console = logging.StreamHandler()
+    console.setFormatter(formatter)
+    console.setLevel(severity)
+    root.addHandler(console)
+
+    # File handler
+    logfile = logfile or ENV["FILE"]["LOG"]
+    file_handler = logging.FileHandler(logfile, mode="w")
+    file_handler.setFormatter(formatter)
+    root.addHandler(file_handler)
+
+
+def get_logger(name: str) -> logging.Logger:
+    """
+    Return a named logger.
+    """
+    return logging.getLogger(name)
+
+
+def redirect_logs(logfile: str):
+    """
+    Redirect file logging to a new file at runtime.
+    """
+    root = logging.getLogger()
+
+    formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
+
+    # Remove only existing FileHandlers
+    for handler in root.handlers[:]:
+        if isinstance(handler, logging.FileHandler):
+            handler.flush()
+            handler.close()
+            root.removeHandler(handler)
+
+    # Add new file handler
+    file_handler = logging.FileHandler(logfile, mode="a")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
+    root.addHandler(file_handler)

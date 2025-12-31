@@ -24,7 +24,7 @@
     <!-- Cloud :: End -->
     <!-- Table :: Start -->
     <li>
-        <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">
+        <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped uk-height-1-1" style="width:100%">
             <thead>
                 <tr class="">
                     <th class=""><span class="uk-text-bold uk-text-primary">Value</span></th>

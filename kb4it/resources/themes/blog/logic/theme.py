@@ -70,7 +70,7 @@ class Theme(Builder):
         content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
         return content
 
-    @timeit
+    # ~ @timeit
     def build_datatable(self, headers=[], doclist=[]):
         """Given a list of columns, it builds a datatable.
         First column is always a date field, which is got by using the
@@ -81,7 +81,7 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
-        self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
+        # ~ self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
@@ -164,7 +164,6 @@ class Theme(Builder):
 
         Another workaround would be to create a datatable with all post.
         """
-        self.log.info("[THEME] - Create Index page")
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
@@ -175,7 +174,6 @@ class Theme(Builder):
         doclist = self.srvdtb.get_documents()
         html = TPL_INDEX.render(var=var)
         for post in doclist:
-            self.log.info(f"[THEME] - \tProcessing file '{post}'")
             var['post'] = {}
             var['post']['filename'] = post
             metadata = self.srvdtb.get_doc_properties(post)
@@ -194,23 +192,19 @@ class Theme(Builder):
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             try:
                 html += TPL_POST_ADOC.render(var=var)
+                self.log.debug(f"DOC[{post}] add to index page")
             except Exception:
-                self.log.error(f"Ignoring {post}. No metadata found")
+                self.log.warning(f"DOC[{post}] ignored. No metadata found")
 
         runtime = self.srvbes.get_runtime_dict()
         adocprops = runtime['adocprops']
         index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        self.log.debug(f"[THEME] Index file: {index_file}")
         cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
-        self.log.debug("[COMPILATION] - CMD[%s]", cmd)
         data = (index_file, cmd, 1)
-        self.log.debug("[BACKEND/COMPILATION] - Job[%4d] Document[%s] will be compiled", 1, index_file)
         res = exec_cmd(data)
         self.build_page(index_file, var)
-        self.log.info("[THEME] - Index page created")
-
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -253,8 +247,8 @@ class Theme(Builder):
                 self.events_docs[y][m][d] = docs
             except Exception as error:
                 # Doc doesn't have a valid date field. Skip it.
-                self.log.error("[THEME] - %s", error)
-                self.log.error("[THEME] - Doc doesn't have a valid date field ('{timestamp}'). Skip it.")
+                self.log.error(f"DOC[{os.path.basename(docId)}] doesn't have a valid date field ('{timestamp}'). Skip it.")
+                self.log.error(error)
                 raise
 
         kbdict = self.srvbes.get_kb_dict()
@@ -274,7 +268,7 @@ class Theme(Builder):
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
                             break
-                    self.log.debug("[THEME] - Page[%s] Compile? %s (Changed? %s or not cached? %s)", os.path.basename(pagename), must_compile_day, doc_changed, doc_not_cached)
+                    # ~ self.log.debug(f"DOC[{EVENT_PAGE_DAY}.adoc] targeting RESOURCE[{os.path.basename(pagename)}] COMPILE[{must_compile_day}]")
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
@@ -292,7 +286,7 @@ class Theme(Builder):
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'SystemPage', 'Yes')
                     else:
-                        self.distribute_html(pagename)
+                        self.distribute_html(EVENT_PAGE_DAY, pagename)
 
 
         # Build month event pages
@@ -320,7 +314,7 @@ class Theme(Builder):
 
                 else:
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
-                    self.distribute_html(pagename)
+                    self.distribute_html(EVENT_PAGE_MONTH, pagename)
 
         self.srvcal.set_events_days(self.dey)
         self.srvcal.set_events_docs(self.events_docs)
@@ -347,20 +341,17 @@ class Theme(Builder):
 
             else:
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
-                self.distribute_html(pagename)
+                self.distribute_html(EVENT_PAGE_YEAR, pagename)
 
     def build_page_events(self):
         doclist = []
         ecats = {}
         repo = self.srvbes.get_repo_parameters()
-        self.log.debug("[THEME] - Repository parameters:")
-        for parameter in repo:
-            self.log.debug(f"[THEME] - Parameter[{parameter}] = {repo[parameter]}")
         try:
             event_types = repo['events']
         except:
             event_types = []
-        self.log.debug("[THEME] - Event types: %s", ', '.join(event_types))
+        # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
 
         for docId in self.srvdtb.get_documents():
             if self.srvdtb.is_system(docId):
@@ -390,13 +381,15 @@ class Theme(Builder):
         self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
 
     def post_activities(self):
+        self.log.debug("[POSTPROCESSING THEME] - START")
         var = self.get_theme_var()
         self.build_page_index(var)
+        self.log.debug("[POSTPROCESSING THEME] - END")
 
     def build(self):
         """Create standard pages for default theme"""
         # ~ var = self.get_theme_var()
-        self.log.debug("[THEME] - This is the Blog theme")
+        #self.log.debug("This is the Blog theme")
         self.app.register_service('EvCal', EventsCalendar())
         self.app.register_service('Timeline', Timeline())
         self.srvcal = self.get_service('EvCal')
@@ -550,7 +543,7 @@ class Theme(Builder):
         self.srvdtb.add_document_key('all.adoc', 'Title', 'All documents')
         self.srvdtb.add_document_key('all.adoc', 'SystemPage', 'Yes')
 
-        self.log.debug("[THEME] - Created page for bookmarks")
+        # ~ self.log.debug("Created page for all documents")
         return page
 
     def extract_toc(self, source):
@@ -613,10 +606,10 @@ class Theme(Builder):
         exists_hdoc = os.path.exists(path_hdoc) # it should be true
 
         if not exists_hdoc:
-            self.log.error("[THEME] - Source[%s] not converted to HTML properly", basename_adoc)
+            self.log.error(" - Source[%s] not converted to HTML properly", basename_adoc)
             return
 
-        self.log.debug("[THEME] - Page[%s] transformation started", basename_hdoc)
+        # ~ self.log.debug(" - Page[%s] transformation started", basename_hdoc)
         THEME_ID = self.srvbes.get_theme_property('id')
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
         HTML_BODY = self.template('HTML_BODY')
@@ -714,8 +707,8 @@ class Theme(Builder):
             tree = etree.fromstring(HTML, parser)
             pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
             fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-            self.log.debug("[THEME] - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
-            self.log.debug("[THEME] - Page[%s] transformation finished", basename_hdoc)
+            # ~ self.log.debug(" - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+            # ~ self.log.debug(" - Page[%s] transformation finished", basename_hdoc)
 
     # ~ @timeit
     def build_page_key(self, key, values):
@@ -743,9 +736,9 @@ class Theme(Builder):
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
 
-        self.log.debug("[THEME] - Created page key '%s'", var['pagename'])
+        # ~ self.log.debug(" - Created page key '%s'", var['pagename'])
 
-    @timeit
+    # ~ @timeit
     def build_page_key_value(self, kvpath):
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
@@ -771,7 +764,7 @@ class Theme(Builder):
             self.srvdtb.add_document(f"{var['pagename']}.adoc")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
-            self.log.debug("[THEME] - Created page key-value '%s'", var['pagename'])
+            self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
@@ -781,11 +774,11 @@ class Theme(Builder):
         for docId in self.srvdtb.get_documents():
             bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
             doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
-            self.log.debug(f"Doc['{docId}'] bookmarked? {bookmark} [{doc_bookmarked}]")
+            self.log.debug(f"DOC['{docId}'] bookmarked? {bookmark} [{doc_bookmarked}]")
             if doc_bookmarked:
                 doclist.append(docId)
 
-        self.log.debug("[THEME] - Found %d bookmarks", len(doclist))
+        self.log.debug(" - Found %d bookmarks", len(doclist))
         headers = []
         datatable = self.build_datatable(headers, doclist)
 
@@ -798,7 +791,7 @@ class Theme(Builder):
         page = TPL_PAGE_BOOKMARKS.render(var=var)
         self.distribute_adoc('bookmarks', page)
 
-        self.log.debug("[THEME] - Created page for bookmarks")
+        self.log.debug(" - Created page for bookmarks")
 
         return page
 
@@ -877,141 +870,142 @@ class Theme(Builder):
                     ckey['labels'] = self.get_labels(values)
                     var['items'].append(ckey)
                 except Exception as error:
-                    self.log.error("[THEME] - Key[%s]: %s", key, error)
+                    self.log.error(" - Key[%s]: %s", key, error)
                     raise
             html = TPL_METADATA_SECTION.render(var=var)
         except Exception as error:
             msgerror = "%s -> %s" % (docId, error)
-            self.log.error("[THEME] - %s", msgerror)
+            self.log.error(" - %s", msgerror)
             html = ''
             raise
         return html
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""
-        self.log.debug("[THEME] - No sources generated by this theme")
+        # ~ self.log.debug("No sources generated by this theme")
+        pass
 
     def check_config(self):
         go = True
         repo = self.app.get_repo_config_dict()
-        self.log.debug("[THEME/CHECKS] - Checking your repo config settings")
+        self.log.debug("[CHECKS] - Checking your repo config settings")
 
         # Check title
-        self.log.info(f"[THEME/CHECKS] - Repository title: '{repo['title']}'")
+        self.log.info(f"[CHECKS] - Repository title: '{repo['title']}'")
         if len(repo['title']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: Theme title is empty.")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'title' is filled in with the name of your website")
-            self.log.info("[THEME/CHECKS] - \tProperty 'title' is mandatory")
+            self.log.error("[CHECKS] - \tError: Theme title is empty.")
+            self.log.info("[CHECKS] - \tSolution: Make sure that property 'title' is filled in with the name of your website")
+            self.log.info("[CHECKS] - \tProperty 'title' is mandatory")
             go = go and False
 
         # Check datatable fields
-        self.log.info(f"[THEME/CHECKS] - Datatable fields ({len(repo['datatable'])}): {', '.join(repo['datatable'])}")
+        self.log.info(f"[CHECKS] - Datatable fields ({len(repo['datatable'])}): {', '.join(repo['datatable'])}")
         if len(repo['datatable']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: datatable doesn't have any default column defined")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'datatable' has one or more columns defined")
-            self.log.info("[THEME/CHECKS] - \tProperty 'datatable' is mandatory")
+            self.log.error("[CHECKS] - \tError: datatable doesn't have any default column defined")
+            self.log.info("[CHECKS] - \tSolution: Make sure that property 'datatable' has one or more columns defined")
+            self.log.info("[CHECKS] - \tProperty 'datatable' is mandatory")
             go = go and False
 
         # Check events available
-        self.log.info(f"[THEME/CHECKS] - Events ({len(repo['events'])}): {', '.join(repo['events'])}")
+        self.log.info(f"[CHECKS] - Events ({len(repo['events'])}): {', '.join(repo['events'])}")
         if len(repo['events']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: your repository doesn't have any events defined")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'events' has one or more events defined")
-            self.log.info("[THEME/CHECKS] - \tProperty 'events' is mandatory")
+            self.log.error("[CHECKS] - \tError: your repository doesn't have any events defined")
+            self.log.info("[CHECKS] - \tSolution: Make sure that property 'events' has one or more events defined")
+            self.log.info("[CHECKS] - \tProperty 'events' is mandatory")
             go = go and False
 
         # Check git configuration
-        self.log.info(f"[THEME/CHECKS] - Git config enabled? {repo['git']}")
+        self.log.info(f"[CHECKS] - Git config enabled? {repo['git']}")
         if repo['git']:
             git_config_ok = True
             git_props = ['git_branch', 'git_path', 'git_repo', 'git_server', 'git_user']
             for git_prop in git_props:
                 if len(repo[git_prop]) == 0:
-                    self.log.warning(f"[THEME/CHECKS] - \tGit field '{git_prop}' is empty")
+                    self.log.warning(f"[CHECKS] - \tGit field '{git_prop}' is empty")
                     git_config_ok = git_config_ok and False
             if not git_config_ok:
-                self.log.info(f"[THEME/CHECKS] - \tMake sure that all Git properties have the right values")
-                self.log.info("[THEME/CHECKS] - \tProperty 'git' and subproperties are optional")
+                self.log.info(f"[CHECKS] - \tMake sure that all Git properties have the right values")
+                self.log.info("[CHECKS] - \tProperty 'git' and subproperties are optional")
                 go = go and True
 
         # Ignored keys
-        self.log.info(f"[THEME/CHECKS] - Ignored keys: {', '.join(repo['ignored_keys'])}")
+        self.log.info(f"[CHECKS] - Ignored keys: {', '.join(repo['ignored_keys'])}")
         if len(repo['ignored_keys']) == 0:
-            self.log.warning(f"[THEME/CHECKS] - \tThere are not ignored keys defined")
-            self.log.info(f"[THEME/CHECKS] - \tIgnored keys passed to the theme will not be part of the menu")
-            self.log.info("[THEME/CHECKS] - \tProperty 'ignored_keys' is optional")
+            self.log.warning(f"[CHECKS] - \tThere are not ignored keys defined")
+            self.log.info(f"[CHECKS] - \tIgnored keys passed to the theme will not be part of the menu")
+            self.log.info("[CHECKS] - \tProperty 'ignored_keys' is optional")
             go = go and True
 
         # Logo icon path
-        self.log.info(f"[THEME/CHECKS] - Repository icon: {repo['logo']}")
+        self.log.info(f"[CHECKS] - Repository icon: {repo['logo']}")
         if not os.path.exists(repo['logo']):
-            self.log.warning(f"[THEME/CHECKS] - \tNo icon found in path '{repo['logo']}")
-            self.log.info(f"[THEME/CHECKS] - \tMake sure you set the right path to your icon in the property 'logo'")
-            self.log.info("[THEME/CHECKS] - \tProperty 'logo' is optional")
+            self.log.warning(f"[CHECKS] - \tNo icon found in path '{repo['logo']}")
+            self.log.info(f"[CHECKS] - \tMake sure you set the right path to your icon in the property 'logo'")
+            self.log.info("[CHECKS] - \tProperty 'logo' is optional")
             go = go and True
 
         # Logo icon alternative text
-        self.log.info(f"[THEME/CHECKS] - Alternative icon text: '{repo['logo_alt']}'")
+        self.log.info(f"[CHECKS] - Alternative icon text: '{repo['logo_alt']}'")
         if not os.path.exists(repo['logo_alt']):
-            self.log.warning(f"[THEME/CHECKS] - \tNo alternative text found for icon")
-            self.log.info("[THEME/CHECKS] - \tProperty 'logo_alt' is optional")
+            self.log.warning(f"[CHECKS] - \tNo alternative text found for icon")
+            self.log.info("[CHECKS] - \tProperty 'logo_alt' is optional")
             go = go and True
 
         # Menu entries
-        self.log.info(f"[THEME/CHECKS] - Menu entries: '{', '.join(repo['menu'])}'")
+        self.log.info(f"[CHECKS] - Menu entries: '{', '.join(repo['menu'])}'")
         if len(repo['menu']) == 0:
-            self.log.warning(f"[THEME/CHECKS] - \tNo entries definied for theme menu")
-            self.log.info(f"[THEME/CHECKS] - \tThis is fine. Menu entries will be computed in runtime based on their availability")
-            self.log.info(f"[THEME/CHECKS] - \tOtherwise, define your own entries")
-            self.log.info("[THEME/CHECKS] - \tProperty 'menu' is optional")
+            self.log.warning(f"[CHECKS] - \tNo entries definied for theme menu")
+            self.log.info(f"[CHECKS] - \tThis is fine. Menu entries will be computed in runtime based on their availability")
+            self.log.info(f"[CHECKS] - \tOtherwise, define your own entries")
+            self.log.info("[CHECKS] - \tProperty 'menu' is optional")
             go = go and True
 
         # Check sorting property
-        self.log.info(f"[THEME/CHECKS] - Sort attribute: '{repo['sort'][0]}'")
+        self.log.info(f"[CHECKS] - Sort attribute: '{repo['sort'][0]}'")
         if len(repo['sort']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: 'sort' property is empty.")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'sort' is defined")
-            self.log.info("[THEME/CHECKS] - \tProperty 'sort' is mandatory")
+            self.log.error("[CHECKS] - \tError: 'sort' property is empty.")
+            self.log.info("[CHECKS] - \tSolution: Make sure that property 'sort' is defined")
+            self.log.info("[CHECKS] - \tProperty 'sort' is mandatory")
             go = go and False
 
         # Check source path
-        self.log.info(f"[THEME/CHECKS] - Source attribute: '{repo['source']}'")
+        self.log.info(f"[CHECKS] - Source attribute: '{repo['source']}'")
         if len(repo['source']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: 'source' attribute is empty.")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'source' is defined with the correct path your source asciidoc documents")
-            self.log.info("[THEME/CHECKS] - \tProperty 'source' is mandatory")
+            self.log.error("[CHECKS] - \tError: 'source' attribute is empty.")
+            self.log.info("[CHECKS] - \tSolution: Make sure that property 'source' is defined with the correct path your source asciidoc documents")
+            self.log.info("[CHECKS] - \tProperty 'source' is mandatory")
             go = go and False
         else:
             if not os.path.exists(repo['source']):
-                self.log.error("[THEME/CHECKS] - \tError: Path defined in property 'source' does not exist")
-                self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'source' is defined with the correct path your source asciidoc documents")
-                self.log.info("[THEME/CHECKS] - \tProperty 'source' is mandatory")
+                self.log.error("[CHECKS] - \tError: Path defined in property 'source' does not exist")
+                self.log.info("[CHECKS] - \tSolution: Make sure that property 'source' is defined with the correct path your source asciidoc documents")
+                self.log.info("[CHECKS] - \tProperty 'source' is mandatory")
                 go = go and False
 
         # Check target path
-        self.log.info(f"[THEME/CHECKS] - Target attribute: '{repo['target']}'")
+        self.log.info(f"[CHECKS] - Target attribute: '{repo['target']}'")
         if len(repo['target']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: 'target' attribute is empty.")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'target' is defined with the correct path your target directory.")
-            self.log.info("[THEME/CHECKS] - \t          Your target directory holds the built website")
-            self.log.info("[THEME/CHECKS] - \tProperty 'target' is mandatory")
+            self.log.error("[CHECKS] - \tError: 'target' attribute is empty.")
+            self.log.info("[CHECKS] - \tSolution: Make sure that property 'target' is defined with the correct path your target directory.")
+            self.log.info("[CHECKS] - \t          Your target directory holds the built website")
+            self.log.info("[CHECKS] - \tProperty 'target' is mandatory")
             go = go and False
         else:
             if not os.path.exists(repo['target']):
-                self.log.error("[THEME/CHECKS] - \tError: Path defined in property 'target' does not exist")
-                self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'target' is defined with the correct path your target directory.")
-                self.log.info("[THEME/CHECKS] - \t          Your target directory holds the built website")
-                self.log.info("[THEME/CHECKS] - \tProperty 'target' is mandatory")
+                self.log.error("[CHECKS] - \tError: Path defined in property 'target' does not exist")
+                self.log.info("[CHECKS] - \tSolution: Make sure that property 'target' is defined with the correct path your target directory.")
+                self.log.info("[CHECKS] - \t          Your target directory holds the built website")
+                self.log.info("[CHECKS] - \tProperty 'target' is mandatory")
                 go = go and False
 
         # Webserver enabled?
-        self.log.info(f"[THEME/CHECKS] - Webserver enabled? {repo['webserver']}")
+        self.log.info(f"[CHECKS] - Webserver enabled? {repo['webserver']}")
         if repo['webserver']:
-            self.log.info(f"[THEME/CHECKS] - Timeline events defined: {', '.join(repo['timeline'])}")
+            self.log.info(f"[CHECKS] - Timeline events defined: {', '.join(repo['timeline'])}")
             if len(repo['timeline']) == 0:
-                self.log.error("[THEME/CHECKS] - \tError: No timeline events defined in property 'timeline'")
-                self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'timeline' has one or more events defined.")
-                self.log.info("[THEME/CHECKS] - \tProperty 'timeline' is mandatory when webserver is enabled")
+                self.log.error("[CHECKS] - \tError: No timeline events defined in property 'timeline'")
+                self.log.info("[CHECKS] - \tSolution: Make sure that property 'timeline' has one or more events defined.")
+                self.log.info("[CHECKS] - \tProperty 'timeline' is mandatory when webserver is enabled")
                 go = go and False
 
         if not go:
