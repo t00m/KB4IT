@@ -396,7 +396,7 @@ class Theme(Builder):
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
-        # ~ self.build_page_bookmarks()
+        self.build_page_bookmarks()
         # ~ self.build_page_index(var)
         self.build_page_index_all()
         # ~ self.create_page_about_kb4it()
