@@ -1,5 +1,5 @@
 % if len(var['rows']) > 0:
-<table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped uk-text-small uk-height-1-1" style="width: 100%">
+<table id="kb4it-datatable" class="uk-table uk-table-small uk-table-responsive uk-table-divider uk-table-hover uk-table-striped uk-text-small uk-height-1-1" style="width: 100%">
     <thead class="">
         <tr class="">
             ${var['header']}

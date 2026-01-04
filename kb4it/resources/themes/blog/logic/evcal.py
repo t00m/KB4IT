@@ -136,6 +136,7 @@ class EventsCalendar(Service, HTMLCalendar):
         self.year = theyear
         self.month = themonth
         month = super(EventsCalendar, self).formatmonth(theyear, themonth, withyear=False)
+        month = month.replace('class="month"', 'class="uk-table uk-table-responsive uk-table-divider month"')
         return month
 
     def formatyear(self, theyear, width=4):
