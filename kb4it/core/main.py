@@ -13,6 +13,7 @@ import os
 import sys
 import json
 import math
+import uuid
 import multiprocessing
 import argparse
 import traceback
@@ -49,6 +50,9 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
+
+        suffix = str(uuid.uuid1().time)
+        self.set_log_file(suffix)
         self.__setup_environment()
         if params is not None:
             self.params = params
@@ -59,8 +63,9 @@ class KB4IT:
         # Initialize log
         if 'log_level' not in vars(self.params):
             self.params.LOGLEVEL = 'INFO'
-        setup_logging(self.params.log_level, ENV["FILE"]["LOG"])
+        setup_logging(self.params.log_level, self.log_file)
         self.log = get_logger(__class__.__name__)
+        self.log.debug(f"Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"KB4IT {ENV['APP']['version']}")
         self.log.debug(f"CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
         self.log.debug(f"CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
@@ -76,6 +81,12 @@ class KB4IT:
         #self.log.debug("MaxWorkers: %d (default)", self.params.NUM_WORKERS)
 
         self.__gonogo()
+
+    def set_log_file(self, suffix: str):
+        self.log_file = f"{ENV['FILE']['LOG']}.{suffix}"
+
+    def get_log_file(self):
+        return self.log_file
 
     def __setup_logging(self, severity=None):
         """Set up logging."""
