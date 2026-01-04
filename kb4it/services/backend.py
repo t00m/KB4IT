@@ -135,7 +135,8 @@ class Backend(Service):
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
-            shutil.copy(ENV['FILE']['LOG'], app_log_file)
+            self.kb4it_temp_log = self.app.get_log_file()
+            shutil.copy(self.kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
             # if SORT attribute is given, use it instead of the OS timestamp
@@ -940,6 +941,7 @@ class Backend(Service):
             delete_target_contents(self.runtime['dir']['tmp'])
             delete_target_contents(self.runtime['dir']['www'])
             delete_target_contents(self.runtime['dir']['dist'])
+            os.unlink(self.kb4it_temp_log)
             pass
         except Exception as KeyError:
             pass
