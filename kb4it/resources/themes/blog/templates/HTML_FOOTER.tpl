@@ -13,6 +13,11 @@
                         <!-- INDEX_TAB_STATS.tpl :: START -->
                         <div class="uk-grid-small uk-text-meta" uk-grid>
                             <div class="uk-width-expand uk-text-bold">
+                                <a class="uk-link-heading" href="bookmarks.html">Bookmarks</a>
+                            </div>
+                        </div>
+                        <div class="uk-grid-small uk-text-meta" uk-grid>
+                            <div class="uk-width-expand uk-text-bold">
                                 <a class="uk-link-heading" href="events.html">Events</a>
                             </div>
                         </div>
