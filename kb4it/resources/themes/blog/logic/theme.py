@@ -190,11 +190,16 @@ class Theme(Builder):
             timestamp = var['post']['Updated'][0]
             dt = guess_datetime(timestamp)
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
+            var['basename_adoc'] = post
+            var['metadata'] = self.build_metadata_section(post)
+            var['source_adoc'] = adoc_content
             try:
                 html += TPL_POST_ADOC.render(var=var)
                 self.log.debug(f"DOC[{post}] add to index page")
-            except Exception:
+            except Exception as error:
+                self.log.error(error)
                 self.log.warning(f"DOC[{post}] ignored. No metadata found")
+                raise
 
         runtime = self.srvbes.get_runtime_dict()
         adocprops = runtime['adocprops']
@@ -661,7 +666,7 @@ class Theme(Builder):
             var['SystemPage'] = False
             TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
             HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-            var['metadata'] = self.build_metadata_section(basename_adoc)
+        var['metadata'] = self.build_metadata_section(basename_adoc)
 
         var['menu_contents'] = HTML_TOC
         try:
