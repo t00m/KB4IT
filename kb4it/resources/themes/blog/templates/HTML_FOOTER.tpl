@@ -3,42 +3,28 @@
                 <div class="uk-width-1-3@m" uk-height-viewport="expand: true">
                   <div class="uk-sticky" uk-sticky="offset: 40">
                     <h2 class="uk-heading-line uk-text-center"><a class="uk-link-toggle" href="index.html"><span class="uk-link-heading">${var['repo']['title']}</span></a></h2>
-                    <div class="sidebar">
+<div class="uk-card uk-card-body uk-card-small uk-flex uk-flex-top uk-flex-center">
+<blockquote>
+<p class="uk-text-center">${var['repo']['tagline']}</p>
+</blockquote>
+</div>
+
+                      <div class="sidebar">
 <!--
                       <h5 class="sidebar-title">About</h5>
                       <p class="uk-text-small">${var['repo']['tagline']}</p>
-
 -->
-
-                        <!-- INDEX_TAB_STATS.tpl :: START -->
-                        <div class="uk-grid-small uk-text-meta" uk-grid>
-                            <div class="uk-width-expand uk-text-bold">
-                                <a class="uk-link-heading" href="events.html">Events</a>
-                            </div>
-                        </div>
-                        <div class="uk-grid-small uk-text-meta" uk-grid>
-                            <div class="uk-width-expand uk-text-bold" uk-leader>
-                                <a class="uk-link-heading" href="all.html">Documents</a>
-                            </div>
-                            <div>
-                                <a href="all.html">${var['count_docs']}</a>
-                            </div> <!-- Num of documents -->
-                        </div>
-                        <div class="uk-grid-small uk-text-meta" uk-grid>
-                            <div class="uk-width-expand uk-text-bold" uk-leader>
-                                <a class="uk-link-heading" href="properties.html">Properties</a>
-                            </div>
-                            <div><a href="properties.html">${var['count_keys']}</a></div> <!-- Num of properties or keys -->
-                        </div>
-                        <!-- Property leader items -->
-                    % for item in var['leader_items']:
-                        <div class="uk-grid-small uk-text-meta" uk-grid>
-                            <div class="uk-width-1-6@m"></div>
-                            <div class="uk-width-expand uk-text-bold" uk-leader><a class="uk-link-heading" href="${item['vfkey']}.html">${item['key']}</a></div>
-                            <div><a href="${item['vfkey']}.html">${item['count_values']}</a></div>
-                        </div>
-                    % endfor
-                        <!-- Property leader items -->
+<div class="uk-card uk-card-body uk-card-small uk-flex uk-flex-top uk-flex-center">
+<ul class="uk-iconnav">
+    <li>
+        <a href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" uk-icon="icon: plus" uk-tooltip="Create new post" target="_blank"></a>
+    </li>
+    <li><a href="all.html" uk-icon="icon: list" uk-tooltip="Documents"></a></li>
+    <li><a href="bookmarks.html" uk-icon="icon: star" uk-tooltip="Bookmarks"></a></li>
+    <li><a href="events.html" uk-icon="icon: calendar" uk-tooltip="Events"></a></li>
+    <li><a href="properties.html" uk-icon="icon: world" uk-tooltip="Properties"></a></li>
+</ul>
+</div>
 
                       <div class="uk-text-center uk-card uk-card-body uk-card-big">
                         <hr class="uk-divider-icon">
@@ -62,5 +48,26 @@
     </div>
     <!-- Blog container :: END -->
 <script>hljs.highlightAll();</script>
+<script>
+<!-- Necessary javascript for filtering results -->
+<!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
+var input = document.getElementById('text_filter');
+var filter = document.getElementById('filter');
+
+input.addEventListener( 'keyup', function(event)
+{
+    if ( input.value == "" )
+    {
+        filter.setAttribute( 'uk-filter-control', '' );
+    }
+
+    else
+    {
+        filter.setAttribute( 'uk-filter-control', 'filter:[data-title*=\'' + input.value + '\'i]' );
+    }
+
+    filter.click();
+});
+</script>
 </body>
 </html>
