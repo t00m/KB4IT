@@ -44,4 +44,4 @@
         <!-- GRID :: START -->
         <div class="uk-grid">
             <!-- Main Content Column :: START-->
-            <div class="uk-width-2-3@m">
+            <div class="uk-width-3-4@m">
