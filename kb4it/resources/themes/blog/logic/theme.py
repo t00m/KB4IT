@@ -167,13 +167,17 @@ class Theme(Builder):
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
+        try:
+            nip = repo['index_posts'] # Number of posts to display in index
+        except KeyError:
+            nip = -1
         runtime = self.srvbes.get_runtime_dict()
         filenames = runtime['docs']['filenames']
         var['page']['title'] = "Index"
 
         doclist = self.srvdtb.get_documents()
         html = TPL_INDEX.render(var=var)
-        for post in doclist:
+        for post in doclist[:nip]:
             var['post'] = {}
             var['post']['filename'] = post
             metadata = self.srvdtb.get_doc_properties(post)
