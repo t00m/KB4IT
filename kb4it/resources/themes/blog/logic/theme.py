@@ -328,14 +328,25 @@ class Theme(Builder):
         self.srvcal.set_events_days(self.dey)
         self.srvcal.set_events_docs(self.events_docs)
 
+        self.log.error(self.dey)
+        self.log.error(self.events_docs)
+
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
             EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
             if str(year) in must_compile_year:
+                var = self.get_theme_var()
+                headers = []
+
+                # ~ var['page']['datatable'] = self.build_datatable(headers, doclist)
+                # ~ var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
+                # ~ html = TPL_PAGE_EVENTS_DAYS.render(var=var)
+                # ~ self.distribute_adoc(EVENT_PAGE_DAY, html)
+
                 thisyear = {}
-                html = self.srvcal.build_year_pagination(self.dey.keys())
+                html = self.build_year_pagination(self.dey.keys())
                 edt = guess_datetime("%4d.01.01" % year)
                 title = edt.strftime("Events on %Y")
                 thisyear['title'] = title
@@ -351,6 +362,19 @@ class Theme(Builder):
             else:
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
+
+    def build_year_pagination(self, years):
+        EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
+        EVENTCAL_YEAR_PAGINATION_ITEM = self.template('EVENTCAL_YEAR_PAGINATION_ITEM')
+        var = {}
+        var['items'] = ''
+        ITEMS = ''
+        for yp in sorted(years):
+            item = {}
+            item['year'] = yp
+            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
+        var['items'] = ITEMS
+        return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def build_page_events(self):
         doclist = []
@@ -379,14 +403,14 @@ class Theme(Builder):
                 doclist.append(docId)
                 title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
-        HTML = self.srvcal.build_year_pagination(self.dey.keys())
+        HTML = self.build_year_pagination(self.dey.keys())
         events = {}
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
         self.distribute_adoc('events', page.render(var=events))
 
         self.srvdtb.add_document('events.adoc')
-        self.srvdtb.add_document_key('events.adoc', 'Title', 'Events')
+        self.srvdtb.add_document_key('events.adoc', 'Title', 'Posts by year')
         self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
 
     def post_activities(self):
