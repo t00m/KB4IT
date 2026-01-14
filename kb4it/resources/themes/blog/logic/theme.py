@@ -270,7 +270,7 @@ class Theme(Builder):
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
-                    must_compile_day = False
+                    must_compile_day = True
                     for docId in doclist:
                         doc_changed = kbdict['document'][docId]['compile']
                         doc_not_cached = not os.path.exists(pagename)
@@ -328,35 +328,25 @@ class Theme(Builder):
         self.srvcal.set_events_days(self.dey)
         self.srvcal.set_events_docs(self.events_docs)
 
-        self.log.error(self.dey)
-        self.log.error(self.events_docs)
+        # ~ self.log.error(self.dey)
+        # ~ self.log.error(self.events_docs)
 
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
+            var = self.get_theme_var()
+            headers = []
+            doclist = []
             EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
             if str(year) in must_compile_year:
-                var = self.get_theme_var()
-                headers = []
-
-                # ~ var['page']['datatable'] = self.build_datatable(headers, doclist)
-                # ~ var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
-                # ~ html = TPL_PAGE_EVENTS_DAYS.render(var=var)
-                # ~ self.distribute_adoc(EVENT_PAGE_DAY, html)
-
-                thisyear = {}
-                html = self.build_year_pagination(self.dey.keys())
-                edt = guess_datetime("%4d.01.01" % year)
-                title = edt.strftime("Events on %Y")
-                thisyear['title'] = title
-                html += self.srvcal.formatyearpage(year, 4)
-                thisyear['content'] = html
-                self.distribute_adoc(page_name, PAGE.render(var=thisyear))
-
-                human_title = get_human_datetime_year(edt)
+                for month in self.events_docs[year]:
+                    for day in self.events_docs[year][month]:
+                        doclist.extend(self.events_docs[year][month][day])
+                var['page']['datatable'] = self.build_datatable(headers, doclist)
+                self.distribute_adoc(page_name, PAGE.render(var=var))
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Posts on {year}")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
