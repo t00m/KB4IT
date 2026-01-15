@@ -346,7 +346,7 @@ class Theme(Builder):
                 var['page']['datatable'] = self.build_datatable(headers, doclist)
                 self.distribute_adoc(page_name, PAGE.render(var=var))
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Posts on {year}")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Archive / {year}")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
@@ -406,7 +406,7 @@ class Theme(Builder):
         self.distribute_adoc('events', page.render(var=events))
 
         self.srvdtb.add_document('events.adoc')
-        self.srvdtb.add_document_key('events.adoc', 'Title', 'Posts by year')
+        self.srvdtb.add_document_key('events.adoc', 'Title', 'Archive')
         self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
 
     def post_activities(self):
@@ -470,7 +470,7 @@ class Theme(Builder):
         self.distribute_adoc('properties', content)
 
         self.srvdtb.add_document('properties.adoc')
-        self.srvdtb.add_document_key('properties.adoc', 'Title', 'Properties')
+        self.srvdtb.add_document_key('properties.adoc', 'Title', 'Metadata')
         self.srvdtb.add_document_key('properties.adoc', 'SystemPage', 'Yes')
 
     def build_tagcloud_from_key(self, key):
