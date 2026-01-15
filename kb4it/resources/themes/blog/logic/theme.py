@@ -359,7 +359,7 @@ class Theme(Builder):
         var = {}
         var['items'] = ''
         ITEMS = ''
-        for yp in sorted(years):
+        for yp in sorted(years, reverse=True):
             item = {}
             item['year'] = yp
             ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
