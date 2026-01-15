@@ -168,18 +168,18 @@ class EventsCalendar(Service, HTMLCalendar):
         """Return a formatted year as a complete HTML page."""
         return self.formatyear(theyear, width)
 
-    def build_year_pagination(self, years):
-        EVENTCAL_YEAR_PAGINATION = self.srvbld.template('EVENTCAL_YEAR_PAGINATION')
-        EVENTCAL_YEAR_PAGINATION_ITEM = self.srvbld.template('EVENTCAL_YEAR_PAGINATION_ITEM')
-        var = {}
-        var['items'] = ''
-        ITEMS = ''
-        for yp in sorted(years):
-            item = {}
-            item['year'] = yp
-            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
-        var['items'] = ITEMS
-        return EVENTCAL_YEAR_PAGINATION.render(var=var)
+    # ~ def build_year_pagination(self, years):
+        # ~ EVENTCAL_YEAR_PAGINATION = self.srvbld.template('EVENTCAL_YEAR_PAGINATION')
+        # ~ EVENTCAL_YEAR_PAGINATION_ITEM = self.srvbld.template('EVENTCAL_YEAR_PAGINATION_ITEM')
+        # ~ var = {}
+        # ~ var['items'] = ''
+        # ~ ITEMS = ''
+        # ~ for yp in sorted(years):
+            # ~ item = {}
+            # ~ item['year'] = yp
+            # ~ ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
+        # ~ var['items'] = ITEMS
+        # ~ return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def format_trimester(self, theyear, themonth):
         """Return a formatted year as a table of tables."""
