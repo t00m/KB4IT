@@ -362,6 +362,12 @@ class Theme(Builder):
         for yp in sorted(years, reverse=True):
             item = {}
             item['year'] = yp
+
+            total = 0
+            for month in self.events_docs[yp]:
+                for day in self.events_docs[yp][month]:
+                    total += len(self.events_docs[yp][month][day])
+            item['year_count'] = total
             ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
         var['items'] = ITEMS
         return EVENTCAL_YEAR_PAGINATION.render(var=var)
