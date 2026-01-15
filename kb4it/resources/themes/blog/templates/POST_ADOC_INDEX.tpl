@@ -5,12 +5,12 @@
     timestamp = var['post']['Updated'][0]
     dt = guess_datetime(timestamp)
     var['post']['updated_human'] = get_human_datetime(dt)
-    var['post']['updated_day_text'] = f"{dt.day}"
-    var['post']['updated_day'] = f"{dt.year}{dt.month}{dt.day}"
-    var['post']['updated_month_text'] = f"{dt.month}"
-    var['post']['updated_month'] = f"{dt.year}{dt.month}"
-    var['post']['updated_year_text'] = f"{dt.year}"
-    var['post']['updated_year'] = f"{dt.year}"
+    var['post']['updated_day_text'] = f"{dt.day:02d}"
+    var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"
+    var['post']['updated_month_text'] = f"{dt.month:02d}"
+    var['post']['updated_month'] = f"{dt.year:04d}{dt.month:02d}"
+    var['post']['updated_year_text'] = f"{dt.year:04d}"
+    var['post']['updated_year'] = f"{dt.year:04d}"
     var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
 %>
 ++++

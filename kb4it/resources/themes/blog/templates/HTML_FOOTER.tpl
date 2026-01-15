@@ -15,12 +15,14 @@
 
         <div class="uk-card uk-card-body uk-card-small uk-flex uk-flex-top uk-flex-left">
         <ul class="uk-list uk-text-left uk-margin-left">
+% if var['repo']['git'] == True:
                 <li>
                     <span uk-icon="icon: plus" uk-tooltip="Create new post"></span>
                     <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
                         <span class="uk-link-toogle uk-margin-left">Create new post</span>
                     </a>
                 </li>
+% endif
                 <li>
                     <span uk-icon="icon: list" uk-tooltip="All posts"></span>
                     <a class="uk-link-heading" href="all.html">
@@ -34,15 +36,15 @@
                     </a>
                 </li>
                 <li>
-                    <span uk-icon="icon: calendar" uk-tooltip="Posts by date"></span>
-                    <a class="uk-link-heading" href="events.html">
-                        <span class="uk-link-toogle uk-margin-left">Posts by date</span>
+                    <span uk-icon="icon: world" uk-tooltip="Browse by metadata"></span>
+                    <a class="uk-link-heading" href="properties.html">
+                        <span class="uk-link-toogle uk-margin-left">Metadata</span>
                     </a>
                 </li>
                 <li>
-                    <span uk-icon="icon: world" uk-tooltip="Browse by metadata"></span>
-                    <a class="uk-link-heading" href="properties.html">
-                        <span class="uk-link-toogle uk-margin-left">Browse by metadata</span>
+                    <span uk-icon="icon: calendar" uk-tooltip="Posts by year"></span>
+                    <a class="uk-link-heading" href="events.html">
+                        <span class="uk-link-toogle uk-margin-left">Archive</span>
                     </a>
                 </li>
         </ul>

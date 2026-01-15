@@ -78,13 +78,13 @@ class Backend(Service):
             self.log.error(f"    Repository config file not found in command line params")
             raise
             repo_config_exists = False
-        
+
         if repo_config_exists:
             try:
                self.params.force = self.repo['force']
                self.log.debug(f"CONF[REPO] PARAM[force] set to {self.params.force}")
             except KeyError:
-                pass 
+                pass
 
         # Initialize runtime dictionary
         self.runtime['dir'] = {}

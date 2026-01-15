@@ -270,7 +270,7 @@ class Theme(Builder):
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
-                    must_compile_day = False
+                    must_compile_day = True
                     for docId in doclist:
                         doc_changed = kbdict['document'][docId]['compile']
                         doc_not_cached = not os.path.exists(pagename)
@@ -328,29 +328,49 @@ class Theme(Builder):
         self.srvcal.set_events_days(self.dey)
         self.srvcal.set_events_docs(self.events_docs)
 
+        # ~ self.log.error(self.dey)
+        # ~ self.log.error(self.events_docs)
+
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
+            var = self.get_theme_var()
+            headers = []
+            doclist = []
             EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
             if str(year) in must_compile_year:
-                thisyear = {}
-                html = self.srvcal.build_year_pagination(self.dey.keys())
-                edt = guess_datetime("%4d.01.01" % year)
-                title = edt.strftime("Events on %Y")
-                thisyear['title'] = title
-                html += self.srvcal.formatyearpage(year, 4)
-                thisyear['content'] = html
-                self.distribute_adoc(page_name, PAGE.render(var=thisyear))
-
-                human_title = get_human_datetime_year(edt)
+                for month in self.events_docs[year]:
+                    for day in self.events_docs[year][month]:
+                        doclist.extend(self.events_docs[year][month][day])
+                var['page']['datatable'] = self.build_datatable(headers, doclist)
+                self.distribute_adoc(page_name, PAGE.render(var=var))
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Archive / {year}")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
                 pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
+
+    def build_year_pagination(self, years):
+        EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
+        EVENTCAL_YEAR_PAGINATION_ITEM = self.template('EVENTCAL_YEAR_PAGINATION_ITEM')
+        var = {}
+        var['items'] = ''
+        ITEMS = ''
+        for yp in sorted(years, reverse=True):
+            item = {}
+            item['year'] = yp
+
+            total = 0
+            for month in self.events_docs[yp]:
+                for day in self.events_docs[yp][month]:
+                    total += len(self.events_docs[yp][month][day])
+            item['year_count'] = total
+            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
+        var['items'] = ITEMS
+        return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def build_page_events(self):
         doclist = []
@@ -379,14 +399,14 @@ class Theme(Builder):
                 doclist.append(docId)
                 title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
-        HTML = self.srvcal.build_year_pagination(self.dey.keys())
+        HTML = self.build_year_pagination(self.dey.keys())
         events = {}
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
         self.distribute_adoc('events', page.render(var=events))
 
         self.srvdtb.add_document('events.adoc')
-        self.srvdtb.add_document_key('events.adoc', 'Title', 'Events')
+        self.srvdtb.add_document_key('events.adoc', 'Title', 'Archive')
         self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
 
     def post_activities(self):
@@ -450,7 +470,7 @@ class Theme(Builder):
         self.distribute_adoc('properties', content)
 
         self.srvdtb.add_document('properties.adoc')
-        self.srvdtb.add_document_key('properties.adoc', 'Title', 'Properties')
+        self.srvdtb.add_document_key('properties.adoc', 'Title', 'Metadata')
         self.srvdtb.add_document_key('properties.adoc', 'SystemPage', 'Yes')
 
     def build_tagcloud_from_key(self, key):
