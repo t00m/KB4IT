@@ -243,12 +243,11 @@ def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
 def get_hash_from_file(path):
     """Get the SHA256 hash for a given filename."""
     if os.path.exists(path):
-        content = open(path, 'r').read()
-        m = hashlib.sha256()
-        m.update(content.encode())
-        return m.hexdigest()
+        with open(path, 'rb') as fin:
+            fhash = hashlib.file_digest(fin, 'md5').hexdigest()
     else:
-        return None
+        fhash = None
+    return fhash
 
 # ~ @timeit
 def get_hash_from_dict(adict):

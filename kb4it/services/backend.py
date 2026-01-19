@@ -373,19 +373,19 @@ class Backend(Service):
             return
 
         # Get content
-        with open(filepath) as source_adoc:
-            content = source_adoc.read()
+        # ~ with open(filepath) as source_adoc:
+            # ~ content = source_adoc.read()
 
         # Add to cache
         # Old cache
         self.kbdict_new['document'][adocId] = {}
-        self.kbdict_new['document'][adocId]['content'] = content
+        self.kbdict_new['document'][adocId]['content'] = filepath
         self.kbdict_new['document'][adocId]['keys'] = keys
 
         # Add to the in-memory database
         self.srvdtb.add_document(adocId)
 
-        self.stage_03_00_preprocess_document_hashes(adocId, content, keys)
+        self.stage_03_00_preprocess_document_hashes(adocId, keys)
         self.stage_03_00_preprocess_document_caches(adocId, keys)
 
         # Add compiled page to the target list
@@ -414,13 +414,14 @@ class Backend(Service):
         return sort_attribute
 
     # ~ @timeit
-    def stage_03_00_preprocess_document_hashes(self, adocId: str, content: str, keys: list):
+    def stage_03_00_preprocess_document_hashes(self, adocId: str, keys: list):
         # To track changes in a document, hashes for metadata and content are created.
         # Comparing them with those in the cache, KB4IT determines if a document must be
         # compiled again. Very useful to reduce the compilation time.
 
         # Get Document Content and Metadata Hashes
-        content_hash = get_hash_from_dict({'content': content})
+        source_file = os.path.join(self.get_source_path(), adocId)
+        content_hash = get_hash_from_file(source_file)
         metadata_hash = get_hash_from_dict(keys)
         self.kbdict_new['document'][adocId]['content_hash'] = content_hash
         self.kbdict_new['document'][adocId]['metadata_hash'] = metadata_hash
@@ -465,7 +466,7 @@ class Backend(Service):
                         self.kbdict_new['metadata'][key][value] = [adocId]
 
     # ~ @timeit
-    def stage_03_00_preprocess_document_compile(self, adocId: str, content:str, keys:list):
+    def stage_03_00_preprocess_document_compile(self, adocId: str, keys:list):
         # Force compilation (from command line)?
         DOC_COMPILATION = False
         FORCE_ALL = self.params.force
@@ -504,6 +505,8 @@ class Backend(Service):
 
         if COMPILE:
             # Write new adoc to temporary dir
+            source_path = os.path.join(self.get_source_path(), adocId)
+            content = open(source_path).read()
             target = f"{self.runtime['dir']['tmp']}/{valid_filename(adocId)}"
             with open(target, 'w') as target_adoc:
                 target_adoc.write(content)
@@ -551,9 +554,10 @@ class Backend(Service):
         # Compiling strategy
         for filepath in self.runtime['docs']['bag']:
             adocId = os.path.basename(filepath)
-            content = self.kbdict_new['document'][adocId]['content']
+            filepath = self.kbdict_new['document'][adocId]['content']
+            content = open(filepath).read()
             keys = self.kbdict_new['document'][adocId]['keys']
-            self.stage_03_00_preprocess_document_compile(adocId, content, keys)
+            self.stage_03_00_preprocess_document_compile(adocId, keys)
 
         # Build a list of documents sorted by timestamp
         self.srvdtb.sort_database()
