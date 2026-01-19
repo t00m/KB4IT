@@ -47,9 +47,15 @@
                         <span class="uk-link-toogle uk-margin-left">Archive</span>
                     </a>
                 </li>
+                <li class="uk-nav-divider"></li>
+                <li>
+                    <span uk-icon="icon: info" uk-tooltip="About"></span>
+                    <a class="uk-link-heading" href="about_app.html">
+                        <span class="uk-link-toogle uk-margin-left">About</span>
+                    </a>
+                </li>
         </ul>
     </div>
-
                       <div class="uk-text-center uk-card uk-card-body uk-card-big">
                         <hr class="uk-divider-icon">
                         <p>
