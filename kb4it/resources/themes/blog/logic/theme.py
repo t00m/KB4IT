@@ -108,7 +108,10 @@ class Theme(Builder):
         for docId in doclist:
             documents[docId] = self.srvdtb.get_doc_properties(docId)
         datatable['rows'] = ''
+        # ~ n = 0
         for docId in documents:
+            # ~ self.log.error(f"{n}: {docId}")
+            # ~ n += 1
             if self.srvdtb.is_system(docId):
                 continue
 
@@ -124,7 +127,6 @@ class Theme(Builder):
                 final_headers = headers[1:]
             else:
                 final_headers = headers
-
 
             for key in final_headers:
                 item = {}
@@ -146,7 +148,7 @@ class Theme(Builder):
                             link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
                             field.append(TPL_LINK.render(var=link))
                     except KeyError:
-                        field = ''
+                        field = []
                     datatable['rows'] += """<td class="">%s</td>""" % ', '.join(field)
             datatable['rows'] += '</tr>'
 
@@ -170,7 +172,7 @@ class Theme(Builder):
         try:
             nip = repo['index_posts'] # Number of posts to display in index
         except KeyError:
-            nip = -1
+            nip = 10 # Default number of post in index page
         runtime = self.srvbes.get_runtime_dict()
         filenames = runtime['docs']['filenames']
         var['page']['title'] = "Index"
@@ -201,9 +203,7 @@ class Theme(Builder):
                 html += TPL_POST_ADOC.render(var=var)
                 self.log.debug(f"DOC[{post}] add to index page")
             except Exception as error:
-                self.log.error(error)
-                self.log.warning(f"DOC[{post}] ignored. No metadata found")
-                raise
+                self.log.warning(f"DOC[{post}] ignored. No metadata '{error}' found")
 
         runtime = self.srvbes.get_runtime_dict()
         adocprops = runtime['adocprops']
@@ -560,7 +560,9 @@ class Theme(Builder):
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
         doclist = []
-        for docId in self.srvdtb.get_documents():
+        documents = self.srvdtb.get_documents()
+        self.log.error(f"ALL: {len(documents)}")
+        for docId in documents:
             doclist.append(docId)
         headers = []
         datatable = self.build_datatable(headers, doclist)
