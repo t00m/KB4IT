@@ -72,7 +72,7 @@ class Backend(Service):
             self.app.stop()
         except AttributeError as error:
             self.log.error(f"Repository config couldn't be read")
-            self.log.error(f"Repository config file: {self.params.config}")
+            # ~ self.log.error(f"Repository config file: {self.params.config}")
             repo_config_exists = False
         except Exception as error:
             self.log.error(f"    Repository config file not found in command line params")
