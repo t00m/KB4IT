@@ -20,15 +20,15 @@
     <div class="uk-container uk-container-small">
 
         <!-- Header -->
-        <header class="uk-margin-small-bottom uk-background-muted">
+        <header class="uk-margin-small-bottom uk-background-muted uk-card-hover">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
-                <div class="uk-width">
+                <div class="uk-width uk-margin-top">
                     <h5 class="uk-card-title uk-margin-remove uk-text-center">
                         <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
                             <span class="uk-link-heading">${var['post']['Title']}</span>
                         </a>
                     </h5>
-                    <div class="uk-width">
+                    <div class="uk-width uk-margin-top">
                         <ul class="uk-subnav uk-subnav-divider uk-margin-small-top uk-flex-center uk-text-meta">
                             <li>
                                 <span uk-icon="user"></span>
