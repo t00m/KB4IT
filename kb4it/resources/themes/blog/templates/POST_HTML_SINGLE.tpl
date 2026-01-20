@@ -39,24 +39,6 @@
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
                             <!-- Update :: END -->
-<!--
-                            <li>
-                                <span uk-icon="star"></span>
-                                <span class="uk-margin-small-left">
-                                % for i, topic in enumerate(var['post']['Topic']):
-                                    <a href="Topic_${valid_filename(topic)}.html">${topic}</a>${"," if i < len(var['post']['Topic'])-1 else ""}
-                                % endfor
-                                </span>
-                            </li>
-                            <li>
-                                <span uk-icon="tag"></span>
-                                <span class="uk-margin-small-left">
-                                % for i, tag in enumerate(var['post']['Tag']):
-                                    <a href="Tag_${valid_filename(tag)}.html">${tag}</a>${"," if i < len(var['post']['Tag'])-1 else ""}
-                                % endfor
-                                </span>
-                            </li>
--->
                             <!-- Metadata Button :: START -->
                             <li uk-tooltip="title: Document properties">
                                 <span uk-icon="hashtag"></span>
