@@ -293,8 +293,8 @@ class Database(Service):
                 for key in self.db[docId]:
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
-            except Exception as warning:
-                self.log.debug("DOC[%s] is not in the database", docId)
+            except KeyError as warning:
+                self.log.warning("DOC[%s] is not in the database", docId)
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 
