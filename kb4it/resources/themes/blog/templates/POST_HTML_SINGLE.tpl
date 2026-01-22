@@ -5,7 +5,6 @@
     sort_by = var['repo']['sort']
     timestamp = var['post'][sort_by][0]
     dt = guess_datetime(timestamp)
-    print(dt)
     var['post']['updated_human'] = get_human_datetime(dt)
     var['post']['updated_day_text'] = f"{dt.day:02d}"
     var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"

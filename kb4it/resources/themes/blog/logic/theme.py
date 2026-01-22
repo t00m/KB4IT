@@ -731,7 +731,6 @@ class Theme(Builder):
                 BODY = HTML_BODY_POST.render(var=var)
         except Exception as error:
             self.log.error(f"{basename_adoc} > {error}")
-            raise
             BODY = HTML_BODY.render(var=var)
         FOOTER = HTML_FOOTER.render(var=var)
 
