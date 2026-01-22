@@ -10,6 +10,7 @@ from kb4it.core.service import Service
 from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
 from kb4it.core.util import guess_datetime
+from kb4it.core.util import json_load, json_save
 # ~ from kb4it.core.util import timeit
 from kb4it.core.util import get_hash_from_list
 from kb4it.core.util import get_timestamp_yyyymmdd
@@ -106,8 +107,10 @@ class Database(Service):
                 self.sorted_docs = list(self.db.keys())
 
     # ~ # ~ @timeit
-    def sort_by_date(self, doclist):
+    def sort_by_date(self, doclist:list=[]):
         """Build a list of documents sorted by timestamp desc."""
+        if len(doclist) == 0:
+            doclist = self.db.keys()
         md5hash = get_hash_from_list(sorted(doclist))
         if not md5hash in self.cache_docs_sorted_by_date:
             adict = {}
@@ -115,6 +118,7 @@ class Database(Service):
                 if not self.is_system(docId):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
+                        self.log.warning(f"{docId} not compliant")
                         continue
                     dt = guess_datetime(sdate)
                     adict[docId] = dt #.strftime("%Y%m%d")
@@ -300,3 +304,4 @@ class Database(Service):
 
     def get_sort_attribute(self):
         return self.sort_attribute
+
