@@ -2,8 +2,10 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    timestamp = var['post']['Updated'][0]
+    sort_by = var['repo']['sort']
+    timestamp = var['post'][sort_by][0]
     dt = guess_datetime(timestamp)
+    print(dt)
     var['post']['updated_human'] = get_human_datetime(dt)
     var['post']['updated_day_text'] = f"{dt.day:02d}"
     var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"
@@ -17,7 +19,6 @@
 <!-- Blog Post :: START -->
 <div class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
-
         <!-- Header -->
         <header class="uk-margin-small-bottom uk-background-muted uk-card-hover">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">

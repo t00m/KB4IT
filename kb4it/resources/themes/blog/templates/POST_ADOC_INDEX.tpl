@@ -2,7 +2,8 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    timestamp = var['post']['Updated'][0]
+    sort_by = var['repo']['sort']
+    timestamp = var['post'][sort_by][0]
     dt = guess_datetime(timestamp)
     var['post']['updated_human'] = get_human_datetime(dt)
     var['post']['updated_day_text'] = f"{dt.day:02d}"

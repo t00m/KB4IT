@@ -169,6 +169,7 @@ class Theme(Builder):
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_repo_parameters()
+        sort_by = repo['sort']
         try:
             nip = repo['index_posts'] # Number of posts to display in index
         except KeyError:
@@ -193,7 +194,7 @@ class Theme(Builder):
             body_mark = "<!-- BODY :: START -->"
             body_start = html_content.find("<!-- BODY :: START -->")
             body_end = html_content.find("<!-- BODY :: END -->")
-            timestamp = var['post']['Updated'][0]
+            timestamp = var['post'][sort_by][0]
             dt = guess_datetime(timestamp)
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             var['basename_adoc'] = post
@@ -635,6 +636,8 @@ class Theme(Builder):
         basename_hdoc = os.path.basename(path_hdoc)
         exists_adoc = os.path.exists(path_adoc) # it should be true
         exists_hdoc = os.path.exists(path_hdoc) # it should be true
+        repo = self.srvbes.get_repo_parameters()
+        strict = repo['strict']
 
         if not exists_hdoc:
             self.log.error(" - Source[%s] not converted to HTML properly", basename_adoc)
@@ -719,10 +722,13 @@ class Theme(Builder):
 
         HEADER = HTML_HEADER_COMMON.render(var=var)
         try:
-            if 'Post' in var['post']['Category']:
-                BODY = HTML_BODY_POST.render(var=var)
+            if strict:
+                if 'Post' in var['post']['Category']:
+                    BODY = HTML_BODY_POST.render(var=var)
+                else:
+                    BODY = HTML_BODY.render(var=var)
             else:
-                BODY = HTML_BODY.render(var=var)
+                BODY = HTML_BODY_POST.render(var=var)
         except Exception as error:
             self.log.error(f"{basename_adoc} > {error}")
             raise
@@ -735,9 +741,10 @@ class Theme(Builder):
         HTML += FOOTER
 
         with open(path_hdoc, 'w') as fhtml:
-            tree = etree.fromstring(HTML, parser)
-            pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
-            fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
+            fhtml.write(HTML)
+            # ~ tree = etree.fromstring(HTML, parser)
+            # ~ pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+            # ~ fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
             # ~ self.log.debug(" - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
             # ~ self.log.debug(" - Page[%s] transformation finished", basename_hdoc)
 

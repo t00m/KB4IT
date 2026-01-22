@@ -99,8 +99,8 @@ class Database(Service):
         Build a list of documents.
         Documents sorted by the given date attribute in descending order.
         """
-        runtime = self.srvbes.get_runtime_dict()
         if len(self.sorted_docs) == 0:
+            runtime = self.srvbes.get_runtime_dict()
             if runtime['sort_enabled']:
                 self.sorted_docs = self.sort_by_date(list(self.db.keys()))
             else:
@@ -298,7 +298,9 @@ class Database(Service):
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
             except KeyError as warning:
-                self.log.warning("DOC[%s] is not in the database", docId)
+                pass
+                # ~ self.log.warning("DOC[%s] is not in the database", docId)
+                # ~ raise
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 
