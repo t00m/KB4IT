@@ -13,9 +13,9 @@ Server module.
 import os
 import math
 from datetime import datetime, timedelta
-from calendar import monthrange
+# ~ from calendar import monthrange
 
-from lxml import etree
+# ~ from lxml import etree
 
 from kb4it.core.env import ENV
 from kb4it.services.builder import Builder
@@ -33,10 +33,10 @@ from kb4it.core.util import ellipsize_text
 from kb4it.core.perf import timeit
 from kb4it.core.util import get_year, get_month, get_day
 
-from evcal import EventsCalendar
-from timeline import Timeline
+# ~ from evcal import EventsCalendar
+# ~ from timeline import Timeline
 
-parser = etree.HTMLParser()
+# ~ parser = etree.HTMLParser()
 
 class Theme(Builder):
     dey = {}  # Dictionary of day events per year
@@ -108,16 +108,12 @@ class Theme(Builder):
         for docId in doclist:
             documents[docId] = self.srvdtb.get_doc_properties(docId)
         datatable['rows'] = ''
-        # ~ n = 0
         for docId in documents:
-            # ~ self.log.error(f"{n}: {docId}")
-            # ~ n += 1
             if self.srvdtb.is_system(docId):
                 continue
 
             datatable['rows'] += '<tr>'
             if sort_attribute in headers:
-
                 timestamp = self.srvdtb.get_doc_timestamp(docId)
                 if timestamp is None:
                     continue
@@ -132,7 +128,7 @@ class Theme(Builder):
                 item = {}
                 if key == 'Title':
                     try:
-                        item['title'] = f"<div uk-tooltip='{documents[docId][key]}'>{ellipsize_text(documents[docId][key], 80)}</div>"
+                        item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
                         item['url'] = documents[docId]['%s_Url' % key]
                         datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
                     except:
@@ -326,8 +322,8 @@ class Theme(Builder):
                     pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
                     self.distribute_html(EVENT_PAGE_MONTH, pagename)
 
-        self.srvcal.set_events_days(self.dey)
-        self.srvcal.set_events_docs(self.events_docs)
+        # ~ self.srvcal.set_events_days(self.dey)
+        # ~ self.srvcal.set_events_docs(self.events_docs)
 
         # ~ self.log.error(self.dey)
         # ~ self.log.error(self.events_docs)
@@ -387,18 +383,8 @@ class Theme(Builder):
             if self.srvdtb.is_system(docId):
                 continue
             category = self.srvdtb.get_values(docId, 'Category')[0]
-            if category in event_types:
-                try:
-                    docs = ecats[category]
-                    docs.add(docId)
-                    ecats[category] = docs
-                except:
-                    docs = set()
-                    docs.add(docId)
-                    ecats[category] = docs
-
-                doclist.append(docId)
-                title = self.srvdtb.get_values(docId, 'Title')[0]
+            doclist.append(docId)
+            title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
         HTML = self.build_year_pagination(self.dey.keys())
         events = {}
@@ -420,9 +406,9 @@ class Theme(Builder):
         """Create standard pages for default theme"""
         # ~ var = self.get_theme_var()
         #self.log.debug("This is the Blog theme")
-        self.app.register_service('EvCal', EventsCalendar())
-        self.app.register_service('Timeline', Timeline())
-        self.srvcal = self.get_service('EvCal')
+        # ~ self.app.register_service('EvCal', EventsCalendar())
+        # ~ self.app.register_service('Timeline', Timeline())
+        # ~ self.srvcal = self.get_service('EvCal')
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
@@ -562,7 +548,6 @@ class Theme(Builder):
         var = self.get_theme_var()
         doclist = []
         documents = self.srvdtb.get_documents()
-        self.log.error(f"ALL: {len(documents)}")
         for docId in documents:
             doclist.append(docId)
         headers = []
@@ -668,7 +653,9 @@ class Theme(Builder):
             var['leader_items'].append(item)
 
         var['post'] = {}
-        var['post']['Category'] = []
+        metadata = self.srvdtb.get_doc_properties(basename_adoc)
+        for prop in metadata:
+            var['post'][prop] = metadata[prop]
         var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
         var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
         now = datetime.now()
@@ -730,7 +717,7 @@ class Theme(Builder):
             else:
                 BODY = HTML_BODY_POST.render(var=var)
         except Exception as error:
-            self.log.error(f"{basename_adoc} > {error}")
+            # ~ self.log.error(f"{basename_adoc} > {error}")
             BODY = HTML_BODY.render(var=var)
         FOOTER = HTML_FOOTER.render(var=var)
 
