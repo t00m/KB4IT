@@ -622,7 +622,10 @@ class Theme(Builder):
         exists_adoc = os.path.exists(path_adoc) # it should be true
         exists_hdoc = os.path.exists(path_hdoc) # it should be true
         repo = self.srvbes.get_repo_parameters()
-        strict = repo['strict']
+        try:
+            strict = repo['strict']
+        except KeyError:
+            strict = False
 
         if not exists_hdoc:
             self.log.error(" - Source[%s] not converted to HTML properly", basename_adoc)
