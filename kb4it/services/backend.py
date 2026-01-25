@@ -139,18 +139,9 @@ class Backend(Service):
             shutil.copy(self.kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
-            # if SORT attribute is given, use it instead of the OS timestamp
-            try:
-                self.runtime['sort_attribute'] = self.repo['sort']
-                self.runtime['sort_enabled'] = True
-            except:
-                self.runtime['sort_enabled'] = False
-                self.log.error("No property defined for sorting")
-                self.log.error("Property 'sort' not found in repo config dict")
+            self.runtime['sort_attribute'] = self.repo.get('sort')
+                self.log.error("No property 'sort' defined in repository config")
                 sys.exit(-1)
-
-            # ~ self.log.debug(f"CONF[    Sort enabled: {self.runtime['sort_enabled']}")
-            # ~ self.log.debug(f"    Sort attribute: {self.runtime['sort_attribute']}")
 
             # Initialize docs structure
             self.runtime['docs'] = {}
