@@ -140,6 +140,7 @@ class Backend(Service):
             redirect_logs(app_log_file)
 
             self.runtime['sort_attribute'] = self.repo.get('sort')
+            if self.runtime['sort_attribute'] is None:
                 self.log.error("No property 'sort' defined in repository config")
                 sys.exit(-1)
 

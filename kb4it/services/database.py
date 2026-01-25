@@ -34,13 +34,7 @@ class Database(Service):
         """Initialize database module."""
         self.srvbes = self.get_service('Backend')
         runtime = self.srvbes.get_runtime_dict()
-        self.sort_attribute = ''
-        try:
-            if runtime['sort_enabled']:
-                self.sort_attribute = runtime['sort_attribute']
-        except KeyError:
-            pass
-
+        self.sort_attribute = runtime.get('sort_attribute')
         self.sorted_docs = []
         self.keys['all'] = []
         self.keys['blocked'] = ['Title', 'SystemPage']
@@ -101,10 +95,7 @@ class Database(Service):
         """
         if len(self.sorted_docs) == 0:
             runtime = self.srvbes.get_runtime_dict()
-            if runtime['sort_enabled']:
-                self.sorted_docs = self.sort_by_date(list(self.db.keys()))
-            else:
-                self.sorted_docs = list(self.db.keys())
+            self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     # ~ # ~ @timeit
     def sort_by_date(self, doclist:list=[]):
