@@ -52,8 +52,8 @@ class Service:
         """Start service."""
         self.started = True
         self.app = app
-        conf = self.app.get_params()
-        severity = conf.log_level
+        params = self.app.get_params()
+        severity = params['log_level']
         self.log = get_logger(f"{self.modname}")
         self.initialize()
         # ~ self.log.debug(f"Service {self.modname} started")

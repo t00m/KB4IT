@@ -60,7 +60,7 @@ class Backend(Service):
 
         # Get repository config file (if any)
         try:
-            repo_config_file = self.params.config
+            repo_config_file = self.params['config']
             self.repo = json_load(repo_config_file)
             self.log.debug(f"CONF[REPO] CONFIG_FILE[ VALUE[{repo_config_file}]")
             for param in self.repo:
@@ -71,18 +71,17 @@ class Backend(Service):
             self.log.error(f"{error}")
             self.app.stop()
         except AttributeError as error:
-            self.log.error(f"Repository config couldn't be read")
-            # ~ self.log.error(f"Repository config file: {self.params.config}")
+            self.log.error(f"Repository config couldn't be parsed (probably not well formed)")
             repo_config_exists = False
+            self.app.stop()
         except Exception as error:
-            self.log.error(f"    Repository config file not found in command line params")
-            raise
+            self.log.debug(f"Repository config file not found in command line params")
             repo_config_exists = False
 
         if repo_config_exists:
             try:
-               self.params.force = self.repo['force']
-               self.log.debug(f"CONF[REPO] PARAM[force] set to {self.params.force}")
+               self.params['force'] = self.repo['force']
+               self.log.debug(f"CONF[REPO] PARAM[force] set to {self.params['force']}")
             except KeyError:
                 pass
 
@@ -461,7 +460,7 @@ class Backend(Service):
     def stage_03_00_preprocess_document_compile(self, adocId: str, keys:list):
         # Force compilation (from command line)?
         DOC_COMPILATION = False
-        FORCE_ALL = self.params.force
+        FORCE_ALL = self.params['force']
         if not FORCE_ALL:
             # Get cached document path and check if it exists
             htmlId = adocId.replace('.adoc', '.html')
@@ -541,7 +540,7 @@ class Backend(Service):
         keys_hash_differ = keys_hash_cur != keys_hash_new
         if keys_hash_differ:
             self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
-            self.params.force = True
+            self.params['force'] = True
 
         # Compiling strategy
         for filepath in self.runtime['docs']['bag']:
@@ -628,7 +627,7 @@ class Backend(Service):
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_KEY = key in self.force_keys
-            FORCE_ALL = self.params.force or FORCE_KEY
+            FORCE_ALL = self.params['force'] or FORCE_KEY
             values = self.srvdtb.get_all_values_for_key(key)
 
             # Compare keys values for the current run and the cache
@@ -737,7 +736,7 @@ class Backend(Service):
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
         # ~ params = self.app.get_app_conf()
-        with Executor(max_workers=self.params.workers) as exe:
+        with Executor(max_workers=self.params['workers']) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
@@ -756,7 +755,7 @@ class Backend(Service):
                             COMPILE = False
 
 
-                if COMPILE or self.params.force:
+                if COMPILE or self.params['force']:
                     cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
                     #self.log.debug(f"CMD[%s]", cmd)
                     data = (doc, cmd, num)

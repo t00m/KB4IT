@@ -37,7 +37,7 @@ class Workflow(Service):
         frontend = self.app.get_service('Frontend')
         params = self.app.get_params()
         initialize = False
-        theme, repo_path = params.theme, params.repo_path
+        theme, repo_path = params['theme'], params['repo_path']
         self.log.debug(f"Theme: {theme}")
         self.log.debug(f"Repository path: {repo_path}")
         theme_path = frontend.theme_search(theme=theme)

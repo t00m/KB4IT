@@ -51,19 +51,18 @@ class KB4IT:
         Register main services.
         """
 
-        suffix = str(uuid.uuid1().time)
-        self.set_log_file(suffix)
+        self.set_log_file()
         self.__setup_environment()
         if params is not None:
-            self.params = params
+            self.params = vars(params)
         else:
-            self.params = argparse.Namespace()
-            self.params.REPO_CONFIG_FILE = None
+            self.params = vars(argparse.Namespace())
+            self.params['REPO_CONFIG_FILE'] = None
 
         # Initialize log
-        if 'log_level' not in vars(self.params):
-            self.params.LOGLEVEL = 'INFO'
-        setup_logging(self.params.log_level, self.log_file)
+        if 'log_level' not in self.params:
+            self.params['LOGLEVEL'] = 'INFO'
+        setup_logging(self.params['log_level'], self.log_file)
         self.log = get_logger(__class__.__name__)
         self.log.debug(f"Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"KB4IT {ENV['APP']['version']}")
@@ -82,7 +81,8 @@ class KB4IT:
 
         self.__gonogo()
 
-    def set_log_file(self, suffix: str):
+    def set_log_file(self):
+        suffix = str(uuid.uuid1().time)
         self.log_file = f"{ENV['FILE']['LOG']}.{suffix}"
 
     def get_log_file(self):
@@ -95,8 +95,8 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
 
-        for key in vars(self.params):
-            self.log.debug(f"CONF[CMDLINE] PARAM[{key}] VALUE[{vars(self.params)[key]}]")
+        for key in self.params:
+            self.log.debug(f"CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]")
 
     def get_params(self):
         """Return app configuration"""
@@ -197,7 +197,7 @@ class KB4IT:
     def run(self):
         """Start application."""
 
-        action = self.params.action
+        action = self.params['action']
         workflow = self.get_service('Workflow')
         if action == 'themes':
             workflow.list_themes()
@@ -207,7 +207,7 @@ class KB4IT:
             workflow.build_website()
         elif action == 'apps':
             # ~ raise NotImplementedError
-            workflow.list_apps(self.params.theme)
+            workflow.list_apps(self.params['theme'])
         self.stop()
 
     def stop(self, error=False):
