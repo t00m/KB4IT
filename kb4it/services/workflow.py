@@ -9,10 +9,12 @@
 import os
 import json
 import stat
+import pprint
 
 from kb4it.core.service import Service
 from kb4it.core.util import copydir
 from kb4it.core.util import timeit
+from kb4it.core.util import json_load
 
 class Workflow(Service):
     """KB4IT workflow class."""
@@ -30,6 +32,22 @@ class Workflow(Service):
         self.log.debug(f"KB4IT action: list available apps for theme '{theme}'")
         frontend = self.get_service('Frontend')
         frontend.apps_list(theme)
+
+    def info_repository(self):
+        backend = self.app.get_service('Backend')
+        config_file = backend.get_app_param('config')
+        if config_file is not None and os.path.exists(config_file):
+            repo = json_load(config_file)
+            print(f"                     Title: {repo.get('title')}")
+            print(f"                   Tagline: {repo.get('tagline')}")
+            print(f"                Theme used: {repo.get('theme')}")
+            print(f"            Docs sorted by: {repo.get('sort')}")
+            print(f"         Force compilation: {repo.get('force')}")
+            print(f"         Number of workers: {repo.get('workers')}")
+            print(f"  Website target directory: {repo.get('target')}")
+            print(f"Documents source directory: {repo.get('source')}")
+
+
 
     def create_repository(self):
         self.log.info("KB4IT action: create new repository")

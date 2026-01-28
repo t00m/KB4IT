@@ -18,13 +18,16 @@ import time
 import uuid
 import pickle
 import shutil
+import pprint
 import hashlib
 import operator
 import subprocess
-import pprint
+import multiprocessing
+
 from pathlib import Path
 from functools import wraps
 from datetime import datetime
+
 
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
@@ -59,6 +62,14 @@ def copy_docs(docs, target):
             log.warning(f"File {doc} not found")
     # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
 
+def get_default_workers():
+    """Calculate default number or workers.
+    Workers = Number of CPU / 2
+    Minimum workers = 1
+    """
+    ncpu = multiprocessing.cpu_count()
+    workers = ncpu/2
+    return math.ceil(workers)
 
 def copydir(source, dest):
     """Copy a directory structure overwriting existing files.
@@ -79,7 +90,6 @@ def copydir(source, dest):
                 shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
             except PermissionError:
                 log.warning(f"Check permissions for file {file}")
-
 
 def get_source_docs(path: str):
     """Get asciidoc documents from a given path"""
@@ -298,6 +308,8 @@ def log_timestamp():
 def kb4it_timestamp():
     now = datetime.now()
     return now.strftime("%Y-%m-%d %H:%M:%S")
+
+
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""

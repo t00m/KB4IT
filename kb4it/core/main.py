@@ -11,10 +11,7 @@ KB4IT module. Entry point.
 
 import os
 import sys
-import json
-import math
 import uuid
-import multiprocessing
 import argparse
 import traceback
 from kb4it.core.env import ENV
@@ -29,28 +26,16 @@ from kb4it.services.builder import Builder
 from kb4it.services.workflow import Workflow
 
 
-def get_default_workers():
-    """Calculate default number or workers.
-    Workers = Number of CPU / 2
-    Minimum workers = 1
-    """
-    ncpu = multiprocessing.cpu_count()
-    workers = ncpu/2
-    return math.ceil(workers)
-
-
 class KB4IT:
     """KB4IT main class."""
     repo = {}
 
     def __init__(self, params: argparse.Namespace=None):
         """Initialize KB4IT class.
-
         Setup environment.
         Initialize main log.
         Register main services.
         """
-
         self.set_log_file()
         self.__setup_environment()
         if params is not None:
@@ -68,17 +53,12 @@ class KB4IT:
         self.log.debug(f"KB4IT {ENV['APP']['version']}")
         self.log.debug(f"CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
         self.log.debug(f"CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
+        self.log.debug(f"CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
+        self.log.debug(f"CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
 
         # Start up
-        #self.__setup_environment()
         self.__check_params()
         self.__setup_services()
-
-        #self.log.info("KB4IT %s started at %s", ENV['APP']['version'], now())
-        #self.log.debug("Log level set to %s", self.params.LOGLEVEL)
-        #self.log.debug("Process: %s (%d)", ENV['PS']['NAME'], ENV['PS']['PID'])
-        #self.log.debug("MaxWorkers: %d (default)", self.params.NUM_WORKERS)
-
         self.__gonogo()
 
     def set_log_file(self):
@@ -94,7 +74,6 @@ class KB4IT:
 
     def __check_params(self):
         """Check arguments passed to the application."""
-
         for key in self.params:
             self.log.debug(f"CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]")
 
@@ -104,16 +83,12 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-        #self.log.debug(f"CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
-        #self.log.debug(f"CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
+
 
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
                 os.makedirs(path)
-                #self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] created")
-            # ~ else:
-                # ~ self.log.debug(f"CONF[ENV] LPATH[{key}] DIR[{path}] already exists")
 
     def __setup_services(self):
         """Declare and register services."""
@@ -160,7 +135,6 @@ class KB4IT:
 
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        #self.log.debug(f"Getting service '{name}'")
         try:
             service = self.services[name]
             logname = service.__class__.__name__
@@ -171,14 +145,12 @@ class KB4IT:
             self.log.error(f"Service {name} not registered")
             self.log.error(f"\t{error}")
             self.stop(error=True)
-            #raise
-            #return None
 
     def register_service(self, name, service):
         """Register a new service."""
         try:
             self.services[name] = service
-            # ~ self.log.debug("Service[%s] registered", name)
+            self.log.debug("Service[%s] registered", name)
         except KeyError as error:
             self.log.error("%s", error)
 
@@ -187,26 +159,27 @@ class KB4IT:
         service = self.services[name]
         registered = service is not None
         started = service.is_started()
-        # ~ self.log.debug("Service[%s] - Registered[%s] / Started[%s]", name, registered, started)
         if registered and started:
             service.end()
+            self.log.debug("Service[%s] unregistered", name)
         service = None
-        #self.log.debug("Service[%s] unregistered", name)
+
 
     # ~ @timeit
     def run(self):
         """Start application."""
-
         action = self.params['action']
         workflow = self.get_service('Workflow')
+        self.log.debug(f"Executing KB4IT action '{action}'")
         if action == 'themes':
             workflow.list_themes()
         elif action == 'create':
             workflow.create_repository()
         elif action == 'build':
             workflow.build_website()
+        elif action == 'info':
+            workflow.info_repository()
         elif action == 'apps':
-            # ~ raise NotImplementedError
             workflow.list_apps(self.params['theme'])
         self.stop()
 
@@ -276,32 +249,33 @@ def main():
     theme_apps = subparsers.add_parser('apps', help='List all apps for a specific theme')
     theme_apps.add_argument('theme', help='Theme to query')
 
-    # run repository workflow
-    workflow_parser = subparsers.add_parser(
+    # Run repository workflow
+    repo_build = subparsers.add_parser(
         'build',
         help='Run workflow for a given repository',
         description='Based on your repository configuration, compile and build the website',
         epilog='Example:\n\n'
-               ' - Compile a repository with 10 workers. Do not force a clean compilation:\n'
-               '   kb4it run-workflow /home/jsmith/Documents/myrepo/config/repo.json false --workers=10\n'
+               '   kb4it build /home/jsmith/Documents/myrepo/config/repo.json'
     )
-    workflow_parser.add_argument(
+
+    repo_build.add_argument(
         'config',
         help='Path to the repository config file (mandatory)'
     )
-    workflow_parser.add_argument(
-        '-f', '--force',
-        action='store_true',
-        default=False,
-        help='Force a clean compilation'
-    )
-    workflow_parser.add_argument(
-        '-w', '--workers',
-        help=f'Number of workers. Default is CPUs available/2. Default: {get_default_workers()}',
-        type=int,
-        default=get_default_workers()
+
+    # Get repository info
+    repo_info = subparsers.add_parser(
+        'info',
+        help='Get repository info from its config file',
+        description='Based on your repository configuration, get all info available',
+        epilog='Example:\n\n'
+               '   kb4it info /home/jsmith/Documents/myrepo/config/repo.json'
     )
 
+    repo_info.add_argument(
+        'config',
+        help='Path to the repository config file (mandatory)'
+    )
 
     # Dispatch to the appropriate action handler
     try:

@@ -30,6 +30,7 @@ from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import now
 from kb4it.core.util import valid_filename
+from kb4it.core.util import get_default_workers
 from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict, get_hash_from_list
@@ -219,6 +220,12 @@ class Backend(Service):
     def get_repo_dict(self):
         """Get all properties."""
         return self.repo
+
+    def get_repo_key(self, key):
+        return self.repo.get(key)
+
+    def get_app_param(self, key):
+        return self.params.get(key)
 
     def get_runtime_parameter(self, parameter):
         """Get value for a given parameter."""
@@ -735,8 +742,10 @@ class Backend(Service):
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
-        # ~ params = self.app.get_app_conf()
-        with Executor(max_workers=self.params['workers']) as exe:
+        max_workers = self.get_repo_key('workers')
+        if max_workers is None:
+            max_workers = get_default_workers()
+        with Executor(max_workers=max_workers) as exe:
             docs = get_source_docs(self.runtime['dir']['tmp'])
             jobs = []
             jobcount = 0
