@@ -10,7 +10,6 @@ Module with the application logic.
 
 import re
 import os
-from os.path import abspath
 import sys
 import glob
 import json
@@ -54,113 +53,111 @@ class Backend(Service):
         self.kbdict_cur = {}     # Cached data
         self.force_keys = set()  # List of keys which must be compiled (forced)
 
-        # ~ self.log.debug(f"[BACKEND] - Started at {now()}")
-
         # Get params from command line
         self.params = self.app.get_params()
 
-        # Get repository config file (if any)
-        try:
-            repo_config_file = self.params['config']
-            self.repo = json_load(repo_config_file)
-            self.log.debug(f"CONF[REPO] CONFIG_FILE[ VALUE[{repo_config_file}]")
-            for param in self.repo:
-                self.log.debug(f"CONF[REPO] PARAM[{param}] VALUE[{self.repo[param]}]")
-            repo_config_exists = True
-        except FileNotFoundError as error:
-            self.log.error(f"Repository config file not found")
-            self.log.error(f"{error}")
+        # Check command line param for config file
+        config_file = self.params.get('config')
+        if config_file is None:
             self.app.stop()
-        except AttributeError as error:
-            self.log.error(f"Repository config couldn't be parsed (probably not well formed)")
-            repo_config_exists = False
-            self.app.stop()
-        except Exception as error:
-            self.log.debug(f"Repository config file not found in command line params")
-            repo_config_exists = False
 
-        if repo_config_exists:
+        # Check if it exists
+        config_path = Path(config_file).absolute()
+        if config_path.exists():
             try:
-               self.params['force'] = self.repo['force']
-               self.log.debug(f"CONF[REPO] PARAM[force] set to {self.params['force']}")
-            except KeyError:
-                pass
-
-        # Initialize runtime dictionary
-        self.runtime['dir'] = {}
-        if repo_config_exists:
-            self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
-            self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
-
-            ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
-            ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
-            ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
-            ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
-            ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-            ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-
-            PROJECT = valid_filename(self.runtime['dir']['source'])
-            WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
-            dir_src = Path(self.runtime['dir']['source'])
-            dir_root = dir_src.parent.absolute()
-            dir_var = Path.joinpath(dir_root, 'var')
-            dir_log = Path.joinpath(dir_var, 'log')
-            dir_work = Path.joinpath(dir_var, 'work')
-            dir_project = Path.joinpath(dir_work, PROJECT)
-            dir_tmp = Path.joinpath(dir_project, 'tmp')
-            dir_cache = Path.joinpath(dir_project, 'cache')
-            dir_www = Path.joinpath(dir_project, 'www')
-            dir_dist = Path.joinpath(dir_project, 'dist')
-
-            self.runtime['dir']['work'] = dir_project
-            self.runtime['dir']['tmp'] = dir_tmp
-            self.runtime['dir']['www'] = dir_www
-            self.runtime['dir']['dist'] = dir_dist
-            self.runtime['dir']['cache'] = dir_cache
-            self.runtime['dir']['log'] = dir_log
-
-            for entry in self.runtime['dir']:
-                create_directory = False
-                dirname = self.runtime['dir'][entry]
-                if entry not in ['source', 'target']:
-                    dirname = self.runtime['dir'][entry]
-                    if not os.path.exists(dirname):
-                        os.makedirs(dirname, exist_ok=True)
-                        # ~ create_directory = True
-                        # ~ self.log.debug(f"    \tCreate directory {dirname}? {create_directory}")
-
-            # Activate application log
-            app_log_file = Path.joinpath(dir_log, f"{PROJECT}.log")
-            self.set_app_log_file(app_log_file)
-            self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
-            if os.path.exists(app_log_file):
-                os.unlink(app_log_file)
-            self.kb4it_temp_log = self.app.get_log_file()
-            shutil.copy(self.kb4it_temp_log, app_log_file)
-            redirect_logs(app_log_file)
-
-            self.runtime['sort_attribute'] = self.repo.get('sort')
-            if self.runtime['sort_attribute'] is None:
-                self.log.error("No property 'sort' defined in repository config")
-                sys.exit(-1)
-
-            # Initialize docs structure
-            self.runtime['docs'] = {}
-            self.runtime['docs']['count'] = 0
-            self.runtime['docs']['bag'] = []
-            self.runtime['docs']['target'] = set()
-
-            # Load cache dictionary from last run
-            self.kbdict_cur = self.load_kbdict(self.get_cache_path())
-
-            # And initialize the new one
-            self.kbdict_new['document'] = {}
-            self.kbdict_new['metadata'] = {}
-
-            # Get services
-            self.get_services()
+                self.log.debug(f"CONF[REPO] Config file: {config_path}")
+                self.repo = json_load(config_path)
+                self.log.debug(f"CONF[REPO] Configuration loaded successfully")
+            except AttributeError as error:
+                self.log.error(f"Repository config couldn't be parsed (probably not well formed)")
+                self.log.error(error)
+                self.app.stop()
+            except Exception as error:
+                self.log.error(error)
+                self.app.stop()
         else:
-            self.runtime['dir']['source'] = '/dev/null'
+            self.log.error(f"Config path '{config_path}' does not exist")
+            self.app.stop()
+
+        root_path = config_path.parent
+        dir_source = self.repo.get('dir_source') or Path(root_path, 'source')
+        dir_target = self.repo.get('dir_target') or Path(root_path, 'target')
+
+        self.params['force'] = self.repo.get('force') or False
+
+
+        self.runtime['dir'] = {}
+        self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
+        self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
+
+        # ~ ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
+        # ~ ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
+        # ~ ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
+        # ~ ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
+        # ~ ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
+        # ~ ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
+
+        PROJECT = valid_filename(self.runtime['dir']['source'])
+        WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
+        dir_src = Path(self.runtime['dir']['source'])
+        dir_root = dir_src.parent.absolute()
+        dir_var = Path.joinpath(dir_root, 'var')
+        dir_log = Path.joinpath(dir_var, 'log')
+        dir_work = Path.joinpath(dir_var, 'work')
+        dir_project = Path.joinpath(dir_work, PROJECT)
+        dir_tmp = Path.joinpath(dir_project, 'tmp')
+        dir_cache = Path.joinpath(dir_project, 'cache')
+        dir_www = Path.joinpath(dir_project, 'www')
+        dir_dist = Path.joinpath(dir_project, 'dist')
+
+        self.runtime['dir']['work'] = dir_project
+        self.runtime['dir']['tmp'] = dir_tmp
+        self.runtime['dir']['www'] = dir_www
+        self.runtime['dir']['dist'] = dir_dist
+        self.runtime['dir']['cache'] = dir_cache
+        self.runtime['dir']['log'] = dir_log
+
+        for entry in self.runtime['dir']:
+            create_directory = False
+            dirname = self.runtime['dir'][entry]
+            if entry not in ['source', 'target']:
+                dirname = self.runtime['dir'][entry]
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname, exist_ok=True)
+                    # ~ create_directory = True
+                    # ~ self.log.debug(f"    \tCreate directory {dirname}? {create_directory}")
+
+        # Activate application log
+        app_log_file = Path.joinpath(dir_log, f"{PROJECT}.log")
+        self.set_app_log_file(app_log_file)
+        self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
+        if os.path.exists(app_log_file):
+            os.unlink(app_log_file)
+        self.kb4it_temp_log = self.app.get_log_file()
+        shutil.copy(self.kb4it_temp_log, app_log_file)
+        redirect_logs(app_log_file)
+
+        self.runtime['sort_attribute'] = self.repo.get('sort')
+        if self.runtime['sort_attribute'] is None:
+            self.log.error("No property 'sort' defined in repository config")
+            sys.exit(-1)
+
+        # Initialize docs structure
+        self.runtime['docs'] = {}
+        self.runtime['docs']['count'] = 0
+        self.runtime['docs']['bag'] = []
+        self.runtime['docs']['target'] = set()
+
+        # Load cache dictionary from last run
+        self.kbdict_cur = self.load_kbdict(self.get_cache_path())
+
+        # And initialize the new one
+        self.kbdict_new['document'] = {}
+        self.kbdict_new['metadata'] = {}
+
+        # Get services
+        self.get_services()
+
 
     def set_app_log_file(self, logfile: str):
         self.app_log_file = logfile
