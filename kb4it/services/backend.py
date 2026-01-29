@@ -151,7 +151,7 @@ class Backend(Service):
             self.runtime['docs']['target'] = set()
 
             # Load cache dictionary from last run
-            self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
+            self.kbdict_cur = self.load_kbdict(self.get_cache_path())
 
             # And initialize the new one
             self.kbdict_new['document'] = {}
@@ -172,13 +172,13 @@ class Backend(Service):
         self.repo = config['repo']
         self.runtime = config['runtime']
 
-    def load_kbdict(self, source_path):
+    def load_kbdict(self, path):
         """C0111: Missing function docstring (missing-docstring)."""
-        source_path = valid_filename(source_path)
-        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], f"kbdict-{source_path}.json")
+        path = valid_filename(path)
+        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], f"kbdict-{path}.json")
         try:
             kbdict = json_load(KB4IT_DB_FILE)
-            # ~ self.log.debug(f"[CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
+            self.log.debug(f"[CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
         except FileNotFoundError:
             kbdict = {}
             kbdict['document'] = {}
@@ -200,7 +200,7 @@ class Backend(Service):
             KB4IT_DB_FILE = os.path.join(path, f"{name}.json")
 
         json_save(KB4IT_DB_FILE, kbdict)
-        # ~ self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
+        self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
 
     def get_targets(self):
         """Get list of documents converted to pages"""
@@ -537,7 +537,7 @@ class Backend(Service):
             self.stage_03_00_preprocess_document(filepath)
 
         # Save current status for the next run
-        self.save_kbdict(self.kbdict_new, self.get_source_path())
+        self.save_kbdict(self.kbdict_new, self.get_cache_path())
 
         # Force compilation for all documents?
         # ~ self.log.debug(f"PREPROCESSING - KB Old keys: {sorted(list(self.kbdict_cur['metadata'].keys()))}")
