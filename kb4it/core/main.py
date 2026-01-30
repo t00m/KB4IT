@@ -136,10 +136,13 @@ class KB4IT:
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
         try:
+            self.log.debug(f"Getting service '{name}'")
             service = self.services[name]
             logname = service.__class__.__name__
             if not service.is_started():
                 service.start(self, name)
+                self.log.debug(f"Service '{name}' started")
+            self.log.debug(f"Service '{name}' ready")
             return service
         except Exception as error:
             self.log.error(f"Service {name} not registered")

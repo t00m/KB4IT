@@ -145,14 +145,17 @@ class Frontend(Service):
         else:
             # ~ self.log.debug(f" - \tFound directory for theme: '{theme}'")
             # Search in sources path
-            source_path = self.runtime['dir']['source']
-            theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
-            theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
+            try:
+                source_path = self.runtime['dir']['source']
+                theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
+                theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
+            except:
+                theme_path_source = ''
             theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)
             theme_path_global = os.path.join(ENV['GPATH']['THEMES'], theme)
-            # ~ self.log.debug(f" - From sources: {theme_path_source}")
-            # ~ self.log.debug(f" - From optional: {theme_path_opt}") # DEPRECATE
-            # ~ self.log.debug(f" - From global: {theme_path_global}")
+            self.log.debug(f" - From sources: {theme_path_source}")
+            self.log.debug(f" - From optional: {theme_path_opt}") # DEPRECATE
+            self.log.debug(f" - From global: {theme_path_global}")
             found = False
             for path in [theme_path_source, theme_path_opt, theme_path_global]:
                 theme_config = os.path.join(path, 'theme.json')

@@ -47,13 +47,12 @@ class Workflow(Service):
             print(f"  Website target directory: {repo.get('target')}")
             print(f"Documents source directory: {repo.get('source')}")
 
-
-
     def create_repository(self):
         self.log.info("KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
         frontend = self.app.get_service('Frontend')
         params = self.app.get_params()
+        self.log.debug(params)
         initialize = False
         theme, repo_path = params['theme'], params['repo_path']
         self.log.debug(f"Theme: {theme}")
