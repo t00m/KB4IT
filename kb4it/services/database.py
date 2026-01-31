@@ -33,7 +33,7 @@ class Database(Service):
     def initialize(self):
         """Initialize database module."""
         self.srvbes = self.get_service('Backend')
-        runtime = self.srvbes.get_runtime_dict()
+        runtime = self.srvbes.get_dict('runtime')
         self.sort_attribute = runtime.get('sort_attribute')
         self.sorted_docs = []
         self.keys['all'] = []
@@ -94,7 +94,7 @@ class Database(Service):
         Documents sorted by the given date attribute in descending order.
         """
         if len(self.sorted_docs) == 0:
-            runtime = self.srvbes.get_runtime_dict()
+            runtime = self.srvbes.get_dict('runtime')
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     # ~ # ~ @timeit

@@ -86,7 +86,7 @@ class Theme(Builder):
         TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
 
         datatable = {}
-        repo = self.srvbes.get_repo_parameters()
+        repo = self.srvbes.get_dict('repo')
         sort_attribute = repo['sort']
 
         # Add datatable hearders
@@ -154,7 +154,7 @@ class Theme(Builder):
     def build_page_index(self, var):
         """Create key page."""
         # ~ timeline = self.get_service('Timeline')
-        repo = self.srvbes.get_repo_parameters()
+        repo = self.srvbes.get_dict('repo')
         runtime = self.srvbes.get_runtime_dict()
         use_webserver = repo['webserver']
         filenames = runtime['docs']['filenames']
@@ -199,7 +199,7 @@ class Theme(Builder):
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
         TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
-        SORT = self.srvbes.get_runtime_parameter('sort_attribute')
+        SORT = self.srvbes.get_value('runtime', 'sort_attribute')
         # Get events dates
         for docId in doclist:
             props = self.srvdtb.get_doc_properties(docId)
@@ -250,7 +250,7 @@ class Theme(Builder):
             for month in self.events_docs[year]:
                 for day in self.events_docs[year][month]:
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
-                    pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_DAY)
+                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
                     must_compile_day = False
                     for docId in doclist:
@@ -304,7 +304,7 @@ class Theme(Builder):
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'SystemPage', 'Yes')
 
                 else:
-                    pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_MONTH)
+                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
                     self.distribute_html(EVENT_PAGE_MONTH, pagename)
 
         self.srvcal.set_events_days(self.dey)
@@ -331,13 +331,13 @@ class Theme(Builder):
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
-                pagename = os.path.join(self.srvbes.get_cache_path(), "%s.html" % EVENT_PAGE_YEAR)
+                pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
 
     def build_page_events(self):
         doclist = []
         ecats = {}
-        repo = self.srvbes.get_repo_parameters()
+        repo = self.srvbes.get_dict('repo')
         try:
             event_types = repo['events']
         except:
@@ -592,7 +592,7 @@ class Theme(Builder):
             self.log.error("DOC[%s] not converted to HTML properly", basename_adoc)
         else:
             #self.log.debug("DOC[%s] transformation started", basename_hdoc)
-            THEME_ID = self.srvbes.get_theme_property('id')
+            THEME_ID = self.srvbes.get_value('theme', 'id')
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
             HTML_FOOTER = self.template('HTML_FOOTER')

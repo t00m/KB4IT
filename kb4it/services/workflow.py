@@ -35,7 +35,7 @@ class Workflow(Service):
 
     def info_repository(self):
         backend = self.app.get_service('Backend')
-        config_file = backend.get_app_param('config')
+        config_file = backend.get_value('app', 'config')
         if config_file is not None and os.path.exists(config_file):
             repo = json_load(config_file)
             print(f"                     Title: {repo.get('title')}")
@@ -110,7 +110,7 @@ class Workflow(Service):
         """
         backend = self.get_service('Backend')
         backend.busy()
-        repo = backend.get_repo_parameters()
+        repo = backend.get_dict('repo')
         repo_title = repo['title']
         repo_theme = repo['theme']
         self.log.info(f"Building a website for repository '{repo_title}'")
@@ -136,9 +136,9 @@ class Workflow(Service):
         backend.stage_08_refresh_target()
         self.log.info(f"Theme post activities")
         theme.post_activities()
-        homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
+        homepage = os.path.join(os.path.abspath(backend.get_path('target')), 'index.html')
         self.log.info(f"Repository website built")
         self.log.info(f"URL: {homepage}")
-        self.log.info(f"Full log: {backend.get_app_log_file()}")
+        self.log.info(f"Full log: {backend.get_value('runtime', 'logfile')}")
         self.log.info(f"The End")
         backend.free()

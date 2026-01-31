@@ -92,32 +92,22 @@ class Backend(Service):
             self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
             self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
 
-            # ~ ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
-            # ~ ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
-            # ~ ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
-            # ~ ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
-            # ~ ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-            # ~ ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-
-            PROJECT = valid_filename(self.runtime['dir']['source'])
-            WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
-            dir_src = Path(self.runtime['dir']['source'])
+            dir_src = Path(self.get_path('source'))
             dir_root = dir_src.parent.absolute()
             dir_var = Path.joinpath(dir_root, 'var')
             dir_log = Path.joinpath(dir_var, 'log')
-            dir_work = Path.joinpath(dir_var, 'work')
-            dir_project = Path.joinpath(dir_work, PROJECT)
-            dir_tmp = Path.joinpath(dir_project, 'tmp')
-            dir_cache = Path.joinpath(dir_project, 'cache')
-            dir_www = Path.joinpath(dir_project, 'www')
-            dir_dist = Path.joinpath(dir_project, 'dist')
+            dir_tmp = Path.joinpath(dir_var, 'tmp')
+            dir_cache = Path.joinpath(dir_var, 'cache')
+            dir_www = Path.joinpath(dir_var, 'www')
+            dir_dist = Path.joinpath(dir_var, 'dist')
+            dir_db = Path.joinpath(dir_var, 'db')
 
-            self.runtime['dir']['work'] = dir_project
             self.runtime['dir']['tmp'] = dir_tmp
             self.runtime['dir']['www'] = dir_www
             self.runtime['dir']['dist'] = dir_dist
             self.runtime['dir']['cache'] = dir_cache
             self.runtime['dir']['log'] = dir_log
+            self.runtime['dir']['db'] = dir_db
 
             for entry in self.runtime['dir']:
                 create_directory = False
@@ -130,8 +120,8 @@ class Backend(Service):
                         # ~ self.log.debug(f"    \tCreate directory {dirname}? {create_directory}")
 
             # Activate application log
-            app_log_file = Path.joinpath(dir_log, f"{PROJECT}.log")
-            self.set_app_log_file(app_log_file)
+            app_log_file = Path.joinpath(dir_log, "kb4it.log")
+            self.runtime['logfile'] = app_log_file
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
@@ -151,7 +141,7 @@ class Backend(Service):
             self.runtime['docs']['target'] = set()
 
             # Load cache dictionary from last run
-            self.kbdict_cur = self.load_kbdict(self.get_cache_path())
+            self.kbdict_cur = self.load_kbdict()
 
             # And initialize the new one
             self.kbdict_new['document'] = {}
@@ -160,21 +150,47 @@ class Backend(Service):
             # Get services
             self.get_services()
 
+    def get_value(self, domain: str, key: str):
+        if domain == 'app':
+            adict = self.params
+        elif domain == 'repo':
+            adict = self.repo
+        elif domain == 'runtime':
+            adict = self.runtime
+        elif domain == 'theme':
+            adict = self.runtime['theme']
+        else:
+            return None
+        return adict.get(key)
 
-    def set_app_log_file(self, logfile: str):
-        self.app_log_file = logfile
+    def get_dict(self, domain: str) -> dict:
+        if domain == 'app':
+            return self.params
+        elif domain == 'repo':
+            return self.repo
+        elif domain == 'runtime':
+            return self.runtime
+        elif domain == 'theme':
+            return self.runtime['theme']
+        else:
+            return None
 
-    def get_app_log_file(self):
-        return self.app_log_file
+    def get_path(self, name: str):
+        return self.runtime['dir'].get(name)
 
-    def set_config(self, config: dict):
-        self.repo = config['repo']
-        self.runtime = config['runtime']
+    # ~ def set_app_log_file(self, logfile: str):
+        # ~ self.app_log_file = logfile
 
-    def load_kbdict(self, path):
+    # ~ def get_app_log_file(self):
+        # ~ return self.app_log_file
+
+    # ~ def set_config(self, config: dict):
+        # ~ self.repo = config['repo']
+        # ~ self.runtime = config['runtime']
+
+    def load_kbdict(self):
         """C0111: Missing function docstring (missing-docstring)."""
-        path = valid_filename(path)
-        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], f"kbdict-{path}.json")
+        KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
         try:
             kbdict = json_load(KB4IT_DB_FILE)
             self.log.debug(f"[CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
@@ -190,14 +206,9 @@ class Backend(Service):
         self.log.debug(f"[CONF] - Current kbdict entries: {len(kbdict)}")
         return kbdict
 
-    def save_kbdict(self, kbdict, path, name=None):
+    def save_kbdict(self, kbdict):
         """C0111: Missing function docstring (missing-docstring)."""
-        if name is None:
-            target_path = valid_filename(path)
-            KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], f"kbdict-{target_path}.json")
-        else:
-            KB4IT_DB_FILE = os.path.join(path, f"{name}.json")
-
+        KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
         json_save(KB4IT_DB_FILE, kbdict)
         self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
 
@@ -212,55 +223,9 @@ class Backend(Service):
         self.runtime['docs']['target'].add(htmlId)
         self.log.debug(f"DOC[{adocId}] targets to RESOURCE[{htmlId}]")
 
-    def get_runtime_dict(self):
-        """Get all properties."""
-        return self.runtime
-
-    def get_repo_dict(self):
-        """Get all properties."""
-        return self.repo
-
-    def get_repo_key(self, key):
-        return self.repo.get(key)
-
-    def get_app_param(self, key):
-        return self.params.get(key)
-
-    def get_runtime_parameter(self, parameter):
-        """Get value for a given parameter."""
-        return self.runtime[parameter]
-
-    def get_repo_parameters(self):
-        """Get repository parameters."""
-        return self.repo
-
-    def get_theme_properties(self):
-        """Get all properties from loaded theme."""
-        return self.runtime['theme']
-
-    def get_theme_property(self, prop):
-        """Get value for a given property from loaded theme."""
-        return self.runtime['theme'][prop]
-
-    def get_www_path(self):
-        """Get temporary target directory."""
-        return self.runtime['dir']['www']
-
-    def get_cache_path(self):
-        """Get cache path."""
-        return self.runtime['dir']['cache']
-
-    def get_source_path(self):
-        """Get asciidoctor sources path."""
-        return self.runtime['dir']['source']
-
-    def get_target_path(self):
-        """Get target path."""
-        return self.runtime['dir']['target']
-
-    def get_temp_path(self):
-        """Get temporary working path."""
-        return self.runtime['dir']['tmp']
+    # ~ def get_runtime_dict(self):
+        # ~ """Get all properties."""
+        # ~ return self.runtime
 
     def get_services(self):
         """Get services needed."""
@@ -284,43 +249,26 @@ class Backend(Service):
         """Check environment."""
         frontend = self.get_service('Frontend')
         self.log.debug(f"[CHECKS] - START")
-        self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.runtime['dir']['cache']}]")
-        self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.runtime['dir']['tmp']}]")
-        self.log.debug(f"CONF[APP] DIR[DISTRIBUTION] VALUE[{self.runtime['dir']['dist']}]")
-        self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.runtime['dir']['www']}]")
+        self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.get_path('cache')}]")
+        self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.get_path('tmp')}]")
+        self.log.debug(f"CONF[APP] DIR[DISTRIBUTION] VALUE[{self.get_path('dist')}]")
+        self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.get_path('www')}]")
 
         # Check if source directory exists. If not, stop application
-        if not os.path.exists(self.get_source_path()):
-            self.log.error(f"Source directory '{self.get_source_path()}' doesn't exist.")
+        if not os.path.exists(self.get_path('source')):
+            self.log.error(f"Source directory '{self.get_path('source')}' doesn't exist.")
             self.app.stop()
-        self.log.debug(f"CONF[APP] DIR[SOURCE] VALUE[{self.get_source_path()}]")
+        self.log.debug(f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
 
         # check if target directory exists. If not, create it:
-        if not os.path.exists(self.get_target_path()):
-            os.makedirs(self.get_target_path(), exist_ok=True)
-        self.log.debug(f"CONF[APP] DIR[TARGET] VALUE[{self.get_target_path()}]")
+        if not os.path.exists(self.get_path('target')):
+            os.makedirs(self.get_path('target'), exist_ok=True)
+        self.log.debug(f"CONF[APP] DIR[TARGET] VALUE[{self.get_path('target')}]")
 
-        if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
-            self.log.error("No config file especified")
-            self.app.stop()
-
-        # if no theme defined by params, try to autodetect it.
-        # ~ self.log.debug(f"    Paramters: {self.repo}")
-        try:
-            theme_name = self.repo['theme']
-        except KeyError:
-            theme_name = 'techdoc'
-
+        theme_name = self.get_value('repo', 'theme')
         if theme_name is None:
-            self.log.debug(f"Theme not provided. Autodetect it.")
-            theme_path = frontend.theme_search()
-            if theme_path is not None:
-                frontend.theme_load(os.path.basename(theme_path))
-                self.log.debug(f"Theme found and loaded")
-            else:
-                self.log.error(f"Theme '{theme_name}' not found")
-                self.log.error(f"[CHECKS] - END")
-                self.app.stop()
+            self.log.debug(f"Theme not provided.")
+            self.app.stop()
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
@@ -335,7 +283,7 @@ class Backend(Service):
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.debug(f"[SOURCES] - START")
-        sources_path = self.get_source_path()
+        sources_path = self.get_path('source')
 
         # Firstly, allow theme to generate documents
         self.srvthm = self.get_service('Theme')
@@ -391,7 +339,7 @@ class Backend(Service):
 
     # ~ @timeit
     def stage_03_00_preprocess_document_metadata(self, adocId: str, tolerant: bool):
-        docpath = os.path.join(self.get_source_path(), adocId)
+        docpath = os.path.join(self.get_path('source'), adocId)
         keys = get_asciidoctor_attributes(docpath, tolerant)
 
         # If document doesn't have a title, skip it.
@@ -405,10 +353,11 @@ class Backend(Service):
         self.log.debug(f"DOC[{adocId}] has {len(keys)} keys")
         return keys
 
-    def get_sort_attribute(self):
-        runtime = self.get_runtime_dict()
-        sort_attribute = runtime['sort_attribute']
-        return sort_attribute
+    # ~ def get_sort_attribute(self):
+        # ~ return self.runtime.get('sort_attribute')
+        # ~ runtime = self.get_runtime_dict()
+        # ~ sort_attribute = runtime['sort_attribute']
+        # ~ return sort_attribute
 
     # ~ @timeit
     def stage_03_00_preprocess_document_hashes(self, adocId: str, keys: list):
@@ -417,7 +366,7 @@ class Backend(Service):
         # compiled again. Very useful to reduce the compilation time.
 
         # Get Document Content and Metadata Hashes
-        source_file = os.path.join(self.get_source_path(), adocId)
+        source_file = os.path.join(self.get_path('source'), adocId)
         content_hash = get_hash_from_file(source_file)
         metadata_hash = get_hash_from_dict(keys)
         self.kbdict_new['document'][adocId]['content_hash'] = content_hash
@@ -470,7 +419,7 @@ class Backend(Service):
         if not FORCE_ALL:
             # Get cached document path and check if it exists
             htmlId = adocId.replace('.adoc', '.html')
-            cached_document = os.path.join(self.runtime['dir']['cache'], htmlId)
+            cached_document = os.path.join(self.get_path('cache'), htmlId)
             cached_document_exists = os.path.exists(cached_document)
 
             # Compare the document with the one in the cache
@@ -502,9 +451,9 @@ class Backend(Service):
 
         if COMPILE:
             # Write new adoc to temporary dir
-            source_path = os.path.join(self.get_source_path(), adocId)
+            source_path = os.path.join(self.get_path('source'), adocId)
             content = open(source_path).read()
-            target = f"{self.runtime['dir']['tmp']}/{valid_filename(adocId)}"
+            target = f"{self.get_path('tmp')}/{valid_filename(adocId)}"
             with open(target, 'w') as target_adoc:
                 target_adoc.write(content)
 
@@ -536,7 +485,7 @@ class Backend(Service):
             self.stage_03_00_preprocess_document(filepath)
 
         # Save current status for the next run
-        self.save_kbdict(self.kbdict_new, self.get_cache_path())
+        self.save_kbdict(self.kbdict_new)
 
         # Force compilation for all documents?
         # ~ self.log.debug(f"PREPROCESSING - KB Old keys: {sorted(list(self.kbdict_cur['metadata'].keys()))}")
@@ -672,7 +621,7 @@ class Backend(Service):
         and CPU.
         """
         self.log.debug(f"[PROCESSING] - START")
-        repo = self.get_repo_parameters()
+        repo = self.get_dict('repo')
         all_keys = set(self.srvdtb.get_all_keys())
         ign_default_keys = set(self.srvdtb.get_ignored_keys())
         ign_theme_keys = set(repo['ignored_keys'])
@@ -719,7 +668,7 @@ class Backend(Service):
 
         # copy online resources to target path
         # ~ resources_dir_source = GPATH['THEMES']
-        resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
+        resources_dir_tmp = os.path.join(self.get_path('tmp'), 'resources')
         #if path already exists, remove it before copying with copytree()
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
@@ -731,7 +680,7 @@ class Backend(Service):
             self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
             if ENV['CONF']['ADOCPROPS'][prop] is not None:
                 if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
-                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_target_path())
+                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_path('target'))
                 else:
                     adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
             else:
@@ -741,11 +690,11 @@ class Backend(Service):
 
         # ~ distributed = self.srvthm.get_distributed()
         distributed = self.get_targets()
-        max_workers = self.get_repo_key('workers')
+        max_workers = self.get_value('repo', 'workers')
         if max_workers is None:
             max_workers = get_default_workers()
         with Executor(max_workers=max_workers) as exe:
-            docs = get_source_docs(self.runtime['dir']['tmp'])
+            docs = get_source_docs(self.get_path('tmp'))
             jobs = []
             jobcount = 0
             num = 1
@@ -754,8 +703,8 @@ class Backend(Service):
                 COMPILE = True
                 basename = os.path.basename(doc)
                 if basename in distributed:
-                    distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
-                    cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
+                    distributed_file = os.path.join(self.get_path('dist'), basename)
+                    cached_file = os.path.join(self.get_path('cache'), basename.replace('.adoc', '.html'))
                     if os.path.exists(distributed_file) and os.path.exists(cached_file):
                         cached_hash = get_hash_from_file(distributed_file)
                         current_hash = get_hash_from_file(doc)
@@ -764,7 +713,7 @@ class Backend(Service):
 
 
                 if COMPILE or self.params['force']:
-                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
+                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.get_path('tmp'), doc)
                     #self.log.debug(f"CMD[%s]", cmd)
                     data = (doc, cmd, num)
                     self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
@@ -839,15 +788,15 @@ class Backend(Service):
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.debug(f"[CLEANUP] - START")
-        pattern = os.path.join(self.get_source_path(), '*.*')
+        pattern = os.path.join(self.get_path('source'), '*.*')
         extra = glob.glob(pattern)
-        copy_docs(extra, self.get_cache_path())
-        delete_target_contents(self.runtime['dir']['dist'])
+        copy_docs(extra, self.get_path('cache'))
+        delete_target_contents(self.get_path('dist'))
         self.log.debug(f"Distributed files deleted")
         distributed = self.get_targets()
         for adoc in distributed:
-            source = os.path.join(self.runtime['dir']['tmp'], adoc)
-            target = self.runtime['dir']['www']
+            source = os.path.join(self.get_path('tmp'), adoc)
+            target = self.get_path('www')
             try:
                 shutil.copy(source, target)
             except Exception as warning:
@@ -857,8 +806,8 @@ class Backend(Service):
                 pass
         self.log.debug(f"Copy temporary files to distributed directory")
 
-        delete_target_contents(self.get_target_path())
-        self.log.debug(f"Deleted target contents in: %s", self.get_target_path())
+        delete_target_contents(self.get_path('target'))
+        self.log.debug(f"Deleted target contents in: %s", self.get_path('target'))
         self.log.debug(f"[CLEANUP]")
 
     # ~ @timeit
@@ -866,25 +815,25 @@ class Backend(Service):
         """Refresh target."""
         self.log.debug(f"[INSTALL] - START")
         # Copy asciidocs documents to target path
-        pattern = os.path.join(self.get_source_path(), '*.adoc')
+        pattern = os.path.join(self.get_path('source'), '*.adoc')
         files = glob.glob(pattern)
-        docsdir = os.path.join(self.get_target_path(), 'sources')
+        docsdir = os.path.join(self.get_path('target'), 'sources')
         os.makedirs(docsdir, exist_ok=True)
         copy_docs(files, docsdir)
         self.log.debug(f"STATS - Copied {len(files)} asciidoctor sources to target path")
 
         # Copy compiled documents to cache path
-        pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
+        pattern = os.path.join(self.get_path('tmp'), '*.html')
         files = glob.glob(pattern)
-        copy_docs(files, self.runtime['dir']['cache'])
+        copy_docs(files, self.get_path('cache'))
         # ~ for file in files:
             # ~ self.log.debug(f"[INSTALL] - \tCopied '{os.path.basename(file)}' from temporary path to cache path")
         self.log.debug(f"STATS - Copied {len(files)} html files from temporary path to cache path")
 
         # Copy objects in temporary target to cache path
-        pattern = os.path.join(self.runtime['dir']['tmp'], '*.*')
+        pattern = os.path.join(self.get_path('tmp'), '*.*')
         files = glob.glob(pattern)
-        copy_docs(files, self.runtime['dir']['cache'])
+        copy_docs(files, self.get_path('cache'))
         #for file in files:
         #    self.log.debug(f"[INSTALL] - \tCopied '{os.path.basename(file)}' from temporary target to cache path")
         self.log.debug(f"STATS - Copied {len(files)} html files from temporary target to cache path")
@@ -892,8 +841,8 @@ class Backend(Service):
         # Copy cached documents to target path
         n = 0
         for filename in sorted(self.runtime['docs']['target']):
-            source = os.path.join(self.runtime['dir']['cache'], filename)
-            target = os.path.join(self.get_target_path(), filename)
+            source = os.path.join(self.get_path('cache'), filename)
+            target = os.path.join(self.get_path('target'), filename)
             try:
                 shutil.copy(source, target)
                 # ~ self.log.debug(f"%s -> %s", os.path.basename(source), os.path.basename(target))
@@ -905,9 +854,9 @@ class Backend(Service):
         self.log.debug(f"STATS - Copied {n} cached documents successfully to target path")
 
         # Copy global resources to target path
-        resources_dir_target = os.path.join(self.get_target_path(), 'resources')
+        resources_dir_target = os.path.join(self.get_path('target'), 'resources')
         theme_target_dir = os.path.join(resources_dir_target, 'themes')
-        theme = self.get_theme_properties()
+        theme = self.get_dict('theme')
         DEFAULT_THEME = os.path.join(ENV['GPATH']['THEMES'], 'default')
         CUSTOM_THEME_ID = theme['id']
         CUSTOM_THEME_PATH = theme['path']
@@ -917,73 +866,37 @@ class Backend(Service):
         self.log.debug("STATS - Copied global resources to target path")
 
         # Copy local resources to target path
-        source_resources_dir = os.path.join(self.get_source_path(), 'resources')
+        source_resources_dir = os.path.join(self.get_path('source'), 'resources')
         if os.path.exists(source_resources_dir):
-            resources_dir_target = os.path.join(self.get_target_path(), 'resources')
+            resources_dir_target = os.path.join(self.get_path('target'), 'resources')
             copydir(source_resources_dir, resources_dir_target)
             self.log.debug(f"Copied local resources to target path")
         # ~ self.log.info("STATS - Copied local resources to target path")
 
         # Copy back all HTML files from target to cache
-        delete_target_contents(self.runtime['dir']['cache'])
-        pattern = os.path.join(self.get_target_path(), '*.html')
+        delete_target_contents(self.get_path('cache'))
+        pattern = os.path.join(self.get_path('target'), '*.html')
         html_files = glob.glob(pattern)
-        copy_docs(html_files, self.runtime['dir']['cache'])
+        copy_docs(html_files, self.get_path('cache'))
         self.log.debug("Copying HTML files back to cache...")
 
         # Copy JSON database to target path so it can be queried from
         # others applications
-        self.save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
-        self.log.debug("Copied JSON database to target")
+        # ~ self.save_kbdict(self.kbdict_new, self.get_path('target'), 'kb4it')
+        # ~ self.log.debug("Copied JSON database to target")
         self.log.debug(f"[INSTALL] - END")
 
     def cleanup(self):
         """Clean KB4IT temporary environment.
         """
         try:
-            delete_target_contents(self.runtime['dir']['tmp'])
-            delete_target_contents(self.runtime['dir']['www'])
-            delete_target_contents(self.runtime['dir']['dist'])
+            delete_target_contents(self.get_path('tmp'))
+            delete_target_contents(self.get_path('www'))
+            delete_target_contents(self.get_path('dist'))
             os.unlink(self.kb4it_temp_log)
             pass
         except Exception as KeyError:
             pass
-        # ~ self.log.debug(f"[CLEANUP] - KB4IT Workspace clean")
-
-    # ~ def reset(self):
-        # ~ """WARNING.
-        # ~ Reset environment given source and target directories.
-        # ~ Delete:
-        # ~ - Source directory
-        # ~ - Target directory
-        # ~ - Temporary directory
-        # ~ - Cache directory
-        # ~ - KB4IT database file for this environment
-        # ~ WARNING!!!
-        # ~ Please, note: if you pass the wrong directory...
-        # ~ """
-        # ~ self.kbdict_new = {}
-        # ~ self.kbdict_cur = {}
-        # ~ filename = valid_filename(self.get_source_path())
-        # ~ kdbdict = 'kbdict-%s.json' % filename
-        # ~ KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], kdbdict)
-
-        # ~ delete_target_contents(self.runtime['dir']['cache'])
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.runtime['dir']['cache'])
-
-        # ~ delete_target_contents(self.runtime['dir']['tmp'])
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.runtime['dir']['tmp'])
-
-        # ~ delete_target_contents(self.get_source_path())
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.get_source_path())
-
-        # ~ delete_target_contents(self.get_target_path())
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.get_target_path())
-
-        # ~ delete_target_contents(KB4IT_DB_FILE)
-        # ~ self.log.debug(f"[RESET] - FILE[%s] deleted", KB4IT_DB_FILE)
-
-        # ~ self.log.debug(f"[RESET] - KB4IT environment reset")
 
     def run(self):
         """Start script execution following this flow.
@@ -1002,37 +915,10 @@ class Backend(Service):
         """Return current execution status."""
         return self.running
 
-    # ~ def delete_document(self, adoc):
-        # ~ """Remove a document from database and also from cache."""
-        # ~ # Remove source document
-        # ~ try:
-            # ~ source_dir = self.get_source_path()
-            # ~ source_path = os.path.join(source_dir, "%s.adoc" % adoc)
-            # ~ os.unlink(source_path)
-            # ~ self.log.debug(f"DOC[%s] deleted from source directory", adoc)
-        # ~ except FileNotFoundError:
-            # ~ self.log.debug(f"DOC[%s] not found in source directory", adoc)
-
-        # ~ # Remove database document
-        # ~ self.srvdtb.del_document(adoc)
-        # ~ self.log.debug(f"DOC[%s] deleted from database", adoc)
-
-        # ~ # Remove cache document
-        # ~ cache_dir = self.get_cache_path()
-        # ~ cached_path = os.path.join(cache_dir, "%s.html" % adoc)
-        # ~ try:
-            # ~ os.unlink(cached_path)
-            # ~ self.log.debug(f"DOC[%s] deleted from cache directory", adoc)
-        # ~ except FileNotFoundError:
-            # ~ self.log.debug(f"DOC[%s] not found in cache directory", adoc)
-
     def busy(self):
         self.running = True
 
     def free(self):
-        # Cache Manager Stats
-        # ~ self.cache.print_cache_report()
-        # ~ pprint.pprint(self.cache.get_new())
         self.running = False
 
     def end(self):

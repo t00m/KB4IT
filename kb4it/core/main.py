@@ -59,7 +59,6 @@ class KB4IT:
         # Start up
         self.__check_params()
         self.__setup_services()
-        self.__gonogo()
 
     def set_log_file(self):
         suffix = str(uuid.uuid1().time)
@@ -83,8 +82,6 @@ class KB4IT:
 
     def __setup_environment(self):
         """Set up KB4IT environment."""
-
-
         # Create local paths if they do not exist
         for key, path in ENV['LPATH'].items():
             if not os.path.exists(path):
@@ -102,32 +99,6 @@ class KB4IT:
         }
         for name, klass in services.items():
             self.register_service(name, klass)
-
-    def __gonogo(self):
-        """Go/No-Go decision making"""
-        can_run = False
-        no_go_reason = ''
-        PIDFILE = os.path.join(ENV['LPATH']['VAR'], 'kb4it.pid')
-        if os.path.exists(PIDFILE):
-            pid = open(PIDFILE, 'r').read()
-            if os.path.exists('/proc/%s'):
-                can_run = False
-                no_go_reason = 'Previous process (%s) still running?' % pid
-            else:
-                can_run = True
-        else:
-            # Previous Pid file doesn't exist. Continue
-            can_run = True
-
-        if can_run:
-            # Write current Pid to file
-            PIDNUM = ENV['SYS']['PS']['PID']
-            with open(PIDFILE, 'w') as fpid:
-                fpid.write(str(PIDNUM))
-            self.log.debug(f"CONF[ENV] PID[{PIDNUM}] FILE[{PIDFILE}]")
-        else:
-            self.log.error(f"{no_go_reason}")
-            self.stop()
 
     def get_services(self):
         """Get all registered services"""

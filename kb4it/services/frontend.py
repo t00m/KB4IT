@@ -32,8 +32,8 @@ class Frontend(Service):
 
     def initialize(self):
         """"""
-        backend = self.get_service('Backend')
-        self.runtime = backend.get_runtime_dict()
+        self.srvbes = self.get_service('Backend')
+        self.runtime = self.srvbes.get_dict('runtime')
 
     def theme_list(self):
         self.log.debug(" - List of themes available")
@@ -133,7 +133,7 @@ class Frontend(Service):
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug(" - Autodetecting theme from source path")
-            source_path = self.runtime['dir']['source']
+            source_path = self.get_path('source')
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
@@ -146,7 +146,7 @@ class Frontend(Service):
             # ~ self.log.debug(f" - \tFound directory for theme: '{theme}'")
             # Search in sources path
             try:
-                source_path = self.runtime['dir']['source']
+                source_path = self.get_path('source')
                 theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
                 theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
             except:

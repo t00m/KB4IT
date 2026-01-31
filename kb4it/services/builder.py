@@ -46,7 +46,7 @@ class Builder(Service):
         pass
 
     def distribute_html(self, adocId, htmlId):
-        shutil.copy(htmlId, self.srvbes.get_www_path())
+        shutil.copy(htmlId, self.srvbes.get_path('www'))
         # Add compiled page to the target list
         self.srvbes.add_target(adocId, os.path.basename(htmlId))
         #self.log.debug(f"DOC[{adocId}] targeting RESOURCE[{os.path.basename(htmlId)}] was copied to temporary target directory")
@@ -60,7 +60,7 @@ class Builder(Service):
         """
         ADOC_NAME = "%s.adoc" % name
         #self.log.debug(f"DOC[{ADOC_NAME}] received")
-        PAGE_PATH = os.path.join(self.srvbes.get_temp_path(), ADOC_NAME)
+        PAGE_PATH = os.path.join(self.srvbes.get_path('tmp'), ADOC_NAME)
         with open(PAGE_PATH, 'w') as fpag:
             try:
                 fpag.write(content)
@@ -74,7 +74,7 @@ class Builder(Service):
 
     def template(self, template):
         """Return the template content from chosen theme"""
-        runtime = self.srvbes.get_runtime_dict()
+        runtime = self.srvbes.get_dict('runtime')
         theme = runtime['theme']
         current_theme = theme['id']
         TEMPLATE_FOUND = False
@@ -113,10 +113,10 @@ class Builder(Service):
         # FIXME: concurrent.futures MemoryError
         # https://stackoverflow.com/questions/37445540/memory-usage-with-concurrent-futures-threadpoolexecutor-in-python3
         """Create a new variable for rendering templates."""
-        repo = self.srvbes.get_repo_parameters()
+        repo = self.srvbes.get_dict('repo')
         theme_var = {}
-        theme_var['theme'] = self.srvbes.get_theme_properties()
-        theme_var['repo'] = self.srvbes.get_repo_parameters()
+        theme_var['theme'] = self.srvbes.get_dict('theme')
+        theme_var['repo'] = self.srvbes.get_dict('repo')
         theme_var['env'] = ENV
         theme_var['conf'] = self.app.get_params()
         theme_var['page'] = {}
