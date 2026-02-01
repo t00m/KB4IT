@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
@@ -79,7 +78,7 @@ class Workflow(Service):
             bin_dir = os.path.join(repo_path, 'bin')
             script = os.path.join(bin_dir, 'compile.sh')
             config_file = os.path.join(repo_path, 'config', 'repo.json')
-            with open(config_file, 'r') as fc:
+            with open(config_file) as fc:
                 repoconf = json.load(fc)
             repoconf['source'] = source_dir
             repoconf['target'] = target_dir

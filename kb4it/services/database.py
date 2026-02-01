@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
@@ -158,11 +157,11 @@ class Database(Service):
                         props[key] = self.db[docId][key]
                         n = 0
                         for value in self.db[docId][key]:
-                            key_value_url = "%s_%s_Url" % (key, value)
-                            props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
+                            key_value_url = "{}_{}_Url".format(key, value)
+                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
 
                             key_value_url = "%s_%d_Url" % (key, n)
-                            props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
+                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
                             n += 1
             except Exception as warning:
                 # FIXME: Document why it is not necessary

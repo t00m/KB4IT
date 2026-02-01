@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 CacheManager - Intelligent caching system for KB4IT
@@ -101,7 +100,7 @@ class CacheManager:
             return
 
         try:
-            with open(self.db_file, 'r', encoding='utf-8') as f:
+            with open(self.db_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             self._cache = {

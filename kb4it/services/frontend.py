@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Module with the application logic.
@@ -101,7 +100,7 @@ class Frontend(Service):
         else:
             # load theme configuration
             try:
-                with open(theme_conf, 'r') as fth:
+                with open(theme_conf) as fth:
                     theme = json.load(fth)
                     for prop in theme:
                         self.runtime['theme'][prop] = theme[prop]

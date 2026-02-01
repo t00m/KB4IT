@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Module with the application logic.
@@ -680,9 +679,9 @@ class Backend(Service):
             self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
             if ENV['CONF']['ADOCPROPS'][prop] is not None:
                 if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
-                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_path('target'))
+                    adocprops += '-a {}={} '.format(prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_path('target'))
                 else:
-                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
+                    adocprops += '-a {}={} '.format(prop, ENV['CONF']['ADOCPROPS'][prop])
             else:
                 adocprops += '-a %s ' % prop
         self.runtime['adocprops'] = adocprops
@@ -713,7 +712,7 @@ class Backend(Service):
 
 
                 if COMPILE or self.params['force']:
-                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.get_path('tmp'), doc)
+                    cmd = "asciidoctor -q -s {} -b html5 -D {} {}".format(adocprops, self.get_path('tmp'), doc)
                     #self.log.debug(f"CMD[%s]", cmd)
                     data = (doc, cmd, num)
                     self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
@@ -741,7 +740,7 @@ class Backend(Service):
                 duration = comptime.seconds
                 if duration == 0:
                     duration = 1
-                avgspeed = int(((num - 1) / duration))
+                avgspeed = int((num - 1) / duration)
                 pct = int(jobcount * 100 / len(docs))
                 self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
                 self.log.debug(f"STATS - Compilation time: {comptime.seconds} seconds")

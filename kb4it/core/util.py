@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 """
 Utils functions used along the project.
@@ -207,7 +206,7 @@ def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
     basename = os.path.basename(docpath)
     props = {}
     try:
-        lines = open(docpath, 'r').readlines()
+        lines = open(docpath).readlines()
         title_found = False
         title_line = lines[0]
         if title_line.startswith('= '):

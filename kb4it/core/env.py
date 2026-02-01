@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 Environment module.
 
@@ -50,7 +49,7 @@ except AttributeError:
 pid = os.getpid()
 ENV['SYS']['PS'] = {}
 ENV['SYS']['PS']['PID'] = os.getpid()
-ENV['SYS']['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read().strip()
+ENV['SYS']['PS']['NAME'] = open('/proc/%d/comm' % pid).read().strip()
 
 # Configuration
 ENV['CONF'] = {}
