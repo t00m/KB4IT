@@ -19,6 +19,7 @@ import pickle
 import shutil
 import pprint
 import hashlib
+import pathlib
 import operator
 import subprocess
 import multiprocessing
@@ -92,19 +93,8 @@ def copydir(source, dest):
 
 def get_source_docs(path: str):
     """Get asciidoc documents from a given path"""
-    if isinstance(path, Path):
-        path = str(path)
-
-    if path[:-1] != os.path.sep:
-        path = path + os.path.sep
-
-    pattern = os.path.join(path) + '*.adoc'
-    docs = glob.glob(pattern)
-    docs.sort(key=lambda y: y.lower())
-    #log.debug("Found %d asciidoctor documents", len(docs))
-
-    return docs
-
+    pattern = os.path.join(path, '*.adoc')
+    return glob.glob(pattern)
 
 def exec_cmd(data):
     """Execute an operating system command.

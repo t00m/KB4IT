@@ -407,12 +407,13 @@ class Theme(Builder):
         var = self.get_theme_var()
         var['buttons'] = []
         for key in all_keys:
-            ignored_keys = self.srvbes.get_ignored_keys()
+            ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
                 vbtn = {}
                 vbtn['content'] = self.build_tagcloud_from_key(key)
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
+                self.log.debug(f"KEY[{key}] Frequency[{frequency}]: {values}")
                 size = get_font_size(frequency, max_frequency)
                 proportion = int(math.log((frequency * 100) / max_frequency))
                 vbtn['key'] = key

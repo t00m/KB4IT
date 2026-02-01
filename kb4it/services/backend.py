@@ -45,8 +45,6 @@ class Backend(Service):
 
     def initialize(self):
         """Initialize application structure."""
-
-        self.running = False     # Backend running?
         self.runtime = {}        # Dictionary of runtime properties
         self.kbdict_new = {}     # New compilation cache
         self.kbdict_cur = {}     # Cached data
@@ -137,7 +135,7 @@ class Backend(Service):
             self.runtime['docs'] = {}
             self.runtime['docs']['count'] = 0
             self.runtime['docs']['bag'] = []
-            self.runtime['docs']['target'] = set()
+            self.runtime['docs']['targets'] = set()
 
             # Load cache dictionary from last run
             self.kbdict_cur = self.load_kbdict()
@@ -152,6 +150,8 @@ class Backend(Service):
     def get_value(self, domain: str, key: str):
         if domain == 'app':
             adict = self.params
+        elif domain == 'docs':
+            adict = self.runtime['docs']
         elif domain == 'repo':
             adict = self.repo
         elif domain == 'runtime':
@@ -165,6 +165,8 @@ class Backend(Service):
     def get_dict(self, domain: str) -> dict:
         if domain == 'app':
             return self.params
+        elif domain == 'docs':
+            return self.runtime['docs']
         elif domain == 'repo':
             return self.repo
         elif domain == 'runtime':
@@ -176,16 +178,6 @@ class Backend(Service):
 
     def get_path(self, name: str):
         return self.runtime['dir'].get(name)
-
-    # ~ def set_app_log_file(self, logfile: str):
-        # ~ self.app_log_file = logfile
-
-    # ~ def get_app_log_file(self):
-        # ~ return self.app_log_file
-
-    # ~ def set_config(self, config: dict):
-        # ~ self.repo = config['repo']
-        # ~ self.runtime = config['runtime']
 
     def load_kbdict(self):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -211,37 +203,17 @@ class Backend(Service):
         json_save(KB4IT_DB_FILE, kbdict)
         self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
 
-    def get_targets(self):
-        """Get list of documents converted to pages"""
-        return self.runtime['docs']['target']
-
     def add_target(self, adocId, htmlId):
         """All objects received by this method will be appended to the
         list of objects that will be copied to the target directory.
         """
-        self.runtime['docs']['target'].add(htmlId)
+        self.runtime['docs']['targets'].add(htmlId)
         self.log.debug(f"DOC[{adocId}] targets to RESOURCE[{htmlId}]")
-
-    # ~ def get_runtime_dict(self):
-        # ~ """Get all properties."""
-        # ~ return self.runtime
 
     def get_services(self):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
-
-    def get_numdocs(self):
-        """Get current number of valid documents."""
-        return self.runtime['docs']['count']
-
-    def get_documents(self):
-        """Get current number of valid documents."""
-        try:
-            return self.runtime['docs']['bag']
-        except:
-            self.log.warning("Runtime dictionary not yet initialiased")
-            return []
 
     # ~ @timeit
     def stage_01_check_environment(self):
@@ -316,10 +288,6 @@ class Backend(Service):
             self.log.error(f"DOC[{adocId}] not compliant: no keys found")
             return
 
-        # Get content
-        # ~ with open(filepath) as source_adoc:
-            # ~ content = source_adoc.read()
-
         # Add to cache
         # Old cache
         self.kbdict_new['document'][adocId] = {}
@@ -351,12 +319,6 @@ class Backend(Service):
 
         self.log.debug(f"DOC[{adocId}] has {len(keys)} keys")
         return keys
-
-    # ~ def get_sort_attribute(self):
-        # ~ return self.runtime.get('sort_attribute')
-        # ~ runtime = self.get_runtime_dict()
-        # ~ sort_attribute = runtime['sort_attribute']
-        # ~ return sort_attribute
 
     # ~ @timeit
     def stage_03_00_preprocess_document_hashes(self, adocId: str, keys: list):
@@ -516,17 +478,14 @@ class Backend(Service):
             else:
                 keep_docs += 1
         self.log.debug(f"STATS - Keep: {keep_docs} - Compile: {compile_docs}")
-        #if compile_docs == 0:
-        #    self.log.debug(f"    - No changes in the repository")
-        #else:
-        #    if compile_docs < keep_docs:
-        #        self.log.info(f"    - There are changes in the repository. {compile_docs} documents will be compiled again")
-        #    else:
-        #        self.log.info(f"[PREPROCESSING] - All documents will be compiled again")
+        if compile_docs == 0:
+            self.log.debug(f"[PREPROCESSING] - No changes in the repository")
+        else:
+            if compile_docs < keep_docs:
+                self.log.debug(f"[PREPROCESSING] - There are changes in the repository. {compile_docs} documents will be compiled again")
+            else:
+                self.log.debug(f"[PREPROCESSING] - All documents will be compiled again")
         self.log.debug(f"[PREPROCESSING] - END")
-
-    def get_ignored_keys(self):
-        return self.ignored_keys
 
     def get_kb_dict(self):
         return self.kbdict_new
@@ -622,10 +581,8 @@ class Backend(Service):
         self.log.debug(f"[PROCESSING] - START")
         repo = self.get_dict('repo')
         all_keys = set(self.srvdtb.get_all_keys())
-        ign_default_keys = set(self.srvdtb.get_ignored_keys())
-        ign_theme_keys = set(repo['ignored_keys'])
-        self.ignored_keys = ign_default_keys.union(ign_theme_keys)
-        available_keys = list(all_keys - self.ignored_keys)
+        ignored_keys = self.srvdtb.get_ignored_keys()
+        available_keys = list(all_keys - set(ignored_keys))
         self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
 
         # Keys
@@ -657,7 +614,7 @@ class Backend(Service):
         self.log.debug(f"STATS - {keys_with_compile_true} keys will be compiled")
         self.log.debug(f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
         self.log.debug(f"STATS - Finish processing keys")
-        self.log.debug(f"STATS - Target docs: {len(self.runtime['docs']['target'])}")
+        self.log.debug(f"STATS - Target docs: {len(self.runtime['docs']['targets'])}")
         self.log.debug(f"[PROCESSINNG] - END")
 
     # ~ @timeit
@@ -688,10 +645,11 @@ class Backend(Service):
         #self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
         # ~ distributed = self.srvthm.get_distributed()
-        distributed = self.get_targets()
+        distributed = self.get_value('docs', 'targets')
         max_workers = self.get_value('repo', 'workers')
         if max_workers is None:
             max_workers = get_default_workers()
+        self.log.debug(f"Number or compiling workers: {max_workers}")
         with Executor(max_workers=max_workers) as exe:
             docs = get_source_docs(self.get_path('tmp'))
             jobs = []
@@ -792,7 +750,7 @@ class Backend(Service):
         copy_docs(extra, self.get_path('cache'))
         delete_target_contents(self.get_path('dist'))
         self.log.debug(f"Distributed files deleted")
-        distributed = self.get_targets()
+        distributed = self.get_value('docs', 'targets')
         for adoc in distributed:
             source = os.path.join(self.get_path('tmp'), adoc)
             target = self.get_path('www')
@@ -839,7 +797,7 @@ class Backend(Service):
 
         # Copy cached documents to target path
         n = 0
-        for filename in sorted(self.runtime['docs']['target']):
+        for filename in sorted(self.runtime['docs']['targets']):
             source = os.path.join(self.get_path('cache'), filename)
             target = os.path.join(self.get_path('target'), filename)
             try:
@@ -886,8 +844,7 @@ class Backend(Service):
         self.log.debug(f"[INSTALL] - END")
 
     def cleanup(self):
-        """Clean KB4IT temporary environment.
-        """
+        """Clean KB4IT temporary environment."""
         try:
             delete_target_contents(self.get_path('tmp'))
             delete_target_contents(self.get_path('www'))
@@ -897,29 +854,5 @@ class Backend(Service):
         except Exception as KeyError:
             pass
 
-    def run(self):
-        """Start script execution following this flow.
-        1. Check environment
-        2. Get source documents
-        3. Preprocess documents (get metadata)
-        4. Process documents in a temporary dir
-        5. Compile documents to html with asciidoctor
-        6. Delete contents of target directory (if any)
-        7. Refresh target directory
-        8. Remove temporary directory
-        """
-        self.running = True
-
-    def is_running(self):
-        """Return current execution status."""
-        return self.running
-
-    def busy(self):
-        self.running = True
-
-    def free(self):
-        self.running = False
-
-    def end(self):
+    def finalize(self):
         self.cleanup()
-        pass

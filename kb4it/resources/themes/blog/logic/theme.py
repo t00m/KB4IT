@@ -439,7 +439,7 @@ class Theme(Builder):
         var = self.get_theme_var()
         var['buttons'] = []
         for key in all_keys:
-            ignored_keys = self.srvbes.get_ignored_keys()
+            ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
                 vbtn = {}
                 vbtn['content'] = self.build_tagcloud_from_key(key)

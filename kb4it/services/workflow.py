@@ -108,7 +108,7 @@ class Workflow(Service):
         8. Remove temporary directory
         """
         backend = self.get_service('Backend')
-        backend.busy()
+        # ~ backend.busy()
         repo = backend.get_dict('repo')
         repo_title = repo['title']
         repo_theme = repo['theme']
@@ -140,4 +140,4 @@ class Workflow(Service):
         self.log.info(f"URL: {homepage}")
         self.log.info(f"Full log: {backend.get_value('runtime', 'logfile')}")
         self.log.info(f"The End")
-        backend.free()
+        # ~ backend.free()
