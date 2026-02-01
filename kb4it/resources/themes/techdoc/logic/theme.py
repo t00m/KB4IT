@@ -155,7 +155,7 @@ class Theme(Builder):
         """Create key page."""
         # ~ timeline = self.get_service('Timeline')
         repo = self.srvbes.get_dict('repo')
-        runtime = self.srvbes.get_runtime_dict()
+        runtime = self.srvbes.get_dict('runtime')
         use_webserver = repo['webserver']
         filenames = runtime['docs']['filenames']
         now = datetime.now()
