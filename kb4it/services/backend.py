@@ -21,6 +21,7 @@ import tempfile
 import datetime
 import traceback
 import threading
+import subprocess
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor as Executor
 
@@ -623,14 +624,15 @@ class Backend(Service):
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
-        # ~ resources_dir_source = GPATH['THEMES']
         resources_dir_tmp = os.path.join(self.get_path('tmp'), 'resources')
-        #if path already exists, remove it before copying with copytree()
+
+        # if path already exists, remove it before copying with copytree()
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
             shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
         self.log.debug(f"Global resources copied to {resources_dir_tmp}")
 
+        # configure asciidoctor parameters for compilation
         adocprops = ''
         for prop in ENV['CONF']['ADOCPROPS']:
             self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
@@ -642,71 +644,102 @@ class Backend(Service):
             else:
                 adocprops += '-a %s ' % prop
         self.runtime['adocprops'] = adocprops
-        #self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
+        self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
 
-        # ~ distributed = self.srvthm.get_distributed()
+        # get targets
         distributed = self.get_value('docs', 'targets')
+
+        # calculate max_workers
         max_workers = self.get_value('repo', 'workers')
         if max_workers is None:
             max_workers = get_default_workers()
         self.log.debug(f"Number or compiling workers: {max_workers}")
-        with Executor(max_workers=max_workers) as exe:
-            docs = get_source_docs(self.get_path('tmp'))
-            jobs = []
-            jobcount = 0
-            num = 1
-            # ~ self.log.debug(f"Generating jobs")
-            for doc in docs:
-                COMPILE = True
-                basename = os.path.basename(doc)
-                if basename in distributed:
-                    distributed_file = os.path.join(self.get_path('dist'), basename)
-                    cached_file = os.path.join(self.get_path('cache'), basename.replace('.adoc', '.html'))
-                    if os.path.exists(distributed_file) and os.path.exists(cached_file):
-                        cached_hash = get_hash_from_file(distributed_file)
-                        current_hash = get_hash_from_file(doc)
-                        if cached_hash == current_hash:
-                            COMPILE = False
+
+        docs = get_source_docs(self.get_path('tmp'))
+        commands = []
+        for doc in docs:
+            COMPILE = True
+            basename = os.path.basename(doc)
+            if basename in distributed:
+                distributed_file = os.path.join(self.get_path('dist'), basename)
+                cached_file = os.path.join(self.get_path('cache'), basename.replace('.adoc', '.html'))
+                if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                    cached_hash = get_hash_from_file(distributed_file)
+                    current_hash = get_hash_from_file(doc)
+                    if cached_hash == current_hash:
+                        COMPILE = False
+
+            if COMPILE or self.get_value('app', 'force'):
+                cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.get_path('tmp')} {doc}"
+                commands.append(cmd)
+
+        self.log.debug("Start parallel compilation")
+        self.log.debug(f"Num. commands: {len(commands)}")
+        self.log.debug(f"Eg.: {commands[0]}")
+        input_data = "\n".join(commands)
+        result = subprocess.run(
+            ["/usr/bin/parallel"],
+            input=input_data,
+            text=True
+        )
+
+        # ~ # Where the party begins
+        # ~ with Executor(max_workers=max_workers) as exe:
+            # ~ docs = get_source_docs(self.get_path('tmp'))
+            # ~ jobs = []
+            # ~ jobcount = 0
+            # ~ num = 1
+
+            # ~ # identify which docs must be compiled
+            # ~ for doc in docs:
+                # ~ COMPILE = True
+                # ~ basename = os.path.basename(doc)
+                # ~ if basename in distributed:
+                    # ~ distributed_file = os.path.join(self.get_path('dist'), basename)
+                    # ~ cached_file = os.path.join(self.get_path('cache'), basename.replace('.adoc', '.html'))
+                    # ~ if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                        # ~ cached_hash = get_hash_from_file(distributed_file)
+                        # ~ current_hash = get_hash_from_file(doc)
+                        # ~ if cached_hash == current_hash:
+                            # ~ COMPILE = False
 
 
-                if COMPILE or self.params['force']:
-                    cmd = "asciidoctor -q -s {} -b html5 -D {} {}".format(adocprops, self.get_path('tmp'), doc)
-                    #self.log.debug(f"CMD[%s]", cmd)
-                    data = (doc, cmd, num)
-                    self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
-                    job = exe.submit(self.compilation_started, data)
-                    job.add_done_callback(self.compilation_finished)
-                    jobs.append(job)
-                    num = num + 1
-                else:
-                    self.log.debug(f"DOC[{basename}] cached. Avoid compiling")
+                # ~ if COMPILE or self.get_value('app', 'force'):
+                    # ~ cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.get_path('tmp')} {doc}"
+                    # ~ self.log.debug(f"CMD[{cmd}]")
+                    # ~ data = (doc, cmd, num)
+                    # ~ self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
+                    # ~ job = exe.submit(self.compilation_started, data)
+                    # ~ job.add_done_callback(self.compilation_finished)
+                    # ~ jobs.append(job)
+                    # ~ num = num + 1
+                # ~ else:
+                    # ~ self.log.debug(f"DOC[{basename}] cached. Avoid compiling")
 
-            if num-1 > 0:
-                self.log.debug("[COMPILATION] - START")
-                # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
-                for job in jobs:
-                    adoc, res, jobid = job.result()
-                    self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
-                    jobcount += 1
-                    if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
-                        pct = int(jobcount * 100 / len(docs))
-                        # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
-                        self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
+            # ~ if num-1 > 0:
+                # ~ self.log.debug("[COMPILATION] - START")
+                # ~ for job in jobs:
+                    # ~ adoc, res, jobid = job.result()
+                    # ~ self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
+                    # ~ jobcount += 1
+                    # ~ if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
+                        # ~ pct = int(jobcount * 100 / len(docs))
+                        # ~ self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
 
-                dcompe = datetime.datetime.now()
-                comptime = dcompe - dcomps
-                duration = comptime.seconds
-                if duration == 0:
-                    duration = 1
-                avgspeed = int((num - 1) / duration)
-                pct = int(jobcount * 100 / len(docs))
-                self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
-                self.log.debug(f"STATS - Compilation time: {comptime.seconds} seconds")
-                self.log.debug(f"STATS - Compiled docs: {num - 1}")
-                self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
-            else:
-                self.log.debug(f"STATS - Nothing to compile!")
-            self.log.debug(f"[COMPILATION] - END")
+                # ~ dcompe = datetime.datetime.now()
+                # ~ comptime = dcompe - dcomps
+                # ~ duration = comptime.seconds
+                # ~ if duration == 0:
+                    # ~ duration = 1
+                # ~ avgspeed = int((num - 1) / duration)
+                # ~ pct = int(jobcount * 100 / len(docs))
+                # ~ self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
+                # ~ self.log.debug(f"STATS - Compilation time: {comptime.seconds} seconds")
+                # ~ self.log.debug(f"STATS - Compiled docs: {num - 1}")
+                # ~ self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
+            # ~ else:
+                # ~ self.log.debug(f"STATS - Nothing to compile!")
+            # ~ self.log.debug(f"[COMPILATION] - END")
 
     def compilation_started(self, data):
         (doc, cmd, num) = data
