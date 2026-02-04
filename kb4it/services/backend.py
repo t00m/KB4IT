@@ -43,7 +43,7 @@ class Backend(Service):
     """Backend class for managing the main logic workflow.
     """
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize application structure."""
         self.runtime = {}        # Dictionary of runtime properties
         self.kbdict_new = {}     # New compilation cache
@@ -742,6 +742,18 @@ class Backend(Service):
         self.log.debug(f"[PROCESSING THEME] - END")
 
     # ~ @timeit
+
+    def stage_07_deploy(self):
+        from kb4it.services.deployer import Deployer
+        self.app.register_service('Deployer', Deployer())
+        deployer = self.app.get_service('Deployer')
+
+        deployer.copy_source_to_cache()
+        deployer.delete_temporary_target_contents()
+        deployer.copy_temporary_files_to_distributed_directory()
+        deployer.clear_target()
+
+
     def stage_07_clean_target(self):
         """Clean up stage."""
         self.log.debug(f"[CLEANUP] - START")
@@ -758,8 +770,8 @@ class Backend(Service):
                 shutil.copy(source, target)
             except Exception as warning:
                 # FIXME
-                # ~ self.log.warning(warning)
-                # ~ self.log.warning("[CLEANUP] - Missing source file: %s", source)
+                self.log.warning(warning)
+                self.log.warning("[CLEANUP] - Missing source file: %s", source)
                 pass
         self.log.debug(f"Copy temporary files to distributed directory")
 
@@ -854,5 +866,5 @@ class Backend(Service):
         except Exception as KeyError:
             pass
 
-    def finalize(self):
+    def _finalize(self):
         self.cleanup()

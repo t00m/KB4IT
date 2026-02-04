@@ -29,7 +29,7 @@ class Database(Service):
     cache_docs_sorted_by_date = {}
     cache_all_values_for_key = {}
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize database module."""
         self.srvbes = self.get_service('Backend')
         runtime = self.srvbes.get_dict('runtime')

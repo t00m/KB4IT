@@ -49,7 +49,7 @@ class KB4ITObject:
 class CacheManager(Service):
     """KB4IT Cache Manager"""
 
-    def initialize(self):
+    def _initialize(self):
         """"""
         self.new = {}
         self.old = {}

@@ -107,29 +107,34 @@ class KB4IT:
         """Get or start a registered service."""
         try:
             self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
-            service = self.services[name]
-            logname = service.__class__.__name__
-            if not service.is_started():
-                service.start(self, name)
-                self.log.debug(f"[CONTROLLER] - Service '{name}' started")
-            self.log.debug(f"[CONTROLLER] - Service '{name}' ready")
+            service = self.services.get(name)
+            if service:
+                logname = service.__class__.__name__
+                if not service.is_started():
+                    service.start(self, name)
+                    self.log.debug(f"[CONTROLLER] - Service '{name}' started")
+                self.log.debug(f"[CONTROLLER] - Service '{name}' ready")
             return service
         except Exception as error:
             self.log.error(f"[CONTROLLER] - Service {name} not registered")
             self.log.error(f"[CONTROLLER] - \t{error}")
             self.stop(error=True)
+            return None
 
     def register_service(self, name, service):
         """Register a new service."""
         try:
             self.services[name] = service
             self.log.debug(f"[CONTROLLER] - Service[{name}] registered")
+            return service
         except KeyError as error:
             self.log.error(f"[CONTROLLER] - {error}")
+            return None
 
     def deregister_service(self, name):
         """Deregister a running service."""
-        service = self.services[name]
+        service = self.services.get(name)
+        self.log.debug(f"Service: {service}")
         registered = service is not None
         started = service.is_started()
         if registered and started:

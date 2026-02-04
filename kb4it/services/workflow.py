@@ -18,7 +18,7 @@ from kb4it.core.util import json_load
 class Workflow(Service):
     """KB4IT workflow class."""
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize workflow module."""
         pass
 
