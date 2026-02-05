@@ -20,7 +20,20 @@ class Deployer(Service):
     def _initialize(self):
         """Initialize workflow module."""
         self.srvbes = self.app.get_service('Backend')
-        self.log.debug(f"[CLEANUP] - START")
+        self.log.debug(f"[DEPLOYER] - START")
+
+    def execute(self):
+        self.step_00_copy_source_to_cache()
+        self.step_01_delete_temporary_target_contents()
+        self.step_02_copy_temporary_files_to_distributed_directory()
+        self.step_03_clear_target()
+        self.step_04_copy_sources_to_target()
+        self.step_05_copy_compiled_to_cache()
+        self.step_06_copy_all_to_cache()
+        self.step_07_copy_compiled_documents_to_target()
+        self.step_08_copy_global_resources_to_target()
+        self.step_09_copy_html_to_cache()
+        self.step_10_copy_kbdict_to_target()
 
     def step_00_copy_source_to_cache(self):
         pattern = os.path.join(self.srvbes.get_path('source'), '*.*')
@@ -31,7 +44,7 @@ class Deployer(Service):
         delete_target_contents(self.srvbes.get_path('dist'))
         self.log.debug(f"Distributed files deleted")
 
-    def step_02_copy_temporary_files_to_distributed_directory(self)
+    def step_02_copy_temporary_files_to_distributed_directory(self):
         distributed = self.srvbes.get_value('docs', 'targets')
         for adoc in distributed:
             source = os.path.join(self.srvbes.get_path('tmp'), adoc)
@@ -74,9 +87,10 @@ class Deployer(Service):
         self.log.debug(f"STATS - Copied {len(files)} html files from temporary target to cache path")
 
     def step_07_copy_compiled_documents_to_target(self):
+        runtime = self.srvbes.get_dict('runtime')
         # Copy cached documents to target path
         n = 0
-        for filename in sorted(self.runtime['docs']['targets']):
+        for filename in sorted(runtime['docs']['targets']):
             source = os.path.join(self.srvbes.get_path('cache'), filename)
             target = os.path.join(self.srvbes.get_path('target'), filename)
             try:

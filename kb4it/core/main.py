@@ -134,7 +134,6 @@ class KB4IT:
     def deregister_service(self, name):
         """Deregister a running service."""
         service = self.services.get(name)
-        self.log.debug(f"Service: {service}")
         registered = service is not None
         started = service.is_started()
         if registered and started:

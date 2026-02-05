@@ -747,12 +747,7 @@ class Backend(Service):
         from kb4it.services.deployer import Deployer
         self.app.register_service('Deployer', Deployer())
         deployer = self.app.get_service('Deployer')
-
-        deployer.copy_source_to_cache()
-        deployer.delete_temporary_target_contents()
-        deployer.copy_temporary_files_to_distributed_directory()
-        deployer.clear_target()
-
+        deployer.execute()
 
     def stage_07_clean_target(self):
         """Clean up stage."""
