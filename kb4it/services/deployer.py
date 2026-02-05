@@ -11,18 +11,20 @@ import shutil
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import copy_docs, copydir
-from kb4it.core.util import exec_cmd, delete_target_contents
+from kb4it.core.util import copy_docs
+from kb4it.core.util import copydir
+from kb4it.core.util import exec_cmd
+from kb4it.core.util import delete_target_contents
 
 class Deployer(Service):
-    """KB4IT Cleaner Service"""
+    """KB4IT Deployer Service"""
 
     def _initialize(self):
-        """Initialize workflow module."""
+        """Initialize deployer service"""
         self.srvbes = self.app.get_service('Backend')
-        self.log.debug(f"[DEPLOYER] - START")
 
     def execute(self):
+        self.log.debug(f"[DEPLOYER] - START")
         self.step_00_copy_source_to_cache()
         self.step_01_delete_temporary_target_contents()
         self.step_02_copy_temporary_files_to_distributed_directory()
@@ -34,6 +36,8 @@ class Deployer(Service):
         self.step_08_copy_global_resources_to_target()
         self.step_09_copy_html_to_cache()
         self.step_10_copy_kbdict_to_target()
+        self.step_11_cleanup()
+        self.log.debug(f"[DEPLOYER] - END")
 
     def step_00_copy_source_to_cache(self):
         pattern = os.path.join(self.srvbes.get_path('source'), '*.*')
@@ -137,5 +141,12 @@ class Deployer(Service):
         # ~ self.log.debug("Copied JSON database to target")
         pass
 
+    def step_11_cleanup(self):
+        delete_target_contents(self.srvbes.get_path('tmp'))
+        delete_target_contents(self.srvbes.get_path('www'))
+        delete_target_contents(self.srvbes.get_path('dist'))
+        os.unlink(self.app.get_log_file())
+        self.log.debug("Cleanup temporary files")
+
     def _finalize(self):
-        self.log.debug(f"[DEPLOYER] - END")
+        pass

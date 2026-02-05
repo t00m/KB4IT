@@ -113,8 +113,9 @@ class KB4IT:
                 if not service.is_started():
                     service.start(self, name)
                     self.log.debug(f"[CONTROLLER] - Service '{name}' started")
-                self.log.debug(f"[CONTROLLER] - Service '{name}' ready")
-            return service
+                return service
+            else:
+                self.stop()
         except Exception as error:
             self.log.error(f"[CONTROLLER] - Service {name} not registered")
             self.log.error(f"[CONTROLLER] - \t{error}")

@@ -7,32 +7,15 @@ Module with the application logic.
 # Description: module holding the application logic
 """
 
-import re
 import os
-import sys
-import glob
-import json
-import time
-import errno
-import pprint
-import random
 import shutil
-import tempfile
-import datetime
-import traceback
-import threading
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import now
 from kb4it.core.util import valid_filename
-from kb4it.core.util import get_default_workers
-from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict, get_hash_from_list
-from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.perf import timeit
@@ -122,14 +105,14 @@ class Backend(Service):
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
-            self.kb4it_temp_log = self.app.get_log_file()
-            shutil.copy(self.kb4it_temp_log, app_log_file)
+            kb4it_temp_log = self.app.get_log_file()
+            shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
             self.runtime['sort_attribute'] = self.repo.get('sort')
             if self.runtime['sort_attribute'] is None:
                 self.log.error("No property 'sort' defined in repository config")
-                sys.exit(-1)
+                self.app.stop()
 
             # Initialize docs structure
             self.runtime['docs'] = {}
@@ -193,7 +176,6 @@ class Backend(Service):
             self.log.error(f"There was an error reading file {KB4IT_DB_FILE}")
             self.log.error(error)
             self.app.stop()
-            sys.exit()
         self.log.debug(f"[CONF] - Current kbdict entries: {len(kbdict)}")
         return kbdict
 
@@ -620,120 +602,11 @@ class Backend(Service):
     # ~ @timeit
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
-        dcomps = datetime.datetime.now()
-
-        # copy online resources to target path
-        # ~ resources_dir_source = GPATH['THEMES']
-        resources_dir_tmp = os.path.join(self.get_path('tmp'), 'resources')
-        #if path already exists, remove it before copying with copytree()
-        if os.path.exists(resources_dir_tmp):
-            shutil.rmtree(resources_dir_tmp)
-            shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
-        self.log.debug(f"Global resources copied to {resources_dir_tmp}")
-
-        adocprops = ''
-        for prop in ENV['CONF']['ADOCPROPS']:
-            self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
-            if ENV['CONF']['ADOCPROPS'][prop] is not None:
-                if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
-                    adocprops += '-a {}={} '.format(prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_path('target'))
-                else:
-                    adocprops += '-a {}={} '.format(prop, ENV['CONF']['ADOCPROPS'][prop])
-            else:
-                adocprops += '-a %s ' % prop
-        self.runtime['adocprops'] = adocprops
-        #self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
-
-        # ~ distributed = self.srvthm.get_distributed()
-        distributed = self.get_value('docs', 'targets')
-        max_workers = self.get_value('repo', 'workers')
-        if max_workers is None:
-            max_workers = get_default_workers()
-        self.log.debug(f"Number or compiling workers: {max_workers}")
-        with Executor(max_workers=max_workers) as exe:
-            docs = get_source_docs(self.get_path('tmp'))
-            jobs = []
-            jobcount = 0
-            num = 1
-            # ~ self.log.debug(f"Generating jobs")
-            for doc in docs:
-                COMPILE = True
-                basename = os.path.basename(doc)
-                if basename in distributed:
-                    distributed_file = os.path.join(self.get_path('dist'), basename)
-                    cached_file = os.path.join(self.get_path('cache'), basename.replace('.adoc', '.html'))
-                    if os.path.exists(distributed_file) and os.path.exists(cached_file):
-                        cached_hash = get_hash_from_file(distributed_file)
-                        current_hash = get_hash_from_file(doc)
-                        if cached_hash == current_hash:
-                            COMPILE = False
-
-
-                if COMPILE or self.params['force']:
-                    cmd = "asciidoctor -q -s {} -b html5 -D {} {}".format(adocprops, self.get_path('tmp'), doc)
-                    #self.log.debug(f"CMD[%s]", cmd)
-                    data = (doc, cmd, num)
-                    self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
-                    job = exe.submit(self.compilation_started, data)
-                    job.add_done_callback(self.compilation_finished)
-                    jobs.append(job)
-                    num = num + 1
-                else:
-                    self.log.debug(f"DOC[{basename}] cached. Avoid compiling")
-
-            if num-1 > 0:
-                self.log.debug("[COMPILATION] - START")
-                # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
-                for job in jobs:
-                    adoc, res, jobid = job.result()
-                    self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
-                    jobcount += 1
-                    if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
-                        pct = int(jobcount * 100 / len(docs))
-                        # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
-                        self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
-
-                dcompe = datetime.datetime.now()
-                comptime = dcompe - dcomps
-                duration = comptime.seconds
-                if duration == 0:
-                    duration = 1
-                avgspeed = int((num - 1) / duration)
-                pct = int(jobcount * 100 / len(docs))
-                self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
-                self.log.debug(f"STATS - Compilation time: {comptime.seconds} seconds")
-                self.log.debug(f"STATS - Compiled docs: {num - 1}")
-                self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
-            else:
-                self.log.debug(f"STATS - Nothing to compile!")
-            self.log.debug(f"[COMPILATION] - END")
-
-    def compilation_started(self, data):
-        (doc, cmd, num) = data
-        res = exec_cmd(data)
-        return res
-
-    def compilation_finished(self, future):
-        time.sleep(random.random())
-        cur_thread = threading.current_thread().name
-        x = future.result()
-        if cur_thread != x:
-            path_hdoc, rc, num = x
-            basename = os.path.basename(path_hdoc)
-            # ~ self.log.debug(f"[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
-            try:
-                html = self.srvthm.build_page(path_hdoc)
-            except MemoryError:
-                self.log.error("Memory exhausted!")
-                self.log.error("Please, consider using less workers or add more memory to your system")
-                self.log.error("The application will exit now...")
-                self.app.stop()
-                sys.exit(errno.ENOMEM)
-            except Exception as error:
-                self.log.error(error)
-                self.print_traceback()
-                self.app.stop()
-            return x
+        from kb4it.services.compiler import Compiler
+        self.app.register_service('Compiler', Compiler())
+        compiler = self.app.get_service('Compiler')
+        compiler.execute()
+        return
 
     # ~ @timeit
     def stage_06_theme(self):
@@ -749,16 +622,5 @@ class Backend(Service):
         deployer = self.app.get_service('Deployer')
         deployer.execute()
 
-    def cleanup(self):
-        """Clean KB4IT temporary environment."""
-        try:
-            delete_target_contents(self.get_path('tmp'))
-            delete_target_contents(self.get_path('www'))
-            delete_target_contents(self.get_path('dist'))
-            os.unlink(self.kb4it_temp_log)
-            pass
-        except Exception as KeyError:
-            pass
-
     def _finalize(self):
-        self.cleanup()
+        pass
