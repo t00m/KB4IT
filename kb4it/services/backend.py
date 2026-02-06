@@ -135,6 +135,10 @@ class Backend(Service):
             adict = self.params
         elif domain == 'docs':
             adict = self.runtime['docs']
+        elif domain == 'kbcur':
+            adict = self.kbdict_cur
+        elif domain == 'kbnew':
+            adict = self.kbdict_new
         elif domain == 'repo':
             adict = self.repo
         elif domain == 'runtime':
@@ -150,6 +154,10 @@ class Backend(Service):
             return self.params
         elif domain == 'docs':
             return self.runtime['docs']
+        elif domain == 'kbcur':
+            return self.kbdict_cur
+        elif domain == 'kbnew':
+            return self.kbdict_new
         elif domain == 'repo':
             return self.repo
         elif domain == 'runtime':
