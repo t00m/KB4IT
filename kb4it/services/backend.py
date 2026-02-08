@@ -41,7 +41,7 @@ class Backend(Service):
         if action in ('build', 'info'):
             config_file = self.params.get('config')
             if config_file is None:
-                self.app.stop()
+                self.app.stop(error=True)
 
             # Check if it exists
             config_path = Path(config_file).absolute()
@@ -53,13 +53,13 @@ class Backend(Service):
                 except AttributeError as error:
                     self.log.error(f"Repository config couldn't be parsed (probably not well formed)")
                     self.log.error(error)
-                    self.app.stop()
+                    self.app.stop(error=True)
                 except Exception as error:
                     self.log.error(error)
-                    self.app.stop()
+                    self.app.stop(error=True)
             else:
                 self.log.error(f"Config path '{config_path}' does not exist")
-                self.app.stop()
+                self.app.stop(error=True)
 
             root_path = config_path.parent
             dir_source = self.repo.get('dir_source') or Path(root_path, 'source')
@@ -112,7 +112,7 @@ class Backend(Service):
             self.runtime['sort_attribute'] = self.repo.get('sort')
             if self.runtime['sort_attribute'] is None:
                 self.log.error("No property 'sort' defined in repository config")
-                self.app.stop()
+                self.app.stop(error=True)
 
             # Initialize docs structure
             self.runtime['docs'] = {}
@@ -149,6 +149,12 @@ class Backend(Service):
             return None
         return adict.get(key)
 
+    def set_value(self, doamin: str, key: str, value: str|int|bool):
+        if domain == 'app':
+            adict = self.params
+        adict[key] = value
+
+
     def get_dict(self, domain: str) -> dict:
         if domain == 'app':
             return self.params
@@ -183,7 +189,7 @@ class Backend(Service):
         except Exception as error:
             self.log.error(f"There was an error reading file {KB4IT_DB_FILE}")
             self.log.error(error)
-            self.app.stop()
+            self.app.stop(error=True)
         self.log.debug(f"[CONF] - Current kbdict entries: {len(kbdict)}")
         return kbdict
 
@@ -205,7 +211,10 @@ class Backend(Service):
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
 
-    # ~ @timeit
+        from kb4it.services.processor import Processor
+        self.app.register_service('Processor', Processor())
+        self.srvprc = self.get_service('Processor')
+
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
@@ -218,7 +227,7 @@ class Backend(Service):
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_path('source')):
             self.log.error(f"Source directory '{self.get_path('source')}' doesn't exist.")
-            self.app.stop()
+            self.app.stop(error=True)
         self.log.debug(f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
 
         # check if target directory exists. If not, create it:
@@ -229,7 +238,7 @@ class Backend(Service):
         theme_name = self.get_value('repo', 'theme')
         if theme_name is None:
             self.log.debug(f"Theme not provided.")
-            self.app.stop()
+            self.app.stop(error=True)
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
@@ -237,10 +246,10 @@ class Backend(Service):
             else:
                 self.log.error(f"Theme '{theme_name}' not found")
                 self.log.error(f"[CHECKS] - END")
-                self.app.stop()
+                self.app.stop(error=True)
         self.log.debug(f"[CHECKS] - END")
 
-    # ~ @timeit
+
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.debug(f"[SOURCES] - START")
@@ -267,160 +276,159 @@ class Backend(Service):
         self.log.debug(f"STATS - Found {self.runtime['docs']['count']} asciidoctor documents in source directory")
         self.log.debug(f"[SOURCES] - END")
 
-    # ~ @timeit
-    def stage_03_00_preprocess_document(self, filepath: str):
-        # Get Id
-        adocId = os.path.basename(filepath)
 
-        # Get metadata
-        keys = self.stage_03_00_preprocess_document_metadata(adocId, tolerant=True)
-        if keys is None:
-            self.log.error(f"DOC[{adocId}] not compliant: no keys found")
-            return
+    # ~ def stage_03_00_preprocess_document(self, filepath: str):
+        # ~ # Get Id
+        # ~ adocId = os.path.basename(filepath)
 
-        # Add to cache
-        # Old cache
-        self.kbdict_new['document'][adocId] = {}
-        self.kbdict_new['document'][adocId]['content'] = filepath
-        self.kbdict_new['document'][adocId]['keys'] = keys
+        # ~ # Get metadata
+        # ~ keys = self.stage_03_00_preprocess_document_metadata(adocId, tolerant=True)
+        # ~ if keys is None:
+            # ~ self.log.error(f"DOC[{adocId}] not compliant: no keys found")
+            # ~ return
 
-        # Add to the in-memory database
-        self.srvdtb.add_document(adocId)
+        # ~ # Add to cache
+        # ~ # Old cache
+        # ~ self.kbdict_new['document'][adocId] = {}
+        # ~ self.kbdict_new['document'][adocId]['content'] = filepath
+        # ~ self.kbdict_new['document'][adocId]['keys'] = keys
 
-        self.stage_03_00_preprocess_document_hashes(adocId, keys)
-        self.stage_03_00_preprocess_document_caches(adocId, keys)
+        # ~ # Add to the in-memory database
+        # ~ self.srvdtb.add_document(adocId)
 
-        # Add compiled page to the target list
-        htmlId = adocId.replace('.adoc', '.html')
-        self.add_target(adocId, htmlId)
+        # ~ self.stage_03_00_preprocess_document_hashes(adocId, keys)
+        # ~ self.stage_03_00_preprocess_document_caches(adocId, keys)
 
-    # ~ @timeit
-    def stage_03_00_preprocess_document_metadata(self, adocId: str, tolerant: bool):
-        docpath = os.path.join(self.get_path('source'), adocId)
-        keys = get_asciidoctor_attributes(docpath, tolerant)
+        # ~ # Add compiled page to the target list
+        # ~ htmlId = adocId.replace('.adoc', '.html')
+        # ~ self.add_target(adocId, htmlId)
 
-        # If document doesn't have a title, skip it.
-        try:
-            title = keys['Title'][0]
-            self.log.debug(f"DOC[{adocId}] Title[{title}]")
-        except (KeyError, TypeError):
-            self.runtime['docs']['count'] -= 1
-            self.log.warning(f"DOC[{adocId}] doesn't have a title. Skip it.")
+    # ~ def stage_03_00_preprocess_document_metadata(self, adocId: str, tolerant: bool):
+        # ~ docpath = os.path.join(self.get_path('source'), adocId)
+        # ~ keys = get_asciidoctor_attributes(docpath, tolerant)
 
-        self.log.debug(f"DOC[{adocId}] has {len(keys)} keys")
-        return keys
+        # ~ # If document doesn't have a title, skip it.
+        # ~ try:
+            # ~ title = keys['Title'][0]
+            # ~ self.log.debug(f"DOC[{adocId}] Title[{title}]")
+        # ~ except (KeyError, TypeError):
+            # ~ self.runtime['docs']['count'] -= 1
+            # ~ self.log.warning(f"DOC[{adocId}] doesn't have a title. Skip it.")
 
-    # ~ @timeit
-    def stage_03_00_preprocess_document_hashes(self, adocId: str, keys: list):
-        # To track changes in a document, hashes for metadata and content are created.
-        # Comparing them with those in the cache, KB4IT determines if a document must be
-        # compiled again. Very useful to reduce the compilation time.
-
-        # Get Document Content and Metadata Hashes
-        source_file = os.path.join(self.get_path('source'), adocId)
-        content_hash = get_hash_from_file(source_file)
-        metadata_hash = get_hash_from_dict(keys)
-        self.kbdict_new['document'][adocId]['content_hash'] = content_hash
-        self.kbdict_new['document'][adocId]['metadata_hash'] = metadata_hash
-        self.log.debug(f"DOC[{adocId}] HASH[{content_hash}{metadata_hash}]")
+        # ~ self.log.debug(f"DOC[{adocId}] has {len(keys)} keys")
+        # ~ return keys
 
 
-    # ~ @timeit
-    def stage_03_00_preprocess_document_caches(self, adocId: str, keys: list):
-        # Generate caches
-        for key in keys:
-            alist = keys[key]
-            for value in alist:
-                if len(value.strip()) == 0:
-                    continue
-                #self.log.debug(f"Doc['{adocId}'] Key['{key}'] Value['{value}']")
-                if key == self.runtime['sort_attribute']:
-                    value = string_timestamp(value)
+    # ~ def stage_03_00_preprocess_document_hashes(self, adocId: str, keys: list):
+        # ~ # To track changes in a document, hashes for metadata and content are created.
+        # ~ # Comparing them with those in the cache, KB4IT determines if a document must be
+        # ~ # compiled again. Very useful to reduce the compilation time.
 
-                if key == 'Tag':
-                    value = value.lower()
+        # ~ # Get Document Content and Metadata Hashes
+        # ~ source_file = os.path.join(self.get_path('source'), adocId)
+        # ~ content_hash = get_hash_from_file(source_file)
+        # ~ metadata_hash = get_hash_from_dict(keys)
+        # ~ self.kbdict_new['document'][adocId]['content_hash'] = content_hash
+        # ~ self.kbdict_new['document'][adocId]['metadata_hash'] = metadata_hash
+        # ~ self.log.debug(f"DOC[{adocId}] HASH[{content_hash}{metadata_hash}]")
 
-                self.srvdtb.add_document_key(adocId, key, value)
 
-                # For each document and for each key/value linked to that document add an entry to kbdic['document']
-                try:
-                    values = self.kbdict_new['document'][adocId][key]
-                    if value not in values:
-                        values.append(value)
-                    self.kbdict_new['document'][adocId][key] = sorted(values)
-                except KeyError:
-                    self.kbdict_new['document'][adocId][key] = [value]
 
-                # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
-                try:
-                    documents = self.kbdict_new['metadata'][key][value]
-                    documents.append(adocId)
-                    self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
-                except KeyError:
-                    if key not in self.kbdict_new['metadata']:
-                        self.kbdict_new['metadata'][key] = {}
-                    if value not in self.kbdict_new['metadata'][key]:
-                        self.kbdict_new['metadata'][key][value] = [adocId]
+    # ~ def stage_03_00_preprocess_document_caches(self, adocId: str, keys: list):
+        # ~ # Generate caches
+        # ~ for key in keys:
+            # ~ alist = keys[key]
+            # ~ for value in alist:
+                # ~ if len(value.strip()) == 0:
+                    # ~ continue
+                # ~ #self.log.debug(f"Doc['{adocId}'] Key['{key}'] Value['{value}']")
+                # ~ if key == self.runtime['sort_attribute']:
+                    # ~ value = string_timestamp(value)
 
-    # ~ @timeit
-    def stage_03_00_preprocess_document_compile(self, adocId: str, keys:list):
-        # Force compilation (from command line)?
-        DOC_COMPILATION = False
-        FORCE_ALL = self.params['force']
-        if not FORCE_ALL:
-            # Get cached document path and check if it exists
-            htmlId = adocId.replace('.adoc', '.html')
-            cached_document = os.path.join(self.get_path('cache'), htmlId)
-            cached_document_exists = os.path.exists(cached_document)
+                # ~ if key == 'Tag':
+                    # ~ value = value.lower()
 
-            # Compare the document with the one in the cache
-            if not cached_document_exists:
-                DOC_COMPILATION = True
-                REASON = "Not cached"
-            else:
-                try:
-                    hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
-                    hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
-                    #self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
-                    #self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
-                    DOC_COMPILATION = hash_new != hash_cur
-                    REASON = f"Hashes differ? {DOC_COMPILATION}"
-                except Exception as warning:
-                    DOC_COMPILATION = True
-                    REASON = warning
-        else:
-            REASON = "Forced"
+                # ~ self.srvdtb.add_document_key(adocId, key, value)
 
-        COMPILE = DOC_COMPILATION or FORCE_ALL
-        # Save compilation status
-        try:
-            self.kbdict_new['document'][adocId]['compile'] = COMPILE
-        except KeyError as error:
-            #FIXME: check
-            self.log.error(f"DOC[{adocId}]: {error}")
-            raise
+                # ~ # For each document and for each key/value linked to that document add an entry to kbdic['document']
+                # ~ try:
+                    # ~ values = self.kbdict_new['document'][adocId][key]
+                    # ~ if value not in values:
+                        # ~ values.append(value)
+                    # ~ self.kbdict_new['document'][adocId][key] = sorted(values)
+                # ~ except KeyError:
+                    # ~ self.kbdict_new['document'][adocId][key] = [value]
 
-        if COMPILE:
-            # Write new adoc to temporary dir
-            source_path = os.path.join(self.get_path('source'), adocId)
-            content = open(source_path).read()
-            target = f"{self.get_path('tmp')}/{valid_filename(adocId)}"
-            with open(target, 'w') as target_adoc:
-                target_adoc.write(content)
+                # ~ # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
+                # ~ try:
+                    # ~ documents = self.kbdict_new['metadata'][key][value]
+                    # ~ documents.append(adocId)
+                    # ~ self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
+                # ~ except KeyError:
+                    # ~ if key not in self.kbdict_new['metadata']:
+                        # ~ self.kbdict_new['metadata'][key] = {}
+                    # ~ if value not in self.kbdict_new['metadata'][key]:
+                        # ~ self.kbdict_new['metadata'][key][value] = [adocId]
 
-            try:
-                title_cur = self.kbdict_cur['document'][adocId]['Title']
-                title_new = self.kbdict_new['document'][adocId]['Title']
-                if title_new != title_cur:
-                    for key in keys:
-                        if key != 'Title':
-                            self.force_keys.add(key)
-            except KeyError:
-                # Very likely there is no kbdict, so this step is skipped
-                pass
-        self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
 
-    # ~ @timeit
+    # ~ def stage_03_00_preprocess_document_compile(self, adocId: str, keys:list):
+        # ~ # Force compilation (from command line)?
+        # ~ DOC_COMPILATION = False
+        # ~ FORCE_ALL = self.params['force']
+        # ~ if not FORCE_ALL:
+            # ~ # Get cached document path and check if it exists
+            # ~ htmlId = adocId.replace('.adoc', '.html')
+            # ~ cached_document = os.path.join(self.get_path('cache'), htmlId)
+            # ~ cached_document_exists = os.path.exists(cached_document)
+
+            # ~ # Compare the document with the one in the cache
+            # ~ if not cached_document_exists:
+                # ~ DOC_COMPILATION = True
+                # ~ REASON = "Not cached"
+            # ~ else:
+                # ~ try:
+                    # ~ hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
+                    # ~ hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
+                    # ~ #self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
+                    # ~ #self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
+                    # ~ DOC_COMPILATION = hash_new != hash_cur
+                    # ~ REASON = f"Hashes differ? {DOC_COMPILATION}"
+                # ~ except Exception as warning:
+                    # ~ DOC_COMPILATION = True
+                    # ~ REASON = warning
+        # ~ else:
+            # ~ REASON = "Forced"
+
+        # ~ COMPILE = DOC_COMPILATION or FORCE_ALL
+        # ~ # Save compilation status
+        # ~ try:
+            # ~ self.kbdict_new['document'][adocId]['compile'] = COMPILE
+        # ~ except KeyError as error:
+            # ~ #FIXME: check
+            # ~ self.log.error(f"DOC[{adocId}]: {error}")
+            # ~ raise
+
+        # ~ if COMPILE:
+            # ~ # Write new adoc to temporary dir
+            # ~ source_path = os.path.join(self.get_path('source'), adocId)
+            # ~ content = open(source_path).read()
+            # ~ target = f"{self.get_path('tmp')}/{valid_filename(adocId)}"
+            # ~ with open(target, 'w') as target_adoc:
+                # ~ target_adoc.write(content)
+
+            # ~ try:
+                # ~ title_cur = self.kbdict_cur['document'][adocId]['Title']
+                # ~ title_new = self.kbdict_new['document'][adocId]['Title']
+                # ~ if title_new != title_cur:
+                    # ~ for key in keys:
+                        # ~ if key != 'Title':
+                            # ~ self.force_keys.add(key)
+            # ~ except KeyError:
+                # ~ # Very likely there is no kbdict, so this step is skipped
+                # ~ pass
+        # ~ self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
+
+
     def stage_03_preprocessing(self):
         """
         Extract metadata from source docs into a dict.
@@ -429,185 +437,191 @@ class Backend(Service):
         In this way, after being compiled into HTML, final adocs are
         browsable throught its metadata.
         """
-        self.log.debug(f"[PREPROCESSING] - START")
+        self.log.debug(f"[EXTRACTION] - START")
+        self.srvprc.step_00_extraction()
 
-        # Preprocessing
-        for filepath in self.runtime['docs']['bag']:
-            self.stage_03_00_preprocess_document(filepath)
+        # ~ # Preprocessing
+        # ~ for filepath in self.runtime['docs']['bag']:
+            # ~ self.stage_03_00_preprocess_document(filepath)
 
         # Save current status for the next run
-        self.save_kbdict(self.kbdict_new)
+        # ~ self.save_kbdict(self.kbdict_new)
 
         # Force compilation for all documents?
-        # ~ self.log.debug(f"PREPROCESSING - KB Old keys: {sorted(list(self.kbdict_cur['metadata'].keys()))}")
-        # ~ self.log.debug(f"PREPROCESSING - KB New keys: {sorted(list(self.kbdict_new['metadata'].keys()))}")
-        keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
-        keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
-        keys_hash_differ = keys_hash_cur != keys_hash_new
-        if keys_hash_differ:
-            self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
-            self.params['force'] = True
+        # ~ keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
+        # ~ keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
+        # ~ keys_hash_differ = keys_hash_cur != keys_hash_new
+        # ~ if keys_hash_differ:
+            # ~ self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
+            # ~ self.params['force'] = True
 
-        # Compiling strategy
-        for filepath in self.runtime['docs']['bag']:
-            adocId = os.path.basename(filepath)
-            filepath = self.kbdict_new['document'][adocId]['content']
-            content = open(filepath).read()
-            keys = self.kbdict_new['document'][adocId]['keys']
-            self.stage_03_00_preprocess_document_compile(adocId, keys)
+        # ~ # Compiling strategy
+        # ~ for filepath in self.runtime['docs']['bag']:
+            # ~ adocId = os.path.basename(filepath)
+            # ~ filepath = self.kbdict_new['document'][adocId]['content']
+            # ~ content = open(filepath).read()
+            # ~ keys = self.kbdict_new['document'][adocId]['keys']
+            # ~ self.stage_03_00_preprocess_document_compile(adocId, keys)
 
         # Build a list of documents sorted by timestamp
-        self.srvdtb.sort_database()
+        # ~ self.srvdtb.sort_database()
 
-        # Documents preprocessing stats
-        self.log.debug(f"STATS - Documents analyzed: {len(self.runtime['docs']['bag'])}")
-        keep_docs = compile_docs = 0
-        for adocId in self.kbdict_new['document']:
-            if self.kbdict_new['document'][adocId]['compile']:
-                compile_docs += 1
-            else:
-                keep_docs += 1
-        self.log.debug(f"STATS - Keep: {keep_docs} - Compile: {compile_docs}")
-        if compile_docs == 0:
-            self.log.debug(f"[PREPROCESSING] - No changes in the repository")
-        else:
-            if compile_docs < keep_docs:
-                self.log.debug(f"[PREPROCESSING] - There are changes in the repository. {compile_docs} documents will be compiled again")
-            else:
-                self.log.debug(f"[PREPROCESSING] - All documents will be compiled again")
-        self.log.debug(f"[PREPROCESSING] - END")
+        # ~ # Documents preprocessing stats
+        # ~ self.log.debug(f"STATS - Documents analyzed: {len(self.runtime['docs']['bag'])}")
+        # ~ keep_docs = compile_docs = 0
+        # ~ for adocId in self.kbdict_new['document']:
+            # ~ if self.kbdict_new['document'][adocId]['compile']:
+                # ~ compile_docs += 1
+            # ~ else:
+                # ~ keep_docs += 1
+        # ~ self.log.debug(f"STATS - Keep: {keep_docs} - Compile: {compile_docs}")
+        # ~ if compile_docs == 0:
+            # ~ self.log.debug(f"[PREPROCESSING] - No changes in the repository")
+        # ~ else:
+            # ~ if compile_docs < keep_docs:
+                # ~ self.log.debug(f"[PREPROCESSING] - There are changes in the repository. {compile_docs} documents will be compiled again")
+            # ~ else:
+                # ~ self.log.debug(f"[PREPROCESSING] - All documents will be compiled again")
+        # ~ self.log.debug(f"[PREPROCESSING] - END")
 
     def get_kb_dict(self):
-        return self.kbdict_new
+        return self.srvprc.get_kb_dict()
+        # ~ return self.kbdict_new
 
-    # ~ @timeit
     def get_kbdict_key(self, key, new=True):
-        """
-        Return values for a given key from KB dictionary.
-        If new is True, it will return the value from the kbdict just
-        generated during the execution.
-        If new is False, it will return the value from the kbdict saved
-        in the previous execution.
-        """
-        if new:
-            kbdict = self.kbdict_new
-        else:
-            kbdict = self.kbdict_cur
+        return self.srvprc.get_kbdict_key(self, key, new=True)
 
-        try:
-            alist = kbdict['metadata'][key]
-        except KeyError:
-            alist = []
-
-        return alist
-
-    # ~ @timeit
     def get_kbdict_value(self, key, value, new=True):
-        """
-        Get a value for a given key from KB dictionary.
-        If new is True, it will return the value from the kbdict just
-        generated during the execution.
-        If new is False, it will return the value from the kbdict saved
-        in the previous execution.
-        """
-        if new:
-            kbdict = self.kbdict_new
-        else:
-            kbdict = self.kbdict_cur
+        return self.srvprc.get_kbdict_value(self, key, new=True)
 
-        try:
-            alist = kbdict['metadata'][key][value]
-        except KeyError:
-            alist = []
+    # ~ def get_kbdict_key(self, key, new=True):
+        # ~ """
+        # ~ Return values for a given key from KB dictionary.
+        # ~ If new is True, it will return the value from the kbdict just
+        # ~ generated during the execution.
+        # ~ If new is False, it will return the value from the kbdict saved
+        # ~ in the previous execution.
+        # ~ """
+        # ~ if new:
+            # ~ kbdict = self.kbdict_new
+        # ~ else:
+            # ~ kbdict = self.kbdict_cur
 
-        return alist
+        # ~ try:
+            # ~ alist = kbdict['metadata'][key]
+        # ~ except KeyError:
+            # ~ alist = []
 
-    # ~ @timeit
-    def stage_04_processing_00_analyze_keys(self, available_keys):
-        K_PATH = []
-        KV_PATH = []
-
-        for key in sorted(available_keys):
-            COMPILE_KEY = False
-            FORCE_KEY = key in self.force_keys
-            FORCE_ALL = self.params['force'] or FORCE_KEY
-            values = self.srvdtb.get_all_values_for_key(key)
-
-            # Compare keys values for the current run and the cache
-            # Otherwise, the key is not recompiled when a value is deleted
-            rknew = sorted(self.get_kbdict_key(key, new=True))
-            rkold = sorted(self.get_kbdict_key(key, new=False))
-            if rknew != rkold:
-                COMPILE_KEY = True
-            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
-
-            for value in values:
-                COMPILE_VALUE = False
-                key_value_docs_new = self.get_kbdict_value(key, value, new=True)
-                key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
-                VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
-
-                if VALUE_COMPARISON:
-                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}]")
-                    COMPILE_VALUE = True
-                COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
-                COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
-                KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
-            COMPILE_KEY = COMPILE_KEY or FORCE_ALL
-            K_PATH.append((key, values, COMPILE_KEY))
-            if COMPILE_KEY:
-                self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
-        return K_PATH, KV_PATH
+        # ~ return alist
 
 
-    # ~ @timeit
+    # ~ def get_kbdict_value(self, key, value, new=True):
+        # ~ """
+        # ~ Get a value for a given key from KB dictionary.
+        # ~ If new is True, it will return the value from the kbdict just
+        # ~ generated during the execution.
+        # ~ If new is False, it will return the value from the kbdict saved
+        # ~ in the previous execution.
+        # ~ """
+        # ~ if new:
+            # ~ kbdict = self.kbdict_new
+        # ~ else:
+            # ~ kbdict = self.kbdict_cur
+
+        # ~ try:
+            # ~ alist = kbdict['metadata'][key][value]
+        # ~ except KeyError:
+            # ~ alist = []
+
+        # ~ return alist
+
+
+    # ~ def stage_04_processing_00_analyze_keys(self, available_keys):
+        # ~ K_PATH = []
+        # ~ KV_PATH = []
+
+        # ~ for key in sorted(available_keys):
+            # ~ COMPILE_KEY = False
+            # ~ FORCE_KEY = key in self.force_keys
+            # ~ FORCE_ALL = self.params['force'] or FORCE_KEY
+            # ~ values = self.srvdtb.get_all_values_for_key(key)
+
+            # ~ # Compare keys values for the current run and the cache
+            # ~ # Otherwise, the key is not recompiled when a value is deleted
+            # ~ rknew = sorted(self.get_kbdict_key(key, new=True))
+            # ~ rkold = sorted(self.get_kbdict_key(key, new=False))
+            # ~ if rknew != rkold:
+                # ~ COMPILE_KEY = True
+            # ~ self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+
+            # ~ for value in values:
+                # ~ COMPILE_VALUE = False
+                # ~ key_value_docs_new = self.get_kbdict_value(key, value, new=True)
+                # ~ key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
+                # ~ VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
+
+                # ~ if VALUE_COMPARISON:
+                    # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}]")
+                    # ~ COMPILE_VALUE = True
+                # ~ COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
+                # ~ COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
+                # ~ KV_PATH.append((key, value, COMPILE_VALUE))
+                # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
+            # ~ COMPILE_KEY = COMPILE_KEY or FORCE_ALL
+            # ~ K_PATH.append((key, values, COMPILE_KEY))
+            # ~ if COMPILE_KEY:
+                # ~ self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+        # ~ return K_PATH, KV_PATH
+
+
+
     def stage_04_processing(self):
         """Process all keys/values got from documents.
         The algorithm detects which keys/values have changed and compile
         them again. This avoid recompile the whole database, saving time
         and CPU.
         """
-        self.log.debug(f"[PROCESSING] - START")
-        repo = self.get_dict('repo')
-        all_keys = set(self.srvdtb.get_all_keys())
-        ignored_keys = self.srvdtb.get_ignored_keys()
-        available_keys = list(all_keys - set(ignored_keys))
-        self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
+        self.srvprc.stage_04_processing()
+        # ~ self.log.debug(f"[PROCESSING] - START")
+        # ~ repo = self.get_dict('repo')
+        # ~ all_keys = set(self.srvdtb.get_all_keys())
+        # ~ ignored_keys = self.srvdtb.get_ignored_keys()
+        # ~ available_keys = list(all_keys - set(ignored_keys))
+        # ~ self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
 
-        # Keys
-        keys_with_compile_true = 0
-        for kpath in self.runtime['K_PATH']:
-            key, values, COMPILE_KEY = kpath
-            adocId = f"{valid_filename(key)}.adoc"
-            htmlId = adocId.replace('.adoc', '.html')
-            if COMPILE_KEY:
-                self.srvthm.build_page_key(key, values)
-                keys_with_compile_true += 1
+        # ~ # Keys
+        # ~ keys_with_compile_true = 0
+        # ~ for kpath in self.runtime['K_PATH']:
+            # ~ key, values, COMPILE_KEY = kpath
+            # ~ adocId = f"{valid_filename(key)}.adoc"
+            # ~ htmlId = adocId.replace('.adoc', '.html')
+            # ~ if COMPILE_KEY:
+                # ~ self.srvthm.build_page_key(key, values)
+                # ~ keys_with_compile_true += 1
 
-            # Add compiled page to the target list
-            self.add_target(adocId, htmlId)
+            # ~ # Add compiled page to the target list
+            # ~ self.add_target(adocId, htmlId)
 
-        # # Keys/Values
-        pairs_with_compile_true = 0
-        for kvpath in self.runtime['KV_PATH']:
-            key, value, COMPILE_VALUE = kvpath
-            adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
-            htmlId = adocId.replace('.adoc', '.html')
-            if COMPILE_VALUE:
-                self.srvthm.build_page_key_value(kvpath)
-                pairs_with_compile_true += 1
+        # ~ # # Keys/Values
+        # ~ pairs_with_compile_true = 0
+        # ~ for kvpath in self.runtime['KV_PATH']:
+            # ~ key, value, COMPILE_VALUE = kvpath
+            # ~ adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
+            # ~ htmlId = adocId.replace('.adoc', '.html')
+            # ~ if COMPILE_VALUE:
+                # ~ self.srvthm.build_page_key_value(kvpath)
+                # ~ pairs_with_compile_true += 1
 
-            # Add compiled page to the target list
-            self.add_target(adocId, htmlId)
+            # ~ # Add compiled page to the target list
+            # ~ self.add_target(adocId, htmlId)
 
-        self.log.debug(f"STATS - {keys_with_compile_true} keys will be compiled")
-        self.log.debug(f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
-        self.log.debug(f"STATS - Finish processing keys")
-        self.log.debug(f"STATS - Target docs: {len(self.runtime['docs']['targets'])}")
-        self.log.debug(f"[PROCESSINNG] - END")
+        # ~ self.log.debug(f"STATS - {keys_with_compile_true} keys will be compiled")
+        # ~ self.log.debug(f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
+        # ~ self.log.debug(f"STATS - Finish processing keys")
+        # ~ self.log.debug(f"STATS - Target docs: {len(self.runtime['docs']['targets'])}")
+        # ~ self.log.debug(f"[PROCESSINNG] - END")
 
-    # ~ @timeit
+
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         from kb4it.services.compiler import Compiler
@@ -616,13 +630,13 @@ class Backend(Service):
         compiler.execute()
         return
 
-    # ~ @timeit
+
     def stage_06_theme(self):
         self.log.debug(f"[PROCESSING THEME] - START")
         self.srvthm.build()
         self.log.debug(f"[PROCESSING THEME] - END")
 
-    # ~ @timeit
+
 
     def stage_07_deploy(self):
         from kb4it.services.deployer import Deployer

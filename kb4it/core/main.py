@@ -105,22 +105,17 @@ class KB4IT:
 
     def get_service(self, name: str = {}):
         """Get or start a registered service."""
-        try:
-            self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
-            service = self.services.get(name)
-            if service:
-                logname = service.__class__.__name__
-                if not service.is_started():
-                    service.start(self, name)
-                    self.log.debug(f"[CONTROLLER] - Service '{name}' started")
-                return service
-            else:
-                self.stop()
-        except Exception as error:
+        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
+        service = self.services.get(name)
+        if service:
+            logname = service.__class__.__name__
+            if not service.is_started():
+                service.start(self, name)
+                self.log.debug(f"[CONTROLLER] - Service '{name}' started")
+            return service
+        else:
             self.log.error(f"[CONTROLLER] - Service {name} not registered")
-            self.log.error(f"[CONTROLLER] - \t{error}")
             self.stop(error=True)
-            return None
 
     def register_service(self, name, service):
         """Register a new service."""
@@ -165,16 +160,15 @@ class KB4IT:
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
             self.log.error(f"[CONTROLLER] - Execution aborted because of serious errors")
-            self.log.error(f"[CONTROLLER] - \tTraceback:\n{traceback.print_exc()}")
+            # ~ self.log.error(f"[CONTROLLER] - Traceback:\n{traceback.print_exc()}")
             self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
-            sys.exit(-1)
 
         try:
             for name in self.services:
                 self.deregister_service(name)
-        except AttributeError:
+        except AttributeError as error:
             # KB4IT wasn't even started
-            raise
+            self.log.error(error)
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
         sys.exit()
 

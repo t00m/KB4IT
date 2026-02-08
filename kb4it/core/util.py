@@ -191,24 +191,23 @@ def json_save(filepath: str, adict: {}) -> {}:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
 # ~ @timeit
-def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
+def get_asciidoctor_attributes(docpath: str):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
-    props = {}
+    keys = {}
+    valid = False
+    title_found = False
+    end_of_header_found = False
+
     try:
         lines = open(docpath).readlines()
         title_found = False
         title_line = lines[0]
+
         if title_line.startswith('= '):
             title = title_line[2:-1].strip()
             if len(title) > 0:
-                props['Title'] = [title]
-                title_found = True
-
-        # Tolerate no title
-        if not title_found:
-            if tolerant:
-                props['Title'] = ['No title found']
+                keys['Title'] = [title]
                 title_found = True
 
         # Proceed only if document has a title
@@ -220,24 +219,29 @@ def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
                 if line.startswith(':'):
                     key = line[1:line.find(':', 1)]
                     values = line[len(key)+2:].split(',')
-                    props[key] = [value.strip() for value in values]
+                    keys[key] = [value.strip() for value in values]
                 elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
                     break
-
             if not end_of_header_found:
-                if tolerant:
-                    log.warning(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
-                else:
-                    log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
+                reason = f"Document '{basename}' doesn't have the END-OF-HEADER mark"
+                log.error("Error: {reason}")
+                keys = {}
         else:
-            log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
+            reason = f"Document '{basename}' doesn't have a title"
+            log.error("Error: {reason}")
+            keys = {}
     except IndexError as error:
-        log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
+        reason = "Document '{basename}' could not be processed. Empty?"
+        log.error("Error: {reason}")
+        keys = {}
 
-    return props
+    if title_found and end_of_header_found:
+        valid = True
+        reason = 'Success'
 
+    return keys, valid, reason
 
 def get_hash_from_file(path):
     """Get the SHA256 hash for a given filename."""
