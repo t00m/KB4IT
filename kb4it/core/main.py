@@ -160,7 +160,7 @@ class KB4IT:
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
             self.log.error(f"[CONTROLLER] - Execution aborted because of serious errors")
-            # ~ self.log.error(f"[CONTROLLER] - Traceback:\n{traceback.print_exc()}")
+            self.log.error(f"[CONTROLLER] - Traceback:\n{traceback.print_exc()}")
             self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
 
         try:

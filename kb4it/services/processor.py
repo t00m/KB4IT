@@ -151,9 +151,9 @@ class Processor(Service):
         try:
             self.kbdict_new['document'][adocId]['compile'] = COMPILE
         except KeyError as error:
-            #FIXME: check
+            self.log.error(f"FIXME: check")
             self.log.error(f"DOC[{adocId}]: {error}")
-            raise
+            self.app.stop(error=True)
 
         if COMPILE:
             # Write new adoc to temporary dir
