@@ -149,9 +149,12 @@ class Backend(Service):
             return None
         return adict.get(key)
 
-    def set_value(self, doamin: str, key: str, value: str|int|bool):
+    def set_value(self, domain: str, key: str, value: str|int|bool):
         if domain == 'app':
             adict = self.params
+        elif domain == 'runtime':
+            adict = self.runtime
+
         adict[key] = value
 
 
@@ -287,6 +290,8 @@ class Backend(Service):
         """
         self.log.debug(f"[EXTRACTION] - START")
         self.srvprc.step_00_extraction()
+        self.srvprc.step_01_analysis()
+        self.srvprc.step_02_transformation()
 
     def get_kb_dict(self):
         return self.srvprc.get_kb_dict()
@@ -297,15 +302,6 @@ class Backend(Service):
     def get_kbdict_value(self, key, value, new=True):
         return self.srvprc.get_kbdict_value(self, key, new=True)
 
-    def stage_04_processing(self):
-        """Process all keys/values got from documents.
-        The algorithm detects which keys/values have changed and compile
-        them again. This avoid recompile the whole database, saving time
-        and CPU.
-        """
-        self.srvprc.stage_04_processing()
-
-
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
         from kb4it.services.compiler import Compiler
@@ -314,13 +310,10 @@ class Backend(Service):
         compiler.execute()
         return
 
-
     def stage_06_theme(self):
         self.log.debug(f"[PROCESSING THEME] - START")
         self.srvthm.build()
         self.log.debug(f"[PROCESSING THEME] - END")
-
-
 
     def stage_07_deploy(self):
         from kb4it.services.deployer import Deployer

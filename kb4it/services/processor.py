@@ -73,27 +73,40 @@ class Processor(Service):
             htmlId = adocId.replace('.adoc', '.html')
             self.srvbes.add_target(adocId, htmlId)
 
+        # Save new kbdict
         self.srvbes.save_kbdict(self.kbdict_new)
+
+        # Build a list of documents sorted by timestamp
+        # ~ self.srvdtb.sort_database()
+
+    def step_01_analysis(self):
+        # Compilation strategy
 
         # Force compilation for all documents?
         keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
         keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
         keys_hash_differ = keys_hash_cur != keys_hash_new
         if keys_hash_differ:
+            # Force compilation!
             self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
             self.srvbes.set_value('app', 'force', True)
+        else:
+            # Decide documents compilation one by one
+            sources = self.srvbes.get_value('docs', 'bag')
+            for filepath in sources:
+                adocId = os.path.basename(filepath)
+                keys = self.kbdict_new['document'][adocId]['keys']
+                self.step_01_00_decide_document_compilation(adocId, keys)
 
-        # Compiling strategy
-        for filepath in sources:
-            adocId = os.path.basename(filepath)
-            filepath = self.kbdict_new['document'][adocId]['content']
-            content = open(filepath).read()
-            keys = self.kbdict_new['document'][adocId]['keys']
-            self.stage_03_00_preprocess_document_compile(adocId, keys)
+            # Decide keys compilation
+            all_keys = set(self.srvdtb.get_all_keys())
+            ignored_keys = self.srvdtb.get_ignored_keys()
+            available_keys = list(all_keys - set(ignored_keys))
+            K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
+            self.srvbes.set_value('runtime', 'K_PATH', K_PATH)
+            self.srvbes.set_value('runtime', 'KV_PATH', KV_PATH)
 
-        # Build a list of documents sorted by timestamp
-        self.srvdtb.sort_database()
-
+    def display_stats(self):
         # Documents preprocessing stats
         self.log.debug(f"STATS - Documents analyzed: {len(sources)}")
         keep_docs = compile_docs = 0
@@ -112,13 +125,52 @@ class Processor(Service):
                 self.log.debug(f"[PREPROCESSING] - All documents will be compiled again")
         self.log.debug(f"[PREPROCESSING] - END")
 
-    def step_01_analysis(self):
-        pass
+    def get_kb_dict(self):
+        return self.kbdict_new
 
-    def step_02_transformation(self):
-        pass
 
-    def stage_03_00_preprocess_document_compile(self, adocId: str, keys:list):
+    def get_kbdict_key(self, key, new=True):
+        """
+        Return values for a given key from KB dictionary.
+        If new is True, it will return the value from the kbdict just
+        generated during the execution.
+        If new is False, it will return the value from the kbdict saved
+        in the previous execution.
+        """
+        if new:
+            kbdict = self.kbdict_new
+        else:
+            kbdict = self.kbdict_cur
+
+        try:
+            alist = kbdict['metadata'][key]
+        except KeyError:
+            alist = []
+
+        return alist
+
+
+    def get_kbdict_value(self, key, value, new=True):
+        """
+        Get a value for a given key from KB dictionary.
+        If new is True, it will return the value from the kbdict just
+        generated during the execution.
+        If new is False, it will return the value from the kbdict saved
+        in the previous execution.
+        """
+        if new:
+            kbdict = self.kbdict_new
+        else:
+            kbdict = self.kbdict_cur
+
+        try:
+            alist = kbdict['metadata'][key][value]
+        except KeyError:
+            alist = []
+
+        return alist
+
+    def step_01_00_decide_document_compilation(self, adocId: str, keys:list):
         # Force compilation (from command line)?
         DOC_COMPILATION = False
         FORCE_ALL = self.srvbes.get_value('app', 'force')
@@ -176,53 +228,7 @@ class Processor(Service):
         self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
 
 
-    def get_kb_dict(self):
-        return self.kbdict_new
-
-
-    def get_kbdict_key(self, key, new=True):
-        """
-        Return values for a given key from KB dictionary.
-        If new is True, it will return the value from the kbdict just
-        generated during the execution.
-        If new is False, it will return the value from the kbdict saved
-        in the previous execution.
-        """
-        if new:
-            kbdict = self.kbdict_new
-        else:
-            kbdict = self.kbdict_cur
-
-        try:
-            alist = kbdict['metadata'][key]
-        except KeyError:
-            alist = []
-
-        return alist
-
-
-    def get_kbdict_value(self, key, value, new=True):
-        """
-        Get a value for a given key from KB dictionary.
-        If new is True, it will return the value from the kbdict just
-        generated during the execution.
-        If new is False, it will return the value from the kbdict saved
-        in the previous execution.
-        """
-        if new:
-            kbdict = self.kbdict_new
-        else:
-            kbdict = self.kbdict_cur
-
-        try:
-            alist = kbdict['metadata'][key][value]
-        except KeyError:
-            alist = []
-
-        return alist
-
-
-    def stage_04_processing_00_analyze_keys(self, available_keys):
+    def step_01_01_decide_keys_compilation(self, available_keys):
         K_PATH = []
         KV_PATH = []
 
@@ -261,7 +267,7 @@ class Processor(Service):
 
 
 
-    def stage_04_processing(self):
+    def step_02_transformation(self):
         """Process all keys/values got from documents.
         The algorithm detects which keys/values have changed and compile
         them again. This avoid recompile the whole database, saving time
@@ -270,11 +276,6 @@ class Processor(Service):
         self.log.debug(f"[PROCESSING] - START")
         self.srvthm = self.get_service('Theme')
         runtime = self.srvbes.get_dict('runtime')
-        repo = self.srvbes.get_dict('repo')
-        all_keys = set(self.srvdtb.get_all_keys())
-        ignored_keys = self.srvdtb.get_ignored_keys()
-        available_keys = list(all_keys - set(ignored_keys))
-        runtime['K_PATH'], runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
 
         # Keys
         keys_with_compile_true = 0

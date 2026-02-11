@@ -122,8 +122,6 @@ class Workflow(Service):
         backend.stage_02_get_source_documents()
         self.log.info(f"Preprocessing")
         backend.stage_03_preprocessing()
-        self.log.info(f"Backend processing")
-        backend.stage_04_processing()
         self.log.info(f"Theme processing")
         backend.stage_06_theme()
         self.log.info(f"Compilation")
