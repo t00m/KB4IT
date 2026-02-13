@@ -80,7 +80,8 @@ class Processor(Service):
         # ~ self.srvdtb.sort_database()
 
     def step_01_analysis(self):
-        # Compilation strategy
+        """Compilation strategy"""
+        runtime = self.srvbes.get_dict('runtime')
 
         # Force compilation for all documents?
         keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
@@ -93,10 +94,14 @@ class Processor(Service):
         else:
             # Decide documents compilation one by one
             sources = self.srvbes.get_value('docs', 'bag')
+            ncd = 0 # Number of documents to be compiled
             for filepath in sources:
                 adocId = os.path.basename(filepath)
                 keys = self.kbdict_new['document'][adocId]['keys']
-                self.step_01_00_decide_document_compilation(adocId, keys)
+                need_compilation = self.step_01_00_decide_document_compilation(adocId, keys)
+                if need_compilation:
+                    ncd += 1
+            self.srvbes.set_value('runtime', 'ncd', ncd)
 
             # Decide keys compilation
             all_keys = set(self.srvdtb.get_all_keys())
@@ -170,7 +175,7 @@ class Processor(Service):
 
         return alist
 
-    def step_01_00_decide_document_compilation(self, adocId: str, keys:list):
+    def step_01_00_decide_document_compilation(self, adocId: str, keys:list) -> bool:
         # Force compilation (from command line)?
         DOC_COMPILATION = False
         FORCE_ALL = self.srvbes.get_value('app', 'force')
@@ -226,12 +231,14 @@ class Processor(Service):
                 # Very likely there is no kbdict, so this step is skipped
                 pass
         self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
+        return COMPILE
 
 
     def step_01_01_decide_keys_compilation(self, available_keys):
         K_PATH = []
         KV_PATH = []
 
+        nck = 0 # Number of keys to be compiled
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_KEY = key in self.force_keys
@@ -263,6 +270,8 @@ class Processor(Service):
             K_PATH.append((key, values, COMPILE_KEY))
             if COMPILE_KEY:
                 self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+                nck += 1
+        self.srvbes.set_value('runtime', 'nck', nck)
         return K_PATH, KV_PATH
 
 
