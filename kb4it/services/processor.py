@@ -57,6 +57,26 @@ class Processor(Service):
                         value = string_timestamp(value)
                     self.srvdtb.add_document_key(adocId, key, value)
 
+                    # For each document and for each key/value linked to that document add an entry to kbdic['document']
+                    try:
+                        values = self.kbdict_new['document'][adocId][key]
+                        if value not in values:
+                            values.append(value)
+                        self.kbdict_new['document'][adocId][key] = sorted(values)
+                    except KeyError:
+                        self.kbdict_new['document'][adocId][key] = [value]
+
+                    # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
+                    try:
+                        documents = self.kbdict_new['metadata'][key][value]
+                        documents.append(adocId)
+                        self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
+                    except KeyError:
+                        if key not in self.kbdict_new['metadata']:
+                            self.kbdict_new['metadata'][key] = {}
+                        if value not in self.kbdict_new['metadata'][key]:
+                            self.kbdict_new['metadata'][key][value] = [adocId]
+
             # To track changes in a document, hashes for metadata and
             # content are created. Comparing them with those in the
             # cache, KB4IT determines if a document must be compiled
@@ -84,32 +104,32 @@ class Processor(Service):
         runtime = self.srvbes.get_dict('runtime')
 
         # Force compilation for all documents?
-        keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
-        keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
-        keys_hash_differ = keys_hash_cur != keys_hash_new
-        if keys_hash_differ:
-            # Force compilation!
-            self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
-            self.srvbes.set_value('app', 'force', True)
-        else:
-            # Decide documents compilation one by one
-            sources = self.srvbes.get_value('docs', 'bag')
-            ncd = 0 # Number of documents to be compiled
-            for filepath in sources:
-                adocId = os.path.basename(filepath)
-                keys = self.kbdict_new['document'][adocId]['keys']
-                need_compilation = self.step_01_00_decide_document_compilation(adocId, keys)
-                if need_compilation:
-                    ncd += 1
-            self.srvbes.set_value('runtime', 'ncd', ncd)
+        # ~ keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
+        # ~ keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
+        # ~ keys_hash_differ = keys_hash_cur != keys_hash_new
+        # ~ if keys_hash_differ:
+            # ~ # Force compilation!
+            # ~ self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
+            # ~ self.srvbes.set_value('app', 'force', True)
 
-            # Decide keys compilation
-            all_keys = set(self.srvdtb.get_all_keys())
-            ignored_keys = self.srvdtb.get_ignored_keys()
-            available_keys = list(all_keys - set(ignored_keys))
-            K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
-            self.srvbes.set_value('runtime', 'K_PATH', K_PATH)
-            self.srvbes.set_value('runtime', 'KV_PATH', KV_PATH)
+        # Decide documents compilation one by one
+        sources = self.srvbes.get_value('docs', 'bag')
+        ncd = 0 # Number of documents to be compiled
+        for filepath in sources:
+            adocId = os.path.basename(filepath)
+            keys = self.kbdict_new['document'][adocId]['keys']
+            need_compilation = self.step_01_00_decide_document_compilation(adocId, keys)
+            if need_compilation:
+                ncd += 1
+        self.srvbes.set_value('runtime', 'ncd', ncd)
+
+        # Decide keys compilation
+        all_keys = set(self.srvdtb.get_all_keys())
+        ignored_keys = self.srvdtb.get_ignored_keys()
+        available_keys = list(all_keys - set(ignored_keys))
+        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
+        self.srvbes.set_value('runtime', 'K_PATH', K_PATH)
+        self.srvbes.set_value('runtime', 'KV_PATH', KV_PATH)
 
     def display_stats(self):
         # Documents preprocessing stats
@@ -147,9 +167,12 @@ class Processor(Service):
         else:
             kbdict = self.kbdict_cur
 
+        # ~ self.log.debug(f"{new}: {kbdict}")
+
         try:
             alist = kbdict['metadata'][key]
         except KeyError:
+            self.log.warning(f"KBDICT[{new}] Key[{key}] not found")
             alist = []
 
         return alist
@@ -171,6 +194,8 @@ class Processor(Service):
         try:
             alist = kbdict['metadata'][key][value]
         except KeyError:
+            self.log.warning(f"KBDICT New[{new}] Key[{key}] Value[{value}] not found")
+            # ~ raise
             alist = []
 
         return alist
@@ -251,17 +276,17 @@ class Processor(Service):
             rkold = sorted(self.get_kbdict_key(key, new=False))
             if rknew != rkold:
                 COMPILE_KEY = True
-            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
 
             for value in values:
                 COMPILE_VALUE = False
-                key_value_docs_new = self.get_kbdict_value(key, value, new=True)
-                key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
-                VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
+                rkvnew = self.get_kbdict_value(key, value, new=True)
+                rkvold = self.get_kbdict_value(key, value, new=False)
+                VALUE_COMPARISON = rkvnew != rkvold
 
                 if VALUE_COMPARISON:
-                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}]")
                     COMPILE_VALUE = True
+                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})")
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
                 KV_PATH.append((key, value, COMPILE_VALUE))

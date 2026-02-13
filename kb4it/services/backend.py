@@ -297,10 +297,10 @@ class Backend(Service):
         return self.srvprc.get_kb_dict()
 
     def get_kbdict_key(self, key, new=True):
-        return self.srvprc.get_kbdict_key(self, key, new=True)
+        return self.srvprc.get_kbdict_key(key, new=True)
 
     def get_kbdict_value(self, key, value, new=True):
-        return self.srvprc.get_kbdict_value(self, key, new=True)
+        return self.srvprc.get_kbdict_value(key, value, new=True)
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
