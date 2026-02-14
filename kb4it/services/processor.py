@@ -167,12 +167,9 @@ class Processor(Service):
         else:
             kbdict = self.kbdict_cur
 
-        # ~ self.log.debug(f"{new}: {kbdict}")
-
         try:
             alist = kbdict['metadata'][key]
         except KeyError:
-            self.log.warning(f"KBDICT[{new}] Key[{key}] not found")
             alist = []
 
         return alist
@@ -194,8 +191,6 @@ class Processor(Service):
         try:
             alist = kbdict['metadata'][key][value]
         except KeyError:
-            self.log.warning(f"KBDICT New[{new}] Key[{key}] Value[{value}] not found")
-            # ~ raise
             alist = []
 
         return alist
