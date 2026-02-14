@@ -153,7 +153,11 @@ class Theme(Builder):
 
     def build_page_index(self, var):
         """Create key page."""
-        # ~ timeline = self.get_service('Timeline')
+        if self.srvbes.get_value('runtime', 'ncd') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            return
+
         repo = self.srvbes.get_dict('repo')
         runtime = self.srvbes.get_dict('runtime')
         use_webserver = repo['webserver']
@@ -335,6 +339,11 @@ class Theme(Builder):
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
 
     def build_page_events(self):
+        if self.srvbes.get_value('runtime', 'ncd') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            return
+
         doclist = []
         ecats = {}
         repo = self.srvbes.get_dict('repo')
@@ -399,6 +408,11 @@ class Theme(Builder):
 
     def build_page_properties(self):
         """Create properties page"""
+        if self.srvbes.get_value('runtime', 'nck') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in keys. Skip '{func_name}'")
+            return
+
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
         max_frequency = self.get_maxkv_freq()
@@ -431,6 +445,11 @@ class Theme(Builder):
 
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
+        if self.srvbes.get_value('runtime', 'nck') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in keys. Skip '{func_name}'")
+            return
+
         dkeyurl = {}
         for docId in self.srvdtb.get_documents():
             tags = self.srvdtb.get_values(docId, key)
@@ -491,6 +510,11 @@ class Theme(Builder):
 
     def build_page_stats(self):
         """Create stats page"""
+        if self.srvbes.get_value('runtime', 'nck') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in keys. Skip '{func_name}'")
+            return
+
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         var = self.get_theme_var()
         var['count_docs'] = self.srvdtb.get_documents_count()
@@ -513,6 +537,11 @@ class Theme(Builder):
 
     def build_page_index_all(self):
         """Create a page with all documents"""
+        if self.srvbes.get_value('runtime', 'ncd') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            return
+
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
         doclist = []
@@ -715,6 +744,11 @@ class Theme(Builder):
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
+        if self.srvbes.get_value('runtime', 'ncd') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            return
+
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
         var = self.get_theme_var()
         doclist = []
