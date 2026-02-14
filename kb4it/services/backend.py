@@ -218,6 +218,15 @@ class Backend(Service):
         self.app.register_service('Processor', Processor())
         self.srvprc = self.get_service('Processor')
 
+    def get_kb_dict(self):
+        return self.srvprc.get_kb_dict()
+
+    def get_kbdict_key(self, key, new=True):
+        return self.srvprc.get_kbdict_key(key, new=True)
+
+    def get_kbdict_value(self, key, value, new=True):
+        return self.srvprc.get_kbdict_value(key, value, new=True)
+
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
@@ -252,7 +261,6 @@ class Backend(Service):
                 self.app.stop(error=True)
         self.log.debug(f"[CHECKS] - END")
 
-
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.debug(f"[SOURCES] - START")
@@ -279,8 +287,7 @@ class Backend(Service):
         self.log.debug(f"STATS - Found {self.runtime['docs']['count']} asciidoctor documents in source directory")
         self.log.debug(f"[SOURCES] - END")
 
-
-    def stage_03_preprocessing(self):
+    def stage_03_process_sources(self):
         """
         Extract metadata from source docs into a dict.
         Create metadata section for each adoc and insert it after the
@@ -293,14 +300,10 @@ class Backend(Service):
         self.srvprc.step_01_analysis()
         self.srvprc.step_02_transformation()
 
-    def get_kb_dict(self):
-        return self.srvprc.get_kb_dict()
-
-    def get_kbdict_key(self, key, new=True):
-        return self.srvprc.get_kbdict_key(key, new=True)
-
-    def get_kbdict_value(self, key, value, new=True):
-        return self.srvprc.get_kbdict_value(key, value, new=True)
+    def stage_04_process_theme(self):
+        self.log.debug(f"[PROCESSING THEME] - START")
+        self.srvthm.build()
+        self.log.debug(f"[PROCESSING THEME] - END")
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
@@ -310,12 +313,7 @@ class Backend(Service):
         compiler.execute()
         return
 
-    def stage_06_theme(self):
-        self.log.debug(f"[PROCESSING THEME] - START")
-        self.srvthm.build()
-        self.log.debug(f"[PROCESSING THEME] - END")
-
-    def stage_07_deploy(self):
+    def stage_06_deploy(self):
         from kb4it.services.deployer import Deployer
         self.app.register_service('Deployer', Deployer())
         deployer = self.app.get_service('Deployer')

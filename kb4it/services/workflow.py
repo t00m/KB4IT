@@ -103,33 +103,39 @@ class Workflow(Service):
         3. Preprocess documents (get metadata)
         4. Process documents in a temporary dir
         5. Compile documents to html with asciidoctor
-        6. Delete contents of target directory (if any)
-        7. Refresh target directory
-        8. Remove temporary directory
+        6. Deploy
+        7. Theme Post activities
         """
         backend = self.get_service('Backend')
         repo = backend.get_dict('repo')
         repo_title = repo['title']
         repo_theme = repo['theme']
-        self.log.info(f"Building a website for repository '{repo_title}'")
-        self.log.info(f"Using theme '{repo_theme}'")
-        self.log.info(f"Check environment")
+        self.log.info(f"Theme '{repo_theme}' - Repository '{repo_title}'")
+
+        self.log.info(f"1 - Check environment")
         backend.stage_01_check_environment()
-        self.log.info(f"Allow theme to generate sources")
         theme = self.get_service('Theme')
+
+        self.log.info(f"2 - Get sources")
         theme.generate_sources()
-        self.log.info(f"Get source documents")
         backend.stage_02_get_source_documents()
-        self.log.info(f"Preprocessing")
-        backend.stage_03_preprocessing()
-        self.log.info(f"Theme processing")
-        backend.stage_06_theme()
-        self.log.info(f"Compilation")
+
+        self.log.info(f"3 - Process sources")
+        backend.stage_03_process_sources()
+
+        self.log.info(f"4 - Process theme")
+        backend.stage_04_process_theme()
+
+        self.log.info(f"5 - Compilation")
         backend.stage_05_compilation()
-        self.log.info(f"Deploy")
-        backend.stage_07_deploy()
-        self.log.info(f"Theme post activities")
+
+        self.log.info(f"6 - Deploy")
+        backend.stage_06_deploy()
+
+        self.log.info(f"7 - Theme post activities")
         theme.post_activities()
+
+        # Report
         homepage = os.path.join(os.path.abspath(backend.get_path('target')), 'index.html')
         self.log.info(f"Repository website built")
         self.log.info(f"URL: {homepage}")
