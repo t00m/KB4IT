@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Module with the application logic.
@@ -8,32 +7,15 @@ Module with the application logic.
 # Description: module holding the application logic
 """
 
-import re
 import os
-from os.path import abspath
-import sys
-import glob
-import json
-import time
-import errno
-import pprint
-import random
 import shutil
-import tempfile
-import datetime
-import traceback
-import threading
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import now
 from kb4it.core.util import valid_filename
-from kb4it.core.util import exec_cmd, delete_target_contents
 from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file, get_hash_from_dict, get_hash_from_list
-from kb4it.core.util import copy_docs, copydir
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load, json_save
 from kb4it.core.perf import timeit
@@ -44,80 +26,68 @@ class Backend(Service):
     """Backend class for managing the main logic workflow.
     """
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize application structure."""
-
-        self.running = False     # Backend running?
         self.runtime = {}        # Dictionary of runtime properties
         self.kbdict_new = {}     # New compilation cache
         self.kbdict_cur = {}     # Cached data
         self.force_keys = set()  # List of keys which must be compiled (forced)
 
-        # ~ self.log.debug(f"[BACKEND] - Started at {now()}")
-
         # Get params from command line
         self.params = self.app.get_params()
 
-        # Get repository config file (if any)
-        try:
-            repo_config_file = self.params.config
-            self.repo = json_load(repo_config_file)
-            self.log.debug(f"CONF[REPO] CONFIG_FILE[ VALUE[{repo_config_file}]")
-            for param in self.repo:
-                self.log.debug(f"CONF[REPO] PARAM[{param}] VALUE[{self.repo[param]}]")
-            repo_config_exists = True
-        except FileNotFoundError as error:
-            self.log.error(f"Repository config file not found")
-            self.log.error(f"{error}")
-            self.app.stop()
-        except AttributeError as error:
-            self.log.error(f"Repository config couldn't be read")
-            self.log.error(f"Repository config file: {self.params.config}")
-            repo_config_exists = False
-        except Exception as error:
-            self.log.error(f"    Repository config file not found in command line params")
-            raise
-            repo_config_exists = False
+        # Check command line param for config file
+        action = self.params.get('action')
+        if action in ('build', 'info'):
+            config_file = self.params.get('config')
+            if config_file is None:
+                self.app.stop(error=True)
 
-        if repo_config_exists:
-            try:
-               self.params.force = self.repo['force']
-               self.log.debug(f"CONF[REPO] PARAM[force] set to {self.params.force}")
-            except KeyError:
-                pass
+            # Check if it exists
+            config_path = Path(config_file).absolute()
+            if config_path.exists():
+                try:
+                    self.log.debug(f"CONF[REPO] Config file: {config_path}")
+                    self.repo = json_load(config_path)
+                    self.log.debug(f"CONF[REPO] Configuration loaded successfully")
+                except AttributeError as error:
+                    self.log.error(f"Repository config couldn't be parsed (probably not well formed)")
+                    self.log.error(error)
+                    self.app.stop(error=True)
+                except Exception as error:
+                    self.log.error(error)
+                    self.app.stop(error=True)
+            else:
+                self.log.error(f"Config path '{config_path}' does not exist")
+                self.app.stop(error=True)
 
-        # Initialize runtime dictionary
-        self.runtime['dir'] = {}
-        if repo_config_exists:
+            root_path = config_path.parent
+            dir_source = self.repo.get('dir_source') or Path(root_path, 'source')
+            dir_target = self.repo.get('dir_target') or Path(root_path, 'target')
+
+            self.params['force'] = self.repo.get('force') or False
+
+
+            self.runtime['dir'] = {}
             self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
             self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
 
-            ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
-            ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
-            ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
-            ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
-            ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-            ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-
-            PROJECT = valid_filename(self.runtime['dir']['source'])
-            WORKDIR = os.path.join(ENV['LPATH']['WORK'], PROJECT)
-            dir_src = Path(self.runtime['dir']['source'])
+            dir_src = Path(self.get_path('source'))
             dir_root = dir_src.parent.absolute()
             dir_var = Path.joinpath(dir_root, 'var')
             dir_log = Path.joinpath(dir_var, 'log')
-            dir_work = Path.joinpath(dir_var, 'work')
-            dir_project = Path.joinpath(dir_work, PROJECT)
-            dir_tmp = Path.joinpath(dir_project, 'tmp')
-            dir_cache = Path.joinpath(dir_project, 'cache')
-            dir_www = Path.joinpath(dir_project, 'www')
-            dir_dist = Path.joinpath(dir_project, 'dist')
+            dir_tmp = Path.joinpath(dir_var, 'tmp')
+            dir_cache = Path.joinpath(dir_var, 'cache')
+            dir_www = Path.joinpath(dir_var, 'www')
+            dir_dist = Path.joinpath(dir_var, 'dist')
+            dir_db = Path.joinpath(dir_var, 'db')
 
-            self.runtime['dir']['work'] = dir_project
             self.runtime['dir']['tmp'] = dir_tmp
             self.runtime['dir']['www'] = dir_www
             self.runtime['dir']['dist'] = dir_dist
             self.runtime['dir']['cache'] = dir_cache
             self.runtime['dir']['log'] = dir_log
+            self.runtime['dir']['db'] = dir_db
 
             for entry in self.runtime['dir']:
                 create_directory = False
@@ -130,36 +100,28 @@ class Backend(Service):
                         # ~ self.log.debug(f"    \tCreate directory {dirname}? {create_directory}")
 
             # Activate application log
-            app_log_file = Path.joinpath(dir_log, f"{PROJECT}.log")
-            self.set_app_log_file(app_log_file)
+            app_log_file = Path.joinpath(dir_log, "kb4it.log")
+            self.runtime['logfile'] = app_log_file
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
-            self.kb4it_temp_log = self.app.get_log_file()
-            shutil.copy(self.kb4it_temp_log, app_log_file)
+            kb4it_temp_log = self.app.get_log_file()
+            shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
-            # if SORT attribute is given, use it instead of the OS timestamp
-            try:
-                self.runtime['sort_attribute'] = self.repo['sort']
-                self.runtime['sort_enabled'] = True
-            except:
-                self.runtime['sort_enabled'] = False
-                self.log.error("No property defined for sorting")
-                self.log.error("Property 'sort' not found in repo config dict")
-                sys.exit(-1)
-
-            # ~ self.log.debug(f"CONF[    Sort enabled: {self.runtime['sort_enabled']}")
-            # ~ self.log.debug(f"    Sort attribute: {self.runtime['sort_attribute']}")
+            self.runtime['sort_attribute'] = self.repo.get('sort')
+            if self.runtime['sort_attribute'] is None:
+                self.log.error("No property 'sort' defined in repository config")
+                self.app.stop(error=True)
 
             # Initialize docs structure
             self.runtime['docs'] = {}
             self.runtime['docs']['count'] = 0
             self.runtime['docs']['bag'] = []
-            self.runtime['docs']['target'] = set()
+            self.runtime['docs']['targets'] = set()
 
             # Load cache dictionary from last run
-            self.kbdict_cur = self.load_kbdict(self.runtime['dir']['source'])
+            self.kbdict_cur = self.load_kbdict()
 
             # And initialize the new one
             self.kbdict_new['document'] = {}
@@ -167,26 +129,62 @@ class Backend(Service):
 
             # Get services
             self.get_services()
+
+    def get_value(self, domain: str, key: str):
+        if domain == 'app':
+            adict = self.params
+        elif domain == 'docs':
+            adict = self.runtime['docs']
+        elif domain == 'kbcur':
+            adict = self.kbdict_cur
+        elif domain == 'kbnew':
+            adict = self.kbdict_new
+        elif domain == 'repo':
+            adict = self.repo
+        elif domain == 'runtime':
+            adict = self.runtime
+        elif domain == 'theme':
+            adict = self.runtime['theme']
         else:
-            self.runtime['dir']['source'] = '/dev/null'
+            return None
+        return adict.get(key)
 
-    def set_app_log_file(self, logfile: str):
-        self.app_log_file = logfile
+    def set_value(self, domain: str, key: str, value: str|int|bool):
+        if domain == 'app':
+            adict = self.params
+        elif domain == 'runtime':
+            adict = self.runtime
 
-    def get_app_log_file(self):
-        return self.app_log_file
+        adict[key] = value
 
-    def set_config(self, config: dict):
-        self.repo = config['repo']
-        self.runtime = config['runtime']
 
-    def load_kbdict(self, source_path):
+    def get_dict(self, domain: str) -> dict:
+        if domain == 'app':
+            return self.params
+        elif domain == 'docs':
+            return self.runtime['docs']
+        elif domain == 'kbcur':
+            return self.kbdict_cur
+        elif domain == 'kbnew':
+            return self.kbdict_new
+        elif domain == 'repo':
+            return self.repo
+        elif domain == 'runtime':
+            return self.runtime
+        elif domain == 'theme':
+            return self.runtime['theme']
+        else:
+            return None
+
+    def get_path(self, name: str):
+        return self.runtime['dir'].get(name)
+
+    def load_kbdict(self):
         """C0111: Missing function docstring (missing-docstring)."""
-        source_path = valid_filename(source_path)
-        KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], f"kbdict-{source_path}.json")
+        KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
         try:
             kbdict = json_load(KB4IT_DB_FILE)
-            # ~ self.log.debug(f"[CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
+            self.log.debug(f"[CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
         except FileNotFoundError:
             kbdict = {}
             kbdict['document'] = {}
@@ -194,136 +192,65 @@ class Backend(Service):
         except Exception as error:
             self.log.error(f"There was an error reading file {KB4IT_DB_FILE}")
             self.log.error(error)
-            self.app.stop()
-            sys.exit()
+            self.app.stop(error=True)
         self.log.debug(f"[CONF] - Current kbdict entries: {len(kbdict)}")
         return kbdict
 
-    def save_kbdict(self, kbdict, path, name=None):
+    def save_kbdict(self, kbdict):
         """C0111: Missing function docstring (missing-docstring)."""
-        if name is None:
-            target_path = valid_filename(path)
-            KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], f"kbdict-{target_path}.json")
-        else:
-            KB4IT_DB_FILE = os.path.join(path, f"{name}.json")
-
+        KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
         json_save(KB4IT_DB_FILE, kbdict)
-        # ~ self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
-
-    def get_targets(self):
-        """Get list of documents converted to pages"""
-        return self.runtime['docs']['target']
+        self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
 
     def add_target(self, adocId, htmlId):
         """All objects received by this method will be appended to the
         list of objects that will be copied to the target directory.
         """
-        self.runtime['docs']['target'].add(htmlId)
+        self.runtime['docs']['targets'].add(htmlId)
         self.log.debug(f"DOC[{adocId}] targets to RESOURCE[{htmlId}]")
-
-    def get_runtime_dict(self):
-        """Get all properties."""
-        return self.runtime
-
-    def get_repo_dict(self):
-        """Get all properties."""
-        return self.repo
-
-    def get_runtime_parameter(self, parameter):
-        """Get value for a given parameter."""
-        return self.runtime[parameter]
-
-    def get_repo_parameters(self):
-        """Get repository parameters."""
-        return self.repo
-
-    def get_theme_properties(self):
-        """Get all properties from loaded theme."""
-        return self.runtime['theme']
-
-    def get_theme_property(self, prop):
-        """Get value for a given property from loaded theme."""
-        return self.runtime['theme'][prop]
-
-    def get_www_path(self):
-        """Get temporary target directory."""
-        return self.runtime['dir']['www']
-
-    def get_cache_path(self):
-        """Get cache path."""
-        return self.runtime['dir']['cache']
-
-    def get_source_path(self):
-        """Get asciidoctor sources path."""
-        return self.runtime['dir']['source']
-
-    def get_target_path(self):
-        """Get target path."""
-        return self.runtime['dir']['target']
-
-    def get_temp_path(self):
-        """Get temporary working path."""
-        return self.runtime['dir']['tmp']
 
     def get_services(self):
         """Get services needed."""
         self.srvdtb = self.get_service('DB')
         self.srvbld = self.get_service('Builder')
 
-    def get_numdocs(self):
-        """Get current number of valid documents."""
-        return self.runtime['docs']['count']
+        from kb4it.services.processor import Processor
+        self.app.register_service('Processor', Processor())
+        self.srvprc = self.get_service('Processor')
 
-    def get_documents(self):
-        """Get current number of valid documents."""
-        try:
-            return self.runtime['docs']['bag']
-        except:
-            self.log.warning("Runtime dictionary not yet initialiased")
-            return []
+    def get_kb_dict(self):
+        return self.srvprc.get_kb_dict()
 
-    # ~ @timeit
+    def get_kbdict_key(self, key, new=True):
+        return self.srvprc.get_kbdict_key(key, new=True)
+
+    def get_kbdict_value(self, key, value, new=True):
+        return self.srvprc.get_kbdict_value(key, value, new=True)
+
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service('Frontend')
         self.log.debug(f"[CHECKS] - START")
-        self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.runtime['dir']['cache']}]")
-        self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.runtime['dir']['tmp']}]")
-        self.log.debug(f"CONF[APP] DIR[DISTRIBUTION] VALUE[{self.runtime['dir']['dist']}]")
-        self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.runtime['dir']['www']}]")
+        self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.get_path('cache')}]")
+        self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.get_path('tmp')}]")
+        self.log.debug(f"CONF[APP] DIR[DISTRIBUTION] VALUE[{self.get_path('dist')}]")
+        self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.get_path('www')}]")
 
         # Check if source directory exists. If not, stop application
-        if not os.path.exists(self.get_source_path()):
-            self.log.error(f"Source directory '{self.get_source_path()}' doesn't exist.")
-            self.app.stop()
-        self.log.debug(f"CONF[APP] DIR[SOURCE] VALUE[{self.get_source_path()}]")
+        if not os.path.exists(self.get_path('source')):
+            self.log.error(f"Source directory '{self.get_path('source')}' doesn't exist.")
+            self.app.stop(error=True)
+        self.log.debug(f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
 
         # check if target directory exists. If not, create it:
-        if not os.path.exists(self.get_target_path()):
-            os.makedirs(self.get_target_path(), exist_ok=True)
-        self.log.debug(f"CONF[APP] DIR[TARGET] VALUE[{self.get_target_path()}]")
+        if not os.path.exists(self.get_path('target')):
+            os.makedirs(self.get_path('target'), exist_ok=True)
+        self.log.debug(f"CONF[APP] DIR[TARGET] VALUE[{self.get_path('target')}]")
 
-        if  self.get_source_path() == ENV['LPATH']['TMP_SOURCE'] and self.get_target_path() == ENV['LPATH']['TMP_TARGET']:
-            self.log.error("No config file especified")
-            self.app.stop()
-
-        # if no theme defined by params, try to autodetect it.
-        # ~ self.log.debug(f"    Paramters: {self.repo}")
-        try:
-            theme_name = self.repo['theme']
-        except KeyError:
-            theme_name = 'techdoc'
-
+        theme_name = self.get_value('repo', 'theme')
         if theme_name is None:
-            self.log.debug(f"Theme not provided. Autodetect it.")
-            theme_path = frontend.theme_search()
-            if theme_path is not None:
-                frontend.theme_load(os.path.basename(theme_path))
-                self.log.debug(f"Theme found and loaded")
-            else:
-                self.log.error(f"Theme '{theme_name}' not found")
-                self.log.error(f"[CHECKS] - END")
-                self.app.stop()
+            self.log.debug(f"Theme not provided.")
+            self.app.stop(error=True)
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
@@ -331,14 +258,13 @@ class Backend(Service):
             else:
                 self.log.error(f"Theme '{theme_name}' not found")
                 self.log.error(f"[CHECKS] - END")
-                self.app.stop()
+                self.app.stop(error=True)
         self.log.debug(f"[CHECKS] - END")
 
-    # ~ @timeit
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.debug(f"[SOURCES] - START")
-        sources_path = self.get_source_path()
+        sources_path = self.get_path('source')
 
         # Firstly, allow theme to generate documents
         self.srvthm = self.get_service('Theme')
@@ -361,167 +287,7 @@ class Backend(Service):
         self.log.debug(f"STATS - Found {self.runtime['docs']['count']} asciidoctor documents in source directory")
         self.log.debug(f"[SOURCES] - END")
 
-    # ~ @timeit
-    def stage_03_00_preprocess_document(self, filepath: str):
-        # Get Id
-        adocId = os.path.basename(filepath)
-
-        # Get metadata
-        keys = self.stage_03_00_preprocess_document_metadata(adocId, tolerant=True)
-        if keys is None:
-            self.log.error(f"DOC[{adocId}] not compliant: no keys found")
-            return
-
-        # Get content
-        with open(filepath) as source_adoc:
-            content = source_adoc.read()
-
-        # Add to cache
-        # Old cache
-        self.kbdict_new['document'][adocId] = {}
-        self.kbdict_new['document'][adocId]['content'] = content
-        self.kbdict_new['document'][adocId]['keys'] = keys
-
-        # Add to the in-memory database
-        self.srvdtb.add_document(adocId)
-
-        self.stage_03_00_preprocess_document_hashes(adocId, content, keys)
-        self.stage_03_00_preprocess_document_caches(adocId, keys)
-
-        # Add compiled page to the target list
-        htmlId = adocId.replace('.adoc', '.html')
-        self.add_target(adocId, htmlId)
-
-    # ~ @timeit
-    def stage_03_00_preprocess_document_metadata(self, adocId: str, tolerant: bool):
-        docpath = os.path.join(self.get_source_path(), adocId)
-        keys = get_asciidoctor_attributes(docpath, tolerant)
-
-        # If document doesn't have a title, skip it.
-        try:
-            title = keys['Title'][0]
-            self.log.debug(f"DOC[{adocId}] Title[{title}]")
-        except (KeyError, TypeError):
-            self.runtime['docs']['count'] -= 1
-            self.log.warning(f"DOC[{adocId}] doesn't have a title. Skip it.")
-
-        self.log.debug(f"DOC[{adocId}] has {len(keys)} keys")
-        return keys
-
-    def get_sort_attribute(self):
-        runtime = self.get_runtime_dict()
-        sort_attribute = runtime['sort_attribute']
-        return sort_attribute
-
-    # ~ @timeit
-    def stage_03_00_preprocess_document_hashes(self, adocId: str, content: str, keys: list):
-        # To track changes in a document, hashes for metadata and content are created.
-        # Comparing them with those in the cache, KB4IT determines if a document must be
-        # compiled again. Very useful to reduce the compilation time.
-
-        # Get Document Content and Metadata Hashes
-        content_hash = get_hash_from_dict({'content': content})
-        metadata_hash = get_hash_from_dict(keys)
-        self.kbdict_new['document'][adocId]['content_hash'] = content_hash
-        self.kbdict_new['document'][adocId]['metadata_hash'] = metadata_hash
-        self.log.debug(f"DOC[{adocId}] HASH[{content_hash}{metadata_hash}]")
-
-
-    # ~ @timeit
-    def stage_03_00_preprocess_document_caches(self, adocId: str, keys: list):
-        # Generate caches
-        for key in keys:
-            alist = keys[key]
-            for value in alist:
-                if len(value.strip()) == 0:
-                    continue
-                #self.log.debug(f"Doc['{adocId}'] Key['{key}'] Value['{value}']")
-                if key == self.runtime['sort_attribute']:
-                    value = string_timestamp(value)
-
-                if key == 'Tag':
-                    value = value.lower()
-
-                self.srvdtb.add_document_key(adocId, key, value)
-
-                # For each document and for each key/value linked to that document add an entry to kbdic['document']
-                try:
-                    values = self.kbdict_new['document'][adocId][key]
-                    if value not in values:
-                        values.append(value)
-                    self.kbdict_new['document'][adocId][key] = sorted(values)
-                except KeyError:
-                    self.kbdict_new['document'][adocId][key] = [value]
-
-                # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
-                try:
-                    documents = self.kbdict_new['metadata'][key][value]
-                    documents.append(adocId)
-                    self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
-                except KeyError:
-                    if key not in self.kbdict_new['metadata']:
-                        self.kbdict_new['metadata'][key] = {}
-                    if value not in self.kbdict_new['metadata'][key]:
-                        self.kbdict_new['metadata'][key][value] = [adocId]
-
-    # ~ @timeit
-    def stage_03_00_preprocess_document_compile(self, adocId: str, content:str, keys:list):
-        # Force compilation (from command line)?
-        DOC_COMPILATION = False
-        FORCE_ALL = self.params.force
-        if not FORCE_ALL:
-            # Get cached document path and check if it exists
-            htmlId = adocId.replace('.adoc', '.html')
-            cached_document = os.path.join(self.runtime['dir']['cache'], htmlId)
-            cached_document_exists = os.path.exists(cached_document)
-
-            # Compare the document with the one in the cache
-            if not cached_document_exists:
-                DOC_COMPILATION = True
-                REASON = "Not cached"
-            else:
-                try:
-                    hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
-                    hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
-                    #self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
-                    #self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
-                    DOC_COMPILATION = hash_new != hash_cur
-                    REASON = f"Hashes differ? {DOC_COMPILATION}"
-                except Exception as warning:
-                    DOC_COMPILATION = True
-                    REASON = warning
-        else:
-            REASON = "Forced"
-
-        COMPILE = DOC_COMPILATION or FORCE_ALL
-        # Save compilation status
-        try:
-            self.kbdict_new['document'][adocId]['compile'] = COMPILE
-        except KeyError as error:
-            #FIXME: check
-            self.log.error(f"DOC[{adocId}]: {error}")
-            raise
-
-        if COMPILE:
-            # Write new adoc to temporary dir
-            target = f"{self.runtime['dir']['tmp']}/{valid_filename(adocId)}"
-            with open(target, 'w') as target_adoc:
-                target_adoc.write(content)
-
-            try:
-                title_cur = self.kbdict_cur['document'][adocId]['Title']
-                title_new = self.kbdict_new['document'][adocId]['Title']
-                if title_new != title_cur:
-                    for key in keys:
-                        if key != 'Title':
-                            self.force_keys.add(key)
-            except KeyError:
-                # Very likely there is no kbdict, so this step is skipped
-                pass
-        self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
-
-    # ~ @timeit
-    def stage_03_preprocessing(self):
+    def stage_03_process_sources(self):
         """
         Extract metadata from source docs into a dict.
         Create metadata section for each adoc and insert it after the
@@ -529,509 +295,29 @@ class Backend(Service):
         In this way, after being compiled into HTML, final adocs are
         browsable throught its metadata.
         """
-        self.log.debug(f"[PREPROCESSING] - START")
+        self.log.debug(f"[EXTRACTION] - START")
+        self.srvprc.step_00_extraction()
+        self.srvprc.step_01_analysis()
+        self.srvprc.step_02_transformation()
 
-        # Preprocessing
-        for filepath in self.runtime['docs']['bag']:
-            self.stage_03_00_preprocess_document(filepath)
-
-        # Save current status for the next run
-        self.save_kbdict(self.kbdict_new, self.get_source_path())
-
-        # Force compilation for all documents?
-        # ~ self.log.debug(f"PREPROCESSING - KB Old keys: {sorted(list(self.kbdict_cur['metadata'].keys()))}")
-        # ~ self.log.debug(f"PREPROCESSING - KB New keys: {sorted(list(self.kbdict_new['metadata'].keys()))}")
-        keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
-        keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
-        keys_hash_differ = keys_hash_cur != keys_hash_new
-        if keys_hash_differ:
-            self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
-            self.params.force = True
-
-        # Compiling strategy
-        for filepath in self.runtime['docs']['bag']:
-            adocId = os.path.basename(filepath)
-            content = self.kbdict_new['document'][adocId]['content']
-            keys = self.kbdict_new['document'][adocId]['keys']
-            self.stage_03_00_preprocess_document_compile(adocId, content, keys)
-
-        # Build a list of documents sorted by timestamp
-        self.srvdtb.sort_database()
-
-        # Documents preprocessing stats
-        self.log.debug(f"STATS - Documents analyzed: {len(self.runtime['docs']['bag'])}")
-        keep_docs = compile_docs = 0
-        for adocId in self.kbdict_new['document']:
-            if self.kbdict_new['document'][adocId]['compile']:
-                compile_docs += 1
-            else:
-                keep_docs += 1
-        self.log.debug(f"STATS - Keep: {keep_docs} - Compile: {compile_docs}")
-        #if compile_docs == 0:
-        #    self.log.debug(f"    - No changes in the repository")
-        #else:
-        #    if compile_docs < keep_docs:
-        #        self.log.info(f"    - There are changes in the repository. {compile_docs} documents will be compiled again")
-        #    else:
-        #        self.log.info(f"[PREPROCESSING] - All documents will be compiled again")
-        self.log.debug(f"[PREPROCESSING] - END")
-
-    def get_ignored_keys(self):
-        return self.ignored_keys
-
-    def get_kb_dict(self):
-        return self.kbdict_new
-
-    # ~ @timeit
-    def get_kbdict_key(self, key, new=True):
-        """
-        Return values for a given key from KB dictionary.
-        If new is True, it will return the value from the kbdict just
-        generated during the execution.
-        If new is False, it will return the value from the kbdict saved
-        in the previous execution.
-        """
-        if new:
-            kbdict = self.kbdict_new
-        else:
-            kbdict = self.kbdict_cur
-
-        try:
-            alist = kbdict['metadata'][key]
-        except KeyError:
-            alist = []
-
-        return alist
-
-    # ~ @timeit
-    def get_kbdict_value(self, key, value, new=True):
-        """
-        Get a value for a given key from KB dictionary.
-        If new is True, it will return the value from the kbdict just
-        generated during the execution.
-        If new is False, it will return the value from the kbdict saved
-        in the previous execution.
-        """
-        if new:
-            kbdict = self.kbdict_new
-        else:
-            kbdict = self.kbdict_cur
-
-        try:
-            alist = kbdict['metadata'][key][value]
-        except KeyError:
-            alist = []
-
-        return alist
-
-    # ~ @timeit
-    def stage_04_processing_00_analyze_keys(self, available_keys):
-        K_PATH = []
-        KV_PATH = []
-
-        for key in sorted(available_keys):
-            COMPILE_KEY = False
-            FORCE_KEY = key in self.force_keys
-            FORCE_ALL = self.params.force or FORCE_KEY
-            values = self.srvdtb.get_all_values_for_key(key)
-
-            # Compare keys values for the current run and the cache
-            # Otherwise, the key is not recompiled when a value is deleted
-            rknew = sorted(self.get_kbdict_key(key, new=True))
-            rkold = sorted(self.get_kbdict_key(key, new=False))
-            if rknew != rkold:
-                COMPILE_KEY = True
-            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
-
-            for value in values:
-                COMPILE_VALUE = False
-                key_value_docs_new = self.get_kbdict_value(key, value, new=True)
-                key_value_docs_cur = self.get_kbdict_value(key, value, new=False)
-                VALUE_COMPARISON = key_value_docs_new != key_value_docs_cur
-
-                if VALUE_COMPARISON:
-                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}]")
-                    COMPILE_VALUE = True
-                COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
-                COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
-                KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
-            COMPILE_KEY = COMPILE_KEY or FORCE_ALL
-            K_PATH.append((key, values, COMPILE_KEY))
-            if COMPILE_KEY:
-                self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
-        return K_PATH, KV_PATH
-
-
-    # ~ @timeit
-    def stage_04_processing(self):
-        """Process all keys/values got from documents.
-        The algorithm detects which keys/values have changed and compile
-        them again. This avoid recompile the whole database, saving time
-        and CPU.
-        """
-        self.log.debug(f"[PROCESSING] - START")
-        repo = self.get_repo_parameters()
-        all_keys = set(self.srvdtb.get_all_keys())
-        ign_default_keys = set(self.srvdtb.get_ignored_keys())
-        ign_theme_keys = set(repo['ignored_keys'])
-        self.ignored_keys = ign_default_keys.union(ign_theme_keys)
-        available_keys = list(all_keys - self.ignored_keys)
-        self.runtime['K_PATH'], self.runtime['KV_PATH'] = self.stage_04_processing_00_analyze_keys(available_keys)
-
-        # Keys
-        keys_with_compile_true = 0
-        for kpath in self.runtime['K_PATH']:
-            key, values, COMPILE_KEY = kpath
-            adocId = f"{valid_filename(key)}.adoc"
-            htmlId = adocId.replace('.adoc', '.html')
-            if COMPILE_KEY:
-                self.srvthm.build_page_key(key, values)
-                keys_with_compile_true += 1
-
-            # Add compiled page to the target list
-            self.add_target(adocId, htmlId)
-
-        # # Keys/Values
-        pairs_with_compile_true = 0
-        for kvpath in self.runtime['KV_PATH']:
-            key, value, COMPILE_VALUE = kvpath
-            adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
-            htmlId = adocId.replace('.adoc', '.html')
-            if COMPILE_VALUE:
-                self.srvthm.build_page_key_value(kvpath)
-                pairs_with_compile_true += 1
-
-            # Add compiled page to the target list
-            self.add_target(adocId, htmlId)
-
-        self.log.debug(f"STATS - {keys_with_compile_true} keys will be compiled")
-        self.log.debug(f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
-        self.log.debug(f"STATS - Finish processing keys")
-        self.log.debug(f"STATS - Target docs: {len(self.runtime['docs']['target'])}")
-        self.log.debug(f"[PROCESSINNG] - END")
-
-    # ~ @timeit
-    def stage_05_compilation(self):
-        """Compile documents to html with asciidoctor."""
-        dcomps = datetime.datetime.now()
-
-        # copy online resources to target path
-        # ~ resources_dir_source = GPATH['THEMES']
-        resources_dir_tmp = os.path.join(self.runtime['dir']['tmp'], 'resources')
-        #if path already exists, remove it before copying with copytree()
-        if os.path.exists(resources_dir_tmp):
-            shutil.rmtree(resources_dir_tmp)
-            shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
-        self.log.debug(f"Global resources copied to {resources_dir_tmp}")
-
-        adocprops = ''
-        for prop in ENV['CONF']['ADOCPROPS']:
-            self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
-            if ENV['CONF']['ADOCPROPS'][prop] is not None:
-                if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
-                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop] % self.get_target_path())
-                else:
-                    adocprops += '-a %s=%s ' % (prop, ENV['CONF']['ADOCPROPS'][prop])
-            else:
-                adocprops += '-a %s ' % prop
-        self.runtime['adocprops'] = adocprops
-        #self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
-
-        # ~ distributed = self.srvthm.get_distributed()
-        distributed = self.get_targets()
-        # ~ params = self.app.get_app_conf()
-        with Executor(max_workers=self.params.workers) as exe:
-            docs = get_source_docs(self.runtime['dir']['tmp'])
-            jobs = []
-            jobcount = 0
-            num = 1
-            # ~ self.log.debug(f"Generating jobs")
-            for doc in docs:
-                COMPILE = True
-                basename = os.path.basename(doc)
-                if basename in distributed:
-                    distributed_file = os.path.join(self.runtime['dir']['dist'], basename)
-                    cached_file = os.path.join(self.runtime['dir']['cache'], basename.replace('.adoc', '.html'))
-                    if os.path.exists(distributed_file) and os.path.exists(cached_file):
-                        cached_hash = get_hash_from_file(distributed_file)
-                        current_hash = get_hash_from_file(doc)
-                        if cached_hash == current_hash:
-                            COMPILE = False
-
-
-                if COMPILE or self.params.force:
-                    cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, self.runtime['dir']['tmp'], doc)
-                    #self.log.debug(f"CMD[%s]", cmd)
-                    data = (doc, cmd, num)
-                    self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
-                    job = exe.submit(self.compilation_started, data)
-                    job.add_done_callback(self.compilation_finished)
-                    jobs.append(job)
-                    num = num + 1
-                else:
-                    self.log.debug(f"DOC[{basename}] cached. Avoid compiling")
-
-            if num-1 > 0:
-                self.log.debug("[COMPILATION] - START")
-                # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
-                for job in jobs:
-                    adoc, res, jobid = job.result()
-                    self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
-                    jobcount += 1
-                    if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
-                        pct = int(jobcount * 100 / len(docs))
-                        # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
-                        self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
-
-                dcompe = datetime.datetime.now()
-                comptime = dcompe - dcomps
-                duration = comptime.seconds
-                if duration == 0:
-                    duration = 1
-                avgspeed = int(((num - 1) / duration))
-                pct = int(jobcount * 100 / len(docs))
-                self.log.debug(f"STATS - JOB[{jobid}/{num -1}] Compilation progress: {pct}% done")
-                self.log.debug(f"STATS - Compilation time: {comptime.seconds} seconds")
-                self.log.debug(f"STATS - Compiled docs: {num - 1}")
-                self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
-            else:
-                self.log.debug(f"STATS - Nothing to compile!")
-            self.log.debug(f"[COMPILATION] - END")
-
-    def compilation_started(self, data):
-        (doc, cmd, num) = data
-        res = exec_cmd(data)
-        return res
-
-    def compilation_finished(self, future):
-        time.sleep(random.random())
-        cur_thread = threading.current_thread().name
-        x = future.result()
-        if cur_thread != x:
-            path_hdoc, rc, num = x
-            basename = os.path.basename(path_hdoc)
-            # ~ self.log.debug(f"[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
-            try:
-                html = self.srvthm.build_page(path_hdoc)
-            except MemoryError:
-                self.log.error("Memory exhausted!")
-                self.log.error("Please, consider using less workers or add more memory to your system")
-                self.log.error("The application will exit now...")
-                self.app.stop()
-                sys.exit(errno.ENOMEM)
-            except Exception as error:
-                self.log.error(error)
-                self.print_traceback()
-                self.app.stop()
-            return x
-
-    # ~ @timeit
-    def stage_06_theme(self):
+    def stage_04_process_theme(self):
         self.log.debug(f"[PROCESSING THEME] - START")
         self.srvthm.build()
         self.log.debug(f"[PROCESSING THEME] - END")
 
-    # ~ @timeit
-    def stage_07_clean_target(self):
-        """Clean up stage."""
-        self.log.debug(f"[CLEANUP] - START")
-        pattern = os.path.join(self.get_source_path(), '*.*')
-        extra = glob.glob(pattern)
-        copy_docs(extra, self.get_cache_path())
-        delete_target_contents(self.runtime['dir']['dist'])
-        self.log.debug(f"Distributed files deleted")
-        distributed = self.get_targets()
-        for adoc in distributed:
-            source = os.path.join(self.runtime['dir']['tmp'], adoc)
-            target = self.runtime['dir']['www']
-            try:
-                shutil.copy(source, target)
-            except Exception as warning:
-                # FIXME
-                # ~ self.log.warning(warning)
-                # ~ self.log.warning("[CLEANUP] - Missing source file: %s", source)
-                pass
-        self.log.debug(f"Copy temporary files to distributed directory")
+    def stage_05_compilation(self):
+        """Compile documents to html with asciidoctor."""
+        from kb4it.services.compiler import Compiler
+        self.app.register_service('Compiler', Compiler())
+        compiler = self.app.get_service('Compiler')
+        compiler.execute()
+        return
 
-        delete_target_contents(self.get_target_path())
-        self.log.debug(f"Deleted target contents in: %s", self.get_target_path())
-        self.log.debug(f"[CLEANUP]")
+    def stage_06_deploy(self):
+        from kb4it.services.deployer import Deployer
+        self.app.register_service('Deployer', Deployer())
+        deployer = self.app.get_service('Deployer')
+        deployer.execute()
 
-    # ~ @timeit
-    def stage_08_refresh_target(self):
-        """Refresh target."""
-        self.log.debug(f"[INSTALL] - START")
-        # Copy asciidocs documents to target path
-        pattern = os.path.join(self.get_source_path(), '*.adoc')
-        files = glob.glob(pattern)
-        docsdir = os.path.join(self.get_target_path(), 'sources')
-        os.makedirs(docsdir, exist_ok=True)
-        copy_docs(files, docsdir)
-        self.log.debug(f"STATS - Copied {len(files)} asciidoctor sources to target path")
-
-        # Copy compiled documents to cache path
-        pattern = os.path.join(self.runtime['dir']['tmp'], '*.html')
-        files = glob.glob(pattern)
-        copy_docs(files, self.runtime['dir']['cache'])
-        # ~ for file in files:
-            # ~ self.log.debug(f"[INSTALL] - \tCopied '{os.path.basename(file)}' from temporary path to cache path")
-        self.log.debug(f"STATS - Copied {len(files)} html files from temporary path to cache path")
-
-        # Copy objects in temporary target to cache path
-        pattern = os.path.join(self.runtime['dir']['tmp'], '*.*')
-        files = glob.glob(pattern)
-        copy_docs(files, self.runtime['dir']['cache'])
-        #for file in files:
-        #    self.log.debug(f"[INSTALL] - \tCopied '{os.path.basename(file)}' from temporary target to cache path")
-        self.log.debug(f"STATS - Copied {len(files)} html files from temporary target to cache path")
-
-        # Copy cached documents to target path
-        n = 0
-        for filename in sorted(self.runtime['docs']['target']):
-            source = os.path.join(self.runtime['dir']['cache'], filename)
-            target = os.path.join(self.get_target_path(), filename)
-            try:
-                shutil.copy(source, target)
-                # ~ self.log.debug(f"%s -> %s", os.path.basename(source), os.path.basename(target))
-            except FileNotFoundError as error:
-                self.log.error(error)
-                self.log.error("Consider to run the command again with the option -force")
-                self.app.stop()
-            n += 1
-        self.log.debug(f"STATS - Copied {n} cached documents successfully to target path")
-
-        # Copy global resources to target path
-        resources_dir_target = os.path.join(self.get_target_path(), 'resources')
-        theme_target_dir = os.path.join(resources_dir_target, 'themes')
-        theme = self.get_theme_properties()
-        DEFAULT_THEME = os.path.join(ENV['GPATH']['THEMES'], 'default')
-        CUSTOM_THEME_ID = theme['id']
-        CUSTOM_THEME_PATH = theme['path']
-        copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
-        copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
-        copydir(ENV['GPATH']['COMMON'], os.path.join(resources_dir_target, 'common'))
-        self.log.debug("STATS - Copied global resources to target path")
-
-        # Copy local resources to target path
-        source_resources_dir = os.path.join(self.get_source_path(), 'resources')
-        if os.path.exists(source_resources_dir):
-            resources_dir_target = os.path.join(self.get_target_path(), 'resources')
-            copydir(source_resources_dir, resources_dir_target)
-            self.log.debug(f"Copied local resources to target path")
-        # ~ self.log.info("STATS - Copied local resources to target path")
-
-        # Copy back all HTML files from target to cache
-        delete_target_contents(self.runtime['dir']['cache'])
-        pattern = os.path.join(self.get_target_path(), '*.html')
-        html_files = glob.glob(pattern)
-        copy_docs(html_files, self.runtime['dir']['cache'])
-        self.log.debug("Copying HTML files back to cache...")
-
-        # Copy JSON database to target path so it can be queried from
-        # others applications
-        self.save_kbdict(self.kbdict_new, self.get_target_path(), 'kb4it')
-        self.log.debug("Copied JSON database to target")
-        self.log.debug(f"[INSTALL] - END")
-
-    def cleanup(self):
-        """Clean KB4IT temporary environment.
-        """
-        try:
-            delete_target_contents(self.runtime['dir']['tmp'])
-            delete_target_contents(self.runtime['dir']['www'])
-            delete_target_contents(self.runtime['dir']['dist'])
-            os.unlink(self.kb4it_temp_log)
-            pass
-        except Exception as KeyError:
-            pass
-        # ~ self.log.debug(f"[CLEANUP] - KB4IT Workspace clean")
-
-    # ~ def reset(self):
-        # ~ """WARNING.
-        # ~ Reset environment given source and target directories.
-        # ~ Delete:
-        # ~ - Source directory
-        # ~ - Target directory
-        # ~ - Temporary directory
-        # ~ - Cache directory
-        # ~ - KB4IT database file for this environment
-        # ~ WARNING!!!
-        # ~ Please, note: if you pass the wrong directory...
-        # ~ """
-        # ~ self.kbdict_new = {}
-        # ~ self.kbdict_cur = {}
-        # ~ filename = valid_filename(self.get_source_path())
-        # ~ kdbdict = 'kbdict-%s.json' % filename
-        # ~ KB4IT_DB_FILE = os.path.join(ENV['LPATH']['DB'], kdbdict)
-
-        # ~ delete_target_contents(self.runtime['dir']['cache'])
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.runtime['dir']['cache'])
-
-        # ~ delete_target_contents(self.runtime['dir']['tmp'])
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.runtime['dir']['tmp'])
-
-        # ~ delete_target_contents(self.get_source_path())
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.get_source_path())
-
-        # ~ delete_target_contents(self.get_target_path())
-        # ~ self.log.debug(f"[RESET] - DIR[%s] deleted", self.get_target_path())
-
-        # ~ delete_target_contents(KB4IT_DB_FILE)
-        # ~ self.log.debug(f"[RESET] - FILE[%s] deleted", KB4IT_DB_FILE)
-
-        # ~ self.log.debug(f"[RESET] - KB4IT environment reset")
-
-    def run(self):
-        """Start script execution following this flow.
-        1. Check environment
-        2. Get source documents
-        3. Preprocess documents (get metadata)
-        4. Process documents in a temporary dir
-        5. Compile documents to html with asciidoctor
-        6. Delete contents of target directory (if any)
-        7. Refresh target directory
-        8. Remove temporary directory
-        """
-        self.running = True
-
-    def is_running(self):
-        """Return current execution status."""
-        return self.running
-
-    # ~ def delete_document(self, adoc):
-        # ~ """Remove a document from database and also from cache."""
-        # ~ # Remove source document
-        # ~ try:
-            # ~ source_dir = self.get_source_path()
-            # ~ source_path = os.path.join(source_dir, "%s.adoc" % adoc)
-            # ~ os.unlink(source_path)
-            # ~ self.log.debug(f"DOC[%s] deleted from source directory", adoc)
-        # ~ except FileNotFoundError:
-            # ~ self.log.debug(f"DOC[%s] not found in source directory", adoc)
-
-        # ~ # Remove database document
-        # ~ self.srvdtb.del_document(adoc)
-        # ~ self.log.debug(f"DOC[%s] deleted from database", adoc)
-
-        # ~ # Remove cache document
-        # ~ cache_dir = self.get_cache_path()
-        # ~ cached_path = os.path.join(cache_dir, "%s.html" % adoc)
-        # ~ try:
-            # ~ os.unlink(cached_path)
-            # ~ self.log.debug(f"DOC[%s] deleted from cache directory", adoc)
-        # ~ except FileNotFoundError:
-            # ~ self.log.debug(f"DOC[%s] not found in cache directory", adoc)
-
-    def busy(self):
-        self.running = True
-
-    def free(self):
-        # Cache Manager Stats
-        # ~ self.cache.print_cache_report()
-        # ~ pprint.pprint(self.cache.get_new())
-        self.running = False
-
-    def end(self):
-        self.cleanup()
+    def _finalize(self):
         pass

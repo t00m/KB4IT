@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 Environment module.
 
@@ -50,7 +49,7 @@ except AttributeError:
 pid = os.getpid()
 ENV['SYS']['PS'] = {}
 ENV['SYS']['PS']['PID'] = os.getpid()
-ENV['SYS']['PS']['NAME'] = open('/proc/%d/comm' % pid, 'r').read().strip()
+ENV['SYS']['PS']['NAME'] = open('/proc/%d/comm' % pid).read().strip()
 
 # Configuration
 ENV['CONF'] = {}
@@ -93,18 +92,18 @@ ENV['APP']['website'] = 'https://github.com/t00m/KB4IT'
 # Local paths
 ENV['LPATH'] = {}
 ENV['LPATH']['ROOT'] = os.path.join(ENV['CONF']['USER_DIR'], ".%s" % ENV['APP']['shortname'].lower())
-ENV['LPATH']['ETC'] = os.path.join(ENV['LPATH']['ROOT'], 'etc')
+# ~ ENV['LPATH']['ETC'] = os.path.join(ENV['LPATH']['ROOT'], 'etc')
 ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
-ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
-ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
-ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
+# ~ ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
+# ~ ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
+# ~ ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
 ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
+# ~ ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
 ENV['LPATH']['OPT'] = os.path.join(ENV['LPATH']['ROOT'], 'opt')
 ENV['LPATH']['RESOURCES'] = os.path.join(ENV['LPATH']['OPT'], 'resources')
 ENV['LPATH']['THEMES'] = os.path.join(ENV['LPATH']['RESOURCES'], 'themes')
-ENV['LPATH']['TMP_SOURCE'] = os.path.join(ENV['LPATH']['TMP'], 'source')
-ENV['LPATH']['TMP_TARGET'] = os.path.join(ENV['LPATH']['TMP'], 'target')
+# ~ ENV['LPATH']['TMP_SOURCE'] = os.path.join(ENV['LPATH']['TMP'], 'source')
+# ~ ENV['LPATH']['TMP_TARGET'] = os.path.join(ENV['LPATH']['TMP'], 'target')
 # ~ ENV['LPATH']['WWW'] = os.path.join(ENV['LPATH']['VAR'], 'www')
 # ~ ENV['LPATH']['EXPORT'] = os.path.join(ENV['LPATH']['VAR'], 'export')
 # ~ ENV['LPATH']['CACHE'] = os.path.join(ENV['LPATH']['VAR'], 'cache')

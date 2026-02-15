@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
@@ -26,7 +25,7 @@ def check_repo_config_file(configfile: str = None):
 
 try:
     configfile = input("Repository configuration file: ")
-    print("Config file: %s (%s)" % (configfile, type(configfile)))
+    print("Config file: {} ({})".format(configfile, type(configfile)))
     if configfile is None or len(configfile) == 0 or not os.path.exists(configfile):
         raise KB4ITRepositoryConfigFileNotFoundError(configfile)
 except KB4ITRepositoryConfigFileNotFoundError:

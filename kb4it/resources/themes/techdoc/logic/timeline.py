@@ -8,7 +8,7 @@ from kb4it.core.util import get_human_datetime
 class Timeline(Service):
     """Generate JSON data for TimelineJS"""
 
-    def initialize(self):
+    def _initialize(self):
         super(Timeline, self).__init__()
         self.get_services()
 

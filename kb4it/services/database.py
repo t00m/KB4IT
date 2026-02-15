@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
@@ -10,6 +9,7 @@ from kb4it.core.service import Service
 from kb4it.core.util import sort_dictionary
 from kb4it.core.util import valid_filename
 from kb4it.core.util import guess_datetime
+from kb4it.core.util import json_load, json_save
 # ~ from kb4it.core.util import timeit
 from kb4it.core.util import get_hash_from_list
 from kb4it.core.util import get_timestamp_yyyymmdd
@@ -29,17 +29,11 @@ class Database(Service):
     cache_docs_sorted_by_date = {}
     cache_all_values_for_key = {}
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize database module."""
         self.srvbes = self.get_service('Backend')
-        runtime = self.srvbes.get_runtime_dict()
-        self.sort_attribute = ''
-        try:
-            if runtime['sort_enabled']:
-                self.sort_attribute = runtime['sort_attribute']
-        except KeyError:
-            pass
-
+        runtime = self.srvbes.get_dict('runtime')
+        self.sort_attribute = runtime.get('sort_attribute')
         self.sorted_docs = []
         self.keys['all'] = []
         self.keys['blocked'] = ['Title', 'SystemPage']
@@ -98,16 +92,15 @@ class Database(Service):
         Build a list of documents.
         Documents sorted by the given date attribute in descending order.
         """
-        runtime = self.srvbes.get_runtime_dict()
         if len(self.sorted_docs) == 0:
-            if runtime['sort_enabled']:
-                self.sorted_docs = self.sort_by_date(list(self.db.keys()))
-            else:
-                self.sorted_docs = list(self.db.keys())
+            runtime = self.srvbes.get_dict('runtime')
+            self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     # ~ # ~ @timeit
-    def sort_by_date(self, doclist):
+    def sort_by_date(self, doclist:list=[]):
         """Build a list of documents sorted by timestamp desc."""
+        if len(doclist) == 0:
+            doclist = self.db.keys()
         md5hash = get_hash_from_list(sorted(doclist))
         if not md5hash in self.cache_docs_sorted_by_date:
             adict = {}
@@ -115,6 +108,7 @@ class Database(Service):
                 if not self.is_system(docId):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
+                        self.log.warning(f"{docId} not compliant")
                         continue
                     dt = guess_datetime(sdate)
                     adict[docId] = dt #.strftime("%Y%m%d")
@@ -163,11 +157,11 @@ class Database(Service):
                         props[key] = self.db[docId][key]
                         n = 0
                         for value in self.db[docId][key]:
-                            key_value_url = "%s_%s_Url" % (key, value)
-                            props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
+                            key_value_url = "{}_{}_Url".format(key, value)
+                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
 
                             key_value_url = "%s_%d_Url" % (key, n)
-                            props[key_value_url] = "%s_%s.html" % (valid_filename(key), valid_filename(value))
+                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
                             n += 1
             except Exception as warning:
                 # FIXME: Document why it is not necessary
@@ -293,10 +287,13 @@ class Database(Service):
                 for key in self.db[docId]:
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
-            except Exception as warning:
-                self.log.debug("DOC[%s] is not in the database", docId)
+            except KeyError as warning:
+                pass
+                # ~ self.log.warning("DOC[%s] is not in the database", docId)
+                # ~ raise
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 
     def get_sort_attribute(self):
         return self.sort_attribute
+

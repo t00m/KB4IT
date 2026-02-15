@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 Module with the application logic.
@@ -30,10 +29,10 @@ class Frontend(Service):
     """
     srvthm = None
 
-    def initialize(self):
+    def _initialize(self):
         """"""
-        backend = self.get_service('Backend')
-        self.runtime = backend.get_runtime_dict()
+        self.srvbes = self.get_service('Backend')
+        self.runtime = self.srvbes.get_dict('runtime')
 
     def theme_list(self):
         self.log.debug(" - List of themes available")
@@ -101,7 +100,7 @@ class Frontend(Service):
         else:
             # load theme configuration
             try:
-                with open(theme_conf, 'r') as fth:
+                with open(theme_conf) as fth:
                     theme = json.load(fth)
                     for prop in theme:
                         self.runtime['theme'][prop] = theme[prop]
@@ -133,7 +132,7 @@ class Frontend(Service):
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug(" - Autodetecting theme from source path")
-            source_path = self.runtime['dir']['source']
+            source_path = self.get_path('source')
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
@@ -145,14 +144,17 @@ class Frontend(Service):
         else:
             # ~ self.log.debug(f" - \tFound directory for theme: '{theme}'")
             # Search in sources path
-            source_path = self.runtime['dir']['source']
-            theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
-            theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
+            try:
+                source_path = self.get_path('source')
+                theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
+                theme_path_source = os.path.join(source_path, theme_rel_path, theme) #theme_rel_path, theme)
+            except:
+                theme_path_source = ''
             theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)
             theme_path_global = os.path.join(ENV['GPATH']['THEMES'], theme)
-            # ~ self.log.debug(f" - From sources: {theme_path_source}")
-            # ~ self.log.debug(f" - From optional: {theme_path_opt}") # DEPRECATE
-            # ~ self.log.debug(f" - From global: {theme_path_global}")
+            self.log.debug(f" - From sources: {theme_path_source}")
+            self.log.debug(f" - From optional: {theme_path_opt}") # DEPRECATE
+            self.log.debug(f" - From global: {theme_path_global}")
             found = False
             for path in [theme_path_source, theme_path_opt, theme_path_global]:
                 theme_config = os.path.join(path, 'theme.json')

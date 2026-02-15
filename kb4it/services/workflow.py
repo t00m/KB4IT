@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
@@ -9,15 +8,17 @@
 import os
 import json
 import stat
+import pprint
 
 from kb4it.core.service import Service
 from kb4it.core.util import copydir
 from kb4it.core.util import timeit
+from kb4it.core.util import json_load
 
 class Workflow(Service):
     """KB4IT workflow class."""
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize workflow module."""
         pass
 
@@ -31,13 +32,28 @@ class Workflow(Service):
         frontend = self.get_service('Frontend')
         frontend.apps_list(theme)
 
+    def info_repository(self):
+        backend = self.app.get_service('Backend')
+        config_file = backend.get_value('app', 'config')
+        if config_file is not None and os.path.exists(config_file):
+            repo = json_load(config_file)
+            print(f"                     Title: {repo.get('title')}")
+            print(f"                   Tagline: {repo.get('tagline')}")
+            print(f"                Theme used: {repo.get('theme')}")
+            print(f"            Docs sorted by: {repo.get('sort')}")
+            print(f"         Force compilation: {repo.get('force')}")
+            print(f"         Number of workers: {repo.get('workers')}")
+            print(f"  Website target directory: {repo.get('target')}")
+            print(f"Documents source directory: {repo.get('source')}")
+
     def create_repository(self):
         self.log.info("KB4IT action: create new repository")
         backend = self.app.get_service('Backend')
         frontend = self.app.get_service('Frontend')
         params = self.app.get_params()
+        self.log.debug(params)
         initialize = False
-        theme, repo_path = params.theme, params.repo_path
+        theme, repo_path = params['theme'], params['repo_path']
         self.log.debug(f"Theme: {theme}")
         self.log.debug(f"Repository path: {repo_path}")
         theme_path = frontend.theme_search(theme=theme)
@@ -62,7 +78,7 @@ class Workflow(Service):
             bin_dir = os.path.join(repo_path, 'bin')
             script = os.path.join(bin_dir, 'compile.sh')
             config_file = os.path.join(repo_path, 'config', 'repo.json')
-            with open(config_file, 'r') as fc:
+            with open(config_file) as fc:
                 repoconf = json.load(fc)
             repoconf['source'] = source_dir
             repoconf['target'] = target_dir
@@ -87,41 +103,41 @@ class Workflow(Service):
         3. Preprocess documents (get metadata)
         4. Process documents in a temporary dir
         5. Compile documents to html with asciidoctor
-        6. Delete contents of target directory (if any)
-        7. Refresh target directory
-        8. Remove temporary directory
+        6. Deploy
+        7. Theme Post activities
         """
         backend = self.get_service('Backend')
-        backend.busy()
-        repo = backend.get_repo_parameters()
+        repo = backend.get_dict('repo')
         repo_title = repo['title']
         repo_theme = repo['theme']
-        self.log.info(f"Building a website for repository '{repo_title}'")
-        self.log.info(f"Using theme '{repo_theme}'")
-        self.log.info(f"Check environment")
+        self.log.info(f"Theme '{repo_theme}' - Repository '{repo_title}'")
+
+        self.log.info(f"1 - Check environment")
         backend.stage_01_check_environment()
-        self.log.info(f"Allow theme to generate sources")
         theme = self.get_service('Theme')
+
+        self.log.info(f"2 - Get sources")
         theme.generate_sources()
-        self.log.info(f"Get source documents")
         backend.stage_02_get_source_documents()
-        self.log.info(f"Preprocessing")
-        backend.stage_03_preprocessing()
-        self.log.info(f"Backend processing")
-        backend.stage_04_processing()
-        self.log.info(f"Theme processing")
-        backend.stage_06_theme()
-        self.log.info(f"Compilation")
+
+        self.log.info(f"3 - Process sources")
+        backend.stage_03_process_sources()
+
+        self.log.info(f"4 - Process theme")
+        backend.stage_04_process_theme()
+
+        self.log.info(f"5 - Compilation")
         backend.stage_05_compilation()
-        self.log.info(f"Clean up target")
-        backend.stage_07_clean_target()
-        self.log.info(f"Refresh target")
-        backend.stage_08_refresh_target()
-        self.log.info(f"Theme post activities")
+
+        self.log.info(f"6 - Deploy")
+        backend.stage_06_deploy()
+
+        self.log.info(f"7 - Theme post activities")
         theme.post_activities()
-        homepage = os.path.join(os.path.abspath(backend.get_target_path()), 'index.html')
+
+        # Report
+        homepage = os.path.join(os.path.abspath(backend.get_path('target')), 'index.html')
         self.log.info(f"Repository website built")
         self.log.info(f"URL: {homepage}")
-        self.log.info(f"Full log: {backend.get_app_log_file()}")
+        self.log.info(f"Full log: {backend.get_value('runtime', 'logfile')}")
         self.log.info(f"The End")
-        backend.free()

@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 """
 Utils functions used along the project.
@@ -18,13 +17,17 @@ import time
 import uuid
 import pickle
 import shutil
+import pprint
 import hashlib
+import pathlib
 import operator
 import subprocess
-import pprint
+import multiprocessing
+
 from pathlib import Path
 from functools import wraps
 from datetime import datetime
+
 
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
@@ -59,6 +62,14 @@ def copy_docs(docs, target):
             log.warning(f"File {doc} not found")
     # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
 
+def get_default_workers():
+    """Calculate default number or workers.
+    Workers = Number of CPU / 2
+    Minimum workers = 1
+    """
+    ncpu = multiprocessing.cpu_count()
+    workers = ncpu/2
+    return math.ceil(workers)
 
 def copydir(source, dest):
     """Copy a directory structure overwriting existing files.
@@ -80,22 +91,10 @@ def copydir(source, dest):
             except PermissionError:
                 log.warning(f"Check permissions for file {file}")
 
-
 def get_source_docs(path: str):
     """Get asciidoc documents from a given path"""
-    if isinstance(path, Path):
-        path = str(path)
-
-    if path[:-1] != os.path.sep:
-        path = path + os.path.sep
-
-    pattern = os.path.join(path) + '*.adoc'
-    docs = glob.glob(pattern)
-    docs.sort(key=lambda y: y.lower())
-    #log.debug("Found %d asciidoctor documents", len(docs))
-
-    return docs
-
+    pattern = os.path.join(path, '*.adoc')
+    return glob.glob(pattern)
 
 def exec_cmd(data):
     """Execute an operating system command.
@@ -192,24 +191,23 @@ def json_save(filepath: str, adict: {}) -> {}:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
 # ~ @timeit
-def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
+def get_asciidoctor_attributes(docpath: str):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
-    props = {}
+    keys = {}
+    valid = False
+    title_found = False
+    end_of_header_found = False
+
     try:
-        lines = open(docpath, 'r').readlines()
+        lines = open(docpath).readlines()
         title_found = False
         title_line = lines[0]
+
         if title_line.startswith('= '):
             title = title_line[2:-1].strip()
             if len(title) > 0:
-                props['Title'] = [title]
-                title_found = True
-
-        # Tolerate no title
-        if not title_found:
-            if tolerant:
-                props['Title'] = ['No title found']
+                keys['Title'] = [title]
                 title_found = True
 
         # Proceed only if document has a title
@@ -221,34 +219,38 @@ def get_asciidoctor_attributes(docpath: str, tolerant: bool = True):
                 if line.startswith(':'):
                     key = line[1:line.find(':', 1)]
                     values = line[len(key)+2:].split(',')
-                    props[key] = [value.strip() for value in values]
+                    keys[key] = [value.strip() for value in values]
                 elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
                     break
-
             if not end_of_header_found:
-                if tolerant:
-                    log.warning(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
-                else:
-                    log.error(f"[UTIL] - Document '{basename}' doesn't have the END-OF-HEADER mark")
+                reason = f"Document '{basename}' doesn't have the END-OF-HEADER mark"
+                log.error("Error: {reason}")
+                keys = {}
         else:
-            log.error(f"[UTIL] - Document '{basename}' doesn't have a title")
+            reason = f"Document '{basename}' doesn't have a title"
+            log.error("Error: {reason}")
+            keys = {}
     except IndexError as error:
-        log.error(f"[UTIL] - Document '{basename}' could not be processed. Empty?")
+        reason = "Document '{basename}' could not be processed. Empty?"
+        log.error("Error: {reason}")
+        keys = {}
 
-    return props
+    if title_found and end_of_header_found:
+        valid = True
+        reason = 'Success'
 
+    return keys, valid, reason
 
 def get_hash_from_file(path):
     """Get the SHA256 hash for a given filename."""
     if os.path.exists(path):
-        content = open(path, 'r').read()
-        m = hashlib.sha256()
-        m.update(content.encode())
-        return m.hexdigest()
+        with open(path, 'rb') as fin:
+            fhash = hashlib.file_digest(fin, 'md5').hexdigest()
     else:
-        return None
+        fhash = None
+    return fhash
 
 # ~ @timeit
 def get_hash_from_dict(adict):
@@ -299,6 +301,8 @@ def log_timestamp():
 def kb4it_timestamp():
     now = datetime.now()
     return now.strftime("%Y-%m-%d %H:%M:%S")
+
+
 
 def guess_datetime(sdate):
     """Return (guess) a datetime object for a given string."""
