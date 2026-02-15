@@ -25,18 +25,26 @@ class Deployer(Service):
 
     def execute(self):
         self.log.debug(f"[DEPLOYER] - START")
-        self.step_00_copy_source_to_cache()
-        self.step_01_delete_temporary_target_contents()
-        self.step_02_copy_temporary_files_to_distributed_directory()
-        self.step_03_clear_target()
-        self.step_04_copy_sources_to_target()
-        self.step_05_copy_compiled_to_cache()
-        self.step_06_copy_all_to_cache()
-        self.step_07_copy_compiled_documents_to_target()
-        self.step_08_copy_global_resources_to_target()
-        self.step_09_copy_html_to_cache()
-        self.step_10_copy_kbdict_to_target()
-        self.step_11_cleanup()
+        ncd = self.srvbes.get_value('runtime', 'ncd')
+        nck = self.srvbes.get_value('runtime', 'nck')
+        DOCS_CHANGED = ncd > 0
+        KEYS_CHANGED = nck > 0
+        if DOCS_CHANGED or KEYS_CHANGED:
+            self.log.debug(f"Changes detected. Deploying")
+            self.step_00_copy_source_to_cache()
+            self.step_01_delete_temporary_target_contents()
+            self.step_02_copy_temporary_files_to_distributed_directory()
+            self.step_03_clear_target()
+            self.step_04_copy_sources_to_target()
+            self.step_05_copy_compiled_to_cache()
+            self.step_06_copy_all_to_cache()
+            self.step_07_copy_compiled_documents_to_target()
+            self.step_08_copy_global_resources_to_target()
+            self.step_09_copy_html_to_cache()
+            self.step_10_copy_kbdict_to_target()
+            self.step_11_cleanup()
+        else:
+            self.log.debug(f"No changes detected. Avoid deploying")
         self.log.debug(f"[DEPLOYER] - END")
 
     def step_00_copy_source_to_cache(self):
