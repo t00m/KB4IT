@@ -54,7 +54,7 @@ class Service:
         params = self.app.get_params()
         severity = params['log_level']
         self.log = get_logger(f"{self.modname}")
-        self.initialize()
+        self._initialize()
         # ~ self.log.debug(f"Service {self.modname} started")
 
     def end(self):
@@ -63,16 +63,16 @@ class Service:
         """
         if self.started:
             self.started = False
-            self.finalize()
+            self._finalize()
             # ~ self.log.debug(f"Service {self.modname} finished")
 
-    def initialize(self, **kwargs):
+    def _initialize(self, **kwargs):
         """Initialize service.
         All clases derived from Service class must implement this method
         """
         pass
 
-    def finalize(self):
+    def _finalize(self):
         """Finalize service.
         All clases derived from Service class must implement this method
         """

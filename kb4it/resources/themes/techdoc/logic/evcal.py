@@ -9,7 +9,7 @@ from kb4it.core.util import guess_datetime
 class EventsCalendar(Service, HTMLCalendar):
     """Credit to: https://github.com/garthhumphreys/How-to-Use-Python-To-Create-A-Beautiful-Web-Calendar"""
 
-    def initialize(self):
+    def _initialize(self):
         super(HTMLCalendar, self).__init__(calendar.MONDAY)
         self.ml = {} # ??
         self.now = datetime.now()

@@ -29,7 +29,7 @@ class Frontend(Service):
     """
     srvthm = None
 
-    def initialize(self):
+    def _initialize(self):
         """"""
         self.srvbes = self.get_service('Backend')
         self.runtime = self.srvbes.get_dict('runtime')

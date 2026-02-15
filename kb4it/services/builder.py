@@ -24,7 +24,7 @@ class Builder(Service):
     theme_var = {}
     templates = {}
 
-    def initialize(self):
+    def _initialize(self):
         """Initialize Builder class."""
         self.get_services()
 
