@@ -14,10 +14,15 @@ from pathlib import Path
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import valid_filename
-from kb4it.core.util import get_source_docs, get_asciidoctor_attributes
-from kb4it.core.util import get_hash_from_file, get_hash_from_dict, get_hash_from_list
+from kb4it.core.util import get_source_docs
+from kb4it.core.util import get_asciidoctor_attributes
+from kb4it.core.util import get_hash_from_file
+from kb4it.core.util import get_hash_from_dict
+from kb4it.core.util import get_hash_from_list
+from kb4it.core.util import get_hash_from_content
 from kb4it.core.util import string_timestamp
-from kb4it.core.util import json_load, json_save
+from kb4it.core.util import json_load
+from kb4it.core.util import json_save
 from kb4it.core.perf import timeit
 from kb4it.core.log import redirect_logs
 
@@ -269,13 +274,32 @@ class Backend(Service):
         # Firstly, allow theme to generate documents
         self.srvthm = self.get_service('Theme')
 
+        # If 'about_kb4it.adoc' doesn't exist, create one from template
+        var = self.srvbld.get_theme_var()
+        NEW_VERSION = False
+        TPL_PAGE_ABOUT_KB4IT = self.srvbld.template('PAGE_ABOUT_KB4IT')
+        about_kb4it_content = TPL_PAGE_ABOUT_KB4IT.render(var=var)
+        about_kb4it_target = os.path.join(sources_path, 'about_kb4it.adoc')
+        if os.path.exists(about_kb4it_target):
+            # About KB4IT asciidoc page is already in sources
+            # Then, check if hashes matches with the KB4IT's one.
+            md5_source = get_hash_from_content(about_kb4it_content)
+            md5_target = get_hash_from_file(about_kb4it_target)
+            if md5_source != md5_target:
+                NEW_VERSION = True
+        if NEW_VERSION:
+            # FIXME: Force compilation if new KB4IT version?
+            self.log.debug("[DOC] - Added/Replaced 'About KB4IT' to your sources")
+            with open(about_kb4it_target, 'w') as fout:
+                fout.write(about_kb4it_content)
+
         # If 'about_app.adoc' doesn't exist, create one from template
         # FIXME: if no file exists, tell theme
         about_app_source = os.path.join(sources_path, 'about_app.adoc')
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
-            self.log.warning("  - Added missing 'About App' to your sources")
+            self.log.warning("[DOC] - Added missing 'About App' to your sources")
 
         # Then, get them
         self.runtime['docs']['bag'] = get_source_docs(sources_path)
