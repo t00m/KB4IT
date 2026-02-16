@@ -60,7 +60,7 @@
                         <hr class="uk-divider-icon">
                         <p>
                             <span class="uk-link">
-                                <a href="https://github.com/t00m/KB4IT" target="_blank">
+                                <a href="about_kb4it.html">
                                     <img src="resources/common/images/kb4it-badge-built-with.svg">
                                 </a>
                             </span>
