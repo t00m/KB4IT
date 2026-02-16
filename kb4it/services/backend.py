@@ -287,6 +287,9 @@ class Backend(Service):
             md5_target = get_hash_from_file(about_kb4it_target)
             if md5_source != md5_target:
                 NEW_VERSION = True
+        else:
+            NEW_VERSION = True
+
         if NEW_VERSION:
             # FIXME: Force compilation if new KB4IT version?
             self.log.debug("[DOC] - Added/Replaced 'About KB4IT' to your sources")
