@@ -243,6 +243,10 @@ def get_asciidoctor_attributes(docpath: str):
 
     return keys, valid, reason
 
+def get_hash_from_content(content: str):
+    """Get the SHA256 hash for any string"""
+    return hashlib.md5(content.encode('utf-8')).hexdigest()
+
 def get_hash_from_file(path):
     """Get the SHA256 hash for a given filename."""
     if os.path.exists(path):
