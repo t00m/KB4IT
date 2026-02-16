@@ -16,10 +16,10 @@ For more information, visit my Git https://github.com/t00m/KB4IT[repository].
 
 == Copyright
 
-Copyright (C) 2019-2025 mailto:tomas.virseda@gmail.com[Tomás Vírseda]
+Copyright (C) 2019-2026 mailto:tomas.virseda@gmail.com[Tomás Vírseda]
 
 == License
 
 The code is licensed under the terms of the https://www.gnu.org/licenses/gpl-3.0.en.html[`GPL v3`].
 
-IMPORTANT: you're free to *grab*, *extend*, *improve* and *fork* the code as you want as long as it stays as GPLv3.
+IMPORTANT: You're free to *grab*, *extend*, *improve* and *fork* the code as you want as long as it stays as GPLv3.
