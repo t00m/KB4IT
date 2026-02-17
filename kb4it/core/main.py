@@ -160,9 +160,6 @@ class KB4IT:
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
             self.log.error(f"[CONTROLLER] - Execution aborted because of serious errors")
-            self.log.error(f"[CONTROLLER] - Traceback:\n{traceback.print_exc()}")
-            self.log.error(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
-
         try:
             for name in self.services:
                 self.deregister_service(name)
@@ -172,13 +169,6 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
         sys.exit()
 
-# ~ class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
-    # ~ """Custom formatter to replace section titles in the help output."""
-
-    # ~ def add_arguments(self, actions):
-        # ~ if any(action.dest == 'action' for action in actions):
-            # ~ self._root_section.heading = 'Actions available'
-        # ~ super().add_arguments(actions)
 
 def main():
     """Set up application arguments and execute."""

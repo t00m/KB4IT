@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 """
-Module with the application logic.
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: module holding the application logic
 """
 
 import os
@@ -13,29 +11,20 @@ from pathlib import Path
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import valid_filename
 from kb4it.core.util import get_source_docs
-from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file
-from kb4it.core.util import get_hash_from_dict
-from kb4it.core.util import get_hash_from_list
 from kb4it.core.util import get_hash_from_content
-from kb4it.core.util import string_timestamp
 from kb4it.core.util import json_load
 from kb4it.core.util import json_save
-from kb4it.core.perf import timeit
 from kb4it.core.log import redirect_logs
 
 
 class Backend(Service):
-    """Backend class for managing the main logic workflow.
-    """
+    """(Second) KB4IT Initialization."""
 
     def _initialize(self):
         """Initialize application structure."""
         self.runtime = {}        # Dictionary of runtime properties
-        self.kbdict_new = {}     # New compilation cache
-        self.kbdict_cur = {}     # Cached data
         self.force_keys = set()  # List of keys which must be compiled (forced)
 
         # Get params from command line
@@ -66,13 +55,7 @@ class Backend(Service):
                 self.log.error(f"Config path '{config_path}' does not exist")
                 self.app.stop(error=True)
 
-            root_path = config_path.parent
-            dir_source = self.repo.get('dir_source') or Path(root_path, 'source')
-            dir_target = self.repo.get('dir_target') or Path(root_path, 'target')
-
             self.params['force'] = self.repo.get('force') or False
-
-
             self.runtime['dir'] = {}
             self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
             self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
@@ -95,14 +78,11 @@ class Backend(Service):
             self.runtime['dir']['db'] = dir_db
 
             for entry in self.runtime['dir']:
-                create_directory = False
                 dirname = self.runtime['dir'][entry]
                 if entry not in ['source', 'target']:
                     dirname = self.runtime['dir'][entry]
                     if not os.path.exists(dirname):
                         os.makedirs(dirname, exist_ok=True)
-                        # ~ create_directory = True
-                        # ~ self.log.debug(f"    \tCreate directory {dirname}? {create_directory}")
 
             # Activate application log
             app_log_file = Path.joinpath(dir_log, "kb4it.log")
@@ -125,25 +105,19 @@ class Backend(Service):
             self.runtime['docs']['bag'] = []
             self.runtime['docs']['targets'] = set()
 
-            # Load cache dictionary from last run
-            self.kbdict_cur = self.load_kbdict()
-
-            # And initialize the new one
-            self.kbdict_new['document'] = {}
-            self.kbdict_new['metadata'] = {}
-
             # Get services
             self.get_services()
 
     def get_value(self, domain: str, key: str):
+        """Get value from key given a domain."""
         if domain == 'app':
             adict = self.params
         elif domain == 'docs':
             adict = self.runtime['docs']
-        elif domain == 'kbcur':
-            adict = self.kbdict_cur
-        elif domain == 'kbnew':
-            adict = self.kbdict_new
+        # ~ elif domain == 'kbcur':
+            # ~ adict = self.kbdict_cur
+        # ~ elif domain == 'kbnew':
+            # ~ adict = self.kbdict_new
         elif domain == 'repo':
             adict = self.repo
         elif domain == 'runtime':
@@ -154,24 +128,22 @@ class Backend(Service):
             return None
         return adict.get(key)
 
-    def set_value(self, domain: str, key: str, value: str|int|bool):
+    def set_value(self, domain: str, key: str, value: str | int | bool):
+        """Set a value for a specific key in a given domain."""
         if domain == 'app':
             adict = self.params
         elif domain == 'runtime':
             adict = self.runtime
-
+        else:
+            return None
         adict[key] = value
 
-
     def get_dict(self, domain: str) -> dict:
+        """Get dict by domain."""
         if domain == 'app':
             return self.params
         elif domain == 'docs':
             return self.runtime['docs']
-        elif domain == 'kbcur':
-            return self.kbdict_cur
-        elif domain == 'kbnew':
-            return self.kbdict_new
         elif domain == 'repo':
             return self.repo
         elif domain == 'runtime':
@@ -182,10 +154,11 @@ class Backend(Service):
             return None
 
     def get_path(self, name: str):
+        """Get path by name."""
         return self.runtime['dir'].get(name)
 
     def load_kbdict(self):
-        """C0111: Missing function docstring (missing-docstring)."""
+        """Load KB4IT dictionary."""
         KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
         try:
             kbdict = json_load(KB4IT_DB_FILE)
@@ -202,15 +175,13 @@ class Backend(Service):
         return kbdict
 
     def save_kbdict(self, kbdict):
-        """C0111: Missing function docstring (missing-docstring)."""
+        """Save kb4it dictionary."""
         KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
         json_save(KB4IT_DB_FILE, kbdict)
         self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
 
     def add_target(self, adocId, htmlId):
-        """All objects received by this method will be appended to the
-        list of objects that will be copied to the target directory.
-        """
+        """Add documents to be compiled."""
         self.runtime['docs']['targets'].add(htmlId)
         self.log.debug(f"DOC[{adocId}] targets to RESOURCE[{htmlId}]")
 
@@ -224,13 +195,16 @@ class Backend(Service):
         self.srvprc = self.get_service('Processor')
 
     def get_kb_dict(self):
+        """Shortcut to Processor method."""
         return self.srvprc.get_kb_dict()
 
     def get_kbdict_key(self, key, new=True):
-        return self.srvprc.get_kbdict_key(key, new=True)
+        """Shortcut to Processor method."""
+        return self.srvprc.get_kbdict_key(key, new)
 
     def get_kbdict_value(self, key, value, new=True):
-        return self.srvprc.get_kbdict_value(key, value, new=True)
+        """Shortcut to Processor method."""
+        return self.srvprc.get_kbdict_value(key, value, new)
 
     def stage_01_check_environment(self):
         """Check environment."""
@@ -315,19 +289,14 @@ class Backend(Service):
         self.log.debug(f"[SOURCES] - END")
 
     def stage_03_process_sources(self):
-        """
-        Extract metadata from source docs into a dict.
-        Create metadata section for each adoc and insert it after the
-        EOHMARK.
-        In this way, after being compiled into HTML, final adocs are
-        browsable throught its metadata.
-        """
+        """Extract, Analyze and Transform."""
         self.log.debug(f"[EXTRACTION] - START")
         self.srvprc.step_00_extraction()
         self.srvprc.step_01_analysis()
         self.srvprc.step_02_transformation()
 
     def stage_04_process_theme(self):
+        """Run theme logic."""
         self.log.debug(f"[PROCESSING THEME] - START")
         self.srvthm.build()
         self.log.debug(f"[PROCESSING THEME] - END")
@@ -341,10 +310,8 @@ class Backend(Service):
         return
 
     def stage_06_deploy(self):
+        """Recreate target."""
         from kb4it.services.deployer import Deployer
         self.app.register_service('Deployer', Deployer())
         deployer = self.app.get_service('Deployer')
         deployer.execute()
-
-    def _finalize(self):
-        pass
