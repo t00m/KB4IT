@@ -116,15 +116,19 @@ class Frontend(Service):
             self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
 
             # Register theme service
+            self.log.debug(f"Registering Theme from {self.runtime['theme']['logic']}")
             sys.path.insert(0, self.runtime['theme']['logic'])
             try:
                 from theme import Theme
                 self.app.register_service('Theme', Theme())
                 srvthm = self.get_service('Theme')
                 # ~ self.log.debug("Theme '%s' loaded successfully", self.runtime['theme']['id'])
+            except AttributeError as error:
+                # Backend fails to load repository. Skip it
+                return
             except Exception as error:
                 self.log.error(error)
-                self.app.stop()
+                self.app.stop(error=True)
             # ~ self.log.debug(" - Loaded theme '%s'", self.runtime['theme']['id'])
 
     def theme_search(self, theme=None):
