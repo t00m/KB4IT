@@ -66,7 +66,7 @@ class Service:
             self._finalize()
             # ~ self.log.debug(f"Service {self.modname} finished")
 
-    def _initialize(self, **kwargs):
+    def _initialize(self):
         """Initialize service.
         All clases derived from Service class must implement this method
         """
