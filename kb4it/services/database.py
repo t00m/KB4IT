@@ -32,6 +32,7 @@ class Database(Service):
     def _initialize(self):
         """Initialize database module."""
         self.srvbes = self.get_service('Backend')
+        repo = self.srvbes.get_dict('repo')
         runtime = self.srvbes.get_dict('runtime')
         self.sort_attribute = runtime.get('sort_attribute')
         self.sorted_docs = []
@@ -39,12 +40,7 @@ class Database(Service):
         self.keys['blocked'] = ['Title', 'SystemPage']
         self.keys['custom'] = []
         self.keys['theme'] = []
-        try:
-            self.keys['ignored'] = repo['ignored_keys']
-        except:
-            # FIXME: raises error when the command line option -r
-            # is not passed
-            self.keys['ignored'] = []
+        self.keys['ignored'] = repo.get('ignored_keys') or []
         self.ignore_key('Title')
         self.db = {}
 
