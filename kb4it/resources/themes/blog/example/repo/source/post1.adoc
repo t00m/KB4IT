@@ -1,27 +1,44 @@
-= Cloud administration
+= Understanding Algorithm Complexity
 
-:Author:        Tomás Vírseda
+:Author:        Elena Marchetti
 :Category:      Post
-:Scope:         Cloud Administration
-:Topic:         Architecture
-:Status:        Draft
-:Priority:      Very high
-:Team:          Linux
-:Tag:           cloud, service
-:Public:        No
-:Project:       Maintenance
-:Updated:       2024-12-17 18:00:00
+:Scope:         Computer Science Fundamentals
+:Topic:         Algorithms
+:Status:        Published
+:Priority:      High
+:Team:          Research
+:Tag:           algorithms, complexity, big-o, performance
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:     2024-05-28 09:00:00
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
 == Introduction
 
-This is a post example for KB4IT TechBlog theme.
+Algorithm complexity is one of the cornerstones of computing science. Understanding how an algorithm behaves as the size of its input grows is essential for writing efficient software and making informed design decisions.
 
-== Common guidelines:
+== Big-O Notation
 
-* After the title (=),
-* Define your own properties. This theme uses some of them by default, but you can add as many as you want.
-* Do not forget to add `// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE` after the last property.
-* Then, start by writing the paragraphs you need by using asciidoc format
-* Do NOT forget to save your documes with `.adoc` extension
+Big-O notation describes the upper bound of an algorithm's time or space requirements in terms of input size _n_. It abstracts away hardware differences and focuses on growth rate, giving developers a language-agnostic way to compare algorithms.
+
+Common complexity classes, ordered from most to least efficient, include:
+
+* *O(1)* — Constant time. The operation takes the same amount of time regardless of input size. Example: array index access.
+* *O(log n)* — Logarithmic time. Typical of divide-and-conquer strategies such as binary search.
+* *O(n)* — Linear time. The algorithm visits each element once, as in a simple list traversal.
+* *O(n log n)* — Linearithmic time. Found in efficient sorting algorithms like Merge Sort and Heap Sort.
+* *O(n²)* — Quadratic time. Common in naive sorting algorithms such as Bubble Sort and Insertion Sort.
+* *O(2ⁿ)* — Exponential time. Characteristic of brute-force solutions to combinatorial problems.
+
+== Time vs. Space Trade-offs
+
+Optimising an algorithm often involves a trade-off between time complexity and space complexity. A solution that caches intermediate results (memoisation) may run significantly faster at the cost of additional memory. Understanding the constraints of your execution environment — CPU speed, available RAM, cache hierarchy — is crucial when deciding which resource to optimise for.
+
+== Practical Implications
+
+Choosing the wrong algorithm can have catastrophic consequences at scale. Sorting one thousand records with an O(n²) algorithm is imperceptible; sorting one billion records with the same algorithm is practically infeasible. Profiling, asymptotic analysis, and benchmarking together form a robust methodology for selecting the right tool for the job.
+
+== Conclusion
+
+A solid grasp of algorithm complexity empowers engineers to reason confidently about performance before writing a single line of code. It is not merely academic knowledge — it is a daily engineering discipline.

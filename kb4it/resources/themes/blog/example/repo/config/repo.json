@@ -1,13 +1,13 @@
 {
     "datatable": [
-        "Updated",
+        "Published",
         "Title",
         "Topic"
     ],
     "events": [
-        "Post",
-        "Note"
+        "Post"
     ],
+    "force": false,
     "git": true,
     "git_branch": "branch",
     "git_path": "source",
@@ -15,23 +15,24 @@
     "git_server": "https://github.com",
     "git_user": "user",
     "ignored_keys": [
-        "Updated"
+        "Published"
     ],
-    "logo": "resources/themes/techdoc/images/logo.svg",
+    "logo": "resources/themes/blog/images/logo.svg",
     "logo_alt": "",
     "menu": [
         "Author",
         "Category"
     ],
-    "sort": "Updated",
-    "source": "/path/to/source/dir",
-    "target": "/path/to/target/dir",
+    "sort": "Published",
+    "source": "source",
+    "strict": false,
+    "tagline": "My public notes",
+    "target": "target",
     "theme": "blog",
     "timeline": [
       "Post",
       "Note"
     ],
-    "tagline": "My public notes",
     "title": "My Blog",
     "webserver": false
 }

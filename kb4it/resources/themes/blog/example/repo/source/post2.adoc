@@ -1,25 +1,53 @@
-= Cloud decommissioning
+= Memory Management in Modern Operating Systems
 
-:Author:        t00m
+:Author:        Rajiv Nair
 :Category:      Post
-:Scope:         Cloud Administration
-:Topic:         Administration
-:Status:        Draft
-:Priority:      Normal
-:Team:          Linux
-:Tag:           cloud, service
-:Public:        No
-:Project:       Maintenance
-:Updated:       2025-10-10 09:00
+:Scope:         Systems Programming
+:Topic:         Operating Systems
+:Status:        Published
+:Priority:      High
+:Team:          Systems
+:Tag:           memory, os, virtual-memory, garbage-collection, paging
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:     2025-02-01 10:30:00
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Capítulo 1
+== Introduction
 
-_Hola_
+Memory management is one of the most critical responsibilities of a modern operating system. It determines how physical RAM is allocated, protected, and reclaimed across competing processes, directly influencing both system stability and application performance.
 
-== Capítulo 2
+== Virtual Memory
 
-=== Subcapítulo 2 punto uno
+Modern operating systems do not expose physical memory addresses directly to user processes. Instead, each process operates within its own _virtual address space_, and the OS — together with the Memory Management Unit (MMU) hardware — transparently maps virtual addresses to physical ones.
 
-*Adios*
+This abstraction provides several key benefits:
+
+* *Isolation* — Processes cannot read or write each other's memory without explicit permission, improving security and stability.
+* *Overcommitment* — The system can present each process with an address space larger than the available physical RAM by swapping infrequently used pages to disk.
+* *Simplified linking* — Programs can be compiled to run at the same virtual base address regardless of where they actually reside in physical memory.
+
+== Paging and Page Tables
+
+The virtual address space is divided into fixed-size chunks called _pages_ (typically 4 KB). The OS maintains a _page table_ for each process that maps virtual page numbers to physical frame numbers. When a process accesses a virtual address, the MMU consults the page table; if the referenced page is not currently in RAM, a _page fault_ is triggered and the OS loads the page from disk.
+
+Modern CPUs employ a _Translation Lookaside Buffer_ (TLB) — a small, fast cache for recent page table lookups — to avoid the cost of a full page table walk on every memory access.
+
+== Heap Allocation and Fragmentation
+
+Within a process, dynamic memory is managed on the _heap_. Languages like C expose this directly through `malloc` and `free`; higher-level languages delegate to a _garbage collector_ (GC). Over time, repeated allocation and deallocation of variable-sized blocks leads to _fragmentation_, where free memory exists but is split into non-contiguous pieces too small to satisfy new requests.
+
+Allocators combat fragmentation through strategies such as segregated free lists, slab allocation, and compaction.
+
+== Garbage Collection Strategies
+
+Managed runtimes — including the JVM, the .NET CLR, and the Python interpreter — automate memory reclamation. Common GC algorithms include:
+
+* *Mark-and-Sweep* — Traverses live object graphs to mark reachable objects, then sweeps unreachable ones.
+* *Reference Counting* — Tracks how many references point to each object; reclaims when the count reaches zero. Fails on cyclic references without supplemental cycle detection.
+* *Generational GC* — Exploits the observation that most objects die young by dividing the heap into generations and collecting younger generations more frequently.
+
+== Conclusion
+
+Memory management sits at the intersection of hardware architecture, operating system design, and programming language theory. A developer who understands its mechanics is better equipped to diagnose memory leaks, tune garbage collectors, and write software that scales gracefully under load.

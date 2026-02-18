@@ -1,24 +1,56 @@
-= Cloud monitoring
+= Foundations of Distributed Systems
 
-:Author:        Tomás Vírseda
+:Author:        Sofia Andersen
 :Category:      Post
-:Scope:         Cloud Administration
-:Topic:         Monitoring
+:Scope:         Distributed Computing
+:Topic:         Architecture
 :Status:        Draft
-:Priority:      Normal
-:Team:          Linux
-:Tag:           cloud, service
+:Priority:      Medium
+:Team:          Backend
+:Tag:           distributed-systems, cap-theorem, consensus, fault-tolerance
 :Public:        No
-:Project:       Maintenance
-:Updated:       2025-10-10 08:00:00
+:Project:       CS Knowledge Base
+:Published:     2026-02-18 12:00:00
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
+== Introduction
 
-This is a another post example for KB4IT TechBlog theme.
+A distributed system is a collection of independent computers that appears to its users as a single coherent system. Building such systems is notoriously difficult: network links fail, clocks drift, and nodes crash — often without warning and in partial, hard-to-detect ways.
 
-== References
+== The CAP Theorem
 
-=== Common guidelines:
+Formulated by Eric Brewer and later proven by Gilbert and Lynch, the CAP theorem states that a distributed data store can provide at most two of the following three guarantees simultaneously:
 
-* http://www.example.com[Lorem ipsum]
+* *Consistency (C)* — Every read receives the most recent write or an error.
+* *Availability (A)* — Every request receives a response (not necessarily the most recent data).
+* *Partition Tolerance (P)* — The system continues to operate despite arbitrary network partitions.
+
+Because network partitions are a physical reality in any real distributed deployment, the practical choice is between CP systems (which sacrifice availability during a partition) and AP systems (which sacrifice strong consistency). Understanding this trade-off is fundamental to selecting the right database or messaging technology for a given workload.
+
+== Consistency Models
+
+Beyond the binary framing of CAP, a rich spectrum of consistency models exists:
+
+* *Linearisability* — The strongest model; operations appear instantaneous and globally ordered.
+* *Sequential Consistency* — All processes see operations in the same order, but not necessarily in real time.
+* *Eventual Consistency* — Given no new updates, all replicas will eventually converge to the same value. Used by systems such as Amazon DynamoDB and Apache Cassandra.
+* *Causal Consistency* — Operations that are causally related are seen in causal order by all nodes.
+
+Weaker models allow higher availability and lower latency at the cost of more complex application logic.
+
+== Consensus Algorithms
+
+Many distributed problems reduce to reaching agreement among a set of nodes — electing a leader, committing a transaction, or replicating a log entry. The most influential consensus algorithms include:
+
+* *Paxos* — The classical consensus protocol, known for its theoretical elegance and practical difficulty of implementation.
+* *Raft* — Designed explicitly for understandability; it decomposes consensus into leader election, log replication, and safety, making it significantly easier to reason about and implement correctly.
+* *PBFT (Practical Byzantine Fault Tolerance)* — Handles _Byzantine_ failures where nodes may behave arbitrarily or maliciously, at the cost of higher message complexity.
+
+== Observability in Distributed Systems
+
+Debugging a monolith is hard; debugging a distributed system is an order of magnitude harder. The three pillars of observability — *logs*, *metrics*, and *traces* — must be designed into a system from the outset. Distributed tracing tools such as Jaeger and Zipkin propagate correlation identifiers across service boundaries, enabling engineers to reconstruct the causal chain of events that led to a failure.
+
+== Conclusion
+
+Distributed systems are both a theoretical discipline and a practical craft. The gap between a system that works on paper and one that survives a production outage is bridged by a deep understanding of failure modes, careful protocol design, and rigorous operational practice.

@@ -18,6 +18,7 @@
         "Report",
         "Task"
     ],
+    "force": false,
     "git": false,
     "git_branch": "",
     "git_path": "",
