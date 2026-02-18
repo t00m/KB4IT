@@ -166,6 +166,7 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            self.srvbes.add_target('index.adoc', 'index.html')
             return
 
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
@@ -299,7 +300,7 @@ class Theme(Builder):
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'SystemPage', 'Yes')
                     else:
                         self.distribute_html(EVENT_PAGE_DAY, pagename)
-
+                    self.srvbes.add_target(f"{EVENT_PAGE_DAY}.adoc", f"{EVENT_PAGE_DAY}.html")
 
         # Build month event pages
         for year in self.events_docs:
@@ -327,12 +328,7 @@ class Theme(Builder):
                 else:
                     pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
                     self.distribute_html(EVENT_PAGE_MONTH, pagename)
-
-        # ~ self.srvcal.set_events_days(self.dey)
-        # ~ self.srvcal.set_events_docs(self.events_docs)
-
-        # ~ self.log.error(self.dey)
-        # ~ self.log.error(self.events_docs)
+                self.srvbes.add_target(f"{EVENT_PAGE_MONTH}.adoc", f"{EVENT_PAGE_MONTH}.html")
 
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
@@ -355,6 +351,7 @@ class Theme(Builder):
             else:
                 pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
+            self.srvbes.add_target(f"{EVENT_PAGE_YEAR}.adoc", f"{EVENT_PAGE_YEAR}.html")
 
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
@@ -376,11 +373,6 @@ class Theme(Builder):
         return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def build_page_events(self):
-        if self.srvbes.get_value('runtime', 'ncd') == 0:
-            func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"No changes in documents. Skip '{func_name}'")
-            return
-
         doclist = []
         ecats = {}
         repo = self.srvbes.get_dict('repo')
@@ -388,7 +380,6 @@ class Theme(Builder):
             event_types = repo['events']
         except:
             event_types = []
-        # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
 
         for docId in self.srvdtb.get_documents():
             if self.srvdtb.is_system(docId):
@@ -398,6 +389,13 @@ class Theme(Builder):
             title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
         HTML = self.build_year_pagination(self.dey.keys())
+
+        if self.srvbes.get_value('runtime', 'ncd') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            self.srvbes.add_target('events.adoc', 'events.html')
+            return
+
         events = {}
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
@@ -444,6 +442,7 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'nck') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in keys. Skip '{func_name}'")
+            self.srvbes.add_target('properties.adoc', 'properties.html')
             return
 
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
@@ -477,11 +476,6 @@ class Theme(Builder):
 
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
-        if self.srvbes.get_value('runtime', 'nck') == 0:
-            func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"No changes in keys. Skip '{func_name}'")
-            return
-
         dkeyurl = {}
         for docId in self.srvdtb.get_documents():
             tags = self.srvdtb.get_values(docId, key)
@@ -545,6 +539,7 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'nck') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in keys. Skip '{func_name}'")
+            self.srvbes.add_target('stats.adoc', 'stats.html')
             return
 
         TPL_PAGE_STATS = self.template('PAGE_STATS')
@@ -572,6 +567,7 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            self.srvbes.add_target('all.adoc', 'all.html')
             return
 
         TPL_PAGE_ALL = self.template('PAGE_ALL')
@@ -828,6 +824,7 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            self.srvbes.add_target('bookmarks.adoc', 'bookmarks.html')
             return
 
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
@@ -840,7 +837,7 @@ class Theme(Builder):
             if doc_bookmarked:
                 doclist.append(docId)
 
-        self.log.debug(" - Found %d bookmarks", len(doclist))
+        self.log.debug("Found %d bookmarks", len(doclist))
         headers = []
         datatable = self.build_datatable(headers, doclist)
 
