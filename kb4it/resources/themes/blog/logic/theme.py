@@ -13,31 +13,22 @@ Server module.
 import os
 import sys
 import math
-from datetime import datetime, timedelta
-# ~ from calendar import monthrange
-
-# ~ from lxml import etree
+from datetime import datetime
 
 from kb4it.core.env import ENV
 from kb4it.services.builder import Builder
 from kb4it.core.util import valid_filename
 from kb4it.core.util import exec_cmd
-from kb4it.core.util import set_max_frequency, get_font_size
+from kb4it.core.util import set_max_frequency
+from kb4it.core.util import get_font_size
 from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_human_datetime
 from kb4it.core.util import get_human_datetime_day
 from kb4it.core.util import get_human_datetime_month
 from kb4it.core.util import get_human_datetime_year
-from kb4it.core.util import get_asciidoctor_attributes
-from kb4it.core.util import json_save
 from kb4it.core.util import ellipsize_text
 from kb4it.core.perf import timeit
-from kb4it.core.util import get_year, get_month, get_day
 
-# ~ from evcal import EventsCalendar
-# ~ from timeline import Timeline
-
-# ~ parser = etree.HTMLParser()
 
 class Theme(Builder):
     dey = {}  # Dictionary of day events per year
