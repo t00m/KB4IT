@@ -104,7 +104,7 @@ class Database(Service):
                 if not self.is_system(docId):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
-                        self.log.warning(f"{docId} not compliant")
+                        self.log.warning(f"{docId} not compliant: no valid date '{sdate}'. Check attribute {self.sort_attribute}")
                         continue
                     dt = guess_datetime(sdate)
                     adict[docId] = dt #.strftime("%Y%m%d")
