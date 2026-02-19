@@ -1,0 +1,53 @@
+= How Compilers Transform Source Code
+
+:Author:        Elena Marchetti
+:Category:      Post
+:Scope:         Computer Science Fundamentals
+:Topic:         Compilers
+:Status:        Published
+:Priority:      High
+:Team:          Research
+:Tag:           compilers, parsing, lexing, optimization, code-generation
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:       2026-02-19 08:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+A compiler is a program that translates source code written in a high-level language into a lower-level representation — typically machine code or an intermediate bytecode. Understanding how this transformation works demystifies much of what happens between writing a line of code and executing it on hardware.
+
+== Lexical Analysis
+
+The first stage of compilation is _lexical analysis_, performed by the _lexer_ (or scanner). The lexer reads the raw character stream of the source file and groups characters into meaningful units called _tokens_ — keywords, identifiers, literals, operators, and punctuation. Whitespace and comments are typically discarded at this stage.
+
+For example, the expression `x = 42 + y;` produces tokens such as `IDENTIFIER(x)`, `ASSIGN`, `INTEGER(42)`, `PLUS`, `IDENTIFIER(y)`, and `SEMICOLON`.
+
+== Parsing and the Abstract Syntax Tree
+
+The _parser_ consumes the token stream and checks that it conforms to the language's grammar, building an _Abstract Syntax Tree_ (AST) as it goes. The AST captures the hierarchical structure of the program — statements, expressions, and declarations — in a form that is far easier to analyse and transform than flat text.
+
+Parsing strategies include top-down approaches such as recursive descent (used in Clang and the Go compiler) and bottom-up approaches such as LALR parsing (used in Yacc/Bison-generated parsers).
+
+== Semantic Analysis
+
+Once the AST is constructed, the compiler performs _semantic analysis_: type checking, scope resolution, and enforcement of language-specific rules that cannot be expressed in the grammar alone. Errors such as using an undeclared variable or passing an argument of the wrong type are caught here.
+
+== Optimisation
+
+Modern compilers apply a battery of optimisation passes to the intermediate representation (IR) before generating machine code. Common optimisations include:
+
+* *Constant folding* — Evaluating constant expressions at compile time rather than runtime.
+* *Dead code elimination* — Removing code paths that can never be reached.
+* *Inlining* — Replacing a function call with the body of the called function to eliminate call overhead.
+* *Loop unrolling* — Replicating loop bodies to reduce branching and improve instruction-level parallelism.
+
+== Code Generation
+
+The final stage translates the optimised IR into target machine instructions. The compiler must perform _register allocation_ — deciding which variables live in CPU registers and which spill to the stack — and _instruction selection_, mapping IR operations to the most efficient available opcodes for the target architecture.
+
+== Conclusion
+
+Compilers are among the most sophisticated software artefacts ever built. Studying them reveals deep connections between formal language theory, graph algorithms, and computer architecture, and gives developers intuition for writing code that their compiler can optimise effectively.
+

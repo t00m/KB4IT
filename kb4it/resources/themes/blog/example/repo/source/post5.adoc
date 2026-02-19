@@ -1,0 +1,49 @@
+= Computer Networking and the TCP/IP Stack
+
+:Author:        Rajiv Nair
+:Category:      Post
+:Scope:         Systems Programming
+:Topic:         Networking
+:Status:        Published
+:Priority:      High
+:Team:          Systems
+:Tag:           networking, tcp-ip, protocols, sockets, http
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:       2026-02-19 10:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+Computer networks are the connective tissue of modern computing. Whether a request travels across a data centre fabric or halfway around the globe, the same layered protocol stack governs how data is packaged, addressed, transmitted, and delivered reliably.
+
+== The Layered Model
+
+The TCP/IP model organises network communication into four conceptual layers, each responsible for a distinct concern:
+
+* *Link Layer* — Handles transmission of frames between devices on the same physical network segment. Ethernet and Wi-Fi operate here.
+* *Internet Layer* — Provides logical addressing and routing across networks. The Internet Protocol (IP) is the primary protocol; it delivers packets on a best-effort basis with no delivery guarantees.
+* *Transport Layer* — Adds end-to-end communication semantics. TCP provides reliable, ordered, connection-oriented delivery; UDP provides fast, connectionless, best-effort delivery.
+* *Application Layer* — Contains the protocols that applications use directly, such as HTTP, DNS, TLS, and SSH.
+
+== TCP: Reliability Through State
+
+TCP achieves reliability through a combination of mechanisms. Before data flows, a _three-way handshake_ (SYN, SYN-ACK, ACK) establishes a connection and synchronises sequence numbers. Every segment is acknowledged; unacknowledged segments are retransmitted. A _sliding window_ controls how much data may be in flight at once, and _congestion control_ algorithms — such as CUBIC and BBR — dynamically adjust the sending rate to avoid overwhelming the network.
+
+== The Role of DNS
+
+Before a TCP connection can be established, the client must resolve a hostname to an IP address. The _Domain Name System_ (DNS) is a globally distributed, hierarchically organised database that performs this translation. A DNS query travels from the client to a recursive resolver, which may consult root servers, top-level domain servers, and authoritative name servers before returning the final answer. Results are cached according to their _Time to Live_ (TTL) to reduce latency on subsequent lookups.
+
+== Sockets and the Kernel Interface
+
+Applications interact with the network through the _sockets API_, a POSIX-standard abstraction that presents network connections as file descriptors. Creating a TCP server involves creating a socket, binding it to an address and port, listening for incoming connections, and accepting them in a loop. The kernel's network stack manages the underlying TCP state machine invisibly behind this simple interface.
+
+== TLS and Encrypted Transport
+
+Plaintext TCP provides no confidentiality or integrity. _Transport Layer Security_ (TLS) sits between the transport and application layers, performing a cryptographic handshake to negotiate cipher suites and authenticate the server (and optionally the client) before any application data is exchanged. TLS 1.3, standardised in 2018, significantly reduced handshake latency by requiring fewer round trips than its predecessors.
+
+== Conclusion
+
+A working knowledge of the TCP/IP stack enables engineers to diagnose latency problems, design efficient protocols, and make informed choices between competing transport mechanisms. Networking is not a black box — it is a well-specified, learnable system.
+
