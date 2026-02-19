@@ -32,7 +32,7 @@ class Deployer(Service):
         if DOCS_CHANGED or KEYS_CHANGED:
             self.log.debug(f"Changes detected. Deploying")
             self.step_00_copy_source_to_cache()
-            self.step_01_delete_temporary_target_contents()
+            # ~ self.step_01_delete_temporary_target_contents()
             self.step_02_copy_temporary_files_to_distributed_directory()
             self.step_03_clear_target()
             self.step_04_copy_sources_to_target()
@@ -52,9 +52,9 @@ class Deployer(Service):
         extra = glob.glob(pattern)
         copy_docs(extra, self.srvbes.get_path('cache'))
 
-    def step_01_delete_temporary_target_contents(self):
-        delete_target_contents(self.srvbes.get_path('dist'))
-        self.log.debug(f"Distributed files deleted")
+    # ~ def step_01_delete_temporary_target_contents(self):
+        # ~ delete_target_contents(self.srvbes.get_path('dist'))
+        # ~ self.log.debug(f"Distributed files deleted")
 
     def step_02_copy_temporary_files_to_distributed_directory(self):
         distributed = self.srvbes.get_value('docs', 'targets')
@@ -110,6 +110,7 @@ class Deployer(Service):
             except FileNotFoundError as error:
                 self.log.error(error)
                 self.log.error("Consider to run the command again with the option -force")
+                self.print_traceback()
                 self.app.stop()
             n += 1
         self.log.debug(f"STATS - Copied {n} cached documents successfully to target path")
@@ -136,10 +137,13 @@ class Deployer(Service):
 
     def step_09_copy_html_to_cache(self):
         # Copy back all HTML files from target to cache
-        delete_target_contents(self.srvbes.get_path('cache'))
-        pattern = os.path.join(self.srvbes.get_path('target'), '*.html')
+        dir_cache = self.srvbes.get_path('cache')
+        dir_target = self.srvbes.get_path('target')
+        delete_target_contents(dir_cache)
+        pattern = os.path.join(dir_target, '*.html')
         html_files = glob.glob(pattern)
-        copy_docs(html_files, self.srvbes.get_path('cache'))
+        self.log.debug(html_files)
+        copy_docs(html_files, dir_cache)
         self.log.debug("Copying HTML files back to cache...")
 
     def step_10_copy_kbdict_to_target(self):
@@ -152,7 +156,7 @@ class Deployer(Service):
     def step_11_cleanup(self):
         delete_target_contents(self.srvbes.get_path('tmp'))
         delete_target_contents(self.srvbes.get_path('www'))
-        delete_target_contents(self.srvbes.get_path('dist'))
+        # ~ delete_target_contents(self.srvbes.get_path('dist'))
         os.unlink(self.app.get_log_file())
         self.log.debug("Cleanup temporary files")
 

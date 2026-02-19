@@ -72,19 +72,21 @@ class Compiler(Service):
             num = 1
             # ~ self.log.debug(f"Generating jobs")
             for doc in docs:
-                COMPILE = True
+                COMPILE = False
                 basename = os.path.basename(doc)
                 if basename in distributed:
-                    distributed_file = os.path.join(self.srvbes.get_path('dist'), basename)
-                    cached_file = os.path.join(self.srvbes.get_path('cache'), basename.replace('.adoc', '.html'))
-                    if os.path.exists(distributed_file) and os.path.exists(cached_file):
-                        cached_hash = get_hash_from_file(distributed_file)
-                        current_hash = get_hash_from_file(doc)
-                        if cached_hash == current_hash:
-                            COMPILE = False
+                    COMPILE = True
+                    # ~ distributed_file = os.path.join(self.srvbes.get_path('dist'), basename)
+                    # ~ cached_file = os.path.join(self.srvbes.get_path('cache'), basename.replace('.adoc', '.html'))
+                    # ~ if os.path.exists(distributed_file) and os.path.exists(cached_file):
+                    # ~ if os.path.exists(cached_file):
+                        # ~ cached_hash = get_hash_from_file(distributed_file)
+                        # ~ current_hash = get_hash_from_file(doc)
+                        # ~ if cached_hash == current_hash:
+                            # ~ COMPILE = False
 
-
-                if COMPILE or self.params['force']:
+                FORCE = self.srvbes.get_value('repo', 'force') or False
+                if COMPILE or FORCE:
                     cmd = "asciidoctor -q -s {} -b html5 -D {} {}".format(adocprops, self.srvbes.get_path('tmp'), doc)
                     #self.log.debug(f"CMD[%s]", cmd)
                     data = (doc, cmd, num)

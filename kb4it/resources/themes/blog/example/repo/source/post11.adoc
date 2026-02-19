@@ -1,0 +1,47 @@
+= How Compilers Transform Source Code
+
+:Author:        Rajiv Nair
+:Category:      Post
+:Scope:         Systems Programming
+:Topic:         Compilers
+:Status:        Published
+:Priority:      High
+:Team:          Systems
+:Tag:           compilers, parsing, lexing, intermediate-representation, optimisation
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:     2025-03-08 10:30:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+Every time a developer saves a source file and runs a build, a compiler performs an intricate pipeline of transformations — turning human-readable text into executable machine instructions. Understanding that pipeline demystifies error messages, helps developers write more compiler-friendly code, and is essential knowledge for anyone working on language tooling, performance-critical systems, or virtual machines.
+
+== Phase One: Lexical Analysis
+
+The first phase, performed by the _lexer_ (or scanner), reads the raw character stream and groups characters into meaningful units called _tokens_. Keywords, identifiers, literals, operators, and punctuation each become a distinct token type. Whitespace and comments are typically discarded at this stage. The output is a flat token stream that subsequent phases can process without worrying about individual characters.
+
+== Phase Two: Parsing and the Syntax Tree
+
+The _parser_ consumes the token stream and checks that it conforms to the language's grammar, typically expressed as a context-free grammar. If the grammar is satisfied, the parser produces an _Abstract Syntax Tree_ (AST) — a hierarchical structure that captures the grammatical relationships between tokens. An `if` statement, for instance, becomes a node with three children: the condition expression, the then-branch, and the optional else-branch. Syntax errors surface here when the token stream violates grammatical rules.
+
+== Phase Three: Semantic Analysis
+
+With a syntactically valid AST in hand, the compiler performs _semantic analysis_. This phase enforces rules that grammars cannot express: type checking, scope resolution, and checking that variables are declared before use. Type inference engines, where present, also operate here. The result is an annotated AST — the same tree structure, but enriched with type information and symbol table references.
+
+== Phase Four: Intermediate Representation and Optimisation
+
+Most modern compilers translate the annotated AST into an _Intermediate Representation_ (IR) — a lower-level, language-agnostic form that is easier to analyse and transform. LLVM's IR is a well-known example. The IR is then subjected to a series of _optimisation passes_: dead code elimination, constant folding, inlining, loop unrolling, and many others. Optimising the IR rather than the source or machine code keeps the optimisation logic independent of both the source language and the target architecture.
+
+== Phase Five: Code Generation
+
+The final phase translates the optimised IR into target machine code or bytecode. A register allocator maps IR variables to physical CPU registers, instruction selection chooses the best machine instructions, and an instruction scheduler reorders operations to exploit CPU pipelining. The output may be native machine code, JVM bytecode, WebAssembly, or any other target the compiler supports.
+
+== Why This Matters for Developers
+
+A working knowledge of compiler phases explains many seemingly mysterious behaviours: why an unused variable causes a warning (semantic analysis), why certain loop structures are faster than others (IR optimisation), and why template-heavy C++ compiles slowly (AST explosion). It also provides the conceptual foundation for building domain-specific languages, linters, and static analysis tools.
+
+== Conclusion
+
+Compilers are among the most sophisticated software artefacts ever built, yet their internal architecture follows a clear, logical sequence of transformations. Each phase has a well-defined input and output, and each one adds a layer of understanding — from raw text to executable logic — that ultimately makes high-level programming possible.

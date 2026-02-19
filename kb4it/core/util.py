@@ -57,10 +57,10 @@ def copy_docs(docs, target):
     for doc in docs:
         try:
             shutil.copy(doc, target)
-            # log.debug(f"Copied {doc} to {target}")
+            log.debug(f"Copied {doc} to {target}")
         except FileNotFoundError:
             log.warning(f"File {doc} not found")
-    # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
+    log.debug(f"{len(docs)} documents copied to '{target}'")
 
 def get_default_workers():
     """Calculate default number or workers.

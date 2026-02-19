@@ -178,7 +178,7 @@ class Theme(Builder):
             adoc_filepath = os.path.join(self.srvbes.get_path('source'), post)
             adoc_content = open(adoc_filepath, 'r').read()
             html_filename = post.replace('.adoc', '.html')
-            html_filepath = os.path.join(self.srvbes.get_path('target'), html_filename)
+            html_filepath = os.path.join(self.srvbes.get_path('tmp'), html_filename)
             html_content = open(html_filepath, 'r').read()
             body_mark = "<!-- BODY :: START -->"
             body_start = html_content.find("<!-- BODY :: START -->")
@@ -197,10 +197,10 @@ class Theme(Builder):
 
         runtime = self.srvbes.get_dict('runtime')
         adocprops = runtime['adocprops']
-        index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
+        index_file = os.path.join(runtime['dir']['tmp'], 'index.adoc')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
+        cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['tmp'], index_file)
         data = (index_file, cmd, 1)
         res = exec_cmd(data)
         self.build_page(index_file, var)
@@ -630,7 +630,9 @@ class Theme(Builder):
             strict = False
 
         if not exists_hdoc:
-            self.log.error(" - Source[%s] not converted to HTML properly", basename_adoc)
+            self.log.error("Source[%s] not converted to HTML properly", basename_adoc)
+            self.log.error(f"{basename_adoc} asciidoc path: {path_adoc}")
+            self.log.error(f"{basename_hdoc} asciidoc path: {path_hdoc}")
             return
 
         # ~ self.log.debug(" - Page[%s] transformation started", basename_hdoc)
