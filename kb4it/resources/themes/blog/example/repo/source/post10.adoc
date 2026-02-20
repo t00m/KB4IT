@@ -1,0 +1,51 @@
+= Distributed Systems and the CAP Theorem
+
+:Author:        Elena Marchetti
+:Category:      Post
+:Scope:         Computer Science Fundamentals
+:Topic:         Distributed Systems
+:Status:        Published
+:Priority:      High
+:Team:          Research
+:Tag:           distributed-systems, cap-theorem, consistency, availability, fault-tolerance
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:     2025-03-01 09:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Building software that runs across multiple machines forces you to confront a fundamental truth: you can't have everything. The CAP theorem, formalized by Eric Brewer, states that any distributed system can only guarantee two of three properties — Consistency, Availability, and Partition Tolerance — at any given time. This isn't a bug in our engineering; it's a mathematical reality of networked systems.
+
+Understanding which two properties your system prioritizes is one of the most important architectural decisions you'll make. A banking system might favor consistency over availability, accepting downtime rather than serving stale balances. A social media feed might do the opposite, preferring to show slightly outdated posts rather than returning an error. Knowing your CAP trade-offs means knowing your product.
+
+== What the CAP Theorem States
+
+Proposed by Eric Brewer in 2000 and formally proved by Gilbert and Lynch in 2002, the CAP theorem asserts that a distributed data store can guarantee at most two of the following three properties simultaneously:
+
+* *Consistency (C)* — Every read receives the most recent write or an error. All nodes in the system see the same data at the same time.
+* *Availability (A)* — Every request receives a non-error response, though it may not contain the most recent data.
+* *Partition Tolerance (P)* — The system continues to operate despite arbitrary message loss or failure of part of the network.
+
+Because network partitions are an unavoidable reality in any distributed deployment, partition tolerance is not truly optional. The practical choice, therefore, is between consistency and availability when a partition occurs.
+
+== CP vs AP Systems
+
+Systems that prioritise *Consistency over Availability* (CP) will refuse to respond to requests when they cannot guarantee that the data is up to date. Apache ZooKeeper and HBase follow this model. They are appropriate for use cases where stale data is unacceptable — for example, distributed locking or financial ledgers.
+
+Systems that prioritise *Availability over Consistency* (AP) will continue to serve requests during a partition, accepting that some nodes may temporarily return stale data. Apache Cassandra and CouchDB lean towards this model. They suit applications where availability is paramount and eventual consistency is acceptable, such as social media feeds or product catalogues.
+
+== Beyond CAP: The PACELC Model
+
+The CAP theorem only addresses behaviour during a network partition. The PACELC model, introduced by Daniel Abadi, extends it by acknowledging that even in the absence of a partition (the normal operating case), there is a trade-off between *Latency* and *Consistency*. A system that synchronously replicates every write to all replicas will be consistent but slow; one that acknowledges writes before replication completes will be faster but briefly inconsistent.
+
+== Practical Design Considerations
+
+Understanding CAP and PACELC helps architects make deliberate choices rather than stumbling into them by accident. Key questions to ask when designing a distributed system include: What is the acceptable staleness window? Can the application tolerate returning an error, or must it always return a result? How frequently do network partitions occur in the target infrastructure?
+
+Answering these questions concretely, before choosing a database or messaging system, saves considerable rework later.
+
+== Conclusion
+
+The CAP theorem is not a pessimistic verdict on distributed systems — it is a precise map of the trade-off landscape. By understanding where a system sits on that map, engineers can reason clearly about guarantees they can offer users and design failure modes that degrade gracefully rather than catastrophically.

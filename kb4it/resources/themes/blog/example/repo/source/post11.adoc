@@ -1,0 +1,51 @@
+= Cryptography Fundamentals for Software Engineers
+
+:Author:        Elena Marchetti
+:Category:      Post
+:Scope:         Computer Science Fundamentals
+:Topic:         Security
+:Status:        Published
+:Priority:      High
+:Team:          Research
+:Tag:           cryptography, encryption, hashing, public-key, tls, security
+:Public:        Yes
+:Project:       CS Knowledge Base
+:Published:     2025-03-15 09:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Cryptography is no longer a niche concern reserved for security specialists — it's embedded in virtually every system engineers build today. From HTTPS handshakes to password hashing to token signing, a working understanding of cryptographic primitives helps you make better decisions and avoid costly mistakes. The difference between SHA-256 and MD5, or between symmetric and asymmetric encryption, has real consequences in production.
+
+The core concepts aren't as intimidating as they might seem. Symmetric encryption uses the same key to lock and unlock data; asymmetric encryption uses a key pair, keeping one private and sharing the other publicly. Hash functions are one-way transformations that produce a fixed-length fingerprint of any input. Build your mental model around these three ideas, and most of modern cryptography starts to make intuitive sense.
+
+== Symmetric Encryption
+
+In symmetric encryption, the same key is used for both encrypting and decrypting data. The Advanced Encryption Standard (AES) is today's dominant symmetric cipher. It is fast, hardware-accelerated on most modern CPUs, and considered secure at key lengths of 128 bits or above. Symmetric encryption is ideal for bulk data — encrypting files, database columns, or network streams — because of its speed.
+
+The fundamental challenge with symmetric encryption is _key distribution_: how do two parties that have never met agree on a shared secret over an untrusted network? This is where asymmetric cryptography enters the picture.
+
+== Asymmetric Encryption and Key Exchange
+
+Asymmetric (or public-key) cryptography uses a mathematically linked key pair. Data encrypted with the _public key_ can only be decrypted with the corresponding _private key_, and vice versa. RSA and Elliptic Curve Cryptography (ECC) are the most widely used asymmetric algorithms. ECC achieves equivalent security to RSA with significantly shorter keys, making it preferable in bandwidth- or compute-constrained environments.
+
+In practice, asymmetric cryptography is rarely used to encrypt bulk data directly — it is too slow. Instead, it is used to securely exchange a symmetric key, which then handles the actual data. This hybrid approach underlies TLS, the protocol that secures HTTPS connections.
+
+== Cryptographic Hash Functions
+
+A cryptographic hash function maps an input of arbitrary length to a fixed-length digest. Good hash functions are _deterministic_, _fast to compute_, _pre-image resistant_ (infeasible to reverse), and _collision resistant_ (infeasible to find two inputs with the same digest). SHA-256 and SHA-3 are the current standards; MD5 and SHA-1 are deprecated for security purposes and should not be used in new systems.
+
+Hash functions are used for verifying file integrity, constructing digital signatures, and — critically — storing passwords. Passwords should never be stored as plaintext or even as plain hashes. Instead, a slow, salted hashing algorithm such as bcrypt, scrypt, or Argon2 should be used, making brute-force attacks computationally expensive.
+
+== Digital Signatures
+
+A digital signature provides authenticity and non-repudiation. The signer computes a hash of the message and encrypts it with their private key. The recipient decrypts the signature with the signer's public key and verifies it against a freshly computed hash of the received message. If the two hashes match, the message is intact and provably originated from the holder of the private key. Digital signatures underpin code signing, certificate authorities, and blockchain transactions.
+
+== Common Pitfalls
+
+Cryptography is notoriously easy to misuse. Frequent mistakes include: using ECB mode for AES (which reveals patterns in plaintext), generating weak random numbers (always use a cryptographically secure random number generator), rolling custom cryptographic algorithms (never do this), and mismanaging keys (hardcoding them in source code or storing them alongside the data they protect). Prefer well-audited libraries such as libsodium or the platform's native cryptographic APIs over hand-rolled implementations.
+
+== Conclusion
+
+Cryptography is the bedrock of trust in digital systems. Software engineers do not need to be mathematicians to use it effectively, but they do need to understand what each primitive guarantees and — equally importantly — what it does not. Choosing the right tool, configuring it correctly, and managing keys securely are engineering disciplines as important as any other in the modern software stack.

@@ -52,15 +52,67 @@ def timeit(func):
         return result
     return timeit_wrapper
 
+def extract_sections_from_adoc(file_path):
+    """
+    Extract sections from an AsciiDoc file.
+
+    Args:
+        file_path (str): Path to the .adoc file
+
+    Returns:
+        list: List of dictionaries containing section info
+    """
+    sections = []
+
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    current_section = None
+    start = None
+
+    for i, line in enumerate(lines, 1):  # Start line counting at 1
+        line = line.rstrip('\n')
+
+        # Check if this is a section header (starts with '== ' but not more '=' signs)
+        if line.startswith('== ') and not line.startswith('==='):
+            # Save previous section if exists
+            if current_section:
+                sections.append({
+                    'name': current_section,
+                    'start': start,
+                    'end': i - 1
+                })
+
+            # Start new section
+            current_section = line[3:].strip()  # Remove '== ' prefix
+            start = i
+
+    # Add the last section
+    if current_section:
+        sections.append({
+            'name': current_section,
+            'start': start,
+            'end': len(lines)
+        })
+
+    # As a dictionary with section names as keys
+    sections_dict = {section['name']: {
+    'start': section['start'],
+    'end': section['end']
+    } for section in sections}
+
+    return sections_dict
+
+
 def copy_docs(docs, target):
     """C0111: Missing function docstring (missing-docstring)."""
     for doc in docs:
         try:
             shutil.copy(doc, target)
-            # log.debug(f"Copied {doc} to {target}")
+            log.debug(f"Copied {doc} to {target}")
         except FileNotFoundError:
             log.warning(f"File {doc} not found")
-    # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
+    log.debug(f"{len(docs)} documents copied to '{target}'")
 
 def get_default_workers():
     """Calculate default number or workers.

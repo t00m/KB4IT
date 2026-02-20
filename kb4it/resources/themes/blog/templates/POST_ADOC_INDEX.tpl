@@ -88,7 +88,7 @@
 
         <!-- Body -->
         <article class="uk-article">
-            ${var['post']['body'].strip()}
+            ${var['post']['Excerpt']}
         </article>
 
         <!-- Footer -->

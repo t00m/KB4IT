@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Machine learning (ML) is a subfield of computing science concerned with building systems that learn from data rather than from explicitly programmed rules. Over the past decade it has moved from a niche academic discipline to a foundational technology underpinning search engines, recommendation systems, medical diagnostics, and autonomous vehicles.
+Machine learning flips the traditional programming model on its head. Instead of writing explicit rules for a computer to follow, you feed it examples and let it infer the rules itself. A spam filter built with ML doesn't need a hand-crafted list of suspicious phrases — it learns statistical patterns from thousands of labeled emails and generalizes from there. This shift in approach has proven extraordinarily powerful across domains that resist manual rule-writing.
+
+At the core of most modern ML systems is a simple optimization loop: make a prediction, measure how wrong it was, and adjust the model's parameters to do better next time. Repeated millions of times across large datasets, this process produces models capable of remarkably sophisticated behavior. The math underneath — linear algebra, calculus, probability — is worth understanding, but even a conceptual grasp of this feedback loop will take you a long way toward reasoning about how these systems behave and where they fail.
 
 == The Learning Paradigm
 

@@ -14,7 +14,7 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
 A compiler is a program that translates source code written in a high-level language into a lower-level representation — typically machine code or an intermediate bytecode. Understanding how this transformation works demystifies much of what happens between writing a line of code and executing it on hardware.
 

@@ -1,0 +1,87 @@
+= Modern Compiler Design Patterns
+
+:Author: Sofia Andersen
+:Category: Post
+:Scope: Programming Languages
+:Topic: Compilation
+:Status: Draft
+:Priority: Medium
+:Team: Languages
+:Tag: compilers, LLVM, AST, optimization, code-generation
+:Public: No
+:Project: CS Knowledge Base
+:Published: 2026-02-19 11:15:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Compiler design has evolved considerably since the days of monolithic, language-specific tools. Modern compilers increasingly embrace modular architectures — most famously exemplified by LLVM — that separate the frontend (parsing and semantic analysis) from the backend (optimization and code generation) through a shared intermediate representation. This separation means a new language only needs to target the IR, instantly inheriting a sophisticated optimization pipeline and support for dozens of hardware targets.
+
+The patterns that have emerged from this evolution — pass-based optimization pipelines, SSA form, polyhedral transformations — are influencing how engineers think about data transformation more broadly. Whether you're building a query engine, a rules evaluator, or a domain-specific language, the structural ideas behind modern compiler design have practical applications well beyond traditional language implementation.
+
+== Frontend: Lexical and Syntactic Analysis
+
+The compiler frontend converts source code into an intermediate representation suitable for analysis:
+
+    Lexical Analysis — The lexer scans characters and groups them into tokens (keywords, identifiers, operators)
+
+    Syntactic Analysis — The parser consumes tokens and builds an Abstract Syntax Tree (AST) representing the program's grammatical structure
+
+    Semantic Analysis — The compiler checks for logical consistency: type checking, scope resolution, and symbol binding
+
+Parser generators such as ANTLR and Bison automate the construction of this frontend phase from formal grammar specifications.
+
+== Intermediate Representations
+
+Between frontend and backend, compilers use Intermediate Representations (IR) that are:
+
+    Machine-Independent — Enabling reuse across target architectures
+
+    Low-Level Enough — Capturing enough detail for optimization
+
+    High-Level Enough — Preserving semantic information for analysis
+
+LLVM IR exemplifies modern three-address code design, representing programs in Static Single Assignment (SSA) form where each variable is assigned exactly once, simplifying dataflow analysis and optimization.
+
+== Optimization Passes
+
+The optimizer transforms IR to improve performance without changing program behavior:
+
+    Constant Folding — Precomputing constant expressions at compile time
+
+    Dead Code Elimination — Removing unreachable or unused computations
+
+    Loop Invariant Code Motion — Moving loop-invariant calculations outside loop bodies
+
+    Inlining — Replacing function calls with the function body to reduce overhead
+
+Modern compilers like GCC and Clang implement hundreds of optimization passes, arranged in a pipeline that iteratively refines the IR.
+
+== Code Generation and Register Allocation
+
+The backend maps IR to target machine code:
+
+    Instruction Selection — Choosing target-specific instructions that implement IR operations
+
+    Register Allocation — Assigning variables to CPU registers, spilling to memory when registers are exhausted
+
+    Instruction Scheduling — Reordering instructions to exploit pipeline parallelism and avoid stalls
+
+Register allocation, often solved via graph coloring, critically impacts performance: keeping values in registers rather than memory can mean order-of-magnitude speed differences.
+
+== Just-In-Time Compilation
+
+JIT compilers blur the traditional ahead-of-time compilation boundary:
+
+    Interpretation First — Execute bytecode while profiling execution hotspots
+
+    Selective Compilation — Compile frequently executed paths to native code at runtime
+
+    Adaptive Optimization — Recompile with more aggressive optimizations as methods warm up
+
+The Java Virtual Machine (JVM) and V8 JavaScript engine demonstrate how JIT compilation enables cross-platform portability with near-native performance.
+
+== Conclusion
+
+Compiler design integrates formal language theory, computer architecture, and software engineering. Modern compiler infrastructure like LLVM has democratized compiler development, allowing language designers to focus on frontend innovation while reusing battle-tested optimization and code generation pipelines.

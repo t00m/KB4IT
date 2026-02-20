@@ -129,11 +129,13 @@ class Workflow(Service):
         self.log.info(f"5 - Compilation")
         backend.stage_05_compilation()
 
+        self.log.info(f"7 - Theme post activities")
+        theme.post_activities()
+
         self.log.info(f"6 - Deploy")
         backend.stage_06_deploy()
 
-        self.log.info(f"7 - Theme post activities")
-        theme.post_activities()
+
 
         # Report
         homepage = os.path.join(os.path.abspath(backend.get_path('target')), 'index.html')

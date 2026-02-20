@@ -1,0 +1,89 @@
+= Zero-Knowledge Proofs in Cryptography
+
+:Author: Sofia Andersen
+:Category: Post
+:Scope: Cryptography
+:Topic: Privacy
+:Status: Draft
+:Priority: Medium
+:Team: Security
+:Tag: cryptography, zero-knowledge, zk-SNARKs, privacy, blockchain
+:Public: No
+:Project: CS Knowledge Base
+:Published: 2026-02-19 09:45:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Imagine proving to someone that you know a secret without revealing anything about the secret itself. That's the core idea behind zero-knowledge proofs — a cryptographic primitive that sounds almost paradoxical but rests on solid mathematical foundations. A ZK proof allows a prover to convince a verifier that a statement is true, with the verifier learning nothing beyond the truth of the statement itself.
+
+The practical applications are expanding rapidly. Zero-knowledge proofs power privacy-preserving authentication, confidential smart contracts, and scalable blockchain rollups. Systems like zk-SNARKs and zk-STARKs have made these proofs compact and fast enough to be production-viable. For engineers working at the intersection of security and distributed systems, ZK proofs are quickly moving from theoretical curiosity to an essential tool in the design palette.
+
+== The Three Properties of ZKPs
+
+For a protocol to be considered zero-knowledge, it must satisfy three properties:
+
+    Completeness — If the statement is true, an honest prover can always convince an honest verifier
+
+    Soundness — If the statement is false, no cheating prover can convince an honest verifier (except with negligible probability)
+
+    Zero-Knowledge — The verifier learns nothing except the truth of the statement; any verifier could simulate the transcript without interacting with the prover
+
+These properties ensure both security and privacy, enabling verification without disclosure.
+
+== Interactive vs. Non-Interactive Proofs
+
+ZKPs evolved along two main branches:
+
+    Interactive Proofs — Require multiple rounds of challenge-response between prover and verifier. The verifier sends random challenges; the prover must respond correctly to each, with probability of cheating decreasing exponentially with each round.
+
+    Non-Interactive Zero-Knowledge (NIZK) — The prover sends a single proof that any verifier can check. This requires a common reference string (CRS) or random oracle model and underpins modern zk-SNARKs.
+
+Non-interactivity is essential for blockchain applications where asynchronous verification is required.
+
+== zk-SNARKs: Succinct Non-Interactive Arguments
+
+zk-SNARKs represent the most practically significant ZKP construction:
+
+    Succinctness — Proofs are tiny (typically hundreds of bytes) and verification is fast (milliseconds)
+
+    Zero-Knowledge — The prover reveals nothing about the witness (secret inputs)
+
+    Succinctness — Proof size grows logarithmically with computation size
+
+    Trusted Setup — Most zk-SNARKs require an initial trusted setup ceremony; if setup participants collude, they could forge proofs
+
+Zcash pioneered zk-SNARKs in blockchain, enabling fully private transactions where amounts and addresses remain encrypted yet verifiable.
+
+== zk-STARKs: Transparency and Scalability
+
+zk-STARKs address some limitations of SNARKs:
+
+    Transparency — No trusted setup required; security relies on hash functions and information-theoretic assumptions
+
+    Post-Quantum Security — Resistant to quantum attacks, unlike SNARKs based on elliptic curve cryptography
+
+    Larger Proofs — Proof sizes are orders of magnitude larger than SNARKs (hundreds of KB)
+
+    Faster Proving — Proving time scales better with computation size
+
+StarkWare and other projects deploy STARKs for scalable, private rollups on Ethereum.
+
+== Applications Beyond Blockchain
+
+While blockchain dominates ZKP discourse, applications extend further:
+
+    Authentication — Prove knowledge of a password without sending it over the network
+
+    Verifiable Computation — Outsource computation to untrusted servers and verify correctness
+
+    Private Data Queries — Query databases and prove the query was executed correctly without revealing the query or data
+
+    Anonymous Credentials — Prove you meet age or location requirements without revealing exact birthdate or address
+
+These applications suggest ZKPs may become as fundamental as encryption in privacy-preserving systems.
+
+== Conclusion
+
+Zero-knowledge proofs reconcile the seemingly contradictory goals of transparency and privacy. As proving systems become more efficient and developer tooling matures, ZKPs will likely underpin the next generation of privacy-preserving protocols, enabling verification without revelation across computing systems.

@@ -1,0 +1,71 @@
+= Introduction to Quantum Computing
+
+:Author: Sofia Andersen
+:Category: Post
+:Scope: Quantum Computing
+:Topic: Fundamentals
+:Status: Draft
+:Priority: Medium
+:Team: Research
+:Tag: quantum-computing, qubits, superposition, entanglement
+:Public: No
+:Project: CS Knowledge Base
+:Published: 2026-02-19 10:30:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Classical computers think in bits — values that are either 0 or 1. Quantum computers work with qubits, which exploit the principles of quantum mechanics to exist in a superposition of states simultaneously. This isn't just a faster version of what we already have; it's a fundamentally different computational model that excels at a specific class of problems where classical approaches hit hard limits.
+
+The implications for cryptography, drug discovery, and optimization problems are significant enough that major governments and technology companies are investing heavily in the field. That said, practical quantum computers remain limited and error-prone, and most of the algorithms that would make them transformative — like Shor's algorithm for breaking RSA — require qubit counts and error rates we haven't reached yet. For software engineers, now is a good time to build intuition for the paradigm before it matures.
+
+== Qubits and Superposition
+
+A qubit is the fundamental unit of quantum information. While a classical bit is binary, a qubit exists in a superposition of both ∣0⟩ and ∣1⟩ states until measured:
+
+    ∣0⟩ State — Analogous to classical 0
+
+    ∣1⟩ State — Analogous to classical 1
+
+    Superposition — A linear combination α∣0⟩ + β∣1⟩, where |α|² + |β|² = 1
+
+The power of superposition allows a quantum computer with n qubits to represent 2ⁿ states simultaneously, enabling massive parallelism in computation.
+
+== Quantum Entanglement
+
+Einstein famously described entanglement as "spooky action at a distance." When qubits become entangled, the state of one qubit instantaneously correlates with the state of another, regardless of the physical distance between them:
+
+    Bell States — Maximally entangled quantum states
+
+    Measurement Correlation — Measuring one entangled qubit immediately determines the state of its partner
+
+    Non-locality — Entanglement enables quantum teleportation and superdense coding
+
+Entanglement is the resource that enables quantum algorithms to outperform their classical counterparts.
+
+== Quantum Gates and Circuits
+
+Quantum computations are performed by applying quantum gates to qubits, analogous to logic gates in classical computing. Unlike classical gates, quantum gates are reversible:
+
+    Pauli Gates (X, Y, Z) — Single-qubit rotations analogous to NOT operations
+
+    Hadamard Gate (H) — Creates superposition from basis states
+
+    CNOT Gate — Two-qubit gate that flips target qubit based on control qubit state
+
+These gates combine to form quantum circuits, the building blocks of quantum algorithms.
+
+== Shor's and Grover's Algorithms
+
+Two algorithms demonstrate quantum supremacy:
+
+    Shor's Algorithm — Factors large integers in polynomial time, threatening RSA encryption by reducing the factoring problem from exponential to polynomial complexity
+
+    Grover's Algorithm — Searches unsorted databases in O(√N) time, providing a quadratic speedup over classical O(N) search
+
+While large-scale fault-tolerant quantum computers remain years away, these algorithms prove quantum advantage is theoretically possible.
+
+== Conclusion
+
+Quantum computing represents a paradigm shift in computation, trading classical determinism for probabilistic quantum mechanics. As hardware improves and error correction matures, quantum computers will likely solve problems in cryptography, drug discovery, and materials science that remain intractable today.

@@ -67,12 +67,12 @@ class Backend(Service):
             dir_tmp = Path.joinpath(dir_var, 'tmp')
             dir_cache = Path.joinpath(dir_var, 'cache')
             dir_www = Path.joinpath(dir_var, 'www')
-            dir_dist = Path.joinpath(dir_var, 'dist')
+            # ~ dir_dist = Path.joinpath(dir_var, 'dist')
             dir_db = Path.joinpath(dir_var, 'db')
 
             self.runtime['dir']['tmp'] = dir_tmp
             self.runtime['dir']['www'] = dir_www
-            self.runtime['dir']['dist'] = dir_dist
+            # ~ self.runtime['dir']['dist'] = dir_dist
             self.runtime['dir']['cache'] = dir_cache
             self.runtime['dir']['log'] = dir_log
             self.runtime['dir']['db'] = dir_db
@@ -212,7 +212,7 @@ class Backend(Service):
         self.log.debug(f"[CHECKS] - START")
         self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.get_path('cache')}]")
         self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.get_path('tmp')}]")
-        self.log.debug(f"CONF[APP] DIR[DISTRIBUTION] VALUE[{self.get_path('dist')}]")
+        # ~ self.log.debug(f"CONF[APP] DIR[DISTRIBUTION] VALUE[{self.get_path('dist')}]")
         self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.get_path('www')}]")
 
         # Check if source directory exists. If not, stop application

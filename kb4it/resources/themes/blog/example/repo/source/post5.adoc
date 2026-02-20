@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Computer networks are the connective tissue of modern computing. Whether a request travels across a data centre fabric or halfway around the globe, the same layered protocol stack governs how data is packaged, addressed, transmitted, and delivered reliably.
+The internet works because millions of independent systems agreed to speak the same language. That language is the TCP/IP protocol suite — a layered set of conventions that governs everything from how bits travel across physical cables to how your browser negotiates a secure connection with a web server. Each layer in the stack has a specific responsibility and communicates only with the layers immediately above and below it.
+
+TCP, the Transmission Control Protocol, is where reliability lives. It breaks data into packets, numbers them, ensures they all arrive, and reassembles them in the correct order — all transparently. UDP, its simpler sibling, skips that overhead entirely, trading reliability for speed. Understanding when to use each, and what happens at every layer of the stack when a request leaves your application, is foundational knowledge for diagnosing latency, debugging connectivity issues, and designing networked systems.
 
 == The Layered Model
 

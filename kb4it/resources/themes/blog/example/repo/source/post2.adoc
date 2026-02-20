@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Memory management is one of the most critical responsibilities of a modern operating system. It determines how physical RAM is allocated, protected, and reclaimed across competing processes, directly influencing both system stability and application performance.
+Every variable you declare, every object you instantiate, every buffer you allocate exists somewhere in physical memory — but the address your program sees is almost certainly not a real one. Modern operating systems use virtual memory to give each process the illusion of its own private address space, translating virtual addresses to physical ones through a mechanism called paging. This abstraction is what makes multitasking safe and stable.
+
+Beneath this abstraction lies a complex ecosystem of allocators, garbage collectors, and kernel routines all working to balance performance with safety. Languages like C give developers direct control over allocation and deallocation, which enables fine-grained optimization but also opens the door to leaks and corruption. Higher-level languages trade some of that control for managed memory, automating cleanup at the cost of predictability. Neither approach is universally better — the right choice depends on what your application demands.
 
 == Virtual Memory
 
