@@ -1,49 +1,51 @@
-= How Compilers Transform Source Code
+= Cryptography Fundamentals for Software Engineers
 
-:Author:        Rajiv Nair
+:Author:        Elena Marchetti
 :Category:      Post
-:Scope:         Systems Programming
-:Topic:         Compilers
+:Scope:         Computer Science Fundamentals
+:Topic:         Security
 :Status:        Published
 :Priority:      High
-:Team:          Systems
-:Tag:           compilers, parsing, lexing, intermediate-representation, optimisation
+:Team:          Research
+:Tag:           cryptography, encryption, hashing, public-key, tls, security
 :Public:        Yes
 :Project:       CS Knowledge Base
-:Published:     2025-03-08 10:30:00
+:Published:     2025-03-15 09:00:00
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
 == Excerpt
 
-When you hit "run," a remarkable chain of transformations quietly takes place before your code ever touches the processor. A compiler's job is to bridge the enormous gap between human-readable source code and machine instructions, doing so through a series of well-defined stages: lexical analysis, parsing, semantic analysis, optimization, and code generation. Each phase peels away another layer of abstraction.
+Cryptography is no longer a niche concern reserved for security specialists — it's embedded in virtually every system engineers build today. From HTTPS handshakes to password hashing to token signing, a working understanding of cryptographic primitives helps you make better decisions and avoid costly mistakes. The difference between SHA-256 and MD5, or between symmetric and asymmetric encryption, has real consequences in production.
 
-What's fascinating is how much work happens before a single instruction is executed. The compiler builds symbol tables, constructs abstract syntax trees, resolves types, and often reorganizes your logic entirely in pursuit of efficiency. The code that actually runs on your CPU can look remarkably different from what you wrote — and that's entirely by design.
+The core concepts aren't as intimidating as they might seem. Symmetric encryption uses the same key to lock and unlock data; asymmetric encryption uses a key pair, keeping one private and sharing the other publicly. Hash functions are one-way transformations that produce a fixed-length fingerprint of any input. Build your mental model around these three ideas, and most of modern cryptography starts to make intuitive sense.
 
-== Phase One: Lexical Analysis
+== Symmetric Encryption
 
-The first phase, performed by the _lexer_ (or scanner), reads the raw character stream and groups characters into meaningful units called _tokens_. Keywords, identifiers, literals, operators, and punctuation each become a distinct token type. Whitespace and comments are typically discarded at this stage. The output is a flat token stream that subsequent phases can process without worrying about individual characters.
+In symmetric encryption, the same key is used for both encrypting and decrypting data. The Advanced Encryption Standard (AES) is today's dominant symmetric cipher. It is fast, hardware-accelerated on most modern CPUs, and considered secure at key lengths of 128 bits or above. Symmetric encryption is ideal for bulk data — encrypting files, database columns, or network streams — because of its speed.
 
-== Phase Two: Parsing and the Syntax Tree
+The fundamental challenge with symmetric encryption is _key distribution_: how do two parties that have never met agree on a shared secret over an untrusted network? This is where asymmetric cryptography enters the picture.
 
-The _parser_ consumes the token stream and checks that it conforms to the language's grammar, typically expressed as a context-free grammar. If the grammar is satisfied, the parser produces an _Abstract Syntax Tree_ (AST) — a hierarchical structure that captures the grammatical relationships between tokens. An `if` statement, for instance, becomes a node with three children: the condition expression, the then-branch, and the optional else-branch. Syntax errors surface here when the token stream violates grammatical rules.
+== Asymmetric Encryption and Key Exchange
 
-== Phase Three: Semantic Analysis
+Asymmetric (or public-key) cryptography uses a mathematically linked key pair. Data encrypted with the _public key_ can only be decrypted with the corresponding _private key_, and vice versa. RSA and Elliptic Curve Cryptography (ECC) are the most widely used asymmetric algorithms. ECC achieves equivalent security to RSA with significantly shorter keys, making it preferable in bandwidth- or compute-constrained environments.
 
-With a syntactically valid AST in hand, the compiler performs _semantic analysis_. This phase enforces rules that grammars cannot express: type checking, scope resolution, and checking that variables are declared before use. Type inference engines, where present, also operate here. The result is an annotated AST — the same tree structure, but enriched with type information and symbol table references.
+In practice, asymmetric cryptography is rarely used to encrypt bulk data directly — it is too slow. Instead, it is used to securely exchange a symmetric key, which then handles the actual data. This hybrid approach underlies TLS, the protocol that secures HTTPS connections.
 
-== Phase Four: Intermediate Representation and Optimisation
+== Cryptographic Hash Functions
 
-Most modern compilers translate the annotated AST into an _Intermediate Representation_ (IR) — a lower-level, language-agnostic form that is easier to analyse and transform. LLVM's IR is a well-known example. The IR is then subjected to a series of _optimisation passes_: dead code elimination, constant folding, inlining, loop unrolling, and many others. Optimising the IR rather than the source or machine code keeps the optimisation logic independent of both the source language and the target architecture.
+A cryptographic hash function maps an input of arbitrary length to a fixed-length digest. Good hash functions are _deterministic_, _fast to compute_, _pre-image resistant_ (infeasible to reverse), and _collision resistant_ (infeasible to find two inputs with the same digest). SHA-256 and SHA-3 are the current standards; MD5 and SHA-1 are deprecated for security purposes and should not be used in new systems.
 
-== Phase Five: Code Generation
+Hash functions are used for verifying file integrity, constructing digital signatures, and — critically — storing passwords. Passwords should never be stored as plaintext or even as plain hashes. Instead, a slow, salted hashing algorithm such as bcrypt, scrypt, or Argon2 should be used, making brute-force attacks computationally expensive.
 
-The final phase translates the optimised IR into target machine code or bytecode. A register allocator maps IR variables to physical CPU registers, instruction selection chooses the best machine instructions, and an instruction scheduler reorders operations to exploit CPU pipelining. The output may be native machine code, JVM bytecode, WebAssembly, or any other target the compiler supports.
+== Digital Signatures
 
-== Why This Matters for Developers
+A digital signature provides authenticity and non-repudiation. The signer computes a hash of the message and encrypts it with their private key. The recipient decrypts the signature with the signer's public key and verifies it against a freshly computed hash of the received message. If the two hashes match, the message is intact and provably originated from the holder of the private key. Digital signatures underpin code signing, certificate authorities, and blockchain transactions.
 
-A working knowledge of compiler phases explains many seemingly mysterious behaviours: why an unused variable causes a warning (semantic analysis), why certain loop structures are faster than others (IR optimisation), and why template-heavy C++ compiles slowly (AST explosion). It also provides the conceptual foundation for building domain-specific languages, linters, and static analysis tools.
+== Common Pitfalls
+
+Cryptography is notoriously easy to misuse. Frequent mistakes include: using ECB mode for AES (which reveals patterns in plaintext), generating weak random numbers (always use a cryptographically secure random number generator), rolling custom cryptographic algorithms (never do this), and mismanaging keys (hardcoding them in source code or storing them alongside the data they protect). Prefer well-audited libraries such as libsodium or the platform's native cryptographic APIs over hand-rolled implementations.
 
 == Conclusion
 
-Compilers are among the most sophisticated software artefacts ever built, yet their internal architecture follows a clear, logical sequence of transformations. Each phase has a well-defined input and output, and each one adds a layer of understanding — from raw text to executable logic — that ultimately makes high-level programming possible.
+Cryptography is the bedrock of trust in digital systems. Software engineers do not need to be mathematicians to use it effectively, but they do need to understand what each primitive guarantees and — equally importantly — what it does not. Choosing the right tool, configuring it correctly, and managing keys securely are engineering disciplines as important as any other in the modern software stack.
