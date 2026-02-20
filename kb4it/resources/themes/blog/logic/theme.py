@@ -14,6 +14,7 @@ from datetime import datetime
 
 from kb4it.core.env import ENV
 from kb4it.services.builder import Builder
+from kb4it.core.util import extract_sections_from_adoc
 from kb4it.core.util import valid_filename
 from kb4it.core.util import exec_cmd
 from kb4it.core.util import set_max_frequency
@@ -138,7 +139,7 @@ class Theme(Builder):
         return TPL_DATATABLE.render(var=datatable)
 
 
-    def build_page_index(self, var):
+    def build_page_index(self):
         """Create blog index page.
 
         At this point, all posts have been already converted to HTML.
@@ -155,6 +156,7 @@ class Theme(Builder):
             self.srvbes.add_target('index.adoc', 'index.html')
             return
 
+        var = self.get_theme_var()
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_dict('repo')
@@ -176,16 +178,25 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             adoc_filepath = os.path.join(self.srvbes.get_path('source'), post)
+            sections = extract_sections_from_adoc(adoc_filepath)
+            excerpt = 'Excerpt' in sections.keys()
+            if excerpt:
+                s = sections['Excerpt']['start']
+                e = sections['Excerpt']['end']
+                lines = open(adoc_filepath).readlines()
+                text = '\n'.join(lines[s+1:e])
+                var['post']['body'] = "\n".join([f"<p>{line}</p>" if line.strip() else line for line in text.strip().splitlines()])
+            else:
+                var['post']['body'] = "<p>No intro</p>"
             adoc_content = open(adoc_filepath, 'r').read()
-            html_filename = post.replace('.adoc', '.html')
-            html_filepath = os.path.join(self.srvbes.get_path('tmp'), html_filename)
-            html_content = open(html_filepath, 'r').read()
-            body_mark = "<!-- BODY :: START -->"
-            body_start = html_content.find("<!-- BODY :: START -->")
-            body_end = html_content.find("<!-- BODY :: END -->")
+            # ~ html_filename = post.replace('.adoc', '.html')
+            # ~ html_filepath = os.path.join(self.srvbes.get_path('tmp'), html_filename)
+            # ~ html_content = open(html_filepath, 'r').read()
+            # ~ body_mark = "<!-- BODY :: START -->"
+            # ~ body_start = html_content.find("<!-- BODY :: START -->")
+            # ~ body_end = html_content.find("<!-- BODY :: END -->")
             timestamp = var['post'][sort_by][0]
             dt = guess_datetime(timestamp)
-            var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             var['basename_adoc'] = post
             var['metadata'] = self.build_metadata_section(post)
             var['source_adoc'] = adoc_content
@@ -200,7 +211,7 @@ class Theme(Builder):
         index_file = os.path.join(runtime['dir']['tmp'], 'index.adoc')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['tmp'], index_file)
+        cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
         data = (index_file, cmd, 1)
         res = exec_cmd(data)
         self.build_page(index_file, var)
@@ -393,12 +404,13 @@ class Theme(Builder):
 
     def post_activities(self):
         self.log.debug("[POSTPROCESSING THEME] - START")
-        var = self.get_theme_var()
-        self.build_page_index(var)
+        # ~ var = self.get_theme_var()
+        # ~ self.build_page_index(var)
         self.log.debug("[POSTPROCESSING THEME] - END")
 
     def build(self):
         """Create standard pages for default theme"""
+        self.build_page_index()
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
