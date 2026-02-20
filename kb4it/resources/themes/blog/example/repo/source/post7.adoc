@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Quantum computing harnesses the principles of quantum mechanics to process information in ways that classical computers cannot. Unlike classical bits, which exist as either 0 or 1, quantum bits — or qubits — can exist in multiple states simultaneously, opening the door to exponential speedups for certain computational problems.
+Classical computers think in bits — values that are either 0 or 1. Quantum computers work with qubits, which exploit the principles of quantum mechanics to exist in a superposition of states simultaneously. This isn't just a faster version of what we already have; it's a fundamentally different computational model that excels at a specific class of problems where classical approaches hit hard limits.
+
+The implications for cryptography, drug discovery, and optimization problems are significant enough that major governments and technology companies are investing heavily in the field. That said, practical quantum computers remain limited and error-prone, and most of the algorithms that would make them transformative — like Shor's algorithm for breaking RSA — require qubit counts and error rates we haven't reached yet. For software engineers, now is a good time to build intuition for the paradigm before it matures.
 
 == Qubits and Superposition
 

@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Modern software relies on cryptography at every layer — securing network connections, verifying software integrity, protecting stored passwords, and enabling digital signatures. Despite its mathematical depth, the core ideas are accessible to any software engineer, and a practical understanding of them is increasingly non-negotiable in professional practice.
+Cryptography is no longer a niche concern reserved for security specialists — it's embedded in virtually every system engineers build today. From HTTPS handshakes to password hashing to token signing, a working understanding of cryptographic primitives helps you make better decisions and avoid costly mistakes. The difference between SHA-256 and MD5, or between symmetric and asymmetric encryption, has real consequences in production.
+
+The core concepts aren't as intimidating as they might seem. Symmetric encryption uses the same key to lock and unlock data; asymmetric encryption uses a key pair, keeping one private and sharing the other publicly. Hash functions are one-way transformations that produce a fixed-length fingerprint of any input. Build your mental model around these three ideas, and most of modern cryptography starts to make intuitive sense.
 
 == Symmetric Encryption
 

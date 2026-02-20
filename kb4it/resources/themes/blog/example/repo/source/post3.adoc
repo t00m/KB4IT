@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-A distributed system is a collection of independent computers that appears to its users as a single coherent system. Building such systems is notoriously difficult: network links fail, clocks drift, and nodes crash — often without warning and in partial, hard-to-detect ways.
+A distributed system is, at its simplest, a collection of independent computers that appear to their users as a single coherent system. That simplicity is deceptive. The moment you introduce a network between components, you inherit an entirely new class of problems: machines fail independently, messages arrive out of order or not at all, and clocks across nodes are never perfectly synchronized. Writing software that handles all of this gracefully is the central challenge of distributed systems engineering.
+
+The field has developed a rich vocabulary for reasoning about these challenges — consensus algorithms, vector clocks, eventual consistency, leader election. These aren't academic curiosities; they're the building blocks of the databases, message queues, and coordination services that modern infrastructure depends on. Before you can use these tools well, you need to understand the failure modes they were designed to address.
 
 == The CAP Theorem
 

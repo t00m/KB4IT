@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Compilers transform human-readable source code into executable machine instructions. Modern compilers are complex pipelines, each stage applying well-defined transformations while preserving program semantics. Understanding compiler design illuminates how high-level abstractions become efficient low-level implementations.
+Compiler design has evolved considerably since the days of monolithic, language-specific tools. Modern compilers increasingly embrace modular architectures — most famously exemplified by LLVM — that separate the frontend (parsing and semantic analysis) from the backend (optimization and code generation) through a shared intermediate representation. This separation means a new language only needs to target the IR, instantly inheriting a sophisticated optimization pipeline and support for dozens of hardware targets.
+
+The patterns that have emerged from this evolution — pass-based optimization pipelines, SSA form, polyhedral transformations — are influencing how engineers think about data transformation more broadly. Whether you're building a query engine, a rules evaluator, or a domain-specific language, the structural ideas behind modern compiler design have practical applications well beyond traditional language implementation.
 
 == Frontend: Lexical and Syntactic Analysis
 

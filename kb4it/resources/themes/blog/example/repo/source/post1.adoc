@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Algorithm complexity is one of the cornerstones of computing science. Understanding how an algorithm behaves as the size of its input grows is essential for writing efficient software and making informed design decisions.
+Not all code that works is code worth keeping. Two programs can produce identical output while differing wildly in how they scale — one handling a million records gracefully, the other grinding to a halt. Algorithm complexity, expressed through Big O notation, gives us a shared language for describing this behavior independent of hardware, language, or implementation quirks.
+
+Big O describes the worst-case growth rate of an algorithm as input size increases. An O(n) algorithm grows linearly; an O(n²) algorithm, common in naive sorting or nested loops, can become catastrophically slow at scale. Developing an instinct for complexity doesn't require deep mathematical training — it mostly requires the habit of asking, "what happens to this code when the input gets ten times larger?"
 
 == Big-O Notation
 

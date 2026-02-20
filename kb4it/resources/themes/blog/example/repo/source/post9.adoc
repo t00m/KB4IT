@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Zero-knowledge proofs (ZKPs) allow a prover to convince a verifier that a statement is true without revealing any information beyond the validity of the statement itself. This cryptographic primitive, introduced by Goldwasser, Micali, and Rackoff in 1985, has moved from theoretical curiosity to practical infrastructure, particularly in blockchain applications.
+Imagine proving to someone that you know a secret without revealing anything about the secret itself. That's the core idea behind zero-knowledge proofs — a cryptographic primitive that sounds almost paradoxical but rests on solid mathematical foundations. A ZK proof allows a prover to convince a verifier that a statement is true, with the verifier learning nothing beyond the truth of the statement itself.
+
+The practical applications are expanding rapidly. Zero-knowledge proofs power privacy-preserving authentication, confidential smart contracts, and scalable blockchain rollups. Systems like zk-SNARKs and zk-STARKs have made these proofs compact and fast enough to be production-viable. For engineers working at the intersection of security and distributed systems, ZK proofs are quickly moving from theoretical curiosity to an essential tool in the design palette.
 
 == The Three Properties of ZKPs
 

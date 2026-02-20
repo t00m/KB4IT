@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Building software that runs across multiple machines is one of the most intellectually challenging areas of computer science. Distributed systems offer scalability and resilience, but they introduce a class of problems that simply do not exist in single-machine environments — chief among them, the fundamental tension described by the CAP theorem.
+Building software that runs across multiple machines forces you to confront a fundamental truth: you can't have everything. The CAP theorem, formalized by Eric Brewer, states that any distributed system can only guarantee two of three properties — Consistency, Availability, and Partition Tolerance — at any given time. This isn't a bug in our engineering; it's a mathematical reality of networked systems.
+
+Understanding which two properties your system prioritizes is one of the most important architectural decisions you'll make. A banking system might favor consistency over availability, accepting downtime rather than serving stale balances. A social media feed might do the opposite, preferring to show slightly outdated posts rather than returning an error. Knowing your CAP trade-offs means knowing your product.
 
 == What the CAP Theorem States
 

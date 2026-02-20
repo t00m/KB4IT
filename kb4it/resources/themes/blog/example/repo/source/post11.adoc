@@ -14,9 +14,11 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
-== Introduction
+== Excerpt
 
-Every time a developer saves a source file and runs a build, a compiler performs an intricate pipeline of transformations — turning human-readable text into executable machine instructions. Understanding that pipeline demystifies error messages, helps developers write more compiler-friendly code, and is essential knowledge for anyone working on language tooling, performance-critical systems, or virtual machines.
+When you hit "run," a remarkable chain of transformations quietly takes place before your code ever touches the processor. A compiler's job is to bridge the enormous gap between human-readable source code and machine instructions, doing so through a series of well-defined stages: lexical analysis, parsing, semantic analysis, optimization, and code generation. Each phase peels away another layer of abstraction.
+
+What's fascinating is how much work happens before a single instruction is executed. The compiler builds symbol tables, constructs abstract syntax trees, resolves types, and often reorganizes your logic entirely in pursuit of efficiency. The code that actually runs on your CPU can look remarkably different from what you wrote — and that's entirely by design.
 
 == Phase One: Lexical Analysis
 
