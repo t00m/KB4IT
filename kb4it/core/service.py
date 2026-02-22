@@ -2,6 +2,7 @@
 
 """
 Server module.
+
 # File: mod_srv.py
 # Author: Tomás Vírseda
 # License: GPL v3
@@ -21,6 +22,7 @@ def get_traceback():
 class Service:
     """
     Service class.
+
     It is the base class for those modules acting as services.
     Different modules (GUI, Database, Ask, etc...) share same methods
     which is useful to start/stop them, simplify logging and, comunicate
@@ -29,7 +31,7 @@ class Service:
 
     def __init__(self, app=None):
         """Initialize Service instance."""
-
+        self.log = None
         self.modname = self.__class__.__name__
         if app is not None:
             self.app = app
@@ -39,6 +41,7 @@ class Service:
     def is_started(self):
         """
         Check if service is started.
+
         Return True or False if service is running / not running
         """
         return self.started
@@ -47,18 +50,17 @@ class Service:
         """Print traceback."""
         self.log.debug(f"Traceback:\n{get_traceback()}")
 
-    def start(self, app, name:str):
+    def start(self, app):
         """Start service."""
         self.started = True
         self.app = app
-        params = self.app.get_params()
-        severity = params['log_level']
         self.log = get_logger(f"{self.modname}")
         self._initialize()
-        # ~ self.log.debug(f"Service {self.modname} started")
+        self.log.debug(f"[SERVICE] {self.modname} registered and started")
 
     def end(self):
         """End service.
+
         Use finalize for writting a custom end method
         """
         if self.started:
@@ -68,17 +70,16 @@ class Service:
 
     def _initialize(self):
         """Initialize service.
+
         All clases derived from Service class must implement this method
         """
-        pass
 
     def _finalize(self):
         """Finalize service.
+
         All clases derived from Service class must implement this method
         """
-        pass
 
     def get_service(self, name):
         """Get service name."""
         return self.app.get_service(name)
-

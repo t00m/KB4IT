@@ -106,11 +106,8 @@ class KB4IT:
         if service is None:
             self.log.error(f"[CONTROLLER] - Service {name} not registered")
             self.stop(error=True)
-
         if not service.is_started():
-            service.start(self, name)
-            self.log.debug(f"[CONTROLLER] - Service '{name}' started")
-        self.log.debug(f"[CONTROLLER] - Service {name}  available")
+            service.start(self)
         return service
 
     def register_service(self, name, service):
