@@ -12,12 +12,10 @@ import os
 import sys
 import uuid
 import argparse
-import traceback
 from kb4it.core.env import ENV
 from kb4it.core.log import setup_logging
 from kb4it.core.log import get_logger
 from kb4it.core.util import now
-from kb4it.core.perf import timeit
 from kb4it.services.backend import Backend
 from kb4it.services.frontend import Frontend
 from kb4it.services.database import Database
@@ -27,10 +25,12 @@ from kb4it.services.workflow import Workflow
 
 class KB4IT:
     """KB4IT main class."""
+
     repo = {}
 
-    def __init__(self, params: argparse.Namespace=None):
+    def __init__(self, params: argparse.Namespace = None):
         """Initialize KB4IT class.
+
         Setup environment.
         Initialize main log.
         Register main services.
@@ -60,15 +60,13 @@ class KB4IT:
         self.__setup_services()
 
     def set_log_file(self):
+        """Generate a temporary log file."""
         suffix = str(uuid.uuid1().time)
         self.log_file = f"{ENV['FILE']['LOG']}.{suffix}"
 
     def get_log_file(self):
+        """Get log file path."""
         return self.log_file
-
-    def __setup_logging(self, severity=None):
-        """Set up logging."""
-        self.log = get_logger(__class__.__name__)
 
     def __check_params(self):
         """Check arguments passed to the application."""
@@ -76,15 +74,14 @@ class KB4IT:
             self.log.debug(f"[CONTROLLER] - CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]")
 
     def get_params(self):
-        """Return app configuration"""
+        """Return app configuration."""
         return self.params
 
     def __setup_environment(self):
-        """Set up KB4IT environment."""
-        # Create local paths if they do not exist
-        for key, path in ENV['LPATH'].items():
+        """Create local paths if they do not exist."""
+        for path in ENV['LPATH'].values():
             if not os.path.exists(path):
-                os.makedirs(path)
+                os.makedirs(path, exist_ok=True)
 
     def __setup_services(self):
         """Declare and register services."""
@@ -100,22 +97,21 @@ class KB4IT:
             self.register_service(name, klass)
 
     def get_services(self):
-        """Get all registered services"""
+        """Get all registered services."""
         return self.services
 
-    def get_service(self, name: str = {}):
+    def get_service(self, name: str):
         """Get or start a registered service."""
-        self.log.debug(f"[CONTROLLER] - Getting service '{name}'")
-        service = self.services.get(name)
-        if service:
-            logname = service.__class__.__name__
-            if not service.is_started():
-                service.start(self, name)
-                self.log.debug(f"[CONTROLLER] - Service '{name}' started")
-            return service
-        else:
+        service = self.services.get(name) or None
+        if service is None:
             self.log.error(f"[CONTROLLER] - Service {name} not registered")
             self.stop(error=True)
+
+        if not service.is_started():
+            service.start(self, name)
+            self.log.debug(f"[CONTROLLER] - Service '{name}' started")
+        self.log.debug(f"[CONTROLLER] - Service {name}  available")
+        return service
 
     def register_service(self, name, service):
         """Register a new service."""
@@ -137,8 +133,6 @@ class KB4IT:
             self.log.debug(f"[CONTROLLER] - Service[{name}] unregistered")
         service = None
 
-
-    # ~ @timeit
     def run(self):
         """Start application."""
         action = self.params['action']
@@ -159,13 +153,13 @@ class KB4IT:
     def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
-            self.log.error(f"[CONTROLLER] - Execution aborted because of serious errors")
+            self.log.error("[CONTROLLER] - Execution aborted because of serious errors")
         try:
             for name in self.services:
                 self.deregister_service(name)
-        except AttributeError as error:
+        except AttributeError as errmsg:
             # KB4IT wasn't even started
-            self.log.error(error)
+            self.log.error(errmsg)
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
         sys.exit()
 
@@ -175,7 +169,8 @@ def main():
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog='kb4it',
-        description=f"KB4IT v{ENV['APP']['version']}\nCustomizable static website generator based on Asciidoctor sources",
+        description=f"KB4IT v{ENV['APP']['version']}\nCustomizable \
+            static website generator based on Asciidoctor sources",
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -247,4 +242,3 @@ def main():
     except SystemExit as error:
         if error.code != 0 and error.code is not None:
             print("Run 'kb4it <action name> --help' to get help for a specific command.")
-
