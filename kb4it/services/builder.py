@@ -1,10 +1,10 @@
 #!/usr/bin/python
 """
 Builder service.
-# File: srv_builder.py
+
+# File: builder.py
 # Author: Tomás Vírseda
 # License: GPL v3
-# Description: Create KB4IT pages
 """
 
 import os
@@ -16,12 +16,12 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import timeit
 from kb4it.core.util import get_human_datetime
 
 
 class Builder(Service):
-    """Build HTML blocks"""
+    """Build HTML blocks."""
+
     theme_var = {}
     templates = {}
 
@@ -29,39 +29,39 @@ class Builder(Service):
         """Initialize Builder class."""
         self.get_services()
 
-    def finalize(self):
-        """Clean up."""
-        pass
-
     def get_services(self):
         """Get services."""
         self.srvdtb = self.get_service('DB')
         self.srvbes = self.get_service('Backend')
 
     def generate_sources(self):
-        """Custom themes can use this method to generate source documents"""
-        pass
+        """Generate sources.
+
+        Custom themes must subclass it.
+        """
 
     def post_activities(self):
-        pass
+        """Theme post activities.
+
+        Custom themes must subclass it.
+        """
 
     def distribute_html(self, adocId, htmlId):
+        """Add compiled page to the target list."""
         shutil.copy(htmlId, self.srvbes.get_path('www'))
-        # Add compiled page to the target list
         self.srvbes.add_target(adocId, os.path.basename(htmlId))
-        #self.log.debug(f"DOC[{adocId}] targeting RESOURCE[{os.path.basename(htmlId)}] was copied to temporary target directory")
 
-    # ~ @timeit
     def distribute_adoc(self, name, content):
         """
         Distribute source file to temporary directory.
+
         Use this method when the source asciidoctor file doesn't have to
         be analyzed.
         """
-        ADOC_NAME = "%s.adoc" % name
-        #self.log.debug(f"DOC[{ADOC_NAME}] received")
+        ADOC_NAME = f"{name}.adoc"
+        # ~ self.log.debug(f"DOC[{ADOC_NAME}] received")
         PAGE_PATH = os.path.join(self.srvbes.get_path('tmp'), ADOC_NAME)
-        with open(PAGE_PATH, 'w') as fpag:
+        with open(PAGE_PATH, 'w', encoding='utf-8') as fpag:
             try:
                 fpag.write(content)
             except Exception as error:
@@ -70,13 +70,11 @@ class Builder(Service):
 
         # Add compiled page to the target list
         self.srvbes.add_target(ADOC_NAME, PAGE_NAME)
-        #self.log.debug(f"DOC[{ADOC_NAME}] targets RESOURCE[{PAGE_NAME}] distributed to temporary path")
 
     def template(self, template):
-        """Return the template content from chosen theme"""
+        """Return Mako Template object."""
         runtime = self.srvbes.get_dict('runtime')
         theme = runtime['theme']
-        current_theme = theme['id']
         TEMPLATE_FOUND = False
 
         # Try to get the template from cache
@@ -86,8 +84,8 @@ class Builder(Service):
             # ~ self.log.debug(f"[TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
         except KeyError:
             templates = []
-            templates.append(os.path.join(theme['templates'], "%s.tpl" % template))  # From theme
-            templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], "%s.tpl" % template))  # From common templates dir
+            templates.append(os.path.join(theme['templates'], f"{template}.tpl"))  # From theme
+            templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], f"{template}.tpl"))  # From common templates dir
             TEMPLATE_FOUND = False
             for template_path in templates:
                 if not TEMPLATE_FOUND:
@@ -96,7 +94,7 @@ class Builder(Service):
                         TEMPLATE_FOUND = True
                         # ~ self.log.debug(f"TEMPLATE[{template}] cached")
                         break
-                    except:
+                    except Exception:
                         self.templates[template] = Template("")
 
         if not TEMPLATE_FOUND:
@@ -106,14 +104,12 @@ class Builder(Service):
         return self.templates[template]
 
     def render_template(self, name, var={}):
+        """Render template according to dict var values."""
         tpl = self.template(name)
         return tpl.render(var=var)
 
     def get_theme_var(self):
-        # FIXME: concurrent.futures MemoryError
-        # https://stackoverflow.com/questions/37445540/memory-usage-with-concurrent-futures-threadpoolexecutor-in-python3
         """Create a new variable for rendering templates."""
-        repo = self.srvbes.get_dict('repo')
         theme_var = {}
         theme_var['theme'] = self.srvbes.get_dict('theme')
         theme_var['repo'] = self.srvbes.get_dict('repo')
@@ -133,29 +129,30 @@ class Builder(Service):
         blocked_keys = set(self.srvdtb.get_blocked_keys())
         used_keys = set(metadata.keys())
         theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys))
-        # ~ self.log.info(f"Keys: {theme_var['kb']['keys']}")
 
         return theme_var
 
     def page_hook_pre(self, var):
-        """ Insert html code before the content.
+        """Insert html code before the content.
+
         This method can be overwriten by custom themes.
         """
         return var
 
     def page_hook_post(self, var):
-        """ Insert html code after the content.
+        """Insert html code after the content.
+
         This method can be overwriten by custom themes.
         """
         return var
 
     def build_page_key(self, key, values):
         """Create page for a key."""
-        pass
 
     def build_page(self, path_adoc):
         """
         Build the final HTML Page for a document.
+
         At this point, the compilation for the asciidoc document has
         finished successfully, and therefore the html page can be built.
         The Builder receives the asciidoc document filepath. It means,
@@ -163,18 +160,17 @@ class Builder(Service):
         The html page is built by inserting the html header at the
         beguinning, appending the footer at the end, and applying the
         necessary transformations.
+
         Finally, the html page created by asciidoctor is overwritten.
         This method must be overwriten by custom themes.
         """
-        # ~ html = ''
-        # ~ return html
 
     def build_page_key_value(self, kvpath):
         """
         Build the final HTML Page for a document key-value.
+
         This method must be overwriten by custom themes.
         """
-        pass
 
     def create_page_help(self):
         """KB4IT help page."""
@@ -193,4 +189,3 @@ class Builder(Service):
         self.srvdtb.add_document('about_kb4it.adoc')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'SystemPage', 'Yes')
-
