@@ -2,6 +2,7 @@
 
 """
 Utils functions used along the project.
+
 # File: srv_utils.py
 # Author: Tomás Vírseda
 # License: GPL v3
@@ -14,17 +15,12 @@ import glob
 import json
 import math
 import time
-import uuid
 import pickle
 import shutil
-import pprint
 import hashlib
-import pathlib
 import operator
 import subprocess
 import multiprocessing
-
-from pathlib import Path
 from functools import wraps
 from datetime import datetime
 
@@ -37,7 +33,9 @@ log = get_logger('Util')
 cache_dt = {}
 cache_ts_ymd = {}
 
+
 def timeit(func):
+    """Time a method for measuring performance."""
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
         start_time = time.perf_counter()
@@ -52,19 +50,12 @@ def timeit(func):
         return result
     return timeit_wrapper
 
-def extract_sections_from_adoc(file_path):
-    """
-    Extract sections from an AsciiDoc file.
 
-    Args:
-        file_path (str): Path to the .adoc file
-
-    Returns:
-        list: List of dictionaries containing section info
-    """
+def extract_sections_from_adoc(file_path: str) -> dict:
+    """Extract sections from an AsciiDoc file."""
     sections = []
 
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         lines = file.readlines()
 
     current_section = None
@@ -97,15 +88,15 @@ def extract_sections_from_adoc(file_path):
 
     # As a dictionary with section names as keys
     sections_dict = {section['name']: {
-    'start': section['start'],
-    'end': section['end']
+        'start': section['start'],
+        'end': section['end']
     } for section in sections}
 
     return sections_dict
 
 
-def copy_docs(docs, target):
-    """C0111: Missing function docstring (missing-docstring)."""
+def copy_docs(docs: list, target: str) -> None:
+    """Copy a list of docs to target directory."""
     for doc in docs:
         try:
             shutil.copy(doc, target)
@@ -114,17 +105,21 @@ def copy_docs(docs, target):
             log.warning(f"File {doc} not found")
     log.debug(f"{len(docs)} documents copied to '{target}'")
 
+
 def get_default_workers():
     """Calculate default number or workers.
+
     Workers = Number of CPU / 2
     Minimum workers = 1
     """
     ncpu = multiprocessing.cpu_count()
-    workers = ncpu/2
+    workers = ncpu / 2
     return math.ceil(workers)
+
 
 def copydir(source, dest):
     """Copy a directory structure overwriting existing files.
+
     https://gist.github.com/dreikanter/5650973#gistcomment-835606
     """
     for root, dirs, files in os.walk(source):
@@ -143,13 +138,16 @@ def copydir(source, dest):
             except PermissionError:
                 log.warning(f"Check permissions for file {file}")
 
+
 def get_source_docs(path: str):
-    """Get asciidoc documents from a given path"""
+    """Get asciidoc documents from a given path."""
     pattern = os.path.join(path, '*.adoc')
     return glob.glob(pattern)
 
+
 def exec_cmd(data):
     """Execute an operating system command.
+
     Return:
     - document
     - True if success, False if not
@@ -171,8 +169,7 @@ def set_max_frequency(dkeyurl):
     max_frequency = 1
     for keyword in dkeyurl:
         cur_frequency = len(dkeyurl[keyword])
-        if cur_frequency > max_frequency:
-            max_frequency = cur_frequency
+        max_frequency = max(max_frequency, cur_frequency)
 
     return max_frequency
 
@@ -200,8 +197,8 @@ def get_font_size(frequency, max_frequency):
     return size
 
 
-def delete_target_contents(target_path) -> bool:
-    """C0111: Missing function docstring (missing-docstring)."""
+def delete_target_contents(target_path: str) -> bool:
+    """Delete contents from target directory."""
     error = False
     if os.path.exists(target_path):
         if os.path.isdir(target_path):
@@ -231,18 +228,20 @@ def delete_files(files):
             log.warning("[UTIL] - %s", error)
             log.warning("[UTIL] - %s", path)
 
+
 def json_load(filepath: str) -> {}:
-    """Load into a dictionary a file in json format"""
-    with open(filepath) as fin:
+    """Load into a dictionary a file in json format."""
+    with open(filepath, 'r', encoding='utf-8') as fin:
         adict = json.load(fin)
     return adict
 
+
 def json_save(filepath: str, adict: {}) -> {}:
-    """Save dictionary into a file in json format"""
-    with open(filepath, 'w') as fout:
+    """Save dictionary into a file in json format."""
+    with open(filepath, 'w', encoding='utf-8') as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
-# ~ @timeit
+
 def get_asciidoctor_attributes(docpath: str):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
@@ -252,7 +251,7 @@ def get_asciidoctor_attributes(docpath: str):
     end_of_header_found = False
 
     try:
-        lines = open(docpath).readlines()
+        lines = open(docpath, 'r', encoding='utf-8').readlines()
         title_found = False
         title_line = lines[0]
 
@@ -270,7 +269,7 @@ def get_asciidoctor_attributes(docpath: str):
                 line = lines[n].strip()
                 if line.startswith(':'):
                     key = line[1:line.find(':', 1)]
-                    values = line[len(key)+2:].split(',')
+                    values = line[len(key) + 2:].split(',')
                     keys[key] = [value.strip() for value in values]
                 elif line.startswith(ENV['CONF']['EOHMARK']):
                     # Stop processing if EOHMARK is found
@@ -295,12 +294,14 @@ def get_asciidoctor_attributes(docpath: str):
 
     return keys, valid, reason
 
+
 def get_hash_from_content(content: str):
-    """Get the SHA256 hash for any string"""
+    """Get the md5 hash for any string."""
     return hashlib.md5(content.encode('utf-8')).hexdigest()
 
+
 def get_hash_from_file(path):
-    """Get the SHA256 hash for a given filename."""
+    """Get the md5 hash for a given filename."""
     if os.path.exists(path):
         with open(path, 'rb') as fin:
             fhash = hashlib.file_digest(fin, 'md5').hexdigest()
@@ -308,17 +309,20 @@ def get_hash_from_file(path):
         fhash = None
     return fhash
 
-# ~ @timeit
+
 def get_hash_from_dict(adict):
-    """Get the MD5  hash for a given dictionary."""
+    """Get the md5 hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
-# ~ @timeit
+
 def get_hash_from_list(alist):
+    """Get the md5 hash for a given list."""
     return hashlib.md5(pickle.dumps(alist)).hexdigest()
 
+
 def valid_filename(s):
-    """Return the given string converted to a string that can be used for a clean filename.
+    """Return a clean filename.
+
     Remove leading and trailing spaces; convert other spaces to
     underscores; and remove anything that is not an alphanumeric, dash,
     underscore, or dot.
@@ -331,37 +335,38 @@ def valid_filename(s):
     return re.sub(r'(?u)[^-\w.]', '', s)
 
 
-# ~ def file_timestamp(filename):
-    # ~ """Return last modification datetime normalized of a file."""
-    # ~ t = os.path.getmtime(filename)
-    # ~ sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
-    # ~ return sdate
-
-
 def now():
+    """Return datetime.now in isoformat."""
     return datetime.now().isoformat()
 
-def get_year(timestamp: str):
+
+def get_year(timestamp: str) -> int:
+    """Return year from timestamp."""
     return int(timestamp[:4])
 
+
 def get_month(timestamp: str):
+    """Return month from timestamp."""
     return int(timestamp[4:6])
 
+
 def get_day(timestamp: str):
+    """Return day from timestamp."""
     return int(timestamp[6:8])
 
+
 def log_timestamp():
-    now = datetime.now()
-    return now.strftime("%Y%m%d_%H%M%S")
+    """Return timestamp for logging purposes."""
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
 
 def kb4it_timestamp():
-    now = datetime.now()
-    return now.strftime("%Y-%m-%d %H:%M:%S")
-
+    """Return timestamp in KB4IT format."""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def guess_datetime(sdate):
-    """Return (guess) a datetime object for a given string."""
+    """Guess a datetime object for a given string."""
     if sdate in cache_dt:
         return cache_dt[sdate]
 
@@ -379,7 +384,6 @@ def guess_datetime(sdate):
     for pattern in patterns:
         if not found:
             try:
-                # ~ timestamp = datetime.strptime(sdate, pattern)
                 td = datetime.strptime(sdate, pattern)
                 ts = td.strftime("%Y-%m-%d %H:%M:%S")
                 timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
@@ -400,31 +404,38 @@ def string_timestamp(string):
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
-    return "%s" % dt.strftime("%A, %B %d, %Y at %H:%M")
+    return f"{dt.strftime("%A, %B %d, %Y at %H:%M")}"
+
 
 def get_human_datetime_day(dt):
-    """Return day datetime for humans"""
-    return "%s" % dt.strftime("%A, %B %d, %Y")
+    """Return day datetime for humans."""
+    return f"{dt.strftime("%A, %B %d, %Y")}"
+
 
 def get_human_datetime_month(dt):
-    """Return month datetime for humans"""
-    return "%s" % dt.strftime("%B, %Y")
+    """Return month datetime for humans."""
+    return f"{dt.strftime("%B, %Y")}"
+
 
 def get_human_datetime_year(dt):
-    """Return year datetime for humans"""
-    return "%s" % dt.strftime("%Y")
+    """Return year datetime for humans."""
+    return f"{dt.strftime("%Y")}"
+
 
 def get_timestamp_yyyymmdd(dt):
-    if not dt in cache_ts_ymd:
+    """Return timestamp in yyyymmdd format."""
+    if dt not in cache_ts_ymd:
         cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
     return cache_ts_ymd[dt]
 
-# ~ @timeit
+
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
 
-def ellipsize_text(text: str, max_length: int=70):
+
+def ellipsize_text(text: str, max_length: int = 70):
+    """Elipsize a given text given a max length."""
     if len(text) <= max_length:
         return text
 
@@ -436,4 +447,3 @@ def ellipsize_text(text: str, max_length: int=70):
     end = text[-split_length:] if max_length % 2 == 0 else text[-split_length - 1:]
 
     return f"{start}...{end}"
-
