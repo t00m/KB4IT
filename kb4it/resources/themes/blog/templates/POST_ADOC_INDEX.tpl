@@ -83,7 +83,6 @@
                     <!-- Tags and Topics -->
                 </div>
             </div>
-            <hr>
         </header>
 
         <!-- Body -->
@@ -93,7 +92,9 @@
 
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
-            <hr>
+            <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
+                <span class="uk-link-heading">Read more...</span>
+            </a>
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
         </footer>
