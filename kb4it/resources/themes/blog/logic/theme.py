@@ -25,7 +25,6 @@ from kb4it.core.util import get_human_datetime_day
 from kb4it.core.util import get_human_datetime_month
 from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import ellipsize_text
-from kb4it.core.perf import timeit
 
 
 class Theme(Builder):
