@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """
-Module with the application logic.
+Frontend module.
+
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: module holding the application logic
 """
 
 import re
@@ -25,7 +25,7 @@ from kb4it.core.service import Service
 
 class Frontend(Service):
     """KB4I Application Class.
-    This class manages the Frontend (Themes).
+    This class manages the Frontend (Themes): list, load and search
     """
     srvthm = None
 
