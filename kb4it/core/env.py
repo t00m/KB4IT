@@ -11,16 +11,19 @@ Environment module.
 import os
 from os.path import abspath
 import sys
+from pathlib import Path
+import locale
 import platform
-import tempfile
 import multiprocessing
+
+locale.getpreferredencoding()
 
 ENV = {}
 
 # System info
 ENV['SYS'] = {}
 
-## Python
+# Python
 ENV['SYS']['PYTHON'] = {}
 ENV['SYS']['PYTHON']['VERSION'] = sys.version
 ENV['SYS']['PYTHON']['PATH'] = sys.path
@@ -42,26 +45,22 @@ except FileNotFoundError:
     sys.exit(-1)
 except AttributeError:
     print("KB4IT couldn't start. Check traceback")
-    raise
     sys.exit(-1)
 
 # KB4IT current process
 pid = os.getpid()
 ENV['SYS']['PS'] = {}
 ENV['SYS']['PS']['PID'] = os.getpid()
-ENV['SYS']['PS']['NAME'] = open('/proc/%d/comm' % pid).read().strip()
+ENV['SYS']['PS']['NAME'] = Path(f"/proc/{pid}/comm").read_text(encoding='utf-8').strip()
 
 # Configuration
 ENV['CONF'] = {}
 ENV['CONF']['ROOT'] = abspath(sys.modules[__name__].__file__ + "/../../")
+
 ENV['CONF']['USER_DIR'] = os.path.expanduser('~')
-ENV['CONF']['TMPNAME'] = next(tempfile._get_candidate_names())
 ENV['CONF']['MAX_WORKERS'] = multiprocessing.cpu_count()  # Avoid MemoryError
 ENV['CONF']['EOHMARK'] = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
 ENV['CONF']['ADOCPROPS'] = {
-#    'source-highlighter': 'coderay',
-#    'coderay-css': 'class',
-#    'coderay-linenums-mode': 'table',
     'toc': 'left',
     'toclevels': '2',
     'icons': 'font',
@@ -83,7 +82,8 @@ ENV['APP']['license_long'] = "The code is licensed under the terms of the  GPL v
                   code\nas you want"
 ENV['APP']['copyright'] = "Copyright \xa9 2019 Tomás Vírseda"
 ENV['APP']['desc'] = ""
-ENV['APP']['version'] = open('%s' % os.path.join(ENV['CONF']['ROOT'], 'VERSION')).read()
+FILE_VERSION = os.path.join(ENV['CONF']['ROOT'], 'VERSION')
+ENV['APP']['version'] = Path(FILE_VERSION).read_text(encoding='utf-8').strip()
 ENV['APP']['author'] = 'Tomás Vírseda'
 ENV['APP']['author_email'] = 'tomasvirseda@gmail.com'
 ENV['APP']['documenters'] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
@@ -91,25 +91,12 @@ ENV['APP']['website'] = 'https://github.com/t00m/KB4IT'
 
 # Local paths
 ENV['LPATH'] = {}
-ENV['LPATH']['ROOT'] = os.path.join(ENV['CONF']['USER_DIR'], ".%s" % ENV['APP']['shortname'].lower())
-# ~ ENV['LPATH']['ETC'] = os.path.join(ENV['LPATH']['ROOT'], 'etc')
+ENV['LPATH']['ROOT'] = os.path.join(ENV['CONF']['USER_DIR'], f".{ENV['APP']['shortname'].lower()}")
 ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
-# ~ ENV['LPATH']['WORK'] = os.path.join(ENV['LPATH']['VAR'], 'work')
-# ~ ENV['LPATH']['DB'] = os.path.join(ENV['LPATH']['VAR'], 'db')
-# ~ ENV['LPATH']['PLUGINS'] = os.path.join(ENV['LPATH']['VAR'], 'plugins')
 ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
-# ~ ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'log')
 ENV['LPATH']['OPT'] = os.path.join(ENV['LPATH']['ROOT'], 'opt')
 ENV['LPATH']['RESOURCES'] = os.path.join(ENV['LPATH']['OPT'], 'resources')
 ENV['LPATH']['THEMES'] = os.path.join(ENV['LPATH']['RESOURCES'], 'themes')
-# ~ ENV['LPATH']['TMP_SOURCE'] = os.path.join(ENV['LPATH']['TMP'], 'source')
-# ~ ENV['LPATH']['TMP_TARGET'] = os.path.join(ENV['LPATH']['TMP'], 'target')
-# ~ ENV['LPATH']['WWW'] = os.path.join(ENV['LPATH']['VAR'], 'www')
-# ~ ENV['LPATH']['EXPORT'] = os.path.join(ENV['LPATH']['VAR'], 'export')
-# ~ ENV['LPATH']['CACHE'] = os.path.join(ENV['LPATH']['VAR'], 'cache')
-# ~ ENV['LPATH']['DISTRIBUTED'] = os.path.join(ENV['LPATH']['CACHE'], TMPNAME, 'distributed')
-# ~ ENV['LPATH']['TMP'] = os.path.join(ENV['LPATH']['VAR'], 'tmp', TMPNAME)
-
 
 # Global paths
 ENV['GPATH'] = {}
@@ -125,6 +112,6 @@ ENV['GPATH']['THEMES'] = os.path.join(ENV['GPATH']['RESOURCES'], 'themes')
 ENV['GPATH']['APPDATA'] = os.path.join(ENV['GPATH']['COMMON'], 'appdata')
 ENV['GPATH']['RES'] = os.path.join(ENV['GPATH']['DATA'], 'res')
 
-
+# Files
 ENV['FILE'] = {}
 ENV['FILE']['LOG'] = os.path.join(ENV['LPATH']['LOG'], f"{ENV['APP']['shortname'].lower()}.log")
