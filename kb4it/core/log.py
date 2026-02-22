@@ -2,6 +2,7 @@
 
 """
 Log module.
+
 File: log.py
 Author: Tomás Vírseda
 License: GPL v3
@@ -17,14 +18,8 @@ _PATTERN = (
 _DATEFMT = "%d/%m/%Y %H:%M:%S"
 
 
-def setup_logging(
-    level: str = "INFO",
-    logfile: str | None = None,
-):
-    """
-    Configure root logger once.
-    """
-
+def setup_logging(level: str = "INFO", logfile: str | None = None):
+    """Configure root logger once."""
     if level is not None:
         level_dict = {
             'DEBUG': logging.DEBUG,
@@ -58,18 +53,13 @@ def setup_logging(
 
 
 def get_logger(name: str) -> logging.Logger:
-    """
-    Return a named logger.
-    """
+    """Return a named logger."""
     return logging.getLogger(name)
 
 
 def redirect_logs(logfile: str):
-    """
-    Redirect logging to a new file at runtime.
-    """
+    """Redirect logging to a new file at runtime."""
     root = logging.getLogger()
-
     formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
 
     # Remove only existing FileHandlers
