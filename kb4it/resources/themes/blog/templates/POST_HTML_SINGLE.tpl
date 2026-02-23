@@ -19,7 +19,7 @@
 <div class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
         <!-- Header -->
-        <header class="uk-margin-small-bottom uk-background-muted uk-card-hover">
+        <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
                 <div class="uk-width uk-margin-top">
                     <h5 class="uk-card-title uk-margin-remove uk-text-center">
@@ -89,7 +89,6 @@
                     <!-- Tags and Topics -->
                 </div>
             </div>
-            <hr>
         </header>
 
         <!-- Body -->
@@ -101,7 +100,6 @@
 
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
-            <hr>
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
         </footer>

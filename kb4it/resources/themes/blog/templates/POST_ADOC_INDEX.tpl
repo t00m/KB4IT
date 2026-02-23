@@ -21,7 +21,7 @@
     <div class="uk-container uk-container-small">
 
         <!-- Header -->
-        <header class="uk-margin-small-bottom uk-background-muted uk-card-hover">
+        <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
                 <div class="uk-width uk-margin-top">
                     <h5 class="uk-card-title uk-margin-remove uk-text-center">
@@ -93,7 +93,7 @@
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
             <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
-                <span class="uk-link-heading">Read more...</span>
+                <span class="uk-link-heading uk-text-right">Read more...</span>
             </a>
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
