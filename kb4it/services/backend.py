@@ -23,13 +23,14 @@ from kb4it.services.processor import Processor
 from kb4it.services.compiler import Compiler
 from kb4it.services.deployer import Deployer
 
+
 class Backend(Service):
     """(Second) KB4IT Initialization."""
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime = {}                   # Dictionary of runtime properties
-        self.params = self.app.get_params() # Get params from command line
+        self.runtime = {}                       # Dictionary of runtime properties
+        self.params = self.app.get_params()     # Get params from command line
 
         # Check command line param for config file
         # ~ action = self.params.get('action')

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
+Service Processor.
+
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: Cleaner service
 """
 
 import os
@@ -10,24 +11,25 @@ from kb4it.core.service import Service
 from kb4it.core.util import get_asciidoctor_attributes
 from kb4it.core.util import get_hash_from_file
 from kb4it.core.util import get_hash_from_dict
-from kb4it.core.util import get_hash_from_list
 from kb4it.core.util import string_timestamp
 from kb4it.core.util import valid_filename
 
+
 class Processor(Service):
-    """KB4IT Processor Service"""
+    """KB4IT Processor Service."""
 
     def _initialize(self):
-        """Initialize Processor service"""
+        """Initialize Processor service."""
         self.srvbes = self.app.get_service('Backend')
         self.srvdtb = self.app.get_service('DB')
-        self.kbdict_cur = self.srvbes.load_kbdict() # Previous run
+        self.kbdict_cur = self.srvbes.load_kbdict()  # Previous run
         self.kbdict_new = {}     # New compilation cache
         self.kbdict_new['document'] = {}
         self.kbdict_new['metadata'] = {}
         self.force_keys = set()  # List of keys which must be compiled (forced)
 
     def step_00_extraction(self):
+        """Extract metadata."""
         runtime = self.srvbes.get_dict('runtime')
         sources = self.srvbes.get_value('docs', 'bag')
         for filepath in sources:
@@ -100,21 +102,10 @@ class Processor(Service):
         # ~ self.srvdtb.sort_database()
 
     def step_01_analysis(self):
-        """Compilation strategy"""
-        runtime = self.srvbes.get_dict('runtime')
-
-        # Force compilation for all documents?
-        # ~ keys_hash_cur = get_hash_from_list(sorted(list(self.kbdict_cur['metadata'].keys())))
-        # ~ keys_hash_new = get_hash_from_list(sorted(list(self.kbdict_new['metadata'].keys())))
-        # ~ keys_hash_differ = keys_hash_cur != keys_hash_new
-        # ~ if keys_hash_differ:
-            # ~ # Force compilation!
-            # ~ self.log.debug(f"CONF[APP] PARAM[force] VALUE[True]: Keys hashes mismatch. Force compilation!")
-            # ~ self.srvbes.set_value('app', 'force', True)
-
+        """Compilation strategy."""
         # Decide documents compilation one by one
         sources = self.srvbes.get_value('docs', 'bag')
-        ncd = 0 # Number of documents to be compiled
+        ncd = 0  # Number of documents to be compiled
         for filepath in sources:
             adocId = os.path.basename(filepath)
             keys = self.kbdict_new['document'][adocId]['keys']
@@ -131,32 +122,13 @@ class Processor(Service):
         self.srvbes.set_value('runtime', 'K_PATH', K_PATH)
         self.srvbes.set_value('runtime', 'KV_PATH', KV_PATH)
 
-    def display_stats(self):
-        # Documents preprocessing stats
-        self.log.debug(f"STATS - Documents analyzed: {len(sources)}")
-        keep_docs = compile_docs = 0
-        for adocId in self.kbdict_new['document']:
-            if self.kbdict_new['document'][adocId]['compile']:
-                compile_docs += 1
-            else:
-                keep_docs += 1
-        self.log.debug(f"STATS - Keep: {keep_docs} - Compile: {compile_docs}")
-        if compile_docs == 0:
-            self.log.debug(f"[PREPROCESSING] - No changes in the repository")
-        else:
-            if compile_docs < keep_docs:
-                self.log.debug(f"[PREPROCESSING] - There are changes in the repository. {compile_docs} documents will be compiled again")
-            else:
-                self.log.debug(f"[PREPROCESSING] - All documents will be compiled again")
-        self.log.debug(f"[PREPROCESSING] - END")
-
     def get_kb_dict(self):
+        """Get new KB4IT Dictionary."""
         return self.kbdict_new
 
-
     def get_kbdict_key(self, key, new=True):
-        """
-        Return values for a given key from KB dictionary.
+        """Return values for a given key from KB dictionary.
+
         If new is True, it will return the value from the kbdict just
         generated during the execution.
         If new is False, it will return the value from the kbdict saved
@@ -174,10 +146,9 @@ class Processor(Service):
 
         return alist
 
-
     def get_kbdict_value(self, key, value, new=True):
-        """
-        Get a value for a given key from KB dictionary.
+        """Get a value for a given key from KB dictionary.
+
         If new is True, it will return the value from the kbdict just
         generated during the execution.
         If new is False, it will return the value from the kbdict saved
@@ -195,7 +166,8 @@ class Processor(Service):
 
         return alist
 
-    def step_01_00_decide_document_compilation(self, adocId: str, keys:list) -> bool:
+    def step_01_00_decide_document_compilation(self, adocId: str, keys: list) -> bool:
+        """Decide which documents will be compiled."""
         # Force compilation (from command line)?
         DOC_COMPILATION = False
         FORCE_ALL = self.srvbes.get_value('app', 'force')
@@ -213,8 +185,8 @@ class Processor(Service):
                 try:
                     hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
                     hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
-                    #self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
-                    #self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
+                    # ~ self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
+                    # ~ self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
                     DOC_COMPILATION = hash_new != hash_cur
                     REASON = f"Hashes differ? {DOC_COMPILATION}"
                 except Exception as warning:
@@ -228,16 +200,16 @@ class Processor(Service):
         try:
             self.kbdict_new['document'][adocId]['compile'] = COMPILE
         except KeyError as error:
-            self.log.error(f"FIXME: check")
+            self.log.error("FIXME: check")
             self.log.error(f"DOC[{adocId}]: {error}")
             self.app.stop(error=True)
 
         if COMPILE:
             # Write new adoc to temporary dir
             source_path = os.path.join(self.srvbes.get_path('source'), adocId)
-            content = open(source_path).read()
+            content = open(source_path, 'r', encoding='utf-8').read()
             target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
-            with open(target, 'w') as target_adoc:
+            with open(target, 'w', encoding='utf-8') as target_adoc:
                 target_adoc.write(content)
 
             try:
@@ -253,12 +225,12 @@ class Processor(Service):
         self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
         return COMPILE
 
-
     def step_01_01_decide_keys_compilation(self, available_keys):
+        """Decide which keys and values will be compiled."""
         K_PATH = []
         KV_PATH = []
 
-        nck = 0 # Number of keys to be compiled
+        nck = 0  # Number of keys to be compiled
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_KEY = key in self.force_keys
@@ -294,15 +266,14 @@ class Processor(Service):
         self.srvbes.set_value('runtime', 'nck', nck)
         return K_PATH, KV_PATH
 
-
-
     def step_02_transformation(self):
         """Process all keys/values got from documents.
+
         The algorithm detects which keys/values have changed and compile
         them again. This avoid recompile the whole database, saving time
         and CPU.
         """
-        self.log.debug(f"[PROCESSING] - START")
+        self.log.debug("[PROCESSING] - START")
         self.srvthm = self.get_service('Theme')
         runtime = self.srvbes.get_dict('runtime')
 
@@ -334,10 +305,6 @@ class Processor(Service):
 
         self.log.debug(f"STATS - {keys_with_compile_true} keys will be compiled")
         self.log.debug(f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
-        self.log.debug(f"STATS - Finish processing keys")
+        self.log.debug("STATS - Finish processing keys")
         self.log.debug(f"STATS - Target docs: {len(runtime['docs']['targets'])}")
-        self.log.debug(f"[PROCESSINNG] - END")
-
-
-    def _finalize(self):
-        pass
+        self.log.debug("[PROCESSINNG] - END")
