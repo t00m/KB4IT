@@ -51,13 +51,13 @@ class Compiler(Service):
             self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
             if ENV['CONF']['ADOCPROPS'][prop] is not None:
                 if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
-                    adocprops += '-a {}={} '.format(prop, ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target'))
+                    adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target')} "
                 else:
-                    adocprops += '-a {}={} '.format(prop, ENV['CONF']['ADOCPROPS'][prop])
+                    adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop]} "
             else:
-                adocprops += '-a %s ' % prop
+                adocprops += f"-a {prop} "
         runtime['adocprops'] = adocprops
-        # ~ self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: %s", adocprops)
+        self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: {adocprops}")
 
         distributed = self.srvbes.get_value('docs', 'targets')
         max_workers = self.srvbes.get_value('repo', 'workers')
@@ -79,8 +79,8 @@ class Compiler(Service):
 
                 FORCE = self.srvbes.get_value('repo', 'force') or False
                 if COMPILE or FORCE:
-                    cmd = "asciidoctor -q -s {} -b html5 -D {} {}".format(adocprops, self.srvbes.get_path('tmp'), doc)
-                    # ~ self.log.debug(f"CMD[%s]", cmd)
+                    cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
+                    self.log.debug(f"CMD[{cmd}]")
                     data = (doc, cmd, num)
                     self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
                     job = exe.submit(self.compilation_started, data)
@@ -114,12 +114,12 @@ class Compiler(Service):
                 self.log.debug(f"STATS - Compiled docs: {num - 1}")
                 self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
             else:
-                self.log.debug(f"STATS - Nothing to compile!")
-            self.log.debug(f"[COMPILATION] - END")
+                self.log.debug("STATS - Nothing to compile!")
+            self.log.debug("[COMPILATION] - END")
 
     def compilation_started(self, data):
         """Execute compilation."""
-        (doc, cmd, num) = data
+        # ~ (doc, cmd, num) = data
         res = exec_cmd(data)
         return res
 
@@ -131,7 +131,7 @@ class Compiler(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            self.log.debug(f"[COMPILATION] - Job[%s] for Doc[%s] has RC[%s]", num, basename, rc)
+            self.log.debug(f"[COMPILATION] - Job[{num}] for Doc[{basename}] has RC[{rc}]")
             try:
                 self.srvthm.build_page(path_hdoc)
             except MemoryError:
