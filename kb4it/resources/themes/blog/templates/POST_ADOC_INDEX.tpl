@@ -92,9 +92,11 @@
 
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
-            <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
-                <span class="uk-link-heading uk-text-right">Read more...</span>
-            </a>
+            <p>
+                <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
+                    <span class="uk-link-heading uk-align-right">Read more...</span>
+                </a>
+            </p>
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
         </footer>
