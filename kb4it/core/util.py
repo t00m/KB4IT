@@ -43,9 +43,9 @@ def timeit(func):
         end_time = time.perf_counter()
         total_time = end_time - start_time
         # ~ if total_time > 1:
-            # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         # ~ else:
-            # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
     return timeit_wrapper
@@ -134,7 +134,8 @@ def copydir(source, dest):
                 os.makedirs(dest_path, exist_ok=True)
 
             try:
-                shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
+                shutil.copyfile(os.path.join(root, file),
+                                os.path.join(dest_path, file))
             except PermissionError:
                 log.warning(f"Check permissions for file {file}")
 

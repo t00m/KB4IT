@@ -38,7 +38,8 @@ class Compiler(Service):
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
-        resources_dir_tmp = os.path.join(self.srvbes.get_path('tmp'), 'resources')
+        resources_dir_tmp = os.path.join(
+            self.srvbes.get_path('tmp'), 'resources')
 
         # if path already exists, remove it before copying with copytree()
         if os.path.exists(resources_dir_tmp):
@@ -48,7 +49,8 @@ class Compiler(Service):
 
         adocprops = ''
         for prop in ENV['CONF']['ADOCPROPS']:
-            self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
+            self.log.debug(
+                f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
             if ENV['CONF']['ADOCPROPS'][prop] is not None:
                 if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
                     adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target')} "
@@ -57,7 +59,8 @@ class Compiler(Service):
             else:
                 adocprops += f"-a {prop} "
         runtime['adocprops'] = adocprops
-        self.log.debug(f"[COMPILATION] - Parameters passed to Asciidoctor: {adocprops}")
+        self.log.debug(
+            f"[COMPILATION] - Parameters passed to Asciidoctor: {adocprops}")
 
         distributed = self.srvbes.get_value('docs', 'targets')
         max_workers = self.srvbes.get_value('repo', 'workers')
@@ -95,12 +98,14 @@ class Compiler(Service):
                 # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
                 for job in jobs:
                     adoc, res, jobid = job.result()
-                    self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
+                    self.log.debug(
+                        f"DOC[{os.path.basename(adoc)}] compiled successfully")
                     jobcount += 1
                     if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
                         pct = int(jobcount * 100 / len(docs))
                         # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
-                        self.log.debug(f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
+                        self.log.debug(
+                            f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
 
                 dcompe = datetime.datetime.now()
                 comptime = dcompe - dcomps
@@ -109,8 +114,10 @@ class Compiler(Service):
                     duration = 1
                 avgspeed = int((num - 1) / duration)
                 pct = int(jobcount * 100 / len(docs))
-                self.log.debug(f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
-                self.log.debug(f"STATS - Compilation time: {comptime.seconds} seconds")
+                self.log.debug(
+                    f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
+                self.log.debug(
+                    f"STATS - Compilation time: {comptime.seconds} seconds")
                 self.log.debug(f"STATS - Compiled docs: {num - 1}")
                 self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
             else:
@@ -131,12 +138,14 @@ class Compiler(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            self.log.debug(f"[COMPILATION] - Job[{num}] for Doc[{basename}] has RC[{rc}]")
+            self.log.debug(
+                f"[COMPILATION] - Job[{num}] for Doc[{basename}] has RC[{rc}]")
             try:
                 self.srvthm.build_page(path_hdoc)
             except MemoryError:
                 self.log.error("Memory exhausted!")
-                self.log.error("Please, consider using less workers or add more memory to your system")
+                self.log.error(
+                    "Please, consider using less workers or add more memory to your system")
                 self.log.error("The application will exit now...")
                 self.app.stop()
             except Exception as error:

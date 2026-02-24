@@ -31,26 +31,30 @@ class Frontend(Service):
         """List available themes."""
         self.log.debug(" - List of themes available")
 
-        self.log.debug(f" - 1) Search themes installed globally ({ENV['GPATH']['THEMES']})")
+        self.log.debug(
+            f" - 1) Search themes installed globally ({ENV['GPATH']['THEMES']})")
         global_themes = os.listdir(ENV['GPATH']['THEMES'])
         n = 1
         for dirname in global_themes:
             try:
                 self.theme_load(dirname)
-                self.log.info(f" - [{n}] - (G) Theme '{self.runtime['theme']['id']}' ({self.runtime['theme']['description']})")
+                self.log.info(
+                    f" - [{n}] - (G) Theme '{self.runtime['theme']['id']}' ({self.runtime['theme']['description']})")
                 n += 1
             except Exception as error:
                 self.log.error(error)
                 self.log.error(f" - \tTheme Id: '{dirname}' NOT valid")
 
-        self.log.debug(" - 2) Search themes installed locally ({ENV['LPATH']['THEMES']})")
+        self.log.debug(
+            " - 2) Search themes installed locally ({ENV['LPATH']['THEMES']})")
         local_themes = os.listdir(ENV['LPATH']['THEMES'])
         if len(local_themes) > 0:
             for dirname in local_themes:
                 self.log.debug(f"Looking for a theme in {dirname}")
                 try:
                     self.theme_load(dirname)
-                    self.log.info(f" - (L) Theme Id: '{self.runtime['theme']['id']}' ({self.runtime['theme']['name']} - {self.runtime['theme']['description']})")
+                    self.log.info(
+                        f" - (L) Theme Id: '{self.runtime['theme']['id']}' ({self.runtime['theme']['name']} - {self.runtime['theme']['description']})")
                     n += 1
                 except Exception as error:
                     self.log.error(error)
@@ -97,26 +101,34 @@ class Frontend(Service):
                     theme = json.load(fth)
                     for prop in theme:
                         self.runtime['theme'][prop] = theme[prop]
-                self.log.debug(f"CONF[THEME] NAME[{theme['name']}] VERSION[{theme['version']}]")
+                self.log.debug(
+                    f"CONF[THEME] NAME[{theme['name']}] VERSION[{theme['version']}]")
             except Exception as error:
                 self.log.error(error)
-                self.log.error(f" - \tTheme configuration file not valid: {theme_conf}")
+                self.log.error(
+                    f" - \tTheme configuration file not valid: {theme_conf}")
                 return None
 
             # Get theme directories
-            self.runtime['theme']['templates'] = os.path.join(self.runtime['theme']['path'], 'templates')
-            self.runtime['theme']['framework'] = os.path.join(self.runtime['theme']['path'], 'framework')
-            self.runtime['theme']['images'] = os.path.join(self.runtime['theme']['path'], 'images')
-            self.runtime['theme']['logic'] = os.path.join(self.runtime['theme']['path'], 'logic')
+            self.runtime['theme']['templates'] = os.path.join(
+                self.runtime['theme']['path'], 'templates')
+            self.runtime['theme']['framework'] = os.path.join(
+                self.runtime['theme']['path'], 'framework')
+            self.runtime['theme']['images'] = os.path.join(
+                self.runtime['theme']['path'], 'images')
+            self.runtime['theme']['logic'] = os.path.join(
+                self.runtime['theme']['path'], 'logic')
 
             # Register theme service
-            self.log.debug(f"Registering Theme from {self.runtime['theme']['logic']}")
+            self.log.debug(
+                f"Registering Theme from {self.runtime['theme']['logic']}")
             sys.path.insert(0, self.runtime['theme']['logic'])
             try:
                 from theme import Theme
                 self.app.register_service('Theme', Theme())
                 self.get_service('Theme')
-                self.log.debug("Theme '%s' loaded successfully", self.runtime['theme']['id'])
+                self.log.debug("Theme '%s' loaded successfully",
+                               self.runtime['theme']['id'])
             except AttributeError as error:
                 self.log.error(error)
                 return None
@@ -134,7 +146,8 @@ class Frontend(Service):
             source_resources_path = os.path.join(source_path, 'resources')
             source_themes_path = os.path.join(source_resources_path, 'themes')
             all_themes = os.path.join(source_themes_path, '*')
-            self.log.debug(f" - Looking for first theme ocurrence in: {all_themes}")
+            self.log.debug(
+                f" - Looking for first theme ocurrence in: {all_themes}")
             try:
                 theme_path = glob.glob(all_themes)[0]
             except IndexError:
@@ -144,8 +157,10 @@ class Frontend(Service):
             # Search in sources path
             try:
                 source_path = self.srvbes.get_path('source')
-                theme_rel_path = os.path.join(os.path.join('resources', 'themes'))
-                theme_path_source = os.path.join(source_path, theme_rel_path, theme)
+                theme_rel_path = os.path.join(
+                    os.path.join('resources', 'themes'))
+                theme_path_source = os.path.join(
+                    source_path, theme_rel_path, theme)
             except Exception:
                 theme_path_source = ''
             theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)

@@ -48,12 +48,17 @@ class KB4IT:
             self.params['LOGLEVEL'] = 'INFO'
         setup_logging(self.params['log_level'], self.log_file)
         self.log = get_logger(__class__.__name__)
-        self.log.debug(f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
+        self.log.debug(
+            f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']}")
-        self.log.debug(f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
+        self.log.debug(
+            f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
+        self.log.debug(
+            f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
+        self.log.debug(
+            f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
+        self.log.debug(
+            f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
 
         # Start up
         self.__check_params()
@@ -71,7 +76,8 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
         for key in self.params:
-            self.log.debug(f"[CONTROLLER] - CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]")
+            self.log.debug(
+                f"[CONTROLLER] - CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]")
 
     def get_params(self):
         """Return app configuration."""
@@ -150,14 +156,16 @@ class KB4IT:
     def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
-            self.log.error("[CONTROLLER] - Execution aborted because of serious errors")
+            self.log.error(
+                "[CONTROLLER] - Execution aborted because of serious errors")
         try:
             for name in self.services:
                 self.deregister_service(name)
         except AttributeError as errmsg:
             # KB4IT wasn't even started
             self.log.error(errmsg)
-        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
+        self.log.debug(
+            f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
         sys.exit()
 
 
@@ -192,7 +200,8 @@ def main():
     )
 
     # Initialize repository
-    init_parser = subparsers.add_parser('create', help='Initialize a new repository')
+    init_parser = subparsers.add_parser(
+        'create', help='Initialize a new repository')
     init_parser.add_argument('theme', help='Theme to use for initialization')
     init_parser.add_argument('repo_path', help='Path to the repository')
 
@@ -200,7 +209,8 @@ def main():
     subparsers.add_parser('themes', help='List all installed themes')
 
     # List apps for a specific theme
-    theme_apps = subparsers.add_parser('apps', help='List all apps for a specific theme')
+    theme_apps = subparsers.add_parser(
+        'apps', help='List all apps for a specific theme')
     theme_apps.add_argument('theme', help='Theme to query')
 
     # Run repository workflow

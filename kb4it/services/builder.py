@@ -84,13 +84,17 @@ class Builder(Service):
             # ~ self.log.debug(f"[TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
         except KeyError:
             templates = []
-            templates.append(os.path.join(theme['templates'], f"{template}.tpl"))  # From theme
-            templates.append(os.path.join(ENV['GPATH']['TEMPLATES'], f"{template}.tpl"))  # From common templates dir
+            templates.append(os.path.join(
+                theme['templates'], f"{template}.tpl"))  # From theme
+            # From common templates dir
+            templates.append(os.path.join(
+                ENV['GPATH']['TEMPLATES'], f"{template}.tpl"))
             TEMPLATE_FOUND = False
             for template_path in templates:
                 if not TEMPLATE_FOUND:
                     try:
-                        self.templates[template] = Template(filename=template_path)
+                        self.templates[template] = Template(
+                            filename=template_path)
                         TEMPLATE_FOUND = True
                         # ~ self.log.debug(f"TEMPLATE[{template}] cached")
                         break
@@ -128,7 +132,8 @@ class Builder(Service):
         ignored_keys = set(self.srvdtb.get_ignored_keys())
         blocked_keys = set(self.srvdtb.get_blocked_keys())
         used_keys = set(metadata.keys())
-        theme_var['kb']['keys']['menu'] = sorted(list(used_keys - blocked_keys - ignored_keys))
+        theme_var['kb']['keys']['menu'] = sorted(
+            list(used_keys - blocked_keys - ignored_keys))
 
         return theme_var
 
@@ -185,7 +190,9 @@ class Builder(Service):
         """About KB4IT page."""
         TPL_PAGE_ABOUT_KB4IT = self.template('PAGE_ABOUT_KB4IT')
         var = self.get_theme_var()
-        self.distribute_adoc('about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
+        self.distribute_adoc(
+            'about_kb4it', TPL_PAGE_ABOUT_KB4IT.render(var=var))
         self.srvdtb.add_document('about_kb4it.adoc')
-        self.srvdtb.add_document_key('about_kb4it.adoc', 'Title', 'About KB4IT')
+        self.srvdtb.add_document_key(
+            'about_kb4it.adoc', 'Title', 'About KB4IT')
         self.srvdtb.add_document_key('about_kb4it.adoc', 'SystemPage', 'Yes')

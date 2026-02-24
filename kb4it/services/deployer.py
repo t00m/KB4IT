@@ -72,7 +72,8 @@ class Deployer(Service):
     def step_03_clear_target(self):
         """Clear target directory."""
         delete_target_contents(self.srvbes.get_path('target'))
-        self.log.debug(f"Deleted target contents in: {self.srvbes.get_path('target')}")
+        self.log.debug(
+            f"Deleted target contents in: {self.srvbes.get_path('target')}")
 
     # Refresh target
     def step_04_copy_sources_to_target(self):
@@ -83,21 +84,24 @@ class Deployer(Service):
         docsdir = os.path.join(self.srvbes.get_path('target'), 'sources')
         os.makedirs(docsdir, exist_ok=True)
         copy_docs(files, docsdir)
-        self.log.debug(f"STATS - Copied {len(files)} asciidoctor sources to target path")
+        self.log.debug(
+            f"STATS - Copied {len(files)} asciidoctor sources to target path")
 
     def step_05_copy_compiled_to_cache(self):
         """Copy compiled documents to cache path."""
         pattern = os.path.join(self.srvbes.get_path('tmp'), '*.html')
         files = glob.glob(pattern)
         copy_docs(files, self.srvbes.get_path('cache'))
-        self.log.debug(f"STATS - Copied {len(files)} html files from temporary path to cache path")
+        self.log.debug(
+            f"STATS - Copied {len(files)} html files from temporary path to cache path")
 
     def step_06_copy_all_to_cache(self):
         """Copy objects in temporary target to cache path."""
         pattern = os.path.join(self.srvbes.get_path('tmp'), '*.*')
         files = glob.glob(pattern)
         copy_docs(files, self.srvbes.get_path('cache'))
-        self.log.debug(f"STATS - Copied {len(files)} html files from temporary target to cache path")
+        self.log.debug(
+            f"STATS - Copied {len(files)} html files from temporary target to cache path")
 
     def step_07_copy_compiled_documents_to_target(self):
         """Copy cached documents to target path."""
@@ -111,29 +115,36 @@ class Deployer(Service):
                 shutil.copy(source, target)
             except FileNotFoundError as error:
                 self.log.error(error)
-                self.log.error("Consider to run the command again with the option -force")
+                self.log.error(
+                    "Consider to run the command again with the option -force")
                 self.print_traceback()
                 self.app.stop()
             n += 1
-        self.log.debug(f"STATS - Copied {n} cached documents successfully to target path")
+        self.log.debug(
+            f"STATS - Copied {n} cached documents successfully to target path")
 
     def step_08_copy_global_resources_to_target(self):
         """Copy global resources to target path."""
-        resources_dir_target = os.path.join(self.srvbes.get_path('target'), 'resources')
+        resources_dir_target = os.path.join(
+            self.srvbes.get_path('target'), 'resources')
         theme_target_dir = os.path.join(resources_dir_target, 'themes')
         theme = self.srvbes.get_dict('theme')
         DEFAULT_THEME = os.path.join(ENV['GPATH']['THEMES'], 'default')
         CUSTOM_THEME_ID = theme['id']
         CUSTOM_THEME_PATH = theme['path']
         copydir(DEFAULT_THEME, os.path.join(theme_target_dir, 'default'))
-        copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
-        copydir(ENV['GPATH']['COMMON'], os.path.join(resources_dir_target, 'common'))
+        copydir(CUSTOM_THEME_PATH, os.path.join(
+            theme_target_dir, CUSTOM_THEME_ID))
+        copydir(ENV['GPATH']['COMMON'], os.path.join(
+            resources_dir_target, 'common'))
         self.log.debug("STATS - Copied global resources to target path")
 
         # Copy local resources to target path
-        source_resources_dir = os.path.join(self.srvbes.get_path('source'), 'resources')
+        source_resources_dir = os.path.join(
+            self.srvbes.get_path('source'), 'resources')
         if os.path.exists(source_resources_dir):
-            resources_dir_target = os.path.join(self.srvbes.get_path('target'), 'resources')
+            resources_dir_target = os.path.join(
+                self.srvbes.get_path('target'), 'resources')
             copydir(source_resources_dir, resources_dir_target)
             self.log.debug("Copied local resources to target path")
 

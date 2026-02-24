@@ -93,7 +93,7 @@ class Database(Service):
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     # ~ # ~ @timeit
-    def sort_by_date(self, doclist:list=[]):
+    def sort_by_date(self, doclist: list = []):
         """Build a list of documents sorted by timestamp desc."""
         if len(doclist) == 0:
             doclist = self.db.keys()
@@ -104,10 +104,11 @@ class Database(Service):
                 if not self.is_system(docId):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
-                        self.log.warning(f"{docId} not compliant: no valid date '{sdate}'. Check attribute {self.sort_attribute}")
+                        self.log.warning(
+                            f"{docId} not compliant: no valid date '{sdate}'. Check attribute {self.sort_attribute}")
                         continue
                     dt = guess_datetime(sdate)
-                    adict[docId] = dt #.strftime("%Y%m%d")
+                    adict[docId] = dt  # .strftime("%Y%m%d")
             sorted_docs = [docId for docId, _ in sort_dictionary(adict)]
             self.cache_docs_sorted_by_date[md5hash] = sorted_docs
         return self.cache_docs_sorted_by_date[md5hash]
@@ -127,7 +128,8 @@ class Database(Service):
         try:
             return self.db[docId][self.sort_attribute][0]
         except KeyError as error:
-            self.log.debug(f"Document '{docId}' doesn't have the sort attribute {error}")
+            self.log.debug(
+                f"Document '{docId}' doesn't have the sort attribute {error}")
             return None
 
     def is_system(self, docId):
@@ -154,10 +156,12 @@ class Database(Service):
                         n = 0
                         for value in self.db[docId][key]:
                             key_value_url = "{}_{}_Url".format(key, value)
-                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
+                            props[key_value_url] = "{}_{}.html".format(
+                                valid_filename(key), valid_filename(value))
 
                             key_value_url = "%s_%d_Url" % (key, n)
-                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
+                            props[key_value_url] = "{}_{}.html".format(
+                                valid_filename(key), valid_filename(value))
                             n += 1
             except Exception as warning:
                 # FIXME: Document why it is not necessary
@@ -259,7 +263,8 @@ class Database(Service):
                     if value in self.db[docId][key]:
                         docs.append(docId)
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
-            self.log.debug(f"KEY[{key}] VALUE[{value}]: search returned {len(self.cache_docs_by_kvpath[kvpath])} documents")
+            self.log.debug(
+                f"KEY[{key}] VALUE[{value}]: search returned {len(self.cache_docs_by_kvpath[kvpath])} documents")
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_docs_by_date_range(self, ds, de) -> []:
@@ -292,4 +297,3 @@ class Database(Service):
 
     def get_sort_attribute(self):
         return self.sort_attribute
-

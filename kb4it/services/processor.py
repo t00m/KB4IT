@@ -64,7 +64,8 @@ class Processor(Service):
                         values = self.kbdict_new['document'][adocId][key]
                         if value not in values:
                             values.append(value)
-                        self.kbdict_new['document'][adocId][key] = sorted(values)
+                        self.kbdict_new['document'][adocId][key] = sorted(
+                            values)
                     except KeyError:
                         self.kbdict_new['document'][adocId][key] = [value]
 
@@ -72,7 +73,8 @@ class Processor(Service):
                     try:
                         documents = self.kbdict_new['metadata'][key][value]
                         documents.append(adocId)
-                        self.kbdict_new[key][value] = sorted(documents, key=lambda y: y.lower())
+                        self.kbdict_new[key][value] = sorted(
+                            documents, key=lambda y: y.lower())
                     except KeyError:
                         if key not in self.kbdict_new['metadata']:
                             self.kbdict_new['metadata'][key] = {}
@@ -109,7 +111,8 @@ class Processor(Service):
         for filepath in sources:
             adocId = os.path.basename(filepath)
             keys = self.kbdict_new['document'][adocId]['keys']
-            need_compilation = self.step_01_00_decide_document_compilation(adocId, keys)
+            need_compilation = self.step_01_00_decide_document_compilation(
+                adocId, keys)
             if need_compilation:
                 ncd += 1
         self.srvbes.set_value('runtime', 'ncd', ncd)
@@ -118,7 +121,8 @@ class Processor(Service):
         all_keys = set(self.srvdtb.get_all_keys())
         ignored_keys = self.srvdtb.get_ignored_keys()
         available_keys = list(all_keys - set(ignored_keys))
-        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
+        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(
+            available_keys)
         self.srvbes.set_value('runtime', 'K_PATH', K_PATH)
         self.srvbes.set_value('runtime', 'KV_PATH', KV_PATH)
 
@@ -174,7 +178,8 @@ class Processor(Service):
         if not FORCE_ALL:
             # Get cached document path and check if it exists
             htmlId = adocId.replace('.adoc', '.html')
-            cached_document = os.path.join(self.srvbes.get_path('cache'), htmlId)
+            cached_document = os.path.join(
+                self.srvbes.get_path('cache'), htmlId)
             cached_document_exists = os.path.exists(cached_document)
 
             # Compare the document with the one in the cache
@@ -183,8 +188,10 @@ class Processor(Service):
                 REASON = "Not cached"
             else:
                 try:
-                    hash_new = self.kbdict_new['document'][adocId]['content_hash'] + self.kbdict_new['document'][adocId]['metadata_hash']
-                    hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + self.kbdict_cur['document'][adocId]['metadata_hash']
+                    hash_new = self.kbdict_new['document'][adocId]['content_hash'] + \
+                        self.kbdict_new['document'][adocId]['metadata_hash']
+                    hash_cur = self.kbdict_cur['document'][adocId]['content_hash'] + \
+                        self.kbdict_cur['document'][adocId]['metadata_hash']
                     # ~ self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
                     # ~ self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
                     DOC_COMPILATION = hash_new != hash_cur
@@ -243,7 +250,8 @@ class Processor(Service):
             rkold = sorted(self.get_kbdict_key(key, new=False))
             if rknew != rkold:
                 COMPILE_KEY = True
-            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
+            self.log.debug(
+                f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
 
             for value in values:
                 COMPILE_VALUE = False
@@ -253,11 +261,13 @@ class Processor(Service):
 
                 if VALUE_COMPARISON:
                     COMPILE_VALUE = True
-                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})")
+                    self.log.debug(
+                        f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})")
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
                 KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
+                self.log.debug(
+                    f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
             COMPILE_KEY = COMPILE_KEY or FORCE_ALL
             K_PATH.append((key, values, COMPILE_KEY))
             if COMPILE_KEY:
@@ -303,8 +313,11 @@ class Processor(Service):
             # Add compiled page to the target list
             self.srvbes.add_target(adocId, htmlId)
 
-        self.log.debug(f"STATS - {keys_with_compile_true} keys will be compiled")
-        self.log.debug(f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
+        self.log.debug(
+            f"STATS - {keys_with_compile_true} keys will be compiled")
+        self.log.debug(
+            f"STATS - {pairs_with_compile_true} key/value pairs will be compiled")
         self.log.debug("STATS - Finish processing keys")
-        self.log.debug(f"STATS - Target docs: {len(runtime['docs']['targets'])}")
+        self.log.debug(
+            f"STATS - Target docs: {len(runtime['docs']['targets'])}")
         self.log.debug("[PROCESSINNG] - END")

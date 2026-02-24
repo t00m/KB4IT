@@ -15,6 +15,7 @@ from kb4it.core.util import copydir
 from kb4it.core.util import timeit
 from kb4it.core.util import json_load
 
+
 class Workflow(Service):
     """KB4IT workflow class."""
 
@@ -28,7 +29,8 @@ class Workflow(Service):
         frontend.theme_list()
 
     def list_apps(self, theme):
-        self.log.debug(f"KB4IT action: list available apps for theme '{theme}'")
+        self.log.debug(
+            f"KB4IT action: list available apps for theme '{theme}'")
         frontend = self.get_service('Frontend')
         frontend.apps_list(theme)
 
@@ -63,7 +65,8 @@ class Workflow(Service):
             frontend.theme_list()
         else:
             if not os.path.exists(repo_path):
-                self.log.warning(f"Repository path '{repo_path}' does not exist")
+                self.log.warning(
+                    f"Repository path '{repo_path}' does not exist")
                 os.makedirs(repo_path, exist_ok=True)
                 self.log.warning(f"Repository path '{repo_path}' created")
             initialize = True
@@ -87,7 +90,8 @@ class Workflow(Service):
             os.makedirs(bin_dir, exist_ok=True)
             with open(script, 'w') as fs:
                 fs.write(f'kb4it -L INFO build {config_file}')
-            os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
+            os.chmod(script, stat.S_IRUSR | stat.S_IRGRP |
+                     stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info(f"Repository initialized")
             self.log.info(f"You can compile it by executing '{script}'")
             self.log.info(f"Add your documents in '{source_dir}'")
@@ -135,10 +139,9 @@ class Workflow(Service):
         self.log.info(f"6 - Deploy")
         backend.stage_06_deploy()
 
-
-
         # Report
-        homepage = os.path.join(os.path.abspath(backend.get_path('target')), 'index.html')
+        homepage = os.path.join(os.path.abspath(
+            backend.get_path('target')), 'index.html')
         self.log.info(f"Repository website built")
         self.log.info(f"URL: {homepage}")
         self.log.info(f"Full log: {backend.get_value('runtime', 'logfile')}")

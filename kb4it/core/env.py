@@ -39,7 +39,8 @@ if not supported:
 ENV['SYS']['PLATFORM'] = {}
 ENV['SYS']['PLATFORM']['NODE'] = platform.node()
 try:
-    ENV['SYS']['PLATFORM']['OS'] = platform.freedesktop_os_release()['PRETTY_NAME']
+    ENV['SYS']['PLATFORM']['OS'] = platform.freedesktop_os_release()[
+        'PRETTY_NAME']
 except FileNotFoundError:
     print("KB4IT only runs in GNU/Linux systems")
     sys.exit(-1)
@@ -51,7 +52,8 @@ except AttributeError:
 pid = os.getpid()
 ENV['SYS']['PS'] = {}
 ENV['SYS']['PS']['PID'] = os.getpid()
-ENV['SYS']['PS']['NAME'] = Path(f"/proc/{pid}/comm").read_text(encoding='utf-8').strip()
+ENV['SYS']['PS']['NAME'] = Path(
+    f"/proc/{pid}/comm").read_text(encoding='utf-8').strip()
 
 # Configuration
 ENV['CONF'] = {}
@@ -91,7 +93,8 @@ ENV['APP']['website'] = 'https://github.com/t00m/KB4IT'
 
 # Local paths
 ENV['LPATH'] = {}
-ENV['LPATH']['ROOT'] = os.path.join(ENV['CONF']['USER_DIR'], f".{ENV['APP']['shortname'].lower()}")
+ENV['LPATH']['ROOT'] = os.path.join(
+    ENV['CONF']['USER_DIR'], f".{ENV['APP']['shortname'].lower()}")
 ENV['LPATH']['VAR'] = os.path.join(ENV['LPATH']['ROOT'], 'var')
 ENV['LPATH']['LOG'] = os.path.join(ENV['LPATH']['VAR'], 'log')
 ENV['LPATH']['OPT'] = os.path.join(ENV['LPATH']['ROOT'], 'opt')
@@ -114,4 +117,5 @@ ENV['GPATH']['RES'] = os.path.join(ENV['GPATH']['DATA'], 'res')
 
 # Files
 ENV['FILE'] = {}
-ENV['FILE']['LOG'] = os.path.join(ENV['LPATH']['LOG'], f"{ENV['APP']['shortname'].lower()}.log")
+ENV['FILE']['LOG'] = os.path.join(
+    ENV['LPATH']['LOG'], f"{ENV['APP']['shortname'].lower()}.log")

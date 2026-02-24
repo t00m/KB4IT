@@ -59,8 +59,10 @@ class Backend(Service):
 
             self.params['force'] = self.repo.get('force') or False
             self.runtime['dir'] = {}
-            self.runtime['dir']['source'] = os.path.realpath(self.repo['source'])
-            self.runtime['dir']['target'] = os.path.realpath(self.repo['target'])
+            self.runtime['dir']['source'] = os.path.realpath(
+                self.repo['source'])
+            self.runtime['dir']['target'] = os.path.realpath(
+                self.repo['target'])
 
             # ~ dir_src = Path(self.get_path('source'))
             dir_root = Path(self.get_path('source')).parent.absolute()
@@ -96,7 +98,8 @@ class Backend(Service):
 
             self.runtime['sort_attribute'] = self.repo.get('sort')
             if self.runtime['sort_attribute'] is None:
-                self.log.error("No property 'sort' defined in repository config")
+                self.log.error(
+                    "No property 'sort' defined in repository config")
                 self.app.stop(error=True)
 
             # Initialize docs structure
@@ -214,14 +217,17 @@ class Backend(Service):
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_path('source')):
-            self.log.error(f"Source directory '{self.get_path('source')}' doesn't exist.")
+            self.log.error(
+                f"Source directory '{self.get_path('source')}' doesn't exist.")
             self.app.stop(error=True)
-        self.log.debug(f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
+        self.log.debug(
+            f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_path('target')):
             os.makedirs(self.get_path('target'), exist_ok=True)
-        self.log.debug(f"CONF[APP] DIR[TARGET] VALUE[{self.get_path('target')}]")
+        self.log.debug(
+            f"CONF[APP] DIR[TARGET] VALUE[{self.get_path('target')}]")
 
         theme_name = self.get_value('repo', 'theme')
         if theme_name is None:
@@ -265,16 +271,19 @@ class Backend(Service):
             # FIXME: Force compilation if new KB4IT version?
             # Yes. But starting with v0.8 and major.minor versions.
             # Skip patches.
-            self.log.debug("[DOC] - Added/Replaced 'About KB4IT' to your sources")
+            self.log.debug(
+                "[DOC] - Added/Replaced 'About KB4IT' to your sources")
             with open(about_kb4it_target, 'w', encoding='utf-8') as fout:
                 fout.write(about_kb4it_content)
 
         # If 'about_app.adoc' doesn't exist, create one from template
         about_app_source = os.path.join(sources_path, 'about_app.adoc')
         if not os.path.exists(about_app_source):
-            about_app_default = os.path.join(ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
+            about_app_default = os.path.join(
+                ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
             shutil.copy(about_app_default, about_app_source)
-            self.log.warning("[DOC] - Added missing 'About App' to your sources")
+            self.log.warning(
+                "[DOC] - Added missing 'About App' to your sources")
 
         # Then, get them
         self.runtime['docs']['bag'] = get_source_docs(sources_path)
