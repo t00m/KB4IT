@@ -27,7 +27,7 @@ from functools import wraps
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
-log = get_logger('Util')
+log = get_logger("Util")
 
 cache_dt = {}
 cache_ts_ymd = {}
@@ -35,6 +35,7 @@ cache_ts_ymd = {}
 
 def timeit(func):
     """Time a method for measuring performance."""
+
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
         start_time = time.perf_counter()
@@ -47,6 +48,7 @@ def timeit(func):
         # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
+
     return timeit_wrapper
 
 
@@ -54,24 +56,21 @@ def extract_sections_from_adoc(file_path: str) -> dict:
     """Extract sections from an AsciiDoc file."""
     sections = []
 
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     current_section = None
     start = None
 
     for i, line in enumerate(lines, 1):  # Start line counting at 1
-        line = line.rstrip('\n')
+        line = line.rstrip("\n")
 
         # Check if this is a section header (starts with '== ' but not more '=' signs)
-        if line.startswith('== ') and not line.startswith('==='):
+        if line.startswith("== ") and not line.startswith("==="):
             # Save previous section if exists
             if current_section:
-                sections.append({
-                    'name': current_section,
-                    'start': start,
-                    'end': i - 1
-                })
+                sections.append(
+                    {"name": current_section, "start": start, "end": i - 1})
 
             # Start new section
             current_section = line[3:].strip()  # Remove '== ' prefix
@@ -79,17 +78,14 @@ def extract_sections_from_adoc(file_path: str) -> dict:
 
     # Add the last section
     if current_section:
-        sections.append({
-            'name': current_section,
-            'start': start,
-            'end': len(lines)
-        })
+        sections.append(
+            {"name": current_section, "start": start, "end": len(lines)})
 
     # As a dictionary with section names as keys
-    sections_dict = {section['name']: {
-        'start': section['start'],
-        'end': section['end']
-    } for section in sections}
+    sections_dict = {
+        section["name"]: {"start": section["start"], "end": section["end"]}
+        for section in sections
+    }
 
     return sections_dict
 
@@ -126,7 +122,7 @@ def copydir(source, dest):
             os.makedirs(root, exist_ok=True)
 
         for file in files:
-            rel_path = root.replace(source, '').lstrip(os.sep)
+            rel_path = root.replace(source, "").lstrip(os.sep)
             dest_path = os.path.join(dest, rel_path)
 
             if not os.path.isdir(dest_path):
@@ -141,7 +137,7 @@ def copydir(source, dest):
 
 def get_source_docs(path: str):
     """Get asciidoc documents from a given path."""
-    pattern = os.path.join(path, '*.adoc')
+    pattern = os.path.join(path, "*.adoc")
     return glob.glob(pattern)
 
 
@@ -215,7 +211,7 @@ def delete_target_contents(target_path: str) -> bool:
     else:
         log.error(f"Target path {target_path} does not exist")
         error = True
-    return True
+    return error
 
 
 def delete_files(files):
@@ -231,14 +227,14 @@ def delete_files(files):
 
 def json_load(filepath: str) -> {}:
     """Load into a dictionary a file in json format."""
-    with open(filepath, 'r', encoding='utf-8') as fin:
+    with open(filepath, "r", encoding="utf-8") as fin:
         adict = json.load(fin)
     return adict
 
 
 def json_save(filepath: str, adict: {}) -> {}:
     """Save dictionary into a file in json format."""
-    with open(filepath, 'w', encoding='utf-8') as fout:
+    with open(filepath, "w", encoding="utf-8") as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
 
@@ -251,14 +247,14 @@ def get_asciidoctor_attributes(docpath: str):
     end_of_header_found = False
 
     try:
-        lines = open(docpath, 'r', encoding='utf-8').readlines()
+        lines = open(docpath, "r", encoding="utf-8").readlines()
         title_found = False
         title_line = lines[0]
 
-        if title_line.startswith('= '):
+        if title_line.startswith("= "):
             title = title_line[2:-1].strip()
             if len(title) > 0:
-                keys['Title'] = [title]
+                keys["Title"] = [title]
                 title_found = True
 
         # Proceed only if document has a title
@@ -267,11 +263,11 @@ def get_asciidoctor_attributes(docpath: str):
             # read the rest of properties until watermark
             for n in range(1, len(lines)):
                 line = lines[n].strip()
-                if line.startswith(':'):
-                    key = line[1:line.find(':', 1)]
-                    values = line[len(key) + 2:].split(',')
+                if line.startswith(":"):
+                    key = line[1: line.find(":", 1)]
+                    values = line[len(key) + 2:].split(",")
                     keys[key] = [value.strip() for value in values]
-                elif line.startswith(ENV['CONF']['EOHMARK']):
+                elif line.startswith(ENV["CONF"]["EOHMARK"]):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
                     break
@@ -285,26 +281,27 @@ def get_asciidoctor_attributes(docpath: str):
             keys = {}
     except IndexError as error:
         reason = "Document '{basename}' could not be processed. Empty?"
+        log.error(error)
         log.error("Error: {reason}")
         keys = {}
 
     if title_found and end_of_header_found:
         valid = True
-        reason = 'Success'
+        reason = "Success"
 
     return keys, valid, reason
 
 
 def get_hash_from_content(content: str):
     """Get the md5 hash for any string."""
-    return hashlib.md5(content.encode('utf-8')).hexdigest()
+    return hashlib.md5(content.encode("utf-8")).hexdigest()
 
 
 def get_hash_from_file(path):
     """Get the md5 hash for a given filename."""
     if os.path.exists(path):
-        with open(path, 'rb') as fin:
-            fhash = hashlib.file_digest(fin, 'md5').hexdigest()
+        with open(path, "rb") as fin:
+            fhash = hashlib.file_digest(fin, "md5").hexdigest()
     else:
         fhash = None
     return fhash
@@ -331,8 +328,8 @@ def valid_filename(s):
     Borrowed from:
     https://github.com/django/django/blob/master/django/utils/text.py
     """
-    s = str(s).strip().replace(' ', '_')
-    return re.sub(r'(?u)[^-\w.]', '', s)
+    s = str(s).strip().replace(" ", "_")
+    return re.sub(r"(?u)[^-\w.]", "", s)
 
 
 def now():
@@ -370,16 +367,37 @@ def guess_datetime(sdate):
     if sdate in cache_dt:
         return cache_dt[sdate]
 
-    patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
-                "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
-                "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
-                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S",
-                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
-                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
-                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
-                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
+    patterns = [
+        "%d/%m/%Y",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %H:%M:%S",
+        "%d.%m.%Y",
+        "%d.%m.%Y %H:%M",
+        "%d.%m.%Y %H:%M:%S",
+        "%d-%m-%Y",
+        "%d-%m-%Y %H:%M",
+        "%d-%m-%Y %H:%M:%S",
+        "%Y/%m/%d",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y.%m.%d",
+        "%Y.%m.%d %H:%M",
+        "%Y.%m.%d %H:%M:%S",
+        "%Y-%m-%d",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y/%m/%d",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d %H:%M:%S.%f",
+        "%Y.%m.%d",
+        "%Y.%m.%d %H:%M",
+        "%Y.%m.%d %H:%M:%S.%f",
+        "%Y-%m-%d",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%M:%SZ",
+    ]
     found = False
     for pattern in patterns:
         if not found:

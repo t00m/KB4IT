@@ -24,37 +24,41 @@ class Frontend(Service):
 
     def _initialize(self):
         """Initialize frontend."""
-        self.srvbes = self.get_service('Backend')
-        self.runtime = self.srvbes.get_dict('runtime')
+        self.srvbes = self.get_service("Backend")
+        self.runtime = self.srvbes.get_dict("runtime")
 
     def theme_list(self):
         """List available themes."""
         self.log.debug(" - List of themes available")
 
         self.log.debug(
-            f" - 1) Search themes installed globally ({ENV['GPATH']['THEMES']})")
-        global_themes = os.listdir(ENV['GPATH']['THEMES'])
+            f" - 1) Search themes installed globally ({ENV['GPATH']['THEMES']})"
+        )
+        global_themes = os.listdir(ENV["GPATH"]["THEMES"])
         n = 1
         for dirname in global_themes:
             try:
                 self.theme_load(dirname)
                 self.log.info(
-                    f" - [{n}] - (G) Theme '{self.runtime['theme']['id']}' ({self.runtime['theme']['description']})")
+                    f" - [{n}] - (G) Theme '{self.runtime['theme']['id']}' ({self.runtime['theme']['description']})"
+                )
                 n += 1
             except Exception as error:
                 self.log.error(error)
                 self.log.error(f" - \tTheme Id: '{dirname}' NOT valid")
 
         self.log.debug(
-            " - 2) Search themes installed locally ({ENV['LPATH']['THEMES']})")
-        local_themes = os.listdir(ENV['LPATH']['THEMES'])
+            " - 2) Search themes installed locally ({ENV['LPATH']['THEMES']})"
+        )
+        local_themes = os.listdir(ENV["LPATH"]["THEMES"])
         if len(local_themes) > 0:
             for dirname in local_themes:
                 self.log.debug(f"Looking for a theme in {dirname}")
                 try:
                     self.theme_load(dirname)
                     self.log.info(
-                        f" - (L) Theme Id: '{self.runtime['theme']['id']}' ({self.runtime['theme']['name']} - {self.runtime['theme']['description']})")
+                        f" - (L) Theme Id: '{self.runtime['theme']['id']}' ({self.runtime['theme']['name']} - {self.runtime['theme']['description']})"
+                    )
                     n += 1
                 except Exception as error:
                     self.log.error(error)
@@ -69,7 +73,7 @@ class Frontend(Service):
         if theme_path is not None:
             self.log.info(f" - List of apps available for theme '{theme}'")
             self.log.debug(f"Theme '{theme}' path: {theme_path}")
-            apps_path = os.path.join(theme_path, 'apps', '*.json')
+            apps_path = os.path.join(theme_path, "apps", "*.json")
             apps = glob.glob(apps_path)
             for app in apps:
                 app_name = os.path.basename(app)[:-5]
@@ -86,23 +90,24 @@ class Frontend(Service):
             self.app.stop(error=True)
 
         # custom theme requested by user via command line properties
-        self.runtime['theme'] = {}
-        self.runtime['theme']['path'] = self.theme_search(theme_name)
-        if self.runtime['theme']['path'] is None:
+        self.runtime["theme"] = {}
+        self.runtime["theme"]["path"] = self.theme_search(theme_name)
+        if self.runtime["theme"]["path"] is None:
             return None
 
-        theme_conf = os.path.join(self.runtime['theme']['path'], "theme.json")
+        theme_conf = os.path.join(self.runtime["theme"]["path"], "theme.json")
         if not os.path.exists(theme_conf):
             self.log.warning(" - Theme config file not found: {theme_conf}")
         else:
             # load theme configuration
             try:
-                with open(theme_conf, 'r', encoding='utf-8') as fth:
+                with open(theme_conf, "r", encoding="utf-8") as fth:
                     theme = json.load(fth)
                     for prop in theme:
-                        self.runtime['theme'][prop] = theme[prop]
+                        self.runtime["theme"][prop] = theme[prop]
                 self.log.debug(
-                    f"CONF[THEME] NAME[{theme['name']}] VERSION[{theme['version']}]")
+                    f"CONF[THEME] NAME[{theme['name']}] VERSION[{theme['version']}]"
+                )
             except Exception as error:
                 self.log.error(error)
                 self.log.error(
@@ -110,25 +115,31 @@ class Frontend(Service):
                 return None
 
             # Get theme directories
-            self.runtime['theme']['templates'] = os.path.join(
-                self.runtime['theme']['path'], 'templates')
-            self.runtime['theme']['framework'] = os.path.join(
-                self.runtime['theme']['path'], 'framework')
-            self.runtime['theme']['images'] = os.path.join(
-                self.runtime['theme']['path'], 'images')
-            self.runtime['theme']['logic'] = os.path.join(
-                self.runtime['theme']['path'], 'logic')
+            self.runtime["theme"]["templates"] = os.path.join(
+                self.runtime["theme"]["path"], "templates"
+            )
+            self.runtime["theme"]["framework"] = os.path.join(
+                self.runtime["theme"]["path"], "framework"
+            )
+            self.runtime["theme"]["images"] = os.path.join(
+                self.runtime["theme"]["path"], "images"
+            )
+            self.runtime["theme"]["logic"] = os.path.join(
+                self.runtime["theme"]["path"], "logic"
+            )
 
             # Register theme service
             self.log.debug(
                 f"Registering Theme from {self.runtime['theme']['logic']}")
-            sys.path.insert(0, self.runtime['theme']['logic'])
+            sys.path.insert(0, self.runtime["theme"]["logic"])
             try:
                 from theme import Theme
-                self.app.register_service('Theme', Theme())
-                self.get_service('Theme')
-                self.log.debug("Theme '%s' loaded successfully",
-                               self.runtime['theme']['id'])
+
+                self.app.register_service("Theme", Theme())
+                self.get_service("Theme")
+                self.log.debug(
+                    "Theme '%s' loaded successfully", self.runtime["theme"]["id"]
+                )
             except AttributeError as error:
                 self.log.error(error)
                 return None
@@ -142,10 +153,10 @@ class Frontend(Service):
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug(" - Autodetecting theme from source path")
-            source_path = self.srvbes.get_path('source')
-            source_resources_path = os.path.join(source_path, 'resources')
-            source_themes_path = os.path.join(source_resources_path, 'themes')
-            all_themes = os.path.join(source_themes_path, '*')
+            source_path = self.srvbes.get_path("source")
+            source_resources_path = os.path.join(source_path, "resources")
+            source_themes_path = os.path.join(source_resources_path, "themes")
+            all_themes = os.path.join(source_themes_path, "*")
             self.log.debug(
                 f" - Looking for first theme ocurrence in: {all_themes}")
             try:
@@ -156,20 +167,20 @@ class Frontend(Service):
             # ~ self.log.debug(f" - \tFound directory for theme: '{theme}'")
             # Search in sources path
             try:
-                source_path = self.srvbes.get_path('source')
+                source_path = self.srvbes.get_path("source")
                 theme_rel_path = os.path.join(
-                    os.path.join('resources', 'themes'))
+                    os.path.join("resources", "themes"))
                 theme_path_source = os.path.join(
                     source_path, theme_rel_path, theme)
             except Exception:
-                theme_path_source = ''
-            theme_path_opt = os.path.join(ENV['LPATH']['THEMES'], theme)
-            theme_path_global = os.path.join(ENV['GPATH']['THEMES'], theme)
+                theme_path_source = ""
+            theme_path_opt = os.path.join(ENV["LPATH"]["THEMES"], theme)
+            theme_path_global = os.path.join(ENV["GPATH"]["THEMES"], theme)
             self.log.debug(f" - From sources: {theme_path_source}")
             self.log.debug(f" - From optional: {theme_path_opt}")  # DEPRECATE
             self.log.debug(f" - From global: {theme_path_global}")
             for path in [theme_path_source, theme_path_opt, theme_path_global]:
-                theme_config = os.path.join(path, 'theme.json')
+                theme_config = os.path.join(path, "theme.json")
                 if not os.path.exists(theme_config):
                     theme_path = None
                 else:

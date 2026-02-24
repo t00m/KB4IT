@@ -26,13 +26,13 @@ class Backend(Service):
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime = {}                       # Dictionary of runtime properties
-        self.params = self.app.get_params()     # Get params from command line
+        self.runtime = {}  # Dictionary of runtime properties
+        self.params = self.app.get_params()  # Get params from command line
 
         # Check command line param for config file
         # ~ action = self.params.get('action')
-        if self.params.get('action') in ('build', 'info'):
-            config_file = self.params.get('config')
+        if self.params.get("action") in ("build", "info"):
+            config_file = self.params.get("config")
             if config_file is None:
                 self.app.stop(error=True)
 
@@ -54,38 +54,38 @@ class Backend(Service):
                 self.log.error(f"Config path '{config_path}' does not exist")
                 self.app.stop(error=True)
 
-            self.params['force'] = self.repo.get('force') or False
-            self.runtime['dir'] = {}
-            self.runtime['dir']['source'] = os.path.realpath(
-                self.repo['source'])
-            self.runtime['dir']['target'] = os.path.realpath(
-                self.repo['target'])
+            self.params["force"] = self.repo.get("force") or False
+            self.runtime["dir"] = {}
+            self.runtime["dir"]["source"] = os.path.realpath(
+                self.repo["source"])
+            self.runtime["dir"]["target"] = os.path.realpath(
+                self.repo["target"])
 
             # ~ dir_src = Path(self.get_path('source'))
-            dir_root = Path(self.get_path('source')).parent.absolute()
-            dir_var = Path.joinpath(dir_root, 'var')
-            dir_log = Path.joinpath(dir_var, 'log')
-            dir_tmp = Path.joinpath(dir_var, 'tmp')
-            dir_cache = Path.joinpath(dir_var, 'cache')
-            dir_www = Path.joinpath(dir_var, 'www')
-            dir_db = Path.joinpath(dir_var, 'db')
+            dir_root = Path(self.get_path("source")).parent.absolute()
+            dir_var = Path.joinpath(dir_root, "var")
+            dir_log = Path.joinpath(dir_var, "log")
+            dir_tmp = Path.joinpath(dir_var, "tmp")
+            dir_cache = Path.joinpath(dir_var, "cache")
+            dir_www = Path.joinpath(dir_var, "www")
+            dir_db = Path.joinpath(dir_var, "db")
 
-            self.runtime['dir']['tmp'] = dir_tmp
-            self.runtime['dir']['www'] = dir_www
-            self.runtime['dir']['cache'] = dir_cache
-            self.runtime['dir']['log'] = dir_log
-            self.runtime['dir']['db'] = dir_db
+            self.runtime["dir"]["tmp"] = dir_tmp
+            self.runtime["dir"]["www"] = dir_www
+            self.runtime["dir"]["cache"] = dir_cache
+            self.runtime["dir"]["log"] = dir_log
+            self.runtime["dir"]["db"] = dir_db
 
-            for entry in self.runtime['dir']:
-                dirname = self.runtime['dir'][entry]
-                if entry not in ['source', 'target']:
-                    dirname = self.runtime['dir'][entry]
+            for entry in self.runtime["dir"]:
+                dirname = self.runtime["dir"][entry]
+                if entry not in ["source", "target"]:
+                    dirname = self.runtime["dir"][entry]
                     if not os.path.exists(dirname):
                         os.makedirs(dirname, exist_ok=True)
 
             # Activate application log
             app_log_file = Path.joinpath(dir_log, "kb4it.log")
-            self.runtime['logfile'] = app_log_file
+            self.runtime["logfile"] = app_log_file
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
@@ -93,42 +93,42 @@ class Backend(Service):
             shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
-            self.runtime['sort_attribute'] = self.repo.get('sort')
-            if self.runtime['sort_attribute'] is None:
+            self.runtime["sort_attribute"] = self.repo.get("sort")
+            if self.runtime["sort_attribute"] is None:
                 self.log.error(
                     "No property 'sort' defined in repository config")
                 self.app.stop(error=True)
 
             # Initialize docs structure
-            self.runtime['docs'] = {}
-            self.runtime['docs']['count'] = 0
-            self.runtime['docs']['bag'] = []
-            self.runtime['docs']['targets'] = set()
+            self.runtime["docs"] = {}
+            self.runtime["docs"]["count"] = 0
+            self.runtime["docs"]["bag"] = []
+            self.runtime["docs"]["targets"] = set()
 
             # Get services
             self.get_services()
 
     def get_value(self, domain: str, key: str):
         """Get value from key given a domain."""
-        if domain == 'app':
+        if domain == "app":
             adict = self.params
-        elif domain == 'docs':
-            adict = self.runtime['docs']
-        elif domain == 'repo':
+        elif domain == "docs":
+            adict = self.runtime["docs"]
+        elif domain == "repo":
             adict = self.repo
-        elif domain == 'runtime':
+        elif domain == "runtime":
             adict = self.runtime
-        elif domain == 'theme':
-            adict = self.runtime['theme']
+        elif domain == "theme":
+            adict = self.runtime["theme"]
         else:
             return None
         return adict.get(key)
 
     def set_value(self, domain: str, key: str, value: str | int | bool):
         """Set a value for a specific key in a given domain."""
-        if domain == 'app':
+        if domain == "app":
             adict = self.params
-        elif domain == 'runtime':
+        elif domain == "runtime":
             adict = self.runtime
         else:
             adict = None
@@ -140,36 +140,36 @@ class Backend(Service):
 
     def get_dict(self, domain: str) -> dict:
         """Get dict by domain."""
-        if domain == 'app':
+        if domain == "app":
             adict = self.params
-        elif domain == 'docs':
-            adict = self.runtime['docs']
-        elif domain == 'repo':
+        elif domain == "docs":
+            adict = self.runtime["docs"]
+        elif domain == "repo":
             adict = self.repo
-        elif domain == 'runtime':
+        elif domain == "runtime":
             adict = self.runtime
-        elif domain == 'theme':
-            adict = self.runtime['theme']
+        elif domain == "theme":
+            adict = self.runtime["theme"]
         else:
             adict = None
         return adict
 
     def get_path(self, name: str):
         """Get path by name."""
-        return self.runtime['dir'].get(name)
+        return self.runtime["dir"].get(name)
 
     def load_kbdict(self):
         """Load KB4IT dictionary."""
-        KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
+        kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         try:
-            kbdict = json_load(KB4IT_DB_FILE)
-            self.log.debug(f"[CONF] - Loading KBDICT from {KB4IT_DB_FILE}")
+            kbdict = json_load(kb4it_dbfile)
+            self.log.debug(f"[CONF] - Loading KBDICT from {kb4it_dbfile}")
         except FileNotFoundError:
             kbdict = {}
-            kbdict['document'] = {}
-            kbdict['metadata'] = {}
+            kbdict["document"] = {}
+            kbdict["metadata"] = {}
         except Exception as error:
-            self.log.error(f"There was an error reading file {KB4IT_DB_FILE}")
+            self.log.error(f"There was an error reading file {kb4it_dbfile}")
             self.log.error(error)
             self.app.stop(error=True)
         self.log.debug(f"[CONF] - Current kbdict entries: {len(kbdict)}")
@@ -177,20 +177,20 @@ class Backend(Service):
 
     def save_kbdict(self, kbdict):
         """Save kb4it dictionary."""
-        KB4IT_DB_FILE = os.path.join(self.get_path('db'), "kbdict.json")
-        json_save(KB4IT_DB_FILE, kbdict)
-        self.log.debug(f"[CONF] - KBDICT {KB4IT_DB_FILE} saved")
+        kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
+        json_save(kb4it_dbfile, kbdict)
+        self.log.debug(f"[CONF] - KBDICT {kb4it_dbfile} saved")
 
-    def add_target(self, adocId, htmlId):
+    def add_target(self, aid, hid):
         """Add documents to be compiled."""
-        self.runtime['docs']['targets'].add(htmlId)
-        self.log.debug(f"DOC[{adocId}] targets to RESOURCE[{htmlId}]")
+        self.runtime["docs"]["targets"].add(hid)
+        self.log.debug(f"DOC[{aid}] targets to RESOURCE[{hid}]")
 
     def get_services(self):
         """Get services needed."""
-        self.srvbld = self.get_service('Builder')
-        self.app.register_service('Processor', Processor())
-        self.srvprc = self.get_service('Processor')
+        self.srvbld = self.get_service("Builder")
+        self.app.register_service("Processor", Processor())
+        self.srvprc = self.get_service("Processor")
 
     def get_kb_dict(self):
         """Shortcut to Processor method."""
@@ -206,27 +206,28 @@ class Backend(Service):
 
     def stage_01_check_environment(self):
         """Check environment."""
-        frontend = self.get_service('Frontend')
+        frontend = self.get_service("Frontend")
         self.log.debug("[CHECKS] - START")
         self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.get_path('cache')}]")
         self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.get_path('tmp')}]")
         self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.get_path('www')}]")
 
         # Check if source directory exists. If not, stop application
-        if not os.path.exists(self.get_path('source')):
+        if not os.path.exists(self.get_path("source")):
             self.log.error(
-                f"Source directory '{self.get_path('source')}' doesn't exist.")
+                f"Source directory '{self.get_path('source')}' doesn't exist."
+            )
             self.app.stop(error=True)
         self.log.debug(
             f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
 
         # check if target directory exists. If not, create it:
-        if not os.path.exists(self.get_path('target')):
-            os.makedirs(self.get_path('target'), exist_ok=True)
+        if not os.path.exists(self.get_path("target")):
+            os.makedirs(self.get_path("target"), exist_ok=True)
         self.log.debug(
             f"CONF[APP] DIR[TARGET] VALUE[{self.get_path('target')}]")
 
-        theme_name = self.get_value('repo', 'theme')
+        theme_name = self.get_value("repo", "theme")
         if theme_name is None:
             self.log.debug("Theme not provided.")
             self.app.stop(error=True)
@@ -243,17 +244,17 @@ class Backend(Service):
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
         self.log.debug("[SOURCES] - START")
-        sources_path = self.get_path('source')
+        sources_path = self.get_path("source")
 
         # Firstly, allow theme to generate documents
-        self.srvthm = self.get_service('Theme')
+        self.srvthm = self.get_service("Theme")
 
         # If 'about_kb4it.adoc' doesn't exist, create one from template
         var = self.srvbld.get_theme_var()
         NEW_VERSION = False
-        TPL_PAGE_ABOUT_KB4IT = self.srvbld.template('PAGE_ABOUT_KB4IT')
+        TPL_PAGE_ABOUT_KB4IT = self.srvbld.template("PAGE_ABOUT_KB4IT")
         about_kb4it_content = TPL_PAGE_ABOUT_KB4IT.render(var=var)
-        about_kb4it_target = os.path.join(sources_path, 'about_kb4it.adoc')
+        about_kb4it_target = os.path.join(sources_path, "about_kb4it.adoc")
         if os.path.exists(about_kb4it_target):
             # About KB4IT asciidoc page is already in sources
             # Then, check if hashes matches with the KB4IT's one.
@@ -270,25 +271,26 @@ class Backend(Service):
             # Skip patches.
             self.log.debug(
                 "[DOC] - Added/Replaced 'About KB4IT' to your sources")
-            with open(about_kb4it_target, 'w', encoding='utf-8') as fout:
+            with open(about_kb4it_target, "w", encoding="utf-8") as fout:
                 fout.write(about_kb4it_content)
 
         # If 'about_app.adoc' doesn't exist, create one from template
-        about_app_source = os.path.join(sources_path, 'about_app.adoc')
+        about_app_source = os.path.join(sources_path, "about_app.adoc")
         if not os.path.exists(about_app_source):
             about_app_default = os.path.join(
-                ENV['GPATH']['TEMPLATES'], 'PAGE_ABOUT_APP.tpl')
+                ENV["GPATH"]["TEMPLATES"], "PAGE_ABOUT_APP.tpl"
+            )
             shutil.copy(about_app_default, about_app_source)
             self.log.warning(
                 "[DOC] - Added missing 'About App' to your sources")
 
         # Then, get them
-        self.runtime['docs']['bag'] = get_source_docs(sources_path)
+        self.runtime["docs"]["bag"] = get_source_docs(sources_path)
         basenames = []
-        for filepath in self.runtime['docs']['bag']:
+        for filepath in self.runtime["docs"]["bag"]:
             basenames.append(os.path.basename(filepath))
-        self.runtime['docs']['filenames'] = basenames
-        self.runtime['docs']['count'] = len(self.runtime['docs']['bag'])
+        self.runtime["docs"]["filenames"] = basenames
+        self.runtime["docs"]["count"] = len(self.runtime["docs"]["bag"])
         self.log.debug(f"STATS - Found {self.runtime['docs']['count']} docs")
         self.log.debug("[SOURCES] - END")
 
@@ -307,12 +309,12 @@ class Backend(Service):
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""
-        self.app.register_service('Compiler', Compiler())
-        compiler = self.app.get_service('Compiler')
+        self.app.register_service("Compiler", Compiler())
+        compiler = self.app.get_service("Compiler")
         compiler.execute()
 
     def stage_06_deploy(self):
         """Recreate target."""
-        self.app.register_service('Deployer', Deployer())
-        deployer = self.app.get_service('Deployer')
+        self.app.register_service("Deployer", Deployer())
+        deployer = self.app.get_service("Deployer")
         deployer.execute()

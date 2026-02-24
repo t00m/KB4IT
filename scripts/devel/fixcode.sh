@@ -10,3 +10,8 @@ echo ""
 echo "Checking doc style for file: $1"
 echo "================================================================="
 pydocstyle $1
+echo ""
+echo "Checking flake8 for file: $1"
+echo "================================================================="
+flake8 --ignore E501,Q000,I100,B902 $1
+echo ""

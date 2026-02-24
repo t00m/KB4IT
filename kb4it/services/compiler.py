@@ -26,47 +26,48 @@ class Compiler(Service):
 
     def _initialize(self):
         """Initialize compiler service."""
-        self.srvbes = self.app.get_service('Backend')
-        self.srvthm = self.get_service('Theme')
+        self.srvbes = self.app.get_service("Backend")
+        self.srvthm = self.get_service("Theme")
 
     def execute(self):
         """Compile documents to html with asciidoctor."""
         self.log.debug("[COMPILER] - START")
-        runtime = self.srvbes.get_dict('runtime')
+        runtime = self.srvbes.get_dict("runtime")
         dcomps = datetime.datetime.now()
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(
-            self.srvbes.get_path('tmp'), 'resources')
+            self.srvbes.get_path("tmp"), "resources")
 
         # if path already exists, remove it before copying with copytree()
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
-            shutil.copytree(ENV['GPATH']['RESOURCES'], resources_dir_tmp)
+            shutil.copytree(ENV["GPATH"]["RESOURCES"], resources_dir_tmp)
         self.log.debug(f"Global resources copied to {resources_dir_tmp}")
 
-        adocprops = ''
-        for prop in ENV['CONF']['ADOCPROPS']:
+        adocprops = ""
+        for prop in ENV["CONF"]["ADOCPROPS"]:
             self.log.debug(
-                f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
-            if ENV['CONF']['ADOCPROPS'][prop] is not None:
-                if '%s' in ENV['CONF']['ADOCPROPS'][prop]:
+                f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]"
+            )
+            if ENV["CONF"]["ADOCPROPS"][prop] is not None:
+                if "%s" in ENV["CONF"]["ADOCPROPS"][prop]:
                     adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target')} "
                 else:
                     adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop]} "
             else:
                 adocprops += f"-a {prop} "
-        runtime['adocprops'] = adocprops
+        runtime["adocprops"] = adocprops
         self.log.debug(
             f"[COMPILATION] - Parameters passed to Asciidoctor: {adocprops}")
 
-        distributed = self.srvbes.get_value('docs', 'targets')
-        max_workers = self.srvbes.get_value('repo', 'workers')
+        distributed = self.srvbes.get_value("docs", "targets")
+        max_workers = self.srvbes.get_value("repo", "workers")
         if max_workers is None:
             max_workers = get_default_workers()
         self.log.debug(f"Number or compiling workers: {max_workers}")
         with Executor(max_workers=max_workers) as exe:
-            docs = get_source_docs(self.srvbes.get_path('tmp'))
+            docs = get_source_docs(self.srvbes.get_path("tmp"))
             jobs = []
             jobcount = 0
             num = 1
@@ -78,7 +79,7 @@ class Compiler(Service):
                 if basename in distributed:
                     COMPILE = True
 
-                FORCE = self.srvbes.get_value('repo', 'force') or False
+                FORCE = self.srvbes.get_value("repo", "force") or False
                 if COMPILE or FORCE:
                     cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
                     self.log.debug(f"CMD[{cmd}]")
@@ -97,13 +98,15 @@ class Compiler(Service):
                 for job in jobs:
                     adoc, res, jobid = job.result()
                     self.log.debug(
-                        f"DOC[{os.path.basename(adoc)}] compiled successfully")
+                        f"DOC[{os.path.basename(adoc)}] compiled successfully"
+                    )
                     jobcount += 1
-                    if jobcount % ENV['CONF']['MAX_WORKERS'] == 0:
+                    if jobcount % ENV["CONF"]["MAX_WORKERS"] == 0:
                         pct = int(jobcount * 100 / len(docs))
                         # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
                         self.log.debug(
-                            f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
+                            f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done"
+                        )
 
                 dcompe = datetime.datetime.now()
                 comptime = dcompe - dcomps
@@ -113,7 +116,8 @@ class Compiler(Service):
                 avgspeed = int((num - 1) / duration)
                 pct = int(jobcount * 100 / len(docs))
                 self.log.debug(
-                    f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
+                    f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done"
+                )
                 self.log.debug(
                     f"STATS - Compilation time: {comptime.seconds} seconds")
                 self.log.debug(f"STATS - Compiled docs: {num - 1}")
@@ -137,13 +141,15 @@ class Compiler(Service):
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
             self.log.debug(
-                f"[COMPILATION] - Job[{num}] for Doc[{basename}] has RC[{rc}]")
+                f"[COMPILATION] - Job[{num}] for Doc[{basename}] has RC[{rc}]"
+            )
             try:
                 self.srvthm.build_page(path_hdoc)
             except MemoryError:
                 self.log.error("Memory exhausted!")
                 self.log.error(
-                    "Please, consider using less workers or add more memory to your system")
+                    "Please, consider using less workers or add more memory to your system"
+                )
                 self.log.error("The application will exit now...")
                 self.app.stop()
             except Exception as error:

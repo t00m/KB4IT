@@ -22,11 +22,11 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
     """Configure root logger once."""
     if level is not None:
         level_dict = {
-            'DEBUG': logging.DEBUG,
-            'INFO': logging.INFO,
-            'WARNING': logging.WARNING,
-            'ERROR': logging.ERROR,
-            'CRITICAL': logging.CRITICAL
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL,
         }
         severity = level_dict.get(level, logging.DEBUG)
     else:

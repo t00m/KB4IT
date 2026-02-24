@@ -41,24 +41,28 @@ class KB4IT:
             self.params = vars(params)
         else:
             self.params = vars(argparse.Namespace())
-            self.params['REPO_CONFIG_FILE'] = None
+            self.params["REPO_CONFIG_FILE"] = None
 
         # Initialize log
-        if 'log_level' not in self.params:
-            self.params['LOGLEVEL'] = 'INFO'
-        setup_logging(self.params['log_level'], self.log_file)
+        if "log_level" not in self.params:
+            self.params["LOGLEVEL"] = "INFO"
+        setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
         self.log.debug(
             f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']}")
         self.log.debug(
-            f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
+            f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]"
+        )
         self.log.debug(
-            f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
+            f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]"
+        )
         self.log.debug(
-            f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
+            f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]"
+        )
         self.log.debug(
-            f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
+            f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]"
+        )
 
         # Start up
         self.__check_params()
@@ -77,7 +81,8 @@ class KB4IT:
         """Check arguments passed to the application."""
         for key in self.params:
             self.log.debug(
-                f"[CONTROLLER] - CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]")
+                f"[CONTROLLER] - CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]"
+            )
 
     def get_params(self):
         """Return app configuration."""
@@ -85,7 +90,7 @@ class KB4IT:
 
     def __setup_environment(self):
         """Create local paths if they do not exist."""
-        for path in ENV['LPATH'].values():
+        for path in ENV["LPATH"].values():
             if not os.path.exists(path):
                 os.makedirs(path, exist_ok=True)
 
@@ -93,11 +98,11 @@ class KB4IT:
         """Declare and register services."""
         self.services = {}
         services = {
-            'DB': Database(),
-            'Backend': Backend(),
-            'Frontend': Frontend(),
-            'Builder': Builder(),
-            'Workflow': Workflow(),
+            "DB": Database(),
+            "Backend": Backend(),
+            "Frontend": Frontend(),
+            "Builder": Builder(),
+            "Workflow": Workflow(),
         }
         for name, klass in services.items():
             self.register_service(name, klass)
@@ -138,19 +143,19 @@ class KB4IT:
 
     def run(self):
         """Start application."""
-        action = self.params['action']
-        workflow = self.get_service('Workflow')
+        action = self.params["action"]
+        workflow = self.get_service("Workflow")
         self.log.debug(f"[CONTROLLER] - Executing KB4IT action '{action}'")
-        if action == 'themes':
+        if action == "themes":
             workflow.list_themes()
-        elif action == 'create':
+        elif action == "create":
             workflow.create_repository()
-        elif action == 'build':
+        elif action == "build":
             workflow.build_website()
-        elif action == 'info':
+        elif action == "info":
             workflow.info_repository()
-        elif action == 'apps':
-            workflow.list_apps(self.params['theme'])
+        elif action == "apps":
+            workflow.list_apps(self.params["theme"])
         self.stop()
 
     def stop(self, error=False):
@@ -165,7 +170,8 @@ class KB4IT:
             # KB4IT wasn't even started
             self.log.error(errmsg)
         self.log.debug(
-            f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}")
+            f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}"
+        )
         sys.exit()
 
 
@@ -173,72 +179,71 @@ def main():
     """Set up application arguments and execute."""
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
-        prog='kb4it',
+        prog="kb4it",
         description=f"KB4IT v{ENV['APP']['version']}\nCustomizable \
             static website generator based on Asciidoctor sources",
         epilog=extra_usage,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        '-L', '--log-level',
-        help='Control output verbosity. Default set to INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO'
+        "-L",
+        "--log-level",
+        help="Control output verbosity. Default set to INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
     )
     parser.add_argument(
-        '-v', '--version',
-        action='version',
-        version=f"{ENV['APP']['shortname']} {ENV['APP']['version']}"
+        "-v",
+        "--version",
+        action="version",
+        version=f"{ENV['APP']['shortname']} {ENV['APP']['version']}",
     )
 
     # Add subcommands for actions
     subparsers = parser.add_subparsers(
-        dest='action',
-        required=True,
-        help='Action to perform'
+        dest="action", required=True, help="Action to perform"
     )
 
     # Initialize repository
     init_parser = subparsers.add_parser(
-        'create', help='Initialize a new repository')
-    init_parser.add_argument('theme', help='Theme to use for initialization')
-    init_parser.add_argument('repo_path', help='Path to the repository')
+        "create", help="Initialize a new repository")
+    init_parser.add_argument("theme", help="Theme to use for initialization")
+    init_parser.add_argument("repo_path", help="Path to the repository")
 
     # List themes
-    subparsers.add_parser('themes', help='List all installed themes')
+    subparsers.add_parser("themes", help="List all installed themes")
 
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
-        'apps', help='List all apps for a specific theme')
-    theme_apps.add_argument('theme', help='Theme to query')
+        "apps", help="List all apps for a specific theme"
+    )
+    theme_apps.add_argument("theme", help="Theme to query")
 
     # Run repository workflow
     repo_build = subparsers.add_parser(
-        'build',
-        help='Run workflow for a given repository',
-        description='Based on your repository configuration, compile and build the website',
-        epilog='Example:\n\n'
-               '   kb4it build /home/jsmith/Documents/myrepo/config/repo.json'
+        "build",
+        help="Run workflow for a given repository",
+        description="Based on your repository configuration, compile and build the website",
+        epilog="Example:\n\n"
+        "   kb4it build /home/jsmith/Documents/myrepo/config/repo.json",
     )
 
     repo_build.add_argument(
-        'config',
-        help='Path to the repository config file (mandatory)'
+        "config", help="Path to the repository config file (mandatory)"
     )
 
     # Get repository info
     repo_info = subparsers.add_parser(
-        'info',
-        help='Get repository info from its config file',
-        description='Based on your repository configuration, get all info available',
-        epilog='Example:\n\n'
-               '   kb4it info /home/jsmith/Documents/myrepo/config/repo.json'
+        "info",
+        help="Get repository info from its config file",
+        description="Based on your repository configuration, get all info available",
+        epilog="Example:\n\n"
+        "   kb4it info /home/jsmith/Documents/myrepo/config/repo.json",
     )
 
     repo_info.add_argument(
-        'config',
-        help='Path to the repository config file (mandatory)'
+        "config", help="Path to the repository config file (mandatory)"
     )
 
     # Dispatch to the appropriate action handler
@@ -248,4 +253,6 @@ def main():
         app.run()
     except SystemExit as error:
         if error.code != 0 and error.code is not None:
-            print("Run 'kb4it <action name> --help' to get help for a specific command.")
+            print(
+                "Run 'kb4it <action name> --help' to get help for a specific command."
+            )

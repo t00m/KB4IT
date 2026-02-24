@@ -7,11 +7,11 @@
 
 import json
 import os
-import pprint
 import stat
 
 from kb4it.core.service import Service
-from kb4it.core.util import copydir, json_load, timeit
+from kb4it.core.util import copydir
+from kb4it.core.util import json_load
 
 
 class Workflow(Service):
@@ -23,18 +23,18 @@ class Workflow(Service):
 
     def list_themes(self):
         self.log.info("KB4IT action: list available themes")
-        frontend = self.get_service('Frontend')
+        frontend = self.get_service("Frontend")
         frontend.theme_list()
 
     def list_apps(self, theme):
         self.log.debug(
             f"KB4IT action: list available apps for theme '{theme}'")
-        frontend = self.get_service('Frontend')
+        frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
 
     def info_repository(self):
-        backend = self.app.get_service('Backend')
-        config_file = backend.get_value('app', 'config')
+        backend = self.app.get_service("Backend")
+        config_file = backend.get_value("app", "config")
         if config_file is not None and os.path.exists(config_file):
             repo = json_load(config_file)
             print(f"                     Title: {repo.get('title')}")
@@ -48,12 +48,11 @@ class Workflow(Service):
 
     def create_repository(self):
         self.log.info("KB4IT action: create new repository")
-        backend = self.app.get_service('Backend')
-        frontend = self.app.get_service('Frontend')
+        frontend = self.app.get_service("Frontend")
         params = self.app.get_params()
         self.log.debug(params)
         initialize = False
-        theme, repo_path = params['theme'], params['repo_path']
+        theme, repo_path = params["theme"], params["repo_path"]
         self.log.debug(f"Theme: {theme}")
         self.log.debug(f"Repository path: {repo_path}")
         theme_path = frontend.theme_search(theme=theme)
@@ -72,32 +71,38 @@ class Workflow(Service):
         if initialize:
             self.log.info(f"Repository path: {repo_path}")
             self.log.info(f"Using theme '{theme}' from path '{theme_path}'")
-            repo_demo = os.path.join(theme_path, 'example', 'repo')
+            repo_demo = os.path.join(theme_path, "example", "repo")
             copydir(repo_demo, repo_path)
-            source_dir = os.path.join(repo_path, 'source')
-            target_dir = os.path.join(repo_path, 'target')
-            bin_dir = os.path.join(repo_path, 'bin')
-            script = os.path.join(bin_dir, 'compile.sh')
-            config_file = os.path.join(repo_path, 'config', 'repo.json')
+            source_dir = os.path.join(repo_path, "source")
+            target_dir = os.path.join(repo_path, "target")
+            bin_dir = os.path.join(repo_path, "bin")
+            script = os.path.join(bin_dir, "compile.sh")
+            config_file = os.path.join(repo_path, "config", "repo.json")
             with open(config_file) as fc:
                 repoconf = json.load(fc)
-            repoconf['source'] = source_dir
-            repoconf['target'] = target_dir
-            with open(config_file, 'w') as fc:
+            repoconf["source"] = source_dir
+            repoconf["target"] = target_dir
+            with open(config_file, "w") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
-            with open(script, 'w') as fs:
-                fs.write(f'kb4it -L INFO build {config_file}')
-            os.chmod(script, stat.S_IRUSR | stat.S_IRGRP |
-                     stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
-            self.log.info(f"Repository initialized")
+            with open(script, "w") as fs:
+                fs.write(f"kb4it -L INFO build {config_file}")
+            os.chmod(
+                script,
+                stat.S_IRUSR
+                | stat.S_IRGRP
+                | stat.S_IWUSR
+                | stat.S_IWGRP
+                | stat.S_IXUSR
+                | stat.S_IXGRP,
+            )
+            self.log.info("Repository initialized")
             self.log.info(f"You can compile it by executing '{script}'")
             self.log.info(f"Add your documents in '{source_dir}'")
             self.log.info(f"Documents to be published in '{target_dir}'")
             self.log.info(f"Check your repository settings in '{config_file}'")
-            self.log.info(f"For more KB4IT options, execute: kb4it -h")
+            self.log.info("For more KB4IT options, execute: kb4it -h")
 
-    # ~ @timeit
     def build_website(self):
         """Build workflow:
         1. Check environment
@@ -108,39 +113,40 @@ class Workflow(Service):
         6. Deploy
         7. Theme Post activities
         """
-        backend = self.get_service('Backend')
-        repo = backend.get_dict('repo')
-        repo_title = repo['title']
-        repo_theme = repo['theme']
+        backend = self.get_service("Backend")
+        repo = backend.get_dict("repo")
+        repo_title = repo["title"]
+        repo_theme = repo["theme"]
         self.log.info(f"Theme '{repo_theme}' - Repository '{repo_title}'")
 
-        self.log.info(f"1 - Check environment")
+        self.log.info("1 - Check environment")
         backend.stage_01_check_environment()
-        theme = self.get_service('Theme')
+        theme = self.get_service("Theme")
 
-        self.log.info(f"2 - Get sources")
+        self.log.info("2 - Get sources")
         theme.generate_sources()
         backend.stage_02_get_source_documents()
 
-        self.log.info(f"3 - Process sources")
+        self.log.info("3 - Process sources")
         backend.stage_03_process_sources()
 
-        self.log.info(f"4 - Process theme")
+        self.log.info("4 - Process theme")
         backend.stage_04_process_theme()
 
-        self.log.info(f"5 - Compilation")
+        self.log.info("5 - Compilation")
         backend.stage_05_compilation()
 
-        self.log.info(f"7 - Theme post activities")
+        self.log.info("7 - Theme post activities")
         theme.post_activities()
 
-        self.log.info(f"6 - Deploy")
+        self.log.info("6 - Deploy")
         backend.stage_06_deploy()
 
         # Report
-        homepage = os.path.join(os.path.abspath(
-            backend.get_path('target')), 'index.html')
-        self.log.info(f"Repository website built")
+        homepage = os.path.join(
+            os.path.abspath(backend.get_path("target")), "index.html"
+        )
+        self.log.info("Repository website built")
         self.log.info(f"URL: {homepage}")
         self.log.info(f"Full log: {backend.get_value('runtime', 'logfile')}")
-        self.log.info(f"The End")
+        self.log.info("The End")
