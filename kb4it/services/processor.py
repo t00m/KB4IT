@@ -7,12 +7,11 @@ Service Processor.
 """
 
 import os
+
 from kb4it.core.service import Service
-from kb4it.core.util import get_asciidoctor_attributes
-from kb4it.core.util import get_hash_from_file
-from kb4it.core.util import get_hash_from_dict
-from kb4it.core.util import string_timestamp
-from kb4it.core.util import valid_filename
+from kb4it.core.util import (get_asciidoctor_attributes, get_hash_from_dict,
+                             get_hash_from_file, string_timestamp,
+                             valid_filename)
 
 
 class Processor(Service):

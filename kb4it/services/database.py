@@ -6,13 +6,10 @@
 """
 
 from kb4it.core.service import Service
-from kb4it.core.util import sort_dictionary
-from kb4it.core.util import valid_filename
-from kb4it.core.util import guess_datetime
-from kb4it.core.util import json_load, json_save
 # ~ from kb4it.core.util import timeit
-from kb4it.core.util import get_hash_from_list
-from kb4it.core.util import get_timestamp_yyyymmdd
+from kb4it.core.util import (get_hash_from_list, get_timestamp_yyyymmdd,
+                             guess_datetime, json_load, json_save,
+                             sort_dictionary, valid_filename)
 
 
 class Database(Service):

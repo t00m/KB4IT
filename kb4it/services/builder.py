@@ -8,8 +8,8 @@ Builder service.
 """
 
 import os
-import sys
 import shutil
+import sys
 from datetime import datetime
 
 from mako.template import Template

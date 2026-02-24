@@ -7,15 +7,13 @@ Service Deployer.
 # License: GPLv3
 """
 
-import os
 import glob
+import os
 import shutil
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import copy_docs
-from kb4it.core.util import copydir
-from kb4it.core.util import delete_target_contents
+from kb4it.core.util import copy_docs, copydir, delete_target_contents
 
 
 class Deployer(Service):

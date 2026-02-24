@@ -8,18 +8,18 @@ KB4IT module. Entry point.
 # Description: Website static-generator based on Asciidoctor
 """
 
+import argparse
 import os
 import sys
 import uuid
-import argparse
+
 from kb4it.core.env import ENV
-from kb4it.core.log import setup_logging
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, setup_logging
 from kb4it.core.util import now
 from kb4it.services.backend import Backend
-from kb4it.services.frontend import Frontend
-from kb4it.services.database import Database
 from kb4it.services.builder import Builder
+from kb4it.services.database import Database
+from kb4it.services.frontend import Frontend
 from kb4it.services.workflow import Workflow
 
 

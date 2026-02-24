@@ -9,21 +9,20 @@ Utils functions used along the project.
 # Description: Generic functions module
 """
 
-import os
-import re
 import glob
+import hashlib
 import json
 import math
-import time
-import pickle
-import shutil
-import hashlib
-import operator
-import subprocess
 import multiprocessing
-from functools import wraps
+import operator
+import os
+import pickle
+import re
+import shutil
+import subprocess
+import time
 from datetime import datetime
-
+from functools import wraps
 
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger

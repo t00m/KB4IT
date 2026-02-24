@@ -12,16 +12,13 @@ import shutil
 from pathlib import Path
 
 from kb4it.core.env import ENV
-from kb4it.core.service import Service
-from kb4it.core.util import get_source_docs
-from kb4it.core.util import get_hash_from_file
-from kb4it.core.util import get_hash_from_content
-from kb4it.core.util import json_load
-from kb4it.core.util import json_save
 from kb4it.core.log import redirect_logs
-from kb4it.services.processor import Processor
+from kb4it.core.service import Service
+from kb4it.core.util import (get_hash_from_content, get_hash_from_file,
+                             get_source_docs, json_load, json_save)
 from kb4it.services.compiler import Compiler
 from kb4it.services.deployer import Deployer
+from kb4it.services.processor import Processor
 
 
 class Backend(Service):

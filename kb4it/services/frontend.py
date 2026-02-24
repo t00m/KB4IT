@@ -7,10 +7,10 @@ Frontend module.
 # License: GPLv3
 """
 
-import os
-import sys
 import glob
 import json
+import os
+import sys
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service

@@ -8,13 +8,13 @@ Environment module.
 # Description: Environment variables module
 """
 
-import os
-from os.path import abspath
-import sys
-from pathlib import Path
 import locale
-import platform
 import multiprocessing
+import os
+import platform
+import sys
+from os.path import abspath
+from pathlib import Path
 
 locale.getpreferredencoding()
 

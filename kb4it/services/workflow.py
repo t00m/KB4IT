@@ -5,15 +5,13 @@
 # Description: Workflow module
 """
 
-import os
 import json
-import stat
+import os
 import pprint
+import stat
 
 from kb4it.core.service import Service
-from kb4it.core.util import copydir
-from kb4it.core.util import timeit
-from kb4it.core.util import json_load
+from kb4it.core.util import copydir, json_load, timeit
 
 
 class Workflow(Service):

@@ -8,19 +8,17 @@ Service Compiler.
 # Description: Cleaner service
 """
 
+import datetime
 import os
-import time
 import random
 import shutil
-import datetime
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import exec_cmd
-from kb4it.core.util import get_default_workers
-from kb4it.core.util import get_source_docs
+from kb4it.core.util import exec_cmd, get_default_workers, get_source_docs
 
 
 class Compiler(Service):
