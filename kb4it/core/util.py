@@ -404,22 +404,22 @@ def string_timestamp(string):
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
-    return f"{dt.strftime("%A, %B %d, %Y at %H:%M")}"
+    return dt.strftime("%A, %B %d, %Y at %H:%M")
 
 
 def get_human_datetime_day(dt):
     """Return day datetime for humans."""
-    return f"{dt.strftime("%A, %B %d, %Y")}"
+    return dt.strftime("%A, %B %d, %Y")
 
 
 def get_human_datetime_month(dt):
     """Return month datetime for humans."""
-    return f"{dt.strftime("%B, %Y")}"
+    return dt.strftime("%B, %Y")
 
 
 def get_human_datetime_year(dt):
     """Return year datetime for humans."""
-    return f"{dt.strftime("%Y")}"
+    return dt.strftime("%Y")
 
 
 def get_timestamp_yyyymmdd(dt):
