@@ -65,6 +65,7 @@ class Deployer(Service):
                 # FIXME
                 self.log.warning(warning)
                 self.log.warning(f"[CLEANUP] - Missing source file: {source}")
+                continue
         self.log.debug("Copy temporary files to distributed directory")
 
     def step_03_clear_target(self):
