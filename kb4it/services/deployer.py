@@ -57,7 +57,7 @@ class Deployer(Service):
         """Copy temporary files to distributed directory."""
         distributed = self.srvbes.get_value("docs", "targets")
         for adoc in distributed:
-            source = os.path.join(self.srvbes.get_path("tmp"), adoc)
+            source = os.path.join(self.srvbes.get_path("cache"), adoc)
             target = self.srvbes.get_path("www")
             try:
                 shutil.copy(source, target)
@@ -172,7 +172,7 @@ class Deployer(Service):
 
     def step_11_cleanup(self):
         """Cleanup temporary files."""
-        delete_target_contents(self.srvbes.get_path("tmp"))
-        delete_target_contents(self.srvbes.get_path("www"))
+        # ~ delete_target_contents(self.srvbes.get_path("tmp"))
+        # ~ delete_target_contents(self.srvbes.get_path("www"))
         os.unlink(self.app.get_log_file())
         self.log.debug("Cleanup temporary files")

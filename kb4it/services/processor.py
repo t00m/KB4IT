@@ -26,6 +26,7 @@ class Processor(Service):
         self.kbdict_new["document"] = {}
         self.kbdict_new["metadata"] = {}
         self.force_keys = set()  # List of keys which must be compiled (forced)
+        self.changed_docs = set()
 
     def step_00_extraction(self):
         """Extract metadata."""
@@ -37,10 +38,10 @@ class Processor(Service):
 
             # Get metadata
             keys, valid, reason = get_asciidoctor_attributes(filepath)
-            self.log.debug(f"{os.path.basename(filepath)}: {reason}")
+            self.log.debug(f"{os.path.basename(filepath)} valid? {valid}. Why? {reason}")
 
             if not valid:
-                return
+                continue
 
             # Add to cache
             self.kbdict_new["document"][adocId] = {}
@@ -72,7 +73,7 @@ class Processor(Service):
                     try:
                         documents = self.kbdict_new["metadata"][key][value]
                         documents.append(adocId)
-                        self.kbdict_new[key][value] = sorted(
+                        self.kbdict_new["metadata"][key][value] = sorted(
                             documents, key=lambda y: y.lower()
                         )
                     except KeyError:
@@ -111,9 +112,9 @@ class Processor(Service):
         for filepath in sources:
             adocId = os.path.basename(filepath)
             keys = self.kbdict_new["document"][adocId]["keys"]
-            need_compilation = self.step_01_00_decide_document_compilation(
+            need_compile = self.step_01_00_decide_document_compilation(
                 adocId, keys)
-            if need_compilation:
+            if need_compile:
                 ncd += 1
         self.srvbes.set_value("runtime", "ncd", ncd)
 
@@ -217,6 +218,7 @@ class Processor(Service):
 
         if COMPILE:
             # Write new adoc to temporary dir
+            self.changed_docs.add(adocId)
             source_path = os.path.join(self.srvbes.get_path("source"), adocId)
             content = open(source_path, "r", encoding="utf-8").read()
             target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
@@ -262,8 +264,9 @@ class Processor(Service):
                 rkvnew = self.get_kbdict_value(key, value, new=True)
                 rkvold = self.get_kbdict_value(key, value, new=False)
                 VALUE_COMPARISON = rkvnew != rkvold
+                VALUE_DOC_CHANGED = bool(self.changed_docs & set(rkvnew))
 
-                if VALUE_COMPARISON:
+                if VALUE_COMPARISON or VALUE_DOC_CHANGED:
                     COMPILE_VALUE = True
                     self.log.debug(
                         f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})"
