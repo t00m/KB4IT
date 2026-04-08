@@ -28,6 +28,7 @@ class Compiler(Service):
         """Initialize compiler service."""
         self.srvbes = self.app.get_service("Backend")
         self.srvthm = self.get_service("Theme")
+        self.srvprc = self.get_service("Processor")
 
     def execute(self):
         """Compile documents to html with asciidoctor."""
@@ -73,11 +74,16 @@ class Compiler(Service):
             num = 1
 
             # ~ self.log.debug(f"Generating jobs")
+            kbdict_new = self.srvprc.get_kb_dict()
             for doc in docs:
-                COMPILE = False
                 basename = os.path.basename(doc)
-                if basename in distributed:
-                    COMPILE = True
+                try:
+                    MUST_COMPILE = kbdict_new['document'][basename]['compile']
+                except KeyError:
+                    # It is not a source file
+                    MUST_COMPILE = False
+                IS_DISTRIBUTED = basename in distributed
+                COMPILE = MUST_COMPILE or IS_DISTRIBUTED
 
                 #dir_cache = self.srvbes.get_path('cache')
                 #cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
