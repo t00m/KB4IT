@@ -79,12 +79,13 @@ class Compiler(Service):
                 if basename in distributed:
                     COMPILE = True
 
-                dir_cache = self.srvbes.get_path('cache')
-                cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
-                if not os.path.exists(cached_file):
-                    COMPILE = True
+                #dir_cache = self.srvbes.get_path('cache')
+                #cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
+                #if not os.path.exists(cached_file):
+                #    COMPILE = True
 
                 FORCE = self.srvbes.get_value("repo", "force") or False
+                self.log.debug(f"DOC[{doc}]: COMPILE[{COMPILE}] or FORCE[{FORCE}]? {COMPILE or FORCE}")
                 if COMPILE or FORCE:
                     cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
                     self.log.debug(f"CMD[{cmd}]")

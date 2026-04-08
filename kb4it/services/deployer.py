@@ -172,7 +172,7 @@ class Deployer(Service):
 
     def step_11_cleanup(self):
         """Cleanup temporary files."""
-        # ~ delete_target_contents(self.srvbes.get_path("tmp"))
-        # ~ delete_target_contents(self.srvbes.get_path("www"))
+        delete_target_contents(self.srvbes.get_path("tmp"))
+        delete_target_contents(self.srvbes.get_path("www"))
         os.unlink(self.app.get_log_file())
         self.log.debug("Cleanup temporary files")
