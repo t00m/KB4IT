@@ -28,6 +28,9 @@ class Processor(Service):
         self.force_keys = set()  # List of keys which must be compiled (forced)
         self.changed_docs = set()
 
+    def get_force_keys(self):
+        return self.force_keys
+
     def step_00_extraction(self):
         """Extract metadata."""
         runtime = self.srvbes.get_dict("runtime")

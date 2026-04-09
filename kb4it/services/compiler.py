@@ -35,6 +35,7 @@ class Compiler(Service):
         self.log.debug("[COMPILER] - START")
         runtime = self.srvbes.get_dict("runtime")
         dcomps = datetime.datetime.now()
+        force_keys = self.srvprc.get_force_keys()
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(
@@ -83,12 +84,14 @@ class Compiler(Service):
                     # It is not a source file
                     MUST_COMPILE = False
                 IS_DISTRIBUTED = basename in distributed
-                COMPILE = MUST_COMPILE or IS_DISTRIBUTED
+                key = basename[:basename.rfind('.')]
+                IS_FORCED = key in force_keys
+                COMPILE = MUST_COMPILE or IS_DISTRIBUTED or IS_FORCED
 
-                #dir_cache = self.srvbes.get_path('cache')
-                #cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
-                #if not os.path.exists(cached_file):
-                #    COMPILE = True
+                dir_cache = self.srvbes.get_path('cache')
+                cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
+                if not os.path.exists(cached_file):
+                    COMPILE = True
 
                 FORCE = self.srvbes.get_value("repo", "force") or False
                 self.log.debug(f"DOC[{basename}]: COMPILE[{COMPILE}] or FORCE[{FORCE}]? {COMPILE or FORCE}")
