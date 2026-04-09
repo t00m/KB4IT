@@ -109,14 +109,57 @@ class Processor(Service):
 
     def step_01_analysis(self):
         """Compilation strategy."""
+        # Do not analyze if force compilation is enabled in config
+        FORCE_ALL = self.srvbes.get_value("app", "force")
+        if FORCE_ALL:
+            return
+
+        # Otherwise, decide documents compilation one by one
+        sources = self.srvbes.get_value("docs", "bag")
+        ncd = 0  # Number of documents to be compiled
+        for filepath in sources:
+            adocId = os.path.basename(filepath)
+            DOC_COMPILATION = self.step_01_00_decide_document_compilation(adocId)
+            if DOC_COMPILATION:
+                ncd += 1
+
+            # Save compilation status
+            self.kbdict_new["document"][adocId]["compile"] = DOC_COMPILATION
+
+            # Write adoc to tmp directory for further compilation
+            if DOC_COMPILATION:
+                # Write new adoc to temporary dir
+                self.changed_docs.add(adocId)
+                source_path = os.path.join(self.srvbes.get_path("source"), adocId)
+                content = open(source_path, "r", encoding="utf-8").read()
+                target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
+                with open(target, "w", encoding="utf-8") as target_adoc:
+                    target_adoc.write(content)
+
+        self.srvbes.set_value("runtime", "ncd", ncd)
+
+        # Decide keys compilation
+        all_keys = set(self.srvdtb.get_all_keys())
+        ignored_keys = self.srvdtb.get_ignored_keys()
+        available_keys = list(all_keys - set(ignored_keys))
+        self.log.debug(f"ALL Keys: {all_keys}")
+        self.log.debug(f"IGN Keys: {ignored_keys}")
+        self.log.debug(f"AVL Keys: {available_keys}")
+        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
+        self.srvbes.set_value("runtime", "K_PATH", K_PATH)
+        self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
+
+        self.app.stop()
+
+    def step_01_analysis_orig(self):
+        """Compilation strategy."""
         # Decide documents compilation one by one
         sources = self.srvbes.get_value("docs", "bag")
         ncd = 0  # Number of documents to be compiled
         for filepath in sources:
             adocId = os.path.basename(filepath)
             keys = self.kbdict_new["document"][adocId]["keys"]
-            need_compile = self.step_01_00_decide_document_compilation(
-                adocId, keys)
+            need_compile = self.step_01_00_decide_document_compilation(adocId, keys)
             if need_compile:
                 ncd += 1
         self.srvbes.set_value("runtime", "ncd", ncd)
@@ -125,8 +168,7 @@ class Processor(Service):
         all_keys = set(self.srvdtb.get_all_keys())
         ignored_keys = self.srvdtb.get_ignored_keys()
         available_keys = list(all_keys - set(ignored_keys))
-        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(
-            available_keys)
+        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
         self.srvbes.set_value("runtime", "K_PATH", K_PATH)
         self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
 
@@ -174,7 +216,38 @@ class Processor(Service):
 
         return alist
 
-    def step_01_00_decide_document_compilation(self, adocId: str, keys: list) -> bool:
+    def step_01_00_decide_document_compilation(self, adocId: str) -> bool:
+        """Decide which documents will be compiled.
+
+        Note: there is room for improvement here.
+        What if only content changes but not keys or title?
+        """
+
+        # Check hashes
+        try:
+            hash_new = (
+                self.kbdict_new["document"][adocId]["content_hash"]
+                + self.kbdict_new["document"][adocId]["metadata_hash"]
+            )
+            hash_cur = (
+                self.kbdict_cur["document"][adocId]["content_hash"]
+                + self.kbdict_cur["document"][adocId]["metadata_hash"]
+            )
+            HASHES_DIFFER = hash_new != hash_cur
+        except Exception as warning:
+            HASHES_DIFFER = True
+
+        # Check existence
+        htmlId = adocId.replace(".adoc", ".html")
+        cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
+        NOT_CACHED = not os.path.exists(cached_document)
+
+        DOC_COMPILATION = HASHES_DIFFER or NOT_CACHED
+        self.log.debug(f"DOC[{adocId}]: Hashes_differ[{HASHES_DIFFER}] or NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
+        return DOC_COMPILATION
+
+
+    def step_01_00_decide_document_compilation_orig(self, adocId: str, keys: list) -> bool:
         """Decide which documents will be compiled."""
         # Force compilation (from command line)?
         DOC_COMPILATION = False
@@ -182,8 +255,7 @@ class Processor(Service):
         if not FORCE_ALL:
             # Get cached document path and check if it exists
             htmlId = adocId.replace(".adoc", ".html")
-            cached_document = os.path.join(
-                self.srvbes.get_path("cache"), htmlId)
+            cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
             cached_document_exists = os.path.exists(cached_document)
 
             # Compare the document with the one in the cache
