@@ -38,7 +38,7 @@ class Processor(Service):
 
             # Get metadata
             keys, valid, reason = get_asciidoctor_attributes(filepath)
-            self.log.debug(f"{os.path.basename(filepath)} valid? {valid}. Why? {reason}")
+            self.log.debug(f"DOC[{os.path.basename(filepath)}] valid? {valid}. Why? {reason}")
 
             if not valid:
                 continue
@@ -256,8 +256,7 @@ class Processor(Service):
             rkold = sorted(self.get_kbdict_key(key, new=False))
             if rknew != rkold:
                 COMPILE_KEY = True
-            self.log.debug(
-                f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
+            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
 
             for value in values:
                 COMPILE_VALUE = False
@@ -268,9 +267,7 @@ class Processor(Service):
 
                 if VALUE_COMPARISON or VALUE_DOC_CHANGED:
                     COMPILE_VALUE = True
-                    self.log.debug(
-                        f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})"
-                    )
+                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})")
                 COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
                 COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
                 KV_PATH.append((key, value, COMPILE_VALUE))
