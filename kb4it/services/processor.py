@@ -109,25 +109,26 @@ class Processor(Service):
 
     def step_01_analysis(self):
         """Compilation strategy."""
-        # Do not analyze if force compilation is enabled in config
-        FORCE_ALL = self.srvbes.get_value("app", "force")
-        if FORCE_ALL:
-            return
+        # ~ # Do not analyze if force compilation is enabled in config
+        # ~ FORCE_ALL = self.srvbes.get_value("app", "force")
+        # ~ if FORCE_ALL:
+            # ~ self.srvbes.set_value("runtime", "K_PATH", [])
+            # ~ self.srvbes.set_value("runtime", "KV_PATH", [])
+            # ~ self.srvbes.set_value("runtime", "ncd", 0)
+            # ~ self.srvbes.set_value("runtime", "nck", 0)
+            # ~ return
 
         # Otherwise, decide documents compilation one by one
         sources = self.srvbes.get_value("docs", "bag")
         ncd = 0  # Number of documents to be compiled
         for filepath in sources:
             adocId = os.path.basename(filepath)
-            DOC_COMPILATION = self.step_01_00_decide_document_compilation(adocId)
-            if DOC_COMPILATION:
+            result = self.step_01_00_analyze_document(adocId)
+            if result['compile']:
                 ncd += 1
 
-            # Save compilation status
-            self.kbdict_new["document"][adocId]["compile"] = DOC_COMPILATION
-
             # Write adoc to tmp directory for further compilation
-            if DOC_COMPILATION:
+            if result['compile']:
                 # Write new adoc to temporary dir
                 self.changed_docs.add(adocId)
                 source_path = os.path.join(self.srvbes.get_path("source"), adocId)
@@ -135,6 +136,13 @@ class Processor(Service):
                 target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
                 with open(target, "w", encoding="utf-8") as target_adoc:
                     target_adoc.write(content)
+
+            if result['titles_differ']:
+                for key in self.srvdtb.get_doc_keys(adocId):
+                    self.force_keys.add(key)
+
+            # Save compilation status
+            self.kbdict_new["document"][adocId]["compile"] = result['compile']
 
         self.srvbes.set_value("runtime", "ncd", ncd)
 
@@ -145,11 +153,10 @@ class Processor(Service):
         self.log.debug(f"ALL Keys: {all_keys}")
         self.log.debug(f"IGN Keys: {ignored_keys}")
         self.log.debug(f"AVL Keys: {available_keys}")
+        self.log.debug(f"FCD Keys: {self.force_keys}")
         K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
         self.srvbes.set_value("runtime", "K_PATH", K_PATH)
         self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
-
-        self.app.stop()
 
     def step_01_analysis_orig(self):
         """Compilation strategy."""
@@ -216,12 +223,13 @@ class Processor(Service):
 
         return alist
 
-    def step_01_00_decide_document_compilation(self, adocId: str) -> bool:
+    def step_01_00_analyze_document(self, adocId: str) -> dict:
         """Decide which documents will be compiled.
 
         Note: there is room for improvement here.
         What if only content changes but not keys or title?
         """
+        result = {}
 
         # Check hashes
         try:
@@ -236,82 +244,29 @@ class Processor(Service):
             HASHES_DIFFER = hash_new != hash_cur
         except Exception as warning:
             HASHES_DIFFER = True
+        result['hashes_differ'] = HASHES_DIFFER
+
+        # Check title change
+        try:
+            title_cur = self.kbdict_cur["document"][adocId]["Title"]
+            title_new = self.kbdict_new["document"][adocId]["Title"]
+            TITLES_DIFFER = title_new != title_cur
+        except KeyError:
+            TITLES_DIFFER = True
+        result['titles_differ'] = TITLES_DIFFER
 
         # Check existence
         htmlId = adocId.replace(".adoc", ".html")
         cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
         NOT_CACHED = not os.path.exists(cached_document)
+        result['not_cached'] = NOT_CACHED
 
-        DOC_COMPILATION = HASHES_DIFFER or NOT_CACHED
-        self.log.debug(f"DOC[{adocId}]: Hashes_differ[{HASHES_DIFFER}] or NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
-        return DOC_COMPILATION
+        DOC_COMPILATION = HASHES_DIFFER or TITLES_DIFFER or NOT_CACHED
+        result['compile'] = DOC_COMPILATION
 
+        self.log.debug(f"DOC[{adocId}]: Hashes_differ[{HASHES_DIFFER}] or TITLES_DIFFER[{TITLES_DIFFER}] or NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
 
-    def step_01_00_decide_document_compilation_orig(self, adocId: str, keys: list) -> bool:
-        """Decide which documents will be compiled."""
-        # Force compilation (from command line)?
-        DOC_COMPILATION = False
-        FORCE_ALL = self.srvbes.get_value("app", "force")
-        if not FORCE_ALL:
-            # Get cached document path and check if it exists
-            htmlId = adocId.replace(".adoc", ".html")
-            cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
-            cached_document_exists = os.path.exists(cached_document)
-
-            # Compare the document with the one in the cache
-            if not cached_document_exists:
-                DOC_COMPILATION = True
-                REASON = "Not cached"
-            else:
-                try:
-                    hash_new = (
-                        self.kbdict_new["document"][adocId]["content_hash"]
-                        + self.kbdict_new["document"][adocId]["metadata_hash"]
-                    )
-                    hash_cur = (
-                        self.kbdict_cur["document"][adocId]["content_hash"]
-                        + self.kbdict_cur["document"][adocId]["metadata_hash"]
-                    )
-                    # ~ self.log.debug(f"[BACKEND-CACHE] - Old hash for {adocId}: '{hash_cur}'")
-                    # ~ self.log.debug(f"[BACKEND-CACHE] - New hash for {adocId}: '{hash_new}'")
-                    DOC_COMPILATION = hash_new != hash_cur
-                    REASON = f"Hashes differ? {DOC_COMPILATION}"
-                except Exception as warning:
-                    DOC_COMPILATION = True
-                    REASON = warning
-        else:
-            REASON = "Forced"
-
-        COMPILE = DOC_COMPILATION or FORCE_ALL
-        # Save compilation status
-        try:
-            self.kbdict_new["document"][adocId]["compile"] = COMPILE
-        except KeyError as error:
-            self.log.error("FIXME: check")
-            self.log.error(f"DOC[{adocId}]: {error}")
-            self.app.stop(error=True)
-
-        if COMPILE:
-            # Write new adoc to temporary dir
-            self.changed_docs.add(adocId)
-            source_path = os.path.join(self.srvbes.get_path("source"), adocId)
-            content = open(source_path, "r", encoding="utf-8").read()
-            target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
-            with open(target, "w", encoding="utf-8") as target_adoc:
-                target_adoc.write(content)
-
-            try:
-                title_cur = self.kbdict_cur["document"][adocId]["Title"]
-                title_new = self.kbdict_new["document"][adocId]["Title"]
-                if title_new != title_cur:
-                    for key in keys:
-                        if key != "Title":
-                            self.force_keys.add(key)
-            except KeyError:
-                # Very likely there is no kbdict, so this step is skipped
-                pass
-        self.log.debug(f"DOC[{adocId}] COMPILE[{COMPILE}] REASON[{REASON}]")
-        return COMPILE
+        return result
 
     def step_01_01_decide_keys_compilation(self, available_keys):
         """Decide which keys and values will be compiled."""
@@ -322,38 +277,36 @@ class Processor(Service):
         for key in sorted(available_keys):
             COMPILE_KEY = False
             FORCE_KEY = key in self.force_keys
-            FORCE_ALL = self.srvbes.get_value("app", "force") or FORCE_KEY
             values = self.srvdtb.get_all_values_for_key(key)
-
-            # Compare keys values for the current run and the cache
-            # Otherwise, the key is not recompiled when a value is deleted
-            rknew = sorted(self.get_kbdict_key(key, new=True))
-            rkold = sorted(self.get_kbdict_key(key, new=False))
-            if rknew != rkold:
-                COMPILE_KEY = True
-            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
-
-            for value in values:
-                COMPILE_VALUE = False
-                rkvnew = self.get_kbdict_value(key, value, new=True)
-                rkvold = self.get_kbdict_value(key, value, new=False)
-                VALUE_COMPARISON = rkvnew != rkvold
-                VALUE_DOC_CHANGED = bool(self.changed_docs & set(rkvnew))
-
-                if VALUE_COMPARISON or VALUE_DOC_CHANGED:
-                    COMPILE_VALUE = True
-                    self.log.debug(f"KEY[{key}] VALUE[{value}] CHANGE[{VALUE_COMPARISON}] | ({rkvnew}-{rkvold})")
-                COMPILE_VALUE = COMPILE_VALUE or FORCE_ALL
-                COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
-                KV_PATH.append((key, value, COMPILE_VALUE))
-                self.log.debug(
-                    f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
-            COMPILE_KEY = COMPILE_KEY or FORCE_ALL
-            K_PATH.append((key, values, COMPILE_KEY))
-            if COMPILE_KEY:
-                self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+            if FORCE_KEY:
+                self.log.debug(f"KEY[{key}] COMPILE[{FORCE_KEY}]")
+                K_PATH.append((key, values, FORCE_KEY))
                 nck += 1
-        self.srvbes.set_value("runtime", "nck", nck)
+                for value in values:
+                    KV_PATH.append((key, value, FORCE_KEY))
+            else:
+                # Compare keys values for the current run and the cache
+                # Otherwise, the key is not recompiled when a value is deleted
+                rknew = sorted(self.get_kbdict_key(key, new=True))
+                rkold = sorted(self.get_kbdict_key(key, new=False))
+                if rknew != rkold:
+                    COMPILE_KEY = True
+                # ~ self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
+
+                for value in values:
+                    rkvnew = self.get_kbdict_value(key, value, new=True)
+                    rkvold = self.get_kbdict_value(key, value, new=False)
+                    COMPILE_VALUE = rkvnew != rkvold
+                    COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
+                    KV_PATH.append((key, value, COMPILE_VALUE))
+                    self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
+
+                self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+                K_PATH.append((key, values, COMPILE_KEY))
+
+                if COMPILE_KEY:
+                    nck += 1
+            self.srvbes.set_value("runtime", "nck", nck)
         return K_PATH, KV_PATH
 
     def step_02_transformation(self):
@@ -369,6 +322,7 @@ class Processor(Service):
 
         # Keys
         keys_with_compile_true = 0
+        self.log.debug(f"K_PATH: {runtime['K_PATH']}")
         for kpath in runtime["K_PATH"]:
             key, values, COMPILE_KEY = kpath
             adocId = f"{valid_filename(key)}.adoc"
@@ -382,6 +336,7 @@ class Processor(Service):
 
         # # Keys/Values
         pairs_with_compile_true = 0
+        self.log.debug(f"KV_PATH: {runtime['KV_PATH']}")
         for kvpath in runtime["KV_PATH"]:
             key, value, COMPILE_VALUE = kvpath
             adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"

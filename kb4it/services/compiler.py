@@ -81,21 +81,20 @@ class Compiler(Service):
                 try:
                     MUST_COMPILE = kbdict_new['document'][basename]['compile']
                 except KeyError:
-                    # It is not a source file
-                    MUST_COMPILE = False
-                IS_DISTRIBUTED = basename in distributed
-                key = basename[:basename.rfind('.')]
-                IS_FORCED = key in force_keys
-                COMPILE = MUST_COMPILE or IS_DISTRIBUTED or IS_FORCED
+                    MUST_COMPILE = True
+                # ~ IS_DISTRIBUTED = basename in distributed
+                # ~ key = basename[:basename.rfind('.')]
+                # ~ IS_FORCED = key in force_keys
+                # ~ COMPILE = MUST_COMPILE or IS_DISTRIBUTED or IS_FORCED
 
-                dir_cache = self.srvbes.get_path('cache')
-                cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
-                if not os.path.exists(cached_file):
-                    COMPILE = True
+                # ~ dir_cache = self.srvbes.get_path('cache')
+                # ~ cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
+                # ~ if not os.path.exists(cached_file):
+                    # ~ COMPILE = True
 
                 FORCE = self.srvbes.get_value("repo", "force") or False
-                self.log.debug(f"DOC[{basename}]: COMPILE[{COMPILE}] or FORCE[{FORCE}]? {COMPILE or FORCE}")
-                if COMPILE or FORCE:
+                self.log.debug(f"DOC[{basename}]: COMPILE[{MUST_COMPILE}] or FORCE[{FORCE}]? {MUST_COMPILE or FORCE}")
+                if MUST_COMPILE or FORCE:
                     cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
                     # ~ self.log.debug(f"CMD[{cmd}]")
                     data = (doc, cmd, num)
@@ -105,7 +104,7 @@ class Compiler(Service):
                     jobs.append(job)
                     num = num + 1
                 else:
-                    self.log.debug(f"DOC[{basename}] cached. Avoid compiling")
+                    self.log.debug(f"DOC[{basename}] skipped")
 
             if num - 1 > 0:
                 self.log.debug("[COMPILATION] - START")

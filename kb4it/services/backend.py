@@ -298,8 +298,13 @@ class Backend(Service):
         """Extract, Analyze and Transform."""
         self.log.debug("[EXTRACTION] - START")
         self.srvprc.step_00_extraction()
+        self.log.debug("[EXTRACTION] - END")
+        self.log.debug("[ANALYSIS] - START")
         self.srvprc.step_01_analysis()
+        self.log.debug("[ANALYSIS] - END")
+        self.log.debug("[TRANSFORMATION] - START")
         self.srvprc.step_02_transformation()
+        self.log.debug("[TRANSFORMATION] - END")
 
     def stage_04_process_theme(self):
         """Run theme logic."""
