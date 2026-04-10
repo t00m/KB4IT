@@ -61,7 +61,7 @@ class Compiler(Service):
                 adocprops += f"-a {prop} "
         runtime["adocprops"] = adocprops
         self.log.debug(
-            f"[COMPILATION] - Parameters passed to Asciidoctor: {adocprops}")
+            f"[COMPILATION] - Asciidoctor parameters: {adocprops}")
 
         distributed = self.srvbes.get_value("docs", "targets")
         max_workers = self.srvbes.get_value("repo", "workers")
@@ -111,16 +111,12 @@ class Compiler(Service):
                 # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
                 for job in jobs:
                     adoc, res, jobid = job.result()
-                    self.log.debug(
-                        f"DOC[{os.path.basename(adoc)}] compiled successfully"
-                    )
+                    # ~ self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
                     jobcount += 1
                     if jobcount % ENV["CONF"]["MAX_WORKERS"] == 0:
                         pct = int(jobcount * 100 / len(docs))
-                        # ~ self.log.info("[COMPILATION] - %3s%% done", str(pct))
-                        self.log.debug(
-                            f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done"
-                        )
+                        self.log.info("[COMPILATION] - STATS - %3s%% done", str(pct))
+                        # ~ self.log.debug(f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
 
                 dcompe = datetime.datetime.now()
                 comptime = dcompe - dcomps
@@ -129,15 +125,12 @@ class Compiler(Service):
                     duration = 1
                 avgspeed = int((num - 1) / duration)
                 pct = int(jobcount * 100 / len(docs))
-                self.log.debug(
-                    f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done"
-                )
-                self.log.debug(
-                    f"STATS - Compilation time: {comptime.seconds} seconds")
-                self.log.debug(f"STATS - Compiled docs: {num - 1}")
-                self.log.debug(f"STATS - Avg. Speed: {avgspeed} docs/sec")
+                self.log.debug(f"[COMPILATION] - STATS - {pct}% done")
+                self.log.debug(f"[COMPILATION] - STATS - Compilation time: {comptime.seconds} seconds")
+                self.log.debug(f"[COMPILATION] - STATS - Compiled docs: {num - 1}")
+                self.log.debug(f"[COMPILATION] - STATS - Avg. Speed: {avgspeed} docs/sec")
             else:
-                self.log.debug("STATS - Nothing to compile!")
+                self.log.debug("[COMPILATION] - STATS - Nothing to compile!")
             self.log.debug("[COMPILATION] - END")
 
     def compilation_started(self, data):

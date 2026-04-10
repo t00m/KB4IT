@@ -109,16 +109,6 @@ class Processor(Service):
 
     def step_01_analysis(self):
         """Compilation strategy."""
-        # ~ # Do not analyze if force compilation is enabled in config
-        # ~ FORCE_ALL = self.srvbes.get_value("app", "force")
-        # ~ if FORCE_ALL:
-            # ~ self.srvbes.set_value("runtime", "K_PATH", [])
-            # ~ self.srvbes.set_value("runtime", "KV_PATH", [])
-            # ~ self.srvbes.set_value("runtime", "ncd", 0)
-            # ~ self.srvbes.set_value("runtime", "nck", 0)
-            # ~ return
-
-        # Otherwise, decide documents compilation one by one
         sources = self.srvbes.get_value("docs", "bag")
         ncd = 0  # Number of documents to be compiled
         for filepath in sources:
@@ -230,6 +220,7 @@ class Processor(Service):
         What if only content changes but not keys or title?
         """
         result = {}
+        FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
 
         # Check hashes
         try:
@@ -261,7 +252,7 @@ class Processor(Service):
         NOT_CACHED = not os.path.exists(cached_document)
         result['not_cached'] = NOT_CACHED
 
-        DOC_COMPILATION = HASHES_DIFFER or TITLES_DIFFER or NOT_CACHED
+        DOC_COMPILATION = HASHES_DIFFER or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
         self.log.debug(f"DOC[{adocId}]: Hashes_differ[{HASHES_DIFFER}] or TITLES_DIFFER[{TITLES_DIFFER}] or NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
@@ -272,11 +263,12 @@ class Processor(Service):
         """Decide which keys and values will be compiled."""
         K_PATH = []
         KV_PATH = []
+        FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
 
         nck = 0  # Number of keys to be compiled
         for key in sorted(available_keys):
             COMPILE_KEY = False
-            FORCE_KEY = key in self.force_keys
+            FORCE_KEY = key in self.force_keys or FORCE_COMPILATION
             values = self.srvdtb.get_all_values_for_key(key)
             if FORCE_KEY:
                 self.log.debug(f"KEY[{key}] COMPILE[{FORCE_KEY}]")
@@ -296,8 +288,8 @@ class Processor(Service):
                 for value in values:
                     rkvnew = self.get_kbdict_value(key, value, new=True)
                     rkvold = self.get_kbdict_value(key, value, new=False)
-                    COMPILE_VALUE = rkvnew != rkvold
-                    COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE
+                    COMPILE_VALUE = rkvnew != rkvold or FORCE_COMPILATION
+                    COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE or FORCE_COMPILATION
                     KV_PATH.append((key, value, COMPILE_VALUE))
                     self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
 

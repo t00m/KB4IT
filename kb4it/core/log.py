@@ -10,7 +10,7 @@ License: GPL v3
 
 import logging
 
-_PATTERN = ("%(levelname)10s | %(lineno)4d | %(name)-12s | %(message)s")
+_PATTERN = ("%(levelname)10s | %(lineno)4d | %(name)-15s | %(message)s")
 _DATEFMT = "%d/%m/%Y %H:%M:%S"
 
 
