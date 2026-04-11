@@ -113,6 +113,11 @@ class Processor(Service):
         ncd = 0  # Number of documents to be compiled
         for filepath in sources:
             adocId = os.path.basename(filepath)
+            try:
+                self.kbdict_new["document"][adocId]
+            except KeyError:
+                continue
+
             result = self.step_01_00_analyze_document(adocId)
             if result['compile']:
                 ncd += 1
