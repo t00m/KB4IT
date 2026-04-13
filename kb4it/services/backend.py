@@ -85,6 +85,9 @@ class Backend(Service):
 
             # Activate application log
             app_log_file = Path.joinpath(dir_log, "kb4it.log")
+            # Rotate the existing log before redirecting
+            if app_log_file.exists():
+                shutil.copy2(app_log_file, app_log_file.with_suffix('.log.old'))
             self.runtime["logfile"] = app_log_file
             self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
             if os.path.exists(app_log_file):
