@@ -48,8 +48,8 @@ class KB4IT:
             self.params["LOGLEVEL"] = "INFO"
         setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
-        self.log.debug(
-            f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
+        #self.log.debug(
+        #    f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']}")
         self.log.debug(
             f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]"
@@ -145,6 +145,9 @@ class KB4IT:
         """Start application."""
         action = self.params["action"]
         workflow = self.get_service("Workflow")
+        self.log.debug(
+            f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {now()}"
+        )
         self.log.debug(f"[CONTROLLER] - Executing KB4IT action '{action}'")
         if action == "themes":
             workflow.list_themes()
