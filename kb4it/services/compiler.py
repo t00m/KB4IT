@@ -35,11 +35,9 @@ class Compiler(Service):
         self.log.debug("[COMPILER] - START")
         runtime = self.srvbes.get_dict("runtime")
         dcomps = datetime.datetime.now()
-        force_keys = self.srvprc.get_force_keys()
 
         # copy online resources to target path
-        resources_dir_tmp = os.path.join(
-            self.srvbes.get_path("tmp"), "resources")
+        resources_dir_tmp = os.path.join(self.srvbes.get_path("tmp"), "resources")
 
         # if path already exists, remove it before copying with copytree()
         if os.path.exists(resources_dir_tmp):
@@ -49,9 +47,7 @@ class Compiler(Service):
 
         adocprops = ""
         for prop in ENV["CONF"]["ADOCPROPS"]:
-            self.log.debug(
-                f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]"
-            )
+            self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
             if ENV["CONF"]["ADOCPROPS"][prop] is not None:
                 if "%s" in ENV["CONF"]["ADOCPROPS"][prop]:
                     adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target')} "
@@ -60,10 +56,10 @@ class Compiler(Service):
             else:
                 adocprops += f"-a {prop} "
         runtime["adocprops"] = adocprops
-        self.log.debug(
-            f"[COMPILATION] - Asciidoctor parameters: {adocprops}")
+        self.log.debug(f"[COMPILATION] - Asciidoctor parameters: {adocprops}")
 
         distributed = self.srvbes.get_value("docs", "targets")
+        self.log.debug(f"Targets: {distributed}")
         max_workers = self.srvbes.get_value("repo", "workers")
         if max_workers is None:
             max_workers = get_default_workers()
@@ -78,33 +74,25 @@ class Compiler(Service):
             kbdict_new = self.srvprc.get_kb_dict()
             for doc in docs:
                 basename = os.path.basename(doc)
-                try:
-                    MUST_COMPILE = kbdict_new['document'][basename]['compile']
-                except KeyError:
-                    MUST_COMPILE = False
-                # ~ IS_DISTRIBUTED = basename in distributed
-                # ~ key = basename[:basename.rfind('.')]
-                # ~ IS_FORCED = key in force_keys
-                # ~ COMPILE = MUST_COMPILE or IS_DISTRIBUTED or IS_FORCED
+                self.log.debug(f"TargetDoc[{basename}] [{doc}]")
+                # ~ try:
+                    # ~ MUST_COMPILE = kbdict_new['document'][basename]['compile']
+                # ~ except KeyError:
+                    # ~ MUST_COMPILE = False
 
-                # ~ dir_cache = self.srvbes.get_path('cache')
-                # ~ cached_file = os.path.join(dir_cache, basename.replace('.adoc', '.html'))
-                # ~ if not os.path.exists(cached_file):
-                    # ~ COMPILE = True
-
-                FORCE = self.srvbes.get_value("repo", "force") or False
-                self.log.debug(f"DOC[{basename}]: COMPILE[{MUST_COMPILE}] or FORCE[{FORCE}]? {MUST_COMPILE or FORCE}")
-                if MUST_COMPILE or FORCE:
-                    cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
-                    # ~ self.log.debug(f"CMD[{cmd}]")
-                    data = (doc, cmd, num)
-                    self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
-                    job = exe.submit(self.compilation_started, data)
-                    job.add_done_callback(self.compilation_finished)
-                    jobs.append(job)
-                    num = num + 1
-                else:
-                    self.log.debug(f"DOC[{basename}] skipped")
+                # ~ FORCE = self.srvbes.get_value("repo", "force") or False
+                # ~ self.log.debug(f"DOC[{basename}]: COMPILE[{MUST_COMPILE}] or FORCE[{FORCE}]? {MUST_COMPILE or FORCE}")
+                # ~ if MUST_COMPILE or FORCE:
+                cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
+                # ~ self.log.debug(f"CMD[{cmd}]")
+                data = (doc, cmd, num)
+                self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
+                job = exe.submit(self.compilation_started, data)
+                job.add_done_callback(self.compilation_finished)
+                jobs.append(job)
+                num = num + 1
+                # ~ else:
+                    # ~ self.log.debug(f"DOC[{basename}] skipped")
 
             if num - 1 > 0:
                 self.log.debug("[COMPILATION] - START")

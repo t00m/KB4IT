@@ -731,7 +731,7 @@ class Theme(Builder):
             self.srvdtb.add_document(f"{var['pagename']}.adoc")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
             self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
-            self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
+            # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
