@@ -51,18 +51,11 @@ class KB4IT:
         #self.log.debug(
         #    f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']}")
-        self.log.debug(
-            f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]"
-        )
-        self.log.debug(
-            f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]"
-        )
-        self.log.debug(
-            f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]"
-        )
-        self.log.debug(
-            f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]"
-        )
+        self.log.debug(f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
+        self.log.debug(f"[CONTROLLER] - CONF[SYS] MAKO[{ENV['SYS']['MAKO']['VERSION']}]")
+        self.log.debug(f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
+        self.log.debug(f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
+        self.log.debug(f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
 
         # Start up
         self.__check_params()
