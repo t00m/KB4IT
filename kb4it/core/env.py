@@ -36,11 +36,18 @@ if not supported:
     print("KB4IT only runs in with Python version >= 3.11")
     sys.exit(-1)
 
+try:
+    import mako
+    ENV["SYS"]["MAKO"] = {}
+    ENV["SYS"]["MAKO"]["VERSION"] = mako.__version__
+except ModuleNotFoundError as error:
+    print("Mako template system not found")
+    sys.exit(-1)
+
 ENV["SYS"]["PLATFORM"] = {}
 ENV["SYS"]["PLATFORM"]["NODE"] = platform.node()
 try:
-    ENV["SYS"]["PLATFORM"]["OS"] = platform.freedesktop_os_release()[
-        "PRETTY_NAME"]
+    ENV["SYS"]["PLATFORM"]["OS"] = platform.freedesktop_os_release()["PRETTY_NAME"]
 except FileNotFoundError:
     print("KB4IT only runs in GNU/Linux systems")
     sys.exit(-1)
