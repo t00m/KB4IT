@@ -81,7 +81,7 @@ class Compiler(Service):
                 try:
                     MUST_COMPILE = kbdict_new['document'][basename]['compile']
                 except KeyError:
-                    MUST_COMPILE = True
+                    MUST_COMPILE = False
                 # ~ IS_DISTRIBUTED = basename in distributed
                 # ~ key = basename[:basename.rfind('.')]
                 # ~ IS_FORCED = key in force_keys
