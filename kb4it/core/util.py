@@ -293,15 +293,15 @@ def get_asciidoctor_attributes(docpath: str):
 
 
 def get_hash_from_content(content: str):
-    """Get the md5 hash for any string."""
-    return hashlib.md5(content.encode("utf-8")).hexdigest()
+    """Get the blake2b hash for any string."""
+    return hashlib.blake2b(content.encode("utf-8")).hexdigest()
 
 
 def get_hash_from_file(path):
-    """Get the md5 hash for a given filename."""
+    """Get the blake2b hash for a given filename."""
     if os.path.exists(path):
         with open(path, "rb") as fin:
-            fhash = hashlib.file_digest(fin, "md5").hexdigest()
+            fhash = hashlib.file_digest(fin, "blake2b").hexdigest()
     else:
         fhash = None
     return fhash
