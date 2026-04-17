@@ -96,11 +96,6 @@ class Backend(Service):
             shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
-            self.runtime["sort_attribute"] = self.repo.get("sort")
-            if self.runtime["sort_attribute"] is None:
-                self.log.error(
-                    "No property 'sort' defined in repository config")
-                self.app.stop(error=True)
 
             # Initialize docs structure
             self.runtime["docs"] = {}

@@ -18,7 +18,6 @@ class Database(Service):
     db = {}
     keys = {}
     keys_doc = {}
-    sort_attribute = None
     sorted_docs = []
     cache_props = {}
     cache_docs_by_kvpath = {}
@@ -31,7 +30,6 @@ class Database(Service):
         self.srvbes = self.get_service("Backend")
         repo = self.srvbes.get_dict("repo")
         runtime = self.srvbes.get_dict("runtime")
-        self.sort_attribute = runtime.get("sort_attribute")
         self.sorted_docs = []
         self.keys["all"] = []
         self.keys["blocked"] = ["Title", "SystemPage"]
@@ -101,7 +99,7 @@ class Database(Service):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
                         self.log.warning(
-                            f"{docId} not compliant: no valid date '{sdate}'. Check attribute {self.sort_attribute}"
+                            f"{docId} not compliant: no valid date '{sdate}'. Check attribute 'Date'"
                         )
                         continue
                     dt = guess_datetime(sdate)
@@ -123,10 +121,10 @@ class Database(Service):
     def get_doc_timestamp(self, docId) -> str:
         """Get timestamp for a given document."""
         try:
-            return self.db[docId][self.sort_attribute][0]
+            return self.db[docId]["Date"][0]
         except KeyError as error:
             self.log.debug(
-                f"Document '{docId}' doesn't have the sort attribute {error}"
+                f"Document '{docId}' doesn't have a 'Date' attribute {error}"
             )
             return None
 
@@ -296,4 +294,4 @@ class Database(Service):
             return self.cache_keys_by_doc[docId]
 
     def get_sort_attribute(self):
-        return self.sort_attribute
+        return "Date"

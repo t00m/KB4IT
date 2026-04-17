@@ -58,7 +58,7 @@ class Processor(Service):
                 for value in alist:
                     if len(value.strip()) == 0:
                         continue
-                    if key == runtime["sort_attribute"]:
+                    if key == "Date":
                         value = string_timestamp(value)
                     self.srvdtb.add_document_key(adocId, key, value)
 
@@ -294,7 +294,7 @@ class Processor(Service):
                     rkvnew = self.get_kbdict_value(key, value, new=True)
                     rkvold = self.get_kbdict_value(key, value, new=False)
                     COMPILE_VALUE = rkvnew != rkvold or FORCE_COMPILATION
-                    COMPILE_KEY = COMPILE_KEY or COMPILE_VALUE or FORCE_COMPILATION
+                    COMPILE_KEY = COMPILE_VALUE or FORCE_COMPILATION
                     KV_PATH.append((key, value, COMPILE_VALUE))
                     self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
 

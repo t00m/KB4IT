@@ -85,7 +85,7 @@ class Theme(Builder):
 
         datatable = {}
         repo = self.srvbes.get_dict('repo')
-        sort_attribute = repo['sort']
+        sort_attribute = "Date"
 
         # Add datatable hearders
         datatable['header'] = ''
@@ -191,7 +191,7 @@ class Theme(Builder):
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
         TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
-        SORT = self.srvbes.get_value('runtime', 'sort_attribute')
+        SORT = "Date"
         # Get events dates
         for docId in doclist:
             props = self.srvdtb.get_doc_properties(docId)
@@ -933,12 +933,7 @@ class Theme(Builder):
             go = go and True
 
         # Check sorting property
-        self.log.info(f"[THEME/CHECKS] - Sort attribute: '{repo['sort'][0]}'")
-        if len(repo['sort']) == 0:
-            self.log.error("[THEME/CHECKS] - \tError: 'sort' property is empty.")
-            self.log.info("[THEME/CHECKS] - \tSolution: Make sure that property 'sort' is defined")
-            self.log.info("[THEME/CHECKS] - \tProperty 'sort' is mandatory")
-            go = go and False
+        self.log.info("[THEME/CHECKS] - Sort attribute: 'Date'")
 
         # Check source path
         self.log.info(f"[THEME/CHECKS] - Source attribute: '{repo['source']}'")

@@ -40,7 +40,7 @@ class Workflow(Service):
             print(f"                     Title: {repo.get('title')}")
             print(f"                   Tagline: {repo.get('tagline')}")
             print(f"                Theme used: {repo.get('theme')}")
-            print(f"            Docs sorted by: {repo.get('sort')}")
+            print(f"            Docs sorted by: Date")
             print(f"         Force compilation: {repo.get('force')}")
             print(f"         Number of workers: {repo.get('workers')}")
             print(f"  Website target directory: {repo.get('target')}")

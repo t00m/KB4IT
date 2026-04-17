@@ -2,29 +2,32 @@
 # -*- coding: utf-8 -*-
 
 """
+Server module.
+
+# File: theme.py
 # Author: Tomás Vírseda
 # License: GPL v3
-# Description: Theme Blog for KB4IT
+# Description: default theme script
 """
 
 import os
-import sys
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from kb4it.core.env import ENV
 from kb4it.services.builder import Builder
-from kb4it.core.util import extract_sections_from_adoc
 from kb4it.core.util import valid_filename
 from kb4it.core.util import exec_cmd
-from kb4it.core.util import set_max_frequency
-from kb4it.core.util import get_font_size
+from kb4it.core.util import set_max_frequency, get_font_size
 from kb4it.core.util import guess_datetime
 from kb4it.core.util import get_human_datetime
 from kb4it.core.util import get_human_datetime_day
 from kb4it.core.util import get_human_datetime_month
 from kb4it.core.util import get_human_datetime_year
+from kb4it.core.util import get_asciidoctor_attributes
+from kb4it.core.util import json_save
 from kb4it.core.util import ellipsize_text
+from kb4it.core.util import get_year, get_month, get_day
 
 
 class Theme(Builder):
@@ -84,6 +87,8 @@ class Theme(Builder):
         datatable['header'] = ''
         if len(headers) == 0:
             headers = repo['datatable']
+        # ~ sort_attr = repo['sort'][0]
+        # ~ headers.insert(0, sort_attr)
 
         for item in headers:
             var = {}
@@ -138,7 +143,7 @@ class Theme(Builder):
         return TPL_DATATABLE.render(var=datatable)
 
 
-    def build_page_index(self):
+    def build_page_index(self, var):
         """Create blog index page.
 
         At this point, all posts have been already converted to HTML.
@@ -152,10 +157,8 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in documents. Skip '{func_name}'")
-            self.srvbes.add_target('index.adoc', 'index.html')
             return
 
-        var = self.get_theme_var()
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_dict('repo')
@@ -177,19 +180,16 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             adoc_filepath = os.path.join(self.srvbes.get_path('source'), post)
-            sections = extract_sections_from_adoc(adoc_filepath)
-            excerpt = 'Excerpt' in sections.keys()
-            if excerpt:
-                s = sections['Excerpt']['start']
-                e = sections['Excerpt']['end']
-                lines = open(adoc_filepath).readlines()
-                text = '\n'.join(lines[s+1:e])
-                var['post']['Excerpt'] = "\n".join([f"<p>{line}</p>" if line.strip() else line for line in text.strip().splitlines()])
-            else:
-                var['post']['Excerpt'] = "<p>Excerpt missing</p>"
             adoc_content = open(adoc_filepath, 'r').read()
+            html_filename = post.replace('.adoc', '.html')
+            html_filepath = os.path.join(self.srvbes.get_path('target'), html_filename)
+            html_content = open(html_filepath, 'r').read()
+            body_mark = "<!-- BODY :: START -->"
+            body_start = html_content.find("<!-- BODY :: START -->")
+            body_end = html_content.find("<!-- BODY :: END -->")
             timestamp = var['post'][sort_by][0]
             dt = guess_datetime(timestamp)
+            var['post']['body'] = html_content[body_start + len(body_mark):body_end]
             var['basename_adoc'] = post
             var['metadata'] = self.build_metadata_section(post)
             var['source_adoc'] = adoc_content
@@ -199,10 +199,15 @@ class Theme(Builder):
             except Exception as error:
                 self.log.warning(f"DOC[{post}] ignored. No metadata '{error}' found")
 
-        self.distribute_adoc('index', html)
-        self.srvdtb.add_document('index.adoc')
-        self.srvdtb.add_document_key('index.adoc', 'Title', 'Index')
-        self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
+        runtime = self.srvbes.get_dict('runtime')
+        adocprops = runtime['adocprops']
+        index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
+        with open(index_file, 'w') as fout:
+            fout.write(html)
+        cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
+        data = (index_file, cmd, 1)
+        res = exec_cmd(data)
+        self.build_page(index_file, var)
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -285,7 +290,7 @@ class Theme(Builder):
                         self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'SystemPage', 'Yes')
                     else:
                         self.distribute_html(EVENT_PAGE_DAY, pagename)
-                    self.srvbes.add_target(f"{EVENT_PAGE_DAY}.adoc", f"{EVENT_PAGE_DAY}.html")
+
 
         # Build month event pages
         for year in self.events_docs:
@@ -313,7 +318,12 @@ class Theme(Builder):
                 else:
                     pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
                     self.distribute_html(EVENT_PAGE_MONTH, pagename)
-                self.srvbes.add_target(f"{EVENT_PAGE_MONTH}.adoc", f"{EVENT_PAGE_MONTH}.html")
+
+        # ~ self.srvcal.set_events_days(self.dey)
+        # ~ self.srvcal.set_events_docs(self.events_docs)
+
+        # ~ self.log.error(self.dey)
+        # ~ self.log.error(self.events_docs)
 
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
@@ -336,7 +346,6 @@ class Theme(Builder):
             else:
                 pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
-            self.srvbes.add_target(f"{EVENT_PAGE_YEAR}.adoc", f"{EVENT_PAGE_YEAR}.html")
 
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
@@ -358,6 +367,11 @@ class Theme(Builder):
         return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def build_page_events(self):
+        if self.srvbes.get_value('runtime', 'ncd') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in documents. Skip '{func_name}'")
+            return
+
         doclist = []
         ecats = {}
         repo = self.srvbes.get_dict('repo')
@@ -365,6 +379,7 @@ class Theme(Builder):
             event_types = repo['events']
         except:
             event_types = []
+        # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
 
         for docId in self.srvdtb.get_documents():
             if self.srvdtb.is_system(docId):
@@ -374,13 +389,6 @@ class Theme(Builder):
             title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
         HTML = self.build_year_pagination(self.dey.keys())
-
-        if self.srvbes.get_value('runtime', 'ncd') == 0:
-            func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"No changes in documents. Skip '{func_name}'")
-            self.srvbes.add_target('events.adoc', 'events.html')
-            return
-
         events = {}
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
@@ -392,18 +400,26 @@ class Theme(Builder):
 
     def post_activities(self):
         self.log.debug("[POSTPROCESSING THEME] - START")
-        # ~ var = self.get_theme_var()
-        # ~ self.build_page_index(var)
+        var = self.get_theme_var()
+        self.build_page_index(var)
         self.log.debug("[POSTPROCESSING THEME] - END")
 
     def build(self):
         """Create standard pages for default theme"""
-        self.build_page_index()
+        # ~ var = self.get_theme_var()
+        #self.log.debug("This is the Blog theme")
+        # ~ self.app.register_service('EvCal', EventsCalendar())
+        # ~ self.app.register_service('Timeline', Timeline())
+        # ~ self.srvcal = self.get_service('EvCal')
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        # ~ self.build_page_index(var)
         self.build_page_index_all()
+        # ~ self.create_page_about_kb4it()
+        # ~ self.create_page_help()
+        pass
 
     def page_hook_pre(self, var):
         var['related'] = ''
@@ -416,10 +432,10 @@ class Theme(Builder):
         return var
 
     def build_page_properties(self):
+        """Create properties page"""
         if self.srvbes.get_value('runtime', 'nck') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in keys. Skip '{func_name}'")
-            self.srvbes.add_target('properties.adoc', 'properties.html')
             return
 
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
@@ -453,6 +469,11 @@ class Theme(Builder):
 
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
+        if self.srvbes.get_value('runtime', 'nck') == 0:
+            func_name = sys._getframe().f_code.co_name
+            self.log.debug(f"No changes in keys. Skip '{func_name}'")
+            return
+
         dkeyurl = {}
         for docId in self.srvdtb.get_documents():
             tags = self.srvdtb.get_values(docId, key)
@@ -516,7 +537,6 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'nck') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in keys. Skip '{func_name}'")
-            self.srvbes.add_target('stats.adoc', 'stats.html')
             return
 
         TPL_PAGE_STATS = self.template('PAGE_STATS')
@@ -544,7 +564,6 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in documents. Skip '{func_name}'")
-            self.srvbes.add_target('all.adoc', 'all.html')
             return
 
         TPL_PAGE_ALL = self.template('PAGE_ALL')
@@ -563,6 +582,7 @@ class Theme(Builder):
         self.srvdtb.add_document_key('all.adoc', 'Title', 'All documents')
         self.srvdtb.add_document_key('all.adoc', 'SystemPage', 'Yes')
 
+        # ~ self.log.debug("Created page for all documents")
         return page
 
     def extract_toc(self, source):
@@ -630,9 +650,7 @@ class Theme(Builder):
             strict = False
 
         if not exists_hdoc:
-            self.log.error("Source[%s] not converted to HTML properly", basename_adoc)
-            self.log.error(f"{basename_adoc} asciidoc path: {path_adoc}")
-            self.log.error(f"{basename_hdoc} asciidoc path: {path_hdoc}")
+            self.log.error(" - Source[%s] not converted to HTML properly", basename_adoc)
             return
 
         # ~ self.log.debug(" - Page[%s] transformation started", basename_hdoc)
@@ -735,7 +753,13 @@ class Theme(Builder):
 
         with open(path_hdoc, 'w') as fhtml:
             fhtml.write(HTML)
+            # ~ tree = etree.fromstring(HTML, parser)
+            # ~ pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+            # ~ fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
+            # ~ self.log.debug(" - Page[%s] saved to: %s", basename_hdoc, path_hdoc)
+            # ~ self.log.debug(" - Page[%s] transformation finished", basename_hdoc)
 
+    # ~ @timeit
     def build_page_key(self, key, values):
         """Create page for a key."""
         TPL_PAGE_KEY = self.template('PAGE_KEY')
@@ -761,6 +785,9 @@ class Theme(Builder):
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
         self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
 
+        # ~ self.log.debug(" - Created page key '%s'", var['pagename'])
+
+    # ~ @timeit
     def build_page_key_value(self, kvpath):
         key, value, COMPILE_VALUE = kvpath
         TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
@@ -793,7 +820,6 @@ class Theme(Builder):
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"No changes in documents. Skip '{func_name}'")
-            self.srvbes.add_target('bookmarks.adoc', 'bookmarks.html')
             return
 
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
@@ -806,7 +832,7 @@ class Theme(Builder):
             if doc_bookmarked:
                 doclist.append(docId)
 
-        self.log.debug("Found %d bookmarks", len(doclist))
+        self.log.debug(" - Found %d bookmarks", len(doclist))
         headers = []
         datatable = self.build_datatable(headers, doclist)
 
@@ -910,8 +936,8 @@ class Theme(Builder):
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""
-        # ~ self.build_page_index()
-        self.log.debug("No sources generated by this theme")
+        # ~ self.log.debug("No sources generated by this theme")
+        pass
 
     def check_config(self):
         go = True
