@@ -111,17 +111,20 @@ class Compiler(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            if rc != 0:
-                self.log.error(f"[COMPILER] ASCIIDOCTOR_FAIL doc={basename} rc={rc}")
-            try:
-                self.srvthm.build_page(path_hdoc)
-            except MemoryError:
-                self.log.error("[COMPILER] MEMORY_EXHAUSTED")
-                self.log.error("[COMPILER] HINT use fewer workers or add memory")
-                self.log.error("[COMPILER] EXIT")
+            self.log.info(f"[COMPILER] ASCIIDOCTOR doc={basename} rc={rc}")
+            if rc is True:
+                try:
+                    self.srvthm.build_page(path_hdoc)
+                except MemoryError:
+                    self.log.error("[COMPILER] MEMORY_EXHAUSTED")
+                    self.log.error("[COMPILER] HINT use fewer workers or add memory")
+                    self.log.error("[COMPILER] EXIT")
+                    self.app.stop()
+                except Exception as error:
+                    self.log.error(f"[COMPILER] ERROR {error}")
+                    self.print_traceback()
+                    self.app.stop()
+                return x
+            else:
                 self.app.stop()
-            except Exception as error:
-                self.log.error(f"[COMPILER] ERROR {error}")
-                self.print_traceback()
-                self.app.stop()
-            return x
+
