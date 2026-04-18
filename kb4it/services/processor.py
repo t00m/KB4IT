@@ -9,8 +9,8 @@ Service Processor.
 import os
 
 from kb4it.core.service import Service
-from kb4it.core.util import (get_asciidoctor_attributes, get_hash_from_dict,
-                             get_hash_from_file, string_timestamp,
+from kb4it.core.util import (get_asciidoctor_attributes, get_hash_from_body,
+                             get_hash_from_dict, string_timestamp,
                              valid_filename)
 
 
@@ -25,11 +25,11 @@ class Processor(Service):
         self.kbdict_new = {}  # New compilation cache
         self.kbdict_new["document"] = {}
         self.kbdict_new["metadata"] = {}
-        self.force_keys = set()  # List of keys which must be compiled (forced)
+        self.force_kv_pairs = set()  # (key, value) pairs forced to recompile
         self.changed_docs = set()
 
-    def get_force_keys(self):
-        return self.force_keys
+    def get_force_kv_pairs(self):
+        return self.force_kv_pairs
 
     def step_00_extraction(self):
         """Extract metadata."""
@@ -90,12 +90,12 @@ class Processor(Service):
             # cache, KB4IT determines if a document must be compiled
             # again. Very useful to reduce the compilation time.
 
-            # Get Document Content and Metadata Hashes
-            c_hash = get_hash_from_file(filepath)
+            # Get Document Body and Metadata Hashes
+            b_hash = get_hash_from_body(filepath)
             m_hash = get_hash_from_dict(keys)
-            self.kbdict_new["document"][adocId]["content_hash"] = c_hash
+            self.kbdict_new["document"][adocId]["body_hash"] = b_hash
             self.kbdict_new["document"][adocId]["metadata_hash"] = m_hash
-            self.log.debug(f"DOC[{adocId}] HASH[{c_hash}{m_hash}]")
+            self.log.debug(f"DOC[{adocId}] BODY[{b_hash}] META[{m_hash}]")
 
             # Add compiled page to the target list
             htmlId = adocId.replace(".adoc", ".html")
@@ -110,6 +110,8 @@ class Processor(Service):
     def step_01_analysis(self):
         """Compilation strategy."""
         sources = self.srvbes.get_value("docs", "bag")
+        ignored = set(self.srvdtb.get_ignored_keys())
+        blocked = set(self.srvdtb.get_blocked_keys())
         ncd = 0  # Number of documents to be compiled
         for filepath in sources:
             adocId = os.path.basename(filepath)
@@ -121,10 +123,7 @@ class Processor(Service):
             result = self.step_01_00_analyze_document(adocId)
             if result['compile']:
                 ncd += 1
-
-            # Write adoc to tmp directory for further compilation
-            if result['compile']:
-                # Write new adoc to temporary dir
+                # Write new adoc to temporary dir for asciidoctor
                 self.changed_docs.add(adocId)
                 source_path = os.path.join(self.srvbes.get_path("source"), adocId)
                 content = open(source_path, "r", encoding="utf-8").read()
@@ -132,9 +131,15 @@ class Processor(Service):
                 with open(target, "w", encoding="utf-8") as target_adoc:
                     target_adoc.write(content)
 
+            # On title change, force recompile of the exact (key, value)
+            # pairs this document belongs to — so its title updates wherever
+            # it is listed.
             if result['titles_differ']:
                 for key in self.srvdtb.get_doc_keys(adocId):
-                    self.force_keys.add(key)
+                    if key in ignored or key in blocked:
+                        continue
+                    for value in self.srvdtb.get_values(adocId, key):
+                        self.force_kv_pairs.add((key, value))
 
             # Save compilation status
             self.kbdict_new["document"][adocId]["compile"] = result['compile']
@@ -143,33 +148,11 @@ class Processor(Service):
 
         # Decide keys compilation
         all_keys = set(self.srvdtb.get_all_keys())
-        ignored_keys = self.srvdtb.get_ignored_keys()
-        available_keys = list(all_keys - set(ignored_keys))
+        available_keys = list(all_keys - ignored)
         self.log.debug(f"ALL Keys: {sorted(all_keys)}")
-        self.log.debug(f"IGN Keys: {sorted(ignored_keys)}")
+        self.log.debug(f"IGN Keys: {sorted(ignored)}")
         self.log.debug(f"AVL Keys: {sorted(available_keys)}")
-        self.log.debug(f"FCD Keys: {sorted(self.force_keys)}")
-        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
-        self.srvbes.set_value("runtime", "K_PATH", K_PATH)
-        self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
-
-    def step_01_analysis_orig(self):
-        """Compilation strategy."""
-        # Decide documents compilation one by one
-        sources = self.srvbes.get_value("docs", "bag")
-        ncd = 0  # Number of documents to be compiled
-        for filepath in sources:
-            adocId = os.path.basename(filepath)
-            keys = self.kbdict_new["document"][adocId]["keys"]
-            need_compile = self.step_01_00_decide_document_compilation(adocId, keys)
-            if need_compile:
-                ncd += 1
-        self.srvbes.set_value("runtime", "ncd", ncd)
-
-        # Decide keys compilation
-        all_keys = set(self.srvdtb.get_all_keys())
-        ignored_keys = self.srvdtb.get_ignored_keys()
-        available_keys = list(all_keys - set(ignored_keys))
+        self.log.debug(f"FCD KV pairs: {sorted(self.force_kv_pairs)}")
         K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
         self.srvbes.set_value("runtime", "K_PATH", K_PATH)
         self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
@@ -219,30 +202,40 @@ class Processor(Service):
         return alist
 
     def step_01_00_analyze_document(self, adocId: str) -> dict:
-        """Decide which documents will be compiled.
+        """Decide whether a document must be recompiled.
 
-        Note: there is room for improvement here.
-        What if only content changes but not keys or title?
+        Body, metadata and title are compared independently:
+          - body_differs:     body content changed (after the EOH mark)
+          - metadata_differs: extracted keys changed
+          - titles_differ:    title changed
+
+        A doc recompiles when its body, metadata or title changed, its
+        HTML isn't cached yet, or compilation is forced. Metadata changes
+        also trigger key/value index recompilation in
+        step_01_01_decide_keys_compilation.
         """
         result = {}
         FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
 
-        # Check hashes
+        # Body hash
         try:
-            hash_new = (
-                self.kbdict_new["document"][adocId]["content_hash"]
-                + self.kbdict_new["document"][adocId]["metadata_hash"]
-            )
-            hash_cur = (
-                self.kbdict_cur["document"][adocId]["content_hash"]
-                + self.kbdict_cur["document"][adocId]["metadata_hash"]
-            )
-            HASHES_DIFFER = hash_new != hash_cur
-        except Exception as warning:
-            HASHES_DIFFER = True
-        result['hashes_differ'] = HASHES_DIFFER
+            body_new = self.kbdict_new["document"][adocId]["body_hash"]
+            body_cur = self.kbdict_cur["document"][adocId]["body_hash"]
+            BODY_DIFFERS = body_new != body_cur
+        except (KeyError, TypeError):
+            BODY_DIFFERS = True
+        result['body_differs'] = BODY_DIFFERS
 
-        # Check title change
+        # Metadata hash
+        try:
+            meta_new = self.kbdict_new["document"][adocId]["metadata_hash"]
+            meta_cur = self.kbdict_cur["document"][adocId]["metadata_hash"]
+            METADATA_DIFFERS = meta_new != meta_cur
+        except (KeyError, TypeError):
+            METADATA_DIFFERS = True
+        result['metadata_differs'] = METADATA_DIFFERS
+
+        # Title change
         try:
             title_cur = self.kbdict_cur["document"][adocId]["Title"]
             title_new = self.kbdict_new["document"][adocId]["Title"]
@@ -251,59 +244,68 @@ class Processor(Service):
             TITLES_DIFFER = True
         result['titles_differ'] = TITLES_DIFFER
 
-        # Check existence
+        # HTML cache existence
         htmlId = adocId.replace(".adoc", ".html")
         cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
         NOT_CACHED = not os.path.exists(cached_document)
         result['not_cached'] = NOT_CACHED
 
-        DOC_COMPILATION = HASHES_DIFFER or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
+        DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
-        self.log.debug(f"DOC[{adocId}]: Hashes_differ[{HASHES_DIFFER}] or TITLES_DIFFER[{TITLES_DIFFER}] or NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
+        self.log.debug(f"DOC[{adocId}]: BODY[{BODY_DIFFERS}] META[{METADATA_DIFFERS}] TITLE[{TITLES_DIFFER}] NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
 
         return result
 
     def step_01_01_decide_keys_compilation(self, available_keys):
-        """Decide which keys and values will be compiled."""
+        """Decide which keys and values will be compiled.
+
+        A key/value page recompiles when:
+          - its doc set changed (rkvnew != rkvold), OR
+          - it was forced via force_kv_pairs (doc title changed), OR
+          - compilation is globally forced.
+        A key index page recompiles when:
+          - its value set changed (rknew != rkold), OR
+          - any of its (key, value) pages recompiles, OR
+          - compilation is globally forced.
+        """
         K_PATH = []
         KV_PATH = []
         FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
 
         nck = 0  # Number of keys to be compiled
         for key in sorted(available_keys):
-            COMPILE_KEY = False
-            FORCE_KEY = key in self.force_keys or FORCE_COMPILATION
             values = self.srvdtb.get_all_values_for_key(key)
-            if FORCE_KEY:
-                self.log.debug(f"KEY[{key}] COMPILE[{FORCE_KEY}]")
-                K_PATH.append((key, values, FORCE_KEY))
+
+            if FORCE_COMPILATION:
+                K_PATH.append((key, values, True))
+                for value in values:
+                    KV_PATH.append((key, value, True))
+                self.log.debug(f"KEY[{key}] COMPILE[True] (forced)")
                 nck += 1
-                for value in values:
-                    KV_PATH.append((key, value, FORCE_KEY))
-            else:
-                # Compare keys values for the current run and the cache
-                # Otherwise, the key is not recompiled when a value is deleted
-                rknew = sorted(self.get_kbdict_key(key, new=True))
-                rkold = sorted(self.get_kbdict_key(key, new=False))
-                if rknew != rkold:
+                continue
+
+            # Key value-set changed?
+            rknew = sorted(self.get_kbdict_key(key, new=True))
+            rkold = sorted(self.get_kbdict_key(key, new=False))
+            COMPILE_KEY = rknew != rkold
+
+            for value in values:
+                rkvnew = self.get_kbdict_value(key, value, new=True)
+                rkvold = self.get_kbdict_value(key, value, new=False)
+                KV_FORCED = (key, value) in self.force_kv_pairs
+                COMPILE_VALUE = rkvnew != rkvold or KV_FORCED
+                KV_PATH.append((key, value, COMPILE_VALUE))
+                if COMPILE_VALUE:
                     COMPILE_KEY = True
-                # ~ self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}] | ({rknew}-{rkold})")
+                self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
 
-                for value in values:
-                    rkvnew = self.get_kbdict_value(key, value, new=True)
-                    rkvold = self.get_kbdict_value(key, value, new=False)
-                    COMPILE_VALUE = rkvnew != rkvold or FORCE_COMPILATION
-                    COMPILE_KEY = COMPILE_VALUE or FORCE_COMPILATION
-                    KV_PATH.append((key, value, COMPILE_VALUE))
-                    self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
+            K_PATH.append((key, values, COMPILE_KEY))
+            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+            if COMPILE_KEY:
+                nck += 1
 
-                self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
-                K_PATH.append((key, values, COMPILE_KEY))
-
-                if COMPILE_KEY:
-                    nck += 1
-            self.srvbes.set_value("runtime", "nck", nck)
+        self.srvbes.set_value("runtime", "nck", nck)
         return K_PATH, KV_PATH
 
     def step_02_transformation(self):
