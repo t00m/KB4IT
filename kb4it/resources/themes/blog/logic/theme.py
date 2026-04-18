@@ -650,7 +650,7 @@ class Theme(Builder):
         var['count_keys'] = len(keys)
         var['leader_items'] = []
         for key in keys:
-            if key == 'Updated':
+            if key == 'Date':
                 continue
             values = self.srvdtb.get_all_values_for_key(key)
             item = {}
