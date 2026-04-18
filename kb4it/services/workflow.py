@@ -22,13 +22,12 @@ class Workflow(Service):
         pass
 
     def list_themes(self):
-        self.log.info("KB4IT action: list available themes")
+        self.log.info("[WORKFLOW] ACTION name=list_themes")
         frontend = self.get_service("Frontend")
         frontend.theme_list()
 
     def list_apps(self, theme):
-        self.log.debug(
-            f"KB4IT action: list available apps for theme '{theme}'")
+        self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")
         frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
 
@@ -47,30 +46,29 @@ class Workflow(Service):
             print(f"Documents source directory: {repo.get('source')}")
 
     def create_repository(self):
-        self.log.info("KB4IT action: create new repository")
+        self.log.info("[WORKFLOW] ACTION name=create_repository")
         frontend = self.app.get_service("Frontend")
         params = self.app.get_params()
-        self.log.debug(params)
+        self.log.debug(f"[WORKFLOW] PARAMS {params}")
         initialize = False
         theme, repo_path = params["theme"], params["repo_path"]
-        self.log.debug(f"Theme: {theme}")
-        self.log.debug(f"Repository path: {repo_path}")
+        self.log.debug(f"[WORKFLOW] THEME name={theme}")
+        self.log.debug(f"[WORKFLOW] REPO_PATH path={repo_path}")
         theme_path = frontend.theme_search(theme=theme)
         if theme_path is None:
-            self.log.error(f"Theme '{theme}' doesn't exist.")
-            self.log.info("This is the list of themes available:")
+            self.log.error(f"[WORKFLOW] THEME_NOT_FOUND name={theme}")
+            self.log.info("[WORKFLOW] LIST_AVAILABLE_THEMES")
             frontend.theme_list()
         else:
             if not os.path.exists(repo_path):
-                self.log.warning(
-                    f"Repository path '{repo_path}' does not exist")
+                self.log.warning(f"[WORKFLOW] REPO_PATH_MISSING path={repo_path}")
                 os.makedirs(repo_path, exist_ok=True)
-                self.log.warning(f"Repository path '{repo_path}' created")
+                self.log.warning(f"[WORKFLOW] REPO_PATH_CREATED path={repo_path}")
             initialize = True
 
         if initialize:
-            self.log.info(f"Repository path: {repo_path}")
-            self.log.info(f"Using theme '{theme}' from path '{theme_path}'")
+            self.log.info(f"[WORKFLOW] REPO_PATH path={repo_path}")
+            self.log.info(f"[WORKFLOW] THEME_USE name={theme} path={theme_path}")
             repo_demo = os.path.join(theme_path, "example", "repo")
             copydir(repo_demo, repo_path)
             source_dir = os.path.join(repo_path, "source")
@@ -96,12 +94,12 @@ class Workflow(Service):
                 | stat.S_IXUSR
                 | stat.S_IXGRP,
             )
-            self.log.info("Repository initialized")
-            self.log.info(f"You can compile it by executing '{script}'")
-            self.log.info(f"Add your documents in '{source_dir}'")
-            self.log.info(f"Documents to be published in '{target_dir}'")
-            self.log.info(f"Check your repository settings in '{config_file}'")
-            self.log.info("For more KB4IT options, execute: kb4it -h")
+            self.log.info("[WORKFLOW] REPO_INITIALIZED")
+            self.log.info(f"[WORKFLOW] HINT compile_script path={script}")
+            self.log.info(f"[WORKFLOW] HINT source_dir path={source_dir}")
+            self.log.info(f"[WORKFLOW] HINT target_dir path={target_dir}")
+            self.log.info(f"[WORKFLOW] HINT config_file path={config_file}")
+            self.log.info("[WORKFLOW] HINT help command='kb4it -h'")
 
     def build_website(self):
         """Build workflow:
@@ -117,36 +115,36 @@ class Workflow(Service):
         repo = backend.get_dict("repo")
         repo_title = repo["title"]
         repo_theme = repo["theme"]
-        self.log.info(f"Theme '{repo_theme}' - Repository '{repo_title}'")
+        self.log.info(f"[WORKFLOW] BUILD theme={repo_theme} repo={repo_title}")
 
-        self.log.info("1 - Check environment")
+        self.log.info("[WORKFLOW] STAGE n=1 name=check_environment")
         backend.stage_01_check_environment()
         theme = self.get_service("Theme")
 
-        self.log.info("2 - Get sources")
+        self.log.info("[WORKFLOW] STAGE n=2 name=get_sources")
         theme.generate_sources()
         backend.stage_02_get_source_documents()
 
-        self.log.info("3 - Process sources")
+        self.log.info("[WORKFLOW] STAGE n=3 name=process_sources")
         backend.stage_03_process_sources()
 
-        self.log.info("4 - Process theme")
+        self.log.info("[WORKFLOW] STAGE n=4 name=process_theme")
         backend.stage_04_process_theme()
 
-        self.log.info("5 - Compilation")
+        self.log.info("[WORKFLOW] STAGE n=5 name=compilation")
         backend.stage_05_compilation()
 
-        self.log.info("7 - Theme post activities")
+        self.log.info("[WORKFLOW] STAGE n=7 name=theme_post")
         theme.post_activities()
 
-        self.log.info("6 - Deploy")
+        self.log.info("[WORKFLOW] STAGE n=6 name=deploy")
         backend.stage_06_deploy()
 
         # Report
         homepage = os.path.join(
             os.path.abspath(backend.get_path("target")), "index.html"
         )
-        self.log.info("Repository website built")
-        self.log.info(f"URL: {homepage}")
-        self.log.info(f"Full log: {backend.get_value('runtime', 'logfile')}")
-        self.log.info("The End")
+        self.log.info("[WORKFLOW] BUILD_COMPLETE")
+        self.log.info(f"[WORKFLOW] URL {homepage}")
+        self.log.info(f"[WORKFLOW] LOG path={backend.get_value('runtime', 'logfile')}")
+        self.log.info("[WORKFLOW] END")

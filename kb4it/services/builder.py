@@ -65,7 +65,7 @@ class Builder(Service):
             try:
                 fpag.write(content)
             except Exception as error:
-                self.log.error(f"DOC[{ADOC_NAME}] ERROR[{error}]")
+                self.log.error(f"[BUILDER] WRITE_FAIL doc={ADOC_NAME} error={error}")
         PAGE_NAME = ADOC_NAME.replace(".adoc", ".html")
 
         # Add compiled page to the target list
@@ -103,7 +103,7 @@ class Builder(Service):
                         self.templates[template] = Template("")
 
         if not TEMPLATE_FOUND:
-            self.log.error(f"TEMPLATE[{template}] not found")
+            self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
             sys.exit(-1)
 
         return self.templates[template]

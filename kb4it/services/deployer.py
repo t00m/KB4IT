@@ -25,13 +25,13 @@ class Deployer(Service):
 
     def execute(self):
         """Deploy website build by KB4IT."""
-        self.log.debug("[DEPLOYER] - START")
+        self.log.debug("[DEPLOYER] START")
         # ~ ncd = self.srvbes.get_value("runtime", "ncd")
         # ~ nck = self.srvbes.get_value("runtime", "nck")
         # ~ DOCS_CHANGED = ncd > 0
         # ~ KEYS_CHANGED = nck > 0
         # ~ if DOCS_CHANGED or KEYS_CHANGED:
-        self.log.debug("Changes detected. Deploying")
+        self.log.debug("[DEPLOYER] DEPLOY_BEGIN")
         self.step_00_copy_source_to_cache()
         # ~ self.step_02_copy_temporary_files_to_distributed_directory()
         self.step_03_clear_target()
@@ -45,7 +45,7 @@ class Deployer(Service):
         self.step_11_cleanup()
         # ~ else:
             # ~ self.log.debug("No changes detected. Avoid deploying")
-        self.log.debug("[DEPLOYER] - END")
+        self.log.debug("[DEPLOYER] END")
 
     def step_00_copy_source_to_cache(self):
         """Copy all from source directory to cache."""
@@ -63,16 +63,15 @@ class Deployer(Service):
                 shutil.copy(source, target)
             except Exception as warning:
                 # FIXME
-                self.log.warning(warning)
-                self.log.warning(f"[CLEANUP] - Missing source file: {source}")
+                self.log.warning(f"[DEPLOYER] WARN {warning}")
+                self.log.warning(f"[DEPLOYER] SOURCE_MISSING path={source}")
                 continue
-        self.log.debug("Copy temporary files to distributed directory")
+        self.log.debug("[DEPLOYER] COPY_TMP_TO_DIST")
 
     def step_03_clear_target(self):
         """Clear target directory."""
         delete_target_contents(self.srvbes.get_path("target"))
-        self.log.debug(
-            f"Deleted target contents in: {self.srvbes.get_path('target')}")
+        self.log.debug(f"[DEPLOYER] TARGET_CLEARED path={self.srvbes.get_path('target')}")
 
     # Refresh target
     def step_04_copy_sources_to_target(self):
@@ -83,27 +82,21 @@ class Deployer(Service):
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
         os.makedirs(docsdir, exist_ok=True)
         copy_docs(files, docsdir)
-        self.log.debug(
-            f"STATS - Copied {len(files)} asciidoctor sources to target path"
-        )
+        self.log.debug(f"[DEPLOYER] COPIED_SOURCES_TO_TARGET n={len(files)}")
 
     def step_05_copy_compiled_to_cache(self):
         """Copy compiled documents to cache path."""
         pattern = os.path.join(self.srvbes.get_path("tmp"), "*.html")
         files = glob.glob(pattern)
         copy_docs(files, self.srvbes.get_path("cache"))
-        self.log.debug(
-            f"STATS - Copied {len(files)} html files from temporary path to cache path"
-        )
+        self.log.debug(f"[DEPLOYER] COPIED_HTML_TO_CACHE n={len(files)}")
 
     def step_06_copy_all_to_cache(self):
         """Copy objects in temporary target to cache path."""
         pattern = os.path.join(self.srvbes.get_path("tmp"), "*.*")
         files = glob.glob(pattern)
         copy_docs(files, self.srvbes.get_path("cache"))
-        self.log.debug(
-            f"STATS - Copied {len(files)} html files from temporary target to cache path"
-        )
+        self.log.debug(f"[DEPLOYER] COPIED_ALL_TO_CACHE n={len(files)}")
 
     def step_07_copy_compiled_documents_to_target(self):
         """Copy cached documents to target path."""
@@ -116,16 +109,12 @@ class Deployer(Service):
             try:
                 shutil.copy(source, target)
             except FileNotFoundError as error:
-                self.log.error(error)
-                self.log.error(
-                    "Consider to run the command again with the option -force"
-                )
+                self.log.error(f"[DEPLOYER] ERROR {error}")
+                self.log.error("[DEPLOYER] HINT rerun with -force")
                 self.print_traceback()
                 self.app.stop()
             n += 1
-        self.log.debug(
-            f"STATS - Copied {n} cached documents successfully to target path"
-        )
+        self.log.debug(f"[DEPLOYER] COPIED_CACHED_TO_TARGET n={n}")
 
     def step_08_copy_global_resources_to_target(self):
         """Copy global resources to target path."""
@@ -141,7 +130,7 @@ class Deployer(Service):
             theme_target_dir, CUSTOM_THEME_ID))
         copydir(ENV["GPATH"]["COMMON"], os.path.join(
             resources_dir_target, "common"))
-        self.log.debug("STATS - Copied global resources to target path")
+        self.log.debug("[DEPLOYER] COPIED_GLOBAL_RESOURCES")
 
         # Copy local resources to target path
         source_resources_dir = os.path.join(
@@ -151,7 +140,7 @@ class Deployer(Service):
                 self.srvbes.get_path("target"), "resources"
             )
             copydir(source_resources_dir, resources_dir_target)
-            self.log.debug("Copied local resources to target path")
+            self.log.debug("[DEPLOYER] COPIED_LOCAL_RESOURCES")
 
     def step_09_copy_html_to_cache(self):
         """Copy back all HTML files from target to cache."""
@@ -161,7 +150,7 @@ class Deployer(Service):
         pattern = os.path.join(dir_target, "*.html")
         html_files = glob.glob(pattern)
         copy_docs(html_files, dir_cache)
-        self.log.debug("Copying HTML files back to cache...")
+        self.log.debug("[DEPLOYER] COPIED_HTML_BACK_TO_CACHE")
 
     def step_10_copy_kbdict_to_target(self):
         """Copy JSON database to target path."""
@@ -174,4 +163,4 @@ class Deployer(Service):
         delete_target_contents(self.srvbes.get_path("tmp"))
         delete_target_contents(self.srvbes.get_path("www"))
         os.unlink(self.app.get_log_file())
-        self.log.debug("Cleanup temporary files")
+        self.log.debug("[DEPLOYER] CLEANUP")

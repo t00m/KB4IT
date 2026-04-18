@@ -272,12 +272,10 @@ def get_asciidoctor_attributes(docpath: str):
                     end_of_header_found = True
                     break
             if not end_of_header_found:
-                reason = f"Document '{basename}' doesn't have the END-OF-HEADER mark"
-                log.error(f"Error: {reason}")
+                log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_eohmark")
                 keys = {}
         else:
-            reason = f"Document '{basename}' doesn't have a title"
-            log.error(f"Error: {reason}")
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_title")
             keys = {}
     except IndexError as error:
         reason = f"Document '{basename}' could not be processed. Empty?"

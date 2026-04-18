@@ -40,18 +40,18 @@ class Backend(Service):
             config_path = Path(config_file).absolute()
             if config_path.exists():
                 try:
-                    self.log.debug(f"CONF[REPO] Config file: {config_path}")
+                    self.log.debug(f"[BACKEND] CONFIG_FILE path={config_path}")
                     self.repo = json_load(config_path)
-                    self.log.debug("CONF[REPO] Configuration loaded")
+                    self.log.debug("[BACKEND] CONFIG_LOADED")
                 except AttributeError as error:
-                    self.log.error("Repo config couldn't be parsed")
-                    self.log.error(error)
+                    self.log.error("[BACKEND] CONFIG_PARSE_FAIL")
+                    self.log.error(f"[BACKEND] ERROR {error}")
                     self.app.stop(error=True)
                 except Exception as error:
-                    self.log.error(error)
+                    self.log.error(f"[BACKEND] ERROR {error}")
                     self.app.stop(error=True)
             else:
-                self.log.error(f"Config path '{config_path}' does not exist")
+                self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
                 self.app.stop(error=True)
 
             self.params["force"] = self.repo.get("force") or False
@@ -89,7 +89,7 @@ class Backend(Service):
             if app_log_file.exists():
                 shutil.copy2(app_log_file, app_log_file.with_suffix('.log.old'))
             self.runtime["logfile"] = app_log_file
-            self.log.debug(f"CONF[APP] LOG_FILE[{app_log_file}]")
+            self.log.debug(f"[BACKEND] LOG_FILE path={app_log_file}")
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
             kb4it_temp_log = self.app.get_log_file()
@@ -132,7 +132,7 @@ class Backend(Service):
             adict = None
 
         if adict is None:
-            self.log.error(f"Dictionary doesn't exist for domain {domain}")
+            self.log.error(f"[BACKEND] DOMAIN_UNKNOWN domain={domain}")
         else:
             adict[key] = value
 
@@ -161,28 +161,28 @@ class Backend(Service):
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         try:
             kbdict = json_load(kb4it_dbfile)
-            self.log.debug(f"[CONF] - Loading KBDICT from {kb4it_dbfile}")
+            self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
         except FileNotFoundError:
             kbdict = {}
             kbdict["document"] = {}
             kbdict["metadata"] = {}
         except Exception as error:
-            self.log.error(f"There was an error reading file {kb4it_dbfile}")
-            self.log.error(error)
+            self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
+            self.log.error(f"[BACKEND] ERROR {error}")
             self.app.stop(error=True)
-        self.log.debug(f"[CONF] - Current kbdict entries: {len(kbdict)}")
+        self.log.debug(f"[BACKEND] KBDICT_ENTRIES n={len(kbdict)}")
         return kbdict
 
     def save_kbdict(self, kbdict):
         """Save kb4it dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         json_save(kb4it_dbfile, kbdict)
-        self.log.debug(f"[CONF] - KBDICT {kb4it_dbfile} saved")
+        self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")
 
     def add_target(self, aid, hid):
         """Add documents to be compiled."""
         self.runtime["docs"]["targets"].add(hid)
-        self.log.debug(f"DOC[{aid}] targets to RESOURCE[{hid}]")
+        self.log.debug(f"[BACKEND] ADD_TARGET doc={aid} resource={hid}")
 
     def get_services(self):
         """Get services needed."""
@@ -205,43 +205,39 @@ class Backend(Service):
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service("Frontend")
-        self.log.debug("[CHECKS] - START")
-        self.log.debug(f"CONF[APP] DIR[CACHE] VALUE[{self.get_path('cache')}]")
-        self.log.debug(f"CONF[APP] DIR[WORKDIR] VALUE[{self.get_path('tmp')}]")
-        self.log.debug(f"CONF[APP] DIR[TMPWWW] VALUE[{self.get_path('www')}]")
+        self.log.debug("[BACKEND] CHECKS_START")
+        self.log.debug(f"[BACKEND] DIR name=cache path={self.get_path('cache')}")
+        self.log.debug(f"[BACKEND] DIR name=tmp path={self.get_path('tmp')}")
+        self.log.debug(f"[BACKEND] DIR name=www path={self.get_path('www')}")
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_path("source")):
-            self.log.error(
-                f"Source directory '{self.get_path('source')}' doesn't exist."
-            )
+            self.log.error(f"[BACKEND] SOURCE_MISSING path={self.get_path('source')}")
             self.app.stop(error=True)
-        self.log.debug(
-            f"CONF[APP] DIR[SOURCE] VALUE[{self.get_path('source')}]")
+        self.log.debug(f"[BACKEND] DIR name=source path={self.get_path('source')}")
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_path("target")):
             os.makedirs(self.get_path("target"), exist_ok=True)
-        self.log.debug(
-            f"CONF[APP] DIR[TARGET] VALUE[{self.get_path('target')}]")
+        self.log.debug(f"[BACKEND] DIR name=target path={self.get_path('target')}")
 
         theme_name = self.get_value("repo", "theme")
         if theme_name is None:
-            self.log.debug("Theme not provided.")
+            self.log.debug("[BACKEND] THEME_MISSING")
             self.app.stop(error=True)
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
                 frontend.theme_load(os.path.basename(theme_path))
             else:
-                self.log.error(f"Theme '{theme_name}' not found")
-                self.log.error("[CHECKS] - END")
+                self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
+                self.log.error("[BACKEND] CHECKS_END")
                 self.app.stop(error=True)
-        self.log.debug("[CHECKS] - END")
+        self.log.debug("[BACKEND] CHECKS_END")
 
     def stage_02_get_source_documents(self):
         """Get Asciidoctor documents from source directory."""
-        self.log.debug("[SOURCES] - START")
+        self.log.debug("[BACKEND] SOURCES_START")
         sources_path = self.get_path("source")
 
         # Firstly, allow theme to generate documents
@@ -267,8 +263,7 @@ class Backend(Service):
             # FIXME: Force compilation if new KB4IT version?
             # Yes. But starting with v0.8 and major.minor versions.
             # Skip patches.
-            self.log.debug(
-                "[DOC] - Added/Replaced 'About KB4IT' to your sources")
+            self.log.debug("[BACKEND] ABOUT_KB4IT_UPDATED")
             with open(about_kb4it_target, "w", encoding="utf-8") as fout:
                 fout.write(about_kb4it_content)
 
@@ -279,8 +274,7 @@ class Backend(Service):
                 ENV["GPATH"]["TEMPLATES"], "PAGE_ABOUT_APP.tpl"
             )
             shutil.copy(about_app_default, about_app_source)
-            self.log.warning(
-                "[DOC] - Added missing 'About App' to your sources")
+            self.log.warning("[BACKEND] ABOUT_APP_CREATED")
 
         # Then, get them
         self.runtime["docs"]["bag"] = get_source_docs(sources_path)
@@ -289,26 +283,26 @@ class Backend(Service):
             basenames.append(os.path.basename(filepath))
         self.runtime["docs"]["filenames"] = basenames
         self.runtime["docs"]["count"] = len(self.runtime["docs"]["bag"])
-        self.log.debug(f"STATS - Found {self.runtime['docs']['count']} docs")
-        self.log.debug("[SOURCES] - END")
+        self.log.debug(f"[BACKEND] DOCS_FOUND n={self.runtime['docs']['count']}")
+        self.log.debug("[BACKEND] SOURCES_END")
 
     def stage_03_process_sources(self):
         """Extract, Analyze and Transform."""
-        self.log.debug("[EXTRACTION] - START")
+        self.log.debug("[BACKEND] EXTRACTION_START")
         self.srvprc.step_00_extraction()
-        self.log.debug("[EXTRACTION] - END")
-        self.log.debug("[ANALYSIS] - START")
+        self.log.debug("[BACKEND] EXTRACTION_END")
+        self.log.debug("[BACKEND] ANALYSIS_START")
         self.srvprc.step_01_analysis()
-        self.log.debug("[ANALYSIS] - END")
-        self.log.debug("[TRANSFORMATION] - START")
+        self.log.debug("[BACKEND] ANALYSIS_END")
+        self.log.debug("[BACKEND] TRANSFORMATION_START")
         self.srvprc.step_02_transformation()
-        self.log.debug("[TRANSFORMATION] - END")
+        self.log.debug("[BACKEND] TRANSFORMATION_END")
 
     def stage_04_process_theme(self):
         """Run theme logic."""
-        self.log.debug("[PROCESSING THEME] - START")
+        self.log.debug("[BACKEND] THEME_START")
         self.srvthm.build()
-        self.log.debug("[PROCESSING THEME] - END")
+        self.log.debug("[BACKEND] THEME_END")
 
     def stage_05_compilation(self):
         """Compile documents to html with asciidoctor."""

@@ -44,15 +44,15 @@ class Database(Service):
         adoc = "%s.adoc" % docId
         try:
             del self.db[adoc]
-            self.log.debug("DOC[%s] deleted from database", docId)
+            self.log.debug("[DATABASE] DOC_DELETE doc=%s", docId)
             self.sort_database()
         except KeyError:
-            self.log.debug("DOC[%s] not found in database", docId)
+            self.log.debug("[DATABASE] DOC_NOT_FOUND doc=%s", docId)
 
     def add_document(self, docId: str):
         """Add a new document node to the database ('name.adoc')"""
         self.db[docId] = {}
-        self.log.debug("DOC[%s] added to database", docId)
+        self.log.debug("[DATABASE] DOC_ADD doc=%s", docId)
 
     def add_document_key(self, docId, key, value):
         """Add a new key/value node for a given document."""
@@ -63,7 +63,7 @@ class Database(Service):
         except KeyError:
             self.db[docId][key] = [value]
 
-        self.log.debug("DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
+        self.log.debug("[DATABASE] KV_ADD doc=%s key=%s value=%s", docId, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -98,9 +98,7 @@ class Database(Service):
                 if not self.is_system(docId):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
-                        self.log.warning(
-                            f"{docId} not compliant: no valid date '{sdate}'. Check attribute 'Date'"
-                        )
+                        self.log.warning(f"[DATABASE] DATE_INVALID doc={docId} value={sdate}")
                         continue
                     dt = guess_datetime(sdate)
                     adict[docId] = dt  # .strftime("%Y%m%d")
@@ -122,10 +120,8 @@ class Database(Service):
         """Get timestamp for a given document."""
         try:
             return self.db[docId]["Date"][0]
-        except KeyError as error:
-            self.log.debug(
-                f"Document '{docId}' doesn't have a 'Date' attribute {error}"
-            )
+        except KeyError:
+            self.log.debug(f"[DATABASE] DATE_MISSING doc={docId}")
             return None
 
     def is_system(self, docId):
@@ -261,9 +257,7 @@ class Database(Service):
                     if value in self.db[docId][key]:
                         docs.append(docId)
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
-            self.log.debug(
-                f"KEY[{key}] VALUE[{value}]: search returned {len(self.cache_docs_by_kvpath[kvpath])} documents"
-            )
+            self.log.debug(f"[DATABASE] KV_SEARCH key={key} value={value} count={len(self.cache_docs_by_kvpath[kvpath])}")
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_docs_by_date_range(self, ds, de) -> []:
@@ -287,9 +281,8 @@ class Database(Service):
                 for key in self.db[docId]:
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
-            except KeyError as warning:
-                self.log.warning(warning)
-                self.log.warning("DOC[%s] is not in the database", docId)
+            except KeyError:
+                self.log.warning("[DATABASE] DOC_NOT_IN_DB doc=%s", docId)
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 

@@ -15,7 +15,6 @@ import uuid
 
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger, setup_logging
-from kb4it.core.util import now
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -50,12 +49,12 @@ class KB4IT:
         self.log = get_logger(__class__.__name__)
         #self.log.debug(
         #    f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
-        self.log.debug(f"[CONTROLLER] - KB4IT {ENV['APP']['version']}")
-        self.log.debug(f"[CONTROLLER] - CONF[SYS] PYTHON[{ENV['SYS']['PYTHON']['VERSION']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[SYS] MAKO[{ENV['SYS']['MAKO']['VERSION']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[SYS] PLATFORM[{ENV['SYS']['PLATFORM']['OS']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[ENV] GPATH[ROOT] DIR[{ENV['GPATH']['ROOT']}]")
-        self.log.debug(f"[CONTROLLER] - CONF[ENV] LPATH[ROOT] DIR[{ENV['LPATH']['ROOT']}]")
+        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
+        self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")
+        self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']}")
+        self.log.debug(f"[CONTROLLER] GPATH_ROOT path={ENV['GPATH']['ROOT']}")
+        self.log.debug(f"[CONTROLLER] LPATH_ROOT path={ENV['LPATH']['ROOT']}")
 
         # Start up
         self.__check_params()
@@ -72,10 +71,8 @@ class KB4IT:
 
     def __check_params(self):
         """Check arguments passed to the application."""
-        for key in self.params:
-            self.log.debug(
-                f"[CONTROLLER] - CONF[CMDLINE] PARAM[{key}] VALUE[{self.params[key]}]"
-            )
+        for key in sorted(self.params):
+            self.log.debug(f"[CONTROLLER] PARAM name={key} value={self.params[key]}")
 
     def get_params(self):
         """Return app configuration."""
@@ -108,7 +105,7 @@ class KB4IT:
         """Get or start a registered service."""
         service = self.services.get(name) or None
         if service is None:
-            self.log.error(f"[CONTROLLER] - Service {name} not registered")
+            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
             self.stop(error=True)
         if not service.is_started():
             service.start(self)
@@ -118,10 +115,10 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug(f"[CONTROLLER] - Service[{name}] registered")
+            self.log.debug(f"[CONTROLLER] SERVICE_REGISTER name={name}")
             return service
         except KeyError as error:
-            self.log.error(f"[CONTROLLER] - {error}")
+            self.log.error(f"[CONTROLLER] ERROR {error}")
             return None
 
     def deregister_service(self, name):
@@ -131,17 +128,15 @@ class KB4IT:
         started = service.is_started()
         if registered and started:
             service.end()
-            self.log.debug(f"[CONTROLLER] - Service[{name}] unregistered")
+            self.log.debug(f"[CONTROLLER] SERVICE_UNREGISTER name={name}")
         service = None
 
     def run(self):
         """Start application."""
         action = self.params["action"]
         workflow = self.get_service("Workflow")
-        self.log.debug(
-            f"[CONTROLLER] - KB4IT {ENV['APP']['version']} started at {now()}"
-        )
-        self.log.debug(f"[CONTROLLER] - Executing KB4IT action '{action}'")
+        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] ACTION name={action}")
         if action == "themes":
             workflow.list_themes()
         elif action == "create":
@@ -157,17 +152,14 @@ class KB4IT:
     def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
         if error:
-            self.log.error(
-                "[CONTROLLER] - Execution aborted because of serious errors")
+            self.log.error("[CONTROLLER] ABORT reason=serious_errors")
         try:
             for name in self.services:
                 self.deregister_service(name)
         except AttributeError as errmsg:
             # KB4IT wasn't even started
-            self.log.error(errmsg)
-        self.log.debug(
-            f"[CONTROLLER] - KB4IT {ENV['APP']['version']} finished at {now()}"
-        )
+            self.log.error(f"[CONTROLLER] ERROR {errmsg}")
+        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
         sys.exit()
 
 

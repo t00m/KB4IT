@@ -41,7 +41,7 @@ class Processor(Service):
 
             # Get metadata
             keys, valid, reason = get_asciidoctor_attributes(filepath)
-            self.log.debug(f"DOC[{os.path.basename(filepath)}] valid? {valid}. Why? {reason}")
+            self.log.debug(f"[PROCESSOR] DOC_VALID doc={os.path.basename(filepath)} valid={valid} reason={reason}")
 
             if not valid:
                 continue
@@ -95,7 +95,7 @@ class Processor(Service):
             m_hash = get_hash_from_dict(keys)
             self.kbdict_new["document"][adocId]["body_hash"] = b_hash
             self.kbdict_new["document"][adocId]["metadata_hash"] = m_hash
-            self.log.debug(f"DOC[{adocId}] BODY[{b_hash}] META[{m_hash}]")
+            self.log.debug(f"[PROCESSOR] HASH doc={adocId} body={b_hash} meta={m_hash}")
 
             # Add compiled page to the target list
             htmlId = adocId.replace(".adoc", ".html")
@@ -149,10 +149,10 @@ class Processor(Service):
         # Decide keys compilation
         all_keys = set(self.srvdtb.get_all_keys())
         available_keys = list(all_keys - ignored)
-        self.log.debug(f"ALL Keys: {sorted(all_keys)}")
-        self.log.debug(f"IGN Keys: {sorted(ignored)}")
-        self.log.debug(f"AVL Keys: {sorted(available_keys)}")
-        self.log.debug(f"FCD KV pairs: {sorted(self.force_kv_pairs)}")
+        self.log.debug(f"[PROCESSOR] KEYS_ALL count={len(all_keys)}")
+        self.log.debug(f"[PROCESSOR] KEYS_IGNORED count={len(ignored)}")
+        self.log.debug(f"[PROCESSOR] KEYS_AVAILABLE count={len(available_keys)}")
+        self.log.debug(f"[PROCESSOR] FORCE_KV_PAIRS count={len(self.force_kv_pairs)}")
         K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
         self.srvbes.set_value("runtime", "K_PATH", K_PATH)
         self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
@@ -253,7 +253,7 @@ class Processor(Service):
         DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
-        self.log.debug(f"DOC[{adocId}]: BODY[{BODY_DIFFERS}] META[{METADATA_DIFFERS}] TITLE[{TITLES_DIFFER}] NOT_CACHED[{NOT_CACHED}] => Compile? {DOC_COMPILATION}")
+        self.log.debug(f"[PROCESSOR] ANALYZE doc={adocId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
 
         return result
 
@@ -281,7 +281,7 @@ class Processor(Service):
                 K_PATH.append((key, values, True))
                 for value in values:
                     KV_PATH.append((key, value, True))
-                self.log.debug(f"KEY[{key}] COMPILE[True] (forced)")
+                self.log.debug(f"[PROCESSOR] KEY key={key} compile=True forced=True")
                 nck += 1
                 continue
 
@@ -298,10 +298,10 @@ class Processor(Service):
                 KV_PATH.append((key, value, COMPILE_VALUE))
                 if COMPILE_VALUE:
                     COMPILE_KEY = True
-                self.log.debug(f"KEY[{key}] VALUE[{value}] COMPILE[{COMPILE_VALUE}]")
+                self.log.debug(f"[PROCESSOR] KV key={key} value={value} compile={COMPILE_VALUE}")
 
             K_PATH.append((key, values, COMPILE_KEY))
-            self.log.debug(f"KEY[{key}] COMPILE[{COMPILE_KEY}]")
+            self.log.debug(f"[PROCESSOR] KEY key={key} compile={COMPILE_KEY}")
             if COMPILE_KEY:
                 nck += 1
 
@@ -315,13 +315,12 @@ class Processor(Service):
         them again. This avoid recompile the whole database, saving time
         and CPU.
         """
-        self.log.debug("[PROCESSING] - START")
+        self.log.debug("[PROCESSOR] TRANSFORM_START")
         self.srvthm = self.get_service("Theme")
         runtime = self.srvbes.get_dict("runtime")
 
         # Keys
         keys_with_compile_true = 0
-        self.log.debug(f"K_PATH: {runtime['K_PATH']}")
         for kpath in runtime["K_PATH"]:
             key, values, COMPILE_KEY = kpath
             adocId = f"{valid_filename(key)}.adoc"
@@ -335,7 +334,6 @@ class Processor(Service):
 
         # # Keys/Values
         pairs_with_compile_true = 0
-        self.log.debug(f"KV_PATH: {runtime['KV_PATH']}")
         for kvpath in runtime["KV_PATH"]:
             key, value, COMPILE_VALUE = kvpath
             adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
@@ -347,12 +345,7 @@ class Processor(Service):
             # Add compiled page to the target list
             self.srvbes.add_target(adocId, htmlId)
 
-        self.log.debug(
-            f"STATS - {keys_with_compile_true} keys will be compiled")
-        self.log.debug(
-            f"STATS - {pairs_with_compile_true} key/value pairs will be compiled"
-        )
-        self.log.debug("STATS - Finish processing keys")
-        self.log.debug(
-            f"STATS - Target docs: {len(runtime['docs']['targets'])}")
-        self.log.debug("[PROCESSINNG] - END")
+        self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={keys_with_compile_true}")
+        self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={pairs_with_compile_true}")
+        self.log.debug(f"[PROCESSOR] TARGET_DOCS n={len(runtime['docs']['targets'])}")
+        self.log.debug("[PROCESSOR] TRANSFORM_END")

@@ -48,7 +48,7 @@ class Service:
 
     def print_traceback(self):
         """Print traceback."""
-        self.log.debug(f"Traceback:\n{get_traceback()}")
+        self.log.debug(f"[SERVICE] TRACEBACK\n{get_traceback()}")
 
     def start(self, app):
         """Start service."""
@@ -56,7 +56,7 @@ class Service:
         self.app = app
         self.log = get_logger(f"{self.modname}")
         self._initialize()
-        self.log.debug(f"[SERVICE] {self.modname} registered and started")
+        self.log.debug(f"[SERVICE] STARTED name={self.modname}")
 
     def end(self):
         """End service.

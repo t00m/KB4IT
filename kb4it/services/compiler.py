@@ -8,7 +8,6 @@ Service Compiler.
 # Description: Cleaner service
 """
 
-import datetime
 import os
 import random
 import shutil
@@ -32,9 +31,8 @@ class Compiler(Service):
 
     def execute(self):
         """Compile documents to html with asciidoctor."""
-        self.log.debug("[COMPILER] - START")
+        self.log.debug("[COMPILER] START")
         runtime = self.srvbes.get_dict("runtime")
-        dcomps = datetime.datetime.now()
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(self.srvbes.get_path("tmp"), "resources")
@@ -43,11 +41,11 @@ class Compiler(Service):
         if os.path.exists(resources_dir_tmp):
             shutil.rmtree(resources_dir_tmp)
             shutil.copytree(ENV["GPATH"]["RESOURCES"], resources_dir_tmp)
-        self.log.debug(f"Global resources copied to {resources_dir_tmp}")
+        self.log.debug("[COMPILER] RESOURCES_COPIED")
 
         adocprops = ""
-        for prop in ENV["CONF"]["ADOCPROPS"]:
-            self.log.debug(f"CONF[ASCIIDOC] PARAM[{prop}] VALUE[{ENV['CONF']['ADOCPROPS'][prop]}]")
+        for prop in sorted(ENV["CONF"]["ADOCPROPS"]):
+            self.log.debug(f"[COMPILER] ADOCPROP name={prop} value={ENV['CONF']['ADOCPROPS'][prop]}")
             if ENV["CONF"]["ADOCPROPS"][prop] is not None:
                 if "%s" in ENV["CONF"]["ADOCPROPS"][prop]:
                     adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target')} "
@@ -56,25 +54,22 @@ class Compiler(Service):
             else:
                 adocprops += f"-a {prop} "
         runtime["adocprops"] = adocprops
-        self.log.debug(f"[COMPILATION] - Asciidoctor parameters: {adocprops}")
 
         distributed = self.srvbes.get_value("docs", "targets")
-        self.log.debug(f"Targets: {distributed}")
+        targets_count = len(distributed) if distributed else 0
+        self.log.debug(f"[COMPILER] TARGETS count={targets_count}")
         max_workers = self.srvbes.get_value("repo", "workers")
         if max_workers is None:
             max_workers = get_default_workers()
-        self.log.debug(f"Number or compiling workers: {max_workers}")
+        self.log.debug(f"[COMPILER] WORKERS n={max_workers}")
         with Executor(max_workers=max_workers) as exe:
-            docs = get_source_docs(self.srvbes.get_path("tmp"))
+            docs = sorted(get_source_docs(self.srvbes.get_path("tmp")))
             jobs = []
-            jobcount = 0
             num = 1
 
-            # ~ self.log.debug(f"Generating jobs")
             kbdict_new = self.srvprc.get_kb_dict()
             for doc in docs:
                 basename = os.path.basename(doc)
-                self.log.debug(f"TargetDoc[{basename}] [{doc}]")
                 # ~ try:
                     # ~ MUST_COMPILE = kbdict_new['document'][basename]['compile']
                 # ~ except KeyError:
@@ -84,9 +79,8 @@ class Compiler(Service):
                 # ~ self.log.debug(f"DOC[{basename}]: COMPILE[{MUST_COMPILE}] or FORCE[{FORCE}]? {MUST_COMPILE or FORCE}")
                 # ~ if MUST_COMPILE or FORCE:
                 cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
-                # ~ self.log.debug(f"CMD[{cmd}]")
                 data = (doc, cmd, num)
-                self.log.debug(f"DOC[{basename}] compiles in JOB[{num}]")
+                self.log.debug(f"[COMPILER] QUEUE doc={basename}")
                 job = exe.submit(self.compilation_started, data)
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
@@ -95,31 +89,13 @@ class Compiler(Service):
                     # ~ self.log.debug(f"DOC[{basename}] skipped")
 
             if num - 1 > 0:
-                self.log.debug("[COMPILATION] - START")
-                # ~ self.log.debug(f"[COMPILATION] - %3s%% done", "0")
+                self.log.debug("[COMPILER] COMPILATION_START")
                 for job in jobs:
-                    adoc, res, jobid = job.result()
-                    # ~ self.log.debug(f"DOC[{os.path.basename(adoc)}] compiled successfully")
-                    jobcount += 1
-                    if jobcount % ENV["CONF"]["MAX_WORKERS"] == 0:
-                        pct = int(jobcount * 100 / len(docs))
-                        self.log.info("[COMPILATION] - STATS - %3s%% done", str(pct))
-                        # ~ self.log.debug(f"STATS - JOB[{jobid}/{num - 1}] Compilation progress: {pct}% done")
-
-                dcompe = datetime.datetime.now()
-                comptime = dcompe - dcomps
-                duration = comptime.seconds
-                if duration == 0:
-                    duration = 1
-                avgspeed = int((num - 1) / duration)
-                pct = int(jobcount * 100 / len(docs))
-                self.log.debug(f"[COMPILATION] - STATS - {pct}% done")
-                self.log.debug(f"[COMPILATION] - STATS - Compilation time: {comptime.seconds} seconds")
-                self.log.debug(f"[COMPILATION] - STATS - Compiled docs: {num - 1}")
-                self.log.debug(f"[COMPILATION] - STATS - Avg. Speed: {avgspeed} docs/sec")
+                    job.result()
+                self.log.debug(f"[COMPILER] COMPILED n={num - 1}")
             else:
-                self.log.debug("[COMPILATION] - STATS - Nothing to compile!")
-            self.log.debug("[COMPILATION] - END")
+                self.log.debug("[COMPILER] NOTHING_TO_COMPILE")
+            self.log.debug("[COMPILER] END")
 
     def compilation_started(self, data):
         """Execute compilation."""
@@ -135,20 +111,17 @@ class Compiler(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            self.log.debug(
-                f"[COMPILATION] - Job[{num}] for Doc[{basename}] has RC[{rc}]"
-            )
+            if rc != 0:
+                self.log.error(f"[COMPILER] ASCIIDOCTOR_FAIL doc={basename} rc={rc}")
             try:
                 self.srvthm.build_page(path_hdoc)
             except MemoryError:
-                self.log.error("Memory exhausted!")
-                self.log.error(
-                    "Please, consider using less workers or add more memory to your system"
-                )
-                self.log.error("The application will exit now...")
+                self.log.error("[COMPILER] MEMORY_EXHAUSTED")
+                self.log.error("[COMPILER] HINT use fewer workers or add memory")
+                self.log.error("[COMPILER] EXIT")
                 self.app.stop()
             except Exception as error:
-                self.log.error(error)
+                self.log.error(f"[COMPILER] ERROR {error}")
                 self.print_traceback()
                 self.app.stop()
             return x
