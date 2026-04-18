@@ -307,6 +307,18 @@ def get_hash_from_file(path):
     return fhash
 
 
+def get_hash_from_body(path):
+    """Get blake2b hash for the document body (content after EOHMARK)."""
+    if not os.path.exists(path):
+        return None
+    eohmark = ENV["CONF"]["EOHMARK"]
+    with open(path, "r", encoding="utf-8") as fin:
+        content = fin.read()
+    idx = content.find(eohmark)
+    body = content[idx + len(eohmark):] if idx >= 0 else content
+    return hashlib.blake2b(body.encode("utf-8")).hexdigest()
+
+
 def get_hash_from_dict(adict):
     """Get the md5 hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
