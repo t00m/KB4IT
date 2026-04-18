@@ -108,8 +108,8 @@ class Workflow(Service):
         3. Preprocess documents (get metadata)
         4. Process documents in a temporary dir
         5. Compile documents to html with asciidoctor
-        6. Deploy
-        7. Theme Post activities
+        6. Theme Post activities
+        7. Deploy
         """
         backend = self.get_service("Backend")
         repo = backend.get_dict("repo")
@@ -134,10 +134,10 @@ class Workflow(Service):
         self.log.info("[WORKFLOW] STAGE n=5 name=compilation")
         backend.stage_05_compilation()
 
-        self.log.info("[WORKFLOW] STAGE n=7 name=theme_post")
+        self.log.info("[WORKFLOW] STAGE n=6 name=theme_post")
         theme.post_activities()
 
-        self.log.info("[WORKFLOW] STAGE n=6 name=deploy")
+        self.log.info("[WORKFLOW] STAGE n=7 name=deploy")
         backend.stage_06_deploy()
 
         # Report
