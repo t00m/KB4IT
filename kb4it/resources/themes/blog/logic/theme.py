@@ -28,36 +28,13 @@ from kb4it.core.util import ellipsize_text
 
 
 class Theme(Builder):
-    dey = {}  # Dictionary of day events per year
-    events_docs = {}  # Dictionary storing a list of docs for a given date
+    dey = {}
+    events_docs = {}
 
-    def apply_transformations(self, content):
-        """Apply CSS transformation to the compiled page."""
-        content = content.replace(self.render_template('HTML_TAG_A_ADOC'), self.render_template('HTML_TAG_A_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_TOC_ADOC'), self.render_template('HTML_TAG_TOC_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_SECT1_ADOC'), self.render_template('HTML_TAG_SECT1_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_SECT2_ADOC'), self.render_template('HTML_TAG_SECT2_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_SECT3_ADOC'), self.render_template('HTML_TAG_SECT3_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_SECT4_ADOC'), self.render_template('HTML_TAG_SECT4_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_SECTIONBODY_ADOC'), self.render_template('HTML_TAG_SECTIONBODY_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_PRE_ADOC'), self.render_template('HTML_TAG_PRE_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_H2_ADOC'), self.render_template('HTML_TAG_H2_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_H3_ADOC'), self.render_template('HTML_TAG_H3_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_H4_ADOC'), self.render_template('HTML_TAG_H4_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_TABLE_ADOC'), self.render_template('HTML_TAG_TABLE_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_TABLE_KB4IT_ADOC'), self.render_template('HTML_TAG_TABLE_KB4IT_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_NOTE_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_NOTE_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_TIP_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_TIP_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_IMPORTANT_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_CAUTION_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_ICON_WARNING_ADOC'), self.render_template('HTML_TAG_ADMONITION_ICON_WARNING_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_IMPORTANT_ADOC'), self.render_template('HTML_TAG_ADMONITION_IMPORTANT_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_CAUTION_ADOC'), self.render_template('HTML_TAG_ADMONITION_CAUTION_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_NOTE_ADOC'), self.render_template('HTML_TAG_ADMONITION_NOTE_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_TIP_ADOC'), self.render_template('HTML_TAG_ADMONITION_TIP_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_ADMONITION_WARNING_ADOC'), self.render_template('HTML_TAG_ADMONITION_WARNING_NEW'))
-        content = content.replace(self.render_template('HTML_TAG_IMG_ADOC'), self.render_template('HTML_TAG_IMG_NEW'))
-        return content
+    def _initialize(self):
+        super()._initialize()
+        self.dey = {}
+        self.events_docs = {}
 
     # ~ @timeit
     def build_datatable(self, headers=[], doclist=[]):
@@ -177,17 +154,17 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             adoc_filepath = os.path.join(self.srvbes.get_path('source'), post)
+            adoc_content = open(adoc_filepath, 'r').read()
             sections = extract_sections_from_adoc(adoc_filepath)
             excerpt = 'Excerpt' in sections.keys()
             if excerpt:
                 s = sections['Excerpt']['start']
                 e = sections['Excerpt']['end']
-                lines = open(adoc_filepath).readlines()
+                lines = adoc_content.splitlines()
                 text = '\n'.join(lines[s+1:e])
                 var['post']['Excerpt'] = "\n".join([f"<p>{line}</p>" if line.strip() else line for line in text.strip().splitlines()])
             else:
                 var['post']['Excerpt'] = "<p>Excerpt missing</p>"
-            adoc_content = open(adoc_filepath, 'r').read()
             timestamp = var['post'][sort_by][0]
             dt = guess_datetime(timestamp)
             var['basename_adoc'] = post
@@ -250,6 +227,7 @@ class Theme(Builder):
                 raise
 
         kbdict = self.srvbes.get_kb_dict()
+        base_var = self.get_theme_var()
         # Build day event pages
         must_compile_month = set()
         must_compile_year = set()
@@ -271,7 +249,8 @@ class Theme(Builder):
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
                         edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
-                        var = self.get_theme_var()
+                        var = base_var
+                        var['page'] = {}
                         headers = []
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
@@ -293,7 +272,8 @@ class Theme(Builder):
                 thismonth = "%4d%02d" % (year, month)
                 EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
                 if thismonth in must_compile_month:
-                    var = self.get_theme_var()
+                    var = base_var
+                    var['page'] = {}
                     doclist = []
                     edt = guess_datetime("%4d.%02d.01" % (year, month))
                     for day in self.events_docs[year][month]:
@@ -317,7 +297,8 @@ class Theme(Builder):
 
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
-            var = self.get_theme_var()
+            var = base_var
+            var['page'] = {}
             headers = []
             doclist = []
             EVENT_PAGE_YEAR = "events_%4d" % year
@@ -327,6 +308,7 @@ class Theme(Builder):
                 for month in self.events_docs[year]:
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
+                var['page']['title'] = f"Archive / {year}"
                 var['page']['datatable'] = self.build_datatable(headers, doclist)
                 self.distribute_adoc(page_name, PAGE.render(var=var))
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")

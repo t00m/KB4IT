@@ -25,6 +25,23 @@ class Builder(Service):
     theme_var = {}
     templates = {}
     _templates_lock = threading.Lock()
+    _xform_lock = threading.Lock()
+    _xform_pairs = None
+
+    _XFORM_NAMES = [
+        'HTML_TAG_A', 'HTML_TAG_TOC',
+        'HTML_TAG_SECT1', 'HTML_TAG_SECT2', 'HTML_TAG_SECT3', 'HTML_TAG_SECT4',
+        'HTML_TAG_SECTIONBODY', 'HTML_TAG_PRE',
+        'HTML_TAG_H2', 'HTML_TAG_H3', 'HTML_TAG_H4',
+        'HTML_TAG_TABLE', 'HTML_TAG_TABLE_KB4IT',
+        'HTML_TAG_ADMONITION_ICON_NOTE', 'HTML_TAG_ADMONITION_ICON_TIP',
+        'HTML_TAG_ADMONITION_ICON_IMPORTANT', 'HTML_TAG_ADMONITION_ICON_CAUTION',
+        'HTML_TAG_ADMONITION_ICON_WARNING',
+        'HTML_TAG_ADMONITION_IMPORTANT', 'HTML_TAG_ADMONITION_CAUTION',
+        'HTML_TAG_ADMONITION_NOTE', 'HTML_TAG_ADMONITION_TIP',
+        'HTML_TAG_ADMONITION_WARNING',
+        'HTML_TAG_IMG',
+    ]
 
     def _initialize(self):
         """Initialize Builder class."""
@@ -34,6 +51,20 @@ class Builder(Service):
         """Get services."""
         self.srvdtb = self.get_service("DB")
         self.srvbes = self.get_service("Backend")
+
+    def apply_transformations(self, content):
+        """Apply CSS transformations to the compiled page."""
+        if Builder._xform_pairs is None:
+            with self._xform_lock:
+                if Builder._xform_pairs is None:
+                    Builder._xform_pairs = [
+                        (self.render_template(f'{n}_ADOC'), self.render_template(f'{n}_NEW'))
+                        for n in self._XFORM_NAMES
+                    ]
+        for old, new in Builder._xform_pairs:
+            if old:
+                content = content.replace(old, new)
+        return content
 
     def generate_sources(self):
         """Generate sources.

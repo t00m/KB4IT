@@ -26,32 +26,27 @@ class Deployer(Service):
     def execute(self):
         """Deploy website build by KB4IT."""
         self.log.debug("[DEPLOYER] START")
-        # ~ ncd = self.srvbes.get_value("runtime", "ncd")
-        # ~ nck = self.srvbes.get_value("runtime", "nck")
-        # ~ DOCS_CHANGED = ncd > 0
-        # ~ KEYS_CHANGED = nck > 0
-        # ~ if DOCS_CHANGED or KEYS_CHANGED:
         self.log.debug("[DEPLOYER] DEPLOY_BEGIN")
-        self.step_00_copy_source_to_cache()
+
+        source_files = glob.glob(os.path.join(self.srvbes.get_path("source"), "*.*"))
+        source_adocs = [f for f in source_files if f.endswith(".adoc")]
+        tmp_files = glob.glob(os.path.join(self.srvbes.get_path("tmp"), "*.*"))
+
+        self.step_00_copy_source_to_cache(source_files)
         # ~ self.step_02_copy_temporary_files_to_distributed_directory()
         self.step_03_clear_target()
-        self.step_04_copy_sources_to_target()
-        self.step_05_copy_compiled_to_cache()
-        self.step_06_copy_all_to_cache()
+        self.step_04_copy_sources_to_target(source_adocs)
+        self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
         self.step_08_copy_global_resources_to_target()
         self.step_09_copy_html_to_cache()
         self.step_10_copy_kbdict_to_target()
         self.step_11_cleanup()
-        # ~ else:
-            # ~ self.log.debug("No changes detected. Avoid deploying")
         self.log.debug("[DEPLOYER] END")
 
-    def step_00_copy_source_to_cache(self):
+    def step_00_copy_source_to_cache(self, files):
         """Copy all from source directory to cache."""
-        pattern = os.path.join(self.srvbes.get_path("source"), "*.*")
-        extra = glob.glob(pattern)
-        copy_docs(extra, self.srvbes.get_path("cache"))
+        copy_docs(files, self.srvbes.get_path("cache"))
 
     def step_02_copy_temporary_files_to_distributed_directory(self):
         """Copy temporary files to distributed directory."""
@@ -74,27 +69,15 @@ class Deployer(Service):
         self.log.debug(f"[DEPLOYER] TARGET_CLEARED path={self.srvbes.get_path('target')}")
 
     # Refresh target
-    def step_04_copy_sources_to_target(self):
+    def step_04_copy_sources_to_target(self, files):
         """Place a copy of sources in the target directory."""
-        # Copy asciidocs documents to target/sources
-        pattern = os.path.join(self.srvbes.get_path("source"), "*.adoc")
-        files = glob.glob(pattern)
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
         os.makedirs(docsdir, exist_ok=True)
         copy_docs(files, docsdir)
         self.log.debug(f"[DEPLOYER] COPIED_SOURCES_TO_TARGET n={len(files)}")
 
-    def step_05_copy_compiled_to_cache(self):
-        """Copy compiled documents to cache path."""
-        pattern = os.path.join(self.srvbes.get_path("tmp"), "*.html")
-        files = glob.glob(pattern)
-        copy_docs(files, self.srvbes.get_path("cache"))
-        self.log.debug(f"[DEPLOYER] COPIED_HTML_TO_CACHE n={len(files)}")
-
-    def step_06_copy_all_to_cache(self):
-        """Copy objects in temporary target to cache path."""
-        pattern = os.path.join(self.srvbes.get_path("tmp"), "*.*")
-        files = glob.glob(pattern)
+    def step_06_copy_all_to_cache(self, files):
+        """Copy objects in temporary directory to cache path."""
         copy_docs(files, self.srvbes.get_path("cache"))
         self.log.debug(f"[DEPLOYER] COPIED_ALL_TO_CACHE n={len(files)}")
 

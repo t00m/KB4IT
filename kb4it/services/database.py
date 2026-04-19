@@ -29,15 +29,22 @@ class Database(Service):
         """Initialize database module."""
         self.srvbes = self.get_service("Backend")
         repo = self.srvbes.get_dict("repo")
-        runtime = self.srvbes.get_dict("runtime")
-        self.sorted_docs = []
-        self.keys["all"] = []
-        self.keys["blocked"] = ["Title", "SystemPage"]
-        self.keys["custom"] = []
-        self.keys["theme"] = []
-        self.keys["ignored"] = repo.get("ignored_keys") or []
-        self.ignore_key("Title")
         self.db = {}
+        self.keys = {
+            "all": [],
+            "blocked": ["Title", "SystemPage"],
+            "custom": [],
+            "theme": [],
+            "ignored": repo.get("ignored_keys") or [],
+        }
+        self.keys_doc = {}
+        self.sorted_docs = []
+        self.cache_props = {}
+        self.cache_docs_by_kvpath = {}
+        self.cache_keys_by_doc = {}
+        self.cache_docs_sorted_by_date = {}
+        self.cache_all_values_for_key = {}
+        self.ignore_key("Title")
 
     def del_document(self, docId):
         """Delete a document node from database."""
@@ -125,7 +132,7 @@ class Database(Service):
             return None
 
     def is_system(self, docId):
-        return "SystemPage" in self.get_doc_properties(docId).keys()
+        return "SystemPage" in self.db.get(docId, {})
 
     # ~ @timeit
     def get_doc_properties(self, docId):
@@ -229,7 +236,6 @@ class Database(Service):
             return self.keys["theme"]
 
         keys = set(self.get_all_keys())
-        self.get_documents()
         for key in self.keys["ignored"]:
             try:
                 keys.remove(key)
