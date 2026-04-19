@@ -30,7 +30,6 @@ from kb4it.core.util import get_human_datetime_year
 from kb4it.core.util import ellipsize_text
 from kb4it.core.util import get_year, get_month, get_day
 
-from evcal import EventsCalendar
 from timeline import Timeline
 
 parser = etree.HTMLParser()
@@ -222,7 +221,7 @@ class Theme(Builder):
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
                     pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
-                    must_compile_day = False
+                    must_compile_day = True
                     for docId in doclist:
                         doc_changed = kbdict['document'][docId]['compile']
                         doc_not_cached = not os.path.exists(pagename)
@@ -281,33 +280,49 @@ class Theme(Builder):
                     self.distribute_html(EVENT_PAGE_MONTH, pagename)
                 self.srvbes.add_target(f"{EVENT_PAGE_MONTH}.adoc", f"{EVENT_PAGE_MONTH}.html")
 
-        self.srvcal.set_events_days(self.dey)
-        self.srvcal.set_events_docs(self.events_docs)
-
         # Build year event pages
         for year in sorted(self.dey.keys(), reverse=True):
+            var = base_var
+            var['page'] = {}
+            headers = []
+            doclist = []
             EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
             if str(year) in must_compile_year:
-                thisyear = {}
-                html = self.srvcal.build_year_pagination(self.dey.keys())
-                edt = guess_datetime("%4d.01.01" % year)
-                title = edt.strftime("Events on %Y")
-                thisyear['title'] = title
-                html += self.srvcal.formatyearpage(year, 4)
-                thisyear['content'] = html
-                self.distribute_adoc(page_name, PAGE.render(var=thisyear))
-
-                human_title = get_human_datetime_year(edt)
+                for month in self.events_docs[year]:
+                    for day in self.events_docs[year][month]:
+                        doclist.extend(self.events_docs[year][month][day])
+                var['page']['title'] = f"Archive / {year}"
+                var['page']['datatable'] = self.build_datatable(headers, doclist)
+                self.distribute_adoc(page_name, PAGE.render(var=var))
                 self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Events on {human_title}")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Archive / {year}")
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
                 pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
                 self.distribute_html(EVENT_PAGE_YEAR, pagename)
             self.srvbes.add_target(f"{EVENT_PAGE_YEAR}.adoc", f"{EVENT_PAGE_YEAR}.html")
+
+    def build_year_pagination(self, years):
+        EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
+        EVENTCAL_YEAR_PAGINATION_ITEM = self.template('EVENTCAL_YEAR_PAGINATION_ITEM')
+        var = {}
+        var['items'] = ''
+        ITEMS = ''
+        for yp in sorted(years, reverse=True):
+            item = {}
+            item['year'] = yp
+
+            total = 0
+            for month in self.events_docs[yp]:
+                for day in self.events_docs[yp][month]:
+                    total += len(self.events_docs[yp][month][day])
+            item['year_count'] = total
+            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
+        var['items'] = ITEMS
+        return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def build_page_events(self):
         doclist = []
@@ -336,7 +351,7 @@ class Theme(Builder):
                 doclist.append(docId)
                 title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
-        HTML = self.srvcal.build_year_pagination(self.dey.keys())
+        HTML = self.build_year_pagination(self.dey.keys())
 
         #if self.srvbes.get_value('runtime', 'ncd') == 0:
         #    func_name = sys._getframe().f_code.co_name
@@ -356,10 +371,7 @@ class Theme(Builder):
     def build(self):
         """Create standard pages for default theme"""
         var = self.get_theme_var()
-        #self.log.debug("This is the Techdoc theme")
-        self.app.register_service('EvCal', EventsCalendar())
         self.app.register_service('Timeline', Timeline())
-        self.srvcal = self.get_service('EvCal')
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
