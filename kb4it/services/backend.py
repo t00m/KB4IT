@@ -26,7 +26,7 @@ class Backend(Service):
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime = {}  # Dictionary of runtime properties
+        self.runtime = {"theme": {}}  # Dictionary of runtime properties
         self.params = self.app.get_params()  # Get params from command line
 
         # Check command line param for config file
@@ -228,7 +228,10 @@ class Backend(Service):
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
-                frontend.theme_load(os.path.basename(theme_path))
+                result = frontend.theme_load(os.path.basename(theme_path))
+                if result is None and not self.runtime["theme"].get("id"):
+                    self.log.error(f"[BACKEND] THEME_LOAD_FAIL name={theme_name}")
+                    self.app.stop(error=True)
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
                 self.log.error("[BACKEND] CHECKS_END")

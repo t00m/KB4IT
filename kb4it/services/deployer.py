@@ -122,6 +122,9 @@ class Deployer(Service):
             self.srvbes.get_path("target"), "resources")
         theme_target_dir = os.path.join(resources_dir_target, "themes")
         theme = self.srvbes.get_dict("theme")
+        if not theme.get("id") or not theme.get("path"):
+            self.log.error("[DEPLOYER] THEME_NOT_LOADED")
+            self.app.stop(error=True)
         DEFAULT_THEME = os.path.join(ENV["GPATH"]["THEMES"], "default")
         CUSTOM_THEME_ID = theme["id"]
         CUSTOM_THEME_PATH = theme["path"]

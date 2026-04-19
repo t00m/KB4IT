@@ -9,10 +9,8 @@ Service Compiler.
 """
 
 import os
-import random
 import shutil
 import threading
-import time
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
@@ -105,7 +103,6 @@ class Compiler(Service):
 
     def compilation_finished(self, future):
         """Once compiled, build page."""
-        time.sleep(random.random())
         cur_thread = threading.current_thread().name
         x = future.result()
         if cur_thread != x:

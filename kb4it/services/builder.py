@@ -9,7 +9,7 @@ Builder service.
 
 import os
 import shutil
-import sys
+import threading
 from datetime import datetime
 
 from mako.template import Template
@@ -24,6 +24,7 @@ class Builder(Service):
 
     theme_var = {}
     templates = {}
+    _templates_lock = threading.Lock()
 
     def _initialize(self):
         """Initialize Builder class."""
@@ -73,40 +74,32 @@ class Builder(Service):
 
     def template(self, template):
         """Return Mako Template object."""
-        runtime = self.srvbes.get_dict("runtime")
-        theme = runtime["theme"]
-        TEMPLATE_FOUND = False
+        cached = self.templates.get(template)
+        if cached is not None:
+            return cached
 
-        # Try to get the template from cache
-        try:
-            self.templates[template]
-            TEMPLATE_FOUND = True
-            # ~ self.log.debug(f"[TEMPLATES] - Template[{template}] loaded from cache") # Commented to avoid too much verbosity
-        except KeyError:
-            templates = []
-            templates.append(
-                os.path.join(theme["templates"], f"{template}.tpl")
-            )  # From theme
-            # From common templates dir
-            templates.append(os.path.join(
-                ENV["GPATH"]["TEMPLATES"], f"{template}.tpl"))
-            TEMPLATE_FOUND = False
-            for template_path in templates:
-                if not TEMPLATE_FOUND:
-                    try:
-                        self.templates[template] = Template(
-                            filename=template_path)
-                        TEMPLATE_FOUND = True
-                        # ~ self.log.debug(f"TEMPLATE[{template}] cached")
-                        break
-                    except Exception:
-                        self.templates[template] = Template("")
+        with self._templates_lock:
+            cached = self.templates.get(template)
+            if cached is not None:
+                return cached
 
-        if not TEMPLATE_FOUND:
+            runtime = self.srvbes.get_dict("runtime")
+            theme = runtime["theme"]
+            candidates = [
+                os.path.join(theme["templates"], f"{template}.tpl"),
+                os.path.join(ENV["GPATH"]["TEMPLATES"], f"{template}.tpl"),
+            ]
+            for template_path in candidates:
+                try:
+                    tpl = Template(filename=template_path)
+                    self.templates[template] = tpl
+                    return tpl
+                except Exception:
+                    continue
+
             self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
-            sys.exit(-1)
-
-        return self.templates[template]
+            self.app.stop(error=True)
+            raise RuntimeError(f"Template not found: {template}")
 
     def render_template(self, name, var={}):
         """Render template according to dict var values."""

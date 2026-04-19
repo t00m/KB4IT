@@ -243,6 +243,7 @@ def get_asciidoctor_attributes(docpath: str):
     basename = os.path.basename(docpath)
     keys = {}
     valid = False
+    reason = ""
     title_found = False
     end_of_header_found = False
 
@@ -277,10 +278,9 @@ def get_asciidoctor_attributes(docpath: str):
         else:
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_title")
             keys = {}
-    except IndexError as error:
-        reason = f"Document '{basename}' could not be processed. Empty?"
-        log.error(error)
-        log.error(f"Error: {reason}")
+    except IndexError:
+        reason = "empty_doc"
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=empty_doc")
         keys = {}
 
     if title_found and end_of_header_found:
