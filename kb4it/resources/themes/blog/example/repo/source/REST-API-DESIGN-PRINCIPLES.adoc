@@ -1,0 +1,82 @@
+= REST API Design Principles
+// -- Mandatory properties --
+:Team: Tech Writers Team
+:Date: 2024-05-10
+:Version: 1.0
+:DocType: Explanation
+:Tag: api-design
+// -- Semantic properties --
+:Category: Post
+:Topic: Architecture
+:Status: Released
+:Priority: Normal
+:Date: 2024-05-10 11:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+A REST API is a contract. Every endpoint, status code, and payload structure is a promise to every client that will ever consume it. Poorly designed contracts accumulate technical debt at a rate proportional to the number of clients — changing a field name or HTTP method after release forces coordinated updates across systems you may not control.
+
+Good REST design is not about following a specification to the letter. It is about making the API predictable, consistent, and self-explanatory to a developer encountering it for the first time.
+
+== Resources and Nouns
+
+URLs should identify resources (nouns), not actions (verbs). The HTTP method communicates the action.
+
+*Correct:*
+----
+GET    /orders/42
+POST   /orders
+DELETE /orders/42
+----
+
+*Avoid:*
+----
+GET  /getOrder?id=42
+POST /deleteOrder
+----
+
+Use plural nouns for collections (`/orders`, `/users`) and singular identifiers for specific items (`/orders/42`).
+
+== HTTP Methods and Semantics
+
+Each HTTP method carries an implicit contract:
+
+* *GET* — retrieve a resource; must be safe and idempotent.
+* *POST* — create a new resource; not idempotent.
+* *PUT* — replace a resource entirely; idempotent.
+* *PATCH* — partially update a resource; idempotent in practice.
+* *DELETE* — remove a resource; idempotent.
+
+Respect these semantics. A `GET` that mutates state, or a `POST` used for retrieval, breaks client assumptions about caching and safety.
+
+== Status Codes
+
+Use HTTP status codes accurately. Clients rely on them to distinguish success from failure and recoverable errors from permanent ones.
+
+* `200 OK` — successful GET, PUT, PATCH, or DELETE
+* `201 Created` — successful POST; include a `Location` header pointing to the new resource
+* `204 No Content` — successful action with no response body
+* `400 Bad Request` — client sent malformed input
+* `401 Unauthorized` — authentication required
+* `403 Forbidden` — authenticated but not permitted
+* `404 Not Found` — resource does not exist
+* `409 Conflict` — state conflict (e.g. duplicate creation)
+* `500 Internal Server Error` — server-side failure; do not leak stack traces
+
+== Versioning
+
+APIs change. Version from the start to avoid breaking existing clients when you need to evolve the contract.
+
+The most common approach is URL path versioning:
+----
+/v1/orders
+/v2/orders
+----
+
+Alternatively, use an `Accept` header (`Accept: application/vnd.myapi.v2+json`), which is cleaner but harder to test manually.
+
+== Conclusion
+
+Consistency is the highest virtue in API design. A developer using your API for the first time should be able to guess the endpoint for a new resource based on the pattern they already learned. Surprises in an API are always a defect.

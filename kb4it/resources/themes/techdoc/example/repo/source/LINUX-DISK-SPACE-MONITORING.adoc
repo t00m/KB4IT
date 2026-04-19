@@ -1,0 +1,92 @@
+= Linux Disk Space Monitoring
+// -- Mandatory properties --
+:Author: Thomas Young
+:Team: Admin Team
+:Date: 2024-03-15
+:Version: 1.0
+:DocType: How-to guide
+:Tag: storage
+// -- Semantic properties --
+:OS: Linux
+:Category: Procedure
+:Scope: Infrastructure
+:Topic: Monitoring
+:Status: Released
+:Priority: High
+:Updated: 2024-03-15 10:00:00
+// -- Auto-extracted properties --
+:Command: df, du, find, ls
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Problem
+
+Disk space exhaustion on Linux servers causes service outages, application crashes, and data loss. This guide explains how to identify which directories consume the most space and how to monitor disk usage proactively.
+
+== Prerequisites
+
+* Root or sudo access to the server
+* A running Linux system with standard utilities (`df`, `du`, `find`)
+
+== Procedure
+
+=== Step 1 — Check overall disk usage
+
+Use `df` to get an overview of all mounted filesystems:
+
+[source,bash]
+----
+df -h
+----
+
+The `-h` flag prints sizes in human-readable format. Pay attention to the `Use%` column — filesystems above 85% warrant investigation.
+
+=== Step 2 — Identify large directories
+
+Use `du` to find which top-level directories consume the most space:
+
+[source,bash]
+----
+du -sh /* 2>/dev/null | sort -hr | head -20
+----
+
+This lists the twenty largest directories sorted in descending order.
+
+=== Step 3 — Drill down into a specific directory
+
+Once you identify a suspect directory, narrow the search:
+
+[source,bash]
+----
+du -sh /var/* 2>/dev/null | sort -hr | head -20
+----
+
+Repeat until you identify the specific files or subdirectories responsible.
+
+=== Step 4 — Find large files directly
+
+Use `find` to list files above a given size threshold:
+
+[source,bash]
+----
+find /var -type f -size +100M 2>/dev/null
+----
+
+Adjust the size threshold (`+100M`) as needed.
+
+== Verification
+
+After cleanup, verify the freed space:
+
+[source,bash]
+----
+df -h
+----
+
+Confirm the `Use%` value has decreased on the affected filesystem.
+
+== Troubleshooting
+
+NOTE: If `df` shows a filesystem is full but `du` shows available space, a deleted file may still be held open by a running process. Restart the relevant service to release those file handles.
+
+WARNING: Do not delete files under `/proc`, `/sys`, or `/dev` — these are virtual filesystems and removing entries can destabilise the running system.

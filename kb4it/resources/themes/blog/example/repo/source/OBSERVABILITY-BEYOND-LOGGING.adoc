@@ -1,0 +1,49 @@
+= Observability Beyond Logging
+// -- Mandatory properties --
+:Team: Tech Writers Team
+:Date: 2025-01-20
+:Version: 1.0
+:DocType: Explanation
+:Tag: telemetry
+// -- Semantic properties --
+:Category: Post
+:Topic: Monitoring
+:Status: Released
+:Priority: Normal
+:Date: 2025-01-20 10:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Logs answer the question: "what happened?" But in a distributed system with dozens of services, that question is rarely enough. When a request fails after touching eight services, logs tell you that something went wrong in service four — they do not tell you why, or what the request looked like as it crossed service boundaries.
+
+Observability is the property of a system that lets you understand its internal state from its external outputs. Logging is one output. Metrics and traces are the others. Together they form the three pillars of observability.
+
+== Logs
+
+Logs are timestamped records of discrete events. They are best for capturing context-rich information about specific occurrences: errors, state changes, and audit trails.
+
+Structured logs (JSON rather than free-form text) are significantly easier to query at scale. A log line like `{"level": "error", "service": "payment", "order_id": "42", "reason": "timeout"}` can be filtered, aggregated, and alerted on by any log platform. A log line like `ERROR payment service failed for order 42: timeout` cannot.
+
+== Metrics
+
+Metrics are numeric measurements sampled over time: request rate, error rate, latency percentiles, queue depth, memory usage. They are aggregated, lightweight, and efficient to store.
+
+Metrics excel at answering "is the system healthy right now?" and "is this trend normal?" They are poor at explaining *why* a value is abnormal — for that you need logs or traces.
+
+== Traces
+
+A trace follows a single request as it travels through a distributed system. Each service adds a *span* — a timed record of its participation — and these spans are linked by a shared trace ID.
+
+Traces answer the question no other pillar can: "which service is responsible for this latency, and what was the call chain?" They make the invisible topology of a distributed system visible.
+
+== Correlation
+
+The three pillars become exponentially more powerful when correlated. A metric alert fires — latency has spiked. You jump to traces for the affected time window and identify the slow span. You jump to logs for that span's service and find the root cause.
+
+This flow — from symptom to trace to log — collapses an investigation that might otherwise take hours into minutes. It requires that all three signals carry a shared identifier (trace ID, request ID) that allows them to be joined.
+
+== Conclusion
+
+Observability is not a product you buy — it is a property you design into your system. Structured logs, meaningful metrics, and distributed traces are the engineering investment that transforms "something is wrong" into "here is exactly what is wrong and why."

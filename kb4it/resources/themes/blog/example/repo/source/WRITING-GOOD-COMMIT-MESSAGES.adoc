@@ -1,0 +1,78 @@
+= Writing Good Commit Messages
+// -- Mandatory properties --
+:Author: Tech Writers Team
+:Date: 2024-10-18
+:Version: 1.0
+:DocType: Explanation
+:Tag: best-practice
+// -- Semantic properties --
+:Category: Post
+:Product: Git
+:Topic: Development
+:Status: Released
+:Priority: Normal
+:Date: 2024-10-18 08:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+A commit message is a letter to your future self and your teammates. Written well, it makes code review faster, debugging easier, and the project history genuinely useful. Written poorly — "fix stuff", "wip", "asdf" — it turns `git log` into an archaeological dig through changes without context.
+
+The rules for good commit messages are simple, stable, and ignored far too often.
+
+== The Structure
+
+A commit message has two parts: a subject line and an optional body.
+
+----
+Short summary in the imperative, under 72 characters
+
+Longer explanation of what changed and why, not how.
+Wrap lines at 72 characters. Leave a blank line between
+the subject and the body.
+----
+
+The subject line is what appears in `git log --oneline`, pull request lists, and notification emails. It must stand alone.
+
+== The Subject Line
+
+Use the *imperative mood*: "Add feature", not "Added feature" or "Adding feature". This matches the convention used by Git itself (`Merge branch`, `Revert commit`).
+
+Keep it under 72 characters. Anything longer is truncated in most interfaces.
+
+Do not end with a period.
+
+*Good examples:*
+----
+Add rate limiting to the authentication endpoint
+Fix null pointer in user profile serialiser
+Remove deprecated payment gateway integration
+----
+
+*Poor examples:*
+----
+fixed bug
+changes
+WIP
+update stuff
+----
+
+== The Body
+
+The body answers *why*, not *what*. The diff already shows what changed. What the diff cannot show is the reasoning:
+
+* Why was this change necessary?
+* What alternatives were considered and rejected?
+* What are the known limitations of this approach?
+* Does this change break any assumptions downstream consumers might have?
+
+Reference issue trackers, RFCs, or discussion threads where relevant.
+
+== Atomic Commits
+
+Each commit should represent one logical change. A commit that reformats code, fixes a bug, and adds a feature is three commits presented as one. Atomic commits make it possible to revert a specific change without touching unrelated work, and make blame annotations meaningful.
+
+== Conclusion
+
+Good commit messages are a form of documentation. They are the narrative of a project's evolution — the record of not just what the codebase is, but how it became that way and why. The investment is small; the return accumulates over years.

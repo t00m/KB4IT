@@ -1,6 +1,6 @@
 {
     "datatable": [
-        "Published",
+        "Date",
         "Title",
         "Topic"
     ],
@@ -8,30 +8,31 @@
         "Post"
     ],
     "force": false,
-    "git": true,
+    "git": false,
     "git_branch": "branch",
     "git_path": "source",
     "git_repo": "repo",
     "git_server": "https://github.com",
     "git_user": "user",
     "ignored_keys": [
-        "Published"
+        "Date"
     ],
     "logo": "resources/themes/blog/images/logo.svg",
     "logo_alt": "",
     "menu": [
         "Author",
-        "Category"
+        "Category",
+        "Tag",
+        "Topic"
     ],
-    "sort": "Published",
-    "source": "source",
+    "source": "/path/to/source/dir",
     "strict": false,
-    "tagline": "My public notes",
-    "target": "target",
+    "tagline": "My Public Notes",
+    "target": "/path/to/target/dir",
     "theme": "blog",
     "timeline": [
-      "Post",
-      "Note"
+        "Post",
+        "Note"
     ],
     "title": "My Blog",
     "webserver": false
