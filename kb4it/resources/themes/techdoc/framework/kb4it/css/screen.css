@@ -363,3 +363,72 @@ table.month tbody tr th {
 }
 .kb-cloud-item:hover .kb-cloud-count { color: #6aa9e0; }
 .kb-cloud-key { cursor: pointer; }
+
+/* ==========================================================================
+   Events page — full-year calendar grid (kb-evcal-*)
+   ========================================================================== */
+.kb-evcal-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+@media (max-width: 960px) {
+    .kb-evcal-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+    .kb-evcal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.kb-evcal-month {
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 6px 8px 8px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+}
+.kb-evcal-mname {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #555;
+    padding-bottom: 4px;
+}
+.kb-evcal-mname a { color: #1e87f0; text-decoration: none; }
+.kb-evcal-mname a:hover { text-decoration: underline; }
+.kb-evcal-month table { width: 100%; border-collapse: collapse; }
+.kb-evcal-month th {
+    font-size: 0.60rem;
+    font-weight: 500;
+    color: #aaa;
+    padding: 2px 0;
+    text-align: center;
+    width: 14.28%;
+}
+.kb-evcal-month td {
+    padding: 2px 0;
+    text-align: center;
+    color: #555;
+    height: 18px;
+    width: 14.28%;
+    background: transparent;
+    border: 0;
+}
+.kb-evcal-event a {
+    color: #1e87f0;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+.kb-evcal-event a:hover { background: #e8f2ff; }
+.kb-evcal-today {
+    background: #1e87f0;
+    color: #fff !important;
+    border-radius: 3px;
+    font-weight: 600;
+}
+.kb-evcal-today-event { background: #1e87f0; border-radius: 3px; }
+.kb-evcal-today-event a { color: #fff !important; font-weight: 700; text-decoration: none; }

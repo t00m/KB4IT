@@ -44,7 +44,7 @@ class Theme(Builder):
         self.dey = {}
         self.events_docs = {}
 
-    def build_datatable(self, headers=[], doclist=[]):
+    def build_datatable(self, headers=[], doclist=[], table_id='kb4it-datatable'):
         """Given a list of columns, it builds a datatable.
         First column is always a date field, which is got by using the
         method get_doc_timestamp from the database module. It means
@@ -61,6 +61,7 @@ class Theme(Builder):
         TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
 
         datatable = {}
+        datatable['table_id'] = table_id
         repo = self.srvbes.get_dict('repo')
         sort_attribute = "Date"
 
@@ -295,6 +296,68 @@ class Theme(Builder):
             },
         }
 
+    def _build_year_calendar_html(self, year):
+        """Generate a 12-month HTML calendar grid for events.html."""
+        MONTH_NAMES = [
+            'January', 'February', 'March', 'April',
+            'May', 'June', 'July', 'August',
+            'September', 'October', 'November', 'December',
+        ]
+        WEEKDAY_ABBR = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+        now = datetime.now()
+        cal = _calendar.Calendar(firstweekday=_calendar.MONDAY)
+
+        parts = ['<div class="kb-evcal-grid">']
+        for month in range(1, 13):
+            mname = MONTH_NAMES[month - 1]
+            has_month = (
+                year in self.events_docs
+                and month in self.events_docs[year]
+            )
+            if has_month:
+                month_url = f'events_{year:04d}{month:02d}.html'
+                caption = f'<a href="{month_url}">{mname}</a>'
+            else:
+                caption = mname
+
+            parts.append('<div class="kb-evcal-month">')
+            parts.append(f'<div class="kb-evcal-mname">{caption}</div>')
+            parts.append('<table><thead><tr>')
+            for wd in WEEKDAY_ABBR:
+                parts.append(f'<th>{wd}</th>')
+            parts.append('</tr></thead><tbody>')
+
+            for week in cal.monthdayscalendar(year, month):
+                parts.append('<tr>')
+                for day in week:
+                    if day == 0:
+                        parts.append('<td></td>')
+                        continue
+                    has_event = (
+                        year in self.events_docs
+                        and month in self.events_docs[year]
+                        and day in self.events_docs[year][month]
+                    )
+                    is_today = (
+                        year == now.year
+                        and month == now.month
+                        and day == now.day
+                    )
+                    url = f'events_{year:04d}{month:02d}{day:02d}.html'
+                    if has_event and is_today:
+                        parts.append(f'<td class="kb-evcal-today-event"><a href="{url}">{day}</a></td>')
+                    elif has_event:
+                        parts.append(f'<td class="kb-evcal-event"><a href="{url}">{day}</a></td>')
+                    elif is_today:
+                        parts.append(f'<td class="kb-evcal-today">{day}</td>')
+                    else:
+                        parts.append(f'<td>{day}</td>')
+                parts.append('</tr>')
+
+            parts.append('</tbody></table></div>')
+        parts.append('</div>')
+        return ''.join(parts)
+
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
         TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
@@ -482,16 +545,24 @@ class Theme(Builder):
                 doclist.append(docId)
                 title = self.srvdtb.get_values(docId, 'Title')[0]
         self.build_events(doclist)
-        HTML = self.build_year_pagination(self.dey.keys())
 
-        #if self.srvbes.get_value('runtime', 'ncd') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in documents. Skip '{func_name}'")
-        #    self.srvbes.add_target('events.adoc', 'events.html')
-        #    return
+        years_data = []
+        for year in sorted(self.dey.keys(), reverse=True):
+            doclist_year = []
+            for month in self.events_docs[year]:
+                for day in self.events_docs[year][month]:
+                    doclist_year.extend(self.events_docs[year][month][day])
+            total = len(doclist_year)
+            calendar_html = self._build_year_calendar_html(year)
+            datatable_html = self.build_datatable([], doclist_year, table_id=f'kb4it-datatable-{year}')
+            years_data.append({
+                'year': year,
+                'count': total,
+                'calendar': calendar_html,
+                'datatable': datatable_html,
+            })
 
-        events = {}
-        events['content'] = HTML
+        events = {'years': years_data}
         page = self.template('PAGE_EVENTS')
         self.distribute_adoc('events', page.render(var=events))
 

@@ -21,22 +21,24 @@
     <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
     <script type="text/javascript" class="init">
         $(document).ready(function() {
-            $('#kb4it-datatable').DataTable( {
-                dom: '<"kbfilter"flrtip>',
-                serverSide: false,
-                ordering: true,
-                searching: true,
-                //~ data:           data,
-                deferRender:    true,
-                scrollY:        400,
-                scrollCollapse: false,
-                scroller:       false,
-                stateSave: false,
-                paging:   false,
-                info:     true,
-                order: [[ 0, "desc" ]]
-            } );
-        } );
+            $('.kb4it-datatable:not([data-dt-init])').each(function() {
+                $(this).attr('data-dt-init', '1').DataTable({
+                    dom: '<"kbfilter"flrtip>',
+                    serverSide: false,
+                    ordering: true,
+                    searching: true,
+                    deferRender:    true,
+                    autoWidth:      false,
+                    scrollY:        400,
+                    scrollCollapse: false,
+                    scroller:       false,
+                    stateSave: false,
+                    paging:   false,
+                    info:     true,
+                    order: [[ 0, "desc" ]]
+                });
+            });
+        });
     </script>
 </head>
 <body>
