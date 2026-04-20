@@ -134,3 +134,232 @@ table.month tbody tr th {
 #kb-sect4:hover {
     border: 1px solid black;
 }
+
+/* ==========================================================================
+   Landing page (PAGE_INDEX) — compact layout
+   ========================================================================== */
+.kb-index { font-size: 14px; }
+.kb-index .kb-section { margin-bottom: 20px; }
+.kb-index .kb-panel {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 14px 18px;
+}
+.kb-index .kb-section-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: #777;
+    margin: 0 0 8px 2px;
+}
+
+/* Trimester calendar (top, compact) */
+.kb-trimester { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; }
+.kb-trimester-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+.kb-trimester-month {
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 6px 8px 8px 8px;
+}
+.kb-trimester-month.current { border-color: #1e87f0; background: #f4faff; }
+.kb-trimester-month h4 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #555;
+    margin: 0 0 6px 0;
+    text-align: center;
+}
+.kb-trimester-month.current h4 { color: #1e87f0; }
+.kb-trimester-month table { width: 100%; border-collapse: collapse; }
+.kb-trimester-month th {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: #aaa;
+    padding: 2px 0;
+    text-align: center;
+}
+.kb-trimester-month td {
+    padding: 2px 0;
+    text-align: center;
+    color: #555;
+    height: 18px;
+    width: 14.28%;
+    background: transparent;
+    border: 0;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+.kb-trimester-month td.empty { color: transparent; }
+.kb-trimester-month td.event a {
+    color: #1e87f0;
+    font-weight: 600;
+    text-decoration: none;
+}
+.kb-trimester-month td.event a:hover { text-decoration: underline; }
+.kb-trimester-month td.today {
+    background: #1e87f0;
+    color: #fff;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* Hero stats bar */
+.kb-hero-bar {
+    background: linear-gradient(135deg, #1e87f0 0%, #0f6ecd 100%);
+    color: #fff;
+    border-radius: 6px;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(30,135,240,0.2);
+}
+.kb-hero-stat { display: flex; align-items: baseline; gap: 8px; }
+.kb-hero-stat .num { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.kb-hero-stat .label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+}
+.kb-hero-bar .kb-hero-divider {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255,255,255,0.2);
+}
+
+/* Diataxis cards */
+.kb-diataxis-card {
+    background: #fff;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block;
+    border-left: 3px solid transparent;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    height: 100%;
+}
+.kb-diataxis-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.09);
+}
+.kb-diataxis-card.tutorial    { border-left-color: #32d296; }
+.kb-diataxis-card.howto       { border-left-color: #1e87f0; }
+.kb-diataxis-card.reference   { border-left-color: #faa05a; }
+.kb-diataxis-card.explanation { border-left-color: #9063f0; }
+
+.kb-diataxis-headline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.kb-diataxis-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.kb-diataxis-card.tutorial    .kb-diataxis-icon { background: rgba(50,210,150,0.14); color: #32d296; }
+.kb-diataxis-card.howto       .kb-diataxis-icon { background: rgba(30,135,240,0.14); color: #1e87f0; }
+.kb-diataxis-card.reference   .kb-diataxis-icon { background: rgba(250,160,90,0.14); color: #faa05a; }
+.kb-diataxis-card.explanation .kb-diataxis-icon { background: rgba(144,99,240,0.14); color: #9063f0; }
+
+.kb-diataxis-count { font-size: 1.15rem; font-weight: 700; color: #222; line-height: 1; }
+.kb-diataxis-label { font-size: 0.92rem; font-weight: 600; color: #333; }
+.kb-diataxis-desc { font-size: 0.76rem; color: #888; line-height: 1.35; margin: 0; padding-left: 36px; }
+
+/* Events panel */
+.kb-events-table { margin: 0; }
+.kb-events-table td {
+    vertical-align: middle;
+    padding: 6px 8px;
+    font-size: 0.86rem;
+}
+.kb-event-date {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 0.8rem;
+    color: #1e87f0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.kb-event-title a { color: #222; font-weight: 500; text-decoration: none; }
+.kb-event-title a:hover { color: #1e87f0; }
+.kb-events-month-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: #1e87f0;
+    font-weight: 600;
+    margin: 10px 0 4px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+.kb-events-empty {
+    font-style: italic;
+    color: #aaa;
+    font-size: 0.82rem;
+    padding: 4px 0;
+}
+
+/* ==========================================================================
+   Word cloud (properties.html and key value pages)
+   --kb-weight is a 0..1 value emitted per item from the theme.
+   ========================================================================== */
+.kb-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px 18px;
+    padding: 22px 12px;
+    line-height: 1.65;
+}
+.kb-cloud-properties {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 28px 18px;
+    gap: 8px 22px;
+}
+.kb-cloud-item {
+    --kb-weight: 0;
+    font-size: calc(0.82rem + var(--kb-weight) * 1.45rem);
+    font-weight: calc(400 + var(--kb-weight) * 300);
+    color: hsl(210, 14%, calc(58% - var(--kb-weight) * 38%));
+    text-decoration: none !important;
+    white-space: nowrap;
+    transition: color 0.15s ease, transform 0.12s ease;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+}
+.kb-cloud-item:hover {
+    color: #1e87f0 !important;
+    text-decoration: underline !important;
+    transform: translateY(-1px);
+}
+.kb-cloud-word { letter-spacing: -0.01em; }
+.kb-cloud-count {
+    font-size: 0.62em;
+    color: #bbb;
+    font-weight: 400;
+    vertical-align: super;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: 0;
+}
+.kb-cloud-item:hover .kb-cloud-count { color: #6aa9e0; }
+.kb-cloud-key { cursor: pointer; }

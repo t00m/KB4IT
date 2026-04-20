@@ -10,7 +10,7 @@
     </ul>
     <!-- This is the container of the content items -->
     <ul class="uk-switcher uk-margin">
-        <li>${var['source_html']}</li>
+        <li class="uk-active">${var['source_html']}</li>
 <!-- <li>var['related']</li> -->
     </ul>
 % else:

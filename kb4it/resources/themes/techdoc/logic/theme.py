@@ -13,6 +13,7 @@ Server module.
 import os
 import sys
 import math
+import calendar as _calendar
 from datetime import datetime, timedelta
 from calendar import monthrange
 
@@ -126,43 +127,173 @@ class Theme(Builder):
 
 
     def build_page_index(self, var):
-        """Create key page."""
-        #if self.srvbes.get_value('runtime', 'ncd') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in documents. Skip '{func_name}'")
-        #    self.srvbes.add_target('index.adoc', 'index.html')
-        #    return
-
+        """Create landing page."""
         repo = self.srvbes.get_dict('repo')
         runtime = self.srvbes.get_dict('runtime')
-        use_webserver = repo['webserver']
         filenames = runtime['docs']['filenames']
         now = datetime.now()
-        de = datetime.strptime("31.12.9999", "%d.%m.%Y")
-        ds = now - timedelta(days=365)
-        var['dt_start'] = ds
-        var['dt_end'] = de
         var['dt_now'] = now
-
-        doclist = self.srvdtb.get_documents()
-        if len(doclist) > 500:
-            doclist = self.srvdtb.get_docs_by_date_range(ds, de)
 
         if 'index.adoc' in filenames:
             self.log.info("[THEME] INDEX_SKIP reason=user_generated")
             return
 
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-        var['page']['dt_documents'] = datatable
-
         var['page']['title'] = var['repo']['title']
+        var['page']['stats'] = self._build_index_stats()
+        var['page']['diataxis'] = self._build_index_diataxis()
+        var['page']['trimester'] = self._build_index_trimester(now)
+        var['page']['events_panel'] = self._build_index_events_panel(now)
+
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
 
         self.srvdtb.add_document('index.adoc')
         self.srvdtb.add_document_key('index.adoc', 'Title', var['repo']['title'])
         self.srvdtb.add_document_key('index.adoc', 'SystemPage', 'Yes')
+
+    def _build_index_stats(self):
+        """Counters shown in the hero stats bar."""
+        count_docs = 0
+        count_bookmarks = 0
+        for docId in self.srvdtb.get_documents():
+            if self.srvdtb.is_system(docId):
+                continue
+            count_docs += 1
+            bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
+            if bookmark in ('Yes', 'True'):
+                count_bookmarks += 1
+
+        count_authors = len(self.srvdtb.get_all_values_for_key('Author'))
+        count_categories = len(self.srvdtb.get_all_values_for_key('Category'))
+
+        count_events = 0
+        for year in self.events_docs:
+            for month in self.events_docs[year]:
+                for day in self.events_docs[year][month]:
+                    count_events += len(self.events_docs[year][month][day])
+
+        return [
+            {'num': count_docs, 'label': 'Documents'},
+            {'num': count_authors, 'label': 'Authors'},
+            {'num': count_categories, 'label': 'Categories'},
+            {'num': count_events, 'label': 'Events'},
+            {'num': count_bookmarks, 'label': 'Bookmarks'},
+        ]
+
+    def _build_index_diataxis(self):
+        """Diátaxis cards — one per DocType value."""
+        diataxis = [
+            {'name': 'Tutorial',     'css': 'tutorial',    'icon': 'bolt',
+             'label': 'Tutorials',
+             'desc': 'Learning-oriented lessons that take you through a series of steps.'},
+            {'name': 'How-to guide', 'css': 'howto',       'icon': 'cog',
+             'label': 'How-to guides',
+             'desc': 'Goal-oriented recipes to solve a specific problem.'},
+            {'name': 'Reference',    'css': 'reference',   'icon': 'file-text',
+             'label': 'Reference',
+             'desc': 'Information-oriented technical descriptions of the machinery.'},
+            {'name': 'Explanation',  'css': 'explanation', 'icon': 'comment',
+             'label': 'Explanations',
+             'desc': 'Understanding-oriented discussions that clarify a topic.'},
+        ]
+        key = 'DocType'
+        for item in diataxis:
+            docs = self.srvdtb.get_docs_by_key_value(key, item['name'])
+            item['count'] = len(docs)
+            item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(item['name']))
+        return diataxis
+
+    def _build_index_trimester(self, now):
+        """Compact 3-month grid — prev, current, next."""
+        cur_first = now.replace(day=1)
+        prv_last = cur_first - timedelta(days=1)
+        cur_last = cur_first.replace(day=monthrange(cur_first.year, cur_first.month)[1])
+        nxt_first = cur_last + timedelta(days=1)
+
+        months_data = [
+            (prv_last.year, prv_last.month, False),
+            (cur_first.year, cur_first.month, True),
+            (nxt_first.year, nxt_first.month, False),
+        ]
+        cal = _calendar.Calendar(firstweekday=_calendar.MONDAY)
+        months = []
+        for year, month, is_current in months_data:
+            dt = datetime(year, month, 1)
+            weeks = []
+            for week in cal.monthdayscalendar(year, month):
+                row = []
+                for day in week:
+                    cell = {'n': day}
+                    if day == 0:
+                        cell['kind'] = 'empty'
+                    else:
+                        has_event = (
+                            year in self.events_docs
+                            and month in self.events_docs[year]
+                            and day in self.events_docs[year][month]
+                            and len(self.events_docs[year][month][day]) > 0
+                        )
+                        is_today = (year == now.year and month == now.month and day == now.day)
+                        if is_today:
+                            cell['kind'] = 'today'
+                        elif has_event:
+                            cell['kind'] = 'event'
+                            cell['url'] = "events_%04d%02d%02d.html" % (year, month, day)
+                        else:
+                            cell['kind'] = 'day'
+                    row.append(cell)
+                weeks.append(row)
+            months.append({
+                'name': dt.strftime('%B %Y'),
+                'current': is_current,
+                'weeks': weeks,
+            })
+        title = "%s / %s / %s" % (
+            datetime(months_data[0][0], months_data[0][1], 1).strftime('%b'),
+            datetime(months_data[1][0], months_data[1][1], 1).strftime('%b'),
+            datetime(months_data[2][0], months_data[2][1], 1).strftime('%b %Y'),
+        )
+        return {'title': title, 'months': months}
+
+    def _build_index_events_panel(self, now):
+        """Rows for current and next month events."""
+        cur_first = now.replace(day=1)
+        cur_last = cur_first.replace(day=monthrange(cur_first.year, cur_first.month)[1])
+        nxt_first = cur_last + timedelta(days=1)
+
+        def rows_for(year, month):
+            rows = []
+            try:
+                days = self.events_docs[year][month]
+            except KeyError:
+                return rows
+            for day in sorted(days.keys()):
+                for docId in days[day]:
+                    props = self.srvdtb.get_doc_properties(docId)
+                    title = props.get('Title', docId)
+                    if isinstance(title, list):
+                        title = title[0] if title else docId
+                    url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                    categories = self.srvdtb.get_values(docId, 'Category')
+                    category = categories[0] if categories and categories[0] else ''
+                    rows.append({
+                        'date': datetime(year, month, day).strftime('%b %d'),
+                        'title': title,
+                        'url': url,
+                        'category': category,
+                    })
+            return rows
+
+        return {
+            'current': {
+                'label': '%s · Current' % cur_first.strftime('%B %Y'),
+                'rows': rows_for(cur_first.year, cur_first.month),
+            },
+            'next': {
+                'label': '%s · Next' % nxt_first.strftime('%B %Y'),
+                'rows': rows_for(nxt_first.year, nxt_first.month),
+            },
+        }
 
     def build_events(self, doclist):
         TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
@@ -403,9 +534,9 @@ class Theme(Builder):
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
         max_frequency = self.get_maxkv_freq()
         all_keys = self.srvdtb.get_all_keys()
-        custom_buttons = ''
         var = self.get_theme_var()
         var['buttons'] = []
+        log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
         for key in all_keys:
             ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
@@ -414,12 +545,12 @@ class Theme(Builder):
                 values = self.srvdtb.get_all_values_for_key(key)
                 frequency = len(values)
                 self.log.debug(f"[THEME] KEY key={key} frequency={frequency}")
-                size = get_font_size(frequency, max_frequency)
-                proportion = int(math.log((frequency * 100) / max_frequency))
+                weight = math.log(1 + frequency) / log_max if log_max else 0.0
                 vbtn['key'] = key
                 vbtn['vfkey'] = valid_filename(key)
-                vbtn['size'] = size
-                vbtn['tooltip'] = "%d values" % len(values)
+                vbtn['count'] = frequency
+                vbtn['weight'] = round(weight, 3)
+                vbtn['tooltip'] = "%d values" % frequency
                 button = TPL_KEY_MODAL_BUTTON.render(var=vbtn)
                 var['buttons'].append(button)
         content = TPL_PROPS_PAGE.render(var=var)
@@ -465,16 +596,16 @@ class Theme(Builder):
             TPL_WORDCLOUD = self.template('WORDCLOUD')
             var = self.get_theme_var()
             var['items'] = []
+            log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
             for word in lwords:
                 frequency = len(dkeyurl[word])
-                size = get_font_size(frequency, max_frequency)
-                url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
-                tooltip = "%d documents" % frequency
+                weight = math.log(1 + frequency) / log_max if log_max else 0.0
                 item = {}
-                item['url'] = url
-                item['tooltip'] = tooltip
-                item['size'] = size
+                item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(word))
+                item['tooltip'] = "%d documents" % frequency
                 item['word'] = word
+                item['count'] = frequency
+                item['weight'] = round(weight, 3)
                 var['items'].append(item)
             html = TPL_WORDCLOUD.render(var=var)
         else:
