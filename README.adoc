@@ -2,28 +2,52 @@
 :toc: preamble
 :toclevels: 2
 
-image:https://img.shields.io/github/v/release/t00m/KB4IT?include_prereleases&sort=semver[Latest release,link=https://github.com/t00m/KB4IT/releases]
-image:https://img.shields.io/pypi/v/KB4IT[PyPI,link=https://pypi.org/project/KB4IT/]
-image:https://img.shields.io/pypi/pyversions/KB4IT[Python versions,link=https://pypi.org/project/KB4IT/]
-image:https://img.shields.io/badge/license-GPL--3.0--or--later-blue[License,link=LICENSE]
-image:https://img.shields.io/badge/platform-GNU%2FLinux-lightgrey[Platform]
-image:https://github.com/t00m/KB4IT/actions/workflows/kb4it.yml/badge.svg[CI,link=https://github.com/t00m/KB4IT/actions/workflows/kb4it.yml]
 
-*KB4IT* turns a folder of AsciiDoc (`.adoc`) files into a fast, static,
-property-indexed website — no database, no JavaScript framework, no
-runtime. Write in plain text, commit to git, generate the site, serve
-the static files anywhere.
+*KB4IT* is a static website generator based on Asciidoc sources
+mainly for technical documentation purposes.
 
-* *Serverless output* — plain HTML/CSS, host on GitHub Pages, S3, nginx,
-or just open `index.html`
-* *Smart incremental builds* — only changed documents are recompiled
-  (content-hash based)
-* *Property-driven navigation* — every document attribute becomes a
-  filterable index page
-* *Three themes out of the box* — `techdoc`, `book`, `blog` — plus a
-  theming system if you want your own
+*KB4IT* turns a directory of AsciiDoc (`.adoc`) files into a fast, static,
+property-indexed website — no database, nor webserver needed.
 
-Demos: https://github.com/t00m/kb4it-adocs
+Write in plain text, generate the site, and serve the static files anywhere.
+
+_Motivations_:
+
+* Provide an easy way to write my technical documentation.
+* Don't care about the formatting and focus on the contents.
+* To allow teams to manage their knowledge database easily.
+* Do not depend on third software products like word processors or complex web applications.
+* Easy to transfer (KB is made only text files)
+
+
+== Features
+
+[cols="1,4", options="header"]
+|===
+| | Feature
+
+| ✅ | Writing documentation: Documents must be in Asciidoctor format, which is easy to learn.
+| ✅ | Finding documents: Once converted to HTML, properties can be browsed. Property pages include filters and a search entry to filter by title.
+| ✅ | Publishing your repository: All necessary files are inside a single directory. Browse it or copy it to your web server.
+| ✅ | Serverless: No web server required, though you can use one if you prefer.
+| ✅ | Smart compiling: Only documents added or modified are compiled.
+| ✅ | Use the default themes or build your own custom theme.
+| ✅ | By modifying templates, it can be integrated with GitHub or GitLab.
+
+| ❌ | Not much documentation at this moment.
+| ❌ | No online editor: KB4IT does not include any online editor. Documents must be created or edited with your preferred editor.
+| ❌ | No dynamic search: KB4IT was developed to be as simple as possible.
+| ❌ | Dependencies on Asciidoctor (text processor and publishing toolchain) and Python (programming language).
+| ❌ | API is not stable.
+| ❌ | Most requirements are tailored to the author's own needs, which may not match yours.
+|===
+
+== Requirements
+
+- Python 3.11+
+- Mako
+- Asciidoctor
+
 
 == Quick start
 
@@ -44,19 +68,6 @@ xdg-open ~/mykb/target/index.html
 
 You'll also need the `asciidoctor` command on your system (see
 <<requirements>>).
-
-== Why KB4IT?
-
-If you've tried MkDocs, Hugo, Sphinx, or Docusaurus and felt any of:
-
-* "I just want to drop `.adoc` files in a folder"
-* "I want my metadata (Author, Category, Status…) to become navigation
-  automatically"
-* "I want the *output* to be static HTML I can rsync anywhere"
-* "I don't want Node, Ruby gems, or a 200-plugin config"
-
-…then KB4IT is built for you. It's opinionated, single-purpose, and
-tries to stay out of your way.
 
 == Installation
 
@@ -100,21 +111,6 @@ Release artefacts are built with the scripts under
 `scripts/distribution/` — see
 `scripts/distribution/README.md` if you want to build them yourself.
 
-[[requirements]]
-== Requirements
-
-* GNU/Linux (tested on Debian, Ubuntu, Fedora)
-* Python ≥ 3.11
-* `asciidoctor` (Ruby gem, install via your package manager)
-
-[source,bash]
-----
-# Debian / Ubuntu
-sudo apt install asciidoctor
-
-# Fedora
-sudo dnf install asciidoctor
-----
 
 == Usage
 
@@ -139,21 +135,6 @@ mykb/
 └── target/             # generated static website (output)
 ----
 
-A minimal `repo.json`:
-
-[source,json]
-----
-{
-  "title":   "My Knowledge Base",
-  "tagline": "Notes I don't want to lose",
-  "theme":   "techdoc",
-  "sort":    "Date",
-  "force":   false,
-  "workers": 4,
-  "source":  "/home/me/mykb/source",
-  "target":  "/home/me/mykb/target"
-}
-----
 
 == Themes
 
@@ -172,10 +153,8 @@ A minimal `repo.json`:
 | Chronological posts with tags/categories.
 |===
 
-Custom themes live in `~/.kb4it/opt/resources/themes/` or inside the
-installed package.
 
-== How it works (30-second tour)
+== How it works
 
 [source]
 ----
@@ -194,7 +173,13 @@ Your .adoc files
   Deployer   ──── copies static site to your target directory
 ----
 
-Service-oriented architecture. See `CLAUDE.md` for a full module map.
+
+== Demos
+
+- Blog: https://t00m.github.io/blog/
+
+- Techdoc: 
+
 
 == Contributing
 
@@ -220,23 +205,14 @@ Open an issue before starting a large change so we can align on the
 approach. A PR with a clear problem statement and a minimal diff beats
 a big "improvements" PR every time.
 
-== Roadmap / known limitations
-
-* Documentation is thinner than the code deserves — help wanted
-* No online editor by design — use your preferred editor
-* No dynamic search — KB4IT aims to stay small and serverless
-* API is still evolving; minor releases may change internals
-* When a linked document's properties change, related property pages may
-  need a `--force` rebuild to refresh titles
 
 == Credits
 
 * http://www.python.org/[Python] — the language KB4IT is written in
-* https://asciidoctor.org[Asciidoctor] — text processor and publishing
-  toolchain
-* https://getuikit.com[UIKit] — the front-end framework used by the
-  default themes
-* https://www.geany.org/[Geany] — the editor used to build KB4IT
+* https://asciidoctor.org[Asciidoctor] — text processor and publishing toolchain
+* https://www.makotemplates.org/[Mako] — template library written in Python
+* https://getuikit.com[UIKit] — the front-end framework used by the default themes
+* https://www.geany.org/[Geany] — the text editor used to build KB4IT
 
 == License
 
