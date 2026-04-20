@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "KB4IT"
-version = "0.7.32+build.5"
+version = "0.7.32+build.6"
 description = "A static website generator based on Asciidoctor sources."
 authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"

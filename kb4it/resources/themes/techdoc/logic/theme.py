@@ -415,7 +415,7 @@ class Theme(Builder):
                     EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
                     pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_DAY)
                     doclist = self.events_docs[year][month][day]
-                    must_compile_day = True
+                    must_compile_day = False
                     for docId in doclist:
                         doc_changed = kbdict['document'][docId]['compile']
                         doc_not_cached = not os.path.exists(pagename)
@@ -450,7 +450,8 @@ class Theme(Builder):
             for month in self.events_docs[year]:
                 thismonth = "%4d%02d" % (year, month)
                 EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
-                if thismonth in must_compile_month:
+                month_pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
+                if thismonth in must_compile_month or not os.path.exists(month_pagename):
                     var = base_var
                     var['page'] = {}
                     doclist = []
@@ -470,8 +471,7 @@ class Theme(Builder):
                     self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'SystemPage', 'Yes')
 
                 else:
-                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
-                    self.distribute_html(EVENT_PAGE_MONTH, pagename)
+                    self.distribute_html(EVENT_PAGE_MONTH, month_pagename)
                 self.srvbes.add_target(f"{EVENT_PAGE_MONTH}.adoc", f"{EVENT_PAGE_MONTH}.html")
 
         # Build year event pages
@@ -483,7 +483,8 @@ class Theme(Builder):
             EVENT_PAGE_YEAR = "events_%4d" % year
             PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
             page_name = "events_%4d" % year
-            if str(year) in must_compile_year:
+            year_pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
+            if str(year) in must_compile_year or not os.path.exists(year_pagename):
                 for month in self.events_docs[year]:
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
@@ -495,9 +496,10 @@ class Theme(Builder):
                 self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
 
             else:
-                pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
-                self.distribute_html(EVENT_PAGE_YEAR, pagename)
+                self.distribute_html(EVENT_PAGE_YEAR, year_pagename)
             self.srvbes.add_target(f"{EVENT_PAGE_YEAR}.adoc", f"{EVENT_PAGE_YEAR}.html")
+
+        return must_compile_year
 
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
@@ -544,27 +546,30 @@ class Theme(Builder):
 
                 doclist.append(docId)
                 title = self.srvdtb.get_values(docId, 'Title')[0]
-        self.build_events(doclist)
+        must_compile_year = self.build_events(doclist)
 
-        years_data = []
-        for year in sorted(self.dey.keys(), reverse=True):
-            doclist_year = []
-            for month in self.events_docs[year]:
-                for day in self.events_docs[year][month]:
-                    doclist_year.extend(self.events_docs[year][month][day])
-            total = len(doclist_year)
-            calendar_html = self._build_year_calendar_html(year)
-            datatable_html = self.build_datatable([], doclist_year, table_id=f'kb4it-datatable-{year}')
-            years_data.append({
-                'year': year,
-                'count': total,
-                'calendar': calendar_html,
-                'datatable': datatable_html,
-            })
-
-        events = {'years': years_data}
-        page = self.template('PAGE_EVENTS')
-        self.distribute_adoc('events', page.render(var=events))
+        events_pagename = os.path.join(self.srvbes.get_path('cache'), 'events.html')
+        if must_compile_year or not os.path.exists(events_pagename):
+            years_data = []
+            for year in sorted(self.dey.keys(), reverse=True):
+                doclist_year = []
+                for month in self.events_docs[year]:
+                    for day in self.events_docs[year][month]:
+                        doclist_year.extend(self.events_docs[year][month][day])
+                total = len(doclist_year)
+                calendar_html = self._build_year_calendar_html(year)
+                datatable_html = self.build_datatable([], doclist_year, table_id=f'kb4it-datatable-{year}')
+                years_data.append({
+                    'year': year,
+                    'count': total,
+                    'calendar': calendar_html,
+                    'datatable': datatable_html,
+                })
+            events = {'years': years_data}
+            page = self.template('PAGE_EVENTS')
+            self.distribute_adoc('events', page.render(var=events))
+        else:
+            self.distribute_html('events', events_pagename)
 
         self.srvdtb.add_document('events.adoc')
         self.srvdtb.add_document_key('events.adoc', 'Title', 'Events')
