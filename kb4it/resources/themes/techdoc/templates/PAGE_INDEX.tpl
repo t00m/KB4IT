@@ -5,8 +5,8 @@
 ++++
 <div class="uk-container kb-index">
 
-    <!-- 1. TRIMESTER CALENDAR -->
-    <section class="kb-section">
+    <!-- 1. TRIMESTER CALENDAR (hidden) -->
+    <section class="kb-section" style="display:none;">
         <div class="kb-panel kb-trimester">
             <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
                 <h2 class="kb-section-title" style="margin: 0;">Trimester · ${var['page']['trimester']['title']}</h2>
@@ -53,34 +53,41 @@
 %     if i > 0:
             <div class="kb-hero-divider"></div>
 %     endif
-            <div class="kb-hero-stat">
+            <a class="kb-hero-stat" href="${stat['url']}">
                 <span class="num">${stat['num']}</span>
                 <span class="label">${stat['label']}</span>
-            </div>
+            </a>
 % endfor
         </div>
     </section>
 
     <!-- 3. DIATAXIS GRID -->
     <section class="kb-section">
-        <h2 class="kb-section-title">Browse by type</h2>
         <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" uk-grid>
 % for item in var['page']['diataxis']:
             <div>
+% if item['url']:
                 <a class="kb-diataxis-card ${item['css']}" href="${item['url']}">
+% else:
+                <div class="kb-diataxis-card ${item['css']} kb-diataxis-empty">
+% endif
                     <div class="kb-diataxis-headline">
                         <span class="kb-diataxis-icon"><span uk-icon="icon: ${item['icon']}; ratio: 0.9"></span></span>
                         <span class="kb-diataxis-count">${item['count']}</span>
                         <span class="kb-diataxis-label">${item['label']}</span>
                     </div>
                     <p class="kb-diataxis-desc">${item['desc']}</p>
+% if item['url']:
                 </a>
+% else:
+                </div>
+% endif
             </div>
 % endfor
         </div>
     </section>
 
-    <!-- 4. EVENTS PANEL -->
+    <!-- 4. UPCOMING EVENTS -->
     <section class="kb-section">
         <h2 class="kb-section-title">Upcoming events</h2>
         <div class="kb-panel">
@@ -111,6 +118,32 @@
                 </div>
 % endfor
             </div>
+        </div>
+    </section>
+
+    <!-- 5. RECENT EVENTS -->
+    <section class="kb-section">
+        <h2 class="kb-section-title">Recent events</h2>
+        <div class="kb-panel">
+% if len(var['page']['recent_events']) == 0:
+            <div class="kb-events-empty">No events in the past month.</div>
+% else:
+            <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
+                <tbody>
+% for row in var['page']['recent_events']:
+                    <tr>
+                        <td class="kb-event-date">${row['date']}</td>
+                        <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
+% if row['category']:
+                        <td><span class="uk-label">${row['category']}</span></td>
+% else:
+                        <td></td>
+% endif
+                    </tr>
+% endfor
+                </tbody>
+            </table>
+% endif
         </div>
     </section>
 

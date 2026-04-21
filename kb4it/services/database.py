@@ -262,7 +262,7 @@ class Database(Service):
                 if key in self.db[docId]:
                     if value in self.db[docId][key]:
                         docs.append(docId)
-            self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
+            self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs) if docs else []
             self.log.debug(f"[DATABASE] KV_SEARCH key={key} value={value} count={len(self.cache_docs_by_kvpath[kvpath])}")
         return self.cache_docs_by_kvpath[kvpath]
 

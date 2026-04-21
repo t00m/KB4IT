@@ -131,10 +131,11 @@ class Processor(Service):
                 with open(target, "w", encoding="utf-8") as target_adoc:
                     target_adoc.write(content)
 
-            # On title change, force recompile of the exact (key, value)
-            # pairs this document belongs to — so its title updates wherever
-            # it is listed.
-            if result['titles_differ']:
+            # On metadata change, force recompile of ALL (key, value) pairs
+            # this document belongs to — datatable rows reflect metadata
+            # values, so any property change must refresh every page that
+            # lists this document, even if its membership set is unchanged.
+            if result['metadata_differs']:
                 for key in self.srvdtb.get_doc_keys(adocId):
                     if key in ignored or key in blocked:
                         continue
@@ -262,7 +263,7 @@ class Processor(Service):
 
         A key/value page recompiles when:
           - its doc set changed (rkvnew != rkvold), OR
-          - it was forced via force_kv_pairs (doc title changed), OR
+          - it was forced via force_kv_pairs (doc metadata/title changed), OR
           - compilation is globally forced.
         A key index page recompiles when:
           - its value set changed (rknew != rkold), OR

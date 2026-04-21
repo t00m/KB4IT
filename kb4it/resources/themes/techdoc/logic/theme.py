@@ -144,6 +144,7 @@ class Theme(Builder):
         var['page']['diataxis'] = self._build_index_diataxis()
         var['page']['trimester'] = self._build_index_trimester(now)
         var['page']['events_panel'] = self._build_index_events_panel(now)
+        var['page']['recent_events'] = self._build_index_recent_events(now)
 
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_adoc('index', page)
@@ -174,11 +175,11 @@ class Theme(Builder):
                     count_events += len(self.events_docs[year][month][day])
 
         return [
-            {'num': count_docs, 'label': 'Documents'},
-            {'num': count_authors, 'label': 'Authors'},
-            {'num': count_categories, 'label': 'Categories'},
-            {'num': count_events, 'label': 'Events'},
-            {'num': count_bookmarks, 'label': 'Bookmarks'},
+            {'num': count_docs,       'label': 'Documents',  'url': 'all.html'},
+            {'num': count_authors,    'label': 'Authors',    'url': 'Author.html'},
+            {'num': count_categories, 'label': 'Categories', 'url': 'Category.html'},
+            {'num': count_events,     'label': 'Events',     'url': 'events.html'},
+            {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
         ]
 
     def _build_index_diataxis(self):
@@ -201,7 +202,7 @@ class Theme(Builder):
         for item in diataxis:
             docs = self.srvdtb.get_docs_by_key_value(key, item['name'])
             item['count'] = len(docs)
-            item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(item['name']))
+            item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(item['name'])) if docs else None
         return diataxis
 
     def _build_index_trimester(self, now):
@@ -262,6 +263,8 @@ class Theme(Builder):
         cur_last = cur_first.replace(day=monthrange(cur_first.year, cur_first.month)[1])
         nxt_first = cur_last + timedelta(days=1)
 
+        today = now.date()
+
         def rows_for(year, month):
             rows = []
             try:
@@ -269,6 +272,8 @@ class Theme(Builder):
             except KeyError:
                 return rows
             for day in sorted(days.keys()):
+                if datetime(year, month, day).date() < today:
+                    continue
                 for docId in days[day]:
                     props = self.srvdtb.get_doc_properties(docId)
                     title = props.get('Title', docId)
@@ -295,6 +300,38 @@ class Theme(Builder):
                 'rows': rows_for(nxt_first.year, nxt_first.month),
             },
         }
+
+    def _build_index_recent_events(self, now):
+        """Events from yesterday back to one month ago, newest first."""
+        yesterday = datetime(now.year, now.month, now.day) - timedelta(days=1)
+        month_ago_month = now.month - 1 if now.month > 1 else 12
+        month_ago_year = now.year if now.month > 1 else now.year - 1
+        month_ago_day = min(now.day, monthrange(month_ago_year, month_ago_month)[1])
+        month_ago = datetime(month_ago_year, month_ago_month, month_ago_day)
+
+        rows = []
+        for year in sorted(self.events_docs.keys()):
+            for month in sorted(self.events_docs[year].keys()):
+                for day in sorted(self.events_docs[year][month].keys()):
+                    d = datetime(year, month, day)
+                    if d < month_ago or d > yesterday:
+                        continue
+                    for docId in self.events_docs[year][month][day]:
+                        props = self.srvdtb.get_doc_properties(docId)
+                        title = props.get('Title', docId)
+                        if isinstance(title, list):
+                            title = title[0] if title else docId
+                        url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                        categories = self.srvdtb.get_values(docId, 'Category')
+                        category = categories[0] if categories and categories[0] else ''
+                        rows.append({
+                            'date': d.strftime('%b %d'),
+                            'title': title,
+                            'url': url,
+                            'category': category,
+                        })
+        rows.reverse()
+        return rows
 
     def _build_year_calendar_html(self, year):
         """Generate a 12-month HTML calendar grid for events.html."""
