@@ -29,7 +29,7 @@
                     searching: true,
                     deferRender:    true,
                     autoWidth:      false,
-                    scrollY:        400,
+                    scrollY:        'calc(100vh - 200px)',
                     scrollCollapse: false,
                     scroller:       false,
                     stateSave: false,

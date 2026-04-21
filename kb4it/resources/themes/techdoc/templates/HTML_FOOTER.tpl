@@ -4,7 +4,8 @@
     <span class="kb-footer-meta">Last updated ${var['timestamp']}</span>
 </div>
 <!-- FOOTER :: END -->
-        </div>
+</div><!-- /uk-container -->
+</div><!-- /uk-background-muted -->
 <!-- CONTENTS (Document) :: END -->
 <script>hljs.highlightAll();</script>
 <script>

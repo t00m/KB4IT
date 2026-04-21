@@ -1,25 +1,195 @@
 @media print {
+
+    /* -----------------------------------------------------------------------
+       Page setup
+    ----------------------------------------------------------------------- */
     @page {
         size: A4 portrait;
-        display: !noimportant;
+        margin: 1.5cm 2cm;
     }
 
-    .noprint {
-        display: none;
+    /* -----------------------------------------------------------------------
+       Hide all UI chrome
+    ----------------------------------------------------------------------- */
+    #container-1,
+    #kb4it-menu,
+    .noprint,
+    .uk-navbar-container,
+    #kb4it-doc-metadata,
+    .kb-footer,
+    .uk-modal,
+    .uk-sticky-placeholder,
+    .kbfilter,
+    .dataTables_filter,
+    .dataTables_length,
+    .dataTables_info,
+    .dataTables_paginate {
+        display: none !important;
     }
 
-    .print {
-        display: block;
+    /* -----------------------------------------------------------------------
+       Reset backgrounds and shadows
+    ----------------------------------------------------------------------- */
+    *,
+    body,
+    .uk-background-muted {
+        background: white !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
     }
 
-    #kb4it-datatable {
+    /* -----------------------------------------------------------------------
+       Layout: full-width, no container constraints
+    ----------------------------------------------------------------------- */
+    .uk-container,
+    .uk-container-center {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
-    #kb4it-datatable_wrapper {
-        display: none;
+    /* UIKit switcher: force active panel visible */
+    .uk-switcher > li {
+        display: block !important;
     }
 
-    h1, h2, h3, h4, h5 {
-      page-break-after: avoid;
+    /* -----------------------------------------------------------------------
+       Typography
+    ----------------------------------------------------------------------- */
+    body {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #000;
     }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #000;
+        page-break-after: avoid;
+    }
+
+    h1 { font-size: 20pt; margin: 0 0 12pt; }
+    h2 { font-size: 15pt; margin: 14pt 0 6pt; }
+    h3 { font-size: 12pt; margin: 10pt 0 4pt; }
+    h4 { font-size: 11pt; margin: 8pt 0 3pt; }
+
+    p { margin: 0 0 8pt; orphans: 3; widows: 3; }
+
+    /* -----------------------------------------------------------------------
+       Page-break rules
+    ----------------------------------------------------------------------- */
+    pre, blockquote, figure, .admonitionblock { page-break-inside: avoid; }
+    table { page-break-inside: auto; }
+    tr    { page-break-inside: avoid; }
+    .sect1 + .sect1 { margin-top: 14pt; }
+
+    /* -----------------------------------------------------------------------
+       Links: append URL after link text, skip anchors and js links
+    ----------------------------------------------------------------------- */
+    a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 8pt;
+        color: #555;
+        font-style: italic;
+        word-break: break-all;
+    }
+
+    a[href^="#"]::after,
+    a[href^="javascript"]::after,
+    [uk-icon]::after,
+    .uk-icon::after {
+        content: "" !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       Code blocks — readable on paper, no neon colours
+    ----------------------------------------------------------------------- */
+    pre, code, kbd, samp {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 9pt;
+    }
+
+    pre {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+        border: 1px solid #ccc;
+        border-radius: 0;
+        padding: 8pt 10pt;
+        margin: 8pt 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow: visible;
+    }
+
+    code {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        padding: 1pt 3pt;
+    }
+
+    /* Highlight.js overrides for print */
+    .hljs { background: #f5f5f5 !important; color: #000 !important; }
+    .hljs-keyword, .hljs-built_in  { color: #000 !important; font-weight: bold; }
+    .hljs-string, .hljs-attr       { color: #444 !important; }
+    .hljs-comment                  { color: #777 !important; font-style: italic; }
+    .hljs-number, .hljs-literal    { color: #333 !important; }
+
+    /* -----------------------------------------------------------------------
+       Tables
+    ----------------------------------------------------------------------- */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 9pt;
+    }
+
+    th, td {
+        border: 1px solid #bbb;
+        padding: 4pt 6pt;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    thead tr { background: #f0f0f0 !important; }
+    thead th { font-weight: bold; }
+
+    /* DataTables: show raw table, release fixed scroll height */
+    .dataTables_scrollHead,
+    .dataTables_scrollBody {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .dataTables_scrollHeadInner,
+    .dataTables_scrollBodyInner,
+    .dataTables_scroll {
+        width: 100% !important;
+        overflow: visible !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       Admonition blocks — grayscale left-border, no background colour
+    ----------------------------------------------------------------------- */
+    .admonitionblock {
+        border: none !important;
+        border-left: 3pt solid #666 !important;
+        background: none !important;
+        margin: 8pt 0;
+        padding: 5pt 10pt;
+    }
+
+    .admonitionblock td.icon    { display: none; }
+    .admonitionblock td.content { font-size: 10pt; }
+
+    /* -----------------------------------------------------------------------
+       Images
+    ----------------------------------------------------------------------- */
+    img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+
 }

@@ -17,4 +17,3 @@
     ${var['source_html']}
 % endif
 <!-- Template HTML_BODY_DOC.tpl :: END -->
-</div>
