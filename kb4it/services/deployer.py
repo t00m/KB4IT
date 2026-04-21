@@ -34,7 +34,6 @@ class Deployer(Service):
 
         self.step_00_copy_source_to_cache(source_files)
         # ~ self.step_02_copy_temporary_files_to_distributed_directory()
-        self.step_03_clear_target()
         self.step_04_copy_sources_to_target(source_adocs)
         self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
@@ -68,13 +67,23 @@ class Deployer(Service):
         delete_target_contents(self.srvbes.get_path("target"))
         self.log.debug(f"[DEPLOYER] TARGET_CLEARED path={self.srvbes.get_path('target')}")
 
-    # Refresh target
     def step_04_copy_sources_to_target(self, files):
-        """Place a copy of sources in the target directory."""
+        """Incrementally sync source .adoc files to target/sources/."""
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
         os.makedirs(docsdir, exist_ok=True)
-        copy_docs(files, docsdir)
-        self.log.debug(f"[DEPLOYER] COPIED_SOURCES_TO_TARGET n={len(files)}")
+        expected = {os.path.basename(f) for f in files}
+        n_copied = n_deleted = 0
+        for filepath in files:
+            dest = os.path.join(docsdir, os.path.basename(filepath))
+            if not os.path.exists(dest) or os.path.getmtime(filepath) > os.path.getmtime(dest):
+                shutil.copy(filepath, dest)
+                n_copied += 1
+        for filename in os.listdir(docsdir):
+            if filename not in expected:
+                os.unlink(os.path.join(docsdir, filename))
+                n_deleted += 1
+                self.log.debug(f"[DEPLOYER] STALE_SOURCE_DELETED file={filename}")
+        self.log.debug(f"[DEPLOYER] SOURCES_TO_TARGET copied={n_copied} deleted={n_deleted}")
 
     def step_06_copy_all_to_cache(self, files):
         """Copy objects in temporary directory to cache path."""
@@ -82,22 +91,34 @@ class Deployer(Service):
         self.log.debug(f"[DEPLOYER] COPIED_ALL_TO_CACHE n={len(files)}")
 
     def step_07_copy_compiled_documents_to_target(self):
-        """Copy cached documents to target path."""
+        """Incrementally sync compiled HTML to target: copy expected, delete stale."""
         runtime = self.srvbes.get_dict("runtime")
+        expected = runtime["docs"]["targets"]
+        dir_cache = self.srvbes.get_path("cache")
+        dir_target = self.srvbes.get_path("target")
 
-        n = 0
-        for filename in sorted(runtime["docs"]["targets"]):
-            source = os.path.join(self.srvbes.get_path("cache"), filename)
-            target = os.path.join(self.srvbes.get_path("target"), filename)
+        n_copied = n_deleted = 0
+        for filename in sorted(expected):
+            source = os.path.join(dir_cache, filename)
+            target = os.path.join(dir_target, filename)
             try:
                 shutil.copy(source, target)
+                n_copied += 1
             except FileNotFoundError as error:
                 self.log.error(f"[DEPLOYER] ERROR {error}")
                 self.log.error("[DEPLOYER] HINT rerun with -force")
                 self.print_traceback()
                 self.app.stop()
-            n += 1
-        self.log.debug(f"[DEPLOYER] COPIED_CACHED_TO_TARGET n={n}")
+
+        for filename in os.listdir(dir_target):
+            if not filename.endswith('.html'):
+                continue
+            if filename not in expected:
+                os.unlink(os.path.join(dir_target, filename))
+                n_deleted += 1
+                self.log.debug(f"[DEPLOYER] STALE_HTML_DELETED file={filename}")
+
+        self.log.debug(f"[DEPLOYER] HTML_TO_TARGET copied={n_copied} deleted={n_deleted}")
 
     def step_08_copy_global_resources_to_target(self):
         """Copy global resources to target path."""
