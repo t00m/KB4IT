@@ -2,6 +2,24 @@
 
 // END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
 
+<%!
+def category_css(category):
+    _danger  = {"Change"}
+    _warning = {"Incident", "Task"}
+    _success = {"Meeting", "Procedure", "Reminder", "Template"}
+    _primary = {"Note", "Post"}
+    if category in _danger:
+        return "uk-label-danger"
+    elif category in _warning:
+        return "uk-label-warning"
+    elif category in _success:
+        return "uk-label-success"
+    elif category in _primary:
+        return "uk-label-primary"
+    else:
+        return "uk-text-muted"
+%>
+
 ++++
 <div class="uk-container kb-index">
 
@@ -106,7 +124,7 @@
                                 <td class="kb-event-date">${row['date']}</td>
                                 <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 %             if row['category']:
-                                <td><span class="uk-label">${row['category']}</span></td>
+                                <td><span class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}">${row['category']}</span></td>
 %             else:
                                 <td></td>
 %             endif
@@ -135,7 +153,7 @@
                         <td class="kb-event-date">${row['date']}</td>
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 % if row['category']:
-                        <td><span class="uk-label">${row['category']}</span></td>
+                        <td><span class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}">${row['category']}</span></td>
 % else:
                         <td></td>
 % endif
