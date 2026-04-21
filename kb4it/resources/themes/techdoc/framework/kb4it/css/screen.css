@@ -289,6 +289,14 @@ table.month tbody tr th {
 }
 .kb-event-title a { color: #222; font-weight: 500; text-decoration: none; }
 .kb-event-title a:hover { color: #1e87f0; }
+.kb-events-table .uk-label {
+    display: inline-block;
+    width: 7rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .kb-events-month-header {
     font-size: 0.7rem;
     text-transform: uppercase;

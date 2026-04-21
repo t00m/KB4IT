@@ -32,7 +32,7 @@ class Database(Service):
         self.db = {}
         self.keys = {
             "all": [],
-            "blocked": ["Title", "SystemPage"],
+            "blocked": ["Title", "SystemPage", "Date"],
             "custom": [],
             "theme": [],
             "ignored": repo.get("ignored_keys") or [],
