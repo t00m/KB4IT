@@ -951,6 +951,7 @@ class Theme(Builder):
         var = self.get_theme_var()
         var['key'] = key
         var['value'] = value
+        var['vfkey'] = valid_filename(key)
         var['title'] = '%s: %s' % (key, value)
         var['pagename'] = pagename
         var['doclist'] = sorted_docs

@@ -1,18 +1,13 @@
 <!-- FOOTER :: START -->
-            <div class="uk-flex uk-flex-center uk-flex-wrap">
-<!--
-                <div class="uk-card uk-card-small uk-card-body">
-                    <span class="uk-text-meta">Last update on ${var['timestamp']}</span>
-                </div>
--->
-            </div>
+<div class="kb-footer">
+    <a class="kb-footer-top" href="#">↑ Back to top</a>
+    <span class="kb-footer-meta">Last updated ${var['timestamp']}</span>
+</div>
 <!-- FOOTER :: END -->
         </div>
 <!-- CONTENTS (Document) :: END -->
 <script>hljs.highlightAll();</script>
 <script>
-<!-- Necessary javascript for filtering results -->
-<!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->
 var input = document.getElementById('text_filter');
 var filter = document.getElementById('filter');
 
