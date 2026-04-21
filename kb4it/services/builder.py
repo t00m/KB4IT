@@ -222,3 +222,16 @@ class Builder(Service):
         self.srvdtb.add_document_key(
             "about_kb4it.adoc", "Title", "About KB4IT")
         self.srvdtb.add_document_key("about_kb4it.adoc", "SystemPage", "Yes")
+
+    def create_page_help(self):
+        """Help page — generated only when the user repo has no help.adoc."""
+        filenames = self.srvbes.get_value("docs", "filenames")
+        if "help.adoc" in filenames:
+            self.log.info("[BUILDER] HELP_SKIP reason=user_generated")
+            return
+        TPL_PAGE_HELP = self.template("PAGE_HELP")
+        var = self.get_theme_var()
+        self.distribute_adoc("help", TPL_PAGE_HELP.render(var=var))
+        self.srvdtb.add_document("help.adoc")
+        self.srvdtb.add_document_key("help.adoc", "Title", "Help")
+        self.srvdtb.add_document_key("help.adoc", "SystemPage", "Yes")
