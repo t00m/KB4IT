@@ -623,7 +623,7 @@ class Theme(Builder):
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()
-        # ~ self.create_page_help()
+        self.create_page_help()
 
     def page_hook_pre(self, var):
         var['related'] = ''
@@ -729,13 +729,10 @@ class Theme(Builder):
     def get_maxkv_freq(self):
         """Calculate max frequency for all keys"""
         maxkvfreq = 0
-        all_keys = self.srvdtb.get_all_keys()
-        for key in all_keys:
-            blocked_keys = self.srvdtb.get_blocked_keys()
-            if key not in blocked_keys:
-                values = self.srvdtb.get_all_values_for_key(key)
-                if len(values) > maxkvfreq:
-                    maxkvfreq = len(values)
+        for key in self.srvdtb.get_theme_keys():
+            values = self.srvdtb.get_all_values_for_key(key)
+            if len(values) > maxkvfreq:
+                maxkvfreq = len(values)
         return maxkvfreq
 
     def build_page_stats(self):
@@ -749,7 +746,7 @@ class Theme(Builder):
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         var = self.get_theme_var()
         var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.srvdtb.get_all_keys()
+        keys = self.srvdtb.get_theme_keys()
         var['count_keys'] = len(keys)
         var['leader_items'] = []
         for key in keys:
