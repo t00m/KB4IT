@@ -1,0 +1,62 @@
+{
+    "datatable": [
+        "Updated",
+        "Title",
+        "Category",
+        "Scope",
+        "Topic"
+    ],
+    "events": [
+        "Change",
+        "Course",
+        "Incident",
+        "Issue",
+        "Note",
+        "Post",
+        "Procedure",
+        "Reminder",
+        "Report",
+        "Task"
+    ],
+    "force": false,
+    "git": false,
+    "git_branch": "",
+    "git_path": "",
+    "git_repo": "",
+    "git_server": "",
+    "git_user": "",
+    "ignored_keys": [
+        "Updated"
+    ],
+    "logo": "resources/themes/techdoc/images/logo.svg",
+    "logo_alt": "",
+    "menu": [
+        "Author",
+        "Category",
+        "Command",
+        "Component",
+        "Database",
+        "OS",
+        "Periodicity",
+        "Priority",
+        "Product",
+        "Scope",
+        "Server",
+        "Status",
+        "Tag",
+        "Team",
+        "Topic"
+    ],
+    "source": "/path/to/source/dir",
+    "tagline": "Technical Knowledge Base",
+    "target": "/path/to/target/dir",
+    "theme": "techdoc",
+    "timeline": [
+        "Change",
+        "Incident",
+        "Note",
+        "Task"
+    ],
+    "title": "KB4IT",
+    "webserver": false
+}

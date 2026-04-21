@@ -1,0 +1,58 @@
+= Git Branching Strategies
+// -- Mandatory properties --
+:Team: Tech Writers Team
+:Date: 2024-03-22
+:Version: 1.0
+:DocType: Explanation
+:Tag: version-control
+// -- Semantic properties --
+:Category: Post
+:Product: Git
+:Topic: Development
+:Status: Released
+:Priority: Normal
+:Date: 2024-03-22 10:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+A branching strategy is not just a version control convention — it is a team agreement about how work flows from idea to production. Choosing the wrong model for your team size and release cadence creates merge conflicts, deployment confusion, and coordination overhead that compounds over time.
+
+The three most widely adopted strategies — Git Flow, GitHub Flow, and trunk-based development — each suit a different context. Understanding the trade-offs helps teams make an informed choice rather than inheriting one by accident.
+
+== Git Flow
+
+Git Flow defines long-lived branches: `main` (production), `develop` (integration), and short-lived `feature`, `release`, and `hotfix` branches.
+
+*Best suited for:* projects with scheduled, versioned releases (libraries, packaged software).
+
+*Trade-offs:* the parallel `develop` and `main` branches add ceremony. Merge conflicts accumulate if feature branches live too long. Continuous deployment is difficult because code waits in `develop` before reaching `main`.
+
+== GitHub Flow
+
+GitHub Flow simplifies to two tiers: `main` is always deployable, and every change goes through a short-lived feature branch and a pull request.
+
+*Best suited for:* web applications with continuous deployment, small to medium teams.
+
+*Trade-offs:* with no explicit release branch, managing multiple supported versions requires additional conventions. Suitable only when `main` can be deployed at any time.
+
+== Trunk-Based Development
+
+All developers commit to a single shared branch (`main` or `trunk`), using feature flags to hide incomplete work from users. Branches, if used at all, are extremely short-lived (hours, not days).
+
+*Best suited for:* large teams practising continuous integration at scale.
+
+*Trade-offs:* requires strong CI discipline, comprehensive automated testing, and feature flag infrastructure. Onboarding is harder without clear branch isolation.
+
+== Choosing a Strategy
+
+Consider these questions:
+
+* *How frequently do you release?* Daily deployments favour trunk-based or GitHub Flow. Monthly releases suit Git Flow.
+* *How many versions do you support simultaneously?* Multiple supported versions require explicit release branches.
+* *How mature is your test suite?* Trunk-based development demands high test coverage and fast pipelines.
+
+== Conclusion
+
+No strategy is universally correct. The best choice is the one your team will actually follow consistently — a simple model executed well outperforms a sophisticated model executed poorly.

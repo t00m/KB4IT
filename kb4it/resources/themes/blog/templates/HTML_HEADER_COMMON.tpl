@@ -20,17 +20,18 @@
   <script type="text/javascript" class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {
-                dom: '<"kbfilter"flrtip>',
+                dom: '<"kbfilter"Bifrt>',
                 serverSide: false,
+                pageLength: 1000,
                 ordering: true,
                 searching: true,
                 //~ data:           data,
                 deferRender:    true,
-                scrollY:        400,
-                scrollCollapse: false,
-                scroller:       false,
+                scrollY: 600,
+                scrollCollapse: true,
+                scroller:       true,
                 stateSave: false,
-                paging:   false,
+                paging:   true,
                 info:     true,
                 order: [[ 0, "desc" ]]
             } );

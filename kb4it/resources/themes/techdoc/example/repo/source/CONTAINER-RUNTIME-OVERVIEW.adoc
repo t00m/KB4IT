@@ -1,0 +1,60 @@
+= Container Runtime Overview
+// -- Mandatory properties --
+:Author: John Smith
+:Team: Architecture Team
+:Date: 2024-09-01
+:Version: 1.0
+:DocType: Explanation
+:Tag: containerization
+// -- Semantic properties --
+:OS: Linux
+:Product: Docker
+:Category: Note
+:Scope: Infrastructure
+:Topic: Architecture
+:Status: Released
+:Priority: Normal
+:Updated: 2024-09-01 14:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Background
+
+Containers emerged as a lightweight alternative to virtual machines. While virtual machines emulate entire hardware stacks, containers share the host kernel and isolate only the process namespace, filesystem, and network. This difference makes containers faster to start, smaller in size, and less resource-intensive.
+
+The shift from monolithic deployments to containerised workloads has changed how software is built, shipped, and operated. A single container image bundles the application and all its dependencies, making the environment reproducible across development, test, and production systems.
+
+== Concepts
+
+=== Images and Containers
+
+An *image* is a read-only, layered snapshot of a filesystem and configuration. A *container* is a running instance of an image — the image is immutable, the container is ephemeral.
+
+=== Namespaces and cgroups
+
+The Linux kernel features underlying containers are:
+
+* *Namespaces* — isolate process visibility. A containerised process cannot see processes outside its namespace.
+* *Control groups (cgroups)* — limit and account for resource usage (CPU, memory, I/O) per process group.
+
+=== Container Runtime
+
+The container runtime is the software that executes containers from images. It communicates with the kernel to set up namespaces, cgroups, and filesystem layers. Docker introduced this concept and remains widely used, though lower-level runtimes such as `containerd` and `runc` now underpin most modern container platforms.
+
+== How It Works
+
+When a container starts:
+
+1. The runtime pulls the image from a registry if not already local.
+2. A writable layer is added on top of the read-only image layers (union filesystem).
+3. A new set of kernel namespaces is created for the container.
+4. cgroup limits defined in the container configuration are applied.
+5. The container's entrypoint process starts inside the isolated environment.
+
+When the container stops, the writable layer is discarded unless committed or mounted as a volume.
+
+== Related Topics
+
+* Container orchestration (Kubernetes, Swarm)
+* Image build best practices (multi-stage builds, minimal base images)
+* Container security (rootless containers, image scanning, seccomp profiles)

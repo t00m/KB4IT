@@ -5,17 +5,19 @@ body {
 }
 
 pre {
-    padding: 15px;
+    padding: 14px 16px;
     overflow: auto;
-    margin: 10px 0; /* Space around the div */
-    border: 3px solid black;
-    font-family: "Lucida Console", "Courier New", monospace;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    background: #1e1e1e;
+    font-family: "SF Mono", "Fira Code", "Lucida Console", monospace;
 }
 
 pre code {
-    background-color: black;
-    color: #52ff00;
-    font-family: "Lucida Console", "Courier New", monospace;
+    background-color: transparent;
+    color: #d4d4d4;
+    font-family: inherit;
 }
 
 table.month{
@@ -56,10 +58,10 @@ table.month tbody tr th {
     color: blue;
 }
 
-.content pre{
-    background-color: black;
-    color: #52ff00;
-    font-family: "Lucida Console", "Courier New", monospace;
+.content pre {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: "SF Mono", "Fira Code", "Lucida Console", monospace;
 }
 
 #kb4it-page-title {
@@ -70,36 +72,22 @@ table.month tbody tr th {
 }
 
 .admonitionblock {
-    border: 3px solid black;
-    color: black;
-    padding: 15px; /* Add padding */
-    font-family: Arial, sans-serif; /* Font style */
-    margin: 10px 0; /* Space around the div */
+    border: none;
+    border-left: 4px solid #ddd;
+    border-radius: 0 4px 4px 0;
+    color: #333;
+    padding: 12px 16px;
+    font-family: inherit;
+    margin: 12px 0;
 }
 
-.admonitionblock.note {
-    background-color: #ffffba;
-}
+.admonitionblock.note     { background-color: #fffde7; border-left-color: #f0b429; }
+.admonitionblock.tip      { background-color: #f0fdf4; border-left-color: #22c55e; }
+.admonitionblock.important{ background-color: #eff6ff; border-left-color: #3b82f6; }
+.admonitionblock.caution  { background-color: #fff1f0; border-left-color: #ef4444; }
+.admonitionblock.warning  { background-color: #fffbeb; border-left-color: #f59e0b; }
 
-.admonitionblock.tip {
-    background-color:  #baffc9;
-}
-
-.admonitionblock.important {
-    background-color: #bae1ff;
-}
-
-.admonitionblock.caution {
-    background-color: #ffb3ba;
-}
-
-.admonitionblock.warning {
-    background-color: orange;
-}
-
-.admonitionblock .uk-icon {
-    border: 1px solid black;
-}
+.admonitionblock .uk-icon { border: none; }
 
 
 #kb-sect1 {
@@ -134,3 +122,442 @@ table.month tbody tr th {
 #kb-sect4:hover {
     border: 1px solid black;
 }
+
+/* ==========================================================================
+   Landing page (PAGE_INDEX) — compact layout
+   ========================================================================== */
+.kb-index { font-size: 14px; }
+.kb-index .kb-section { margin-bottom: 20px; }
+.kb-index .kb-panel {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 14px 18px;
+}
+.kb-index .kb-section-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: #777;
+    margin: 0 0 8px 2px;
+}
+
+/* Trimester calendar (top, compact) */
+.kb-trimester { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; }
+.kb-trimester-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+.kb-trimester-month {
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 6px 8px 8px 8px;
+}
+.kb-trimester-month.current { border-color: #1e87f0; background: #f4faff; }
+.kb-trimester-month h4 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #555;
+    margin: 0 0 6px 0;
+    text-align: center;
+}
+.kb-trimester-month.current h4 { color: #1e87f0; }
+.kb-trimester-month table { width: 100%; border-collapse: collapse; }
+.kb-trimester-month th {
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: #aaa;
+    padding: 2px 0;
+    text-align: center;
+}
+.kb-trimester-month td {
+    padding: 2px 0;
+    text-align: center;
+    color: #555;
+    height: 18px;
+    width: 14.28%;
+    background: transparent;
+    border: 0;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+.kb-trimester-month td.empty { color: transparent; }
+.kb-trimester-month td.event a {
+    color: #1e87f0;
+    font-weight: 600;
+    text-decoration: none;
+}
+.kb-trimester-month td.event a:hover { text-decoration: underline; }
+.kb-trimester-month td.today {
+    background: #1e87f0;
+    color: #fff;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* Hero stats bar */
+.kb-hero-bar {
+    background: linear-gradient(135deg, #1e87f0 0%, #0f6ecd 100%);
+    color: #fff;
+    border-radius: 6px;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(30,135,240,0.2);
+}
+.kb-hero-stat { display: flex; align-items: baseline; gap: 8px; color: inherit; text-decoration: none; }
+.kb-hero-stat:hover { opacity: 0.85; }
+.kb-hero-stat .num { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.kb-hero-stat .label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+}
+.kb-hero-bar .kb-hero-divider {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255,255,255,0.2);
+}
+
+/* Diataxis cards */
+.kb-diataxis-card {
+    background: #fff;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block;
+    border-left: 3px solid transparent;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    height: 100%;
+}
+.kb-diataxis-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.09);
+}
+.kb-diataxis-card.kb-diataxis-empty { opacity: 0.45; cursor: default; pointer-events: none; }
+.kb-diataxis-card.tutorial    { border-left-color: #32d296; }
+.kb-diataxis-card.howto       { border-left-color: #1e87f0; }
+.kb-diataxis-card.reference   { border-left-color: #faa05a; }
+.kb-diataxis-card.explanation { border-left-color: #9063f0; }
+
+.kb-diataxis-headline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.kb-diataxis-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.kb-diataxis-card.tutorial    .kb-diataxis-icon { background: rgba(50,210,150,0.14); color: #32d296; }
+.kb-diataxis-card.howto       .kb-diataxis-icon { background: rgba(30,135,240,0.14); color: #1e87f0; }
+.kb-diataxis-card.reference   .kb-diataxis-icon { background: rgba(250,160,90,0.14); color: #faa05a; }
+.kb-diataxis-card.explanation .kb-diataxis-icon { background: rgba(144,99,240,0.14); color: #9063f0; }
+
+.kb-diataxis-count { font-size: 1.15rem; font-weight: 700; color: #222; line-height: 1; }
+.kb-diataxis-label { font-size: 0.92rem; font-weight: 600; color: #333; }
+.kb-diataxis-desc { font-size: 0.76rem; color: #888; line-height: 1.35; margin: 0; padding-left: 36px; }
+
+/* Events panel */
+.kb-events-table { margin: 0; }
+.kb-events-table td {
+    vertical-align: middle;
+    padding: 6px 8px;
+    font-size: 0.86rem;
+}
+.kb-event-date {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 0.8rem;
+    color: #1e87f0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.kb-event-title a { color: #222; font-weight: 500; text-decoration: none; }
+.kb-event-title a:hover { color: #1e87f0; }
+.kb-events-month-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: #1e87f0;
+    font-weight: 600;
+    margin: 10px 0 4px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+.kb-events-empty {
+    font-style: italic;
+    color: #aaa;
+    font-size: 0.82rem;
+    padding: 4px 0;
+}
+
+/* ==========================================================================
+   Word cloud (properties.html and key value pages)
+   --kb-weight is a 0..1 value emitted per item from the theme.
+   ========================================================================== */
+.kb-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px 18px;
+    padding: 22px 12px;
+    line-height: 1.65;
+}
+.kb-cloud-properties {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 28px 18px;
+    gap: 8px 22px;
+}
+.kb-cloud-item {
+    --kb-weight: 0;
+    font-size: calc(0.82rem + var(--kb-weight) * 1.45rem);
+    font-weight: calc(400 + var(--kb-weight) * 300);
+    color: hsl(210, 14%, calc(58% - var(--kb-weight) * 38%));
+    text-decoration: none !important;
+    white-space: nowrap;
+    transition: color 0.15s ease, transform 0.12s ease;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+}
+.kb-cloud-item:hover {
+    color: #1e87f0 !important;
+    text-decoration: underline !important;
+    transform: translateY(-1px);
+}
+.kb-cloud-word { letter-spacing: -0.01em; }
+.kb-cloud-count {
+    font-size: 0.62em;
+    color: #bbb;
+    font-weight: 400;
+    vertical-align: super;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: 0;
+}
+.kb-cloud-item:hover .kb-cloud-count { color: #6aa9e0; }
+.kb-cloud-key { cursor: pointer; }
+
+/* ==========================================================================
+   Events page — full-year calendar grid (kb-evcal-*)
+   ========================================================================== */
+.kb-evcal-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+@media (max-width: 960px) {
+    .kb-evcal-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+    .kb-evcal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.kb-evcal-month {
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 6px 8px 8px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+}
+.kb-evcal-mname {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #555;
+    padding-bottom: 4px;
+}
+.kb-evcal-mname a { color: #1e87f0; text-decoration: none; }
+.kb-evcal-mname a:hover { text-decoration: underline; }
+.kb-evcal-month table { width: 100%; border-collapse: collapse; }
+.kb-evcal-month th {
+    font-size: 0.60rem;
+    font-weight: 500;
+    color: #aaa;
+    padding: 2px 0;
+    text-align: center;
+    width: 14.28%;
+}
+.kb-evcal-month td {
+    padding: 2px 0;
+    text-align: center;
+    color: #555;
+    height: 18px;
+    width: 14.28%;
+    background: transparent;
+    border: 0;
+}
+.kb-evcal-event a {
+    color: #1e87f0;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+.kb-evcal-event a:hover { background: #e8f2ff; }
+.kb-evcal-today {
+    background: #1e87f0;
+    color: #fff !important;
+    border-radius: 3px;
+    font-weight: 600;
+}
+.kb-evcal-today-event { background: #1e87f0; border-radius: 3px; }
+.kb-evcal-today-event a { color: #fff !important; font-weight: 700; text-decoration: none; }
+
+/* ==========================================================================
+   Key-value page banner (PAGE_KEY_VALUE)
+   ========================================================================== */
+.kb-kv-banner {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 14px 18px 12px;
+    margin-bottom: 16px;
+}
+.kb-kv-breadcrumb { font-size: 0.72rem; color: #bbb; margin-bottom: 8px; }
+.kb-kv-breadcrumb a { color: #999; text-decoration: none; }
+.kb-kv-breadcrumb a:hover { color: #1e87f0; }
+.kb-kv-sep { margin: 0 5px; color: #ccc; }
+.kb-kv-current { color: #666; }
+.kb-kv-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kb-kv-key-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    background: #eef3ff;
+    color: #5580cc;
+    padding: 3px 9px;
+    border-radius: 3px;
+}
+.kb-kv-arrow { color: #ccc; }
+.kb-kv-value-badge { font-size: 1.05rem; font-weight: 700; color: #1e87f0; }
+.kb-kv-count { margin-left: auto; font-size: 0.75rem; color: #bbb; font-style: italic; }
+
+/* ==========================================================================
+   Key page header (PAGE_KEY)
+   ========================================================================== */
+.kb-key-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+}
+.kb-key-title { font-size: 1.1rem; font-weight: 700; color: #1e87f0; }
+.kb-key-meta { font-size: 0.76rem; color: #aaa; }
+.kb-meta-sep { margin: 0 4px; }
+
+/* ==========================================================================
+   Stats page (PAGE_STATS)
+   ========================================================================== */
+.kb-stats-hero {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.kb-stat-card {
+    flex: 1;
+    min-width: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    padding: 22px 16px 18px;
+    text-decoration: none !important;
+    color: #222 !important;
+    border-top: 3px solid #1e87f0;
+    transition: box-shadow 0.12s ease, transform 0.12s ease;
+}
+.kb-stat-card:hover { box-shadow: 0 4px 14px rgba(30,135,240,0.15); transform: translateY(-2px); }
+.kb-stat-icon { color: #1e87f0; margin-bottom: 6px; }
+.kb-stat-num { font-size: 2.2rem; font-weight: 700; color: #111; line-height: 1; }
+.kb-stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.1px; color: #999; margin-top: 2px; }
+
+.kb-stats-list {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 4px 16px;
+}
+.kb-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+.kb-stats-row:last-child { border-bottom: none; }
+.kb-stats-key {
+    width: 160px;
+    flex-shrink: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #444;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.kb-stats-key:hover { color: #1e87f0; }
+.kb-stats-bar-wrap { flex: 1; height: 6px; background: #f0f2f5; border-radius: 3px; overflow: hidden; }
+.kb-stats-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #1e87f0, #70b8ff);
+    border-radius: 3px;
+    transition: width 0.35s ease;
+}
+.kb-stats-count {
+    width: 36px;
+    text-align: right;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #666;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.kb-stats-count:hover { color: #1e87f0; }
+
+/* ==========================================================================
+   Page footer (HTML_FOOTER)
+   ========================================================================== */
+.kb-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0 6px;
+    margin-top: 28px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 0.73rem;
+}
+.kb-footer-top { color: #bbb; text-decoration: none; transition: color 0.12s; }
+.kb-footer-top:hover { color: #1e87f0; }
+.kb-footer-meta { color: #ccc; }

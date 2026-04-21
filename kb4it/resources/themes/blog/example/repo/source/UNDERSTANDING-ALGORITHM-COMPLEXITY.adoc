@@ -1,0 +1,46 @@
+= Understanding Algorithm Complexity
+// -- Mandatory properties --
+:Team: Tech Writers Team
+:Date: 2024-01-15
+:Version: 1.0
+:DocType: Explanation
+:Tag: computer-science
+// -- Semantic properties --
+:Category: Post
+:Topic: Analysis
+:Status: Released
+:Priority: High
+:Date: 2024-01-15 09:00:00
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Excerpt
+
+Not all code that works is code worth keeping. Two programs can produce identical output while differing wildly in how they scale — one handling a million records gracefully, the other grinding to a halt. Algorithm complexity, expressed through Big O notation, gives us a shared language for describing this behavior independent of hardware, language, or implementation quirks.
+
+Big O describes the worst-case growth rate of an algorithm as input size increases. An O(n) algorithm grows linearly; an O(n²) algorithm, common in naive sorting or nested loops, can become catastrophically slow at scale. Developing an instinct for complexity doesn't require deep mathematical training — it mostly requires the habit of asking, "what happens to this code when the input gets ten times larger?"
+
+== Big-O Notation
+
+Big-O notation describes the upper bound of an algorithm's time or space requirements in terms of input size _n_. It abstracts away hardware differences and focuses on growth rate, giving developers a language-agnostic way to compare algorithms.
+
+Common complexity classes, ordered from most to least efficient:
+
+* *O(1)* — Constant time. The operation takes the same time regardless of input size. Example: array index access.
+* *O(log n)* — Logarithmic time. Typical of divide-and-conquer strategies such as binary search.
+* *O(n)* — Linear time. The algorithm visits each element once, as in a simple list traversal.
+* *O(n log n)* — Linearithmic time. Found in efficient sorting algorithms like Merge Sort and Heap Sort.
+* *O(n²)* — Quadratic time. Common in naive sorting algorithms such as Bubble Sort and Insertion Sort.
+* *O(2ⁿ)* — Exponential time. Characteristic of brute-force solutions to combinatorial problems.
+
+== Time vs. Space Trade-offs
+
+Optimising an algorithm often involves a trade-off between time complexity and space complexity. A solution that caches intermediate results (memoisation) may run significantly faster at the cost of additional memory. Understanding the constraints of your execution environment — CPU speed, available RAM, cache hierarchy — is essential when deciding which resource to optimise for.
+
+== Practical Implications
+
+Choosing the wrong algorithm can have catastrophic consequences at scale. Sorting one thousand records with an O(n²) algorithm is imperceptible; sorting one billion records with the same algorithm is practically infeasible. Profiling, asymptotic analysis, and benchmarking together form a robust methodology for selecting the right tool for the job.
+
+== Conclusion
+
+A solid grasp of algorithm complexity empowers engineers to reason confidently about performance before writing a single line of code. It is not merely academic knowledge — it is a daily engineering discipline.

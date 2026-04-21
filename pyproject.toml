@@ -1,92 +1,52 @@
-#~ [project]
-#~ authors = [{name = "Tomás Vírseda", email = "tomasvirseda@gmail.com"}]
-#~ dependencies = []
-#~ name = "KB4IT"
-#~ requires-python = ">= 3.12"
-#~ version = "0.7.20+build.18"
-#~ license = "GPL-3.0-or-later"
-#~ keywords = ["static-site-generator", "asciidoctor", "documentation"]
-#~ classifiers = [
- #~ "Development Status :: 4 - Beta",
- #~ "Environment :: Console",
- #~ "Environment :: Web Environment",
- #~ "Intended Audience :: Developers",
- #~ "Intended Audience :: Information Technology",
- #~ "Intended Audience :: System Administrators",
- #~ "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
- #~ "Natural Language :: English",
- #~ "Operating System :: POSIX :: Linux",
- #~ "Programming Language :: Python :: 3",
- #~ "Topic :: Documentation",
- #~ "Topic :: Software Development :: Documentation",
- #~ "Topic :: Utilities",
-#~ ]
-
-#~ [build-system]
-#~ build-backend = "hatchling.build"
-#~ requires = ["hatchling"]
-
-#~ [tool.pixi.workspace]
-#~ channels = ["conda-forge"]
-#~ platforms = ["linux-64"]
-
-#~ [tool.pixi.pypi-dependencies]
-#~ kb4it = { path = ".", editable = true }
-
-#~ [tool.pixi.dependencies]
-#~ mako = ">=1.3.10,<2"
-#~ lxml = ">=6.0.2,<7"
-
-#~ [tool.pixi.tasks]
-#~ version = "kb4it --version"
-#~ myblog_force = "kb4it -L DEBUG build /home/t00m/tmp/myblog/config/repo.json -f"
-#~ myblog = "kb4it -L DEBUG build /home/t00m/tmp/myblog/config/repo.json"
-
-
-dynamic = [ "classifiers" ]
-
-classifiers = [
- "Development Status :: 4 - Beta",
- "Environment :: Console",
- "Environment :: Web Environment",
- "Intended Audience :: Developers",
- "Intended Audience :: Information Technology",
- "Intended Audience :: System Administrators",
- "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
- "Natural Language :: English",
- "Operating System :: POSIX :: Linux",
- "Programming Language :: Python :: 3",
- "Topic :: Documentation",
- "Topic :: Software Development :: Documentation",
- "Topic :: Utilities",
-]
-
 [tool.poetry]
 name = "KB4IT"
-version = "0.7.26+build.269" # Replace with ENV['APP']['version']
+version = "0.7.32+build.13"
 description = "A static website generator based on Asciidoctor sources."
-authors = ["Tomás Vírseda <replace_with_author_email>"] # Replace with ENV['APP']['author_email']
+authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"
+readme = "README.rst"
 homepage = "https://github.com/t00m/KB4IT"
 repository = "https://github.com/t00m/KB4IT"
 keywords = ["static-site-generator", "asciidoctor", "documentation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Utilities",
+]
+packages = [
+    { include = "kb4it" },
+]
+include = [
+    { path = "kb4it/VERSION", format = ["sdist", "wheel"] },
+    { path = "kb4it/resources/**/*", format = ["sdist", "wheel"] },
+    { path = "README.rst", format = ["sdist", "wheel"] },
+    { path = "LICENSE", format = ["sdist", "wheel"] },
+    { path = "AUTHORS", format = ["sdist", "wheel"] },
+    { path = "Changelog", format = ["sdist", "wheel"] },
+    { path = "THANKS", format = ["sdist", "wheel"] },
+]
 
 [tool.poetry.dependencies]
-python = "^3.8" # Adjust the version as needed
-Mako = "1.3.6"
+python = ">=3.11,<4.0"
+Mako = "1.3.11"
 lxml = "*"
-
-# [tool.poetry.extras]
-# Additional features or dependencies can be added here
-
-# [tool.poetry.include]
-# README.rst = true
-# kb4it/VERSION = true
-# kb4it/resources/** = true
 
 [tool.poetry.scripts]
 kb4it = "kb4it.core.main:main"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"

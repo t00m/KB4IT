@@ -2,42 +2,40 @@
 
 """
 Utils functions used along the project.
+
 # File: srv_utils.py
 # Author: Tomás Vírseda
 # License: GPL v3
 # Description: Generic functions module
 """
 
-import os
-import re
 import glob
+import hashlib
 import json
 import math
-import time
-import uuid
-import pickle
-import shutil
-import pprint
-import hashlib
-import pathlib
-import operator
-import subprocess
 import multiprocessing
-
-from pathlib import Path
-from functools import wraps
+import operator
+import os
+import pickle
+import re
+import shutil
+import subprocess
+import time
 from datetime import datetime
-
+from functools import wraps
 
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
-log = get_logger('Util')
+log = get_logger("Util")
 
 cache_dt = {}
 cache_ts_ymd = {}
 
+
 def timeit(func):
+    """Time a method for measuring performance."""
+
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
         start_time = time.perf_counter()
@@ -45,34 +43,78 @@ def timeit(func):
         end_time = time.perf_counter()
         total_time = end_time - start_time
         # ~ if total_time > 1:
-            # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         # ~ else:
-            # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
+        # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
+
     return timeit_wrapper
 
-def copy_docs(docs, target):
-    """C0111: Missing function docstring (missing-docstring)."""
+
+def extract_sections_from_adoc(file_path: str) -> dict:
+    """Extract sections from an AsciiDoc file."""
+    sections = []
+
+    with open(file_path, "r", encoding="utf-8") as file:
+        lines = file.readlines()
+
+    current_section = None
+    start = None
+
+    for i, line in enumerate(lines, 1):  # Start line counting at 1
+        line = line.rstrip("\n")
+
+        # Check if this is a section header (starts with '== ' but not more '=' signs)
+        if line.startswith("== ") and not line.startswith("==="):
+            # Save previous section if exists
+            if current_section:
+                sections.append(
+                    {"name": current_section, "start": start, "end": i - 1})
+
+            # Start new section
+            current_section = line[3:].strip()  # Remove '== ' prefix
+            start = i
+
+    # Add the last section
+    if current_section:
+        sections.append(
+            {"name": current_section, "start": start, "end": len(lines)})
+
+    # As a dictionary with section names as keys
+    sections_dict = {
+        section["name"]: {"start": section["start"], "end": section["end"]}
+        for section in sections
+    }
+
+    return sections_dict
+
+
+def copy_docs(docs: list, target: str) -> None:
+    """Copy a list of docs to target directory."""
     for doc in docs:
         try:
             shutil.copy(doc, target)
-            # log.debug(f"Copied {doc} to {target}")
+            log.debug(f"Copied {doc} to {target}")
         except FileNotFoundError:
             log.warning(f"File {doc} not found")
-    # ~ log.debug(f"{len(docs)} documents copied to '{target}'")
+    log.debug(f"{len(docs)} documents copied to '{target}'")
+
 
 def get_default_workers():
     """Calculate default number or workers.
+
     Workers = Number of CPU / 2
     Minimum workers = 1
     """
     ncpu = multiprocessing.cpu_count()
-    workers = ncpu/2
+    workers = ncpu / 2
     return math.ceil(workers)
+
 
 def copydir(source, dest):
     """Copy a directory structure overwriting existing files.
+
     https://gist.github.com/dreikanter/5650973#gistcomment-835606
     """
     for root, dirs, files in os.walk(source):
@@ -80,24 +122,28 @@ def copydir(source, dest):
             os.makedirs(root, exist_ok=True)
 
         for file in files:
-            rel_path = root.replace(source, '').lstrip(os.sep)
+            rel_path = root.replace(source, "").lstrip(os.sep)
             dest_path = os.path.join(dest, rel_path)
 
             if not os.path.isdir(dest_path):
                 os.makedirs(dest_path, exist_ok=True)
 
             try:
-                shutil.copyfile(os.path.join(root, file), os.path.join(dest_path, file))
+                shutil.copyfile(os.path.join(root, file),
+                                os.path.join(dest_path, file))
             except PermissionError:
                 log.warning(f"Check permissions for file {file}")
 
+
 def get_source_docs(path: str):
-    """Get asciidoc documents from a given path"""
-    pattern = os.path.join(path, '*.adoc')
+    """Get asciidoc documents from a given path."""
+    pattern = os.path.join(path, "*.adoc")
     return glob.glob(pattern)
+
 
 def exec_cmd(data):
     """Execute an operating system command.
+
     Return:
     - document
     - True if success, False if not
@@ -119,8 +165,7 @@ def set_max_frequency(dkeyurl):
     max_frequency = 1
     for keyword in dkeyurl:
         cur_frequency = len(dkeyurl[keyword])
-        if cur_frequency > max_frequency:
-            max_frequency = cur_frequency
+        max_frequency = max(max_frequency, cur_frequency)
 
     return max_frequency
 
@@ -148,8 +193,8 @@ def get_font_size(frequency, max_frequency):
     return size
 
 
-def delete_target_contents(target_path) -> bool:
-    """C0111: Missing function docstring (missing-docstring)."""
+def delete_target_contents(target_path: str) -> bool:
+    """Delete contents from target directory."""
     error = False
     if os.path.exists(target_path):
         if os.path.isdir(target_path):
@@ -166,7 +211,7 @@ def delete_target_contents(target_path) -> bool:
     else:
         log.error(f"Target path {target_path} does not exist")
         error = True
-    return True
+    return error
 
 
 def delete_files(files):
@@ -179,35 +224,38 @@ def delete_files(files):
             log.warning("[UTIL] - %s", error)
             log.warning("[UTIL] - %s", path)
 
+
 def json_load(filepath: str) -> {}:
-    """Load into a dictionary a file in json format"""
-    with open(filepath) as fin:
+    """Load into a dictionary a file in json format."""
+    with open(filepath, "r", encoding="utf-8") as fin:
         adict = json.load(fin)
     return adict
 
+
 def json_save(filepath: str, adict: {}) -> {}:
-    """Save dictionary into a file in json format"""
-    with open(filepath, 'w') as fout:
+    """Save dictionary into a file in json format."""
+    with open(filepath, "w", encoding="utf-8") as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
-# ~ @timeit
+
 def get_asciidoctor_attributes(docpath: str):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
     keys = {}
     valid = False
+    reason = ""
     title_found = False
     end_of_header_found = False
 
     try:
-        lines = open(docpath).readlines()
+        lines = open(docpath, "r", encoding="utf-8").readlines()
         title_found = False
         title_line = lines[0]
 
-        if title_line.startswith('= '):
+        if title_line.startswith("= "):
             title = title_line[2:-1].strip()
             if len(title) > 0:
-                keys['Title'] = [title]
+                keys["Title"] = [title]
                 title_found = True
 
         # Proceed only if document has a title
@@ -216,53 +264,72 @@ def get_asciidoctor_attributes(docpath: str):
             # read the rest of properties until watermark
             for n in range(1, len(lines)):
                 line = lines[n].strip()
-                if line.startswith(':'):
-                    key = line[1:line.find(':', 1)]
-                    values = line[len(key)+2:].split(',')
+                if line.startswith(":"):
+                    key = line[1: line.find(":", 1)]
+                    values = line[len(key) + 2:].split(",")
                     keys[key] = [value.strip() for value in values]
-                elif line.startswith(ENV['CONF']['EOHMARK']):
+                elif line.startswith(ENV["CONF"]["EOHMARK"]):
                     # Stop processing if EOHMARK is found
                     end_of_header_found = True
                     break
             if not end_of_header_found:
-                reason = f"Document '{basename}' doesn't have the END-OF-HEADER mark"
-                log.error("Error: {reason}")
+                log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_eohmark")
                 keys = {}
         else:
-            reason = f"Document '{basename}' doesn't have a title"
-            log.error("Error: {reason}")
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_title")
             keys = {}
-    except IndexError as error:
-        reason = "Document '{basename}' could not be processed. Empty?"
-        log.error("Error: {reason}")
+    except IndexError:
+        reason = "empty_doc"
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=empty_doc")
         keys = {}
 
     if title_found and end_of_header_found:
         valid = True
-        reason = 'Success'
+        reason = "Success"
 
     return keys, valid, reason
 
+
+def get_hash_from_content(content: str):
+    """Get the blake2b hash for any string."""
+    return hashlib.blake2b(content.encode("utf-8")).hexdigest()
+
+
 def get_hash_from_file(path):
-    """Get the SHA256 hash for a given filename."""
+    """Get the blake2b hash for a given filename."""
     if os.path.exists(path):
-        with open(path, 'rb') as fin:
-            fhash = hashlib.file_digest(fin, 'md5').hexdigest()
+        with open(path, "rb") as fin:
+            fhash = hashlib.file_digest(fin, "blake2b").hexdigest()
     else:
         fhash = None
     return fhash
 
-# ~ @timeit
+
+def get_hash_from_body(path):
+    """Get blake2b hash for the document body (content after EOHMARK)."""
+    if not os.path.exists(path):
+        return None
+    eohmark = ENV["CONF"]["EOHMARK"]
+    with open(path, "r", encoding="utf-8") as fin:
+        content = fin.read()
+    idx = content.find(eohmark)
+    body = content[idx + len(eohmark):] if idx >= 0 else content
+    return hashlib.blake2b(body.encode("utf-8")).hexdigest()
+
+
 def get_hash_from_dict(adict):
-    """Get the MD5  hash for a given dictionary."""
+    """Get the md5 hash for a given dictionary."""
     return hashlib.md5(pickle.dumps(adict)).hexdigest()
 
-# ~ @timeit
+
 def get_hash_from_list(alist):
+    """Get the md5 hash for a given list."""
     return hashlib.md5(pickle.dumps(alist)).hexdigest()
 
+
 def valid_filename(s):
-    """Return the given string converted to a string that can be used for a clean filename.
+    """Return a clean filename.
+
     Remove leading and trailing spaces; convert other spaces to
     underscores; and remove anything that is not an alphanumeric, dash,
     underscore, or dot.
@@ -271,59 +338,80 @@ def valid_filename(s):
     Borrowed from:
     https://github.com/django/django/blob/master/django/utils/text.py
     """
-    s = str(s).strip().replace(' ', '_')
-    return re.sub(r'(?u)[^-\w.]', '', s)
-
-
-# ~ def file_timestamp(filename):
-    # ~ """Return last modification datetime normalized of a file."""
-    # ~ t = os.path.getmtime(filename)
-    # ~ sdate = datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M:%S")
-    # ~ return sdate
+    s = str(s).strip().replace(" ", "_")
+    return re.sub(r"(?u)[^-\w.]", "", s)
 
 
 def now():
+    """Return datetime.now in isoformat."""
     return datetime.now().isoformat()
 
-def get_year(timestamp: str):
+
+def get_year(timestamp: str) -> int:
+    """Return year from timestamp."""
     return int(timestamp[:4])
 
+
 def get_month(timestamp: str):
+    """Return month from timestamp."""
     return int(timestamp[4:6])
 
+
 def get_day(timestamp: str):
+    """Return day from timestamp."""
     return int(timestamp[6:8])
 
+
 def log_timestamp():
-    now = datetime.now()
-    return now.strftime("%Y%m%d_%H%M%S")
+    """Return timestamp for logging purposes."""
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
 
 def kb4it_timestamp():
-    now = datetime.now()
-    return now.strftime("%Y-%m-%d %H:%M:%S")
-
+    """Return timestamp in KB4IT format."""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def guess_datetime(sdate):
-    """Return (guess) a datetime object for a given string."""
+    """Guess a datetime object for a given string."""
     if sdate in cache_dt:
         return cache_dt[sdate]
 
-    patterns = ["%d/%m/%Y", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
-                "%d.%m.%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S",
-                "%d-%m-%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S",
-                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S",
-                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
-                "%Y/%m/%d", "%Y/%m/%d %H:%M", "%Y/%m/%d %H:%M:%S.%f",
-                "%Y.%m.%d", "%Y.%m.%d %H:%M", "%Y.%m.%d %H:%M:%S.%f",
-                "%Y-%m-%d", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S.%f",
-                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
+    patterns = [
+        "%d/%m/%Y",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %H:%M:%S",
+        "%d.%m.%Y",
+        "%d.%m.%Y %H:%M",
+        "%d.%m.%Y %H:%M:%S",
+        "%d-%m-%Y",
+        "%d-%m-%Y %H:%M",
+        "%d-%m-%Y %H:%M:%S",
+        "%Y/%m/%d",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y.%m.%d",
+        "%Y.%m.%d %H:%M",
+        "%Y.%m.%d %H:%M:%S",
+        "%Y-%m-%d",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y/%m/%d",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d %H:%M:%S.%f",
+        "%Y.%m.%d",
+        "%Y.%m.%d %H:%M",
+        "%Y.%m.%d %H:%M:%S.%f",
+        "%Y-%m-%d",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%M:%SZ",
+    ]
     found = False
     for pattern in patterns:
         if not found:
             try:
-                # ~ timestamp = datetime.strptime(sdate, pattern)
                 td = datetime.strptime(sdate, pattern)
                 ts = td.strftime("%Y-%m-%d %H:%M:%S")
                 timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
@@ -344,31 +432,38 @@ def string_timestamp(string):
 
 def get_human_datetime(dt):
     """Return datetime for humans."""
-    return "%s" % dt.strftime("%A, %B %d, %Y at %H:%M")
+    return dt.strftime("%A, %B %d, %Y at %H:%M")
+
 
 def get_human_datetime_day(dt):
-    """Return day datetime for humans"""
-    return "%s" % dt.strftime("%A, %B %d, %Y")
+    """Return day datetime for humans."""
+    return dt.strftime("%A, %B %d, %Y")
+
 
 def get_human_datetime_month(dt):
-    """Return month datetime for humans"""
-    return "%s" % dt.strftime("%B, %Y")
+    """Return month datetime for humans."""
+    return dt.strftime("%B, %Y")
+
 
 def get_human_datetime_year(dt):
-    """Return year datetime for humans"""
-    return "%s" % dt.strftime("%Y")
+    """Return year datetime for humans."""
+    return dt.strftime("%Y")
+
 
 def get_timestamp_yyyymmdd(dt):
-    if not dt in cache_ts_ymd:
+    """Return timestamp in yyyymmdd format."""
+    if dt not in cache_ts_ymd:
         cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
     return cache_ts_ymd[dt]
 
-# ~ @timeit
+
 def sort_dictionary(adict, reverse=True):
     """Return a reversed sorted list from a dictionary."""
     return sorted(adict.items(), key=operator.itemgetter(1), reverse=reverse)
 
-def ellipsize_text(text: str, max_length: int=70):
+
+def ellipsize_text(text: str, max_length: int = 70):
+    """Elipsize a given text given a max length."""
     if len(text) <= max_length:
         return text
 
@@ -380,4 +475,3 @@ def ellipsize_text(text: str, max_length: int=70):
     end = text[-split_length:] if max_length % 2 == 0 else text[-split_length - 1:]
 
     return f"{start}...{end}"
-

@@ -20,7 +20,7 @@ class Timeline(Service):
     def get_all(self):
         repo = self.srvbes.get_repo_parameters()
         event_types = repo['timeline']
-        sortby = repo['sort']
+        sortby = "Date"
         data = {}
         data['events'] = []
 
@@ -35,7 +35,7 @@ class Timeline(Service):
                 timestamp = self.srvdtb.get_values(doc, sortby)[0]
                 dt = guess_datetime(timestamp)
                 if dt is None:
-                    self.log.error(f"[THEME/TIMELINE] - Error in document '{doc}' with timestamp {timestamp}")
+                    self.log.error(f"[TIMELINE] DATE_INVALID doc={doc} timestamp={timestamp}")
                     continue
                 human_date = get_human_datetime(dt)
                 text = f"<p>Saved in Category <b>{category}</b> on {human_date}</p><p>Access to <a href='{url}' target='_top'>document</a></p>"

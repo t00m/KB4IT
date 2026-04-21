@@ -2,7 +2,7 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    sort_by = var['repo']['sort']
+    sort_by = 'Date' # var['repo']['sort']
     timestamp = var['post'][sort_by][0]
     dt = guess_datetime(timestamp)
     var['post']['updated_human'] = get_human_datetime(dt)
@@ -21,7 +21,7 @@
     <div class="uk-container uk-container-small">
 
         <!-- Header -->
-        <header class="uk-margin-small-bottom uk-background-muted uk-card-hover">
+        <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
                 <div class="uk-width uk-margin-top">
                     <h5 class="uk-card-title uk-margin-remove uk-text-center">
@@ -83,17 +83,20 @@
                     <!-- Tags and Topics -->
                 </div>
             </div>
-            <hr>
         </header>
 
         <!-- Body -->
         <article class="uk-article">
-            ${var['post']['body'].strip()}
+            ${var['post']['Excerpt']}
         </article>
 
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
-            <hr>
+            <p>
+                <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
+                    <span class="uk-link-heading uk-align-right">Read more...</span>
+                </a>
+            </p>
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
         </footer>

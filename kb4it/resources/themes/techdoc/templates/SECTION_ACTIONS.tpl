@@ -40,6 +40,11 @@
             </div>
         </li>
         <!-- View Source Button :: END -->
+        <!-- Print Button :: START -->
+        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+            <a class="uk-link-heading" href="javascript:window.print()"><span uk-icon="icon: print; ratio: 1.0;"></span></a>
+        </li>
+        <!-- Print Button :: END -->
 % endif
 <!-- Template SECTION_ACTIONS.tpl :: END -->
 

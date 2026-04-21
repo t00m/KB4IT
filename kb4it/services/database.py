@@ -6,13 +6,10 @@
 """
 
 from kb4it.core.service import Service
-from kb4it.core.util import sort_dictionary
-from kb4it.core.util import valid_filename
-from kb4it.core.util import guess_datetime
-from kb4it.core.util import json_load, json_save
 # ~ from kb4it.core.util import timeit
-from kb4it.core.util import get_hash_from_list
-from kb4it.core.util import get_timestamp_yyyymmdd
+from kb4it.core.util import (get_hash_from_list,
+                             guess_datetime, sort_dictionary,
+                             valid_filename)
 
 
 class Database(Service):
@@ -21,7 +18,6 @@ class Database(Service):
     db = {}
     keys = {}
     keys_doc = {}
-    sort_attribute = None
     sorted_docs = []
     cache_props = {}
     cache_docs_by_kvpath = {}
@@ -31,37 +27,39 @@ class Database(Service):
 
     def _initialize(self):
         """Initialize database module."""
-        self.srvbes = self.get_service('Backend')
-        runtime = self.srvbes.get_dict('runtime')
-        self.sort_attribute = runtime.get('sort_attribute')
-        self.sorted_docs = []
-        self.keys['all'] = []
-        self.keys['blocked'] = ['Title', 'SystemPage']
-        self.keys['custom'] = []
-        self.keys['theme'] = []
-        try:
-            self.keys['ignored'] = repo['ignored_keys']
-        except:
-            # FIXME: raises error when the command line option -r
-            # is not passed
-            self.keys['ignored'] = []
-        self.ignore_key('Title')
+        self.srvbes = self.get_service("Backend")
+        repo = self.srvbes.get_dict("repo")
         self.db = {}
+        self.keys = {
+            "all": [],
+            "blocked": ["Title", "SystemPage"],
+            "custom": [],
+            "theme": [],
+            "ignored": repo.get("ignored_keys") or [],
+        }
+        self.keys_doc = {}
+        self.sorted_docs = []
+        self.cache_props = {}
+        self.cache_docs_by_kvpath = {}
+        self.cache_keys_by_doc = {}
+        self.cache_docs_sorted_by_date = {}
+        self.cache_all_values_for_key = {}
+        self.ignore_key("Title")
 
     def del_document(self, docId):
         """Delete a document node from database."""
         adoc = "%s.adoc" % docId
         try:
             del self.db[adoc]
-            self.log.debug("DOC[%s] deleted from database", docId)
+            self.log.debug("[DATABASE] DOC_DELETE doc=%s", docId)
             self.sort_database()
         except KeyError:
-            self.log.debug("DOC[%s] not found in database", docId)
+            self.log.debug("[DATABASE] DOC_NOT_FOUND doc=%s", docId)
 
     def add_document(self, docId: str):
         """Add a new document node to the database ('name.adoc')"""
         self.db[docId] = {}
-        self.log.debug("DOC[%s] added to database", docId)
+        self.log.debug("[DATABASE] DOC_ADD doc=%s", docId)
 
     def add_document_key(self, docId, key, value):
         """Add a new key/value node for a given document."""
@@ -72,19 +70,19 @@ class Database(Service):
         except KeyError:
             self.db[docId][key] = [value]
 
-        self.log.debug("DOC[%s] KEY[%s] VALUE[%s] added", docId, key, value)
+        self.log.debug("[DATABASE] KV_ADD doc=%s key=%s value=%s", docId, key, value)
 
     def get_blocked_keys(self):
         """Return blocked keys."""
-        return self.keys['blocked']
+        return self.keys["blocked"]
 
     def get_ignored_keys(self):
         """Return ignored keys."""
-        return self.keys['ignored']
+        return self.keys["ignored"]
 
     def ignore_key(self, key):
         """Add given key to ignored keys list."""
-        self.keys['ignored'].append(key)
+        self.keys["ignored"].append(key)
 
     # ~ @timeit
     def sort_database(self):
@@ -93,25 +91,24 @@ class Database(Service):
         Documents sorted by the given date attribute in descending order.
         """
         if len(self.sorted_docs) == 0:
-            runtime = self.srvbes.get_dict('runtime')
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
     # ~ # ~ @timeit
-    def sort_by_date(self, doclist:list=[]):
+    def sort_by_date(self, doclist: list = []):
         """Build a list of documents sorted by timestamp desc."""
         if len(doclist) == 0:
             doclist = self.db.keys()
         md5hash = get_hash_from_list(sorted(doclist))
-        if not md5hash in self.cache_docs_sorted_by_date:
+        if md5hash not in self.cache_docs_sorted_by_date:
             adict = {}
             for docId in doclist:
                 if not self.is_system(docId):
                     sdate = self.get_doc_timestamp(docId)
                     if sdate is None:
-                        self.log.warning(f"{docId} not compliant")
+                        self.log.warning(f"[DATABASE] DATE_INVALID doc={docId} value={sdate}")
                         continue
                     dt = guess_datetime(sdate)
-                    adict[docId] = dt #.strftime("%Y%m%d")
+                    adict[docId] = dt  # .strftime("%Y%m%d")
             sorted_docs = [docId for docId, _ in sort_dictionary(adict)]
             self.cache_docs_sorted_by_date[md5hash] = sorted_docs
         return self.cache_docs_sorted_by_date[md5hash]
@@ -129,13 +126,13 @@ class Database(Service):
     def get_doc_timestamp(self, docId) -> str:
         """Get timestamp for a given document."""
         try:
-            return self.db[docId][self.sort_attribute][0]
-        except KeyError as error:
-            self.log.debug(f"Document '{docId}' doesn't have the sort attribute {error}")
+            return self.db[docId]["Date"][0]
+        except KeyError:
+            self.log.debug(f"[DATABASE] DATE_MISSING doc={docId}")
             return None
 
     def is_system(self, docId):
-        return 'SystemPage' in self.get_doc_properties(docId).keys()
+        return "SystemPage" in self.db.get(docId, {})
 
     # ~ @timeit
     def get_doc_properties(self, docId):
@@ -149,21 +146,25 @@ class Database(Service):
             props = {}
             try:
                 for key in self.db[docId]:
-                    if key == 'Title':
+                    if key == "Title":
                         props[key] = self.db[docId][key][0]
                         key_url = "%s_Url" % key
-                        props[key_url] = docId.replace('.adoc', '.html')
+                        props[key_url] = docId.replace(".adoc", ".html")
                     else:
                         props[key] = self.db[docId][key]
                         n = 0
                         for value in self.db[docId][key]:
                             key_value_url = "{}_{}_Url".format(key, value)
-                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
+                            props[key_value_url] = "{}_{}.html".format(
+                                valid_filename(key), valid_filename(value)
+                            )
 
                             key_value_url = "%s_%d_Url" % (key, n)
-                            props[key_value_url] = "{}_{}.html".format(valid_filename(key), valid_filename(value))
+                            props[key_value_url] = "{}_{}.html".format(
+                                valid_filename(key), valid_filename(value)
+                            )
                             n += 1
-            except Exception as warning:
+            except Exception:
                 # FIXME: Document why it is not necessary
                 pass
             self.cache_props[docId] = props
@@ -174,7 +175,7 @@ class Database(Service):
         try:
             return self.db[docId][key]
         except KeyError:
-            return ['']
+            return [""]
 
     # ~ @timeit
     def get_all_values_for_key(self, key):
@@ -201,7 +202,7 @@ class Database(Service):
             custom_keys = []
             keys = self.get_doc_keys(docId)
             for key in keys:
-                if key not in self.keys['ignored']:
+                if key not in self.keys["ignored"]:
                     custom_keys.append(key)
             custom_keys.sort(key=lambda y: y.lower())
             self.keys_doc[docId] = custom_keys
@@ -215,41 +216,40 @@ class Database(Service):
 
     def get_all_keys(self):
         """Return all keys in the database sorted alphabetically."""
-        if len(self.keys['all']) > 0:
-            return self.keys['all']
+        if len(self.keys["all"]) > 0:
+            return self.keys["all"]
 
         keys = set()
         database = self.get_documents()
         for docId in database:
             for key in self.get_doc_keys(docId):
-                if key not in self.keys['blocked']:
+                if key not in self.keys["blocked"]:
                     keys.add(key)
         keys = list(keys)
         keys.sort(key=lambda y: y.lower())
-        self.keys['all'] = keys
-        return self.keys['all']
+        self.keys["all"] = keys
+        return self.keys["all"]
 
     def get_theme_keys(self):
         """Return all keys in the database sorted alphabetically."""
-        if len(self.keys['theme']) > 0:
-            return self.keys['theme']
+        if len(self.keys["theme"]) > 0:
+            return self.keys["theme"]
 
         keys = set(self.get_all_keys())
-        database = self.get_documents()
-        for key in self.keys['ignored']:
+        for key in self.keys["ignored"]:
             try:
                 keys.remove(key)
             except KeyError:
                 pass
-        for key in self.keys['blocked']:
+        for key in self.keys["blocked"]:
             try:
                 keys.remove(key)
             except KeyError:
                 pass
         keys = list(keys)
         keys.sort(key=lambda y: y.lower())
-        self.keys['theme'] = keys
-        return self.keys['theme']
+        self.keys["theme"] = keys
+        return self.keys["theme"]
 
     # ~ @timeit
     def get_docs_by_key_value(self, key, value):
@@ -262,8 +262,8 @@ class Database(Service):
                 if key in self.db[docId]:
                     if value in self.db[docId][key]:
                         docs.append(docId)
-            self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs)
-            self.log.debug(f"KEY[{key}] VALUE[{value}]: search returned {len(self.cache_docs_by_kvpath[kvpath])} documents")
+            self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs) if docs else []
+            self.log.debug(f"[DATABASE] KV_SEARCH key={key} value={value} count={len(self.cache_docs_by_kvpath[kvpath])}")
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_docs_by_date_range(self, ds, de) -> []:
@@ -287,13 +287,10 @@ class Database(Service):
                 for key in self.db[docId]:
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
-            except KeyError as warning:
-                pass
-                # ~ self.log.warning("DOC[%s] is not in the database", docId)
-                # ~ raise
+            except KeyError:
+                self.log.warning("[DATABASE] DOC_NOT_IN_DB doc=%s", docId)
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 
     def get_sort_attribute(self):
-        return self.sort_attribute
-
+        return "Date"

@@ -1,0 +1,101 @@
+= SSH Key Authentication Setup
+// -- Mandatory properties --
+:Author: Thomas Young
+:Team: Admin Team
+:Date: 2024-06-10
+:Version: 1.1
+:DocType: How-to guide
+:Tag: authentication
+// -- Semantic properties --
+:OS: Linux
+:Category: Procedure
+:Scope: Infrastructure
+:Topic: Security
+:Status: Released
+:Priority: High
+:Updated: 2024-06-10 09:00:00
+// -- Auto-extracted properties --
+:Command: ssh, ssh-keygen, scp, systemctl
+:Filesystem: /etc, /home
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Problem
+
+Password-based SSH authentication is vulnerable to brute-force attacks and requires manual credential management. SSH key pairs provide stronger security through asymmetric cryptography and enable automated, passwordless access.
+
+== Prerequisites
+
+* SSH client installed on the local machine
+* SSH server (`sshd`) running on the target host
+* Sufficient permissions to write to `~/.ssh/` on the target host
+
+== Procedure
+
+=== Step 1 — Generate an SSH key pair
+
+On the local machine, generate a new key pair:
+
+[source,bash]
+----
+ssh-keygen -t ed25519 -C "user@hostname"
+----
+
+Accept the default path (`~/.ssh/id_ed25519`) or specify a custom path. Setting a passphrase is strongly recommended.
+
+TIP: Use `ed25519` keys — they are shorter, faster, and more secure than older RSA 2048-bit keys.
+
+=== Step 2 — Copy the public key to the target host
+
+[source,bash]
+----
+ssh-copy-id -i ~/.ssh/id_ed25519.pub user@target-host
+----
+
+If `ssh-copy-id` is not available, copy it manually:
+
+[source,bash]
+----
+scp ~/.ssh/id_ed25519.pub user@target-host:/tmp/
+ssh user@target-host "cat /tmp/id_ed25519.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+----
+
+=== Step 3 — Test the connection
+
+[source,bash]
+----
+ssh -i ~/.ssh/id_ed25519 user@target-host
+----
+
+You should log in without a password prompt (or with the key passphrase if one was set).
+
+=== Step 4 — Disable password authentication (optional)
+
+Once key-based login is confirmed, edit `/etc/ssh/sshd_config` on the server:
+
+----
+PasswordAuthentication no
+PubkeyAuthentication yes
+----
+
+Restart the SSH service:
+
+[source,bash]
+----
+systemctl restart sshd
+----
+
+== Verification
+
+Attempt a password-based login to confirm it is rejected:
+
+[source,bash]
+----
+ssh -o PubkeyAuthentication=no user@target-host
+----
+
+== Troubleshooting
+
+IMPORTANT: Always verify key-based login works before disabling password authentication. Losing access due to a misconfiguration may require out-of-band console access.
+
+If login fails, check permissions: `~/.ssh` must be `700` and `~/.ssh/authorized_keys` must be `600` on the target host.

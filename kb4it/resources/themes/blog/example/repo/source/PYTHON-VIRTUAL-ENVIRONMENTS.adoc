@@ -1,0 +1,106 @@
+= Python Virtual Environments
+// -- Mandatory properties --
+:Team: Tech Writers Team
+:Date: 2024-08-05
+:Version: 1.0
+:DocType: Tutorial
+:Tag: dependency-management
+// -- Semantic properties --
+:Category: Post
+:Product: Python
+:Topic: Development
+:Status: Released
+:Priority: Normal
+:Date: 2024-08-05 09:30:00
+// -- Auto-extracted properties --
+:Command: python, pip
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Overview
+
+Python projects depend on third-party packages. Installing these packages globally causes version conflicts when different projects require different versions of the same library. Virtual environments solve this by giving each project its own isolated Python installation and package set.
+
+In this tutorial you will create a virtual environment, activate it, install packages, and understand how to reproduce the environment on another machine.
+
+== Prerequisites
+
+* Python 3.8 or later installed
+* Basic familiarity with a terminal
+
+== Step 1 — Create a virtual environment
+
+Navigate to your project directory and run:
+
+[source,bash]
+----
+python -m venv .venv
+----
+
+This creates a `.venv` directory containing an isolated Python interpreter and a `pip` executable.
+
+TIP: Name your virtual environment `.venv` — most editors and linters recognise this name automatically and will use it for code analysis.
+
+== Step 2 — Activate the environment
+
+*Linux / macOS:*
+[source,bash]
+----
+source .venv/bin/activate
+----
+
+*Windows (PowerShell):*
+[source,bash]
+----
+.venv\Scripts\Activate.ps1
+----
+
+After activation, your shell prompt changes to show the environment name. All `python` and `pip` commands now operate within the isolated environment.
+
+== Step 3 — Install packages
+
+Install packages as usual with `pip`:
+
+[source,bash]
+----
+pip install requests flask
+----
+
+These packages are installed only inside `.venv` and do not affect the global Python installation or other projects.
+
+== Step 4 — Freeze dependencies
+
+Record the current installed packages and their exact versions:
+
+[source,bash]
+----
+pip freeze > requirements.txt
+----
+
+Commit `requirements.txt` to version control. This file allows anyone to reproduce your exact environment.
+
+== Step 5 — Reproduce the environment
+
+On another machine, create a new virtual environment and install from the frozen requirements:
+
+[source,bash]
+----
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+----
+
+== Step 6 — Deactivate
+
+When you are done working, deactivate the environment:
+
+[source,bash]
+----
+deactivate
+----
+
+Your shell returns to the global Python context.
+
+== Summary
+
+Virtual environments are a foundational Python practice. They eliminate "works on my machine" problems by making dependencies explicit and isolated. The habit of creating a virtual environment at the start of every project costs thirty seconds and prevents hours of debugging.
