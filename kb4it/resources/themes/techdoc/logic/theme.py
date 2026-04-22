@@ -798,6 +798,18 @@ class Theme(Builder):
         TPL = self.template('PAGE_ADD')
         var = self.get_theme_var()
         var['page']['title'] = 'Add document'
+        runtime = self.srvbes.get_dict("runtime")
+        skeletons_dir = os.path.join(runtime["theme"]["templates"], "skeletons")
+        category_ids = ['change', 'incident', 'meeting', 'note', 'post', 'procedure', 'report', 'task']
+        skeletons = {}
+        for cat_id in category_ids:
+            skel_path = os.path.join(skeletons_dir, f"{cat_id.upper()}-SKELETON.adoc")
+            try:
+                with open(skel_path, encoding="utf-8") as fh:
+                    skeletons[cat_id] = fh.read()
+            except OSError:
+                skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
+        var['page']['skeletons'] = skeletons
         page = TPL.render(var=var)
         self.distribute_adoc('add', page)
         self.srvdtb.add_document('add.adoc')
