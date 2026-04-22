@@ -47,8 +47,6 @@ class KB4IT:
             self.params["LOGLEVEL"] = "INFO"
         setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
-        #self.log.debug(
-        #    f"[CONTROLLER] - Temporary KB4IT Log file: {self.log_file}")
         self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")

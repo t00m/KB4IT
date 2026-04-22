@@ -68,14 +68,6 @@ class Compiler(Service):
             kbdict_new = self.srvprc.get_kb_dict()
             for doc in docs:
                 basename = os.path.basename(doc)
-                # ~ try:
-                    # ~ MUST_COMPILE = kbdict_new['document'][basename]['compile']
-                # ~ except KeyError:
-                    # ~ MUST_COMPILE = False
-
-                # ~ FORCE = self.srvbes.get_value("repo", "force") or False
-                # ~ self.log.debug(f"DOC[{basename}]: COMPILE[{MUST_COMPILE}] or FORCE[{FORCE}]? {MUST_COMPILE or FORCE}")
-                # ~ if MUST_COMPILE or FORCE:
                 cmd = f"asciidoctor -q -s {adocprops} -b html5 -D {self.srvbes.get_path('tmp')} {doc}"
                 data = (doc, cmd, num)
                 self.log.debug(f"[COMPILER] QUEUE doc={basename}")
@@ -83,8 +75,6 @@ class Compiler(Service):
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
                 num = num + 1
-                # ~ else:
-                    # ~ self.log.debug(f"DOC[{basename}] skipped")
 
             if num - 1 > 0:
                 self.log.debug("[COMPILER] COMPILATION_START")
@@ -97,7 +87,6 @@ class Compiler(Service):
 
     def compilation_started(self, data):
         """Execute compilation."""
-        # ~ (doc, cmd, num) = data
         res = exec_cmd(data)
         return res
 

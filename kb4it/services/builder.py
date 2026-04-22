@@ -91,7 +91,6 @@ class Builder(Service):
         be analyzed.
         """
         ADOC_NAME = f"{name}.adoc"
-        # ~ self.log.debug(f"DOC[{ADOC_NAME}] received")
         PAGE_PATH = os.path.join(self.srvbes.get_path("tmp"), ADOC_NAME)
         with open(PAGE_PATH, "w", encoding="utf-8") as fpag:
             try:
@@ -202,15 +201,6 @@ class Builder(Service):
 
         This method must be overwriten by custom themes.
         """
-
-    def create_page_help(self):
-        """KB4IT help page."""
-        TPL_PAGE_HELP = self.template("PAGE_HELP")
-        var = self.get_theme_var()
-        self.distribute_adoc("help", TPL_PAGE_HELP.render(var=var))
-        self.srvdtb.add_document("help.adoc")
-        self.srvdtb.add_document_key("help.adoc", "Title", "KB4IT Help")
-        self.srvdtb.add_document_key("help.adoc", "SystemPage", "Yes")
 
     def create_page_about_kb4it(self):
         """About KB4IT page."""

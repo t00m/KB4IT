@@ -29,8 +29,6 @@ class Backend(Service):
         self.runtime = {"theme": {}}  # Dictionary of runtime properties
         self.params = self.app.get_params()  # Get params from command line
 
-        # Check command line param for config file
-        # ~ action = self.params.get('action')
         if self.params.get("action") in ("build", "info"):
             config_file = self.params.get("config")
             if config_file is None:
@@ -61,7 +59,6 @@ class Backend(Service):
             self.runtime["dir"]["target"] = os.path.realpath(
                 self.repo["target"])
 
-            # ~ dir_src = Path(self.get_path('source'))
             dir_root = Path(self.get_path("source")).parent.absolute()
             dir_var = Path.joinpath(dir_root, "var")
             dir_log = Path.joinpath(dir_var, "log")

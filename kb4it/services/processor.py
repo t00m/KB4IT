@@ -29,6 +29,7 @@ class Processor(Service):
         self.changed_docs = set()
 
     def get_force_kv_pairs(self):
+        """Return the set of (key, value) pairs forced to recompile."""
         return self.force_kv_pairs
 
     def step_00_extraction(self):
@@ -104,8 +105,6 @@ class Processor(Service):
         # Save new kbdict
         self.srvbes.save_kbdict(self.kbdict_new)
 
-        # Build a list of documents sorted by timestamp
-        # ~ self.srvdtb.sort_database()
 
     def step_01_analysis(self):
         """Compilation strategy."""
@@ -333,7 +332,6 @@ class Processor(Service):
             # Add compiled page to the target list
             self.srvbes.add_target(adocId, htmlId)
 
-        # # Keys/Values
         pairs_with_compile_true = 0
         for kvpath in runtime["KV_PATH"]:
             key, value, COMPILE_VALUE = kvpath
