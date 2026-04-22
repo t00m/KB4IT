@@ -320,10 +320,12 @@ class Theme(Builder):
         return {
             'current': {
                 'label': '%s · Current' % cur_first.strftime('%B %Y'),
+                'url': 'events_%04d%02d.html' % (cur_first.year, cur_first.month),
                 'rows': rows_for(cur_first.year, cur_first.month),
             },
             'next': {
                 'label': '%s · Next' % nxt_first.strftime('%B %Y'),
+                'url': 'events_%04d%02d.html' % (nxt_first.year, nxt_first.month),
                 'rows': rows_for(nxt_first.year, nxt_first.month),
             },
         }

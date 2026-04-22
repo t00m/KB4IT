@@ -252,7 +252,11 @@ table.month tbody tr th {
     gap: 5px;
 }
 .kb-alert-changes  { color: #f0506e; }
+.kb-alert-changes  a { color: #f0506e; text-decoration: none; }
+.kb-alert-changes  a:hover { text-decoration: underline; }
 .kb-alert-incidents { color: #faa05a; }
+.kb-alert-incidents a { color: #faa05a; text-decoration: none; }
+.kb-alert-incidents a:hover { text-decoration: underline; }
 .kb-alert-list { list-style: none; margin: 0; padding: 0; }
 .kb-alert-item {
     display: flex;
@@ -339,6 +343,8 @@ table.month tbody tr th {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.kb-events-month-header a { color: #1e87f0; text-decoration: none; }
+.kb-events-month-header a:hover { text-decoration: underline; }
 .kb-events-month-header {
     font-size: 0.7rem;
     text-transform: uppercase;

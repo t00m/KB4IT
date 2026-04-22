@@ -117,7 +117,8 @@ def category_url(category):
         <div class="kb-alert-bar">
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-changes">
-                    <span uk-icon="icon: warning; ratio: 0.75"></span> Changes
+                    <span uk-icon="icon: warning; ratio: 0.75"></span>
+                    <a href="Category_Change.html">Changes</a>
                 </div>
 % if var['page']['alert_bar']['changes']:
                 <ul class="kb-alert-list">
@@ -135,7 +136,8 @@ def category_url(category):
             <div class="kb-alert-divider"></div>
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-incidents">
-                    <span uk-icon="icon: warning; ratio: 0.75"></span> Incidents
+                    <span uk-icon="icon: warning; ratio: 0.75"></span>
+                    <a href="Category_Incident.html">Incidents</a>
                 </div>
 % if var['page']['alert_bar']['incidents']:
                 <ul class="kb-alert-list">
@@ -156,12 +158,12 @@ def category_url(category):
     <!-- 4. UPCOMING EVENTS -->
     <section class="kb-section">
         <h2 class="kb-section-title">Upcoming events</h2>
-        <div class="kb-panel">
+        <div class="kb-panel uk-card-hover uk-box-shadow-large">
             <div class="uk-grid-small" uk-grid>
 % for side in ('current', 'next'):
 <%  panel = var['page']['events_panel'][side] %>
                 <div class="uk-width-1-2@m">
-                    <div class="kb-events-month-header">${panel['label']}</div>
+                    <div class="kb-events-month-header"><a href="${panel['url']}">${panel['label']}</a></div>
 %     if len(panel['rows']) == 0:
                     <div class="kb-events-empty">No events scheduled.</div>
 %     else:
@@ -172,7 +174,7 @@ def category_url(category):
                                 <td class="kb-event-date">${row['date']}</td>
                                 <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 %             if row['category']:
-                                <td><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}">${row['category']}</a></td>
+                                <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}">${row['category']}</a></td>
 %             else:
                                 <td></td>
 %             endif
@@ -190,7 +192,7 @@ def category_url(category):
     <!-- 5. RECENT EVENTS -->
     <section class="kb-section">
         <h2 class="kb-section-title">Recent events</h2>
-        <div class="kb-panel">
+        <div class="kb-panel uk-card-hover uk-box-shadow-large">
 % if len(var['page']['recent_events']) == 0:
             <div class="kb-events-empty">No events in the past month.</div>
 % else:
@@ -201,7 +203,7 @@ def category_url(category):
                         <td class="kb-event-date">${row['date']}</td>
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 % if row['category']:
-                        <td><span class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}">${row['category']}</span></td>
+                        <td class="uk-flex uk-flex-right"><span class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}">${row['category']}</span></td>
 % else:
                         <td></td>
 % endif
