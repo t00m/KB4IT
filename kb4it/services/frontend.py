@@ -132,7 +132,6 @@ class Frontend(Service):
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
                 self.app.stop(error=True)
-            # ~ self.log.debug(" - Loaded theme '%s'", self.runtime['theme']['id'])
 
     def theme_search(self, theme=None):
         """Search custom theme."""
@@ -149,7 +148,6 @@ class Frontend(Service):
             except IndexError:
                 theme_path = None
         else:
-            # ~ self.log.debug(f" - \tFound directory for theme: '{theme}'")
             # Search in sources path
             try:
                 source_path = self.srvbes.get_path("source")
@@ -171,5 +169,4 @@ class Frontend(Service):
                 else:
                     theme_path = path
                     break
-        # ~ self.log.debug(f"CONF[THEME] NAME[{theme}] DIR[{theme_path}]")
         return theme_path

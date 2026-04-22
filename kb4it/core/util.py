@@ -42,10 +42,6 @@ def timeit(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        # ~ if total_time > 1:
-        # ~ log.perf(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
-        # ~ else:
-        # ~ log.trace(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
         return result
 
@@ -204,10 +200,8 @@ def delete_target_contents(target_path: str) -> bool:
                     os.unlink(file_object_path)
                 else:
                     shutil.rmtree(file_object_path)
-            # ~ log.debug("[UTIL] - Contents of directory '%s' deleted successfully", target_path)
         elif os.path.isfile(target_path):
             os.unlink(target_path)
-            # ~ log.debug("[UTIL] - File '%s' deleted successfully", target_path)
     else:
         log.error(f"Target path {target_path} does not exist")
         error = True
@@ -426,7 +420,6 @@ def string_timestamp(string):
     """Return datetime object from a given timestamp."""
     dt = guess_datetime(string)
     sdate = dt.strftime("%Y-%m-%d %H:%M:%S")
-    # ~ print ("%s -> %s" % (string, sdate))
     return sdate
 
 

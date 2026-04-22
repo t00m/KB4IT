@@ -141,6 +141,7 @@ class Theme(Builder):
 
         var['page']['title'] = var['repo']['title']
         var['page']['stats'] = self._build_index_stats()
+        var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
         var['page']['trimester'] = self._build_index_trimester(now)
         var['page']['events_panel'] = self._build_index_events_panel(now)
@@ -181,6 +182,32 @@ class Theme(Builder):
             {'num': count_events,     'label': 'Events',     'url': 'events.html'},
             {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
         ]
+
+    def _build_index_alert_bar(self, limit=5):
+        """Recent changes and incidents for the alert bar below the hero."""
+        def _rows(category):
+            rows = []
+            for docId in self.srvdtb.get_docs_by_key_value('Category', category)[:limit]:
+                props = self.srvdtb.get_doc_properties(docId)
+                title = props.get('Title', docId)
+                if isinstance(title, list):
+                    title = title[0] if title else docId
+                url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                ts = self.srvdtb.get_doc_timestamp(docId)
+                date = ''
+                if ts:
+                    try:
+                        dt = guess_datetime(ts)
+                        date = dt.strftime('%b %d') if dt else ts[:10]
+                    except Exception:
+                        date = ts[:10]
+                rows.append({'date': date, 'title': title, 'url': url})
+            return rows
+
+        return {
+            'changes': _rows('Change'),
+            'incidents': _rows('Incident'),
+        }
 
     def _build_index_diataxis(self):
         """Diátaxis cards — one per DocType value."""
@@ -293,10 +320,12 @@ class Theme(Builder):
         return {
             'current': {
                 'label': '%s · Current' % cur_first.strftime('%B %Y'),
+                'url': 'events_%04d%02d.html' % (cur_first.year, cur_first.month),
                 'rows': rows_for(cur_first.year, cur_first.month),
             },
             'next': {
                 'label': '%s · Next' % nxt_first.strftime('%B %Y'),
+                'url': 'events_%04d%02d.html' % (nxt_first.year, nxt_first.month),
                 'rows': rows_for(nxt_first.year, nxt_first.month),
             },
         }
@@ -620,6 +649,7 @@ class Theme(Builder):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        self.build_page_add()
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()
@@ -762,6 +792,29 @@ class Theme(Builder):
         self.srvdtb.add_document('stats.adoc')
         self.srvdtb.add_document_key('stats.adoc', 'Title', 'Stats')
         self.srvdtb.add_document_key('stats.adoc', 'SystemPage', 'Yes')
+
+    def build_page_add(self):
+        """Create the 'Add document' helper page with per-category skeletons."""
+        TPL = self.template('PAGE_ADD')
+        var = self.get_theme_var()
+        var['page']['title'] = 'Add document'
+        runtime = self.srvbes.get_dict("runtime")
+        skeletons_dir = os.path.join(runtime["theme"]["templates"], "skeletons")
+        category_ids = ['change', 'incident', 'meeting', 'note', 'post', 'procedure', 'report', 'task']
+        skeletons = {}
+        for cat_id in category_ids:
+            skel_path = os.path.join(skeletons_dir, f"{cat_id.upper()}-SKELETON.adoc")
+            try:
+                with open(skel_path, encoding="utf-8") as fh:
+                    skeletons[cat_id] = fh.read()
+            except OSError:
+                skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
+        var['page']['skeletons'] = skeletons
+        page = TPL.render(var=var)
+        self.distribute_adoc('add', page)
+        self.srvdtb.add_document('add.adoc')
+        self.srvdtb.add_document_key('add.adoc', 'Title', 'Add document')
+        self.srvdtb.add_document_key('add.adoc', 'SystemPage', 'Yes')
 
     def build_page_index_all(self):
         """Create a page with all documents"""

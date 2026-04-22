@@ -33,7 +33,6 @@ class Deployer(Service):
         tmp_files = glob.glob(os.path.join(self.srvbes.get_path("tmp"), "*.*"))
 
         self.step_00_copy_source_to_cache(source_files)
-        # ~ self.step_02_copy_temporary_files_to_distributed_directory()
         self.step_04_copy_sources_to_target(source_adocs)
         self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
@@ -161,9 +160,6 @@ class Deployer(Service):
 
     def step_10_copy_kbdict_to_target(self):
         """Copy JSON database to target path."""
-        # FIXME
-        # ~ self.save_kbdict(self.kbdict_new, self.srvbes.get_path('target'), 'kb4it')
-        # ~ self.log.debug("Copied JSON database to target")
 
     def step_11_cleanup(self):
         """Cleanup temporary files."""

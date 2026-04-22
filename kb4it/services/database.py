@@ -6,7 +6,6 @@
 """
 
 from kb4it.core.service import Service
-# ~ from kb4it.core.util import timeit
 from kb4it.core.util import (get_hash_from_list,
                              guess_datetime, sort_dictionary,
                              valid_filename)
@@ -84,7 +83,6 @@ class Database(Service):
         """Add given key to ignored keys list."""
         self.keys["ignored"].append(key)
 
-    # ~ @timeit
     def sort_database(self):
         """
         Build a list of documents.
@@ -93,7 +91,6 @@ class Database(Service):
         if len(self.sorted_docs) == 0:
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
-    # ~ # ~ @timeit
     def sort_by_date(self, doclist: list = []):
         """Build a list of documents sorted by timestamp desc."""
         if len(doclist) == 0:
@@ -113,16 +110,15 @@ class Database(Service):
             self.cache_docs_sorted_by_date[md5hash] = sorted_docs
         return self.cache_docs_sorted_by_date[md5hash]
 
-    # ~ @timeit
     def get_documents(self):
         """Return the list of sorted docs."""
         self.sort_database()
         return self.sorted_docs
 
     def get_documents_count(self):
+        """Return total number of non-system documents."""
         return len(self.get_documents())
 
-    # ~ @timeit
     def get_doc_timestamp(self, docId) -> str:
         """Get timestamp for a given document."""
         try:
@@ -132,9 +128,9 @@ class Database(Service):
             return None
 
     def is_system(self, docId):
+        """Return True if the document is a system-generated page."""
         return "SystemPage" in self.db.get(docId, {})
 
-    # ~ @timeit
     def get_doc_properties(self, docId):
         """Return a dictionary with the properties of a given docId.
         Additionally, the dictionary will contain an extra entry foreach
@@ -177,7 +173,6 @@ class Database(Service):
         except KeyError:
             return [""]
 
-    # ~ @timeit
     def get_all_values_for_key(self, key):
         """Return a list of all values for a given key sorted alphabetically."""
         try:
@@ -251,7 +246,6 @@ class Database(Service):
         self.keys["theme"] = keys
         return self.keys["theme"]
 
-    # ~ @timeit
     def get_docs_by_key_value(self, key, value):
         """Return a list documents for a given key/value sorted by date."""
         kvpath = f"{key}-{value}"
@@ -267,6 +261,7 @@ class Database(Service):
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_docs_by_date_range(self, ds, de) -> []:
+        """Return documents whose Date falls within [ds, de]."""
         doclist = []
         for docId in self.db:
             ts = self.get_doc_timestamp(docId)
@@ -293,4 +288,5 @@ class Database(Service):
             return self.cache_keys_by_doc[docId]
 
     def get_sort_attribute(self):
+        """Return the document attribute used for chronological sorting."""
         return "Date"

@@ -66,7 +66,6 @@ class Service:
         if self.started:
             self.started = False
             self._finalize()
-            # ~ self.log.debug(f"Service {self.modname} finished")
 
     def _initialize(self):
         """Initialize service.
