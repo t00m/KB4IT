@@ -601,6 +601,49 @@ table.month tbody tr th {
 .kb-stats-count:hover { color: #1e87f0; }
 
 /* ==========================================================================
+   Add document page (PAGE_ADD)
+   ========================================================================== */
+.kb-add-note {
+    font-size: 0.84rem;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+    border-radius: 6px;
+}
+.kb-add-card {
+    border-radius: 6px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.kb-add-card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f5f5f5;
+}
+.kb-add-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.kb-add-card-body {
+    flex: 1;
+    padding: 10px 16px;
+}
+.kb-add-card-body p {
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.45;
+}
+.kb-add-card-footer {
+    padding: 10px 16px;
+    background: #fafafa;
+    border-top: 1px solid #f5f5f5;
+    border-radius: 0 0 6px 6px;
+}
+
+/* ==========================================================================
    Page footer (HTML_FOOTER)
    ========================================================================== */
 .kb-footer {

@@ -649,6 +649,7 @@ class Theme(Builder):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        self.build_page_add()
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()
@@ -791,6 +792,17 @@ class Theme(Builder):
         self.srvdtb.add_document('stats.adoc')
         self.srvdtb.add_document_key('stats.adoc', 'Title', 'Stats')
         self.srvdtb.add_document_key('stats.adoc', 'SystemPage', 'Yes')
+
+    def build_page_add(self):
+        """Create the 'Add document' helper page with per-category skeletons."""
+        TPL = self.template('PAGE_ADD')
+        var = self.get_theme_var()
+        var['page']['title'] = 'Add document'
+        page = TPL.render(var=var)
+        self.distribute_adoc('add', page)
+        self.srvdtb.add_document('add.adoc')
+        self.srvdtb.add_document_key('add.adoc', 'Title', 'Add document')
+        self.srvdtb.add_document_key('add.adoc', 'SystemPage', 'Yes')
 
     def build_page_index_all(self):
         """Create a page with all documents"""
