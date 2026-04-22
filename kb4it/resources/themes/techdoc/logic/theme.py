@@ -141,6 +141,7 @@ class Theme(Builder):
 
         var['page']['title'] = var['repo']['title']
         var['page']['stats'] = self._build_index_stats()
+        var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
         var['page']['trimester'] = self._build_index_trimester(now)
         var['page']['events_panel'] = self._build_index_events_panel(now)
@@ -181,6 +182,32 @@ class Theme(Builder):
             {'num': count_events,     'label': 'Events',     'url': 'events.html'},
             {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
         ]
+
+    def _build_index_alert_bar(self, limit=5):
+        """Recent changes and incidents for the alert bar below the hero."""
+        def _rows(category):
+            rows = []
+            for docId in self.srvdtb.get_docs_by_key_value('Category', category)[:limit]:
+                props = self.srvdtb.get_doc_properties(docId)
+                title = props.get('Title', docId)
+                if isinstance(title, list):
+                    title = title[0] if title else docId
+                url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                ts = self.srvdtb.get_doc_timestamp(docId)
+                date = ''
+                if ts:
+                    try:
+                        dt = guess_datetime(ts)
+                        date = dt.strftime('%b %d') if dt else ts[:10]
+                    except Exception:
+                        date = ts[:10]
+                rows.append({'date': date, 'title': title, 'url': url})
+            return rows
+
+        return {
+            'changes': _rows('Change'),
+            'incidents': _rows('Incident'),
+        }
 
     def _build_index_diataxis(self):
         """Diátaxis cards — one per DocType value."""
