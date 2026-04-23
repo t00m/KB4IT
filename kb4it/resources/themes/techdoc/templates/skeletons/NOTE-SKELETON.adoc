@@ -1,0 +1,17 @@
+= Title of the Note
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Explanation
+:Tag:
+// -- Semantic properties --
+:Category:  Note
+:Scope:
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Overview
+
+Write your note here.

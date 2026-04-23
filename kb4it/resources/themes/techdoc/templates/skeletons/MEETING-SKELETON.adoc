@@ -1,0 +1,26 @@
+= Title of the Meeting
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Reference
+:Tag:
+// -- Semantic properties --
+:Category:  Meeting
+:Attendees:
+:Status:    Scheduled
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Agenda
+
+List the topics to be discussed.
+
+== Notes
+
+Summary of the discussion.
+
+== Action Items
+
+List any follow-up tasks and owners.

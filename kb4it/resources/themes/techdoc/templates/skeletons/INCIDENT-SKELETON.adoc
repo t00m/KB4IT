@@ -1,0 +1,30 @@
+= Title of the Incident
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Reference
+:Tag:
+// -- Semantic properties --
+:Category:  Incident
+:Severity:
+:Status:    Open
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Overview
+
+Describe the incident here.
+
+== Impact
+
+What services or users were affected?
+
+== Root Cause
+
+What caused the incident?
+
+== Resolution
+
+Steps taken to resolve the incident.

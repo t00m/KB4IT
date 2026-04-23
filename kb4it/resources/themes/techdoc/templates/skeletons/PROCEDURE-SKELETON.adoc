@@ -1,0 +1,36 @@
+= Title of the Procedure
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   How-to guide
+:Tag:
+// -- Semantic properties --
+:Category:  Procedure
+:Scope:
+:Status:    Draft
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Problem
+
+What task does this procedure solve?
+
+== Prerequisites
+
+What must be in place before starting?
+
+== Procedure
+
+=== Step 1 — <name>
+
+Describe the step.
+
+=== Step 2 — <name>
+
+Describe the step.
+
+== Verification
+
+How to confirm the procedure was successful.

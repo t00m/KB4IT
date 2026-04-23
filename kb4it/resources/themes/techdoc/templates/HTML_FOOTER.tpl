@@ -29,11 +29,13 @@ input.addEventListener( 'keyup', function(event)
 </script>
 <script>
 function copyToClipboard() {
-  var copyText = document.getElementById("source-code");
-  copyText.select();
-  copyText.setSelectionRange(0, 99999)
-  document.execCommand("copy");
-  alert("Text copied to clipboard");
+  var el = document.getElementById("source-code");
+  el.select();
+  el.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(el.value).catch(function() {
+    document.execCommand("copy");
+  });
+  UIkit.notification({message: 'Source copied to clipboard', status: 'success', timeout: 2000});
 }
 </script>
 <!-- GRID LAYOUT :: END -->

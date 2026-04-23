@@ -1,0 +1,30 @@
+= Title of the Change
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Reference
+:Tag:
+// -- Semantic properties --
+:Category:  Change
+:Scope:
+:Status:    Draft
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Overview
+
+Describe the change here.
+
+== Scope
+
+What systems, services, or components are affected?
+
+== Plan
+
+Steps to implement the change.
+
+== Rollback
+
+Steps to revert if the change fails.
