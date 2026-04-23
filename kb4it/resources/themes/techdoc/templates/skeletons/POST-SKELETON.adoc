@@ -1,0 +1,25 @@
+= Title of the Post
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Explanation
+:Tag:
+// -- Semantic properties --
+:Category:  Post
+:Scope:
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Introduction
+
+Introduce the topic here.
+
+== Content
+
+Main content of the post.
+
+== Conclusion
+
+Summary and closing thoughts.

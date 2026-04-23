@@ -1,0 +1,23 @@
+= Title of the Task
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Reference
+:Tag:
+// -- Semantic properties --
+:Category:  Task
+:Assignee:
+:Priority:
+:Status:    Open
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Overview
+
+Describe the task here.
+
+== Acceptance Criteria
+
+What defines this task as done?

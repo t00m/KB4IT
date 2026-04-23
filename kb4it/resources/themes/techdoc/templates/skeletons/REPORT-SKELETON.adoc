@@ -1,0 +1,30 @@
+= Title of the Report
+
+// -- Mandatory properties --
+:Author:
+:Date:      YYYY-MM-DD
+:Version:   1.0
+:DocType:   Reference
+:Tag:
+// -- Semantic properties --
+:Category:  Report
+:Scope:
+:Status:    Draft
+
+// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+
+== Overview
+
+Brief description of the report.
+
+== Findings
+
+Main findings and data.
+
+== Conclusions
+
+Summary of conclusions.
+
+== Recommendations
+
+Recommended actions based on the findings.
