@@ -108,7 +108,7 @@ CATEGORIES = [
                 <div class="uk-text-lead uk-text-center uk-margin-small-bottom" style="color: ${cat['color']};">${cat['name']} skeleton</div>
                 <div class="uk-text-lead uk-margin-small-bottom">
                     new_${cat['id']}.adoc
-                    &nbsp;<a onclick="copySkeletonToClipboard('skeleton-${cat['id']}')" class="uk-icon-link uk-margin-small-right uk-link-toggle" uk-icon="copy; ratio: 1.0;" uk-tooltip="title: Copy to clipboard"></a>
+                    &nbsp;<a onclick="copySkeletonToClipboard('skeleton-${cat['id']}')" class="uk-icon-link uk-margin-small-right uk-link-toggle" uk-icon="icon: copy; ratio: 1.0" uk-tooltip="title: Copy to clipboard"></a>
                 </div>
                 <textarea id="skeleton-${cat['id']}" class="uk-width-1-1 uk-height-viewport">${var['page']['skeletons'][cat['id']]}</textarea>
             </div>
