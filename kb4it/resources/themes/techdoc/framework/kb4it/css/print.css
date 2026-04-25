@@ -1,11 +1,11 @@
 @media print {
 
     /* -----------------------------------------------------------------------
-       Page setup
+       Page setup — tighter margins for better paper usage
     ----------------------------------------------------------------------- */
     @page {
         size: A4 portrait;
-        margin: 1.5cm 2cm;
+        margin: 1cm 1.5cm;
     }
 
     /* -----------------------------------------------------------------------
@@ -15,7 +15,6 @@
     #kb4it-menu,
     .noprint,
     .uk-navbar-container,
-    #kb4it-doc-metadata,
     .kb-footer,
     .uk-modal,
     .uk-sticky-placeholder,
@@ -55,12 +54,12 @@
     }
 
     /* -----------------------------------------------------------------------
-       Typography
+       Typography — tighter line spacing
     ----------------------------------------------------------------------- */
     body {
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 11pt;
-        line-height: 1.6;
+        font-size: 10.5pt;
+        line-height: 1.35;
         color: #000;
     }
 
@@ -70,12 +69,152 @@
         page-break-after: avoid;
     }
 
-    h1 { font-size: 20pt; margin: 0 0 12pt; }
-    h2 { font-size: 15pt; margin: 14pt 0 6pt; }
-    h3 { font-size: 12pt; margin: 10pt 0 4pt; }
-    h4 { font-size: 11pt; margin: 8pt 0 3pt; }
+    h1 { font-size: 22pt; margin: 0 0 10pt; }
+    h2 { font-size: 14pt; margin: 12pt 0 5pt; }
+    h3 { font-size: 12pt; margin: 9pt 0 4pt; }
+    h4 { font-size: 10.5pt; margin: 7pt 0 3pt; }
 
-    p { margin: 0 0 8pt; orphans: 3; widows: 3; }
+    p { margin: 0 0 4pt; orphans: 3; widows: 3; }
+
+    /* -----------------------------------------------------------------------
+       Print-only document title block
+    ----------------------------------------------------------------------- */
+    .kb-print-header {
+        display: block !important;
+        margin-bottom: 12pt;
+        padding-bottom: 6pt;
+        border-bottom: 1.5pt solid #000;
+    }
+
+    .kb-print-doc-title {
+        font-size: 22pt !important;
+        font-weight: bold;
+        color: #000 !important;
+        margin: 0 !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       Document metadata — show in print (override uk-hidden)
+    ----------------------------------------------------------------------- */
+    #kb4it-doc-metadata {
+        display: block !important;
+        margin: 10pt 0 12pt 0;
+        border: 1pt solid #bbb !important;
+        border-radius: 0;
+    }
+
+    #kb4it-table-metadata {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 9pt;
+        border: 1pt solid #bbb !important;
+    }
+
+    #kb4it-table-metadata td {
+        border: 0.5pt solid #ddd !important;
+        padding: 3pt 6pt;
+        font-size: 9pt;
+    }
+
+    #kb4it-table-metadata,
+    #kb4it-table-metadata th,
+    #kb4it-table-metadata td {
+        font-family: Arial, Helvetica, sans-serif !important;
+        color: #000 !important;
+    }
+
+    #kb4it-table-metadata td span,
+    #kb4it-table-metadata th span {
+        color: #000 !important;
+    }
+
+    /* -----------------------------------------------------------------------
+       Inline TOC panel — show open in print
+    ----------------------------------------------------------------------- */
+    details.kb-toc-panel {
+        display: block !important;
+        border: 1pt solid #ccc !important;
+        border-radius: 0;
+        background: none !important;
+        margin: 8pt 0 12pt 0;
+        page-break-inside: avoid;
+    }
+
+    .kb-toc-summary {
+        font-size: 9.5pt;
+        font-weight: bold;
+        color: #000 !important;
+        background: #f0f0f0 !important;
+        border-bottom: 0.5pt solid #ccc;
+        padding: 4pt 8pt;
+        display: block !important;
+    }
+
+    .kb-toc-summary::before {
+        content: none !important;
+    }
+
+    .kb-toc-nav {
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 5pt 10pt;
+    }
+
+    .kb-toc-nav a::after {
+        content: none !important;
+    }
+
+    .kb-toc-nav a {
+        font-size: 9.5pt;
+        color: #000;
+    }
+
+    .kb-toc-nav .uk-nav-sub a {
+        font-size: 9pt;
+    }
+
+    /* -----------------------------------------------------------------------
+       Section headings — grayscale for print
+    ----------------------------------------------------------------------- */
+    .kb-h2 {
+        font-size: 14pt !important;
+        color: #000 !important;
+        border-left: 4pt solid #333 !important;
+        padding: 4pt 8pt 4pt 10pt !important;
+        margin: 10pt 0 4pt 0 !important;
+        display: block !important;
+    }
+
+    .kb-h3 {
+        font-size: 12pt !important;
+        color: #000 !important;
+        border-left: 3pt solid #666 !important;
+        padding: 3pt 6pt 3pt 8pt !important;
+        font-style: normal !important;
+    }
+
+    .kb-h4 {
+        font-size: 10.5pt !important;
+        color: #000 !important;
+        border-left: 2pt solid #999 !important;
+        padding: 2pt 4pt 2pt 8pt !important;
+    }
+
+    .kb-h2::after, .kb-sect1-collapsed .kb-h2::after { content: none !important; }
+
+    .kb-sect1,
+    .kb-sect2,
+    .kb-sect3,
+    .kb-sect4 {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 0 6pt 0 !important;
+    }
+
+    .uk-card-body { padding: 0 !important; }
 
     /* -----------------------------------------------------------------------
        Page-break rules
@@ -83,14 +222,14 @@
     pre, blockquote, figure, .admonitionblock { page-break-inside: avoid; }
     table { page-break-inside: auto; }
     tr    { page-break-inside: avoid; }
-    .sect1 + .sect1 { margin-top: 14pt; }
+    .sect1 + .sect1 { margin-top: 12pt; }
 
     /* -----------------------------------------------------------------------
        Links: append URL after link text, skip anchors and js links
     ----------------------------------------------------------------------- */
     a[href]::after {
         content: " (" attr(href) ")";
-        font-size: 8pt;
+        font-size: 7.5pt;
         color: #555;
         font-style: italic;
         word-break: break-all;
@@ -108,7 +247,7 @@
     ----------------------------------------------------------------------- */
     pre, code, kbd, samp {
         font-family: "Courier New", Courier, monospace;
-        font-size: 9pt;
+        font-size: 8.5pt;
     }
 
     pre {
@@ -116,8 +255,8 @@
         color: #000 !important;
         border: 1px solid #ccc;
         border-radius: 0;
-        padding: 8pt 10pt;
-        margin: 8pt 0;
+        padding: 6pt 8pt;
+        margin: 6pt 0;
         white-space: pre-wrap;
         word-break: break-word;
         overflow: visible;
@@ -147,7 +286,7 @@
 
     th, td {
         border: 1px solid #bbb;
-        padding: 4pt 6pt;
+        padding: 3pt 5pt;
         text-align: left;
         vertical-align: top;
     }
@@ -177,12 +316,12 @@
         border: none !important;
         border-left: 3pt solid #666 !important;
         background: none !important;
-        margin: 8pt 0;
-        padding: 5pt 10pt;
+        margin: 6pt 0;
+        padding: 4pt 8pt;
     }
 
     .admonitionblock td.icon    { display: none; }
-    .admonitionblock td.content { font-size: 10pt; }
+    .admonitionblock td.content { font-size: 9.5pt; }
 
     /* -----------------------------------------------------------------------
        Images

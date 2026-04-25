@@ -1,1 +1,1 @@
-<div id="kb-sect2" class="sect2 uk-card-hover uk-border-rounded uk-padding-small">
+<div class="kb-sect2 sect2 uk-border-rounded uk-padding-small">
