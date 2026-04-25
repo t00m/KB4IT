@@ -1,1 +1,1 @@
-<h4 class="uk-card-title" 
+<h4 class="kb-h4"
