@@ -96,39 +96,36 @@
     }
 
     /* -----------------------------------------------------------------------
-       Document metadata — show in print (override uk-hidden)
+       Force all section bodies visible in print (overrides collapsed state)
     ----------------------------------------------------------------------- */
-    #kb4it-doc-metadata {
-        display: block !important;
-        margin: 10pt 0 12pt 0;
-        border: 1pt solid #bbb !important;
-        border-radius: 0;
+    .kb-section-body { display: block !important; }
+
+    /* -----------------------------------------------------------------------
+       Document metadata list (at end of document)
+    ----------------------------------------------------------------------- */
+    .kb-metadata-list {
+        list-style: disc;
+        padding-left: 14pt;
+        margin: 4pt 0 0 0;
     }
 
-    #kb4it-table-metadata {
-        border-collapse: collapse;
-        width: 100%;
+    .kb-metadata-item {
         font-size: 9pt;
-        border: 1pt solid #bbb !important;
+        margin: 2pt 0;
+        border-bottom: none !important;
+        line-height: 1.4;
     }
 
-    #kb4it-table-metadata td {
-        border: 0.5pt solid #ddd !important;
-        padding: 3pt 6pt;
-        font-size: 9pt;
+    .kb-meta-key { font-weight: bold; color: #000 !important; text-decoration: none !important; }
+    .kb-meta-val { color: #000 !important; text-decoration: none !important; }
+
+    .kb-meta-val + .kb-meta-val::before {
+        content: ', ';
+        color: #000;
     }
 
-    #kb4it-table-metadata,
-    #kb4it-table-metadata th,
-    #kb4it-table-metadata td {
-        font-family: Arial, Helvetica, sans-serif !important;
-        color: #000 !important;
-    }
-
-    #kb4it-table-metadata td span,
-    #kb4it-table-metadata th span {
-        color: #000 !important;
-    }
+    /* Suppress URL appending for metadata links */
+    .kb-metadata-list a[href]::after { content: none !important; }
 
     /* -----------------------------------------------------------------------
        Inline TOC panel — show open in print
