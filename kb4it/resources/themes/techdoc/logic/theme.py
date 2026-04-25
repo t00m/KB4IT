@@ -10,6 +10,7 @@ Server module.
 # Description: default theme script
 """
 
+import json
 import os
 import sys
 import math
@@ -810,6 +811,14 @@ class Theme(Builder):
             except OSError:
                 skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
         var['page']['skeletons'] = skeletons
+        var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True)
+        ignored = self.srvdtb.get_ignored_keys()
+        keys_data = {}
+        for key in self.srvdtb.get_all_keys():
+            if key not in ignored:
+                vals = self.srvdtb.get_all_values_for_key(key)
+                keys_data[key] = sorted({v for v in vals if v})
+        var['page']['keys_json'] = json.dumps(keys_data, ensure_ascii=True)
         page = TPL.render(var=var)
         self.distribute_adoc('add', page)
         self.srvdtb.add_document('add.adoc')
