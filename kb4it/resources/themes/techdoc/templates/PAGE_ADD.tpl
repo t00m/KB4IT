@@ -139,6 +139,45 @@ CATEGORIES = [
 </div><!-- /modal -->
 % endfor
 
+<!-- ── Shared value picker (plain overlay — avoids UIKit modal stacking issues) ── -->
+<div id="kb-add-picker"
+     style="display:none; position:fixed; inset:0; z-index:1050;
+            align-items:center; justify-content:center;
+            background:rgba(0,0,0,0.45);">
+    <div style="background:#fff; border-radius:6px; padding:20px 24px;
+                width:500px; max-width:calc(100vw - 32px);
+                max-height:calc(100vh - 80px); display:flex; flex-direction:column;
+                box-shadow:0 14px 30px rgba(0,0,0,0.18);"
+         onclick="event.stopPropagation()">
+        <div style="display:flex; align-items:center; justify-content:space-between;
+                    margin-bottom:12px; flex-shrink:0;">
+            <h3 id="kb-picker-title"
+                style="margin:0; font-size:1rem; font-weight:700;"></h3>
+            <button onclick="kb_picker_cancel()"
+                    style="background:none; border:none; cursor:pointer;
+                           font-size:1.4rem; line-height:1; color:#999; padding:0;"
+                    title="Cancel">&times;</button>
+        </div>
+        <input id="kb-picker-filter" type="text" class="uk-input uk-form-small"
+               placeholder="Filter…" oninput="kb_picker_filter()" style="flex-shrink:0;">
+        <div id="kb-picker-chips" class="kb-tag-list"
+             style="flex:1; overflow-y:auto; padding:6px 0; margin-top:10px; min-height:60px;"></div>
+        <input id="kb-picker-custom" type="text" class="uk-input uk-form-small"
+               style="margin-top:8px; flex-shrink:0;"
+               placeholder="Custom value — press Enter to add">
+        <div style="display:flex; justify-content:space-between; align-items:center;
+                    margin-top:14px; flex-shrink:0;">
+            <button class="uk-button uk-button-link uk-text-small"
+                    style="color:#aaa; padding:0;"
+                    onclick="kb_picker_clear()">Clear all</button>
+            <button class="uk-button uk-button-primary uk-button-small"
+                    onclick="kb_picker_done()">
+                <span uk-icon="icon: check; ratio:0.85"></span> Done
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
 .kb-tag-list {
     display: flex;
@@ -176,6 +215,25 @@ CATEGORIES = [
 }
 .kb-tag-custom-input {
     margin-top: 6px;
+    font-size: 0.82rem;
+}
+.kb-picker-trigger {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    height: auto;
+    min-height: 30px;
+    padding: 4px 10px;
+    gap: 6px;
+}
+.kb-picker-trigger:hover { border-color: #1e87f0; }
+.kb-trigger-summary {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.82rem;
 }
 </style>
@@ -250,8 +308,35 @@ CATEGORIES = [
 
         } else {
             var known = KB_KEYS[key];
-            if (known && known.length > 0) {
-                /* ── Tag chip multi-selector ── */
+            if (known && known.length > 8) {
+                /* ── Popup picker trigger for large value lists ── */
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.id   = 'add-f-' + catId + '-' + key;
+                hidden.name = key;
+                if (defVal) hidden.value = defVal;
+
+                var trigger = document.createElement('div');
+                trigger.id = 'add-trigger-' + catId + '-' + key;
+                trigger.className = 'uk-input uk-form-small kb-picker-trigger';
+                var summary = document.createElement('span');
+                summary.className = 'kb-trigger-summary';
+                if (defVal) { summary.textContent = defVal; }
+                else { summary.textContent = 'Click to select…'; summary.style.color = '#bbb'; }
+                var chev = document.createElement('span');
+                chev.setAttribute('uk-icon', 'icon: chevron-down; ratio: 0.75');
+                chev.style.cssText = 'flex-shrink:0; color:#aaa;';
+                trigger.appendChild(summary);
+                trigger.appendChild(chev);
+                (function (cId, k) {
+                    trigger.addEventListener('click', function () { window.kb_picker_open(cId, k); });
+                }(catId, key));
+
+                ctrl.appendChild(hidden);
+                ctrl.appendChild(trigger);
+
+            } else if (known && known.length > 0) {
+                /* ── Inline tag chip multi-selector ── */
                 var hidden = document.createElement('input');
                 hidden.type = 'hidden';
                 hidden.id   = 'add-f-' + catId + '-' + key;
@@ -366,8 +451,6 @@ CATEGORIES = [
         grid.setAttribute('uk-grid', '');
         parseAttrs(catId).forEach(function (f) {
             var cell = document.createElement('div');
-            var known = KB_KEYS[f.key];
-            if (known && known.length > 8) cell.className = 'uk-width-1-1';
             cell.appendChild(makeRow(catId, f.key, f.key, f.def, f.key === 'Category'));
             grid.appendChild(cell);
         });
@@ -438,6 +521,129 @@ CATEGORIES = [
         });
         UIkit.notification({ message: 'Skeleton copied to clipboard', status: 'success', timeout: 2000 });
     };
+
+    /* ── Shared picker modal ── */
+    var KB_PICKER = { catId: null, key: null };
+
+    var pickerEl = document.getElementById('kb-add-picker');
+
+    function pickerShow() { pickerEl.style.display = 'flex'; }
+    function pickerHide() { pickerEl.style.display = 'none'; }
+
+    window.kb_picker_open = function (catId, key) {
+        KB_PICKER = { catId: catId, key: key };
+        document.getElementById('kb-picker-title').textContent = key;
+
+        /* Current value from the hidden input */
+        var hidden  = document.getElementById('add-f-' + catId + '-' + key);
+        var current = hidden.value
+            ? hidden.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+            : [];
+
+        /* Build chip list: known values + any previously-custom ones not in known */
+        var known = (KB_KEYS[key] || []).slice();
+        current.forEach(function (cv) {
+            if (known.indexOf(cv) === -1) known.push(cv);
+        });
+
+        var container = document.getElementById('kb-picker-chips');
+        container.innerHTML = '';
+        known.forEach(function (v) {
+            var tag = document.createElement('span');
+            tag.className = 'kb-tag';
+            tag.dataset.value = v;
+            tag.textContent = v;
+            if (current.indexOf(v) !== -1) tag.classList.add('kb-tag-selected');
+            tag.addEventListener('click', function () { tag.classList.toggle('kb-tag-selected'); });
+            container.appendChild(tag);
+        });
+
+        document.getElementById('kb-picker-filter').value  = '';
+        document.getElementById('kb-picker-custom').value  = '';
+        window.kb_picker_filter();
+        pickerShow();
+        document.getElementById('kb-picker-filter').focus();
+    };
+
+    window.kb_picker_filter = function () {
+        var q = document.getElementById('kb-picker-filter').value.toLowerCase();
+        document.querySelectorAll('#kb-picker-chips .kb-tag').forEach(function (t) {
+            t.style.display = (!q || t.dataset.value.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+        });
+    };
+
+    window.kb_picker_clear = function () {
+        document.querySelectorAll('#kb-picker-chips .kb-tag').forEach(function (t) {
+            t.classList.remove('kb-tag-selected');
+        });
+    };
+
+    window.kb_picker_done = function () {
+        var catId = KB_PICKER.catId;
+        var key   = KB_PICKER.key;
+        if (!catId) return;
+
+        var vals = [];
+        document.querySelectorAll('#kb-picker-chips .kb-tag-selected').forEach(function (t) {
+            vals.push(t.dataset.value);
+        });
+
+        /* Write back to hidden input */
+        document.getElementById('add-f-' + catId + '-' + key).value = vals.join(', ');
+
+        /* Update trigger summary */
+        var trigger = document.getElementById('add-trigger-' + catId + '-' + key);
+        if (trigger) {
+            var summary = trigger.querySelector('.kb-trigger-summary');
+            if (vals.length === 0) {
+                summary.textContent = 'Click to select…';
+                summary.style.color = '#bbb';
+            } else {
+                summary.style.color = '';
+                summary.textContent = vals.length <= 3
+                    ? vals.join(', ')
+                    : vals.slice(0, 3).join(', ') + '  (+' + (vals.length - 3) + ')';
+            }
+        }
+
+        pickerHide();
+    };
+
+    window.kb_picker_cancel = function () { pickerHide(); };
+
+    /* Escape closes the picker without applying — stopPropagation prevents
+       UIKit from also closing the parent full-screen modal. */
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && pickerEl.style.display === 'flex') {
+            e.stopPropagation();
+            pickerHide();
+        }
+    }, true);
+
+    /* Custom value entry inside the picker */
+    document.getElementById('kb-picker-custom').addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        var v = this.value.trim();
+        if (!v) return;
+        var container = document.getElementById('kb-picker-chips');
+        var existing  = container.querySelector('[data-value="' + v.replace(/"/g, '\\"') + '"]');
+        if (existing) {
+            existing.classList.add('kb-tag-selected');
+            existing.style.display = '';
+        } else {
+            var tag = document.createElement('span');
+            tag.className = 'kb-tag kb-tag-selected';
+            tag.dataset.value = v;
+            tag.textContent = v;
+            tag.addEventListener('click', function () { tag.classList.toggle('kb-tag-selected'); });
+            container.appendChild(tag);
+        }
+        this.value = '';
+        document.getElementById('kb-picker-filter').value = '';
+        window.kb_picker_filter();
+    });
+
 })();
 </script>
 ++++
