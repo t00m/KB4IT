@@ -17,6 +17,22 @@ from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import exec_cmd, get_default_workers, get_source_docs
 
+# Optional TUI progress callback: set by kb4it.tui.app before a build,
+# cleared after. Signature: callback(basename: str, rc: bool) -> None.
+_progress_callback = None
+
+
+def set_progress_callback(callback) -> None:
+    """Register a TUI progress callback for compilation events."""
+    global _progress_callback
+    _progress_callback = callback
+
+
+def clear_progress_callback() -> None:
+    """Remove the TUI progress callback."""
+    global _progress_callback
+    _progress_callback = None
+
 
 class Compiler(Service):
     """KB4IT Compiler Service."""
@@ -98,6 +114,11 @@ class Compiler(Service):
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
             self.log.info(f"[COMPILER] ASCIIDOCTOR doc={basename} rc={rc}")
+            if _progress_callback is not None:
+                try:
+                    _progress_callback(basename, rc)
+                except Exception:
+                    pass
             if rc is True:
                 try:
                     self.srvthm.build_page(path_hdoc)

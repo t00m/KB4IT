@@ -163,6 +163,18 @@ class KB4IT:
 
 def main():
     """Set up application arguments and execute."""
+    # When called with no arguments in an interactive terminal, launch the TUI
+    if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
+        try:
+            from kb4it.tui.app import run as run_tui
+            run_tui()
+        except ImportError as exc:
+            print(f"TUI requires the 'rich' library: {exc}")
+            print("Install it with: pip install rich")
+        except KeyboardInterrupt:
+            pass
+        return
+
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog="kb4it",
