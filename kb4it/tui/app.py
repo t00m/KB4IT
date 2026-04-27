@@ -9,6 +9,7 @@ Uses the Rich library for a menu-driven interactive experience.
 import argparse
 import logging
 import os
+import re
 import sys
 import threading
 import time
@@ -16,6 +17,7 @@ from pathlib import Path
 
 from rich import box
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import (
     BarColumn,
@@ -710,6 +712,100 @@ def list_source_files(config_path: str) -> None:
 
 # ─── Keys & Values Explorer ───────────────────────────────────────────────────
 
+def _adoc_to_markdown(text: str) -> str:
+    """Lightweight AsciiDoc → Markdown conversion for Rich display."""
+    lines = text.splitlines()
+    out: list[str] = []
+    in_code = False
+    in_header = True
+
+    for line in lines:
+        stripped = line.strip()
+
+        if in_header:
+            if stripped == "":
+                in_header = False
+                continue
+            if stripped.startswith("= ") and not out:
+                out.append("# " + stripped[2:])
+                continue
+            if re.match(r"^:[a-zA-Z][^:]*:", stripped):
+                continue
+            in_header = False
+
+        if line.startswith("----") or line.startswith("...."):
+            in_code = not in_code
+            out.append("```")
+            continue
+
+        if in_code:
+            out.append(line)
+            continue
+
+        m = re.match(r"^(={2,6})\s+(.+)$", line)
+        if m:
+            level = len(m.group(1))
+            out.append("#" * level + " " + m.group(2))
+            continue
+
+        m = re.match(r"^(NOTE|TIP|WARNING|IMPORTANT|CAUTION):\s*(.*)$", line)
+        if m:
+            out.append(f"> **{m.group(1)}:** {m.group(2)}")
+            continue
+
+        bm = re.match(r"^(\*+) ", line)
+        if bm:
+            depth = len(bm.group(1))
+            out.append("  " * (depth - 1) + "- " + line[depth + 1:])
+            continue
+
+        if re.match(r"^\. ", line):
+            out.append("1. " + line[2:])
+            continue
+
+        line = re.sub(r"\*(\S(?:[^*]*\S)?)\*", r"**\1**", line)
+        line = re.sub(r"_(\S(?:[^_]*\S)?)_", r"*\1*", line)
+        line = re.sub(r"link:(\S+)\[([^\]]*)\]", r"[\2](\1)", line)
+        out.append(line)
+
+    return "\n".join(out)
+
+
+def view_document(doc_id: str, kbdict: dict) -> None:
+    """Show document metadata and rendered content in a pager."""
+    doc_info = kbdict.get("document", {}).get(doc_id, {})
+    content_path = doc_info.get("content", "")
+    doc_keys = doc_info.get("keys", {})
+
+    raw_text = ""
+    if content_path and Path(content_path).exists():
+        try:
+            raw_text = Path(content_path).read_text(encoding="utf-8", errors="replace")
+        except Exception as exc:
+            raw_text = f"Error reading file: {exc}"
+    else:
+        raw_text = f"Source file not found: {content_path}"
+
+    meta_table = Table(box=box.SIMPLE, show_header=True, header_style="bold")
+    meta_table.add_column("Key", style="bold cyan", no_wrap=True)
+    meta_table.add_column("Values")
+    for key, vals in sorted(doc_keys.items()):
+        display = ", ".join(str(v) for v in vals) if isinstance(vals, list) else str(vals)
+        meta_table.add_row(key, display)
+
+    md_text = _adoc_to_markdown(raw_text)
+    try:
+        rendered = Markdown(md_text)
+    except Exception:
+        rendered = Markdown(raw_text)
+
+    with console.pager(styles=True):
+        console.print(Panel(f"[bold]{doc_id}[/]", style="bold blue", box=box.DOUBLE_EDGE))
+        if doc_keys:
+            console.print(Panel(meta_table, title="Metadata", box=box.ROUNDED))
+        console.print(Panel(rendered, title="Content", box=box.ROUNDED))
+
+
 def _kbdict_path(config_path: str) -> Path | None:
     """Return the kbdict.json path for a project, or None if it doesn't exist."""
     try:
@@ -789,22 +885,22 @@ def explore_keys_values(config_path: str) -> None:
 
             selected_value = value_list[idx2]
             doc_ids: list = values[selected_value]
+            sorted_docs = sorted(doc_ids)
 
-            clear()
-            header()
-            table = Table(
-                title=f"{selected_key} = [bold]{selected_value}[/]",
-                box=box.ROUNDED, show_header=True, header_style="bold",
-            )
-            table.add_column("#", style="dim", width=5, justify="right")
-            table.add_column("Document ID", style="bold cyan")
+            # Document selection + viewer loop
+            while True:
+                clear()
+                header()
 
-            for i, doc_id in enumerate(sorted(doc_ids), 1):
-                table.add_row(str(i), doc_id)
+                idx3 = pick_from_list(
+                    sorted_docs,
+                    f"{selected_key} = [bold]{selected_value}[/] — Select a Document",
+                    display_fn=lambda d: f"[bold cyan]{d}[/]",
+                )
+                if idx3 is None:
+                    break
 
-            console.print(table)
-            console.print(f"[dim]{len(doc_ids)} document(s)[/dim]")
-            pause()
+                view_document(sorted_docs[idx3], kbdict)
 
 
 # ─── Project Submenu ──────────────────────────────────────────────────────────
