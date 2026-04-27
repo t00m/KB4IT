@@ -75,6 +75,10 @@ class Backend(Service):
             self.runtime["dir"]["log"] = dir_log
             self.runtime["dir"]["db"] = dir_db
 
+            if self.params.get("force"):
+                shutil.rmtree(dir_var, ignore_errors=True)
+                self.log.debug(f"[BACKEND] VAR_CLEARED path={dir_var} reason=force")
+
             for entry in self.runtime["dir"]:
                 dirname = self.runtime["dir"][entry]
                 if entry not in ["source", "target"]:

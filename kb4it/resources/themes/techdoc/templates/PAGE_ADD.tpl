@@ -263,8 +263,12 @@ CATEGORIES = [
             .replace(/^_+|_+$/g, '') || 'document';
     }
 
+    var DOCTYPES = ['', 'Tutorial', 'How-to guide', 'Reference', 'Explanation'];
+
     /* Parse `:Key: DefaultValue` lines from the skeleton header */
+    var _attrsCache = {};
     function parseAttrs(catId) {
+        if (_attrsCache[catId]) return _attrsCache[catId];
         var attrs = [];
         var lines = KB_SKEL[catId].split('\n');
         for (var i = 0; i < lines.length; i++) {
@@ -275,7 +279,20 @@ CATEGORIES = [
             var m = line.match(/^:([^:]+):\s*(.*)/);
             if (m) attrs.push({ key: m[1], def: m[2].trim() });
         }
+        _attrsCache[catId] = attrs;
         return attrs;
+    }
+
+    function createTag(value, selected, onChange) {
+        var tag = document.createElement('span');
+        tag.className = 'kb-tag' + (selected ? ' kb-tag-selected' : '');
+        tag.dataset.value = value;
+        tag.textContent = value;
+        tag.addEventListener('click', function () {
+            tag.classList.toggle('kb-tag-selected');
+            if (onChange) onChange();
+        });
+        return tag;
     }
 
     /* Build one form row */
@@ -300,8 +317,6 @@ CATEGORIES = [
         ctrl.className = 'uk-form-controls';
 
         if (key === 'Date') {
-            /* Date picker — setAttribute sets the reflected content attribute so the
-               value persists across DOM attachment in all browsers. */
             var inp = document.createElement('input');
             inp.type = 'date'; inp.id = 'add-f-' + catId + '-' + key;
             inp.name = key; inp.className = 'uk-input uk-form-small';
@@ -310,11 +325,10 @@ CATEGORIES = [
             ctrl.appendChild(inp);
 
         } else if (key === 'DocType') {
-            /* Combobox restricted to the four Diátaxis document types */
             var sel = document.createElement('select');
             sel.id = 'add-f-' + catId + '-' + key;
             sel.name = key; sel.className = 'uk-select uk-form-small';
-            ['', 'Tutorial', 'How-to guide', 'Reference', 'Explanation'].forEach(function (opt) {
+            DOCTYPES.forEach(function (opt) {
                 var o = document.createElement('option');
                 o.value = opt; o.textContent = opt || '— select —';
                 if (opt === defVal) o.selected = true;
@@ -323,7 +337,6 @@ CATEGORIES = [
             ctrl.appendChild(sel);
 
         } else if (fixed) {
-            /* Read-only fixed value */
             var inp = document.createElement('input');
             inp.type = 'text'; inp.id = 'add-f-' + catId + '-' + key;
             inp.name = key; inp.className = 'uk-input uk-form-small';
@@ -379,16 +392,7 @@ CATEGORIES = [
                 }
 
                 known.forEach(function (v) {
-                    var tag = document.createElement('span');
-                    tag.className = 'kb-tag';
-                    tag.dataset.value = v;
-                    tag.textContent = v;
-                    if (v === defVal) tag.classList.add('kb-tag-selected');
-                    tag.addEventListener('click', function () {
-                        tag.classList.toggle('kb-tag-selected');
-                        syncHidden(tagList, hidden);
-                    });
-                    tagList.appendChild(tag);
+                    tagList.appendChild(createTag(v, v === defVal, function () { syncHidden(tagList, hidden); }));
                 });
                 syncHidden(tagList, hidden);
 
@@ -406,15 +410,7 @@ CATEGORIES = [
                     if (existing) {
                         existing.classList.add('kb-tag-selected');
                     } else {
-                        var tag = document.createElement('span');
-                        tag.className = 'kb-tag kb-tag-selected';
-                        tag.dataset.value = v;
-                        tag.textContent = v;
-                        tag.addEventListener('click', function () {
-                            tag.classList.toggle('kb-tag-selected');
-                            syncHidden(tagList, hidden);
-                        });
-                        tagList.appendChild(tag);
+                        tagList.appendChild(createTag(v, true, function () { syncHidden(tagList, hidden); }));
                     }
                     customIn.value = '';
                     syncHidden(tagList, hidden);
@@ -510,21 +506,17 @@ CATEGORIES = [
         var dateStr = (dateEl && dateEl.value) ? dateEl.value : today();
         var skelLines = result.split('\n');
         var dateWritten = false;
+        var authorIdx = -1;
         for (var li = 0; li < skelLines.length; li++) {
             if (skelLines[li].indexOf(':Date:') === 0) {
                 skelLines[li] = ':Date: ' + dateStr;
                 dateWritten = true;
                 break;
             }
+            if (skelLines[li].indexOf(':Author:') === 0) { authorIdx = li; }
         }
-        if (!dateWritten) {
-            /* Fallback: insert after :Author: line if :Date: is absent */
-            for (var li = 0; li < skelLines.length; li++) {
-                if (skelLines[li].indexOf(':Author:') === 0) {
-                    skelLines.splice(li + 1, 0, ':Date: ' + dateStr);
-                    break;
-                }
-            }
+        if (!dateWritten && authorIdx !== -1) {
+            skelLines.splice(authorIdx + 1, 0, ':Date: ' + dateStr);
         }
         result = skelLines.join('\n');
 
@@ -588,13 +580,11 @@ CATEGORIES = [
             modalDialog.appendChild(pickerEl);
         }
 
-        /* Current value from the hidden input */
         var hidden  = document.getElementById('add-f-' + catId + '-' + key);
         var current = hidden.value
             ? hidden.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
             : [];
 
-        /* Build chip list: known values + any previously-custom ones not in known */
         var known = (KB_KEYS[key] || []).slice();
         current.forEach(function (cv) {
             if (known.indexOf(cv) === -1) known.push(cv);
@@ -603,13 +593,7 @@ CATEGORIES = [
         var container = document.getElementById('kb-picker-chips');
         container.innerHTML = '';
         known.forEach(function (v) {
-            var tag = document.createElement('span');
-            tag.className = 'kb-tag';
-            tag.dataset.value = v;
-            tag.textContent = v;
-            if (current.indexOf(v) !== -1) tag.classList.add('kb-tag-selected');
-            tag.addEventListener('click', function () { tag.classList.toggle('kb-tag-selected'); });
-            container.appendChild(tag);
+            container.appendChild(createTag(v, current.indexOf(v) !== -1, null));
         });
 
         document.getElementById('kb-picker-filter').value  = '';
@@ -686,12 +670,7 @@ CATEGORIES = [
             existing.classList.add('kb-tag-selected');
             existing.style.display = '';
         } else {
-            var tag = document.createElement('span');
-            tag.className = 'kb-tag kb-tag-selected';
-            tag.dataset.value = v;
-            tag.textContent = v;
-            tag.addEventListener('click', function () { tag.classList.toggle('kb-tag-selected'); });
-            container.appendChild(tag);
+            container.appendChild(createTag(v, true, null));
         }
         this.value = '';
         document.getElementById('kb-picker-filter').value = '';

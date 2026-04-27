@@ -46,21 +46,6 @@ class Deployer(Service):
         """Copy all from source directory to cache."""
         copy_docs(files, self.srvbes.get_path("cache"))
 
-    def step_02_copy_temporary_files_to_distributed_directory(self):
-        """Copy temporary files to distributed directory."""
-        distributed = self.srvbes.get_value("docs", "targets")
-        for adoc in distributed:
-            source = os.path.join(self.srvbes.get_path("cache"), adoc)
-            target = self.srvbes.get_path("www")
-            try:
-                shutil.copy(source, target)
-            except Exception as warning:
-                # FIXME
-                self.log.warning(f"[DEPLOYER] WARN {warning}")
-                self.log.warning(f"[DEPLOYER] SOURCE_MISSING path={source}")
-                continue
-        self.log.debug("[DEPLOYER] COPY_TMP_TO_DIST")
-
     def step_03_clear_target(self):
         """Clear target directory."""
         delete_target_contents(self.srvbes.get_path("target"))

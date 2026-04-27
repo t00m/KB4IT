@@ -133,5 +133,6 @@ class Compiler(Service):
                     self.app.stop()
                 return x
             else:
+                self.log.error(f"[COMPILER] COMPILE_FAILED doc={basename}")
                 self.app.stop()
 

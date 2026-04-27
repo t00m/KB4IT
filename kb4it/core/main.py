@@ -27,35 +27,28 @@ _lock_fd = None
 
 
 def _acquire_process_lock():
-    """Acquire an exclusive process lock at startup.
-
-    Called once by main() before any TUI or CLI branch executes.  Holding
-    the lock at the process level (rather than inside KB4IT.__init__) means
-    both the TUI and every KB4IT instance created by its build threads share
-    the same lock, so a second kb4it invocation from any terminal is blocked
-    for the entire session — not just for the duration of an individual build.
-
-    sys.exit() from a background thread only terminates that thread, so the
-    check must happen in the main thread before spawning anything.
-    """
+    """Acquire an exclusive process lock at startup."""
     global _lock_fd
     lock_path = ENV["FILE"]["LOCK"]
     os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    # O_RDWR|O_CREAT never truncates — so if flock fails, the other process's
+    # PID is still readable from the file.
+    raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
+    fd = os.fdopen(raw, "r+")
     try:
-        fd = open(lock_path, "w")
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        fd.write(str(os.getpid()))
-        fd.flush()
-        _lock_fd = fd
     except BlockingIOError:
-        try:
-            with open(lock_path) as f:
-                other_pid = f.read().strip()
-            msg = f"KB4IT is already running (PID {other_pid})"
-        except OSError:
-            msg = "KB4IT is already running"
+        fd.seek(0)
+        other_pid = fd.read().strip()
+        fd.close()
+        msg = f"KB4IT is already running (PID {other_pid})" if other_pid else "KB4IT is already running"
         print(msg, file=sys.stderr)
         sys.exit(1)
+    fd.seek(0)
+    fd.truncate()
+    fd.write(str(os.getpid()))
+    fd.flush()
+    _lock_fd = fd
 
 
 class KB4IT:
