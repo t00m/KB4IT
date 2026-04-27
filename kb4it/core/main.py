@@ -261,6 +261,12 @@ def main():
     repo_build.add_argument(
         "config", help="Path to the repository config file (mandatory)"
     )
+    repo_build.add_argument(
+        "-f", "--force",
+        action="store_true",
+        default=False,
+        help="Force recompilation of all documents, ignoring content hashes",
+    )
 
     # Get repository info
     repo_info = subparsers.add_parser(

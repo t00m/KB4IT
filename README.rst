@@ -128,12 +128,13 @@ Usage
 
 .. code-block:: bash
 
-    kb4it create <theme> <repo_path>   # scaffold a new repo
-    kb4it build <config.json>          # build the site
-    kb4it info <config.json>           # show repo stats
-    kb4it themes                       # list available themes
-    kb4it apps <theme>                 # list theme apps
-    kb4it --version                    # show version
+    kb4it create <theme> <repo_path>        # scaffold a new repo
+    kb4it build <config.json>               # build the site (incremental)
+    kb4it build <config.json> --force       # force recompile everything
+    kb4it info <config.json>                # show repo stats
+    kb4it themes                            # list available themes
+    kb4it apps <theme>                      # list theme apps
+    kb4it --version                         # show version
 
 A KB4IT repository is just three directories and a config file:
 
