@@ -534,6 +534,13 @@ CATEGORIES = [
         KB_PICKER = { catId: catId, key: key };
         document.getElementById('kb-picker-title').textContent = key;
 
+        /* Move picker into the active modal dialog so UIKit's focus trap
+           allows keyboard input in the filter and custom-value fields. */
+        var modalDialog = document.querySelector('#modal-add-' + catId + ' .uk-modal-dialog');
+        if (modalDialog && pickerEl.parentNode !== modalDialog) {
+            modalDialog.appendChild(pickerEl);
+        }
+
         /* Current value from the hidden input */
         var hidden  = document.getElementById('add-f-' + catId + '-' + key);
         var current = hidden.value
