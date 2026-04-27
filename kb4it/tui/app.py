@@ -25,10 +25,8 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
-from rich.prompt import Confirm, IntPrompt, Prompt
+from rich.prompt import Confirm, Prompt
 from rich.table import Table
-from rich.text import Text
-from rich.tree import Tree
 
 from kb4it.core.env import ENV
 from kb4it.core.util import json_load, json_save
@@ -36,6 +34,15 @@ from kb4it.core.util import json_load, json_save
 console = Console()
 
 PROJECTS_FILE = Path(ENV["LPATH"]["ROOT"]) / "projects.json"
+
+# Log-level → Rich colour mapping (matches KB4IT's %(levelname)10s format)
+_LOG_COLOURS = {
+    "CRITICAL": "bold red",
+    "ERROR": "red",
+    "WARNING": "yellow",
+    "INFO": "",
+    "DEBUG": "dim",
+}
 
 
 # ─── Project Registry ──────────────────────────────────────────────────────────
@@ -61,7 +68,7 @@ def save_projects(projects: list[dict]) -> None:
 
 def get_themes() -> list[dict]:
     """Return metadata dicts for all installed themes (global + local)."""
-    themes = []
+    themes: list[dict] = []
     seen_ids: set[str] = set()
     for scope, base in [
         ("global", ENV["GPATH"]["THEMES"]),
@@ -92,7 +99,7 @@ def get_themes() -> list[dict]:
 
 def get_apps(theme_name: str) -> list[str]:
     """Return app names available for the given theme."""
-    apps = []
+    apps: list[str] = []
     for base in [ENV["GPATH"]["THEMES"], ENV["LPATH"]["THEMES"]]:
         apps_path = Path(base) / theme_name / "apps"
         if not apps_path.exists():
@@ -162,53 +169,68 @@ def pick_from_list(
     return int(choice) - 1
 
 
+# ─── Logging Reset ────────────────────────────────────────────────────────────
+
+def _reset_logging() -> None:
+    """
+    Clear every handler from the root logger so the next KB4IT instance
+    can call setup_logging() from scratch.
+
+    KB4IT's setup_logging() has an early-return guard
+    ('if root.handlers: return') that prevents re-initialisation when
+    handlers already exist.  Without this reset a second KB4IT instance
+    never creates its temp log file, causing Backend._initialize() to
+    fail on shutil.copy() and silently abort the build.
+    """
+    root = logging.getLogger()
+    for h in list(root.handlers):
+        try:
+            h.flush()
+            h.close()
+        except Exception:
+            pass
+        root.removeHandler(h)
+
+
+def _silence_console_log() -> None:
+    """Remove any StreamHandler writing to stdout/stderr from root logger."""
+    root = logging.getLogger()
+    for h in list(root.handlers):
+        if isinstance(h, logging.StreamHandler) and h.stream in (sys.stdout, sys.stderr):
+            root.removeHandler(h)
+
+
 # ─── Build Progress Tracking ──────────────────────────────────────────────────
 
 class _BuildState:
-    """Shared state between the build thread and the TUI progress bar."""
+    """Thread-safe state shared between the build thread and the progress bar."""
 
     def __init__(self) -> None:
         self.completed = 0
         self.total = 0
         self.done = threading.Event()
         self.error = False
+        self.error_msg = ""
         self._lock = threading.Lock()
 
     def on_doc_compiled(self, basename: str, rc: bool) -> None:
-        """Called from Compiler.compilation_finished (in a worker thread)."""
+        """Called from Compiler.compilation_finished() in a worker thread."""
         with self._lock:
             self.completed += 1
 
 
-def _silence_console_log() -> list:
-    """
-    Remove StreamHandlers writing to stdout/stderr from the root logger
-    so they don't interleave with the Rich progress bar.
-    Returns the removed handlers so they can be restored later.
-    """
-    root = logging.getLogger()
-    removed = []
-    for h in list(root.handlers):
-        if isinstance(h, logging.StreamHandler) and h.stream in (sys.stdout, sys.stderr):
-            root.removeHandler(h)
-            removed.append(h)
-    return removed
-
-
-def _restore_console_log(handlers: list) -> None:
-    root = logging.getLogger()
-    for h in handlers:
-        root.addHandler(h)
-
-
 def _run_build_thread(config_path: str, force: bool, state: _BuildState) -> None:
-    """Build thread target: runs KB4IT and signals when done."""
+    """Build thread target: runs KB4IT and signals completion via state.done."""
     from kb4it.core.main import KB4IT
     from kb4it.services import compiler as compiler_mod
 
     compiler_mod.set_progress_callback(state.on_doc_compiled)
-    removed_handlers = []
     try:
+        # Reset logging so KB4IT's setup_logging() runs from scratch.
+        # Without this, a second KB4IT instance in the same process
+        # silently fails because its temp log file is never created.
+        _reset_logging()
+
         params = argparse.Namespace(
             action="build",
             config=config_path,
@@ -216,24 +238,26 @@ def _run_build_thread(config_path: str, force: bool, state: _BuildState) -> None
             force=force,
         )
         app = KB4IT(params)
-        # Silence any console log handlers set up by KB4IT
-        removed_handlers = _silence_console_log()
+        _silence_console_log()  # Keep log output out of the Rich display
         app.run()
-    except SystemExit:
-        pass
+
+    except SystemExit as exc:
+        # KB4IT.stop(error=True) → sys.exit(1); success → sys.exit(0)
+        if exc.code and exc.code != 0:
+            state.error = True
+            state.error_msg = "Build failed — see the project log for details."
+
     except Exception as exc:
         state.error = True
-        # Print outside the Progress context; will appear once the bar closes
-        console.print(f"\n[red]Build error:[/] {exc}")
+        state.error_msg = str(exc)
+
     finally:
         compiler_mod.clear_progress_callback()
-        _restore_console_log(removed_handlers)
         state.done.set()
 
 
 def run_build(config_path: str, force: bool = False) -> None:
-    """Run a KB4IT project build with a Rich live progress display."""
-    # Approximate total from source file count
+    """Run a KB4IT build with a Rich live progress display."""
     try:
         repo = json_load(config_path)
         source_path = Path(repo.get("source", ""))
@@ -272,7 +296,6 @@ def run_build(config_path: str, force: bool = False) -> None:
             )
             time.sleep(0.1)
 
-        # Final update to show completion
         final_total = max(state.total, state.completed, 1)
         progress.update(
             task_id,
@@ -284,11 +307,98 @@ def run_build(config_path: str, force: bool = False) -> None:
     thread.join(timeout=5)
 
     if state.error:
-        console.print("[red]Build failed — check the project log for details.[/red]")
+        console.print(f"[red]Build failed.[/] {state.error_msg}")
+        try:
+            if Confirm.ask("Show build log?", default=True):
+                show_build_log(config_path)
+        except (KeyboardInterrupt, EOFError):
+            pass
     else:
         console.print(
             f"[green]Build complete.[/] {state.completed} document(s) compiled."
         )
+
+
+# ─── Build Log Viewer ─────────────────────────────────────────────────────────
+
+def _log_path(config_path: str) -> Path | None:
+    """Return the kb4it.log path for a project, or None if absent."""
+    try:
+        repo = json_load(config_path)
+        source = Path(repo.get("source", ""))
+        p = source.parent / "var" / "log" / "kb4it.log"
+        return p if p.exists() else None
+    except Exception:
+        return None
+
+
+def _parse_level(line: str) -> str:
+    """Detect the KB4IT log level of a line (checks first 15 chars)."""
+    prefix = line[:15].upper()
+    for lvl in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"):
+        if lvl in prefix:
+            return lvl
+    return "INFO"
+
+
+def show_build_log(config_path: str) -> None:
+    """Display the last build log with optional severity filtering."""
+    clear()
+    header()
+
+    log_file = _log_path(config_path)
+    if log_file is None:
+        console.print("[yellow]No build log found — build the project first.[/yellow]")
+        pause()
+        return
+
+    try:
+        lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
+    except Exception as exc:
+        console.print(f"[red]Cannot read log:[/] {exc}")
+        pause()
+        return
+
+    console.print(f"[dim]{log_file}  ({len(lines)} lines total)[/dim]\n")
+
+    # Filter selection
+    filter_choice = Prompt.ask(
+        "Show  [dim](all / warn = WARNING+ / err = ERROR only)[/dim]",
+        choices=["all", "warn", "err"],
+        default="all",
+    )
+    min_level = {"all": 0, "warn": 2, "err": 3}[filter_choice]
+    level_rank = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
+
+    filtered = [
+        (line, _parse_level(line))
+        for line in lines
+        if level_rank.get(_parse_level(line), 1) >= min_level
+    ]
+
+    if not filtered:
+        console.print("[yellow]No entries match the selected filter.[/yellow]")
+        pause()
+        return
+
+    # Show tail (last 300 matching lines) — terminal scrollback handles the rest
+    display = filtered[-300:]
+    console.print(
+        Panel(
+            f"[bold]Build Log[/]  [dim]{log_file.name}"
+            f"  ({len(display)}/{len(filtered)} lines shown)[/dim]",
+            box=box.ROUNDED,
+        )
+    )
+
+    for line, level in display:
+        colour = _LOG_COLOURS.get(level, "")
+        if colour:
+            console.print(f"[{colour}]{line}[/{colour}]")
+        else:
+            console.print(line)
+
+    pause()
 
 
 # ─── Themes Menu ──────────────────────────────────────────────────────────────
@@ -303,7 +413,10 @@ def show_themes() -> None:
         pause()
         return
 
-    table = Table(title="Installed Themes", box=box.ROUNDED, show_header=True, header_style="bold")
+    table = Table(
+        title="Installed Themes", box=box.ROUNDED,
+        show_header=True, header_style="bold",
+    )
     table.add_column("ID", style="bold cyan", no_wrap=True)
     table.add_column("Name")
     table.add_column("Version", justify="center")
@@ -353,16 +466,12 @@ def show_apps() -> None:
     else:
         table = Table(
             title=f"Apps for theme '{theme_id}'",
-            box=box.ROUNDED,
-            show_header=True,
-            header_style="bold",
+            box=box.ROUNDED, show_header=True, header_style="bold",
         )
         table.add_column("#", style="dim", width=4)
         table.add_column("App Name", style="bold cyan")
-
         for i, app in enumerate(apps, 1):
             table.add_row(str(i), app)
-
         console.print(table)
 
     pause()
@@ -371,7 +480,7 @@ def show_apps() -> None:
 # ─── Create Project ───────────────────────────────────────────────────────────
 
 def create_project() -> dict | None:
-    """Wizard that initializes a new KB4IT repository and registers it."""
+    """Wizard: initialise a new KB4IT repository and register it."""
     clear()
     header()
     themes = get_themes()
@@ -383,7 +492,6 @@ def create_project() -> dict | None:
 
     console.print(Panel("[bold]Create a New Project[/]", box=box.ROUNDED, style="green"))
 
-    # Select theme
     idx = pick_from_list(
         themes,
         "Choose a Theme",
@@ -394,17 +502,14 @@ def create_project() -> dict | None:
 
     theme_id = themes[idx].get("id", "")
 
-    # Display name for the registry
     name = Prompt.ask("\nProject display name").strip()
     if not name:
         console.print("[red]Project name cannot be empty.[/red]")
         pause()
         return None
 
-    # Directory where the repo will be initialised
     default_path = str(Path.home() / "Documents" / name.replace(" ", "_"))
-    repo_path = Prompt.ask("Repository path", default=default_path)
-    repo_path = os.path.expanduser(repo_path.strip())
+    repo_path = os.path.expanduser(Prompt.ask("Repository path", default=default_path).strip())
 
     console.print(
         f"\nCreating project [bold]{name}[/] "
@@ -415,20 +520,20 @@ def create_project() -> dict | None:
     try:
         from kb4it.core.main import KB4IT
 
+        _reset_logging()
         params = argparse.Namespace(
             action="create",
             theme=theme_id,
             repo_path=repo_path,
             log_level="WARNING",
         )
-        removed = _silence_console_log()
+        app = KB4IT(params)
+        _silence_console_log()
         try:
-            app = KB4IT(params)
             app.run()
         except SystemExit:
             pass
-        finally:
-            _restore_console_log(removed)
+
     except Exception as exc:
         console.print(f"[red]Error creating project:[/] {exc}")
         pause()
@@ -437,12 +542,62 @@ def create_project() -> dict | None:
     config_path = str(Path(repo_path) / "config" / "repo.json")
     if not Path(config_path).exists():
         console.print(
-            f"[red]Project creation failed — config not found at[/]\n  {config_path}"
+            f"[red]Project creation failed — config not found at:[/]\n  {config_path}"
         )
         pause()
         return None
 
     console.print(f"[green]Project created![/]  Config: [dim]{config_path}[/dim]")
+    pause()
+    return {"name": name, "config": config_path}
+
+
+# ─── Import Project ───────────────────────────────────────────────────────────
+
+def import_project() -> dict | None:
+    """Register an existing KB4IT project by pointing to its repo.json."""
+    clear()
+    header()
+    console.print(Panel("[bold]Import Existing Project[/]", box=box.ROUNDED, style="cyan"))
+
+    raw = Prompt.ask("Path to repo.json  [dim](Tab-complete works)[/dim]").strip()
+    config_path = os.path.expanduser(raw)
+
+    if not Path(config_path).exists():
+        console.print(f"[red]File not found:[/] {config_path}")
+        pause()
+        return None
+
+    try:
+        repo = json_load(config_path)
+    except Exception as exc:
+        console.print(f"[red]Cannot parse config:[/] {exc}")
+        pause()
+        return None
+
+    # Validate required fields
+    for field in ("source", "target", "theme"):
+        if field not in repo:
+            console.print(f"[red]Config is missing required field:[/] '{field}'")
+            pause()
+            return None
+
+    # Show a summary so the user can confirm
+    summary = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
+    summary.add_column("Key", style="bold cyan", no_wrap=True)
+    summary.add_column("Value")
+    for key in ("title", "tagline", "theme", "source", "target"):
+        if key in repo:
+            summary.add_row(key, str(repo[key]))
+    summary.add_row("[dim]config[/dim]", f"[dim]{config_path}[/dim]")
+    console.print(summary)
+
+    default_name = repo.get("title") or Path(config_path).parent.parent.name
+    name = Prompt.ask("Display name", default=default_name).strip()
+    if not name:
+        return None
+
+    console.print(f"[green]Project '[bold]{name}[/]' imported.[/green]")
     pause()
     return {"name": name, "config": config_path}
 
@@ -475,7 +630,7 @@ def delete_project(projects: list[dict]) -> list[dict]:
     if confirmed:
         projects = [p for i, p in enumerate(projects) if i != idx]
         save_projects(projects)
-        console.print(f"[green]Project '[bold]{project['name']}[/]' removed.[/green]")
+        console.print(f"[green]Removed '[bold]{project['name']}[/]'.[/green]")
     pause()
     return projects
 
@@ -495,9 +650,7 @@ def show_project_info(project: dict, config_path: str) -> None:
 
     table = Table(
         title=f"Project Info — {project['name']}",
-        box=box.ROUNDED,
-        show_header=True,
-        header_style="bold",
+        box=box.ROUNDED, show_header=True, header_style="bold",
     )
     table.add_column("Key", style="bold cyan", no_wrap=True)
     table.add_column("Value")
@@ -510,7 +663,6 @@ def show_project_info(project: dict, config_path: str) -> None:
             v = str(v)
         table.add_row(str(k), str(v))
 
-    # Show config path as an extra row
     table.add_row("[dim]config_file[/dim]", f"[dim]{config_path}[/dim]")
 
     console.print(table)
@@ -540,9 +692,7 @@ def list_source_files(config_path: str) -> None:
 
     table = Table(
         title=f"Source Files — {source_path}",
-        box=box.ROUNDED,
-        show_header=True,
-        header_style="bold",
+        box=box.ROUNDED, show_header=True, header_style="bold",
     )
     table.add_column("#", style="dim", width=5, justify="right")
     table.add_column("Filename", style="bold")
@@ -561,18 +711,18 @@ def list_source_files(config_path: str) -> None:
 # ─── Keys & Values Explorer ───────────────────────────────────────────────────
 
 def _kbdict_path(config_path: str) -> Path | None:
-    """Return the path to kbdict.json for a project, or None if not found."""
+    """Return the kbdict.json path for a project, or None if it doesn't exist."""
     try:
         repo = json_load(config_path)
         source_path = Path(repo.get("source", ""))
-        db_path = source_path.parent / "var" / "db" / "kbdict.json"
-        return db_path if db_path.exists() else None
+        p = source_path.parent / "var" / "db" / "kbdict.json"
+        return p if p.exists() else None
     except Exception:
         return None
 
 
 def explore_keys_values(config_path: str) -> None:
-    """Interactive explorer: keys → values → documents."""
+    """Interactive drill-down: metadata keys → values → documents."""
     db_path = _kbdict_path(config_path)
 
     if db_path is None:
@@ -602,7 +752,7 @@ def explore_keys_values(config_path: str) -> None:
         pause()
         return
 
-    # ── Key selection loop ──
+    # Key selection loop
     while True:
         clear()
         header()
@@ -612,8 +762,7 @@ def explore_keys_values(config_path: str) -> None:
             keys,
             "Metadata Keys — Select a Key",
             display_fn=lambda k: (
-                f"[bold]{k}[/]  "
-                f"[dim]({len(metadata.get(k, {}))} value(s))[/dim]"
+                f"[bold]{k}[/]  [dim]({len(metadata.get(k, {}))} value(s))[/dim]"
             ),
         )
         if idx is None:
@@ -622,7 +771,7 @@ def explore_keys_values(config_path: str) -> None:
         selected_key = keys[idx]
         values: dict = metadata[selected_key]
 
-        # ── Value selection loop ──
+        # Value selection loop
         while True:
             clear()
             header()
@@ -632,8 +781,7 @@ def explore_keys_values(config_path: str) -> None:
                 value_list,
                 f"Key: [bold]{selected_key}[/] — Select a Value",
                 display_fn=lambda v: (
-                    f"[bold]{v}[/]  "
-                    f"[dim]({len(values.get(v, []))} doc(s))[/dim]"
+                    f"[bold]{v}[/]  [dim]({len(values.get(v, []))} doc(s))[/dim]"
                 ),
             )
             if idx2 is None:
@@ -642,14 +790,11 @@ def explore_keys_values(config_path: str) -> None:
             selected_value = value_list[idx2]
             doc_ids: list = values[selected_value]
 
-            # ── Document list ──
             clear()
             header()
             table = Table(
                 title=f"{selected_key} = [bold]{selected_value}[/]",
-                box=box.ROUNDED,
-                show_header=True,
-                header_style="bold",
+                box=box.ROUNDED, show_header=True, header_style="bold",
             )
             table.add_column("#", style="dim", width=5, justify="right")
             table.add_column("Document ID", style="bold cyan")
@@ -672,7 +817,6 @@ def project_menu(project: dict) -> None:
         clear()
         header()
 
-        # Load current repo settings for display
         try:
             repo = json_load(config_path)
             repo_title = repo.get("title", project["name"])
@@ -681,12 +825,10 @@ def project_menu(project: dict) -> None:
             repo_target = repo.get("target", "?")
         except Exception:
             repo_title = project["name"]
-            repo_theme = "?"
-            repo_source = "?"
-            repo_target = "?"
+            repo_theme = repo_source = repo_target = "?"
 
-        # Check if database exists (project has been built)
         db_exists = _kbdict_path(config_path) is not None
+        log_exists = _log_path(config_path) is not None
         db_label = "[green]yes[/]" if db_exists else "[dim]not yet built[/dim]"
 
         info_text = (
@@ -700,17 +842,17 @@ def project_menu(project: dict) -> None:
         table = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
         table.add_column("#", style="bold cyan", width=4)
         table.add_column("Action")
-
         table.add_row("1", "Compile")
         table.add_row("2", "Force compile  [dim](recompile everything)[/dim]")
         table.add_row("3", "Project info")
         table.add_row("4", "List source files")
         table.add_row("5", "Explore keys & values")
+        log_label = "View build log" if log_exists else "[dim]View build log (not built yet)[/dim]"
+        table.add_row("6", log_label)
         table.add_row("[dim]B[/dim]", "[dim]Back to main menu[/dim]")
-
         console.print(table)
 
-        choice = Prompt.ask("Choose", choices=["1", "2", "3", "4", "5", "b", "B"])
+        choice = Prompt.ask("Choose", choices=["1", "2", "3", "4", "5", "6", "b", "B"])
 
         if choice == "1":
             clear()
@@ -728,6 +870,8 @@ def project_menu(project: dict) -> None:
             list_source_files(config_path)
         elif choice == "5":
             explore_keys_values(config_path)
+        elif choice == "6":
+            show_build_log(config_path)
         elif choice.lower() == "b":
             break
 
@@ -746,17 +890,21 @@ def run() -> None:
         table.add_column("#", style="bold cyan", width=4)
         table.add_column("Action")
 
-        proj_count = f"[dim]({len(projects)} configured)[/dim]" if projects else "[dim](none)[/dim]"
+        proj_count = (
+            f"[dim]({len(projects)} configured)[/dim]"
+            if projects else "[dim](none)[/dim]"
+        )
         table.add_row("1", f"Select project  {proj_count}")
         table.add_row("2", "Create a new project")
-        table.add_row("3", "Delete a project")
-        table.add_row("4", "List themes")
-        table.add_row("5", "List apps per theme")
+        table.add_row("3", "Import existing project")
+        table.add_row("4", "Delete a project")
+        table.add_row("5", "List themes")
+        table.add_row("6", "List apps per theme")
         table.add_row("[dim]X[/dim]", "[dim]Exit[/dim]")
 
         console.print(Panel(table, title="Main Menu", box=box.ROUNDED))
 
-        choices = ["1", "2", "3", "4", "5", "x", "X"]
+        choices = ["1", "2", "3", "4", "5", "6", "x", "X"]
         try:
             choice = Prompt.ask("Choose", choices=choices)
         except (KeyboardInterrupt, EOFError):
@@ -769,7 +917,7 @@ def run() -> None:
             if not projects:
                 console.print(
                     "[yellow]No projects configured. "
-                    "Use option 2 to create one.[/yellow]"
+                    "Use option 2 (create) or 3 (import) to add one.[/yellow]"
                 )
                 pause()
                 continue
@@ -787,7 +935,7 @@ def run() -> None:
                     project_menu(projects[idx])
                 except KeyboardInterrupt:
                     pass
-                projects = load_projects()  # Reload in case of changes
+                projects = load_projects()
 
         elif choice == "2":
             try:
@@ -800,17 +948,26 @@ def run() -> None:
 
         elif choice == "3":
             try:
+                p = import_project()
+            except KeyboardInterrupt:
+                p = None
+            if p:
+                projects.append(p)
+                save_projects(projects)
+
+        elif choice == "4":
+            try:
                 projects = delete_project(projects)
             except KeyboardInterrupt:
                 pass
 
-        elif choice == "4":
+        elif choice == "5":
             try:
                 show_themes()
             except KeyboardInterrupt:
                 pass
 
-        elif choice == "5":
+        elif choice == "6":
             try:
                 show_apps()
             except KeyboardInterrupt:

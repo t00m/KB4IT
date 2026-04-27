@@ -158,7 +158,7 @@ class KB4IT:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
         self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
-        sys.exit()
+        sys.exit(1 if error else 0)
 
 
 def main():
