@@ -9,6 +9,7 @@ KB4IT module. Entry point.
 """
 
 import argparse
+import fcntl
 import os
 import sys
 import uuid
@@ -20,6 +21,41 @@ from kb4it.services.builder import Builder
 from kb4it.services.database import Database
 from kb4it.services.frontend import Frontend
 from kb4it.services.workflow import Workflow
+
+# Held open for the lifetime of the process; released automatically on exit.
+_lock_fd = None
+
+
+def _acquire_process_lock():
+    """Acquire an exclusive process lock at startup.
+
+    Called once by main() before any TUI or CLI branch executes.  Holding
+    the lock at the process level (rather than inside KB4IT.__init__) means
+    both the TUI and every KB4IT instance created by its build threads share
+    the same lock, so a second kb4it invocation from any terminal is blocked
+    for the entire session — not just for the duration of an individual build.
+
+    sys.exit() from a background thread only terminates that thread, so the
+    check must happen in the main thread before spawning anything.
+    """
+    global _lock_fd
+    lock_path = ENV["FILE"]["LOCK"]
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    try:
+        fd = open(lock_path, "w")
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fd.write(str(os.getpid()))
+        fd.flush()
+        _lock_fd = fd
+    except BlockingIOError:
+        try:
+            with open(lock_path) as f:
+                other_pid = f.read().strip()
+            msg = f"KB4IT is already running (PID {other_pid})"
+        except OSError:
+            msg = "KB4IT is already running"
+        print(msg, file=sys.stderr)
+        sys.exit(1)
 
 
 class KB4IT:
@@ -163,6 +199,8 @@ class KB4IT:
 
 def main():
     """Set up application arguments and execute."""
+    _acquire_process_lock()
+
     # When called with no arguments in an interactive terminal, launch the TUI
     if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
         try:
