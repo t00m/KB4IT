@@ -6,6 +6,7 @@
 :Version:   1.0
 :DocType:   How-to guide
 :Tag:
+:Topic:
 // -- Semantic properties --
 :Category:  Procedure
 :Scope:

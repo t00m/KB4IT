@@ -30,6 +30,16 @@ CATEGORIES = [
         directory and rebuild.
     </div>
 
+% if var['repo']['git'] == True:
+    <div class="kb-add-note uk-alert-primary" uk-alert>
+        <span uk-icon="icon: git-branch; ratio: 0.9"></span>
+        <strong>Online repository:</strong> The document source is hosted at
+        <a href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
+            ${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}
+        </a> — navigate to the source folder to upload your new file.
+    </div>
+% endif
+
     <div class="uk-grid-small uk-child-width-1-2@s uk-child-width-1-4@m" uk-grid>
 % for cat in CATEGORIES:
         <div>
@@ -290,12 +300,27 @@ CATEGORIES = [
         ctrl.className = 'uk-form-controls';
 
         if (key === 'Date') {
-            /* Date picker */
+            /* Date picker — setAttribute sets the reflected content attribute so the
+               value persists across DOM attachment in all browsers. */
             var inp = document.createElement('input');
             inp.type = 'date'; inp.id = 'add-f-' + catId + '-' + key;
             inp.name = key; inp.className = 'uk-input uk-form-small';
+            inp.setAttribute('value', today());
             inp.value = today();
             ctrl.appendChild(inp);
+
+        } else if (key === 'DocType') {
+            /* Combobox restricted to the four Diátaxis document types */
+            var sel = document.createElement('select');
+            sel.id = 'add-f-' + catId + '-' + key;
+            sel.name = key; sel.className = 'uk-select uk-form-small';
+            ['', 'Tutorial', 'How-to guide', 'Reference', 'Explanation'].forEach(function (opt) {
+                var o = document.createElement('option');
+                o.value = opt; o.textContent = opt || '— select —';
+                if (opt === defVal) o.selected = true;
+                sel.appendChild(o);
+            });
+            ctrl.appendChild(sel);
 
         } else if (fixed) {
             /* Read-only fixed value */
@@ -462,7 +487,7 @@ CATEGORIES = [
         var form    = document.getElementById('form-' + catId);
         var result  = KB_SKEL[catId];
         var vals    = {};
-        form.querySelectorAll('input[name]').forEach(function (el) {
+        form.querySelectorAll('input[name], select[name]').forEach(function (el) {
             vals[el.name] = el.value.trim();
         });
 
@@ -479,8 +504,30 @@ CATEGORIES = [
             );
         });
 
+        /* Explicitly write :Date: line-by-line — avoids multiline regex quirks
+           and ensures the value appears even when date-input.value is empty. */
         var dateEl  = document.getElementById('add-f-' + catId + '-Date');
         var dateStr = (dateEl && dateEl.value) ? dateEl.value : today();
+        var skelLines = result.split('\n');
+        var dateWritten = false;
+        for (var li = 0; li < skelLines.length; li++) {
+            if (skelLines[li].indexOf(':Date:') === 0) {
+                skelLines[li] = ':Date: ' + dateStr;
+                dateWritten = true;
+                break;
+            }
+        }
+        if (!dateWritten) {
+            /* Fallback: insert after :Author: line if :Date: is absent */
+            for (var li = 0; li < skelLines.length; li++) {
+                if (skelLines[li].indexOf(':Author:') === 0) {
+                    skelLines.splice(li + 1, 0, ':Date: ' + dateStr);
+                    break;
+                }
+            }
+        }
+        result = skelLines.join('\n');
+
         var filename = dateStr + '_' + slugify(title) + '.adoc';
         return { skeleton: result, filename: filename };
     }
