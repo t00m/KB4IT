@@ -9,6 +9,7 @@ KB4IT module. Entry point.
 """
 
 import argparse
+import fcntl
 import os
 import sys
 import uuid
@@ -20,6 +21,34 @@ from kb4it.services.builder import Builder
 from kb4it.services.database import Database
 from kb4it.services.frontend import Frontend
 from kb4it.services.workflow import Workflow
+
+# Held open for the lifetime of the process; released automatically on exit.
+_lock_fd = None
+
+
+def _acquire_process_lock():
+    """Acquire an exclusive process lock at startup."""
+    global _lock_fd
+    lock_path = ENV["FILE"]["LOCK"]
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    # O_RDWR|O_CREAT never truncates — so if flock fails, the other process's
+    # PID is still readable from the file.
+    raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
+    fd = os.fdopen(raw, "r+")
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        fd.seek(0)
+        other_pid = fd.read().strip()
+        fd.close()
+        msg = f"KB4IT is already running (PID {other_pid})" if other_pid else "KB4IT is already running"
+        print(msg, file=sys.stderr)
+        sys.exit(1)
+    fd.seek(0)
+    fd.truncate()
+    fd.write(str(os.getpid()))
+    fd.flush()
+    _lock_fd = fd
 
 
 class KB4IT:
@@ -158,11 +187,25 @@ class KB4IT:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
         self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
-        sys.exit()
+        sys.exit(1 if error else 0)
 
 
 def main():
     """Set up application arguments and execute."""
+    _acquire_process_lock()
+
+    # When called with no arguments in an interactive terminal, launch the TUI
+    if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
+        try:
+            from kb4it.tui.app import run as run_tui
+            run_tui()
+        except ImportError as exc:
+            print(f"TUI requires the 'rich' library: {exc}")
+            print("Install it with: pip install rich")
+        except KeyboardInterrupt:
+            pass
+        return
+
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog="kb4it",
@@ -217,6 +260,12 @@ def main():
 
     repo_build.add_argument(
         "config", help="Path to the repository config file (mandatory)"
+    )
+    repo_build.add_argument(
+        "-f", "--force",
+        action="store_true",
+        default=False,
+        help="Force recompilation of all documents, ignoring content hashes",
     )
 
     # Get repository info

@@ -1,0 +1,47 @@
+name: Publish to PyPI
+
+# Triggered when a version tag is pushed, e.g.:
+#   git tag v0.7.39 && git push origin v0.7.39
+#
+# One-time setup required on pypi.org (no stored secrets needed):
+#   Project > Settings > Publishing > Add a new publisher
+#     Publisher:        GitHub Actions
+#     Repository owner: t00m
+#     Repository name:  KB4IT
+#     Workflow name:    publish.yml
+#     Environment name: pypi
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  id-token: write   # required for OIDC trusted publishing
+
+jobs:
+  build-and-publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    environment: pypi
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version-file: .python-version
+
+      - name: Set release version from tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "Publishing version: $VERSION"
+          # Strip local build metadata (+build.N) — PyPI rejects local segments
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          echo "$VERSION" > kb4it/VERSION
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

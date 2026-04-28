@@ -1,0 +1,28 @@
+# KB4IT development environment
+#
+# Install pixi: curl -fsSL https://pixi.sh/install.sh | sh
+#
+# Usage:
+#   pixi install          # set up the environment
+#   pixi run check        # verify the install
+#   pixi run build        # build sdist + wheel
+#
+# Key advantage over pip/pipx: pixi installs asciidoctor from conda-forge
+# automatically — no separate "gem install asciidoctor" step needed.
+
+[project]
+name = "kb4it"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = ">=3.11,<4"
+asciidoctor = "*"
+pip = "*"
+
+[pypi-dependencies]
+kb4it = { path = ".", editable = true }
+
+[tasks]
+check = "kb4it --version"
+build = "python -m build"

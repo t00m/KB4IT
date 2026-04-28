@@ -52,7 +52,9 @@ class Backend(Service):
                 self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
                 self.app.stop(error=True)
 
-            self.params["force"] = self.repo.get("force") or False
+            # Params-level force (e.g. from TUI) takes priority over repo.json
+            if not self.params.get("force"):
+                self.params["force"] = self.repo.get("force") or False
             self.runtime["dir"] = {}
             self.runtime["dir"]["source"] = os.path.realpath(
                 self.repo["source"])
@@ -72,6 +74,10 @@ class Backend(Service):
             self.runtime["dir"]["cache"] = dir_cache
             self.runtime["dir"]["log"] = dir_log
             self.runtime["dir"]["db"] = dir_db
+
+            if self.params.get("force"):
+                shutil.rmtree(dir_var, ignore_errors=True)
+                self.log.debug(f"[BACKEND] VAR_CLEARED path={dir_var} reason=force")
 
             for entry in self.runtime["dir"]:
                 dirname = self.runtime["dir"][entry]

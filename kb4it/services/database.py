@@ -50,6 +50,8 @@ class Database(Service):
         adoc = "%s.adoc" % docId
         try:
             del self.db[adoc]
+            self.sorted_docs = []
+            self.cache_docs_sorted_by_date = {}
             self.log.debug("[DATABASE] DOC_DELETE doc=%s", docId)
             self.sort_database()
         except KeyError:
@@ -91,10 +93,10 @@ class Database(Service):
         if len(self.sorted_docs) == 0:
             self.sorted_docs = self.sort_by_date(list(self.db.keys()))
 
-    def sort_by_date(self, doclist: list = []):
+    def sort_by_date(self, doclist=None):
         """Build a list of documents sorted by timestamp desc."""
-        if len(doclist) == 0:
-            doclist = self.db.keys()
+        if doclist is None or len(doclist) == 0:
+            doclist = list(self.db.keys())
         md5hash = get_hash_from_list(sorted(doclist))
         if md5hash not in self.cache_docs_sorted_by_date:
             adict = {}

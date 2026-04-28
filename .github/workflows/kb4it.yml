@@ -2,42 +2,22 @@ name: check-kb4it-version
 
 on:
   push:
-    branches: [ master ]    # choose your branch
-    # paths: ["docs/**"]  # optional: run ONLY if specific directory changes
+    branches: [ master ]
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Install Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.14"
+          python-version-file: .python-version
 
-      # Install pipx
-      - name: Install pipx
-        run: pip install pipx --user
+      - name: Install KB4IT
+        run: uv tool install .
 
-      # Install requirements
-      - name: Install requirements
-        run: pip install -r requirements.txt
-
-      # Install KB4IT
-      - name: Install kb4it
-        run: pipx install . --force
-
-      # Execute KB4IT
       - name: Run kb4it
-        run: kb4it -v
-
-      # Deploy the generated website
-      #~ - name: Upload artifact
-        #~ uses: actions/upload-pages-artifact@v3
-        #~ with:
-          #~ path: ./site
+        run: kb4it --version

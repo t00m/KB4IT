@@ -6,6 +6,7 @@
 :Version:   1.0
 :DocType:   Explanation
 :Tag:
+:Topic:
 // -- Semantic properties --
 :Category:  Note
 :Scope:

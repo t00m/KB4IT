@@ -30,6 +30,16 @@ CATEGORIES = [
         directory and rebuild.
     </div>
 
+% if var['repo']['git'] == True:
+    <div class="kb-add-note uk-alert-primary" uk-alert>
+        <span uk-icon="icon: git-branch; ratio: 0.9"></span>
+        <strong>Online repository:</strong> The document source is hosted at
+        <a href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
+            ${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}
+        </a> — navigate to the source folder to upload your new file.
+    </div>
+% endif
+
     <div class="uk-grid-small uk-child-width-1-2@s uk-child-width-1-4@m" uk-grid>
 % for cat in CATEGORIES:
         <div>
@@ -253,8 +263,12 @@ CATEGORIES = [
             .replace(/^_+|_+$/g, '') || 'document';
     }
 
+    var DOCTYPES = ['', 'Tutorial', 'How-to guide', 'Reference', 'Explanation'];
+
     /* Parse `:Key: DefaultValue` lines from the skeleton header */
+    var _attrsCache = {};
     function parseAttrs(catId) {
+        if (_attrsCache[catId]) return _attrsCache[catId];
         var attrs = [];
         var lines = KB_SKEL[catId].split('\n');
         for (var i = 0; i < lines.length; i++) {
@@ -265,7 +279,20 @@ CATEGORIES = [
             var m = line.match(/^:([^:]+):\s*(.*)/);
             if (m) attrs.push({ key: m[1], def: m[2].trim() });
         }
+        _attrsCache[catId] = attrs;
         return attrs;
+    }
+
+    function createTag(value, selected, onChange) {
+        var tag = document.createElement('span');
+        tag.className = 'kb-tag' + (selected ? ' kb-tag-selected' : '');
+        tag.dataset.value = value;
+        tag.textContent = value;
+        tag.addEventListener('click', function () {
+            tag.classList.toggle('kb-tag-selected');
+            if (onChange) onChange();
+        });
+        return tag;
     }
 
     /* Build one form row */
@@ -290,15 +317,26 @@ CATEGORIES = [
         ctrl.className = 'uk-form-controls';
 
         if (key === 'Date') {
-            /* Date picker */
             var inp = document.createElement('input');
             inp.type = 'date'; inp.id = 'add-f-' + catId + '-' + key;
             inp.name = key; inp.className = 'uk-input uk-form-small';
+            inp.setAttribute('value', today());
             inp.value = today();
             ctrl.appendChild(inp);
 
+        } else if (key === 'DocType') {
+            var sel = document.createElement('select');
+            sel.id = 'add-f-' + catId + '-' + key;
+            sel.name = key; sel.className = 'uk-select uk-form-small';
+            DOCTYPES.forEach(function (opt) {
+                var o = document.createElement('option');
+                o.value = opt; o.textContent = opt || '— select —';
+                if (opt === defVal) o.selected = true;
+                sel.appendChild(o);
+            });
+            ctrl.appendChild(sel);
+
         } else if (fixed) {
-            /* Read-only fixed value */
             var inp = document.createElement('input');
             inp.type = 'text'; inp.id = 'add-f-' + catId + '-' + key;
             inp.name = key; inp.className = 'uk-input uk-form-small';
@@ -354,16 +392,7 @@ CATEGORIES = [
                 }
 
                 known.forEach(function (v) {
-                    var tag = document.createElement('span');
-                    tag.className = 'kb-tag';
-                    tag.dataset.value = v;
-                    tag.textContent = v;
-                    if (v === defVal) tag.classList.add('kb-tag-selected');
-                    tag.addEventListener('click', function () {
-                        tag.classList.toggle('kb-tag-selected');
-                        syncHidden(tagList, hidden);
-                    });
-                    tagList.appendChild(tag);
+                    tagList.appendChild(createTag(v, v === defVal, function () { syncHidden(tagList, hidden); }));
                 });
                 syncHidden(tagList, hidden);
 
@@ -381,15 +410,7 @@ CATEGORIES = [
                     if (existing) {
                         existing.classList.add('kb-tag-selected');
                     } else {
-                        var tag = document.createElement('span');
-                        tag.className = 'kb-tag kb-tag-selected';
-                        tag.dataset.value = v;
-                        tag.textContent = v;
-                        tag.addEventListener('click', function () {
-                            tag.classList.toggle('kb-tag-selected');
-                            syncHidden(tagList, hidden);
-                        });
-                        tagList.appendChild(tag);
+                        tagList.appendChild(createTag(v, true, function () { syncHidden(tagList, hidden); }));
                     }
                     customIn.value = '';
                     syncHidden(tagList, hidden);
@@ -462,7 +483,7 @@ CATEGORIES = [
         var form    = document.getElementById('form-' + catId);
         var result  = KB_SKEL[catId];
         var vals    = {};
-        form.querySelectorAll('input[name]').forEach(function (el) {
+        form.querySelectorAll('input[name], select[name]').forEach(function (el) {
             vals[el.name] = el.value.trim();
         });
 
@@ -479,8 +500,26 @@ CATEGORIES = [
             );
         });
 
+        /* Explicitly write :Date: line-by-line — avoids multiline regex quirks
+           and ensures the value appears even when date-input.value is empty. */
         var dateEl  = document.getElementById('add-f-' + catId + '-Date');
         var dateStr = (dateEl && dateEl.value) ? dateEl.value : today();
+        var skelLines = result.split('\n');
+        var dateWritten = false;
+        var authorIdx = -1;
+        for (var li = 0; li < skelLines.length; li++) {
+            if (skelLines[li].indexOf(':Date:') === 0) {
+                skelLines[li] = ':Date: ' + dateStr;
+                dateWritten = true;
+                break;
+            }
+            if (skelLines[li].indexOf(':Author:') === 0) { authorIdx = li; }
+        }
+        if (!dateWritten && authorIdx !== -1) {
+            skelLines.splice(authorIdx + 1, 0, ':Date: ' + dateStr);
+        }
+        result = skelLines.join('\n');
+
         var filename = dateStr + '_' + slugify(title) + '.adoc';
         return { skeleton: result, filename: filename };
     }
@@ -534,13 +573,18 @@ CATEGORIES = [
         KB_PICKER = { catId: catId, key: key };
         document.getElementById('kb-picker-title').textContent = key;
 
-        /* Current value from the hidden input */
+        /* Move picker into the active modal dialog so UIKit's focus trap
+           allows keyboard input in the filter and custom-value fields. */
+        var modalDialog = document.querySelector('#modal-add-' + catId + ' .uk-modal-dialog');
+        if (modalDialog && pickerEl.parentNode !== modalDialog) {
+            modalDialog.appendChild(pickerEl);
+        }
+
         var hidden  = document.getElementById('add-f-' + catId + '-' + key);
         var current = hidden.value
             ? hidden.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
             : [];
 
-        /* Build chip list: known values + any previously-custom ones not in known */
         var known = (KB_KEYS[key] || []).slice();
         current.forEach(function (cv) {
             if (known.indexOf(cv) === -1) known.push(cv);
@@ -549,13 +593,7 @@ CATEGORIES = [
         var container = document.getElementById('kb-picker-chips');
         container.innerHTML = '';
         known.forEach(function (v) {
-            var tag = document.createElement('span');
-            tag.className = 'kb-tag';
-            tag.dataset.value = v;
-            tag.textContent = v;
-            if (current.indexOf(v) !== -1) tag.classList.add('kb-tag-selected');
-            tag.addEventListener('click', function () { tag.classList.toggle('kb-tag-selected'); });
-            container.appendChild(tag);
+            container.appendChild(createTag(v, current.indexOf(v) !== -1, null));
         });
 
         document.getElementById('kb-picker-filter').value  = '';
@@ -632,12 +670,7 @@ CATEGORIES = [
             existing.classList.add('kb-tag-selected');
             existing.style.display = '';
         } else {
-            var tag = document.createElement('span');
-            tag.className = 'kb-tag kb-tag-selected';
-            tag.dataset.value = v;
-            tag.textContent = v;
-            tag.addEventListener('click', function () { tag.classList.toggle('kb-tag-selected'); });
-            container.appendChild(tag);
+            container.appendChild(createTag(v, true, null));
         }
         this.value = '';
         document.getElementById('kb-picker-filter').value = '';

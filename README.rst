@@ -36,19 +36,21 @@ Quick start
 
 .. code-block:: bash
 
-    # 1. Install
-    pipx install KB4IT
+    # 1. Install KB4IT (pick one — see Installation below)
+    uv tool install KB4IT
 
-    # 2. Create a new knowledge base
+    # 2. Install asciidoctor (skip this step if you used pixi)
+    sudo apt install asciidoctor    # Debian/Ubuntu
+    sudo dnf install asciidoctor    # Fedora
+
+    # 3. Create a new knowledge base
     kb4it create techdoc ~/mykb
 
-    # 3. Build the website
+    # 4. Build the website
     kb4it build ~/mykb/config/repo.json
 
-    # 4. Open it
+    # 5. Open it
     xdg-open ~/mykb/target/index.html
-
-You'll also need the ``asciidoctor`` command on your system.
 
 Why KB4IT?
 ----------
@@ -67,24 +69,54 @@ to stay out of your way.
 Installation
 ------------
 
-KB4IT ships through several channels:
+**uv** — recommended, fastest (~50× faster than pip):
 
-* **pipx** (recommended): ``pipx install KB4IT``
-* **pip**: ``pip install --user KB4IT``
-* **Docker**: ``docker pull ghcr.io/t00m/kb4it:latest`` *(once published)*
-* **Debian/Ubuntu**: ``sudo dpkg -i kb4it_<version>_all.deb``
-* **Fedora/RHEL**: ``sudo dnf install kb4it-<version>.noarch.rpm``
-* **From source**:
-  ``git clone https://github.com/t00m/KB4IT && cd KB4IT && pipx install . --force``
+.. code-block:: bash
 
-Release artefacts are built with the scripts under ``scripts/distribution/``.
+    uv tool install KB4IT
+
+Install uv with ``curl -LsSf https://astral.sh/uv/install.sh | sh`` if you
+don't have it yet.
+
+**pixi** — installs ``asciidoctor`` automatically alongside KB4IT
+(no separate gem install):
+
+.. code-block:: bash
+
+    # development / from source
+    git clone https://github.com/t00m/KB4IT && cd KB4IT
+    pixi install && pixi run check
+
+    # global install (once KB4IT is published to conda-forge)
+    pixi global install kb4it
+
+Install pixi with ``curl -fsSL https://pixi.sh/install.sh | sh``.
+
+**pipx** — classic isolated install:
+
+.. code-block:: bash
+
+    pipx install KB4IT
+
+**pip**:
+
+.. code-block:: bash
+
+    pip install --user KB4IT
+
+**From source**:
+
+.. code-block:: bash
+
+    git clone https://github.com/t00m/KB4IT && cd KB4IT
+    uv tool install . --force
 
 Requirements
 ------------
 
 * GNU/Linux (tested on Debian, Ubuntu, Fedora)
 * Python ≥ 3.11
-* ``asciidoctor`` (install via your package manager):
+* ``asciidoctor`` — handled automatically when using **pixi**; otherwise:
 
 .. code-block:: bash
 
@@ -96,12 +128,13 @@ Usage
 
 .. code-block:: bash
 
-    kb4it create <theme> <repo_path>   # scaffold a new repo
-    kb4it build <config.json>          # build the site
-    kb4it info <config.json>           # show repo stats
-    kb4it themes                       # list available themes
-    kb4it apps <theme>                 # list theme apps
-    kb4it --version                    # show version
+    kb4it create <theme> <repo_path>        # scaffold a new repo
+    kb4it build <config.json>               # build the site (incremental)
+    kb4it build <config.json> --force       # force recompile everything
+    kb4it info <config.json>                # show repo stats
+    kb4it themes                            # list available themes
+    kb4it apps <theme>                      # list theme apps
+    kb4it --version                         # show version
 
 A KB4IT repository is just three directories and a config file:
 
@@ -149,7 +182,7 @@ work on the compiler / builder.
 
     git clone https://github.com/t00m/KB4IT
     cd KB4IT
-    pipx install . --force
+    uv tool install . --force
     kb4it --version
 
 Open an issue before starting a large change so we can align on the

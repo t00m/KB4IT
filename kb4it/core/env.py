@@ -128,3 +128,6 @@ ENV["FILE"] = {}
 ENV["FILE"]["LOG"] = os.path.join(
     ENV["LPATH"]["LOG"], f"{ENV['APP']['shortname'].lower()}.log"
 )
+ENV["FILE"]["LOCK"] = os.path.join(
+    ENV["LPATH"]["VAR"], f"{ENV['APP']['shortname'].lower()}.lock"
+)
