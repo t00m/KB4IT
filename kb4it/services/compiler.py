@@ -17,21 +17,35 @@ from kb4it.core.env import ENV
 from kb4it.core.service import Service
 from kb4it.core.util import exec_cmd, get_default_workers, get_source_docs
 
-# Optional TUI progress callback: set by kb4it.tui.app before a build,
-# cleared after. Signature: callback(basename: str, rc: bool) -> None.
+# Optional TUI callbacks set by kb4it.tui.app before a build, cleared after.
+# _progress_callback: called per document — signature: (basename: str, rc: bool)
+# _compile_start_callback: called once with the total doc count — (total: int)
 _progress_callback = None
+_compile_start_callback = None
 
 
 def set_progress_callback(callback) -> None:
-    """Register a TUI progress callback for compilation events."""
+    """Register a per-document TUI progress callback."""
     global _progress_callback
     _progress_callback = callback
 
 
 def clear_progress_callback() -> None:
-    """Remove the TUI progress callback."""
+    """Remove the per-document TUI progress callback."""
     global _progress_callback
     _progress_callback = None
+
+
+def set_compile_start_callback(callback) -> None:
+    """Register a callback invoked with the actual number of docs to compile."""
+    global _compile_start_callback
+    _compile_start_callback = callback
+
+
+def clear_compile_start_callback() -> None:
+    """Remove the compile-start callback."""
+    global _compile_start_callback
+    _compile_start_callback = None
 
 
 class Compiler(Service):
@@ -78,6 +92,11 @@ class Compiler(Service):
         self.log.debug(f"[COMPILER] WORKERS n={max_workers}")
         with Executor(max_workers=max_workers) as exe:
             docs = sorted(get_source_docs(self.srvbes.get_path("tmp")))
+            if _compile_start_callback is not None:
+                try:
+                    _compile_start_callback(len(docs))
+                except Exception:
+                    pass
             jobs = []
             num = 1
 

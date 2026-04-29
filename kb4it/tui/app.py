@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """
-KB4IT Terminal User Interface.
+KB4IT Terminal User Interface — Textual edition.
 
 Launched automatically when kb4it is run with no arguments in a terminal.
-Uses the Rich library for a menu-driven interactive experience.
 """
+
+from __future__ import annotations
 
 import argparse
 import logging
@@ -12,45 +13,51 @@ import os
 import re
 import sys
 import threading
-import time
 from pathlib import Path
+from typing import Any
 
-from rich import box
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    TimeElapsedColumn,
+from rich.text import Text
+from textual import on
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
+from textual.screen import ModalScreen, Screen
+from textual.widgets import (
+    Button,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    ListItem,
+    ListView,
+    Markdown,
+    ProgressBar,
+    RichLog,
+    Static,
 )
-from rich.prompt import Confirm, Prompt
-from rich.table import Table
 
 from kb4it.core.env import ENV
 from kb4it.core.util import json_load, json_save
 
-console = Console()
+
+# ─── constants ────────────────────────────────────────────────────────────────
 
 PROJECTS_FILE = Path(ENV["LPATH"]["ROOT"]) / "projects.json"
+VERSION = ENV["APP"]["version"]
 
-# Log-level → Rich colour mapping (matches KB4IT's %(levelname)10s format)
-_LOG_COLOURS = {
+_LOG_STYLE: dict[str, str] = {
     "CRITICAL": "bold red",
     "ERROR": "red",
     "WARNING": "yellow",
-    "INFO": "",
-    "DEBUG": "dim",
+    "INFO": "white",
+    "DEBUG": "dim white",
 }
 
 
-# ─── Project Registry ──────────────────────────────────────────────────────────
+# ─── project registry ─────────────────────────────────────────────────────────
 
 def load_projects() -> list[dict]:
-    """Load project list from ~/.kb4it/projects.json."""
     if not PROJECTS_FILE.exists():
         return []
     try:
@@ -61,15 +68,13 @@ def load_projects() -> list[dict]:
 
 
 def save_projects(projects: list[dict]) -> None:
-    """Persist project list to ~/.kb4it/projects.json."""
     PROJECTS_FILE.parent.mkdir(parents=True, exist_ok=True)
     json_save(str(PROJECTS_FILE), {"projects": projects})
 
 
-# ─── Theme / Apps Helpers ──────────────────────────────────────────────────────
+# ─── theme / apps helpers ─────────────────────────────────────────────────────
 
 def get_themes() -> list[dict]:
-    """Return metadata dicts for all installed themes (global + local)."""
     themes: list[dict] = []
     seen_ids: set[str] = set()
     for scope, base in [
@@ -100,7 +105,6 @@ def get_themes() -> list[dict]:
 
 
 def get_apps(theme_name: str) -> list[str]:
-    """Return app names available for the given theme."""
     apps: list[str] = []
     for base in [ENV["GPATH"]["THEMES"], ENV["LPATH"]["THEMES"]]:
         apps_path = Path(base) / theme_name / "apps"
@@ -111,78 +115,98 @@ def get_apps(theme_name: str) -> list[str]:
     return apps
 
 
-# ─── UI Helpers ───────────────────────────────────────────────────────────────
+# ─── path helpers ─────────────────────────────────────────────────────────────
 
-def clear() -> None:
-    console.clear()
-
-
-def header() -> None:
-    version = ENV["APP"]["version"]
-    console.print(
-        Panel(
-            f"[bold white]KB4IT[/]  v{version}  —  Terminal User Interface",
-            style="bold blue",
-            box=box.DOUBLE_EDGE,
-            padding=(0, 2),
-        )
-    )
-
-
-def pause(msg: str = "Press Enter to continue...") -> None:
-    console.input(f"\n[dim]{msg}[/]")
-
-
-def pick_from_list(
-    items: list,
-    title: str,
-    display_fn=None,
-    allow_back: bool = True,
-) -> int | None:
-    """
-    Show a numbered list and return the selected 0-based index,
-    or None if the user chooses Back / there are no items.
-    """
-    if not items:
-        console.print(f"[yellow]No {title.lower()} found.[/yellow]")
-        pause()
+def _log_path(config_path: str) -> Path | None:
+    try:
+        repo = json_load(config_path)
+        source = Path(repo.get("source", ""))
+        p = source.parent / "var" / "log" / "kb4it.log"
+        return p if p.exists() else None
+    except Exception:
         return None
 
-    table = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
-    table.add_column("#", style="bold cyan", width=4)
-    table.add_column("Item")
 
-    for i, item in enumerate(items, 1):
-        label = display_fn(item) if display_fn else str(item)
-        table.add_row(str(i), label)
-
-    if allow_back:
-        table.add_row("[dim]B[/dim]", "[dim]Back[/dim]")
-
-    console.print(Panel(table, title=title, box=box.ROUNDED))
-
-    choices = [str(i) for i in range(1, len(items) + 1)]
-    if allow_back:
-        choices += ["b", "B"]
-
-    choice = Prompt.ask("Select", choices=choices)
-    if choice.lower() == "b":
+def _kbdict_path(config_path: str) -> Path | None:
+    try:
+        repo = json_load(config_path)
+        source_path = Path(repo.get("source", ""))
+        p = source_path.parent / "var" / "db" / "kbdict.json"
+        return p if p.exists() else None
+    except Exception:
         return None
-    return int(choice) - 1
 
 
-# ─── Logging Reset ────────────────────────────────────────────────────────────
+def _parse_level(line: str) -> str:
+    prefix = line[:15].upper()
+    for lvl in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"):
+        if lvl in prefix:
+            return lvl
+    return "INFO"
+
+
+# ─── adoc → markdown ──────────────────────────────────────────────────────────
+
+def _adoc_to_markdown(text: str) -> str:
+    """Lightweight AsciiDoc → Markdown conversion for Textual's Markdown widget."""
+    lines = text.splitlines()
+    out: list[str] = []
+    in_code = False
+    in_header = True
+    for line in lines:
+        stripped = line.strip()
+        if in_header:
+            if stripped == "":
+                in_header = False
+                continue
+            if stripped.startswith("= ") and not out:
+                out.append("# " + stripped[2:])
+                continue
+            if re.match(r"^:[a-zA-Z][^:]*:", stripped):
+                continue
+            in_header = False
+        if line.startswith("----") or line.startswith("...."):
+            in_code = not in_code
+            out.append("```")
+            continue
+        if in_code:
+            out.append(line)
+            continue
+        m = re.match(r"^(={2,6})\s+(.+)$", line)
+        if m:
+            level = len(m.group(1))
+            out.append("#" * level + " " + m.group(2))
+            continue
+        m = re.match(r"^(NOTE|TIP|WARNING|IMPORTANT|CAUTION):\s*(.*)$", line)
+        if m:
+            out.append(f"> **{m.group(1)}:** {m.group(2)}")
+            continue
+        bm = re.match(r"^(\*+) ", line)
+        if bm:
+            depth = len(bm.group(1))
+            out.append("  " * (depth - 1) + "- " + line[depth + 1:])
+            continue
+        if re.match(r"^\. ", line):
+            out.append("1. " + line[2:])
+            continue
+        line = re.sub(r"\*(\S(?:[^*]*\S)?)\*", r"**\1**", line)
+        line = re.sub(r"_(\S(?:[^_]*\S)?)_", r"*\1*", line)
+        line = re.sub(r"link:(\S+)\[([^\]]*)\]", r"[\2](\1)", line)
+        out.append(line)
+    return "\n".join(out)
+
+
+# ─── logging helpers ──────────────────────────────────────────────────────────
 
 def _reset_logging() -> None:
     """
     Clear every handler from the root logger so the next KB4IT instance
     can call setup_logging() from scratch.
 
-    KB4IT's setup_logging() has an early-return guard
-    ('if root.handlers: return') that prevents re-initialisation when
-    handlers already exist.  Without this reset a second KB4IT instance
-    never creates its temp log file, causing Backend._initialize() to
-    fail on shutil.copy() and silently abort the build.
+    KB4IT's setup_logging() has an early-return guard ('if root.handlers:
+    return') that prevents re-initialisation when handlers already exist.
+    Without this reset a second KB4IT instance in the same process never
+    creates its temp log file, causing the build to silently fail.
     """
     root = logging.getLogger()
     for h in list(root.handlers):
@@ -194,881 +218,1016 @@ def _reset_logging() -> None:
         root.removeHandler(h)
 
 
-def _silence_console_log() -> None:
-    """Remove any StreamHandler writing to stdout/stderr from root logger."""
-    root = logging.getLogger()
-    for h in list(root.handlers):
-        if isinstance(h, logging.StreamHandler) and h.stream in (sys.stdout, sys.stderr):
-            root.removeHandler(h)
+class _TUILogHandler(logging.Handler):
+    """Forward log records to a callback for real-time display in the TUI."""
+
+    def __init__(self, callback):
+        super().__init__()
+        self._cb = callback
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            self._cb(record.levelname, self.format(record))
+        except Exception:
+            pass
 
 
-# ─── Build Progress Tracking ──────────────────────────────────────────────────
+# ─── modal: confirm dialog ────────────────────────────────────────────────────
 
-class _BuildState:
-    """Thread-safe state shared between the build thread and the progress bar."""
+class ConfirmScreen(ModalScreen):
+    CSS = """
+    ConfirmScreen { align: center middle; }
+    #dialog {
+        width: 64; height: auto; padding: 1 2;
+        border: thick $primary; background: $surface;
+    }
+    #dialog Label { text-align: center; margin-bottom: 1; width: 100%; }
+    #btns { align: center middle; height: 3; }
+    #btns Button { margin: 0 2; }
+    """
 
-    def __init__(self) -> None:
-        self.completed = 0
-        self.total = 0
-        self.done = threading.Event()
-        self.error = False
-        self.error_msg = ""
+    def __init__(self, message: str, **kw: Any):
+        super().__init__(**kw)
+        self._msg = message
+
+    def compose(self) -> ComposeResult:
+        with Container(id="dialog"):
+            yield Label(self._msg)
+            with Horizontal(id="btns"):
+                yield Button("Yes", id="yes", variant="error")
+                yield Button("No", id="no", variant="primary")
+
+    @on(Button.Pressed, "#yes")
+    def _yes(self) -> None:
+        self.dismiss(True)
+
+    @on(Button.Pressed, "#no")
+    def _no(self) -> None:
+        self.dismiss(False)
+
+
+# ─── screen: build ────────────────────────────────────────────────────────────
+
+class BuildScreen(Screen):
+    CSS = """
+    BuildScreen { layout: vertical; }
+    #status { height: 1; margin: 1 1 0 1; color: $text-muted; }
+    #prog { margin: 0 1 1 1; }
+    #log { height: 1fr; margin: 0 1; border: solid $primary; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def __init__(self, proj_name: str, config: str, force: bool, **kw: Any):
+        super().__init__(**kw)
+        self._proj_name = proj_name
+        self._config = config
+        self._force = force
+        self._total = 0
+        self._completed = 0
         self._lock = threading.Lock()
 
-    def on_doc_compiled(self, basename: str, rc: bool) -> None:
-        """Called from Compiler.compilation_finished() in a worker thread."""
-        with self._lock:
-            self.completed += 1
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Label("Preparing build…", id="status")
+        yield ProgressBar(total=None, id="prog")
+        yield RichLog(highlight=True, markup=False, id="log")
+        with Horizontal(id="footer-bar"):
+            yield Button("Close", id="close", variant="primary", disabled=True)
+        yield Footer()
 
+    def on_mount(self) -> None:
+        self.title = f"Build — {self._proj_name}"
+        self._launch_build()
 
-def _run_build_thread(config_path: str, force: bool, state: _BuildState) -> None:
-    """Build thread target: runs KB4IT and signals completion via state.done."""
-    from kb4it.core.main import KB4IT
-    from kb4it.services import compiler as compiler_mod
+    def _launch_build(self) -> None:
+        from kb4it.services import compiler as cmod
+        cmod.set_progress_callback(self._on_compiled)
+        cmod.set_compile_start_callback(self._on_start)
+        handler = _TUILogHandler(self._on_log)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s: %(message)s"))
+        t = threading.Thread(target=self._build_thread, args=(handler,), daemon=True)
+        t.start()
 
-    compiler_mod.set_progress_callback(state.on_doc_compiled)
-    try:
-        # Reset logging so KB4IT's setup_logging() runs from scratch.
-        # Without this, a second KB4IT instance in the same process
-        # silently fails because its temp log file is never created.
-        _reset_logging()
-
-        params = argparse.Namespace(
-            action="build",
-            config=config_path,
-            log_level="WARNING",
-            force=force,
-        )
-        app = KB4IT(params)
-        _silence_console_log()  # Keep log output out of the Rich display
-        app.run()
-
-    except SystemExit as exc:
-        # KB4IT.stop(error=True) → sys.exit(1); success → sys.exit(0)
-        if exc.code and exc.code != 0:
-            state.error = True
-            state.error_msg = "Build failed — see the project log for details."
-
-    except Exception as exc:
-        state.error = True
-        state.error_msg = str(exc)
-
-    finally:
-        compiler_mod.clear_progress_callback()
-        state.done.set()
-
-
-def run_build(config_path: str, force: bool = False) -> None:
-    """Run a KB4IT build with a Rich live progress display."""
-    try:
-        repo = json_load(config_path)
-        source_path = Path(repo.get("source", ""))
-        approx_total = len(list(source_path.glob("*.adoc"))) if source_path.exists() else 0
-    except Exception:
-        approx_total = 0
-
-    state = _BuildState()
-    state.total = approx_total
-
-    label = "[bold yellow]Force compiling[/]" if force else "[bold green]Compiling[/]"
-
-    thread = threading.Thread(
-        target=_run_build_thread,
-        args=(config_path, force, state),
-        daemon=True,
-    )
-    thread.start()
-
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(bar_width=40),
-        MofNCompleteColumn(),
-        TimeElapsedColumn(),
-        console=console,
-        transient=False,
-    ) as progress:
-        task_id = progress.add_task(label, total=approx_total or None)
-
-        while not state.done.is_set():
-            progress.update(
-                task_id,
-                completed=state.completed,
-                total=state.total if state.total > 0 else None,
-            )
-            time.sleep(0.1)
-
-        final_total = max(state.total, state.completed, 1)
-        progress.update(
-            task_id,
-            completed=state.completed,
-            total=final_total,
-            description="[bold green]Done[/]" if not state.error else "[bold red]Failed[/]",
-        )
-
-    thread.join(timeout=5)
-
-    if state.error:
-        console.print(f"[red]Build failed.[/] {state.error_msg}")
+    def _build_thread(self, handler: _TUILogHandler) -> None:
+        from kb4it.core.main import KB4IT
+        from kb4it.services import compiler as cmod
+        error = ""
         try:
-            if Confirm.ask("Show build log?", default=True):
-                show_build_log(config_path)
-        except (KeyboardInterrupt, EOFError):
-            pass
-    else:
-        console.print(
-            f"[green]Build complete.[/] {state.completed} document(s) compiled."
+            _reset_logging()
+            params = argparse.Namespace(
+                action="build",
+                config=self._config,
+                log_level="DEBUG",
+                force=self._force,
+            )
+            inst = KB4IT(params)
+            # KB4IT's __init__ has already called setup_logging() and registered
+            # its file handler; now we add our real-time display handler.
+            logging.getLogger().addHandler(handler)
+            inst.run()
+        except SystemExit as exc:
+            if exc.code and exc.code != 0:
+                error = "Build failed — see log for details."
+        except Exception as exc:
+            error = str(exc)
+        finally:
+            logging.getLogger().removeHandler(handler)
+            cmod.clear_progress_callback()
+            cmod.clear_compile_start_callback()
+            self.app.call_from_thread(self._on_done, error)
+
+    # ── callbacks invoked from the build thread ───────────────────────────────
+
+    def _on_start(self, total: int) -> None:
+        self.app.call_from_thread(self._set_total, total)
+
+    def _set_total(self, total: int) -> None:
+        self._total = total
+        self.query_one(ProgressBar).update(total=max(total, 1), progress=0)
+        self.query_one("#status", Label).update(f"Compiling 0 / {total} documents…")
+
+    def _on_compiled(self, basename: str, rc: bool) -> None:
+        self.app.call_from_thread(self._advance, basename, rc)
+
+    def _advance(self, basename: str, rc: bool) -> None:
+        with self._lock:
+            self._completed += 1
+            n = self._completed
+        self.query_one(ProgressBar).advance(1)
+        total_str = str(self._total) if self._total else "?"
+        self.query_one("#status", Label).update(f"Compiling {n} / {total_str} documents…")
+        colour = "green" if rc else "red"
+        #self.query_one(RichLog).write(Text(f"compiled: {basename}", style=colour))
+
+    def _on_log(self, level: str, msg: str) -> None:
+        self.app.call_from_thread(self._write_log, level, msg)
+
+    def _write_log(self, level: str, msg: str) -> None:
+        if level == "DEBUG":
+            return
+        self.query_one(RichLog).write(Text(msg, style=_LOG_STYLE.get(level, "white")))
+
+    def _on_done(self, error: str) -> None:
+        n = self._completed
+        total = max(self._total, n, 1)
+        bar = self.query_one(ProgressBar)
+        if error:
+            self.query_one("#status", Label).update(f"FAILED — {error}")
+            self.query_one(RichLog).write(Text(f"Build failed: {error}", style="bold red"))
+        else:
+            bar.update(total=total, progress=total)
+            self.query_one("#status", Label).update(f"Done — {n} document(s) compiled.")
+            self.query_one(RichLog).write(
+                Text(f"Build complete. {n} document(s) compiled.", style="bold green")
+            )
+        self.query_one("#close", Button).disabled = False
+
+    @on(Button.Pressed, "#close")
+    def _close(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: log viewer ───────────────────────────────────────────────────────
+
+class LogViewerScreen(Screen):
+    CSS = """
+    LogViewerScreen { layout: vertical; }
+    #filter-bar { height: 3; align: center middle; padding: 0 1; }
+    #filter-bar Button { margin: 0 1; }
+    #log { height: 1fr; margin: 0 1; border: solid $primary; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def __init__(self, config: str, **kw: Any):
+        super().__init__(**kw)
+        self._config = config
+        self._lines: list[tuple[str, str]] = []
+        self._filter = "all"
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        with Horizontal(id="filter-bar"):
+            yield Button("All", id="f-all", variant="primary")
+            yield Button("Info only", id="f-info", variant="default")
+            yield Button("Warnings+", id="f-warn", variant="warning")
+            yield Button("Errors only", id="f-err", variant="error")
+        yield RichLog(highlight=False, markup=False, id="log")
+        with Horizontal(id="footer-bar"):
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Build Log"
+        self._load()
+
+    def _load(self) -> None:
+        p = _log_path(self._config)
+        log = self.query_one(RichLog)
+        if p is None:
+            log.write("No build log found — build the project first.")
+            return
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except Exception as exc:
+            log.write(f"Cannot read log: {exc}")
+            return
+        self._lines = [(line, _parse_level(line)) for line in text.splitlines()]
+        self._apply_filter()
+
+    def _apply_filter(self) -> None:
+        rank = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
+        log = self.query_one(RichLog)
+        log.clear()
+        for line, level in self._lines:
+            r = rank.get(level, 1)
+            if self._filter == "all":
+                show = True
+            elif self._filter == "info":
+                show = r == 1
+            elif self._filter == "warn":
+                show = r >= 2
+            elif self._filter == "err":
+                show = r >= 3
+            else:
+                show = True
+            if show:
+                log.write(Text(line, style=_LOG_STYLE.get(level, "white")))
+
+    @on(Button.Pressed, "#f-all")
+    def _f_all(self) -> None:
+        self._filter = "all"
+        self._apply_filter()
+
+    @on(Button.Pressed, "#f-info")
+    def _f_info(self) -> None:
+        self._filter = "info"
+        self._apply_filter()
+
+    @on(Button.Pressed, "#f-warn")
+    def _f_warn(self) -> None:
+        self._filter = "warn"
+        self._apply_filter()
+
+    @on(Button.Pressed, "#f-err")
+    def _f_err(self) -> None:
+        self._filter = "err"
+        self._apply_filter()
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: document viewer ──────────────────────────────────────────────────
+
+class DocumentViewerScreen(Screen):
+    CSS = """
+    DocumentViewerScreen { layout: vertical; }
+    #meta { height: auto; max-height: 12; margin: 1 1 0 1; border: solid $primary; }
+    #content { height: 1fr; margin: 0 1; border: solid $secondary; padding: 0 1; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def __init__(self, doc_id: str, kbdict: dict, **kw: Any):
+        super().__init__(**kw)
+        self._doc_id = doc_id
+        self._kbdict = kbdict
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield DataTable(id="meta", show_cursor=False)
+        with ScrollableContainer(id="content"):
+            yield Markdown("", id="md")
+        with Horizontal(id="footer-bar"):
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = self._doc_id
+        doc_info = self._kbdict.get("document", {}).get(self._doc_id, {})
+        doc_keys = doc_info.get("keys", {})
+        content_path = doc_info.get("content", "")
+
+        table = self.query_one("#meta", DataTable)
+        table.add_columns("Key", "Values")
+        for k, v in sorted(doc_keys.items()):
+            display = ", ".join(str(x) for x in v) if isinstance(v, list) else str(v)
+            table.add_row(k, display)
+
+        if content_path and Path(content_path).exists():
+            try:
+                raw = Path(content_path).read_text(encoding="utf-8", errors="replace")
+            except Exception as exc:
+                raw = f"Error reading file: {exc}"
+        else:
+            raw = f"Source not found: {content_path}"
+
+        self.query_one("#md", Markdown).update(_adoc_to_markdown(raw))
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: explorer ─────────────────────────────────────────────────────────
+
+class ExplorerScreen(Screen):
+    CSS = """
+    ExplorerScreen { layout: vertical; }
+    #col-labels { height: 1; margin: 0 1; }
+    .col-label { width: 1fr; text-align: center; color: $text-muted; }
+    #panels { height: 1fr; margin: 0 1; }
+    #keys-pane, #vals-pane, #docs-pane {
+        width: 1fr; border: solid $primary; margin: 0 1;
+    }
+    #footer-bar { height: 3; align: center middle; }
+    #footer-bar Button { margin: 0 2; }
+    """
+
+    def __init__(self, config: str, **kw: Any):
+        super().__init__(**kw)
+        self._config = config
+        self._kbdict: dict = {}
+        self._metadata: dict = {}
+        self._selected_key = ""
+        self._selected_value = ""
+        self._selected_doc = ""
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        with Horizontal(id="col-labels"):
+            yield Label("Keys", classes="col-label")
+            yield Label("Values", classes="col-label")
+            yield Label("Documents", classes="col-label")
+        with Horizontal(id="panels"):
+            yield ListView(id="keys-pane")
+            yield ListView(id="vals-pane")
+            yield ListView(id="docs-pane")
+        with Horizontal(id="footer-bar"):
+            yield Button("View Document", id="btn-view", variant="success", disabled=True)
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Explorer — Metadata Keys & Values"
+        p = _kbdict_path(self._config)
+        if p is None:
+            self.app.notify(
+                "Build the project first to generate the metadata database.",
+                severity="warning",
+            )
+            self.app.pop_screen()
+            return
+        try:
+            self._kbdict = json_load(str(p)) or {}
+            self._metadata = self._kbdict.get("metadata", {})
+        except Exception as exc:
+            self.app.notify(f"Cannot read database: {exc}", severity="error")
+            self.app.pop_screen()
+            return
+        keys_lv = self.query_one("#keys-pane", ListView)
+        for k in sorted(self._metadata.keys()):
+            n = len(self._metadata[k])
+            keys_lv.append(ListItem(Label(f"{k}  ({n})")))
+
+    @on(ListView.Highlighted, "#keys-pane")
+    def _key_highlighted(self, event: ListView.Highlighted) -> None:
+        if event.item is None:
+            return
+        keys = sorted(self._metadata.keys())
+        idx = event.list_view.index
+        if idx is None or idx >= len(keys):
+            return
+        self._selected_key = keys[idx]
+        self._selected_value = ""
+        self._selected_doc = ""
+        self.query_one("#btn-view", Button).disabled = True
+        vals_lv = self.query_one("#vals-pane", ListView)
+        vals_lv.clear()
+        self.query_one("#docs-pane", ListView).clear()
+        values = self._metadata.get(self._selected_key, {})
+        for v in sorted(values.keys()):
+            n = len(values[v])
+            vals_lv.append(ListItem(Label(f"{v}  ({n})")))
+
+    @on(ListView.Highlighted, "#vals-pane")
+    def _val_highlighted(self, event: ListView.Highlighted) -> None:
+        if not self._selected_key or event.item is None:
+            return
+        values = self._metadata.get(self._selected_key, {})
+        val_keys = sorted(values.keys())
+        idx = event.list_view.index
+        if idx is None or idx >= len(val_keys):
+            return
+        self._selected_value = val_keys[idx]
+        self._selected_doc = ""
+        self.query_one("#btn-view", Button).disabled = True
+        docs_lv = self.query_one("#docs-pane", ListView)
+        docs_lv.clear()
+        for d in sorted(values.get(self._selected_value, [])):
+            docs_lv.append(ListItem(Label(d)))
+
+    @on(ListView.Highlighted, "#docs-pane")
+    def _doc_highlighted(self, event: ListView.Highlighted) -> None:
+        if not self._selected_value or event.item is None:
+            return
+        values = self._metadata.get(self._selected_key, {})
+        doc_ids = sorted(values.get(self._selected_value, []))
+        idx = event.list_view.index
+        if idx is None or idx >= len(doc_ids):
+            return
+        self._selected_doc = doc_ids[idx]
+        self.query_one("#btn-view", Button).disabled = False
+
+    @on(ListView.Selected, "#docs-pane")
+    def _doc_selected(self, _event: ListView.Selected) -> None:
+        self._open_doc()
+
+    @on(Button.Pressed, "#btn-view")
+    def _view(self) -> None:
+        self._open_doc()
+
+    def _open_doc(self) -> None:
+        if self._selected_doc:
+            self.app.push_screen(DocumentViewerScreen(self._selected_doc, self._kbdict))
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: project info ─────────────────────────────────────────────────────
+
+class ProjectInfoScreen(Screen):
+    CSS = """
+    ProjectInfoScreen { layout: vertical; }
+    #tbl { height: 1fr; margin: 1; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def __init__(self, project: dict, config: str, **kw: Any):
+        super().__init__(**kw)
+        self._project = project
+        self._config = config
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield DataTable(id="tbl", show_cursor=False)
+        with Horizontal(id="footer-bar"):
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = f"Info — {self._project['name']}"
+        table = self.query_one(DataTable)
+        table.add_columns("Key", "Value")
+        try:
+            repo = json_load(self._config)
+            for k in sorted(repo.keys()):
+                v = repo[k]
+                if isinstance(v, list):
+                    v = ", ".join(str(x) for x in v)
+                elif isinstance(v, dict):
+                    v = str(v)
+                table.add_row(str(k), str(v))
+            table.add_row("config_file", self._config)
+        except Exception as exc:
+            table.add_row("error", str(exc))
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: file list ────────────────────────────────────────────────────────
+
+class FileListScreen(Screen):
+    CSS = """
+    FileListScreen { layout: vertical; }
+    #tbl { height: 1fr; margin: 1; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def __init__(self, config: str, **kw: Any):
+        super().__init__(**kw)
+        self._config = config
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield DataTable(id="tbl", show_cursor=True)
+        with Horizontal(id="footer-bar"):
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Source Files"
+        table = self.query_one(DataTable)
+        table.add_columns("#", "Filename", "Size")
+        try:
+            repo = json_load(self._config)
+            source = Path(repo.get("source", ""))
+            files = sorted(source.glob("*.adoc"))
+            for i, f in enumerate(files, 1):
+                sz = f.stat().st_size
+                sz_str = f"{sz:,} B" if sz < 1024 else f"{sz // 1024} KB"
+                table.add_row(str(i), f.name, sz_str)
+            self.title = f"Source Files ({len(files)})"
+        except Exception as exc:
+            table.add_row("", f"Error: {exc}", "")
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: themes ───────────────────────────────────────────────────────────
+
+class ThemesScreen(Screen):
+    CSS = """
+    ThemesScreen { layout: vertical; }
+    #tbl { height: 1fr; margin: 1; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield DataTable(id="tbl", show_cursor=True)
+        with Horizontal(id="footer-bar"):
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Installed Themes"
+        table = self.query_one(DataTable)
+        table.add_columns("ID", "Name", "Version", "Description", "Scope")
+        for t in get_themes():
+            table.add_row(
+                t.get("id", "?"),
+                t.get("name", "?"),
+                t.get("version", "?"),
+                t.get("description", ""),
+                t.get("_scope", "?"),
+            )
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: apps ─────────────────────────────────────────────────────────────
+
+class AppsScreen(Screen):
+    CSS = """
+    AppsScreen { layout: vertical; }
+    #theme-label { margin: 1 1 0 1; color: $text-muted; }
+    #themes-list { height: 8; margin: 0 1; border: solid $primary; }
+    #apps-label { margin: 1 1 0 1; color: $text-muted; }
+    #apps-tbl { height: 1fr; margin: 0 1; border: solid $secondary; }
+    #footer-bar { height: 3; align: center middle; }
+    """
+
+    def __init__(self, **kw: Any):
+        super().__init__(**kw)
+        self._themes = get_themes()
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Label("Select a theme:", id="theme-label")
+        yield ListView(id="themes-list")
+        yield Label("Apps:", id="apps-label")
+        yield DataTable(id="apps-tbl", show_cursor=True)
+        with Horizontal(id="footer-bar"):
+            yield Button("Back", id="back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Theme Apps"
+        lv = self.query_one("#themes-list", ListView)
+        for t in self._themes:
+            lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+        self.query_one("#apps-tbl", DataTable).add_columns("#", "App Name")
+
+    @on(ListView.Highlighted, "#themes-list")
+    def _theme_highlighted(self, event: ListView.Highlighted) -> None:
+        if event.item is None:
+            return
+        idx = event.list_view.index
+        if idx is None or idx >= len(self._themes):
+            return
+        theme_id = self._themes[idx].get("id", "")
+        apps = get_apps(theme_id)
+        table = self.query_one("#apps-tbl", DataTable)
+        table.clear()
+        for i, app_name in enumerate(apps, 1):
+            table.add_row(str(i), app_name)
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
+
+
+# ─── screen: create project ───────────────────────────────────────────────────
+
+class CreateProjectScreen(Screen):
+    CSS = """
+    CreateProjectScreen { layout: vertical; }
+    .field-label { margin: 1 1 0 1; color: $text-muted; }
+    #themes-list { height: 8; margin: 0 1; border: solid $primary; }
+    Input { margin: 0 1 1 1; }
+    #footer-bar { height: 3; align: center middle; }
+    #footer-bar Button { margin: 0 2; }
+    """
+
+    def __init__(self, **kw: Any):
+        super().__init__(**kw)
+        self._themes = get_themes()
+        self._theme_idx = 0
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Label("Select theme:", classes="field-label")
+        yield ListView(id="themes-list")
+        yield Label("Project display name:", classes="field-label")
+        yield Input(placeholder="My Project", id="inp-name")
+        yield Label("Repository path:", classes="field-label")
+        yield Input(
+            placeholder=str(Path.home() / "Documents" / "my_project"),
+            id="inp-path",
+        )
+        with Horizontal(id="footer-bar"):
+            yield Button("Create", id="create", variant="success")
+            yield Button("Cancel", id="cancel", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Create New Project"
+        if not self._themes:
+            self.app.notify("No themes installed.", severity="warning")
+        lv = self.query_one("#themes-list", ListView)
+        for t in self._themes:
+            lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+
+    @on(ListView.Highlighted, "#themes-list")
+    def _theme_hi(self, event: ListView.Highlighted) -> None:
+        idx = event.list_view.index
+        if idx is not None:
+            self._theme_idx = idx
+
+    @on(Button.Pressed, "#cancel")
+    def _cancel(self) -> None:
+        self.dismiss(None)
+
+    @on(Button.Pressed, "#create")
+    def _create(self) -> None:
+        if not self._themes:
+            self.app.notify("No themes available.", severity="error")
+            return
+        theme_id = self._themes[self._theme_idx].get("id", "")
+        name = self.query_one("#inp-name", Input).value.strip()
+        path = os.path.expanduser(self.query_one("#inp-path", Input).value.strip())
+        if not name:
+            self.app.notify("Project name cannot be empty.", severity="error")
+            return
+        if not path:
+            self.app.notify("Repository path cannot be empty.", severity="error")
+            return
+        try:
+            from kb4it.core.main import KB4IT
+            _reset_logging()
+            params = argparse.Namespace(
+                action="create",
+                theme=theme_id,
+                repo_path=path,
+                log_level="WARNING",
+            )
+            inst = KB4IT(params)
+            try:
+                inst.run()
+            except SystemExit:
+                pass
+        except Exception as exc:
+            self.app.notify(f"Error: {exc}", severity="error")
+            return
+        config = str(Path(path) / "config" / "repo.json")
+        if not Path(config).exists():
+            self.app.notify("Creation failed — config not found.", severity="error")
+            return
+        self.app.notify(f"Project '{name}' created!", severity="information")
+        self.dismiss({"name": name, "config": config})
+
+
+# ─── screen: import project ───────────────────────────────────────────────────
+
+class ImportProjectScreen(Screen):
+    CSS = """
+    ImportProjectScreen { layout: vertical; }
+    .field-label { margin: 1 1 0 1; color: $text-muted; }
+    Input { margin: 0 1 1 1; }
+    #preview { height: auto; max-height: 10; margin: 0 1 1 1; border: solid $primary; }
+    #footer-bar { height: 3; align: center middle; }
+    #footer-bar Button { margin: 0 2; }
+    """
+
+    def __init__(self, **kw: Any):
+        super().__init__(**kw)
+        self._repo: dict = {}
+        self._config_path = ""
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Label("Path to repo.json:", classes="field-label")
+        yield Input(placeholder="/path/to/config/repo.json", id="inp-path")
+        yield Label("Display name:", classes="field-label")
+        yield Input(placeholder="My Project", id="inp-name")
+        yield DataTable(id="preview", show_cursor=False)
+        with Horizontal(id="footer-bar"):
+            yield Button("Import", id="import", variant="success")
+            yield Button("Cancel", id="cancel", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = "Import Existing Project"
+        self.query_one("#preview", DataTable).add_columns("Key", "Value")
+
+    @on(Input.Submitted, "#inp-path")
+    def _path_submitted(self, event: Input.Submitted) -> None:
+        path = os.path.expanduser(event.value.strip())
+        if not path or not Path(path).exists():
+            self.app.notify("File not found.", severity="error")
+            return
+        try:
+            self._repo = json_load(path) or {}
+            self._config_path = path
+        except Exception as exc:
+            self.app.notify(f"Cannot parse: {exc}", severity="error")
+            return
+        default_name = self._repo.get("title") or Path(path).parent.parent.name
+        self.query_one("#inp-name", Input).value = str(default_name)
+        table = self.query_one("#preview", DataTable)
+        table.clear()
+        for k in ("title", "tagline", "theme", "source", "target"):
+            if k in self._repo:
+                table.add_row(k, str(self._repo[k]))
+        table.add_row("config", path)
+
+    @on(Button.Pressed, "#cancel")
+    def _cancel(self) -> None:
+        self.dismiss(None)
+
+    @on(Button.Pressed, "#import")
+    def _import(self) -> None:
+        path = self._config_path or os.path.expanduser(
+            self.query_one("#inp-path", Input).value.strip()
+        )
+        name = self.query_one("#inp-name", Input).value.strip()
+        if not name:
+            self.app.notify("Display name cannot be empty.", severity="error")
+            return
+        if not Path(path).exists():
+            self.app.notify("File not found — submit the path field first.", severity="error")
+            return
+        for field in ("source", "target", "theme"):
+            if field not in self._repo:
+                self.app.notify(f"Config missing required field: '{field}'", severity="error")
+                return
+        self.dismiss({"name": name, "config": path})
+
+
+# ─── screen: project submenu ──────────────────────────────────────────────────
+
+class ProjectScreen(Screen):
+    CSS = """
+    ProjectScreen { layout: vertical; }
+    #info-panel {
+        height: auto; margin: 1; border: solid $primary;
+        padding: 1 2; background: $panel;
+    }
+    #actions { height: 1fr; align: center top; padding: 1 0; }
+    #actions Button { width: 40; margin: 0 0 1 0; }
+    """
+
+    def __init__(self, project: dict, **kw: Any):
+        super().__init__(**kw)
+        self._project = project
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Static("", id="info-panel")
+        with Vertical(id="actions"):
+            yield Button("Compile", id="compile", variant="success")
+            yield Button("Force Compile  (recompile everything)", id="force-compile", variant="warning")
+            yield Button("Project Info", id="info", variant="default")
+            yield Button("List Source Files", id="files", variant="default")
+            yield Button("Explore Keys & Values", id="explore", variant="default")
+            yield Button("View Build Log", id="log", variant="default")
+            yield Button("Back", id="back", variant="primary")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = self._project["name"]
+        self._refresh()
+
+    def _refresh(self) -> None:
+        config = self._project["config"]
+        try:
+            repo = json_load(config)
+            title = repo.get("title", self._project["name"])
+            theme = repo.get("theme", "?")
+            source = repo.get("source", "?")
+            target = repo.get("target", "?")
+        except Exception:
+            title = self._project["name"]
+            theme = source = target = "?"
+        db_ok = _kbdict_path(config) is not None
+        log_ok = _log_path(config) is not None
+        built = "[green]yes[/green]" if db_ok else "[dim]not yet[/dim]"
+        log_lbl = "[green]yes[/green]" if log_ok else "[dim]none[/dim]"
+        self.query_one("#info-panel", Static).update(
+            f"[bold]{title}[/bold]\n"
+            f"Theme: {theme}   Built: {built}   Log: {log_lbl}\n"
+            f"Source: [dim]{source}[/dim]\n"
+            f"Target: [dim]{target}[/dim]"
+        )
+        self.query_one("#explore", Button).disabled = not db_ok
+        self.query_one("#log", Button).disabled = not log_ok
+
+    @on(Button.Pressed, "#compile")
+    def _compile(self) -> None:
+        self.app.push_screen(
+            BuildScreen(self._project["name"], self._project["config"], False),
+            callback=lambda _: self._refresh(),
         )
 
+    @on(Button.Pressed, "#force-compile")
+    def _force_compile(self) -> None:
+        self.app.push_screen(
+            BuildScreen(self._project["name"], self._project["config"], True),
+            callback=lambda _: self._refresh(),
+        )
 
-# ─── Build Log Viewer ─────────────────────────────────────────────────────────
+    @on(Button.Pressed, "#info")
+    def _info(self) -> None:
+        self.app.push_screen(ProjectInfoScreen(self._project, self._project["config"]))
 
-def _log_path(config_path: str) -> Path | None:
-    """Return the kb4it.log path for a project, or None if absent."""
-    try:
-        repo = json_load(config_path)
-        source = Path(repo.get("source", ""))
-        p = source.parent / "var" / "log" / "kb4it.log"
-        return p if p.exists() else None
-    except Exception:
-        return None
+    @on(Button.Pressed, "#files")
+    def _files(self) -> None:
+        self.app.push_screen(FileListScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#explore")
+    def _explore(self) -> None:
+        self.app.push_screen(ExplorerScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#log")
+    def _log(self) -> None:
+        self.app.push_screen(LogViewerScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#back")
+    def _back(self) -> None:
+        self.app.pop_screen()
 
 
-def _parse_level(line: str) -> str:
-    """Detect the KB4IT log level of a line (checks first 15 chars)."""
-    prefix = line[:15].upper()
-    for lvl in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"):
-        if lvl in prefix:
-            return lvl
-    return "INFO"
+# ─── screen: main ─────────────────────────────────────────────────────────────
 
+class MainScreen(Screen):
+    CSS = """
+    MainScreen { layout: vertical; }
+    #list-label { margin: 1 1 0 1; color: $text-muted; }
+    #proj-list { height: 1fr; margin: 0 1; border: solid $primary; }
+    #row1, #row2 { height: 3; align: center middle; padding: 0 1; }
+    #row1 Button, #row2 Button { margin: 0 1; }
+    """
 
-def show_build_log(config_path: str) -> None:
-    """Display the last build log with optional severity filtering."""
-    clear()
-    header()
-
-    log_file = _log_path(config_path)
-    if log_file is None:
-        console.print("[yellow]No build log found — build the project first.[/yellow]")
-        pause()
-        return
-
-    try:
-        lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
-    except Exception as exc:
-        console.print(f"[red]Cannot read log:[/] {exc}")
-        pause()
-        return
-
-    console.print(f"[dim]{log_file}  ({len(lines)} lines total)[/dim]\n")
-
-    # Filter selection
-    filter_choice = Prompt.ask(
-        "Show  [dim](all / warn = WARNING+ / err = ERROR only)[/dim]",
-        choices=["all", "warn", "err"],
-        default="all",
-    )
-    min_level = {"all": 0, "warn": 2, "err": 3}[filter_choice]
-    level_rank = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
-
-    filtered = [
-        (line, _parse_level(line))
-        for line in lines
-        if level_rank.get(_parse_level(line), 1) >= min_level
+    BINDINGS = [
+        Binding("enter", "open_project", "Open", show=True),
+        Binding("q", "request_quit", "Quit", show=True),
     ]
 
-    if not filtered:
-        console.print("[yellow]No entries match the selected filter.[/yellow]")
-        pause()
-        return
-
-    # Show tail (last 300 matching lines) — terminal scrollback handles the rest
-    display = filtered[-300:]
-    console.print(
-        Panel(
-            f"[bold]Build Log[/]  [dim]{log_file.name}"
-            f"  ({len(display)}/{len(filtered)} lines shown)[/dim]",
-            box=box.ROUNDED,
-        )
-    )
-
-    for line, level in display:
-        colour = _LOG_COLOURS.get(level, "")
-        if colour:
-            console.print(f"[{colour}]{line}[/{colour}]")
-        else:
-            console.print(line)
-
-    pause()
-
-
-# ─── Themes Menu ──────────────────────────────────────────────────────────────
-
-def show_themes() -> None:
-    clear()
-    header()
-    themes = get_themes()
-
-    if not themes:
-        console.print("[yellow]No themes found.[/yellow]")
-        pause()
-        return
-
-    table = Table(
-        title="Installed Themes", box=box.ROUNDED,
-        show_header=True, header_style="bold",
-    )
-    table.add_column("ID", style="bold cyan", no_wrap=True)
-    table.add_column("Name")
-    table.add_column("Version", justify="center")
-    table.add_column("Description")
-    table.add_column("Scope", style="dim", justify="center")
-
-    for t in themes:
-        table.add_row(
-            t.get("id", "?"),
-            t.get("name", "?"),
-            t.get("version", "?"),
-            t.get("description", ""),
-            t.get("_scope", "?"),
-        )
-
-    console.print(table)
-    pause()
-
-
-# ─── Apps Menu ────────────────────────────────────────────────────────────────
-
-def show_apps() -> None:
-    clear()
-    header()
-    themes = get_themes()
-
-    if not themes:
-        console.print("[yellow]No themes installed.[/yellow]")
-        pause()
-        return
-
-    idx = pick_from_list(
-        themes,
-        "Select Theme to List Apps",
-        display_fn=lambda t: f"[bold]{t.get('id', '?')}[/]  —  {t.get('description', '')}",
-    )
-    if idx is None:
-        return
-
-    theme_id = themes[idx].get("id", "")
-    clear()
-    header()
-
-    apps = get_apps(theme_id)
-    if not apps:
-        console.print(f"[yellow]No apps found for theme [bold]{theme_id}[/bold].[/yellow]")
-    else:
-        table = Table(
-            title=f"Apps for theme '{theme_id}'",
-            box=box.ROUNDED, show_header=True, header_style="bold",
-        )
-        table.add_column("#", style="dim", width=4)
-        table.add_column("App Name", style="bold cyan")
-        for i, app in enumerate(apps, 1):
-            table.add_row(str(i), app)
-        console.print(table)
-
-    pause()
-
-
-# ─── Create Project ───────────────────────────────────────────────────────────
-
-def create_project() -> dict | None:
-    """Wizard: initialise a new KB4IT repository and register it."""
-    clear()
-    header()
-    themes = get_themes()
-
-    if not themes:
-        console.print("[yellow]No themes installed — cannot create a project.[/yellow]")
-        pause()
-        return None
-
-    console.print(Panel("[bold]Create a New Project[/]", box=box.ROUNDED, style="green"))
-
-    idx = pick_from_list(
-        themes,
-        "Choose a Theme",
-        display_fn=lambda t: f"[bold]{t.get('id', '?')}[/]  —  {t.get('description', '')}",
-    )
-    if idx is None:
-        return None
-
-    theme_id = themes[idx].get("id", "")
-
-    name = Prompt.ask("\nProject display name").strip()
-    if not name:
-        console.print("[red]Project name cannot be empty.[/red]")
-        pause()
-        return None
-
-    default_path = str(Path.home() / "Documents" / name.replace(" ", "_"))
-    repo_path = os.path.expanduser(Prompt.ask("Repository path", default=default_path).strip())
-
-    console.print(
-        f"\nCreating project [bold]{name}[/] "
-        f"with theme [cyan]{theme_id}[/] "
-        f"at [dim]{repo_path}[/dim] …"
-    )
-
-    try:
-        from kb4it.core.main import KB4IT
-
-        _reset_logging()
-        params = argparse.Namespace(
-            action="create",
-            theme=theme_id,
-            repo_path=repo_path,
-            log_level="WARNING",
-        )
-        app = KB4IT(params)
-        _silence_console_log()
-        try:
-            app.run()
-        except SystemExit:
-            pass
-
-    except Exception as exc:
-        console.print(f"[red]Error creating project:[/] {exc}")
-        pause()
-        return None
-
-    config_path = str(Path(repo_path) / "config" / "repo.json")
-    if not Path(config_path).exists():
-        console.print(
-            f"[red]Project creation failed — config not found at:[/]\n  {config_path}"
-        )
-        pause()
-        return None
-
-    console.print(f"[green]Project created![/]  Config: [dim]{config_path}[/dim]")
-    pause()
-    return {"name": name, "config": config_path}
-
-
-# ─── Import Project ───────────────────────────────────────────────────────────
-
-def import_project() -> dict | None:
-    """Register an existing KB4IT project by pointing to its repo.json."""
-    clear()
-    header()
-    console.print(Panel("[bold]Import Existing Project[/]", box=box.ROUNDED, style="cyan"))
-
-    raw = Prompt.ask("Path to repo.json  [dim](Tab-complete works)[/dim]").strip()
-    config_path = os.path.expanduser(raw)
-
-    if not Path(config_path).exists():
-        console.print(f"[red]File not found:[/] {config_path}")
-        pause()
-        return None
-
-    try:
-        repo = json_load(config_path)
-    except Exception as exc:
-        console.print(f"[red]Cannot parse config:[/] {exc}")
-        pause()
-        return None
-
-    # Validate required fields
-    for field in ("source", "target", "theme"):
-        if field not in repo:
-            console.print(f"[red]Config is missing required field:[/] '{field}'")
-            pause()
-            return None
-
-    # Show a summary so the user can confirm
-    summary = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
-    summary.add_column("Key", style="bold cyan", no_wrap=True)
-    summary.add_column("Value")
-    for key in ("title", "tagline", "theme", "source", "target"):
-        if key in repo:
-            summary.add_row(key, str(repo[key]))
-    summary.add_row("[dim]config[/dim]", f"[dim]{config_path}[/dim]")
-    console.print(summary)
-
-    default_name = repo.get("title") or Path(config_path).parent.parent.name
-    name = Prompt.ask("Display name", default=default_name).strip()
-    if not name:
-        return None
-
-    console.print(f"[green]Project '[bold]{name}[/]' imported.[/green]")
-    pause()
-    return {"name": name, "config": config_path}
-
-
-# ─── Delete Project ───────────────────────────────────────────────────────────
-
-def delete_project(projects: list[dict]) -> list[dict]:
-    """Remove a project from the registry (files on disk are untouched)."""
-    clear()
-    header()
-
-    if not projects:
-        console.print("[yellow]No projects configured.[/yellow]")
-        pause()
-        return projects
-
-    idx = pick_from_list(
-        projects,
-        "Delete Project from Registry",
-        display_fn=lambda p: p["name"],
-    )
-    if idx is None:
-        return projects
-
-    project = projects[idx]
-    confirmed = Confirm.ask(
-        f"Remove [bold]{project['name']}[/] from the registry?\n"
-        "  (Files on disk are NOT deleted)"
-    )
-    if confirmed:
-        projects = [p for i, p in enumerate(projects) if i != idx]
-        save_projects(projects)
-        console.print(f"[green]Removed '[bold]{project['name']}[/]'.[/green]")
-    pause()
-    return projects
-
-
-# ─── Project Info ─────────────────────────────────────────────────────────────
-
-def show_project_info(project: dict, config_path: str) -> None:
-    clear()
-    header()
-
-    try:
-        repo = json_load(config_path)
-    except Exception as exc:
-        console.print(f"[red]Cannot read config:[/] {exc}")
-        pause()
-        return
-
-    table = Table(
-        title=f"Project Info — {project['name']}",
-        box=box.ROUNDED, show_header=True, header_style="bold",
-    )
-    table.add_column("Key", style="bold cyan", no_wrap=True)
-    table.add_column("Value")
-
-    for k in sorted(repo.keys()):
-        v = repo[k]
-        if isinstance(v, list):
-            v = ", ".join(str(x) for x in v)
-        elif isinstance(v, dict):
-            v = str(v)
-        table.add_row(str(k), str(v))
-
-    table.add_row("[dim]config_file[/dim]", f"[dim]{config_path}[/dim]")
-
-    console.print(table)
-    pause()
-
-
-# ─── List Source Files ────────────────────────────────────────────────────────
-
-def list_source_files(config_path: str) -> None:
-    clear()
-    header()
-
-    try:
-        repo = json_load(config_path)
-        source_path = Path(repo.get("source", ""))
-    except Exception as exc:
-        console.print(f"[red]Cannot read config:[/] {exc}")
-        pause()
-        return
-
-    if not source_path.exists():
-        console.print(f"[yellow]Source directory not found:[/]\n  {source_path}")
-        pause()
-        return
-
-    files = sorted(source_path.glob("*.adoc"))
-
-    table = Table(
-        title=f"Source Files — {source_path}",
-        box=box.ROUNDED, show_header=True, header_style="bold",
-    )
-    table.add_column("#", style="dim", width=5, justify="right")
-    table.add_column("Filename", style="bold")
-    table.add_column("Size", justify="right", style="dim")
-
-    for i, f in enumerate(files, 1):
-        size = f.stat().st_size
-        size_str = f"{size:,} B" if size < 1024 else f"{size // 1024} KB"
-        table.add_row(str(i), f.name, size_str)
-
-    console.print(table)
-    console.print(f"[dim]Total: {len(files)} file(s)[/dim]")
-    pause()
-
-
-# ─── Keys & Values Explorer ───────────────────────────────────────────────────
-
-def _adoc_to_markdown(text: str) -> str:
-    """Lightweight AsciiDoc → Markdown conversion for Rich display."""
-    lines = text.splitlines()
-    out: list[str] = []
-    in_code = False
-    in_header = True
-
-    for line in lines:
-        stripped = line.strip()
-
-        if in_header:
-            if stripped == "":
-                in_header = False
-                continue
-            if stripped.startswith("= ") and not out:
-                out.append("# " + stripped[2:])
-                continue
-            if re.match(r"^:[a-zA-Z][^:]*:", stripped):
-                continue
-            in_header = False
-
-        if line.startswith("----") or line.startswith("...."):
-            in_code = not in_code
-            out.append("```")
-            continue
-
-        if in_code:
-            out.append(line)
-            continue
-
-        m = re.match(r"^(={2,6})\s+(.+)$", line)
-        if m:
-            level = len(m.group(1))
-            out.append("#" * level + " " + m.group(2))
-            continue
-
-        m = re.match(r"^(NOTE|TIP|WARNING|IMPORTANT|CAUTION):\s*(.*)$", line)
-        if m:
-            out.append(f"> **{m.group(1)}:** {m.group(2)}")
-            continue
-
-        bm = re.match(r"^(\*+) ", line)
-        if bm:
-            depth = len(bm.group(1))
-            out.append("  " * (depth - 1) + "- " + line[depth + 1:])
-            continue
-
-        if re.match(r"^\. ", line):
-            out.append("1. " + line[2:])
-            continue
-
-        line = re.sub(r"\*(\S(?:[^*]*\S)?)\*", r"**\1**", line)
-        line = re.sub(r"_(\S(?:[^_]*\S)?)_", r"*\1*", line)
-        line = re.sub(r"link:(\S+)\[([^\]]*)\]", r"[\2](\1)", line)
-        out.append(line)
-
-    return "\n".join(out)
-
-
-def view_document(doc_id: str, kbdict: dict) -> None:
-    """Show document metadata and rendered content in a pager."""
-    doc_info = kbdict.get("document", {}).get(doc_id, {})
-    content_path = doc_info.get("content", "")
-    doc_keys = doc_info.get("keys", {})
-
-    raw_text = ""
-    if content_path and Path(content_path).exists():
-        try:
-            raw_text = Path(content_path).read_text(encoding="utf-8", errors="replace")
-        except Exception as exc:
-            raw_text = f"Error reading file: {exc}"
-    else:
-        raw_text = f"Source file not found: {content_path}"
-
-    meta_table = Table(box=box.SIMPLE, show_header=True, header_style="bold")
-    meta_table.add_column("Key", style="bold cyan", no_wrap=True)
-    meta_table.add_column("Values")
-    for key, vals in sorted(doc_keys.items()):
-        display = ", ".join(str(v) for v in vals) if isinstance(vals, list) else str(vals)
-        meta_table.add_row(key, display)
-
-    md_text = _adoc_to_markdown(raw_text)
-    try:
-        rendered = Markdown(md_text)
-    except Exception:
-        rendered = Markdown(raw_text)
-
-    with console.pager(styles=True):
-        console.print(Panel(f"[bold]{doc_id}[/]", style="bold blue", box=box.DOUBLE_EDGE))
-        if doc_keys:
-            console.print(Panel(meta_table, title="Metadata", box=box.ROUNDED))
-        console.print(Panel(rendered, title="Content", box=box.ROUNDED))
-
-
-def _kbdict_path(config_path: str) -> Path | None:
-    """Return the kbdict.json path for a project, or None if it doesn't exist."""
-    try:
-        repo = json_load(config_path)
-        source_path = Path(repo.get("source", ""))
-        p = source_path.parent / "var" / "db" / "kbdict.json"
-        return p if p.exists() else None
-    except Exception:
-        return None
-
-
-def explore_keys_values(config_path: str) -> None:
-    """Interactive drill-down: metadata keys → values → documents."""
-    db_path = _kbdict_path(config_path)
-
-    if db_path is None:
-        clear()
-        header()
-        console.print(
-            "[yellow]No database found.[/]\n"
-            "Build the project first to generate the metadata database."
-        )
-        pause()
-        return
-
-    try:
-        kbdict = json_load(str(db_path))
-    except Exception as exc:
-        clear()
-        header()
-        console.print(f"[red]Cannot read database:[/] {exc}")
-        pause()
-        return
-
-    metadata: dict = kbdict.get("metadata", {})
-    if not metadata:
-        clear()
-        header()
-        console.print("[yellow]No metadata found in the database.[/yellow]")
-        pause()
-        return
-
-    # Key selection loop
-    while True:
-        clear()
-        header()
-        keys = sorted(metadata.keys())
-
-        idx = pick_from_list(
-            keys,
-            "Metadata Keys — Select a Key",
-            display_fn=lambda k: (
-                f"[bold]{k}[/]  [dim]({len(metadata.get(k, {}))} value(s))[/dim]"
-            ),
-        )
-        if idx is None:
-            break
-
-        selected_key = keys[idx]
-        values: dict = metadata[selected_key]
-
-        # Value selection loop
-        while True:
-            clear()
-            header()
-            value_list = sorted(values.keys())
-
-            idx2 = pick_from_list(
-                value_list,
-                f"Key: [bold]{selected_key}[/] — Select a Value",
-                display_fn=lambda v: (
-                    f"[bold]{v}[/]  [dim]({len(values.get(v, []))} doc(s))[/dim]"
-                ),
-            )
-            if idx2 is None:
-                break
-
-            selected_value = value_list[idx2]
-            doc_ids: list = values[selected_value]
-            sorted_docs = sorted(doc_ids)
-
-            # Document selection + viewer loop
-            while True:
-                clear()
-                header()
-
-                idx3 = pick_from_list(
-                    sorted_docs,
-                    f"{selected_key} = [bold]{selected_value}[/] — Select a Document",
-                    display_fn=lambda d: f"[bold cyan]{d}[/]",
+    def __init__(self, **kw: Any):
+        super().__init__(**kw)
+        self._projects: list[dict] = []
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Label("Projects:", id="list-label")
+        yield ListView(id="proj-list")
+        with Horizontal(id="row1"):
+            yield Button("New Project", id="new", variant="success")
+            yield Button("Import Project", id="import", variant="primary")
+            yield Button("Delete Project", id="delete", variant="error")
+        with Horizontal(id="row2"):
+            yield Button("Themes", id="themes", variant="default")
+            yield Button("Apps", id="apps", variant="default")
+            yield Button("Quit", id="quit", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.title = f"KB4IT v{VERSION}"
+        self.sub_title = "Static Website Generator"
+        self._reload()
+
+    def _reload(self) -> None:
+        self._projects = load_projects()
+        lv = self.query_one("#proj-list", ListView)
+        lv.clear()
+        if self._projects:
+            for p in self._projects:
+                lv.append(
+                    ListItem(Label(f"[bold]{p['name']}[/bold]  [dim]{p.get('config', '')}[/dim]"))
                 )
-                if idx3 is None:
-                    break
-
-                view_document(sorted_docs[idx3], kbdict)
-
-
-# ─── Project Submenu ──────────────────────────────────────────────────────────
-
-def project_menu(project: dict) -> None:
-    """Submenu for a selected project."""
-    config_path = project["config"]
-
-    while True:
-        clear()
-        header()
-
-        try:
-            repo = json_load(config_path)
-            repo_title = repo.get("title", project["name"])
-            repo_theme = repo.get("theme", "?")
-            repo_source = repo.get("source", "?")
-            repo_target = repo.get("target", "?")
-        except Exception:
-            repo_title = project["name"]
-            repo_theme = repo_source = repo_target = "?"
-
-        db_exists = _kbdict_path(config_path) is not None
-        log_exists = _log_path(config_path) is not None
-        db_label = "[green]yes[/]" if db_exists else "[dim]not yet built[/dim]"
-
-        info_text = (
-            f"[bold]{repo_title}[/]\n"
-            f"Theme: [cyan]{repo_theme}[/]   Built: {db_label}\n"
-            f"Source: [dim]{repo_source}[/dim]\n"
-            f"Target: [dim]{repo_target}[/dim]"
+        else:
+            lv.append(ListItem(Label("[dim]No projects. Use New or Import to add one.[/dim]")))
+        n = len(self._projects)
+        self.query_one("#list-label", Label).update(
+            f"Projects: [dim]({n} configured)[/dim]" if n else "Projects: [dim](none)[/dim]"
         )
-        console.print(Panel(info_text, title=f"Project: {project['name']}", box=box.ROUNDED))
 
-        table = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
-        table.add_column("#", style="bold cyan", width=4)
-        table.add_column("Action")
-        table.add_row("1", "Compile")
-        table.add_row("2", "Force compile  [dim](recompile everything)[/dim]")
-        table.add_row("3", "Project info")
-        table.add_row("4", "List source files")
-        table.add_row("5", "Explore keys & values")
-        log_label = "View build log" if log_exists else "[dim]View build log (not built yet)[/dim]"
-        table.add_row("6", log_label)
-        table.add_row("[dim]B[/dim]", "[dim]Back to main menu[/dim]")
-        console.print(table)
+    def _open_at(self, idx: int) -> None:
+        if idx >= len(self._projects):
+            return
+        project = self._projects[idx]
+        self.app.push_screen(ProjectScreen(project), callback=lambda _: self._reload())
 
-        choice = Prompt.ask("Choose", choices=["1", "2", "3", "4", "5", "6", "b", "B"])
+    @on(ListView.Selected, "#proj-list")
+    def _proj_selected(self, event: ListView.Selected) -> None:
+        idx = event.list_view.index
+        if idx is not None:
+            self._open_at(idx)
 
-        if choice == "1":
-            clear()
-            header()
-            run_build(config_path, force=False)
-            pause()
-        elif choice == "2":
-            clear()
-            header()
-            run_build(config_path, force=True)
-            pause()
-        elif choice == "3":
-            show_project_info(project, config_path)
-        elif choice == "4":
-            list_source_files(config_path)
-        elif choice == "5":
-            explore_keys_values(config_path)
-        elif choice == "6":
-            show_build_log(config_path)
-        elif choice.lower() == "b":
-            break
+    def action_open_project(self) -> None:
+        idx = self.query_one("#proj-list", ListView).index
+        if idx is not None:
+            self._open_at(idx)
+
+    def action_request_quit(self) -> None:
+        self.app.exit()
+
+    @on(Button.Pressed, "#new")
+    def _new(self) -> None:
+        def _after(result: dict | None) -> None:
+            if result:
+                self._projects.append(result)
+                save_projects(self._projects)
+                self._reload()
+        self.app.push_screen(CreateProjectScreen(), callback=_after)
+
+    @on(Button.Pressed, "#import")
+    def _import(self) -> None:
+        def _after(result: dict | None) -> None:
+            if result:
+                self._projects.append(result)
+                save_projects(self._projects)
+                self._reload()
+        self.app.push_screen(ImportProjectScreen(), callback=_after)
+
+    @on(Button.Pressed, "#delete")
+    def _delete(self) -> None:
+        lv = self.query_one("#proj-list", ListView)
+        idx = lv.index
+        if idx is None or idx >= len(self._projects):
+            self.app.notify("Select a project to delete.", severity="warning")
+            return
+        project = self._projects[idx]
+
+        def _after(confirmed: bool | None) -> None:
+            if confirmed:
+                del self._projects[idx]
+                save_projects(self._projects)
+                self._reload()
+                self.app.notify(f"Removed '{project['name']}' from registry.")
+
+        self.app.push_screen(
+            ConfirmScreen(
+                f"Remove '{project['name']}' from the registry?\n"
+                "(Files on disk are NOT deleted)"
+            ),
+            callback=_after,
+        )
+
+    @on(Button.Pressed, "#themes")
+    def _themes(self) -> None:
+        self.app.push_screen(ThemesScreen())
+
+    @on(Button.Pressed, "#apps")
+    def _apps(self) -> None:
+        self.app.push_screen(AppsScreen())
+
+    @on(Button.Pressed, "#quit")
+    def _quit(self) -> None:
+        self.app.exit()
 
 
-# ─── Main Menu ────────────────────────────────────────────────────────────────
+# ─── app root ─────────────────────────────────────────────────────────────────
+
+class KB4ITTUI(App):
+    CSS = """
+    Screen { background: $surface; }
+    """
+    TITLE = f"KB4IT v{VERSION}"
+
+    def on_mount(self) -> None:
+        self.push_screen(MainScreen())
+
 
 def run() -> None:
-    """Launch the KB4IT Terminal User Interface."""
-    projects = load_projects()
-
-    while True:
-        clear()
-        header()
-
-        table = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
-        table.add_column("#", style="bold cyan", width=4)
-        table.add_column("Action")
-
-        proj_count = (
-            f"[dim]({len(projects)} configured)[/dim]"
-            if projects else "[dim](none)[/dim]"
-        )
-        table.add_row("1", f"Select project  {proj_count}")
-        table.add_row("2", "Create a new project")
-        table.add_row("3", "Import existing project")
-        table.add_row("4", "Delete a project")
-        table.add_row("5", "List themes")
-        table.add_row("6", "List apps per theme")
-        table.add_row("[dim]X[/dim]", "[dim]Exit[/dim]")
-
-        console.print(Panel(table, title="Main Menu", box=box.ROUNDED))
-
-        choices = ["1", "2", "3", "4", "5", "6", "x", "X"]
-        try:
-            choice = Prompt.ask("Choose", choices=choices)
-        except (KeyboardInterrupt, EOFError):
-            console.print("\n[blue]Goodbye![/blue]")
-            break
-
-        choice = choice.lower()
-
-        if choice == "1":
-            if not projects:
-                console.print(
-                    "[yellow]No projects configured. "
-                    "Use option 2 (create) or 3 (import) to add one.[/yellow]"
-                )
-                pause()
-                continue
-            clear()
-            header()
-            idx = pick_from_list(
-                projects,
-                "Select Project",
-                display_fn=lambda p: (
-                    f"[bold]{p['name']}[/]  [dim]{p.get('config', '')}[/dim]"
-                ),
-            )
-            if idx is not None:
-                try:
-                    project_menu(projects[idx])
-                except KeyboardInterrupt:
-                    pass
-                projects = load_projects()
-
-        elif choice == "2":
-            try:
-                p = create_project()
-            except KeyboardInterrupt:
-                p = None
-            if p:
-                projects.append(p)
-                save_projects(projects)
-
-        elif choice == "3":
-            try:
-                p = import_project()
-            except KeyboardInterrupt:
-                p = None
-            if p:
-                projects.append(p)
-                save_projects(projects)
-
-        elif choice == "4":
-            try:
-                projects = delete_project(projects)
-            except KeyboardInterrupt:
-                pass
-
-        elif choice == "5":
-            try:
-                show_themes()
-            except KeyboardInterrupt:
-                pass
-
-        elif choice == "6":
-            try:
-                show_apps()
-            except KeyboardInterrupt:
-                pass
-
-        elif choice == "x":
-            console.print("\n[blue]Goodbye![/blue]\n")
-            break
+    """Launch the KB4IT Textual TUI."""
+    KB4ITTUI().run()
