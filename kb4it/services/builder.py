@@ -16,7 +16,7 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import get_human_datetime
+from kb4it.core.util import get_human_datetime, valid_filename
 
 
 class Builder(Service):
@@ -157,7 +157,8 @@ class Builder(Service):
         blocked_keys = set(self.srvdtb.get_blocked_keys())
         used_keys = set(metadata.keys())
         theme_var["kb"]["keys"]["menu"] = sorted(
-            list(used_keys - blocked_keys - ignored_keys)
+            [{"name": k, "href": valid_filename(k)} for k in (used_keys - blocked_keys - ignored_keys)],
+            key=lambda d: d["name"],
         )
 
         return theme_var
