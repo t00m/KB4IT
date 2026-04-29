@@ -200,8 +200,8 @@ def main():
             from kb4it.tui.app import run as run_tui
             run_tui()
         except ImportError as exc:
-            print(f"TUI requires the 'rich' library: {exc}")
-            print("Install it with: pip install rich")
+            print(f"TUI requires the 'textual' library: {exc}")
+            print("Install it with: pip install textual")
         except KeyboardInterrupt:
             pass
         return
