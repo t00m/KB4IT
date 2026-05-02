@@ -15,6 +15,7 @@ import os
 import sys
 import math
 import calendar as _calendar
+from collections import Counter
 from datetime import datetime, timedelta
 from calendar import monthrange
 
@@ -814,10 +815,16 @@ class Theme(Builder):
         var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True)
         ignored = self.srvdtb.get_ignored_keys()
         keys_data = {}
+        all_docs = self.srvdtb.get_documents()
         for key in self.srvdtb.get_all_keys():
             if key not in ignored:
-                vals = self.srvdtb.get_all_values_for_key(key)
-                keys_data[key] = sorted({v for v in vals if v})
+                counter = Counter()
+                for docId in all_docs:
+                    for val in self.srvdtb.get_values(docId, key):
+                        if val:
+                            counter[val] += 1
+                if counter:
+                    keys_data[key] = [{'v': v, 'c': c} for v, c in sorted(counter.items())]
         var['page']['keys_json'] = json.dumps(keys_data, ensure_ascii=True)
         page = TPL.render(var=var)
         self.distribute_adoc('add', page)
