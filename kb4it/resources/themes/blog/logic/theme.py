@@ -128,9 +128,11 @@ class Theme(Builder):
         """
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-            self.srvbes.add_target('index.adoc', 'index.html')
-            return
+            cached = os.path.join(self.srvbes.get_path('cache'), 'index.html')
+            if os.path.exists(cached):
+                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
+                self.srvbes.add_target('index.adoc', 'index.html')
+                return
 
         var = self.get_theme_var()
         TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
@@ -359,9 +361,11 @@ class Theme(Builder):
 
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-            self.srvbes.add_target('events.adoc', 'events.html')
-            return
+            cached = os.path.join(self.srvbes.get_path('cache'), 'events.html')
+            if os.path.exists(cached):
+                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
+                self.srvbes.add_target('events.adoc', 'events.html')
+                return
 
         events = {}
         events['content'] = HTML
@@ -400,9 +404,11 @@ class Theme(Builder):
     def build_page_properties(self):
         if self.srvbes.get_value('runtime', 'nck') == 0:
             func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
-            self.srvbes.add_target('properties.adoc', 'properties.html')
-            return
+            cached = os.path.join(self.srvbes.get_path('cache'), 'properties.html')
+            if os.path.exists(cached):
+                self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
+                self.srvbes.add_target('properties.adoc', 'properties.html')
+                return
 
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
@@ -497,9 +503,11 @@ class Theme(Builder):
         """Create stats page"""
         if self.srvbes.get_value('runtime', 'nck') == 0:
             func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
-            self.srvbes.add_target('stats.adoc', 'stats.html')
-            return
+            cached = os.path.join(self.srvbes.get_path('cache'), 'stats.html')
+            if os.path.exists(cached):
+                self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
+                self.srvbes.add_target('stats.adoc', 'stats.html')
+                return
 
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         var = self.get_theme_var()
@@ -525,9 +533,11 @@ class Theme(Builder):
         """Create a page with all documents"""
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-            self.srvbes.add_target('all.adoc', 'all.html')
-            return
+            cached = os.path.join(self.srvbes.get_path('cache'), 'all.html')
+            if os.path.exists(cached):
+                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
+                self.srvbes.add_target('all.adoc', 'all.html')
+                return
 
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
@@ -774,9 +784,11 @@ class Theme(Builder):
         """Create bookmarks page."""
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
-            self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-            self.srvbes.add_target('bookmarks.adoc', 'bookmarks.html')
-            return
+            cached = os.path.join(self.srvbes.get_path('cache'), 'bookmarks.html')
+            if os.path.exists(cached):
+                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
+                self.srvbes.add_target('bookmarks.adoc', 'bookmarks.html')
+                return
 
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
         var = self.get_theme_var()
