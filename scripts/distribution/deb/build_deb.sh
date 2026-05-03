@@ -15,7 +15,7 @@ cd "${REPO_ROOT}"
 
 VERSION="$(cat kb4it/VERSION)"
 # Debian versions cannot contain '+', replace with '~' which sorts correctly.
-DEB_VERSION="${VERSION//+/~}"
+DEB_VERSION="$(tr '+' '~' <<<"${VERSION}")"
 ARCH="all"
 PKG_NAME="kb4it"
 BUILD_DIR="${REPO_ROOT}/dist/deb_build"
