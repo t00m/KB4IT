@@ -249,14 +249,14 @@ CATEGORIES = [
                ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
     }
 
-    /* Extract ordered key names from the skeleton header */
+    /* Extract ordered key names and default values from the skeleton header */
     function parseKeys(catId) {
         var keys = [];
         var lines = KB_SKEL[catId].split('\n');
         for (var i = 0; i < lines.length; i++) {
             if (lines[i].indexOf('// END-OF-HEADER') === 0) break;
             var m = lines[i].match(/^:([^:]+):\s*(.*)/);
-            if (m) keys.push(m[1]);
+            if (m) keys.push({ name: m[1], val: m[2].trim() });
         }
         return keys;
     }
@@ -266,7 +266,8 @@ CATEGORIES = [
         var keys = parseKeys(catId);
         var out = ['= ', ''];
         keys.forEach(function (key) {
-            out.push(':' + key + ':' + (key === 'Date' ? ' ' + timestamp() : ''));
+            var val = key.name === 'Date' ? timestamp() : key.val;
+            out.push(':' + key.name + ':' + (val ? ' ' + val : ''));
         });
         out.push('');
         out.push('// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE');
@@ -291,36 +292,44 @@ CATEGORIES = [
         ul.setAttribute('uk-accordion', '');
 
         keys.forEach(function (key) {
-            var items = KB_KEYS[key];
-            if (!items || items.length === 0) return;
-
-            var maxC = 1;
-            items.forEach(function (it) { if (it.c > maxC) maxC = it.c; });
-            var logMax = Math.log(1 + maxC) || 1;
+            if (key.name === 'Date') return;
+            var items = KB_KEYS[key.name] || [];
 
             var li = document.createElement('li');
 
             var a = document.createElement('a');
             a.className = 'uk-accordion-title';
             a.href = '';
-            a.innerHTML = key +
-                '<span style="font-size:0.7rem;font-weight:400;color:#ccc;margin-left:5px;">' +
-                '(' + items.length + ')</span>';
+            a.innerHTML = key.name +
+                (items.length > 0
+                    ? '<span style="font-size:0.7rem;font-weight:400;color:#ccc;margin-left:5px;">(' + items.length + ')</span>'
+                    : '');
 
             var div = document.createElement('div');
             div.className = 'uk-accordion-content';
 
             var cloud = document.createElement('div');
             cloud.className = 'kb-wcloud';
-            items.forEach(function (it) {
-                var w = Math.log(1 + it.c) / logMax;
-                var sp = document.createElement('span');
-                sp.className = 'kb-wcloud-word';
-                sp.style.setProperty('--kb-weight', w.toFixed(3));
-                sp.textContent = it.v;
-                sp.title = it.c + (it.c === 1 ? ' document' : ' documents');
-                cloud.appendChild(sp);
-            });
+
+            if (items.length > 0) {
+                var maxC = 1;
+                items.forEach(function (it) { if (it.c > maxC) maxC = it.c; });
+                var logMax = Math.log(1 + maxC) || 1;
+                items.forEach(function (it) {
+                    var w = Math.log(1 + it.c) / logMax;
+                    var sp = document.createElement('span');
+                    sp.className = 'kb-wcloud-word';
+                    sp.style.setProperty('--kb-weight', w.toFixed(3));
+                    sp.textContent = it.v;
+                    sp.title = it.c + (it.c === 1 ? ' document' : ' documents');
+                    cloud.appendChild(sp);
+                });
+            } else {
+                var empty = document.createElement('span');
+                empty.style.cssText = 'font-size:0.75rem;color:#bbb;font-style:italic;';
+                empty.textContent = 'No values yet';
+                cloud.appendChild(empty);
+            }
 
             div.appendChild(cloud);
             li.appendChild(a);

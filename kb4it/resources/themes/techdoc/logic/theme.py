@@ -813,18 +813,16 @@ class Theme(Builder):
                 skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
         var['page']['skeletons'] = skeletons
         var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True)
-        ignored = self.srvdtb.get_ignored_keys()
         keys_data = {}
         all_docs = self.srvdtb.get_documents()
         for key in self.srvdtb.get_all_keys():
-            if key not in ignored:
-                counter = Counter()
-                for docId in all_docs:
-                    for val in self.srvdtb.get_values(docId, key):
-                        if val:
-                            counter[val] += 1
-                if counter:
-                    keys_data[key] = [{'v': v, 'c': c} for v, c in sorted(counter.items())]
+            counter = Counter()
+            for docId in all_docs:
+                for val in self.srvdtb.get_values(docId, key):
+                    if val:
+                        counter[val] += 1
+            if counter:
+                keys_data[key] = [{'v': v, 'c': c} for v, c in sorted(counter.items())]
         var['page']['keys_json'] = json.dumps(keys_data, ensure_ascii=True)
         page = TPL.render(var=var)
         self.distribute_adoc('add', page)
