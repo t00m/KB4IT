@@ -1,0 +1,136 @@
+/* KB4IT.css custom stylesheet based on Asciidoctor default stylesheet */
+
+body {
+    overflow-y: scroll; /* Show vertical scrollbar */
+}
+
+pre {
+    padding: 15px;
+    overflow: auto;
+    margin: 10px 0; /* Space around the div */
+    border: 3px solid black;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+pre code {
+    background-color: black;
+    color: #52ff00;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+table.month{
+    border-collapse: separate;
+    border-spacing: 3px;
+}
+
+table.month{
+    font-family: monospace;
+    border-collapse: separate;
+    border-spacing: 3px;
+}
+
+table.month tbody tr th {
+    background-color: lightgray;
+    border: 1px solid gray;
+}
+
+#kb4it-datatable {
+    font-size: smaller;
+}
+
+#kb4it-table-metadata {
+    border: 2px solid black;
+    font-size: smaller;
+}
+
+#kb4it-table-metadata  td {
+    border: 1px solid lightgray;
+    font-size: smaller;
+}
+
+#kb4it-table-metadata td span {
+    color: gray;
+}
+
+#kb4it-table-metadata td span:hover {
+    color: blue;
+}
+
+.content pre{
+    background-color: black;
+    color: #52ff00;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+#kb4it-page-title {
+    display: inline;
+    font: 18px Arial, Helvetica,"Lucida Grande", serif;
+    color: #000;
+    padding-top: 2em;
+}
+
+.admonitionblock {
+    border: 3px solid black;
+    color: black;
+    padding: 15px; /* Add padding */
+    font-family: Arial, sans-serif; /* Font style */
+    margin: 10px 0; /* Space around the div */
+}
+
+.admonitionblock.note {
+    background-color: #ffffba;
+}
+
+.admonitionblock.tip {
+    background-color:  #baffc9;
+}
+
+.admonitionblock.important {
+    background-color: #bae1ff;
+}
+
+.admonitionblock.caution {
+    background-color: #ffb3ba;
+}
+
+.admonitionblock.warning {
+    background-color: orange;
+}
+
+.admonitionblock .uk-icon {
+    border: 1px solid black;
+}
+
+
+#kb-sect1 {
+    border: 1px solid transparent;
+}
+
+#kb-sect2 {
+    border: 1px solid transparent;
+}
+
+#kb-sect3 {
+    border: 1px solid transparent;
+}
+
+#kb-sect4 {
+    border: 1px solid transparent;
+}
+
+
+#kb-sect1:hover {
+    border: 1px solid black;
+}
+
+#kb-sect2:hover {
+    border: 1px solid black;
+}
+
+#kb-sect3:hover {
+    border: 1px solid black;
+}
+
+#kb-sect4:hover {
+    border: 1px solid black;
+}

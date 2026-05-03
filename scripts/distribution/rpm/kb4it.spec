@@ -2,7 +2,7 @@
 #
 # Release convention: RPM does not allow '+' in Version, so semver build
 # metadata (e.g. 0.7.31+build.0) is remapped to Release (build.0) at build
-# time by build_rpm.sh. The %{kb4it_version} / %{kb4it_release} macros are
+# time by build_rpm.sh. The %%{kb4it_version} / %%{kb4it_release} macros are
 # passed via rpmbuild --define.
 #
 # Packaging style: same as the .deb — install the wheel into a private
@@ -42,12 +42,9 @@ incremental compilation via file hashing.
 rm -rf %{buildroot}
 install -d %{buildroot}/opt/%{name}/wheel
 install -d %{buildroot}%{_bindir}
-install -d %{buildroot}%{_docdir}/%{name}
 
 python3 -m pip install --quiet --upgrade --user build
 python3 -m build --wheel --outdir %{buildroot}/opt/%{name}/wheel
-cp LICENSE %{buildroot}%{_docdir}/%{name}/
-cp README.rst Changelog AUTHORS THANKS %{buildroot}%{_docdir}/%{name}/ 2>/dev/null || true
 
 %post
 VENV_DIR=/opt/%{name}/venv

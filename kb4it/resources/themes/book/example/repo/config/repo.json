@@ -1,0 +1,40 @@
+{
+    "datatable": [
+        "Updated",
+        "Title",
+        "Topic"
+    ],
+    "events": [
+        "Post",
+        "Note"
+    ],
+    "force": false,
+    "git": false,
+    "git_branch": "",
+    "git_path": "",
+    "git_repo": "",
+    "git_server": "",
+    "git_user": "",
+    "ignored_keys": [
+        "Updated"
+    ],
+    "logo": "resources/themes/book/images/logo.svg",
+    "logo_alt": "",
+    "menu": [
+        "Author",
+        "Category",
+        "Tag",
+        "Topic"
+    ],
+    "source": "/path/to/source/dir",
+    "strict": false,
+    "tagline": "My Technical Notes",
+    "target": "/path/to/target/dir",
+    "theme": "book",
+    "timeline": [
+        "Post",
+        "Note"
+    ],
+    "title": "My Book",
+    "webserver": false
+}
