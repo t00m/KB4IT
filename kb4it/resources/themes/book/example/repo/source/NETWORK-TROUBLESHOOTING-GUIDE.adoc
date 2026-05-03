@@ -1,0 +1,119 @@
+= Network Troubleshooting Guide
+// -- Mandatory properties --
+:Author: Admin Team
+:Date: 2024-04-10
+:Version: 1.2
+:DocType: How-to guide
+:Tag: networking
+// -- Semantic properties --
+:OS: Linux
+:Category: Procedure
+:Topic: Troubleshooting
+:Status: Released
+:Priority: High
+:Updated: 2024-04-10 09:00:00
+// -- Auto-extracted properties --
+:Command: ping, traceroute, netstat, ss, curl, nslookup, systemctl
+
+
+
+
+== Problem
+
+Network connectivity issues manifest as application errors, slow responses, or complete unreachability. This guide provides a systematic approach to diagnosing and resolving common network problems on Linux servers.
+
+== Prerequisites
+
+* Root or sudo access
+* Standard Linux network utilities installed (`ping`, `ss`, `curl`)
+
+== Procedure
+
+=== Step 1 — Establish the scope
+
+First, determine whether the problem is local or remote:
+
+[source,bash]
+----
+ping -c 4 127.0.0.1
+----
+
+If the loopback fails, the network stack itself is broken. If it succeeds, continue outward.
+
+[source,bash]
+----
+ping -c 4 <default-gateway-ip>
+----
+
+If the gateway is unreachable, the problem is between the host and the local network.
+
+=== Step 2 — Check interface status
+
+[source,bash]
+----
+ip addr show
+ip link show
+----
+
+Look for interfaces that are `DOWN` or lack an IP address. Also check:
+
+[source,bash]
+----
+ip route show
+----
+
+Ensure a default route (`default via ...`) is present.
+
+=== Step 3 — Test DNS resolution
+
+[source,bash]
+----
+nslookup example.com
+----
+
+If DNS fails but IP addresses work, the issue is in name resolution. Check `/etc/resolv.conf` for nameserver entries.
+
+=== Step 4 — Test remote connectivity
+
+[source,bash]
+----
+curl -v --max-time 10 https://example.com
+----
+
+[source,bash]
+----
+traceroute example.com
+----
+
+`traceroute` identifies where in the network path packets are being dropped or delayed.
+
+=== Step 5 — Inspect listening services
+
+If a local service is unreachable, verify it is listening on the expected port:
+
+[source,bash]
+----
+ss -tlnp | grep <port>
+----
+
+Check that a firewall is not blocking the port:
+
+[source,bash]
+----
+systemctl status firewalld
+----
+
+== Verification
+
+After resolving the issue, confirm end-to-end connectivity:
+
+[source,bash]
+----
+curl -o /dev/null -s -w "%{http_code}\n" https://example.com
+----
+
+A `200` response confirms the path is clear.
+
+== Troubleshooting
+
+NOTE: Intermittent failures are often caused by DNS TTL issues or asymmetric routing. Capture traffic with `tcpdump -i eth0 -n` to identify patterns that do not appear in simple ping tests.

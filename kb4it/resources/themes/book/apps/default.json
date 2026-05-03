@@ -1,0 +1,55 @@
+{
+    "datatable": [
+        "Updated",
+        "Title",
+        "Category",
+        "Scope",
+        "Topic"
+    ],
+    "events": [
+        "Change",
+        "Incident",
+        "Issue",
+        "Note",
+        "Post",
+        "Procedure",
+        "Reminder",
+        "Report",
+        "Task"
+    ],
+    "git": false,
+    "git_branch": "",
+    "git_path": "",
+    "git_repo": "",
+    "git_server": "",
+    "git_user": "",
+    "ignored_keys": [
+        "Updated"
+    ],
+    "logo": "resources/themes/techdoc/images/logo.svg",
+    "logo_alt": "",
+    "menu": [
+        "Author",
+        "Category",
+        "Periodicity",
+        "Priority",
+        "Product",
+        "Scope",
+        "Status",
+        "Tag",
+        "Team",
+        "Topic"
+    ],
+    "sort": "Updated",
+    "source": "/path/to/source/dir",
+    "target": "/path/to/target/dir",
+    "theme": "techdoc",
+    "timeline": [
+      "Change",
+      "Incident",
+      "Note",
+      "Task"
+    ],
+    "title": "KB4IT",
+    "webserver": false
+}
