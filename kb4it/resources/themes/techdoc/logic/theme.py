@@ -815,7 +815,7 @@ class Theme(Builder):
         var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True)
         keys_data = {}
         all_docs = self.srvdtb.get_documents()
-        for key in self.srvdtb.get_all_keys():
+        for key in self.srvdtb.get_theme_keys():
             counter = Counter()
             for docId in all_docs:
                 for val in self.srvdtb.get_values(docId, key):

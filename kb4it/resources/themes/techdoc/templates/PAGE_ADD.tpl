@@ -286,21 +286,21 @@ CATEGORIES = [
     function buildAccordion(catId) {
         var container = document.getElementById('kb-accord-' + catId);
         container.innerHTML = '';
-        var keys = parseKeys(catId);
 
         var ul = document.createElement('ul');
         ul.setAttribute('uk-accordion', '');
 
-        keys.forEach(function (key) {
-            if (key.name === 'Date') return;
-            var items = KB_KEYS[key.name] || [];
+        Object.keys(KB_KEYS).sort(function (a, b) {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        }).forEach(function (keyName) {
+            var items = KB_KEYS[keyName];
 
             var li = document.createElement('li');
 
             var a = document.createElement('a');
             a.className = 'uk-accordion-title';
             a.href = '';
-            a.innerHTML = key.name +
+            a.innerHTML = keyName +
                 (items.length > 0
                     ? '<span style="font-size:0.7rem;font-weight:400;color:#ccc;margin-left:5px;">(' + items.length + ')</span>'
                     : '');
