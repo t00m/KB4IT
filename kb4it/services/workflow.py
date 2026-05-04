@@ -22,16 +22,19 @@ class Workflow(Service):
         pass
 
     def list_themes(self):
+        """Print all installed themes to the log."""
         self.log.info("[WORKFLOW] ACTION name=list_themes")
         frontend = self.get_service("Frontend")
         frontend.theme_list()
 
     def list_apps(self, theme):
+        """Print all apps available for a given theme to the log."""
         self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")
         frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
 
     def info_repository(self):
+        """Print repository configuration fields to stdout."""
         backend = self.app.get_service("Backend")
         config_file = backend.get_value("app", "config")
         if config_file is not None and os.path.exists(config_file):
@@ -46,6 +49,7 @@ class Workflow(Service):
             print(f"Documents source directory: {repo.get('source')}")
 
     def create_repository(self):
+        """Initialise a new repository from the chosen theme's example skeleton."""
         self.log.info("[WORKFLOW] ACTION name=create_repository")
         frontend = self.app.get_service("Frontend")
         params = self.app.get_params()
@@ -76,14 +80,14 @@ class Workflow(Service):
             bin_dir = os.path.join(repo_path, "bin")
             script = os.path.join(bin_dir, "compile.sh")
             config_file = os.path.join(repo_path, "config", "repo.json")
-            with open(config_file) as fc:
+            with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
             repoconf["source"] = source_dir
             repoconf["target"] = target_dir
-            with open(config_file, "w") as fc:
+            with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
-            with open(script, "w") as fs:
+            with open(script, "w", encoding="utf-8") as fs:
                 fs.write(f"kb4it -L INFO build {config_file}")
             os.chmod(
                 script,

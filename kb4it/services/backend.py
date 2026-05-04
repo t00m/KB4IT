@@ -80,7 +80,6 @@ class Backend(Service):
                 self.log.debug(f"[BACKEND] VAR_CLEARED path={dir_var} reason=force")
 
             for entry in self.runtime["dir"]:
-                dirname = self.runtime["dir"][entry]
                 if entry not in ["source", "target"]:
                     dirname = self.runtime["dir"][entry]
                     if not os.path.exists(dirname):
@@ -98,7 +97,6 @@ class Backend(Service):
             kb4it_temp_log = self.app.get_log_file()
             shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
-
 
             # Initialize docs structure
             self.runtime["docs"] = {}

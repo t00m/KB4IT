@@ -124,15 +124,18 @@ class Builder(Service):
                     tpl = Template(filename=template_path)
                     self.templates[template] = tpl
                     return tpl
-                except Exception:
+                except Exception as err:
+                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason={err}")
                     continue
 
             self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
             self.app.stop(error=True)
             raise RuntimeError(f"Template not found: {template}")
 
-    def render_template(self, name, var={}):
+    def render_template(self, name, var=None):
         """Render template according to dict var values."""
+        if var is None:
+            var = {}
         tpl = self.template(name)
         return tpl.render(var=var)
 

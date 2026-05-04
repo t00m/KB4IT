@@ -125,7 +125,8 @@ class Processor(Service):
                 # Write new adoc to temporary dir for asciidoctor
                 self.changed_docs.add(adocId)
                 source_path = os.path.join(self.srvbes.get_path("source"), adocId)
-                content = open(source_path, "r", encoding="utf-8").read()
+                with open(source_path, "r", encoding="utf-8") as fh:
+                    content = fh.read()
                 target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
                 with open(target, "w", encoding="utf-8") as target_adoc:
                     target_adoc.write(content)

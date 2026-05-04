@@ -162,8 +162,8 @@ class Database(Service):
                                 valid_filename(key), valid_filename(value)
                             )
                             n += 1
-            except Exception:
-                # FIXME: Document why it is not necessary
+            except KeyError:
+                # docId not in self.db — return empty props rather than raising
                 pass
             self.cache_props[docId] = props
             return self.cache_props[docId]
@@ -262,7 +262,7 @@ class Database(Service):
             self.log.debug(f"[DATABASE] KV_SEARCH key={key} value={value} count={len(self.cache_docs_by_kvpath[kvpath])}")
         return self.cache_docs_by_kvpath[kvpath]
 
-    def get_docs_by_date_range(self, ds, de) -> []:
+    def get_docs_by_date_range(self, ds, de) -> list:
         """Return documents whose Date falls within [ds, de]."""
         doclist = []
         for docId in self.db:

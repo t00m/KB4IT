@@ -219,14 +219,14 @@ def delete_files(files):
             log.warning("[UTIL] - %s", path)
 
 
-def json_load(filepath: str) -> {}:
+def json_load(filepath: str) -> dict:
     """Load into a dictionary a file in json format."""
     with open(filepath, "r", encoding="utf-8") as fin:
         adict = json.load(fin)
     return adict
 
 
-def json_save(filepath: str, adict: {}) -> {}:
+def json_save(filepath: str, adict: dict) -> None:
     """Save dictionary into a file in json format."""
     with open(filepath, "w", encoding="utf-8") as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
@@ -242,7 +242,8 @@ def get_asciidoctor_attributes(docpath: str):
     end_of_header_found = False
 
     try:
-        lines = open(docpath, "r", encoding="utf-8").readlines()
+        with open(docpath, "r", encoding="utf-8") as fh:
+            lines = fh.readlines()
         title_found = False
         title_line = lines[0]
 
@@ -402,16 +403,15 @@ def guess_datetime(sdate):
         "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%dT%H:%M:%SZ",
     ]
-    found = False
+    timestamp = None
     for pattern in patterns:
-        if not found:
-            try:
-                td = datetime.strptime(sdate, pattern)
-                ts = td.strftime("%Y-%m-%d %H:%M:%S")
-                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-                found = True
-            except ValueError:
-                timestamp = None
+        try:
+            td = datetime.strptime(sdate, pattern)
+            ts = td.strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            break
+        except ValueError:
+            continue
     cache_dt[sdate] = timestamp
     return timestamp
 

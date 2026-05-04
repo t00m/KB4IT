@@ -95,8 +95,8 @@ class Compiler(Service):
             if _compile_start_callback is not None:
                 try:
                     _compile_start_callback(len(docs))
-                except Exception:
-                    pass
+                except Exception as err:
+                    self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=start err={err}")
             jobs = []
             num = 1
 
@@ -109,7 +109,7 @@ class Compiler(Service):
                 job = exe.submit(self.compilation_started, data)
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
-                num = num + 1
+                num += 1
 
             if num - 1 > 0:
                 self.log.debug("[COMPILER] COMPILATION_START")
@@ -136,8 +136,8 @@ class Compiler(Service):
             if _progress_callback is not None:
                 try:
                     _progress_callback(basename, rc)
-                except Exception:
-                    pass
+                except Exception as err:
+                    self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=progress err={err}")
             if rc is True:
                 try:
                     self.srvthm.build_page(path_hdoc)

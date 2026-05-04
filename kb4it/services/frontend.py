@@ -151,11 +151,10 @@ class Frontend(Service):
             # Search in sources path
             try:
                 source_path = self.srvbes.get_path("source")
-                theme_rel_path = os.path.join(
-                    os.path.join("resources", "themes"))
+                theme_rel_path = os.path.join("resources", "themes")
                 theme_path_source = os.path.join(
                     source_path, theme_rel_path, theme)
-            except Exception:
+            except (AttributeError, TypeError):
                 theme_path_source = ""
             theme_path_opt = os.path.join(ENV["LPATH"]["THEMES"], theme)
             theme_path_global = os.path.join(ENV["GPATH"]["THEMES"], theme)
