@@ -81,7 +81,7 @@ CATEGORIES = [
                         onclick="kbAddCopy('${cat['id']}')">
                     <span uk-icon="icon: copy; ratio: 0.85"></span> Copy
                 </button>
-                <button class="uk-modal-close uk-close" type="button" uk-close></button>
+                <button class="uk-button uk-button-small uk-modal-close uk-close" type="button" uk-close> Close </button>
             </div>
         </div>
 
