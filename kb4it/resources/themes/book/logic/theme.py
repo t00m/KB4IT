@@ -13,6 +13,7 @@ Server module.
 import math
 import os
 from datetime import datetime, timedelta
+import sys
 
 from kb4it.core.env import ENV
 from kb4it.core.util import (ellipsize_text, exec_cmd,
