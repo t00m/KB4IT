@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta
 
 from kb4it.core.service import Service
-from kb4it.core.util import valid_filename
-from kb4it.core.util import guess_datetime
-from kb4it.core.util import get_human_datetime
+from kb4it.core.util import get_human_datetime, guess_datetime, valid_filename
+
 
 class Timeline(Service):
     """Generate JSON data for TimelineJS"""

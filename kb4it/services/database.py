@@ -6,9 +6,8 @@
 """
 
 from kb4it.core.service import Service
-from kb4it.core.util import (get_hash_from_list,
-                             guess_datetime, sort_dictionary,
-                             valid_filename)
+from kb4it.core.util import (get_hash_from_list, guess_datetime,
+                             sort_dictionary, valid_filename)
 
 
 class Database(Service):

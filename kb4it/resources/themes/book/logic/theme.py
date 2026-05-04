@@ -10,24 +10,19 @@ Server module.
 # Description: default theme script
 """
 
-import os
 import math
+import os
 from datetime import datetime, timedelta
 
 from kb4it.core.env import ENV
+from kb4it.core.util import (ellipsize_text, exec_cmd,
+                             get_asciidoctor_attributes, get_day,
+                             get_font_size, get_human_datetime,
+                             get_human_datetime_day, get_human_datetime_month,
+                             get_human_datetime_year, get_month, get_year,
+                             guess_datetime, json_save, set_max_frequency,
+                             valid_filename)
 from kb4it.services.builder import Builder
-from kb4it.core.util import valid_filename
-from kb4it.core.util import exec_cmd
-from kb4it.core.util import set_max_frequency, get_font_size
-from kb4it.core.util import guess_datetime
-from kb4it.core.util import get_human_datetime
-from kb4it.core.util import get_human_datetime_day
-from kb4it.core.util import get_human_datetime_month
-from kb4it.core.util import get_human_datetime_year
-from kb4it.core.util import get_asciidoctor_attributes
-from kb4it.core.util import json_save
-from kb4it.core.util import ellipsize_text
-from kb4it.core.util import get_year, get_month, get_day
 
 
 class Theme(Builder):

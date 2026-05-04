@@ -20,26 +20,15 @@ from rich.text import Text
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
+from textual.containers import (Container, Horizontal, ScrollableContainer,
+                                Vertical)
 from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    DataTable,
-    Footer,
-    Header,
-    Input,
-    Label,
-    ListItem,
-    ListView,
-    Markdown,
-    ProgressBar,
-    RichLog,
-    Static,
-)
+from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
+                             ListItem, ListView, Markdown, ProgressBar,
+                             RichLog, Static)
 
 from kb4it.core.env import ENV
 from kb4it.core.util import json_load, json_save
-
 
 # ─── constants ────────────────────────────────────────────────────────────────
 

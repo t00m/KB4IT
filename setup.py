@@ -11,8 +11,9 @@ Setup KB4IT project.
 # the standard for distributing Python Modules.
 """
 
-import os
 import glob
+import os
+
 from setuptools import setup
 
 from kb4it.core.env import ENV

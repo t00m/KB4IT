@@ -12,6 +12,7 @@ Util module.
 
 import math
 
+
 def get_font_size(frequency, max_frequency):
     """Get font size for a word based in its frequency."""
     proportion = int(math.log((frequency * 100) / max_frequency))
