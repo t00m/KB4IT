@@ -16,7 +16,6 @@ import math
 import multiprocessing
 import operator
 import os
-import pickle
 import re
 import shutil
 import subprocess
@@ -312,14 +311,16 @@ def get_hash_from_body(path):
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
 
 
-def get_hash_from_dict(adict):
-    """Get the md5 hash for a given dictionary."""
-    return hashlib.md5(pickle.dumps(adict)).hexdigest()
+def get_hash_from_dict(adict: dict) -> str:
+    """Get the blake2b hash for a given dictionary."""
+    serialized = json.dumps(adict, sort_keys=True, ensure_ascii=False)
+    return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
 
 
-def get_hash_from_list(alist):
-    """Get the md5 hash for a given list."""
-    return hashlib.md5(pickle.dumps(alist)).hexdigest()
+def get_hash_from_list(alist: list) -> str:
+    """Get the blake2b hash for a given list."""
+    serialized = json.dumps(alist, ensure_ascii=False)
+    return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
 
 
 def valid_filename(s):

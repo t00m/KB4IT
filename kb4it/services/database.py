@@ -96,8 +96,8 @@ class Database(Service):
         """Build a list of documents sorted by timestamp desc."""
         if doclist is None or len(doclist) == 0:
             doclist = list(self.db.keys())
-        md5hash = get_hash_from_list(sorted(doclist))
-        if md5hash not in self.cache_docs_sorted_by_date:
+        list_hash = get_hash_from_list(sorted(doclist))
+        if list_hash not in self.cache_docs_sorted_by_date:
             adict = {}
             for docId in doclist:
                 if not self.is_system(docId):
@@ -108,8 +108,8 @@ class Database(Service):
                     dt = guess_datetime(sdate)
                     adict[docId] = dt  # .strftime("%Y%m%d")
             sorted_docs = [docId for docId, _ in sort_dictionary(adict)]
-            self.cache_docs_sorted_by_date[md5hash] = sorted_docs
-        return self.cache_docs_sorted_by_date[md5hash]
+            self.cache_docs_sorted_by_date[list_hash] = sorted_docs
+        return self.cache_docs_sorted_by_date[list_hash]
 
     def get_documents(self):
         """Return the list of sorted docs."""
