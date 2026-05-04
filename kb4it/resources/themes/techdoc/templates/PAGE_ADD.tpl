@@ -81,7 +81,7 @@ CATEGORIES = [
                         onclick="kbAddCopy('${cat['id']}')">
                     <span uk-icon="icon: copy; ratio: 0.85"></span> Copy
                 </button>
-                <button class="uk-modal-close uk-close" type="button" uk-close></button>
+                <button class="uk-button uk-button-small uk-modal-close uk-close" type="button" uk-close> Close </button>
             </div>
         </div>
 
@@ -241,12 +241,12 @@ CATEGORIES = [
     var KB_KEYS = JSON.parse(document.getElementById('kb-add-keys').textContent);
     var KB_SKEL = JSON.parse(document.getElementById('kb-add-skeletons').textContent);
 
-    /* YYYY-MM-DD HH:MM:00 in local time */
+    /* YYYY-MM-DD in local time */
     function timestamp() {
         var d = new Date();
         var p = function (n) { return String(n).padStart(2, '0'); };
-        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
-               ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
+	return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        // return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
     }
 
     /* Extract ordered key names and default values from the skeleton header */
@@ -264,7 +264,7 @@ CATEGORIES = [
     /* Build the clean editable template for the left pane */
     function buildTemplate(catId) {
         var keys = parseKeys(catId);
-        var out = ['= ', ''];
+        var out = ['= ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title', ''];
         keys.forEach(function (key) {
             var val = key.name === 'Date' ? timestamp() : key.val;
             out.push(':' + key.name + ':' + (val ? ' ' + val : ''));
@@ -286,21 +286,21 @@ CATEGORIES = [
     function buildAccordion(catId) {
         var container = document.getElementById('kb-accord-' + catId);
         container.innerHTML = '';
-        var keys = parseKeys(catId);
 
         var ul = document.createElement('ul');
         ul.setAttribute('uk-accordion', '');
 
-        keys.forEach(function (key) {
-            if (key.name === 'Date') return;
-            var items = KB_KEYS[key.name] || [];
+        Object.keys(KB_KEYS).sort(function (a, b) {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        }).forEach(function (keyName) {
+            var items = KB_KEYS[keyName];
 
             var li = document.createElement('li');
 
             var a = document.createElement('a');
             a.className = 'uk-accordion-title';
             a.href = '';
-            a.innerHTML = key.name +
+            a.innerHTML = keyName +
                 (items.length > 0
                     ? '<span style="font-size:0.7rem;font-weight:400;color:#ccc;margin-left:5px;">(' + items.length + ')</span>'
                     : '');
