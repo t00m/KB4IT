@@ -249,8 +249,18 @@ CATEGORIES = [
         // return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
     }
 
-    /* Extract ordered key names and default values from the skeleton header */
-    function parseKeys(catId) {
+    /* Detect format from skeleton content: 'md' if YAML front matter, else 'adoc' */
+    function detectFmt(catId) {
+        var lines = KB_SKEL[catId].split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].trim() === '') continue;
+            return lines[i].trim() === '---' ? 'md' : 'adoc';
+        }
+        return 'adoc';
+    }
+
+    /* Extract keys from AsciiDoc skeleton (`:Key: value` before END-OF-HEADER) */
+    function parseKeysAdoc(catId) {
         var keys = [];
         var lines = KB_SKEL[catId].split('\n');
         for (var i = 0; i < lines.length; i++) {
@@ -261,9 +271,28 @@ CATEGORIES = [
         return keys;
     }
 
-    /* Build the clean editable template for the left pane */
-    function buildTemplate(catId) {
-        var keys = parseKeys(catId);
+    /* Extract keys from Markdown skeleton (YAML front matter between --- delimiters) */
+    function parseKeysMd(catId) {
+        var keys = [];
+        var lines = KB_SKEL[catId].split('\n');
+        var inFm = false, fmCount = 0;
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].trim() === '---') {
+                fmCount++;
+                if (fmCount === 1) { inFm = true; continue; }
+                if (fmCount === 2) { break; }
+            }
+            if (inFm) {
+                var m = lines[i].match(/^([A-Za-z][^:]+):\s*(.*)/);
+                if (m) keys.push({ name: m[1].trim(), val: m[2].trim() });
+            }
+        }
+        return keys;
+    }
+
+    /* Build AsciiDoc template: reconstruct header from skeleton keys + append body */
+    function buildTemplateAdoc(catId) {
+        var keys = parseKeysAdoc(catId);
         var out = ['= ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title', ''];
         keys.forEach(function (key) {
             var val = key.name === 'Date' ? timestamp() : key.val;
@@ -271,8 +300,6 @@ CATEGORIES = [
         });
         out.push('');
         out.push('// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE');
-
-        /* Append body sections from the skeleton (everything after EOHMARK) */
         var skelLines = KB_SKEL[catId].split('\n');
         var inBody = false;
         for (var i = 0; i < skelLines.length; i++) {
@@ -280,6 +307,37 @@ CATEGORIES = [
             if (inBody) out.push(skelLines[i]);
         }
         return out.join('\n');
+    }
+
+    /* Build Markdown template: substitute date and title in skeleton */
+    function buildTemplateMd(catId) {
+        var lines = KB_SKEL[catId].split('\n');
+        var out = [];
+        var inFm = false, fmDone = false, fmCount = 0, titleReplaced = false;
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (!fmDone && line.trim() === '---') {
+                fmCount++;
+                if (fmCount === 1) { inFm = true; out.push(line); continue; }
+                if (fmCount === 2) { inFm = false; fmDone = true; out.push(line); continue; }
+            }
+            if (inFm) {
+                var dm = line.match(/^(Date:\s*)(.*)/);
+                if (dm) { out.push('Date: ' + timestamp()); continue; }
+                out.push(line);
+            } else if (fmDone && !titleReplaced && /^#\s+/.test(line)) {
+                out.push('# ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title');
+                titleReplaced = true;
+            } else {
+                out.push(line);
+            }
+        }
+        return out.join('\n');
+    }
+
+    /* Build the clean editable template for the left pane */
+    function buildTemplate(catId) {
+        return detectFmt(catId) === 'md' ? buildTemplateMd(catId) : buildTemplateAdoc(catId);
     }
 
     /* Build the accordion + word clouds for the right pane */

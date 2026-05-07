@@ -9,8 +9,8 @@ Service Processor.
 import os
 
 from kb4it.core.service import Service
-from kb4it.core.util import (get_asciidoctor_attributes, get_hash_from_body,
-                             get_hash_from_dict, string_timestamp,
+from kb4it.core.util import (get_document_attributes, get_hash_from_body,
+                             get_hash_from_dict, html_id_for, string_timestamp,
                              valid_filename)
 
 
@@ -41,7 +41,7 @@ class Processor(Service):
             adocId = os.path.basename(filepath)
 
             # Get metadata
-            keys, valid, reason = get_asciidoctor_attributes(filepath)
+            keys, valid, reason = get_document_attributes(filepath)
             self.log.debug(f"[PROCESSOR] DOC_VALID doc={os.path.basename(filepath)} valid={valid} reason={reason}")
 
             if not valid:
@@ -99,7 +99,7 @@ class Processor(Service):
             self.log.debug(f"[PROCESSOR] HASH doc={adocId} body={b_hash} meta={m_hash}")
 
             # Add compiled page to the target list
-            htmlId = adocId.replace(".adoc", ".html")
+            htmlId = html_id_for(adocId)
             self.srvbes.add_target(adocId, htmlId)
 
         # Save new kbdict
@@ -246,7 +246,7 @@ class Processor(Service):
         result['titles_differ'] = TITLES_DIFFER
 
         # HTML cache existence
-        htmlId = adocId.replace(".adoc", ".html")
+        htmlId = html_id_for(adocId)
         cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
         NOT_CACHED = not os.path.exists(cached_document)
         result['not_cached'] = NOT_CACHED
@@ -325,7 +325,7 @@ class Processor(Service):
         for kpath in runtime["K_PATH"]:
             key, values, COMPILE_KEY = kpath
             adocId = f"{valid_filename(key)}.adoc"
-            htmlId = adocId.replace(".adoc", ".html")
+            htmlId = html_id_for(adocId)
             if COMPILE_KEY:
                 self.srvthm.build_page_key(key, values)
                 keys_with_compile_true += 1
@@ -337,7 +337,7 @@ class Processor(Service):
         for kvpath in runtime["KV_PATH"]:
             key, value, COMPILE_VALUE = kvpath
             adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
-            htmlId = adocId.replace(".adoc", ".html")
+            htmlId = html_id_for(adocId)
             if COMPILE_VALUE:
                 self.srvthm.build_page_key_value(kvpath)
                 pairs_with_compile_true += 1

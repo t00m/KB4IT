@@ -25,8 +25,8 @@ from timeline import Timeline
 from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
                              get_human_datetime, get_human_datetime_day,
                              get_human_datetime_month, get_human_datetime_year,
-                             get_month, get_year, guess_datetime,
-                             set_max_frequency, valid_filename)
+                             get_month, get_year, guess_datetime, html_id_for,
+                             set_max_frequency, source_ext, valid_filename)
 from kb4it.services.builder import Builder
 
 parser = etree.HTMLParser()
@@ -188,7 +188,7 @@ class Theme(Builder):
                 title = props.get('Title', docId)
                 if isinstance(title, list):
                     title = title[0] if title else docId
-                url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                url = props.get('Title_Url', html_id_for(docId))
                 ts = self.srvdtb.get_doc_timestamp(docId)
                 date = ''
                 if ts:
@@ -302,7 +302,7 @@ class Theme(Builder):
                     title = props.get('Title', docId)
                     if isinstance(title, list):
                         title = title[0] if title else docId
-                    url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                    url = props.get('Title_Url', html_id_for(docId))
                     categories = self.srvdtb.get_values(docId, 'Category')
                     category = categories[0] if categories and categories[0] else ''
                     rows.append({
@@ -346,7 +346,7 @@ class Theme(Builder):
                         title = props.get('Title', docId)
                         if isinstance(title, list):
                             title = title[0] if title else docId
-                        url = props.get('Title_Url', docId.replace('.adoc', '.html'))
+                        url = props.get('Title_Url', html_id_for(docId))
                         categories = self.srvdtb.get_values(docId, 'Category')
                         category = categories[0] if categories and categories[0] else ''
                         rows.append({
@@ -795,16 +795,21 @@ class Theme(Builder):
         var = self.get_theme_var()
         var['page']['title'] = 'Add document'
         runtime = self.srvbes.get_dict("runtime")
-        skeletons_dir = os.path.join(runtime["theme"]["templates"], "skeletons")
+        fmt = runtime.get("docs", {}).get("format", "adoc")
+        skel_ext = ".adoc" if fmt == "adoc" else ".md"
+        skeletons_dir = os.path.join(runtime["theme"]["templates"], fmt, "skeletons")
         category_ids = ['change', 'incident', 'meeting', 'note', 'post', 'procedure', 'report', 'task']
         skeletons = {}
         for cat_id in category_ids:
-            skel_path = os.path.join(skeletons_dir, f"{cat_id.upper()}-SKELETON.adoc")
+            skel_path = os.path.join(skeletons_dir, f"{cat_id.upper()}-SKELETON{skel_ext}")
             try:
                 with open(skel_path, encoding="utf-8") as fh:
                     skeletons[cat_id] = fh.read()
             except OSError:
-                skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
+                if fmt == "adoc":
+                    skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
+                else:
+                    skeletons[cat_id] = f"---\nDate: YYYY-MM-DD\nVersion: 1.0\nCategory: {cat_id.capitalize()}\n---\n\n# Title of the {cat_id.capitalize()}\n\n## Overview\n\nDescribe here.\n"
         var['page']['skeletons'] = skeletons
         var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True)
         keys_data = {}
@@ -901,7 +906,7 @@ class Theme(Builder):
 
         Finally, the html page created by asciidoctor is overwritten.
         """
-        path_hdoc = path_adoc.replace('.adoc', '.html')
+        path_hdoc = html_id_for(path_adoc)
         basename_adoc = os.path.basename(path_adoc)
         basename_hdoc = os.path.basename(path_hdoc)
         exists_adoc = os.path.exists(path_adoc) # it should be true
@@ -954,6 +959,7 @@ class Theme(Builder):
             var['basename_adoc'] = basename_adoc
             var['basename_hdoc'] = basename_hdoc
             var['source_adoc'] = source_adoc
+            var['fmt'] = source_ext(basename_adoc) or "adoc"
             var['source_html'] = self.apply_transformations(source_html) # <---
             actions = self.get_page_actions(var)
             var['actions'] = actions

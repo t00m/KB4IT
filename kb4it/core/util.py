@@ -23,6 +23,8 @@ import time
 from datetime import datetime
 from functools import wraps
 
+import yaml
+
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
@@ -30,6 +32,19 @@ log = get_logger("Util")
 
 cache_dt = {}
 cache_ts_ymd = {}
+
+SOURCE_EXT_RE = re.compile(r"\.(adoc|md|markdown)$", re.IGNORECASE)
+
+
+def html_id_for(doc_id: str) -> str:
+    """Return the HTML filename corresponding to a source docId."""
+    return SOURCE_EXT_RE.sub(".html", doc_id)
+
+
+def source_ext(doc_id: str) -> str:
+    """Return the source extension ('adoc', 'md', or 'markdown') from a docId, or '' if none."""
+    m = SOURCE_EXT_RE.search(doc_id)
+    return m.group(1).lower() if m else ""
 
 
 def timeit(func):
@@ -131,9 +146,11 @@ def copydir(source, dest):
 
 
 def get_source_docs(path: str):
-    """Get asciidoc documents from a given path."""
-    pattern = os.path.join(path, "*.adoc")
-    return glob.glob(pattern)
+    """Get source documents (.adoc, .md, .markdown) from a given path."""
+    docs = []
+    for ext in ("*.adoc", "*.md", "*.markdown"):
+        docs.extend(glob.glob(os.path.join(path, ext)))
+    return docs
 
 
 def exec_cmd(data):
@@ -300,15 +317,91 @@ def get_hash_from_file(path):
 
 
 def get_hash_from_body(path):
-    """Get blake2b hash for the document body (content after EOHMARK)."""
+    """Get blake2b hash for the document body."""
     if not os.path.exists(path):
         return None
-    eohmark = ENV["CONF"]["EOHMARK"]
     with open(path, "r", encoding="utf-8") as fin:
         content = fin.read()
-    idx = content.find(eohmark)
-    body = content[idx + len(eohmark):] if idx >= 0 else content
+    if path.endswith(".adoc"):
+        eohmark = ENV["CONF"]["EOHMARK"]
+        idx = content.find(eohmark)
+        body = content[idx + len(eohmark):] if idx >= 0 else content
+    else:
+        # Markdown: body is content after the closing ---
+        # Strip the leading # heading line so title renames don't invalidate the body cache
+        end = content.find("\n---", 3)
+        if end >= 0:
+            body = content[end + 4:].lstrip("\n")
+            body = re.sub(r"^#[^\n]*\n?", "", body, count=1)
+        else:
+            body = content
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
+
+
+def get_markdown_attributes(docpath: str):
+    """Get metadata from a Markdown document's YAML frontmatter."""
+    basename = os.path.basename(docpath)
+    keys = {}
+
+    try:
+        with open(docpath, "r", encoding="utf-8") as fh:
+            content = fh.read()
+
+        if not content.startswith("---"):
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter")
+            return {}, False, "missing_frontmatter"
+
+        end = content.find("\n---", 3)
+        if end < 0:
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter_close")
+            return {}, False, "missing_frontmatter_close"
+
+        fm_text = content[3:end].strip()
+        body = content[end + 4:].lstrip("\n")
+
+        fm = yaml.safe_load(fm_text) if fm_text else {}
+        if not isinstance(fm, dict):
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=invalid_frontmatter")
+            return {}, False, "invalid_frontmatter"
+
+        # Title comes from the first # heading in the body
+        title_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
+        if not title_match:
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_h1_title")
+            return {}, False, "missing_h1_title"
+
+        keys["Title"] = [title_match.group(1).strip()]
+
+        if "title" in fm or "Title" in fm:
+            log.warning(f"[UTIL] DOC_WARN doc={basename} reason=title_in_frontmatter_ignored")
+            fm.pop("title", None)
+            fm.pop("Title", None)
+
+        for k, v in fm.items():
+            if isinstance(v, list):
+                keys[k] = [str(i).strip() for i in v]
+            elif isinstance(v, str) and "," in v:
+                keys[k] = [i.strip() for i in v.split(",")]
+            else:
+                keys[k] = [str(v).strip()]
+
+    except yaml.YAMLError as err:
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=yaml_error")
+        return {}, False, f"yaml_error: {err}"
+    except Exception as err:
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
+        return {}, False, str(err)
+
+    return keys, True, "Success"
+
+
+def get_document_attributes(docpath: str):
+    """Dispatch to the appropriate metadata extractor based on file extension."""
+    if docpath.endswith(".adoc"):
+        return get_asciidoctor_attributes(docpath)
+    if docpath.endswith((".md", ".markdown")):
+        return get_markdown_attributes(docpath)
+    return {}, False, "unsupported_format"
 
 
 def get_hash_from_dict(adict: dict) -> str:

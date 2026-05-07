@@ -13,7 +13,7 @@ import shutil
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import copy_docs, copydir, delete_target_contents
+from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
 
 
 class Deployer(Service):
@@ -29,11 +29,11 @@ class Deployer(Service):
         self.log.debug("[DEPLOYER] DEPLOY_BEGIN")
 
         source_files = glob.glob(os.path.join(self.srvbes.get_path("source"), "*.*"))
-        source_adocs = [f for f in source_files if f.endswith(".adoc")]
+        source_docs = [f for f in source_files if SOURCE_EXT_RE.search(f)]
         tmp_files = glob.glob(os.path.join(self.srvbes.get_path("tmp"), "*.*"))
 
         self.step_00_copy_source_to_cache(source_files)
-        self.step_04_copy_sources_to_target(source_adocs)
+        self.step_04_copy_sources_to_target(source_docs)
         self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
         self.step_08_copy_global_resources_to_target()

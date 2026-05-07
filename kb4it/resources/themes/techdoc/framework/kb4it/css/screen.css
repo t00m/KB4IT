@@ -104,11 +104,9 @@ table.month tbody tr th {
     box-shadow: 0 4px 14px rgba(30,135,240,0.10);
 }
 
-.kb-sect1.kb-sect1-collapsed {
+.kb-sect1:not(.uk-open) {
     border-top-color: #cbd5e0;
 }
-
-.kb-sect1-collapsed .kb-section-body { display: none; }
 
 .kb-sect2 {
     border-left: 3px solid #e0e8f8;
@@ -181,7 +179,7 @@ table.month tbody tr th {
 }
 
 .kb-h2::after {
-    content: '\25BE';
+    content: '\25B8';
     font-size: 0.65rem;
     color: #94a3b8;
     margin-left: 8px;
@@ -190,8 +188,8 @@ table.month tbody tr th {
     pointer-events: none;
 }
 
-.kb-sect1-collapsed .kb-h2::after {
-    content: '\25B8';
+.kb-sect1.uk-open .kb-h2::after {
+    content: '\25BE';
 }
 
 /* ==========================================================================
@@ -863,3 +861,118 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-footer-top { color: #555; text-decoration: none; transition: color 0.12s; }
 .kb-footer-top:hover { color: #1e87f0; }
 .kb-footer-meta { color: #666; }
+
+/* ── Markdown content wrapper (visual parity with AsciiDoc) ── */
+.kb-content-md h1,
+.kb-content-md h2,
+.kb-content-md h3,
+.kb-content-md h4,
+.kb-content-md h5,
+.kb-content-md h6 {
+    font-family: inherit;
+    line-height: 1.3;
+}
+.kb-content-md h2 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #1a5fa8;
+    margin: 0 0 10px 0;
+    padding: 6px 10px 6px 14px;
+    border-left: 4px solid #1e87f0;
+    border-bottom: none;
+    letter-spacing: -0.01em;
+}
+.kb-content-md h3 {
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: #2c5282;
+    margin: 0 0 8px 0;
+    padding: 4px 8px 4px 10px;
+    border-left: 3px solid #63b3ed;
+}
+.kb-content-md h4 {
+    font-size: 0.87rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin: 0 0 6px 0;
+    padding: 3px 6px 3px 10px;
+    border-left: 2px solid #cbd5e0;
+    font-style: italic;
+}
+
+.kb-content-md p { margin: 0.75rem 0; line-height: 1.6; }
+.kb-content-md ul,
+.kb-content-md ol { margin: 0.5rem 0 0.5rem 1.5rem; line-height: 1.6; }
+.kb-content-md li { margin-bottom: 0.25rem; }
+
+.kb-content-md pre {
+    padding: 14px 16px;
+    overflow: auto;
+    border-radius: 5px;
+    background: #1e1e1e;
+    margin: 10px 0;
+}
+.kb-content-md pre code {
+    background-color: transparent;
+    color: #d4d4d4;
+    font-family: "SF Mono", "Fira Code", "Lucida Console", monospace;
+}
+.kb-content-md code {
+    background: #f4f4f4;
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    font-size: 0.9em;
+}
+.kb-content-md pre code { background: transparent; padding: 0; font-size: inherit; }
+
+.kb-content-md table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+.kb-content-md table th,
+.kb-content-md table td {
+    border: 1px solid #d0d0d0;
+    padding: 6px 12px;
+    text-align: left;
+}
+.kb-content-md table th { background: #f5f5f5; font-weight: 600; }
+.kb-content-md table tr:nth-child(even) { background: #fafafa; }
+
+.kb-content-md blockquote {
+    border-left: 4px solid #c0c0c0;
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    color: #555;
+    background: #fafafa;
+}
+
+/* Admonition blocks (python-markdown admonition extension) */
+.kb-content-md .admonition {
+    border-left: 4px solid #aaa;
+    border-radius: 3px;
+    padding: 0.6rem 1rem;
+    margin: 1rem 0;
+    background: #f8f8f8;
+}
+.kb-content-md .admonition-title {
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+.kb-content-md .admonition.note   { border-color: #5bc0de; background: #f0f8ff; }
+.kb-content-md .admonition.tip    { border-color: #5cb85c; background: #f0fff0; }
+.kb-content-md .admonition.warning { border-color: #f0ad4e; background: #fffdf0; }
+.kb-content-md .admonition.caution,
+.kb-content-md .admonition.important { border-color: #d9534f; background: #fff5f5; }
+.kb-content-md .admonition.note   .admonition-title { color: #31708f; }
+.kb-content-md .admonition.tip    .admonition-title { color: #3c763d; }
+.kb-content-md .admonition.warning .admonition-title { color: #8a6d3b; }
+.kb-content-md .admonition.caution .admonition-title,
+.kb-content-md .admonition.important .admonition-title { color: #a94442; }
+
+.kb-content-md img { max-width: 100%; height: auto; }
+.kb-content-md hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5rem 0; }

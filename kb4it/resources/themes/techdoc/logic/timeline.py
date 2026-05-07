@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from kb4it.core.service import Service
-from kb4it.core.util import get_human_datetime, guess_datetime, valid_filename
+from kb4it.core.util import get_human_datetime, guess_datetime, html_id_for, valid_filename
 
 
 class Timeline(Service):
@@ -30,7 +30,7 @@ class Timeline(Service):
             if category in event_types:
                 event = {}
                 title = self.srvdtb.get_values(doc, 'Title')[0]
-                url = f"{doc.replace('.adoc', '.html')}"
+                url = html_id_for(doc)
                 timestamp = self.srvdtb.get_values(doc, sortby)[0]
                 dt = guess_datetime(timestamp)
                 if dt is None:

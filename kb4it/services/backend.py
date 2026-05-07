@@ -61,7 +61,7 @@ class Backend(Service):
             self.runtime["dir"]["target"] = os.path.realpath(
                 self.repo["target"])
 
-            dir_root = Path(self.get_path("source")).parent.absolute()
+            dir_root = config_path.parent.parent.absolute()
             dir_var = Path.joinpath(dir_root, "var")
             dir_log = Path.joinpath(dir_var, "log")
             dir_tmp = Path.joinpath(dir_var, "tmp")
@@ -155,7 +155,7 @@ class Backend(Service):
 
     def get_path(self, name: str):
         """Get path by name."""
-        return self.runtime["dir"].get(name)
+        return self.runtime.get("dir", {}).get(name)
 
     def load_kbdict(self):
         """Load KB4IT dictionary."""
@@ -282,6 +282,31 @@ class Backend(Service):
 
         # Then, get them
         self.runtime["docs"]["bag"] = get_source_docs(sources_path)
+
+        # Format detection and single-format enforcement
+        system_filenames = {"about_kb4it.adoc", "about_app.adoc"}
+        user_files = [
+            f for f in self.runtime["docs"]["bag"]
+            if os.path.basename(f) not in system_filenames
+        ]
+        adoc_files = [f for f in user_files if f.endswith(".adoc")]
+        md_files = [f for f in user_files if f.endswith((".md", ".markdown"))]
+
+        if adoc_files and md_files:
+            self.log.error("[BACKEND] MIXED_FORMAT_DETECTED abort=True")
+            self.log.error(f"[BACKEND] ADOC_FILES n={len(adoc_files)}")
+            self.log.error(f"[BACKEND] MD_FILES n={len(md_files)}")
+            self.app.stop(error=True)
+
+        detected_fmt = "md" if md_files else "adoc"
+        declared_fmt = self.repo.get("format")
+        if declared_fmt and user_files and declared_fmt != detected_fmt:
+            self.log.error(f"[BACKEND] FORMAT_MISMATCH declared={declared_fmt} detected={detected_fmt}")
+            self.app.stop(error=True)
+        fmt = declared_fmt or detected_fmt
+        self.runtime["docs"]["format"] = fmt
+        self.log.debug(f"[BACKEND] SOURCE_FORMAT fmt={fmt}")
+
         basenames = []
         for filepath in self.runtime["docs"]["bag"]:
             basenames.append(os.path.basename(filepath))

@@ -16,7 +16,7 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import get_human_datetime, valid_filename
+from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 
 
 class Builder(Service):
@@ -26,7 +26,7 @@ class Builder(Service):
     templates = {}
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
-    _xform_pairs = None
+    _xform_pairs = {}  # keyed by format string ("adoc", "md")
 
     _XFORM_NAMES = [
         'HTML_TAG_A', 'HTML_TAG_TOC',
@@ -53,15 +53,25 @@ class Builder(Service):
         self.srvbes = self.get_service("Backend")
 
     def apply_transformations(self, content):
-        """Apply CSS transformations to the compiled page."""
-        if Builder._xform_pairs is None:
+        """Apply CSS transformations to the compiled page.
+
+        Source patterns always use _ADOC templates — Markdown output is
+        pre-processed by _restructure_md_sections() to match asciidoctor's
+        HTML structure, so the same source patterns apply.
+
+        Target (_NEW) templates are looked up via the current format subdir,
+        allowing per-format visual customisation if needed.
+        """
+        fmt = self.srvbes.get_value("docs", "format") or "adoc"
+        if fmt not in Builder._xform_pairs:
             with self._xform_lock:
-                if Builder._xform_pairs is None:
-                    Builder._xform_pairs = [
-                        (self.render_template(f'{n}_ADOC'), self.render_template(f'{n}_NEW'))
+                if fmt not in Builder._xform_pairs:
+                    Builder._xform_pairs[fmt] = [
+                        (self.render_template(f'{n}_ADOC', fmt="adoc"),
+                         self.render_template(f'{n}_NEW'))
                         for n in self._XFORM_NAMES
                     ]
-        for old, new in Builder._xform_pairs:
+        for old, new in Builder._xform_pairs[fmt]:
             if old:
                 content = content.replace(old, new)
         return content
@@ -97,32 +107,38 @@ class Builder(Service):
                 fpag.write(content)
             except Exception as error:
                 self.log.error(f"[BUILDER] WRITE_FAIL doc={ADOC_NAME} error={error}")
-        PAGE_NAME = ADOC_NAME.replace(".adoc", ".html")
+        PAGE_NAME = html_id_for(ADOC_NAME)
 
         # Add compiled page to the target list
         self.srvbes.add_target(ADOC_NAME, PAGE_NAME)
 
-    def template(self, template):
+    def template(self, template, fmt=None):
         """Return Mako Template object."""
-        cached = self.templates.get(template)
+        runtime = self.srvbes.get_dict("runtime")
+        if fmt is None:
+            fmt = runtime.get("docs", {}).get("format", "adoc") if runtime else "adoc"
+        cache_key = f"{fmt}:{template}"
+
+        cached = self.templates.get(cache_key)
         if cached is not None:
             return cached
 
         with self._templates_lock:
-            cached = self.templates.get(template)
+            cached = self.templates.get(cache_key)
             if cached is not None:
                 return cached
 
-            runtime = self.srvbes.get_dict("runtime")
             theme = runtime["theme"]
             candidates = [
+                os.path.join(theme["templates"], fmt, f"{template}.tpl"),
                 os.path.join(theme["templates"], f"{template}.tpl"),
+                os.path.join(ENV["GPATH"]["TEMPLATES"], fmt, f"{template}.tpl"),
                 os.path.join(ENV["GPATH"]["TEMPLATES"], f"{template}.tpl"),
             ]
             for template_path in candidates:
                 try:
                     tpl = Template(filename=template_path)
-                    self.templates[template] = tpl
+                    self.templates[cache_key] = tpl
                     return tpl
                 except Exception as err:
                     self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason={err}")
@@ -132,11 +148,11 @@ class Builder(Service):
             self.app.stop(error=True)
             raise RuntimeError(f"Template not found: {template}")
 
-    def render_template(self, name, var=None):
+    def render_template(self, name, var=None, fmt=None):
         """Render template according to dict var values."""
         if var is None:
             var = {}
-        tpl = self.template(name)
+        tpl = self.template(name, fmt=fmt)
         return tpl.render(var=var)
 
     def get_theme_var(self):

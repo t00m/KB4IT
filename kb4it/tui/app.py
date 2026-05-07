@@ -715,7 +715,7 @@ class FileListScreen(Screen):
         try:
             repo = json_load(self._config)
             source = Path(repo.get("source", ""))
-            files = sorted(source.glob("*.adoc"))
+            files = sorted([f for ext in ("*.adoc", "*.md", "*.markdown") for f in source.glob(ext)])
             for i, f in enumerate(files, 1):
                 sz = f.stat().st_size
                 sz_str = f"{sz:,} B" if sz < 1024 else f"{sz // 1024} KB"
@@ -823,6 +823,18 @@ class CreateProjectScreen(Screen):
     .field-label { margin: 1 1 0 1; color: $text-muted; }
     #themes-list { height: 8; margin: 0 1; border: solid $primary; }
     Input { margin: 0 1 1 1; }
+    #help-banner {
+        margin: 1 1 0 1;
+        padding: 0 1;
+        color: $text-muted;
+        background: $boost;
+        border: solid $primary;
+    }
+    #error-banner {
+        margin: 0 1;
+        padding: 0 1;
+        color: $error;
+    }
     #footer-bar { height: 3; align: center middle; }
     #footer-bar Button { margin: 0 2; }
     """
@@ -834,6 +846,14 @@ class CreateProjectScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield Label(
+            "Create a new repository from a theme's example template.\n"
+            "  Theme   — visual style for your website\n"
+            "  Name    — label shown in the project list (any text)\n"
+            "  Path    — full path where the repository will be created;\n"
+            "            its parent directory must already exist",
+            id="help-banner",
+        )
         yield Label("Select theme:", classes="field-label")
         yield ListView(id="themes-list")
         yield Label("Project display name:", classes="field-label")
@@ -843,6 +863,7 @@ class CreateProjectScreen(Screen):
             placeholder=str(Path.home() / "Documents" / "my_project"),
             id="inp-path",
         )
+        yield Label("", id="error-banner", classes="")
         with Horizontal(id="footer-bar"):
             yield Button("Create", id="create", variant="success")
             yield Button("Cancel", id="cancel", variant="default")
@@ -850,11 +871,22 @@ class CreateProjectScreen(Screen):
 
     def on_mount(self) -> None:
         self.title = "Create New Project"
+        self.query_one("#error-banner", Label).display = False
         if not self._themes:
             self.app.notify("No themes installed.", severity="warning")
         lv = self.query_one("#themes-list", ListView)
         for t in self._themes:
             lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+
+    def _show_error(self, msg: str) -> None:
+        banner = self.query_one("#error-banner", Label)
+        banner.update(f"Error: {msg}")
+        banner.display = True
+
+    def _clear_error(self) -> None:
+        banner = self.query_one("#error-banner", Label)
+        banner.update("")
+        banner.display = False
 
     @on(ListView.Highlighted, "#themes-list")
     def _theme_hi(self, event: ListView.Highlighted) -> None:
@@ -868,17 +900,25 @@ class CreateProjectScreen(Screen):
 
     @on(Button.Pressed, "#create")
     def _create(self) -> None:
+        self._clear_error()
         if not self._themes:
-            self.app.notify("No themes available.", severity="error")
+            self._show_error("No themes available. Install at least one theme first.")
             return
         theme_id = self._themes[self._theme_idx].get("id", "")
         name = self.query_one("#inp-name", Input).value.strip()
         path = os.path.expanduser(self.query_one("#inp-path", Input).value.strip())
         if not name:
-            self.app.notify("Project name cannot be empty.", severity="error")
+            self._show_error("Project display name cannot be empty.")
             return
         if not path:
-            self.app.notify("Repository path cannot be empty.", severity="error")
+            self._show_error("Repository path cannot be empty.")
+            return
+        parent = Path(path).parent
+        if not parent.exists():
+            self._show_error(
+                f"Parent directory '{parent}' does not exist. "
+                "Create it first or choose a different path."
+            )
             return
         try:
             from kb4it.core.main import KB4IT
@@ -894,14 +934,33 @@ class CreateProjectScreen(Screen):
                 inst.run()
             except SystemExit:
                 pass
+        except PermissionError:
+            self._show_error(
+                f"Permission denied. Check that you have write access to: {path}"
+            )
+            return
+        except OSError as exc:
+            self._show_error(
+                f"Cannot access '{path}': {exc.strerror}. Verify the path is valid."
+            )
+            return
+        except KeyError as exc:
+            self._show_error(
+                f"Configuration error: missing key {exc}. "
+                "The selected theme may be incompatible with this action."
+            )
+            return
         except Exception as exc:
-            self.app.notify(f"Error: {exc}", severity="error")
+            self._show_error(f"{type(exc).__name__}: {exc}")
             return
         config = str(Path(path) / "config" / "repo.json")
         if not Path(config).exists():
-            self.app.notify("Creation failed — config not found.", severity="error")
+            self._show_error(
+                f"Repo created but config not found at: {config}. "
+                f"Theme '{theme_id}' may be missing its example repository skeleton."
+            )
             return
-        self.app.notify(f"Project '{name}' created!", severity="information")
+        self.app.notify(f"Project '{name}' created at: {path}", severity="information")
         self.dismiss({"name": name, "config": config})
 
 

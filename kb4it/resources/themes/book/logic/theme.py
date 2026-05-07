@@ -21,8 +21,8 @@ from kb4it.core.util import (ellipsize_text, exec_cmd,
                              get_font_size, get_human_datetime,
                              get_human_datetime_day, get_human_datetime_month,
                              get_human_datetime_year, get_month, get_year,
-                             guess_datetime, json_save, set_max_frequency,
-                             valid_filename)
+                             guess_datetime, html_id_for, json_save,
+                             set_max_frequency, valid_filename)
 from kb4it.services.builder import Builder
 
 
@@ -154,7 +154,7 @@ class Theme(Builder):
                 var['post'][prop] = metadata[prop]
             adoc_filepath = os.path.join(self.srvbes.get_path('source'), post)
             adoc_content = open(adoc_filepath, 'r').read()
-            html_filename = post.replace('.adoc', '.html')
+            html_filename = html_id_for(post)
             html_filepath = os.path.join(self.srvbes.get_path('target'), html_filename)
             html_content = open(html_filepath, 'r').read()
             body_mark = "<!-- BODY :: START -->"
@@ -614,7 +614,7 @@ class Theme(Builder):
 
         Finally, the html page created by asciidoctor is overwritten.
         """
-        path_hdoc = path_adoc.replace('.adoc', '.html')
+        path_hdoc = html_id_for(path_adoc)
         basename_adoc = os.path.basename(path_adoc)
         basename_hdoc = os.path.basename(path_hdoc)
         exists_adoc = os.path.exists(path_adoc) # it should be true

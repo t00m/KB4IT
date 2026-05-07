@@ -6,7 +6,7 @@
 """
 
 from kb4it.core.service import Service
-from kb4it.core.util import (get_hash_from_list, guess_datetime,
+from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
                              sort_dictionary, valid_filename)
 
 
@@ -146,7 +146,7 @@ class Database(Service):
                     if key == "Title":
                         props[key] = self.db[docId][key][0]
                         key_url = "%s_Url" % key
-                        props[key_url] = docId.replace(".adoc", ".html")
+                        props[key_url] = html_id_for(docId)
                     else:
                         props[key] = self.db[docId][key]
                         n = 0
