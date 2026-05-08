@@ -245,6 +245,13 @@ def main():
         help="App template to use (default: 'default')",
     )
     init_parser.add_argument("repo_path", help="Path to the repository")
+    init_parser.add_argument(
+        "-F", "--source-fmt",
+        choices=["md", "adoc"],
+        default="md",
+        dest="source_fmt",
+        help="Source document format for new documents (default: md)",
+    )
 
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")

@@ -139,6 +139,7 @@ class Builder(Service):
                 try:
                     tpl = Template(filename=template_path)
                     self.templates[cache_key] = tpl
+                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
                     return tpl
                 except Exception as err:
                     self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason={err}")
