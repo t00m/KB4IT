@@ -160,13 +160,20 @@ class Backend(Service):
     def load_kbdict(self):
         """Load KB4IT dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
+        empty_kbdict = {"document": {}, "metadata": {}}
         try:
             kbdict = json_load(kb4it_dbfile)
             self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
+            stored_version = kbdict.get("kb4it_version")
+            current_version = ENV["APP"]["version"]
+            if stored_version != current_version:
+                self.log.warning(
+                    f"[BACKEND] KBDICT_VERSION_MISMATCH stored={stored_version} current={current_version}"
+                )
+                self.params["force"] = True
+                return empty_kbdict
         except FileNotFoundError:
-            kbdict = {}
-            kbdict["document"] = {}
-            kbdict["metadata"] = {}
+            kbdict = empty_kbdict
         except Exception as error:
             self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
             self.log.error(f"[BACKEND] ERROR {error}")
@@ -177,6 +184,7 @@ class Backend(Service):
     def save_kbdict(self, kbdict):
         """Save kb4it dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
+        kbdict["kb4it_version"] = ENV["APP"]["version"]
         json_save(kb4it_dbfile, kbdict)
         self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")
 
