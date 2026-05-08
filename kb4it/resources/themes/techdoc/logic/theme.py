@@ -18,9 +18,7 @@ import sys
 from calendar import monthrange
 from collections import Counter
 from datetime import datetime, timedelta
-
 from lxml import etree
-from timeline import Timeline
 
 from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
                              get_human_datetime, get_human_datetime_day,
@@ -640,7 +638,6 @@ class Theme(Builder):
     def build(self):
         """Create standard pages for default theme"""
         var = self.get_theme_var()
-        self.app.register_service('Timeline', Timeline())
         self.build_page_events()
         self.build_page_properties()
         self.build_page_stats()
