@@ -65,7 +65,6 @@ ENV["CONF"]["ROOT"] = abspath(sys.modules[__name__].__file__ + "/../../")
 
 ENV["CONF"]["USER_DIR"] = os.path.expanduser("~")
 ENV["CONF"]["MAX_WORKERS"] = multiprocessing.cpu_count()  # Avoid MemoryError
-ENV["CONF"]["EOHMARK"] = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
 ENV["CONF"]["ADOCPROPS"] = {
     "toc": "left",
     "toclevels": "2",

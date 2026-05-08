@@ -807,7 +807,7 @@ class Theme(Builder):
                     skeletons[cat_id] = fh.read()
             except OSError:
                 if fmt == "adoc":
-                    skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE\n\n== Overview\n\nDescribe here.\n"
+                    skeletons[cat_id] = f"= Title of the {cat_id.capitalize()}\n\n== Overview\n\nDescribe here.\n"
                 else:
                     skeletons[cat_id] = f"---\nDate: YYYY-MM-DD\nVersion: 1.0\nCategory: {cat_id.capitalize()}\n---\n\n# Title of the {cat_id.capitalize()}\n\n## Overview\n\nDescribe here.\n"
         var['page']['skeletons'] = skeletons

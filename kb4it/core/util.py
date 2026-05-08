@@ -248,56 +248,77 @@ def json_save(filepath: str, adict: dict) -> None:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
 
+def _adoc_body_start(lines: list) -> int:
+    """Return the index of the first body line in an AsciiDoc document.
+
+    Applies the same six-rule cascade used by get_asciidoctor_attributes:
+    section heading, two blank lines, property, comment, single blank, unknown text.
+    """
+    blank_count = 0
+    for i, line_raw in enumerate(lines[1:], start=1):
+        stripped = line_raw.strip()
+        if stripped.startswith("== ") or stripped == "==":
+            return i
+        if stripped == "":
+            blank_count += 1
+            if blank_count >= 2:
+                return i
+            continue
+        blank_count = 0
+        if stripped.startswith(":") or stripped.startswith("//"):
+            continue
+        return i
+    return len(lines)
+
+
 def get_asciidoctor_attributes(docpath: str):
     """Get Asciidoctor attributes from a given document."""
     basename = os.path.basename(docpath)
     keys = {}
-    valid = False
-    reason = ""
     title_found = False
-    end_of_header_found = False
 
     try:
         with open(docpath, "r", encoding="utf-8") as fh:
             lines = fh.readlines()
-        title_found = False
-        title_line = lines[0]
 
+        title_line = lines[0]
         if title_line.startswith("= "):
-            title = title_line[2:-1].strip()
-            if len(title) > 0:
+            title = title_line[2:].strip()
+            if title:
                 keys["Title"] = [title]
                 title_found = True
 
-        # Proceed only if document has a title
         if title_found:
-            end_of_header_found = False
-            # read the rest of properties until watermark
-            for n in range(1, len(lines)):
-                line = lines[n].strip()
-                if line.startswith(":"):
-                    key = line[1: line.find(":", 1)]
-                    values = line[len(key) + 2:].split(",")
-                    keys[key] = [value.strip() for value in values]
-                elif line.startswith(ENV["CONF"]["EOHMARK"]):
-                    # Stop processing if EOHMARK is found
-                    end_of_header_found = True
+            blank_count = 0
+            for line_raw in lines[1:]:
+                stripped = line_raw.strip()
+                if stripped.startswith("== ") or stripped == "==":  # rule 1: section start
                     break
-            if not end_of_header_found:
-                log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_eohmark")
-                keys = {}
+                if stripped == "":                                   # rule 5/2: blank lines
+                    blank_count += 1
+                    if blank_count >= 2:
+                        break
+                    continue
+                blank_count = 0
+                if stripped.startswith(":"):                         # rule 3: property
+                    sep = stripped.find(":", 1)
+                    if sep > 1:
+                        key = stripped[1:sep]
+                        values = stripped[sep + 1:].split(",")
+                        keys[key] = [v.strip() for v in values]
+                elif stripped.startswith("//"):                      # rule 4: comment, skip
+                    continue
+                else:                                                # rule 6: unknown text
+                    break
         else:
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_title")
             keys = {}
     except IndexError:
-        reason = "empty_doc"
         log.error(f"[UTIL] DOC_INVALID doc={basename} reason=empty_doc")
         keys = {}
 
-    if title_found and end_of_header_found:
-        valid = True
-        reason = "Success"
-
+    valid = title_found
+    reason = "Success" if valid else ""
     return keys, valid, reason
 
 
@@ -323,9 +344,9 @@ def get_hash_from_body(path):
     with open(path, "r", encoding="utf-8") as fin:
         content = fin.read()
     if path.endswith(".adoc"):
-        eohmark = ENV["CONF"]["EOHMARK"]
-        idx = content.find(eohmark)
-        body = content[idx + len(eohmark):] if idx >= 0 else content
+        lines = content.splitlines(keepends=True)
+        body_start = _adoc_body_start(lines)
+        body = "".join(lines[body_start:])
     else:
         # Markdown: body is content after the closing ---
         # Strip the leading # heading line so title renames don't invalidate the body cache
