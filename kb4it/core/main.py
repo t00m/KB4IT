@@ -238,6 +238,12 @@ def main():
     init_parser = subparsers.add_parser(
         "create", help="Initialize a new repository")
     init_parser.add_argument("theme", help="Theme to use for initialization")
+    init_parser.add_argument(
+        "app",
+        nargs="?",
+        default="default",
+        help="App template to use (default: 'default')",
+    )
     init_parser.add_argument("repo_path", help="Path to the repository")
 
     # List themes

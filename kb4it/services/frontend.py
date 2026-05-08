@@ -65,11 +65,14 @@ class Frontend(Service):
         if theme_path is not None:
             self.log.info(f"[FRONTEND] APPS_LIST theme={theme}")
             self.log.debug(f"[FRONTEND] THEME_PATH theme={theme} path={theme_path}")
-            apps_path = os.path.join(theme_path, "apps", "*.json")
-            apps = sorted(glob.glob(apps_path))
-            for app in apps:
-                app_name = os.path.basename(app)[:-5]
-                self.log.info(f"[FRONTEND] APP name={app_name}")
+            apps_path = os.path.join(theme_path, "apps")
+            if os.path.isdir(apps_path):
+                apps = sorted(
+                    d for d in os.listdir(apps_path)
+                    if os.path.isdir(os.path.join(apps_path, d))
+                )
+                for app_name in apps:
+                    self.log.info(f"[FRONTEND] APP name={app_name}")
         else:
             self.log.error(f"[FRONTEND] THEME_NOT_FOUND name={theme}")
 

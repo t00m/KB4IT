@@ -95,12 +95,15 @@ def get_themes() -> list[dict]:
 
 def get_apps(theme_name: str) -> list[str]:
     apps: list[str] = []
+    seen: set[str] = set()
     for base in [ENV["GPATH"]["THEMES"], ENV["LPATH"]["THEMES"]]:
         apps_path = Path(base) / theme_name / "apps"
         if not apps_path.exists():
             continue
-        for f in sorted(apps_path.glob("*.json")):
-            apps.append(f.stem)
+        for entry in sorted(apps_path.iterdir()):
+            if entry.is_dir() and entry.name not in seen:
+                seen.add(entry.name)
+                apps.append(entry.name)
     return apps
 
 
@@ -821,7 +824,8 @@ class CreateProjectScreen(Screen):
     CSS = """
     CreateProjectScreen { layout: vertical; }
     .field-label { margin: 1 1 0 1; color: $text-muted; }
-    #themes-list { height: 8; margin: 0 1; border: solid $primary; }
+    #themes-list { height: 6; margin: 0 1; border: solid $primary; }
+    #apps-list   { height: 4; margin: 0 1; border: solid $secondary; }
     Input { margin: 0 1 1 1; }
     #help-banner {
         margin: 1 1 0 1;
@@ -843,12 +847,15 @@ class CreateProjectScreen(Screen):
         super().__init__(**kw)
         self._themes = get_themes()
         self._theme_idx = 0
+        self._apps: list[str] = []
+        self._app_idx = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Label(
-            "Create a new repository from a theme's example template.\n"
+            "Create a new repository from a theme app template.\n"
             "  Theme   — visual style for your website\n"
+            "  App     — template to initialise the repository from\n"
             "  Name    — label shown in the project list (any text)\n"
             "  Path    — full path where the repository will be created;\n"
             "            its parent directory must already exist",
@@ -856,6 +863,8 @@ class CreateProjectScreen(Screen):
         )
         yield Label("Select theme:", classes="field-label")
         yield ListView(id="themes-list")
+        yield Label("Select app:", classes="field-label")
+        yield ListView(id="apps-list")
         yield Label("Project display name:", classes="field-label")
         yield Input(placeholder="My Project", id="inp-name")
         yield Label("Repository path:", classes="field-label")
@@ -877,6 +886,20 @@ class CreateProjectScreen(Screen):
         lv = self.query_one("#themes-list", ListView)
         for t in self._themes:
             lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+        self._refresh_apps()
+
+    def _refresh_apps(self) -> None:
+        """Repopulate the apps list for the currently selected theme."""
+        lv = self.query_one("#apps-list", ListView)
+        lv.clear()
+        self._app_idx = 0
+        if self._themes:
+            theme_id = self._themes[self._theme_idx].get("id", "")
+            self._apps = get_apps(theme_id)
+        else:
+            self._apps = []
+        for app_name in self._apps:
+            lv.append(ListItem(Label(app_name)))
 
     def _show_error(self, msg: str) -> None:
         banner = self.query_one("#error-banner", Label)
@@ -893,6 +916,13 @@ class CreateProjectScreen(Screen):
         idx = event.list_view.index
         if idx is not None:
             self._theme_idx = idx
+            self._refresh_apps()
+
+    @on(ListView.Highlighted, "#apps-list")
+    def _app_hi(self, event: ListView.Highlighted) -> None:
+        idx = event.list_view.index
+        if idx is not None:
+            self._app_idx = idx
 
     @on(Button.Pressed, "#cancel")
     def _cancel(self) -> None:
@@ -905,6 +935,7 @@ class CreateProjectScreen(Screen):
             self._show_error("No themes available. Install at least one theme first.")
             return
         theme_id = self._themes[self._theme_idx].get("id", "")
+        app_name = self._apps[self._app_idx] if self._apps else "default"
         name = self.query_one("#inp-name", Input).value.strip()
         path = os.path.expanduser(self.query_one("#inp-path", Input).value.strip())
         if not name:
@@ -926,6 +957,7 @@ class CreateProjectScreen(Screen):
             params = argparse.Namespace(
                 action="create",
                 theme=theme_id,
+                app=app_name,
                 repo_path=path,
                 log_level="WARNING",
             )

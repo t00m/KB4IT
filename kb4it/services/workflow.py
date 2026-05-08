@@ -72,7 +72,11 @@ class Workflow(Service):
         if initialize:
             self.log.info(f"[WORKFLOW] REPO_PATH path={repo_path}")
             self.log.info(f"[WORKFLOW] THEME_USE name={theme} path={theme_path}")
-            repo_demo = os.path.join(theme_path, "example", "repo")
+            app_name = params.get("app", "default") or "default"
+            repo_demo = os.path.join(theme_path, "apps", app_name)
+            if not os.path.isdir(repo_demo):
+                repo_demo = os.path.join(theme_path, "example", "repo")
+            self.log.info(f"[WORKFLOW] APP_TEMPLATE name={app_name} path={repo_demo}")
             copydir(repo_demo, repo_path)
             source_dir = os.path.join(repo_path, "source")
             target_dir = os.path.join(repo_path, "target")
