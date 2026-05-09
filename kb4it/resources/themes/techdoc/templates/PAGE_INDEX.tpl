@@ -1,7 +1,3 @@
-= ${var['page']['title']}
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
 <%!
 import re
 
@@ -27,7 +23,6 @@ def category_url(category):
     return "Category_%s.html" % safe
 %>
 
-++++
 <div class="uk-container kb-index">
 
     <!-- 0. TRIMESTER CALENDAR (hidden) -->
@@ -216,4 +211,3 @@ def category_url(category):
     </section>
 
 </div>
-++++

@@ -38,7 +38,7 @@ class Processor(Service):
         sources = self.srvbes.get_value("docs", "bag")
         for filepath in sources:
             # Get Id
-            adocId = os.path.basename(filepath)
+            docId = os.path.basename(filepath)
 
             # Get metadata
             keys, valid, reason = get_document_attributes(filepath)
@@ -48,12 +48,12 @@ class Processor(Service):
                 continue
 
             # Add to cache
-            self.kbdict_new["document"][adocId] = {}
-            self.kbdict_new["document"][adocId]["content"] = filepath
-            self.kbdict_new["document"][adocId]["keys"] = keys
+            self.kbdict_new["document"][docId] = {}
+            self.kbdict_new["document"][docId]["content"] = filepath
+            self.kbdict_new["document"][docId]["keys"] = keys
 
             # Add to the in-memory database
-            self.srvdtb.add_document(adocId)
+            self.srvdtb.add_document(docId)
             for key in keys:
                 alist = keys[key]
                 for value in alist:
@@ -61,22 +61,22 @@ class Processor(Service):
                         continue
                     if key == "Date":
                         value = string_timestamp(value)
-                    self.srvdtb.add_document_key(adocId, key, value)
+                    self.srvdtb.add_document_key(docId, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
                     try:
-                        values = self.kbdict_new["document"][adocId][key]
+                        values = self.kbdict_new["document"][docId][key]
                         if value not in values:
                             values.append(value)
-                        self.kbdict_new["document"][adocId][key] = sorted(
+                        self.kbdict_new["document"][docId][key] = sorted(
                             values)
                     except KeyError:
-                        self.kbdict_new["document"][adocId][key] = [value]
+                        self.kbdict_new["document"][docId][key] = [value]
 
                     # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                     try:
                         documents = self.kbdict_new["metadata"][key][value]
-                        documents.append(adocId)
+                        documents.append(docId)
                         self.kbdict_new["metadata"][key][value] = sorted(
                             documents, key=lambda y: y.lower()
                         )
@@ -84,7 +84,7 @@ class Processor(Service):
                         if key not in self.kbdict_new["metadata"]:
                             self.kbdict_new["metadata"][key] = {}
                         if value not in self.kbdict_new["metadata"][key]:
-                            self.kbdict_new["metadata"][key][value] = [adocId]
+                            self.kbdict_new["metadata"][key][value] = [docId]
 
             # To track changes in a document, hashes for metadata and
             # content are created. Comparing them with those in the
@@ -94,13 +94,13 @@ class Processor(Service):
             # Get Document Body and Metadata Hashes
             b_hash = get_hash_from_body(filepath)
             m_hash = get_hash_from_dict(keys)
-            self.kbdict_new["document"][adocId]["body_hash"] = b_hash
-            self.kbdict_new["document"][adocId]["metadata_hash"] = m_hash
-            self.log.debug(f"[PROCESSOR] HASH doc={adocId} body={b_hash} meta={m_hash}")
+            self.kbdict_new["document"][docId]["body_hash"] = b_hash
+            self.kbdict_new["document"][docId]["metadata_hash"] = m_hash
+            self.log.debug(f"[PROCESSOR] HASH doc={docId} body={b_hash} meta={m_hash}")
 
             # Add compiled page to the target list
-            htmlId = html_id_for(adocId)
-            self.srvbes.add_target(adocId, htmlId)
+            htmlId = html_id_for(docId)
+            self.srvbes.add_target(docId, htmlId)
 
         # Save new kbdict
         self.srvbes.save_kbdict(self.kbdict_new)
@@ -113,37 +113,37 @@ class Processor(Service):
         blocked = set(self.srvdtb.get_blocked_keys())
         ncd = 0  # Number of documents to be compiled
         for filepath in sources:
-            adocId = os.path.basename(filepath)
+            docId = os.path.basename(filepath)
             try:
-                self.kbdict_new["document"][adocId]
+                self.kbdict_new["document"][docId]
             except KeyError:
                 continue
 
-            result = self.step_01_00_analyze_document(adocId)
+            result = self.step_01_00_analyze_document(docId)
             if result['compile']:
                 ncd += 1
-                # Write new adoc to temporary dir for asciidoctor
-                self.changed_docs.add(adocId)
-                source_path = os.path.join(self.srvbes.get_path("source"), adocId)
+                # Write new source file to temporary dir for the compiler
+                self.changed_docs.add(docId)
+                source_path = os.path.join(self.srvbes.get_path("source"), docId)
                 with open(source_path, "r", encoding="utf-8") as fh:
                     content = fh.read()
-                target = f"{self.srvbes.get_path('tmp')}/{valid_filename(adocId)}"
-                with open(target, "w", encoding="utf-8") as target_adoc:
-                    target_adoc.write(content)
+                target = f"{self.srvbes.get_path('tmp')}/{valid_filename(docId)}"
+                with open(target, "w", encoding="utf-8") as fout:
+                    fout.write(content)
 
             # On metadata change, force recompile of ALL (key, value) pairs
             # this document belongs to — datatable rows reflect metadata
             # values, so any property change must refresh every page that
             # lists this document, even if its membership set is unchanged.
             if result['metadata_differs']:
-                for key in self.srvdtb.get_doc_keys(adocId):
+                for key in self.srvdtb.get_doc_keys(docId):
                     if key in ignored or key in blocked:
                         continue
-                    for value in self.srvdtb.get_values(adocId, key):
+                    for value in self.srvdtb.get_values(docId, key):
                         self.force_kv_pairs.add((key, value))
 
             # Save compilation status
-            self.kbdict_new["document"][adocId]["compile"] = result['compile']
+            self.kbdict_new["document"][docId]["compile"] = result['compile']
 
         self.srvbes.set_value("runtime", "ncd", ncd)
 
@@ -202,11 +202,11 @@ class Processor(Service):
 
         return alist
 
-    def step_01_00_analyze_document(self, adocId: str) -> dict:
+    def step_01_00_analyze_document(self, docId: str) -> dict:
         """Decide whether a document must be recompiled.
 
         Body, metadata and title are compared independently:
-          - body_differs:     body content changed (after the EOH mark)
+          - body_differs:     body content changed
           - metadata_differs: extracted keys changed
           - titles_differ:    title changed
 
@@ -220,8 +220,8 @@ class Processor(Service):
 
         # Body hash
         try:
-            body_new = self.kbdict_new["document"][adocId]["body_hash"]
-            body_cur = self.kbdict_cur["document"][adocId]["body_hash"]
+            body_new = self.kbdict_new["document"][docId]["body_hash"]
+            body_cur = self.kbdict_cur["document"][docId]["body_hash"]
             BODY_DIFFERS = body_new != body_cur
         except (KeyError, TypeError):
             BODY_DIFFERS = True
@@ -229,8 +229,8 @@ class Processor(Service):
 
         # Metadata hash
         try:
-            meta_new = self.kbdict_new["document"][adocId]["metadata_hash"]
-            meta_cur = self.kbdict_cur["document"][adocId]["metadata_hash"]
+            meta_new = self.kbdict_new["document"][docId]["metadata_hash"]
+            meta_cur = self.kbdict_cur["document"][docId]["metadata_hash"]
             METADATA_DIFFERS = meta_new != meta_cur
         except (KeyError, TypeError):
             METADATA_DIFFERS = True
@@ -238,15 +238,15 @@ class Processor(Service):
 
         # Title change
         try:
-            title_cur = self.kbdict_cur["document"][adocId]["Title"]
-            title_new = self.kbdict_new["document"][adocId]["Title"]
+            title_cur = self.kbdict_cur["document"][docId]["Title"]
+            title_new = self.kbdict_new["document"][docId]["Title"]
             TITLES_DIFFER = title_new != title_cur
         except KeyError:
             TITLES_DIFFER = True
         result['titles_differ'] = TITLES_DIFFER
 
         # HTML cache existence
-        htmlId = html_id_for(adocId)
+        htmlId = html_id_for(docId)
         cached_document = os.path.join(self.srvbes.get_path("cache"), htmlId)
         NOT_CACHED = not os.path.exists(cached_document)
         result['not_cached'] = NOT_CACHED
@@ -254,7 +254,7 @@ class Processor(Service):
         DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
-        self.log.debug(f"[PROCESSOR] ANALYZE doc={adocId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
+        self.log.debug(f"[PROCESSOR] ANALYZE doc={docId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
 
         return result
 
@@ -324,26 +324,26 @@ class Processor(Service):
         keys_with_compile_true = 0
         for kpath in runtime["K_PATH"]:
             key, values, COMPILE_KEY = kpath
-            adocId = f"{valid_filename(key)}.adoc"
-            htmlId = html_id_for(adocId)
+            docId = f"{valid_filename(key)}.md"
+            htmlId = html_id_for(docId)
             if COMPILE_KEY:
                 self.srvthm.build_page_key(key, values)
                 keys_with_compile_true += 1
 
             # Add compiled page to the target list
-            self.srvbes.add_target(adocId, htmlId)
+            self.srvbes.add_target(docId, htmlId)
 
         pairs_with_compile_true = 0
         for kvpath in runtime["KV_PATH"]:
             key, value, COMPILE_VALUE = kvpath
-            adocId = f"{valid_filename(key)}_{valid_filename(value)}.adoc"
-            htmlId = html_id_for(adocId)
+            docId = f"{valid_filename(key)}_{valid_filename(value)}.md"
+            htmlId = html_id_for(docId)
             if COMPILE_VALUE:
                 self.srvthm.build_page_key_value(kvpath)
                 pairs_with_compile_true += 1
 
             # Add compiled page to the target list
-            self.srvbes.add_target(adocId, htmlId)
+            self.srvbes.add_target(docId, htmlId)
 
         self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={keys_with_compile_true}")
         self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={pairs_with_compile_true}")

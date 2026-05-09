@@ -137,57 +137,6 @@ def _parse_level(line: str) -> str:
     return "INFO"
 
 
-# ─── adoc → markdown ──────────────────────────────────────────────────────────
-
-def _adoc_to_markdown(text: str) -> str:
-    """Lightweight AsciiDoc → Markdown conversion for Textual's Markdown widget."""
-    lines = text.splitlines()
-    out: list[str] = []
-    in_code = False
-    in_header = True
-    for line in lines:
-        stripped = line.strip()
-        if in_header:
-            if stripped == "":
-                in_header = False
-                continue
-            if stripped.startswith("= ") and not out:
-                out.append("# " + stripped[2:])
-                continue
-            if re.match(r"^:[a-zA-Z][^:]*:", stripped):
-                continue
-            in_header = False
-        if line.startswith("----") or line.startswith("...."):
-            in_code = not in_code
-            out.append("```")
-            continue
-        if in_code:
-            out.append(line)
-            continue
-        m = re.match(r"^(={2,6})\s+(.+)$", line)
-        if m:
-            level = len(m.group(1))
-            out.append("#" * level + " " + m.group(2))
-            continue
-        m = re.match(r"^(NOTE|TIP|WARNING|IMPORTANT|CAUTION):\s*(.*)$", line)
-        if m:
-            out.append(f"> **{m.group(1)}:** {m.group(2)}")
-            continue
-        bm = re.match(r"^(\*+) ", line)
-        if bm:
-            depth = len(bm.group(1))
-            out.append("  " * (depth - 1) + "- " + line[depth + 1:])
-            continue
-        if re.match(r"^\. ", line):
-            out.append("1. " + line[2:])
-            continue
-        line = re.sub(r"\*(\S(?:[^*]*\S)?)\*", r"**\1**", line)
-        line = re.sub(r"_(\S(?:[^_]*\S)?)_", r"*\1*", line)
-        line = re.sub(r"link:(\S+)\[([^\]]*)\]", r"[\2](\1)", line)
-        out.append(line)
-    return "\n".join(out)
-
-
 # ─── logging helpers ──────────────────────────────────────────────────────────
 
 def _reset_logging() -> None:
@@ -514,7 +463,7 @@ class DocumentViewerScreen(Screen):
         else:
             raw = f"Source not found: {content_path}"
 
-        self.query_one("#md", Markdown).update(_adoc_to_markdown(raw))
+        self.query_one("#md", Markdown).update(raw)
 
     @on(Button.Pressed, "#back")
     def _back(self) -> None:
@@ -718,7 +667,7 @@ class FileListScreen(Screen):
         try:
             repo = json_load(self._config)
             source = Path(repo.get("source", ""))
-            files = sorted([f for ext in ("*.adoc", "*.md", "*.markdown") for f in source.glob(ext)])
+            files = sorted([f for ext in ("*.md", "*.markdown") for f in source.glob(ext)])
             for i, f in enumerate(files, 1):
                 sz = f.stat().st_size
                 sz_str = f"{sz:,} B" if sz < 1024 else f"{sz // 1024} KB"
@@ -826,7 +775,6 @@ class CreateProjectScreen(Screen):
     .field-label { margin: 1 1 0 1; color: $text-muted; }
     #themes-list { height: 6; margin: 0 1; border: solid $primary; }
     #apps-list   { height: 4; margin: 0 1; border: solid $secondary; }
-    #fmt-list    { height: 4; margin: 0 1; border: solid $accent; }
     Input { margin: 0 1 1 1; }
     #help-banner {
         margin: 1 1 0 1;
@@ -844,15 +792,12 @@ class CreateProjectScreen(Screen):
     #footer-bar Button { margin: 0 2; }
     """
 
-    _FMT_OPTIONS = [("Markdown (.md)", "md"), ("AsciiDoc (.adoc)", "adoc")]
-
     def __init__(self, **kw: Any):
         super().__init__(**kw)
         self._themes = get_themes()
         self._theme_idx = 0
         self._apps: list[str] = []
         self._app_idx = 0
-        self._fmt = "md"
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -869,8 +814,6 @@ class CreateProjectScreen(Screen):
         yield ListView(id="themes-list")
         yield Label("Select app:", classes="field-label")
         yield ListView(id="apps-list")
-        yield Label("Source format:", classes="field-label")
-        yield ListView(id="fmt-list")
         yield Label("Project display name:", classes="field-label")
         yield Input(placeholder="My Project", id="inp-name")
         yield Label("Repository path:", classes="field-label")
@@ -893,9 +836,6 @@ class CreateProjectScreen(Screen):
         for t in self._themes:
             lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
         self._refresh_apps()
-        lv_fmt = self.query_one("#fmt-list", ListView)
-        for label, _ in self._FMT_OPTIONS:
-            lv_fmt.append(ListItem(Label(label)))
 
     def _refresh_apps(self) -> None:
         """Repopulate the apps list for the currently selected theme."""
@@ -933,12 +873,6 @@ class CreateProjectScreen(Screen):
         if idx is not None:
             self._app_idx = idx
 
-    @on(ListView.Highlighted, "#fmt-list")
-    def _fmt_hi(self, event: ListView.Highlighted) -> None:
-        idx = event.list_view.index
-        if idx is not None:
-            self._fmt = self._FMT_OPTIONS[idx][1]
-
     @on(Button.Pressed, "#cancel")
     def _cancel(self) -> None:
         self.dismiss(None)
@@ -974,7 +908,6 @@ class CreateProjectScreen(Screen):
                 theme=theme_id,
                 app=app_name,
                 repo_path=path,
-                source_fmt=self._fmt,
                 log_level="WARNING",
             )
             inst = KB4IT(params)

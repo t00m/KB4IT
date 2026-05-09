@@ -1,69 +1,58 @@
-= Help
-
-:SystemPage:    Yes
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-== KB4IT Documents
+## KB4IT Documents
 
 Any KB4IT document is made of two sections:
 
-. Header
-. Body
+1. Header (YAML frontmatter)
+2. Body (Markdown content)
 
-=== Header
+### Header
 
-By using a first level section (`=`) you set the *title of the document*.
+The header is YAML frontmatter delimited by `---` lines. Properties go
+inside as `Key: Value` pairs.
 
-Then, enclosed by (`:`) you set its *properties*.
+Examples of properties: Author, Category, Scope, Status, Priority, Team,
+Periodicity, etc.
 
-Examples of properties: Author, Category, Scope, Status, Priority, Team, Periodicity, etc...
+**Example of a KB4IT document header:**
 
-Finally, you must indicate the end of the header with this line:
+```markdown
+---
+Author:        John Doe
+Category:      Help
+Scope:         Technical documentation
+Status:        Released
+Priority:      Normal
+Team:          IT Plumbers
+Periodicity:   Timely
+---
 
-`// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE`
+# How to write Markdown documents for KB4IT
+```
 
-.*Example of header of a KB4IT document*
-----
-= How to write asciidoc documents for KB4IT
+### Body
 
-:Author:        John Doe
-:Category:      Help
-:Scope:         Technical documentation
-:Status:        Released
-:Priority:      Normal
-:Team:          IT Plumbers
+After the header, write your document body in Markdown.
 
-// Extra properties
-:Periodicity:   Timely
+It is recommended to split your document into logical sections to make
+it more readable:
 
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
+```markdown
+## Section 1
 
-----
+### Section 1.1
 
-=== Body
+### Section 1.2
 
-After you write the header, you can start writing your document.
+## Section 2
 
-The body *must* use Asciidoc format.
+### Section 2.1
+```
 
-It is recommended to split your document in logic sections in order to make it more readable:
+> **TIP:** Use the source of other KB4IT pages as templates or write your
+> own page from scratch.
 
-----
-== Section 1
+## References
 
-=== Section 1.1
-
-=== Section 1.2
-
-== Section 2
-
-=== Section 2.1
-----
-
-:TIP: Use the source code of other KB4IT pages as templates or write your own page from the scratch.
-
-== References
-
-Take a look to the https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/[AsciiDoc Syntax Quick Reference] for a quick start or read the https://asciidoctor.org/docs/asciidoc-writers-guide/[AsciiDoc Writer’s Guide] for a deeper understanding of Asciidoc markdown format.
-
+See the [CommonMark spec](https://commonmark.org/) for a quick start or
+the [Markdown Guide](https://www.markdownguide.org/) for a deeper
+understanding of the Markdown format.

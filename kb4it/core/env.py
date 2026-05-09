@@ -65,21 +65,13 @@ ENV["CONF"]["ROOT"] = abspath(sys.modules[__name__].__file__ + "/../../")
 
 ENV["CONF"]["USER_DIR"] = os.path.expanduser("~")
 ENV["CONF"]["MAX_WORKERS"] = multiprocessing.cpu_count()  # Avoid MemoryError
-ENV["CONF"]["ADOCPROPS"] = {
-    "toc": "left",
-    "toclevels": "2",
-    "icons": "font",
-    "linkcss": None,
-    "experimental": None,
-    "source-highlighter": "highlight.js",
-}
 
 # App Info
 ENV["APP"] = {}
 ENV["APP"]["name"] = "Knowledge Base For IT"
 ENV["APP"]["shortname"] = "KB4IT"
 ENV["APP"]["description"] = "KB4IT is a static website generator based on \
-                      Asciidoctor sources mainly for technical \
+                      Markdown sources mainly for technical \
                       documentation purposes."
 ENV["APP"]["license"] = "GPL v3"
 ENV["APP"]["license_long"] = "The code is licensed under the terms of the  GPL v3\n\

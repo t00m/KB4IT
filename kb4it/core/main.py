@@ -5,7 +5,7 @@ KB4IT module. Entry point.
 
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: Website static-generator based on Asciidoctor
+# Description: Website static-generator based on Markdown
 """
 
 import argparse
@@ -210,7 +210,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="kb4it",
         description=f"KB4IT v{ENV['APP']['version']}\nCustomizable \
-            static website generator based on Asciidoctor sources",
+            static website generator based on Markdown sources",
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -245,13 +245,6 @@ def main():
         help="App template to use (default: 'default')",
     )
     init_parser.add_argument("repo_path", help="Path to the repository")
-    init_parser.add_argument(
-        "-F", "--source-fmt",
-        choices=["md", "adoc"],
-        default="md",
-        dest="source_fmt",
-        help="Source document format for new documents (default: md)",
-    )
 
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")

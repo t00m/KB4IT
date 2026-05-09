@@ -58,7 +58,7 @@
                                 </div>
                             </li>
                             <!-- Metadata Button :: END -->
-                            <!-- View Asciidoc Source Button :: START -->
+                            <!-- View Markdown Source Button :: START -->
                             <li uk-tooltip="title: Document source">
                                 <span uk-icon="code"></span>
                                 <span class="uk-margin-small-left">
@@ -70,8 +70,8 @@
                                         <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
-                                                <div class="uk-text-lead">${var['basename_adoc']}</div>
-                                                <div class=""><textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_adoc']}</textarea></div>
+                                                <div class="uk-text-lead">${var['basename_md']}</div>
+                                                <div class=""><textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_md']}</textarea></div>
                                             </div>
                                         </div>
                                     </div>
@@ -81,7 +81,7 @@
                             <li uk-tooltip="title: Edit document">
                                 <span uk-icon="pencil"></span>
                                 <span class="uk-margin-small-left">
-                                    <a class="" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_adoc']}" target="_blank" uk-toggle>Edit</a>
+                                    <a class="" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank" uk-toggle>Edit</a>
                                 </span>
                             </li>
                         </ul>

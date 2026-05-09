@@ -1,7 +1,3 @@
-= Add document
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
 <%!
 CATEGORIES = [
     {'id': 'change',    'name': 'Change',    'icon': 'cog',       'color': '#f0506e', 'desc': 'A planned or completed modification to a system, process, or infrastructure component.'},
@@ -15,7 +11,6 @@ CATEGORIES = [
 ]
 %>
 
-++++
 <script id="kb-add-keys" type="application/json">${var['page']['keys_json']}</script>
 <script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json']}</script>
 
@@ -25,7 +20,7 @@ CATEGORIES = [
         <span uk-icon="icon: info; ratio: 0.9"></span>
         <strong>Note:</strong> KB4IT is a static site generator — it cannot create files for you.
         Click <em>Create</em> on any card, edit the template, then copy the
-        ready-to-use AsciiDoc file into your repository's <strong>source</strong>
+        ready-to-use Markdown file into your repository's <strong>source</strong>
         directory and rebuild.
     </div>
 
@@ -88,7 +83,7 @@ CATEGORIES = [
         <!-- Split body -->
         <div class="kb-dialog-body">
 
-            <!-- Left: editable AsciiDoc template -->
+            <!-- Left: editable Markdown template -->
             <div class="kb-pane-left">
                 <div class="kb-pane-label">Template</div>
                 <textarea id="kb-editor-${cat['id']}"
@@ -249,28 +244,6 @@ CATEGORIES = [
         // return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
     }
 
-    /* Detect format from skeleton content: 'md' if YAML front matter, else 'adoc' */
-    function detectFmt(catId) {
-        var lines = KB_SKEL[catId].split('\n');
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i].trim() === '') continue;
-            return lines[i].trim() === '---' ? 'md' : 'adoc';
-        }
-        return 'adoc';
-    }
-
-    /* Extract keys from AsciiDoc skeleton (`:Key: value` before END-OF-HEADER) */
-    function parseKeysAdoc(catId) {
-        var keys = [];
-        var lines = KB_SKEL[catId].split('\n');
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i].indexOf('// END-OF-HEADER') === 0) break;
-            var m = lines[i].match(/^:([^:]+):\s*(.*)/);
-            if (m) keys.push({ name: m[1], val: m[2].trim() });
-        }
-        return keys;
-    }
-
     /* Extract keys from Markdown skeleton (YAML front matter between --- delimiters) */
     function parseKeysMd(catId) {
         var keys = [];
@@ -288,25 +261,6 @@ CATEGORIES = [
             }
         }
         return keys;
-    }
-
-    /* Build AsciiDoc template: reconstruct header from skeleton keys + append body */
-    function buildTemplateAdoc(catId) {
-        var keys = parseKeysAdoc(catId);
-        var out = ['= ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title', ''];
-        keys.forEach(function (key) {
-            var val = key.name === 'Date' ? timestamp() : key.val;
-            out.push(':' + key.name + ':' + (val ? ' ' + val : ''));
-        });
-        out.push('');
-        out.push('// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE');
-        var skelLines = KB_SKEL[catId].split('\n');
-        var inBody = false;
-        for (var i = 0; i < skelLines.length; i++) {
-            if (skelLines[i].indexOf('// END-OF-HEADER') === 0) { inBody = true; continue; }
-            if (inBody) out.push(skelLines[i]);
-        }
-        return out.join('\n');
     }
 
     /* Build Markdown template: substitute date and title in skeleton */
@@ -337,7 +291,7 @@ CATEGORIES = [
 
     /* Build the clean editable template for the left pane */
     function buildTemplate(catId) {
-        return detectFmt(catId) === 'md' ? buildTemplateMd(catId) : buildTemplateAdoc(catId);
+        return buildTemplateMd(catId);
     }
 
     /* Build the accordion + word clouds for the right pane */
@@ -414,4 +368,3 @@ CATEGORIES = [
     };
 })();
 </script>
-++++

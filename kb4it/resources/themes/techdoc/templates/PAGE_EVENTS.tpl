@@ -1,8 +1,3 @@
-= Events
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <div class="uk-container uk-margin-top">
 
   <ul class="uk-tab" id="kb4it-events-tabs"
@@ -59,4 +54,3 @@
   });
 })();
 </script>
-++++

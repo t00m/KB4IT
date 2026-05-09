@@ -5,7 +5,7 @@ Service Compiler.
 
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: Cleaner service
+# Description: Markdown-to-HTML compiler service
 """
 
 import os
@@ -18,7 +18,7 @@ import markdown as _markdown_lib
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import (exec_cmd, get_default_workers, get_source_docs,
+from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext)
 
 # Optional TUI callbacks set by kb4it.tui.app before a build, cleared after.
@@ -62,9 +62,8 @@ class Compiler(Service):
         self.srvprc = self.get_service("Processor")
 
     def execute(self):
-        """Compile documents to html with asciidoctor."""
+        """Compile Markdown documents to HTML."""
         self.log.debug("[COMPILER] START")
-        runtime = self.srvbes.get_dict("runtime")
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(self.srvbes.get_path("tmp"), "resources")
@@ -74,18 +73,6 @@ class Compiler(Service):
             shutil.rmtree(resources_dir_tmp)
             shutil.copytree(ENV["GPATH"]["RESOURCES"], resources_dir_tmp)
         self.log.debug("[COMPILER] RESOURCES_COPIED")
-
-        adocprops = ""
-        for prop in sorted(ENV["CONF"]["ADOCPROPS"]):
-            self.log.debug(f"[COMPILER] ADOCPROP name={prop} value={ENV['CONF']['ADOCPROPS'][prop]}")
-            if ENV["CONF"]["ADOCPROPS"][prop] is not None:
-                if "%s" in ENV["CONF"]["ADOCPROPS"][prop]:
-                    adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop] % self.srvbes.get_path('target')} "
-                else:
-                    adocprops += f"-a {prop}={ENV['CONF']['ADOCPROPS'][prop]} "
-            else:
-                adocprops += f"-a {prop} "
-        runtime["adocprops"] = adocprops
 
         distributed = self.srvbes.get_value("docs", "targets")
         targets_count = len(distributed) if distributed else 0
@@ -105,7 +92,6 @@ class Compiler(Service):
             num = 1
             tmp_dir = self.srvbes.get_path("tmp")
 
-            kbdict_new = self.srvprc.get_kb_dict()
             for doc in docs:
                 basename = os.path.basename(doc)
                 fmt = source_ext(basename)
@@ -113,11 +99,10 @@ class Compiler(Service):
                     "doc": doc,
                     "format": fmt,
                     "tmp_dir": tmp_dir,
-                    "adocprops": adocprops,
                     "num": num,
                 }
                 self.log.debug(f"[COMPILER] QUEUE doc={basename} format={fmt}")
-                job = exe.submit(self.compilation_started, data)
+                job = exe.submit(self._compile_md, data)
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
                 num += 1
@@ -131,27 +116,27 @@ class Compiler(Service):
                 self.log.debug("[COMPILER] NOTHING_TO_COMPILE")
             self.log.debug("[COMPILER] END")
 
-    def compilation_started(self, data):
-        """Execute compilation dispatched by source format."""
-        fmt = data.get("format", "adoc")
-        if fmt in ("md", "markdown"):
-            return self._compile_md(data)
-        return self._compile_adoc(data)
-
-    def _compile_adoc(self, data):
-        """Compile an AsciiDoc file via asciidoctor."""
-        doc = data["doc"]
-        cmd = f"asciidoctor -q -s {data['adocprops']} -b html5 -D {data['tmp_dir']} {doc}"
-        return exec_cmd((doc, cmd, data["num"]))
-
     def _compile_md(self, data):
-        """Compile a Markdown file in-process via python-markdown."""
+        """Compile a Markdown file in-process via python-markdown.
+
+        Files tagged by Builder.distribute_md() with the theme-html sentinel
+        contain pre-rendered HTML and are passed through verbatim — section
+        restructuring would corrupt their UIKit layout.
+        """
         doc = data["doc"]
         num = data["num"]
         tmp_dir = data["tmp_dir"]
         try:
             with open(doc, "r", encoding="utf-8") as fh:
                 text = fh.read()
+            out_path = os.path.join(tmp_dir, html_id_for(os.path.basename(doc)))
+
+            if text.startswith("<!-- kb4it:theme-html -->"):
+                _, _, html_fragment = text.partition("-->")
+                with open(out_path, "w", encoding="utf-8") as fh:
+                    fh.write(html_fragment.lstrip("\n"))
+                return doc, True, num
+
             # Strip YAML frontmatter
             if text.startswith("---"):
                 end = text.find("\n---", 3)
@@ -163,16 +148,13 @@ class Compiler(Service):
                 extensions=["extra", "admonition", "toc", "sane_lists"],
             )
             html_fragment = md.convert(text)
-            # Inject an asciidoctor-compatible TOC block so extract_toc() can
-            # find and populate the Contents nav menu for markdown documents.
-            toc_block = _md_toc_to_adoc(md.toc)
+            # Inject a TOC block so extract_toc() can populate the Contents nav menu.
+            toc_block = _md_toc_block(md.toc)
             if toc_block:
                 html_fragment = toc_block + '\n' + html_fragment
             # Restructure flat headings into sect1/sectionbody divs so the
-            # standard asciidoctor transformation pipeline produces the same
-            # UIKit accordion layout as it does for AsciiDoc documents.
+            # transformation pipeline produces the UIKit accordion layout.
             html_fragment = _restructure_md_sections(html_fragment)
-            out_path = os.path.join(tmp_dir, html_id_for(os.path.basename(doc)))
             with open(out_path, "w", encoding="utf-8") as fh:
                 fh.write(html_fragment)
             return doc, True, num
@@ -187,7 +169,7 @@ class Compiler(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            self.log.info(f"[COMPILER] ASCIIDOCTOR doc={basename} rc={rc}")
+            self.log.info(f"[COMPILER] COMPILED doc={basename} rc={rc}")
             if _progress_callback is not None:
                 try:
                     _progress_callback(basename, rc)
@@ -211,10 +193,10 @@ class Compiler(Service):
                 self.app.stop()
 
 
-def _md_toc_to_adoc(toc_html: str) -> str:
-    """Convert python-markdown TOC HTML to asciidoctor-compatible format.
+def _md_toc_block(toc_html: str) -> str:
+    """Convert python-markdown TOC HTML to KB4IT's expected sectlevel format.
 
-    python-markdown uses plain <ul> nesting; extract_toc() expects sectlevel1/2/3/4
+    python-markdown emits plain <ul> nesting; extract_toc() expects sectlevel1/2/3/4
     class names and a <div id="toctitle"> marker to locate the TOC block.
     """
     if not toc_html or '<li>' not in toc_html:
@@ -241,8 +223,8 @@ def _md_toc_to_adoc(toc_html: str) -> str:
 def _restructure_md_sections(html: str) -> str:
     """Wrap h2/h3/h4 headings in sect1/sect2/sect3 + sectionbody divs.
 
-    Produces the same nested structure that asciidoctor generates, so the
-    standard ADOC transformation pipeline can apply UIKit accordion classes.
+    Produces the same nested structure expected by the transformation pipeline,
+    so UIKit accordion classes can be applied uniformly.
     """
     _LEVEL_CLASS = {2: "sect1", 3: "sect2", 4: "sect3", 5: "sect4"}
 

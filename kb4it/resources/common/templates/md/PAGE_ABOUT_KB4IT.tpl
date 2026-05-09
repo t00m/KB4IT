@@ -7,7 +7,7 @@ SystemPage: Yes
 
 **KB4IT** is a static website generator mainly for technical documentation purposes.
 
-It is based on [AsciiDoc](https://docs.asciidoctor.org/asciidoc/latest/) sources and it uses [Asciidoctor](https://asciidoctor.org) for processing them.
+It is based on [Markdown](https://commonmark.org/) sources and uses the [python-markdown](https://python-markdown.github.io/) library to convert them to HTML.
 
 This website was built using KB4IT ${var['env']['APP']['version']}
 

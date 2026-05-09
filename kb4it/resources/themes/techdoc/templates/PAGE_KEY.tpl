@@ -1,8 +1,3 @@
-= ${var['title']}
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <div class="kb-key-header">
     <span class="kb-key-title">${var['title']}</span>
     <div class="kb-key-meta">
@@ -51,4 +46,3 @@
 % endfor
     </li>
 </ul>
-++++
