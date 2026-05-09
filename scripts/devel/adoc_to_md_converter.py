@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Convert AsciiDoc files to Markdown with YAML frontmatter.
+Convert AsciiDoc files to Markdown.
 
-Extracts metadata from AsciiDoc headers and converts content to Markdown.
-Requires pandoc for best results, but has basic fallback conversion.
+Converts AsciiDoc documents to Markdown while preserving content structure.
+No metadata extraction is performed - KB4IT extracts metadata from document
+structure (filenames, headings) during processing.
 
 Usage:
     python adoc_to_md_converter.py <input_dir> <output_dir> [--overwrite]
@@ -12,13 +13,10 @@ Usage:
 import argparse
 import logging
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Optional
-
-import yaml
+from typing import Optional
 
 
 logging.basicConfig(
@@ -26,64 +24,6 @@ logging.basicConfig(
     format="%(levelname)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-class AsciiDocParser:
-    """Parse AsciiDoc headers and extract metadata."""
-
-    def __init__(self, content: str):
-        self.content = content
-        self.metadata: Dict[str, any] = {}
-        self.body = ""
-        self._parse()
-
-    def _parse(self):
-        """Parse AsciiDoc header and body."""
-        lines = self.content.split('\n')
-        idx = 0
-
-        # Parse title (first line starting with =)
-        while idx < len(lines):
-            line = lines[idx].strip()
-            if line.startswith('=') and not line.startswith('=='):
-                # Extract title from "= Title" format
-                title = line.lstrip('=').strip()
-                if title:
-                    self.metadata['title'] = title
-                idx += 1
-                break
-            idx += 1
-
-        # Parse attributes (lines starting with :)
-        while idx < len(lines):
-            line = lines[idx]
-            if line.startswith(':'):
-                # Parse attribute format ":name: value"
-                match = re.match(r'^:([^:]+):\s*(.*?)$', line)
-                if match:
-                    key, value = match.groups()
-                    self.metadata[key] = value
-                    idx += 1
-                else:
-                    # Malformed attribute, end of header
-                    break
-            elif line.strip() == '':
-                # Empty line, skip it but continue looking for attributes
-                idx += 1
-            else:
-                # Non-attribute line, end of header
-                break
-
-        # Rest is body content
-        self.body = '\n'.join(lines[idx:]).strip()
-
-    def get_metadata(self) -> Dict[str, any]:
-        """Return parsed metadata."""
-        return self.metadata
-
-    def get_body(self) -> str:
-        """Return document body."""
-        return self.body
 
 
 class MarkdownConverter:
@@ -118,9 +58,12 @@ class MarkdownConverter:
         content = adoc_content
 
         # Section headings: == Title -> ## Title, === -> ###, etc.
-        content = re.sub(r'^(=+)\s+(.+)$',
-                        lambda m: '#' * len(m.group(1)) + ' ' + m.group(2),
-                        content, flags=re.MULTILINE)
+        content = re.sub(
+            r'^(=+)\s+(.+)$',
+            lambda m: '#' * len(m.group(1)) + ' ' + m.group(2),
+            content,
+            flags=re.MULTILINE
+        )
 
         # Bold: *text* -> **text**
         content = re.sub(r'\*([^*\n]+)\*', r'**\1**', content)
@@ -128,17 +71,24 @@ class MarkdownConverter:
         # Italic: _text_ -> *text*
         content = re.sub(r'_([^_\n]+)_', r'*\1*', content)
 
-        # Monospace: `text` -> `text` (already compatible)
+        # Monospace/code: `text` remains `text` (compatible)
+
         # Code blocks: [source,language] -> ```language
         content = re.sub(
             r'\[source,([^\]]+)\]\n(-{4,})',
-            r'```\1\n',
+            lambda m: f'```{m.group(1)}\n',
             content
         )
         content = re.sub(r'^(-{4,})$', '```', content, flags=re.MULTILINE)
 
-        # Lists: * item -> - item (basic)
-        content = re.sub(r'^\*\s+', '- ', content, flags=re.MULTILINE)
+        # Numbered lists: . item -> 1. item (basic; pandoc handles better)
+        content = re.sub(r'^\. ', '1. ', content, flags=re.MULTILINE)
+
+        # Bullet lists: * item -> - item
+        content = re.sub(r'^\* ', '- ', content, flags=re.MULTILINE)
+
+        # Nested lists: ** -> two spaces + -
+        content = re.sub(r'^\*\* ', '  - ', content, flags=re.MULTILINE)
 
         # Links: link:url[text] -> [text](url)
         content = re.sub(r'link:([^\[]+)\[([^\]]+)\]', r'[\2](\1)', content)
@@ -147,6 +97,14 @@ class MarkdownConverter:
 
         # Images: image:path[alt] -> ![alt](path)
         content = re.sub(r'image:([^\[]+)\[([^\]]*)\]', r'![\2](\1)', content)
+
+        # Admonitions: NOTE: -> (no markdown equivalent, use blockquote)
+        content = re.sub(
+            r'^(NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+',
+            r'> **\1:** ',
+            content,
+            flags=re.MULTILINE
+        )
 
         return content
 
@@ -172,13 +130,8 @@ def process_file(input_file: Path, output_dir: Path, overwrite: bool = False) ->
         # Read AsciiDoc file
         content = input_file.read_text(encoding='utf-8')
 
-        # Parse header and extract metadata
-        parser = AsciiDocParser(content)
-        metadata = parser.get_metadata()
-        body = parser.get_body()
-
-        # Convert body to Markdown
-        md_body = MarkdownConverter.convert(body)
+        # Convert to Markdown
+        md_content = MarkdownConverter.convert(content)
 
         # Create output file
         output_file = output_dir / input_file.with_suffix('.md').name
@@ -187,11 +140,7 @@ def process_file(input_file: Path, output_dir: Path, overwrite: bool = False) ->
             logger.warning(f"Skipping {output_file.name} (already exists, use --overwrite)")
             return False
 
-        # Build Markdown with YAML frontmatter
-        frontmatter = yaml.dump(metadata, default_flow_style=False, sort_keys=False)
-        md_content = f"---\n{frontmatter}---\n\n{md_body}"
-
-        # Write output
+        # Write output (no frontmatter - KB4IT extracts metadata from structure)
         output_file.write_text(md_content, encoding='utf-8')
         logger.info(f"✓ Converted {input_file.name} → {output_file.name}")
         return True
@@ -203,7 +152,7 @@ def process_file(input_file: Path, output_dir: Path, overwrite: bool = False) ->
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Convert AsciiDoc files to Markdown with YAML frontmatter',
+        description='Convert AsciiDoc files to Markdown',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
