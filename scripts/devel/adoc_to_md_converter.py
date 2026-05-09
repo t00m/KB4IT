@@ -16,7 +16,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 
 logging.basicConfig(
@@ -120,6 +120,23 @@ class MarkdownConverter:
         return MarkdownConverter.basic_conversion(adoc_content)
 
 
+def extract_title_from_content(content: str) -> Tuple[Optional[str], str]:
+    """
+    Extract the first heading as the title and return title + remaining content.
+
+    Returns (title, remaining_content)
+    """
+    lines = content.split('\n')
+    for i, line in enumerate(lines):
+        # Match heading: ## Title, ### Subheading, etc.
+        match = re.match(r'^(#+)\s+(.+)$', line)
+        if match:
+            title = match.group(2).strip()
+            remaining = '\n'.join(lines[i+1:]).strip()
+            return title, remaining
+    return None, content
+
+
 def process_file(input_file: Path, output_dir: Path, overwrite: bool = False) -> bool:
     """
     Convert a single AsciiDoc file to Markdown.
@@ -133,6 +150,14 @@ def process_file(input_file: Path, output_dir: Path, overwrite: bool = False) ->
         # Convert to Markdown
         md_content = MarkdownConverter.convert(content)
 
+        # Extract title from first heading
+        title, remaining_content = extract_title_from_content(md_content)
+
+        if not title:
+            logger.warning(f"  ⚠ No heading found in {input_file.name}, using filename as title")
+            title = input_file.stem.replace('-', ' ').title()
+            remaining_content = md_content
+
         # Create output file
         output_file = output_dir / input_file.with_suffix('.md').name
 
@@ -140,8 +165,14 @@ def process_file(input_file: Path, output_dir: Path, overwrite: bool = False) ->
             logger.warning(f"Skipping {output_file.name} (already exists, use --overwrite)")
             return False
 
-        # Write output (no frontmatter - KB4IT extracts metadata from structure)
-        output_file.write_text(md_content, encoding='utf-8')
+        # Build output: frontmatter + title + content
+        output = "---\n{}\n---\n\n"
+        output += f"# {title}\n"
+        if remaining_content:
+            output += f"\n{remaining_content}"
+
+        # Write output
+        output_file.write_text(output, encoding='utf-8')
         logger.info(f"✓ Converted {input_file.name} → {output_file.name}")
         return True
 
