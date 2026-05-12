@@ -49,7 +49,7 @@ class Theme(Builder):
         So, it is not necessary to pass a date property in the headers.
         """
         #self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
-        TPL_LINK = self.template('LINK')
+        TPL_LINK = self.template('LINK_DATATABLE')
         TPL_DATATABLE = self.template('DATATABLE')
         TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
         TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
@@ -88,7 +88,7 @@ class Theme(Builder):
                     continue
                 ts_title = timestamp[:16]
                 ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-                datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
+                datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
                 final_headers = headers[1:]
             else:
                 final_headers = headers
@@ -369,18 +369,20 @@ class Theme(Builder):
 
         parts = ['<div class="kb-evcal-grid">']
         for month in range(1, 13):
+            quarter = (month - 1) // 3 + 1
             mname = MONTH_NAMES[month - 1]
             has_month = (
                 year in self.events_docs
                 and month in self.events_docs[year]
             )
+            qlabel = f'<span class="kb-evcal-qlabel">Q{quarter}</span>'
             if has_month:
                 month_url = f'events_{year:04d}{month:02d}.html'
-                caption = f'<a href="{month_url}">{mname}</a>'
+                caption = f'<a href="{month_url}">{qlabel} {mname}</a>'
             else:
-                caption = mname
+                caption = f'{qlabel} {mname}'
 
-            parts.append('<div class="kb-evcal-month">')
+            parts.append(f'<div class="kb-evcal-month kb-evcal-q{quarter}">')
             parts.append(f'<div class="kb-evcal-mname">{caption}</div>')
             parts.append('<table><thead><tr>')
             for wd in WEEKDAY_ABBR:
