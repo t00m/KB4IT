@@ -89,18 +89,22 @@ class Builder(Service):
         shutil.copy(htmlId, self.srvbes.get_path("www"))
         self.srvbes.add_target(mdId, os.path.basename(htmlId))
 
-    def distribute_md(self, name, content):
+    def distribute_md(self, name, content, as_html=True):
         """Distribute a theme-rendered system page to the temporary directory.
 
-        The file is tagged with a sentinel so the compiler treats it as
-        ready-made HTML and skips python-markdown and the heading
-        restructuring (which is meant for user markdown docs only).
+        When *as_html* is True (default), the file is tagged with a sentinel
+        so the compiler treats it as ready-made HTML and skips
+        python-markdown.  When *as_html* is False the content is treated as
+        Markdown and goes through the normal compilation pipeline.
         """
         MD_NAME = f"{name}.md"
         PAGE_PATH = os.path.join(self.srvbes.get_path("tmp"), MD_NAME)
         with open(PAGE_PATH, "w", encoding="utf-8") as fpag:
             try:
-                fpag.write("<!-- kb4it:theme-html -->\n" + content)
+                if as_html:
+                    fpag.write("<!-- kb4it:theme-html -->\n" + content)
+                else:
+                    fpag.write(content)
             except Exception as error:
                 self.log.error(f"[BUILDER] WRITE_FAIL doc={MD_NAME} error={error}")
         PAGE_NAME = html_id_for(MD_NAME)
@@ -218,7 +222,8 @@ class Builder(Service):
         TPL_PAGE_ABOUT_KB4IT = self.template("PAGE_ABOUT_KB4IT")
         var = self.get_theme_var()
         self.distribute_md(
-            "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var))
+            "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var),
+            as_html=False)
         self.srvdtb.add_document("about_kb4it.md")
         self.srvdtb.add_document_key(
             "about_kb4it.md", "Title", "About KB4IT")
@@ -232,7 +237,7 @@ class Builder(Service):
             return
         TPL_PAGE_HELP = self.template("PAGE_HELP")
         var = self.get_theme_var()
-        self.distribute_md("help", TPL_PAGE_HELP.render(var=var))
+        self.distribute_md("help", TPL_PAGE_HELP.render(var=var), as_html=False)
         self.srvdtb.add_document("help.md")
         self.srvdtb.add_document_key("help.md", "Title", "Help")
         self.srvdtb.add_document_key("help.md", "SystemPage", "Yes")
