@@ -140,6 +140,7 @@ class Theme(Builder):
         var['page']['trimester'] = self._build_index_trimester(now)
         var['page']['events_panel'] = self._build_index_events_panel(now)
         var['page']['recent_events'] = self._build_index_recent_events(now)
+        var['page']['monitoring_panel'] = self._build_index_monitoring_panel()
 
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_md('index', page)
@@ -355,6 +356,33 @@ class Theme(Builder):
                         })
         rows.reverse()
         return rows
+
+    def _build_index_monitoring_panel(self):
+        """Articles with Topic=Monitoring, grouped by Periodicity."""
+        monitoring_docs = self.srvdtb.get_docs_by_key_value('Topic', 'Monitoring')
+        groups = {}
+        for docId in monitoring_docs:
+            if self.srvdtb.is_system(docId):
+                continue
+            props = self.srvdtb.get_doc_properties(docId)
+            title = props.get('Title', docId)
+            if isinstance(title, list):
+                title = title[0] if title else docId
+            url = props.get('Title_Url', html_id_for(docId))
+            periodicities = self.srvdtb.get_values(docId, 'Periodicity')
+            if not periodicities or not periodicities[0]:
+                continue
+            periodicity = periodicities[0] 
+            groups.setdefault(periodicity, []).append({'title': title, 'url': url})
+
+        return [
+            {
+                'periodicity': p,
+                'url': 'Periodicity_%s.html' % p.replace(' ', '_'),
+                'rows': groups[p],
+            }
+            for p in sorted(groups.keys())
+        ]
 
     def _build_year_calendar_html(self, year):
         """Generate a 12-month HTML calendar grid for events.html."""

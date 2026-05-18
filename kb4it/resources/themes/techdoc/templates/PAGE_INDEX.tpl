@@ -184,6 +184,41 @@ def category_url(category):
         </div>
     </section>
 
+    <!-- 4b. MONITORING -->
+% if var['page']['monitoring_panel']:
+    <section class="kb-section">
+        <h2 class="kb-section-title">Monitoring</h2>
+        <div class="kb-panel uk-card-hover uk-box-shadow-large">
+% if len(var['page']['monitoring_panel']) == 0:
+            <div class="kb-events-empty">No monitoring articles found.</div>
+% else:
+            <div class="uk-grid-small" uk-grid>
+% for group in var['page']['monitoring_panel']:
+                <div class="uk-width-1-${ len(var['page']['monitoring_panel']) }@m">
+                    <div class="kb-events-month-header">
+                        <a href="${group['url']}">${group['periodicity']}</a>
+                    </div>
+% if len(group['rows']) == 0:
+                    <div class="kb-events-empty">No articles.</div>
+% else:
+                    <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
+                        <tbody>
+% for row in group['rows']:
+                            <tr>
+                                <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
+                            </tr>
+% endfor
+                        </tbody>
+                    </table>
+% endif
+                </div>
+% endfor
+            </div>
+% endif
+        </div>
+    </section>
+% endif
+
     <!-- 5. RECENT EVENTS -->
     <section class="kb-section">
         <h2 class="kb-section-title">Recent events</h2>
