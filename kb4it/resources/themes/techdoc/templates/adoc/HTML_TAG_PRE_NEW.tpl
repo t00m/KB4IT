@@ -1,1 +1,0 @@
-<pre class="CodeRay highlight uk-card-hover">

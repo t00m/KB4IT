@@ -1,8 +1,3 @@
-= Stats
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <div class="kb-stats-hero">
     <a class="kb-stat-card" href="all.html">
         <span class="kb-stat-icon" uk-icon="icon: file-text; ratio: 1.4"></span>
@@ -28,4 +23,3 @@
     </div>
 % endfor
 </div>
-++++

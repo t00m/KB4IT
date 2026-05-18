@@ -26,7 +26,7 @@ class Builder(Service):
     templates = {}
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
-    _xform_pairs = {}  # keyed by format string ("adoc", "md")
+    _xform_pairs = None
 
     _XFORM_NAMES = [
         'HTML_TAG_A', 'HTML_TAG_TOC',
@@ -55,23 +55,19 @@ class Builder(Service):
     def apply_transformations(self, content):
         """Apply CSS transformations to the compiled page.
 
-        Source patterns always use _ADOC templates — Markdown output is
-        pre-processed by _restructure_md_sections() to match asciidoctor's
-        HTML structure, so the same source patterns apply.
-
-        Target (_NEW) templates are looked up via the current format subdir,
-        allowing per-format visual customisation if needed.
+        Source patterns (_MD templates) match the HTML produced by the
+        Markdown compile pipeline; target (_NEW) templates supply theme-
+        specific replacements.
         """
-        fmt = self.srvbes.get_value("docs", "format") or "adoc"
-        if fmt not in Builder._xform_pairs:
+        if Builder._xform_pairs is None:
             with self._xform_lock:
-                if fmt not in Builder._xform_pairs:
-                    Builder._xform_pairs[fmt] = [
-                        (self.render_template(f'{n}_ADOC', fmt="adoc"),
+                if Builder._xform_pairs is None:
+                    Builder._xform_pairs = [
+                        (self.render_template(f'{n}_MD'),
                          self.render_template(f'{n}_NEW'))
                         for n in self._XFORM_NAMES
                     ]
-        for old, new in Builder._xform_pairs[fmt]:
+        for old, new in Builder._xform_pairs:
             if old:
                 content = content.replace(old, new)
         return content
@@ -88,57 +84,57 @@ class Builder(Service):
         Custom themes must subclass it.
         """
 
-    def distribute_html(self, adocId, htmlId):
+    def distribute_html(self, mdId, htmlId):
         """Add compiled page to the target list."""
         shutil.copy(htmlId, self.srvbes.get_path("www"))
-        self.srvbes.add_target(adocId, os.path.basename(htmlId))
+        self.srvbes.add_target(mdId, os.path.basename(htmlId))
 
-    def distribute_adoc(self, name, content):
-        """
-        Distribute source file to temporary directory.
+    def distribute_md(self, name, content, as_html=True):
+        """Distribute a theme-rendered system page to the temporary directory.
 
-        Use this method when the source asciidoctor file doesn't have to
-        be analyzed.
+        When *as_html* is True (default), the file is tagged with a sentinel
+        so the compiler treats it as ready-made HTML and skips
+        python-markdown.  When *as_html* is False the content is treated as
+        Markdown and goes through the normal compilation pipeline.
         """
-        ADOC_NAME = f"{name}.adoc"
-        PAGE_PATH = os.path.join(self.srvbes.get_path("tmp"), ADOC_NAME)
+        MD_NAME = f"{name}.md"
+        PAGE_PATH = os.path.join(self.srvbes.get_path("tmp"), MD_NAME)
         with open(PAGE_PATH, "w", encoding="utf-8") as fpag:
             try:
-                fpag.write(content)
+                if as_html:
+                    fpag.write("<!-- kb4it:theme-html -->\n" + content)
+                else:
+                    fpag.write(content)
             except Exception as error:
-                self.log.error(f"[BUILDER] WRITE_FAIL doc={ADOC_NAME} error={error}")
-        PAGE_NAME = html_id_for(ADOC_NAME)
+                self.log.error(f"[BUILDER] WRITE_FAIL doc={MD_NAME} error={error}")
+        PAGE_NAME = html_id_for(MD_NAME)
 
         # Add compiled page to the target list
-        self.srvbes.add_target(ADOC_NAME, PAGE_NAME)
+        self.srvbes.add_target(MD_NAME, PAGE_NAME)
 
-    def template(self, template, fmt=None):
+    def template(self, template):
         """Return Mako Template object."""
         runtime = self.srvbes.get_dict("runtime")
-        if fmt is None:
-            fmt = runtime.get("docs", {}).get("format", "adoc") if runtime else "adoc"
-        cache_key = f"{fmt}:{template}"
-
-        cached = self.templates.get(cache_key)
+        cached = self.templates.get(template)
         if cached is not None:
             return cached
 
         with self._templates_lock:
-            cached = self.templates.get(cache_key)
+            cached = self.templates.get(template)
             if cached is not None:
                 return cached
 
             theme = runtime["theme"]
             candidates = [
-                os.path.join(theme["templates"], fmt, f"{template}.tpl"),
+                os.path.join(theme["templates"], "md", f"{template}.tpl"),
                 os.path.join(theme["templates"], f"{template}.tpl"),
-                os.path.join(ENV["GPATH"]["TEMPLATES"], fmt, f"{template}.tpl"),
+                os.path.join(ENV["GPATH"]["TEMPLATES"], "md", f"{template}.tpl"),
                 os.path.join(ENV["GPATH"]["TEMPLATES"], f"{template}.tpl"),
             ]
             for template_path in candidates:
                 try:
                     tpl = Template(filename=template_path)
-                    self.templates[cache_key] = tpl
+                    self.templates[template] = tpl
                     self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
                     return tpl
                 except Exception as err:
@@ -149,11 +145,11 @@ class Builder(Service):
             self.app.stop(error=True)
             raise RuntimeError(f"Template not found: {template}")
 
-    def render_template(self, name, var=None, fmt=None):
+    def render_template(self, name, var=None):
         """Render template according to dict var values."""
         if var is None:
             var = {}
-        tpl = self.template(name, fmt=fmt)
+        tpl = self.template(name)
         return tpl.render(var=var)
 
     def get_theme_var(self):
@@ -200,20 +196,18 @@ class Builder(Service):
     def build_page_key(self, key, values):
         """Create page for a key."""
 
-    def build_page(self, path_adoc):
-        """
-        Build the final HTML Page for a document.
+    def build_page(self, path_md):
+        """Build the final HTML Page for a document.
 
-        At this point, the compilation for the asciidoc document has
-        finished successfully, and therefore the html page can be built.
-        The Builder receives the asciidoc document filepath. It means,
-        that another file with extension .html should also exist.
-        The html page is built by inserting the html header at the
-        beguinning, appending the footer at the end, and applying the
+        At this point, the Markdown document has been compiled successfully,
+        and therefore the html page can be built. The Builder receives the
+        source document filepath; another file with extension .html should
+        also exist. The html page is built by inserting the html header at
+        the beginning, appending the footer at the end, and applying the
         necessary transformations.
 
-        Finally, the html page created by asciidoctor is overwritten.
-        This method must be overwriten by custom themes.
+        Finally, the html page produced by the compiler is overwritten.
+        This method must be overwritten by custom themes.
         """
 
     def build_page_key_value(self, kvpath):
@@ -227,22 +221,23 @@ class Builder(Service):
         """About KB4IT page."""
         TPL_PAGE_ABOUT_KB4IT = self.template("PAGE_ABOUT_KB4IT")
         var = self.get_theme_var()
-        self.distribute_adoc(
-            "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var))
-        self.srvdtb.add_document("about_kb4it.adoc")
+        self.distribute_md(
+            "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var),
+            as_html=False)
+        self.srvdtb.add_document("about_kb4it.md")
         self.srvdtb.add_document_key(
-            "about_kb4it.adoc", "Title", "About KB4IT")
-        self.srvdtb.add_document_key("about_kb4it.adoc", "SystemPage", "Yes")
+            "about_kb4it.md", "Title", "About KB4IT")
+        self.srvdtb.add_document_key("about_kb4it.md", "SystemPage", "Yes")
 
     def create_page_help(self):
-        """Help page — generated only when the user repo has no help.adoc."""
+        """Help page — generated only when the user repo has no help.md."""
         filenames = self.srvbes.get_value("docs", "filenames")
-        if "help.adoc" in filenames:
+        if "help.md" in filenames:
             self.log.info("[BUILDER] HELP_SKIP reason=user_generated")
             return
         TPL_PAGE_HELP = self.template("PAGE_HELP")
         var = self.get_theme_var()
-        self.distribute_adoc("help", TPL_PAGE_HELP.render(var=var))
-        self.srvdtb.add_document("help.adoc")
-        self.srvdtb.add_document_key("help.adoc", "Title", "Help")
-        self.srvdtb.add_document_key("help.adoc", "SystemPage", "Yes")
+        self.distribute_md("help", TPL_PAGE_HELP.render(var=var), as_html=False)
+        self.srvdtb.add_document("help.md")
+        self.srvdtb.add_document_key("help.md", "Title", "Help")
+        self.srvdtb.add_document_key("help.md", "SystemPage", "Yes")

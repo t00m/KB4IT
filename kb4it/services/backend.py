@@ -255,35 +255,16 @@ class Backend(Service):
         # Allow theme to generate documents first
         self.srvthm = self.get_service("Theme")
 
-        # System file basenames in both formats — excluded from format detection
-        system_basenames = {
-            "about_kb4it.adoc", "about_kb4it.md",
-            "about_app.adoc",   "about_app.md",
-        }
+        # System file basenames — excluded from user-file collection
+        system_basenames = {"about_kb4it.md", "about_app.md"}
 
-        # Determine format before generating system files:
-        # peek at existing user files, fall back to declared or "md"
-        declared_fmt = self.repo.get("format")
-        early_docs = get_source_docs(sources_path)
-        user_early = [f for f in early_docs if os.path.basename(f) not in system_basenames]
-        has_adoc = any(f.endswith(".adoc") for f in user_early)
-        has_md   = any(f.endswith((".md", ".markdown")) for f in user_early)
-        if declared_fmt:
-            fmt = declared_fmt
-        elif has_md:
-            fmt = "md"
-        elif has_adoc:
-            fmt = "adoc"
-        else:
-            fmt = "md"  # empty repo: default to Markdown
-        self.runtime["docs"]["format"] = fmt
-        self.log.debug(f"[BACKEND] SOURCE_FORMAT fmt={fmt}")
+        self.runtime["docs"]["format"] = "md"
 
-        # Generate about_kb4it.{fmt} (regenerate when content changes)
+        # Generate about_kb4it.md (regenerate when content changes)
         var = self.srvbld.get_theme_var()
         TPL_PAGE_ABOUT_KB4IT = self.srvbld.template("PAGE_ABOUT_KB4IT")
         about_kb4it_content = TPL_PAGE_ABOUT_KB4IT.render(var=var)
-        about_kb4it_target = os.path.join(sources_path, f"about_kb4it.{fmt}")
+        about_kb4it_target = os.path.join(sources_path, "about_kb4it.md")
         if os.path.exists(about_kb4it_target):
             if get_hash_from_content(about_kb4it_content) != get_hash_from_file(about_kb4it_target):
                 with open(about_kb4it_target, "w", encoding="utf-8") as fout:
@@ -294,20 +275,15 @@ class Backend(Service):
                 fout.write(about_kb4it_content)
             self.log.debug("[BACKEND] ABOUT_KB4IT_CREATED")
 
-        # Generate about_app.{fmt} if missing (user-editable placeholder)
-        about_app_target = os.path.join(sources_path, f"about_app.{fmt}")
+        # Generate about_app.md if missing (user-editable placeholder)
+        about_app_target = os.path.join(sources_path, "about_app.md")
         if not os.path.exists(about_app_target):
-            if fmt == "md":
-                about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "md", "PAGE_ABOUT_APP.tpl")
-            else:
-                about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "PAGE_ABOUT_APP.tpl")
+            about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "md", "PAGE_ABOUT_APP.tpl")
             shutil.copy(about_app_tpl, about_app_target)
             self.log.warning("[BACKEND] ABOUT_APP_CREATED")
 
-        # Remove stale system files from the other format (e.g. about_kb4it.adoc
-        # when fmt is "md") so they are not compiled alongside the correct ones.
-        other_fmt = "adoc" if fmt == "md" else "md"
-        for stale_name in (f"about_kb4it.{other_fmt}", f"about_app.{other_fmt}"):
+        # Remove stale .adoc system files left over from older repos.
+        for stale_name in ("about_kb4it.adoc", "about_app.adoc"):
             stale_path = os.path.join(sources_path, stale_name)
             if os.path.exists(stale_path):
                 os.unlink(stale_path)
@@ -315,25 +291,6 @@ class Backend(Service):
 
         # Collect all source documents
         self.runtime["docs"]["bag"] = get_source_docs(sources_path)
-        user_files = [
-            f for f in self.runtime["docs"]["bag"]
-            if os.path.basename(f) not in system_basenames
-        ]
-        adoc_files = [f for f in user_files if f.endswith(".adoc")]
-        md_files   = [f for f in user_files if f.endswith((".md", ".markdown"))]
-
-        if adoc_files and md_files:
-            self.log.error("[BACKEND] MIXED_FORMAT_DETECTED abort=True")
-            self.log.error(f"[BACKEND] ADOC_FILES n={len(adoc_files)}")
-            self.log.error(f"[BACKEND] MD_FILES n={len(md_files)}")
-            self.app.stop(error=True)
-
-        if declared_fmt and user_files:
-            detected_from_files = "md" if md_files else "adoc"
-            if declared_fmt != detected_from_files:
-                self.log.error(f"[BACKEND] FORMAT_MISMATCH declared={declared_fmt} detected={detected_from_files}")
-                self.app.stop(error=True)
-
         basenames = [os.path.basename(f) for f in self.runtime["docs"]["bag"]]
         self.runtime["docs"]["filenames"] = basenames
         self.runtime["docs"]["count"] = len(self.runtime["docs"]["bag"])
@@ -359,7 +316,7 @@ class Backend(Service):
         self.log.debug("[BACKEND] THEME_END")
 
     def stage_05_compilation(self):
-        """Compile documents to html with asciidoctor."""
+        """Compile Markdown documents to HTML."""
         self.app.register_service("Compiler", Compiler())
         compiler = self.app.get_service("Compiler")
         compiler.execute()

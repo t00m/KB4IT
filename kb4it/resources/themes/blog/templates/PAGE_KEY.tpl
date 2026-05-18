@@ -1,8 +1,3 @@
-= ${var['title']}
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <!-- KEY_PAGE.tpl -->
 <!-- Tabs header :: START-->
 <!--
@@ -60,4 +55,3 @@
     <!-- Leader :: End-->
 </ul>
 <!-- Tabs content :: END-->
-++++

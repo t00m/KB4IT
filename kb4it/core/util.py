@@ -33,7 +33,7 @@ log = get_logger("Util")
 cache_dt = {}
 cache_ts_ymd = {}
 
-SOURCE_EXT_RE = re.compile(r"\.(adoc|md|markdown)$", re.IGNORECASE)
+SOURCE_EXT_RE = re.compile(r"\.(md|markdown)$", re.IGNORECASE)
 
 
 def html_id_for(doc_id: str) -> str:
@@ -42,7 +42,7 @@ def html_id_for(doc_id: str) -> str:
 
 
 def source_ext(doc_id: str) -> str:
-    """Return the source extension ('adoc', 'md', or 'markdown') from a docId, or '' if none."""
+    """Return the source extension ('md' or 'markdown') from a docId, or '' if none."""
     m = SOURCE_EXT_RE.search(doc_id)
     return m.group(1).lower() if m else ""
 
@@ -62,42 +62,36 @@ def timeit(func):
     return timeit_wrapper
 
 
-def extract_sections_from_adoc(file_path: str) -> dict:
-    """Extract sections from an AsciiDoc file."""
+def extract_sections_from_md(file_path: str) -> dict:
+    """Extract H2 sections from a Markdown file.
+
+    Returns a dict mapping section name -> {start, end} (1-indexed line numbers).
+    """
     sections = []
 
-    with open(file_path, "r", encoding="utf-8") as file:
-        lines = file.readlines()
+    with open(file_path, "r", encoding="utf-8") as fh:
+        lines = fh.readlines()
 
     current_section = None
     start = None
 
-    for i, line in enumerate(lines, 1):  # Start line counting at 1
+    for i, line in enumerate(lines, 1):
         line = line.rstrip("\n")
-
-        # Check if this is a section header (starts with '== ' but not more '=' signs)
-        if line.startswith("== ") and not line.startswith("==="):
-            # Save previous section if exists
+        if line.startswith("## ") and not line.startswith("###"):
             if current_section:
                 sections.append(
                     {"name": current_section, "start": start, "end": i - 1})
-
-            # Start new section
-            current_section = line[3:].strip()  # Remove '== ' prefix
+            current_section = line[3:].strip()
             start = i
 
-    # Add the last section
     if current_section:
         sections.append(
             {"name": current_section, "start": start, "end": len(lines)})
 
-    # As a dictionary with section names as keys
-    sections_dict = {
-        section["name"]: {"start": section["start"], "end": section["end"]}
-        for section in sections
+    return {
+        s["name"]: {"start": s["start"], "end": s["end"]}
+        for s in sections
     }
-
-    return sections_dict
 
 
 def copy_docs(docs: list, target: str) -> None:
@@ -146,9 +140,9 @@ def copydir(source, dest):
 
 
 def get_source_docs(path: str):
-    """Get source documents (.adoc, .md, .markdown) from a given path."""
+    """Get source documents (.md, .markdown) from a given path."""
     docs = []
-    for ext in ("*.adoc", "*.md", "*.markdown"):
+    for ext in ("*.md", "*.markdown"):
         docs.extend(glob.glob(os.path.join(path, ext)))
     return docs
 
@@ -162,13 +156,15 @@ def exec_cmd(data):
     - num is the job number
     """
     doc, cmd, num = data
-    process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
-    outs, errs = process.communicate()
-    if errs is None:
-        compiled = True
-    else:
-        compiled = False
-        log.debug("[UTIL] - Compiling %s: Error: %s", doc, errs)
+    process = subprocess.Popen(
+        [cmd], shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    _outs, errs = process.communicate()
+    compiled = process.returncode == 0
+    if not compiled:
+        log.debug("[UTIL] CMD_FAIL doc=%s rc=%d stderr=%s", doc, process.returncode, errs)
     return doc, compiled, num
 
 
@@ -248,80 +244,6 @@ def json_save(filepath: str, adict: dict) -> None:
         json.dump(adict, fout, sort_keys=True, indent=4)
 
 
-def _adoc_body_start(lines: list) -> int:
-    """Return the index of the first body line in an AsciiDoc document.
-
-    Applies the same six-rule cascade used by get_asciidoctor_attributes:
-    section heading, two blank lines, property, comment, single blank, unknown text.
-    """
-    blank_count = 0
-    for i, line_raw in enumerate(lines[1:], start=1):
-        stripped = line_raw.strip()
-        if stripped.startswith("== ") or stripped == "==":
-            return i
-        if stripped == "":
-            blank_count += 1
-            if blank_count >= 2:
-                return i
-            continue
-        blank_count = 0
-        if stripped.startswith(":") or stripped.startswith("//"):
-            continue
-        return i
-    return len(lines)
-
-
-def get_asciidoctor_attributes(docpath: str):
-    """Get Asciidoctor attributes from a given document."""
-    basename = os.path.basename(docpath)
-    keys = {}
-    title_found = False
-
-    try:
-        with open(docpath, "r", encoding="utf-8") as fh:
-            lines = fh.readlines()
-
-        title_line = lines[0]
-        if title_line.startswith("= "):
-            title = title_line[2:].strip()
-            if title:
-                keys["Title"] = [title]
-                title_found = True
-
-        if title_found:
-            blank_count = 0
-            for line_raw in lines[1:]:
-                stripped = line_raw.strip()
-                if stripped.startswith("== ") or stripped == "==":  # rule 1: section start
-                    break
-                if stripped == "":                                   # rule 5/2: blank lines
-                    blank_count += 1
-                    if blank_count >= 2:
-                        break
-                    continue
-                blank_count = 0
-                if stripped.startswith(":"):                         # rule 3: property
-                    sep = stripped.find(":", 1)
-                    if sep > 1:
-                        key = stripped[1:sep]
-                        values = stripped[sep + 1:].split(",")
-                        keys[key] = [v.strip() for v in values]
-                elif stripped.startswith("//"):                      # rule 4: comment, skip
-                    continue
-                else:                                                # rule 6: unknown text
-                    break
-        else:
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_title")
-            keys = {}
-    except IndexError:
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=empty_doc")
-        keys = {}
-
-    valid = title_found
-    reason = "Success" if valid else ""
-    return keys, valid, reason
-
-
 def get_hash_from_content(content: str):
     """Get the blake2b hash for any string."""
     return hashlib.blake2b(content.encode("utf-8")).hexdigest()
@@ -338,24 +260,21 @@ def get_hash_from_file(path):
 
 
 def get_hash_from_body(path):
-    """Get blake2b hash for the document body."""
+    """Get blake2b hash for the document body.
+
+    Body is the content after the closing YAML frontmatter delimiter, with the
+    leading H1 heading stripped so title renames don't invalidate the cache.
+    """
     if not os.path.exists(path):
         return None
     with open(path, "r", encoding="utf-8") as fin:
         content = fin.read()
-    if path.endswith(".adoc"):
-        lines = content.splitlines(keepends=True)
-        body_start = _adoc_body_start(lines)
-        body = "".join(lines[body_start:])
+    end = content.find("\n---", 3)
+    if end >= 0:
+        body = content[end + 4:].lstrip("\n")
+        body = re.sub(r"^#[^\n]*\n?", "", body, count=1)
     else:
-        # Markdown: body is content after the closing ---
-        # Strip the leading # heading line so title renames don't invalidate the body cache
-        end = content.find("\n---", 3)
-        if end >= 0:
-            body = content[end + 4:].lstrip("\n")
-            body = re.sub(r"^#[^\n]*\n?", "", body, count=1)
-        else:
-            body = content
+        body = content
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
 
 
@@ -417,9 +336,7 @@ def get_markdown_attributes(docpath: str):
 
 
 def get_document_attributes(docpath: str):
-    """Dispatch to the appropriate metadata extractor based on file extension."""
-    if docpath.endswith(".adoc"):
-        return get_asciidoctor_attributes(docpath)
+    """Extract metadata from a Markdown document."""
     if docpath.endswith((".md", ".markdown")):
         return get_markdown_attributes(docpath)
     return {}, False, "unsupported_format"

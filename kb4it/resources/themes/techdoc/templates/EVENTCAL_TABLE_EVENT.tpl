@@ -1,4 +1,3 @@
-++++
 <!-- EVENTCAL_TABLE_EVENT.tpl :: START -->
 <table class="uk-table uk-table-responsive uk-table-striped uk-table-divider uk-table-hover">
     <caption></caption>
@@ -31,4 +30,3 @@
     </tbody>
 </table>
 <!-- EVENTCAL_TABLE_EVENT.tpl :: END -->
-++++

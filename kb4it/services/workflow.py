@@ -83,12 +83,10 @@ class Workflow(Service):
             bin_dir = os.path.join(repo_path, "bin")
             script = os.path.join(bin_dir, "compile.sh")
             config_file = os.path.join(repo_path, "config", "repo.json")
-            source_fmt = params.get("source_fmt", "md") or "md"
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
             repoconf["source"] = source_dir
             repoconf["target"] = target_dir
-            repoconf["format"] = source_fmt
             with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
@@ -116,7 +114,7 @@ class Workflow(Service):
         2. Get source documents
         3. Preprocess documents (get metadata)
         4. Process documents in a temporary dir
-        5. Compile documents to html with asciidoctor
+        5. Compile Markdown documents to HTML
         6. Theme Post activities
         7. Deploy
         """

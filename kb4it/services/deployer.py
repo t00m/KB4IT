@@ -52,7 +52,7 @@ class Deployer(Service):
         self.log.debug(f"[DEPLOYER] TARGET_CLEARED path={self.srvbes.get_path('target')}")
 
     def step_04_copy_sources_to_target(self, files):
-        """Incrementally sync source .adoc files to target/sources/."""
+        """Incrementally sync source Markdown files to target/sources/."""
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
         os.makedirs(docsdir, exist_ok=True)
         expected = {os.path.basename(f) for f in files}

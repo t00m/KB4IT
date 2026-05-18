@@ -46,9 +46,9 @@ class Database(Service):
 
     def del_document(self, docId):
         """Delete a document node from database."""
-        adoc = "%s.adoc" % docId
+        key = f"{docId}.md"
         try:
-            del self.db[adoc]
+            del self.db[key]
             self.sorted_docs = []
             self.cache_docs_sorted_by_date = {}
             self.log.debug("[DATABASE] DOC_DELETE doc=%s", docId)
@@ -57,7 +57,7 @@ class Database(Service):
             self.log.debug("[DATABASE] DOC_NOT_FOUND doc=%s", docId)
 
     def add_document(self, docId: str):
-        """Add a new document node to the database ('name.adoc')"""
+        """Add a new document node to the database ('name.md')."""
         self.db[docId] = {}
         self.log.debug("[DATABASE] DOC_ADD doc=%s", docId)
 
