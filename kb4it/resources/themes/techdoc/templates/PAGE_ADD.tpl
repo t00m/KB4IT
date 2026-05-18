@@ -18,7 +18,7 @@ CATEGORIES = [
 
     <div class="kb-add-note uk-alert-primary" uk-alert>
         <span uk-icon="icon: info; ratio: 0.9"></span>
-        <strong>Note:</strong> KB4IT is a static site generator — it cannot create files for you.
+        <strong>Note:</strong> KB4IT is a static site generator, it cannot create files for you.
         Click <em>Create</em> on any card, edit the template, then copy the
         ready-to-use Markdown file into your repository's <strong>source</strong>
         directory and rebuild.
@@ -30,7 +30,7 @@ CATEGORIES = [
         <strong>Online repository:</strong> The document source is hosted at
         <a href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
             ${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}
-        </a> — navigate to the source folder to upload your new file.
+        </a>,  navigate to the source folder to upload your new file.
     </div>
 % endif
 
@@ -60,7 +60,7 @@ CATEGORIES = [
 
 </div><!-- /kb-add -->
 
-<!-- ── Full-screen modal — one per category ── -->
+<!-- ── Full-screen modal,  one per category ── -->
 % for cat in CATEGORIES:
 <div id="modal-add-${cat['id']}" class="uk-modal-full" uk-modal>
     <div class="kb-dialog">
@@ -240,7 +240,7 @@ CATEGORIES = [
     function timestamp() {
         var d = new Date();
         var p = function (n) { return String(n).padStart(2, '0'); };
-	return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
         // return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
     }
 

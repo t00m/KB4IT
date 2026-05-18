@@ -132,7 +132,7 @@ class Processor(Service):
                     fout.write(content)
 
             # On metadata change, force recompile of ALL (key, value) pairs
-            # this document belongs to — datatable rows reflect metadata
+            # this document belongs to,  datatable rows reflect metadata
             # values, so any property change must refresh every page that
             # lists this document, even if its membership set is unchanged.
             if result['metadata_differs']:

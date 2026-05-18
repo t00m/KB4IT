@@ -255,7 +255,7 @@ class Backend(Service):
         # Allow theme to generate documents first
         self.srvthm = self.get_service("Theme")
 
-        # System file basenames — excluded from user-file collection
+        # System file basenames,  excluded from user-file collection
         system_basenames = {"about_kb4it.md", "about_app.md"}
 
         self.runtime["docs"]["format"] = "md"

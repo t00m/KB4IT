@@ -22,8 +22,8 @@ from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext)
 
 # Optional TUI callbacks set by kb4it.tui.app before a build, cleared after.
-# _progress_callback: called per document — signature: (basename: str, rc: bool)
-# _compile_start_callback: called once with the total doc count — (total: int)
+# _progress_callback: called per document,  signature: (basename: str, rc: bool)
+# _compile_start_callback: called once with the total doc count,  (total: int)
 _progress_callback = None
 _compile_start_callback = None
 
@@ -120,7 +120,7 @@ class Compiler(Service):
         """Compile a Markdown file in-process via python-markdown.
 
         Files tagged by Builder.distribute_md() with the theme-html sentinel
-        contain pre-rendered HTML and are passed through verbatim — section
+        contain pre-rendered HTML and are passed through verbatim,  section
         restructuring would corrupt their UIKit layout.
         """
         doc = data["doc"]
@@ -142,7 +142,7 @@ class Compiler(Service):
                 end = text.find("\n---", 3)
                 if end >= 0:
                     text = text[end + 4:].lstrip("\n")
-            # Strip the first H1 heading — the title is already shown in the page header
+            # Strip the first H1 heading,  the title is already shown in the page header
             text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
             md = _markdown_lib.Markdown(
                 extensions=["extra", "admonition", "toc", "sane_lists"],

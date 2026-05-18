@@ -230,7 +230,7 @@ class Builder(Service):
         self.srvdtb.add_document_key("about_kb4it.md", "SystemPage", "Yes")
 
     def create_page_help(self):
-        """Help page — generated only when the user repo has no help.md."""
+        """Help page,  generated only when the user repo has no help.md."""
         filenames = self.srvbes.get_value("docs", "filenames")
         if "help.md" in filenames:
             self.log.info("[BUILDER] HELP_SKIP reason=user_generated")

@@ -15,7 +15,7 @@ def category_css(category):
     elif category in _primary:
         return "uk-label-primary"
     else:
-        return "uk-text-muted"
+        return ""
 
 def category_url(category):
     s = str(category).strip().replace(" ", "_")
@@ -169,7 +169,7 @@ def category_url(category):
                                 <td class="kb-event-date">${row['date']}</td>
                                 <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 %             if row['category']:
-                                <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}">${row['category']}</a></td>
+                                <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}" style="color: white;">${row['category']}</a></td>
 %             else:
                                 <td></td>
 %             endif
@@ -233,7 +233,7 @@ def category_url(category):
                         <td class="kb-event-date">${row['date']}</td>
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 % if row['category']:
-                        <td class="uk-flex uk-flex-right"><span class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}">${row['category']}</span></td>
+                        <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}" style="color: white;">${row['category']}</a></td>
 % else:
                         <td></td>
 % endif

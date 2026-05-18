@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-KB4IT Terminal User Interface — Textual edition.
+KB4IT Terminal User Interface,  Textual edition.
 
 Launched automatically when kb4it is run with no arguments in a terminal.
 """
@@ -308,7 +308,7 @@ class BuildScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = f"Build — {self._proj_name}"
+        self.title = f"Build,  {self._proj_name}"
         self._launch_build()
 
     def _launch_build(self) -> None:
@@ -339,7 +339,7 @@ class BuildScreen(Screen):
             inst.run()
         except SystemExit as exc:
             if exc.code and exc.code != 0:
-                error = "Build failed — see log for details."
+                error = "Build failed,  see log for details."
         except Exception as exc:
             error = str(exc)
         finally:
@@ -385,11 +385,11 @@ class BuildScreen(Screen):
         total = max(self._total, n, 1)
         bar = self.query_one(ProgressBar)
         if error:
-            self.query_one("#status", Label).update(f"FAILED — {error}")
+            self.query_one("#status", Label).update(f"FAILED,  {error}")
             self.query_one(RichLog).write(Text(f"Build failed: {error}", style="bold red"))
         else:
             bar.update(total=total, progress=total)
-            self.query_one("#status", Label).update(f"Done — {n} document(s) compiled.")
+            self.query_one("#status", Label).update(f"Done,  {n} document(s) compiled.")
             self.query_one(RichLog).write(
                 Text(f"Build complete. {n} document(s) compiled.", style="bold green")
             )
@@ -450,7 +450,7 @@ class LogViewerScreen(Screen):
         p = _log_path(self._config)
         log = self.query_one(RichLog)
         if p is None:
-            log.write("No build log found — build the project first.")
+            log.write("No build log found,  build the project first.")
             return
         try:
             text = p.read_text(encoding="utf-8", errors="replace")
@@ -630,7 +630,7 @@ class ExplorerScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = "Explorer — Metadata Keys & Values"
+        self.title = "Explorer,  Metadata Keys & Values"
         p = _kbdict_path(self._config)
         if p is None:
             self.app.notify(
@@ -739,7 +739,7 @@ class ProjectInfoScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = f"Info — {self._project['name']}"
+        self.title = f"Info,  {self._project['name']}"
         table = self.query_one(DataTable)
         table.add_columns("Key", "Value")
         try:
@@ -865,7 +865,7 @@ class AppsScreen(Screen):
         self.title = "Theme Apps"
         lv = self.query_one("#themes-list", ListView)
         for t in self._themes:
-            lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+            lv.append(ListItem(Label(f"{t.get('id', '?')},  {t.get('description', '')}")))
         self.query_one("#apps-tbl", DataTable).add_columns("#", "App Name")
 
     @on(ListView.Highlighted, "#themes-list")
@@ -923,10 +923,10 @@ class CreateProjectScreen(Screen):
         yield Header(show_clock=True)
         yield Label(
             "Create a new repository from a theme app template.\n"
-            "  Theme   — visual style for your website\n"
-            "  App     — template to initialise the repository from\n"
-            "  Name    — label shown in the project list (any text)\n"
-            "  Path    — full path where the repository will be created;\n"
+            "  Theme  ,  visual style for your website\n"
+            "  App    ,  template to initialise the repository from\n"
+            "  Name   ,  label shown in the project list (any text)\n"
+            "  Path   ,  full path where the repository will be created;\n"
             "            its parent directory must already exist",
             id="help-banner",
         )
@@ -954,7 +954,7 @@ class CreateProjectScreen(Screen):
             self.app.notify("No themes installed.", severity="warning")
         lv = self.query_one("#themes-list", ListView)
         for t in self._themes:
-            lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+            lv.append(ListItem(Label(f"{t.get('id', '?')},  {t.get('description', '')}")))
         self._refresh_apps()
 
     def _refresh_apps(self) -> None:
@@ -1133,7 +1133,7 @@ class ImportProjectScreen(Screen):
             self.app.notify("Display name cannot be empty.", severity="error")
             return
         if not Path(path).exists():
-            self.app.notify("File not found — submit the path field first.", severity="error")
+            self.app.notify("File not found,  submit the path field first.", severity="error")
             return
         for field in ("source", "target", "theme"):
             if field not in self._repo:
@@ -1267,7 +1267,7 @@ class ProjectScreen(Screen):
     def _browse_local(self) -> None:
         index = self._target_index()
         if index is None:
-            self.app.notify("No built index.html found — compile the project first.",
+            self.app.notify("No built index.html found,  compile the project first.",
                             severity="warning")
             return
         webbrowser.open(index.as_uri())
@@ -1277,7 +1277,7 @@ class ProjectScreen(Screen):
     def _browse_server(self) -> None:
         index = self._target_index()
         if index is None:
-            self.app.notify("No built index.html found — compile the project first.",
+            self.app.notify("No built index.html found,  compile the project first.",
                             severity="warning")
             return
         key = self._project["config"]

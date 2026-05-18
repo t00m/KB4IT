@@ -205,7 +205,7 @@ class Theme(Builder):
         }
 
     def _build_index_diataxis(self):
-        """Diátaxis cards — one per DocType value."""
+        """Diátaxis cards,  one per DocType value."""
         diataxis = [
             {'name': 'Tutorial',     'css': 'tutorial',    'icon': 'bolt',
              'label': 'Tutorials',
@@ -228,7 +228,7 @@ class Theme(Builder):
         return diataxis
 
     def _build_index_trimester(self, now):
-        """Compact 3-month grid — prev, current, next."""
+        """Compact 3-month grid,  prev, current, next."""
         cur_first = now.replace(day=1)
         prv_last = cur_first - timedelta(days=1)
         cur_last = cur_first.replace(day=monthrange(cur_first.year, cur_first.month)[1])
@@ -372,7 +372,7 @@ class Theme(Builder):
             periodicities = self.srvdtb.get_values(docId, 'Periodicity')
             if not periodicities or not periodicities[0]:
                 continue
-            periodicity = periodicities[0] 
+            periodicity = periodicities[0]
             groups.setdefault(periodicity, []).append({'title': title, 'url': url})
 
         return [

@@ -162,7 +162,7 @@ class Database(Service):
                             )
                             n += 1
             except KeyError:
-                # docId not in self.db — return empty props rather than raising
+                # docId not in self.db,  return empty props rather than raising
                 pass
             self.cache_props[docId] = props
             return self.cache_props[docId]

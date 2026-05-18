@@ -31,8 +31,8 @@ def _acquire_process_lock():
     global _lock_fd
     lock_path = ENV["FILE"]["LOCK"]
     os.makedirs(os.path.dirname(lock_path), exist_ok=True)
-    # O_RDWR|O_CREAT never truncates — so if flock fails, the other process's
-    # PID is still readable from the file.
+    # O_RDWR|O_CREAT never truncates, so if flock fails, the other
+    # process's PID is still readable from the file.
     raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
     fd = os.fdopen(raw, "r+")
     try:
