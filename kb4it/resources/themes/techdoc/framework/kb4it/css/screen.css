@@ -40,6 +40,13 @@ table.month tbody tr th {
     font-size: smaller;
 }
 
+#kb4it-datatable th,
+#kb4it-datatable td,
+.kb4it-datatable th,
+.kb4it-datatable td {
+    text-align: left;
+}
+
 #kb4it-table-metadata {
     border: 2px solid black;
     font-size: smaller;
@@ -302,6 +309,23 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     letter-spacing: 1.3px;
     color: #777;
     margin: 0 0 8px 2px;
+    text-align: left;
+}
+
+.kb-index .kb-panel,
+.kb-index .kb-section > h1,
+.kb-index .kb-section > h2,
+.kb-index .kb-section > h3,
+.kb-index .kb-section > h4,
+.kb-index .kb-panel h1,
+.kb-index .kb-panel h2,
+.kb-index .kb-panel h3,
+.kb-index .kb-panel h4,
+.kb-index .kb-panel h5,
+.kb-index .kb-panel h6,
+.kb-index .kb-panel .kb-section-title,
+.kb-index .kb-panel .kb-events-month-header {
+    text-align: left;
 }
 
 /* Trimester calendar (top, compact) */
@@ -1002,7 +1026,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 }
 .kb-content-md table th,
 .kb-content-md table td {
-    text-align: center;
+    text-align: left;
 }
 .kb-content-md table th { background: #f5f5f5; font-weight: 600; }
 .kb-content-md table tr:nth-child(even) { background: #fafafa; }
