@@ -5,10 +5,16 @@
 # Description: In-memory database for KB4IT
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kb4it.core.types import DBRecord
+
 from kb4it.core.service import Service
-from kb4it.core.util import (get_hash_from_list,
-                             guess_datetime, sort_dictionary,
-                             valid_filename)
+from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
+                             sort_dictionary, valid_filename)
 
 
 class Database(Service):
@@ -28,7 +34,7 @@ class Database(Service):
         """Initialize database module."""
         self.srvbes = self.get_service("Backend")
         repo = self.srvbes.get_dict("repo")
-        self.db = {}
+        self.db: dict[str, DBRecord] = {}
         self.keys = {
             "all": [],
             "blocked": ["Title", "SystemPage", "Date"],
@@ -47,9 +53,9 @@ class Database(Service):
 
     def del_document(self, docId):
         """Delete a document node from database."""
-        adoc = "%s.adoc" % docId
+        key = f"{docId}.md"
         try:
-            del self.db[adoc]
+            del self.db[key]
             self.sorted_docs = []
             self.cache_docs_sorted_by_date = {}
             self.log.debug("[DATABASE] DOC_DELETE doc=%s", docId)
@@ -58,7 +64,7 @@ class Database(Service):
             self.log.debug("[DATABASE] DOC_NOT_FOUND doc=%s", docId)
 
     def add_document(self, docId: str):
-        """Add a new document node to the database ('name.adoc')"""
+        """Add a new document node to the database ('name.md')."""
         self.db[docId] = {}
         self.log.debug("[DATABASE] DOC_ADD doc=%s", docId)
 
@@ -97,8 +103,8 @@ class Database(Service):
         """Build a list of documents sorted by timestamp desc."""
         if doclist is None or len(doclist) == 0:
             doclist = list(self.db.keys())
-        md5hash = get_hash_from_list(sorted(doclist))
-        if md5hash not in self.cache_docs_sorted_by_date:
+        list_hash = get_hash_from_list(sorted(doclist))
+        if list_hash not in self.cache_docs_sorted_by_date:
             adict = {}
             for docId in doclist:
                 if not self.is_system(docId):
@@ -109,8 +115,8 @@ class Database(Service):
                     dt = guess_datetime(sdate)
                     adict[docId] = dt  # .strftime("%Y%m%d")
             sorted_docs = [docId for docId, _ in sort_dictionary(adict)]
-            self.cache_docs_sorted_by_date[md5hash] = sorted_docs
-        return self.cache_docs_sorted_by_date[md5hash]
+            self.cache_docs_sorted_by_date[list_hash] = sorted_docs
+        return self.cache_docs_sorted_by_date[list_hash]
 
     def get_documents(self):
         """Return the list of sorted docs."""
@@ -147,7 +153,7 @@ class Database(Service):
                     if key == "Title":
                         props[key] = self.db[docId][key][0]
                         key_url = "%s_Url" % key
-                        props[key_url] = docId.replace(".adoc", ".html")
+                        props[key_url] = html_id_for(docId)
                     else:
                         props[key] = self.db[docId][key]
                         n = 0
@@ -162,8 +168,8 @@ class Database(Service):
                                 valid_filename(key), valid_filename(value)
                             )
                             n += 1
-            except Exception:
-                # FIXME: Document why it is not necessary
+            except KeyError:
+                # docId not in self.db,  return empty props rather than raising
                 pass
             self.cache_props[docId] = props
             return self.cache_props[docId]
@@ -262,7 +268,7 @@ class Database(Service):
             self.log.debug(f"[DATABASE] KV_SEARCH key={key} value={value} count={len(self.cache_docs_by_kvpath[kvpath])}")
         return self.cache_docs_by_kvpath[kvpath]
 
-    def get_docs_by_date_range(self, ds, de) -> []:
+    def get_docs_by_date_range(self, ds, de) -> list:
         """Return documents whose Date falls within [ds, de]."""
         doclist = []
         for docId in self.db:

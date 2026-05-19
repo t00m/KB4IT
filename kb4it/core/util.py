@@ -16,7 +16,6 @@ import math
 import multiprocessing
 import operator
 import os
-import pickle
 import re
 import shutil
 import subprocess
@@ -24,13 +23,59 @@ import time
 from datetime import datetime
 from functools import wraps
 
+import yaml
+
 from kb4it.core.env import ENV
 from kb4it.core.log import get_logger
 
 log = get_logger("Util")
 
-cache_dt = {}
-cache_ts_ymd = {}
+class DateCache:
+    """Isolated cache for date-string parsing and formatting results.
+
+    Using a class instead of module-level dicts allows test code to inject
+    a fresh instance (no cross-test contamination) while production callers
+    rely on the module-level singleton without any change.
+    """
+
+    def __init__(self):
+        self._dt = {}
+        self._ymd = {}
+
+    def has_dt(self, key):
+        return key in self._dt
+
+    def get_dt(self, key):
+        return self._dt[key]
+
+    def set_dt(self, key, value):
+        self._dt[key] = value
+
+    def get_ymd(self, key):
+        return self._ymd.get(key)
+
+    def set_ymd(self, key, value):
+        self._ymd[key] = value
+
+    def clear(self):
+        self._dt.clear()
+        self._ymd.clear()
+
+
+_default_date_cache = DateCache()
+
+SOURCE_EXT_RE = re.compile(r"\.(md|markdown)$", re.IGNORECASE)
+
+
+def html_id_for(doc_id: str) -> str:
+    """Return the HTML filename corresponding to a source docId."""
+    return SOURCE_EXT_RE.sub(".html", doc_id)
+
+
+def source_ext(doc_id: str) -> str:
+    """Return the source extension ('md' or 'markdown') from a docId, or '' if none."""
+    m = SOURCE_EXT_RE.search(doc_id)
+    return m.group(1).lower() if m else ""
 
 
 def timeit(func):
@@ -48,42 +93,36 @@ def timeit(func):
     return timeit_wrapper
 
 
-def extract_sections_from_adoc(file_path: str) -> dict:
-    """Extract sections from an AsciiDoc file."""
+def extract_sections_from_md(file_path: str) -> dict:
+    """Extract H2 sections from a Markdown file.
+
+    Returns a dict mapping section name -> {start, end} (1-indexed line numbers).
+    """
     sections = []
 
-    with open(file_path, "r", encoding="utf-8") as file:
-        lines = file.readlines()
+    with open(file_path, "r", encoding="utf-8") as fh:
+        lines = fh.readlines()
 
     current_section = None
     start = None
 
-    for i, line in enumerate(lines, 1):  # Start line counting at 1
+    for i, line in enumerate(lines, 1):
         line = line.rstrip("\n")
-
-        # Check if this is a section header (starts with '== ' but not more '=' signs)
-        if line.startswith("== ") and not line.startswith("==="):
-            # Save previous section if exists
+        if line.startswith("## ") and not line.startswith("###"):
             if current_section:
                 sections.append(
                     {"name": current_section, "start": start, "end": i - 1})
-
-            # Start new section
-            current_section = line[3:].strip()  # Remove '== ' prefix
+            current_section = line[3:].strip()
             start = i
 
-    # Add the last section
     if current_section:
         sections.append(
             {"name": current_section, "start": start, "end": len(lines)})
 
-    # As a dictionary with section names as keys
-    sections_dict = {
-        section["name"]: {"start": section["start"], "end": section["end"]}
-        for section in sections
+    return {
+        s["name"]: {"start": s["start"], "end": s["end"]}
+        for s in sections
     }
-
-    return sections_dict
 
 
 def copy_docs(docs: list, target: str) -> None:
@@ -132,9 +171,11 @@ def copydir(source, dest):
 
 
 def get_source_docs(path: str):
-    """Get asciidoc documents from a given path."""
-    pattern = os.path.join(path, "*.adoc")
-    return glob.glob(pattern)
+    """Get source documents (.md, .markdown) from a given path."""
+    docs = []
+    for ext in ("*.md", "*.markdown"):
+        docs.extend(glob.glob(os.path.join(path, ext)))
+    return docs
 
 
 def exec_cmd(data):
@@ -146,13 +187,15 @@ def exec_cmd(data):
     - num is the job number
     """
     doc, cmd, num = data
-    process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE)
-    outs, errs = process.communicate()
-    if errs is None:
-        compiled = True
-    else:
-        compiled = False
-        log.debug("[UTIL] - Compiling %s: Error: %s", doc, errs)
+    process = subprocess.Popen(
+        [cmd], shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    _outs, errs = process.communicate()
+    compiled = process.returncode == 0
+    if not compiled:
+        log.debug("[UTIL] CMD_FAIL doc=%s rc=%d stderr=%s", doc, process.returncode, errs)
     return doc, compiled, num
 
 
@@ -219,69 +262,17 @@ def delete_files(files):
             log.warning("[UTIL] - %s", path)
 
 
-def json_load(filepath: str) -> {}:
+def json_load(filepath: str) -> dict:
     """Load into a dictionary a file in json format."""
     with open(filepath, "r", encoding="utf-8") as fin:
         adict = json.load(fin)
     return adict
 
 
-def json_save(filepath: str, adict: {}) -> {}:
+def json_save(filepath: str, adict: dict) -> None:
     """Save dictionary into a file in json format."""
     with open(filepath, "w", encoding="utf-8") as fout:
         json.dump(adict, fout, sort_keys=True, indent=4)
-
-
-def get_asciidoctor_attributes(docpath: str):
-    """Get Asciidoctor attributes from a given document."""
-    basename = os.path.basename(docpath)
-    keys = {}
-    valid = False
-    reason = ""
-    title_found = False
-    end_of_header_found = False
-
-    try:
-        lines = open(docpath, "r", encoding="utf-8").readlines()
-        title_found = False
-        title_line = lines[0]
-
-        if title_line.startswith("= "):
-            title = title_line[2:-1].strip()
-            if len(title) > 0:
-                keys["Title"] = [title]
-                title_found = True
-
-        # Proceed only if document has a title
-        if title_found:
-            end_of_header_found = False
-            # read the rest of properties until watermark
-            for n in range(1, len(lines)):
-                line = lines[n].strip()
-                if line.startswith(":"):
-                    key = line[1: line.find(":", 1)]
-                    values = line[len(key) + 2:].split(",")
-                    keys[key] = [value.strip() for value in values]
-                elif line.startswith(ENV["CONF"]["EOHMARK"]):
-                    # Stop processing if EOHMARK is found
-                    end_of_header_found = True
-                    break
-            if not end_of_header_found:
-                log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_eohmark")
-                keys = {}
-        else:
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_title")
-            keys = {}
-    except IndexError:
-        reason = "empty_doc"
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=empty_doc")
-        keys = {}
-
-    if title_found and end_of_header_found:
-        valid = True
-        reason = "Success"
-
-    return keys, valid, reason
 
 
 def get_hash_from_content(content: str):
@@ -300,25 +291,98 @@ def get_hash_from_file(path):
 
 
 def get_hash_from_body(path):
-    """Get blake2b hash for the document body (content after EOHMARK)."""
+    """Get blake2b hash for the document body.
+
+    Body is the content after the closing YAML frontmatter delimiter, with the
+    leading H1 heading stripped so title renames don't invalidate the cache.
+    """
     if not os.path.exists(path):
         return None
-    eohmark = ENV["CONF"]["EOHMARK"]
     with open(path, "r", encoding="utf-8") as fin:
         content = fin.read()
-    idx = content.find(eohmark)
-    body = content[idx + len(eohmark):] if idx >= 0 else content
+    end = content.find("\n---", 3)
+    if end >= 0:
+        body = content[end + 4:].lstrip("\n")
+        body = re.sub(r"^#[^\n]*\n?", "", body, count=1)
+    else:
+        body = content
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
 
 
-def get_hash_from_dict(adict):
-    """Get the md5 hash for a given dictionary."""
-    return hashlib.md5(pickle.dumps(adict)).hexdigest()
+def get_markdown_attributes(docpath: str):
+    """Get metadata from a Markdown document's YAML frontmatter."""
+    basename = os.path.basename(docpath)
+    keys = {}
+
+    try:
+        with open(docpath, "r", encoding="utf-8") as fh:
+            content = fh.read()
+
+        if not content.startswith("---"):
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter")
+            return {}, False, "missing_frontmatter"
+
+        end = content.find("\n---", 3)
+        if end < 0:
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter_close")
+            return {}, False, "missing_frontmatter_close"
+
+        fm_text = content[3:end].strip()
+        body = content[end + 4:].lstrip("\n")
+
+        fm = yaml.safe_load(fm_text) if fm_text else {}
+        if not isinstance(fm, dict):
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=invalid_frontmatter")
+            return {}, False, "invalid_frontmatter"
+
+        # Title comes from the first # heading in the body
+        title_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
+        if not title_match:
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_h1_title")
+            return {}, False, "missing_h1_title"
+
+        keys["Title"] = [title_match.group(1).strip()]
+
+        if "title" in fm or "Title" in fm:
+            log.warning(f"[UTIL] DOC_WARN doc={basename} reason=title_in_frontmatter_ignored")
+            fm.pop("title", None)
+            fm.pop("Title", None)
+
+        for k, v in fm.items():
+            if isinstance(v, list):
+                keys[k] = [str(i).strip() for i in v]
+            elif isinstance(v, str) and "," in v:
+                keys[k] = [i.strip() for i in v.split(",")]
+            else:
+                keys[k] = [str(v).strip()]
+
+    except yaml.YAMLError as err:
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=yaml_error")
+        return {}, False, f"yaml_error: {err}"
+    except Exception as err:
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
+        return {}, False, str(err)
+
+    return keys, True, "Success"
 
 
-def get_hash_from_list(alist):
-    """Get the md5 hash for a given list."""
-    return hashlib.md5(pickle.dumps(alist)).hexdigest()
+def get_document_attributes(docpath: str):
+    """Extract metadata from a Markdown document."""
+    if docpath.endswith((".md", ".markdown")):
+        return get_markdown_attributes(docpath)
+    return {}, False, "unsupported_format"
+
+
+def get_hash_from_dict(adict: dict) -> str:
+    """Get the blake2b hash for a given dictionary."""
+    serialized = json.dumps(adict, sort_keys=True, ensure_ascii=False)
+    return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
+
+
+def get_hash_from_list(alist: list) -> str:
+    """Get the blake2b hash for a given list."""
+    serialized = json.dumps(alist, ensure_ascii=False)
+    return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
 
 
 def valid_filename(s):
@@ -366,10 +430,11 @@ def kb4it_timestamp():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def guess_datetime(sdate):
+def guess_datetime(sdate, _cache=None):
     """Guess a datetime object for a given string."""
-    if sdate in cache_dt:
-        return cache_dt[sdate]
+    cache = _cache if _cache is not None else _default_date_cache
+    if cache.has_dt(sdate):
+        return cache.get_dt(sdate)
 
     patterns = [
         "%d/%m/%Y",
@@ -402,17 +467,16 @@ def guess_datetime(sdate):
         "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%dT%H:%M:%SZ",
     ]
-    found = False
+    timestamp = None
     for pattern in patterns:
-        if not found:
-            try:
-                td = datetime.strptime(sdate, pattern)
-                ts = td.strftime("%Y-%m-%d %H:%M:%S")
-                timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-                found = True
-            except ValueError:
-                timestamp = None
-    cache_dt[sdate] = timestamp
+        try:
+            td = datetime.strptime(sdate, pattern)
+            ts = td.strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            break
+        except ValueError:
+            continue
+    cache.set_dt(sdate, timestamp)
     return timestamp
 
 
@@ -443,11 +507,14 @@ def get_human_datetime_year(dt):
     return dt.strftime("%Y")
 
 
-def get_timestamp_yyyymmdd(dt):
+def get_timestamp_yyyymmdd(dt, _cache=None):
     """Return timestamp in yyyymmdd format."""
-    if dt not in cache_ts_ymd:
-        cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
-    return cache_ts_ymd[dt]
+    cache = _cache if _cache is not None else _default_date_cache
+    result = cache.get_ymd(dt)
+    if result is None:
+        result = dt.strftime("%Y%m%d")
+        cache.set_ymd(dt, result)
+    return result
 
 
 def sort_dictionary(adict, reverse=True):

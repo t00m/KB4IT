@@ -11,8 +11,9 @@ Setup KB4IT project.
 # the standard for distributing Python Modules.
 """
 
-import os
 import glob
+import os
+
 from setuptools import setup
 
 from kb4it.core.env import ENV
@@ -53,7 +54,7 @@ setup(
     author=ENV['APP']['author'],
     author_email=ENV['APP']['author_email'],
     url=ENV['APP']['website'],
-    description='A static website generator based on Asciidoctor sources.',
+    description='A static website generator based on Markdown sources.',
     long_description=LONG_DESCRIPTION,
     download_url='https://github.com/t00m/KB4IT/archive/master.zip',
     license=ENV['APP']['license'],

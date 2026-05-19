@@ -7,15 +7,22 @@ Backend module for initialization.
 # License: GPLv3
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kb4it.core.types import Runtime
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import redirect_logs
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_content, get_hash_from_file,
-                             get_source_docs, json_load, json_save)
+                             get_source_docs, json_load, json_save, timeit)
 from kb4it.services.compiler import Compiler
 from kb4it.services.deployer import Deployer
 from kb4it.services.processor import Processor
@@ -26,13 +33,13 @@ class Backend(Service):
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime = {"theme": {}}  # Dictionary of runtime properties
+        self.runtime: Runtime = {"theme": {}}  # type: ignore[typeddict-item]
         self.params = self.app.get_params()  # Get params from command line
 
         if self.params.get("action") in ("build", "info"):
             config_file = self.params.get("config")
             if config_file is None:
-                self.app.stop(error=True)
+                raise ConfigError("No config file specified")
 
             # Check if it exists
             config_path = Path(config_file).absolute()
@@ -43,14 +50,14 @@ class Backend(Service):
                     self.log.debug("[BACKEND] CONFIG_LOADED")
                 except AttributeError as error:
                     self.log.error("[BACKEND] CONFIG_PARSE_FAIL")
-                    self.log.error(f"[BACKEND] ERROR {error}")
-                    self.app.stop(error=True)
+                    raise ConfigError(f"Config parse failed: {error}") from error
                 except Exception as error:
                     self.log.error(f"[BACKEND] ERROR {error}")
-                    self.app.stop(error=True)
+                    raise ConfigError(f"Config load failed: {error}") from error
+                self._validate_config()
             else:
                 self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
-                self.app.stop(error=True)
+                raise ConfigError(f"Config file not found: {config_path}")
 
             # Params-level force (e.g. from TUI) takes priority over repo.json
             if not self.params.get("force"):
@@ -61,7 +68,7 @@ class Backend(Service):
             self.runtime["dir"]["target"] = os.path.realpath(
                 self.repo["target"])
 
-            dir_root = Path(self.get_path("source")).parent.absolute()
+            dir_root = config_path.parent.parent.absolute()
             dir_var = Path.joinpath(dir_root, "var")
             dir_log = Path.joinpath(dir_var, "log")
             dir_tmp = Path.joinpath(dir_var, "tmp")
@@ -80,7 +87,6 @@ class Backend(Service):
                 self.log.debug(f"[BACKEND] VAR_CLEARED path={dir_var} reason=force")
 
             for entry in self.runtime["dir"]:
-                dirname = self.runtime["dir"][entry]
                 if entry not in ["source", "target"]:
                     dirname = self.runtime["dir"][entry]
                     if not os.path.exists(dirname):
@@ -99,7 +105,6 @@ class Backend(Service):
             shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
-
             # Initialize docs structure
             self.runtime["docs"] = {}
             self.runtime["docs"]["count"] = 0
@@ -109,8 +114,31 @@ class Backend(Service):
             # Get services
             self.get_services()
 
+    REQUIRED_CONFIG_KEYS = ("source", "target", "theme", "title")
+
+    def _validate_config(self):
+        """Validate required keys are present in repo.json."""
+        missing = [k for k in self.REQUIRED_CONFIG_KEYS if k not in self.repo]
+        if missing:
+            for key in missing:
+                self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
+            raise ConfigError(f"Missing required config keys: {missing}")
+
+    _PLAN_RUNTIME_KEYS = {"ncd", "nck", "K_PATH", "KV_PATH"}
+
     def get_value(self, domain: str, key: str):
         """Get value from key given a domain."""
+        if domain == "runtime" and key in self._PLAN_RUNTIME_KEYS:
+            plan = self.get_plan()
+            if plan is not None:
+                if key == "ncd":
+                    return plan.doc_count
+                if key == "nck":
+                    return plan.key_count
+                if key == "K_PATH":
+                    return plan.K_PATH
+                if key == "KV_PATH":
+                    return plan.KV_PATH
         if domain == "app":
             adict = self.params
         elif domain == "docs":
@@ -124,6 +152,13 @@ class Backend(Service):
         else:
             return None
         return adict.get(key)
+
+    def get_plan(self):
+        """Return the current BuildPlan from the Processor (or None if not yet available)."""
+        srvprc = getattr(self, "srvprc", None)
+        if srvprc is None:
+            return None
+        return srvprc.get_plan()
 
     def set_value(self, domain: str, key: str, value: str | int | bool):
         """Set a value for a specific key in a given domain."""
@@ -157,28 +192,35 @@ class Backend(Service):
 
     def get_path(self, name: str):
         """Get path by name."""
-        return self.runtime["dir"].get(name)
+        return self.runtime.get("dir", {}).get(name)
 
     def load_kbdict(self):
         """Load KB4IT dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
+        empty_kbdict = {"document": {}, "metadata": {}}
         try:
             kbdict = json_load(kb4it_dbfile)
             self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
+            stored_version = kbdict.get("kb4it_version")
+            current_version = ENV["APP"]["version"]
+            if stored_version != current_version:
+                self.log.warning(
+                    f"[BACKEND] KBDICT_VERSION_MISMATCH stored={stored_version} current={current_version}"
+                )
+                self.params["force"] = True
+                return empty_kbdict
         except FileNotFoundError:
-            kbdict = {}
-            kbdict["document"] = {}
-            kbdict["metadata"] = {}
+            kbdict = empty_kbdict
         except Exception as error:
             self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
-            self.log.error(f"[BACKEND] ERROR {error}")
-            self.app.stop(error=True)
+            raise KB4ITError(f"kbdict load failed: {error}") from error
         self.log.debug(f"[BACKEND] KBDICT_ENTRIES n={len(kbdict)}")
         return kbdict
 
     def save_kbdict(self, kbdict):
         """Save kb4it dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
+        kbdict["kb4it_version"] = ENV["APP"]["version"]
         json_save(kb4it_dbfile, kbdict)
         self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")
 
@@ -205,6 +247,7 @@ class Backend(Service):
         """Shortcut to Processor method."""
         return self.srvprc.get_kbdict_value(key, value, new)
 
+    @timeit
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service("Frontend")
@@ -216,7 +259,7 @@ class Backend(Service):
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_path("source")):
             self.log.error(f"[BACKEND] SOURCE_MISSING path={self.get_path('source')}")
-            self.app.stop(error=True)
+            raise ConfigError(f"Source directory not found: {self.get_path('source')}")
         self.log.debug(f"[BACKEND] DIR name=source path={self.get_path('source')}")
 
         # check if target directory exists. If not, create it:
@@ -227,71 +270,73 @@ class Backend(Service):
         theme_name = self.get_value("repo", "theme")
         if theme_name is None:
             self.log.debug("[BACKEND] THEME_MISSING")
-            self.app.stop(error=True)
+            raise ConfigError("Theme name missing from repo config")
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
                 result = frontend.theme_load(os.path.basename(theme_path))
                 if result is None and not self.runtime["theme"].get("id"):
                     self.log.error(f"[BACKEND] THEME_LOAD_FAIL name={theme_name}")
-                    self.app.stop(error=True)
+                    raise ThemeError(f"Theme load failed: {theme_name}")
+                else:
+                    frontend._validate_required_templates(self.runtime["theme"])
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
-                self.log.error("[BACKEND] CHECKS_END")
-                self.app.stop(error=True)
+                raise ThemeError(f"Theme not found: {theme_name}")
         self.log.debug("[BACKEND] CHECKS_END")
 
+    @timeit
     def stage_02_get_source_documents(self):
-        """Get Asciidoctor documents from source directory."""
+        """Get source documents from source directory."""
         self.log.debug("[BACKEND] SOURCES_START")
         sources_path = self.get_path("source")
 
-        # Firstly, allow theme to generate documents
+        # Allow theme to generate documents first
         self.srvthm = self.get_service("Theme")
 
-        # If 'about_kb4it.adoc' doesn't exist, create one from template
+        # System file basenames,  excluded from user-file collection
+        system_basenames = {"about_kb4it.md", "about_app.md"}
+
+        self.runtime["docs"]["format"] = "md"
+
+        # Generate about_kb4it.md (regenerate when content changes)
         var = self.srvbld.get_theme_var()
-        NEW_VERSION = False
         TPL_PAGE_ABOUT_KB4IT = self.srvbld.template("PAGE_ABOUT_KB4IT")
         about_kb4it_content = TPL_PAGE_ABOUT_KB4IT.render(var=var)
-        about_kb4it_target = os.path.join(sources_path, "about_kb4it.adoc")
+        about_kb4it_target = os.path.join(sources_path, "about_kb4it.md")
         if os.path.exists(about_kb4it_target):
-            # About KB4IT asciidoc page is already in sources
-            # Then, check if hashes matches with the KB4IT's one.
-            md5_source = get_hash_from_content(about_kb4it_content)
-            md5_target = get_hash_from_file(about_kb4it_target)
-            if md5_source != md5_target:
-                NEW_VERSION = True
+            if get_hash_from_content(about_kb4it_content) != get_hash_from_file(about_kb4it_target):
+                with open(about_kb4it_target, "w", encoding="utf-8") as fout:
+                    fout.write(about_kb4it_content)
+                self.log.debug("[BACKEND] ABOUT_KB4IT_UPDATED")
         else:
-            NEW_VERSION = True
-
-        if NEW_VERSION:
-            # FIXME: Force compilation if new KB4IT version?
-            # Yes. But starting with v0.8 and major.minor versions.
-            # Skip patches.
-            self.log.debug("[BACKEND] ABOUT_KB4IT_UPDATED")
             with open(about_kb4it_target, "w", encoding="utf-8") as fout:
                 fout.write(about_kb4it_content)
+            self.log.debug("[BACKEND] ABOUT_KB4IT_CREATED")
 
-        # If 'about_app.adoc' doesn't exist, create one from template
-        about_app_source = os.path.join(sources_path, "about_app.adoc")
-        if not os.path.exists(about_app_source):
-            about_app_default = os.path.join(
-                ENV["GPATH"]["TEMPLATES"], "PAGE_ABOUT_APP.tpl"
-            )
-            shutil.copy(about_app_default, about_app_source)
+        # Generate about_app.md if missing (user-editable placeholder)
+        about_app_target = os.path.join(sources_path, "about_app.md")
+        if not os.path.exists(about_app_target):
+            about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "md", "PAGE_ABOUT_APP.tpl")
+            shutil.copy(about_app_tpl, about_app_target)
             self.log.warning("[BACKEND] ABOUT_APP_CREATED")
 
-        # Then, get them
+        # Remove stale .adoc system files left over from older repos.
+        for stale_name in ("about_kb4it.adoc", "about_app.adoc"):
+            stale_path = os.path.join(sources_path, stale_name)
+            if os.path.exists(stale_path):
+                os.unlink(stale_path)
+                self.log.debug(f"[BACKEND] STALE_REMOVED path={stale_path}")
+
+        # Collect all source documents
         self.runtime["docs"]["bag"] = get_source_docs(sources_path)
-        basenames = []
-        for filepath in self.runtime["docs"]["bag"]:
-            basenames.append(os.path.basename(filepath))
+        basenames = [os.path.basename(f) for f in self.runtime["docs"]["bag"]]
         self.runtime["docs"]["filenames"] = basenames
         self.runtime["docs"]["count"] = len(self.runtime["docs"]["bag"])
         self.log.debug(f"[BACKEND] DOCS_FOUND n={self.runtime['docs']['count']}")
         self.log.debug("[BACKEND] SOURCES_END")
 
+    @timeit
     def stage_03_process_sources(self):
         """Extract, Analyze and Transform."""
         self.log.debug("[BACKEND] EXTRACTION_START")
@@ -304,18 +349,21 @@ class Backend(Service):
         self.srvprc.step_02_transformation()
         self.log.debug("[BACKEND] TRANSFORMATION_END")
 
+    @timeit
     def stage_04_process_theme(self):
         """Run theme logic."""
         self.log.debug("[BACKEND] THEME_START")
         self.srvthm.build()
         self.log.debug("[BACKEND] THEME_END")
 
+    @timeit
     def stage_05_compilation(self):
-        """Compile documents to html with asciidoctor."""
+        """Compile Markdown documents to HTML."""
         self.app.register_service("Compiler", Compiler())
         compiler = self.app.get_service("Compiler")
         compiler.execute()
 
+    @timeit
     def stage_06_deploy(self):
         """Recreate target."""
         self.app.register_service("Deployer", Deployer())

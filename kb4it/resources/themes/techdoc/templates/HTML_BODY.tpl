@@ -22,7 +22,7 @@
     </ul>
     <!-- This is the container of the content items -->
     <ul class="uk-switcher uk-margin">
-        <li class="uk-active">${var['source_html']}</li>
+        <li class="uk-active"><div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html']}</div></li>
     </ul>
 
 % if var['metadata']:
@@ -36,6 +36,6 @@
 % endif
 
 % else:
-    ${var['source_html']}
+    <div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html']}</div>
 % endif
 <!-- Template HTML_BODY_DOC.tpl :: END -->

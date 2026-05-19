@@ -1,7 +1,3 @@
-= Add document
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
 <%!
 CATEGORIES = [
     {'id': 'change',    'name': 'Change',    'icon': 'cog',       'color': '#f0506e', 'desc': 'A planned or completed modification to a system, process, or infrastructure component.'},
@@ -15,7 +11,6 @@ CATEGORIES = [
 ]
 %>
 
-++++
 <script id="kb-add-keys" type="application/json">${var['page']['keys_json']}</script>
 <script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json']}</script>
 
@@ -23,9 +18,9 @@ CATEGORIES = [
 
     <div class="kb-add-note uk-alert-primary" uk-alert>
         <span uk-icon="icon: info; ratio: 0.9"></span>
-        <strong>Note:</strong> KB4IT is a static site generator — it cannot create files for you.
+        <strong>Note:</strong> KB4IT is a static site generator, it cannot create files for you.
         Click <em>Create</em> on any card, edit the template, then copy the
-        ready-to-use AsciiDoc file into your repository's <strong>source</strong>
+        ready-to-use Markdown file into your repository's <strong>source</strong>
         directory and rebuild.
     </div>
 
@@ -35,7 +30,7 @@ CATEGORIES = [
         <strong>Online repository:</strong> The document source is hosted at
         <a href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
             ${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}
-        </a> — navigate to the source folder to upload your new file.
+        </a>,  navigate to the source folder to upload your new file.
     </div>
 % endif
 
@@ -65,7 +60,7 @@ CATEGORIES = [
 
 </div><!-- /kb-add -->
 
-<!-- ── Full-screen modal — one per category ── -->
+<!-- ── Full-screen modal,  one per category ── -->
 % for cat in CATEGORIES:
 <div id="modal-add-${cat['id']}" class="uk-modal-full" uk-modal>
     <div class="kb-dialog">
@@ -88,7 +83,7 @@ CATEGORIES = [
         <!-- Split body -->
         <div class="kb-dialog-body">
 
-            <!-- Left: editable AsciiDoc template -->
+            <!-- Left: editable Markdown template -->
             <div class="kb-pane-left">
                 <div class="kb-pane-label">Template</div>
                 <textarea id="kb-editor-${cat['id']}"
@@ -245,41 +240,58 @@ CATEGORIES = [
     function timestamp() {
         var d = new Date();
         var p = function (n) { return String(n).padStart(2, '0'); };
-	return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
         // return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
     }
 
-    /* Extract ordered key names and default values from the skeleton header */
-    function parseKeys(catId) {
+    /* Extract keys from Markdown skeleton (YAML front matter between --- delimiters) */
+    function parseKeysMd(catId) {
         var keys = [];
         var lines = KB_SKEL[catId].split('\n');
+        var inFm = false, fmCount = 0;
         for (var i = 0; i < lines.length; i++) {
-            if (lines[i].indexOf('// END-OF-HEADER') === 0) break;
-            var m = lines[i].match(/^:([^:]+):\s*(.*)/);
-            if (m) keys.push({ name: m[1], val: m[2].trim() });
+            if (lines[i].trim() === '---') {
+                fmCount++;
+                if (fmCount === 1) { inFm = true; continue; }
+                if (fmCount === 2) { break; }
+            }
+            if (inFm) {
+                var m = lines[i].match(/^([A-Za-z][^:]+):\s*(.*)/);
+                if (m) keys.push({ name: m[1].trim(), val: m[2].trim() });
+            }
         }
         return keys;
     }
 
-    /* Build the clean editable template for the left pane */
-    function buildTemplate(catId) {
-        var keys = parseKeys(catId);
-        var out = ['= ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title', ''];
-        keys.forEach(function (key) {
-            var val = key.name === 'Date' ? timestamp() : key.val;
-            out.push(':' + key.name + ':' + (val ? ' ' + val : ''));
-        });
-        out.push('');
-        out.push('// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE');
-
-        /* Append body sections from the skeleton (everything after EOHMARK) */
-        var skelLines = KB_SKEL[catId].split('\n');
-        var inBody = false;
-        for (var i = 0; i < skelLines.length; i++) {
-            if (skelLines[i].indexOf('// END-OF-HEADER') === 0) { inBody = true; continue; }
-            if (inBody) out.push(skelLines[i]);
+    /* Build Markdown template: substitute date and title in skeleton */
+    function buildTemplateMd(catId) {
+        var lines = KB_SKEL[catId].split('\n');
+        var out = [];
+        var inFm = false, fmDone = false, fmCount = 0, titleReplaced = false;
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (!fmDone && line.trim() === '---') {
+                fmCount++;
+                if (fmCount === 1) { inFm = true; out.push(line); continue; }
+                if (fmCount === 2) { inFm = false; fmDone = true; out.push(line); continue; }
+            }
+            if (inFm) {
+                var dm = line.match(/^(Date:\s*)(.*)/);
+                if (dm) { out.push('Date: ' + timestamp()); continue; }
+                out.push(line);
+            } else if (fmDone && !titleReplaced && /^#\s+/.test(line)) {
+                out.push('# ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title');
+                titleReplaced = true;
+            } else {
+                out.push(line);
+            }
         }
         return out.join('\n');
+    }
+
+    /* Build the clean editable template for the left pane */
+    function buildTemplate(catId) {
+        return buildTemplateMd(catId);
     }
 
     /* Build the accordion + word clouds for the right pane */
@@ -356,4 +368,3 @@ CATEGORIES = [
     };
 })();
 </script>
-++++

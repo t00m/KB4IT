@@ -12,8 +12,9 @@ import os
 import shutil
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
-from kb4it.core.util import copy_docs, copydir, delete_target_contents
+from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
 
 
 class Deployer(Service):
@@ -29,11 +30,11 @@ class Deployer(Service):
         self.log.debug("[DEPLOYER] DEPLOY_BEGIN")
 
         source_files = glob.glob(os.path.join(self.srvbes.get_path("source"), "*.*"))
-        source_adocs = [f for f in source_files if f.endswith(".adoc")]
+        source_docs = [f for f in source_files if SOURCE_EXT_RE.search(f)]
         tmp_files = glob.glob(os.path.join(self.srvbes.get_path("tmp"), "*.*"))
 
         self.step_00_copy_source_to_cache(source_files)
-        self.step_04_copy_sources_to_target(source_adocs)
+        self.step_04_copy_sources_to_target(source_docs)
         self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
         self.step_08_copy_global_resources_to_target()
@@ -52,7 +53,7 @@ class Deployer(Service):
         self.log.debug(f"[DEPLOYER] TARGET_CLEARED path={self.srvbes.get_path('target')}")
 
     def step_04_copy_sources_to_target(self, files):
-        """Incrementally sync source .adoc files to target/sources/."""
+        """Incrementally sync source Markdown files to target/sources/."""
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
         os.makedirs(docsdir, exist_ok=True)
         expected = {os.path.basename(f) for f in files}
@@ -91,8 +92,7 @@ class Deployer(Service):
             except FileNotFoundError as error:
                 self.log.error(f"[DEPLOYER] ERROR {error}")
                 self.log.error("[DEPLOYER] HINT rerun with -force")
-                self.print_traceback()
-                self.app.stop()
+                return
 
         for filename in os.listdir(dir_target):
             if not filename.endswith('.html'):
@@ -112,7 +112,7 @@ class Deployer(Service):
         theme = self.srvbes.get_dict("theme")
         if not theme.get("id") or not theme.get("path"):
             self.log.error("[DEPLOYER] THEME_NOT_LOADED")
-            self.app.stop(error=True)
+            raise ThemeError("Theme not loaded for deployment")
         DEFAULT_THEME = os.path.join(ENV["GPATH"]["THEMES"], "default")
         CUSTOM_THEME_ID = theme["id"]
         CUSTOM_THEME_PATH = theme["path"]

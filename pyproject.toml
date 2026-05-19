@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "KB4IT"
-version = "0.7.39+build.30"
-description = "A static website generator based on Asciidoctor sources."
+version = "0.7.6+build.15"
+description = "A static website generator based on Markdown sources."
 authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.rst"
 homepage = "https://github.com/t00m/KB4IT"
 repository = "https://github.com/t00m/KB4IT"
-keywords = ["static-site-generator", "asciidoctor", "documentation"]
+keywords = ["static-site-generator", "markdown", "documentation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -45,6 +45,8 @@ Mako = "1.3.12"
 lxml = "*"
 rich = ">=13.0"
 textual = ">=0.47.0"
+PyYAML = ">=6.0"
+Markdown = ">=3.5"
 
 [tool.poetry.scripts]
 kb4it = "kb4it.core.main:main"

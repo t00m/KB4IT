@@ -1,7 +1,3 @@
-= ${var['page']['title']}
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
 <%!
 import re
 
@@ -19,7 +15,7 @@ def category_css(category):
     elif category in _primary:
         return "uk-label-primary"
     else:
-        return "uk-text-muted"
+        return ""
 
 def category_url(category):
     s = str(category).strip().replace(" ", "_")
@@ -27,49 +23,7 @@ def category_url(category):
     return "Category_%s.html" % safe
 %>
 
-++++
 <div class="uk-container kb-index">
-
-    <!-- 0. TRIMESTER CALENDAR (hidden) -->
-    <section class="kb-section" style="display:none;">
-        <div class="kb-panel kb-trimester">
-            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
-                <h2 class="kb-section-title" style="margin: 0;">Trimester · ${var['page']['trimester']['title']}</h2>
-                <a href="events.html" class="uk-text-small" style="text-decoration: none;">
-                    All events <span uk-icon="icon: chevron-right; ratio: 0.8"></span>
-                </a>
-            </div>
-            <div class="kb-trimester-grid">
-% for month in var['page']['trimester']['months']:
-                <div class="kb-trimester-month${' current' if month['current'] else ''}">
-                    <h4>${month['name']}</h4>
-                    <table>
-                        <thead>
-                            <tr><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th></tr>
-                        </thead>
-                        <tbody>
-%     for week in month['weeks']:
-                            <tr>
-%         for cell in week:
-%             if cell['kind'] == 'empty':
-                                <td class="empty">·</td>
-%             elif cell['kind'] == 'today':
-                                <td class="today">${cell['n']}</td>
-%             elif cell['kind'] == 'event':
-                                <td class="event"><a href="${cell['url']}">${cell['n']}</a></td>
-%             else:
-                                <td>${cell['n']}</td>
-%             endif
-%         endfor
-                            </tr>
-%     endfor
-                        </tbody>
-                    </table>
-                </div>
-% endfor
-            </div>
-        </div>
-    </section>
 
     <!-- 1. HERO STATS BAR -->
     <section class="kb-section">
@@ -174,7 +128,7 @@ def category_url(category):
                                 <td class="kb-event-date">${row['date']}</td>
                                 <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 %             if row['category']:
-                                <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}">${row['category']}</a></td>
+                                <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}" style="color: white;">${row['category']}</a></td>
 %             else:
                                 <td></td>
 %             endif
@@ -188,6 +142,41 @@ def category_url(category):
             </div>
         </div>
     </section>
+
+    <!-- 4b. MONITORING -->
+% if var['page']['monitoring_panel']:
+    <section class="kb-section">
+        <h2 class="kb-section-title">Monitoring</h2>
+        <div class="kb-panel uk-card-hover uk-box-shadow-large">
+% if len(var['page']['monitoring_panel']) == 0:
+            <div class="kb-events-empty">No monitoring articles found.</div>
+% else:
+            <div class="uk-grid-small" uk-grid>
+% for group in var['page']['monitoring_panel']:
+                <div class="uk-width-1-${ len(var['page']['monitoring_panel']) }@m">
+                    <div class="kb-events-month-header">
+                        <a href="${group['url']}">${group['periodicity']}</a>
+                    </div>
+% if len(group['rows']) == 0:
+                    <div class="kb-events-empty">No articles.</div>
+% else:
+                    <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
+                        <tbody>
+% for row in group['rows']:
+                            <tr>
+                                <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
+                            </tr>
+% endfor
+                        </tbody>
+                    </table>
+% endif
+                </div>
+% endfor
+            </div>
+% endif
+        </div>
+    </section>
+% endif
 
     <!-- 5. RECENT EVENTS -->
     <section class="kb-section">
@@ -203,7 +192,7 @@ def category_url(category):
                         <td class="kb-event-date">${row['date']}</td>
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 % if row['category']:
-                        <td class="uk-flex uk-flex-right"><span class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}">${row['category']}</span></td>
+                        <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}" style="color: white;">${row['category']}</a></td>
 % else:
                         <td></td>
 % endif
@@ -216,4 +205,3 @@ def category_url(category):
     </section>
 
 </div>
-++++

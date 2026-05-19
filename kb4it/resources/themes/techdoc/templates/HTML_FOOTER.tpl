@@ -40,15 +40,26 @@ function copyToClipboard() {
 </script>
 <script>
 (function() {
-    document.querySelectorAll(".kb-sect1").forEach(function(sect) {
-        var h2 = sect.querySelector("h2.kb-h2");
-        var body = sect.querySelector(".kb-section-body");
-        if (!h2 || !body) return;
-        h2.style.cursor = "pointer";
-        h2.addEventListener("click", function() {
-            var collapsed = sect.classList.toggle("kb-sect1-collapsed");
-            body.style.display = collapsed ? "none" : "";
-        });
+    var content = document.querySelector('.kb-content');
+    if (!content) return;
+    var sects = Array.from(content.querySelectorAll(':scope > .kb-sect1'));
+    if (!sects.length) return;
+
+    var acc = document.createElement('div');
+    acc.setAttribute('uk-accordion', '');
+    sects[0].parentNode.insertBefore(acc, sects[0]);
+    sects.forEach(function(s) {
+        s.classList.add('uk-open');
+        acc.appendChild(s);
+    });
+
+    UIkit.accordion(acc, {
+        targets: '> .kb-sect1',
+        toggle: '> h2',
+        content: '> .kb-section-body',
+        multiple: true,
+        animation: true,
+        duration: 200
     });
 })();
 </script>

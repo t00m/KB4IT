@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+
 import semver
 
 current = open('kb4it/VERSION', 'r').read()

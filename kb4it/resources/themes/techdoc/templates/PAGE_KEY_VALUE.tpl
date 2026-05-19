@@ -1,8 +1,3 @@
-= ${var['title']}
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <div class="kb-kv-banner">
     <nav class="kb-kv-breadcrumb">
         <a href="properties.html">Properties</a>
@@ -21,4 +16,3 @@
 <div class="uk-container uk-overflow-auto">
 ${var['page']['dt_documents']}
 </div>
-++++

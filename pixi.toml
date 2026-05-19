@@ -6,9 +6,6 @@
 #   pixi install          # set up the environment
 #   pixi run check        # verify the install
 #   pixi run build        # build sdist + wheel
-#
-# Key advantage over pip/pipx: pixi installs asciidoctor from conda-forge
-# automatically — no separate "gem install asciidoctor" step needed.
 
 [project]
 name = "kb4it"
@@ -17,7 +14,6 @@ platforms = ["linux-64"]
 
 [dependencies]
 python = ">=3.11,<4"
-asciidoctor = "*"
 pip = "*"
 
 [pypi-dependencies]

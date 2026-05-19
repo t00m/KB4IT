@@ -1,8 +1,3 @@
-= ${var['title']}
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
         <!-- PAGINATION_HEAD.tpl :: START -->
         <!-- PAGINATION :: START -->
         <ul class="uk-pagination uk-flex-center" uk-margin>
@@ -22,5 +17,4 @@
             </ul> <!-- Filtered rows :: End -->
         </div>
         <!-- PAGINATION_HEAD.tpl :: END -->
-++++
 

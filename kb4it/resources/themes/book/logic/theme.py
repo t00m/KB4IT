@@ -10,24 +10,18 @@ Server module.
 # Description: default theme script
 """
 
-import os
 import math
+import os
 from datetime import datetime, timedelta
+import sys
 
 from kb4it.core.env import ENV
+from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
+                             get_human_datetime, get_human_datetime_day,
+                             get_human_datetime_month, get_human_datetime_year,
+                             get_month, get_year, guess_datetime, html_id_for,
+                             json_save, set_max_frequency, valid_filename)
 from kb4it.services.builder import Builder
-from kb4it.core.util import valid_filename
-from kb4it.core.util import exec_cmd
-from kb4it.core.util import set_max_frequency, get_font_size
-from kb4it.core.util import guess_datetime
-from kb4it.core.util import get_human_datetime
-from kb4it.core.util import get_human_datetime_day
-from kb4it.core.util import get_human_datetime_month
-from kb4it.core.util import get_human_datetime_year
-from kb4it.core.util import get_asciidoctor_attributes
-from kb4it.core.util import json_save
-from kb4it.core.util import ellipsize_text
-from kb4it.core.util import get_year, get_month, get_day
 
 
 class Theme(Builder):
@@ -100,8 +94,8 @@ class Theme(Builder):
                         item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
                         item['url'] = documents[docId]['%s_Url' % key]
                         datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
-                    except:
-                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item}")
+                    except (KeyError, AttributeError) as e:
+                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
                         raise
                 else:
                     link = {}
@@ -121,31 +115,24 @@ class Theme(Builder):
 
 
     def build_page_index(self, var):
-        """Create blog index page.
+        """Create the book index page.
 
-        At this point, all posts have been already converted to HTML.
-        So, it doesn't make sense to compile again asciidoc sources.
-        Instead, thanks to 'some marks' left in post templates, the body
-        code is extracted and reinjected in the index page.
-        Probably this ins't the best approach. Need a deep review.
-
-        Another workaround would be to create a datatable with all post.
+        Posts are already converted to HTML; the body of each is extracted
+        and reinjected into the index page.
         """
         if self.srvbes.get_value('runtime', 'ncd') == 0:
             func_name = sys._getframe().f_code.co_name
             self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
             return
 
-        TPL_POST_ADOC = self.template('POST_ADOC_INDEX')
+        TPL_POST = self.template('POST_ADOC_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_dict('repo')
         sort_by = "Date"
         try:
-            nip = repo['index_posts'] # Number of posts to display in index
+            nip = repo['index_posts']
         except KeyError:
-            nip = 10 # Default number of post in index page
-        runtime = self.srvbes.get_dict('runtime')
-        filenames = runtime['docs']['filenames']
+            nip = 10
         var['page']['title'] = "Index"
 
         doclist = self.srvdtb.get_documents()
@@ -156,34 +143,30 @@ class Theme(Builder):
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
-            adoc_filepath = os.path.join(self.srvbes.get_path('source'), post)
-            adoc_content = open(adoc_filepath, 'r').read()
-            html_filename = post.replace('.adoc', '.html')
+            md_filepath = os.path.join(self.srvbes.get_path('source'), post)
+            md_content = open(md_filepath, 'r').read()
+            html_filename = html_id_for(post)
             html_filepath = os.path.join(self.srvbes.get_path('target'), html_filename)
             html_content = open(html_filepath, 'r').read()
             body_mark = "<!-- BODY :: START -->"
-            body_start = html_content.find("<!-- BODY :: START -->")
+            body_start = html_content.find(body_mark)
             body_end = html_content.find("<!-- BODY :: END -->")
             timestamp = var['post'][sort_by][0]
-            dt = guess_datetime(timestamp)
+            guess_datetime(timestamp)
             var['post']['body'] = html_content[body_start + len(body_mark):body_end]
-            var['basename_adoc'] = post
+            var['basename_md'] = post
             var['metadata'] = self.build_metadata_section(post)
-            var['source_adoc'] = adoc_content
+            var['source_md'] = md_content
             try:
-                html += TPL_POST_ADOC.render(var=var)
+                html += TPL_POST.render(var=var)
                 self.log.debug(f"[THEME] INDEX_ADD doc={post}")
             except Exception as error:
                 self.log.warning(f"[THEME] INDEX_SKIP doc={post} error={error}")
 
         runtime = self.srvbes.get_dict('runtime')
-        adocprops = runtime['adocprops']
-        index_file = os.path.join(runtime['dir']['target'], 'index.adoc')
+        index_file = os.path.join(runtime['dir']['target'], 'index.md')
         with open(index_file, 'w') as fout:
             fout.write(html)
-        cmd = "asciidoctor -q -s %s -b html5 -D %s %s" % (adocprops, runtime['dir']['target'], index_file)
-        data = (index_file, cmd, 1)
-        res = exec_cmd(data)
         self.build_page(index_file, var)
 
     def build_events(self, doclist):
@@ -204,13 +187,7 @@ class Theme(Builder):
                 y = timestamp.year
                 m = timestamp.month
                 d = timestamp.day
-                try:
-                    days_events = self.dey[y]
-                    days_events.append((m, d))
-                except:
-                    days_events = []
-                    days_events.append((m, d))
-                    self.dey[y] = days_events
+                self.dey.setdefault(y, []).append((m, d))
 
                 # Build dict of documents
                 if not y in self.events_docs:
@@ -249,7 +226,7 @@ class Theme(Builder):
                         if doc_changed or doc_not_cached:
                             must_compile_day = True
                             break
-                    # ~ self.log.debug(f"DOC[{EVENT_PAGE_DAY}.adoc] targeting RESOURCE[{os.path.basename(pagename)}] COMPILE[{must_compile_day}]")
+                    # ~ self.log.debug(f"DOC[{EVENT_PAGE_DAY}.md] targeting RESOURCE[{os.path.basename(pagename)}] COMPILE[{must_compile_day}]")
                     if must_compile_day:
                         must_compile_month.add("%4d%02d" % (year, month))
                         must_compile_year.add("%4d" % (year))
@@ -260,13 +237,13 @@ class Theme(Builder):
                         var['page']['datatable'] = self.build_datatable(headers, doclist)
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         html = TPL_PAGE_EVENTS_DAYS.render(var=var)
-                        self.distribute_adoc(EVENT_PAGE_DAY, html)
+                        self.distribute_md(EVENT_PAGE_DAY, html)
 
                         #FIXME
                         human_title = get_human_datetime_day(edt)
-                        self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.adoc")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'Title', f"Events on {human_title}")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.adoc", 'SystemPage', 'Yes')
+                        self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.md")
+                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.md", 'Title', f"Events on {human_title}")
+                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.md", 'SystemPage', 'Yes')
                     else:
                         self.distribute_html(EVENT_PAGE_DAY, pagename)
 
@@ -288,12 +265,12 @@ class Theme(Builder):
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
-                    self.distribute_adoc(EVENT_PAGE_MONTH, html)
+                    self.distribute_md(EVENT_PAGE_MONTH, html)
 
                     human_title = get_human_datetime_month(edt)
-                    self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.adoc")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'Title', f"Events on {human_title}")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.adoc", 'SystemPage', 'Yes')
+                    self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.md")
+                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.md", 'Title', f"Events on {human_title}")
+                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.md", 'SystemPage', 'Yes')
 
                 else:
                     pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
@@ -318,10 +295,10 @@ class Theme(Builder):
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
                 var['page']['datatable'] = self.build_datatable(headers, doclist)
-                self.distribute_adoc(page_name, PAGE.render(var=var))
-                self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.adoc")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'Title', f"Archive / {year}")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.adoc", 'SystemPage', 'Yes')
+                self.distribute_md(page_name, PAGE.render(var=var))
+                self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.md")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.md", 'Title', f"Archive / {year}")
+                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.md", 'SystemPage', 'Yes')
 
             else:
                 pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
@@ -355,10 +332,7 @@ class Theme(Builder):
         doclist = []
         ecats = {}
         repo = self.srvbes.get_dict('repo')
-        try:
-            event_types = repo['events']
-        except:
-            event_types = []
+        event_types = repo.get('events', [])
         # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
 
         for docId in self.srvdtb.get_documents():
@@ -372,11 +346,11 @@ class Theme(Builder):
         events = {}
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
-        self.distribute_adoc('events', page.render(var=events))
+        self.distribute_md('events', page.render(var=events))
 
-        self.srvdtb.add_document('events.adoc')
-        self.srvdtb.add_document_key('events.adoc', 'Title', 'Archive')
-        self.srvdtb.add_document_key('events.adoc', 'SystemPage', 'Yes')
+        self.srvdtb.add_document('events.md')
+        self.srvdtb.add_document_key('events.md', 'Title', 'Archive')
+        self.srvdtb.add_document_key('events.md', 'SystemPage', 'Yes')
 
     def post_activities(self):
         self.log.debug("[THEME] POST_START")
@@ -441,11 +415,11 @@ class Theme(Builder):
                 button = TPL_KEY_MODAL_BUTTON.render(var=vbtn)
                 var['buttons'].append(button)
         content = TPL_PROPS_PAGE.render(var=var)
-        self.distribute_adoc('properties', content)
+        self.distribute_md('properties', content)
 
-        self.srvdtb.add_document('properties.adoc')
-        self.srvdtb.add_document_key('properties.adoc', 'Title', 'Metadata')
-        self.srvdtb.add_document_key('properties.adoc', 'SystemPage', 'Yes')
+        self.srvdtb.add_document('properties.md')
+        self.srvdtb.add_document_key('properties.md', 'Title', 'Metadata')
+        self.srvdtb.add_document_key('properties.md', 'SystemPage', 'Yes')
 
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
@@ -533,11 +507,11 @@ class Theme(Builder):
             item['count_values'] = len(values)
             var['leader_items'].append(item)
         stats = TPL_PAGE_STATS.render(var=var)
-        self.distribute_adoc('stats', stats)
+        self.distribute_md('stats', stats)
 
-        self.srvdtb.add_document('stats.adoc')
-        self.srvdtb.add_document_key('stats.adoc', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.adoc', 'SystemPage', 'Yes')
+        self.srvdtb.add_document('stats.md')
+        self.srvdtb.add_document_key('stats.md', 'Title', 'Stats')
+        self.srvdtb.add_document_key('stats.md', 'SystemPage', 'Yes')
 
     def build_page_index_all(self):
         """Create a page with all documents"""
@@ -556,18 +530,17 @@ class Theme(Builder):
         datatable = self.build_datatable(headers, doclist)
         var['content'] = datatable
         page = TPL_PAGE_ALL.render(var=var)
-        self.distribute_adoc('all', page)
+        self.distribute_md('all', page)
 
-        self.srvdtb.add_document('all.adoc')
-        self.srvdtb.add_document_key('all.adoc', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.adoc', 'SystemPage', 'Yes')
+        self.srvdtb.add_document('all.md')
+        self.srvdtb.add_document_key('all.md', 'Title', 'All documents')
+        self.srvdtb.add_document_key('all.md', 'SystemPage', 'Yes')
 
         # ~ self.log.debug("Created page for all documents")
         return page
 
     def extract_toc(self, source):
-        """Extract TOC from Asciidoctor generated HTML code and
-        make it theme dependent."""
+        """Extract TOC from compiled HTML code and make it theme dependent."""
         toc = ''
         items = []
         lines = source.split('\n')
@@ -601,28 +574,24 @@ class Theme(Builder):
             toc = '\n'.join(items)
         return toc
 
-    # ~ @timeit
-    def build_page(self, path_adoc, var={}):
-        """
-        Build the final HTML Page
+    def build_page(self, path_md, var={}):
+        """Build the final HTML Page.
 
-        At this point, the compilation for the asciidoc document has
-        finished successfully, and therefore the html page can be built.
-
-        The Builder receives the asciidoc document filepath. It means,
-        that another file with extension .html should also exist.
+        At this point, the Markdown compilation has finished successfully
+        and therefore the html page can be built. The Builder receives the
+        source filepath; another file with extension .html should also
+        exist.
 
         The html page is built by inserting the html header at the
-        beguinning, appending the footer at the end, and applying the
+        beginning, appending the footer at the end, and applying the
         necessary transformations in the body.
 
-        Finally, the html page created by asciidoctor is overwritten.
+        Finally, the html page produced by the compiler is overwritten.
         """
-        path_hdoc = path_adoc.replace('.adoc', '.html')
-        basename_adoc = os.path.basename(path_adoc)
+        path_hdoc = html_id_for(path_md)
+        basename_md = os.path.basename(path_md)
         basename_hdoc = os.path.basename(path_hdoc)
-        exists_adoc = os.path.exists(path_adoc) # it should be true
-        exists_hdoc = os.path.exists(path_hdoc) # it should be true
+        exists_hdoc = os.path.exists(path_hdoc)
         repo = self.srvbes.get_dict('repo')
         try:
             strict = repo['strict']
@@ -630,11 +599,9 @@ class Theme(Builder):
             strict = False
 
         if not exists_hdoc:
-            self.log.error(f"[THEME] HTML_MISSING doc={basename_adoc}")
+            self.log.error(f"[THEME] HTML_MISSING doc={basename_md}")
             return
 
-        # ~ self.log.debug(" - Page[%s] transformation started", basename_hdoc)
-        THEME_ID = self.srvbes.get_value('theme', 'id')
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
         HTML_BODY = self.template('HTML_BODY')
         HTML_BODY_POST = self.template('POST_HTML_SINGLE')
@@ -658,18 +625,17 @@ class Theme(Builder):
             var['leader_items'].append(item)
 
         var['post'] = {}
-        metadata = self.srvdtb.get_doc_properties(basename_adoc)
+        metadata = self.srvdtb.get_doc_properties(basename_md)
         for prop in metadata:
             var['post'][prop] = metadata[prop]
         var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
         var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
         now = datetime.now()
         timestamp = get_human_datetime(now)
-        keys = self.srvdtb.get_doc_properties(basename_adoc)
-        system_page = self.srvdtb.is_system(basename_adoc)
+        keys = self.srvdtb.get_doc_properties(basename_md)
 
-        with open(path_adoc, 'r') as fpa:
-            source_adoc = fpa.read()
+        with open(path_md, 'r') as fpa:
+            source_md = fpa.read()
 
         with open(path_hdoc, 'r') as fph:
             source_html = fph.read()
@@ -678,7 +644,7 @@ class Theme(Builder):
         var['has_toc'] = True
 
         # Do not show metadata for system pages
-        if self.srvdtb.is_system(basename_adoc):
+        if self.srvdtb.is_system(basename_md):
             var['SystemPage'] = True
             TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
             HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
@@ -687,7 +653,7 @@ class Theme(Builder):
             var['SystemPage'] = False
             TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
             HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-        var['metadata'] = self.build_metadata_section(basename_adoc)
+        var['metadata'] = self.build_metadata_section(basename_md)
 
         var['menu_contents'] = HTML_TOC
         try:
@@ -696,18 +662,17 @@ class Theme(Builder):
                 for key in keys:
                     var['post'][key] = keys[key]
                 var['page']['title'] = var['post']['title']
-        except Exception as error:
+        except Exception:
             var['keys'] = keys
         try:
             var['page']['title'] = ellipsize_text(keys['Title'])
             var['page']['title-tooltip'] = keys['Title']
-        except Exception as error:
-            # ~ self.log.error(error)
+        except Exception:
             pass
-        var['basename_adoc'] = basename_adoc
+        var['basename_md'] = basename_md
         var['basename_hdoc'] = basename_hdoc
-        var['source_adoc'] = source_adoc
-        var['source_html'] = self.apply_transformations(source_html) # <---
+        var['source_md'] = source_md
+        var['source_html'] = self.apply_transformations(source_html)
         actions = self.get_page_actions(var)
         var['actions'] = actions
         var['timestamp'] = timestamp
@@ -721,8 +686,7 @@ class Theme(Builder):
                     BODY = HTML_BODY.render(var=var)
             else:
                 BODY = HTML_BODY_POST.render(var=var)
-        except Exception as error:
-            # ~ self.log.error(f"{basename_adoc} > {error}")
+        except Exception:
             BODY = HTML_BODY.render(var=var)
         FOOTER = HTML_FOOTER.render(var=var)
 
@@ -759,11 +723,11 @@ class Theme(Builder):
 
         adoc = TPL_PAGE_KEY.render(var=var)
         var['pagename'] = "%s" % valid_filename(key)
-        self.distribute_adoc(var['pagename'], adoc)
+        self.distribute_md(var['pagename'], adoc)
 
-        self.srvdtb.add_document(f"{var['pagename']}.adoc")
-        self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
-        self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
+        self.srvdtb.add_document(f"{var['pagename']}.md")
+        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
+        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
 
         # ~ self.log.debug(" - Created page key '%s'", var['pagename'])
 
@@ -788,11 +752,11 @@ class Theme(Builder):
 
         if var['compile']:
             adoc = TPL_PAGE_KEY_VALUE.render(var=var)
-            self.distribute_adoc(var['pagename'], adoc)
+            self.distribute_md(var['pagename'], adoc)
 
-            self.srvdtb.add_document(f"{var['pagename']}.adoc")
-            self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'Title', f"{var['title']}")
-            self.srvdtb.add_document_key(f"{var['pagename']}.adoc", 'SystemPage', 'Yes')
+            self.srvdtb.add_document(f"{var['pagename']}.md")
+            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
+            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
             self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
 
     def build_page_bookmarks(self):
@@ -816,14 +780,14 @@ class Theme(Builder):
         headers = []
         datatable = self.build_datatable(headers, doclist)
 
-        self.srvdtb.add_document('bookmarks.adoc')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.adoc', 'SystemPage', 'Yes')
+        self.srvdtb.add_document('bookmarks.md')
+        self.srvdtb.add_document_key('bookmarks.md', 'Title', 'Bookmarks')
+        self.srvdtb.add_document_key('bookmarks.md', 'SystemPage', 'Yes')
 
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable
         page = TPL_PAGE_BOOKMARKS.render(var=var)
-        self.distribute_adoc('bookmarks', page)
+        self.distribute_md('bookmarks', page)
 
         self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
 

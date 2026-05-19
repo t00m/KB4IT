@@ -14,7 +14,6 @@
     var['post']['updated_year'] = f"{dt.year:04d}"
     var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
 %>
-++++
 <!-- Template POST_ADOC_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
 <div class="uk-card uk-card-small uk-card-body post-card">
@@ -58,7 +57,7 @@
                                 </div>
                             </li>
                             <!-- Metadata Button :: END -->
-                            <!-- View Asciidoc Source Button :: START -->
+                            <!-- View Markdown Source Button :: START -->
                             <li uk-tooltip="title: Document source">
                                 <span uk-icon="code"></span>
                                 <span class="uk-margin-small-left">
@@ -70,8 +69,8 @@
                                         <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
-                                                <div class="uk-text-lead">${var['basename_adoc']}</div>
-                                                <div class=""><textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_adoc']}</textarea></div>
+                                                <div class="uk-text-lead">${var['basename_md']}</div>
+                                                <div class=""><textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_md']}</textarea></div>
                                             </div>
                                         </div>
                                     </div>
@@ -104,4 +103,3 @@
 </div>
 <p></p>
 <!-- Template POST_ADOC_INDEX.tpl :: END -->
-++++

@@ -8,10 +8,10 @@
 import json
 import os
 import stat
+import time
 
 from kb4it.core.service import Service
-from kb4it.core.util import copydir
-from kb4it.core.util import json_load
+from kb4it.core.util import copydir, json_load
 
 
 class Workflow(Service):
@@ -22,16 +22,19 @@ class Workflow(Service):
         pass
 
     def list_themes(self):
+        """Print all installed themes to the log."""
         self.log.info("[WORKFLOW] ACTION name=list_themes")
         frontend = self.get_service("Frontend")
         frontend.theme_list()
 
     def list_apps(self, theme):
+        """Print all apps available for a given theme to the log."""
         self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")
         frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
 
     def info_repository(self):
+        """Print repository configuration fields to stdout."""
         backend = self.app.get_service("Backend")
         config_file = backend.get_value("app", "config")
         if config_file is not None and os.path.exists(config_file):
@@ -46,6 +49,7 @@ class Workflow(Service):
             print(f"Documents source directory: {repo.get('source')}")
 
     def create_repository(self):
+        """Initialise a new repository from the chosen theme's example skeleton."""
         self.log.info("[WORKFLOW] ACTION name=create_repository")
         frontend = self.app.get_service("Frontend")
         params = self.app.get_params()
@@ -69,21 +73,25 @@ class Workflow(Service):
         if initialize:
             self.log.info(f"[WORKFLOW] REPO_PATH path={repo_path}")
             self.log.info(f"[WORKFLOW] THEME_USE name={theme} path={theme_path}")
-            repo_demo = os.path.join(theme_path, "example", "repo")
+            app_name = params.get("app", "default") or "default"
+            repo_demo = os.path.join(theme_path, "apps", app_name)
+            if not os.path.isdir(repo_demo):
+                repo_demo = os.path.join(theme_path, "example", "repo")
+            self.log.info(f"[WORKFLOW] APP_TEMPLATE name={app_name} path={repo_demo}")
             copydir(repo_demo, repo_path)
             source_dir = os.path.join(repo_path, "source")
             target_dir = os.path.join(repo_path, "target")
             bin_dir = os.path.join(repo_path, "bin")
             script = os.path.join(bin_dir, "compile.sh")
             config_file = os.path.join(repo_path, "config", "repo.json")
-            with open(config_file) as fc:
+            with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
             repoconf["source"] = source_dir
             repoconf["target"] = target_dir
-            with open(config_file, "w") as fc:
+            with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
-            with open(script, "w") as fs:
+            with open(script, "w", encoding="utf-8") as fs:
                 fs.write(f"kb4it -L INFO build {config_file}")
             os.chmod(
                 script,
@@ -107,10 +115,12 @@ class Workflow(Service):
         2. Get source documents
         3. Preprocess documents (get metadata)
         4. Process documents in a temporary dir
-        5. Compile documents to html with asciidoctor
+        5. Compile Markdown documents to HTML
         6. Theme Post activities
         7. Deploy
         """
+        t0 = time.perf_counter()
+
         backend = self.get_service("Backend")
         repo = backend.get_dict("repo")
         repo_title = repo["title"]
@@ -127,6 +137,13 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=3 name=process_sources")
         backend.stage_03_process_sources()
+        plan = backend.get_plan()
+        if plan is not None:
+            self.log.info(
+                f"[WORKFLOW] PLAN docs={plan.doc_count}"
+                f" keys={plan.key_count}"
+                f" kv={plan.kv_count}"
+            )
 
         self.log.info("[WORKFLOW] STAGE n=4 name=process_theme")
         backend.stage_04_process_theme()
@@ -139,6 +156,26 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=7 name=deploy")
         backend.stage_06_deploy()
+
+        # Build summary
+        runtime = backend.get_dict("runtime")
+        plan = backend.get_plan()
+        docs_total = runtime["docs"].get("count", 0)
+        compiled   = plan.doc_count if plan is not None else 0
+        skipped    = docs_total - compiled
+        keys_compiled = plan.key_count if plan is not None else 0
+        kv_compiled   = plan.kv_count if plan is not None else 0
+        elapsed = time.perf_counter() - t0
+
+        self.log.info(
+            f"[WORKFLOW] SUMMARY"
+            f" docs_total={docs_total}"
+            f" compiled={compiled}"
+            f" skipped={skipped}"
+            f" keys_compiled={keys_compiled}"
+            f" kv_pages_compiled={kv_compiled}"
+        )
+        self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 
         # Report
         homepage = os.path.join(

@@ -1,8 +1,3 @@
-= Properties
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <!-- WORDCLOUD :: START -->
 <div class="uk-card uk-card-small uk-border-rounded uk-card-body uk-auto@m">
     <div class="uk-card-header">
@@ -18,4 +13,3 @@
     </div>
 </div>
 <!-- WORDCLOUD :: END -->
-++++

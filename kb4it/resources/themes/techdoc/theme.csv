@@ -12,7 +12,7 @@
 "events";"Change, Diary, Email, Incident, Message, Meeting, Note, Post, Procedure, Reminder, Report, Task";"Event keys";"Attibutes that will be used when creating the calendar events";"Yes"
 "sort";"Updated, Published";"Sort by";"Which attributes use for sorting";"Yes"
 "title";"My KB4IT repository";"Repository title";"Title of your repository";"No"
-"target";"/path/to/target/directory";"Source directory";"Absolute path to the directory containing the Asciidocs files";"No"
+"target";"/path/to/target/directory";"Source directory";"Absolute path to the directory containing the Markdown source files";"No"
 "source";"/path/to/source/directory";"Target directory";"Absolute path to the directory used as output.";"No"
 "git";TRUE;"Use Git server?";"Integrate KB4IT with a Git server";"No"
 "git_server";"https://github.com";"Git server";"Git server";"No"

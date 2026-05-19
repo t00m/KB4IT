@@ -13,6 +13,7 @@ import os
 import sys
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 
 
@@ -65,11 +66,14 @@ class Frontend(Service):
         if theme_path is not None:
             self.log.info(f"[FRONTEND] APPS_LIST theme={theme}")
             self.log.debug(f"[FRONTEND] THEME_PATH theme={theme} path={theme_path}")
-            apps_path = os.path.join(theme_path, "apps", "*.json")
-            apps = sorted(glob.glob(apps_path))
-            for app in apps:
-                app_name = os.path.basename(app)[:-5]
-                self.log.info(f"[FRONTEND] APP name={app_name}")
+            apps_path = os.path.join(theme_path, "apps")
+            if os.path.isdir(apps_path):
+                apps = sorted(
+                    d for d in os.listdir(apps_path)
+                    if os.path.isdir(os.path.join(apps_path, d))
+                )
+                for app_name in apps:
+                    self.log.info(f"[FRONTEND] APP name={app_name}")
         else:
             self.log.error(f"[FRONTEND] THEME_NOT_FOUND name={theme}")
 
@@ -79,7 +83,7 @@ class Frontend(Service):
         """Load custom user theme, global theme or default."""
         if theme_name is None:
             self.log.error("[FRONTEND] THEME_MISSING")
-            self.app.stop(error=True)
+            raise ThemeError("Theme name not specified")
 
         # custom theme requested by user via command line properties
         self.runtime["theme"] = {}
@@ -131,7 +135,21 @@ class Frontend(Service):
                 return None
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
-                self.app.stop(error=True)
+                raise ThemeError(f"Theme load failed: {error}") from error
+
+    def _validate_required_templates(self, theme):
+        """Check that all required templates exist for the loaded theme."""
+        from kb4it.services.builder import REQUIRED_TEMPLATES, _template_candidates
+        global_tpl_dir = ENV["GPATH"]["TEMPLATES"]
+        theme_tpl_dir = theme["templates"]
+        missing = [
+            name for name in REQUIRED_TEMPLATES
+            if not any(os.path.isfile(c) for c in _template_candidates(name, theme_tpl_dir, global_tpl_dir))
+        ]
+        if missing:
+            for name in missing:
+                self.log.error(f"[FRONTEND] TEMPLATE_MISSING name={name} theme={theme.get('name', '?')}")
+            raise ThemeError(f"Required templates missing: {missing}")
 
     def theme_search(self, theme=None):
         """Search custom theme."""
@@ -151,11 +169,10 @@ class Frontend(Service):
             # Search in sources path
             try:
                 source_path = self.srvbes.get_path("source")
-                theme_rel_path = os.path.join(
-                    os.path.join("resources", "themes"))
+                theme_rel_path = os.path.join("resources", "themes")
                 theme_path_source = os.path.join(
                     source_path, theme_rel_path, theme)
-            except Exception:
+            except (AttributeError, TypeError):
                 theme_path_source = ""
             theme_path_opt = os.path.join(ENV["LPATH"]["THEMES"], theme)
             theme_path_global = os.path.join(ENV["GPATH"]["THEMES"], theme)

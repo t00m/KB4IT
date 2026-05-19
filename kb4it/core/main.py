@@ -5,7 +5,7 @@ KB4IT module. Entry point.
 
 # Author: Tomás Vírseda <tomasvirseda@gmail.com>
 # License: GPLv3
-# Description: Website static-generator based on Asciidoctor
+# Description: Website static-generator based on Markdown
 """
 
 import argparse
@@ -15,6 +15,7 @@ import sys
 import uuid
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, ThemeError
 from kb4it.core.log import get_logger, setup_logging
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
@@ -31,8 +32,8 @@ def _acquire_process_lock():
     global _lock_fd
     lock_path = ENV["FILE"]["LOCK"]
     os.makedirs(os.path.dirname(lock_path), exist_ok=True)
-    # O_RDWR|O_CREAT never truncates — so if flock fails, the other process's
-    # PID is still readable from the file.
+    # O_RDWR|O_CREAT never truncates, so if flock fails, the other
+    # process's PID is still readable from the file.
     raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
     fd = os.fdopen(raw, "r+")
     try:
@@ -133,7 +134,7 @@ class KB4IT:
         service = self.services.get(name) or None
         if service is None:
             self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
-            self.stop(error=True)
+            raise KB4ITError(f"Service not registered: {name}")
         if not service.is_started():
             service.start(self)
         return service
@@ -161,19 +162,32 @@ class KB4IT:
     def run(self):
         """Start application."""
         action = self.params["action"]
-        workflow = self.get_service("Workflow")
         self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
-        if action == "themes":
-            workflow.list_themes()
-        elif action == "create":
-            workflow.create_repository()
-        elif action == "build":
-            workflow.build_website()
-        elif action == "info":
-            workflow.info_repository()
-        elif action == "apps":
-            workflow.list_apps(self.params["theme"])
+        try:
+            workflow = self.get_service("Workflow")
+            if action == "themes":
+                workflow.list_themes()
+            elif action == "create":
+                workflow.create_repository()
+            elif action == "build":
+                workflow.build_website()
+            elif action == "info":
+                workflow.info_repository()
+            elif action == "apps":
+                workflow.list_apps(self.params["theme"])
+        except ConfigError as e:
+            self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
+            self.stop(error=True)
+        except ThemeError as e:
+            self.log.error(f"[CONTROLLER] THEME_ERROR reason={e}")
+            self.stop(error=True)
+        except CompilationError as e:
+            self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={e}")
+            self.stop(error=True)
+        except KB4ITError as e:
+            self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
+            self.stop(error=True)
         self.stop()
 
     def stop(self, error=False):
@@ -210,7 +224,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="kb4it",
         description=f"KB4IT v{ENV['APP']['version']}\nCustomizable \
-            static website generator based on Asciidoctor sources",
+            static website generator based on Markdown sources",
         epilog=extra_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -238,6 +252,12 @@ def main():
     init_parser = subparsers.add_parser(
         "create", help="Initialize a new repository")
     init_parser.add_argument("theme", help="Theme to use for initialization")
+    init_parser.add_argument(
+        "app",
+        nargs="?",
+        default="default",
+        help="App template to use (default: 'default')",
+    )
     init_parser.add_argument("repo_path", help="Path to the repository")
 
     # List themes

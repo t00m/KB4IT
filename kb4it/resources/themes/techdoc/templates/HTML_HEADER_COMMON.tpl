@@ -4,7 +4,7 @@
     <title>${var['repo']['title']} - ${var['page']['title']}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="Asciidoctor 2.0.10">
+    <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
     <meta name="description" content="KB4IT document">
     <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/TimelineJS/css/timeline.css" />
     <script src="resources/themes/techdoc/framework/Highlight/highlight.js"></script>
     <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
     <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>

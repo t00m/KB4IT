@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-KB4IT Terminal User Interface — Textual edition.
+KB4IT Terminal User Interface,  Textual edition.
 
 Launched automatically when kb4it is run with no arguments in a terminal.
 """
@@ -8,11 +8,15 @@ Launched automatically when kb4it is run with no arguments in a terminal.
 from __future__ import annotations
 
 import argparse
+import http.server
 import logging
 import os
 import re
+import socket
+import socketserver
 import sys
 import threading
+import webbrowser
 from pathlib import Path
 from typing import Any
 
@@ -20,26 +24,15 @@ from rich.text import Text
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
+from textual.containers import (Container, Horizontal, ScrollableContainer,
+                                Vertical)
 from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    DataTable,
-    Footer,
-    Header,
-    Input,
-    Label,
-    ListItem,
-    ListView,
-    Markdown,
-    ProgressBar,
-    RichLog,
-    Static,
-)
+from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
+                             ListItem, ListView, Markdown, ProgressBar,
+                             RichLog, Static)
 
 from kb4it.core.env import ENV
 from kb4it.core.util import json_load, json_save
-
 
 # ─── constants ────────────────────────────────────────────────────────────────
 
@@ -106,22 +99,34 @@ def get_themes() -> list[dict]:
 
 def get_apps(theme_name: str) -> list[str]:
     apps: list[str] = []
+    seen: set[str] = set()
     for base in [ENV["GPATH"]["THEMES"], ENV["LPATH"]["THEMES"]]:
         apps_path = Path(base) / theme_name / "apps"
         if not apps_path.exists():
             continue
-        for f in sorted(apps_path.glob("*.json")):
-            apps.append(f.stem)
+        for entry in sorted(apps_path.iterdir()):
+            if entry.is_dir() and entry.name not in seen:
+                seen.add(entry.name)
+                apps.append(entry.name)
     return apps
 
 
 # ─── path helpers ─────────────────────────────────────────────────────────────
 
+def _project_root(config_path: str) -> Path:
+    """Project root is the parent of the config/ directory holding repo.json."""
+    return Path(config_path).resolve().parent.parent
+
+
+def _resolve_repo_path(config_path: str, value: str) -> Path:
+    """Resolve a value from repo.json (may be relative) against the project root."""
+    p = Path(value)
+    return p if p.is_absolute() else _project_root(config_path) / p
+
+
 def _log_path(config_path: str) -> Path | None:
     try:
-        repo = json_load(config_path)
-        source = Path(repo.get("source", ""))
-        p = source.parent / "var" / "log" / "kb4it.log"
+        p = _project_root(config_path) / "var" / "log" / "kb4it.log"
         return p if p.exists() else None
     except Exception:
         return None
@@ -129,12 +134,68 @@ def _log_path(config_path: str) -> Path | None:
 
 def _kbdict_path(config_path: str) -> Path | None:
     try:
-        repo = json_load(config_path)
-        source_path = Path(repo.get("source", ""))
-        p = source_path.parent / "var" / "db" / "kbdict.json"
+        p = _project_root(config_path) / "var" / "db" / "kbdict.json"
         return p if p.exists() else None
     except Exception:
         return None
+
+
+# ─── local web server (per-project) ───────────────────────────────────────────
+
+KB4IT_DEFAULT_PORT = 8642
+KB4IT_PORT_SCAN_LIMIT = 50
+
+# project config path -> (httpd, port)
+_WEB_SERVERS: dict[str, tuple[socketserver.TCPServer, int]] = {}
+
+
+def _find_free_port(start: int = KB4IT_DEFAULT_PORT,
+                    limit: int = KB4IT_PORT_SCAN_LIMIT) -> int | None:
+    for port in range(start, start + limit):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("127.0.0.1", port))
+                return port
+            except OSError:
+                continue
+    return None
+
+
+def _start_project_server(target_dir: str) -> tuple[socketserver.TCPServer | None, int | None, str | None]:
+    port = _find_free_port()
+    if port is None:
+        return None, None, (
+            f"No free port found in range "
+            f"{KB4IT_DEFAULT_PORT}-{KB4IT_DEFAULT_PORT + KB4IT_PORT_SCAN_LIMIT}"
+        )
+
+    def _handler(*args: Any, **kwargs: Any) -> http.server.SimpleHTTPRequestHandler:
+        return http.server.SimpleHTTPRequestHandler(*args, directory=target_dir, **kwargs)
+
+    try:
+        httpd = socketserver.TCPServer(("127.0.0.1", port), _handler)
+    except OSError as exc:
+        return None, None, str(exc)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd, port, None
+
+
+def _copy_to_clipboard(app: App, text: str) -> tuple[bool, str]:
+    """Copy text to system clipboard. Tries wl-copy/xclip/xsel, falls back to OSC 52."""
+    import shutil
+    import subprocess
+    for cmd in (["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]):
+        if shutil.which(cmd[0]):
+            try:
+                subprocess.run(cmd, input=text.encode("utf-8"), check=True, timeout=2)
+                return True, cmd[0]
+            except Exception:
+                continue
+    try:
+        app.copy_to_clipboard(text)
+        return True, "OSC52"
+    except Exception as exc:
+        return False, str(exc)
 
 
 def _parse_level(line: str) -> str:
@@ -143,57 +204,6 @@ def _parse_level(line: str) -> str:
         if lvl in prefix:
             return lvl
     return "INFO"
-
-
-# ─── adoc → markdown ──────────────────────────────────────────────────────────
-
-def _adoc_to_markdown(text: str) -> str:
-    """Lightweight AsciiDoc → Markdown conversion for Textual's Markdown widget."""
-    lines = text.splitlines()
-    out: list[str] = []
-    in_code = False
-    in_header = True
-    for line in lines:
-        stripped = line.strip()
-        if in_header:
-            if stripped == "":
-                in_header = False
-                continue
-            if stripped.startswith("= ") and not out:
-                out.append("# " + stripped[2:])
-                continue
-            if re.match(r"^:[a-zA-Z][^:]*:", stripped):
-                continue
-            in_header = False
-        if line.startswith("----") or line.startswith("...."):
-            in_code = not in_code
-            out.append("```")
-            continue
-        if in_code:
-            out.append(line)
-            continue
-        m = re.match(r"^(={2,6})\s+(.+)$", line)
-        if m:
-            level = len(m.group(1))
-            out.append("#" * level + " " + m.group(2))
-            continue
-        m = re.match(r"^(NOTE|TIP|WARNING|IMPORTANT|CAUTION):\s*(.*)$", line)
-        if m:
-            out.append(f"> **{m.group(1)}:** {m.group(2)}")
-            continue
-        bm = re.match(r"^(\*+) ", line)
-        if bm:
-            depth = len(bm.group(1))
-            out.append("  " * (depth - 1) + "- " + line[depth + 1:])
-            continue
-        if re.match(r"^\. ", line):
-            out.append("1. " + line[2:])
-            continue
-        line = re.sub(r"\*(\S(?:[^*]*\S)?)\*", r"**\1**", line)
-        line = re.sub(r"_(\S(?:[^_]*\S)?)_", r"*\1*", line)
-        line = re.sub(r"link:(\S+)\[([^\]]*)\]", r"[\2](\1)", line)
-        out.append(line)
-    return "\n".join(out)
 
 
 # ─── logging helpers ──────────────────────────────────────────────────────────
@@ -285,6 +295,7 @@ class BuildScreen(Screen):
         self._total = 0
         self._completed = 0
         self._lock = threading.Lock()
+        self._log_buffer: list[str] = []
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -292,11 +303,12 @@ class BuildScreen(Screen):
         yield ProgressBar(total=None, id="prog")
         yield RichLog(highlight=True, markup=False, id="log")
         with Horizontal(id="footer-bar"):
+            yield Button("Copy Log", id="copy", variant="default")
             yield Button("Close", id="close", variant="primary", disabled=True)
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = f"Build — {self._proj_name}"
+        self.title = f"Build,  {self._proj_name}"
         self._launch_build()
 
     def _launch_build(self) -> None:
@@ -327,7 +339,7 @@ class BuildScreen(Screen):
             inst.run()
         except SystemExit as exc:
             if exc.code and exc.code != 0:
-                error = "Build failed — see log for details."
+                error = "Build failed,  see log for details."
         except Exception as exc:
             error = str(exc)
         finally:
@@ -365,6 +377,7 @@ class BuildScreen(Screen):
     def _write_log(self, level: str, msg: str) -> None:
         if level == "DEBUG":
             return
+        self._log_buffer.append(msg)
         self.query_one(RichLog).write(Text(msg, style=_LOG_STYLE.get(level, "white")))
 
     def _on_done(self, error: str) -> None:
@@ -372,15 +385,27 @@ class BuildScreen(Screen):
         total = max(self._total, n, 1)
         bar = self.query_one(ProgressBar)
         if error:
-            self.query_one("#status", Label).update(f"FAILED — {error}")
+            self.query_one("#status", Label).update(f"FAILED,  {error}")
             self.query_one(RichLog).write(Text(f"Build failed: {error}", style="bold red"))
         else:
             bar.update(total=total, progress=total)
-            self.query_one("#status", Label).update(f"Done — {n} document(s) compiled.")
+            self.query_one("#status", Label).update(f"Done,  {n} document(s) compiled.")
             self.query_one(RichLog).write(
                 Text(f"Build complete. {n} document(s) compiled.", style="bold green")
             )
         self.query_one("#close", Button).disabled = False
+
+    @on(Button.Pressed, "#copy")
+    def _copy(self) -> None:
+        text = "\n".join(self._log_buffer)
+        if not text:
+            self.app.notify("Nothing to copy yet.", severity="warning")
+            return
+        ok, info = _copy_to_clipboard(self.app, text)
+        if ok:
+            self.app.notify(f"Copied {len(text)} chars to clipboard via {info}.", severity="information")
+        else:
+            self.app.notify(f"Could not copy: {info}", severity="error")
 
     @on(Button.Pressed, "#close")
     def _close(self) -> None:
@@ -413,6 +438,7 @@ class LogViewerScreen(Screen):
             yield Button("Errors only", id="f-err", variant="error")
         yield RichLog(highlight=False, markup=False, id="log")
         with Horizontal(id="footer-bar"):
+            yield Button("Copy Log", id="copy", variant="default")
             yield Button("Back", id="back", variant="default")
         yield Footer()
 
@@ -424,7 +450,7 @@ class LogViewerScreen(Screen):
         p = _log_path(self._config)
         log = self.query_one(RichLog)
         if p is None:
-            log.write("No build log found — build the project first.")
+            log.write("No build log found,  build the project first.")
             return
         try:
             text = p.read_text(encoding="utf-8", errors="replace")
@@ -473,6 +499,27 @@ class LogViewerScreen(Screen):
         self._filter = "err"
         self._apply_filter()
 
+    @on(Button.Pressed, "#copy")
+    def _copy(self) -> None:
+        rank = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
+        keep = []
+        for line, level in self._lines:
+            r = rank.get(level, 1)
+            if (self._filter == "all"
+                or (self._filter == "info" and r == 1)
+                or (self._filter == "warn" and r >= 2)
+                or (self._filter == "err" and r >= 3)):
+                keep.append(line)
+        text = "\n".join(keep)
+        if not text:
+            self.app.notify("Nothing to copy.", severity="warning")
+            return
+        ok, info = _copy_to_clipboard(self.app, text)
+        if ok:
+            self.app.notify(f"Copied {len(text)} chars to clipboard via {info}.", severity="information")
+        else:
+            self.app.notify(f"Could not copy: {info}", severity="error")
+
     @on(Button.Pressed, "#back")
     def _back(self) -> None:
         self.app.pop_screen()
@@ -492,6 +539,7 @@ class DocumentViewerScreen(Screen):
         super().__init__(**kw)
         self._doc_id = doc_id
         self._kbdict = kbdict
+        self._raw = ""
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -499,6 +547,7 @@ class DocumentViewerScreen(Screen):
         with ScrollableContainer(id="content"):
             yield Markdown("", id="md")
         with Horizontal(id="footer-bar"):
+            yield Button("Copy Document", id="copy", variant="default")
             yield Button("Back", id="back", variant="default")
         yield Footer()
 
@@ -522,7 +571,19 @@ class DocumentViewerScreen(Screen):
         else:
             raw = f"Source not found: {content_path}"
 
-        self.query_one("#md", Markdown).update(_adoc_to_markdown(raw))
+        self._raw = raw
+        self.query_one("#md", Markdown).update(raw)
+
+    @on(Button.Pressed, "#copy")
+    def _copy(self) -> None:
+        if not self._raw:
+            self.app.notify("Nothing to copy.", severity="warning")
+            return
+        ok, info = _copy_to_clipboard(self.app, self._raw)
+        if ok:
+            self.app.notify(f"Copied {len(self._raw)} chars to clipboard via {info}.", severity="information")
+        else:
+            self.app.notify(f"Could not copy: {info}", severity="error")
 
     @on(Button.Pressed, "#back")
     def _back(self) -> None:
@@ -569,7 +630,7 @@ class ExplorerScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = "Explorer — Metadata Keys & Values"
+        self.title = "Explorer,  Metadata Keys & Values"
         p = _kbdict_path(self._config)
         if p is None:
             self.app.notify(
@@ -678,7 +739,7 @@ class ProjectInfoScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = f"Info — {self._project['name']}"
+        self.title = f"Info,  {self._project['name']}"
         table = self.query_one(DataTable)
         table.add_columns("Key", "Value")
         try:
@@ -725,8 +786,8 @@ class FileListScreen(Screen):
         table.add_columns("#", "Filename", "Size")
         try:
             repo = json_load(self._config)
-            source = Path(repo.get("source", ""))
-            files = sorted(source.glob("*.adoc"))
+            source = _resolve_repo_path(self._config, repo.get("source", ""))
+            files = sorted([f for ext in ("*.md", "*.markdown") for f in source.glob(ext)])
             for i, f in enumerate(files, 1):
                 sz = f.stat().st_size
                 sz_str = f"{sz:,} B" if sz < 1024 else f"{sz // 1024} KB"
@@ -804,7 +865,7 @@ class AppsScreen(Screen):
         self.title = "Theme Apps"
         lv = self.query_one("#themes-list", ListView)
         for t in self._themes:
-            lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+            lv.append(ListItem(Label(f"{t.get('id', '?')},  {t.get('description', '')}")))
         self.query_one("#apps-tbl", DataTable).add_columns("#", "App Name")
 
     @on(ListView.Highlighted, "#themes-list")
@@ -832,8 +893,21 @@ class CreateProjectScreen(Screen):
     CSS = """
     CreateProjectScreen { layout: vertical; }
     .field-label { margin: 1 1 0 1; color: $text-muted; }
-    #themes-list { height: 8; margin: 0 1; border: solid $primary; }
+    #themes-list { height: 6; margin: 0 1; border: solid $primary; }
+    #apps-list   { height: 4; margin: 0 1; border: solid $secondary; }
     Input { margin: 0 1 1 1; }
+    #help-banner {
+        margin: 1 1 0 1;
+        padding: 0 1;
+        color: $text-muted;
+        background: $boost;
+        border: solid $primary;
+    }
+    #error-banner {
+        margin: 0 1;
+        padding: 0 1;
+        color: $error;
+    }
     #footer-bar { height: 3; align: center middle; }
     #footer-bar Button { margin: 0 2; }
     """
@@ -842,11 +916,24 @@ class CreateProjectScreen(Screen):
         super().__init__(**kw)
         self._themes = get_themes()
         self._theme_idx = 0
+        self._apps: list[str] = []
+        self._app_idx = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield Label(
+            "Create a new repository from a theme app template.\n"
+            "  Theme  ,  visual style for your website\n"
+            "  App    ,  template to initialise the repository from\n"
+            "  Name   ,  label shown in the project list (any text)\n"
+            "  Path   ,  full path where the repository will be created;\n"
+            "            its parent directory must already exist",
+            id="help-banner",
+        )
         yield Label("Select theme:", classes="field-label")
         yield ListView(id="themes-list")
+        yield Label("Select app:", classes="field-label")
+        yield ListView(id="apps-list")
         yield Label("Project display name:", classes="field-label")
         yield Input(placeholder="My Project", id="inp-name")
         yield Label("Repository path:", classes="field-label")
@@ -854,6 +941,7 @@ class CreateProjectScreen(Screen):
             placeholder=str(Path.home() / "Documents" / "my_project"),
             id="inp-path",
         )
+        yield Label("", id="error-banner", classes="")
         with Horizontal(id="footer-bar"):
             yield Button("Create", id="create", variant="success")
             yield Button("Cancel", id="cancel", variant="default")
@@ -861,17 +949,49 @@ class CreateProjectScreen(Screen):
 
     def on_mount(self) -> None:
         self.title = "Create New Project"
+        self.query_one("#error-banner", Label).display = False
         if not self._themes:
             self.app.notify("No themes installed.", severity="warning")
         lv = self.query_one("#themes-list", ListView)
         for t in self._themes:
-            lv.append(ListItem(Label(f"{t.get('id', '?')} — {t.get('description', '')}")))
+            lv.append(ListItem(Label(f"{t.get('id', '?')},  {t.get('description', '')}")))
+        self._refresh_apps()
+
+    def _refresh_apps(self) -> None:
+        """Repopulate the apps list for the currently selected theme."""
+        lv = self.query_one("#apps-list", ListView)
+        lv.clear()
+        self._app_idx = 0
+        if self._themes:
+            theme_id = self._themes[self._theme_idx].get("id", "")
+            self._apps = get_apps(theme_id)
+        else:
+            self._apps = []
+        for app_name in self._apps:
+            lv.append(ListItem(Label(app_name)))
+
+    def _show_error(self, msg: str) -> None:
+        banner = self.query_one("#error-banner", Label)
+        banner.update(f"Error: {msg}")
+        banner.display = True
+
+    def _clear_error(self) -> None:
+        banner = self.query_one("#error-banner", Label)
+        banner.update("")
+        banner.display = False
 
     @on(ListView.Highlighted, "#themes-list")
     def _theme_hi(self, event: ListView.Highlighted) -> None:
         idx = event.list_view.index
         if idx is not None:
             self._theme_idx = idx
+            self._refresh_apps()
+
+    @on(ListView.Highlighted, "#apps-list")
+    def _app_hi(self, event: ListView.Highlighted) -> None:
+        idx = event.list_view.index
+        if idx is not None:
+            self._app_idx = idx
 
     @on(Button.Pressed, "#cancel")
     def _cancel(self) -> None:
@@ -879,17 +999,26 @@ class CreateProjectScreen(Screen):
 
     @on(Button.Pressed, "#create")
     def _create(self) -> None:
+        self._clear_error()
         if not self._themes:
-            self.app.notify("No themes available.", severity="error")
+            self._show_error("No themes available. Install at least one theme first.")
             return
         theme_id = self._themes[self._theme_idx].get("id", "")
+        app_name = self._apps[self._app_idx] if self._apps else "default"
         name = self.query_one("#inp-name", Input).value.strip()
         path = os.path.expanduser(self.query_one("#inp-path", Input).value.strip())
         if not name:
-            self.app.notify("Project name cannot be empty.", severity="error")
+            self._show_error("Project display name cannot be empty.")
             return
         if not path:
-            self.app.notify("Repository path cannot be empty.", severity="error")
+            self._show_error("Repository path cannot be empty.")
+            return
+        parent = Path(path).parent
+        if not parent.exists():
+            self._show_error(
+                f"Parent directory '{parent}' does not exist. "
+                "Create it first or choose a different path."
+            )
             return
         try:
             from kb4it.core.main import KB4IT
@@ -897,6 +1026,7 @@ class CreateProjectScreen(Screen):
             params = argparse.Namespace(
                 action="create",
                 theme=theme_id,
+                app=app_name,
                 repo_path=path,
                 log_level="WARNING",
             )
@@ -905,14 +1035,33 @@ class CreateProjectScreen(Screen):
                 inst.run()
             except SystemExit:
                 pass
+        except PermissionError:
+            self._show_error(
+                f"Permission denied. Check that you have write access to: {path}"
+            )
+            return
+        except OSError as exc:
+            self._show_error(
+                f"Cannot access '{path}': {exc.strerror}. Verify the path is valid."
+            )
+            return
+        except KeyError as exc:
+            self._show_error(
+                f"Configuration error: missing key {exc}. "
+                "The selected theme may be incompatible with this action."
+            )
+            return
         except Exception as exc:
-            self.app.notify(f"Error: {exc}", severity="error")
+            self._show_error(f"{type(exc).__name__}: {exc}")
             return
         config = str(Path(path) / "config" / "repo.json")
         if not Path(config).exists():
-            self.app.notify("Creation failed — config not found.", severity="error")
+            self._show_error(
+                f"Repo created but config not found at: {config}. "
+                f"Theme '{theme_id}' may be missing its example repository skeleton."
+            )
             return
-        self.app.notify(f"Project '{name}' created!", severity="information")
+        self.app.notify(f"Project '{name}' created at: {path}", severity="information")
         self.dismiss({"name": name, "config": config})
 
 
@@ -984,7 +1133,7 @@ class ImportProjectScreen(Screen):
             self.app.notify("Display name cannot be empty.", severity="error")
             return
         if not Path(path).exists():
-            self.app.notify("File not found — submit the path field first.", severity="error")
+            self.app.notify("File not found,  submit the path field first.", severity="error")
             return
         for field in ("source", "target", "theme"):
             if field not in self._repo:
@@ -1002,24 +1151,39 @@ class ProjectScreen(Screen):
         height: auto; margin: 1; border: solid $primary;
         padding: 1 2; background: $panel;
     }
-    #actions { height: 1fr; align: center top; padding: 1 0; }
-    #actions Button { width: 40; margin: 0 0 1 0; }
+    #actions {
+        height: 1fr; padding: 1 2;
+        layout: grid; grid-size: 2; grid-columns: 1fr 1fr;
+        grid-rows: 3; grid-gutter: 1 2;
+    }
+    #actions Button { width: 1fr; }
+    #footer-bar { height: 3; align: center middle; }
     """
+
+    BINDINGS = [
+        Binding("escape", "back", "Back", show=True),
+    ]
 
     def __init__(self, project: dict, **kw: Any):
         super().__init__(**kw)
         self._project = project
 
+    def action_back(self) -> None:
+        self.app.pop_screen()
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Static("", id="info-panel")
-        with Vertical(id="actions"):
+        with ScrollableContainer(id="actions"):
             yield Button("Compile", id="compile", variant="success")
             yield Button("Force Compile  (recompile everything)", id="force-compile", variant="warning")
             yield Button("Project Info", id="info", variant="default")
             yield Button("List Source Files", id="files", variant="default")
             yield Button("Explore Keys & Values", id="explore", variant="default")
             yield Button("View Build Log", id="log", variant="default")
+            yield Button("Browse Local (file://)", id="browse-local", variant="default")
+            yield Button("Browse via Web Server (http)", id="browse-server", variant="default")
+        with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="primary")
         yield Footer()
 
@@ -1050,6 +1214,13 @@ class ProjectScreen(Screen):
         )
         self.query_one("#explore", Button).disabled = not db_ok
         self.query_one("#log", Button).disabled = not log_ok
+        if target not in ("", "?"):
+            target_dir = _resolve_repo_path(config, target)
+            target_ok = (target_dir / "index.html").exists()
+        else:
+            target_ok = False
+        self.query_one("#browse-local", Button).disabled = not target_ok
+        self.query_one("#browse-server", Button).disabled = not target_ok
 
     @on(Button.Pressed, "#compile")
     def _compile(self) -> None:
@@ -1080,6 +1251,48 @@ class ProjectScreen(Screen):
     @on(Button.Pressed, "#log")
     def _log(self) -> None:
         self.app.push_screen(LogViewerScreen(self._project["config"]))
+
+    def _target_index(self) -> Path | None:
+        try:
+            repo = json_load(self._project["config"])
+        except Exception:
+            return None
+        target = repo.get("target")
+        if not target:
+            return None
+        index = _resolve_repo_path(self._project["config"], target) / "index.html"
+        return index if index.exists() else None
+
+    @on(Button.Pressed, "#browse-local")
+    def _browse_local(self) -> None:
+        index = self._target_index()
+        if index is None:
+            self.app.notify("No built index.html found,  compile the project first.",
+                            severity="warning")
+            return
+        webbrowser.open(index.as_uri())
+        self.app.notify(f"Opened {index.as_uri()}", severity="information")
+
+    @on(Button.Pressed, "#browse-server")
+    def _browse_server(self) -> None:
+        index = self._target_index()
+        if index is None:
+            self.app.notify("No built index.html found,  compile the project first.",
+                            severity="warning")
+            return
+        key = self._project["config"]
+        entry = _WEB_SERVERS.get(key)
+        if entry is None:
+            httpd, port, err = _start_project_server(str(index.parent))
+            if err or httpd is None or port is None:
+                self.app.notify(f"Could not start web server: {err}", severity="error")
+                return
+            _WEB_SERVERS[key] = (httpd, port)
+        else:
+            port = entry[1]
+        url = f"http://127.0.0.1:{port}/"
+        webbrowser.open(url)
+        self.app.notify(f"Serving at {url}", severity="information")
 
     @on(Button.Pressed, "#back")
     def _back(self) -> None:
@@ -1223,6 +1436,11 @@ class KB4ITTUI(App):
     Screen { background: $surface; }
     """
     TITLE = f"KB4IT v{VERSION}"
+
+    BINDINGS = [
+        Binding("ctrl+a", "screen.text_select_all", "Select All", show=True),
+        Binding("ctrl+c", "screen.copy_text", "Copy", show=True),
+    ]
 
     def on_mount(self) -> None:
         self.push_screen(MainScreen())

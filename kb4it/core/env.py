@@ -8,7 +8,6 @@ Environment module.
 # Description: Environment variables module
 """
 
-import locale
 import multiprocessing
 import os
 import platform
@@ -16,9 +15,37 @@ import sys
 from os.path import abspath
 from pathlib import Path
 
-locale.getpreferredencoding()
+class FrozenDict(dict):
+    """A dict subclass that can be frozen to block further mutation.
 
-ENV = {}
+    All existing dict read operations (ENV["KEY"], ENV.get(), iteration)
+    work without modification. After freeze() is called, any attempt to
+    set or delete a top-level key raises TypeError. Unknown key access
+    raises KeyError with the list of valid keys so typos are caught early.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._frozen = False
+        super().__init__(*args, **kwargs)
+
+    def freeze(self):
+        self._frozen = True
+
+    def __setitem__(self, key, value):
+        if self._frozen:
+            raise TypeError(f"ENV is frozen; cannot set key '{key}'")
+        super().__setitem__(key, value)
+
+    def __delitem__(self, key):
+        if self._frozen:
+            raise TypeError(f"ENV is frozen; cannot delete key '{key}'")
+        super().__delitem__(key)
+
+    def __missing__(self, key):
+        raise KeyError(f"ENV has no key '{key}'. Valid keys: {sorted(self.keys())}")
+
+
+ENV = FrozenDict()
 
 # System info
 ENV["SYS"] = {}
@@ -68,22 +95,13 @@ ENV["CONF"]["ROOT"] = abspath(sys.modules[__name__].__file__ + "/../../")
 
 ENV["CONF"]["USER_DIR"] = os.path.expanduser("~")
 ENV["CONF"]["MAX_WORKERS"] = multiprocessing.cpu_count()  # Avoid MemoryError
-ENV["CONF"]["EOHMARK"] = "// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE"
-ENV["CONF"]["ADOCPROPS"] = {
-    "toc": "left",
-    "toclevels": "2",
-    "icons": "font",
-    "linkcss": None,
-    "experimental": None,
-    "source-highlighter": "highlight.js",
-}
 
 # App Info
 ENV["APP"] = {}
 ENV["APP"]["name"] = "Knowledge Base For IT"
 ENV["APP"]["shortname"] = "KB4IT"
 ENV["APP"]["description"] = "KB4IT is a static website generator based on \
-                      Asciidoctor sources mainly for technical \
+                      Markdown sources mainly for technical \
                       documentation purposes."
 ENV["APP"]["license"] = "GPL v3"
 ENV["APP"]["license_long"] = "The code is licensed under the terms of the  GPL v3\n\
@@ -131,3 +149,5 @@ ENV["FILE"]["LOG"] = os.path.join(
 ENV["FILE"]["LOCK"] = os.path.join(
     ENV["LPATH"]["VAR"], f"{ENV['APP']['shortname'].lower()}.lock"
 )
+
+ENV.freeze()

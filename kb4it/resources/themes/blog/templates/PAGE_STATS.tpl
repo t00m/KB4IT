@@ -1,8 +1,3 @@
-= Stats
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
     <!-- INDEX_TAB_STATS.tpl :: START -->
     <div class="uk-grid-small" uk-grid>
         <div class="uk-width-expand uk-text-bold" uk-leader>
@@ -27,4 +22,3 @@
     </div>
 % endfor
     <!-- Property leader items -->
-++++

@@ -1,20 +1,17 @@
-= Events
-
-// END-OF-HEADER. DO NOT MODIFY OR DELETE THIS LINE
-
-++++
 <div class="uk-container uk-margin-top">
 
-  <ul class="uk-tab" id="kb4it-events-tabs"
-      uk-tab="connect: #kb4it-events-switcher; animation: uk-animation-fade">
-    % for ydata in var['years']:
-    <li><a href="#">${ydata['year']} <span class="uk-badge">${ydata['count']}</span></a></li>
-    % endfor
-  </ul>
+  <div class="uk-flex uk-flex-center uk-margin">
+    <select id="kb4it-events-year-select" class="uk-select uk-form-width-medium uk-text-center">
+      % for i, ydata in enumerate(var['years']):
+      <option value="${i}" ${'selected' if i == 0 else ''}>${ydata['year']} (${ydata['count']})</option>
+      % endfor
+    </select>
+  </div>
 
   <ul id="kb4it-events-switcher" class="uk-switcher uk-margin">
     % for ydata in var['years']:
     <li>
+      <div hidden></div>
       <div class="uk-margin-bottom">
         ${ydata['calendar']}
       </div>
@@ -29,6 +26,12 @@
 
 <script>
 (function () {
+  var switcher = UIkit.switcher('#kb4it-events-switcher');
+
+  document.getElementById('kb4it-events-year-select').addEventListener('change', function () {
+    switcher.show(parseInt(this.value));
+  });
+
   % for ydata in var['years']:
   (function () {
     var tid = 'kb4it-datatable-${ydata["year"]}';
@@ -59,4 +62,3 @@
   });
 })();
 </script>
-++++
