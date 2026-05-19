@@ -8,6 +8,7 @@
 import json
 import os
 import stat
+import time
 
 from kb4it.core.service import Service
 from kb4it.core.util import copydir, json_load
@@ -118,6 +119,8 @@ class Workflow(Service):
         6. Theme Post activities
         7. Deploy
         """
+        t0 = time.perf_counter()
+
         backend = self.get_service("Backend")
         repo = backend.get_dict("repo")
         repo_title = repo["title"]
@@ -146,6 +149,27 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=7 name=deploy")
         backend.stage_06_deploy()
+
+        # Build summary
+        runtime = backend.get_dict("runtime")
+        docs_total = runtime["docs"].get("count", 0)
+        compiled   = runtime.get("ncd", 0)
+        skipped    = docs_total - compiled
+        k_path     = runtime.get("K_PATH", [])
+        kv_path    = runtime.get("KV_PATH", [])
+        keys_compiled = sum(1 for _, _, flag in k_path  if flag)
+        kv_compiled   = sum(1 for _, _, flag in kv_path if flag)
+        elapsed = time.perf_counter() - t0
+
+        self.log.info(
+            f"[WORKFLOW] SUMMARY"
+            f" docs_total={docs_total}"
+            f" compiled={compiled}"
+            f" skipped={skipped}"
+            f" keys_compiled={keys_compiled}"
+            f" kv_pages_compiled={kv_compiled}"
+        )
+        self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 
         # Report
         homepage = os.path.join(

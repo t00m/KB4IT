@@ -16,7 +16,7 @@ from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import redirect_logs
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_content, get_hash_from_file,
-                             get_source_docs, json_load, json_save)
+                             get_source_docs, json_load, json_save, timeit)
 from kb4it.services.compiler import Compiler
 from kb4it.services.deployer import Deployer
 from kb4it.services.processor import Processor
@@ -221,6 +221,7 @@ class Backend(Service):
         """Shortcut to Processor method."""
         return self.srvprc.get_kbdict_value(key, value, new)
 
+    @timeit
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service("Frontend")
@@ -258,6 +259,7 @@ class Backend(Service):
                 raise ThemeError(f"Theme not found: {theme_name}")
         self.log.debug("[BACKEND] CHECKS_END")
 
+    @timeit
     def stage_02_get_source_documents(self):
         """Get source documents from source directory."""
         self.log.debug("[BACKEND] SOURCES_START")
@@ -308,6 +310,7 @@ class Backend(Service):
         self.log.debug(f"[BACKEND] DOCS_FOUND n={self.runtime['docs']['count']}")
         self.log.debug("[BACKEND] SOURCES_END")
 
+    @timeit
     def stage_03_process_sources(self):
         """Extract, Analyze and Transform."""
         self.log.debug("[BACKEND] EXTRACTION_START")
@@ -320,18 +323,21 @@ class Backend(Service):
         self.srvprc.step_02_transformation()
         self.log.debug("[BACKEND] TRANSFORMATION_END")
 
+    @timeit
     def stage_04_process_theme(self):
         """Run theme logic."""
         self.log.debug("[BACKEND] THEME_START")
         self.srvthm.build()
         self.log.debug("[BACKEND] THEME_END")
 
+    @timeit
     def stage_05_compilation(self):
         """Compile Markdown documents to HTML."""
         self.app.register_service("Compiler", Compiler())
         compiler = self.app.get_service("Compiler")
         compiler.execute()
 
+    @timeit
     def stage_06_deploy(self):
         """Recreate target."""
         self.app.register_service("Deployer", Deployer())
