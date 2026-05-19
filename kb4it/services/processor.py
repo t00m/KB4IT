@@ -6,8 +6,14 @@ Service Processor.
 # License: GPLv3
 """
 
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kb4it.core.types import KBDict
 
 from kb4it.core.service import Service
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
@@ -28,10 +34,8 @@ class Processor(Service):
         """Initialize Processor service."""
         self.srvbes = self.app.get_service("Backend")
         self.srvdtb = self.app.get_service("DB")
-        self.kbdict_cur = self.srvbes.load_kbdict()  # Previous run
-        self.kbdict_new = {}  # New compilation cache
-        self.kbdict_new["document"] = {}
-        self.kbdict_new["metadata"] = {}
+        self.kbdict_cur: KBDict = self.srvbes.load_kbdict()  # Previous run
+        self.kbdict_new: KBDict = {"document": {}, "metadata": {}}
         self.changed_docs = set()
 
     def step_00_extraction(self):

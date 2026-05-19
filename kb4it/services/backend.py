@@ -7,9 +7,15 @@ Backend module for initialization.
 # License: GPLv3
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kb4it.core.types import Runtime
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
@@ -27,7 +33,7 @@ class Backend(Service):
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime = {"theme": {}}  # Dictionary of runtime properties
+        self.runtime: Runtime = {"theme": {}}  # type: ignore[typeddict-item]
         self.params = self.app.get_params()  # Get params from command line
 
         if self.params.get("action") in ("build", "info"):

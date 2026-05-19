@@ -5,6 +5,13 @@
 # Description: In-memory database for KB4IT
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kb4it.core.types import DBRecord
+
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
                              sort_dictionary, valid_filename)
@@ -27,7 +34,7 @@ class Database(Service):
         """Initialize database module."""
         self.srvbes = self.get_service("Backend")
         repo = self.srvbes.get_dict("repo")
-        self.db = {}
+        self.db: dict[str, DBRecord] = {}
         self.keys = {
             "all": [],
             "blocked": ["Title", "SystemPage", "Date"],
