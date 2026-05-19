@@ -30,8 +30,39 @@ from kb4it.core.log import get_logger
 
 log = get_logger("Util")
 
-cache_dt = {}
-cache_ts_ymd = {}
+class DateCache:
+    """Isolated cache for date-string parsing and formatting results.
+
+    Using a class instead of module-level dicts allows test code to inject
+    a fresh instance (no cross-test contamination) while production callers
+    rely on the module-level singleton without any change.
+    """
+
+    def __init__(self):
+        self._dt = {}
+        self._ymd = {}
+
+    def has_dt(self, key):
+        return key in self._dt
+
+    def get_dt(self, key):
+        return self._dt[key]
+
+    def set_dt(self, key, value):
+        self._dt[key] = value
+
+    def get_ymd(self, key):
+        return self._ymd.get(key)
+
+    def set_ymd(self, key, value):
+        self._ymd[key] = value
+
+    def clear(self):
+        self._dt.clear()
+        self._ymd.clear()
+
+
+_default_date_cache = DateCache()
 
 SOURCE_EXT_RE = re.compile(r"\.(md|markdown)$", re.IGNORECASE)
 
@@ -399,10 +430,11 @@ def kb4it_timestamp():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def guess_datetime(sdate):
+def guess_datetime(sdate, _cache=None):
     """Guess a datetime object for a given string."""
-    if sdate in cache_dt:
-        return cache_dt[sdate]
+    cache = _cache if _cache is not None else _default_date_cache
+    if cache.has_dt(sdate):
+        return cache.get_dt(sdate)
 
     patterns = [
         "%d/%m/%Y",
@@ -444,7 +476,7 @@ def guess_datetime(sdate):
             break
         except ValueError:
             continue
-    cache_dt[sdate] = timestamp
+    cache.set_dt(sdate, timestamp)
     return timestamp
 
 
@@ -475,11 +507,14 @@ def get_human_datetime_year(dt):
     return dt.strftime("%Y")
 
 
-def get_timestamp_yyyymmdd(dt):
+def get_timestamp_yyyymmdd(dt, _cache=None):
     """Return timestamp in yyyymmdd format."""
-    if dt not in cache_ts_ymd:
-        cache_ts_ymd[dt] = dt.strftime("%Y%m%d")
-    return cache_ts_ymd[dt]
+    cache = _cache if _cache is not None else _default_date_cache
+    result = cache.get_ymd(dt)
+    if result is None:
+        result = dt.strftime("%Y%m%d")
+        cache.set_ymd(dt, result)
+    return result
 
 
 def sort_dictionary(adict, reverse=True):
