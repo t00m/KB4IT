@@ -15,7 +15,37 @@ import sys
 from os.path import abspath
 from pathlib import Path
 
-ENV = {}
+class FrozenDict(dict):
+    """A dict subclass that can be frozen to block further mutation.
+
+    All existing dict read operations (ENV["KEY"], ENV.get(), iteration)
+    work without modification. After freeze() is called, any attempt to
+    set or delete a top-level key raises TypeError. Unknown key access
+    raises KeyError with the list of valid keys so typos are caught early.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._frozen = False
+        super().__init__(*args, **kwargs)
+
+    def freeze(self):
+        self._frozen = True
+
+    def __setitem__(self, key, value):
+        if self._frozen:
+            raise TypeError(f"ENV is frozen; cannot set key '{key}'")
+        super().__setitem__(key, value)
+
+    def __delitem__(self, key):
+        if self._frozen:
+            raise TypeError(f"ENV is frozen; cannot delete key '{key}'")
+        super().__delitem__(key)
+
+    def __missing__(self, key):
+        raise KeyError(f"ENV has no key '{key}'. Valid keys: {sorted(self.keys())}")
+
+
+ENV = FrozenDict()
 
 # System info
 ENV["SYS"] = {}
@@ -119,3 +149,5 @@ ENV["FILE"]["LOG"] = os.path.join(
 ENV["FILE"]["LOCK"] = os.path.join(
     ENV["LPATH"]["VAR"], f"{ENV['APP']['shortname'].lower()}.lock"
 )
+
+ENV.freeze()

@@ -7,11 +7,18 @@ Service Processor.
 """
 
 import os
+from dataclasses import dataclass, field
 
 from kb4it.core.service import Service
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, string_timestamp,
                              valid_filename)
+
+
+@dataclass
+class AnalysisResult:
+    """Carries the outputs of step_01_analysis so they are passed explicitly."""
+    force_kv_pairs: set = field(default_factory=set)
 
 
 class Processor(Service):
@@ -25,12 +32,7 @@ class Processor(Service):
         self.kbdict_new = {}  # New compilation cache
         self.kbdict_new["document"] = {}
         self.kbdict_new["metadata"] = {}
-        self.force_kv_pairs = set()  # (key, value) pairs forced to recompile
         self.changed_docs = set()
-
-    def get_force_kv_pairs(self):
-        """Return the set of (key, value) pairs forced to recompile."""
-        return self.force_kv_pairs
 
     def step_00_extraction(self):
         """Extract metadata."""
@@ -108,6 +110,7 @@ class Processor(Service):
 
     def step_01_analysis(self):
         """Compilation strategy."""
+        analysis = AnalysisResult()
         sources = self.srvbes.get_value("docs", "bag")
         ignored = set(self.srvdtb.get_ignored_keys())
         blocked = set(self.srvdtb.get_blocked_keys())
@@ -140,7 +143,7 @@ class Processor(Service):
                     if key in ignored or key in blocked:
                         continue
                     for value in self.srvdtb.get_values(docId, key):
-                        self.force_kv_pairs.add((key, value))
+                        analysis.force_kv_pairs.add((key, value))
 
             # Save compilation status
             self.kbdict_new["document"][docId]["compile"] = result['compile']
@@ -153,8 +156,8 @@ class Processor(Service):
         self.log.debug(f"[PROCESSOR] KEYS_ALL count={len(all_keys)}")
         self.log.debug(f"[PROCESSOR] KEYS_IGNORED count={len(ignored)}")
         self.log.debug(f"[PROCESSOR] KEYS_AVAILABLE count={len(available_keys)}")
-        self.log.debug(f"[PROCESSOR] FORCE_KV_PAIRS count={len(self.force_kv_pairs)}")
-        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys)
+        self.log.debug(f"[PROCESSOR] FORCE_KV_PAIRS count={len(analysis.force_kv_pairs)}")
+        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys, analysis.force_kv_pairs)
         self.srvbes.set_value("runtime", "K_PATH", K_PATH)
         self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
 
@@ -258,7 +261,7 @@ class Processor(Service):
 
         return result
 
-    def step_01_01_decide_keys_compilation(self, available_keys):
+    def step_01_01_decide_keys_compilation(self, available_keys, force_kv_pairs: set):
         """Decide which keys and values will be compiled.
 
         A key/value page recompiles when:
@@ -294,7 +297,7 @@ class Processor(Service):
             for value in values:
                 rkvnew = self.get_kbdict_value(key, value, new=True)
                 rkvold = self.get_kbdict_value(key, value, new=False)
-                KV_FORCED = (key, value) in self.force_kv_pairs
+                KV_FORCED = (key, value) in force_kv_pairs
                 COMPILE_VALUE = rkvnew != rkvold or KV_FORCED
                 KV_PATH.append((key, value, COMPILE_VALUE))
                 if COMPILE_VALUE:
