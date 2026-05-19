@@ -136,6 +136,20 @@ class Frontend(Service):
                 self.log.error(f"[FRONTEND] ERROR {error}")
                 self.app.stop(error=True)
 
+    def _validate_required_templates(self, theme):
+        """Check that all required templates exist for the loaded theme."""
+        from kb4it.services.builder import REQUIRED_TEMPLATES, _template_candidates
+        global_tpl_dir = ENV["GPATH"]["TEMPLATES"]
+        theme_tpl_dir = theme["templates"]
+        missing = [
+            name for name in REQUIRED_TEMPLATES
+            if not any(os.path.isfile(c) for c in _template_candidates(name, theme_tpl_dir, global_tpl_dir))
+        ]
+        if missing:
+            for name in missing:
+                self.log.error(f"[FRONTEND] TEMPLATE_MISSING name={name} theme={theme.get('name', '?')}")
+            self.app.stop(error=True)
+
     def theme_search(self, theme=None):
         """Search custom theme."""
         if theme is None:

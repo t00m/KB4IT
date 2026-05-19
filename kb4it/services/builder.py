@@ -19,6 +19,23 @@ from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 
 
+REQUIRED_TEMPLATES = [
+    "HTML_BODY",
+    "PAGE_INDEX",
+    "PAGE_KEY",
+    "PAGE_KEY_VALUE",
+]
+
+
+def _template_candidates(template_name, theme_templates_dir, global_templates_dir):
+    return [
+        os.path.join(theme_templates_dir, "md", f"{template_name}.tpl"),
+        os.path.join(theme_templates_dir, f"{template_name}.tpl"),
+        os.path.join(global_templates_dir, "md", f"{template_name}.tpl"),
+        os.path.join(global_templates_dir, f"{template_name}.tpl"),
+    ]
+
+
 class Builder(Service):
     """Build HTML blocks."""
 
@@ -125,12 +142,9 @@ class Builder(Service):
                 return cached
 
             theme = runtime["theme"]
-            candidates = [
-                os.path.join(theme["templates"], "md", f"{template}.tpl"),
-                os.path.join(theme["templates"], f"{template}.tpl"),
-                os.path.join(ENV["GPATH"]["TEMPLATES"], "md", f"{template}.tpl"),
-                os.path.join(ENV["GPATH"]["TEMPLATES"], f"{template}.tpl"),
-            ]
+            candidates = _template_candidates(
+                template, theme["templates"], ENV["GPATH"]["TEMPLATES"]
+            )
             for template_path in candidates:
                 try:
                     tpl = Template(filename=template_path)

@@ -252,6 +252,8 @@ class Backend(Service):
                 if result is None and not self.runtime["theme"].get("id"):
                     self.log.error(f"[BACKEND] THEME_LOAD_FAIL name={theme_name}")
                     self.app.stop(error=True)
+                else:
+                    frontend._validate_required_templates(self.runtime["theme"])
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
                 self.log.error("[BACKEND] CHECKS_END")
