@@ -137,6 +137,13 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=3 name=process_sources")
         backend.stage_03_process_sources()
+        plan = backend.get_plan()
+        if plan is not None:
+            self.log.info(
+                f"[WORKFLOW] PLAN docs={plan.doc_count}"
+                f" keys={plan.key_count}"
+                f" kv={plan.kv_count}"
+            )
 
         self.log.info("[WORKFLOW] STAGE n=4 name=process_theme")
         backend.stage_04_process_theme()
@@ -152,13 +159,12 @@ class Workflow(Service):
 
         # Build summary
         runtime = backend.get_dict("runtime")
+        plan = backend.get_plan()
         docs_total = runtime["docs"].get("count", 0)
-        compiled   = runtime.get("ncd", 0)
+        compiled   = plan.doc_count if plan is not None else 0
         skipped    = docs_total - compiled
-        k_path     = runtime.get("K_PATH", [])
-        kv_path    = runtime.get("KV_PATH", [])
-        keys_compiled = sum(1 for _, _, flag in k_path  if flag)
-        kv_compiled   = sum(1 for _, _, flag in kv_path if flag)
+        keys_compiled = plan.key_count if plan is not None else 0
+        kv_compiled   = plan.kv_count if plan is not None else 0
         elapsed = time.perf_counter() - t0
 
         self.log.info(

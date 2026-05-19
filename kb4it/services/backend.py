@@ -124,8 +124,21 @@ class Backend(Service):
                 self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
             raise ConfigError(f"Missing required config keys: {missing}")
 
+    _PLAN_RUNTIME_KEYS = {"ncd", "nck", "K_PATH", "KV_PATH"}
+
     def get_value(self, domain: str, key: str):
         """Get value from key given a domain."""
+        if domain == "runtime" and key in self._PLAN_RUNTIME_KEYS:
+            plan = self.get_plan()
+            if plan is not None:
+                if key == "ncd":
+                    return plan.doc_count
+                if key == "nck":
+                    return plan.key_count
+                if key == "K_PATH":
+                    return plan.K_PATH
+                if key == "KV_PATH":
+                    return plan.KV_PATH
         if domain == "app":
             adict = self.params
         elif domain == "docs":
@@ -139,6 +152,13 @@ class Backend(Service):
         else:
             return None
         return adict.get(key)
+
+    def get_plan(self):
+        """Return the current BuildPlan from the Processor (or None if not yet available)."""
+        srvprc = getattr(self, "srvprc", None)
+        if srvprc is None:
+            return None
+        return srvprc.get_plan()
 
     def set_value(self, domain: str, key: str, value: str | int | bool):
         """Set a value for a specific key in a given domain."""

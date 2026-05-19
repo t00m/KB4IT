@@ -41,10 +41,6 @@ class Runtime(TypedDict, total=False):
     dir:     DirPaths
     docs:    DocsInfo
     logfile: Path
-    ncd:     int
-    nck:     int
-    K_PATH:  list
-    KV_PATH: list
 
 
 class DocumentMeta(TypedDict, total=False):

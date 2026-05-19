@@ -27,6 +27,32 @@ class AnalysisResult:
     force_kv_pairs: set = field(default_factory=set)
 
 
+@dataclass
+class BuildPlan:
+    """Full description of what a build will compile.
+
+    Replaces the K_PATH/KV_PATH/ncd/nck side-channel keys previously written
+    into runtime. Workflow, Compiler and Builder read this single source of
+    truth instead of probing runtime.
+    """
+    docs_to_compile: set = field(default_factory=set)
+    K_PATH: list = field(default_factory=list)   # [(key, values, compile_flag), ...]
+    KV_PATH: list = field(default_factory=list)  # [(key, value, compile_flag), ...]
+    force_kv_pairs: set = field(default_factory=set)
+
+    @property
+    def doc_count(self) -> int:
+        return len(self.docs_to_compile)
+
+    @property
+    def key_count(self) -> int:
+        return sum(1 for _, _, flag in self.K_PATH if flag)
+
+    @property
+    def kv_count(self) -> int:
+        return sum(1 for _, _, flag in self.KV_PATH if flag)
+
+
 class Processor(Service):
     """KB4IT Processor Service."""
 
@@ -36,7 +62,15 @@ class Processor(Service):
         self.srvdtb = self.app.get_service("DB")
         self.kbdict_cur: KBDict = self.srvbes.load_kbdict()  # Previous run
         self.kbdict_new: KBDict = {"document": {}, "metadata": {}}
-        self.changed_docs = set()
+        self.plan = BuildPlan()
+
+    @property
+    def changed_docs(self) -> set:
+        return self.plan.docs_to_compile
+
+    def get_plan(self) -> BuildPlan:
+        """Return the current BuildPlan."""
+        return self.plan
 
     def step_00_extraction(self):
         """Extract metadata."""
@@ -118,7 +152,6 @@ class Processor(Service):
         sources = self.srvbes.get_value("docs", "bag")
         ignored = set(self.srvdtb.get_ignored_keys())
         blocked = set(self.srvdtb.get_blocked_keys())
-        ncd = 0  # Number of documents to be compiled
         for filepath in sources:
             docId = os.path.basename(filepath)
             try:
@@ -128,9 +161,8 @@ class Processor(Service):
 
             result = self.step_01_00_analyze_document(docId)
             if result['compile']:
-                ncd += 1
                 # Write new source file to temporary dir for the compiler
-                self.changed_docs.add(docId)
+                self.plan.docs_to_compile.add(docId)
                 source_path = os.path.join(self.srvbes.get_path("source"), docId)
                 with open(source_path, "r", encoding="utf-8") as fh:
                     content = fh.read()
@@ -152,7 +184,7 @@ class Processor(Service):
             # Save compilation status
             self.kbdict_new["document"][docId]["compile"] = result['compile']
 
-        self.srvbes.set_value("runtime", "ncd", ncd)
+        self.plan.force_kv_pairs = analysis.force_kv_pairs
 
         # Decide keys compilation
         all_keys = set(self.srvdtb.get_all_keys())
@@ -161,9 +193,9 @@ class Processor(Service):
         self.log.debug(f"[PROCESSOR] KEYS_IGNORED count={len(ignored)}")
         self.log.debug(f"[PROCESSOR] KEYS_AVAILABLE count={len(available_keys)}")
         self.log.debug(f"[PROCESSOR] FORCE_KV_PAIRS count={len(analysis.force_kv_pairs)}")
-        K_PATH, KV_PATH = self.step_01_01_decide_keys_compilation(available_keys, analysis.force_kv_pairs)
-        self.srvbes.set_value("runtime", "K_PATH", K_PATH)
-        self.srvbes.set_value("runtime", "KV_PATH", KV_PATH)
+        self.plan.K_PATH, self.plan.KV_PATH = self.step_01_01_decide_keys_compilation(
+            available_keys, analysis.force_kv_pairs
+        )
 
     def get_kb_dict(self):
         """Get new KB4IT Dictionary."""
@@ -281,7 +313,6 @@ class Processor(Service):
         KV_PATH = []
         FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
 
-        nck = 0  # Number of keys to be compiled
         for key in sorted(available_keys):
             values = self.srvdtb.get_all_values_for_key(key)
 
@@ -290,7 +321,6 @@ class Processor(Service):
                 for value in values:
                     KV_PATH.append((key, value, True))
                 self.log.debug(f"[PROCESSOR] KEY key={key} compile=True forced=True")
-                nck += 1
                 continue
 
             # Key value-set changed?
@@ -310,10 +340,7 @@ class Processor(Service):
 
             K_PATH.append((key, values, COMPILE_KEY))
             self.log.debug(f"[PROCESSOR] KEY key={key} compile={COMPILE_KEY}")
-            if COMPILE_KEY:
-                nck += 1
 
-        self.srvbes.set_value("runtime", "nck", nck)
         return K_PATH, KV_PATH
 
     def step_02_transformation(self):
@@ -325,11 +352,10 @@ class Processor(Service):
         """
         self.log.debug("[PROCESSOR] TRANSFORM_START")
         self.srvthm = self.get_service("Theme")
-        runtime = self.srvbes.get_dict("runtime")
 
         # Keys
         keys_with_compile_true = 0
-        for kpath in runtime["K_PATH"]:
+        for kpath in self.plan.K_PATH:
             key, values, COMPILE_KEY = kpath
             docId = f"{valid_filename(key)}.md"
             htmlId = html_id_for(docId)
@@ -341,7 +367,7 @@ class Processor(Service):
             self.srvbes.add_target(docId, htmlId)
 
         pairs_with_compile_true = 0
-        for kvpath in runtime["KV_PATH"]:
+        for kvpath in self.plan.KV_PATH:
             key, value, COMPILE_VALUE = kvpath
             docId = f"{valid_filename(key)}_{valid_filename(value)}.md"
             htmlId = html_id_for(docId)
@@ -352,7 +378,8 @@ class Processor(Service):
             # Add compiled page to the target list
             self.srvbes.add_target(docId, htmlId)
 
+        targets = self.srvbes.get_value("docs", "targets")
         self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={keys_with_compile_true}")
         self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={pairs_with_compile_true}")
-        self.log.debug(f"[PROCESSOR] TARGET_DOCS n={len(runtime['docs']['targets'])}")
+        self.log.debug(f"[PROCESSOR] TARGET_DOCS n={len(targets)}")
         self.log.debug("[PROCESSOR] TRANSFORM_END")
