@@ -13,6 +13,7 @@ import os
 import sys
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 
 
@@ -82,7 +83,7 @@ class Frontend(Service):
         """Load custom user theme, global theme or default."""
         if theme_name is None:
             self.log.error("[FRONTEND] THEME_MISSING")
-            self.app.stop(error=True)
+            raise ThemeError("Theme name not specified")
 
         # custom theme requested by user via command line properties
         self.runtime["theme"] = {}
@@ -134,7 +135,7 @@ class Frontend(Service):
                 return None
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
-                self.app.stop(error=True)
+                raise ThemeError(f"Theme load failed: {error}") from error
 
     def _validate_required_templates(self, theme):
         """Check that all required templates exist for the loaded theme."""
@@ -148,7 +149,7 @@ class Frontend(Service):
         if missing:
             for name in missing:
                 self.log.error(f"[FRONTEND] TEMPLATE_MISSING name={name} theme={theme.get('name', '?')}")
-            self.app.stop(error=True)
+            raise ThemeError(f"Required templates missing: {missing}")
 
     def theme_search(self, theme=None):
         """Search custom theme."""

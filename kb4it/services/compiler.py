@@ -181,16 +181,13 @@ class Compiler(Service):
                 except MemoryError:
                     self.log.error("[COMPILER] MEMORY_EXHAUSTED")
                     self.log.error("[COMPILER] HINT use fewer workers or add memory")
-                    self.log.error("[COMPILER] EXIT")
-                    self.app.stop()
                 except Exception as error:
                     self.log.error(f"[COMPILER] ERROR {error}")
                     self.print_traceback()
-                    self.app.stop()
                 return x
             else:
                 self.log.error(f"[COMPILER] COMPILE_FAILED doc={basename}")
-                self.app.stop()
+                return x
 
 
 def _md_toc_block(toc_html: str) -> str:

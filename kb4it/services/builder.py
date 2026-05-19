@@ -15,6 +15,7 @@ from datetime import datetime
 from mako.template import Template
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 
@@ -156,8 +157,7 @@ class Builder(Service):
                     continue
 
             self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
-            self.app.stop(error=True)
-            raise RuntimeError(f"Template not found: {template}")
+            raise ThemeError(f"Template not found: {template}")
 
     def render_template(self, name, var=None):
         """Render template according to dict var values."""

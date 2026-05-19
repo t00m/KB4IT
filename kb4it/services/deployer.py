@@ -12,6 +12,7 @@ import os
 import shutil
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
 
@@ -91,8 +92,7 @@ class Deployer(Service):
             except FileNotFoundError as error:
                 self.log.error(f"[DEPLOYER] ERROR {error}")
                 self.log.error("[DEPLOYER] HINT rerun with -force")
-                self.print_traceback()
-                self.app.stop()
+                return
 
         for filename in os.listdir(dir_target):
             if not filename.endswith('.html'):
@@ -112,7 +112,7 @@ class Deployer(Service):
         theme = self.srvbes.get_dict("theme")
         if not theme.get("id") or not theme.get("path"):
             self.log.error("[DEPLOYER] THEME_NOT_LOADED")
-            self.app.stop(error=True)
+            raise ThemeError("Theme not loaded for deployment")
         DEFAULT_THEME = os.path.join(ENV["GPATH"]["THEMES"], "default")
         CUSTOM_THEME_ID = theme["id"]
         CUSTOM_THEME_PATH = theme["path"]

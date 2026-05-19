@@ -12,6 +12,7 @@ import shutil
 from pathlib import Path
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import redirect_logs
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_content, get_hash_from_file,
@@ -32,7 +33,7 @@ class Backend(Service):
         if self.params.get("action") in ("build", "info"):
             config_file = self.params.get("config")
             if config_file is None:
-                self.app.stop(error=True)
+                raise ConfigError("No config file specified")
 
             # Check if it exists
             config_path = Path(config_file).absolute()
@@ -41,17 +42,16 @@ class Backend(Service):
                     self.log.debug(f"[BACKEND] CONFIG_FILE path={config_path}")
                     self.repo = json_load(config_path)
                     self.log.debug("[BACKEND] CONFIG_LOADED")
-                    self._validate_config()
                 except AttributeError as error:
                     self.log.error("[BACKEND] CONFIG_PARSE_FAIL")
-                    self.log.error(f"[BACKEND] ERROR {error}")
-                    self.app.stop(error=True)
+                    raise ConfigError(f"Config parse failed: {error}") from error
                 except Exception as error:
                     self.log.error(f"[BACKEND] ERROR {error}")
-                    self.app.stop(error=True)
+                    raise ConfigError(f"Config load failed: {error}") from error
+                self._validate_config()
             else:
                 self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
-                self.app.stop(error=True)
+                raise ConfigError(f"Config file not found: {config_path}")
 
             # Params-level force (e.g. from TUI) takes priority over repo.json
             if not self.params.get("force"):
@@ -116,7 +116,7 @@ class Backend(Service):
         if missing:
             for key in missing:
                 self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
-            self.app.stop(error=True)
+            raise ConfigError(f"Missing required config keys: {missing}")
 
     def get_value(self, domain: str, key: str):
         """Get value from key given a domain."""
@@ -187,8 +187,7 @@ class Backend(Service):
             kbdict = empty_kbdict
         except Exception as error:
             self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
-            self.log.error(f"[BACKEND] ERROR {error}")
-            self.app.stop(error=True)
+            raise KB4ITError(f"kbdict load failed: {error}") from error
         self.log.debug(f"[BACKEND] KBDICT_ENTRIES n={len(kbdict)}")
         return kbdict
 
@@ -233,7 +232,7 @@ class Backend(Service):
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_path("source")):
             self.log.error(f"[BACKEND] SOURCE_MISSING path={self.get_path('source')}")
-            self.app.stop(error=True)
+            raise ConfigError(f"Source directory not found: {self.get_path('source')}")
         self.log.debug(f"[BACKEND] DIR name=source path={self.get_path('source')}")
 
         # check if target directory exists. If not, create it:
@@ -244,20 +243,19 @@ class Backend(Service):
         theme_name = self.get_value("repo", "theme")
         if theme_name is None:
             self.log.debug("[BACKEND] THEME_MISSING")
-            self.app.stop(error=True)
+            raise ConfigError("Theme name missing from repo config")
         else:
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
                 result = frontend.theme_load(os.path.basename(theme_path))
                 if result is None and not self.runtime["theme"].get("id"):
                     self.log.error(f"[BACKEND] THEME_LOAD_FAIL name={theme_name}")
-                    self.app.stop(error=True)
+                    raise ThemeError(f"Theme load failed: {theme_name}")
                 else:
                     frontend._validate_required_templates(self.runtime["theme"])
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
-                self.log.error("[BACKEND] CHECKS_END")
-                self.app.stop(error=True)
+                raise ThemeError(f"Theme not found: {theme_name}")
         self.log.debug("[BACKEND] CHECKS_END")
 
     def stage_02_get_source_documents(self):
