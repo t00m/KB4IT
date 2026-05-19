@@ -41,6 +41,7 @@ class Backend(Service):
                     self.log.debug(f"[BACKEND] CONFIG_FILE path={config_path}")
                     self.repo = json_load(config_path)
                     self.log.debug("[BACKEND] CONFIG_LOADED")
+                    self._validate_config()
                 except AttributeError as error:
                     self.log.error("[BACKEND] CONFIG_PARSE_FAIL")
                     self.log.error(f"[BACKEND] ERROR {error}")
@@ -106,6 +107,16 @@ class Backend(Service):
 
             # Get services
             self.get_services()
+
+    REQUIRED_CONFIG_KEYS = ("source", "target", "theme", "title")
+
+    def _validate_config(self):
+        """Validate required keys are present in repo.json."""
+        missing = [k for k in self.REQUIRED_CONFIG_KEYS if k not in self.repo]
+        if missing:
+            for key in missing:
+                self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
+            self.app.stop(error=True)
 
     def get_value(self, domain: str, key: str):
         """Get value from key given a domain."""
