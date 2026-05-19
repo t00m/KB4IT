@@ -101,8 +101,8 @@ class Theme(Builder):
                         item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
                         item['url'] = documents[docId]['%s_Url' % key]
                         datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
-                    except:
-                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item}")
+                    except (KeyError, AttributeError) as e:
+                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
                         raise
                 else:
                     link = {}
@@ -466,13 +466,7 @@ class Theme(Builder):
                 y = timestamp.year
                 m = timestamp.month
                 d = timestamp.day
-                try:
-                    days_events = self.dey[y]
-                    days_events.append((m, d))
-                except:
-                    days_events = []
-                    days_events.append((m, d))
-                    self.dey[y] = days_events
+                self.dey.setdefault(y, []).append((m, d))
 
                 # Build dict of documents
                 if not y in self.events_docs:
@@ -614,10 +608,7 @@ class Theme(Builder):
         doclist = []
         ecats = {}
         repo = self.srvbes.get_dict('repo')
-        try:
-            event_types = repo['events']
-        except:
-            event_types = []
+        event_types = repo.get('events', [])
         # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
 
         for docId in self.srvdtb.get_documents():
@@ -625,14 +616,7 @@ class Theme(Builder):
                 continue
             category = self.srvdtb.get_values(docId, 'Category')[0]
             if category in event_types:
-                try:
-                    docs = ecats[category]
-                    docs.add(docId)
-                    ecats[category] = docs
-                except:
-                    docs = set()
-                    docs.add(docId)
-                    ecats[category] = docs
+                ecats.setdefault(category, set()).add(docId)
 
                 doclist.append(docId)
                 title = self.srvdtb.get_values(docId, 'Title')[0]
