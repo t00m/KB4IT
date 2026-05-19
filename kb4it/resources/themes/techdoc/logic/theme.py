@@ -14,7 +14,6 @@ import calendar as _calendar
 import json
 import math
 import os
-import sys
 from calendar import monthrange
 from collections import Counter
 from datetime import datetime, timedelta
@@ -137,7 +136,6 @@ class Theme(Builder):
         var['page']['stats'] = self._build_index_stats()
         var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
-        var['page']['trimester'] = self._build_index_trimester(now)
         var['page']['events_panel'] = self._build_index_events_panel(now)
         var['page']['recent_events'] = self._build_index_recent_events(now)
         var['page']['monitoring_panel'] = self._build_index_monitoring_panel()
@@ -226,58 +224,6 @@ class Theme(Builder):
             item['count'] = len(docs)
             item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(item['name'])) if docs else None
         return diataxis
-
-    def _build_index_trimester(self, now):
-        """Compact 3-month grid,  prev, current, next."""
-        cur_first = now.replace(day=1)
-        prv_last = cur_first - timedelta(days=1)
-        cur_last = cur_first.replace(day=monthrange(cur_first.year, cur_first.month)[1])
-        nxt_first = cur_last + timedelta(days=1)
-
-        months_data = [
-            (prv_last.year, prv_last.month, False),
-            (cur_first.year, cur_first.month, True),
-            (nxt_first.year, nxt_first.month, False),
-        ]
-        cal = _calendar.Calendar(firstweekday=_calendar.MONDAY)
-        months = []
-        for year, month, is_current in months_data:
-            dt = datetime(year, month, 1)
-            weeks = []
-            for week in cal.monthdayscalendar(year, month):
-                row = []
-                for day in week:
-                    cell = {'n': day}
-                    if day == 0:
-                        cell['kind'] = 'empty'
-                    else:
-                        has_event = (
-                            year in self.events_docs
-                            and month in self.events_docs[year]
-                            and day in self.events_docs[year][month]
-                            and len(self.events_docs[year][month][day]) > 0
-                        )
-                        is_today = (year == now.year and month == now.month and day == now.day)
-                        if is_today:
-                            cell['kind'] = 'today'
-                        elif has_event:
-                            cell['kind'] = 'event'
-                            cell['url'] = "events_%04d%02d%02d.html" % (year, month, day)
-                        else:
-                            cell['kind'] = 'day'
-                    row.append(cell)
-                weeks.append(row)
-            months.append({
-                'name': dt.strftime('%B %Y'),
-                'current': is_current,
-                'weeks': weeks,
-            })
-        title = "%s / %s / %s" % (
-            datetime(months_data[0][0], months_data[0][1], 1).strftime('%b'),
-            datetime(months_data[1][0], months_data[1][1], 1).strftime('%b'),
-            datetime(months_data[2][0], months_data[2][1], 1).strftime('%b %Y'),
-        )
-        return {'title': title, 'months': months}
 
     def _build_index_events_panel(self, now):
         """Rows for current and next month events."""
@@ -585,25 +531,6 @@ class Theme(Builder):
 
         return must_compile_year
 
-    def build_year_pagination(self, years):
-        EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
-        EVENTCAL_YEAR_PAGINATION_ITEM = self.template('EVENTCAL_YEAR_PAGINATION_ITEM')
-        var = {}
-        var['items'] = ''
-        ITEMS = ''
-        for yp in sorted(years, reverse=True):
-            item = {}
-            item['year'] = yp
-
-            total = 0
-            for month in self.events_docs[yp]:
-                for day in self.events_docs[yp][month]:
-                    total += len(self.events_docs[yp][month][day])
-            item['year_count'] = total
-            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
-        var['items'] = ITEMS
-        return EVENTCAL_YEAR_PAGINATION.render(var=var)
-
     def build_page_events(self):
         doclist = []
         ecats = {}
@@ -662,23 +589,8 @@ class Theme(Builder):
         self.create_page_about_kb4it()
         self.create_page_help()
 
-    def page_hook_pre(self, var):
-        var['related'] = ''
-        var['metadata'] = ''
-        var['source'] = ''
-        var['actions'] = ''
-        return var
-
-    def page_hook_post(self, var):
-        return var
-
     def build_page_properties(self):
         """Create properties page"""
-        #if self.srvbes.get_value('runtime', 'nck') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in keys. Skip '{func_name}'")
-        #    self.srvbes.add_target('properties.md', 'properties.html')
-        #    return
 
         TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
         TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
@@ -712,11 +624,6 @@ class Theme(Builder):
 
     def build_tagcloud_from_key(self, key):
         """Create a tag cloud based on key values."""
-        #if self.srvbes.get_value('runtime', 'nck') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in keys. Skip '{func_name}'")
-        #    return
-
         dkeyurl = {}
         for docId in self.srvdtb.get_documents():
             tags = self.srvdtb.get_values(docId, key)
@@ -774,12 +681,6 @@ class Theme(Builder):
 
     def build_page_stats(self):
         """Create stats page"""
-        #if self.srvbes.get_value('runtime', 'nck') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in keys. Skip '{func_name}'")
-        #    self.srvbes.add_target('stats.md', 'stats.html')
-        #    return
-
         TPL_PAGE_STATS = self.template('PAGE_STATS')
         var = self.get_theme_var()
         var['count_docs'] = self.srvdtb.get_documents_count()
@@ -837,12 +738,6 @@ class Theme(Builder):
 
     def build_page_index_all(self):
         """Create a page with all documents"""
-        #if self.srvbes.get_value('runtime', 'ncd') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in documents. Skip '{func_name}'")
-        #    self.srvbes.add_target('all.md', 'all.html')
-        #    return
-
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
         doclist = []
@@ -1034,12 +929,6 @@ class Theme(Builder):
 
     def build_page_bookmarks(self):
         """Create bookmarks page."""
-        #if self.srvbes.get_value('runtime', 'ncd') == 0:
-        #    func_name = sys._getframe().f_code.co_name
-        #    self.log.debug(f"No changes in documents. Skip '{func_name}'")
-        #    self.srvbes.add_target('bookmarks.md', 'bookmarks.html')
-        #    return
-
         TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
         var = self.get_theme_var()
         doclist = []
@@ -1070,37 +959,6 @@ class Theme(Builder):
     def get_page_actions(self, var):
         TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
         return TPL_SECTION_ACTIONS.render(var=var)
-
-    def get_related(self, docId):
-        """Get a list of related documents for each tag"""
-        # DISABLED:
-        # Related section code works.
-        # However, because of the workflow do not detect which sources
-        # have been added or removed, if any of the remaining sources do
-        # not change, the related section will not be rebuilt again.
-        # As a consecuence, documents displayed in the related section
-        # might not exist. Or the other way around, the new documents
-        # might exist, but they are not referenced.
-        # Workaround: just browse the metadata from the document menu
-
-        TPL_SECTION_RELATED = self.template('SECTION_RELATED')
-        blocked_keys = self.srvdtb.get_blocked_keys()
-        doclist = set()
-        doc_keys = self.srvdtb.get_doc_properties(docId)
-        filtered_keys = [key for key in doc_keys if key not in blocked_keys]
-        for key in filtered_keys:
-            for value in self.srvdtb.get_values(docId, key):
-                for docId in self.srvdtb.get_docs_by_key_value(key, value):
-                    doclist.add(docId)
-
-        doclist.remove(docId)
-        self.log.debug(f"[THEME] RELATED_FOUND doc={docId} n={len(doclist)}")
-
-        headers = []
-        var = self.get_theme_var()
-        var['datatable'] = self.build_datatable(headers, doclist)
-        html_related = TPL_SECTION_RELATED.render(var=var)
-        return html_related
 
     def get_labels(self, values):
         """C0111: Missing function docstring (missing-docstring)."""
@@ -1155,77 +1013,3 @@ class Theme(Builder):
         # ~ self.log.debug("No sources generated by this theme")
         pass
 
-    def check_config(self):
-        go = True
-        repo = self.app.get_repo_config_dict()
-        self.log.debug("[THEME] CONFIG_CHECK_START")
-
-        self.log.info(f"[THEME] CONFIG key=title value='{repo['title']}'")
-        if len(repo['title']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=title reason=empty")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=datatable n={len(repo['datatable'])}")
-        if len(repo['datatable']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=datatable reason=empty")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=events n={len(repo['events'])}")
-        if len(repo['events']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=events reason=empty")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=git value={repo['git']}")
-        if repo['git']:
-            git_props = ['git_branch', 'git_path', 'git_repo', 'git_server', 'git_user']
-            for git_prop in sorted(git_props):
-                if len(repo[git_prop]) == 0:
-                    self.log.warning(f"[THEME] CONFIG_FAIL key={git_prop} reason=empty")
-
-        self.log.info(f"[THEME] CONFIG key=ignored_keys n={len(repo['ignored_keys'])}")
-        if len(repo['ignored_keys']) == 0:
-            self.log.warning("[THEME] CONFIG_WARN key=ignored_keys reason=empty")
-
-        self.log.info(f"[THEME] CONFIG key=logo value={repo['logo']}")
-        if not os.path.exists(repo['logo']):
-            self.log.warning(f"[THEME] CONFIG_WARN key=logo reason=missing path={repo['logo']}")
-
-        self.log.info(f"[THEME] CONFIG key=logo_alt value='{repo['logo_alt']}'")
-        if not os.path.exists(repo['logo_alt']):
-            self.log.warning("[THEME] CONFIG_WARN key=logo_alt reason=missing")
-
-        self.log.info(f"[THEME] CONFIG key=menu n={len(repo['menu'])}")
-        if len(repo['menu']) == 0:
-            self.log.warning("[THEME] CONFIG_WARN key=menu reason=empty")
-
-        self.log.info("[THEME] CONFIG key=sort value=Date")
-
-        self.log.info(f"[THEME] CONFIG key=source value='{repo['source']}'")
-        if len(repo['source']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=source reason=empty")
-            go = False
-        elif not os.path.exists(repo['source']):
-            self.log.error(f"[THEME] CONFIG_FAIL key=source reason=missing path={repo['source']}")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=target value='{repo['target']}'")
-        if len(repo['target']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=target reason=empty")
-            go = False
-        elif not os.path.exists(repo['target']):
-            self.log.error(f"[THEME] CONFIG_FAIL key=target reason=missing path={repo['target']}")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=webserver value={repo['webserver']}")
-        if repo['webserver']:
-            self.log.info(f"[THEME] CONFIG key=timeline n={len(repo['timeline'])}")
-            if len(repo['timeline']) == 0:
-                self.log.error("[THEME] CONFIG_FAIL key=timeline reason=empty")
-                go = False
-
-        if not go:
-            example = os.path.join(ENV['GPATH']['THEMES'], 'techdoc', 'example', 'repo', 'config', 'repo.json')
-            self.log.info(f"[THEME] CONFIG_EXAMPLE path={example}")
-
-        self.log.debug("[THEME] CONFIG_CHECK_END")
-        return go

@@ -25,47 +25,6 @@ def category_url(category):
 
 <div class="uk-container kb-index">
 
-    <!-- 0. TRIMESTER CALENDAR (hidden) -->
-    <section class="kb-section" style="display:none;">
-        <div class="kb-panel kb-trimester">
-            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
-                <h2 class="kb-section-title" style="margin: 0;">Trimester · ${var['page']['trimester']['title']}</h2>
-                <a href="events.html" class="uk-text-small" style="text-decoration: none;">
-                    All events <span uk-icon="icon: chevron-right; ratio: 0.8"></span>
-                </a>
-            </div>
-            <div class="kb-trimester-grid">
-% for month in var['page']['trimester']['months']:
-                <div class="kb-trimester-month${' current' if month['current'] else ''}">
-                    <h4>${month['name']}</h4>
-                    <table>
-                        <thead>
-                            <tr><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th></tr>
-                        </thead>
-                        <tbody>
-%     for week in month['weeks']:
-                            <tr>
-%         for cell in week:
-%             if cell['kind'] == 'empty':
-                                <td class="empty">·</td>
-%             elif cell['kind'] == 'today':
-                                <td class="today">${cell['n']}</td>
-%             elif cell['kind'] == 'event':
-                                <td class="event"><a href="${cell['url']}">${cell['n']}</a></td>
-%             else:
-                                <td>${cell['n']}</td>
-%             endif
-%         endfor
-                            </tr>
-%     endfor
-                        </tbody>
-                    </table>
-                </div>
-% endfor
-            </div>
-        </div>
-    </section>
-
     <!-- 1. HERO STATS BAR -->
     <section class="kb-section">
         <div class="kb-hero-bar">
