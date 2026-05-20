@@ -1,0 +1,39 @@
+{
+    "datatable": [
+        "Date",
+        "Title",
+        "Topic"
+    ],
+    "events": [
+        "Post"
+    ],
+    "git": false,
+    "git_branch": "{branch_name}",
+    "git_path": "{relative_path}",
+    "git_repo": "{repository_name}",
+    "git_server": "{https://{server.fqdn}",
+    "git_user": "{username}",
+    "ignored_keys": [
+        "Date"
+    ],
+    "logo": "resources/themes/blog/images/logo.svg",
+    "logo_alt": "{alternative_text}",
+    "menu": [
+        "Author",
+        "Category",
+        "Tag",
+        "Topic"
+    ],
+    "sort": "Date",
+    "source": "{source_directory}",
+    "strict": false,
+    "tagline": "My Public Notes",
+    "target": "{target_directory}",
+    "theme": "blog",
+    "timeline": [
+        "Post",
+        "Note"
+    ],
+    "title": "My Blog",
+    "webserver": false
+}

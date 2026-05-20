@@ -707,7 +707,7 @@ class Theme(Builder):
         var = self.get_theme_var()
         var['page']['title'] = 'Add document'
         runtime = self.srvbes.get_dict("runtime")
-        skeletons_dir = os.path.join(runtime["theme"]["templates"], "md", "skeletons")
+        skeletons_dir = os.path.join(runtime["theme"]["templates"], "skeletons")
         category_ids = ['change', 'incident', 'meeting', 'note', 'post', 'procedure', 'report', 'task']
         skeletons = {}
         for cat_id in category_ids:

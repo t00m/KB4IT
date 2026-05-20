@@ -11,7 +11,14 @@
 - **Serverless output** - plain HTML/CSS, host on GitHub Pages, S3, nginx, or just open `index.html`.
 - **Smart incremental builds** - only changed documents and their key/value index pages are recompiled, driven by per-document body and metadata hashes (blake2b).
 - **Property-driven navigation** - every frontmatter property becomes a filterable index page automatically.
-- **Three themes out of the box** - `techdoc`, `book`, `blog` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
+- **Two themes out of the box** - `techdoc`, `blog` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
+
+## Live demos
+
+See KB4IT in action with the bundled themes:
+
+- **techdoc** - [t00mterías](https://t00m.github.io/techdoc/index.html)
+- **blog** - [t00m's tech notes](https://t00m.github.io/blog/index.html)
 
 ## Source format
 
@@ -134,7 +141,7 @@ A minimal `repo.json` only needs four required keys:
 Required (validated at load time with a clear per-key error):
 
 - `title`  - site title shown in the navbar and `<title>`
-- `theme`  - `techdoc` / `book` / `blog` or a custom theme name
+- `theme`  - `techdoc` / `blog` or a custom theme name
 - `source` - absolute path to the directory holding `.md` files
 - `target` - absolute path where the static site will be written
 
@@ -150,7 +157,6 @@ Common optional keys honoured by the bundled themes:
 ## Themes
 
 - **techdoc** - Technical documentation, runbooks, knowledge bases. Dense, searchable, property-heavy navigation.
-- **book**    - Long-form structured content. Chapter / section layout.
 - **blog**    - Chronological posts with tags / categories.
 
 Custom themes live in `~/.kb4it/opt/resources/themes/<your-theme>/`.

@@ -2,7 +2,7 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    sort_by = var['repo']['sort']
+    sort_by = 'Date' # var['repo']['sort']
     timestamp = var['post'][sort_by][0]
     dt = guess_datetime(timestamp)
     var['post']['updated_human'] = get_human_datetime(dt)
@@ -14,10 +14,11 @@
     var['post']['updated_year'] = f"{dt.year:04d}"
     var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
 %>
-<!-- Template POST_HTML_SINGLE.tpl :: START -->
+<!-- Template POST_MD_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
 <div class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
+
         <!-- Header -->
         <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
@@ -33,12 +34,10 @@
                                 <span uk-icon="user"></span>
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
                             </li>
-                            <!-- Update :: START -->
-                            <li uk-tooltip="title: Document last update">
+                            <li>
                                 <span uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
-                            <!-- Update :: END -->
                             <!-- Metadata Button :: START -->
                             <li uk-tooltip="title: Document properties">
                                 <span uk-icon="hashtag"></span>
@@ -78,12 +77,6 @@
                                 </div>
                             </li>
                             <!-- View Source Button :: END -->
-                            <li uk-tooltip="title: Edit document">
-                                <span uk-icon="pencil"></span>
-                                <span class="uk-margin-small-left">
-                                    <a class="" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank" uk-toggle>Edit</a>
-                                </span>
-                            </li>
                         </ul>
                     </div>
                     <!-- Tags and Topics -->
@@ -93,17 +86,20 @@
 
         <!-- Body -->
         <article class="uk-article">
-            <!-- BODY :: START -->
-            ${var['source_html']}
-            <!-- BODY :: END -->
+            ${var['post']['Excerpt']}
         </article>
 
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
+            <p>
+                <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
+                    <span class="uk-link-heading uk-align-right">Read more...</span>
+                </a>
+            </p>
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
         </footer>
     </div>
 </div>
 <p></p>
-<!-- Template POST_HTML_SINGLE.tpl :: END -->
+<!-- Template POST_MD_INDEX.tpl :: END -->
