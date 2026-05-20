@@ -317,7 +317,7 @@ class Backend(Service):
         # Generate about_app.md if missing (user-editable placeholder)
         about_app_target = os.path.join(sources_path, "about_app.md")
         if not os.path.exists(about_app_target):
-            about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "md", "PAGE_ABOUT_APP.tpl")
+            about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "PAGE_ABOUT_APP.tpl")
             shutil.copy(about_app_tpl, about_app_target)
             self.log.warning("[BACKEND] ABOUT_APP_CREATED")
 

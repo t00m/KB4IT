@@ -30,9 +30,7 @@ REQUIRED_TEMPLATES = [
 
 def _template_candidates(template_name, theme_templates_dir, global_templates_dir):
     return [
-        os.path.join(theme_templates_dir, "md", f"{template_name}.tpl"),
         os.path.join(theme_templates_dir, f"{template_name}.tpl"),
-        os.path.join(global_templates_dir, "md", f"{template_name}.tpl"),
         os.path.join(global_templates_dir, f"{template_name}.tpl"),
     ]
 
