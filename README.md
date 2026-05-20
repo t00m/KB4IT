@@ -13,6 +13,13 @@
 - **Property-driven navigation** - every frontmatter property becomes a filterable index page automatically.
 - **Two themes out of the box** - `techdoc`, `blog` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
 
+## Live demos
+
+See KB4IT in action with the bundled themes:
+
+- **techdoc** - [t00mterías](https://t00m.github.io/techdoc/index.html)
+- **blog** - [t00m's tech notes](https://t00m.github.io/blog/index.html)
+
 ## Source format
 
 Every KB4IT document is a Markdown file beginning with a YAML frontmatter block. The closing `---` is the only header boundary; the title comes from the first `# H1` heading, not from the frontmatter.
