@@ -12,7 +12,7 @@
     var['post']['updated_month'] = f"{dt.year:04d}{dt.month:02d}"
     var['post']['updated_year_text'] = f"{dt.year:04d}"
     var['post']['updated_year'] = f"{dt.year:04d}"
-    var['post']['updated_time'] = f"{dt.hour.conjugate()}:{dt.minute.conjugate()}"
+    var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
 %>
 <!-- Template POST_HTML_SINGLE.tpl :: START -->
 <!-- Blog Post :: START -->

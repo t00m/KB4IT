@@ -31,7 +31,7 @@ class Theme(Builder):
         self.events_docs = {}
 
     # ~ @timeit
-    def build_datatable(self, headers=[], doclist=[]):
+    def build_datatable(self, headers=None, doclist=None):
         """Given a list of columns, it builds a datatable.
         First column is always a date field, which is got by using the
         method get_doc_timestamp from the database module. It means
@@ -41,6 +41,10 @@ class Theme(Builder):
         file from the OS).
         So, it is not necessary to pass a date property in the headers.
         """
+        if headers is None:
+            headers = []
+        if doclist is None:
+            doclist = []
         # ~ self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
         TPL_LINK = self.template('LINK')
         TPL_DATATABLE = self.template('DATATABLE')
@@ -52,32 +56,33 @@ class Theme(Builder):
         sort_attribute = "Date"
 
         # Add datatable hearders
-        datatable['header'] = ''
         if len(headers) == 0:
             headers = repo['datatable']
 
+        header_parts = []
         for item in headers:
             var = {}
             var['item'] = item
-            datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var=var)
+            header_parts.append(TPL_DATATABLE_HEADER_ITEM.render(var=var))
+        datatable['header'] = ''.join(header_parts)
 
         # Add datatable body
         documents = {}
         for docId in doclist:
             documents[docId] = self.srvdtb.get_doc_properties(docId)
-        datatable['rows'] = ''
+        rows = []
         for docId in documents:
             if self.srvdtb.is_system(docId):
                 continue
 
-            datatable['rows'] += '<tr>'
+            row = ['<tr>']
             if sort_attribute in headers:
                 timestamp = self.srvdtb.get_doc_timestamp(docId)
                 if timestamp is None:
                     continue
                 ts_title = timestamp[:16]
                 ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-                datatable['rows'] += f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
+                row.append(f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>""")
                 final_headers = headers[1:]
             else:
                 final_headers = headers
@@ -88,7 +93,7 @@ class Theme(Builder):
                     try:
                         item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
                         item['url'] = documents[docId]['%s_Url' % key]
-                        datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
+                        row.append(TPL_DATATABLE_BODY_ITEM.render(var=item))
                     except (KeyError, AttributeError) as e:
                         self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
                         raise
@@ -103,8 +108,10 @@ class Theme(Builder):
                             field.append(TPL_LINK.render(var=link))
                     except KeyError:
                         field = []
-                    datatable['rows'] += """<td class="">%s</td>""" % ', '.join(field)
-            datatable['rows'] += '</tr>'
+                    row.append("""<td class="">%s</td>""" % ', '.join(field))
+            row.append('</tr>')
+            rows.append(''.join(row))
+        datatable['rows'] = ''.join(rows)
 
         return TPL_DATATABLE.render(var=datatable)
 
@@ -125,7 +132,7 @@ class Theme(Builder):
                 return
 
         var = self.get_theme_var()
-        TPL_POST = self.template('POST_ADOC_INDEX')
+        TPL_POST = self.template('POST_MD_INDEX')
         TPL_INDEX = self.template('PAGE_INDEX')
         repo = self.srvbes.get_dict('repo')
         sort_by = "Date"
@@ -136,7 +143,7 @@ class Theme(Builder):
         var['page']['title'] = "Index"
 
         doclist = self.srvdtb.get_documents()
-        html = TPL_INDEX.render(var=var)
+        html_parts = [TPL_INDEX.render(var=var)]
         for post in doclist[:nip]:
             var['post'] = {}
             var['post']['filename'] = post
@@ -144,7 +151,8 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             md_filepath = os.path.join(self.srvbes.get_path('source'), post)
-            md_content = open(md_filepath, 'r').read()
+            with open(md_filepath, 'r') as fmd:
+                md_content = fmd.read()
             sections = extract_sections_from_md(md_filepath)
             if 'Excerpt' in sections:
                 s = sections['Excerpt']['start']
@@ -163,11 +171,12 @@ class Theme(Builder):
             var['metadata'] = self.build_metadata_section(post)
             var['source_md'] = md_content
             try:
-                html += TPL_POST.render(var=var)
+                html_parts.append(TPL_POST.render(var=var))
                 self.log.debug(f"[THEME] INDEX_ADD doc={post}")
             except Exception as error:
                 self.log.warning(f"[THEME] INDEX_SKIP doc={post} error={error}")
 
+        html = ''.join(html_parts)
         self.distribute_md('index', html)
         self.srvdtb.add_document('index.md')
         self.srvdtb.add_document_key('index.md', 'Title', 'Index')
@@ -264,7 +273,7 @@ class Theme(Builder):
                     edt = guess_datetime("%4d.%02d.01" % (year, month))
                     for day in self.events_docs[year][month]:
                         doclist.extend(self.events_docs[year][month][day])
-                    var['doclist'] = docs
+                    var['doclist'] = doclist
                     headers = []
                     var['page']['datatable'] = self.build_datatable(headers, doclist)
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
@@ -310,8 +319,7 @@ class Theme(Builder):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
         EVENTCAL_YEAR_PAGINATION_ITEM = self.template('EVENTCAL_YEAR_PAGINATION_ITEM')
         var = {}
-        var['items'] = ''
-        ITEMS = ''
+        items = []
         for yp in sorted(years, reverse=True):
             item = {}
             item['year'] = yp
@@ -321,8 +329,8 @@ class Theme(Builder):
                 for day in self.events_docs[yp][month]:
                     total += len(self.events_docs[yp][month][day])
             item['year_count'] = total
-            ITEMS += EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item)
-        var['items'] = ITEMS
+            items.append(EVENTCAL_YEAR_PAGINATION_ITEM.render(var=item))
+        var['items'] = ''.join(items)
         return EVENTCAL_YEAR_PAGINATION.render(var=var)
 
     def build_page_events(self):
@@ -398,8 +406,8 @@ class Theme(Builder):
         custom_buttons = ''
         var = self.get_theme_var()
         var['buttons'] = []
+        ignored_keys = self.srvdtb.get_ignored_keys()
         for key in all_keys:
-            ignored_keys = self.srvdtb.get_ignored_keys()
             if key not in ignored_keys:
                 vbtn = {}
                 vbtn['content'] = self.build_tagcloud_from_key(key)
@@ -427,15 +435,7 @@ class Theme(Builder):
             tags = self.srvdtb.get_values(docId, key)
             url = os.path.basename(docId)[:-5]
             for tag in tags:
-                try:
-                    urllist = dkeyurl[tag]
-                    surllist = set(urllist)
-                    surllist.add(url)
-                    dkeyurl[tag] = list(surllist)
-                except KeyError:
-                    surllist = set()
-                    surllist.add(url)
-                    dkeyurl[tag] = list(surllist)
+                dkeyurl.setdefault(tag, set()).add(url)
 
         max_frequency = set_max_frequency(dkeyurl)
         lwords = []
@@ -472,8 +472,8 @@ class Theme(Builder):
         """Calculate max frequency for all keys"""
         maxkvfreq = 0
         all_keys = self.srvdtb.get_all_keys()
+        blocked_keys = self.srvdtb.get_blocked_keys()
         for key in all_keys:
-            blocked_keys = self.srvdtb.get_blocked_keys()
             if key not in blocked_keys:
                 values = self.srvdtb.get_all_values_for_key(key)
                 if len(values) > maxkvfreq:
@@ -522,10 +522,7 @@ class Theme(Builder):
 
         TPL_PAGE_ALL = self.template('PAGE_ALL')
         var = self.get_theme_var()
-        doclist = []
-        documents = self.srvdtb.get_documents()
-        for docId in documents:
-            doclist.append(docId)
+        doclist = list(self.srvdtb.get_documents())
         headers = []
         datatable = self.build_datatable(headers, doclist)
         var['content'] = datatable
@@ -545,14 +542,14 @@ class Theme(Builder):
         lines = source.split('\n')
         s = e = n = 0
         var = self.get_theme_var()
-        TOC_LI_TOP = self.template('HTML_TOC_LI')
-        TOC_SECTLEVEL1 = self.template('HTML_TOC_SECTLEVEL1')
-        TOC_SECTLEVEL2 = self.template('HTML_TOC_SECTLEVEL2')
-        TOC_SECTLEVEL3 = self.template('HTML_TOC_SECTLEVEL3')
-        TOC_SECTLEVEL4 = self.template('HTML_TOC_SECTLEVEL4')
+        toc_li_top = self.template('HTML_TOC_LI').render(var=var)
+        toc_sectlevel1 = self.template('HTML_TOC_SECTLEVEL1').render(var=var)
+        toc_sectlevel2 = self.template('HTML_TOC_SECTLEVEL2').render(var=var)
+        toc_sectlevel3 = self.template('HTML_TOC_SECTLEVEL3').render(var=var)
+        toc_sectlevel4 = self.template('HTML_TOC_SECTLEVEL4').render(var=var)
 
         for line in lines:
-            if line.find("toctitle") > 0:
+            if "toctitle" in line:
                 s = n + 1
             if s > 0:
                 if line.startswith('</div>') and n > s:
@@ -563,12 +560,12 @@ class Theme(Builder):
         if s > 0 and e > s:
             for line in lines[s:e]:
                 if line.startswith('<li><a href='):
-                    line = line.replace("<li><a ", TOC_LI_TOP.render(var=var))
+                    line = line.replace("<li><a ", toc_li_top)
                 else:
-                    line = line.replace("sectlevel1", TOC_SECTLEVEL1.render(var=var))
-                    line = line.replace("sectlevel2", TOC_SECTLEVEL2.render(var=var))
-                    line = line.replace("sectlevel3", TOC_SECTLEVEL3.render(var=var))
-                    line = line.replace("sectlevel4", TOC_SECTLEVEL4.render(var=var))
+                    line = line.replace("sectlevel1", toc_sectlevel1)
+                    line = line.replace("sectlevel2", toc_sectlevel2)
+                    line = line.replace("sectlevel3", toc_sectlevel3)
+                    line = line.replace("sectlevel4", toc_sectlevel4)
                 items.append(line)
             toc = '\n'.join(items)
         return toc
@@ -717,9 +714,9 @@ class Theme(Builder):
             item['name'] = value
             var['leader'].append(item)
 
-        adoc = TPL_PAGE_KEY.render(var=var)
+        content = TPL_PAGE_KEY.render(var=var)
         var['pagename'] = "%s" % valid_filename(key)
-        self.distribute_md(var['pagename'], adoc)
+        self.distribute_md(var['pagename'], content)
 
         self.srvdtb.add_document(f"{var['pagename']}.md")
         self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
@@ -744,8 +741,8 @@ class Theme(Builder):
         var['page']['dt_documents'] = datatable
 
         if var['compile']:
-            adoc = TPL_PAGE_KEY_VALUE.render(var=var)
-            self.distribute_md(var['pagename'], adoc)
+            content = TPL_PAGE_KEY_VALUE.render(var=var)
+            self.distribute_md(var['pagename'], content)
 
             self.srvdtb.add_document(f"{var['pagename']}.md")
             self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
@@ -812,10 +809,10 @@ class Theme(Builder):
         filtered_keys = [key for key in doc_keys if key not in blocked_keys]
         for key in filtered_keys:
             for value in self.srvdtb.get_values(docId, key):
-                for docId in self.srvdtb.get_docs_by_key_value(key, value):
-                    doclist.add(docId)
+                for rel_docId in self.srvdtb.get_docs_by_key_value(key, value):
+                    doclist.add(rel_docId)
 
-        doclist.remove(docId)
+        doclist.discard(docId)
         self.log.debug(f"[THEME] RELATED_FOUND doc={docId} n={len(doclist)}")
 
         headers = []
@@ -946,7 +943,7 @@ class Theme(Builder):
                 go = False
 
         if not go:
-            example = os.path.join(ENV['GPATH']['THEMES'], 'techdoc', 'example', 'repo', 'config', 'repo.json')
+            example = os.path.join(ENV['GPATH']['THEMES'], 'techdoc', 'apps', 'default', 'config', 'repo.json')
             self.log.info(f"[THEME] CONFIG_EXAMPLE path={example}")
 
         self.log.debug("[THEME] CONFIG_CHECK_END")
