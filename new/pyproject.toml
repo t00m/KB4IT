@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "kb4it"  # Replace this with ENV['APP']['shortname'] during dynamic evaluation
 version = "0.7.10"  # Replace this with ENV['APP']['version']
 description = "A static website generator based on Asciidoctor sources."
-readme = "README.rst"
+readme = "README.md"
 license = { text = "GNU General Public License v3 or later (GPLv3+)" }
 authors = [
     { name = "Tomás Vírseda", email = "tomas.virseda@gmail.com" }

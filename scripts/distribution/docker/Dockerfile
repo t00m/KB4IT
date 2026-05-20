@@ -1,7 +1,7 @@
 # KB4IT container image.
 # Multi-stage build: wheel is built in the first stage; runtime keeps only
-# asciidoctor + Python + the wheel. Alpine/Debian-slim would also work, but
-# asciidoctor pulls a large Ruby toolchain on Alpine, so we use debian:slim.
+# Python + the wheel. No external binary toolchain is required - Markdown
+# rendering is pure Python (python-markdown + Mako).
 
 ARG PYTHON_VERSION=3.12
 
@@ -14,7 +14,7 @@ WORKDIR /src
 
 RUN python -m pip install --no-cache-dir --upgrade pip build
 
-COPY pyproject.toml README.rst LICENSE AUTHORS Changelog THANKS ./
+COPY pyproject.toml README.md LICENSE AUTHORS Changelog THANKS ./
 COPY kb4it ./kb4it
 
 RUN python -m build --wheel --outdir /wheels
@@ -25,16 +25,9 @@ RUN python -m build --wheel --outdir /wheels
 FROM python:${PYTHON_VERSION}-slim AS runtime
 
 LABEL org.opencontainers.image.title="KB4IT" \
-      org.opencontainers.image.description="Static website generator based on Asciidoctor sources" \
+      org.opencontainers.image.description="Static website generator based on Markdown sources" \
       org.opencontainers.image.source="https://github.com/t00m/KB4IT" \
       org.opencontainers.image.licenses="GPL-3.0-or-later"
-
-# Asciidoctor is a runtime dependency (called via subprocess).
-# source-highlight and graphviz are commonly used by themes; install if
-# users need them. Keep image lean: only asciidoctor by default.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends asciidoctor \
- && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*.whl && rm -rf /wheels

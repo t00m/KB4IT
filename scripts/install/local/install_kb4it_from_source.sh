@@ -54,8 +54,8 @@ if [[ "$INSTALLER" == "uv" ]]; then
 
 elif [[ -d "$PIPX_VENV" ]]; then
     # Venv already exists: reinstall only the kb4it package, keeping all
-    # cached dependencies — avoids full venv recreation (~5-10× faster).
-    echo "(Reusing existing venv — reinstalling package only)"
+    # cached dependencies - avoids full venv recreation (~5-10× faster).
+    echo "(Reusing existing venv - reinstalling package only)"
     "$PIPX_VENV/bin/python" -m pip install . --quiet
 
 else

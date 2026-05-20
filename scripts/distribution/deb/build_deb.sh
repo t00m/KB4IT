@@ -6,7 +6,7 @@
 # KB4IT isolated from the system Python site-packages (same spirit as pipx).
 #
 # Runtime dependencies (declared in the .deb control file):
-#   python3 (>= 3.11), python3-venv, asciidoctor
+#   python3 (>= 3.11), python3-venv
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -52,13 +52,14 @@ Version: ${DEB_VERSION}
 Section: doc
 Priority: optional
 Architecture: ${ARCH}
-Depends: python3 (>= 3.11), python3-venv, asciidoctor
+Depends: python3 (>= 3.11), python3-venv
 Maintainer: Tomás Vírseda <tomasvirseda@gmail.com>
 Homepage: https://github.com/t00m/KB4IT
 Description: Static website generator for technical documentation
- KB4IT converts AsciiDoc sources into a static website using Mako
- templates. Supports multiple themes (techdoc, book, blog) and
- incremental compilation via file hashing.
+ KB4IT converts Markdown sources (with YAML frontmatter) into a static
+ website using python-markdown and Mako templates. Supports multiple
+ themes (techdoc, book, blog) and incremental compilation via blake2b
+ hashing.
 EOF
 
 echo ">>> Writing postinst (creates venv, installs wheel, creates symlink)"
@@ -93,7 +94,7 @@ chmod 0755 "${STAGE_DIR}/DEBIAN/postrm"
 
 echo ">>> Copying docs"
 cp LICENSE "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/copyright"
-cp README.rst Changelog AUTHORS THANKS "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/" 2>/dev/null || true
+cp README.md Changelog AUTHORS THANKS "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/" 2>/dev/null || true
 gzip -n -9 "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/Changelog" 2>/dev/null || true
 
 echo ">>> Building .deb"

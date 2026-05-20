@@ -18,7 +18,7 @@ from setuptools import setup
 
 from kb4it.core.env import ENV
 
-with open('README.rst', 'r') as f:
+with open('README.md', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 
@@ -44,7 +44,7 @@ def add_data(root_data):
 
     return dir_files
 
-DATA_FILES = ['README.rst']
+DATA_FILES = ['README.md']
 DATA_FILES +=  ['kb4it/VERSION']
 DATA_FILES += add_data('kb4it/resources')
 
