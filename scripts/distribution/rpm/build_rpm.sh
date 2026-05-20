@@ -36,12 +36,17 @@ echo ">>> Preparing ~/rpmbuild tree"
 mkdir -p "${HOME}/rpmbuild"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
 echo ">>> Creating source tarball: ${TARBALL}"
-# git archive ensures we exclude .git, build artefacts, etc.
+# Tarball reflects the working tree (tracked files + untracked non-ignored
+# files) rather than HEAD, so iteration works without requiring every
+# change to be committed first.
 if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    git -C "${REPO_ROOT}" archive --format=tar.gz \
-        --prefix="${PKG_NAME}-${RPM_VERSION}/" \
-        --output "${HOME}/rpmbuild/SOURCES/${TARBALL}" \
-        HEAD
+    # Drop entries that are tracked but no longer exist on disk (deleted
+    # files that have not been committed yet), so tar does not abort.
+    git -C "${REPO_ROOT}" ls-files --cached --others --exclude-standard -z \
+        | while IFS= read -r -d '' f; do [ -e "${REPO_ROOT}/${f}" ] && printf '%s\0' "${f}"; done \
+        | tar --null --files-from=- \
+              --transform "s,^,${PKG_NAME}-${RPM_VERSION}/," \
+              -czf "${HOME}/rpmbuild/SOURCES/${TARBALL}"
 else
     # fallback: tar the working tree
     tar --transform "s,^,${PKG_NAME}-${RPM_VERSION}/," \
@@ -60,7 +65,9 @@ rpmbuild -bb \
 
 echo ">>> Collecting artefacts"
 mkdir -p "${REPO_ROOT}/dist"
-find "${HOME}/rpmbuild/RPMS" -name "${PKG_NAME}-${RPM_VERSION}-*.rpm" -print -exec cp {} "${REPO_ROOT}/dist/" \;
+# Scope the find pattern to the exact release, otherwise older builds left
+# in ~/rpmbuild/RPMS/ get copied alongside the freshly built one.
+find "${HOME}/rpmbuild/RPMS" -name "${PKG_NAME}-${RPM_VERSION}-${RPM_RELEASE}*.rpm" -print -exec cp {} "${REPO_ROOT}/dist/" \;
 
 echo ""
 echo "Install with:"

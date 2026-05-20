@@ -41,12 +41,12 @@ scripts/distribution/pypi/publish_pypi.sh
 
 ### PyPI / pipx
 `pip install KB4IT` or `pipx install KB4IT` after the PyPI upload. The wheel
-is pure-Python and works on any GNU/Linux with Python ≥ 3.11. Users still
-need the `asciidoctor` CLI installed separately.
+is pure-Python and works on any GNU/Linux with Python ≥ 3.11. No external
+binary toolchain is required.
 
 ### Docker
-Produces a ~200 MB image based on `python:3.12-slim` with `asciidoctor`
-preinstalled. Mount the KB4IT repo at `/work`:
+Produces a small image based on `python:3.12-slim`. Mount the KB4IT repo
+at `/work`:
 
 ```bash
 docker run --rm -v "$(pwd)/myrepo:/work" kb4it:latest build /work/config/repo.json
@@ -56,7 +56,7 @@ docker run --rm -v "$(pwd)/myrepo:/work" kb4it:latest build /work/config/repo.js
 Both packages install the wheel into `/opt/kb4it/venv` and expose
 `/usr/bin/kb4it` as a symlink. This isolates KB4IT from the distro's
 Python site-packages without requiring any system packaging of its
-Python dependencies. Runtime requires the distro `asciidoctor` package.
+Python dependencies.
 
 ### Source tarball
 `scripts/distribution/tarball/build_tarball.sh` runs `git archive HEAD` so

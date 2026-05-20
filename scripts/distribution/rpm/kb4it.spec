@@ -1,11 +1,11 @@
-# kb4it.spec — RPM spec for KB4IT
+# kb4it.spec - RPM spec for KB4IT
 #
 # Release convention: RPM does not allow '+' in Version, so semver build
 # metadata (e.g. 0.7.31+build.0) is remapped to Release (build.0) at build
 # time by build_rpm.sh. The %%{kb4it_version} / %%{kb4it_release} macros are
 # passed via rpmbuild --define.
 #
-# Packaging style: same as the .deb — install the wheel into a private
+# Packaging style: same as the .deb - install the wheel into a private
 # virtualenv under /opt/kb4it/venv and expose /usr/bin/kb4it as a symlink.
 
 %global debug_package %{nil}
@@ -14,7 +14,7 @@
 Name:           kb4it
 Version:        %{kb4it_version}
 Release:        %{kb4it_release}%{?dist}
-Summary:        Static website generator for technical documentation based on Asciidoctor
+Summary:        Static website generator for technical documentation based on Markdown
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/t00m/KB4IT
@@ -25,12 +25,12 @@ BuildRequires:  python3 >= 3.11
 BuildRequires:  python3-pip
 
 Requires:       python3 >= 3.11
-Requires:       asciidoctor
 
 %description
-KB4IT converts AsciiDoc sources into a static website using Mako
-templates. It supports multiple themes (techdoc, book, blog) and
-incremental compilation via file hashing.
+KB4IT converts Markdown sources (with YAML frontmatter) into a static
+website using python-markdown and Mako templates. It supports multiple
+themes (techdoc, book, blog) and incremental compilation via blake2b
+hashing.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -66,7 +66,7 @@ fi
 
 %files
 %license LICENSE
-%doc README.rst Changelog AUTHORS THANKS
+%doc README.md Changelog AUTHORS THANKS
 /opt/%{name}/wheel/*.whl
 
 %changelog

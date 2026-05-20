@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "KB4IT"
-version = "0.7.6+build.15"
+version = "0.7.6+build.17"
 description = "A static website generator based on Markdown sources."
 authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"
-readme = "README.rst"
+readme = "README.md"
 homepage = "https://github.com/t00m/KB4IT"
 repository = "https://github.com/t00m/KB4IT"
 keywords = ["static-site-generator", "markdown", "documentation"]
@@ -32,7 +32,7 @@ packages = [
 include = [
     { path = "kb4it/VERSION", format = ["sdist", "wheel"] },
     { path = "kb4it/resources/**/*", format = ["sdist", "wheel"] },
-    { path = "README.rst", format = ["sdist", "wheel"] },
+    { path = "README.md", format = ["sdist", "wheel"] },
     { path = "LICENSE", format = ["sdist", "wheel"] },
     { path = "AUTHORS", format = ["sdist", "wheel"] },
     { path = "Changelog", format = ["sdist", "wheel"] },
