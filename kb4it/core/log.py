@@ -31,8 +31,8 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
 
-    if root.handlers:
-        return  # Already configured
+    if any(isinstance(h, logging.FileHandler) for h in root.handlers):
+        return  # File handler already configured
 
     formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
 

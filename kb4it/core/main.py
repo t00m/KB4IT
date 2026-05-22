@@ -160,10 +160,11 @@ class KB4IT:
         service = None
 
     def run(self):
-        """Start application."""
+        """Run the requested action. Returns True on success, False on error."""
         action = self.params["action"]
         self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
+        error = False
         try:
             workflow = self.get_service("Workflow")
             if action == "themes":
@@ -178,17 +179,18 @@ class KB4IT:
                 workflow.list_apps(self.params["theme"])
         except ConfigError as e:
             self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
-            self.stop(error=True)
+            error = True
         except ThemeError as e:
             self.log.error(f"[CONTROLLER] THEME_ERROR reason={e}")
-            self.stop(error=True)
+            error = True
         except CompilationError as e:
             self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={e}")
-            self.stop(error=True)
+            error = True
         except KB4ITError as e:
             self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
-            self.stop(error=True)
-        self.stop()
+            error = True
+        self.stop(error=error)
+        return not error
 
     def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
@@ -201,7 +203,6 @@ class KB4IT:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
         self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
-        sys.exit(1 if error else 0)
 
 
 def main():
@@ -305,9 +306,11 @@ def main():
     try:
         params = parser.parse_args()
         app = KB4IT(params)
-        app.run()
-    except SystemExit as error:
-        if error.code != 0 and error.code is not None:
-            print(
-                "Run 'kb4it <action name> --help' to get help for a specific command."
-            )
+        success = app.run()
+        sys.exit(0 if success else 1)
+    except SystemExit:
+        raise
+    except Exception as error:
+        print(f"Error: {error}")
+        print("Run 'kb4it <action name> --help' to get help for a specific command.")
+        sys.exit(1)

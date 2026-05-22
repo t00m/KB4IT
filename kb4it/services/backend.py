@@ -102,7 +102,8 @@ class Backend(Service):
             if os.path.exists(app_log_file):
                 os.unlink(app_log_file)
             kb4it_temp_log = self.app.get_log_file()
-            shutil.copy(kb4it_temp_log, app_log_file)
+            if os.path.exists(kb4it_temp_log):
+                shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
 
             # Initialize docs structure

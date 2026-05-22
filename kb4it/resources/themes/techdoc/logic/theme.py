@@ -61,7 +61,7 @@ class Theme(Builder):
         # Add datatable hearders
         datatable['header'] = ''
         if len(headers) == 0:
-            headers = repo['datatable']
+            headers = repo.get('datatable', ['Date', 'Title'])
         # ~ sort_attr = repo['sort'][0]
         # ~ headers.insert(0, sort_attr)
 
