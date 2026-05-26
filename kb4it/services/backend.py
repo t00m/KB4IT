@@ -28,6 +28,13 @@ from kb4it.services.deployer import Deployer
 from kb4it.services.processor import Processor
 
 
+def _dir_contains(parent, child) -> bool:
+    """Return True if *child* is *parent* or lives inside it."""
+    parent = os.path.realpath(str(parent))
+    child = os.path.realpath(str(child))
+    return parent == child or child.startswith(parent + os.sep)
+
+
 class Backend(Service):
     """(Second) KB4IT Initialization."""
 
@@ -83,8 +90,25 @@ class Backend(Service):
             self.runtime["dir"]["db"] = dir_db
 
             if self.params.get("force"):
-                shutil.rmtree(dir_var, ignore_errors=True)
-                self.log.debug(f"[BACKEND] VAR_CLEARED path={dir_var} reason=force")
+                # Force clears KB4IT's build artifacts only. It must never
+                # delete the user's source or target, which may be nested
+                # inside var when an app stores them under <root>/var/...
+                # (rmtree of the whole var once wiped a repo's sources).
+                source_dir = self.runtime["dir"]["source"]
+                target_dir = self.runtime["dir"]["target"]
+                for key in ("tmp", "cache", "www"):
+                    artifact = self.runtime["dir"][key]
+                    if _dir_contains(artifact, source_dir) or _dir_contains(artifact, target_dir):
+                        self.log.warning(
+                            f"[BACKEND] FORCE_SKIP path={artifact} reason=holds_source_or_target")
+                        continue
+                    shutil.rmtree(artifact, ignore_errors=True)
+                # Reset the incremental cache without touching other data that
+                # may share var/db (e.g. an embedding app's own database).
+                kbdict_file = Path.joinpath(dir_db, "kbdict.json")
+                if os.path.exists(kbdict_file):
+                    os.unlink(kbdict_file)
+                self.log.debug("[BACKEND] VAR_CLEARED scope=build_artifacts reason=force")
 
             for entry in self.runtime["dir"]:
                 if entry not in ["source", "target"]:

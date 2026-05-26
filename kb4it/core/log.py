@@ -29,7 +29,7 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
         severity = logging.INFO
 
     root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
+    root.setLevel(severity)
 
     if any(isinstance(h, logging.FileHandler) for h in root.handlers):
         return  # File handler already configured
