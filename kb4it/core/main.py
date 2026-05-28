@@ -169,12 +169,16 @@ class KB4IT:
             workflow = self.get_service("Workflow")
             if action == "themes":
                 workflow.list_themes()
+            elif action == "projects":
+                workflow.list_projects()
             elif action == "create":
                 workflow.create_repository()
             elif action == "build":
                 workflow.build_website()
             elif action == "info":
                 workflow.info_repository()
+            elif action == "verify":
+                workflow.verify_sources()
             elif action == "apps":
                 workflow.list_apps(self.params["theme"])
         except ConfigError as e:
@@ -264,6 +268,9 @@ def main():
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
 
+    # List projects
+    subparsers.add_parser("projects", help="List all projects created by the user")
+
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
@@ -302,6 +309,19 @@ def main():
         "config", help="Path to the repository config file (mandatory)"
     )
 
+    # Verify repository sources
+    repo_verify = subparsers.add_parser(
+        "verify",
+        help="Verify project sources for a given repository",
+        description="Check if all source files in the project are KB4IT conformant",
+        epilog="Example:\n\n"
+        "   kb4it verify /home/jsmith/Documents/myrepo/config/repo.json",
+    )
+
+    repo_verify.add_argument(
+        "config", help="Path to the repository config file (mandatory)"
+    )
+
     # Dispatch to the appropriate action handler
     try:
         params = parser.parse_args()
@@ -314,3 +334,7 @@ def main():
         print(f"Error: {error}")
         print("Run 'kb4it <action name> --help' to get help for a specific command.")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
