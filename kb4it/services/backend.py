@@ -149,6 +149,27 @@ class Backend(Service):
                 self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
             raise ConfigError(f"Missing required config keys: {missing}")
 
+    def _resolve_theme_path_override(self):
+        """Resolve the optional repo.json `theme_path` field to a real, absolute path.
+
+        Returns None when the field is absent. Raises ConfigError if it is set to
+        anything other than a non-empty string. Relative paths are anchored to the
+        repository root (the parent of the config file's parent), matching the
+        convention used for source/target resolution elsewhere.
+        """
+        raw = self.repo.get("theme_path")
+        if raw is None:
+            return None
+        if not isinstance(raw, str) or not raw.strip():
+            raise ConfigError("repo.json 'theme_path' must be a non-empty string")
+        expanded = os.path.expanduser(os.path.expandvars(raw))
+        if not os.path.isabs(expanded):
+            config_file = self.params.get("config")
+            if config_file:
+                dir_root = Path(config_file).absolute().parent.parent
+                expanded = os.path.join(str(dir_root), expanded)
+        return os.path.realpath(expanded)
+
     _PLAN_RUNTIME_KEYS = {"ncd", "nck", "K_PATH", "KV_PATH"}
 
     def get_value(self, domain: str, key: str):
@@ -297,6 +318,10 @@ class Backend(Service):
             self.log.debug("[BACKEND] THEME_MISSING")
             raise ConfigError("Theme name missing from repo config")
         else:
+            theme_override = self._resolve_theme_path_override()
+            if theme_override is not None:
+                self.log.info(f"[BACKEND] THEME_PATH_OVERRIDE path={theme_override}")
+                frontend.set_theme_path_override(theme_override)
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
                 result = frontend.theme_load(os.path.basename(theme_path))

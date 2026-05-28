@@ -27,6 +27,17 @@ class Frontend(Service):
         """Initialize frontend."""
         self.srvbes = self.get_service("Backend")
         self.runtime = self.srvbes.get_dict("runtime")
+        self._theme_path_override = None
+
+    def set_theme_path_override(self, path):
+        """Pin theme_search to a specific theme directory, bypassing the name-based chain.
+
+        Pass an absolute path to a directory that contains a valid theme.json.
+        Pass None to clear a previously set override. Callers (typically Backend
+        when repo.json declares theme_path) are responsible for resolving the
+        value to an absolute path before handing it in.
+        """
+        self._theme_path_override = path
 
     def theme_list(self):
         """List available themes."""
@@ -153,6 +164,18 @@ class Frontend(Service):
 
     def theme_search(self, theme=None):
         """Search custom theme."""
+        override = self._theme_path_override
+        if override is not None:
+            theme_config = os.path.join(override, "theme.json")
+            if not os.path.isdir(override):
+                self.log.error(f"[FRONTEND] THEME_PATH_INVALID path={override} reason=not_a_directory")
+                raise ThemeError(f"theme_path is not a directory: {override}")
+            if not os.path.exists(theme_config):
+                self.log.error(f"[FRONTEND] THEME_PATH_INVALID path={override} reason=missing_theme_json")
+                raise ThemeError(f"theme_path does not contain theme.json: {override}")
+            self.log.debug(f"[FRONTEND] THEME_PATH_OVERRIDE path={override}")
+            return override
+
         if theme is None:
             # No custom theme passed in arguments. Autodetect.
             self.log.debug("[FRONTEND] THEME_AUTODETECT")
