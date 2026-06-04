@@ -1,0 +1,34 @@
+{
+    "datatable": [
+        "Date",
+        "Title",
+        "Chapter",
+        "Author",
+        "Status"
+    ],
+    "events": [],
+    "git": false,
+    "git_branch": "main",
+    "git_path": "",
+    "git_repo": "",
+    "git_server": "",
+    "ignored_keys": [
+        "Date",
+        "Order"
+    ],
+    "logo": "resources/themes/bookshelf/images/logo.svg",
+    "logo_alt": "Bookshelf Logo",
+    "menu": [
+        "Author",
+        "Part",
+        "Chapter",
+        "Tag",
+        "Command"
+    ],
+    "source": "{source_directory}",
+    "target": "{target_directory}",
+    "theme": "bookshelf",
+    "title": "Study Library",
+    "tagline": "A focused study companion for certification prep",
+    "webserver": false
+}
