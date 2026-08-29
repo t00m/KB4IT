@@ -1067,3 +1067,41 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 
 .kb-content-md img { max-width: 100%; height: auto; }
 .kb-content-md hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.5rem 0; }
+
+/* Admin page */
+.kb-admin-intro {
+    font-size: 0.85rem;
+    color: #777;
+    margin: 0 0 14px;
+}
+.kb-admin-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+.kb-admin-card {
+    flex: 1;
+    min-width: 260px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    padding: 18px 20px;
+    text-decoration: none !important;
+    color: #222 !important;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+.kb-admin-card:hover { box-shadow: 0 4px 14px rgba(30,135,240,0.15); transform: translateY(-2px); }
+.kb-admin-icon { color: #1e87f0; flex-shrink: 0; }
+.kb-admin-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.kb-admin-name { font-size: 0.95rem; font-weight: 600; color: #111; }
+.kb-admin-desc { font-size: 0.8rem; color: #666; }
+.kb-admin-meta {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #999;
+    margin-top: 2px;
+}

@@ -20,6 +20,7 @@ import re
 import shutil
 import subprocess
 import time
+import unicodedata
 from datetime import datetime
 from functools import wraps
 
@@ -398,6 +399,28 @@ def valid_filename(s):
     """
     s = str(s).strip().replace(" ", "_")
     return re.sub(r"(?u)[^-\w.]", "", s)
+
+
+def slugify(text: str) -> str:
+    """Return a lowercase, dash separated version of *text*.
+
+    Accents are stripped, any run of non alphanumeric characters becomes a
+    single dash and leading/trailing dashes are removed.
+    >>> slugify("SAP Notes Knowledge Base")
+    'sap-notes-knowledge-base'
+    """
+    normalized = unicodedata.normalize("NFKD", str(text))
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "-", ascii_text.lower()).strip("-")
+
+
+def human_size(nbytes: float) -> str:
+    """Return a human readable representation of a size in bytes."""
+    for unit in ("B", "KB", "MB", "GB"):
+        if nbytes < 1024:
+            return f"{nbytes:.0f} {unit}" if unit == "B" else f"{nbytes:.1f} {unit}"
+        nbytes /= 1024
+    return f"{nbytes:.1f} TB"
 
 
 def now():

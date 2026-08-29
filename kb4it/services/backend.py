@@ -83,6 +83,7 @@ class Backend(Service):
             dir_www = Path.joinpath(dir_var, "www")
             dir_db = Path.joinpath(dir_var, "db")
 
+            self.runtime["dir"]["root"] = dir_root
             self.runtime["dir"]["tmp"] = dir_tmp
             self.runtime["dir"]["www"] = dir_www
             self.runtime["dir"]["cache"] = dir_cache
@@ -111,7 +112,7 @@ class Backend(Service):
                 self.log.debug("[BACKEND] VAR_CLEARED scope=build_artifacts reason=force")
 
             for entry in self.runtime["dir"]:
-                if entry not in ["source", "target"]:
+                if entry not in ["source", "target", "root"]:
                     dirname = self.runtime["dir"][entry]
                     if not os.path.exists(dirname):
                         os.makedirs(dirname, exist_ok=True)

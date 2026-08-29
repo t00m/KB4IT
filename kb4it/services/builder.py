@@ -100,6 +100,14 @@ class Builder(Service):
         Custom themes must subclass it.
         """
 
+    def post_deploy_activities(self):
+        """Theme activities executed after the site has been deployed.
+
+        Runs when the target directory already holds the final site, so it
+        is the right place for anything that needs to read or package it.
+        Custom themes must subclass it.
+        """
+
     def distribute_html(self, mdId, htmlId):
         """Add compiled page to the target list."""
         shutil.copy(htmlId, self.srvbes.get_path("www"))

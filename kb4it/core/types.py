@@ -21,6 +21,7 @@ from typing import Optional, TypedDict
 class DirPaths(TypedDict):
     source: str
     target: str
+    root:   str
     tmp:    str
     www:    str
     cache:  str

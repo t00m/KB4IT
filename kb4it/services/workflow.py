@@ -220,6 +220,7 @@ class Workflow(Service):
         5. Compile Markdown documents to HTML
         6. Theme Post activities
         7. Deploy
+        8. Theme post deploy activities
         """
         t0 = time.perf_counter()
 
@@ -258,6 +259,9 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=7 name=deploy")
         backend.stage_06_deploy()
+
+        self.log.info("[WORKFLOW] STAGE n=8 name=theme_post_deploy")
+        theme.post_deploy_activities()
 
         # Build summary
         runtime = backend.get_dict("runtime")
