@@ -17,10 +17,13 @@ def category_css(category):
     else:
         return ""
 
-def category_url(category):
-    s = str(category).strip().replace(" ", "_")
+def prop_url(key, value):
+    s = str(value).strip().replace(" ", "_")
     safe = re.sub(r"(?u)[^-\w.]", "", s)
-    return "Category_%s.html" % safe
+    return "%s_%s.html" % (key, safe)
+
+def category_url(category):
+    return prop_url("Category", category)
 %>
 
 <div class="uk-container kb-index">
@@ -39,6 +42,36 @@ def category_url(category):
 % endfor
         </div>
     </section>
+
+    <!-- 1b. OPEN ITEMS -->
+% if var['page']['open_items']:
+    <section class="kb-section">
+        <h2 class="kb-section-title">Open items</h2>
+        <div class="kb-panel uk-card-hover uk-box-shadow-large">
+            <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
+                <tbody>
+%     for row in var['page']['open_items']:
+                    <tr>
+                        <td class="kb-event-date">${row['date']}</td>
+                        <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
+                        <td class="kb-open-badges">
+%         if row['priority']:
+                            <a class="uk-label kb-badge ${row['priority_css']}" href="${prop_url('Priority', row['priority'])}">${row['priority']}</a>
+%         endif
+%         if row['status']:
+                            <a class="uk-label kb-badge ${row['status_css']}" href="${prop_url('Status', row['status'])}">${row['status']}</a>
+%         endif
+%         if row['category']:
+                            <a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}">${row['category']}</a>
+%         endif
+                        </td>
+                    </tr>
+%     endfor
+                </tbody>
+            </table>
+        </div>
+    </section>
+% endif
 
     <!-- 2. DIATAXIS GRID -->
     <section class="kb-section">
@@ -80,6 +113,12 @@ def category_url(category):
                     <li class="kb-alert-item">
                         <span class="kb-alert-date">${item['date']}</span>
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
+%         if item['status']:
+                        <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}">${item['status']}</a>
+%         endif
+%         if item['priority']:
+                        <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}">${item['priority']}</a>
+%         endif
                     </li>
 %     endfor
                 </ul>
@@ -99,6 +138,12 @@ def category_url(category):
                     <li class="kb-alert-item">
                         <span class="kb-alert-date">${item['date']}</span>
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
+%         if item['status']:
+                        <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}">${item['status']}</a>
+%         endif
+%         if item['priority']:
+                        <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}">${item['priority']}</a>
+%         endif
                     </li>
 %     endfor
                 </ul>

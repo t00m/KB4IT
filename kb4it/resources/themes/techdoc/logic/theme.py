@@ -32,6 +32,53 @@ from kb4it.services.builder import Builder
 
 parser = etree.HTMLParser()
 
+PRIORITY_RANK = {
+    'Critical': 0,
+    'Very high': 1,
+    'High': 2,
+    'Medium': 3,
+    'Normal': 4,
+    'Low': 5,
+}
+
+PRIORITY_CSS = {
+    'Critical': 'uk-label-danger',
+    'Very high': 'uk-label-danger',
+    'High': 'uk-label-danger',
+    'Medium': 'uk-label-warning',
+    'Normal': 'uk-label-warning',
+    'Low': 'kb-label-muted',
+    'Unknown': 'kb-label-muted',
+}
+
+STATUS_CSS = {
+    'New': 'uk-label-danger',
+    'Open': 'uk-label-danger',
+    'Draft': 'uk-label-warning',
+    'Planned': 'uk-label-warning',
+    'Completed': 'uk-label-success',
+    'Finished': 'uk-label-success',
+    'Released': 'uk-label-success',
+    'Successful': 'uk-label-success',
+    'Deprecated': 'kb-label-muted',
+    'Obsolete': 'kb-label-muted',
+}
+
+OPEN_STATUSES = {'New', 'Open', 'Draft', 'Planned'}
+
+OPEN_ITEM_CATEGORIES = ['Incident', 'Change', 'Task']
+
+
+def priority_css(value):
+    """Return the label modifier class for a Priority value."""
+    return PRIORITY_CSS.get(value, 'kb-label-muted')
+
+
+def status_css(value):
+    """Return the label modifier class for a Status value."""
+    return STATUS_CSS.get(value, 'kb-label-muted')
+
+
 class Theme(Builder):
     dey = {}
     events_docs = {}
@@ -109,10 +156,15 @@ class Theme(Builder):
                         raise
                 else:
                     link = {}
-                    link['class'] = 'uk-link-heading'
                     field = []
                     try:
                         for value in documents[docId][key]:
+                            if key == 'Priority' and value:
+                                link['class'] = 'uk-label kb-dt-label %s' % priority_css(value)
+                            elif key == 'Status' and value:
+                                link['class'] = 'uk-label kb-dt-label %s' % status_css(value)
+                            else:
+                                link['class'] = 'uk-link-heading'
                             link['title'] = value
                             link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
                             field.append(TPL_LINK.render(var=link))
@@ -138,6 +190,7 @@ class Theme(Builder):
 
         var['page']['title'] = var['repo']['title']
         var['page']['stats'] = self._build_index_stats()
+        var['page']['open_items'] = self._build_index_open_items()
         var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
         var['page']['events_panel'] = self._build_index_events_panel(now)
@@ -180,31 +233,68 @@ class Theme(Builder):
             {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
         ]
 
+    def _index_doc_row(self, docId):
+        """Build one index row dict with badge data for a document."""
+        props = self.srvdtb.get_doc_properties(docId)
+        title = props.get('Title', docId)
+        if isinstance(title, list):
+            title = title[0] if title else docId
+        url = props.get('Title_Url', html_id_for(docId))
+        ts = self.srvdtb.get_doc_timestamp(docId)
+        date = ''
+        if ts:
+            try:
+                dt = guess_datetime(ts)
+                date = dt.strftime('%b %d') if dt else ts[:10]
+            except Exception:
+                date = ts[:10]
+        category = self.srvdtb.get_values(docId, 'Category')[0]
+        priority = self.srvdtb.get_values(docId, 'Priority')[0]
+        status = self.srvdtb.get_values(docId, 'Status')[0]
+        return {
+            'date': date,
+            'timestamp': ts or '',
+            'title': title,
+            'url': url,
+            'category': category,
+            'priority': priority,
+            'priority_css': priority_css(priority) if priority else '',
+            'status': status,
+            'status_css': status_css(status) if status else '',
+        }
+
     def _build_index_alert_bar(self, limit=5):
         """Recent changes and incidents for the alert bar below the hero."""
         def _rows(category):
             rows = []
             for docId in self.srvdtb.get_docs_by_key_value('Category', category)[:limit]:
-                props = self.srvdtb.get_doc_properties(docId)
-                title = props.get('Title', docId)
-                if isinstance(title, list):
-                    title = title[0] if title else docId
-                url = props.get('Title_Url', html_id_for(docId))
-                ts = self.srvdtb.get_doc_timestamp(docId)
-                date = ''
-                if ts:
-                    try:
-                        dt = guess_datetime(ts)
-                        date = dt.strftime('%b %d') if dt else ts[:10]
-                    except Exception:
-                        date = ts[:10]
-                rows.append({'date': date, 'title': title, 'url': url})
+                rows.append(self._index_doc_row(docId))
             return rows
 
         return {
             'changes': _rows('Change'),
             'incidents': _rows('Incident'),
         }
+
+    def _build_index_open_items(self, limit=7):
+        """Incidents, changes and tasks whose Status is still open.
+
+        Rows are ranked by Priority first, then by date, newest first.
+        Documents without a Status never show up here, so repositories
+        that do not use the property keep a clean index.
+        """
+        rows = []
+        for category in OPEN_ITEM_CATEGORIES:
+            for docId in self.srvdtb.get_docs_by_key_value('Category', category):
+                if self.srvdtb.is_system(docId):
+                    continue
+                status = self.srvdtb.get_values(docId, 'Status')[0]
+                if status not in OPEN_STATUSES:
+                    continue
+                rows.append(self._index_doc_row(docId))
+        rows.sort(key=lambda r: r['timestamp'], reverse=True)
+        rows.sort(key=lambda r: PRIORITY_RANK.get(r['priority'], len(PRIORITY_RANK)))
+        return rows[:limit]
 
     def _build_index_diataxis(self):
         """Diátaxis cards,  one per DocType value."""

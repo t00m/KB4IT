@@ -6,6 +6,8 @@ DocType: Reference
 Tag:
 Topic:
 Category: Incident
+Priority: Normal
+Status: New
 Scope:
 ---
 

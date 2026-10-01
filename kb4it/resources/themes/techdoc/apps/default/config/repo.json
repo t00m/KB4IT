@@ -4,6 +4,8 @@
         "Date",
         "Title",
         "Category",
+        "Priority",
+        "Status",
         "Scope",
         "Topic"
     ],
