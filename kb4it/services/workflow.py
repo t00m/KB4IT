@@ -5,14 +5,17 @@
 # Description: Workflow module
 """
 
+import importlib.util
 import json
 import os
 import stat
 import time
+from pathlib import Path
 
 from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import copydir, json_load, json_save, get_source_docs, get_document_attributes
+from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
+from kb4it.services.backend import resolve_repo_path
 
 
 class Workflow(Service):
@@ -127,9 +130,45 @@ class Workflow(Service):
             else:
                 print("\nAll source documents are conformant.")
 
+            problems = self._theme_verify(repo, config_file, docs)
+            if problems:
+                print("\nTheme checks:")
+                for line in problems:
+                    print(f"  {line}")
+                print(f"Total: {len(problems)} theme problems.")
+
         except Exception as e:
             self.log.error(f"[WORKFLOW] VERIFY_ERROR reason={e}")
             print(f"Error during verification: {e}")
+
+    def _find_theme_dir(self, repo, config_file):
+        """Return the theme folder for a repo, following the same order as the build."""
+        root = Path(config_file).absolute().parent.parent
+        if repo.get("theme_path"):
+            return resolve_repo_path(repo["theme_path"], root)
+        theme = repo.get("theme", "")
+        source = resolve_repo_path(repo.get("source", "source"), root)
+        for base in (os.path.join(source, "resources", "themes"), ENV["LPATH"]["THEMES"], ENV["GPATH"]["THEMES"]):
+            candidate = os.path.join(base, theme)
+            if os.path.isfile(os.path.join(candidate, "theme.json")):
+                return candidate
+        return None
+
+    def _theme_verify(self, repo, config_file, docs):
+        """Run the theme's optional logic/verify.py and return its problem lines."""
+        theme_dir = self._find_theme_dir(repo, config_file)
+        hook = os.path.join(theme_dir, "logic", "verify.py") if theme_dir else ""
+        if not os.path.isfile(hook):
+            return []
+        spec = importlib.util.spec_from_file_location(f"kb4it_verify_{repo.get('theme', 'theme')}", hook)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        metadata = {}
+        for doc in docs:
+            keys, ok, _reason = get_document_attributes(doc)
+            if ok:
+                metadata[os.path.basename(doc)] = keys
+        return [str(line) for line in module.verify(repo, metadata)]
 
     def info_repository(self):
         """Print repository configuration fields to stdout."""
@@ -181,11 +220,12 @@ class Workflow(Service):
             target_dir = os.path.join(repo_path, "target")
             bin_dir = os.path.join(repo_path, "bin")
             script = os.path.join(bin_dir, "compile.sh")
-            config_file = os.path.join(repo_path, "config", "repo.json")
+            config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
-            repoconf["source"] = source_dir
-            repoconf["target"] = target_dir
+            # Relative to the repository root, so the repository can move and work in CI.
+            repoconf["source"] = "source"
+            repoconf["target"] = "target"
             with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
@@ -233,6 +273,9 @@ class Workflow(Service):
         self.log.info("[WORKFLOW] STAGE n=1 name=check_environment")
         backend.stage_01_check_environment()
         theme = self.get_service("Theme")
+
+        # A failed build leaves files in tmp; clear them before anything writes there.
+        delete_target_contents(backend.get_path("tmp"))
 
         self.log.info("[WORKFLOW] STAGE n=2 name=get_sources")
         theme.generate_sources()

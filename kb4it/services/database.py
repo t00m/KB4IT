@@ -106,15 +106,19 @@ class Database(Service):
         list_hash = get_hash_from_list(sorted(doclist))
         if list_hash not in self.cache_docs_sorted_by_date:
             adict = {}
+            undated = []
             for docId in doclist:
-                if not self.is_system(docId):
-                    sdate = self.get_doc_timestamp(docId)
-                    if sdate is None:
+                if self.is_system(docId):
+                    continue
+                sdate = self.get_doc_timestamp(docId)
+                dt = guess_datetime(sdate) if sdate else None
+                if dt is None:
+                    if sdate:
                         self.log.warning(f"[DATABASE] DATE_INVALID doc={docId} value={sdate}")
-                        continue
-                    dt = guess_datetime(sdate)
-                    adict[docId] = dt  # .strftime("%Y%m%d")
-            sorted_docs = [docId for docId, _ in sort_dictionary(adict)]
+                    undated.append(docId)
+                    continue
+                adict[docId] = dt
+            sorted_docs = [docId for docId, _ in sort_dictionary(adict)] + sorted(undated)
             self.cache_docs_sorted_by_date[list_hash] = sorted_docs
         return self.cache_docs_sorted_by_date[list_hash]
 

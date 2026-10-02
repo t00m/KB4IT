@@ -79,10 +79,11 @@ class Theme(Builder):
             if sort_attribute in headers:
                 timestamp = self.srvdtb.get_doc_timestamp(docId)
                 if timestamp is None:
-                    continue
-                ts_title = timestamp[:16]
-                ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-                row.append(f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>""")
+                    row.append( '<td class=""></td>')
+                else:
+                    ts_title = timestamp[:16]
+                    ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                    row.append(f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>""")
                 final_headers = headers[1:]
             else:
                 final_headers = headers
@@ -379,6 +380,8 @@ class Theme(Builder):
         self.build_page_stats()
         self.build_page_bookmarks()
         self.build_page_index_all()
+        self.create_page_about_kb4it()
+        self.create_page_about_app()
 
     def page_hook_pre(self, var):
         var['related'] = ''
@@ -919,21 +922,16 @@ class Theme(Builder):
 
         self.log.info("[THEME] CONFIG key=sort value=Date")
 
-        self.log.info(f"[THEME] CONFIG key=source value='{repo['source']}'")
-        if len(repo['source']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=source reason=empty")
-            go = False
-        elif not os.path.exists(repo['source']):
-            self.log.error(f"[THEME] CONFIG_FAIL key=source reason=missing path={repo['source']}")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=target value='{repo['target']}'")
-        if len(repo['target']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=target reason=empty")
-            go = False
-        elif not os.path.exists(repo['target']):
-            self.log.error(f"[THEME] CONFIG_FAIL key=target reason=missing path={repo['target']}")
-            go = False
+        # Use the paths resolved against the repository root, not the raw repo.json values.
+        for key in ('source', 'target'):
+            path = self.srvbes.get_path(key) or ''
+            self.log.info(f"[THEME] CONFIG key={key} value='{path}'")
+            if len(path) == 0:
+                self.log.error(f"[THEME] CONFIG_FAIL key={key} reason=empty")
+                go = False
+            elif not os.path.exists(path):
+                self.log.error(f"[THEME] CONFIG_FAIL key={key} reason=missing path={path}")
+                go = False
 
         self.log.info(f"[THEME] CONFIG key=webserver value={repo['webserver']}")
         if repo['webserver']:

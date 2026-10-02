@@ -153,8 +153,11 @@ class Frontend(Service):
         from kb4it.services.builder import REQUIRED_TEMPLATES, _template_candidates
         global_tpl_dir = ENV["GPATH"]["TEMPLATES"]
         theme_tpl_dir = theme["templates"]
+        required = list(REQUIRED_TEMPLATES)
+        if theme.get("metadata_pages", True) is False:
+            required = [n for n in required if n not in ("PAGE_KEY", "PAGE_KEY_VALUE")]
         missing = [
-            name for name in REQUIRED_TEMPLATES
+            name for name in required
             if not any(os.path.isfile(c) for c in _template_candidates(name, theme_tpl_dir, global_tpl_dir))
         ]
         if missing:

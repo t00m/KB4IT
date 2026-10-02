@@ -158,6 +158,7 @@ Common optional keys honoured by the bundled themes:
 
 - **techdoc** - Technical documentation, runbooks, knowledge bases. Dense, searchable, property-heavy navigation.
 - **blog**    - Chronological posts with tags / categories.
+- **apphelp** - Help site for an application. Works from `file://`, from a GitHub Pages subpath and embedded in the app; strict metadata and offline search. Start with `kb4it create apphelp <path>`.
 
 Custom themes live in `~/.kb4it/opt/resources/themes/<your-theme>/`.
 

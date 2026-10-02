@@ -39,6 +39,7 @@ class BuildPlan:
     K_PATH: list = field(default_factory=list)   # [(key, values, compile_flag), ...]
     KV_PATH: list = field(default_factory=list)  # [(key, value, compile_flag), ...]
     force_kv_pairs: set = field(default_factory=set)
+    force_all: bool = False
 
     @property
     def doc_count(self) -> int:
@@ -141,6 +142,13 @@ class Processor(Service):
             # Add compiled page to the target list
             htmlId = html_id_for(docId)
             self.srvbes.add_target(docId, htmlId)
+
+        # Rebuild every page when the theme says the site as a whole changed.
+        signature = self.get_service("Theme").site_signature()
+        self.kbdict_new["site_signature"] = signature
+        self.plan.force_all = bool(signature) and signature != self.kbdict_cur.get("site_signature", "")
+        if self.plan.force_all:
+            self.log.info("[PROCESSOR] SITE_SIGNATURE_CHANGED action=rebuild_all")
 
         # Save new kbdict
         self.srvbes.save_kbdict(self.kbdict_new)
@@ -255,7 +263,7 @@ class Processor(Service):
         step_01_01_decide_keys_compilation.
         """
         result = {}
-        FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
+        FORCE_COMPILATION = bool(self.srvbes.get_value("repo", "force")) or self.plan.force_all
 
         # Body hash
         try:
@@ -352,6 +360,11 @@ class Processor(Service):
         """
         self.log.debug("[PROCESSOR] TRANSFORM_START")
         self.srvthm = self.get_service("Theme")
+        theme = self.srvbes.get_dict("theme")
+        if theme.get("metadata_pages", True) is False:
+            self.log.debug("[PROCESSOR] METADATA_PAGES_SKIP reason=theme")
+            self.log.debug("[PROCESSOR] TRANSFORM_END")
+            return
 
         # Keys
         keys_with_compile_true = 0

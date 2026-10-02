@@ -1,0 +1,10 @@
+{
+    "id": "mini",
+    "name": "Mini",
+    "author": "KB4IT tests",
+    "email": "",
+    "website": "",
+    "description": "Smallest theme, used by the core tests",
+    "version": "0.1.0",
+    "kb4it": ">=0.7.9"
+}

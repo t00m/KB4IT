@@ -135,10 +135,11 @@ class Theme(Builder):
 
                 timestamp = self.srvdtb.get_doc_timestamp(docId)
                 if timestamp is None:
-                    continue
-                ts_title = timestamp[:16]
-                ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-                datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
+                    datatable['rows'] += '<td class="uk-text-left"></td>'
+                else:
+                    ts_title = timestamp[:16]
+                    ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                    datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
                 final_headers = headers[1:]
             else:
                 final_headers = headers
@@ -681,6 +682,7 @@ class Theme(Builder):
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()
+        self.create_page_about_app()
         self.create_page_help()
 
     def build_page_properties(self):

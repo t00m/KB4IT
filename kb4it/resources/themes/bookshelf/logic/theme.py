@@ -365,6 +365,7 @@ class Theme(Builder):
         self.build_page_all()
         self.build_page_index(var)
         self.create_page_about_kb4it()
+        self.create_page_about_app()
         self.create_page_help()
 
     def build_page_index(self, var):
@@ -691,8 +692,9 @@ class Theme(Builder):
             if sort_attribute in headers:
                 timestamp = self.srvdtb.get_doc_timestamp(docId)
                 if timestamp is None:
-                    continue
-                datatable['rows'] += f'<td class="bk-td-date">{timestamp[:16]}</td>'
+                    datatable['rows'] += '<td class="bk-td-date"></td>'
+                else:
+                    datatable['rows'] += f'<td class="bk-td-date">{timestamp[:16]}</td>'
                 final_headers = headers[1:]
             else:
                 final_headers = headers

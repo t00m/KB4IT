@@ -21,8 +21,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import redirect_logs
 from kb4it.core.service import Service
-from kb4it.core.util import (get_hash_from_content, get_hash_from_file,
-                             get_source_docs, json_load, json_save, timeit)
+from kb4it.core.util import get_source_docs, json_load, json_save, timeit
 from kb4it.services.compiler import Compiler
 from kb4it.services.deployer import Deployer
 from kb4it.services.processor import Processor
@@ -33,6 +32,14 @@ def _dir_contains(parent, child) -> bool:
     parent = os.path.realpath(str(parent))
     child = os.path.realpath(str(child))
     return parent == child or child.startswith(parent + os.sep)
+
+
+def resolve_repo_path(raw: str, root) -> str:
+    """Expand ~ and $VARS and anchor a relative path to the repository root."""
+    expanded = os.path.expanduser(os.path.expandvars(raw))
+    if not os.path.isabs(expanded):
+        expanded = os.path.join(str(root), expanded)
+    return os.path.realpath(expanded)
 
 
 class Backend(Service):
@@ -70,12 +77,10 @@ class Backend(Service):
             if not self.params.get("force"):
                 self.params["force"] = self.repo.get("force") or False
             self.runtime["dir"] = {}
-            self.runtime["dir"]["source"] = os.path.realpath(
-                self.repo["source"])
-            self.runtime["dir"]["target"] = os.path.realpath(
-                self.repo["target"])
-
             dir_root = config_path.parent.parent.absolute()
+            source, target = self._resolve_source_target(dir_root)
+            self.runtime["dir"]["source"] = source
+            self.runtime["dir"]["target"] = target
             dir_var = Path.joinpath(dir_root, "var")
             dir_log = Path.joinpath(dir_var, "log")
             dir_tmp = Path.joinpath(dir_var, "tmp")
@@ -150,6 +155,19 @@ class Backend(Service):
                 self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
             raise ConfigError(f"Missing required config keys: {missing}")
 
+    def _resolve_source_target(self, dir_root):
+        """Resolve source and target against the repository root, falling back to old cwd-relative configs."""
+        raw_source, raw_target = self.repo["source"], self.repo["target"]
+        source = resolve_repo_path(raw_source, dir_root)
+        target = resolve_repo_path(raw_target, dir_root)
+        legacy_source = os.path.realpath(os.path.expanduser(os.path.expandvars(raw_source)))
+        if not os.path.exists(source) and os.path.exists(legacy_source):
+            self.log.warning(f"[BACKEND] PATH_CWD_RELATIVE key=source path={legacy_source}")
+            self.log.warning("[BACKEND] HINT make source and target relative to the repository root")
+            source = legacy_source
+            target = os.path.realpath(os.path.expanduser(os.path.expandvars(raw_target)))
+        return source, target
+
     def _resolve_theme_path_override(self):
         """Resolve the optional repo.json `theme_path` field to a real, absolute path.
 
@@ -163,13 +181,9 @@ class Backend(Service):
             return None
         if not isinstance(raw, str) or not raw.strip():
             raise ConfigError("repo.json 'theme_path' must be a non-empty string")
-        expanded = os.path.expanduser(os.path.expandvars(raw))
-        if not os.path.isabs(expanded):
-            config_file = self.params.get("config")
-            if config_file:
-                dir_root = Path(config_file).absolute().parent.parent
-                expanded = os.path.join(str(dir_root), expanded)
-        return os.path.realpath(expanded)
+        config_file = self.params.get("config")
+        root = Path(config_file).absolute().parent.parent if config_file else Path.cwd()
+        return resolve_repo_path(raw, root)
 
     _PLAN_RUNTIME_KEYS = {"ncd", "nck", "K_PATH", "KV_PATH"}
 
@@ -345,32 +359,17 @@ class Backend(Service):
         # Allow theme to generate documents first
         self.srvthm = self.get_service("Theme")
 
-        # System file basenames,  excluded from user-file collection
-        system_basenames = {"about_kb4it.md", "about_app.md"}
-
         self.runtime["docs"]["format"] = "md"
 
-        # Generate about_kb4it.md (regenerate when content changes)
-        var = self.srvbld.get_theme_var()
-        TPL_PAGE_ABOUT_KB4IT = self.srvbld.template("PAGE_ABOUT_KB4IT")
-        about_kb4it_content = TPL_PAGE_ABOUT_KB4IT.render(var=var)
-        about_kb4it_target = os.path.join(sources_path, "about_kb4it.md")
-        if os.path.exists(about_kb4it_target):
-            if get_hash_from_content(about_kb4it_content) != get_hash_from_file(about_kb4it_target):
-                with open(about_kb4it_target, "w", encoding="utf-8") as fout:
-                    fout.write(about_kb4it_content)
-                self.log.debug("[BACKEND] ABOUT_KB4IT_UPDATED")
-        else:
-            with open(about_kb4it_target, "w", encoding="utf-8") as fout:
-                fout.write(about_kb4it_content)
-            self.log.debug("[BACKEND] ABOUT_KB4IT_CREATED")
-
-        # Generate about_app.md if missing (user-editable placeholder)
-        about_app_target = os.path.join(sources_path, "about_app.md")
-        if not os.path.exists(about_app_target):
-            about_app_tpl = os.path.join(ENV["GPATH"]["TEMPLATES"], "PAGE_ABOUT_APP.tpl")
-            shutil.copy(about_app_tpl, about_app_target)
-            self.log.warning("[BACKEND] ABOUT_APP_CREATED")
+        # Older versions wrote about_kb4it.md into source/; remove it only if it is the untouched generated file.
+        generated_head = "---\nSystemPage: Yes\n---\n# About KB4IT\n"
+        legacy = os.path.join(sources_path, "about_kb4it.md")
+        if os.path.exists(legacy):
+            with open(legacy, encoding="utf-8") as fh:
+                head = fh.read(len(generated_head))
+            if head == generated_head:
+                os.unlink(legacy)
+                self.log.info(f"[BACKEND] GENERATED_SOURCE_REMOVED path={legacy}")
 
         # Remove stale .adoc system files left over from older repos.
         for stale_name in ("about_kb4it.adoc", "about_app.adoc"):

@@ -100,6 +100,13 @@ class Builder(Service):
         Custom themes must subclass it.
         """
 
+    def site_signature(self) -> str:
+        """Return a value that changes when every page must be rebuilt; empty turns the check off.
+
+        Themes that render site-wide content (navigation, related pages) into every page override it.
+        """
+        return ""
+
     def post_deploy_activities(self):
         """Theme activities executed after the site has been deployed.
 
@@ -248,6 +255,19 @@ class Builder(Service):
         self.srvdtb.add_document_key(
             "about_kb4it.md", "Title", "About KB4IT")
         self.srvdtb.add_document_key("about_kb4it.md", "SystemPage", "Yes")
+
+    def create_page_about_app(self):
+        """About this app page, generated only when the user repo has no about_app.md."""
+        filenames = self.srvbes.get_value("docs", "filenames") or []
+        if "about_app.md" in filenames:
+            self.log.debug("[BUILDER] ABOUT_APP_SKIP reason=user_generated")
+            return
+        TPL_PAGE_ABOUT_APP = self.template("PAGE_ABOUT_APP")
+        var = self.get_theme_var()
+        self.distribute_md("about_app", TPL_PAGE_ABOUT_APP.render(var=var), as_html=False)
+        self.srvdtb.add_document("about_app.md")
+        self.srvdtb.add_document_key("about_app.md", "Title", "About this app")
+        self.srvdtb.add_document_key("about_app.md", "SystemPage", "Yes")
 
     def create_page_help(self):
         """Help page,  generated only when the user repo has no help.md."""

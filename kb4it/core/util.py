@@ -350,8 +350,10 @@ def get_markdown_attributes(docpath: str):
             fm.pop("Title", None)
 
         for k, v in fm.items():
-            if isinstance(v, list):
-                keys[k] = [str(i).strip() for i in v]
+            if v is None:
+                keys[k] = []
+            elif isinstance(v, list):
+                keys[k] = [str(i).strip() for i in v if i is not None]
             elif isinstance(v, str) and "," in v:
                 keys[k] = [i.strip() for i in v.split(",")]
             else:

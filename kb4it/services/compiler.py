@@ -17,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor as Executor
 import markdown as _markdown_lib
 
 from kb4it.core.env import ENV
+from kb4it.core.mdlinks import MdLinkExtension
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext)
@@ -60,6 +61,8 @@ class Compiler(Service):
         self.srvbes = self.app.get_service("Backend")
         self.srvthm = self.get_service("Theme")
         self.srvprc = self.get_service("Processor")
+        self.links = {}
+        self._links_lock = threading.Lock()
 
     def execute(self):
         """Compile Markdown documents to HTML."""
@@ -112,9 +115,19 @@ class Compiler(Service):
                 for job in jobs:
                     job.result()
                 self.log.debug(f"[COMPILER] COMPILED n={num - 1}")
+                self.check_links()
             else:
                 self.log.debug("[COMPILER] NOTHING_TO_COMPILE")
             self.log.debug("[COMPILER] END")
+
+    def check_links(self):
+        """Warn about links to Markdown documents that do not exist."""
+        known = set(self.srvbes.get_value("docs", "filenames") or [])
+        known.update(os.path.basename(d) for d in get_source_docs(self.srvbes.get_path("tmp")))
+        for doc, links in sorted(self.links.items()):
+            for path, _fragment in links:
+                if os.path.normpath(path) not in known:
+                    self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
 
     def _compile_md(self, data):
         """Compile a Markdown file in-process via python-markdown.
@@ -145,9 +158,11 @@ class Compiler(Service):
             # Strip the first H1 heading,  the title is already shown in the page header
             text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
             md = _markdown_lib.Markdown(
-                extensions=["extra", "admonition", "toc", "sane_lists"],
+                extensions=["extra", "admonition", "toc", "sane_lists", MdLinkExtension()],
             )
             html_fragment = md.convert(text)
+            with self._links_lock:
+                self.links[os.path.basename(doc)] = list(md.kb4it_links)
             # Inject a TOC block so extract_toc() can populate the Contents nav menu.
             toc_block = _md_toc_block(md.toc)
             if toc_block:
