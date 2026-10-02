@@ -1,8 +1,8 @@
 ---
+DocType: How-to guide
 Feature: Search
 HelpId: search-bar
 Keyword: find, filter
-Kind: howto
 Level: basic
 Order: 120
 Platform: Linux, Windows

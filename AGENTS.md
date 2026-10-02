@@ -177,6 +177,8 @@ Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `i
 | `vocabulary` | Allowed values per property (`Feature`, `Level`, `Platform`, ...) |
 | `labels` | Overrides of the UI texts (for example `ts_cause`, `ts_fix`) |
 
+**Type of document (`apphelp`).** Every content page must be classified with `DocType`, the same key and values as `techdoc`, following the Diátaxis framework: exactly one of `Tutorial`, `How-to guide`, `Reference`, `Explanation` (exact spelling). A page without a valid `DocType` is never published: it is left out of the site, the navigation, the search index and `helpids.js` (`[APPHELP] DOC_LEFT_OUT`), and reported as `DOCTYPE_MISSING` or `DOCTYPE_INVALID`, which fails the build when `strict` is on. The optional `Layout` key (`faq`, `tips`, `troubleshooting`) selects a special rendering on top of the type. The old `Kind` key is reported as `META_INVALID reason=replaced_by_DocType_and_Layout`. In the generated site the classification is called "Type of document"; the theme never shows the word Diátaxis. See `kb4it/resources/themes/apphelp/README.md` for all page properties.
+
 The `force` field can also be set per-build via `--force` (CLI) or the TUI; CLI/TUI takes priority over `repo.json`.
 
 ### Admin area (`admin`, techdoc only)

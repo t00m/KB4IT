@@ -7,7 +7,7 @@ VOCAB = {"Feature": ["Backup", "Rename", "Import & export"], "Level": ["basic", 
 
 
 def help_page(title, body="Text.", **keys):
-    base = {"Kind": "howto", "Section": "How-to", "Order": "10", "Summary": "A summary.", "Feature": "Backup"}
+    base = {"DocType": "How-to guide", "Section": "How-to", "Order": "10", "Summary": "A summary.", "Feature": "Backup"}
     base.update(keys)
     return page(title, body, **base)
 
@@ -31,7 +31,7 @@ def test_basic_site(tmp_path, home):
     for name in ("index.html", "topics.html", "search.html", "go.html", "404.html",
                  "backup.html", "rename.html", ".nojekyll", "search-index.js", "helpids.js"):
         assert (target / name).exists(), name
-    for name in ("Kind.html", "Feature.html", "Feature_Backup.html", "all.html", "stats.html"):
+    for name in ("DocType.html", "Feature.html", "Feature_Backup.html", "all.html", "stats.html"):
         assert not (target / name).exists(), name
     backup = (target / "backup.html").read_text()
     assert 'href="rename.html#how"' in backup
@@ -60,18 +60,47 @@ def test_special_characters_are_escaped(tmp_path, home):
 
 def test_strict_metadata_failure_lists_every_problem(tmp_path, home):
     bad = help_page("Bad", Feature="Backups")
-    no_summary = page("No summary", Kind="howto", Section="How-to", Order="1", Feature="Backup")
+    no_summary = page("No summary", DocType="How-to guide", Section="How-to", Order="1", Feature="Backup")
     _repo, result = build(tmp_path, home, {"bad.md": bad, "nosum.md": no_summary})
     assert result.returncode != 0
     assert "META_UNKNOWN doc=bad.md key=Feature value=Backups" in result.stdout
     assert "META_MISSING doc=nosum.md key=Summary" in result.stdout
 
 
-def test_non_strict_unknown_kind_still_builds(tmp_path, home):
-    repo, result = build(tmp_path, home, {"g.md": help_page("Guide", Kind="guide")}, strict=False)
+def test_non_strict_unclassified_page_is_left_out(tmp_path, home):
+    repo, result = build(tmp_path, home, {
+        "a.md": help_page("A", "Text."),
+        "g.md": help_page("Guide", "The word zanzibar.", DocType="Guide", HelpId="guide"),
+        "n.md": page("No type", Section="How-to", Order="5", Summary="S.", Feature="Backup"),
+    }, strict=False)
     assert result.returncode == 0, result.stdout
-    assert "META_INVALID doc=g.md key=Kind value=guide" in result.stdout
-    assert 'class="ah-badge ah-badge-guide">guide<' in (repo / "target" / "g.html").read_text()
+    assert "DOCTYPE_INVALID doc=g.md key=DocType value=Guide" in result.stdout
+    assert "DOCTYPE_MISSING doc=n.md key=DocType" in result.stdout
+    assert "DOC_LEFT_OUT doc=g.md reason=unclassified" in result.stdout
+    target = repo / "target"
+    assert not (target / "g.html").exists()
+    assert not (target / "n.html").exists()
+    assert "g.html" not in (target / "a.html").read_text()
+    assert "zanzibar" not in (target / "search-index.js").read_text()
+    assert '"guide"' not in (target / "helpids.js").read_text()
+
+
+def test_strict_unclassified_page_fails_the_build(tmp_path, home):
+    _repo, result = build(tmp_path, home, {"a.md": help_page("A"), "g.md": help_page("Guide", DocType="howto")})
+    assert result.returncode != 0
+    assert "DOCTYPE_INVALID doc=g.md key=DocType value=howto" in result.stdout
+
+
+def test_landing_page_groups_by_type_of_document(tmp_path, home):
+    repo, result = build(tmp_path, home, {"a.md": help_page("A"), "t.md": help_page("T", DocType="Tutorial")})
+    assert result.returncode == 0, result.stdout
+    index = (repo / "target" / "index.html").read_text()
+    assert "Types of document" in index
+    assert "Goal-oriented recipes to solve a specific problem." in index
+    for path in (repo / "target").rglob("*"):
+        if path.is_file() and path.suffix in (".html", ".js", ".css"):
+            assert "diataxis" not in path.read_text(encoding="utf-8").lower(), path.name
+            assert "diátaxis" not in path.read_text(encoding="utf-8").lower(), path.name
 
 
 def test_undated_pages_are_in_navigation(tmp_path, home):
@@ -134,7 +163,7 @@ def test_default_missing_contract_file_is_silent(tmp_path, home):
     assert "CONTRACT_FILE_MISSING" not in result.stdout
 
 
-BROKEN_SUMMARY = "---\nFeature: Backup\nKind: howto\nOrder: 20\nSection: How-to\nSummary: Broken: a colon inside the value.\n---\n\n# Broken page\n"
+BROKEN_SUMMARY = "---\nDocType: How-to guide\nFeature: Backup\nOrder: 20\nSection: How-to\nSummary: Broken: a colon inside the value.\n---\n\n# Broken page\n"
 
 
 def test_strict_build_fails_on_invalid_frontmatter(tmp_path, home):

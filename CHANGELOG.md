@@ -16,6 +16,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `repo.json` switch `fail_on_invalid` (default `false`) makes any theme fail the build on invalid documents.
+- apphelp: theme documentation in `kb4it/resources/themes/apphelp/README.md`.
+
+### Changed
+
+- apphelp: every page is classified by type of document with `DocType`, the same key and values as `techdoc`: `Tutorial`, `How-to guide`, `Reference` or `Explanation`. A page without a valid `DocType` is left out of the site, the navigation, the search and the help ids, and fails the build when `strict` is on. The landing page groups pages by type of document, and search filters by it.
+- apphelp: the `Kind` key is replaced. Use `DocType` for the type of document and the optional `Layout` key (`faq`, `tips`, `troubleshooting`) for the special renderings. A page that still has `Kind` is reported as `META_INVALID`.
+- apphelp: the labels `kind_*` and `facet_Kind` are now `doctype_*` and `facet_DocType`.
 
 ---
 

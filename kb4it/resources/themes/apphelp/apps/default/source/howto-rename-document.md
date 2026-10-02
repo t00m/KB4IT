@@ -1,8 +1,8 @@
 ---
+DocType: How-to guide
 Feature: Documents
 HelpId: rename-dialog=#rename
 Keyword: change name, retitle
-Kind: howto
 Level: basic
 Order: 110
 Section: How-to

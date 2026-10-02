@@ -5,8 +5,10 @@ from dataclasses import dataclass, field
 
 from kb4it.core.util import html_id_for, slugify
 
-KINDS = ("tutorial", "howto", "reference", "explanation", "faq", "tips", "troubleshooting")
-REQUIRED = ("Kind", "Section", "Order", "Summary", "Feature")
+# Type of document: the frontmatter value and the short name used in CSS classes, URLs and labels.
+DOCTYPES = {"Tutorial": "tutorial", "How-to guide": "howto", "Reference": "reference", "Explanation": "explanation"}
+LAYOUTS = ("faq", "tips", "troubleshooting")
+REQUIRED = ("Section", "Order", "Summary", "Feature")
 VOCABULARY_KEYS = ("Feature", "Level", "Platform")
 SUMMARY_MAX = 160
 LANDING = "index.md"
@@ -19,7 +21,7 @@ ORDER_RE = re.compile(r"^-?\d+$")
 class Page:
     doc_id: str
     title: str
-    kind: str
+    doctype: str
     section: str
     order: int
     summary: str
@@ -33,6 +35,7 @@ class Page:
     related: list = field(default_factory=list)
     tags: list = field(default_factory=list)
     date: str = ""
+    layout: str = ""
 
     @property
     def url(self) -> str:
@@ -74,6 +77,16 @@ def is_content(doc_id: str, keys: dict) -> bool:
     return doc_id != LANDING and "SystemPage" not in keys
 
 
+def doctype_of(keys: dict) -> str:
+    """Short name of the page's type of document, or "" when it is missing, repeated or not one of the four."""
+    values = [v for v in keys.get("DocType") or [] if str(v).strip()]
+    return DOCTYPES.get(values[0], "") if len(values) == 1 else ""
+
+
+def is_classified(keys: dict) -> bool:
+    return bool(doctype_of(keys))
+
+
 def feature_anchor(name: str) -> str:
     return "feature-" + (slugify(name) or "other")
 
@@ -83,7 +96,7 @@ def page_from_keys(doc_id: str, keys: dict) -> Page:
     return Page(
         doc_id=doc_id,
         title=_first(keys, "Title", doc_id),
-        kind=_first(keys, "Kind"),
+        doctype=doctype_of(keys),
         section=_joined(keys, "Section"),
         order=int(order) if ORDER_RE.match(order) else 9999,
         summary=_joined(keys, "Summary"),
@@ -97,6 +110,7 @@ def page_from_keys(doc_id: str, keys: dict) -> Page:
         related=list(keys.get("Related") or []),
         tags=list(keys.get("Tag") or []),
         date=_first(keys, "Date"),
+        layout=_first(keys, "Layout"),
     )
 
 
@@ -116,9 +130,17 @@ def validate_all(docs: dict, config) -> list:
         for name in REQUIRED:
             if not _has_value(keys, name):
                 problems.append(Problem("META_MISSING", doc_id, f"key={name}"))
-        kind = _first(keys, "Kind")
-        if kind.strip() and kind not in KINDS:
-            problems.append(Problem("META_INVALID", doc_id, f"key=Kind value={kind}"))
+        doctypes = [v for v in keys.get("DocType") or [] if str(v).strip()]
+        if not doctypes:
+            problems.append(Problem("DOCTYPE_MISSING", doc_id, "key=DocType action=left_out"))
+        elif not is_classified(keys):
+            problems.append(Problem("DOCTYPE_INVALID", doc_id,
+                                    f"key=DocType value={', '.join(doctypes)} allowed={'|'.join(DOCTYPES)} action=left_out"))
+        if "Kind" in keys:
+            problems.append(Problem("META_INVALID", doc_id, "key=Kind reason=replaced_by_DocType_and_Layout"))
+        layout = _first(keys, "Layout")
+        if layout and layout not in LAYOUTS:
+            problems.append(Problem("META_INVALID", doc_id, f"key=Layout value={layout} allowed={'|'.join(LAYOUTS)}"))
         order = _first(keys, "Order")
         if order and not ORDER_RE.match(order):
             problems.append(Problem("META_INVALID", doc_id, f"key=Order value={order}"))

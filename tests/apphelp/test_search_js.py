@@ -23,11 +23,11 @@ console.log(JSON.stringify({searches, links}));
 
 RECORDS = [
     {"u": "backup.html", "t": "Back up a repository", "s": "Copy all documents to a safe place.",
-     "k": "howto", "c": "How-to", "f": {"Kind": ["howto"], "Feature": ["Backup"]}, "w": ["save copy"],
+     "k": "howto", "c": "How-to", "f": {"DocType": ["howto"], "Feature": ["Backup"]}, "w": ["save copy"],
      "g": [], "x": [["", "", "Intro text."],
                     ["restore", "Restore a backup", "Use the camión option to restore files."]]},
     {"u": "rename.html", "t": "Rename documents", "s": "Change the name of a document.",
-     "k": "howto", "c": "How-to", "f": {"Kind": ["howto"], "Feature": ["Rename"]}, "w": ["retitle"],
+     "k": "howto", "c": "How-to", "f": {"DocType": ["howto"], "Feature": ["Rename"]}, "w": ["retitle"],
      "g": [], "x": [["", "", "Pick a document."]]},
 ]
 

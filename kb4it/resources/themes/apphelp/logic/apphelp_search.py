@@ -51,7 +51,7 @@ def extract_sections(page_html: str) -> list:
 
 def page_record(page, sections) -> dict:
     facets = {
-        "Kind": [page.kind] if page.kind else [],
+        "DocType": [page.doctype] if page.doctype else [],
         "Feature": list(page.features),
         "Level": [page.level] if page.level else [],
         "Platform": list(page.platforms),
@@ -59,7 +59,7 @@ def page_record(page, sections) -> dict:
         "Since": [page.since] if page.since else [],
     }
     return {
-        "u": page.url, "t": page.title, "s": page.summary, "k": page.kind, "c": page.section,
+        "u": page.url, "t": page.title, "s": page.summary, "k": page.doctype, "c": page.section,
         "f": {name: values for name, values in facets.items() if values},
         "w": list(page.keywords), "g": list(page.tags),
         "x": [[s["id"], s["heading"], s["text"]] for s in sections],

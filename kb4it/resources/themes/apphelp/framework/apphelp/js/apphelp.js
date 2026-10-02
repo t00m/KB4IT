@@ -5,7 +5,7 @@
   var params = new URLSearchParams(location.search);
   var L = window.APPHELP_LABELS || {};
   var S = window.AppHelpSearch;
-  var FACETS = ["Kind", "Feature", "Level", "Platform", "Plugin", "Since"];
+  var FACETS = ["DocType", "Feature", "Level", "Platform", "Plugin", "Since"];
   var KEEP = ["embed", "theme"];
   var engine = null;
 
@@ -74,8 +74,8 @@
 
   function resultItem(hit) {
     var li = el("li", "ah-result");
-    var kind = hit.record.k;
-    li.appendChild(el("span", "ah-badge ah-badge-" + kind, label("kind_" + kind, kind)));
+    var doctype = hit.record.k;
+    li.appendChild(el("span", "ah-badge ah-badge-" + doctype, label("doctype_" + doctype, doctype)));
     li.appendChild(document.createTextNode(" "));
     var a = el("a", "", hit.record.t);
     a.href = link(hit.url);
@@ -161,7 +161,7 @@
         render();
       });
       row.appendChild(box);
-      var text = name === "Kind" ? label("kind_" + value, value) : value;
+      var text = name === "DocType" ? label("doctype_" + value, value) : value;
       row.appendChild(document.createTextNode(" " + text + " (" + total + ")"));
       return row;
     }

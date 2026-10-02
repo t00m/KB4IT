@@ -3,7 +3,7 @@ from apphelp_nav import build_sections, flatten, neighbours, related_pages
 
 
 def p(doc, section, order, features=(), keywords=(), tags=(), related=()):
-    return Page(doc_id=doc, title=doc, kind="howto", section=section, order=order, summary="",
+    return Page(doc_id=doc, title=doc, doctype="howto", section=section, order=order, summary="",
                 features=list(features), keywords=list(keywords), tags=list(tags), related=list(related))
 
 

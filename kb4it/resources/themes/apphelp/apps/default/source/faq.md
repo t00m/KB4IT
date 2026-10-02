@@ -1,6 +1,7 @@
 ---
+DocType: Reference
 Feature: Getting started, Documents
-Kind: faq
+Layout: faq
 Order: 410
 Section: Help
 Summary: Short answers to the questions people ask most.

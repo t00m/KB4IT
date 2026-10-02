@@ -26,11 +26,11 @@ def test_extract_without_article():
 
 
 def test_record_and_js():
-    page = Page(doc_id="a.md", title="A", kind="howto", section="How-to", order=1, summary="S",
+    page = Page(doc_id="a.md", title="A", doctype="howto", section="How-to", order=1, summary="S",
                 features=["Backup"], keywords=["copy"], level="basic", tags=["t"])
     record = page_record(page, [{"id": "one", "heading": "H", "text": "body"}])
     assert record == {"u": "a.html", "t": "A", "s": "S", "k": "howto", "c": "How-to",
-                      "f": {"Kind": ["howto"], "Feature": ["Backup"], "Level": ["basic"]},
+                      "f": {"DocType": ["howto"], "Feature": ["Backup"], "Level": ["basic"]},
                       "w": ["copy"], "g": ["t"], "x": [["one", "H", "body"]]}
     js = render_index_js([record])
     assert js.startswith("window.APPHELP_INDEX = ") and js.endswith(";\n")

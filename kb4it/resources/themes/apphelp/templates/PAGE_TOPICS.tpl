@@ -12,7 +12,7 @@
   <h2 id="${group['anchor']}">${group['name'] | h}</h2>
   <ul class="ah-list">
 %   for item in group['pages']:
-    <li><span class="ah-badge ah-badge-${item['kind'] | h}">${item['kind_label'] | h}</span> <a href="${item['url'] | h}">${item['title'] | h}</a><br><span class="ah-muted">${item['summary'] | h}</span></li>
+    <li><span class="ah-badge ah-badge-${item['doctype'] | h}">${item['doctype_label'] | h}</span> <a href="${item['url'] | h}">${item['title'] | h}</a><br><span class="ah-muted">${item['summary'] | h}</span></li>
 %   endfor
   </ul>
 </section>

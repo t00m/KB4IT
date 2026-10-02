@@ -1,6 +1,6 @@
 ---
+DocType: Explanation
 Feature: Documents
-Kind: explanation
 Level: advanced
 Order: 210
 Section: Concepts

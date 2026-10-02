@@ -1,6 +1,6 @@
 ---
+DocType: Reference
 Feature: Plugins
-Kind: reference
 Order: 510
 Plugin: Export
 Section: Plugins

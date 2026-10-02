@@ -8,7 +8,8 @@ from apphelp_checks import (check_anchors, check_contract, check_helpids, helpid
                             render_helpids_js)
 from apphelp_config import load_config
 from apphelp_html import transform
-from apphelp_meta import KINDS, LANDING, Problem, feature_anchor, is_content, page_from_keys, validate_all
+from apphelp_meta import (DOCTYPES, LANDING, Problem, feature_anchor, is_classified, is_content, page_from_keys,
+                          validate_all)
 from apphelp_nav import build_sections, flatten, neighbours, related_pages
 from apphelp_search import extract_sections, page_record, render_index_js
 
@@ -48,7 +49,10 @@ class Theme(Builder):
         # Documents KB4IT could not read are left out of the site; they are metadata problems too.
         invalid = [Problem("DOC_INVALID", doc, f"reason={reason}") for doc, reason in (plan.invalid_docs if plan else [])]
         self._report(invalid + validate_all(docs, self.config))
-        self.pages = {d: page_from_keys(d, k) for d, k in docs.items() if is_content(d, k)}
+        content = {d: k for d, k in docs.items() if is_content(d, k)}
+        for doc_id in sorted(d for d, k in content.items() if not is_classified(k)):
+            self._leave_out(doc_id)
+        self.pages = {d: page_from_keys(d, k) for d, k in content.items() if is_classified(k)}
         self.sections = build_sections(list(self.pages.values()))
         self.flat = flatten(self.sections)
         self.theme_pages = set()
@@ -62,6 +66,17 @@ class Theme(Builder):
         if self.config.about:
             self.create_page_about_kb4it()
             self.create_page_about_app()
+
+    def _leave_out(self, doc_id):
+        """Keep a page without a valid type of document out of the site: not compiled, not deployed."""
+        html = html_id_for(doc_id)
+        targets = self.srvbes.get_value("docs", "targets")
+        if targets is not None:
+            targets.discard(html)
+        staged = os.path.join(self.srvbes.get_path("tmp"), doc_id)
+        if os.path.exists(staged):
+            os.remove(staged)
+        self.log.warning(f"[APPHELP] DOC_LEFT_OUT doc={doc_id} reason=unclassified")
 
     def _report(self, problems):
         for problem in problems:
@@ -101,19 +116,21 @@ class Theme(Builder):
             "assets": ASSETS,
         }
 
-    def _kind_label(self, kind):
-        return self.config.labels.get(f"kind_{kind}", kind)
+    def _label(self, name, fallback):
+        return self.config.labels.get(name, fallback)
 
     def _card_item(self, page) -> dict:
         return {"title": page.title, "url": page.url, "summary": page.summary,
-                "kind": page.kind, "kind_label": self._kind_label(page.kind)}
+                "doctype": page.doctype, "doctype_label": self._label(f"doctype_{page.doctype}", page.doctype)}
 
     def _landing_var(self) -> dict:
         cards = []
-        for kind in KINDS:
-            entries = [page for page in self.flat if page.kind == kind]
+        for doctype in DOCTYPES.values():
+            entries = [page for page in self.flat if page.doctype == doctype]
             if entries:
-                cards.append({"kind": kind, "label": self._kind_label(kind),
+                cards.append({"doctype": doctype,
+                              "label": self._label(f"doctype_{doctype}_title", doctype),
+                              "desc": self._label(f"doctype_{doctype}_desc", ""),
                               "pages": [self._card_item(p) for p in entries[:5]], "more": len(entries) - 5})
         version = self.config.version
         new = [self._card_item(p) for p in self.flat if version and p.since == version]
@@ -144,7 +161,8 @@ class Theme(Builder):
         if page is None:
             return None
         return {
-            "kind": page.kind, "kind_label": self._kind_label(page.kind), "section": page.section,
+            "doctype": page.doctype, "doctype_label": self._label(f"doctype_{page.doctype}", page.doctype),
+            "section": page.section,
             "features": [{"name": f, "anchor": feature_anchor(f)} for f in page.features],
             "level": page.level, "platforms": page.platforms, "since": page.since, "plugin": page.plugin,
         }
@@ -172,7 +190,7 @@ class Theme(Builder):
             "related": [],
             "edit_url": "",
             "updated": "",
-            "body_class": f"ah-kind-{page.kind}" if page else "ah-system",
+            "body_class": self._body_class(page),
             "load_helpids": doc_id == "go.md",
         })
         if page is not None:
@@ -183,6 +201,11 @@ class Theme(Builder):
             var["edit_url"] = self._edit_url(doc_id)
             var["updated"] = page.date[:10]
         return var
+
+    def _body_class(self, page):
+        if page is None:
+            return "ah-system"
+        return f"ah-doctype-{page.doctype}" + (f" ah-layout-{page.layout}" if page.layout else "")
 
     def build_page(self, path_md):
         path_html = html_id_for(path_md)
@@ -196,7 +219,8 @@ class Theme(Builder):
         if doc_id in self.theme_pages:
             content, toc = fragment, []
         else:
-            content, toc = transform(fragment, page.kind if page else "explanation", self.config.labels)
+            content, toc = transform(fragment, page.doctype if page else "", page.layout if page else "",
+                                     self.config.labels)
         html = self.template("HTML_BODY").render(var={"ah": self._page_var(doc_id, page, content, toc)})
         with open(path_html, "w", encoding="utf-8") as fh:
             fh.write(html)

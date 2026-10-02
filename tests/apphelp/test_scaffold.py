@@ -48,7 +48,7 @@ def test_body_edit_updates_index(scaffold, home):
 def test_new_page_appears_in_unchanged_pages(scaffold, home):
     repo, _ = scaffold
     (repo / "source" / "howto-new.md").write_text(page(
-        "A new page", Kind="howto", Section="How-to", Order="130", Summary="New.", Feature="Search"))
+        "A new page", DocType="How-to guide", Section="How-to", Order="130", Summary="New.", Feature="Search"))
     result = run_kb4it("build", repo / "config" / "repo.json", cwd=home, home=home)
     assert result.returncode == 0, result.stdout
     assert 'href="howto-new.html"' in (repo / "target" / "faq.html").read_text()
