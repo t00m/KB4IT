@@ -323,8 +323,17 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 ## Conventions for contributions by AI assistants
 
 - **Never use the em dash (`--`).** Use a comma, semicolon, colon, or rewrite the sentence.
-- **Do not commit unless explicitly asked.** Always suggest a commit message instead.
-- **Save analysis responses, plans, and commit messages** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).
+- **Git workflow.**
+  - Commit when a piece of work is done; do not wait to be asked.
+  - One-line Conventional Commits message: `type(scope): description`, types `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`; omit the scope for project-wide changes; description in lower case, imperative, no full stop, describing the change.
+  - No trailer lines (no `Co-Authored-By`, no `Claude-Session`).
+  - Never push and never create a branch (no `git branch <name>`, `checkout -b`, `switch -c`, `worktree add`); work on the checked-out branch. A PreToolUse hook (`.claude/hooks/git-guard.py`) enforces this.
+  - Stage files by name, never `git add .` or a whole directory. Never commit `.claude/` (it is in `.gitignore`).
+  - One commit per kind of change; a mixed commit takes the type of the main change, or is split if the split is clean.
+  - After a fix or a feature, add an entry under "Unreleased" at the top of `Changelog`.
+  - Never change anything on GitHub (settings, Pages, releases, issues, pull requests, comments) without asking first; explain the change and give the command.
+  - If a hook or guard blocks a git command, do not work around it; use another way that respects the rule, or tell the user.
+- **Save analysis responses and plans** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).
 - **Match KB4IT's existing log style** (`[<COMPONENT>] EVENT key=value`).
 - **Prefer dataclasses + typed exceptions over runtime side-channels** when adding new cross-service communication.
 - **Templates are Mako** -- `${var}` and `% for`/`% if`, never `{var}` or `{include:...}`.
