@@ -21,6 +21,7 @@ from typing import Optional, TypedDict
 class DirPaths(TypedDict):
     source: str
     target: str
+    root:   str
     tmp:    str
     www:    str
     cache:  str
@@ -54,9 +55,10 @@ class DocumentMeta(TypedDict, total=False):
 
 class KBDict(TypedDict, total=False):
     """Top-level structure of the kbdict JSON cache."""
-    document:      dict   # dict[str, DocumentMeta]
-    metadata:      dict   # dict[str, dict[str, list[str]]]
-    kb4it_version: str
+    document:       dict   # dict[str, DocumentMeta]
+    metadata:       dict   # dict[str, dict[str, list[str]]]
+    kb4it_version:  str
+    site_signature: str
 
 
 class DBRecord(TypedDict, total=False):

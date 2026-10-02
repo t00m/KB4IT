@@ -6,6 +6,7 @@ DocType: Reference
 Tag:
 Topic:
 Category: Report
+Status: Draft
 Scope:
 ---
 

@@ -50,7 +50,7 @@
                 <ul class="uk-navbar-nav noprint">
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-logo uk-transition-scale-up uk-transition-opaque" href="index.html">
-                            <img src="${var['repo']['logo']}" alt="${var['repo']['logo_alt']}" width="24px" height="24px">
+                            <img src="${var['repo'].get('logo', 'resources/images/logo.png')}" alt="${var['repo'].get('logo_alt', '')}" width="24px" height="24px">
                         </a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">

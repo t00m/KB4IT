@@ -5,13 +5,17 @@
 # Description: Workflow module
 """
 
+import importlib.util
 import json
 import os
 import stat
 import time
+from pathlib import Path
 
+from kb4it.core.env import ENV
 from kb4it.core.service import Service
-from kb4it.core.util import copydir, json_load
+from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
+from kb4it.services.backend import resolve_repo_path
 
 
 class Workflow(Service):
@@ -32,6 +36,139 @@ class Workflow(Service):
         self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")
         frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
+
+    def list_projects(self):
+        """Print all projects created by the user to stdout."""
+        self.log.info("[WORKFLOW] ACTION name=list_projects")
+        projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
+        if not os.path.exists(projects_file):
+            print("No projects found.")
+            return
+
+        try:
+            data = json_load(projects_file)
+            projects = data.get("projects", [])
+            if not projects:
+                print("No projects found.")
+                return
+
+            print(f"{'Name':<30} {'Config Path'}")
+            print("-" * 80)
+            for proj in projects:
+                print(f"{proj['name']:<30} {proj['config']}")
+        except Exception as e:
+            self.log.error(f"[WORKFLOW] PROJECTS_LOAD_ERROR reason={e}")
+            print(f"Error loading projects: {e}")
+
+    def _save_project(self, name, config_path):
+        """Save project to projects.json registry."""
+        projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
+        projects = []
+        if os.path.exists(projects_file):
+            try:
+                data = json_load(projects_file)
+                projects = data.get("projects", [])
+            except Exception:
+                pass
+
+        # Avoid duplicates
+        if any(p["config"] == config_path for p in projects):
+            return
+
+        projects.append({"name": name, "config": config_path})
+        try:
+            json_save(projects_file, {"projects": projects})
+            self.log.info(f"[WORKFLOW] PROJECT_REGISTERED name={name}")
+        except Exception as e:
+            self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
+
+    def verify_sources(self):
+        """Verify project sources and display non-conformant ones."""
+        self.log.info("[WORKFLOW] ACTION name=verify_sources")
+        backend = self.app.get_service("Backend")
+        config_file = backend.get_value("app", "config")
+        
+        if config_file is None or not os.path.exists(config_file):
+            print("Error: Configuration file not found.")
+            return
+
+        try:
+            repo = json_load(config_file)
+            source_dir = repo.get("source")
+            if not source_dir:
+                print("Error: 'source' directory not defined in config.")
+                return
+            
+            # Resolve relative path if needed
+            if not os.path.isabs(source_dir):
+                source_dir = os.path.join(os.path.dirname(config_file), "..", source_dir)
+                source_dir = os.path.abspath(source_dir)
+
+            if not os.path.exists(source_dir):
+                print(f"Error: Source directory not found: {source_dir}")
+                return
+
+            docs = get_source_docs(source_dir)
+            if not docs:
+                print(f"No source documents found in {source_dir}")
+                return
+
+            print(f"Verifying {len(docs)} source documents in {source_dir}...")
+            non_conformant = []
+            for doc in docs:
+                _keys, success, reason = get_document_attributes(doc)
+                if not success:
+                    non_conformant.append((doc, reason))
+
+            if non_conformant:
+                print("\nNon-conformant source files found:")
+                print("-" * 80)
+                for doc, reason in non_conformant:
+                    print(f"{os.path.abspath(doc)} (Reason: {reason})")
+                print("-" * 80)
+                print(f"Total: {len(non_conformant)} non-conformant files.")
+            else:
+                print("\nAll source documents are conformant.")
+
+            problems = self._theme_verify(repo, config_file, docs)
+            if problems:
+                print("\nTheme checks:")
+                for line in problems:
+                    print(f"  {line}")
+                print(f"Total: {len(problems)} theme problems.")
+
+        except Exception as e:
+            self.log.error(f"[WORKFLOW] VERIFY_ERROR reason={e}")
+            print(f"Error during verification: {e}")
+
+    def _find_theme_dir(self, repo, config_file):
+        """Return the theme folder for a repo, following the same order as the build."""
+        root = Path(config_file).absolute().parent.parent
+        if repo.get("theme_path"):
+            return resolve_repo_path(repo["theme_path"], root)
+        theme = repo.get("theme", "")
+        source = resolve_repo_path(repo.get("source", "source"), root)
+        for base in (os.path.join(source, "resources", "themes"), ENV["LPATH"]["THEMES"], ENV["GPATH"]["THEMES"]):
+            candidate = os.path.join(base, theme)
+            if os.path.isfile(os.path.join(candidate, "theme.json")):
+                return candidate
+        return None
+
+    def _theme_verify(self, repo, config_file, docs):
+        """Run the theme's optional logic/verify.py and return its problem lines."""
+        theme_dir = self._find_theme_dir(repo, config_file)
+        hook = os.path.join(theme_dir, "logic", "verify.py") if theme_dir else ""
+        if not os.path.isfile(hook):
+            return []
+        spec = importlib.util.spec_from_file_location(f"kb4it_verify_{repo.get('theme', 'theme')}", hook)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        metadata = {}
+        for doc in docs:
+            keys, ok, _reason = get_document_attributes(doc)
+            if ok:
+                metadata[os.path.basename(doc)] = keys
+        return [str(line) for line in module.verify(repo, metadata)]
 
     def info_repository(self):
         """Print repository configuration fields to stdout."""
@@ -83,11 +220,12 @@ class Workflow(Service):
             target_dir = os.path.join(repo_path, "target")
             bin_dir = os.path.join(repo_path, "bin")
             script = os.path.join(bin_dir, "compile.sh")
-            config_file = os.path.join(repo_path, "config", "repo.json")
+            config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
-            repoconf["source"] = source_dir
-            repoconf["target"] = target_dir
+            # Relative to the repository root, so the repository can move and work in CI.
+            repoconf["source"] = "source"
+            repoconf["target"] = "target"
             with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
@@ -109,6 +247,10 @@ class Workflow(Service):
             self.log.info(f"[WORKFLOW] HINT config_file path={config_file}")
             self.log.info("[WORKFLOW] HINT help command='kb4it -h'")
 
+            # Register project in projects.json
+            repo_title = repoconf.get("title") or os.path.basename(repo_path)
+            self._save_project(repo_title, config_file)
+
     def build_website(self):
         """Build workflow:
         1. Check environment
@@ -118,6 +260,7 @@ class Workflow(Service):
         5. Compile Markdown documents to HTML
         6. Theme Post activities
         7. Deploy
+        8. Theme post deploy activities
         """
         t0 = time.perf_counter()
 
@@ -130,6 +273,9 @@ class Workflow(Service):
         self.log.info("[WORKFLOW] STAGE n=1 name=check_environment")
         backend.stage_01_check_environment()
         theme = self.get_service("Theme")
+
+        # A failed build leaves files in tmp; clear them before anything writes there.
+        delete_target_contents(backend.get_path("tmp"))
 
         self.log.info("[WORKFLOW] STAGE n=2 name=get_sources")
         theme.generate_sources()
@@ -156,6 +302,9 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=7 name=deploy")
         backend.stage_06_deploy()
+
+        self.log.info("[WORKFLOW] STAGE n=8 name=theme_post_deploy")
+        theme.post_deploy_activities()
 
         # Build summary
         runtime = backend.get_dict("runtime")

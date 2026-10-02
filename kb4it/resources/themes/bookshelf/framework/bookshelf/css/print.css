@@ -1,0 +1,282 @@
+/* ============================================================================
+   KB4IT - "Bookshelf" theme  .  print stylesheet
+   Goal: turn a chapter (reading page) into a clean, focused study handout.
+   Extends the philosophy of the original techdoc print.css for the new markup.
+   ============================================================================ */
+
+@media print {
+
+    /* ---- page setup ---------------------------------------------------- */
+    @page {
+        size: A4 portrait;
+        margin: 1.4cm 1.6cm 1.6cm;
+    }
+
+    :root {
+        --accent: #000;          /* no colour ink on paper */
+        --accent-ink: #000;
+        --ink: #000;
+    }
+
+    html, body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 10.75pt;
+        line-height: 1.42;
+    }
+    body { background-image: none !important; }   /* drop the screen paper grid */
+
+    /* ---- hide all app chrome & navigation ------------------------------ */
+    .app-top,
+    .app-foot,
+    .chapnav,
+    .rail,
+    .prevnext,
+    .crumb .jump,
+    .code .copy,
+    .book-switch,
+    .search,
+    .top-actions {
+        display: none !important;
+    }
+
+    /* kill shadows, lifts, animations everywhere */
+    *,
+    *::before,
+    *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+
+    .wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+    /* hide the inline Markdown TOC; the printed handout keeps headings only */
+    .bk-toc-block { display: none !important; }
+
+    /* ====================================================================
+       READING PAGE  =>  study handout
+       ==================================================================== */
+
+    /* collapse the 3-column reader to a single full-width column */
+    .reader { display: block !important; }
+
+    /* breadcrumb becomes a quiet running context line + rule */
+    .crumb {
+        font-family: "Red Hat Text", Arial, sans-serif;
+        font-size: 8.5pt;
+        color: #444 !important;
+        letter-spacing: 0.02em;
+        margin: 0 0 10pt 0;
+        padding-bottom: 5pt;
+        border-bottom: 0.75pt solid #bbb;
+    }
+    .crumb .sep { color: #999 !important; }
+    .crumb .here { color: #000 !important; font-weight: 700; }
+    .crumb a::after { content: none !important; }   /* no URL append on nav */
+
+    /* article: flat, borderless, full bleed */
+    .article {
+        background: #fff !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* status / type chips at the head => compact text row */
+    .article .meta-top { gap: 8pt; margin-bottom: 6pt; }
+    .article .meta-top .chip {
+        background: #fff !important;
+        border: 0.75pt solid #999 !important;
+        color: #000 !important;
+        border-radius: 3pt;
+        padding: 1pt 6pt;
+        font-size: 7.5pt;
+    }
+    .article .meta-top .dot { display: none !important; }
+
+    /* headings: sans, black, kept with following text */
+    .article h1 {
+        font-family: "Red Hat Display", Arial, sans-serif;
+        font-size: 21pt;
+        margin: 0 0 6pt;
+        page-break-after: avoid;
+    }
+    .article .lead {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 11.5pt;
+        font-style: italic;
+        color: #333 !important;
+        margin: 0 0 12pt;
+    }
+    .article h2 {
+        font-family: "Red Hat Display", Arial, sans-serif;
+        font-size: 13.5pt;
+        color: #000 !important;
+        margin: 16pt 0 6pt;
+        padding-top: 9pt;
+        border-top: 0.75pt solid #ccc !important;
+        page-break-after: avoid;
+    }
+    .article h2 .n { color: #000 !important; font-weight: 700; }
+    .article h3 {
+        font-family: "Red Hat Display", Arial, sans-serif;
+        font-size: 11.5pt;
+        margin: 10pt 0 4pt;
+        page-break-after: avoid;
+    }
+
+    /* body copy => serif for paper readability */
+    .article p,
+    .article li {
+        font-family: Georgia, "Times New Roman", serif;
+        color: #000 !important;
+        orphans: 3; widows: 3;
+    }
+    .article p { margin: 5pt 0; }
+    .article ul { margin: 5pt 0 5pt 16pt; }
+
+    /* inline code */
+    .article code {
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        background: #f0f0f0 !important;
+        border: 0.5pt solid #ccc !important;
+        color: #000 !important;
+        font-size: 8.5pt;
+        padding: 0.5pt 3pt;
+    }
+
+    /* ---- code blocks: dark => ink-on-paper ----------------------------- */
+    .code {
+        background: #f6f6f4 !important;
+        border: 0.75pt solid #bbb !important;
+        border-radius: 4pt;
+        margin: 8pt 0;
+        page-break-inside: avoid;
+    }
+    .code .code-bar {
+        background: #ececea !important;
+        border-bottom: 0.5pt solid #ccc !important;
+        padding: 3pt 8pt;
+    }
+    .code .code-bar .lang {
+        color: #555 !important;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 7pt;
+    }
+    .code pre { padding: 7pt 9pt; white-space: pre-wrap; word-break: break-word; }
+    .code code,
+    .code .cmt,
+    .code .cmd,
+    .code .flag {
+        color: #000 !important;
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-size: 8.25pt;
+        line-height: 1.5;
+    }
+    .code .cmd  { font-weight: 700; }                 /* command name => bold  */
+    .code .flag { font-weight: 700; }                 /* flags => bold         */
+    .code .cmt  { color: #666 !important; font-style: italic; }  /* comments */
+
+    /* ---- print-only command appendix (right rail is hidden in print) --- */
+    .print-only { display: block !important; }
+    .print-appendix {
+        margin-top: 14pt;
+        page-break-inside: avoid;
+    }
+    .print-appendix h2 .n { font-family: "IBM Plex Mono", monospace; }
+    .print-appendix .appendix-cmds {
+        list-style: none;
+        margin: 4pt 0 0 0 !important;
+        padding: 0 !important;
+        columns: 2;
+        column-gap: 18pt;
+    }
+    .print-appendix .appendix-cmds li {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 9.5pt;
+        margin: 2.5pt 0;
+        padding-left: 9pt;
+        text-indent: -9pt;
+        break-inside: avoid;
+    }
+    .print-appendix .appendix-cmds li b,
+    .print-appendix .appendix-tags b {
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-weight: 700;
+    }
+    .print-appendix .appendix-tags {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 8.5pt;
+        color: #444 !important;
+        margin: 7pt 0 0 0;
+        padding-top: 5pt;
+        border-top: 0.5pt solid #ddd;
+    }
+
+    /* doc-meta footer => tidy property list */
+    .docmeta {
+        background: #fff !important;
+        border: none !important;
+        border-top: 0.75pt solid #bbb !important;
+        border-radius: 0 !important;
+        margin-top: 14pt;
+        padding: 8pt 0 0 !important;
+        page-break-inside: avoid;
+    }
+    .docmeta .row { padding: 1.5pt 0; }
+    .docmeta .k {
+        font-family: "IBM Plex Mono", monospace;
+        color: #555 !important;
+        font-size: 7.5pt;
+        min-width: 78pt;
+    }
+    .docmeta a::after { content: none !important; }
+
+    /* ====================================================================
+       LIBRARY  &  BOOK OVERVIEW  (printable, but flattened)
+       ==================================================================== */
+
+    .shelf-wrap, .continue, .stat-strip,
+    .book-card, .col, .ch-card, .rail-card, .kanban-head .whole {
+        background: #fff !important;
+        border: 0.75pt solid #bbb !important;
+        border-radius: 3pt !important;
+        color: #000 !important;
+    }
+    .continue, .continue * { color: #000 !important; }
+    .continue .mini-cover,
+    .book-card .cover,
+    .kanban-head .cover-xs,
+    .spine { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* shelf: let spines print in greyscale, hide the wooden board */
+    .shelf { overflow: visible !important; }
+    .shelf-board { display: none !important; }
+
+    /* progress bars: outline + solid grey fill so they read in mono */
+    .bar { border: 0.5pt solid #999 !important; background: #fff !important; height: 5pt; }
+    .bar > i { background: #777 !important; }
+    .bar.done > i { background: #333 !important; }
+
+    /* board prints as stacked parts rather than 4 cramped columns */
+    .board { display: block !important; }
+    .col { margin-bottom: 10pt; page-break-inside: avoid; }
+    .col-more { color: #666 !important; }
+
+    /* status dots => small outlined marks (legible in greyscale) */
+    .dot { border: 0.75pt solid #000 !important; }
+    .dot.done    { background: #000 !important; }
+    .dot.reading { background: #777 !important; box-shadow: none !important; }
+    .dot.todo    { background: #fff !important; }
+
+    /* generic: no link-URL noise inside content, but keep it for references */
+    a { color: #000 !important; text-decoration: none !important; }
+
+    /* page-break hygiene */
+    pre, blockquote, table, .docmeta, .code { page-break-inside: avoid; }
+    h1, h2, h3 { page-break-after: avoid; }
+    img { max-width: 100% !important; page-break-inside: avoid; }
+}

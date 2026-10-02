@@ -3,14 +3,17 @@ SystemPage: Yes
 ---
 # About this app
 
-## Page not found
+${'##'} Page not found
 
-### Problem
+KB4IT did not find a document named `about_app.md` in the sources directory, so it shows this placeholder.
 
-KB4IT didn't find any document named `about_app.md` in your sources directory.
+${'##'} How to replace it
 
-As a result, it created one. This one. The one you are reading now.
+Create `about_app.md` in the sources directory and start it with this frontmatter:
 
-### Solution
+    ---
+    SystemPage: Yes
+    ---
+    # About your application
 
-Modify the contents of the file *about_app.md* in your sources directory with the desired content.
+Then describe the application. KB4IT uses your file from the next build on.

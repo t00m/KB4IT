@@ -1,0 +1,4 @@
+# Help ids and page anchors that the application opens. The build fails when one is missing.
+first-steps
+rename-dialog
+howto-rename-document.html#rename

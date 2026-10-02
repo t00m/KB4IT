@@ -6,3 +6,5 @@ kb4it/core/__pycache__/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+__pycache__/
+*.pyc

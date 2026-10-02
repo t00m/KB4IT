@@ -6,6 +6,8 @@ DocType: Reference
 Tag:
 Topic:
 Category: Change
+Priority: Normal
+Status: New
 Scope:
 ---
 

@@ -14,6 +14,8 @@ import calendar as _calendar
 import json
 import math
 import os
+import shutil
+import zipfile
 from calendar import monthrange
 from collections import Counter
 from datetime import datetime, timedelta
@@ -22,11 +24,60 @@ from lxml import etree
 from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
                              get_human_datetime, get_human_datetime_day,
                              get_human_datetime_month, get_human_datetime_year,
-                             get_month, get_year, guess_datetime, html_id_for,
-                             set_max_frequency, source_ext, valid_filename)
+                             get_month, get_source_docs, get_year,
+                             guess_datetime, html_id_for, human_size,
+                             set_max_frequency, slugify, source_ext,
+                             valid_filename)
 from kb4it.services.builder import Builder
 
 parser = etree.HTMLParser()
+
+PRIORITY_RANK = {
+    'Critical': 0,
+    'Very high': 1,
+    'High': 2,
+    'Medium': 3,
+    'Normal': 4,
+    'Low': 5,
+}
+
+PRIORITY_CSS = {
+    'Critical': 'uk-label-danger',
+    'Very high': 'uk-label-danger',
+    'High': 'uk-label-danger',
+    'Medium': 'uk-label-warning',
+    'Normal': 'uk-label-warning',
+    'Low': 'kb-label-muted',
+    'Unknown': 'kb-label-muted',
+}
+
+STATUS_CSS = {
+    'New': 'uk-label-danger',
+    'Open': 'uk-label-danger',
+    'Draft': 'uk-label-warning',
+    'Planned': 'uk-label-warning',
+    'Completed': 'uk-label-success',
+    'Finished': 'uk-label-success',
+    'Released': 'uk-label-success',
+    'Successful': 'uk-label-success',
+    'Deprecated': 'kb-label-muted',
+    'Obsolete': 'kb-label-muted',
+}
+
+OPEN_STATUSES = {'New', 'Open', 'Draft', 'Planned'}
+
+OPEN_ITEM_CATEGORIES = ['Incident', 'Change', 'Task']
+
+
+def priority_css(value):
+    """Return the label modifier class for a Priority value."""
+    return PRIORITY_CSS.get(value, 'kb-label-muted')
+
+
+def status_css(value):
+    """Return the label modifier class for a Status value."""
+    return STATUS_CSS.get(value, 'kb-label-muted')
+
 
 class Theme(Builder):
     dey = {}
@@ -61,7 +112,7 @@ class Theme(Builder):
         # Add datatable hearders
         datatable['header'] = ''
         if len(headers) == 0:
-            headers = repo['datatable']
+            headers = repo.get('datatable', ['Date', 'Title'])
         # ~ sort_attr = repo['sort'][0]
         # ~ headers.insert(0, sort_attr)
 
@@ -84,10 +135,11 @@ class Theme(Builder):
 
                 timestamp = self.srvdtb.get_doc_timestamp(docId)
                 if timestamp is None:
-                    continue
-                ts_title = timestamp[:16]
-                ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-                datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
+                    datatable['rows'] += '<td class="uk-text-left"></td>'
+                else:
+                    ts_title = timestamp[:16]
+                    ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                    datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
                 final_headers = headers[1:]
             else:
                 final_headers = headers
@@ -105,10 +157,15 @@ class Theme(Builder):
                         raise
                 else:
                     link = {}
-                    link['class'] = 'uk-link-heading'
                     field = []
                     try:
                         for value in documents[docId][key]:
+                            if key == 'Priority' and value:
+                                link['class'] = 'uk-label kb-dt-label %s' % priority_css(value)
+                            elif key == 'Status' and value:
+                                link['class'] = 'uk-label kb-dt-label %s' % status_css(value)
+                            else:
+                                link['class'] = 'uk-link-heading'
                             link['title'] = value
                             link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
                             field.append(TPL_LINK.render(var=link))
@@ -134,6 +191,7 @@ class Theme(Builder):
 
         var['page']['title'] = var['repo']['title']
         var['page']['stats'] = self._build_index_stats()
+        var['page']['open_items'] = self._build_index_open_items()
         var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
         var['page']['events_panel'] = self._build_index_events_panel(now)
@@ -176,31 +234,68 @@ class Theme(Builder):
             {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
         ]
 
+    def _index_doc_row(self, docId):
+        """Build one index row dict with badge data for a document."""
+        props = self.srvdtb.get_doc_properties(docId)
+        title = props.get('Title', docId)
+        if isinstance(title, list):
+            title = title[0] if title else docId
+        url = props.get('Title_Url', html_id_for(docId))
+        ts = self.srvdtb.get_doc_timestamp(docId)
+        date = ''
+        if ts:
+            try:
+                dt = guess_datetime(ts)
+                date = dt.strftime('%b %d') if dt else ts[:10]
+            except Exception:
+                date = ts[:10]
+        category = self.srvdtb.get_values(docId, 'Category')[0]
+        priority = self.srvdtb.get_values(docId, 'Priority')[0]
+        status = self.srvdtb.get_values(docId, 'Status')[0]
+        return {
+            'date': date,
+            'timestamp': ts or '',
+            'title': title,
+            'url': url,
+            'category': category,
+            'priority': priority,
+            'priority_css': priority_css(priority) if priority else '',
+            'status': status,
+            'status_css': status_css(status) if status else '',
+        }
+
     def _build_index_alert_bar(self, limit=5):
         """Recent changes and incidents for the alert bar below the hero."""
         def _rows(category):
             rows = []
             for docId in self.srvdtb.get_docs_by_key_value('Category', category)[:limit]:
-                props = self.srvdtb.get_doc_properties(docId)
-                title = props.get('Title', docId)
-                if isinstance(title, list):
-                    title = title[0] if title else docId
-                url = props.get('Title_Url', html_id_for(docId))
-                ts = self.srvdtb.get_doc_timestamp(docId)
-                date = ''
-                if ts:
-                    try:
-                        dt = guess_datetime(ts)
-                        date = dt.strftime('%b %d') if dt else ts[:10]
-                    except Exception:
-                        date = ts[:10]
-                rows.append({'date': date, 'title': title, 'url': url})
+                rows.append(self._index_doc_row(docId))
             return rows
 
         return {
             'changes': _rows('Change'),
             'incidents': _rows('Incident'),
         }
+
+    def _build_index_open_items(self, limit=7):
+        """Incidents, changes and tasks whose Status is still open.
+
+        Rows are ranked by Priority first, then by date, newest first.
+        Documents without a Status never show up here, so repositories
+        that do not use the property keep a clean index.
+        """
+        rows = []
+        for category in OPEN_ITEM_CATEGORIES:
+            for docId in self.srvdtb.get_docs_by_key_value('Category', category):
+                if self.srvdtb.is_system(docId):
+                    continue
+                status = self.srvdtb.get_values(docId, 'Status')[0]
+                if status not in OPEN_STATUSES:
+                    continue
+                rows.append(self._index_doc_row(docId))
+        rows.sort(key=lambda r: r['timestamp'], reverse=True)
+        rows.sort(key=lambda r: PRIORITY_RANK.get(r['priority'], len(PRIORITY_RANK)))
+        return rows[:limit]
 
     def _build_index_diataxis(self):
         """Diátaxis cards,  one per DocType value."""
@@ -587,6 +682,7 @@ class Theme(Builder):
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()
+        self.create_page_about_app()
         self.create_page_help()
 
     def build_page_properties(self):
@@ -1007,6 +1103,163 @@ class Theme(Builder):
             html = ''
             raise
         return html
+
+    def post_deploy_activities(self):
+        """Build the admin area once the site has been deployed.
+
+        Only runs when repo.json sets "admin": true. It writes an admin
+        subdirectory in the target with a backup page and two zip files:
+        one holding the source Markdown documents, another holding the
+        whole compiled site.
+        """
+        repo = self.srvbes.get_dict('repo')
+        if not repo.get('admin', False):
+            self.log.debug("[ADMIN] DISABLED")
+            return
+
+        admin_dir = os.path.join(self.srvbes.get_path('target'), 'admin')
+        os.makedirs(admin_dir, exist_ok=True)
+
+        slug = slugify(repo.get('title', ''))
+        if not slug:
+            slug = valid_filename(os.path.basename(str(self.srvbes.get_path('root'))))
+        zip_sources = os.path.join(admin_dir, f"{slug}_sources.zip")
+        zip_site = os.path.join(admin_dir, f"{slug}_site.zip")
+
+        self.clean_stale_backups(admin_dir, [zip_sources, zip_site])
+
+        if self.backups_needed(zip_sources, zip_site):
+            self.build_zip_sources(zip_sources)
+            self.build_zip_site(zip_site, admin_dir)
+        else:
+            self.log.debug("[ADMIN] ZIP_SKIP reason=no_changes")
+
+        self.build_page_admin(admin_dir, zip_sources, zip_site)
+
+    def clean_stale_backups(self, admin_dir, keep):
+        """Delete backups left behind by a previous repository title."""
+        current = {os.path.basename(path) for path in keep}
+        for filename in os.listdir(admin_dir):
+            if filename in current:
+                continue
+            if filename.endswith(('_sources.zip', '_site.zip')):
+                os.unlink(os.path.join(admin_dir, filename))
+                self.log.debug(f"[ADMIN] STALE_BACKUP_DELETED file={filename}")
+
+    def backups_needed(self, *paths):
+        """Rebuild the backups on a forced build, when the build compiled
+        something, or when any of the zip files is missing.
+        """
+        if self.srvbes.get_value('app', 'force'):
+            return True
+        for path in paths:
+            if not os.path.exists(path):
+                return True
+        return (self.srvbes.get_value('runtime', 'ncd') or 0) > 0
+
+    def get_tmp_zip_path(self, zip_path):
+        """Return the temporary path a zip file is written to.
+
+        Zip files are built in the temporary directory and moved into the
+        target afterwards, so a half written file is never linked and the
+        site zip never packs itself.
+        """
+        tmp_dir = self.srvbes.get_path('tmp')
+        os.makedirs(tmp_dir, exist_ok=True)
+        return os.path.join(tmp_dir, os.path.basename(zip_path))
+
+    def build_zip_sources(self, zip_path):
+        """Pack the source Markdown documents, without assets."""
+        docs = sorted(get_source_docs(self.srvbes.get_path('source')))
+        tmp_path = self.get_tmp_zip_path(zip_path)
+        with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zfile:
+            for doc in docs:
+                zfile.write(doc, os.path.basename(doc))
+        shutil.move(tmp_path, zip_path)
+        self.log.info(f"[ADMIN] ZIP_BUILT file={os.path.basename(zip_path)} docs={len(docs)}")
+
+    def build_zip_site(self, zip_path, admin_dir):
+        """Pack the whole compiled site, excluding the admin directory."""
+        target = self.srvbes.get_path('target')
+        admin_real = os.path.realpath(admin_dir)
+        tmp_path = self.get_tmp_zip_path(zip_path)
+        count = 0
+        with zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zfile:
+            for root, dirs, files in os.walk(target):
+                dirs[:] = sorted(d for d in dirs
+                                 if os.path.realpath(os.path.join(root, d)) != admin_real)
+                for filename in sorted(files):
+                    filepath = os.path.join(root, filename)
+                    zfile.write(filepath, os.path.relpath(filepath, target))
+                    count += 1
+        shutil.move(tmp_path, zip_path)
+        self.log.info(f"[ADMIN] ZIP_BUILT file={os.path.basename(zip_path)} files={count}")
+
+    def get_backup_item(self, path, name, description):
+        """Describe a backup file for the admin page."""
+        item = {}
+        item['name'] = name
+        item['description'] = description
+        item['filename'] = os.path.basename(path)
+        item['href'] = f"admin/{os.path.basename(path)}"
+        if os.path.exists(path):
+            stat = os.stat(path)
+            item['size'] = human_size(stat.st_size)
+            item['timestamp'] = get_human_datetime(datetime.fromtimestamp(stat.st_mtime))
+        else:
+            item['size'] = 'n/a'
+            item['timestamp'] = 'n/a'
+        return item
+
+    def relocate_links(self, tree, prefix='../'):
+        """Prefix relative urls so the page works from a subdirectory."""
+        for attribute in ('href', 'src'):
+            for element in tree.xpath(f'//*[@{attribute}]'):
+                url = element.get(attribute)
+                if not url or url.startswith(('#', '/', '../')):
+                    continue
+                if ':' in url.split('/')[0]:  # http:, mailto:, javascript:, data:
+                    continue
+                element.set(attribute, prefix + url)
+
+    def build_page_admin(self, admin_dir, zip_sources, zip_site):
+        """Write the admin page with the same layout as any other page."""
+        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
+        HTML_BODY = self.template('HTML_BODY')
+        HTML_FOOTER = self.template('HTML_FOOTER')
+        TPL_PAGE_ADMIN = self.template('PAGE_ADMIN')
+
+        var = self.get_theme_var()
+        var['page']['title'] = 'Admin'
+        var['page']['title-tooltip'] = 'Admin'
+        var['SystemPage'] = True
+        var['has_toc'] = False
+        var['toc'] = ''
+        var['metadata'] = ''
+        var['fmt'] = 'md'
+        var['timestamp'] = get_human_datetime(datetime.now())
+        var['actions'] = self.get_page_actions(var)
+        var['backups'] = [
+            self.get_backup_item(
+                zip_sources, 'Documents only',
+                'Every Markdown document in the repository. No assets.'),
+            self.get_backup_item(
+                zip_site, 'Full site',
+                'The whole compiled site: documents, pages and assets.'),
+        ]
+        var['source_html'] = TPL_PAGE_ADMIN.render(var=var)
+
+        HTML = HTML_HEADER_COMMON.render(var=var)
+        HTML += HTML_BODY.render(var=var)
+        HTML += HTML_FOOTER.render(var=var)
+
+        page_path = os.path.join(admin_dir, 'index.html')
+        tree = etree.fromstring(HTML, parser)
+        self.relocate_links(tree)
+        pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+        with open(page_path, 'w') as fhtml:
+            fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
+        self.log.info(f"[ADMIN] PAGE_BUILT path={page_path}")
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""

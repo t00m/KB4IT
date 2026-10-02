@@ -1,8 +1,11 @@
 {
+    "admin": false,
     "datatable": [
         "Date",
         "Title",
         "Category",
+        "Priority",
+        "Status",
         "Scope",
         "Topic"
     ],

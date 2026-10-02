@@ -1,8 +1,9 @@
-name: check-kb4it-version
+name: check-kb4it
 
 on:
   push:
     branches: [ master ]
+  pull_request:
 
 jobs:
   check:
@@ -21,3 +22,12 @@ jobs:
 
       - name: Run kb4it
         run: kb4it --version
+
+      - name: Run tests
+        run: ./scripts/devel/test.sh
+
+      - name: Build wheel
+        run: uv build --wheel
+
+      - name: Check that every tracked theme is in the wheel
+        run: python3 scripts/devel/check_wheel_themes.py

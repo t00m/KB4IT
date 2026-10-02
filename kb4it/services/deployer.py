@@ -34,7 +34,10 @@ class Deployer(Service):
         tmp_files = glob.glob(os.path.join(self.srvbes.get_path("tmp"), "*.*"))
 
         self.step_00_copy_source_to_cache(source_files)
-        self.step_04_copy_sources_to_target(source_docs)
+        if self.srvbes.get_value("repo", "publish_sources") is False:
+            self.step_04b_remove_sources_from_target()
+        else:
+            self.step_04_copy_sources_to_target(source_docs)
         self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
         self.step_08_copy_global_resources_to_target()
@@ -69,6 +72,13 @@ class Deployer(Service):
                 n_deleted += 1
                 self.log.debug(f"[DEPLOYER] STALE_SOURCE_DELETED file={filename}")
         self.log.debug(f"[DEPLOYER] SOURCES_TO_TARGET copied={n_copied} deleted={n_deleted}")
+
+    def step_04b_remove_sources_from_target(self):
+        """Remove target/sources/ when the repo does not publish its Markdown sources."""
+        docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
+        if os.path.isdir(docsdir):
+            shutil.rmtree(docsdir)
+            self.log.debug(f"[DEPLOYER] SOURCES_REMOVED path={docsdir}")
 
     def step_06_copy_all_to_cache(self, files):
         """Copy objects in temporary directory to cache path."""
@@ -116,12 +126,40 @@ class Deployer(Service):
         DEFAULT_THEME = os.path.join(ENV["GPATH"]["THEMES"], "default")
         CUSTOM_THEME_ID = theme["id"]
         CUSTOM_THEME_PATH = theme["path"]
-        copydir(DEFAULT_THEME, os.path.join(theme_target_dir, "default"))
-        copydir(CUSTOM_THEME_PATH, os.path.join(
-            theme_target_dir, CUSTOM_THEME_ID))
-        copydir(ENV["GPATH"]["COMMON"], os.path.join(
-            resources_dir_target, "common"))
-        self.log.debug("[DEPLOYER] COPIED_GLOBAL_RESOURCES")
+        deploy_dirs = theme.get("deploy_dirs")
+        if deploy_dirs is None:
+            copydir(DEFAULT_THEME, os.path.join(theme_target_dir, "default"))
+            copydir(CUSTOM_THEME_PATH, os.path.join(theme_target_dir, CUSTOM_THEME_ID))
+            copydir(ENV["GPATH"]["COMMON"], os.path.join(resources_dir_target, "common"))
+            self.log.debug("[DEPLOYER] COPIED_GLOBAL_RESOURCES")
+        else:
+            msg = "theme.json 'deploy_dirs' must be a list of folder names"
+            if not isinstance(deploy_dirs, list) or not all(isinstance(d, str) for d in deploy_dirs):
+                raise ThemeError(msg)
+            if any(d in ("", ".", "..") or os.path.basename(d) != d for d in deploy_dirs):
+                raise ThemeError(msg)
+            if os.path.basename(CUSTOM_THEME_ID) != CUSTOM_THEME_ID or CUSTOM_THEME_ID in ("", ".", ".."):
+                raise ThemeError(f"Theme id is not a plain name: {CUSTOM_THEME_ID}")
+            theme_dest = os.path.join(theme_target_dir, CUSTOM_THEME_ID)
+            stale_dirs = (theme_dest, os.path.join(theme_target_dir, "default"),
+                          os.path.join(resources_dir_target, "common"))
+            # Every path to remove must stay inside the target directory.
+            target_real = os.path.realpath(self.srvbes.get_path("target"))
+            for stale in stale_dirs:
+                stale_real = os.path.realpath(stale)
+                if stale_real == target_real or os.path.commonpath([target_real, stale_real]) != target_real:
+                    raise ThemeError(f"Theme deploy path outside target: {stale}")
+            # Start clean so folders dropped from the list do not linger in the target.
+            for stale in stale_dirs:
+                if os.path.isdir(stale):
+                    shutil.rmtree(stale)
+            for name in deploy_dirs:
+                source = os.path.join(CUSTOM_THEME_PATH, name)
+                if os.path.isdir(source):
+                    copydir(source, os.path.join(theme_dest, name))
+                else:
+                    self.log.warning(f"[DEPLOYER] DEPLOY_DIR_MISSING name={name}")
+            self.log.debug(f"[DEPLOYER] COPIED_THEME_DIRS dirs={','.join(deploy_dirs)}")
 
         # Copy local resources to target path
         source_resources_dir = os.path.join(
@@ -149,6 +187,11 @@ class Deployer(Service):
     def step_11_cleanup(self):
         """Cleanup temporary files."""
         delete_target_contents(self.srvbes.get_path("tmp"))
-        delete_target_contents(self.srvbes.get_path("www"))
-        os.unlink(self.app.get_log_file())
+        www_path = os.path.realpath(self.srvbes.get_path("www"))
+        target_path = os.path.realpath(self.srvbes.get_path("target"))
+        if www_path != target_path:
+            delete_target_contents(self.srvbes.get_path("www"))
+        log_file = self.app.get_log_file()
+        if os.path.exists(log_file):
+            os.unlink(log_file)
         self.log.debug("[DEPLOYER] CLEANUP")

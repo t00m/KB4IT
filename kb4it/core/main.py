@@ -160,35 +160,41 @@ class KB4IT:
         service = None
 
     def run(self):
-        """Start application."""
+        """Run the requested action. Returns True on success, False on error."""
         action = self.params["action"]
         self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
+        error = False
         try:
             workflow = self.get_service("Workflow")
             if action == "themes":
                 workflow.list_themes()
+            elif action == "projects":
+                workflow.list_projects()
             elif action == "create":
                 workflow.create_repository()
             elif action == "build":
                 workflow.build_website()
             elif action == "info":
                 workflow.info_repository()
+            elif action == "verify":
+                workflow.verify_sources()
             elif action == "apps":
                 workflow.list_apps(self.params["theme"])
         except ConfigError as e:
             self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
-            self.stop(error=True)
+            error = True
         except ThemeError as e:
             self.log.error(f"[CONTROLLER] THEME_ERROR reason={e}")
-            self.stop(error=True)
+            error = True
         except CompilationError as e:
             self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={e}")
-            self.stop(error=True)
+            error = True
         except KB4ITError as e:
             self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
-            self.stop(error=True)
-        self.stop()
+            error = True
+        self.stop(error=error)
+        return not error
 
     def stop(self, error=False):
         """Stop registered services by executing the 'end' method (if any)."""
@@ -201,7 +207,6 @@ class KB4IT:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
         self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
-        sys.exit(1 if error else 0)
 
 
 def main():
@@ -263,6 +268,9 @@ def main():
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
 
+    # List projects
+    subparsers.add_parser("projects", help="List all projects created by the user")
+
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
@@ -301,13 +309,32 @@ def main():
         "config", help="Path to the repository config file (mandatory)"
     )
 
+    # Verify repository sources
+    repo_verify = subparsers.add_parser(
+        "verify",
+        help="Verify project sources for a given repository",
+        description="Check if all source files in the project are KB4IT conformant",
+        epilog="Example:\n\n"
+        "   kb4it verify /home/jsmith/Documents/myrepo/config/repo.json",
+    )
+
+    repo_verify.add_argument(
+        "config", help="Path to the repository config file (mandatory)"
+    )
+
     # Dispatch to the appropriate action handler
     try:
         params = parser.parse_args()
         app = KB4IT(params)
-        app.run()
-    except SystemExit as error:
-        if error.code != 0 and error.code is not None:
-            print(
-                "Run 'kb4it <action name> --help' to get help for a specific command."
-            )
+        success = app.run()
+        sys.exit(0 if success else 1)
+    except SystemExit:
+        raise
+    except Exception as error:
+        print(f"Error: {error}")
+        print("Run 'kb4it <action name> --help' to get help for a specific command.")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

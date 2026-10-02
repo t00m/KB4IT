@@ -1,0 +1,29 @@
+{
+    "title": "My App Help",
+    "tagline": "Everything you need to use My App",
+    "theme": "apphelp",
+    "source": "source",
+    "target": "target",
+    "version": "0.3",
+    "logo": "resources/images/logo.svg",
+    "logo_alt": "My App",
+    "publish_sources": false,
+    "git": false,
+    "git_server": "github.com",
+    "git_user": "",
+    "git_repo": "",
+    "git_branch": "main",
+    "git_path": "help/source",
+    "apphelp": {
+        "strict": true,
+        "lang": "en",
+        "accent": "#3584e4",
+        "about": false,
+        "contract": "config/contract.txt",
+        "vocabulary": {
+            "Feature": ["Getting started", "Documents", "Search", "Settings", "Plugins"],
+            "Level": ["basic", "advanced"],
+            "Platform": ["Linux", "Windows", "Flatpak"]
+        }
+    }
+}
