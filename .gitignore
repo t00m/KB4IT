@@ -8,3 +8,6 @@ kb4it/core/__pycache__/
 !.pixi/config.toml
 __pycache__/
 *.pyc
+
+# Claude Code local tooling (hooks, settings)
+.claude/
