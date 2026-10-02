@@ -330,7 +330,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
   - Never push and never create a branch (no `git branch <name>`, `checkout -b`, `switch -c`, `worktree add`); work on the checked-out branch. A PreToolUse hook (`.claude/hooks/git-guard.py`) enforces this.
   - Stage files by name, never `git add .` or a whole directory. Never commit `.claude/` (it is in `.gitignore`).
   - One commit per kind of change; a mixed commit takes the type of the main change, or is split if the split is clean.
-  - After a fix or a feature, add an entry under "Unreleased" at the top of `Changelog`.
+  - After a fix or a feature, add an entry to `CHANGELOG.md` under `## [Unreleased]`, in Keep a Changelog format (`### Added`, `### Changed`, `### Fixed`, `### Removed`).
   - Never change anything on GitHub (settings, Pages, releases, issues, pull requests, comments) without asking first; explain the change and give the command.
   - If a hook or guard blocks a git command, do not work around it; use another way that respects the rule, or tell the user.
 - **Save analysis responses and plans** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).

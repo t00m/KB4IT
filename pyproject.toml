@@ -35,7 +35,7 @@ include = [
     { path = "README.md", format = ["sdist", "wheel"] },
     { path = "LICENSE", format = ["sdist", "wheel"] },
     { path = "AUTHORS", format = ["sdist", "wheel"] },
-    { path = "Changelog", format = ["sdist", "wheel"] },
+    { path = "CHANGELOG.md", format = ["sdist", "wheel"] },
     { path = "THANKS", format = ["sdist", "wheel"] },
 ]
 

@@ -1,10 +1,48 @@
 # Changelog
 
 All notable changes to KB4IT are documented here.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [0.7.38] – Unreleased
+## [Unreleased]
+
+### Fixed
+
+- A source document with unreadable frontmatter (for example an unquoted value containing `: `) no longer vanishes silently. It is recorded in `BuildPlan.invalid_docs` and counted as `invalid=N` in the build summary, and the log gives the YAML line, column and problem.
+- apphelp: with `strict` on, an invalid document fails the build as `DOC_INVALID`, together with the other metadata problems.
+- `kb4it verify` exits 1 when it finds a non-conformant file or a theme problem, so it can gate CI.
+
+### Added
+
+- `repo.json` switch `fail_on_invalid` (default `false`) makes any theme fail the build on invalid documents.
+
+---
+
+## [0.7.9] - 2026-10-01
+
+### Added
+
+- New theme `apphelp`: help sites for applications, with strict metadata, offline search, help ids and `go.html`.
+- `theme.json` `metadata_pages` turns the metadata pages off.
+- `theme.json` `deploy_dirs` deploys only the listed theme folders.
+- `repo.json` `publish_sources` controls copying the sources to the target.
+- Optional `logic/verify.py` theme hook, run by `kb4it verify`.
+- `Builder.site_signature()` rebuilds every page when the site shape changes.
+- Tests run with `./scripts/devel/test.sh`; CI runs them and checks the wheel for every tracked theme.
+
+### Changed
+
+- Markdown links to `.md` files are rewritten to `.html`, keeping the fragment; unknown targets log `LINK_BROKEN`.
+- `source` and `target` are relative to the repository root (`PATH_CWD_RELATIVE` fallback); `kb4it create` writes them that way.
+- The backend no longer writes into `source/`; `Builder.create_page_about_app()` builds the about page.
+- `Date` is optional; undated documents come after dated ones and show an empty date cell.
+- YAML null frontmatter values become `[]`.
+- Custom themes: the about pages are no longer added for every theme. A custom theme must call `create_page_about_kb4it()` and `create_page_about_app()` in its `build()` to get them. An untouched generated `source/about_kb4it.md` from older versions is removed.
+
+---
+
+## [0.7.38]
 
 ### Theme: Techdoc — Document view
 
@@ -89,3 +127,17 @@ All notable changes to KB4IT are documented here.
 ## [0.7.26] and earlier
 
 See git history.
+
+---
+
+## [0.7] - 2019-11-15
+
+### Added
+
+- Asciidoctor 2.0.
+- Layout based on UIkit.
+- Smart compiling.
+
+## [0.6] - 2019-09-10
+
+- Released.
