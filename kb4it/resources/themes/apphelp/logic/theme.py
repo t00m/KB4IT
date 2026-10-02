@@ -8,7 +8,7 @@ from apphelp_checks import (check_anchors, check_contract, check_helpids, helpid
                             render_helpids_js)
 from apphelp_config import load_config
 from apphelp_html import transform
-from apphelp_meta import KINDS, LANDING, feature_anchor, is_content, page_from_keys, validate_all
+from apphelp_meta import KINDS, LANDING, Problem, feature_anchor, is_content, page_from_keys, validate_all
 from apphelp_nav import build_sections, flatten, neighbours, related_pages
 from apphelp_search import extract_sections, page_record, render_index_js
 
@@ -44,7 +44,10 @@ class Theme(Builder):
         repo = self.srvbes.get_dict("repo")
         self.config = load_config(repo)
         docs = self._source_metadata()
-        self._report(validate_all(docs, self.config))
+        plan = self.srvbes.get_plan()
+        # Documents KB4IT could not read are left out of the site; they are metadata problems too.
+        invalid = [Problem("DOC_INVALID", doc, f"reason={reason}") for doc, reason in (plan.invalid_docs if plan else [])]
+        self._report(invalid + validate_all(docs, self.config))
         self.pages = {d: page_from_keys(d, k) for d, k in docs.items() if is_content(d, k)}
         self.sections = build_sections(list(self.pages.values()))
         self.flat = flatten(self.sections)

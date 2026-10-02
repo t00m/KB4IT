@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import ConfigError, KB4ITError
 from kb4it.core.service import Service
 from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
 from kb4it.services.backend import resolve_repo_path
@@ -83,63 +84,66 @@ class Workflow(Service):
             self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
 
     def verify_sources(self):
-        """Verify project sources and display non-conformant ones."""
+        """Verify project sources, display non-conformant ones and fail when there are any."""
         self.log.info("[WORKFLOW] ACTION name=verify_sources")
         backend = self.app.get_service("Backend")
         config_file = backend.get_value("app", "config")
-        
+
         if config_file is None or not os.path.exists(config_file):
             print("Error: Configuration file not found.")
-            return
+            raise ConfigError(f"Configuration file not found: {config_file}")
 
         try:
             repo = json_load(config_file)
-            source_dir = repo.get("source")
-            if not source_dir:
-                print("Error: 'source' directory not defined in config.")
-                return
-            
-            # Resolve relative path if needed
-            if not os.path.isabs(source_dir):
-                source_dir = os.path.join(os.path.dirname(config_file), "..", source_dir)
-                source_dir = os.path.abspath(source_dir)
-
-            if not os.path.exists(source_dir):
-                print(f"Error: Source directory not found: {source_dir}")
-                return
-
-            docs = get_source_docs(source_dir)
-            if not docs:
-                print(f"No source documents found in {source_dir}")
-                return
-
-            print(f"Verifying {len(docs)} source documents in {source_dir}...")
-            non_conformant = []
-            for doc in docs:
-                _keys, success, reason = get_document_attributes(doc)
-                if not success:
-                    non_conformant.append((doc, reason))
-
-            if non_conformant:
-                print("\nNon-conformant source files found:")
-                print("-" * 80)
-                for doc, reason in non_conformant:
-                    print(f"{os.path.abspath(doc)} (Reason: {reason})")
-                print("-" * 80)
-                print(f"Total: {len(non_conformant)} non-conformant files.")
-            else:
-                print("\nAll source documents are conformant.")
-
-            problems = self._theme_verify(repo, config_file, docs)
-            if problems:
-                print("\nTheme checks:")
-                for line in problems:
-                    print(f"  {line}")
-                print(f"Total: {len(problems)} theme problems.")
-
         except Exception as e:
             self.log.error(f"[WORKFLOW] VERIFY_ERROR reason={e}")
-            print(f"Error during verification: {e}")
+            raise ConfigError(f"Config load failed: {e}") from e
+
+        source_dir = repo.get("source")
+        if not source_dir:
+            print("Error: 'source' directory not defined in config.")
+            raise ConfigError("'source' directory not defined in config")
+        source_dir = resolve_repo_path(source_dir, Path(config_file).absolute().parent.parent)
+        if not os.path.exists(source_dir):
+            print(f"Error: Source directory not found: {source_dir}")
+            raise ConfigError(f"Source directory not found: {source_dir}")
+
+        docs = get_source_docs(source_dir)
+        if not docs:
+            print(f"No source documents found in {source_dir}")
+            return
+
+        print(f"Verifying {len(docs)} source documents in {source_dir}...")
+        non_conformant = []
+        for doc in docs:
+            _keys, success, reason = get_document_attributes(doc)
+            if not success:
+                non_conformant.append((doc, reason))
+
+        if non_conformant:
+            print("\nNon-conformant source files found:")
+            print("-" * 80)
+            for doc, reason in non_conformant:
+                print(f"{os.path.abspath(doc)} (Reason: {reason})")
+            print("-" * 80)
+            print(f"Total: {len(non_conformant)} non-conformant files.")
+        else:
+            print("\nAll source documents are conformant.")
+
+        try:
+            problems = self._theme_verify(repo, config_file, docs)
+        except Exception as e:
+            self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={e}")
+            raise KB4ITError(f"Theme verify hook failed: {e}") from e
+        if problems:
+            print("\nTheme checks:")
+            for line in problems:
+                print(f"  {line}")
+            print(f"Total: {len(problems)} theme problems.")
+
+        if non_conformant or problems:
+            raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
+                             f"{len(problems)} theme problems")
 
     def _find_theme_dir(self, repo, config_file):
         """Return the theme folder for a repo, following the same order as the build."""
@@ -311,7 +315,8 @@ class Workflow(Service):
         plan = backend.get_plan()
         docs_total = runtime["docs"].get("count", 0)
         compiled   = plan.doc_count if plan is not None else 0
-        skipped    = docs_total - compiled
+        invalid    = plan.invalid_count if plan is not None else 0
+        skipped    = docs_total - compiled - invalid
         keys_compiled = plan.key_count if plan is not None else 0
         kv_compiled   = plan.kv_count if plan is not None else 0
         elapsed = time.perf_counter() - t0
@@ -321,6 +326,7 @@ class Workflow(Service):
             f" docs_total={docs_total}"
             f" compiled={compiled}"
             f" skipped={skipped}"
+            f" invalid={invalid}"
             f" keys_compiled={keys_compiled}"
             f" kv_pages_compiled={kv_compiled}"
         )

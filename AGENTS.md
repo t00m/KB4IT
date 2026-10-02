@@ -27,7 +27,7 @@ kb4it info <config>                       # Show repository info
 kb4it themes                              # List installed themes
 kb4it apps <theme>                        # List apps available for a theme
 kb4it projects                            # List all projects created by the user
-kb4it verify <config>                     # Verify project sources are KB4IT conformant
+kb4it verify <config>                     # Verify sources are KB4IT conformant; exits 1 on any non-conformant file or theme problem
 ```
 
 **Global flags (before subcommand):**
@@ -63,7 +63,7 @@ CLI args (or TUI)
             -> Theme.post_deploy_activities()           # runs on the deployed target (stage 8)
 ```
 
-Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `keys_compiled`, `kv_pages_compiled`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
+Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `invalid` (documents whose frontmatter could not be read, see `BuildPlan.invalid_docs`), `keys_compiled`, `kv_pages_compiled`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
 
 ### Modules
 
@@ -163,11 +163,13 @@ Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `i
 
 `publish_sources` (default `true`): when `false`, the Markdown sources are not copied to the target.
 
+`fail_on_invalid` (default `false`): when `true`, any source document whose frontmatter cannot be read fails the build (`CompilationError` listing every invalid document). Without it, such documents are logged as `DOC_INVALID`, left out of the site and counted as `invalid` in the summary.
+
 **`apphelp` block** (read by the `apphelp` theme only). The page names `search.md`, `topics.md`, `go.md` and `404.md` are reserved for theme pages; a user page with one of these names is reported as `META_INVALID reason=reserved_name`. `index.md` is the landing page and replaces the theme's own landing page:
 
 | Key | Meaning |
 |---|---|
-| `strict` | Default `true`. Metadata problems (unknown vocabulary values, missing required properties, reserved page names) and help ids that point to a missing page or anchor fail the build. `LINK_BROKEN` and `ANCHOR_MISSING` are only warnings. Entries of the contract file that the site does not provide always fail the build |
+| `strict` | Default `true`. Metadata problems (documents whose frontmatter cannot be read, `DOC_INVALID`; unknown vocabulary values, missing required properties, reserved page names) and help ids that point to a missing page or anchor fail the build. `LINK_BROKEN` and `ANCHOR_MISSING` are only warnings. Entries of the contract file that the site does not provide always fail the build |
 | `lang` | Language of the generated pages (`<html lang>`) |
 | `accent` | Accent colour (CSS value) |
 | `about` | When `true`, the theme builds an about page |
@@ -284,6 +286,8 @@ Projects are registered automatically by `kb4it create` and manually via ImportP
 ## Source documents
 
 KB4IT consumes Markdown files only (`.md` / `.markdown`). Each must begin with a YAML frontmatter block, followed by an H1 heading used as the document title.
+
+A document that does not meet this (`missing_frontmatter`, `missing_frontmatter_close`, `invalid_frontmatter`, `missing_h1_title`, `yaml_error line=<n> col=<n> <problem>`) is logged as `[UTIL] DOC_INVALID`, left out of the site and recorded in `BuildPlan.invalid_docs`. Quote values that contain `: ` (for example `Summary: "Plugins: how they load"`), otherwise YAML reads them as a nested mapping.
 
 ```markdown
 ---

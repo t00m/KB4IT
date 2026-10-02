@@ -360,8 +360,18 @@ def get_markdown_attributes(docpath: str):
                 keys[k] = [str(v).strip()]
 
     except yaml.YAMLError as err:
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=yaml_error")
-        return {}, False, f"yaml_error: {err}"
+        reason = "yaml_error"
+        mark = getattr(err, "problem_mark", None)
+        if mark is not None:
+            # The mark counts from the stripped frontmatter; add the lines before it.
+            raw = content[3:end]
+            offset = content[:3 + len(raw) - len(raw.lstrip())].count("\n")
+            reason += f" line={offset + mark.line + 1} col={mark.column + 1}"
+        problem = getattr(err, "problem", None)
+        if problem:
+            reason += f" {problem}"
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
+        return {}, False, reason
     except Exception as err:
         log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
         return {}, False, str(err)

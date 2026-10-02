@@ -1,3 +1,12 @@
+Unreleased
+
+ Fixes:
+    - A source document with unreadable frontmatter (for example an unquoted value containing ": ") no longer vanishes silently:
+      it is recorded in BuildPlan.invalid_docs and counted as invalid=N in the build summary; the log gives the YAML line, column and problem
+    - apphelp: with strict on, an invalid document fails the build as DOC_INVALID, together with the other metadata problems
+    - New repo.json switch fail_on_invalid (default false) makes any theme fail the build on invalid documents
+    - kb4it verify exits 1 when it finds a non-conformant file or a theme problem, so it can gate CI
+
 2026-10-01 Tomás Vírseda <tomasvirseda@gmail.com>
 
  * Released version 0.7.9

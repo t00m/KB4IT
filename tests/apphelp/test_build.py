@@ -132,3 +132,21 @@ def test_default_missing_contract_file_is_silent(tmp_path, home):
     _repo, result = build(tmp_path, home, {"a.md": help_page("A")})
     assert result.returncode == 0, result.stdout
     assert "CONTRACT_FILE_MISSING" not in result.stdout
+
+
+BROKEN_SUMMARY = "---\nFeature: Backup\nKind: howto\nOrder: 20\nSection: How-to\nSummary: Broken: a colon inside the value.\n---\n\n# Broken page\n"
+
+
+def test_strict_build_fails_on_invalid_frontmatter(tmp_path, home):
+    _repo, result = build(tmp_path, home, {"good.md": help_page("Good"), "broken.md": BROKEN_SUMMARY})
+    assert result.returncode != 0
+    assert "DOC_INVALID doc=broken.md reason=yaml_error line=6 col=16" in result.stdout
+
+
+def test_non_strict_build_reports_invalid_frontmatter(tmp_path, home):
+    repo, result = build(tmp_path, home, {"good.md": help_page("Good"), "broken.md": BROKEN_SUMMARY},
+                         strict=False)
+    assert result.returncode == 0, result.stdout
+    assert "[APPHELP] DOC_INVALID doc=broken.md" in result.stdout
+    assert "invalid=1" in result.stdout
+    assert not (repo / "target" / "broken.html").exists()
