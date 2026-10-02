@@ -44,7 +44,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.7.38]
 
-### Theme: Techdoc — Document view
+### Theme: Techdoc: Document view
 
 - **Collapsible TOC**: a `<details>` panel appears at the top of every document; open by default, collapses on click. Renders correctly in print (forced open, no max-height).
 - **Redesigned headings**: `h2`/`h3`/`h4` now carry a coloured left-accent bar (blue gradient by depth) instead of the generic UIKit card title style.
@@ -60,11 +60,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - All collapsed section bodies forced visible in print.
 - **Print button**: added to the document actions bar.
 - **Add document page**: new page with per-category AsciiDoc skeletons loaded from `.adoc` files; copy-to-clipboard button restored and modernised.
-- **Add document — metadata form**: clicking *Create* now opens a two-step modal. Step 1 is a form with one field per AsciiDoc attribute in the skeleton; step 2 shows the filled skeleton ready to copy. `Date` auto-fills to today; `Category` is read-only; all other fields support free-text entry.
-- **Add document — multi-select tag chips**: keys with known values in the live metadata database render as clickable chip selectors (multiple values selectable). Keys with more than 8 known values open a popup picker with a live filter, custom-value entry, and a *Clear all* button, avoiding cluttered chip clouds in the form.
+- **Add document: metadata form**: clicking *Create* now opens a two-step modal. Step 1 is a form with one field per AsciiDoc attribute in the skeleton; step 2 shows the filled skeleton ready to copy. `Date` auto-fills to today; `Category` is read-only; all other fields support free-text entry.
+- **Add document: multi-select tag chips**: keys with known values in the live metadata database render as clickable chip selectors (multiple values selectable). Keys with more than 8 known values open a popup picker with a live filter, custom-value entry, and a *Clear all* button, avoiding cluttered chip clouds in the form.
 - **Copy-to-clipboard**: migrated to `navigator.clipboard` API with `execCommand` fallback.
 
-### Theme: Techdoc — Landing page
+### Theme: Techdoc: Landing page
 
 - **Hero stats bar**: document counts per Diataxis category link to their respective listing pages. Diataxis count corrected; avoids 404 when a category has no documents.
 - **Changes/Incidents alert bar**: two-column panel showing recent changes and open incidents.
@@ -72,12 +72,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Color-coded category labels**: event tables show labels with uniform fixed width and per-category colour.
 - **Landing page layout reorganised**.
 
-### Theme: Techdoc — Events
+### Theme: Techdoc: Events
 
 - Events page replaced year-card layout with a year-selector, 12-month calendar grid, and a DataTable.
 - Unchanged event pages are skipped during recompilation.
 
-### Theme: Techdoc — Other pages
+### Theme: Techdoc: Other pages
 
 - Key-value, key, and stats pages redesigned with modern CSS (word cloud, bar charts, breadcrumbs).
 - Help page is auto-generated when the repository has no `help.adoc`.
@@ -88,14 +88,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - New index page renders posts by excerpt instead of full content.
 - Visual and style improvements to datatables and post layout.
 
-### Core — Performance
+### Core: Performance
 
 - **Incremental deployment**: deployer now copies only new or changed files and deletes stale ones, skipping unchanged assets.
 - **Incremental compilation**: split body/metadata hashes ensure key pages are recompiled whenever any document's metadata changes.
 - **BLAKE2b hashing**: replaced MD5 with BLAKE2b for content and file hashing.
 - **Compiler**: removed random sleep from `compilation_finished` callback.
 
-### Core — Features
+### Core: Features
 
 - `Date` is now the hardcoded sort key for all themes; the configurable `sort` property is removed.
 - `About KB4IT` source page is auto-created in the repository if missing.
@@ -103,7 +103,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Date` key is blocked from appearing in the stats page and word cloud.
 - Keys listed in `ignored_keys` are excluded from stats and word cloud.
 
-### Core — Bug fixes
+### Core: Bug fixes
 
 - **Template cache race condition**: `builder.template()` previously cached `Template("")` between fallback attempts, causing concurrent compiler workers to read a half-built entry and render empty content. Downstream `content.replace("", …)` then exhausted memory. The cache is now locked and only populated on success.
 - `kb4it themes` command restored after a regression caused by repo-dict loading during theme listing.
