@@ -49,7 +49,8 @@ def notes(text, version):
     bullets = []
     for line in content.splitlines():
         if line.startswith("- "):
-            first = re.split(r"(?<=[.:])\s", line[2:], maxsplit=1)[0].rstrip(".:")
+            # First sentence only; a colon is not an end, it is often part of "apphelp: ...".
+            first = re.split(r"(?<=\.)\s+(?=[A-Z`])", line[2:], maxsplit=1)[0].rstrip(".")
             bullets.append(f"- {first}")
     return (f"# KB4IT {version}\n\n"
             "TODO: replace this line with one sentence a user can read to decide whether to update, "

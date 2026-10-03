@@ -59,5 +59,5 @@ def test_release_refuses_an_empty_unreleased():
 def test_notes_draft():
     out = changelog.notes(changelog.release(TEXT, "0.7.10", "2026-10-03"), "0.7.10")
     assert out.startswith("# KB4IT 0.7.10\n\nTODO:")
-    assert "- Pages without a date are kept\n- `verify` exits 1\n- A switch\n" in out
+    assert "- Pages without a date are kept\n- `verify` exits 1: it can gate CI\n- A switch\n" in out
     assert "Old entry" not in out
