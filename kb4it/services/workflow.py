@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import ConfigError, KB4ITError
+from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.service import Service
 from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
 from kb4it.services.backend import resolve_repo_path
@@ -204,6 +204,7 @@ class Workflow(Service):
             self.log.error(f"[WORKFLOW] THEME_NOT_FOUND name={theme}")
             self.log.info("[WORKFLOW] LIST_AVAILABLE_THEMES")
             frontend.theme_list()
+            raise ThemeError(f"Theme not found: {theme}")
         else:
             if not os.path.exists(repo_path):
                 self.log.warning(f"[WORKFLOW] REPO_PATH_MISSING path={repo_path}")
