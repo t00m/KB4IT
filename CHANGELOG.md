@@ -30,6 +30,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - apphelp: the `Kind` key is replaced. Use `DocType` for the type of document and the optional `Layout` key (`faq`, `tips`, `troubleshooting`) for the special renderings. A page that still has `Kind` is reported as `META_INVALID`.
 - apphelp: the labels `kind_*` and `facet_Kind` are now `doctype_*` and `facet_DocType`.
 
+### Removed
+
+- `setup.py`, unused since the build moved to `pyproject.toml`.
+- `scripts/devel/genbuild.py` and the `+build.N` counter it wrote into `kb4it/VERSION` and `pyproject.toml` on every local install. PyPI rejects such versions, and the changing version forced every site to recompile after each install.
+- The legacy upload scripts in `scripts/distribution/pip/` and `scripts/distribution/deb/create_deb.sh`, which used `setup.py`.
+
 ---
 
 ## [0.7.9] - 2026-10-01
