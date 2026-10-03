@@ -11,12 +11,13 @@ KB4IT is a static website generator for technical documentation. It reads Markdo
 **Install / build**
 
 ```bash
-./build.sh                                # Bump version + install via pipx
-pipx install . --force                    # Install without version bump
-python scripts/devel/genbuild.py          # Bumps kb4it/VERSION and pyproject.toml
+scripts/install/local/install_kb4it_from_source.sh   # Install this checkout (uv tool or pipx)
+./scripts/devel/test.sh                              # Run the tests
+./scripts/devel/check_themes.sh                      # Check every tracked theme is releasable
+scripts/release.sh --dry-run                         # See what a release would do
 ```
 
-`./build.sh` (through `genbuild.py`) appends `+build.N` to the version, and PyPI rejects such versions. Do not publish from it. Releases are published by `.github/workflows/publish.yml` from a `v*` tag.
+**Versions and releases.** `kb4it/VERSION` names the release being built and only changes through `scripts/release.sh` (`pyproject.toml` is kept equal to it; a test fails when they differ). A development build is identified by `kb4it --version`, which adds `git describe` in a source checkout. Releases follow `RELEASING.md`: `scripts/release.sh` dates `CHANGELOG.md`, drafts `releases/X.Y.Z.md` and commits after the checks pass; the `vX.Y.Z` tag on the merged commit triggers `.github/workflows/publish.yml`, which checks the tag, publishes to PyPI and creates the GitHub release. Every theme's `theme.json` declares the KB4IT it needs in `kb4it` (for example `">=0.7.9"`); KB4IT refuses a theme whose requirement it does not meet, and `check_themes.sh` must pass before a release.
 
 **Run**
 
@@ -27,7 +28,7 @@ kb4it info <config>                       # Show repository info
 kb4it themes                              # List installed themes
 kb4it apps <theme>                        # List apps available for a theme
 kb4it projects                            # List all projects created by the user
-kb4it verify <config>                     # Verify project sources are KB4IT conformant
+kb4it verify <config>                     # Verify sources are KB4IT conformant; exits 1 on any non-conformant file or theme problem
 ```
 
 **Global flags (before subcommand):**
@@ -63,7 +64,7 @@ CLI args (or TUI)
             -> Theme.post_deploy_activities()           # runs on the deployed target (stage 8)
 ```
 
-Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `keys_compiled`, `kv_pages_compiled`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
+Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `invalid` (documents whose frontmatter could not be read, see `BuildPlan.invalid_docs`), `keys_compiled`, `kv_pages_compiled`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
 
 ### Modules
 
@@ -163,17 +164,21 @@ Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `i
 
 `publish_sources` (default `true`): when `false`, the Markdown sources are not copied to the target.
 
+`fail_on_invalid` (default `false`): when `true`, any source document whose frontmatter cannot be read fails the build (`CompilationError` listing every invalid document). Without it, such documents are logged as `DOC_INVALID`, left out of the site and counted as `invalid` in the summary.
+
 **`apphelp` block** (read by the `apphelp` theme only). The page names `search.md`, `topics.md`, `go.md` and `404.md` are reserved for theme pages; a user page with one of these names is reported as `META_INVALID reason=reserved_name`. `index.md` is the landing page and replaces the theme's own landing page:
 
 | Key | Meaning |
 |---|---|
-| `strict` | Default `true`. Metadata problems (unknown vocabulary values, missing required properties, reserved page names) and help ids that point to a missing page or anchor fail the build. `LINK_BROKEN` and `ANCHOR_MISSING` are only warnings. Entries of the contract file that the site does not provide always fail the build |
+| `strict` | Default `true`. Metadata problems (documents whose frontmatter cannot be read, `DOC_INVALID`; unknown vocabulary values, missing required properties, reserved page names) and help ids that point to a missing page or anchor fail the build. `LINK_BROKEN` and `ANCHOR_MISSING` are only warnings. Entries of the contract file that the site does not provide always fail the build |
 | `lang` | Language of the generated pages (`<html lang>`) |
 | `accent` | Accent colour (CSS value) |
 | `about` | When `true`, the theme builds an about page |
 | `contract` | Path to a contract file with the help ids the application expects; checked against the documents. An explicit path that does not exist logs `[APPHELP] CONTRACT_FILE_MISSING` |
 | `vocabulary` | Allowed values per property (`Feature`, `Level`, `Platform`, ...) |
 | `labels` | Overrides of the UI texts (for example `ts_cause`, `ts_fix`) |
+
+**Type of document (`apphelp`).** Every content page must be classified with `DocType`, the same key and values as `techdoc`, following the Diátaxis framework: exactly one of `Tutorial`, `How-to guide`, `Reference`, `Explanation` (exact spelling). A page without a valid `DocType` is never published: it is left out of the site, the navigation, the search index and `helpids.js` (`[APPHELP] DOC_LEFT_OUT`), and reported as `DOCTYPE_MISSING` or `DOCTYPE_INVALID`, which fails the build when `strict` is on. The optional `Layout` key (`faq`, `tips`, `troubleshooting`) selects a special rendering on top of the type. The old `Kind` key is reported as `META_INVALID reason=replaced_by_DocType_and_Layout`. In the generated site the classification is called "Type of document"; the theme never shows the word Diátaxis. See `kb4it/resources/themes/apphelp/README.md` for all page properties.
 
 The `force` field can also be set per-build via `--force` (CLI) or the TUI; CLI/TUI takes priority over `repo.json`.
 
@@ -285,6 +290,8 @@ Projects are registered automatically by `kb4it create` and manually via ImportP
 
 KB4IT consumes Markdown files only (`.md` / `.markdown`). Each must begin with a YAML frontmatter block, followed by an H1 heading used as the document title.
 
+A document that does not meet this (`missing_frontmatter`, `missing_frontmatter_close`, `invalid_frontmatter`, `missing_h1_title`, `yaml_error line=<n> col=<n> <problem>`) is logged as `[UTIL] DOC_INVALID`, left out of the site and recorded in `BuildPlan.invalid_docs`. Quote values that contain `: ` (for example `Summary: "Plugins: how they load"`), otherwise YAML reads them as a nested mapping.
+
 ```markdown
 ---
 Author: Tomas Virseda
@@ -319,8 +326,17 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 ## Conventions for contributions by AI assistants
 
 - **Never use the em dash (`--`).** Use a comma, semicolon, colon, or rewrite the sentence.
-- **Do not commit unless explicitly asked.** Always suggest a commit message instead.
-- **Save analysis responses, plans, and commit messages** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).
+- **Git workflow.**
+  - Commit when a piece of work is done; do not wait to be asked.
+  - One-line Conventional Commits message: `type(scope): description`, types `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`; omit the scope for project-wide changes; description in lower case, imperative, no full stop, describing the change.
+  - No trailer lines (no `Co-Authored-By`, no `Claude-Session`).
+  - Never push and never create a branch (no `git branch <name>`, `checkout -b`, `switch -c`, `worktree add`); work on the checked-out branch. A PreToolUse hook (`.claude/hooks/git-guard.py`) enforces this.
+  - Stage files by name, never `git add .` or a whole directory. Never commit `.claude/` (it is in `.gitignore`).
+  - One commit per kind of change; a mixed commit takes the type of the main change, or is split if the split is clean.
+  - After a fix or a feature, add an entry to `CHANGELOG.md` under `## [Unreleased]`, in Keep a Changelog format (`### Added`, `### Changed`, `### Fixed`, `### Removed`).
+  - Never change anything on GitHub (settings, Pages, releases, issues, pull requests, comments) without asking first; explain the change and give the command.
+  - If a hook or guard blocks a git command, do not work around it; use another way that respects the rule, or tell the user.
+- **Save analysis responses and plans** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).
 - **Match KB4IT's existing log style** (`[<COMPONENT>] EVENT key=value`).
 - **Prefer dataclasses + typed exceptions over runtime side-channels** when adding new cross-service communication.
 - **Templates are Mako** -- `${var}` and `% for`/`% if`, never `{var}` or `{include:...}`.

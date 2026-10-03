@@ -23,19 +23,14 @@ Make them executable once with `chmod +x scripts/distribution/**/*.sh`.
 | `tarball/` | Source tarball + zip + SHA-256 | `build_tarball.sh` |
 | _(root)_ | Build every supported format | `build_all.sh` |
 
-## Typical release workflow
+## Releases
 
-```bash
-# 1. Bump the version
-python scripts/devel/genbuild.py
-
-# 2. Build everything that this host supports
-scripts/distribution/build_all.sh
-
-# 3. Rehearse on TestPyPI, then publish
-scripts/distribution/pypi/publish_testpypi.sh
-scripts/distribution/pypi/publish_pypi.sh
-```
+Releases are not made from here. `scripts/release.sh` prepares a release and
+the publish workflow builds and uploads it from a `vX.Y.Z` tag; see
+`RELEASING.md` in the repository root. The scripts in this directory build
+packages for other channels (deb, rpm, Docker, tarball) from the version in
+`kb4it/VERSION`, and `pypi/publish_*.sh` remain as a manual fallback for the
+workflow.
 
 ## Per-channel notes
 

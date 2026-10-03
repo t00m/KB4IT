@@ -101,8 +101,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 .ah-content img { max-width: 100%; height: auto; }
 .ah-content table { display: block; overflow-x: auto; border-collapse: collapse; }
 .ah-content th, .ah-content td { padding: 6px 10px; border: 1px solid var(--ah-border); text-align: left; }
-.ah-kind-reference .ah-article { max-width: none; }
-.ah-kind-reference .ah-content th { background: var(--ah-bg-alt); }
+.ah-doctype-reference .ah-article { max-width: none; }
+.ah-doctype-reference .ah-content th { background: var(--ah-bg-alt); }
 code, pre, kbd { font-family: var(--ah-mono); }
 :not(pre) > code { padding: 1px 4px; border-radius: 4px; background: var(--ah-code-bg); }
 .ah-code { position: relative; }
@@ -118,11 +118,11 @@ kbd { display: inline-block; padding: 1px 6px; border: 1px solid var(--ah-border
 .admonition.danger, .admonition.error, .admonition.important { border-color: var(--ah-danger); }
 .ah-prereq { border-left-width: 8px; }
 
-.ah-kind-tutorial .ah-content { counter-reset: ah-step; }
-.ah-kind-tutorial .ah-content > .sect1 > h2::before { counter-increment: ah-step; content: counter(ah-step); display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; margin-right: 8px; border-radius: 50%; background: var(--ah-chip-bg); }
+.ah-doctype-tutorial .ah-content { counter-reset: ah-step; }
+.ah-doctype-tutorial .ah-content > .sect1 > h2::before { counter-increment: ah-step; content: counter(ah-step); display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; margin-right: 8px; border-radius: 50%; background: var(--ah-chip-bg); }
 .ah-faq { margin: 8px 0; padding: 8px 16px; border: 1px solid var(--ah-border); border-radius: var(--ah-radius); }
 .ah-faq summary { font-weight: 700; cursor: pointer; }
-.ah-kind-tips .ah-content > .sect1, .ah-kind-troubleshooting .ah-content > .sect1 { margin: 16px 0; padding: 0 16px 8px; border: 1px solid var(--ah-border); border-radius: var(--ah-radius); background: var(--ah-bg-alt); }
+.ah-layout-tips .ah-content > .sect1, .ah-layout-troubleshooting .ah-content > .sect1 { margin: 16px 0; padding: 0 16px 8px; border: 1px solid var(--ah-border); border-radius: var(--ah-radius); background: var(--ah-bg-alt); }
 .ah-cause, .ah-fix { padding-left: 8px; border-left: 4px solid var(--ah-warning); }
 .ah-fix { border-color: var(--ah-tip); }
 

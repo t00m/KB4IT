@@ -1,6 +1,7 @@
 ---
+DocType: How-to guide
 Feature: Documents
-Kind: troubleshooting
+Layout: troubleshooting
 Order: 430
 Section: Help
 Summary: What to do when documents do not show up or cannot be renamed.

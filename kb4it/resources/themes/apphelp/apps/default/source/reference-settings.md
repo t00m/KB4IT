@@ -1,6 +1,6 @@
 ---
+DocType: Reference
 Feature: Settings
-Kind: reference
 Level: advanced
 Order: 310
 Section: Reference

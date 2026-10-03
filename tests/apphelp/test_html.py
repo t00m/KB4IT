@@ -31,7 +31,7 @@ def test_images_and_code():
 
 
 def test_faq_becomes_details():
-    html, toc = transform(compile_md("## Where is it? {#where}\n\nHere.\n\n## Why? {#why}\n\nBecause.\n"), "faq")
+    html, toc = transform(compile_md("## Where is it? {#where}\n\nHere.\n\n## Why? {#why}\n\nBecause.\n"), "reference", "faq")
     assert '<details class="ah-faq" id="where"><summary>Where is it?</summary>' in html
     assert '<div class="ah-faq-answer"><p>Here.</p></div></details>' in re.sub(r">\s+<", "><", html)
     assert "<h2" not in html
@@ -40,7 +40,7 @@ def test_faq_becomes_details():
 
 def test_troubleshooting_classes():
     text = "## Empty list {#empty}\n\n### Cause\n\nNo repo.\n\n### Fix\n\nCreate one.\n"
-    html, _ = transform(compile_md(text), "troubleshooting", DEFAULT_LABELS)
+    html, _ = transform(compile_md(text), "howto", "troubleshooting", DEFAULT_LABELS)
     assert '<h3 id="cause" class="ah-cause">' in html or '<h3 class="ah-cause" id="cause">' in html
     assert "ah-fix" in html
 

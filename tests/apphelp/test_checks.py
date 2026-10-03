@@ -24,7 +24,7 @@ def test_check_anchors(tmp_path):
 
 def test_helpids(tmp_path):
     target = site(tmp_path)
-    pages = [Page(doc_id="a.md", title="A", kind="howto", section="S", order=1, summary="",
+    pages = [Page(doc_id="a.md", title="A", doctype="howto", section="S", order=1, summary="",
                   helpids=[("intro", ""), ("ex", "x"), ("broken", "missing")])]
     mapping = helpid_map(pages)
     assert mapping == {"broken": "a.html#missing", "ex": "a.html#x", "intro": "a.html"}

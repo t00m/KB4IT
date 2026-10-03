@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from kb4it.core.types import KBDict
 
+from kb4it.core.exceptions import CompilationError
 from kb4it.core.service import Service
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, string_timestamp,
@@ -40,6 +41,11 @@ class BuildPlan:
     KV_PATH: list = field(default_factory=list)  # [(key, value, compile_flag), ...]
     force_kv_pairs: set = field(default_factory=set)
     force_all: bool = False
+    invalid_docs: list = field(default_factory=list)  # [(docId, reason), ...]
+
+    @property
+    def invalid_count(self) -> int:
+        return len(self.invalid_docs)
 
     @property
     def doc_count(self) -> int:
@@ -86,6 +92,7 @@ class Processor(Service):
             self.log.debug(f"[PROCESSOR] DOC_VALID doc={os.path.basename(filepath)} valid={valid} reason={reason}")
 
             if not valid:
+                self.plan.invalid_docs.append((docId, reason))
                 continue
 
             # Add to cache
@@ -142,6 +149,11 @@ class Processor(Service):
             # Add compiled page to the target list
             htmlId = html_id_for(docId)
             self.srvbes.add_target(docId, htmlId)
+
+        # A repo can ask that any unreadable document fails the build instead of vanishing.
+        if self.plan.invalid_docs and self.srvbes.get_value("repo", "fail_on_invalid") is True:
+            names = ", ".join(f"{doc} ({reason})" for doc, reason in self.plan.invalid_docs)
+            raise CompilationError(f"{self.plan.invalid_count} invalid document(s): {names}")
 
         # Rebuild every page when the theme says the site as a whole changed.
         signature = self.get_service("Theme").site_signature()

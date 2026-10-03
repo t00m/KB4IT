@@ -21,17 +21,23 @@
   </ul>
 </section>
 % endif
+% if var['cards']:
+<h2 id="doctypes">${L['doctypes'] | h}</h2>
+% endif
 <div class="ah-cards">
 % for card in var['cards']:
   <section class="ah-card">
-    <h2 id="kind-${card['kind'] | h}"><span class="ah-badge ah-badge-${card['kind'] | h}">${card['label'] | h}</span></h2>
+    <h3 id="doctype-${card['doctype'] | h}"><span class="ah-badge ah-badge-${card['doctype'] | h}">${card['label'] | h}</span></h3>
+%   if card['desc']:
+    <p class="ah-muted">${card['desc'] | h}</p>
+%   endif
     <ul class="ah-list">
 %   for item in card['pages']:
       <li><a href="${item['url'] | h}">${item['title'] | h}</a><br><span class="ah-muted">${item['summary'] | h}</span></li>
 %   endfor
     </ul>
 %   if card['more'] > 0:
-    <p><a href="search.html?Kind=${card['kind'] | h}">+${card['more']}</a></p>
+    <p><a href="search.html?DocType=${card['doctype'] | h}">+${card['more']}</a></p>
 %   endif
   </section>
 % endfor

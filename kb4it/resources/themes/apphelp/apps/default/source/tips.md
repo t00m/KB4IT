@@ -1,7 +1,8 @@
 ---
+DocType: How-to guide
 Feature: Search, Documents
 HelpId: tip-shortcuts=#shortcuts
-Kind: tips
+Layout: tips
 Order: 420
 Section: Help
 Summary: Small tricks that save time every day.

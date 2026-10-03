@@ -17,6 +17,7 @@ import uuid
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, ThemeError
 from kb4it.core.log import get_logger, setup_logging
+from kb4it.core.version import git_describe
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -209,6 +210,13 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
 
 
+def version_text():
+    """'KB4IT 0.7.10', plus the git describe of a source checkout so development builds are identifiable."""
+    text = f"{ENV['APP']['shortname']} {ENV['APP']['version']}"
+    described = git_describe(os.path.dirname(ENV["CONF"]["ROOT"]))
+    return f"{text} ({described})" if described else text
+
+
 def main():
     """Set up application arguments and execute."""
     _acquire_process_lock()
@@ -245,7 +253,7 @@ def main():
         "-v",
         "--version",
         action="version",
-        version=f"{ENV['APP']['shortname']} {ENV['APP']['version']}",
+        version=version_text(),
     )
 
     # Add subcommands for actions

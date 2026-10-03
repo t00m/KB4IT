@@ -64,7 +64,7 @@
       <h1>${ah['title'] | h}</h1>
 % if chips:
       <div class="ah-chips">
-        <span class="ah-badge ah-badge-${chips['kind'] | h}">${chips['kind_label'] | h}</span>
+        <span class="ah-badge ah-badge-${chips['doctype'] | h}">${chips['doctype_label'] | h}</span>
 %   for feature in chips['features']:
         <a class="ah-chip" href="topics.html#${feature['anchor']}">${feature['name'] | h}</a>
 %   endfor
@@ -110,7 +110,7 @@ ${ah['content']}
         <h2>${L['related'] | h}</h2>
         <ul class="ah-list">
 %   for item in ah['related']:
-          <li><span class="ah-badge ah-badge-${item['kind'] | h}">${item['kind_label'] | h}</span> <a href="${item['url'] | h}">${item['title'] | h}</a><br><span class="ah-muted">${item['summary'] | h}</span></li>
+          <li><span class="ah-badge ah-badge-${item['doctype'] | h}">${item['doctype_label'] | h}</span> <a href="${item['url'] | h}">${item['title'] | h}</a><br><span class="ah-muted">${item['summary'] | h}</span></li>
 %   endfor
         </ul>
       </section>

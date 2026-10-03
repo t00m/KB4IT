@@ -42,3 +42,16 @@ def test_blog_create_then_build_from_another_cwd(tmp_path, home):
     build = run_kb4it("build", tmp_path / "newblog" / "config" / "repo.json", cwd=home, home=home)
     assert build.returncode == 0, build.stdout
     assert "CONFIG_FAIL" not in build.stdout
+
+
+def test_create_makes_source_and_target_when_the_app_has_none(tmp_path, home):
+    # Git cannot store empty folders, so a theme's sample app may ship only its config.
+    theme = mini_theme(home / ".kb4it" / "opt" / "resources" / "themes" / "mini")
+    (theme / "apps" / "default" / "config").mkdir(parents=True)
+    (theme / "apps" / "default" / "config" / "repo.json").write_text(
+        json.dumps({"title": "T", "theme": "mini", "source": "source", "target": "target"}))
+    result = run_kb4it("create", "mini", "newrepo", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert (tmp_path / "newrepo" / "source").is_dir()
+    build = run_kb4it("build", tmp_path / "newrepo" / "config" / "repo.json", cwd=tmp_path, home=home)
+    assert build.returncode == 0, build.stdout

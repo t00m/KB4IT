@@ -79,16 +79,16 @@ def _tutorial(root):
             first.set("class", " ".join(classes + ["ah-prereq"]))
 
 
-def _toc(root, kind):
-    if kind == "faq":
+def _toc(root, layout):
+    if layout == "faq":
         return [{"level": 2, "id": d.get("id"), "text": d.find("summary").text_content().strip()}
                 for d in root.xpath("./details[@id]")]
     return [{"level": int(h.tag[1]), "id": h.get("id"), "text": h.text_content().strip()}
             for h in root.iter("h2", "h3") if h.get("id")]
 
 
-def transform(fragment: str, kind: str, labels: dict | None = None) -> tuple:
-    """Return the article HTML and its table of contents for a page of the given Kind."""
+def transform(fragment: str, doctype: str, layout: str = "", labels: dict | None = None) -> tuple:
+    """Return the article HTML and its table of contents for a page of the given type and layout."""
     if not fragment.strip():
         return "", []
     root = lxml.html.fragment_fromstring(fragment, create_parent="div")
@@ -98,11 +98,11 @@ def transform(fragment: str, kind: str, labels: dict | None = None) -> tuple:
         img.set("loading", "lazy")
     for pre in list(root.iter("pre")):
         _wrap_code(pre)
-    if kind == "faq":
+    if layout == "faq":
         _faq(root)
-    elif kind == "troubleshooting":
+    elif layout == "troubleshooting":
         _troubleshooting(root, labels or {})
-    elif kind == "tutorial":
+    if doctype == "tutorial":
         _tutorial(root)
-    toc = _toc(root, kind)
+    toc = _toc(root, layout)
     return _inner_html(root).strip(), toc
