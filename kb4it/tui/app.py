@@ -336,7 +336,8 @@ class BuildScreen(Screen):
             # KB4IT's __init__ has already called setup_logging() and registered
             # its file handler; now we add our real-time display handler.
             logging.getLogger().addHandler(handler)
-            inst.run()
+            if not inst.run():
+                error = "Build failed,  see log for details."
         except SystemExit as exc:
             if exc.code and exc.code != 0:
                 error = "Build failed,  see log for details."
@@ -409,7 +410,7 @@ class BuildScreen(Screen):
 
     @on(Button.Pressed, "#close")
     def _close(self) -> None:
-        self.app.pop_screen()
+        self.dismiss(None)
 
 
 # ─── screen: log viewer ───────────────────────────────────────────────────────
@@ -1169,7 +1170,7 @@ class ProjectScreen(Screen):
         self._project = project
 
     def action_back(self) -> None:
-        self.app.pop_screen()
+        self.dismiss(None)
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -1296,7 +1297,7 @@ class ProjectScreen(Screen):
 
     @on(Button.Pressed, "#back")
     def _back(self) -> None:
-        self.app.pop_screen()
+        self.dismiss(None)
 
 
 # ─── screen: main ─────────────────────────────────────────────────────────────
