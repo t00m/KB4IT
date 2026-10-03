@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.8.0] - 2026-10-03
+
 ### Fixed
 
 - A second build in the same process, as the TUI does when you compile another project, ran the first theme's logic. Each theme load now imports its own `logic/theme.py`.
