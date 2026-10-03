@@ -20,6 +20,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - apphelp: theme documentation in `kb4it/resources/themes/apphelp/README.md`.
 - The `kb4it` requirement in a theme's `theme.json` (for example `">=0.7.9"`, or `">=0.7.9, <0.8"`) is enforced: a theme that needs a newer KB4IT is refused with `THEME_REQUIREMENT_UNMET`, and an unreadable requirement with `THEME_REQUIREMENT_INVALID`. A theme without one loads with a warning.
 - `kb4it --version` run from a git checkout adds `git describe`, so a development build is identifiable without changing any file.
+- Release process (`RELEASING.md`): `scripts/release.sh` prepares a release (version, dated changelog, release notes) and commits it only after the tests, the theme check and the wheel check pass. It never tags or pushes.
+- `scripts/devel/check_themes.sh` checks every tracked theme before a release: complete `theme.json`, a `kb4it` requirement met by the release, required templates, and sample apps that build with no error or warning. CI runs it too.
+- The publish workflow runs on plain `vX.Y.Z` tags only. It checks that the tag matches the committed version, the changelog and the release notes, runs the tests and the theme check, publishes to PyPI with trusted publishing and creates the GitHub release.
 
 ### Changed
 

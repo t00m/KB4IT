@@ -11,12 +11,13 @@ KB4IT is a static website generator for technical documentation. It reads Markdo
 **Install / build**
 
 ```bash
-./build.sh                                # Bump version + install via pipx
-pipx install . --force                    # Install without version bump
-python scripts/devel/genbuild.py          # Bumps kb4it/VERSION and pyproject.toml
+scripts/install/local/install_kb4it_from_source.sh   # Install this checkout (uv tool or pipx)
+./scripts/devel/test.sh                              # Run the tests
+./scripts/devel/check_themes.sh                      # Check every tracked theme is releasable
+scripts/release.sh --dry-run                         # See what a release would do
 ```
 
-`./build.sh` (through `genbuild.py`) appends `+build.N` to the version, and PyPI rejects such versions. Do not publish from it. Releases are published by `.github/workflows/publish.yml` from a `v*` tag.
+**Versions and releases.** `kb4it/VERSION` names the release being built and only changes through `scripts/release.sh` (`pyproject.toml` is kept equal to it; a test fails when they differ). A development build is identified by `kb4it --version`, which adds `git describe` in a source checkout. Releases follow `RELEASING.md`: `scripts/release.sh` dates `CHANGELOG.md`, drafts `releases/X.Y.Z.md` and commits after the checks pass; the `vX.Y.Z` tag on the merged commit triggers `.github/workflows/publish.yml`, which checks the tag, publishes to PyPI and creates the GitHub release. Every theme's `theme.json` declares the KB4IT it needs in `kb4it` (for example `">=0.7.9"`); KB4IT refuses a theme whose requirement it does not meet, and `check_themes.sh` must pass before a release.
 
 **Run**
 

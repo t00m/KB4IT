@@ -26,6 +26,9 @@ jobs:
       - name: Run tests
         run: ./scripts/devel/test.sh
 
+      - name: Every tracked theme is compliant
+        run: ./scripts/devel/check_themes.sh
+
       - name: Build wheel
         run: uv build --wheel
 
