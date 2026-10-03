@@ -6,7 +6,10 @@
     "website": "https://github.com/t00m/KB4IT",
     "description": "Help site for an application: works from disk, on GitHub Pages and inside the app",
     "version": "0.1.0",
-    "kb4it": ">=0.7.9",
+    "kb4it": ">=0.7.10",
     "metadata_pages": false,
-    "deploy_dirs": ["framework", "images"]
+    "deploy_dirs": [
+        "framework",
+        "images"
+    ]
 }

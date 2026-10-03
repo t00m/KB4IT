@@ -6,5 +6,5 @@
     "website": "https://github.com/t00m/KB4IT",
     "description": "Theme for technical documentation",
     "version": "0.3.0",
-    "kb4it": ">=0.8"
+    "kb4it": ">=0.7.9"
 }

@@ -15,6 +15,7 @@ import sys
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
+from kb4it.core.version import requirement_satisfied
 
 
 class Frontend(Service):
@@ -90,6 +91,23 @@ class Frontend(Service):
 
         self.app.stop()
 
+    def _check_requirement(self, theme):
+        """Refuse a theme whose 'kb4it' requirement this version does not meet."""
+        theme_id = theme.get("id", "?")
+        spec = theme.get("kb4it")
+        current = ENV["APP"]["version"]
+        if not spec:
+            self.log.warning(f"[FRONTEND] THEME_REQUIREMENT_MISSING id={theme_id}")
+            return
+        try:
+            met = requirement_satisfied(spec, current)
+        except ValueError as error:
+            self.log.error(f"[FRONTEND] THEME_REQUIREMENT_INVALID id={theme_id} requires={spec}")
+            raise ThemeError(f"Theme {theme_id} has an invalid kb4it requirement {spec!r}: {error}") from error
+        if not met:
+            self.log.error(f"[FRONTEND] THEME_REQUIREMENT_UNMET id={theme_id} requires={spec} current={current}")
+            raise ThemeError(f"Theme {theme_id} requires KB4IT {spec}; this is {current}")
+
     def theme_load(self, theme_name=None):
         """Load custom user theme, global theme or default."""
         if theme_name is None:
@@ -117,6 +135,8 @@ class Frontend(Service):
                 self.log.error(f"[FRONTEND] ERROR {error}")
                 self.log.error(f"[FRONTEND] THEME_CONF_INVALID path={theme_conf}")
                 return None
+
+            self._check_requirement(theme)
 
             # Get theme directories
             self.runtime["theme"]["templates"] = os.path.join(
