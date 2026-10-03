@@ -1,0 +1,40 @@
+{
+    "title": "KB4IT Help",
+    "tagline": "Turn a folder of Markdown files into a website you can browse",
+    "theme": "apphelp",
+    "source": "source",
+    "target": "target",
+    "version": "0.8",
+    "logo": "resources/images/logo.svg",
+    "logo_alt": "KB4IT",
+    "publish_sources": false,
+    "git": true,
+    "git_server": "github.com",
+    "git_user": "t00m",
+    "git_repo": "KB4IT",
+    "git_branch": "master",
+    "git_path": "help/source",
+    "apphelp": {
+        "strict": true,
+        "lang": "en",
+        "accent": "#0f766e",
+        "about": false,
+        "vocabulary": {
+            "Feature": [
+                "Getting started",
+                "Installation",
+                "Writing",
+                "Building",
+                "Publishing",
+                "Themes",
+                "Terminal interface",
+                "Configuration",
+                "Development"
+            ],
+            "Level": [
+                "basic",
+                "advanced"
+            ]
+        }
+    }
+}

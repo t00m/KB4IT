@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="KB4IT">
+  <rect width="64" height="64" rx="14" fill="#0f766e"/>
+  <path d="M16 18h20a4 4 0 0 1 4 4v24H20a4 4 0 0 1-4-4z" fill="#ffffff" opacity="0.95"/>
+  <path d="M40 22h4a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4" fill="none" stroke="#99f6e4" stroke-width="3"/>
+  <path d="M21 25h14M21 31h14M21 37h9" stroke="#0f766e" stroke-width="3" stroke-linecap="round"/>
+</svg>
