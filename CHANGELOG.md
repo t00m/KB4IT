@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- CI and the publish workflow use the current major versions of their GitHub Actions (`checkout` v7, `upload-artifact` v7, `download-artifact` v8, `setup-uv` v10), which run on Node 24 instead of the deprecated Node 20. A downloaded build that does not match its recorded hash now fails the publish workflow.
+
 ---
 
 ## [0.7.10] - 2026-10-03
