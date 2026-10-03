@@ -155,6 +155,8 @@ class Frontend(Service):
             # Register theme service
             self.log.debug(f"[FRONTEND] THEME_REGISTER path={self.runtime['theme']['logic']}")
             sys.path.insert(0, self.runtime["theme"]["logic"])
+            # Every theme names its logic module "theme"; drop the one an earlier load cached.
+            sys.modules.pop("theme", None)
             try:
                 from theme import Theme
 
