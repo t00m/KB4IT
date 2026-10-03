@@ -7,6 +7,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- A second build in the same process, as the TUI does when you compile another project, ran the first theme's logic. Each theme load now imports its own `logic/theme.py`.
+- `kb4it themes` no longer logs `'Backend' object has no attribute 'repo'` while listing apphelp.
+- `kb4it create` with an unknown theme exits 1 instead of 0.
+- blog: posts without an `Author` were left out of the index page (`INDEX_SKIP`) and rendered without the post layout.
+- TUI: a failed build showed "Done" instead of "FAILED". After a build, the project screen now refreshes, so Explore, View Build Log and Browse are enabled without leaving the project.
+- apphelp: table columns no longer break words in the middle; a wide table scrolls instead.
+
+### Added
+
+- User help at https://t00m.github.io/KB4IT/, built with the apphelp theme from `help/`: getting started, installing, writing documents, building, the terminal interface, publishing, the four themes, creating a theme, a command and settings reference, troubleshooting, and development notes. `.github/workflows/help.yml` builds it on every push that touches the help or the code and publishes it from `master` (#68).
+
+- Tests for the command line (`themes`, `apps`, `projects`, `info`, `create`, configuration and theme errors, `--force`, the process lock), the `kb4it.core.util` helpers, the techdoc, blog and bookshelf themes, and every TUI screen. Line coverage of `kb4it` goes from 60% to 90%.
+
+### Changed
+
+- CI and the publish workflow use the current major versions of their GitHub Actions (`checkout` v7, `upload-artifact` v7, `download-artifact` v8, `setup-uv` v10.2.0), which run on Node 24 instead of the deprecated Node 20. A downloaded build that does not match its recorded hash now fails the publish workflow. `setup-uv` is pinned to a full version because it publishes no `v10` tag.
+
+### Removed
+
+- `docs/`, which held an empty page and an example of an API that no longer exists. The help in `help/` replaces it.
+
 ---
 
 ## [0.7.10] - 2026-10-03

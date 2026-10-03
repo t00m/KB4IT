@@ -30,10 +30,12 @@
                     </h5>
                     <div class="uk-width uk-margin-top">
                         <ul class="uk-subnav uk-subnav-divider uk-margin-small-top uk-flex-center uk-text-meta">
+% if 'Author_0_Url' in var['post']:
                             <li>
                                 <span uk-icon="user"></span>
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
                             </li>
+% endif
                             <li>
                                 <span uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>

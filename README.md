@@ -11,7 +11,9 @@
 - **Serverless output** - plain HTML/CSS, host on GitHub Pages, S3, nginx, or just open `index.html`.
 - **Smart incremental builds** - only changed documents and their key/value index pages are recompiled, driven by per-document body and metadata hashes (blake2b).
 - **Property-driven navigation** - every frontmatter property becomes a filterable index page automatically.
-- **Two themes out of the box** - `techdoc`, `blog` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
+- **Four themes out of the box** - `techdoc`, `blog`, `bookshelf` and `apphelp` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
+
+**Documentation: [t00m.github.io/KB4IT](https://t00m.github.io/KB4IT/)** - install, write, build, publish, themes and development notes.
 
 ## Live demos
 

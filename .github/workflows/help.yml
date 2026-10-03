@@ -1,0 +1,61 @@
+# Builds the help in help/ with the KB4IT of the same commit and publishes it to GitHub Pages.
+#
+# Every push that touches the help, the code or the themes builds it, on any
+# branch, so a broken page, bad metadata or a change that breaks the apphelp
+# theme fails here and not after a merge. Only master deploys.
+#
+# Settings > Pages > Source must be "GitHub Actions".
+name: help
+
+on:
+  push:
+    paths:
+      - 'help/**'
+      - 'kb4it/**'
+      - 'pyproject.toml'
+      - '.github/workflows/help.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: help-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Install KB4IT from this commit
+        run: uv tool install --python 3.11 .
+
+      - name: Check the pages
+        run: kb4it verify help/config/repo.json
+
+      - name: Build the help
+        run: kb4it build help/config/repo.json --force
+
+      - name: Upload the site
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: help/target
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

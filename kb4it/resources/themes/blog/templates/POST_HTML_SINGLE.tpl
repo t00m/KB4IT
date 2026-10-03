@@ -29,10 +29,12 @@
                     </h5>
                     <div class="uk-width uk-margin-top">
                         <ul class="uk-subnav uk-subnav-divider uk-margin-small-top uk-flex-center uk-text-meta">
+% if 'Author_0_Url' in var['post']:
                             <li>
                                 <span uk-icon="user"></span>
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
                             </li>
+% endif
                             <!-- Update :: START -->
                             <li uk-tooltip="title: Document last update">
                                 <span uk-icon="calendar"></span>

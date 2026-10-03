@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "KB4IT"
-version = "0.7.10"
+version = "0.8.0"
 description = "A static website generator based on Markdown sources."
 authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.md"
 homepage = "https://github.com/t00m/KB4IT"
 repository = "https://github.com/t00m/KB4IT"
+documentation = "https://t00m.github.io/KB4IT/"
 keywords = ["static-site-generator", "markdown", "documentation"]
 classifiers = [
     "Development Status :: 4 - Beta",

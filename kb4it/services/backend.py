@@ -48,6 +48,7 @@ class Backend(Service):
     def _initialize(self):
         """Initialize application structure."""
         self.runtime: Runtime = {"theme": {}}  # type: ignore[typeddict-item]
+        self.repo = {}  # Only build and info load a repo.json
         self.params = self.app.get_params()  # Get params from command line
 
         if self.params.get("action") in ("build", "info"):

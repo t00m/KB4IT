@@ -100,7 +100,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 
 .ah-content img { max-width: 100%; height: auto; }
 .ah-content table { display: block; overflow-x: auto; border-collapse: collapse; }
-.ah-content th, .ah-content td { padding: 6px 10px; border: 1px solid var(--ah-border); text-align: left; }
+.ah-content th, .ah-content td { padding: 6px 10px; border: 1px solid var(--ah-border); text-align: left; overflow-wrap: break-word; }
 .ah-doctype-reference .ah-article { max-width: none; }
 .ah-doctype-reference .ah-content th { background: var(--ah-bg-alt); }
 code, pre, kbd { font-family: var(--ah-mono); }
