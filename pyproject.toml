@@ -7,6 +7,7 @@ license = "GPL-3.0-or-later"
 readme = "README.md"
 homepage = "https://github.com/t00m/KB4IT"
 repository = "https://github.com/t00m/KB4IT"
+documentation = "https://t00m.github.io/KB4IT/"
 keywords = ["static-site-generator", "markdown", "documentation"]
 classifiers = [
     "Development Status :: 4 - Beta",
