@@ -52,3 +52,9 @@ def test_print_resets_light_tokens():
     tokens = dict(re.findall(r"--(ah-[a-z-]+):\s*(#[0-9a-fA-F]{6})", match.group(1)))
     assert tokens["ah-fg"] == "#1e1e1e"
     assert tokens["ah-bg"] == "#ffffff"
+
+
+def test_table_cells_keep_words_whole():
+    # body wraps "anywhere", which lets a table column shrink below its longest word
+    cells = re.search(r"\.ah-content th, \.ah-content td \{([^}]*)\}", CSS).group(1)
+    assert "overflow-wrap: break-word" in cells
