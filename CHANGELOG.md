@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A source document with unreadable frontmatter (for example an unquoted value containing `: `) no longer vanishes silently. It is recorded in `BuildPlan.invalid_docs` and counted as `invalid=N` in the build summary, and the log gives the YAML line, column and problem.
 - apphelp: with `strict` on, an invalid document fails the build as `DOC_INVALID`, together with the other metadata problems.
 - `kb4it verify` exits 1 when it finds a non-conformant file or a theme problem, so it can gate CI.
+- `kb4it create` makes the `source/` and `target/` folders when the theme's sample app has none. Git cannot store empty folders, so `kb4it create bookshelf` from a git checkout or a PyPI install produced a repository that did not build.
 
 ### Added
 

@@ -222,6 +222,9 @@ class Workflow(Service):
             copydir(repo_demo, repo_path)
             source_dir = os.path.join(repo_path, "source")
             target_dir = os.path.join(repo_path, "target")
+            # Git cannot store empty folders, so a sample app may ship without them.
+            os.makedirs(source_dir, exist_ok=True)
+            os.makedirs(target_dir, exist_ok=True)
             bin_dir = os.path.join(repo_path, "bin")
             script = os.path.join(bin_dir, "compile.sh")
             config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
