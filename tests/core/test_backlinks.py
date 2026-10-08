@@ -62,3 +62,15 @@ def test_backlinks_false_hides_the_section(tmp_path, home):
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
     assert "Linked from" not in (tmp_path / "repo" / "target" / "b.html").read_text(encoding="utf-8")
 
+
+def test_verify_reports_broken_links_and_anchors(tmp_path, home):
+    pages = {"a.md": _page("Alpha", "[ok](b.md#part) [gone](missing.md) [no anchor](b.md#nowhere)"),
+             "b.md": _page("Beta", "## Part\n\nText.")}
+    cfg = write_repo(tmp_path / "repo", "techdoc", pages)
+    result = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 1
+    assert "LINK_BROKEN from=a.md to=missing.md" in result.stdout
+    assert "ANCHOR_MISSING from=a.md to=b.md#nowhere" in result.stdout
+    assert "b.md#part" not in result.stdout
+    build = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert build.returncode == 0, "a broken link is only a warning when building"

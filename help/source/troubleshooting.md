@@ -28,7 +28,7 @@ A document links to a `.md` file that is not in `source/`.
 
 ### Fix
 
-The warning names both documents. Correct the file name in the link, or create the missing document.
+The warning names both documents. Correct the file name in the link, or create the missing document. `kb4it verify` lists every broken link at once, and also links to a section that does not exist (`ANCHOR_MISSING`); it ends with exit status 1 when it finds any, so it can stop a publishing workflow.
 
 ## The build stops with CONFIG_KEY_MISSING {#config-key}
 

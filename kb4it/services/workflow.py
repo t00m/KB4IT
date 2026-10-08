@@ -18,6 +18,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.lock import registry_lock
 from kb4it.core.mdconfig import load_settings
+from kb4it.core.mdlinks import scan_document
 from kb4it.core.service import Service
 from kb4it.core.util import (copydir, delete_target_contents, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, json_save, page_name_clashes)
@@ -103,6 +104,25 @@ class Workflow(Service):
         except Exception as e:
             self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
 
+    def _verify_links(self, docs):
+        """LINK_BROKEN and ANCHOR_MISSING lines for links between source documents."""
+        scanned = {}
+        for doc in docs:
+            try:
+                scanned[os.path.basename(doc)] = scan_document(doc)
+            except Exception as e:
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={os.path.basename(doc)} error={e}")
+        problems = []
+        for name in sorted(scanned):
+            links, _anchors = scanned[name]
+            for path, fragment in links:
+                target = os.path.normpath(path).replace(os.sep, "/")
+                if target not in scanned:
+                    problems.append(f"LINK_BROKEN from={name} to={path}")
+                elif fragment and fragment not in scanned[target][1]:
+                    problems.append(f"ANCHOR_MISSING from={name} to={path}#{fragment}")
+        return problems
+
     def verify_sources(self):
         """Verify project sources, display non-conformant ones and fail when there are any."""
         self.log.info("[WORKFLOW] ACTION name=verify_sources")
@@ -170,9 +190,16 @@ class Workflow(Service):
                 print(f"  {line}")
             print(f"Total: {len(problems)} theme problems.")
 
-        if non_conformant or problems:
+        link_problems = self._verify_links(docs)
+        if link_problems:
+            print("\nLinks:")
+            for line in link_problems:
+                print(f"  {line}")
+            print(f"Total: {len(link_problems)} broken links.")
+
+        if non_conformant or problems or link_problems:
             raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
-                             f"{len(problems)} theme problems")
+                             f"{len(problems)} theme problems, {len(link_problems)} broken links")
 
     def _find_theme_dir(self, repo, config_file):
         """Return the theme folder for a repo, following the same order as the build."""

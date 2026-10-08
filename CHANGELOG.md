@@ -32,6 +32,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The lock moved from `~/.kb4it/var/kb4it.lock` to each knowledge base (`var/kb4it.lock`), and it uses `flock` on Linux and macOS and `msvcrt` on Windows. Two knowledge bases can now build at the same time, and listing themes, apps or projects, `info` and `verify` never wait for a build. A second build of the same knowledge base still stops with exit status 1 and names the PID that holds it. `projects.json` is written under a short lock, so two `kb4it create` runs cannot lose an entry (CP-02).
 - `kb4it create` writes `bin/compile.cmd` on Windows instead of `bin/compile.sh`. Both scripts quote the path of `repo.json`, so a knowledge base in a folder with spaces builds with them; `compile.sh` starts with `#!/bin/sh` (CP-04).
 - KB4IT is declared OS independent on PyPI, and the install page explains how to install it on Windows (PowerShell) and macOS (CP-08).
+- `kb4it verify` also checks the links between documents: a link to a missing document (`LINK_BROKEN`) or to a missing section (`ANCHOR_MISSING`) is reported and makes it exit with status 1. A build still only warns (KG-02).
 
 ### Fixed
 
