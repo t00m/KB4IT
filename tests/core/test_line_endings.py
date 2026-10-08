@@ -41,3 +41,14 @@ def test_windows_saved_files_build(tmp_path, home):
     html = (tmp_path / "repo" / "target" / "win.html").read_text(encoding="utf-8")
     assert "Body line." in html
     assert "\r" not in html.split("Body line.")[0][-200:]
+
+
+def test_closing_line_with_trailing_spaces(tmp_path, home):
+    cfg = write_repo(tmp_path / "repo", "techdoc", {})
+    (tmp_path / "repo" / "source" / "sp.md").write_text("---\nTag: x\n---   \n\n# Spaced\n\nBody here.\n",
+                                                         encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    html = (tmp_path / "repo" / "target" / "sp.html").read_text(encoding="utf-8")
+    assert "Body here." in html
+    assert 'id="spaced"' not in html, "the title line is stripped, not rendered again as a heading"

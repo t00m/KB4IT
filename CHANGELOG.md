@@ -31,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Pages, logs and theme files are always read and written as UTF-8. On Windows, or on Linux with a non-UTF-8 locale, documents with accents failed to build or were written in the wrong encoding, and log lines with accents could stop the build. A test fails when any text file is opened without naming its encoding (FX-02).
 - `requirements.txt` was missing `Markdown` and `PyYAML`; a test now keeps it equal to the dependencies in `pyproject.toml`. `pixi.toml` lists macOS and Windows platforms (FX-03).
 - Documents and `repo.json` saved with a UTF-8 byte order mark, as some Windows editors do, were rejected (`missing_frontmatter`, or a JSON error). They now load like any other file. CRLF line endings give the same metadata and body hash as LF, so a checkout with `core.autocrlf` does not rebuild every page (CP-07).
+- A document whose closing `---` line ends with spaces showed its title twice: the compiler now skips the whole closing line, as the frontmatter reader already did (MD-03).
 
 ---
 

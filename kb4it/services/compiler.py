@@ -153,7 +153,9 @@ class Compiler(Service):
             if text.startswith("---"):
                 end = text.find("\n---", 3)
                 if end >= 0:
-                    text = text[end + 4:].lstrip("\n")
+                    # Skip the rest of the closing line too, so "--- " with trailing spaces works.
+                    line_end = text.find("\n", end + 4)
+                    text = text[line_end + 1:].lstrip("\n") if line_end >= 0 else ""
             # Strip the first H1 heading,  the title is already shown in the page header
             text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
             md = self.markdown.new_markdown()
