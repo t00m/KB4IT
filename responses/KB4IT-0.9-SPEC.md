@@ -132,7 +132,7 @@ Target platforms: GNU/Linux (x86_64, aarch64), macOS 13 or later (Intel and Appl
   |---|---|
   | `build`, `serve` | `<repo root>/var/kb4it.lock` for the whole run |
   | `verify`, `info` | none (read only) |
-  | `create` | `<new repo path>/var/kb4it.lock` while creating; registry lock while writing `projects.json` |
+  | `create` | `~/.kb4it/var/create-<hash of the path>.lock` while creating (outside the new repository, so a failed create leaves no folder behind); registry lock while writing `projects.json` |
   | `themes`, `apps`, `projects` | none |
   | TUI | no lock at start; each build takes the repository lock; project edits take the registry lock |
 
