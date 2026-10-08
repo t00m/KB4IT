@@ -14,6 +14,7 @@ from pathlib import Path
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
+from kb4it.core.lock import registry_lock
 from kb4it.core.service import Service
 from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
 from kb4it.services.backend import resolve_repo_path
@@ -63,6 +64,10 @@ class Workflow(Service):
 
     def _save_project(self, name, config_path):
         """Save project to projects.json registry."""
+        with registry_lock():
+            self._save_project_locked(name, config_path)
+
+    def _save_project_locked(self, name, config_path):
         projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
         projects = []
         if os.path.exists(projects_file):

@@ -73,4 +73,4 @@ kb4it -L DEBUG build ~/mykb/config/repo.json
 KB4IT converts several documents at a time, by default half the number of processor cores. Change it with `"workers"` in `repo.json`. Use fewer workers if the computer runs short of memory.
 
 !!! note
-    Only one KB4IT runs at a time. A second one stops with `KB4IT is already running (PID 1234)`.
+    Only one KB4IT builds a knowledge base at a time. A second build of the same knowledge base stops with `KB4IT is already working on this repository (PID 1234)`. Different knowledge bases can build at the same time.

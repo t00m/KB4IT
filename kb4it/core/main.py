@@ -9,13 +9,14 @@ KB4IT module. Entry point.
 """
 
 import argparse
-import fcntl
+import hashlib
 import os
 import sys
 import uuid
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, ThemeError
+from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
+from kb4it.core.lock import FileLock, repo_lock_path
 from kb4it.core.log import get_logger, setup_logging
 from kb4it.core.version import git_describe
 from kb4it.services.backend import Backend
@@ -24,33 +25,20 @@ from kb4it.services.database import Database
 from kb4it.services.frontend import Frontend
 from kb4it.services.workflow import Workflow
 
-# Held open for the lifetime of the process; released automatically on exit.
-_lock_fd = None
+# Actions that write into a repository take its lock: <root>/var/kb4it.lock.
+LOCKED_ACTIONS = ("build", "create")
 
 
-def _acquire_process_lock():
-    """Acquire an exclusive process lock at startup."""
-    global _lock_fd
-    lock_path = ENV["FILE"]["LOCK"]
-    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
-    # O_RDWR|O_CREAT never truncates, so if flock fails, the other
-    # process's PID is still readable from the file.
-    raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
-    fd = os.fdopen(raw, "r+", encoding="utf-8")
-    try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        fd.seek(0)
-        other_pid = fd.read().strip()
-        fd.close()
-        msg = f"KB4IT is already running (PID {other_pid})" if other_pid else "KB4IT is already running"
-        print(msg, file=sys.stderr)
-        sys.exit(1)
-    fd.seek(0)
-    fd.truncate()
-    fd.write(str(os.getpid()))
-    fd.flush()
-    _lock_fd = fd
+def lock_path_for(params: dict):
+    """Lock file for the action in params, or None when the action takes no lock."""
+    action = params.get("action")
+    if action == "build" and params.get("config"):
+        return repo_lock_path(params["config"])
+    if action == "create" and params.get("repo_path"):
+        # Kept outside the new repository, so a failed create leaves no folder behind.
+        digest = hashlib.blake2b(os.path.abspath(params["repo_path"]).encode("utf-8"), digest_size=8).hexdigest()
+        return os.path.join(ENV["LPATH"]["VAR"], f"create-{digest}.lock")
+    return None
 
 
 class KB4IT:
@@ -166,7 +154,13 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
         error = False
+        lock = None
         try:
+            path = lock_path_for(self.params)
+            if path is not None:
+                lock = FileLock(path)
+                lock.acquire()
+                self.log.debug(f"[LOCK] ACQUIRED path={path}")
             workflow = self.get_service("Workflow")
             if action == "themes":
                 workflow.list_themes()
@@ -182,6 +176,11 @@ class KB4IT:
                 workflow.verify_sources()
             elif action == "apps":
                 workflow.list_apps(self.params["theme"])
+        except LockBusyError as e:
+            self.log.error(f"[LOCK] BUSY path={e.path} pid={e.pid}")
+            holder = f" (PID {e.pid})" if e.pid else ""
+            print(f"KB4IT is already working on this repository{holder}", file=sys.stderr)
+            error = True
         except ConfigError as e:
             self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
             error = True
@@ -194,6 +193,9 @@ class KB4IT:
         except KB4ITError as e:
             self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
             error = True
+        finally:
+            if lock is not None:
+                lock.release()
         self.stop(error=error)
         return not error
 
@@ -219,8 +221,6 @@ def version_text():
 
 def main():
     """Set up application arguments and execute."""
-    _acquire_process_lock()
-
     # When called with no arguments in an interactive terminal, launch the TUI
     if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
         try:

@@ -70,15 +70,17 @@ The `source` folder in `repo.json` does not exist.
 
 Create it, or correct the path. Relative paths start at the knowledge base folder, the one that holds `config/`.
 
-## KB4IT is already running {#lock}
+## KB4IT is already working on this repository {#lock}
 
 ### Cause
 
-Another `kb4it` command, or the terminal interface, is running.
+Another `kb4it build`, or a build started from the terminal interface, is working on the same knowledge base. The message names its process id (PID).
 
 ### Fix
 
-Wait for it to finish or close it. Only one KB4IT runs at a time, so two builds never write the same files.
+Wait for it to finish. Only one build of a knowledge base runs at a time, so two builds never write the same files. Other knowledge bases are not affected.
+
+If no KB4IT is running, the lock was left by a process that no longer exists and the next build takes it. The lock file is `var/kb4it.lock` inside the knowledge base.
 
 ## The site does not show my latest change {#stale}
 

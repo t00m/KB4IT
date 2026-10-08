@@ -44,7 +44,7 @@ CI runs a build + `kb4it --version` smoke test via `.github/workflows/kb4it.yml`
 
 Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers services and routes `get_service(name)` lookups. Services share state through the controller's `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata.
 
-A process lock (`~/.kb4it/var/kb4it.lock`) prevents concurrent KB4IT instances. When `kb4it` is run with no arguments in an interactive terminal, the Textual-based TUI launches instead of showing help.
+A per-repository lock (`<repo>/var/kb4it.lock`, `kb4it/core/lock.py`, `flock` on POSIX and `msvcrt.locking` on Windows) stops two builds of the same repository; `create` locks under `~/.kb4it/var/`, and `projects.json` writes take `~/.kb4it/var/projects.lock`. Other actions and the TUI itself take no lock. When `kb4it` is run with no arguments in an interactive terminal, the Textual-based TUI launches instead of showing help.
 
 ### Execution flow
 
@@ -233,7 +233,8 @@ Performance log lines come from `@timeit` and look like `[PERFORMANCE] 0.1234s =
 | `~/.kb4it/` | Root of all per-user KB4IT data |
 | `~/.kb4it/var/` | Var directory (lock, work, logs) |
 | `~/.kb4it/var/log/` | Logs (rotated `kb4it.log.old` per run) |
-| `~/.kb4it/var/kb4it.lock` | Process lock file |
+| `~/.kb4it/var/projects.lock` | Registry lock, held while `projects.json` is written |
+| `<repo>/var/kb4it.lock` | Build lock of one repository |
 | `~/.kb4it/opt/` | Opt directory |
 | `~/.kb4it/opt/resources/` | Local resources |
 | `~/.kb4it/opt/resources/themes/` | User-installed themes |

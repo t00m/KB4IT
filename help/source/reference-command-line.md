@@ -43,7 +43,7 @@ Put them before the command.
 | Status | Meaning |
 |---|---|
 | `0` | Done |
-| `1` | Something failed: missing or broken settings, a theme that cannot load, a failed build, problems found by `verify`, or another KB4IT already running |
+| `1` | Something failed: missing or broken settings, a theme that cannot load, a failed build, problems found by `verify`, or another KB4IT already building the same knowledge base |
 
 A build with unreadable documents still ends with `0` and reports them as `invalid=`; set `"fail_on_invalid": true` to make it fail.
 
@@ -53,8 +53,9 @@ A build with unreadable documents still ends with `0` and reports them as `inval
 |---|---|
 | `~/.kb4it/projects.json` | The list behind `kb4it projects` and the terminal interface |
 | `~/.kb4it/opt/resources/themes/` | Your own themes |
-| `~/.kb4it/var/kb4it.lock` | Stops two KB4IT running at once |
+| `~/.kb4it/var/projects.lock` | Held for a moment while `projects.json` is written |
 | `<knowledge base>/var/` | Build cache and logs; safe to delete |
+| `<knowledge base>/var/kb4it.lock` | Stops two builds of the same knowledge base at once |
 
 `~` is your home folder: `/home/<you>` on Linux, `/Users/<you>` on macOS, `C:\Users\<you>` on Windows.
 

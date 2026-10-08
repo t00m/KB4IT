@@ -1,11 +1,14 @@
 """The kb4it command line: list commands, info, create and the error exits."""
 
-import fcntl
 import json
+import os
+import subprocess
+import sys
 
 import pytest
 
-from tests.helpers import mini_theme, page, run_kb4it, write_repo
+from kb4it.core.lock import FileLock
+from tests.helpers import ROOT, isolated_env, mini_theme, page, run_kb4it, write_repo
 
 TRACKED_THEMES = ("apphelp", "blog", "bookshelf", "techdoc")
 
@@ -207,13 +210,25 @@ def test_theme_without_requirement_loads_with_a_warning(tmp_path, home):
     assert "THEME_REQUIREMENT_MISSING id=mini" in result.stdout
 
 
-def test_second_instance_is_refused(tmp_path, home):
-    lock = home / ".kb4it" / "var" / "kb4it.lock"
-    lock.parent.mkdir(parents=True)
-    with open(lock, "w", encoding="utf-8") as fh:
-        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        fh.write("4242")
-        fh.flush()
-        result = run_kb4it("themes", cwd=tmp_path, home=home)
+def test_second_build_of_the_same_repository_is_refused(tmp_path, home):
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("A", Tag="x")})
+    with FileLock(tmp_path / "repo" / "var" / "kb4it.lock"):
+        result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+        listing = run_kb4it("themes", cwd=tmp_path, home=home)
     assert result.returncode == 1
-    assert "KB4IT is already running (PID 4242)" in result.stdout
+    assert f"KB4IT is already working on this repository (PID {os.getpid()})" in result.stdout
+    assert "[LOCK] BUSY" in result.stdout
+    assert listing.returncode == 0, "actions that do not write a repository take no lock"
+
+
+def test_two_repositories_build_at_the_same_time(tmp_path, home):
+    configs = [write_repo(tmp_path / name, "techdoc", {f"{name}.md": page(name.upper(), Tag="x")})
+               for name in ("one", "two")]
+    runner = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
+    procs = [subprocess.Popen([sys.executable, "-c", runner, "build", str(cfg)], cwd=str(tmp_path),
+                              env=isolated_env(home), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              text=True, encoding="utf-8") for cfg in configs]
+    outputs = [proc.communicate(timeout=600)[0] for proc in procs]
+    assert [proc.returncode for proc in procs] == [0, 0], outputs
+    assert (tmp_path / "one" / "target" / "one.html").exists()
+    assert (tmp_path / "two" / "target" / "two.html").exists()

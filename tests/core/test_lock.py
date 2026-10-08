@@ -77,3 +77,23 @@ def test_backend_choice():
     assert isinstance(lockmod.backend_for("win32"), lockmod._WindowsBackend)
     assert isinstance(lockmod.backend_for("linux"), lockmod._PosixBackend)
     assert isinstance(lockmod.backend_for("darwin"), lockmod._PosixBackend)
+
+
+def test_registry_lock_waits_then_gives_up(tmp_path, monkeypatch):
+    held = lockmod.registry_lock(timeout=0.2)
+    with held:
+        with pytest.raises(LockBusyError):
+            with lockmod.registry_lock(timeout=0.2):
+                pass
+    with lockmod.registry_lock(timeout=0.2):
+        pass
+
+
+def test_lock_paths_per_action(tmp_path):
+    from kb4it.core.main import lock_path_for
+    cfg = tmp_path / "kb" / "config" / "repo.json"
+    assert lock_path_for({"action": "build", "config": str(cfg)}) == str(tmp_path / "kb" / "var" / "kb4it.lock")
+    assert lock_path_for({"action": "themes"}) is None
+    assert lock_path_for({"action": "verify", "config": str(cfg)}) is None
+    create = lock_path_for({"action": "create", "repo_path": str(tmp_path / "new")})
+    assert not create.startswith(str(tmp_path / "new"))

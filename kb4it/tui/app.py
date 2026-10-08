@@ -61,8 +61,10 @@ def load_projects() -> list[dict]:
 
 
 def save_projects(projects: list[dict]) -> None:
+    from kb4it.core.lock import registry_lock
     PROJECTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    json_save(str(PROJECTS_FILE), {"projects": projects})
+    with registry_lock():
+        json_save(str(PROJECTS_FILE), {"projects": projects})
 
 
 # ─── theme / apps helpers ─────────────────────────────────────────────────────
