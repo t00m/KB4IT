@@ -267,7 +267,7 @@ kb4it serve <config> [--host 127.0.0.1] [--port 8642] [--no-watch] [--no-reload]
 
 ### SV-02 TUI integration
 
-**Requirement.** The Project screen action "Browse via Web Server" uses `kb4it/core/webserver.py` and gains live reload: it watches and rebuilds like `serve`, and the Build screen log shows rebuilds. The plain "Browse Local" (`file://`) action is unchanged.
+**Requirement.** The Project screen action "Browse via Web Server" uses `kb4it/core/webserver.py` and gains live reload: it watches and rebuilds like `serve`, and each rebuild shows a notification ("Rebuilt the site" or the first error). It does not hold the repository lock between rebuilds, so **Compile** keeps working. The plain "Browse Local" (`file://`) action is unchanged.
 
 **Acceptance.** Existing TUI tests pass; a new test checks that the server object exposes the status endpoint.
 

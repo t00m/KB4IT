@@ -78,9 +78,13 @@ def watched_paths(config):
 class Server:
     """Holds the state of one `kb4it serve` run."""
 
-    def __init__(self, params: dict):
+    def __init__(self, params: dict, holds_lock=True, on_build=None):
         self.config = os.path.abspath(params["config"])
         self.params = params
+        # kb4it serve holds the repository lock for its whole run. The TUI does not, so its
+        # Compile button keeps working; each rebuild then takes the lock like any build.
+        self.holds_lock = holds_lock
+        self.on_build = on_build
         self.status = BuildStatus()
         self.server = None
 
@@ -90,7 +94,8 @@ class Server:
         started = time.perf_counter()
         reset_logging()
         build_params = argparse.Namespace(action="build", config=self.config, force=force,
-                                          log_level=self.params.get("log_level") or "INFO", lock_held=True)
+                                          log_level=self.params.get("log_level") or "INFO",
+                                          lock_held=self.holds_lock)
         collector = _ErrorCollector()
         error = ""
         try:
@@ -106,7 +111,23 @@ class Server:
         self.status.record(ok, error)
         elapsed = time.perf_counter() - started
         log.info(f"[SERVE] REBUILD elapsed={elapsed:.2f}s result={'ok' if ok else 'failed'}")
+        if self.on_build is not None:
+            self.on_build(ok, error)
         return ok
+
+    def start_background(self, target):
+        """Serve target with live reload and rebuild on change from a daemon thread (used by the TUI)."""
+        self.server = SiteServer(target, reload=True, status=self.status).start()
+        self.stop_event = threading.Event()
+        threading.Thread(target=self.watch_loop, args=(self.stop_event,), name="kb4it-watch", daemon=True).start()
+        return self.server
+
+    def stop_background(self):
+        if getattr(self, "stop_event", None) is not None:
+            self.stop_event.set()
+        if self.server is not None:
+            self.server.shutdown()
+            self.server = None
 
     def run(self):
         """Serve until Ctrl+C; return the process exit status."""

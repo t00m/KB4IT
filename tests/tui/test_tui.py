@@ -212,6 +212,11 @@ def test_project_screens_after_a_build(registry, built_repo, monkeypatch):
         assert opened[1].startswith("http://127.0.0.1:")
         status = await asyncio.to_thread(lambda: urllib.request.urlopen(opened[1], timeout=5).status)
         assert status == 200
+        page = await asyncio.to_thread(lambda: urllib.request.urlopen(opened[1], timeout=5).read().decode("utf-8"))
+        assert "kb4it-live-reload" in page, "the TUI web server reloads pages after a rebuild"
+        live = await asyncio.to_thread(
+            lambda: urllib.request.urlopen(opened[1] + "__kb4it/status", timeout=5).read().decode("utf-8"))
+        assert '"build"' in live
         await pilot.click("#back")
         assert isinstance(app.screen, tui.MainScreen)
     run(scenario)

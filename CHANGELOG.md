@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Documents named like a Windows device (`con.md`, `nul.md`, `com1.md`, ...) are left out of the site on every system with `DOC_NAME_RESERVED`, so a site builds the same everywhere. Two documents whose pages differ only by letter case or extension (`Note.md`, `note.md`, `note.markdown`) log `DOC_NAME_CLASH`; `kb4it verify` reports both problems, and `fail_on_invalid` makes them stop the build (CP-06).
 - CI runs the tests and a create-and-build of every bundled theme on Linux, macOS and Windows, with Python 3.11 and 3.13. `scripts/devel/test.sh --python X.Y` picks the Python version, and `scripts/devel/smoke_build.py` runs the same smoke build locally (CP-09).
 - `kb4it serve CONFIG`: builds the site, serves it at `http://127.0.0.1:8642/` and rebuilds it when a document, `repo.json`, your own theme, overrides or hooks change. Open pages reload after each rebuild, and a failed build shows its first error in a bar at the top of the page; the files in `target/` never contain the reload script. Options: `--host`, `--port`, `--open`, `--no-watch`, `--no-reload`, `--interval`, `--force` (SV-01).
+- Terminal interface: **Browse via Web Server** rebuilds the site when you save a document, reloads open pages and shows a notification after each rebuild (SV-02).
 
 ### Changed
 

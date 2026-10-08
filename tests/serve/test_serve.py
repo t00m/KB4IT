@@ -95,3 +95,23 @@ def test_serve_help_lists_its_options(tmp_path, home):
     result = run_kb4it("serve", "--help", cwd=tmp_path, home=home)
     for option in ("--host", "--port", "--no-watch", "--no-reload", "--open", "--interval", "--force"):
         assert option in result.stdout
+
+
+def test_background_server_rebuilds_without_holding_the_lock(tmp_path):
+    from kb4it.core.serve import Server
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("Alpha", "First.", Tag="x")})
+    results = []
+    live = Server({"config": str(cfg), "interval": 0.2}, holds_lock=False,
+                  on_build=lambda ok, error: results.append(ok))
+    assert live.build() is True
+    live.start_background(str(tmp_path / "repo" / "target"))
+    try:
+        # Not holding the lock: another build of the repository may run meanwhile.
+        with FileLock(tmp_path / "repo" / "var" / "kb4it.lock"):
+            pass
+        (tmp_path / "repo" / "source" / "a.md").write_text(page("Alpha", "Second.", Tag="x"), encoding="utf-8")
+        _wait(lambda: len(results) >= 2)
+        assert results[-1] is True
+        assert "Second." in _get(live.server.url + "a.html")
+    finally:
+        live.stop_background()
