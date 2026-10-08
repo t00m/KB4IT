@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Publishing
 HelpId: github-pages
-Keyword: github actions, ci, deploy, workflow, pages
+Keyword: github actions, ci, deploy, workflow, pages, site_url, sitemap
 Level: advanced
 Order: 410
 Related: howto-publish-web-server.md
@@ -34,6 +34,16 @@ Keep `"source": "source"` and `"target": "target"` in `repo.json`. They are rela
 
 !!! warning "Sources are published by default"
     KB4IT copies your `.md` files to the website, so readers can see the source of each page. Set `"publish_sources": false` in `repo.json` if they should not.
+
+## Tell KB4IT where the site lives {#site-url}
+
+Add the address GitHub gives the site to `repo.json`:
+
+```json
+"site_url": "https://<user>.github.io/<repository>/"
+```
+
+With it, the build writes `sitemap.xml` and `robots.txt` for search engines, a canonical link in every page, and the feed of the blog theme. See [site_url](reference-repo-json.md#optional).
 
 ## Add the workflow {#workflow}
 

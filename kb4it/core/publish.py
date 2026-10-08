@@ -29,3 +29,38 @@ def site_url(repo: dict):
 def absolute(base, path):
     """Absolute URL of a page path inside the site."""
     return base + path.lstrip("/").replace("\\", "/")
+
+
+ROBOTS_MARK = "# Written by KB4IT"
+SITEMAP_SKIP_DIRS = {"admin", "resources", "sources"}
+
+
+def sitemap_xml(entries) -> str:
+    """sitemap.xml for [(absolute url, 'YYYY-MM-DD'), ...]."""
+    from xml.sax.saxutils import escape
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for url, lastmod in entries:
+        lines.append(f"  <url><loc>{escape(url)}</loc><lastmod>{lastmod}</lastmod></url>")
+    lines.append("</urlset>")
+    return "\n".join(lines) + "\n"
+
+
+def robots_txt(base) -> str:
+    return f"{ROBOTS_MARK}\nUser-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n"
+
+
+def site_pages(target, exclude=()):
+    """Relative paths ('a.html', 'sub/b.html') of the pages in target, skipping assets and admin folders."""
+    import os
+    pages = []
+    for root, dirs, files in os.walk(target):
+        rel_root = os.path.relpath(root, target)
+        if rel_root == ".":
+            dirs[:] = [d for d in dirs if d not in SITEMAP_SKIP_DIRS]
+            rel_root = ""
+        for name in files:
+            rel = os.path.join(rel_root, name).replace(os.sep, "/")
+            if name.endswith(".html") and rel not in exclude:
+                pages.append(rel)
+    return sorted(pages)

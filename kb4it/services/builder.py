@@ -16,6 +16,7 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
+from kb4it.core.publish import ROBOTS_MARK, absolute, robots_txt, site_pages, sitemap_xml
 from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_sections, prune_sections,
                                render_index_js)
 from kb4it.core.service import Service
@@ -35,6 +36,14 @@ def _template_candidates(template_name, theme_templates_dir, global_templates_di
         os.path.join(theme_templates_dir, f"{template_name}.tpl"),
         os.path.join(global_templates_dir, f"{template_name}.tpl"),
     ]
+
+
+def _written_by_kb4it(path) -> bool:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return fh.readline().strip() == ROBOTS_MARK
+    except OSError:
+        return False
 
 
 class Builder(Service):
@@ -270,6 +279,50 @@ class Builder(Service):
         if size > INDEX_WARN_BYTES:
             self.log.warning(f"[SEARCH] INDEX_LARGE size={size}")
         self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={size}")
+
+    def sitemap_exclude(self) -> set:
+        """Pages left out of sitemap.xml; themes may add their own."""
+        return {"404.html", "search.html"}
+
+    def page_dates(self) -> dict:
+        """'page.html' -> 'YYYY-MM-DD' for documents with a Date."""
+        dates = {}
+        for doc_id in self.srvdtb.get_documents():
+            values = self.srvdtb.get_values(doc_id, "Date") or []
+            if values and values[0]:
+                dates[html_id_for(doc_id)] = str(values[0])[:10]
+        return dates
+
+    def write_sitemap(self):
+        """sitemap.xml and robots.txt for sites with a site_url; "sitemap": false turns them off."""
+        target = self.srvbes.get_path("target")
+        repo = self.srvbes.get_dict("repo") or {}
+        base = getattr(self.srvbes, "site_url", None)
+        sitemap = os.path.join(target, "sitemap.xml")
+        robots = os.path.join(target, "robots.txt")
+        user_robots = os.path.join(self.srvbes.get_path("source"), "robots.txt")
+        if repo.get("sitemap") is False or base is None:
+            if base is None and repo.get("sitemap") is not False:
+                self.log.info("[SITEMAP] SKIP reason=no_site_url")
+            for path in (sitemap, robots):
+                if os.path.exists(path) and (path == sitemap or _written_by_kb4it(path)):
+                    os.unlink(path)
+            return
+        dates = self.page_dates()
+        entries = []
+        for rel in site_pages(target, self.sitemap_exclude()):
+            lastmod = dates.get(rel)
+            if lastmod is None:
+                lastmod = datetime.fromtimestamp(os.path.getmtime(os.path.join(target, rel))).strftime("%Y-%m-%d")
+            entries.append((absolute(base, rel), lastmod))
+        with open(sitemap, "w", encoding="utf-8") as fh:
+            fh.write(sitemap_xml(entries))
+        if os.path.isfile(user_robots):
+            shutil.copyfile(user_robots, robots)
+        else:
+            with open(robots, "w", encoding="utf-8") as fh:
+                fh.write(robots_txt(base))
+        self.log.info(f"[SITEMAP] WRITTEN pages={len(entries)}")
 
     def page_hook_pre(self, var):
         """Insert html code before the content.

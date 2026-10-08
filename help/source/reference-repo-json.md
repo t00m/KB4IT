@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -49,6 +49,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `fail_on_invalid` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
+| `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format |
 

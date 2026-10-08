@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `markdown.highlight`: `pygments` colours code blocks at build time with Pygments, writes `resources/pygments.css` (a light and a dark style, `pygments_style` and `pygments_style_dark`) and drops highlight.js from the pages, in all four themes; `none` turns colouring off. The default, `client`, keeps highlight.js. Pygments is a new dependency (MD-02).
 - Full-text search in techdoc, blog and bookshelf: a search box that shows the best matches as you type, and a `search.html` page with all results and filters by Category and Tag. The index (`search-index.js`) holds the text of every document by section, works from `file://`, and is updated incrementally: documents that did not change are not parsed again. `"search": false` in `repo.json` turns it off. The search engine is now shared with apphelp (SR-01, SR-02, SR-03).
 - `site_url` in `repo.json`: the public address of the site, used by the sitemap, the feed and the canonical and Open Graph tags. A value that is not an `http://` or `https://` address stops the build (PB-01).
+- With `site_url` set, every build writes `sitemap.xml` (with the document `Date` as last change) and `robots.txt`; a `robots.txt` in `source/` is published instead of the generated one. `"sitemap": false` turns both off (PB-02).
 
 ### Changed
 
