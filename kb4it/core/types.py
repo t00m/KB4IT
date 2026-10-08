@@ -59,6 +59,7 @@ class KBDict(TypedDict, total=False):
     metadata:       dict   # dict[str, dict[str, list[str]]]
     kb4it_version:  str
     site_signature: str
+    core_signature: str   # hash of core settings that shape every page (markdown, overrides, hooks)
 
 
 class DBRecord(TypedDict, total=False):

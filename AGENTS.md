@@ -133,6 +133,7 @@ Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first e
 ### Builder hooks and core behaviour
 
 - `Builder.create_page_about_app()` builds the about-app page into the build tree; the backend never writes into `source/`.
+- `Processor.signature_parts()` lists core settings that shape every page (`markdown`, and later overrides and hooks); their hash is stored as `core_signature` in `kbdict.json`, and a change rebuilds everything (`[PROCESSOR] CORE_SIGNATURE_CHANGED`).
 - `Builder.site_signature()` returns a value that changes when every page must be rebuilt (default empty, which turns the check off). The processor stores it in the database and forces a full recompile when it changes; themes that render site-wide content (navigation, related pages) into every page override it.
 - Markdown links to other `.md` files (`[text](other.md#anchor)`) are rewritten to the generated `.html` page. A target that is not a source document logs `[COMPILER] LINK_BROKEN` (rewrite logic in `kb4it/core/mdlinks.py`).
 - YAML frontmatter values that are null (`Tag:` with no value) become `[]`.

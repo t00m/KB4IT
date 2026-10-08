@@ -174,9 +174,25 @@ class Processor(Service):
         if self.plan.force_all:
             self.log.info("[PROCESSOR] SITE_SIGNATURE_CHANGED action=rebuild_all")
 
+        # And when a core setting that shapes every page changed (Markdown settings, overrides, hooks).
+        core = self.core_signature()
+        self.kbdict_new["core_signature"] = core
+        if self.kbdict_cur.get("document") and core != self.kbdict_cur.get("core_signature"):
+            self.plan.force_all = True
+            self.log.info("[PROCESSOR] CORE_SIGNATURE_CHANGED action=rebuild_all")
+
         # Save new kbdict
         self.srvbes.save_kbdict(self.kbdict_new)
 
+
+    def signature_parts(self) -> dict:
+        """Core settings whose change must rebuild every page; each feature adds its own entry."""
+        repo = self.srvbes.get_dict("repo")
+        return {"markdown": repo.get("markdown") or {}}
+
+    def core_signature(self) -> str:
+        """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""
+        return get_hash_from_dict(self.signature_parts())
 
     def step_01_analysis(self):
         """Compilation strategy."""
