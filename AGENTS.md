@@ -324,7 +324,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 
 - Python >= 3.11, < 4.0, GNU/Linux only.
 - `Mako==1.3.12` -- templates.
-- `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions.
+- `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions always on; `repo.json` `markdown.extensions`/`extension_configs` add more (`kb4it/core/mdconfig.py`, checked at config load). Optional extra `KB4IT[extras]` installs `pymdown-extensions`.
 - `PyYAML>=6.0` -- frontmatter parsing.
 - `lxml` -- XML parsing for post-processing.
 - `rich>=13.0` -- terminal formatting (used by TUI and log output).

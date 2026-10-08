@@ -155,6 +155,9 @@ class Backend(Service):
             for key in missing:
                 self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
             raise ConfigError(f"Missing required config keys: {missing}")
+        # Fail early on a bad markdown block or a missing extension package.
+        from kb4it.core.mdconfig import load_settings
+        self.markdown = load_settings(self.repo)
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""

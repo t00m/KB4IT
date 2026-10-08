@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, markdown, extensions, pymdownx
 Level: basic
 Order: 620
 Section: Reference
@@ -49,6 +49,28 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `fail_on_invalid` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format |
+
+## Markdown {#markdown}
+
+The optional `markdown` block adds python-markdown extensions to the built-in ones (`extra`, `admonition`, `toc`, `sane_lists`).
+
+```json
+"markdown": {
+    "extensions": ["pymdownx.tasklist", "pymdownx.details", "nl2br"],
+    "extension_configs": {
+        "pymdownx.tasklist": {"custom_checkbox": true}
+    }
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `extensions` | `[]` | Extension names, as python-markdown expects them. Extensions that ship with python-markdown work right away; others must be installed where KB4IT runs |
+| `extension_configs` | `{}` | Settings per extension |
+
+Changing the block rebuilds every page. An extension that is not installed stops the build with `MD_EXTENSION_MISSING name=... hint=pip install ...`; `kb4it verify` reports it too.
+
+The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT when you ask for its extras: `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`.
 
 ## Theme settings {#theme}
 

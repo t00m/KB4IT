@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+
+"""
+Markdown settings from the optional `markdown` block of repo.json.
+
+# Author: Tomás Vírseda <tomasvirseda@gmail.com>
+# License: GPLv3
+"""
+
+from dataclasses import dataclass, field
+
+import markdown
+
+from kb4it.core.exceptions import ConfigError
+from kb4it.core.log import get_logger
+from kb4it.core.mdlinks import MdLinkExtension
+
+log = get_logger(__name__)
+
+# Always on: the documented KB4IT Markdown dialect.
+BASE_EXTENSIONS = ["extra", "admonition", "toc", "sane_lists"]
+HIGHLIGHT_MODES = ("client", "pygments", "none")
+
+# Package to install for well-known extension modules, for the error hint.
+_PACKAGES = {"pymdownx": "pymdown-extensions", "markdown_katex": "markdown-katex",
+             "mdx_truly_sane_lists": "mdx-truly-sane-lists"}
+
+
+@dataclass
+class MarkdownSettings:
+    extensions: list = field(default_factory=list)          # user extensions, after the base ones
+    extension_configs: dict = field(default_factory=dict)
+    highlight: str = "client"
+    pygments_style: str = "default"
+    pygments_style_dark: str = "monokai"
+
+    def all_extensions(self):
+        """Extension list for one python-markdown instance (a fresh link rewriter each time)."""
+        names = list(BASE_EXTENSIONS)
+        if self.highlight == "pygments":
+            names.append("codehilite")
+        names += [name for name in self.extensions if name not in names]
+        return names + [MdLinkExtension()]
+
+    def all_configs(self):
+        configs = dict(self.extension_configs)
+        if self.highlight == "pygments":
+            configs.setdefault("codehilite", {"css_class": "highlight", "guess_lang": False})
+        return configs
+
+    def new_markdown(self):
+        return markdown.Markdown(extensions=self.all_extensions(), extension_configs=self.all_configs())
+
+
+def _package_hint(name):
+    top = name.split(".", 1)[0].split(":", 1)[0]
+    return _PACKAGES.get(top, top)
+
+
+def load_settings(repo: dict) -> MarkdownSettings:
+    """Read and check the markdown block; raise ConfigError naming the problem."""
+    block = repo.get("markdown") or {}
+    if not isinstance(block, dict):
+        raise ConfigError("repo.json 'markdown' must be an object")
+    extensions = block.get("extensions", [])
+    if not isinstance(extensions, list) or not all(isinstance(e, str) and e.strip() for e in extensions):
+        raise ConfigError("repo.json 'markdown.extensions' must be a list of extension names")
+    configs = block.get("extension_configs", {})
+    if not isinstance(configs, dict) or not all(isinstance(v, dict) for v in configs.values()):
+        raise ConfigError("repo.json 'markdown.extension_configs' must map extension names to objects")
+    highlight = block.get("highlight", "client")
+    if highlight not in HIGHLIGHT_MODES:
+        raise ConfigError(f"repo.json 'markdown.highlight' must be one of {', '.join(HIGHLIGHT_MODES)}")
+    settings = MarkdownSettings(
+        extensions=[e.strip() for e in extensions], extension_configs=configs, highlight=highlight,
+        pygments_style=block.get("pygments_style", "default"),
+        pygments_style_dark=block.get("pygments_style_dark", "monokai"))
+    _check_loadable(settings)
+    return settings
+
+
+def _check_loadable(settings):
+    """Load every extension once, so a missing package fails before any page is built."""
+    for name in settings.extensions + (["codehilite"] if settings.highlight == "pygments" else []):
+        try:
+            markdown.Markdown(extensions=[name], extension_configs={
+                k: v for k, v in settings.all_configs().items() if k == name})
+        except ImportError as error:
+            hint = "pygments" if name == "codehilite" else _package_hint(name)
+            log.error(f"[COMPILER] MD_EXTENSION_MISSING name={name} hint=pip install {hint}")
+            raise ConfigError(f"Markdown extension '{name}' is not installed (pip install {hint}): {error}") from error
+        except Exception as error:
+            log.error(f"[COMPILER] MD_EXTENSION_INVALID name={name} error={error}")
+            raise ConfigError(f"Markdown extension '{name}' cannot load: {error}") from error
+    if settings.highlight == "pygments":
+        try:
+            import pygments  # noqa: F401  codehilite silently skips colouring without it
+        except ImportError as error:
+            log.error("[COMPILER] MD_EXTENSION_MISSING name=pygments hint=pip install pygments")
+            raise ConfigError("markdown.highlight 'pygments' needs the Pygments package") from error

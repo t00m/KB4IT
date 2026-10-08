@@ -17,6 +17,7 @@ from pathlib import Path
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.lock import registry_lock
+from kb4it.core.mdconfig import load_settings
 from kb4it.core.service import Service
 from kb4it.core.util import (copydir, delete_target_contents, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, json_save, page_name_clashes)
@@ -159,6 +160,10 @@ class Workflow(Service):
         except Exception as e:
             self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={e}")
             raise KB4ITError(f"Theme verify hook failed: {e}") from e
+        try:
+            load_settings(repo)
+        except ConfigError as e:
+            problems = [f"repo.json: {e}", *problems]
         if problems:
             print("\nTheme checks:")
             for line in problems:

@@ -63,6 +63,8 @@ KB4IT uses [Python-Markdown](https://python-markdown.github.io/) with these exte
 | `toc` | heading anchors; `## Heading {#my-anchor}` sets your own |
 | `sane_lists` | lists that behave as you expect |
 
+Add more extensions with the [`markdown` setting](reference-repo-json.md#markdown).
+
 ## Why a document is rejected {#invalid}
 
 A document KB4IT cannot read is left out of the site. The build logs `DOC_INVALID` with a reason, counts it as `invalid=` in the summary, and `kb4it verify` lists it.

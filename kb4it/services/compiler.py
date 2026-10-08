@@ -14,10 +14,8 @@ import shutil
 import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
-import markdown as _markdown_lib
-
 from kb4it.core.env import ENV
-from kb4it.core.mdlinks import MdLinkExtension
+from kb4it.core.mdconfig import load_settings
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext)
@@ -63,6 +61,7 @@ class Compiler(Service):
         self.srvprc = self.get_service("Processor")
         self.links = {}
         self._links_lock = threading.Lock()
+        self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
 
     def execute(self):
         """Compile Markdown documents to HTML."""
@@ -157,9 +156,7 @@ class Compiler(Service):
                     text = text[end + 4:].lstrip("\n")
             # Strip the first H1 heading,  the title is already shown in the page header
             text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
-            md = _markdown_lib.Markdown(
-                extensions=["extra", "admonition", "toc", "sane_lists", MdLinkExtension()],
-            )
+            md = self.markdown.new_markdown()
             html_fragment = md.convert(text)
             with self._links_lock:
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)

@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI runs the tests and a create-and-build of every bundled theme on Linux, macOS and Windows, with Python 3.11 and 3.13. `scripts/devel/test.sh --python X.Y` picks the Python version, and `scripts/devel/smoke_build.py` runs the same smoke build locally (CP-09).
 - `kb4it serve CONFIG`: builds the site, serves it at `http://127.0.0.1:8642/` and rebuilds it when a document, `repo.json`, your own theme, overrides or hooks change. Open pages reload after each rebuild, and a failed build shows its first error in a bar at the top of the page; the files in `target/` never contain the reload script. Options: `--host`, `--port`, `--open`, `--no-watch`, `--no-reload`, `--interval`, `--force` (SV-01).
 - Terminal interface: **Browse via Web Server** rebuilds the site when you save a document, reloads open pages and shows a notification after each rebuild (SV-02).
+- `markdown` block in `repo.json`: `extensions` and `extension_configs` add python-markdown extensions to the built-in ones. A missing extension stops the build with `MD_EXTENSION_MISSING` and an install hint, and `kb4it verify` reports it; changing the block rebuilds every page. `KB4IT[extras]` installs PyMdown Extensions (MD-01).
 
 ### Changed
 
