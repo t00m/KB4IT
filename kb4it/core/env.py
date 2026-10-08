@@ -110,7 +110,7 @@ ENV["SYS"]["PS"]["NAME"] = process_name()
 ENV["CONF"] = {}
 ENV["CONF"]["ROOT"] = abspath(sys.modules[__name__].__file__ + "/../../")
 
-ENV["CONF"]["USER_DIR"] = os.path.expanduser("~")
+ENV["CONF"]["USER_DIR"] = str(Path.home())
 ENV["CONF"]["MAX_WORKERS"] = multiprocessing.cpu_count()  # Avoid MemoryError
 
 # App Info
@@ -135,7 +135,8 @@ ENV["APP"]["website"] = "https://github.com/t00m/KB4IT"
 
 # Local paths
 ENV["LPATH"] = {}
-ENV["LPATH"]["ROOT"] = os.path.join(
+# KB4IT_HOME relocates every per-user file (tests, portable installs); the default is ~/.kb4it on all systems.
+ENV["LPATH"]["ROOT"] = os.environ.get("KB4IT_HOME") or os.path.join(
     ENV["CONF"]["USER_DIR"], f".{ENV['APP']['shortname'].lower()}"
 )
 ENV["LPATH"]["VAR"] = os.path.join(ENV["LPATH"]["ROOT"], "var")

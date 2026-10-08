@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `KB4IT_HOME` environment variable: puts the per-user files (`projects.json`, user themes, logs) in another folder instead of `~/.kb4it`. The test suite uses it so that it never writes to the real profile, also on Windows (CP-03).
+
 ### Changed
 
 - KB4IT no longer stops with "KB4IT only runs in GNU/Linux systems" when the system has no `/etc/os-release`, and no longer reads `/proc` at start-up; on macOS and Windows the platform is described with Python's `platform.platform()`. The debug log names the platform family (CP-01).

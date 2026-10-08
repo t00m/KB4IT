@@ -14,9 +14,17 @@ APPHELP = ROOT / "kb4it" / "resources" / "themes" / "apphelp"
 _RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 
 
+def isolated_env(home, **extra):
+    """Environment for a kb4it subprocess whose per-user files live under home/.kb4it on every OS."""
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
+               PYTHONPATH=str(ROOT), COLUMNS="1000")
+    env.update(extra)
+    return env
+
+
 def run_kb4it(*args, cwd, home):
     """Run kb4it with an isolated HOME and return the finished process."""
-    env = dict(os.environ, HOME=str(home), PYTHONPATH=str(ROOT), COLUMNS="1000", NO_COLOR="1")
+    env = isolated_env(home, NO_COLOR="1")
     return subprocess.run(
         [sys.executable, "-c", _RUNNER, *map(str, args)],
         cwd=str(cwd), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

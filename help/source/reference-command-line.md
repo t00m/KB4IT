@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, build, verify, info, themes, apps, projects, --force, --log-level, exit status
+Keyword: cli, kb4it, create, build, verify, info, themes, apps, projects, --force, --log-level, exit status, KB4IT_HOME
 Level: basic
 Order: 610
 Section: Reference
@@ -55,3 +55,11 @@ A build with unreadable documents still ends with `0` and reports them as `inval
 | `~/.kb4it/opt/resources/themes/` | Your own themes |
 | `~/.kb4it/var/kb4it.lock` | Stops two KB4IT running at once |
 | `<knowledge base>/var/` | Build cache and logs; safe to delete |
+
+`~` is your home folder: `/home/<you>` on Linux, `/Users/<you>` on macOS, `C:\Users\<you>` on Windows.
+
+## Environment variables {#environment}
+
+| Variable | Effect |
+|---|---|
+| `KB4IT_HOME` | Folder for the files above instead of `~/.kb4it`. Useful for a portable install or to keep test runs apart |

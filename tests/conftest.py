@@ -5,8 +5,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-# kb4it.core.env creates ~/.kb4it at import time; keep it out of the real home.
+# kb4it.core.env creates its per-user folder at import time; keep it out of the real home.
+# KB4IT_HOME covers Windows, where Path.home() reads USERPROFILE instead of HOME.
 os.environ["HOME"] = tempfile.mkdtemp(prefix="kb4it-test-home-")
+os.environ["USERPROFILE"] = os.environ["HOME"]
+os.environ["KB4IT_HOME"] = os.path.join(os.environ["HOME"], ".kb4it")
 
 import pytest  # noqa: E402
 

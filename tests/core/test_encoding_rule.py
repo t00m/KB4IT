@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 
-from tests.helpers import ROOT, page, write_repo
+from tests.helpers import ROOT, isolated_env, page, write_repo
 
 TEXT_IO_METHODS = {"read_text", "write_text"}
 
@@ -61,7 +61,7 @@ def test_builds_never_fall_back_to_the_locale_encoding(tmp_path, home):
         cfg = write_repo(tmp_path / theme, theme, {"nota.md": page("Canción de Tomás", "Año, niño.", Author="Tomás",
                                                                      Category="Post", Date="2026-10-08", DocType="Reference")},
                          **conf)
-        env = dict(os.environ, HOME=str(home), PYTHONPATH=str(ROOT), COLUMNS="1000")
+        env = isolated_env(home)
         runner = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
         cmd = [sys.executable, "-X", "warn_default_encoding", "-W", "error::EncodingWarning",
                "-c", runner, "build", str(cfg)]

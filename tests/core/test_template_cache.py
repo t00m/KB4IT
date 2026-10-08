@@ -1,10 +1,9 @@
 """Builds in one process, as the TUI and kb4it serve do, never reuse another build's templates."""
 
-import os
 import subprocess
 import sys
 
-from tests.helpers import ROOT, mini_theme, page, write_repo
+from tests.helpers import isolated_env, mini_theme, page, write_repo
 
 _BUILDS = """
 import argparse, sys
@@ -23,7 +22,7 @@ for n, config in enumerate(args):
 
 
 def _run(tmp_path, home, *args):
-    env = dict(os.environ, HOME=str(home), PYTHONPATH=str(ROOT), COLUMNS="1000")
+    env = isolated_env(home)
     return subprocess.run([sys.executable, "-c", _BUILDS, *map(str, args)], cwd=str(tmp_path), env=env,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=600, check=False)
 
