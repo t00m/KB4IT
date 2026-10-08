@@ -12,6 +12,7 @@ from apphelp_meta import (DOCTYPES, LANDING, Problem, feature_anchor, is_classif
                           validate_all)
 from apphelp_nav import build_sections, flatten, neighbours, related_pages
 from apphelp_search import extract_sections, page_record, render_index_js
+from kb4it.core.search import copy_engine
 
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.util import get_hash_from_content, html_id_for
@@ -233,6 +234,8 @@ class Theme(Builder):
     def post_deploy_activities(self):
         target = self.srvbes.get_path("target")
         self._write(target, ".nojekyll", "")
+        # The engine is shared with the other themes; apphelp deploys only its own folders, so copy it in.
+        copy_engine(os.path.join(target, *ASSETS.split("/"), "js", "search.js"))
         self._write_search_index(target)
         mapping = helpid_map(self.flat)
         self._write(target, "helpids.js", render_helpids_js(mapping))

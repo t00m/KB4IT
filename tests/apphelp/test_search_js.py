@@ -5,7 +5,7 @@ import subprocess
 
 import pytest
 
-from tests.helpers import APPHELP
+from tests.helpers import ROOT
 
 NODE = shutil.which("node")
 pytestmark = pytest.mark.skipif(NODE is None, reason="node is not installed")
@@ -33,7 +33,7 @@ RECORDS = [
 
 
 def run(queries, links):
-    env = dict(os.environ, SEARCH_JS=str(APPHELP / "framework" / "apphelp" / "js" / "search.js"))
+    env = dict(os.environ, SEARCH_JS=str(ROOT / "kb4it" / "resources" / "common" / "js" / "kb4it-search.js"))
     payload = json.dumps({"records": RECORDS, "queries": queries, "links": links})
     out = subprocess.run([NODE, "-e", SCRIPT], input=payload, env=env, capture_output=True, text=True, check=True, encoding="utf-8")
     return json.loads(out.stdout)
@@ -76,7 +76,7 @@ def test_with_params_keeps_fragment_last():
 
 
 def test_fold_removes_accents_and_case():
-    env = dict(os.environ, SEARCH_JS=str(APPHELP / "framework" / "apphelp" / "js" / "search.js"))
+    env = dict(os.environ, SEARCH_JS=str(ROOT / "kb4it" / "resources" / "common" / "js" / "kb4it-search.js"))
     script = ('global.window = global; eval(require("fs").readFileSync(process.env.SEARCH_JS, "utf8"));'
               'console.log(JSON.stringify([window.AppHelpSearch.fold("é"), window.AppHelpSearch.fold("CAMIÓN")]));')
     out = subprocess.run([NODE, "-e", script], env=env, capture_output=True, text=True, check=True, encoding="utf-8")
@@ -84,5 +84,5 @@ def test_fold_removes_accents_and_case():
 
 
 def test_search_js_has_no_raw_combining_characters():
-    path = APPHELP / "framework" / "apphelp" / "js" / "search.js"
+    path = ROOT / "kb4it" / "resources" / "common" / "js" / "kb4it-search.js"
     assert "̀" not in path.read_text(encoding="utf-8")

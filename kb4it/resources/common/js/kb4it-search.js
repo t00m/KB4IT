@@ -1,4 +1,5 @@
-/* AppHelp search engine: scores the records in window.APPHELP_INDEX. No dependencies. */
+/* KB4IT search engine: scores the records of a search-index.js file. No dependencies.
+   Shared by every theme; apphelp copies it to its own folder at build time. */
 (function (root) {
   "use strict";
 
@@ -127,5 +128,6 @@
     return parts[0] + "?" + query.toString() + hash;
   }
 
-  root.AppHelpSearch = { Engine: Engine, fold: fold, tokenize: tokenize, withParams: withParams };
+  root.KB4ITSearch = { Engine: Engine, fold: fold, tokenize: tokenize, withParams: withParams };
+  root.AppHelpSearch = root.KB4ITSearch;
 })(typeof window !== "undefined" ? window : globalThis);
