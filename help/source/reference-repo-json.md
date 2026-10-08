@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -50,6 +50,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
+| `feed` | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format |
 
@@ -85,6 +86,23 @@ The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (ta
 techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched.
 
 The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
+
+## Feed {#feed}
+
+With `site_url` set, the blog theme writes an Atom feed, `feed.xml`, with the newest dated documents. techdoc and bookshelf write one when you turn it on:
+
+```json
+"feed": {"enabled": true, "limit": 20, "categories": ["Post", "Note"], "full_content": true}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | blog `true`, others `false` | Write the feed |
+| `limit` | `20` | Number of entries, newest first |
+| `categories` | all | Only documents with one of these `Category` values |
+| `full_content` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |
+
+Documents without a `Date` are not in the feed.
 
 ## Theme settings {#theme}
 

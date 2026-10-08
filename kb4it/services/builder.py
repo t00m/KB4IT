@@ -16,8 +16,9 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
-from kb4it.core.publish import ROBOTS_MARK, absolute, robots_txt, site_pages, sitemap_xml
-from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_sections, prune_sections,
+from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, robots_txt, site_pages,
+                                sitemap_xml)
+from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_html, load_doc_sections, prune_sections,
                                render_index_js)
 from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
@@ -323,6 +324,63 @@ class Builder(Service):
             with open(robots, "w", encoding="utf-8") as fh:
                 fh.write(robots_txt(base))
         self.log.info(f"[SITEMAP] WRITTEN pages={len(entries)}")
+
+    def feed_settings(self):
+        """Feed settings, or None when the theme has no feed. theme.json "feed": true turns it on by default."""
+        theme = self.srvbes.get_dict("theme") or {}
+        if "feed" not in theme:
+            return None
+        repo = self.srvbes.get_dict("repo") or {}
+        conf = repo.get("feed") if isinstance(repo.get("feed"), dict) else {}
+        return {"enabled": conf.get("enabled", theme["feed"] is True), "limit": int(conf.get("limit", 20)),
+                "categories": conf.get("categories"), "full_content": conf.get("full_content", True)}
+
+    def feed_enabled(self) -> bool:
+        settings = self.feed_settings()
+        return bool(settings and settings["enabled"] and getattr(self.srvbes, "site_url", None))
+
+    def write_feed(self):
+        """feed.xml (Atom) with the newest dated documents."""
+        target = self.srvbes.get_path("target")
+        path = os.path.join(target, "feed.xml")
+        settings = self.feed_settings()
+        if not settings or not settings["enabled"]:
+            if os.path.exists(path):
+                os.unlink(path)
+            return
+        base = getattr(self.srvbes, "site_url", None)
+        if base is None:
+            self.log.info("[FEED] SKIP reason=no_site_url")
+            return
+        root = self.srvbes.get_path("root")
+        wanted = set(settings["categories"] or [])
+        sources = self.srvbes.get_value("docs", "filenames") or []
+        known = set(self.srvdtb.get_documents())
+        dated = []
+        for doc_id in sources:
+            if doc_id not in known or self.srvdtb.is_system(doc_id):
+                continue
+            date = (self.srvdtb.get_values(doc_id, "Date") or [None])[0]
+            categories = set(self.srvdtb.get_values(doc_id, "Category") or [])
+            if not date or (wanted and not categories & wanted):
+                continue
+            dated.append((str(date), doc_id))
+        entries = []
+        for date, doc_id in sorted(dated, reverse=True)[:settings["limit"]]:
+            if settings["full_content"]:
+                content = load_doc_html(root, doc_id)
+            else:
+                sections = load_doc_sections(root, doc_id)
+                summary = (self.srvdtb.get_values(doc_id, "Summary") or [""])[0]
+                content = summary or (sections[0]["text"][:300] if sections else "")
+            entries.append({"title": (self.srvdtb.get_values(doc_id, "Title") or [doc_id])[0],
+                            "url": absolute(base, html_id_for(doc_id)), "updated": atom_date(date),
+                            "author": ", ".join(self.srvdtb.get_values(doc_id, "Author") or []),
+                            "content": content})
+        repo = self.srvbes.get_dict("repo") or {}
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(atom_feed(repo.get("title", ""), base, entries, repo.get("tagline", "")))
+        self.log.info(f"[FEED] WRITTEN entries={len(entries)}")
 
     def page_hook_pre(self, var):
         """Insert html code before the content.

@@ -97,6 +97,17 @@ def save_doc_sections(root, doc_id, html_fragment):
     os.makedirs(folder, exist_ok=True)
     with open(os.path.join(folder, _cache_name(doc_id)), "w", encoding="utf-8") as fh:
         json.dump(sections, fh, ensure_ascii=False)
+    # The article HTML too, for feeds that carry the full text.
+    with open(os.path.join(folder, f"{doc_id}.html"), "w", encoding="utf-8") as fh:
+        fh.write(html_fragment)
+
+
+def load_doc_html(root, doc_id) -> str:
+    try:
+        with open(os.path.join(sections_dir(root), f"{doc_id}.html"), encoding="utf-8") as fh:
+            return fh.read()
+    except OSError:
+        return ""
 
 
 def load_doc_sections(root, doc_id) -> list:
@@ -112,7 +123,7 @@ def prune_sections(root, keep):
     folder = sections_dir(root)
     if not os.path.isdir(folder):
         return
-    wanted = {_cache_name(doc) for doc in keep}
+    wanted = {_cache_name(doc) for doc in keep} | {f"{doc}.html" for doc in keep}
     for name in os.listdir(folder):
         if name not in wanted:
             os.unlink(os.path.join(folder, name))

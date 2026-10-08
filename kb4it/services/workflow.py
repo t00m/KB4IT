@@ -338,6 +338,7 @@ class Workflow(Service):
         theme.post_deploy_activities()
         theme.write_search_index()
         theme.write_sitemap()
+        theme.write_feed()
 
         # Build summary
         runtime = backend.get_dict("runtime")

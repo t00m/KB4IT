@@ -7,5 +7,6 @@
     "description": "Theme for creating simple blogs",
     "version": "0.1.0",
     "search": true,
+    "feed": true,
     "kb4it": ">=0.7.9"
 }

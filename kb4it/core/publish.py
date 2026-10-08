@@ -64,3 +64,38 @@ def site_pages(target, exclude=()):
             if name.endswith(".html") and rel not in exclude:
                 pages.append(rel)
     return sorted(pages)
+
+
+def atom_date(value) -> str:
+    """'2026-10-08' or '2026-10-08 14:30:00' as an Atom timestamp (UTC)."""
+    text = str(value).strip().replace("T", " ")
+    date, _, time = text.partition(" ")
+    return f"{date}T{(time or '00:00:00')[:8]}Z"
+
+
+def atom_feed(title, base, entries, subtitle="") -> str:
+    """Atom 1.0 feed. entries: dicts with title, url, updated, author, content (HTML)."""
+    from xml.sax.saxutils import escape
+    updated = max((e["updated"] for e in entries), default=atom_date("1970-01-01"))
+    out = ['<?xml version="1.0" encoding="utf-8"?>',
+           f'<feed xmlns="http://www.w3.org/2005/Atom" xml:base="{escape(base)}">',
+           f"  <title>{escape(title)}</title>"]
+    if subtitle:
+        out.append(f"  <subtitle>{escape(subtitle)}</subtitle>")
+    out += [f'  <link href="{escape(base)}"/>',
+            f'  <link rel="self" href="{escape(base)}feed.xml"/>',
+            f"  <id>{escape(base)}</id>",
+            f"  <updated>{updated}</updated>",
+            '  <generator uri="https://github.com/t00m/KB4IT">KB4IT</generator>']
+    for e in entries:
+        out += ["  <entry>",
+                f"    <title>{escape(e['title'])}</title>",
+                f'    <link href="{escape(e["url"])}"/>',
+                f"    <id>{escape(e['url'])}</id>",
+                f"    <updated>{e['updated']}</updated>"]
+        if e.get("author"):
+            out.append(f"    <author><name>{escape(e['author'])}</name></author>")
+        out.append(f'    <content type="html">{escape(e.get("content", ""))}</content>')
+        out.append("  </entry>")
+    out.append("</feed>")
+    return "\n".join(out) + "\n"

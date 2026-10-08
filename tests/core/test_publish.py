@@ -74,3 +74,57 @@ def test_user_robots_wins_and_sitemap_false(tmp_path, home):
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
     assert not (target / "sitemap.xml").exists()
     assert (target / "robots.txt").exists(), "a robots.txt you wrote is never removed"
+
+
+def _blog_conf(**extra):
+    import json
+    from tests.helpers import ROOT
+    path = ROOT / "kb4it" / "resources" / "themes" / "blog" / "apps" / "default" / "config" / "repo.json"
+    conf = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("theme", "source", "target", "title"):
+        conf.pop(key, None)
+    conf.update(extra)
+    return conf
+
+
+def _feed(path):
+    import xml.etree.ElementTree as ET
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+    root = ET.parse(path).getroot()
+    return [(e.find("a:title", ns).text, e.find("a:link", ns).get("href"), e.find("a:updated", ns).text,
+             e.find("a:content", ns).text) for e in root.findall("a:entry", ns)]
+
+
+def test_blog_feed(tmp_path, home):
+    pages = {"old.md": page("Old post", "Old body.", Category="Post", Date="2026-01-01", Author="Ana"),
+             "new.md": page("New post", "New *body*.", Category="Post", Date="2026-03-01 10:30", Author="Bo"),
+             "note.md": page("A note", Category="Note", Date="2026-02-01")}
+    cfg = write_repo(tmp_path / "blog", "blog", pages, **_blog_conf(site_url="https://x.org/blog/"))
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    entries = _feed(tmp_path / "blog" / "target" / "feed.xml")
+    assert [e[0] for e in entries] == ["New post", "A note", "Old post"]
+    assert entries[0][1] == "https://x.org/blog/new.html"
+    assert entries[0][2] == "2026-03-01T10:30:00Z"
+    assert "<em>body</em>" in entries[0][3]
+
+
+def test_feed_filters_and_limits(tmp_path, home):
+    pages = {f"p{n}.md": page(f"Post {n}", Category="Post", Date=f"2026-01-0{n}") for n in range(1, 5)}
+    pages["note.md"] = page("Note", Category="Note", Date="2026-01-09")
+    pages["undated.md"] = page("Undated", Category="Post")
+    feed = {"enabled": True, "limit": 2, "categories": ["Post"], "full_content": False}
+    cfg = write_repo(tmp_path / "td", "techdoc", pages, site_url="https://x.org/", feed=feed)
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    entries = _feed(tmp_path / "td" / "target" / "feed.xml")
+    assert [e[0] for e in entries] == ["Post 4", "Post 3"]
+
+
+def test_feed_is_off_by_default_in_techdoc_and_needs_site_url(tmp_path, home):
+    cfg = write_repo(tmp_path / "td", "techdoc", {"a.md": page("A", Date="2026-01-01", Tag="x")}, site_url="https://x.org/")
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    assert not (tmp_path / "td" / "target" / "feed.xml").exists()
+    cfg = write_repo(tmp_path / "bl", "blog", {"a.md": page("A", Category="Post", Date="2026-01-01")}, **_blog_conf())
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert "[FEED] SKIP reason=no_site_url" in result.stdout
+    assert not (tmp_path / "bl" / "target" / "feed.xml").exists()
