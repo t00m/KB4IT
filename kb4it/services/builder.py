@@ -16,6 +16,8 @@ from mako.template import Template
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
+from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_sections, prune_sections,
+                               render_index_js)
 from kb4it.core.service import Service
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 
@@ -207,7 +209,67 @@ class Builder(Service):
             key=lambda d: d["name"],
         )
 
+        theme_var["search_box"] = self.search_box()
         return theme_var
+
+    def search_enabled(self) -> bool:
+        """Full-text search is on when the theme supports it ("search": true in theme.json)
+        and repo.json does not turn it off with "search": false."""
+        theme = self.srvbes.get_dict("theme") or {}
+        repo = self.srvbes.get_dict("repo") or {}
+        return theme.get("search") is True and repo.get("search", True) is not False
+
+    def search_box(self) -> str:
+        """Search box markup for the theme's header, or '' when search is off."""
+        return self.render_template("HTML_SEARCH_BOX") if self.search_enabled() else ""
+
+    def create_page_search(self):
+        """Search page (search.html), built only when search is on."""
+        if not self.search_enabled():
+            return
+        self.distribute_md("search", self.render_template("PAGE_SEARCH", self.get_theme_var()))
+        self.srvdtb.add_document("search.md")
+        self.srvdtb.add_document_key("search.md", "Title", "Search")
+        self.srvdtb.add_document_key("search.md", "SystemPage", "Yes")
+
+    def search_record(self, doc_id) -> dict:
+        """Index record of one document; themes may override to add facets or a summary."""
+        values = lambda key: [v for v in (self.srvdtb.get_values(doc_id, key) or []) if v]
+        title = (values("Title") or [doc_id])[0]
+        summary = (values("Summary") or [""])[0]
+        facets = {key: values(key) for key in ("Category", "Tag") if values(key)}
+        return {"u": html_id_for(doc_id), "t": title, "s": summary, "k": "", "c": "", "f": facets,
+                "w": [], "g": [], "x": []}
+
+    def write_search_index(self):
+        """Write target/search-index.js from the sections the compiler recorded; remove it when search is off."""
+        target = self.srvbes.get_path("target")
+        root = self.srvbes.get_path("root")
+        index_path = os.path.join(target, "search-index.js")
+        if (self.srvbes.get_dict("theme") or {}).get("search") is not True:
+            return  # the theme has no shared search (apphelp writes its own index)
+        if not self.search_enabled():
+            for name in ("search-index.js", "search.html"):
+                path = os.path.join(target, name)
+                if os.path.exists(path):
+                    os.unlink(path)
+            return
+        known = set(self.srvdtb.get_documents())
+        sources = self.srvbes.get_value("docs", "filenames") or []
+        docs = [d for d in sources if d in known and not self.srvdtb.is_system(d)]
+        records = []
+        for doc_id in sorted(docs):
+            record = self.search_record(doc_id)
+            record["x"] = [[s["id"], s["heading"], s["text"]] for s in load_doc_sections(root, doc_id)]
+            records.append(record)
+        prune_sections(root, docs)
+        content = render_index_js(records, "KB4IT_INDEX")
+        with open(index_path, "w", encoding="utf-8") as fh:
+            fh.write(content)
+        size = len(content.encode("utf-8"))
+        if size > INDEX_WARN_BYTES:
+            self.log.warning(f"[SEARCH] INDEX_LARGE size={size}")
+        self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={size}")
 
     def page_hook_pre(self, var):
         """Insert html code before the content.

@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
 from kb4it.core.mdconfig import load_settings
+from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext)
@@ -162,6 +163,8 @@ class Compiler(Service):
             html_fragment = md.convert(text)
             with self._links_lock:
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)
+            # Sections for the full-text search index, cached per document for incremental builds.
+            save_doc_sections(self.srvbes.get_path("root"), os.path.basename(doc), html_fragment)
             # Inject a TOC block so extract_toc() can populate the Contents nav menu.
             toc_block = _md_toc_block(md.toc)
             if toc_block:

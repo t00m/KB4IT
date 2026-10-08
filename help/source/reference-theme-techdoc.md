@@ -57,6 +57,7 @@ Each document gets a table of contents, sections that fold when you click their 
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `add.html` | A form that fills a ready-made skeleton per category, to copy into a new file |
 | `help.html` | A short guide to writing documents |
+| `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the header shows the best matches as you type. See [search](reference-repo-json.md#search) |
 
 ## Settings {#settings}
 

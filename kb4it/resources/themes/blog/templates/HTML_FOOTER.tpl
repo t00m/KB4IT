@@ -7,6 +7,9 @@
                         <span class="uk-link-heading">${var['repo']['title']}</span>
                         </a>
                     </h2>
+% if var.get('search_box'):
+                    <div class="uk-flex uk-flex-center uk-margin-small">${var['search_box']}</div>
+% endif
                     <div class="uk-flex uk-flex-top uk-flex-center uk-margin">
             <blockquote>
             <p class="uk-text-center">${var['repo']['tagline']}</p>

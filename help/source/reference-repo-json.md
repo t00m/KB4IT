@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -48,6 +48,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `publish_sources` | `true` | Copy the `.md` files to the website, in `target/sources/` |
 | `fail_on_invalid` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | | Use the theme in this folder instead of searching by name |
+| `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format |
 
 ## Markdown {#markdown}
@@ -76,6 +77,12 @@ With `"highlight": "pygments"` the build writes `resources/pygments.css`, and th
 Changing the block rebuilds every page. An extension that is not installed stops the build with `MD_EXTENSION_MISSING name=... hint=pip install ...`; `kb4it verify` reports it too.
 
 The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT when you ask for its extras: `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`.
+
+## Search {#search}
+
+techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched.
+
+The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
 
 ## Theme settings {#theme}
 

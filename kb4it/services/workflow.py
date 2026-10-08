@@ -336,6 +336,7 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=8 name=theme_post_deploy")
         theme.post_deploy_activities()
+        theme.write_search_index()
 
         # Build summary
         runtime = backend.get_dict("runtime")

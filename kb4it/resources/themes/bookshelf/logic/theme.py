@@ -367,6 +367,7 @@ class Theme(Builder):
         self.create_page_about_kb4it()
         self.create_page_about_app()
         self.create_page_help()
+        self.create_page_search()
 
     def build_page_index(self, var):
         runtime = self.srvbes.get_dict('runtime')

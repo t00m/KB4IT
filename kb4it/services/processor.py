@@ -188,7 +188,7 @@ class Processor(Service):
     def signature_parts(self) -> dict:
         """Core settings whose change must rebuild every page; each feature adds its own entry."""
         repo = self.srvbes.get_dict("repo")
-        return {"markdown": repo.get("markdown") or {}}
+        return {"markdown": repo.get("markdown") or {}, "search": repo.get("search", True)}
 
     def core_signature(self) -> str:
         """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""

@@ -119,6 +119,11 @@ ${var['toc']}
             </div>
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
+% if var.get('search_box'):
+                    <li class="uk-flex uk-flex-middle uk-padding-small uk-padding-remove-vertical">
+                        ${var['search_box']}
+                    </li>
+% endif
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
                     </li>

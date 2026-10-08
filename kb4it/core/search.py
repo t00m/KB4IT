@@ -76,3 +76,43 @@ def copy_engine(dest):
     """Copy the search engine script to dest (a file path)."""
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     shutil.copyfile(ENGINE_JS, dest)
+
+
+DOC_CONTAINER = "kb4it-doc"
+
+
+def sections_dir(root) -> str:
+    """Per-document section cache: <repo>/var/search, kept between builds for unchanged documents."""
+    return os.path.join(str(root), "var", "search")
+
+
+def _cache_name(doc_id) -> str:
+    return f"{doc_id}.json"
+
+
+def save_doc_sections(root, doc_id, html_fragment):
+    """Store the sections of one compiled document (called by the compiler)."""
+    sections = extract_sections(f'<div id="{DOC_CONTAINER}">{html_fragment}</div>', DOC_CONTAINER)
+    folder = sections_dir(root)
+    os.makedirs(folder, exist_ok=True)
+    with open(os.path.join(folder, _cache_name(doc_id)), "w", encoding="utf-8") as fh:
+        json.dump(sections, fh, ensure_ascii=False)
+
+
+def load_doc_sections(root, doc_id) -> list:
+    try:
+        with open(os.path.join(sections_dir(root), _cache_name(doc_id)), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return []
+
+
+def prune_sections(root, keep):
+    """Remove cached sections of documents that no longer exist."""
+    folder = sections_dir(root)
+    if not os.path.isdir(folder):
+        return
+    wanted = {_cache_name(doc) for doc in keep}
+    for name in os.listdir(folder):
+        if name not in wanted:
+            os.unlink(os.path.join(folder, name))

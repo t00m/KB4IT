@@ -34,11 +34,15 @@ from kb4it.core.util import valid_filename
             <span class="caret">&#9662;</span>
         </a>
 % endif
+% if var.get('search_box'):
+        <div class="search">${var['search_box']}</div>
+% else:
         <a class="search" href="all.html">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6"></circle><path d="M14 14l4 4"></path></svg>
             <span>Browse chapters, commands, tags&hellip;</span>
             <span class="kbd">All</span>
         </a>
+% endif
         <div class="top-actions">
             <a class="icon-btn" href="properties.html" title="Properties"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="10" cy="5" rx="7" ry="2.6"></ellipse><path d="M3 5v10c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V5"></path><path d="M3 10c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"></path></svg></a>
             <a class="icon-btn" href="help.html" title="Help"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"></circle><path d="M10 9v5"></path><circle cx="10" cy="6.2" r="0.6" fill="currentColor"></circle></svg></a>
