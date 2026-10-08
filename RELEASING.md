@@ -59,6 +59,29 @@ scripts/release.sh                      # or: scripts/release.sh 0.8.0
 
 This sets the version in `kb4it/VERSION` and `pyproject.toml`, turns `[Unreleased]` into `[X.Y.Z] - <today>` with a fresh empty `[Unreleased]` above it, and drafts `releases/X.Y.Z.md` from the changelog. Running it twice is safe: the second run finds the section already dated and leaves it alone.
 
+### 2b. Raise the requirement of themes that use new core features
+
+While `kb4it/VERSION` still names the previous release, a theme cannot require the new one: KB4IT would refuse to load it and the tests would fail. So a theme that starts using something new from the core keeps its old requirement until the release, and is raised here, after step 2 has set the new version.
+
+For 0.9.0 all four bundled themes use new core features (search, feeds, page metadata, overrides, backlinks):
+
+```bash
+for theme in apphelp blog bookshelf techdoc; do
+    python3 - "kb4it/resources/themes/$theme/theme.json" 0.9.0 <<'PY'
+import json, sys
+path, version = sys.argv[1], sys.argv[2]
+conf = json.load(open(path, encoding="utf-8"))
+conf["kb4it"] = f">={version}"
+open(path, "w", encoding="utf-8").write(json.dumps(conf, indent=4, ensure_ascii=False) + "\n")
+PY
+done
+./scripts/devel/check_themes.sh
+git add kb4it/resources/themes/*/theme.json
+git commit -m "chore(themes): require kb4it 0.9.0"
+```
+
+Commit only the `theme.json` files: the `--commit` step expects every other change except `kb4it/VERSION`, `pyproject.toml` and `CHANGELOG.md` to be committed.
+
 ### 3. Write the release notes
 
 `releases/X.Y.Z.md` becomes the body of the GitHub release. Write it for someone deciding whether to update, not for someone reading a diff: one sentence, then the few changes a user would notice. Mention anything that breaks existing sites or themes.

@@ -33,22 +33,24 @@ This is for maintainers. `RELEASING.md` in the repository has every detail and t
     scripts/release.sh
     ```
 
-3. Edit `releases/X.Y.Z.md` for someone deciding whether to update: one sentence, then the changes they would notice. Delete the `TODO` line.
+3. If a bundled theme started using new core features since the last release, raise its `kb4it` requirement in `theme.json` to the new version now, and commit only those files. It cannot be done earlier, because the version files still name the previous release until step 2. `RELEASING.md` has the commands.
 
-4. Check and commit. This runs the tests, the theme check and the wheel check, and commits `chore(release): X.Y.Z` only if all pass:
+4. Edit `releases/X.Y.Z.md` for someone deciding whether to update: one sentence, then the changes they would notice. Delete the `TODO` line.
+
+5. Check and commit. This runs the tests, the theme check and the wheel check, and commits `chore(release): X.Y.Z` only if all pass:
 
     ```bash
     scripts/release.sh --commit
     ```
 
-5. Open a pull request to `master`, let CI pass and merge it. Then tag the merge commit:
+6. Open a pull request to `master`, let CI pass and merge it. Then tag the merge commit:
 
     ```bash
     git checkout master && git pull --ff-only
     git tag vX.Y.Z && git push origin vX.Y.Z
     ```
 
-6. The tag starts `.github/workflows/publish.yml`. It checks that the tag, the version files, the changelog and the notes agree, runs the tests and the theme check, publishes to PyPI and creates the GitHub release.
+7. The tag starts `.github/workflows/publish.yml`. It checks that the tag, the version files, the changelog and the notes agree, runs the tests and the theme check, publishes to PyPI and creates the GitHub release.
 
 7. Install the new version from PyPI to check it, then open the next cycle:
 
