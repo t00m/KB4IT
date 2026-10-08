@@ -114,6 +114,7 @@ class Theme(Builder):
             "footer_name": f"{title} {version}".strip(),
             "logo": repo.get("logo", ""),
             "assets": ASSETS,
+            "highlight": (repo.get("markdown") or {}).get("highlight", "client"),
         }
 
     def _label(self, name, fallback):

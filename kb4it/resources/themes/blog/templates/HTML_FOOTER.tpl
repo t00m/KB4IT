@@ -76,7 +76,9 @@
         <!-- GRID :: END -->
     </div>
     <!-- Blog container :: END -->
+% if (var['repo'].get('markdown') or {}).get('highlight', 'client') == 'client':
 <script>hljs.highlightAll();</script>
+% endif
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->

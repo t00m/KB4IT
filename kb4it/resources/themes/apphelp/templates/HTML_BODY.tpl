@@ -24,6 +24,9 @@
 })();
 </script>
 <link rel="stylesheet" href="${A}/css/apphelp.css">
+% if ah.get('highlight') == 'pygments':
+<link rel="stylesheet" href="resources/pygments.css">
+% endif
 <style>:root { --ah-accent: ${ah['accent']}; }</style>
 </head>
 <body class="${ah['body_class'] | h}">

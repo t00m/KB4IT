@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, markdown, extensions, pymdownx
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -67,6 +67,11 @@ The optional `markdown` block adds python-markdown extensions to the built-in on
 |---|---|---|
 | `extensions` | `[]` | Extension names, as python-markdown expects them. Extensions that ship with python-markdown work right away; others must be installed where KB4IT runs |
 | `extension_configs` | `{}` | Settings per extension |
+| `highlight` | `client` | How code blocks are coloured: `client` (highlight.js in the browser, as before), `pygments` (at build time, no JavaScript), or `none` |
+| `pygments_style` | `default` | [Pygments style](https://pygments.org/styles/) for light colour schemes, with `pygments` |
+| `pygments_style_dark` | `monokai` | Pygments style for dark colour schemes, with `pygments` |
+
+With `"highlight": "pygments"` the build writes `resources/pygments.css`, and the pages no longer load highlight.js. Code blocks without a language are left plain.
 
 Changing the block rebuilds every page. An extension that is not installed stops the build with `MD_EXTENSION_MISSING name=... hint=pip install ...`; `kb4it verify` reports it too.
 

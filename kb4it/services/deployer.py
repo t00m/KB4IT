@@ -13,6 +13,7 @@ import shutil
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
+from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
 
@@ -160,6 +161,15 @@ class Deployer(Service):
                 else:
                     self.log.warning(f"[DEPLOYER] DEPLOY_DIR_MISSING name={name}")
             self.log.debug(f"[DEPLOYER] COPIED_THEME_DIRS dirs={','.join(deploy_dirs)}")
+
+        # Stylesheet for build-time code highlighting; outside resources/common, which some themes do not deploy.
+        settings = getattr(self.srvbes, "markdown", None)
+        if settings is not None and settings.highlight == "pygments":
+            css_path = os.path.join(self.srvbes.get_path("target"), "resources", "pygments.css")
+            os.makedirs(os.path.dirname(css_path), exist_ok=True)
+            with open(css_path, "w", encoding="utf-8") as fh:
+                fh.write(pygments_css(settings))
+            self.log.debug(f"[DEPLOYER] PYGMENTS_CSS path={css_path}")
 
         # Copy local resources to target path
         source_resources_dir = os.path.join(

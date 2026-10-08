@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `kb4it serve CONFIG`: builds the site, serves it at `http://127.0.0.1:8642/` and rebuilds it when a document, `repo.json`, your own theme, overrides or hooks change. Open pages reload after each rebuild, and a failed build shows its first error in a bar at the top of the page; the files in `target/` never contain the reload script. Options: `--host`, `--port`, `--open`, `--no-watch`, `--no-reload`, `--interval`, `--force` (SV-01).
 - Terminal interface: **Browse via Web Server** rebuilds the site when you save a document, reloads open pages and shows a notification after each rebuild (SV-02).
 - `markdown` block in `repo.json`: `extensions` and `extension_configs` add python-markdown extensions to the built-in ones. A missing extension stops the build with `MD_EXTENSION_MISSING` and an install hint, and `kb4it verify` reports it; changing the block rebuilds every page. `KB4IT[extras]` installs PyMdown Extensions (MD-01).
+- `markdown.highlight`: `pygments` colours code blocks at build time with Pygments, writes `resources/pygments.css` (a light and a dark style, `pygments_style` and `pygments_style_dark`) and drops highlight.js from the pages, in all four themes; `none` turns colouring off. The default, `client`, keeps highlight.js. Pygments is a new dependency (MD-02).
 
 ### Changed
 
