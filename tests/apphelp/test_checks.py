@@ -35,7 +35,7 @@ def test_helpids(tmp_path):
 def test_contract(tmp_path):
     target = site(tmp_path)
     contract = tmp_path / "contract.txt"
-    contract.write_text("# comment\n\nintro\nunknown-id\na.html#x\nb.html#nope\nmissing.html\n")
+    contract.write_text("# comment\n\nintro\nunknown-id\na.html#x\nb.html#nope\nmissing.html\n", encoding="utf-8")
     entries = load_contract(contract)
     assert entries == ["intro", "unknown-id", "a.html#x", "b.html#nope", "missing.html"]
     assert check_contract(entries, {"intro": "a.html"}, target) == ["unknown-id", "b.html#nope", "missing.html"]

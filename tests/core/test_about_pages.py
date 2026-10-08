@@ -27,18 +27,18 @@ def test_generated_about_kb4it_is_removed(tmp_path, home):
 
 def test_edited_about_kb4it_is_kept(tmp_path, home):
     repo = _build(tmp_path, home, {"a.md": page("A", Date="2026-01-01"), "about_kb4it.md": EDITED})
-    assert (repo / "source" / "about_kb4it.md").read_text() == EDITED
+    assert (repo / "source" / "about_kb4it.md").read_text(encoding="utf-8") == EDITED
 
 
 def test_user_about_app_wins(tmp_path, home):
     mine = "---\nSystemPage: Yes\n---\n# About Foo\n\nFoo is great.\n"
     repo = _build(tmp_path, home, {"a.md": page("A", Date="2026-01-01"), "about_app.md": mine})
-    assert "Foo is great." in (repo / "target" / "about_app.html").read_text()
+    assert "Foo is great." in (repo / "target" / "about_app.html").read_text(encoding="utf-8")
 
 
 def test_about_headings_are_rendered(tmp_path, home):
     repo = _build(tmp_path, home, {"a.md": page("A", Date="2026-01-01")})
-    app = (repo / "target" / "about_app.html").read_text()
+    app = (repo / "target" / "about_app.html").read_text(encoding="utf-8")
     assert "Page not found" in app
     assert "How to replace it" in app
-    assert "Description" in (repo / "target" / "about_kb4it.html").read_text()
+    assert "Description" in (repo / "target" / "about_kb4it.html").read_text(encoding="utf-8")

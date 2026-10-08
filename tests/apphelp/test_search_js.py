@@ -35,7 +35,7 @@ RECORDS = [
 def run(queries, links):
     env = dict(os.environ, SEARCH_JS=str(APPHELP / "framework" / "apphelp" / "js" / "search.js"))
     payload = json.dumps({"records": RECORDS, "queries": queries, "links": links})
-    out = subprocess.run([NODE, "-e", SCRIPT], input=payload, env=env, capture_output=True, text=True, check=True)
+    out = subprocess.run([NODE, "-e", SCRIPT], input=payload, env=env, capture_output=True, text=True, check=True, encoding="utf-8")
     return json.loads(out.stdout)
 
 
@@ -79,7 +79,7 @@ def test_fold_removes_accents_and_case():
     env = dict(os.environ, SEARCH_JS=str(APPHELP / "framework" / "apphelp" / "js" / "search.js"))
     script = ('global.window = global; eval(require("fs").readFileSync(process.env.SEARCH_JS, "utf8"));'
               'console.log(JSON.stringify([window.AppHelpSearch.fold("é"), window.AppHelpSearch.fold("CAMIÓN")]));')
-    out = subprocess.run([NODE, "-e", script], env=env, capture_output=True, text=True, check=True)
+    out = subprocess.run([NODE, "-e", script], env=env, capture_output=True, text=True, check=True, encoding="utf-8")
     assert json.loads(out.stdout) == ["e", "camion"]
 
 

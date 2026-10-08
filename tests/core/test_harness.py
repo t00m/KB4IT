@@ -10,4 +10,4 @@ def test_mini_theme_builds(tmp_path, home):
     result = run_kb4it("build", cfg, cwd=repo, home=home)
     assert result.returncode == 0, result.stdout
     assert '<meta name="docs" content="1">' in (repo / "target" / "a.html").read_text(encoding="utf-8")
-    assert json.loads((repo / "target" / "documents.json").read_text()) == ["a.md"]
+    assert json.loads((repo / "target" / "documents.json").read_text(encoding="utf-8")) == ["a.md"]

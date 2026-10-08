@@ -25,8 +25,8 @@ def test_second_build_loads_its_own_theme(tmp_path, home):
     env = isolated_env(home)
     result = subprocess.run([sys.executable, "-c", _TWO_BUILDS, str(cfg_a), str(cfg_b)], cwd=str(tmp_path),
                             env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=600,
-                            check=False)
+                            check=False, encoding="utf-8")
     assert result.returncode == 0, result.stdout
     assert (tmp_path / "a" / "target" / "documents.json").exists()
-    assert json.loads((tmp_path / "b" / "target" / "second.json").read_text()) == ["b.md"]
+    assert json.loads((tmp_path / "b" / "target" / "second.json").read_text(encoding="utf-8")) == ["b.md"]
     assert not (tmp_path / "b" / "target" / "documents.json").exists()

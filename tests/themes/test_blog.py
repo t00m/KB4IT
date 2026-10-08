@@ -28,7 +28,7 @@ def site(tmp_path_factory):
     assert run_kb4it("create", "blog", "repo", cwd=base, home=home).returncode == 0
     repo = base / "repo"
     cfg = repo / "config" / "repo.json"
-    conf = json.loads(cfg.read_text())
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf.update(index_posts=2, strict=True)
     cfg.write_text(json.dumps(conf), encoding="utf-8")
     for name, text in PAGES.items():

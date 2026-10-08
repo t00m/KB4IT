@@ -29,7 +29,7 @@ def test_cwd_relative_paths_still_work_with_a_warning(tmp_path, home):
 def test_create_writes_root_relative_paths(tmp_path, home):
     result = run_kb4it("create", "techdoc", "newrepo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
-    conf = json.loads((tmp_path / "newrepo" / "config" / "repo.json").read_text())
+    conf = json.loads((tmp_path / "newrepo" / "config" / "repo.json").read_text(encoding="utf-8"))
     assert conf["source"] == "source"
     assert conf["target"] == "target"
     build = run_kb4it("build", tmp_path / "newrepo" / "config" / "repo.json", cwd=home, home=home)
@@ -49,7 +49,7 @@ def test_create_makes_source_and_target_when_the_app_has_none(tmp_path, home):
     theme = mini_theme(home / ".kb4it" / "opt" / "resources" / "themes" / "mini")
     (theme / "apps" / "default" / "config").mkdir(parents=True)
     (theme / "apps" / "default" / "config" / "repo.json").write_text(
-        json.dumps({"title": "T", "theme": "mini", "source": "source", "target": "target"}))
+        json.dumps({"title": "T", "theme": "mini", "source": "source", "target": "target"}), encoding="utf-8")
     result = run_kb4it("create", "mini", "newrepo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert (tmp_path / "newrepo" / "source").is_dir()

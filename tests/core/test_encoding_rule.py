@@ -44,7 +44,7 @@ def _offenders(path):
 
 def test_text_io_names_its_encoding():
     found = []
-    for path in sorted((ROOT / "kb4it").rglob("*.py")):
+    for path in sorted([*(ROOT / "kb4it").rglob("*.py"), *(ROOT / "tests").rglob("*.py")]):
         found.extend(f"{path.relative_to(ROOT)}:{line}" for line in _offenders(path))
     assert not found, "text I/O without encoding=:\n" + "\n".join(found)
 

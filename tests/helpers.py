@@ -29,7 +29,7 @@ def run_kb4it(*args, cwd, home):
         [sys.executable, "-c", _RUNNER, *map(str, args)],
         cwd=str(cwd), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, timeout=600,
-    )
+    encoding="utf-8")
 
 
 def write_repo(base, theme, pages, **config):

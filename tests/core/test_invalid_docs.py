@@ -34,7 +34,7 @@ def test_invalid_document_is_reported_in_summary(tmp_path, home):
     assert result.returncode == 0, result.stdout
     assert "DOC_INVALID doc=broken.md reason=yaml_error line=6 col=16" in result.stdout
     assert "docs_total=2 compiled=1 skipped=0 invalid=1" in result.stdout
-    assert json.loads((repo / "target" / "documents.json").read_text()) == ["good.md"]
+    assert json.loads((repo / "target" / "documents.json").read_text(encoding="utf-8")) == ["good.md"]
 
 
 def test_fail_on_invalid_stops_the_build(tmp_path, home):

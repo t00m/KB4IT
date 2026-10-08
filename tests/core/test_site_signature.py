@@ -12,8 +12,8 @@ def test_signature_change_rebuilds_unchanged_pages(tmp_path, home, flag, expecte
         "b.md": page("B", Date="2026-01-02"),
     }, theme_path=str(theme))
     assert run_kb4it("build", cfg, cwd=repo, home=home).returncode == 0
-    (repo / "source" / "c.md").write_text(page("C", Date="2026-01-03"))
+    (repo / "source" / "c.md").write_text(page("C", Date="2026-01-03"), encoding="utf-8")
     result = run_kb4it("build", cfg, cwd=repo, home=home)
     assert result.returncode == 0, result.stdout
-    html = (repo / "target" / "a.html").read_text()
+    html = (repo / "target" / "a.html").read_text(encoding="utf-8")
     assert f'<meta name="docs" content="{expected}">' in html

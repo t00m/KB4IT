@@ -47,7 +47,7 @@ def test_requirement_rejects_bad_spec(spec):
 
 def test_version_files_agree():
     version = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
-    pyproject = re.search(r'(?m)^version\s*=\s*"([^"]+)"', (ROOT / "pyproject.toml").read_text()).group(1)
+    pyproject = re.search(r'(?m)^version\s*=\s*"([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8")).group(1)
     assert version == pyproject
     parse_version(version)
     assert "+" not in version
@@ -85,7 +85,7 @@ def test_every_tracked_theme_declares_a_requirement_this_version_meets():
     import json
     import subprocess
     tracked = subprocess.run(["git", "ls-files", "kb4it/resources/themes/*/theme.json"], cwd=ROOT,
-                             capture_output=True, text=True, check=True).stdout.split()
+                             capture_output=True, text=True, check=True, encoding="utf-8").stdout.split()
     assert tracked
     for rel in tracked:
         spec = json.loads((ROOT / rel).read_text(encoding="utf-8")).get("kb4it")

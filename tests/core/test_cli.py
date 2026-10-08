@@ -61,7 +61,7 @@ def test_create_writes_relative_paths_and_compile_script(tmp_path, home):
     result = run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     repo = tmp_path / "repo"
-    conf = json.loads((repo / "config" / "repo.json").read_text())
+    conf = json.loads((repo / "config" / "repo.json").read_text(encoding="utf-8"))
     assert (conf["source"], conf["target"]) == ("source", "target")
     if sys.platform == "win32":
         assert (repo / "bin" / "compile.cmd").read_text(encoding="utf-8").startswith("@echo off")
@@ -216,7 +216,7 @@ def test_bad_theme_path(tmp_path, home, make, reason):
 
 def test_theme_without_requirement_loads_with_a_warning(tmp_path, home):
     theme = mini_theme(tmp_path / "mini")
-    conf = json.loads((theme / "theme.json").read_text())
+    conf = json.loads((theme / "theme.json").read_text(encoding="utf-8"))
     del conf["kb4it"]
     (theme / "theme.json").write_text(json.dumps(conf), encoding="utf-8")
     repo = tmp_path / "repo"

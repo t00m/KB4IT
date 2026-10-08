@@ -24,7 +24,7 @@ for n, config in enumerate(args):
 def _run(tmp_path, home, *args):
     env = isolated_env(home)
     return subprocess.run([sys.executable, "-c", _BUILDS, *map(str, args)], cwd=str(tmp_path), env=env,
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=600, check=False)
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=600, check=False, encoding="utf-8")
 
 
 def test_template_edited_between_builds_is_used(tmp_path, home):

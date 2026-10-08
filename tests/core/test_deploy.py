@@ -36,9 +36,9 @@ def test_publish_sources_false_removes_sources(tmp_path, home):
     cfg = write_repo(repo, "mini", {"a.md": page("A", Date="2026-01-01")}, theme_path=str(theme))
     _build(repo, home)
     assert (repo / "target" / "sources" / "a.md").exists()
-    conf = json.loads(cfg.read_text())
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf["publish_sources"] = False
-    cfg.write_text(json.dumps(conf))
+    cfg.write_text(json.dumps(conf), encoding="utf-8")
     _build(repo, home)
     assert not (repo / "target" / "sources").exists()
 
@@ -60,9 +60,9 @@ def test_dir_removed_from_deploy_dirs_disappears(tmp_path, home):
     _build(repo, home)
     dest = repo / "target" / "resources" / "themes" / "mini"
     assert (dest / "logic").is_dir()
-    conf = json.loads((theme / "theme.json").read_text())
+    conf = json.loads((theme / "theme.json").read_text(encoding="utf-8"))
     conf["deploy_dirs"] = ["framework"]
-    (theme / "theme.json").write_text(json.dumps(conf))
+    (theme / "theme.json").write_text(json.dumps(conf), encoding="utf-8")
     _build(repo, home)
     assert (dest / "framework").is_dir()
     assert not (dest / "logic").exists()
@@ -74,7 +74,7 @@ def test_user_resources_survive_deploy_dirs(tmp_path, home):
     write_repo(repo, "mini", {"a.md": page("A", Date="2026-01-01"),
                               "resources/x.txt": "keep"}, theme_path=str(theme))
     _build(repo, home)
-    assert (repo / "target" / "resources" / "x.txt").read_text() == "keep"
+    assert (repo / "target" / "resources" / "x.txt").read_text(encoding="utf-8") == "keep"
 
 
 def test_failed_build_leaves_no_stale_tmp_for_link_check(tmp_path, home):

@@ -84,7 +84,8 @@ def test_helpers(tmp_path):
     assert tui.get_apps("nosuchtheme") == []
     cfg = str(tmp_path / "repo" / "config" / "repo.json")
     assert tui._resolve_repo_path(cfg, "target") == tmp_path / "repo" / "target"
-    assert tui._resolve_repo_path(cfg, "/abs") == tui.Path("/abs")
+    absolute = str(tmp_path / "abs")  # "/abs" is not absolute on Windows
+    assert tui._resolve_repo_path(cfg, absolute) == tui.Path(absolute)
     assert tui._log_path(cfg) is None and tui._kbdict_path(cfg) is None
     assert tui._parse_level("   ERROR | x") == "ERROR"
     assert tui._parse_level("plain line") == "INFO"
@@ -278,7 +279,7 @@ def test_create_project(registry, tmp_path):
         await pilot.pause()
         assert isinstance(app.screen, tui.MainScreen), create.query_one("#error-banner", Label).render()
     run(scenario)
-    assert json.loads((path / "config" / "repo.json").read_text())["theme"] == "blog"
+    assert json.loads((path / "config" / "repo.json").read_text(encoding="utf-8"))["theme"] == "blog"
     assert tui.load_projects() == [{"name": "New blog", "config": str(path / "config" / "repo.json")}]
 
 

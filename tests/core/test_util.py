@@ -43,8 +43,8 @@ def test_copydir_merges_into_existing_tree(tmp_path):
     (dest / "top.txt").write_text("old", encoding="utf-8")
     (dest / "keep.txt").write_text("keep", encoding="utf-8")
     util.copydir(str(source), str(dest))
-    assert (dest / "top.txt").read_text() == "new"
-    assert (dest / "sub" / "deep.txt").read_text() == "deep"
+    assert (dest / "top.txt").read_text(encoding="utf-8") == "new"
+    assert (dest / "sub" / "deep.txt").read_text(encoding="utf-8") == "deep"
     assert (dest / "keep.txt").exists()
 
 
@@ -104,7 +104,7 @@ def test_json_round_trip(tmp_path):
     path = tmp_path / "data.json"
     util.json_save(str(path), {"b": 1, "a": [1, 2]})
     assert util.json_load(str(path)) == {"a": [1, 2], "b": 1}
-    assert path.read_text().index('"a"') < path.read_text().index('"b"')
+    assert path.read_text(encoding="utf-8").index('"a"') < path.read_text(encoding="utf-8").index('"b"')
 
 
 def test_hashes(tmp_path):
