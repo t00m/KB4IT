@@ -6,7 +6,7 @@ DocType: How-to guide
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: implementation-plan, roadmap, cross-platform
 Topic: Architecture, Development
 ---
@@ -213,9 +213,9 @@ The push starts the CI matrix (commit 17) on Linux, macOS and Windows. If any jo
 
 ## Open questions
 
-I need your answer on these before starting.
+Answered on 2026-10-08: the recommendation was chosen for each one.
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
 | Q-1 | Themes that use 0.9 features should declare `"kb4it": ">=0.9.0"`. But `kb4it/VERSION` stays `0.8.0` until you run `scripts/release.sh`, and KB4IT refuses a theme whose requirement it does not meet, so the tests would fail inside the series. | Keep the bundled themes at their current requirement inside the series, and add a step to `RELEASING.md` (commit 46): raise the bundled themes to `>=0.9.0` in the release commit. Alternative: bump `kb4it/VERSION` to `0.9.0` at the start of the series, which departs from the rule that only `release.sh` changes it. |
 | Q-2 | Interim delivery after phase 1? | Yes: one interim zip after phase 1 so macOS and Windows CI results arrive early, then the final zip. |
