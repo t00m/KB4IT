@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -49,6 +49,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `fail_on_invalid` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
+| `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
 | `feed` | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
@@ -86,6 +87,12 @@ The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (ta
 techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched.
 
 The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
+
+## Page metadata {#metadata}
+
+Every page gets a short description and [Open Graph](https://ogp.me/) tags, so links shared in chats and social networks show a title and a summary. The description is the document's `Summary` property, or its first lines cut to 160 characters; pages that are not documents use `tagline`. With `site_url` set, each page also gets a canonical link and its full address, and `og_image` adds a preview image.
+
+The tags come from the template `HTML_HEAD_META.tpl`, which a theme can replace.
 
 ## Feed {#feed}
 

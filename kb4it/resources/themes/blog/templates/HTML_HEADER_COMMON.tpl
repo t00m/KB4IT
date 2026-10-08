@@ -6,8 +6,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
-  <meta name="description" content="KB4IT document">
-  <meta name="author" content="KB4IT by t00m">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 % if _hl == 'client':
   <link rel="stylesheet" href="resources/themes/blog/framework/Highlight/styles/github-dark.css">

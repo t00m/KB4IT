@@ -90,6 +90,7 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/webserver.py`         | `SiteServer` (threaded `http.server`), `BuildStatus`, live reload script injection, `/__kb4it/status` |
 | `kb4it/core/watch.py`             | `PollingWatcher`: stdlib polling with debounce, ignores editor scratch files |
 | `kb4it/core/search.py`            | Search index: section extraction (also used by apphelp), per-document cache in `<repo>/var/search/` written by the compiler, `render_index_js`; browser engine `resources/common/js/kb4it-search.js` + UI `kb4it-search-ui.js`. `Builder.write_search_index()` runs after stage 8 for themes with `"search": true` in `theme.json` |
+| `kb4it/core/publish.py`           | `site_url`, `sitemap.xml`/`robots.txt`, Atom feed; `Builder.write_sitemap()`/`write_feed()` run after stage 8; `Deployer.step_05_add_head_meta()` injects `HTML_HEAD_META.tpl` (description, Open Graph, canonical, feed link) into the pages built in this run, between `<!-- kb4it:meta -->` markers |
 | `kb4it/core/lock.py`              | `FileLock` (flock / msvcrt), `repo_lock_path`, `registry_lock` |
 | `kb4it/tui/app.py`                | Textual-based Terminal User Interface (project CRUD, build, browse, explore metadata, log viewer, web server) |
 

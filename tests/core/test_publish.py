@@ -128,3 +128,47 @@ def test_feed_is_off_by_default_in_techdoc_and_needs_site_url(tmp_path, home):
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert "[FEED] SKIP reason=no_site_url" in result.stdout
     assert not (tmp_path / "bl" / "target" / "feed.xml").exists()
+
+
+def _head(html):
+    return html[:html.index("</head>")]
+
+
+def test_page_metadata_with_site_url(tmp_path, home):
+    long_body = "First paragraph " + "word " * 60 + "end."
+    pages = {"a.md": page("Alpha", long_body, Author="Ana", Tag="x"),
+             "b.md": page("Beta", "Body.", Summary="Short summary", Tag="y")}
+    cfg = write_repo(tmp_path / "repo", "techdoc", pages, site_url="https://x.org/kb/", og_image="resources/og.png")
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    target = tmp_path / "repo" / "target"
+    head = _head((target / "a.html").read_text(encoding="utf-8"))
+    assert '<link rel="canonical" href="https://x.org/kb/a.html">' in head
+    assert '<meta property="og:title" content="Alpha">' in head
+    assert '<meta property="og:type" content="article">' in head
+    assert '<meta name="author" content="Ana">' in head
+    assert '<meta property="og:image" content="https://x.org/kb/resources/og.png">' in head
+    assert '<meta name="twitter:card" content="summary_large_image">' in head
+    description = head.split('<meta name="description" content="')[1].split('"')[0]
+    assert description.startswith("First paragraph") and len(description) <= 160 and description.endswith("…")
+    assert head.count('name="description"') == 1, "the theme's fixed description is gone"
+    assert '<meta name="description" content="Short summary">' in _head((target / "b.html").read_text(encoding="utf-8"))
+    index_head = _head((target / "index.html").read_text(encoding="utf-8"))
+    assert '<meta property="og:type" content="website">' in index_head
+
+
+def test_page_metadata_without_site_url(tmp_path, home):
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("Alpha", "Some text.", Tag="x")})
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    head = _head((tmp_path / "repo" / "target" / "a.html").read_text(encoding="utf-8"))
+    assert "canonical" not in head and "og:url" not in head
+    assert '<meta property="og:title" content="Alpha">' in head
+    assert '<meta name="twitter:card" content="summary">' in head
+    assert head.count("<!-- kb4it:meta -->") == 1
+
+
+def test_blog_head_links_its_feed(tmp_path, home):
+    cfg = write_repo(tmp_path / "bl", "blog", {"a.md": page("A", Category="Post", Date="2026-01-01")},
+                     **_blog_conf(site_url="https://x.org/"))
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    head = _head((tmp_path / "bl" / "target" / "a.html").read_text(encoding="utf-8"))
+    assert '<link rel="alternate" type="application/atom+xml"' in head and 'href="feed.xml"' in head

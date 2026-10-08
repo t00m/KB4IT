@@ -21,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `site_url` in `repo.json`: the public address of the site, used by the sitemap, the feed and the canonical and Open Graph tags. A value that is not an `http://` or `https://` address stops the build (PB-01).
 - With `site_url` set, every build writes `sitemap.xml` (with the document `Date` as last change) and `robots.txt`; a `robots.txt` in `source/` is published instead of the generated one. `"sitemap": false` turns both off (PB-02).
 - Atom feed `feed.xml` with the newest dated documents: on by default in the blog theme when `site_url` is set, and available in techdoc and bookshelf with `"feed": {"enabled": true}`. Options: `limit`, `categories`, `full_content` (PB-03).
+- Every page carries a description (the `Summary` property, or the first lines of the document) and Open Graph tags; with `site_url` also a canonical link, and `og_image` adds a preview image for shared links. The fixed "KB4IT document" description and author tags of techdoc, blog and bookshelf are gone. A theme can replace the tags with its own `HTML_HEAD_META.tpl` (PB-04).
 
 ### Changed
 

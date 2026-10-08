@@ -39,6 +39,7 @@ class Deployer(Service):
             self.step_04b_remove_sources_from_target()
         else:
             self.step_04_copy_sources_to_target(source_docs)
+        self.step_05_add_head_meta(tmp_files)
         self.step_06_copy_all_to_cache(tmp_files)
         self.step_07_copy_compiled_documents_to_target()
         self.step_08_copy_global_resources_to_target()
@@ -80,6 +81,22 @@ class Deployer(Service):
         if os.path.isdir(docsdir):
             shutil.rmtree(docsdir)
             self.log.debug(f"[DEPLOYER] SOURCES_REMOVED path={docsdir}")
+
+    def step_05_add_head_meta(self, files):
+        """Add description, Open Graph and canonical tags to the pages built in this run."""
+        theme = self.get_service("Theme")
+        n = 0
+        for path in files:
+            if not path.endswith(".html"):
+                continue
+            with open(path, encoding="utf-8") as fh:
+                html = fh.read()
+            new = theme.inject_head_meta(html, os.path.basename(path))
+            if new != html:
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write(new)
+                n += 1
+        self.log.debug(f"[DEPLOYER] HEAD_META pages={n}")
 
     def step_06_copy_all_to_cache(self, files):
         """Copy objects in temporary directory to cache path."""
