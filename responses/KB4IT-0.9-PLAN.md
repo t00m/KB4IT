@@ -6,7 +6,7 @@ DocType: How-to guide
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Approved
+Status: Done
 Tag: implementation-plan, roadmap, cross-platform
 Topic: Architecture, Development
 ---
@@ -220,3 +220,26 @@ Answered on 2026-10-08: the recommendation was chosen for each one.
 | Q-1 | Themes that use 0.9 features should declare `"kb4it": ">=0.9.0"`. But `kb4it/VERSION` stays `0.8.0` until you run `scripts/release.sh`, and KB4IT refuses a theme whose requirement it does not meet, so the tests would fail inside the series. | Keep the bundled themes at their current requirement inside the series, and add a step to `RELEASING.md` (commit 46): raise the bundled themes to `>=0.9.0` in the release commit. Alternative: bump `kb4it/VERSION` to `0.9.0` at the start of the series, which departs from the rule that only `release.sh` changes it. |
 | Q-2 | Interim delivery after phase 1? | Yes: one interim zip after phase 1 so macOS and Windows CI results arrive early, then the final zip. |
 | Q-3 | The series includes my two analysis documents and this plan under `responses/`. | Keep them: they record why each change was made. Alternative: leave `responses/` out of the series. |
+
+## Implementation notes
+
+Differences between this plan and the delivered series, decided while implementing:
+
+| Item | Plan | Delivered | Why |
+|---|---|---|---|
+| CP-02 | `create` locks `<new repo>/var/kb4it.lock` | `create` locks `~/.kb4it/var/create-<hash>.lock` | A lock inside the new folder created the folder before the theme was checked, so a failed `create` left it behind |
+| CP-07 | LF/CRLF only | Also the UTF-8 byte order mark, in sources and `repo.json` | Found while testing: Windows editors write it, and it hid the opening `---` |
+| SV-02 | Rebuilds shown in the Build screen log | Rebuilds shown as notifications | The web server keeps running after the Project screen closes; a notification reaches the user on any screen |
+| SR-02, SR-03 | One commit per theme, then a caching commit | One commit; the index is built by the core from the HTML the compiler produces, cached per document | No per-theme indexing code; caching comes for free |
+| SR-02 | Search parses pages in worker threads | Sections are parsed on the main thread (separate fix commit) | One full test run crashed with `free(): invalid pointer`; keeping lxml on one thread avoids the risk |
+| PB-04 | Themes include `HTML_HEAD_META.tpl` | The deployer inserts it before `</head>` of each page built in the run | Works for all four themes without editing their page logic; a theme can still override the template |
+| KG-01 | apphelp shows backlinks in "Related" | All four themes show the same "Linked from" block at the end of the article | One code path, from the compiler |
+| VH-01 | `apphelp.version` | The existing top-level `version` key | apphelp already reads it for the footer |
+| VH-03 | Change `help.yml` | Documented pattern only; `help.yml` unchanged | Turning versions on changes the published help URLs (root redirects to `latest/`); that is your decision |
+| Plan, verification | Byte-identical comparison with 0.8.0 per phase | Not run | Most phases change the output on purpose (search box, page metadata, backlinks); each change is covered by its own tests instead |
+
+Pre-existing problems found while testing, not fixed (outside the specification):
+
+- blog: a post without `Date` stops the build with `Error: 'Date'`, although `Date` is optional.
+- blog: a `repo.json` without `tagline` or the `git` keys makes every page fail to render (`[COMPILER] ERROR 'tagline'`), yet the build exits with status 0.
+
