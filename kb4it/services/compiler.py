@@ -15,6 +15,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
+from kb4it.core.exceptions import CompilationError
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
@@ -159,6 +160,14 @@ class Compiler(Service):
                     text = text[line_end + 1:].lstrip("\n") if line_end >= 0 else ""
             # Strip the first H1 heading,  the title is already shown in the page header
             text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
+            hooks = getattr(self.srvbes, "hooks", None)
+            if hooks is not None and hooks.has("on_document"):
+                doc_id = os.path.basename(doc)
+                srvdtb = self.get_service("DB")
+                meta = {key: list(srvdtb.get_values(doc_id, key) or []) for key in srvdtb.get_doc_keys(doc_id)}
+                text = hooks.call("on_document", doc_id, meta, text, doc=doc_id)
+                if not isinstance(text, str):
+                    raise CompilationError("Hook on_document must return the Markdown text")
             md = self.markdown.new_markdown()
             html_fragment = md.convert(text)
             with self._links_lock:
@@ -175,6 +184,8 @@ class Compiler(Service):
             with open(out_path, "w", encoding="utf-8") as fh:
                 fh.write(html_fragment)
             return doc, True, num
+        except CompilationError:
+            raise  # a failing hook stops the build
         except Exception as err:
             self.log.error(f"[COMPILER] MD_COMPILE_FAIL doc={os.path.basename(doc)} error={err}")
             return doc, False, num

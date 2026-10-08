@@ -12,7 +12,7 @@ import os
 import shutil
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import ThemeError
+from kb4it.core.exceptions import CompilationError, ThemeError
 from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
@@ -92,6 +92,11 @@ class Deployer(Service):
             with open(path, encoding="utf-8") as fh:
                 html = fh.read()
             new = theme.inject_head_meta(html, os.path.basename(path))
+            hooks = getattr(self.srvbes, "hooks", None)
+            if hooks is not None and hooks.has("on_page"):
+                new = hooks.call("on_page", os.path.basename(path), new, doc=os.path.basename(path))
+                if not isinstance(new, str):
+                    raise CompilationError("Hook on_page must return the page HTML")
             if new != html:
                 with open(path, "w", encoding="utf-8") as fh:
                     fh.write(new)

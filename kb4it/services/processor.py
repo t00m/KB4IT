@@ -191,7 +191,8 @@ class Processor(Service):
         # site_url and og_image end up in every page head (canonical link, Open Graph tags).
         return {"markdown": repo.get("markdown") or {}, "search": repo.get("search", True),
                 "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed"),
-                "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None))}
+                "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
+                "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else ""}
 
     def core_signature(self) -> str:
         """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""

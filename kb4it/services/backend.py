@@ -165,6 +165,13 @@ class Backend(Service):
             raise ConfigError("repo.json 'overrides' must be a folder path")
         root = Path(self.params["config"]).absolute().parent.parent
         self.overrides_dir = resolve_repo_path(overrides, root)
+        from kb4it.core.hooks import load_hooks
+        self.hooks = load_hooks(self.repo, root)
+        if self.hooks.has("on_config"):
+            repo = self.hooks.call("on_config", dict(self.repo))
+            if not isinstance(repo, dict):
+                raise ConfigError("Hook on_config must return the settings dictionary")
+            self.repo = repo
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""

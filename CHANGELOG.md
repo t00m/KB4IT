@@ -23,6 +23,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Atom feed `feed.xml` with the newest dated documents: on by default in the blog theme when `site_url` is set, and available in techdoc and bookshelf with `"feed": {"enabled": true}`. Options: `limit`, `categories`, `full_content` (PB-03).
 - Every page carries a description (the `Summary` property, or the first lines of the document) and Open Graph tags; with `site_url` also a canonical link, and `og_image` adds a preview image for shared links. The fixed "KB4IT document" description and author tags of techdoc, blog and bookshelf are gone. A theme can replace the tags with its own `HTML_HEAD_META.tpl` (PB-04).
 - Per-repository overrides: a template in `overrides/templates/` replaces the theme's template of the same name, and files in `overrides/static/` are copied into the website. Changing them rebuilds every page; `overrides` in `repo.json` picks another folder. `kb4it serve` watches the folder (CU-01).
+- Build hooks: `"hooks": "hooks/hooks.py"` in `repo.json` loads Python functions that KB4IT calls during the build: `on_config`, `on_document`, `on_page` and `on_build_end`. An error in a hook stops the build; editing the file rebuilds every page (CU-02).
 
 ### Changed
 

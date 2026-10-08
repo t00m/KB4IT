@@ -362,6 +362,13 @@ class Workflow(Service):
         )
         self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 
+        hooks = getattr(backend, "hooks", None)
+        if hooks is not None and hooks.has("on_build_end"):
+            summary = {"docs_total": docs_total, "compiled": compiled, "skipped": skipped, "invalid": invalid,
+                       "keys_compiled": keys_compiled, "kv_pages_compiled": kv_compiled,
+                       "elapsed": round(elapsed, 2)}
+            hooks.call("on_build_end", str(backend.get_path("target")), summary)
+
         # Report
         homepage = os.path.join(
             os.path.abspath(backend.get_path("target")), "index.html"

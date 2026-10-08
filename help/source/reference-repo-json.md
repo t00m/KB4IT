@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -52,6 +52,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
 | `feed` | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
+| `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
 | `overrides` | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format |
