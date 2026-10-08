@@ -10,6 +10,7 @@ Backend module for initialization.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -363,10 +364,26 @@ class Backend(Service):
                     raise ThemeError(f"Theme load failed: {theme_name}")
                 else:
                     frontend._validate_required_templates(self.runtime["theme"])
+                    self._apply_target_subdir()
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
                 raise ThemeError(f"Theme not found: {theme_name}")
         self.log.debug("[BACKEND] CHECKS_END")
+
+    def _apply_target_subdir(self):
+        """Let the theme build into a sub-folder of target (apphelp versions); the target becomes site_root/sub."""
+        sub = self.get_service("Theme").target_subdir()
+        if not sub:
+            return
+        if os.path.basename(sub) != sub or sub in (".", "..") or not re.fullmatch(r"[A-Za-z0-9._-]+", sub):
+            raise ThemeError(f"Version folder must be a plain name such as 0.9, not {sub!r}")
+        root = self.runtime["dir"]["target"]
+        self.runtime["dir"]["site_root"] = root
+        self.runtime["dir"]["target"] = os.path.join(root, sub)
+        os.makedirs(self.runtime["dir"]["target"], exist_ok=True)
+        if getattr(self, "site_url", None):
+            self.site_url = f"{self.site_url}{sub}/"
+        self.log.info(f"[BACKEND] TARGET_SUBDIR name={sub} path={self.runtime['dir']['target']}")
 
     @timeit
     def stage_02_get_source_documents(self):

@@ -242,6 +242,10 @@ class Builder(Service):
         theme_var["search_box"] = self.search_box()
         return theme_var
 
+    def target_subdir(self):
+        """Folder inside target to build into, or None. apphelp uses it for versioned help."""
+        return None
+
     def search_enabled(self) -> bool:
         """Full-text search is on when the theme supports it ("search": true in theme.json)
         and repo.json does not turn it off with "search": false."""

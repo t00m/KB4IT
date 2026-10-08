@@ -184,6 +184,7 @@ Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `i
 | `lang` | Language of the generated pages (`<html lang>`) |
 | `accent` | Accent colour (CSS value) |
 | `about` | When `true`, the theme builds an about page |
+| `versions` | `{"enabled": true, "latest": "<label>"}`: build into `target/<version>/` (version = top-level `version`); `Builder.target_subdir()` moves the target and `runtime['dir']['site_root']` keeps the root; `apphelp_versions.publish()` writes `latest/`, `versions.json`/`.js`, root `index.html` and `helpids.js` |
 | `contract` | Path to a contract file with the help ids the application expects; checked against the documents. An explicit path that does not exist logs `[APPHELP] CONTRACT_FILE_MISSING` |
 | `vocabulary` | Allowed values per property (`Feature`, `Level`, `Platform`, ...) |
 | `labels` | Overrides of the UI texts (for example `ts_cause`, `ts_fix`) |

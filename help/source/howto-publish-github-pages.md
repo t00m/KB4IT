@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Publishing
 HelpId: github-pages
-Keyword: github actions, ci, deploy, workflow, pages, site_url, sitemap
+Keyword: github actions, ci, deploy, workflow, pages, site_url, sitemap, versions, apphelp
 Level: advanced
 Order: 410
 Related: howto-publish-web-server.md
@@ -108,3 +108,35 @@ Push a change. The site appears at `https://OWNER.github.io/REPO/`. The **Action
 Add `kb4it verify config/repo.json` before the build step to stop the publish when a document cannot be read, or set `"fail_on_invalid": true` in `repo.json`.
 
 This help is published exactly this way; see `.github/workflows/help.yml` in the [KB4IT repository](https://github.com/t00m/KB4IT).
+
+## Publish versioned help {#versions}
+
+With [apphelp versions](reference-theme-apphelp.md#versions), every build adds its own folder and keeps the others. On GitHub Actions each run starts empty, so rebuild every released version from its git tag before the current one. Replace the build step with:
+
+```yaml
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0          # all tags
+
+      - name: Build every released version, then the current one
+        run: |
+          for tag in $(git tag --list 'v*' --sort=version:refname); do
+            git worktree add "/tmp/$tag" "$tag"
+            if [ -f "/tmp/$tag/help/config/repo.json" ]; then
+              python3 - "/tmp/$tag/help/config/repo.json" "${tag#v}" <<'PY'
+          import json, sys
+          path, version = sys.argv[1], sys.argv[2]
+          conf = json.load(open(path, encoding="utf-8"))
+          conf["version"] = version
+          conf["target"] = "${{ github.workspace }}/help/target"
+          conf.setdefault("apphelp", {})["versions"] = {"enabled": True}
+          json.dump(conf, open(path, "w", encoding="utf-8"))
+          PY
+              kb4it build "/tmp/$tag/help/config/repo.json" --force
+            fi
+          done
+          kb4it build help/config/repo.json --force
+```
+
+Each tag is built with the KB4IT of the current commit, so old pages get the current look. Pin `latest` in `repo.json` while a new version is still in preparation.
+

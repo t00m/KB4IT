@@ -13,6 +13,7 @@ from apphelp_meta import (DOCTYPES, LANDING, Problem, feature_anchor, is_classif
 from apphelp_nav import build_sections, flatten, neighbours, related_pages
 from apphelp_search import extract_sections, page_record, render_index_js
 from kb4it.core.search import copy_engine
+from apphelp_versions import publish as publish_versions
 
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.util import get_hash_from_content, html_id_for
@@ -41,6 +42,15 @@ class Theme(Builder):
         repo = self.srvbes.get_dict("repo")
         payload = {"docs": self._source_metadata(), "repo": {k: repo.get(k) for k in SIGNATURE_REPO_KEYS}}
         return get_hash_from_content(json.dumps(payload, sort_keys=True, default=str))
+
+    def target_subdir(self):
+        """With versions on, each version builds into its own folder of the target."""
+        config = load_config(self.srvbes.get_dict("repo"))
+        if not config.versions:
+            return None
+        if not config.version:
+            raise ThemeError("apphelp versions need the 'version' key in repo.json, such as \"0.9\"")
+        return config.version
 
     def build(self):
         repo = self.srvbes.get_dict("repo")
@@ -116,6 +126,7 @@ class Theme(Builder):
             "logo": repo.get("logo", ""),
             "assets": ASSETS,
             "highlight": (repo.get("markdown") or {}).get("highlight", "client"),
+            "versions": self.config.versions,
         }
 
     def _label(self, name, fallback):
@@ -240,6 +251,10 @@ class Theme(Builder):
         mapping = helpid_map(self.flat)
         self._write(target, "helpids.js", render_helpids_js(mapping))
         self._run_checks(target, mapping)
+        if self.config.versions:
+            site_root = self.srvbes.get_path("site_root")
+            labels, latest = publish_versions(site_root, self.config.version, self.config.latest)
+            self.log.info(f"[VERSIONS] PUBLISHED current={self.config.version} latest={latest} all={','.join(labels)}")
 
     def _write_search_index(self, target):
         records = []

@@ -25,6 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Per-repository overrides: a template in `overrides/templates/` replaces the theme's template of the same name, and files in `overrides/static/` are copied into the website. Changing them rebuilds every page; `overrides` in `repo.json` picks another folder. `kb4it serve` watches the folder (CU-01).
 - Build hooks: `"hooks": "hooks/hooks.py"` in `repo.json` loads Python functions that KB4IT calls during the build: `on_config`, `on_document`, `on_page` and `on_build_end`. An error in a hook stops the build; editing the file rebuilds every page (CU-02).
 - "Linked from": every document ends with the list of documents that link to it, in all four themes. Links are kept in `kbdict.json`, so only changed documents are scanned, and a page is rebuilt when its list changes. `"backlinks": false` hides the list (KG-01).
+- apphelp versions: with `"versions": {"enabled": true}` each build goes to `target/<version>/` and keeps the other versions, `latest/` copies the newest one, and `index.html`, `versions.json` and `helpids.js` at the top point to it. A version selector in the header opens the same page in another version (VH-01, VH-02). The GitHub Pages guide shows how to publish all versions (VH-03).
 
 ### Changed
 

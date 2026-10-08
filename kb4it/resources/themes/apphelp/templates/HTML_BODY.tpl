@@ -43,6 +43,9 @@
     <input id="ah-search-input" name="q" type="search" placeholder="${L['search_placeholder'] | h}" aria-label="${L['search'] | h}" aria-controls="ah-search-dropdown">
     <div id="ah-search-dropdown" class="ah-dropdown" hidden></div>
   </form>
+% if ah.get('versions'):
+  <select id="ah-version" class="ah-icon-button" aria-label="Version" data-current="${ah['version'] | h}" hidden></select>
+% endif
   <button id="ah-theme-toggle" class="ah-icon-button" type="button" aria-label="${L['theme_toggle'] | h}" title="${L['theme_toggle'] | h}">&#9680;</button>
 </header>
 <div class="ah-layout">
@@ -145,6 +148,9 @@ ${ah['content']}
 <script src="search-index.js"></script>
 % if ah['load_helpids']:
 <script src="helpids.js"></script>
+% endif
+% if ah.get('versions'):
+<script src="../versions.js"></script>
 % endif
 <script src="${A}/js/search.js"></script>
 <script src="${A}/js/apphelp.js"></script>

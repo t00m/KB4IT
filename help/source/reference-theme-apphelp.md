@@ -79,8 +79,31 @@ The `apphelp` block of `repo.json`:
 | `contract` | A file listing, one per line, the help ids and anchors the application opens; a missing one fails the build |
 | `vocabulary` | Allowed values per property |
 | `labels` | Your own texts for the interface |
+| `versions` | `{"enabled": true}` keeps one folder per version of the help; see [versions](#versions) |
 
 Edit links use `"git": true` and `git_server` without `https://`, for example `github.com`.
+
+## Versions {#versions}
+
+An application often needs the help of each release. Turn on versions in the `apphelp` block and name the version with the top-level `version` key:
+
+```json
+"version": "0.9",
+"apphelp": {"versions": {"enabled": true, "latest": "0.9"}}
+```
+
+Each build then writes into `target/<version>/` and leaves the other version folders alone. At the top of `target/` it keeps:
+
+| File | Purpose |
+|---|---|
+| `latest/` | A copy of the newest version (or of `latest`, when set), so links to `latest/` always work |
+| `index.html` | Sends readers to `latest/` |
+| `versions.json`, `versions.js` | The versions and their pages; `versions.js` lets the switcher work from disk |
+| `helpids.js` | The help ids of the latest version, for applications that open help by id |
+
+With two or more versions, a version selector appears in the header. It opens the same page in the chosen version, or that version's start page when the page does not exist there.
+
+To publish all versions on GitHub Pages, see [Publish versioned help](howto-publish-github-pages.md#versions).
 
 ## Start a help site {#start}
 
