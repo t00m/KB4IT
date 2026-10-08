@@ -82,6 +82,38 @@ Wait for it to finish. Only one build of a knowledge base runs at a time, so two
 
 If no KB4IT is running, the lock was left by a process that no longer exists and the next build takes it. The lock file is `var/kb4it.lock` inside the knowledge base.
 
+## The build stops with MD_EXTENSION_MISSING {#md-extension}
+
+### Cause
+
+`repo.json` asks for a Markdown extension, in the `markdown` block, that is not installed where KB4IT runs.
+
+### Fix
+
+Install the package the message names, in the same environment as KB4IT. For PyMdown Extensions: `uv tool install --force "KB4IT[extras]"`. Or remove the extension from `markdown.extensions`.
+
+## The build warns DOC_NAME_CLASH or leaves out a document with DOC_NAME_RESERVED {#names}
+
+### Cause
+
+`DOC_NAME_CLASH`: two documents would publish pages whose names differ only by letter case or extension, such as `Note.md` and `note.md`. macOS and Windows treat them as the same file, so one page would overwrite the other.
+
+`DOC_NAME_RESERVED`: the file is named like a Windows device (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`). Windows cannot create its page.
+
+### Fix
+
+Rename the file. `kb4it verify` lists every such name.
+
+## The page shows a red bar "KB4IT build failed" {#serve-error}
+
+### Cause
+
+`kb4it serve` (or **Browse via Web Server** in the terminal interface) rebuilt the site after a change, and the build failed. The bar shows the first error.
+
+### Fix
+
+Correct the document or setting the message names and save it. The next good build removes the bar.
+
 ## The site does not show my latest change {#stale}
 
 ### Cause

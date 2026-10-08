@@ -19,6 +19,7 @@ apphelp builds the help of an application, like the site you are reading. The sa
 
 - A sidebar of sections, built from the pages' `Section` and `Order`.
 - Search that runs in the browser, with filters, and needs no server.
+- Versions: one folder per release of your application, with a version selector; see [versions](#versions).
 - A **Topics** page listing pages by feature.
 - Help ids: the application opens `go.html?id=rename` and lands on the right page or section.
 - `?embed=1` hides the header and sidebar, for a help viewer inside the application.

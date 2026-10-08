@@ -44,7 +44,7 @@ The home page shows, from top to bottom:
 
 ![A techdoc document](resources/images/techdoc-page.webp)
 
-Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server.
+Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
 ## Other pages {#pages}
 
