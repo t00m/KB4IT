@@ -7,6 +7,38 @@ on:
 
 jobs:
   check:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    defaults:
+      run:
+        # Git Bash on Windows, so the same scripts run on every system.
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Install KB4IT
+        run: uv tool install --python ${{ matrix.python }} .
+
+      - name: Run kb4it
+        run: kb4it --version
+
+      - name: Run tests
+        run: ./scripts/devel/test.sh --python ${{ matrix.python }}
+
+      - name: Create and build every bundled theme
+        run: uv run --no-project --python ${{ matrix.python }} python scripts/devel/smoke_build.py
+
+  package:
+    name: themes and wheel
     runs-on: ubuntu-latest
 
     steps:
@@ -17,12 +49,6 @@ jobs:
 
       - name: Install KB4IT
         run: uv tool install .
-
-      - name: Run kb4it
-        run: kb4it --version
-
-      - name: Run tests
-        run: ./scripts/devel/test.sh
 
       - name: Every tracked theme is compliant
         run: ./scripts/devel/check_themes.sh

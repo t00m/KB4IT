@@ -38,7 +38,7 @@ kb4it -L DEBUG <command>                  # Set log level (DEBUG/INFO/WARNING/ER
 kb4it -v                                  # Print version and exit
 ```
 
-CI runs a build + `kb4it --version` smoke test via `.github/workflows/kb4it.yml`. Tests: `./scripts/devel/test.sh` (pytest via uv; add paths or pytest flags after it). CI also builds the wheel and runs `scripts/devel/check_wheel_themes.py`, which fails when a git-tracked theme is missing from `dist/*.whl` and prints a WARNING for themes that are in the wheel but not tracked in git.
+CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows with Python 3.11 and 3.13: `kb4it --version`, the tests and `scripts/devel/smoke_build.py` (create and build every bundled theme's default app). Tests: `./scripts/devel/test.sh [--python X.Y]` (pytest via uv; add paths or pytest flags after it; Git Bash on Windows). CI also builds the wheel and runs `scripts/devel/check_wheel_themes.py`, which fails when a git-tracked theme is missing from `dist/*.whl` and prints a WARNING for themes that are in the wheel but not tracked in git.
 
 ## Architecture
 
