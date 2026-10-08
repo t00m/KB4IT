@@ -45,6 +45,31 @@ class FrozenDict(dict):
         raise KeyError(f"ENV has no key '{key}'. Valid keys: {sorted(self.keys())}")
 
 
+def platform_family(name=None) -> str:
+    """Return 'linux', 'darwin', 'windows' or 'other' for sys.platform (or name)."""
+    name = sys.platform if name is None else name
+    if name.startswith("linux"):
+        return "linux"
+    if name == "darwin":
+        return "darwin"
+    if name in ("win32", "cygwin"):
+        return "windows"
+    return "other"
+
+
+def platform_description() -> str:
+    """Describe the operating system: os-release PRETTY_NAME where it exists, platform.platform() elsewhere."""
+    try:
+        return platform.freedesktop_os_release()["PRETTY_NAME"]
+    except (OSError, KeyError, AttributeError):
+        return platform.platform()
+
+
+def process_name() -> str:
+    """Name of the running program, read the same way on every platform."""
+    return Path(sys.argv[0]).name if sys.argv and sys.argv[0] else Path(sys.executable).name
+
+
 ENV = FrozenDict()
 
 # System info
@@ -73,21 +98,13 @@ except ModuleNotFoundError as error:
 
 ENV["SYS"]["PLATFORM"] = {}
 ENV["SYS"]["PLATFORM"]["NODE"] = platform.node()
-try:
-    ENV["SYS"]["PLATFORM"]["OS"] = platform.freedesktop_os_release()["PRETTY_NAME"]
-except FileNotFoundError:
-    print("KB4IT only runs in GNU/Linux systems")
-    sys.exit(-1)
-except AttributeError:
-    print("KB4IT couldn't start. Check traceback")
-    sys.exit(-1)
+ENV["SYS"]["PLATFORM"]["OS"] = platform_description()
+ENV["SYS"]["PLATFORM"]["FAMILY"] = platform_family()
 
 # KB4IT current process
-pid = os.getpid()
 ENV["SYS"]["PS"] = {}
 ENV["SYS"]["PS"]["PID"] = os.getpid()
-ENV["SYS"]["PS"]["NAME"] = Path(
-    f"/proc/{pid}/comm").read_text(encoding="utf-8").strip()
+ENV["SYS"]["PS"]["NAME"] = process_name()
 
 # Configuration
 ENV["CONF"] = {}

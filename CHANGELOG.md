@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- KB4IT no longer stops with "KB4IT only runs in GNU/Linux systems" when the system has no `/etc/os-release`, and no longer reads `/proc` at start-up; on macOS and Windows the platform is described with Python's `platform.platform()`. The debug log names the platform family (CP-01).
+
 ### Fixed
 
 - A second build in the same process, as the TUI does, reused the templates loaded by the first build: an edited template was ignored, and a second project whose theme shares a template name with the first rendered the first theme's template. Template caches now belong to each build (FX-01).
