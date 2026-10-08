@@ -12,7 +12,7 @@ Summary: Small things that make writing and building with KB4IT easier.
 
 ## Build with one command {#compile-script}
 
-`kb4it create` writes `bin/compile.sh`. Run it, or bind it to a key in your editor. [More](howto-build.md)
+`kb4it create` writes `bin/compile.sh` (`bin\compile.cmd` on Windows). Run it, or bind it to a key in your editor. [More](howto-build.md)
 
 ## Start from a skeleton {#skeletons}
 

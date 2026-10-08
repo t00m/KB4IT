@@ -20,7 +20,7 @@ Point `kb4it build` at the settings file of the knowledge base:
 kb4it build ~/mykb/config/repo.json
 ```
 
-Or run the script `kb4it create` made for you: `~/mykb/bin/compile.sh`.
+Or run the script `kb4it create` made for you: `~/mykb/bin/compile.sh` on Linux and macOS, `mykb\bin\compile.cmd` on Windows.
 
 The website is written to the `target/` folder. Open `target/index.html` in a browser, or see [Publish on any web server](howto-publish-web-server.md) to share it.
 

@@ -8,7 +8,9 @@
 import importlib.util
 import json
 import os
+import shlex
 import stat
+import sys
 import time
 from pathlib import Path
 
@@ -18,6 +20,17 @@ from kb4it.core.lock import registry_lock
 from kb4it.core.service import Service
 from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
 from kb4it.services.backend import resolve_repo_path
+
+
+def build_script(config_file, platform=None):
+    """Return (file name, content, executable) of the one-command build script for this platform.
+
+    The config path is quoted, so knowledge bases in folders with spaces build too.
+    """
+    platform = sys.platform if platform is None else platform
+    if platform == "win32":
+        return "compile.cmd", f'@echo off\r\nkb4it -L INFO build "{config_file}"\r\n', False
+    return "compile.sh", f"#!/bin/sh\nkb4it -L INFO build {shlex.quote(str(config_file))}\n", True
 
 
 class Workflow(Service):
@@ -232,7 +245,6 @@ class Workflow(Service):
             os.makedirs(source_dir, exist_ok=True)
             os.makedirs(target_dir, exist_ok=True)
             bin_dir = os.path.join(repo_path, "bin")
-            script = os.path.join(bin_dir, "compile.sh")
             config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
@@ -242,17 +254,12 @@ class Workflow(Service):
             with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
-            with open(script, "w", encoding="utf-8") as fs:
-                fs.write(f"kb4it -L INFO build {config_file}")
-            os.chmod(
-                script,
-                stat.S_IRUSR
-                | stat.S_IRGRP
-                | stat.S_IWUSR
-                | stat.S_IWGRP
-                | stat.S_IXUSR
-                | stat.S_IXGRP,
-            )
+            name, content, executable = build_script(config_file)
+            script = os.path.join(bin_dir, name)
+            with open(script, "w", encoding="utf-8", newline="") as fs:
+                fs.write(content)
+            if executable:
+                os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info("[WORKFLOW] REPO_INITIALIZED")
             self.log.info(f"[WORKFLOW] HINT compile_script path={script}")
             self.log.info(f"[WORKFLOW] HINT source_dir path={source_dir}")

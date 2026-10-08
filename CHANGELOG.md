@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - KB4IT no longer stops with "KB4IT only runs in GNU/Linux systems" when the system has no `/etc/os-release`, and no longer reads `/proc` at start-up; on macOS and Windows the platform is described with Python's `platform.platform()`. The debug log names the platform family (CP-01).
 - The lock moved from `~/.kb4it/var/kb4it.lock` to each knowledge base (`var/kb4it.lock`), and it uses `flock` on Linux and macOS and `msvcrt` on Windows. Two knowledge bases can now build at the same time, and listing themes, apps or projects, `info` and `verify` never wait for a build. A second build of the same knowledge base still stops with exit status 1 and names the PID that holds it. `projects.json` is written under a short lock, so two `kb4it create` runs cannot lose an entry (CP-02).
+- `kb4it create` writes `bin/compile.cmd` on Windows instead of `bin/compile.sh`. Both scripts quote the path of `repo.json`, so a knowledge base in a folder with spaces builds with them; `compile.sh` starts with `#!/bin/sh` (CP-04).
 
 ### Fixed
 

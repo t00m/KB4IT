@@ -36,7 +36,7 @@ You get this layout:
 
 ```text
 mykb/
-├── bin/compile.sh      # builds the site with one command
+├── bin/compile.sh      # builds the site with one command (compile.cmd on Windows)
 ├── config/repo.json    # title, theme and other settings
 ├── source/             # your Markdown documents go here
 └── target/             # the generated website appears here

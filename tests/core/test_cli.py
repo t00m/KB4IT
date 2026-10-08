@@ -63,9 +63,25 @@ def test_create_writes_relative_paths_and_compile_script(tmp_path, home):
     repo = tmp_path / "repo"
     conf = json.loads((repo / "config" / "repo.json").read_text())
     assert (conf["source"], conf["target"]) == ("source", "target")
-    script = repo / "bin" / "compile.sh"
-    assert script.read_text().startswith("kb4it -L INFO build ")
-    assert script.stat().st_mode & 0o100
+    if sys.platform == "win32":
+        assert (repo / "bin" / "compile.cmd").read_text(encoding="utf-8").startswith("@echo off")
+    else:
+        script = repo / "bin" / "compile.sh"
+        assert "kb4it -L INFO build " in script.read_text(encoding="utf-8")
+        assert script.stat().st_mode & 0o100
+
+
+@pytest.mark.parametrize("platform, name, line", [
+    ("linux", "compile.sh", "kb4it -L INFO build '/home/me/My KB/config/repo.json'"),
+    ("darwin", "compile.sh", "kb4it -L INFO build '/home/me/My KB/config/repo.json'"),
+    ("win32", "compile.cmd", 'kb4it -L INFO build "/home/me/My KB/config/repo.json"'),
+])
+def test_build_script_quotes_the_config_path(platform, name, line):
+    from kb4it.services.workflow import build_script
+    got_name, content, executable = build_script("/home/me/My KB/config/repo.json", platform)
+    assert got_name == name
+    assert line in content.splitlines()
+    assert executable is (platform != "win32")
 
 
 def test_create_with_unknown_theme_fails(tmp_path, home):
