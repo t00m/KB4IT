@@ -8,12 +8,9 @@ Launched automatically when kb4it is run with no arguments in a terminal.
 from __future__ import annotations
 
 import argparse
-import http.server
 import logging
 import os
 import re
-import socket
-import socketserver
 import sys
 import threading
 import webbrowser
@@ -33,6 +30,7 @@ from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
 
 from kb4it.core.env import ENV
 from kb4it.core.util import json_load, json_save
+from kb4it.core.webserver import DEFAULT_PORT, PORT_SCAN_LIMIT, SiteServer
 
 # ─── constants ────────────────────────────────────────────────────────────────
 
@@ -144,42 +142,19 @@ def _kbdict_path(config_path: str) -> Path | None:
 
 # ─── local web server (per-project) ───────────────────────────────────────────
 
-KB4IT_DEFAULT_PORT = 8642
-KB4IT_PORT_SCAN_LIMIT = 50
+KB4IT_DEFAULT_PORT = DEFAULT_PORT
+KB4IT_PORT_SCAN_LIMIT = PORT_SCAN_LIMIT
 
-# project config path -> (httpd, port)
-_WEB_SERVERS: dict[str, tuple[socketserver.TCPServer, int]] = {}
-
-
-def _find_free_port(start: int = KB4IT_DEFAULT_PORT,
-                    limit: int = KB4IT_PORT_SCAN_LIMIT) -> int | None:
-    for port in range(start, start + limit):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("127.0.0.1", port))
-                return port
-            except OSError:
-                continue
-    return None
+# project config path -> (server, port)
+_WEB_SERVERS: dict[str, tuple[SiteServer, int]] = {}
 
 
-def _start_project_server(target_dir: str) -> tuple[socketserver.TCPServer | None, int | None, str | None]:
-    port = _find_free_port()
-    if port is None:
-        return None, None, (
-            f"No free port found in range "
-            f"{KB4IT_DEFAULT_PORT}-{KB4IT_DEFAULT_PORT + KB4IT_PORT_SCAN_LIMIT}"
-        )
-
-    def _handler(*args: Any, **kwargs: Any) -> http.server.SimpleHTTPRequestHandler:
-        return http.server.SimpleHTTPRequestHandler(*args, directory=target_dir, **kwargs)
-
+def _start_project_server(target_dir: str) -> tuple[SiteServer | None, int | None, str | None]:
     try:
-        httpd = socketserver.TCPServer(("127.0.0.1", port), _handler)
+        server = SiteServer(target_dir).start()
     except OSError as exc:
         return None, None, str(exc)
-    threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    return httpd, port, None
+    return server, server.port, None
 
 
 # Clipboard tools per platform family, in order of preference; each gets the text on stdin.
