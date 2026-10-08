@@ -73,6 +73,10 @@ def html_id_for(doc_id: str) -> str:
     return SOURCE_EXT_RE.sub(".html", doc_id)
 
 
+# Sources are read with utf-8-sig: identical to utf-8, but drops the byte order mark some Windows
+# editors write, which would otherwise hide the opening "---". Text mode turns CRLF into LF.
+SOURCE_ENCODING = "utf-8-sig"
+
 WINDOWS_RESERVED_NAMES = frozenset(
     ["CON", "PRN", "AUX", "NUL"] + [f"COM{n}" for n in range(1, 10)] + [f"LPT{n}" for n in range(1, 10)])
 
@@ -125,7 +129,7 @@ def extract_sections_from_md(file_path: str) -> dict:
     """
     sections = []
 
-    with open(file_path, "r", encoding="utf-8") as fh:
+    with open(file_path, "r", encoding=SOURCE_ENCODING) as fh:
         lines = fh.readlines()
 
     current_section = None
@@ -288,8 +292,8 @@ def delete_files(files):
 
 
 def json_load(filepath: str) -> dict:
-    """Load into a dictionary a file in json format."""
-    with open(filepath, "r", encoding="utf-8") as fin:
+    """Load into a dictionary a file in json format (a repo.json saved with a byte order mark loads too)."""
+    with open(filepath, "r", encoding=SOURCE_ENCODING) as fin:
         adict = json.load(fin)
     return adict
 
@@ -323,7 +327,7 @@ def get_hash_from_body(path):
     """
     if not os.path.exists(path):
         return None
-    with open(path, "r", encoding="utf-8") as fin:
+    with open(path, "r", encoding=SOURCE_ENCODING) as fin:
         content = fin.read()
     end = content.find("\n---", 3)
     if end >= 0:
@@ -340,7 +344,7 @@ def get_markdown_attributes(docpath: str):
     keys = {}
 
     try:
-        with open(docpath, "r", encoding="utf-8") as fh:
+        with open(docpath, "r", encoding=SOURCE_ENCODING) as fh:
             content = fh.read()
 
         if not content.startswith("---"):

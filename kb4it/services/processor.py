@@ -19,7 +19,8 @@ from kb4it.core.exceptions import CompilationError
 from kb4it.core.service import Service
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
-                             page_name_clashes, string_timestamp, valid_filename)
+                             page_name_clashes, string_timestamp, valid_filename,
+                             SOURCE_ENCODING)
 
 
 @dataclass
@@ -195,7 +196,7 @@ class Processor(Service):
                 # Write new source file to temporary dir for the compiler
                 self.plan.docs_to_compile.add(docId)
                 source_path = os.path.join(self.srvbes.get_path("source"), docId)
-                with open(source_path, "r", encoding="utf-8") as fh:
+                with open(source_path, "r", encoding=SOURCE_ENCODING) as fh:
                     content = fh.read()
                 target = os.path.join(self.srvbes.get_path("tmp"), valid_filename(docId))
                 with open(target, "w", encoding="utf-8") as fout:

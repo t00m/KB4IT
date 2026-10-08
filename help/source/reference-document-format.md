@@ -17,7 +17,8 @@ Summary: The rules a source document must follow, the date formats KB4IT reads a
 |---|---|
 | Location | Directly in the `source/` folder of the knowledge base |
 | Extension | `.md` or `.markdown` |
-| Encoding | UTF-8 |
+| Encoding | UTF-8, with or without a byte order mark |
+| Line endings | LF or CRLF; both give the same page and do not trigger a rebuild when a checkout changes them |
 | Published name | Same name with `.html` |
 | Other files | `source/resources/` is copied to the website unchanged |
 
