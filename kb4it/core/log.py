@@ -43,7 +43,7 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
     root.addHandler(console)
 
     # File handler
-    file_handler = logging.FileHandler(logfile, mode="w")
+    file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)
 
@@ -66,7 +66,7 @@ def redirect_logs(logfile: str):
             root.removeHandler(handler)
 
     # Add new file handler
-    file_handler = logging.FileHandler(logfile, mode="a")
+    file_handler = logging.FileHandler(logfile, mode="a", encoding="utf-8")
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
     root.addHandler(file_handler)

@@ -152,7 +152,7 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             md_filepath = os.path.join(self.srvbes.get_path('source'), post)
-            with open(md_filepath, 'r') as fmd:
+            with open(md_filepath, 'r', encoding='utf-8') as fmd:
                 md_content = fmd.read()
             sections = extract_sections_from_md(md_filepath)
             if 'Excerpt' in sections:
@@ -635,10 +635,10 @@ class Theme(Builder):
         timestamp = get_human_datetime(now)
         keys = self.srvdtb.get_doc_properties(basename_md)
 
-        with open(path_md, 'r') as fpa:
+        with open(path_md, 'r', encoding='utf-8') as fpa:
             source_md = fpa.read()
 
-        with open(path_hdoc, 'r') as fph:
+        with open(path_hdoc, 'r', encoding='utf-8') as fph:
             source_html = fph.read()
 
         var['toc'] = self.extract_toc(source_html)
@@ -697,7 +697,7 @@ class Theme(Builder):
         HTML += BODY
         HTML += FOOTER
 
-        with open(path_hdoc, 'w') as fhtml:
+        with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
             fhtml.write(HTML)
 
     def build_page_key(self, key, values):

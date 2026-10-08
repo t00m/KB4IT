@@ -37,7 +37,7 @@ def git_describe(root) -> str:
         return ""
     try:
         out = subprocess.run(["git", "describe", "--tags", "--dirty", "--always"], cwd=root,
-                             capture_output=True, text=True, timeout=5)
+                             capture_output=True, text=True, encoding="utf-8", timeout=5)
     except (OSError, subprocess.SubprocessError):
         return ""
     return out.stdout.strip() if out.returncode == 0 else ""

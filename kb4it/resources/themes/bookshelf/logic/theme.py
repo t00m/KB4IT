@@ -471,9 +471,9 @@ class Theme(Builder):
         var['timestamp'] = get_human_datetime(datetime.now())
         var['keys'] = self.srvdtb.get_doc_properties(basename_md)
 
-        with open(path_md, 'r') as fpa:
+        with open(path_md, 'r', encoding='utf-8') as fpa:
             source_md = fpa.read()
-        with open(path_hdoc, 'r') as fph:
+        with open(path_hdoc, 'r', encoding='utf-8') as fph:
             source_html = fph.read()
 
         var['toc'] = self.extract_toc(source_html)

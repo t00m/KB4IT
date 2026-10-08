@@ -36,7 +36,7 @@ def _acquire_process_lock():
     # O_RDWR|O_CREAT never truncates, so if flock fails, the other
     # process's PID is still readable from the file.
     raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
-    fd = os.fdopen(raw, "r+")
+    fd = os.fdopen(raw, "r+", encoding="utf-8")
     try:
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:

@@ -915,10 +915,10 @@ class Theme(Builder):
             timestamp = get_human_datetime(now)
             keys = self.srvdtb.get_doc_properties(basename_md)
 
-            with open(path_md, 'r') as fpa:
+            with open(path_md, 'r', encoding='utf-8') as fpa:
                 source_md = fpa.read()
 
-            with open(path_hdoc, 'r') as fph:
+            with open(path_hdoc, 'r', encoding='utf-8') as fph:
                 source_html = fph.read()
 
             var['toc'] = self.extract_toc(source_html)
@@ -963,7 +963,7 @@ class Theme(Builder):
             HTML += BODY
             HTML += FOOTER
 
-            with open(path_hdoc, 'w') as fhtml:
+            with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
                 tree = etree.fromstring(HTML, parser)
                 pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
                 fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
@@ -1257,7 +1257,7 @@ class Theme(Builder):
         tree = etree.fromstring(HTML, parser)
         self.relocate_links(tree)
         pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
-        with open(page_path, 'w') as fhtml:
+        with open(page_path, 'w', encoding='utf-8') as fhtml:
             fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
         self.log.info(f"[ADMIN] PAGE_BUILT path={page_path}")
 
