@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `KB4IT_HOME` environment variable: puts the per-user files (`projects.json`, user themes, logs) in another folder instead of `~/.kb4it`. The test suite uses it so that it never writes to the real profile, also on Windows (CP-03).
+- Terminal interface: **Copy Log** uses `pbcopy` on macOS and `clip.exe` on Windows, before falling back to the terminal's OSC 52 (CP-05).
 
 ### Changed
 

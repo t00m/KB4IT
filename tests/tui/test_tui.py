@@ -102,6 +102,29 @@ def test_copy_to_clipboard_falls_back_to_osc52(monkeypatch):
     assert copied == ["hello"]
 
 
+@pytest.mark.parametrize("family, expected", [
+    ("linux", ["wl-copy", "xclip", "xsel"]),
+    ("darwin", ["pbcopy"]),
+    ("windows", ["clip.exe"]),
+])
+def test_clipboard_tools_per_platform(monkeypatch, family, expected):
+    monkeypatch.setattr("shutil.which", lambda name: f"/bin/{name}")
+    assert [cmd[0] for cmd, _enc in tui.clipboard_commands(family)] == expected
+
+
+def test_clipboard_skips_tools_not_on_path(monkeypatch):
+    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/xsel" if name == "xsel" else None)
+    assert [cmd[0] for cmd, _enc in tui.clipboard_commands("linux")] == ["xsel"]
+
+
+def test_windows_clipboard_gets_utf16(monkeypatch):
+    sent = []
+    monkeypatch.setattr(tui, "clipboard_commands", lambda family=None: [(["clip.exe"], "utf-16")])
+    monkeypatch.setattr("subprocess.run", lambda cmd, input, check, timeout: sent.append(input))
+    assert tui._copy_to_clipboard(object(), "Tomás") == (True, "clip.exe")
+    assert sent[0].decode("utf-16") == "Tomás"
+
+
 def test_main_screen_without_projects(registry):
     async def scenario(app, pilot):
         assert isinstance(app.screen, tui.MainScreen)

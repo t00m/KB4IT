@@ -40,7 +40,7 @@ Select a project and press <kbd>Enter</kbd>.
 | **Browse Local** | Opens the site from disk in your browser |
 | **Browse via Web Server** | Serves the site on `http://127.0.0.1` and opens it |
 
-The build screen shows a progress bar and the log as it happens. It says **Done** or **FAILED** at the end; **Copy Log** puts the log on the clipboard.
+The build screen shows a progress bar and the log as it happens. It says **Done** or **FAILED** at the end; **Copy Log** puts the log on the clipboard: with `wl-copy`, `xclip` or `xsel` on Linux, `pbcopy` on macOS and `clip.exe` on Windows, or through the terminal when none of them is available.
 
 ## Explore your properties {#explore}
 

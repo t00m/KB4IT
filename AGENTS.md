@@ -276,7 +276,7 @@ The TUI hooks into the compiler via module-level callbacks in `compiler.py`:
 
 ### Clipboard
 
-Uses `wl-copy`, `xclip`, `xsel`, or OSC52 escape sequence (in order of preference) for copy-to-clipboard in the Build screen.
+Uses the platform's tool found on `PATH` (`wl-copy`, `xclip`, `xsel` on Linux; `pbcopy` on macOS; `clip.exe` on Windows, fed UTF-16), falling back to the OSC 52 escape sequence, for copy-to-clipboard in the Build screen.
 
 ### Project registry
 
