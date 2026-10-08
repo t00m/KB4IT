@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.service import Service
+from kb4it.core.mdlinks import scan_document
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
@@ -44,6 +45,7 @@ class BuildPlan:
     force_all: bool = False
     invalid_docs: list = field(default_factory=list)  # [(docId, reason), ...]
     name_clashes: list = field(default_factory=list)  # [(docId, docId), ...] pages differing only by case
+    backlinks: dict = field(default_factory=dict)  # {docId: [[title, source docId], ...]}
 
     @property
     def invalid_count(self) -> int:
@@ -192,11 +194,44 @@ class Processor(Service):
         return {"markdown": repo.get("markdown") or {}, "search": repo.get("search", True),
                 "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed"),
                 "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
-                "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else ""}
+                "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else "",
+                "backlinks": repo.get("backlinks", True)}
 
     def core_signature(self) -> str:
         """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""
         return get_hash_from_dict(self.signature_parts())
+
+    def document_links(self) -> dict:
+        """Outgoing links to other sources: {docId: [[target docId, fragment], ...]}.
+
+        Only documents whose body changed are parsed; the others keep the links stored in kbdict.json.
+        """
+        known = set(self.kbdict_new["document"])
+        links_cur = self.kbdict_cur.get("links", {}) or {}
+        links = {}
+        for doc_id, entry in self.kbdict_new["document"].items():
+            cur = self.kbdict_cur.get("document", {}).get(doc_id, {})
+            if doc_id in links_cur and cur.get("body_hash") == entry.get("body_hash"):
+                links[doc_id] = links_cur[doc_id]
+                continue
+            try:
+                found, _anchors = scan_document(entry["content"])
+            except Exception as err:
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={doc_id} error={err}")
+                found = []
+            pairs = sorted({(os.path.normpath(path).replace(os.sep, "/"), frag) for path, frag in found})
+            links[doc_id] = [[path, frag] for path, frag in pairs]
+        self.log.debug(f"[LINKS] SCANNED docs={len(known)}")
+        return links
+
+    def backlinks_from(self, links, titles) -> dict:
+        """{target docId: [[source title, source docId], ...]} sorted by title, for existing targets only."""
+        back = {}
+        for source, targets in links.items():
+            for path, _frag in targets:
+                if path in titles and path != source:
+                    back.setdefault(path, set()).add((titles.get(source, source), source))
+        return {doc: [list(item) for item in sorted(items)] for doc, items in back.items()}
 
     def step_01_analysis(self):
         """Compilation strategy."""
@@ -204,6 +239,18 @@ class Processor(Service):
         sources = self.srvbes.get_value("docs", "bag")
         ignored = set(self.srvdtb.get_ignored_keys())
         blocked = set(self.srvdtb.get_blocked_keys())
+
+        # Links between documents: a page whose list of linking pages changed is rebuilt.
+        links = self.document_links()
+        self.kbdict_new["links"] = links
+        titles_new = {d: (e.get("Title") or [d])[0] for d, e in self.kbdict_new["document"].items()}
+        titles_cur = {d: (e.get("Title") or [d])[0] for d, e in (self.kbdict_cur.get("document") or {}).items()}
+        self.plan.backlinks = self.backlinks_from(links, titles_new)
+        backlinks_cur = self.backlinks_from(self.kbdict_cur.get("links", {}) or {}, titles_cur)
+        backlinks_changed = {d for d in titles_new if self.plan.backlinks.get(d) != backlinks_cur.get(d)}
+        for doc in sorted(backlinks_changed):
+            self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={doc}")
+
         for filepath in sources:
             docId = os.path.basename(filepath)
             try:
@@ -212,6 +259,8 @@ class Processor(Service):
                 continue
 
             result = self.step_01_00_analyze_document(docId)
+            if docId in backlinks_changed and not result['compile']:
+                result['compile'] = True
             if result['compile']:
                 # Write new source file to temporary dir for the compiler
                 self.plan.docs_to_compile.add(docId)
@@ -248,6 +297,8 @@ class Processor(Service):
         self.plan.K_PATH, self.plan.KV_PATH = self.step_01_01_decide_keys_compilation(
             available_keys, analysis.force_kv_pairs
         )
+        # Save again: the links found in this step belong in the cache too.
+        self.srvbes.save_kbdict(self.kbdict_new)
 
     def get_kb_dict(self):
         """Get new KB4IT Dictionary."""

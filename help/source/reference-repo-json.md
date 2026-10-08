@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -51,6 +51,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
+| `backlinks` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
 | `feed` | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
 | `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
 | `overrides` | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |

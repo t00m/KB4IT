@@ -174,6 +174,8 @@ class Compiler(Service):
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)
             # Sections for the full-text search index, cached per document for incremental builds.
             save_doc_sections(self.srvbes.get_path("root"), os.path.basename(doc), html_fragment)
+            # Documents that link here, at the end of the article (not part of the search index).
+            html_fragment += self.srvthm.backlinks_html(os.path.basename(doc))
             # Inject a TOC block so extract_toc() can populate the Contents nav menu.
             toc_block = _md_toc_block(md.toc)
             if toc_block:

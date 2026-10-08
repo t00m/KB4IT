@@ -439,6 +439,19 @@ class Builder(Service):
         block = self.render_template("HTML_HEAD_META", {"meta": self.page_meta(page_name, html)}).strip()
         return html[:close] + block + "\n" + html[close:]
 
+    def backlinks(self, doc_id) -> list:
+        """[{title, href}] of the documents that link to doc_id; [] when "backlinks" is false."""
+        repo = self.srvbes.get_dict("repo") or {}
+        if repo.get("backlinks", True) is False:
+            return []
+        plan = self.srvbes.get_plan()
+        found = (getattr(plan, "backlinks", None) or {}).get(doc_id, []) if plan is not None else []
+        return [{"title": title, "href": html_id_for(source)} for title, source in found]
+
+    def backlinks_html(self, doc_id) -> str:
+        items = self.backlinks(doc_id)
+        return self.render_template("HTML_BACKLINKS", {"backlinks": items}) if items else ""
+
     def page_hook_pre(self, var):
         """Insert html code before the content.
 

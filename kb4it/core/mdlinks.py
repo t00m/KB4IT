@@ -39,3 +39,31 @@ class MdLinkExtension(Extension):
         md.kb4it_links = []
         # Priority 5 runs after the inline processor (20), which creates the <a> elements.
         md.treeprocessors.register(_MdLinkProcessor(md), "kb4it_mdlinks", 5)
+
+
+def _body(text: str) -> str:
+    """Markdown after the frontmatter and the H1 title line."""
+    if text.startswith("---"):
+        end = text.find("\n---", 3)
+        if end >= 0:
+            line_end = text.find("\n", end + 4)
+            text = text[line_end + 1:] if line_end >= 0 else ""
+    return re.sub(r"^\s*#\s+[^\n]+\n?", "", text, count=1)
+
+
+def _anchor_ids(tokens):
+    for token in tokens:
+        yield token["id"]
+        yield from _anchor_ids(token.get("children", []))
+
+
+def scan_document(path):
+    """(links, anchors) of a Markdown source: [(target path, fragment), ...] and its heading ids."""
+    import markdown
+    from kb4it.core.util import SOURCE_ENCODING
+    with open(path, encoding=SOURCE_ENCODING) as fh:
+        text = _body(fh.read())
+    md = markdown.Markdown(extensions=["extra", "admonition", "toc", "sane_lists", MdLinkExtension()])
+    html = md.convert(text)
+    anchors = set(_anchor_ids(md.toc_tokens)) | set(re.findall(r'\sid="([^"]+)"', html))
+    return list(md.kb4it_links), anchors
