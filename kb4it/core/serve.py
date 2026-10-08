@@ -119,7 +119,10 @@ class Server:
         """Serve target with live reload and rebuild on change from a daemon thread (used by the TUI)."""
         self.server = SiteServer(target, reload=True, status=self.status).start()
         self.stop_event = threading.Event()
-        threading.Thread(target=self.watch_loop, args=(self.stop_event,), name="kb4it-watch", daemon=True).start()
+        # Take the first snapshot now, so a file saved right after this call is seen as a change.
+        watcher = self.new_watcher()
+        threading.Thread(target=self.watch_loop, args=(self.stop_event, watcher), name="kb4it-watch",
+                         daemon=True).start()
         return self.server
 
     def stop_background(self):
@@ -169,21 +172,24 @@ class Server:
             log.info("[SERVE] STOP")
         return 0
 
-    def watch_loop(self, stop):
-        interval = float(self.params.get("interval") or 1.0)
+    def new_watcher(self):
         paths, full = watched_paths(self.config)
-        watcher = PollingWatcher(paths, interval=interval)
+        watcher = PollingWatcher(paths, interval=float(self.params.get("interval") or 1.0))
+        watcher.full = full
+        return watcher
+
+    def watch_loop(self, stop, watcher=None):
+        watcher = watcher or self.new_watcher()
         while not stop.is_set():
             changed = watcher.wait(stop)
             if changed is None:
                 return
             log.info(f"[WATCH] CHANGE files={len(changed)}")
-            force = any(p == f or p.startswith(f + os.sep) for p in changed for f in full)
+            force = any(p == f or p.startswith(f + os.sep) for p in changed for f in watcher.full)
             self.build(force=force)
             if self.config in changed:
                 # Settings may move the source folder or the theme; watch the new set.
-                paths, full = watched_paths(self.config)
-                watcher = PollingWatcher(paths, interval=interval)
+                watcher = self.new_watcher()
 
 
 def run_serve(params: dict) -> int:
