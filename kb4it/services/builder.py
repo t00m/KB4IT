@@ -39,10 +39,8 @@ class Builder(Service):
     """Build HTML blocks."""
 
     theme_var = {}
-    templates = {}
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
-    _xform_pairs = None
 
     _XFORM_NAMES = [
         'HTML_TAG_A', 'HTML_TAG_TOC',
@@ -61,6 +59,11 @@ class Builder(Service):
 
     def _initialize(self):
         """Initialize Builder class."""
+        # Caches belong to this build. Class-level caches leaked templates from one
+        # build into the next when the TUI or kb4it serve built twice in one process.
+        self.templates = {}
+        self._xform_pairs = None
+        self.log.debug("[BUILDER] CACHE_RESET")
         self.get_services()
 
     def get_services(self):
@@ -75,15 +78,15 @@ class Builder(Service):
         Markdown compile pipeline; target (_NEW) templates supply theme-
         specific replacements.
         """
-        if Builder._xform_pairs is None:
+        if self._xform_pairs is None:
             with self._xform_lock:
-                if Builder._xform_pairs is None:
-                    Builder._xform_pairs = [
+                if self._xform_pairs is None:
+                    self._xform_pairs = [
                         (self.render_template(f'{n}_MD'),
                          self.render_template(f'{n}_NEW'))
                         for n in self._XFORM_NAMES
                     ]
-        for old, new in Builder._xform_pairs:
+        for old, new in self._xform_pairs:
             if old:
                 content = content.replace(old, new)
         return content
