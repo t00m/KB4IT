@@ -160,6 +160,11 @@ class Backend(Service):
         self.markdown = load_settings(self.repo)
         from kb4it.core.publish import site_url
         self.site_url = site_url(self.repo)
+        overrides = self.repo.get("overrides", "overrides")
+        if not isinstance(overrides, str) or not overrides.strip():
+            raise ConfigError("repo.json 'overrides' must be a folder path")
+        root = Path(self.params["config"]).absolute().parent.parent
+        self.overrides_dir = resolve_repo_path(overrides, root)
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""

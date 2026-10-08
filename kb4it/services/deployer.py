@@ -188,6 +188,12 @@ class Deployer(Service):
                 fh.write(pygments_css(settings))
             self.log.debug(f"[DEPLOYER] PYGMENTS_CSS path={css_path}")
 
+        # Files of the repository's overrides/static folder, copied as they are into the site root.
+        static = os.path.join(getattr(self.srvbes, "overrides_dir", "") or "", "static")
+        if getattr(self.srvbes, "overrides_dir", None) and os.path.isdir(static):
+            copydir(static, self.srvbes.get_path("target"))
+            self.log.debug(f"[DEPLOYER] COPIED_OVERRIDES_STATIC path={static}")
+
         # Copy local resources to target path
         source_resources_dir = os.path.join(
             self.srvbes.get_path("source"), "resources")

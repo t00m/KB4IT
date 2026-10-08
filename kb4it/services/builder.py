@@ -32,11 +32,15 @@ REQUIRED_TEMPLATES = [
 ]
 
 
-def _template_candidates(template_name, theme_templates_dir, global_templates_dir):
-    return [
+def _template_candidates(template_name, theme_templates_dir, global_templates_dir, override_dir=None):
+    """Files that may hold a template, first match wins: repository overrides, theme, common."""
+    candidates = [
         os.path.join(theme_templates_dir, f"{template_name}.tpl"),
         os.path.join(global_templates_dir, f"{template_name}.tpl"),
     ]
+    if override_dir:
+        candidates.insert(0, os.path.join(override_dir, "templates", f"{template_name}.tpl"))
+    return candidates
 
 
 META_START = "<!-- kb4it:meta -->"
@@ -184,14 +188,17 @@ class Builder(Service):
                 return cached
 
             theme = runtime["theme"]
+            override_dir = getattr(self.srvbes, "overrides_dir", None)
             candidates = _template_candidates(
-                template, theme["templates"], ENV["GPATH"]["TEMPLATES"]
+                template, theme["templates"], ENV["GPATH"]["TEMPLATES"], override_dir
             )
             for template_path in candidates:
                 try:
                     tpl = Template(filename=template_path)
                     self.templates[template] = tpl
                     self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
+                    if override_dir and template_path == candidates[0]:
+                        self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={template} path={template_path}")
                     return tpl
                 except Exception as err:
                     self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason={err}")

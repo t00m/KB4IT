@@ -180,7 +180,8 @@ class Frontend(Service):
             required = [n for n in required if n not in ("PAGE_KEY", "PAGE_KEY_VALUE")]
         missing = [
             name for name in required
-            if not any(os.path.isfile(c) for c in _template_candidates(name, theme_tpl_dir, global_tpl_dir))
+            if not any(os.path.isfile(c) for c in _template_candidates(
+                name, theme_tpl_dir, global_tpl_dir, getattr(self.srvbes, "overrides_dir", None)))
         ]
         if missing:
             for name in missing:

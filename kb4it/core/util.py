@@ -414,6 +414,21 @@ def get_document_attributes(docpath: str):
     return {}, False, "unsupported_format"
 
 
+def tree_hash(path) -> str:
+    """Hash of every file name and content under path; '' when path is missing."""
+    if not path or not os.path.isdir(path):
+        return ""
+    digest = hashlib.blake2b()
+    for root, dirs, files in os.walk(path):
+        dirs.sort()
+        for name in sorted(files):
+            full = os.path.join(root, name)
+            digest.update(os.path.relpath(full, path).replace(os.sep, "/").encode("utf-8"))
+            with open(full, "rb") as fh:
+                digest.update(fh.read())
+    return digest.hexdigest()
+
+
 def get_hash_from_dict(adict: dict) -> str:
     """Get the blake2b hash for a given dictionary."""
     serialized = json.dumps(adict, sort_keys=True, ensure_ascii=False)

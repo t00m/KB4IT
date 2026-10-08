@@ -20,7 +20,7 @@ from kb4it.core.service import Service
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
-                             SOURCE_ENCODING)
+                             SOURCE_ENCODING, tree_hash)
 
 
 @dataclass
@@ -190,7 +190,8 @@ class Processor(Service):
         repo = self.srvbes.get_dict("repo")
         # site_url and og_image end up in every page head (canonical link, Open Graph tags).
         return {"markdown": repo.get("markdown") or {}, "search": repo.get("search", True),
-                "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed")}
+                "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed"),
+                "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None))}
 
     def core_signature(self) -> str:
         """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""

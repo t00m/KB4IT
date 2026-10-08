@@ -118,7 +118,7 @@ Custom themes installable to `~/.kb4it/opt/resources/themes/<name>/`.
 
 Required template names per theme: `HTML_BODY`, `PAGE_INDEX`, `PAGE_KEY`, `PAGE_KEY_VALUE`. Missing any of these raises `ThemeError` at `stage_01_check_environment`.
 
-Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first existing file among `<theme>/templates/<NAME>.tpl` then `kb4it/resources/common/templates/<NAME>.tpl`. There is no cross-theme inheritance.
+Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first existing file among `<repo>/overrides/templates/<NAME>.tpl` (folder from `repo.json` `overrides`, default `overrides`; logged `[BUILDER] TEMPLATE_OVERRIDE`), `<theme>/templates/<NAME>.tpl`, then `kb4it/resources/common/templates/<NAME>.tpl`. There is no cross-theme inheritance. `<repo>/overrides/static/` is copied into the target root; a hash of the overrides folder is part of the core signature.
 
 **Built-in themes:**
 

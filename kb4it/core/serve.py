@@ -64,8 +64,8 @@ def watched_paths(config):
         user_theme = os.path.join(ENV["LPATH"]["THEMES"], repo["theme"])
         if os.path.isdir(user_theme):
             theme_dirs.append(user_theme)
-    for extra in ("overrides", "hooks"):
-        value = repo.get(extra)
+    for extra, default in (("overrides", "overrides"), ("hooks", None)):
+        value = repo.get(extra, default)
         if isinstance(value, str) and value:
             theme_dirs.append(resolve_repo_path(value, root))
     for path in theme_dirs:
