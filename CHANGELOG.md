@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - A second build in the same process, as the TUI does, reused the templates loaded by the first build: an edited template was ignored, and a second project whose theme shares a template name with the first rendered the first theme's template. Template caches now belong to each build (FX-01).
 - Pages, logs and theme files are always read and written as UTF-8. On Windows, or on Linux with a non-UTF-8 locale, documents with accents failed to build or were written in the wrong encoding, and log lines with accents could stop the build. A test fails when any text file is opened without naming its encoding (FX-02).
+- `requirements.txt` was missing `Markdown` and `PyYAML`; a test now keeps it equal to the dependencies in `pyproject.toml`. `pixi.toml` lists macOS and Windows platforms (FX-03).
 
 ---
 

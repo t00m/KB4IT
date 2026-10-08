@@ -1,4 +1,6 @@
 Mako==1.3.12
+Markdown>=3.5
+PyYAML>=6.0
 lxml
 rich>=13.0
 textual>=0.47.0
