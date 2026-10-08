@@ -73,5 +73,8 @@ A document KB4IT cannot read is left out of the site. The build logs `DOC_INVALI
 | `invalid_frontmatter` | The block is not a list of properties | Write one `Key: value` per line |
 | `yaml_error line=2 col=17 ...` | YAML cannot read a line | Look at that line; usually a value with `: ` that needs quotes |
 | `missing_h1_title` | No `# Title` after the properties | Add the title line |
+| `reserved_name` | The file is named like a Windows device (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`), so its page cannot exist on Windows | Rename the file |
 
-Set `"fail_on_invalid": true` in `repo.json` to make such a document stop the build instead.
+Two files whose pages differ only by letter case or extension (`Note.md` and `note.md`, or `note.md` and `note.markdown`) overwrite each other's page on macOS and Windows. The build logs `DOC_NAME_CLASH` as a warning, and `kb4it verify` reports the second file as `name_clash_with=<first>`. Rename one of them.
+
+Set `"fail_on_invalid": true` in `repo.json` to make such a document, or a name clash, stop the build instead.

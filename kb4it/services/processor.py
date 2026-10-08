@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.service import Service
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
-                             get_hash_from_dict, html_id_for, string_timestamp,
-                             valid_filename)
+                             get_hash_from_dict, html_id_for, is_windows_reserved,
+                             page_name_clashes, string_timestamp, valid_filename)
 
 
 @dataclass
@@ -42,6 +42,7 @@ class BuildPlan:
     force_kv_pairs: set = field(default_factory=set)
     force_all: bool = False
     invalid_docs: list = field(default_factory=list)  # [(docId, reason), ...]
+    name_clashes: list = field(default_factory=list)  # [(docId, docId), ...] pages differing only by case
 
     @property
     def invalid_count(self) -> int:
@@ -83,9 +84,18 @@ class Processor(Service):
         """Extract metadata."""
         runtime = self.srvbes.get_dict("runtime")
         sources = self.srvbes.get_value("docs", "bag")
+        for first, second in page_name_clashes(os.path.basename(f) for f in sources):
+            self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={first} b={second}")
+            self.plan.name_clashes.append((first, second))
         for filepath in sources:
             # Get Id
             docId = os.path.basename(filepath)
+
+            # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
+            if is_windows_reserved(docId):
+                self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
+                self.plan.invalid_docs.append((docId, "reserved_name"))
+                continue
 
             # Get metadata
             keys, valid, reason = get_document_attributes(filepath)
@@ -151,9 +161,10 @@ class Processor(Service):
             self.srvbes.add_target(docId, htmlId)
 
         # A repo can ask that any unreadable document fails the build instead of vanishing.
-        if self.plan.invalid_docs and self.srvbes.get_value("repo", "fail_on_invalid") is True:
-            names = ", ".join(f"{doc} ({reason})" for doc, reason in self.plan.invalid_docs)
-            raise CompilationError(f"{self.plan.invalid_count} invalid document(s): {names}")
+        problems = self.plan.invalid_docs + [(b, f"name_clash_with={a}") for a, b in self.plan.name_clashes]
+        if problems and self.srvbes.get_value("repo", "fail_on_invalid") is True:
+            names = ", ".join(f"{doc} ({reason})" for doc, reason in problems)
+            raise CompilationError(f"{len(problems)} invalid document(s): {names}")
 
         # Rebuild every page when the theme says the site as a whole changed.
         signature = self.get_service("Theme").site_signature()
@@ -186,7 +197,7 @@ class Processor(Service):
                 source_path = os.path.join(self.srvbes.get_path("source"), docId)
                 with open(source_path, "r", encoding="utf-8") as fh:
                     content = fh.read()
-                target = f"{self.srvbes.get_path('tmp')}/{valid_filename(docId)}"
+                target = os.path.join(self.srvbes.get_path("tmp"), valid_filename(docId))
                 with open(target, "w", encoding="utf-8") as fout:
                     fout.write(content)
 

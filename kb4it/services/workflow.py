@@ -18,7 +18,8 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.lock import registry_lock
 from kb4it.core.service import Service
-from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
+from kb4it.core.util import (copydir, delete_target_contents, get_document_attributes, get_source_docs,
+                             is_windows_reserved, json_load, json_save, page_name_clashes)
 from kb4it.services.backend import resolve_repo_path
 
 
@@ -134,9 +135,14 @@ class Workflow(Service):
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
         for doc in docs:
+            if is_windows_reserved(doc):
+                non_conformant.append((doc, "reserved_name"))
+                continue
             _keys, success, reason = get_document_attributes(doc)
             if not success:
                 non_conformant.append((doc, reason))
+        for first, second in page_name_clashes(os.path.basename(d) for d in docs):
+            non_conformant.append((os.path.join(source_dir, second), f"name_clash_with={first}"))
 
         if non_conformant:
             print("\nNon-conformant source files found:")

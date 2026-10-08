@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `KB4IT_HOME` environment variable: puts the per-user files (`projects.json`, user themes, logs) in another folder instead of `~/.kb4it`. The test suite uses it so that it never writes to the real profile, also on Windows (CP-03).
 - Terminal interface: **Copy Log** uses `pbcopy` on macOS and `clip.exe` on Windows, before falling back to the terminal's OSC 52 (CP-05).
+- Documents named like a Windows device (`con.md`, `nul.md`, `com1.md`, ...) are left out of the site on every system with `DOC_NAME_RESERVED`, so a site builds the same everywhere. Two documents whose pages differ only by letter case or extension (`Note.md`, `note.md`, `note.markdown`) log `DOC_NAME_CLASH`; `kb4it verify` reports both problems, and `fail_on_invalid` makes them stop the build (CP-06).
 
 ### Changed
 

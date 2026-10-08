@@ -73,6 +73,30 @@ def html_id_for(doc_id: str) -> str:
     return SOURCE_EXT_RE.sub(".html", doc_id)
 
 
+WINDOWS_RESERVED_NAMES = frozenset(
+    ["CON", "PRN", "AUX", "NUL"] + [f"COM{n}" for n in range(1, 10)] + [f"LPT{n}" for n in range(1, 10)])
+
+
+def is_windows_reserved(filename: str) -> bool:
+    """True when Windows cannot create a file with this name (CON, NUL, COM1, ... with any extension)."""
+    return os.path.basename(filename).split(".", 1)[0].upper() in WINDOWS_RESERVED_NAMES
+
+
+def page_name_clashes(doc_ids) -> list[tuple[str, str]]:
+    """Pairs of documents whose pages differ only by letter case or extension (Foo.md, foo.markdown).
+
+    Their pages overwrite each other on macOS and Windows, whose file systems ignore case.
+    """
+    seen, clashes = {}, []
+    for doc_id in sorted(doc_ids):
+        page = html_id_for(doc_id).lower()
+        if page in seen:
+            clashes.append((seen[page], doc_id))
+        else:
+            seen[page] = doc_id
+    return clashes
+
+
 def source_ext(doc_id: str) -> str:
     """Return the source extension ('md' or 'markdown') from a docId, or '' if none."""
     m = SOURCE_EXT_RE.search(doc_id)
