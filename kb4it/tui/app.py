@@ -29,6 +29,7 @@ from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
                              RichLog, Static)
 
 from kb4it.core.env import ENV
+from kb4it.core.log import reset_logging
 from kb4it.core.util import json_load, json_save
 from kb4it.core.webserver import DEFAULT_PORT, PORT_SCAN_LIMIT, SiteServer
 
@@ -202,24 +203,7 @@ def _parse_level(line: str) -> str:
 
 # ─── logging helpers ──────────────────────────────────────────────────────────
 
-def _reset_logging() -> None:
-    """
-    Clear every handler from the root logger so the next KB4IT instance
-    can call setup_logging() from scratch.
-
-    KB4IT's setup_logging() has an early-return guard ('if root.handlers:
-    return') that prevents re-initialisation when handlers already exist.
-    Without this reset a second KB4IT instance in the same process never
-    creates its temp log file, causing the build to silently fail.
-    """
-    root = logging.getLogger()
-    for h in list(root.handlers):
-        try:
-            h.flush()
-            h.close()
-        except Exception:
-            pass
-        root.removeHandler(h)
+_reset_logging = reset_logging
 
 
 class _TUILogHandler(logging.Handler):

@@ -24,6 +24,7 @@ scripts/release.sh --dry-run                         # See what a release would 
 ```bash
 kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app defaults to "default")
 kb4it build <config>                      # Build the site from repo.json (use -f/--force to force recompilation)
+kb4it serve <config>                      # Build, serve on 127.0.0.1:8642 with live reload, rebuild on change (kb4it/core/serve.py)
 kb4it info <config>                       # Show repository info
 kb4it themes                              # List installed themes
 kb4it apps <theme>                        # List apps available for a theme
@@ -85,6 +86,10 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/services/builder.py`       | Renders Mako templates; defines `REQUIRED_TEMPLATES` + `_template_candidates()` |
 | `kb4it/services/frontend.py`      | Theme discovery, theme load, required-template validation |
 | `kb4it/services/deployer.py`      | Copies the compiled output to `repo.target` |
+| `kb4it/core/serve.py`             | `kb4it serve`: build, serve, poll for changes, rebuild in-process (holds the repo lock; builds pass `lock_held`) |
+| `kb4it/core/webserver.py`         | `SiteServer` (threaded `http.server`), `BuildStatus`, live reload script injection, `/__kb4it/status` |
+| `kb4it/core/watch.py`             | `PollingWatcher`: stdlib polling with debounce, ignores editor scratch files |
+| `kb4it/core/lock.py`              | `FileLock` (flock / msvcrt), `repo_lock_path`, `registry_lock` |
 | `kb4it/tui/app.py`                | Textual-based Terminal User Interface (project CRUD, build, browse, explore metadata, log viewer, web server) |
 
 ### Themes

@@ -32,6 +32,8 @@ LOCKED_ACTIONS = ("build", "create")
 def lock_path_for(params: dict):
     """Lock file for the action in params, or None when the action takes no lock."""
     action = params.get("action")
+    if params.get("lock_held"):
+        return None  # kb4it serve holds the repository lock for its whole run
     if action == "build" and params.get("config"):
         return repo_lock_path(params["config"])
     if action == "create" and params.get("repo_path"):
@@ -304,6 +306,28 @@ def main():
         help="Force recompilation of all documents, ignoring content hashes",
     )
 
+    # Build, serve and rebuild on change
+    repo_serve = subparsers.add_parser(
+        "serve",
+        help="Build, serve the site locally and rebuild when sources change",
+        description="Build the website, serve it on a local web server and rebuild it when a source, "
+        "repo.json or the theme changes. Pages reload in the browser after each rebuild.",
+        epilog="Example:\n\n"
+        "   kb4it serve /home/jsmith/Documents/myrepo/config/repo.json",
+    )
+    repo_serve.add_argument("config", help="Path to the repository config file (mandatory)")
+    repo_serve.add_argument("--host", default="127.0.0.1",
+                            help="Address to listen on (default 127.0.0.1, this computer only)")
+    repo_serve.add_argument("--port", type=int, default=8642,
+                            help="First port to try; the next free one is used when it is busy (default 8642)")
+    repo_serve.add_argument("--no-watch", action="store_true", help="Serve without rebuilding on changes")
+    repo_serve.add_argument("--no-reload", action="store_true", help="Do not reload pages in the browser")
+    repo_serve.add_argument("--open", action="store_true", help="Open the site in the web browser")
+    repo_serve.add_argument("--interval", type=float, default=1.0,
+                            help="Seconds between checks for changes (default 1.0)")
+    repo_serve.add_argument("-f", "--force", action="store_true", default=False,
+                            help="Force recompilation of all documents in the first build")
+
     # Get repository info
     repo_info = subparsers.add_parser(
         "info",
@@ -333,6 +357,9 @@ def main():
     # Dispatch to the appropriate action handler
     try:
         params = parser.parse_args()
+        if params.action == "serve":
+            from kb4it.core.serve import run_serve
+            sys.exit(run_serve(vars(params)))
         app = KB4IT(params)
         success = app.run()
         sys.exit(0 if success else 1)

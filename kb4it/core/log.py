@@ -48,6 +48,22 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
     root.addHandler(file_handler)
 
 
+def reset_logging():
+    """Remove every root handler, so the next KB4IT instance in this process sets up logging from scratch.
+
+    setup_logging() returns early while a file handler exists; the TUI and kb4it serve
+    build several times in one process and call this before each build.
+    """
+    root = logging.getLogger()
+    for handler in list(root.handlers):
+        try:
+            handler.flush()
+            handler.close()
+        except Exception:
+            pass
+        root.removeHandler(handler)
+
+
 def get_logger(name: str) -> logging.Logger:
     """Return a named logger."""
     return logging.getLogger(name)
