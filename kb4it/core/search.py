@@ -12,6 +12,7 @@ search works from file:// as well as from a web server. The browser side is
 kb4it/resources/common/js/kb4it-search.js.
 """
 
+import hashlib
 import json
 import os
 import shutil
@@ -91,13 +92,12 @@ def _cache_name(doc_id) -> str:
 
 
 def save_doc_sections(root, doc_id, html_fragment):
-    """Store the sections of one compiled document (called by the compiler)."""
-    sections = extract_sections(f'<div id="{DOC_CONTAINER}">{html_fragment}</div>', DOC_CONTAINER)
+    """Store the article HTML of one compiled document (called from the compiler's worker threads).
+
+    Only plain file I/O happens here; lxml parsing is left to load_doc_sections, on the main thread.
+    """
     folder = sections_dir(root)
     os.makedirs(folder, exist_ok=True)
-    with open(os.path.join(folder, _cache_name(doc_id)), "w", encoding="utf-8") as fh:
-        json.dump(sections, fh, ensure_ascii=False)
-    # The article HTML too, for feeds that carry the full text.
     with open(os.path.join(folder, f"{doc_id}.html"), "w", encoding="utf-8") as fh:
         fh.write(html_fragment)
 
@@ -111,11 +111,23 @@ def load_doc_html(root, doc_id) -> str:
 
 
 def load_doc_sections(root, doc_id) -> list:
-    try:
-        with open(os.path.join(sections_dir(root), _cache_name(doc_id)), encoding="utf-8") as fh:
-            return json.load(fh)
-    except (OSError, ValueError):
+    """Sections of one document, parsed from its stored HTML and cached by the hash of that HTML."""
+    html = load_doc_html(root, doc_id)
+    if not html.strip():
         return []
+    digest = hashlib.blake2b(html.encode("utf-8"), digest_size=16).hexdigest()
+    json_path = os.path.join(sections_dir(root), _cache_name(doc_id))
+    try:
+        with open(json_path, encoding="utf-8") as fh:
+            cached = json.load(fh)
+        if isinstance(cached, dict) and cached.get("hash") == digest:
+            return cached["sections"]
+    except (OSError, ValueError, KeyError):
+        pass
+    sections = extract_sections(f'<div id="{DOC_CONTAINER}">{html}</div>', DOC_CONTAINER)
+    with open(json_path, "w", encoding="utf-8") as fh:
+        json.dump({"hash": digest, "sections": sections}, fh, ensure_ascii=False)
+    return sections
 
 
 def prune_sections(root, keep):
