@@ -158,6 +158,8 @@ class Backend(Service):
         # Fail early on a bad markdown block or a missing extension package.
         from kb4it.core.mdconfig import load_settings
         self.markdown = load_settings(self.repo)
+        from kb4it.core.publish import site_url
+        self.site_url = site_url(self.repo)
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""
