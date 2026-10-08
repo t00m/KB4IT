@@ -6,7 +6,7 @@ DocType: Reference
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: specification, roadmap, cross-platform
 Topic: Architecture, Documentation
 ---
@@ -44,7 +44,7 @@ Each requirement has an ID (`CP-02`, `SV-01`, ...). The implementation plan, the
 | 6 | Customization and extension | CU-01, CU-02 | 0, 3 |
 | 7 | Backlinks and link checks | KG-01, KG-02 | 0 |
 | 8 | Versioned help (apphelp) | VH-01 to VH-03 | 5 |
-| 9 | Documentation and packaging | DOC-01 to DOC-05 | all |
+| 9 | Documentation and packaging | DOC-01 to DOC-06 | all |
 
 ### Non-goals for 0.9
 
@@ -502,19 +502,42 @@ The help site workflow (`.github/workflows/help.yml`) gets a documented pattern:
 
 Every page passes `kb4it verify help/config/repo.json`.
 
-### DOC-02 AGENTS.md and README.md
+### DOC-02 README.md
 
-`AGENTS.md`: commands (`serve`), architecture (lock module, webserver module, search module, hooks), lookup order with overrides, new `repo.json` keys, new `kbdict` fields, supported platforms. `README.md`: platforms, `serve` in the quick start, feature list.
+The README is the first page users see on GitHub and PyPI. It must describe 0.9 and fix what is already out of date in 0.8.0.
 
-### DOC-03 Theme requirements
+| Section | Change |
+|---|---|
+| Badges | Platform badge: "GNU/Linux, macOS, Windows" |
+| Intro bullets | Add live preview (`kb4it serve`), full-text search, feeds and sitemap, template overrides and hooks, backlinks. Theme count: "Four themes" stays, with `bookshelf` named |
+| Quick start | Step 4 becomes `kb4it serve ~/mykb/config/repo.json` (build, serve and live reload in one step), with `kb4it build` shown as the way to produce the final site. Step 5 replaces `xdg-open` with "open the URL that `serve` prints", which works on every OS |
+| Why KB4IT? | Fix the missing closing quote in the third bullet; add "I want to see my changes while I write" and "I want it on Linux, macOS and Windows" |
+| Installation | One block per OS: Linux and macOS (`curl ... install.sh`, or Homebrew `brew install uv`), Windows (PowerShell `irm https://astral.sh/uv/install.ps1 \| iex`, then `uv tool install KB4IT`). Optional extras: `uv tool install "KB4IT[extras]"` for pymdown-extensions (MD-01). WSL mentioned as an option, not a requirement |
+| Requirements | GNU/Linux, macOS 13+, Windows 10/11; Python 3.11 to 3.13; dependency list gains Pygments, `rich` and `textual` (missing today) |
+| Usage | Add `serve`, `verify` and `projects` (the last two are missing today); one line on running `kb4it` with no arguments to open the TUI |
+| Repository layout | Add the optional `overrides/` and `hooks/` folders, and `var/` (build cache) |
+| Configuration | Fix the example: `source` and `target` relative to the repository root (as `kb4it create` writes them since 0.7.x), not absolute paths. Add a short "New in 0.9" list of optional keys (`site_url`, `markdown`, `search`, `feed`, `sitemap`, `og_image`, `overrides`, `hooks`, `backlinks`) with one line each and a link to the help site's `repo.json` reference for details |
+| Themes | Add `bookshelf` (missing today); mention search, feeds and backlinks per theme |
+| Contributing | Tests run with `./scripts/devel/test.sh` on any OS with bash (Git Bash on Windows); mention the CI matrix |
+| Roadmap / known limitations | Replace "Pseudo-dynamic search" with the current limits: no multilingual sites, no built-in diagrams or math (use extensions plus overrides), no image processing |
+
+Every code block in the README is checked by hand against the real CLI help (`kb4it --help`, `kb4it serve --help`) before the commit. No em dashes.
+
+**Acceptance.** A test checks that every subcommand listed by `kb4it --help` appears in the README Usage block, so the two cannot drift apart again.
+
+### DOC-03 AGENTS.md
+
+Commands (`serve`), architecture (lock module, webserver module, search module, hooks), template lookup order with overrides, new `repo.json` keys, new `kbdict` fields, supported platforms, and the new test layout.
+
+### DOC-04 Theme requirements
 
 Themes that use new core features declare `"kb4it": ">=0.9.0"` in `theme.json` and bump their own `version`.
 
-### DOC-04 CHANGELOG
+### DOC-05 CHANGELOG
 
 One entry per requirement under `## [Unreleased]`, grouped in `### Added`, `### Changed`, `### Fixed`, `### Removed`.
 
-### DOC-05 Release
+### DOC-06 Release
 
 The version stays `0.8.0` in the series. The release to `0.9.0` is done with `scripts/release.sh` after the series is merged, as `RELEASING.md` describes.
 
@@ -534,11 +557,11 @@ Changes a user of 0.8.0 will notice without changing anything:
 
 Everything else (`site_url`, feeds, sitemap, `markdown`, `pygments`, overrides, hooks, versions) only changes output when the new key is set. Existing `kbdict.json` files are upgraded on the first build; the new fields force one full rebuild.
 
-## Decisions for review
+## Decisions
 
-These are the choices I made where more than one answer was reasonable. Each has my recommendation; change any of them in your review.
+Approved on 2026-10-08 with the recommended option for every row.
 
-| # | Decision | Recommendation | Alternative |
+| # | Decision | Chosen | Alternative not taken |
 |---|---|---|---|
 | D-1 | File watching | Polling, no new dependency | `watchdog` package: faster on huge repositories, one more dependency |
 | D-2 | Live reload transport | HTTP polling of `/__kb4it/status` | WebSockets: instant, needs a dependency or a hand-written server |
