@@ -168,6 +168,10 @@ Strictly required (validated in `Backend._validate_config`, raises `ConfigError`
 
 Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `ignored_keys`, `events`, `logo`, `logo_alt`, `menu`, `datatable`, `webserver`, `admin`, `git`, `git_repo`, `git_server`, `git_user`, `git_branch`, `git_path`.
 
+Core optional fields added in 0.9 (all part of `Processor.signature_parts()`, so changing them rebuilds every page): `markdown` (`extensions`, `extension_configs`, `highlight` = `client`|`pygments`|`none`, `pygments_style`, `pygments_style_dark`), `search` (themes with `"search": true` in `theme.json`), `site_url`, `sitemap`, `feed` (`enabled`, `limit`, `categories`, `full_content`; themes declare `"feed": true|false` in `theme.json`), `og_image`, `overrides` (default `overrides`), `hooks`, `backlinks`.
+
+`kbdict.json` fields added in 0.9: `core_signature`, `links` (`{docId: [[target docId, fragment], ...]}`).
+
 `theme_path` (optional) overrides the name-based theme lookup with an explicit directory. When set, `Frontend.theme_search` skips the source-embedded, user-installed, and built-in lookup chain and uses this directory directly; it must contain a valid `theme.json`. Relative values are anchored to the repository root (the parent of the config file's parent), `~` and `$VARS` are expanded, and symlinks are resolved. Intended for applications that embed KB4IT as a library and ship their own theme without installing it under `~/.kb4it/`. The `theme` (name) field is still required and is used for identification and logging.
 
 `source` and `target` are resolved like `theme_path`: relative values are anchored to the repository root (the parent of the config file's parent). If that path does not exist, the old behaviour (relative to the current directory, `PATH_CWD_RELATIVE`) is used as a fallback. `kb4it create` writes `"source"` and `"target"` into `repo.json`.
@@ -327,10 +331,11 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 
 ## Dependencies
 
-- Python >= 3.11, < 4.0, GNU/Linux only.
+- Python >= 3.11, < 4.0, on GNU/Linux, macOS and Windows (CI runs all three with 3.11 and 3.13). Platform-specific code is limited to `kb4it/core/lock.py` (flock/msvcrt), `kb4it/core/env.py` (platform description) and the TUI clipboard; `KB4IT_HOME` relocates `~/.kb4it`.
 - `Mako==1.3.12` -- templates.
 - `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions always on; `repo.json` `markdown.extensions`/`extension_configs` add more (`kb4it/core/mdconfig.py`, checked at config load). Optional extra `KB4IT[extras]` installs `pymdown-extensions`.
 - `PyYAML>=6.0` -- frontmatter parsing.
+- `Pygments>=2.15` -- build-time code highlighting (`markdown.highlight: pygments`).
 - `lxml` -- XML parsing for post-processing.
 - `rich>=13.0` -- terminal formatting (used by TUI and log output).
 - `textual>=0.47.0` -- TUI framework.

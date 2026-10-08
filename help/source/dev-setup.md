@@ -52,6 +52,7 @@ The tests run KB4IT on throwaway knowledge bases with their own home folder, so 
 | `tests/themes/` | techdoc, blog and bookshelf |
 | `tests/apphelp/` | The apphelp theme in detail |
 | `tests/tui/` | Every screen of the terminal interface |
+| `tests/serve/` | `kb4it serve`, the local web server and the file watcher |
 
 ## Check the themes {#themes}
 
