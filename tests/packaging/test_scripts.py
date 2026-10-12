@@ -11,7 +11,7 @@ import pytest
 
 from tests.helpers import ROOT
 
-SCRIPT_DIRS = [ROOT / "scripts" / "distribution", ROOT / "scripts" / "install", ROOT / "scripts" / "uninstall"]
+SCRIPT_DIRS = [ROOT / "scripts" / d for d in ("distribution", "install", "uninstall", "action")]
 DIST = ROOT / "scripts" / "distribution"
 BASH = shutil.which("bash")
 

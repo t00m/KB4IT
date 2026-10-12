@@ -73,7 +73,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends rpm shellcheck
 
       - name: Check the shell scripts
-        run: find scripts/distribution scripts/install scripts/uninstall -name '*.sh' -print0 | xargs -0 shellcheck -x -P SCRIPTDIR -S warning
+        run: find scripts/distribution scripts/install scripts/uninstall scripts/action -name '*.sh' -print0 | xargs -0 shellcheck -x -P SCRIPTDIR -S warning
 
       - name: Build the sdist, the wheel and the source tarball
         run: |

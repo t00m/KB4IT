@@ -1,0 +1,72 @@
+name: KB4IT site build
+description: Build a static website from Markdown files with YAML frontmatter, using KB4IT.
+author: Tomás Vírseda
+branding:
+  icon: book-open
+  color: blue
+
+inputs:
+  config:
+    description: Path of the repository settings file, for example config/repo.json.
+    required: true
+  version:
+    description: >-
+      KB4IT version to install from PyPI. Empty installs the KB4IT of the action's
+      own commit, so t00m/KB4IT@v0.9.0 builds with KB4IT 0.9.0.
+    required: false
+    default: ""
+  python-version:
+    description: Python version for KB4IT.
+    required: false
+    default: "3.13"
+  extras:
+    description: Install the extras (PyMdown Extensions) too.
+    required: false
+    default: "false"
+  verify:
+    description: Run kb4it verify before building; any problem fails the step.
+    required: false
+    default: "true"
+  force:
+    description: Build with --force (compile every page).
+    required: false
+    default: "false"
+
+outputs:
+  target:
+    description: Absolute path of the built site.
+    value: ${{ steps.build.outputs.target }}
+  version:
+    description: KB4IT version that built the site.
+    value: ${{ steps.install.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v10.2.0
+
+    - id: install
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        KB4IT_VERSION: ${{ inputs.version }}
+        KB4IT_PYTHON: ${{ inputs.python-version }}
+        KB4IT_EXTRAS: ${{ inputs.extras }}
+      run: bash "$ACTION_PATH/scripts/action/run.sh" install
+
+    - id: verify
+      if: inputs.verify == 'true'
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        KB4IT_CONFIG: ${{ inputs.config }}
+      run: bash "$ACTION_PATH/scripts/action/run.sh" verify
+
+    - id: build
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        KB4IT_CONFIG: ${{ inputs.config }}
+        KB4IT_PYTHON: ${{ inputs.python-version }}
+        KB4IT_FORCE: ${{ inputs.force }}
+      run: bash "$ACTION_PATH/scripts/action/run.sh" build
