@@ -103,3 +103,19 @@ def test_download_wheels_needs_a_known_architecture():
 def test_package_pythons_cover_the_supported_range():
     common = (DIST / "lib" / "common.sh").read_text(encoding="utf-8")
     assert "KB4IT_PYTHONS=(3.11 3.12 3.13 3.14)" in common
+
+
+def test_packages_install_offline():
+    spec = (DIST / "rpm" / "kb4it.spec").read_text(encoding="utf-8")
+    install = spec[spec.index("%install"):spec.index("%post")]
+    assert "pip" not in install and "build" not in install.replace("buildroot", "")
+    for text in (spec, (DIST / "deb" / "build_deb.sh").read_text(encoding="utf-8")):
+        pip_lines = [line for line in text.splitlines() if "pip install" in line]
+        assert pip_lines and all("--upgrade pip" not in line for line in pip_lines)
+        assert "--no-index --find-links" in text
+
+
+def test_rpm_accepts_rhel9_versioned_pythons():
+    script = (DIST / "rpm" / "build_rpm.sh").read_text(encoding="utf-8")
+    assert 'PY_REQUIRES+=" or python${py}"' in script
+    assert "BuildArch" not in (DIST / "rpm" / "kb4it.spec").read_text(encoding="utf-8")

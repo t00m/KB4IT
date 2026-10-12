@@ -1,30 +1,34 @@
 #!/usr/bin/env bash
 # Build an RPM package for KB4IT using rpmbuild.
 #
-# Strategy: create a clean source tarball of the repo, invoke rpmbuild
-# against scripts/distribution/rpm/kb4it.spec. Semver build metadata
-# (after '+') maps to the RPM Release field because RPM Version cannot
-# contain '+'.
+# Usage: build_rpm.sh [ARCH]      ARCH: x86_64 (default on x86_64) | aarch64
 #
-# Output: ~/rpmbuild/RPMS/noarch/kb4it-<version>-<release>.<dist>.noarch.rpm
-# Also copied to ./dist/.
+# Strategy: build the KB4IT wheel (DS-01) and download the dependency wheels for
+# ARCH (wheels/download_wheels.sh), then pass them to rpmbuild as sources together
+# with the documents. rpmbuild needs no network. Semver build metadata (after '+')
+# maps to the RPM Release field because RPM Version cannot contain '+'.
+#
+# Output: dist/kb4it-<version>-<release>[.<dist>].<arch>.rpm
+# The rpmbuild tree lives in dist/rpm_build/.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-cd "${REPO_ROOT}"
 # shellcheck source=../lib/common.sh
 source "${SCRIPT_DIR}/../lib/common.sh"
+cd "${REPO_ROOT}"
 
 if ! command -v rpmbuild >/dev/null 2>&1; then
-    echo "rpmbuild not found. Install 'rpm-build' (Fedora/RHEL) and 'rpmdevtools'."
+    echo "rpmbuild not found. Install 'rpm-build' (Fedora/RHEL) or 'rpm' (Debian/Ubuntu)."
+    exit 1
+fi
+if ! ARCH="$(arch_machine "${1:-$(uname -m)}")"; then
+    echo "Usage: $(basename "$0") [x86_64|aarch64]" >&2
     exit 1
 fi
 
-RAW_VERSION="$(cat kb4it/VERSION)"       # e.g. 0.7.31+build.0
-RPM_VERSION="${RAW_VERSION%%+*}"         # 0.7.31
-if [[ "${RAW_VERSION}" == *"+"* ]]; then
-    RPM_RELEASE="${RAW_VERSION#*+}"      # build.0
+RPM_VERSION="${KB4IT_VERSION%%+*}"           # 0.7.31
+if [[ "${KB4IT_VERSION}" == *"+"* ]]; then
+    RPM_RELEASE="${KB4IT_VERSION#*+}"        # build.0
     # Release must not contain '+' or '-'
     RPM_RELEASE="${RPM_RELEASE//+/.}"
     RPM_RELEASE="${RPM_RELEASE//-/.}"
@@ -32,47 +36,48 @@ else
     RPM_RELEASE="1"
 fi
 PKG_NAME="kb4it"
-TARBALL="${PKG_NAME}-${RPM_VERSION}.tar.gz"
+TOPDIR="${OUT_DIR}/rpm_build"
+SOURCES="${TOPDIR}/SOURCES"
 
-echo ">>> Preparing ~/rpmbuild tree"
-mkdir -p "${HOME}/rpmbuild"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+# Boolean dependency: a python3 in the supported range, or any versioned interpreter
+# of it (RHEL 9 ships python3 3.9 with python3.11 and python3.12 alongside).
+LAST="${KB4IT_PYTHONS[${#KB4IT_PYTHONS[@]}-1]}"
+NEXT="${LAST%%.*}.$(( ${LAST#*.} + 1 ))"
+PY_REQUIRES="((python3 >= ${KB4IT_PYTHONS[0]} with python3 < ${NEXT})"
+for py in "${KB4IT_PYTHONS[@]}"; do
+    PY_REQUIRES+=" or python${py}"
+done
+PY_REQUIRES+=")"
 
-echo ">>> Creating source tarball: ${TARBALL}"
-# Tarball reflects the working tree (tracked files + untracked non-ignored
-# files) rather than HEAD, so iteration works without requiring every
-# change to be committed first.
-if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    # Drop entries that are tracked but no longer exist on disk (deleted
-    # files that have not been committed yet), so tar does not abort.
-    git -C "${REPO_ROOT}" ls-files --cached --others --exclude-standard -z \
-        | while IFS= read -r -d '' f; do [ -e "${REPO_ROOT}/${f}" ] && printf '%s\0' "${f}"; done \
-        | tar --null --files-from=- \
-              --transform "s,^,${PKG_NAME}-${RPM_VERSION}/," \
-              -czf "${HOME}/rpmbuild/SOURCES/${TARBALL}"
-else
-    # fallback: tar the working tree
-    tar --transform "s,^,${PKG_NAME}-${RPM_VERSION}/," \
-        --exclude-vcs --exclude='./dist' --exclude='./build' \
-        -czf "${HOME}/rpmbuild/SOURCES/${TARBALL}" .
-fi
+echo ">>> Preparing ${TOPDIR}"
+rm -rf "${TOPDIR}"
+mkdir -p "${TOPDIR}"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
-echo ">>> Copying spec"
-cp "${SCRIPT_DIR}/${PKG_NAME}.spec" "${HOME}/rpmbuild/SPECS/"
+echo ">>> Collecting sources for ${ARCH}"
+ensure_wheel
+WHEEL="$(wheel_path)"
+cp "${WHEEL}" "${SOURCES}/"
+DEPS="$(ensure_dep_wheels "${ARCH}")"
+tar -czf "${SOURCES}/${PKG_NAME}-${RPM_VERSION}-wheels-${ARCH}.tar.gz" -C "${DEPS}" .
+tar -czf "${SOURCES}/${PKG_NAME}-${RPM_VERSION}-docs.tar.gz" LICENSE README.md CHANGELOG.md AUTHORS THANKS
+cp "${SCRIPT_DIR}/${PKG_NAME}.spec" "${TOPDIR}/SPECS/"
 
 echo ">>> Building RPM"
-rpmbuild -bb \
+rpmbuild -bb --target "${ARCH}" \
+    --define "_topdir ${TOPDIR}" \
     --define "kb4it_version ${RPM_VERSION}" \
     --define "kb4it_release ${RPM_RELEASE}" \
     --define "kb4it_summary ${KB4IT_SUMMARY}" \
     --define "kb4it_description ${KB4IT_DESCRIPTION}" \
-    "${HOME}/rpmbuild/SPECS/${PKG_NAME}.spec"
+    --define "kb4it_pythons ${KB4IT_PYTHONS[*]}" \
+    --define "kb4it_python_requires ${PY_REQUIRES}" \
+    --define "kb4it_wheel $(basename "${WHEEL}")" \
+    --define "kb4it_wheel_version ${KB4IT_VERSION}" \
+    "${TOPDIR}/SPECS/${PKG_NAME}.spec"
 
 echo ">>> Collecting artefacts"
-mkdir -p "${REPO_ROOT}/dist"
-# Scope the find pattern to the exact release, otherwise older builds left
-# in ~/rpmbuild/RPMS/ get copied alongside the freshly built one.
-find "${HOME}/rpmbuild/RPMS" -name "${PKG_NAME}-${RPM_VERSION}-${RPM_RELEASE}*.rpm" -print -exec cp {} "${REPO_ROOT}/dist/" \;
+find "${TOPDIR}/RPMS" -name "${PKG_NAME}-${RPM_VERSION}-${RPM_RELEASE}*.rpm" -print -exec cp {} "${OUT_DIR}/" \;
 
 echo ""
 echo "Install with:"
-echo "  sudo dnf install ${REPO_ROOT}/dist/${PKG_NAME}-${RPM_VERSION}-*.rpm"
+echo "  sudo dnf install ${OUT_DIR}/${PKG_NAME}-${RPM_VERSION}-${RPM_RELEASE}*.${ARCH}.rpm"

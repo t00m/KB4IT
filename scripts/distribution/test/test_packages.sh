@@ -70,9 +70,34 @@ echo 'remove: ok'"
     done
 }
 
+# Images for the .rpm test and the Python each one installs (RHEL 9's python3 is 3.9).
+rpm_python() {
+    case "$1" in
+        rockylinux:9*|almalinux:9*) echo "python3.11" ;;
+        *) echo "python3" ;;
+    esac
+}
+
+test_rpm() {
+    "${DIST_DIR}/rpm/build_rpm.sh" "${MACHINE}"
+    local rpm image tag
+    rpm="$(basename "$(find "${OUT_DIR}" -maxdepth 1 -name "kb4it-${KB4IT_VERSION%%+*}-*.${MACHINE}.rpm" | head -n 1)")"
+    for image in ${KB4IT_PKGTEST_RPM_IMAGES:-fedora:latest rockylinux:9}; do
+        tag="kb4it-pkgtest:${image//[:.]/-}"
+        prepare "${image}" "${tag}" "dnf install -y $(rpm_python "${image}") && dnf clean all"
+        check ".rpm on ${image}" "${tag}" "dnf install -y --disablerepo='*' /dist/${rpm}
+cat /opt/kb4it/python
+${SMOKE}
+dnf remove -y kb4it
+test ! -e /opt/kb4it && test ! -e /usr/bin/kb4it
+echo 'remove: ok'"
+    done
+}
+
 case "${1:-all}" in
     deb) test_deb ;;
-    all) test_deb ;;
+    rpm) test_rpm ;;
+    all) test_deb; test_rpm ;;
     *) echo "Usage: $(basename "$0") [deb|rpm|all]" >&2; exit 1 ;;
 esac
 

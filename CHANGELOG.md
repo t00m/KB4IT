@@ -37,6 +37,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - KB4IT is declared OS independent on PyPI, and the install page explains how to install it on Windows (PowerShell) and macOS (CP-08).
 - `kb4it verify` also checks the links between documents: a link to a missing document (`LINK_BROKEN`) or to a missing section (`ANCHOR_MISSING`) is reported and makes it exit with status 1. A build still only warns (KG-02).
 - The `.deb` package is built per architecture (`build_deb.sh amd64` or `arm64`) and carries the wheels of every dependency, so it installs without network access; it no longer runs `pip install --upgrade pip` during installation. It refuses, with a clear message, a `python3` it has no wheels for. `scripts/distribution/test/test_packages.sh` builds it and tests install, a smoke build and removal in Debian 12 and Ubuntu 24.04 containers with networking off (DS-04).
+- The `.rpm` package is built per architecture (`build_rpm.sh x86_64` or `aarch64`, in `dist/rpm_build/`) from the release wheel and the dependency wheels, so `rpmbuild` and the installation need no network; it no longer builds a second wheel with `pip install --user build`. It requires any Python from 3.11 to 3.14 as `python3` or as `python3.11` to `python3.14`, so it installs on RHEL 9, Rocky Linux 9 and AlmaLinux 9 next to their Python 3.9. `%post` uses the newest supported Python it finds and logs which one; `test_packages.sh rpm` tests it in Fedora and Rocky Linux 9 containers (DS-03).
 
 ### Fixed
 
