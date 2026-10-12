@@ -91,3 +91,15 @@ def test_packages_share_one_description():
     assert "${KB4IT_DESCRIPTION}" in (DIST / "docker" / "Dockerfile").read_text(encoding="utf-8")
     for path in _dist_files():
         assert "book, blog" not in path.read_text(encoding="utf-8"), path.relative_to(ROOT)
+
+
+@pytest.mark.skipif(BASH is None, reason="bash not installed")
+def test_download_wheels_needs_a_known_architecture():
+    result = subprocess.run([BASH, str(DIST / "wheels" / "download_wheels.sh"), "sparc"], capture_output=True,
+                            text=True, encoding="utf-8")
+    assert result.returncode == 1 and "Usage" in result.stderr
+
+
+def test_package_pythons_cover_the_supported_range():
+    common = (DIST / "lib" / "common.sh").read_text(encoding="utf-8")
+    assert "KB4IT_PYTHONS=(3.11 3.12 3.13)" in common
