@@ -1,59 +1,70 @@
 #!/usr/bin/env bash
-# Install KB4IT locally
-#~ sudo apt install asciidoctor coderay ruby-coderay python3-setuptools
-#~ python3 setup.py install --user
+# Uninstall KB4IT from user space: removes it from uv, pipx and pip --user,
+# whichever has it. No root/admin privileges needed.
+#
+# Usage: uninstall.sh [--purge]
+#   --purge   also delete the per-user folder (~/.kb4it, or $KB4IT_HOME) after asking:
+#             the list of projects, user themes and logs. Your knowledge bases are
+#             never touched.
+#
+# The .deb and .rpm packages are removed with the system package manager instead:
+#   sudo apt remove kb4it      or      sudo dnf remove kb4it
+set -euo pipefail
 
-#!/bin/bash
+PURGE=0
+case "${1:-}" in
+    "") ;;
+    --purge) PURGE=1 ;;
+    *) echo "Usage: $(basename "$0") [--purge]" >&2; exit 1 ;;
+esac
 
-detect_distro() {
-    if [ -f /etc/os-release ]; then
-        # Read the os-release file
-        . /etc/os-release
-        case "$ID" in
-            debian)
-                echo "Installing KB4IT in Debian"
-                pip3 install . --user --trusted-host files.pythonhosted.org --trusted-host pypi.org --break-system-packages
-                ;;
-            ubuntu)
-                echo "Installing KB4IT in Ubuntu (based on Debian)"
-                pip3 install . --user --trusted-host files.pythonhosted.org --trusted-host pypi.org --break-system-packages
-                ;;
-            rhel | redhat)
-                echo "Red Hat Enterprise Linux"
-                pip3 install . --user --trusted-host files.pythonhosted.org --trusted-host pypi.org
-                ;;
-            centos)
-                echo "CentOS"
-                pip3 install . --user --trusted-host files.pythonhosted.org --trusted-host pypi.org
-                ;;
-            arch)
-                echo "Arch Linux"
-                echo "No instructions provided. Open a ticket (and if possible the command):"
-                echo "https://github.com/t00m/KB4IT/issues"
-                ;;
-            *)
-                echo "Unknown Linux distribution: $ID"
-                echo "Open a ticket (and if possible the command):"
-                echo "https://github.com/t00m/KB4IT/issues"
-                ;;
-        esac
-    else
-        echo "/etc/os-release not found. Cannot detect distribution."
-        echo "Open a ticket (and if possible the command):"
-        echo "https://github.com/t00m/KB4IT/issues"
-    fi
-}
-
-echo "KB4IT Uninstaller"
-echo "==============="
-
-echo "Unstalling KB4IT from user space (no root/admin privileges needed)"
+echo "KB4IT uninstaller"
+echo "================="
 echo ""
-echo "Uninstalling current version"
-echo "-----------------------------"
-pip uninstall kb4it -y --break-system-packages
+
+FOUND=0
+
+if command -v uv &>/dev/null && uv tool list 2>/dev/null | grep -qi '^kb4it '; then
+    echo "Removing KB4IT installed with uv"
+    uv tool uninstall kb4it
+    FOUND=1
+fi
+
+if command -v pipx &>/dev/null && pipx list --short 2>/dev/null | grep -qi '^kb4it '; then
+    echo "Removing KB4IT installed with pipx"
+    pipx uninstall kb4it
+    FOUND=1
+fi
+
+if command -v python3 &>/dev/null && python3 -m pip show kb4it &>/dev/null; then
+    echo "Removing KB4IT installed with pip"
+    if ! python3 -m pip uninstall -y kb4it; then
+        echo ""
+        echo "pip could not remove it. If your system Python is managed by the"
+        echo "distribution (PEP 668), remove it with the command you used to install it,"
+        echo "for example: python3 -m pip uninstall --user --break-system-packages kb4it"
+        exit 1
+    fi
+    FOUND=1
+fi
+
+if [[ "$FOUND" == 0 ]]; then
+    echo "KB4IT is not installed with uv, pipx or pip."
+fi
+
+if [[ "$PURGE" == 1 ]]; then
+    DATA="${KB4IT_HOME:-$HOME/.kb4it}"
+    if [[ -d "$DATA" ]]; then
+        echo ""
+        read -r -p "Delete $DATA (projects list, user themes, logs)? [y/N] " answer
+        if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+            rm -rf "$DATA"
+            echo "Deleted $DATA"
+        else
+            echo "Kept $DATA"
+        fi
+    fi
+fi
+
 echo ""
 echo "Uninstallation finished"
-echo "---------------------"
-echo ""
-
