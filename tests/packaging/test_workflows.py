@@ -49,3 +49,11 @@ def test_ci_builds_and_tests_the_packages():
     for needed in ("shellcheck", "build_python.sh", "build_tarball.sh", "test_packages.sh all", "smoke.sh",
                    "podman", "retention-days': 7"):
         assert needed in text, needed
+
+
+def test_action_is_tested_on_every_runner():
+    jobs = load("action.yml")["jobs"]
+    assert jobs["build"]["strategy"]["matrix"]["os"] == ["ubuntu-latest", "macos-latest", "windows-latest"]
+    for job in jobs.values():
+        assert any(step.get("uses") == "./" for step in job["steps"])
+    assert any(step.get("continue-on-error") for step in jobs["verify-fails"]["steps"])

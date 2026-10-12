@@ -32,6 +32,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Each release publishes the container image `ghcr.io/t00m/kb4it` for amd64 and arm64, tagged `X.Y.Z`, `X.Y` and `latest`, from the same wheel as PyPI. The image is smoke-tested before the push, carries an SBOM and a build provenance attestation, and the GitHub release waits for it and names its digest. The workflow pushes with its own token; no secret is stored (GI-02, GI-03).
 - Each GitHub release carries the `.deb` (amd64, arm64) and `.rpm` (x86_64, aarch64), built from the released wheel and installed offline in containers before the release is created (GI-04).
 - GitHub Action: `uses: t00m/KB4IT@vX.Y.Z` installs KB4IT with uv, runs `kb4it verify` (any problem fails the step) and `kb4it build`, and writes a job summary with the version and the build counters. Inputs: `config`, `version` (empty: the KB4IT of the action itself), `python-version`, `extras`, `verify`, `force`; outputs: `target`, the absolute path of the built site, and `version`. It runs on Linux, macOS and Windows runners and never deploys (GA-01).
+- CI workflow `action`: runs the GitHub Action of the same commit with `uses: ./` on Linux, macOS and Windows, checks its outputs, and checks that a broken link makes it fail (GA-02).
 
 ### Changed
 
