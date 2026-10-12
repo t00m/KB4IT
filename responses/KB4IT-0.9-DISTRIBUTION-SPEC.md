@@ -6,7 +6,7 @@ DocType: Reference
 OS: Linux, macOS, Windows
 Product: KB4IT, Docker, Podman, GitHub Actions
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: specification, distribution, packaging, container
 Topic: Installation, Documentation
 ---
@@ -23,7 +23,7 @@ This specification covers three pieces of work:
 2. **GI**: publish a multi-architecture container image to the GitHub Container Registry (GHCR) on every release.
 3. **GA**: ship a GitHub Action, so a site can be built on GitHub with one `uses:` line.
 
-The base is the 0.9 series (`kb4it-0.9-series.zip`, 46 patches on `d026df3`). This document is delivered as patch 0047; the implementation will follow the same review cycle as 0.9 (spec, plan, patch series).
+The base is the 0.9 series (`kb4it-0.9-series.zip`, 46 patches on `d026df3`). This document was delivered as patch 0047 and approved on 2026-10-12; the implementation follows the same review cycle as 0.9 (spec, plan, patch series).
 
 ### Findings this specification fixes
 
@@ -253,6 +253,8 @@ jobs:
 - `publish.yml` gains jobs; a release fails if the image or the packages fail, before anything reaches the GitHub release. PyPI upload still happens first (the order is unchanged), so a failure in `image` after PyPI leaves a PyPI release without a GitHub release; `RELEASING.md` explains how to re-run the failed job.
 
 ## Decisions for review
+
+Answered on 2026-10-12: the recommendation was chosen for each one, and the specification was approved.
 
 | # | Decision | Recommendation | Alternative |
 |---|---|---|---|
