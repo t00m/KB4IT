@@ -119,3 +119,13 @@ def test_rpm_accepts_rhel9_versioned_pythons():
     script = (DIST / "rpm" / "build_rpm.sh").read_text(encoding="utf-8")
     assert 'PY_REQUIRES+=" or python${py}"' in script
     assert "BuildArch" not in (DIST / "rpm" / "kb4it.spec").read_text(encoding="utf-8")
+
+
+def test_dockerfile_installs_the_release_wheel_as_non_root():
+    text = (DIST / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    assert "ARG PYTHON_VERSION=3.13" in text
+    assert '"${wheel}[extras]"' in text and "python -m build" not in text
+    assert "useradd --uid 1000" in text and "USER kb4it" in text
+    assert "KB4IT_HOME=/tmp/kb4it" in text and "WORKDIR /work" in text and "EXPOSE 8642" in text
+    for label in ("title", "description", "version", "revision", "source", "licenses", "documentation"):
+        assert f"org.opencontainers.image.{label}=" in text, label
