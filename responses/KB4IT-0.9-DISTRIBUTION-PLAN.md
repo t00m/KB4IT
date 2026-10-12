@@ -6,7 +6,7 @@ DocType: How-to guide
 OS: Linux, macOS, Windows
 Product: KB4IT, Docker, Podman, GitHub Actions
 Scope: Development
-Status: Draft
+Status: Done
 Tag: implementation-plan, distribution, packaging, container
 Topic: Installation, Development
 ---
@@ -174,4 +174,28 @@ A short status after each phase. No interim zip unless you ask for one: the part
 
 ## Open questions
 
-None. The spec decisions cover the choices this plan needed. If one of the risks above forces a change to a requirement, I will ask before making it.
+Q-1, asked during implementation on 2026-10-12: Fedora 44, the current `fedora:latest`, ships Python 3.14 as `python3`, outside the 3.11 to 3.13 range of the spec. Decision: support Python 3.14 (the full suite passed on it, 431 tests, and every dependency has 3.14 wheels): the packages carry 3.14 wheels, CI runs 3.14 on the three systems, and `pyproject.toml` lists it.
+
+## Implementation notes
+
+The series is patches 0047 to 0068: the three documents, 18 commits for the requirements, the Python 3.14 commit and these notes. Differences from the plan, decided while implementing:
+
+| Item | Plan | Delivered | Why |
+|---|---|---|---|
+| F1 cause | `build_python.sh` missing | It was never committed: the `build/` line of `.gitignore` ignored `scripts/distribution/build/`. An exception line and a test that no script is ignored by git | The real reason the scripts broke |
+| Python range | 3.11 to 3.13 | 3.11 to 3.14, own commit before the `.rpm` (Q-1) | Fedora 44 |
+| DS-03 `Requires` | `(python3 >= 3.11 or python3.11 or python3.12 or python3.13)` | `((python3 >= 3.11 with python3 < 3.15) or python3.11 or ... or python3.14)`, built from `KB4IT_PYTHONS` | A future Fedora with Python 3.15 would satisfy the spec's form and then fail in `%post`; the upper bound makes dnf pick a versioned Python instead |
+| DS-03 build place | Inside a `fedora:latest` container | On the Ubuntu runner with the `rpm` package, which provides `rpmbuild`; the install tests still run in Fedora and Rocky Linux 9 containers | Simpler and faster; the package carries only wheel files, nothing is compiled |
+| DS-03, DS-04 cleanup | `postrm`/`%postun` remove the venv | `prerm`/`%preun` remove it | Removing it after the package files left an empty `/opt/kb4it`; found by the container tests |
+| DS-05 test | Unit test that every dependency has wheels | `download_wheels.sh` itself fails when a binary wheel is missing; it runs in the CI `packages` job | The check needs PyPI; it belongs in CI, not in the unit tests |
+| DS-08 Podman | Checked in CI only | Also run here: the image passes `smoke.sh` with Podman 4.9 and `:Z` mounts | Podman could be installed in this session |
+| GI-01 `.dockerignore` | `.dockerignore` | The build context is `dist/image/`, which holds only the wheel | Same effect without a root `.dockerignore` that would affect other builds |
+| GI-02 tags | `docker/metadata-action` | Tags computed in a shell step | Three fixed tags need no extra action |
+| Workflow name | `Publish to PyPI` | `Publish a release` | It now publishes more than PyPI; trusted publishing is tied to the file name `publish.yml`, which is unchanged |
+| GA-01 | Steps inline in `action.yml` | Steps in `scripts/action/run.sh`, called by `action.yml` | The same script ran here against a sample site and the help site |
+
+What ran here and what only CI can show:
+
+- Ran here: the full test suite, shellcheck and actionlint, the `.deb` offline install on Ubuntu 24.04 (install, smoke build, removal), the `.rpm` on Rocky Linux 9 with `rpm -i --nodeps` and a standalone Python 3.14 in `/usr/bin` (the `%post` choice of Python, smoke build, upgrade, removal, and the error when no supported Python exists), the container image with Docker and Podman as a non-root UID, and the action steps against a sample site and the help site.
+- Only CI: the `.deb` on Debian 12 (`deb.debian.org` is blocked in this session), `dnf` installs on Fedora and Rocky Linux (their mirrors are blocked; `dnf --disablerepo='*'` was checked to parse the rich dependency on both dnf 4 and dnf 5), arm64 installs, the multi-architecture image build, the GHCR push and attestation, and the action on macOS and Windows.
+- The image built here needed this session's proxy certificate for PyPI; that was added only to a scratch copy of the Dockerfile.
