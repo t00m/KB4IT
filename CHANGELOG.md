@@ -30,6 +30,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Python 3.14 is supported: the full test suite passes on it, CI runs it on Linux, macOS and Windows next to 3.11 and 3.13, and the `.deb` and `.rpm` carry wheels for it. Fedora 44 ships Python 3.14 as `python3`.
 - CI job `packages`: checks every distribution script with shellcheck, builds the sdist, wheel, source tarball, `.deb` and `.rpm` for both architectures, installs the packages offline in Debian 12, Ubuntu 24.04, Fedora and Rocky Linux 9 containers, builds the container image and smoke-tests it with Docker and Podman. The packages and tarballs are kept as workflow artifacts for 7 days (DS-08).
 - Each release publishes the container image `ghcr.io/t00m/kb4it` for amd64 and arm64, tagged `X.Y.Z`, `X.Y` and `latest`, from the same wheel as PyPI. The image is smoke-tested before the push, carries an SBOM and a build provenance attestation, and the GitHub release waits for it and names its digest. The workflow pushes with its own token; no secret is stored (GI-02, GI-03).
+- Each GitHub release carries the `.deb` (amd64, arm64) and `.rpm` (x86_64, aarch64), built from the released wheel and installed offline in containers before the release is created (GI-04).
 
 ### Changed
 
