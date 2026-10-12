@@ -2,11 +2,11 @@
 DocType: How-to guide
 Feature: Installation
 HelpId: install
-Keyword: pip, pipx, uv, upgrade, uninstall, requirements, windows, macos, linux, wsl, powershell
+Keyword: pip, pipx, uv, deb, rpm, apt, dnf, upgrade, uninstall, requirements, windows, macos, linux, wsl, powershell
 Level: basic
 Order: 130
 Section: Get started
-Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx or pip, upgrade it, remove it, or run it from a clone.
+Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx, pip or a Linux package, upgrade it, remove it, or run it from a clone.
 ---
 
 # Install KB4IT
@@ -52,6 +52,24 @@ pip install --user KB4IT
 
 !!! tip
     uv and pipx keep KB4IT apart from your other Python packages, so an upgrade of one never breaks the other. Prefer them to pip.
+
+## Install a Linux package {#linux-packages}
+
+Each [GitHub release](https://github.com/t00m/KB4IT/releases) has a `.deb` and an `.rpm` for `x86_64` (`amd64`) and `aarch64` (`arm64`). They install KB4IT in `/opt/kb4it` with everything it needs, so the installation works without internet access, and put `kb4it` in `/usr/bin`.
+
+On Debian 12 or newer and Ubuntu 24.04 or newer:
+
+```bash
+sudo apt install ./kb4it_0.9.0_amd64.deb
+```
+
+On Fedora, and on RHEL, Rocky Linux and AlmaLinux 9 or newer:
+
+```bash
+sudo dnf install ./kb4it-0.9.0-1.x86_64.rpm
+```
+
+The package uses a Python from 3.11 to 3.14. On RHEL 9, whose `python3` is 3.9, dnf installs `python3.11` or `python3.12` next to it. Remove the package with `sudo apt remove kb4it` or `sudo dnf remove kb4it`.
 
 ## Check the installation {#check}
 
