@@ -125,7 +125,7 @@ On Windows, KB4IT runs natively; the Windows Subsystem for Linux works too but i
 ## Requirements
 
 - GNU/Linux, macOS 13 or newer, or Windows 10 or 11
-- Python 3.11 to 3.13
+- Python 3.11 to 3.14
 - `Mako` (templating), `Markdown` (Markdown → HTML), `PyYAML` (frontmatter), `Pygments` (code highlighting), `lxml` (post-processing), `rich` and `textual` (terminal interface) - all installed automatically
 
 ## Usage
@@ -221,7 +221,7 @@ kb4it --version
 ./scripts/devel/test.sh          # the tests; on Windows, run it from Git Bash
 ```
 
-CI runs the tests and a build of every theme on GNU/Linux, macOS and Windows with Python 3.11 and 3.13.
+CI runs the tests and a build of every theme on GNU/Linux, macOS and Windows with Python 3.11, 3.13 and 3.14.
 
 Open an issue before starting a large change so we can align on the approach.
 

@@ -39,7 +39,7 @@ kb4it -L DEBUG <command>                  # Set log level (DEBUG/INFO/WARNING/ER
 kb4it -v                                  # Print version and exit
 ```
 
-CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows with Python 3.11 and 3.13: `kb4it --version`, the tests and `scripts/devel/smoke_build.py` (create and build every bundled theme's default app). Tests: `./scripts/devel/test.sh [--python X.Y]` (pytest via uv; add paths or pytest flags after it; Git Bash on Windows). CI also builds the wheel and runs `scripts/devel/check_wheel_themes.py`, which fails when a git-tracked theme is missing from `dist/*.whl` and prints a WARNING for themes that are in the wheel but not tracked in git.
+CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows with Python 3.11, 3.13 and 3.14: `kb4it --version`, the tests and `scripts/devel/smoke_build.py` (create and build every bundled theme's default app). Tests: `./scripts/devel/test.sh [--python X.Y]` (pytest via uv; add paths or pytest flags after it; Git Bash on Windows). CI also builds the wheel and runs `scripts/devel/check_wheel_themes.py`, which fails when a git-tracked theme is missing from `dist/*.whl` and prints a WARNING for themes that are in the wheel but not tracked in git.
 
 ## Architecture
 
@@ -331,7 +331,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 
 ## Dependencies
 
-- Python >= 3.11, < 4.0, on GNU/Linux, macOS and Windows (CI runs all three with 3.11 and 3.13). Platform-specific code is limited to `kb4it/core/lock.py` (flock/msvcrt), `kb4it/core/env.py` (platform description) and the TUI clipboard; `KB4IT_HOME` relocates `~/.kb4it`.
+- Python >= 3.11, < 4.0, on GNU/Linux, macOS and Windows (CI runs all three with 3.11, 3.13 and 3.14). Platform-specific code is limited to `kb4it/core/lock.py` (flock/msvcrt), `kb4it/core/env.py` (platform description) and the TUI clipboard; `KB4IT_HOME` relocates `~/.kb4it`.
 - `Mako==1.3.12` -- templates.
 - `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions always on; `repo.json` `markdown.extensions`/`extension_configs` add more (`kb4it/core/mdconfig.py`, checked at config load). Optional extra `KB4IT[extras]` installs `pymdown-extensions`.
 - `PyYAML>=6.0` -- frontmatter parsing.

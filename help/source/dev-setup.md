@@ -42,7 +42,7 @@ python3 scripts/devel/smoke_build.py --from-source   # create and build every th
 
 The script runs pytest under Python 3.11 (or the version after `--python`) with the exact dependencies, through uv, so nothing is installed in your system. Any pytest option works after it. On Windows, run it from Git Bash.
 
-CI runs the tests and the smoke build on Linux, macOS and Windows, with Python 3.11 and 3.13.
+CI runs the tests and the smoke build on Linux, macOS and Windows, with Python 3.11, 3.13 and 3.14.
 
 The tests run KB4IT on throwaway knowledge bases with their own home folder, so they never touch your `~/.kb4it`.
 

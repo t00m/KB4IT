@@ -4,7 +4,7 @@
 # Usage: build_deb.sh [ARCH]      ARCH: amd64 (default on x86_64) | arm64
 #
 # The package carries the KB4IT wheel and the wheels of its dependencies for
-# Python 3.11 to 3.13 (lib/common.sh). postinst installs them into
+# Python 3.11 to 3.14 (lib/common.sh). postinst installs them into
 # /opt/kb4it/venv without network access and links /usr/bin/kb4it. This keeps
 # KB4IT isolated from the system Python site-packages (same spirit as pipx).
 #

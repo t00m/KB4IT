@@ -15,7 +15,7 @@ KB4IT_SUMMARY="Static website generator for Markdown knowledge bases"
 KB4IT_DESCRIPTION="KB4IT turns a folder of Markdown files with YAML frontmatter into a static website you can browse by any property. Themes: techdoc, blog, bookshelf, apphelp."
 
 # Python versions the .deb and .rpm ship dependency wheels for.
-KB4IT_PYTHONS=(3.11 3.12 3.13)
+KB4IT_PYTHONS=(3.11 3.12 3.13 3.14)
 
 # Path of the wheel for the current version (it may not exist yet).
 wheel_path() {

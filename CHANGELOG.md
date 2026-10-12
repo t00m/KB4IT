@@ -27,6 +27,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - "Linked from": every document ends with the list of documents that link to it, in all four themes. Links are kept in `kbdict.json`, so only changed documents are scanned, and a page is rebuilt when its list changes. `"backlinks": false` hides the list (KG-01).
 - apphelp versions: with `"versions": {"enabled": true}` each build goes to `target/<version>/` and keeps the other versions, `latest/` copies the newest one, and `index.html`, `versions.json` and `helpids.js` at the top point to it. A version selector in the header opens the same page in another version (VH-01, VH-02). The GitHub Pages guide shows how to publish all versions (VH-03).
 - `scripts/distribution/wheels/download_wheels.sh ARCH` downloads the binary wheels of every KB4IT dependency for Python 3.11, 3.12 and 3.13 on `x86_64` or `aarch64` into `dist/wheels/`, about 20 MB per architecture. The `.deb` and `.rpm` ship them so they install without network access (DS-05).
+- Python 3.14 is supported: the full test suite passes on it, CI runs it on Linux, macOS and Windows next to 3.11 and 3.13, and the `.deb` and `.rpm` carry wheels for it. Fedora 44 ships Python 3.14 as `python3`.
 
 ### Changed
 
