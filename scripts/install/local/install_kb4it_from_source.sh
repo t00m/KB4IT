@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
-# Install KB4IT from source into an isolated tool environment.
+# Install KB4IT from this checkout into an isolated tool environment.
 # Uses uv if available (fastest), then reuses the existing pipx venv if
 # present (fast), and falls back to a full pipx install (slowest).
 #
-# Dependencies: asciidoctor coderay ruby-coderay python3-setuptools
+# Requirements: uv, or pipx with Python 3.11 or newer. uv needs no system
+# Python: it downloads one when needed. No root/admin privileges needed.
 
 set -euo pipefail
 
-# ── Locate Python ─────────────────────────────────────────────────────────────
-latest_python=$(ls /usr/bin/python3.* 2>/dev/null | sort -V | tail -n 1)
-if [[ -z "$latest_python" ]]; then
-    echo "ERROR: No Python 3 installation found in /usr/bin."
-    exit 1
-fi
-echo "Python: $latest_python"
+cd "$(dirname "${BASH_SOURCE[0]}")/../../.."
 
 # ── Locate installer (uv preferred, pipx fallback) ────────────────────────────
 if command -v uv &>/dev/null; then
@@ -25,8 +20,34 @@ elif command -v pipx &>/dev/null; then
 else
     echo "ERROR: Neither uv nor pipx found. Install one:"
     echo "  uv:   curl -LsSf https://astral.sh/uv/install.sh | sh"
-    echo "  pipx: pip install --user pipx"
+    echo "  pipx: python3 -m pip install --user pipx"
     exit 1
+fi
+
+# ── Locate Python for pipx (3.11 or newer) ────────────────────────────────────
+python_ok() {
+    "$1" -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null
+}
+
+find_python() {
+    local candidate
+    # Newest versioned interpreter in /usr/bin first, then python3 on PATH.
+    for candidate in $(find /usr/bin -maxdepth 1 -name 'python3.[0-9]*' 2>/dev/null \
+                       | grep -E '/python3\.[0-9]+$' | sort -V -r) python3; do
+        if command -v "$candidate" &>/dev/null && python_ok "$candidate"; then
+            command -v "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if [[ "$INSTALLER" == "pipx" ]]; then
+    if ! PYTHON="$(find_python)"; then
+        echo "ERROR: pipx needs Python 3.11 or newer; none found in /usr/bin or on PATH."
+        exit 1
+    fi
+    echo "Python: $PYTHON"
 fi
 
 echo ""
@@ -38,8 +59,8 @@ echo ""
 # ── Clean leftover build artifacts ────────────────────────────────────────────
 echo "Cleaning build artifacts"
 echo "------------------------"
-rm -rf build/ dist/ KB4IT.egg-info/
-echo "Deleted build/ dist/ KB4IT.egg-info/"
+rm -rf build/ KB4IT.egg-info/
+echo "Deleted build/ KB4IT.egg-info/"
 echo ""
 
 # ── Install ───────────────────────────────────────────────────────────────────
@@ -60,7 +81,7 @@ elif [[ -d "$PIPX_VENV" ]]; then
 
 else
     # First-time install: full pipx install
-    pipx install . --force
+    pipx install --python "$PYTHON" . --force
 fi
 
 echo ""
@@ -71,4 +92,8 @@ echo ""
 # ── Verify ────────────────────────────────────────────────────────────────────
 echo "Installed version"
 echo "-----------------"
-"$HOME/.local/bin/kb4it" --version
+if command -v kb4it &>/dev/null; then
+    kb4it --version
+else
+    "$HOME/.local/bin/kb4it" --version
+fi
