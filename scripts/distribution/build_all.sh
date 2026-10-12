@@ -5,7 +5,7 @@
 # so this script is safe to run on any GNU/Linux host.
 #
 # Steps:
-#   1. Python sdist + wheel      (requires python3)
+#   1. Python sdist + wheel      (requires uv or python3)
 #   2. Source tarball + zip      (requires git or tar)
 #   3. Docker image              (requires docker or podman)
 #   4. .deb package              (requires dpkg-deb)
@@ -36,7 +36,7 @@ FAILED=()
 
 run_step "Python sdist + wheel" \
          "${SCRIPT_DIR}/build/build_python.sh" \
-         "command -v python3"
+         "command -v uv || command -v python3"
 
 run_step "Source tarball + zip" \
          "${SCRIPT_DIR}/tarball/build_tarball.sh" \

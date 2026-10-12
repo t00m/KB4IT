@@ -42,6 +42,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `requirements.txt` was missing `Markdown` and `PyYAML`; a test now keeps it equal to the dependencies in `pyproject.toml`. `pixi.toml` lists macOS and Windows platforms (FX-03).
 - Documents and `repo.json` saved with a UTF-8 byte order mark, as some Windows editors do, were rejected (`missing_frontmatter`, or a JSON error). They now load like any other file. CRLF line endings give the same metadata and body hash as LF, so a checkout with `core.autocrlf` does not rebuild every page (CP-07).
 - A document whose closing `---` line ends with spaces showed its title twice: the compiler now skips the whole closing line, as the frontmatter reader already did (MD-03).
+- `scripts/distribution/build/build_python.sh` exists again: the `.deb` script, `build_all.sh`, the manual PyPI scripts and `install_pipx.sh wheel` called it but it was missing. It removes earlier KB4IT wheels from `dist/` before building, so no script picks a stale one. The distribution scripts share their settings in `scripts/distribution/lib/common.sh`, and a test checks that every script they call exists (DS-01).
+- `scripts/distribution/build/build_python.sh` is in the repository: the `build/` line of `.gitignore` had kept it out, so the `.deb` script, `build_all.sh`, the manual PyPI scripts and `install_pipx.sh wheel` called a missing file. It removes earlier KB4IT wheels from `dist/` before building, so no script picks a stale one. The distribution scripts share their settings in `scripts/distribution/lib/common.sh`; tests check that every script they call exists and that no script is ignored by git (DS-01).
 
 ---
 

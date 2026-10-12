@@ -35,10 +35,10 @@ mkdir -p "${STAGE_DIR}/DEBIAN" \
          "${STAGE_DIR}/usr/share/doc/${PKG_NAME}"
 
 echo ">>> Ensuring a wheel exists"
-if ! ls dist/*.whl >/dev/null 2>&1; then
-    "${SCRIPT_DIR}/../build/build_python.sh"
-fi
-WHEEL="$(ls -1t dist/*.whl | head -n 1)"
+# shellcheck source=../lib/common.sh
+source "${SCRIPT_DIR}/../lib/common.sh"
+ensure_wheel
+WHEEL="$(wheel_path)"
 echo "    using wheel: ${WHEEL}"
 
 echo ">>> Staging wheel for postinst install"
