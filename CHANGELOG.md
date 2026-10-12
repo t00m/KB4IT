@@ -33,6 +33,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Each GitHub release carries the `.deb` (amd64, arm64) and `.rpm` (x86_64, aarch64), built from the released wheel and installed offline in containers before the release is created (GI-04).
 - GitHub Action: `uses: t00m/KB4IT@vX.Y.Z` installs KB4IT with uv, runs `kb4it verify` (any problem fails the step) and `kb4it build`, and writes a job summary with the version and the build counters. Inputs: `config`, `version` (empty: the KB4IT of the action itself), `python-version`, `extras`, `verify`, `force`; outputs: `target`, the absolute path of the built site, and `version`. It runs on Linux, macOS and Windows runners and never deploys (GA-01).
 - CI workflow `action`: runs the GitHub Action of the same commit with `uses: ./` on Linux, macOS and Windows, checks its outputs, and checks that a broken link makes it fail (GA-02).
+- Help page "GitHub Action" lists the action inputs and outputs and how to pin its version; "Publish on GitHub Pages" uses the action, and keeps the plain commands as an alternative. `README.md` mentions the action, `RELEASING.md` says how to list a release on the GitHub Marketplace and that there is no moving `v0` tag, and `AGENTS.md` describes the distribution scripts and the action (GA-04).
 
 ### Changed
 

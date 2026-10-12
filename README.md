@@ -67,7 +67,7 @@ kb4it serve ~/mykb/config/repo.json
 # 5. Open the address it prints, http://127.0.0.1:8642/, in your browser
 ```
 
-When you are happy with it, `kb4it build ~/mykb/config/repo.json` writes the final site to `~/mykb/target/`, ready to copy to any web server.
+When you are happy with it, `kb4it build ~/mykb/config/repo.json` writes the final site to `~/mykb/target/`, ready to copy to any web server. On GitHub, the [KB4IT action](https://t00m.github.io/KB4IT/reference-github-action.html) builds it in one step: `uses: t00m/KB4IT@v0.9.0`.
 
 ## Why KB4IT?
 

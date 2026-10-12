@@ -5,7 +5,7 @@ HelpId: github-pages
 Keyword: github actions, ci, deploy, workflow, pages, site_url, sitemap, versions, apphelp
 Level: advanced
 Order: 410
-Related: howto-publish-web-server.md
+Related: howto-publish-web-server.md, reference-github-action.md
 Section: Publish
 Summary: Keep the knowledge base in a GitHub repository and publish it on GitHub Pages on every push.
 ---
@@ -65,14 +65,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - id: kb4it
+        uses: t00m/KB4IT@v0.9.0
         with:
-          python-version: '3.12'
-      - run: pip install KB4IT
-      - run: kb4it build config/repo.json
+          config: config/repo.json
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: target
+          path: ${{ steps.kb4it.outputs.target }}
 
   deploy:
     needs: build
@@ -88,10 +87,28 @@ jobs:
         uses: actions/deploy-pages@v5
 ```
 
-If the knowledge base is in a folder, say `docs-site/`, use `docs-site/config/repo.json` and `path: docs-site/target`.
+The [KB4IT action](reference-github-action.md) installs KB4IT, checks the documents with `kb4it verify` and builds the site; its `target` output is the folder to publish. If the knowledge base is in a folder, say `docs-site/`, use `config: docs-site/config/repo.json`.
 
 !!! tip "Pin the version"
-    Install the version you tested, for example `pip install KB4IT==0.7.10`, so the site does not change when a new KB4IT is released. Upgrade on purpose, after a local build.
+    `@v0.9.0` builds with KB4IT 0.9.0, so the site does not change when a new KB4IT is released. Upgrade on purpose, after a local build.
+
+### Without the action {#manual}
+
+The same build with plain commands, for example to run extra `kb4it` commands in the job:
+
+```yaml
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - run: pip install KB4IT==0.9.0
+      - run: kb4it verify config/repo.json
+      - run: kb4it build config/repo.json
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: target
+```
 
 ## Turn on GitHub Pages {#enable}
 
@@ -105,13 +122,13 @@ Push a change. The site appears at `https://OWNER.github.io/REPO/`. The **Action
 
 ## Check broken documents in CI {#check}
 
-Add `kb4it verify config/repo.json` before the build step to stop the publish when a document cannot be read, or set `"fail_on_invalid": true` in `repo.json`.
+The action runs `kb4it verify` before building, so a document that cannot be read or a broken link stops the publish. Set `verify: false` to skip it, or `"fail_on_invalid": true` in `repo.json` to make the build itself strict.
 
 This help is published exactly this way; see `.github/workflows/help.yml` in the [KB4IT repository](https://github.com/t00m/KB4IT).
 
 ## Publish versioned help {#versions}
 
-With [apphelp versions](reference-theme-apphelp.md#versions), every build adds its own folder and keeps the others. On GitHub Actions each run starts empty, so rebuild every released version from its git tag before the current one. Replace the build step with:
+With [apphelp versions](reference-theme-apphelp.md#versions), every build adds its own folder and keeps the others. On GitHub Actions each run starts empty, so rebuild every released version from its git tag before the current one. Use the [workflow without the action](#manual) and replace its build steps with:
 
 ```yaml
       - uses: actions/checkout@v7

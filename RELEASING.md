@@ -139,6 +139,12 @@ docker run --rm ghcr.io/t00m/kb4it:X.Y.Z --version
 scripts/release.sh --open 0.8.0         # commits "chore: target version 0.8.0"
 ```
 
+### 8. GitHub Marketplace (optional, each release)
+
+The repository is also a GitHub Action (`action.yml`). To list a release on the Marketplace, open the release on GitHub, **Edit**, tick **Publish this Action to the GitHub Marketplace**, pick the categories (Continuous integration, Publishing) and save. The first time, GitHub asks you to accept the Marketplace developer agreement. The action's `name` must be unique on the Marketplace; if `KB4IT site build` is ever taken, change `name` in `action.yml`.
+
+Users pin the action by its release tag (`t00m/KB4IT@vX.Y.Z`). There is no moving major tag such as `v0`: do not create one.
+
 ## One-time setup
 
 The workflow needs a few things it cannot set up itself:
