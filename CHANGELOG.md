@@ -44,6 +44,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A document whose closing `---` line ends with spaces showed its title twice: the compiler now skips the whole closing line, as the frontmatter reader already did (MD-03).
 - `scripts/distribution/build/build_python.sh` exists again: the `.deb` script, `build_all.sh`, the manual PyPI scripts and `install_pipx.sh wheel` called it but it was missing. It removes earlier KB4IT wheels from `dist/` before building, so no script picks a stale one. The distribution scripts share their settings in `scripts/distribution/lib/common.sh`, and a test checks that every script they call exists (DS-01).
 - `scripts/distribution/build/build_python.sh` is in the repository: the `build/` line of `.gitignore` had kept it out, so the `.deb` script, `build_all.sh`, the manual PyPI scripts and `install_pipx.sh wheel` called a missing file. It removes earlier KB4IT wheels from `dist/` before building, so no script picks a stale one. The distribution scripts share their settings in `scripts/distribution/lib/common.sh`; tests check that every script they call exists and that no script is ignored by git (DS-01).
+- The `.rpm` spec and the container `Dockerfile` name `CHANGELOG.md` instead of the old `Changelog`, so `rpmbuild` and `docker build` no longer stop on a missing file; the `.deb` no longer skips its documents silently. The `.deb`, the `.rpm` and the container image share one description, which lists the four bundled themes (DS-02).
 
 ---
 

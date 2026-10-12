@@ -14,7 +14,7 @@ WORKDIR /src
 
 RUN python -m pip install --no-cache-dir --upgrade pip build
 
-COPY pyproject.toml README.md LICENSE AUTHORS Changelog THANKS ./
+COPY pyproject.toml README.md LICENSE AUTHORS CHANGELOG.md THANKS ./
 COPY kb4it ./kb4it
 
 RUN python -m build --wheel --outdir /wheels
@@ -24,8 +24,11 @@ RUN python -m build --wheel --outdir /wheels
 # ---------------------------------------------------------------------------
 FROM python:${PYTHON_VERSION}-slim AS runtime
 
+# Passed by build.sh from lib/common.sh.
+ARG KB4IT_DESCRIPTION=""
+
 LABEL org.opencontainers.image.title="KB4IT" \
-      org.opencontainers.image.description="Static website generator based on Markdown sources" \
+      org.opencontainers.image.description="${KB4IT_DESCRIPTION}" \
       org.opencontainers.image.source="https://github.com/t00m/KB4IT" \
       org.opencontainers.image.licenses="GPL-3.0-or-later"
 

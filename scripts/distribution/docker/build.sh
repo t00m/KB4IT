@@ -14,6 +14,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${REPO_ROOT}"
+# shellcheck source=../lib/common.sh
+source "${SCRIPT_DIR}/../lib/common.sh"
 
 IMAGE_NAME="${IMAGE_NAME:-kb4it}"
 IMAGE_REGISTRY="${IMAGE_REGISTRY:-}"
@@ -41,6 +43,7 @@ echo ">>> Building ${PREFIX}${IMAGE_NAME}:${DOCKER_TAG} with ${RUNTIME}"
 "${RUNTIME}" build \
     --file "${SCRIPT_DIR}/Dockerfile" \
     --build-arg "PYTHON_VERSION=${PYTHON_VERSION}" \
+    --build-arg "KB4IT_DESCRIPTION=${KB4IT_DESCRIPTION}" \
     --tag "${PREFIX}${IMAGE_NAME}:${DOCKER_TAG}" \
     --tag "${PREFIX}${IMAGE_NAME}:latest" \
     "${REPO_ROOT}"

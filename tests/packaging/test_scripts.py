@@ -71,3 +71,23 @@ def test_build_python_makes_wheel_and_sdist(tmp_path):
     names = zipfile.ZipFile(out / f"kb4it-{version}-py3-none-any.whl").namelist()
     for theme in ("techdoc", "blog", "bookshelf", "apphelp"):
         assert any(n.startswith(f"kb4it/resources/themes/{theme}/") for n in names), theme
+
+
+def _dist_files():
+    return [p for p in DIST.rglob("*") if p.is_file() and p.suffix in ("", ".sh", ".spec", ".md")
+            and "__pycache__" not in p.parts]
+
+
+def test_no_script_names_the_old_changelog():
+    for path in _dist_files():
+        assert not re.search(r"\bChangelog\b", path.read_text(encoding="utf-8")), path.relative_to(ROOT)
+
+
+def test_packages_share_one_description():
+    common = (DIST / "lib" / "common.sh").read_text(encoding="utf-8")
+    assert re.search(r'^KB4IT_DESCRIPTION=".*Themes: techdoc, blog, bookshelf, apphelp\."$', common, re.M)
+    assert "${KB4IT_DESCRIPTION}" in (DIST / "deb" / "build_deb.sh").read_text(encoding="utf-8")
+    assert "%{kb4it_description}" in (DIST / "rpm" / "kb4it.spec").read_text(encoding="utf-8")
+    assert "${KB4IT_DESCRIPTION}" in (DIST / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    for path in _dist_files():
+        assert "book, blog" not in path.read_text(encoding="utf-8"), path.relative_to(ROOT)

@@ -13,6 +13,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${REPO_ROOT}"
+# shellcheck source=../lib/common.sh
+source "${SCRIPT_DIR}/../lib/common.sh"
 
 if ! command -v rpmbuild >/dev/null 2>&1; then
     echo "rpmbuild not found. Install 'rpm-build' (Fedora/RHEL) and 'rpmdevtools'."
@@ -61,6 +63,8 @@ echo ">>> Building RPM"
 rpmbuild -bb \
     --define "kb4it_version ${RPM_VERSION}" \
     --define "kb4it_release ${RPM_RELEASE}" \
+    --define "kb4it_summary ${KB4IT_SUMMARY}" \
+    --define "kb4it_description ${KB4IT_DESCRIPTION}" \
     "${HOME}/rpmbuild/SPECS/${PKG_NAME}.spec"
 
 echo ">>> Collecting artefacts"

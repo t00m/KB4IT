@@ -46,7 +46,8 @@ mkdir -p "${STAGE_DIR}/opt/${PKG_NAME}/wheel"
 cp "${WHEEL}" "${STAGE_DIR}/opt/${PKG_NAME}/wheel/"
 
 echo ">>> Writing control file"
-cat > "${STAGE_DIR}/DEBIAN/control" <<EOF
+{
+    cat <<EOF
 Package: ${PKG_NAME}
 Version: ${DEB_VERSION}
 Section: doc
@@ -55,12 +56,11 @@ Architecture: ${ARCH}
 Depends: python3 (>= 3.11), python3-venv
 Maintainer: Tomás Vírseda <tomasvirseda@gmail.com>
 Homepage: https://github.com/t00m/KB4IT
-Description: Static website generator for technical documentation
- KB4IT converts Markdown sources (with YAML frontmatter) into a static
- website using python-markdown and Mako templates. Supports multiple
- themes (techdoc, book, blog) and incremental compilation via blake2b
- hashing.
+Description: ${KB4IT_SUMMARY}
 EOF
+    # Extended description: continuation lines start with one space.
+    fold -s -w 72 <<<"${KB4IT_DESCRIPTION}" | sed -e 's/ *$//' -e 's/^/ /'
+} > "${STAGE_DIR}/DEBIAN/control"
 
 echo ">>> Writing postinst (creates venv, installs wheel, creates symlink)"
 cat > "${STAGE_DIR}/DEBIAN/postinst" <<'EOF'
@@ -94,8 +94,8 @@ chmod 0755 "${STAGE_DIR}/DEBIAN/postrm"
 
 echo ">>> Copying docs"
 cp LICENSE "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/copyright"
-cp README.md Changelog AUTHORS THANKS "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/" 2>/dev/null || true
-gzip -n -9 "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/Changelog" 2>/dev/null || true
+cp README.md CHANGELOG.md AUTHORS THANKS "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/"
+gzip -n -9 "${STAGE_DIR}/usr/share/doc/${PKG_NAME}/CHANGELOG.md"
 
 echo ">>> Building .deb"
 dpkg-deb --root-owner-group --build "${STAGE_DIR}" "${DEB_OUT}"

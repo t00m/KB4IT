@@ -2,8 +2,9 @@
 #
 # Release convention: RPM does not allow '+' in Version, so semver build
 # metadata (e.g. 0.7.31+build.0) is remapped to Release (build.0) at build
-# time by build_rpm.sh. The %%{kb4it_version} / %%{kb4it_release} macros are
-# passed via rpmbuild --define.
+# time by build_rpm.sh. The %%{kb4it_version} / %%{kb4it_release} macros, and the
+# %%{kb4it_summary} / %%{kb4it_description} texts of lib/common.sh, are passed via
+# rpmbuild --define.
 #
 # Packaging style: same as the .deb - install the wheel into a private
 # virtualenv under /opt/kb4it/venv and expose /usr/bin/kb4it as a symlink.
@@ -14,7 +15,7 @@
 Name:           kb4it
 Version:        %{kb4it_version}
 Release:        %{kb4it_release}%{?dist}
-Summary:        Static website generator for technical documentation based on Markdown
+Summary:        %{kb4it_summary}
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/t00m/KB4IT
@@ -27,10 +28,7 @@ BuildRequires:  python3-pip
 Requires:       python3 >= 3.11
 
 %description
-KB4IT converts Markdown sources (with YAML frontmatter) into a static
-website using python-markdown and Mako templates. It supports multiple
-themes (techdoc, book, blog) and incremental compilation via blake2b
-hashing.
+%{kb4it_description}
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -66,7 +64,7 @@ fi
 
 %files
 %license LICENSE
-%doc README.md Changelog AUTHORS THANKS
+%doc README.md CHANGELOG.md AUTHORS THANKS
 /opt/%{name}/wheel/*.whl
 
 %changelog
