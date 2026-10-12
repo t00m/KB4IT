@@ -57,3 +57,11 @@ def test_action_is_tested_on_every_runner():
     for job in jobs.values():
         assert any(step.get("uses") == "./" for step in job["steps"])
     assert any(step.get("continue-on-error") for step in jobs["verify-fails"]["steps"])
+
+
+def test_help_site_is_built_with_the_action():
+    steps = load("help.yml")["jobs"]["build"]["steps"]
+    action = next(step for step in steps if step.get("uses") == "./")
+    assert action["with"]["config"] == "help/config/repo.json"
+    assert action["with"]["force"] == "true"
+    assert not any("uv tool install" in str(step.get("run", "")) for step in steps)

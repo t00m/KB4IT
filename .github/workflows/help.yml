@@ -13,6 +13,8 @@ on:
       - 'help/**'
       - 'kb4it/**'
       - 'pyproject.toml'
+      - 'action.yml'
+      - 'scripts/action/**'
       - '.github/workflows/help.yml'
   workflow_dispatch:
 
@@ -29,22 +31,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10.2.0
-
-      - name: Install KB4IT from this commit
-        run: uv tool install --python 3.11 .
-
-      - name: Check the pages
-        run: kb4it verify help/config/repo.json
-
-      - name: Build the help
-        run: kb4it build help/config/repo.json --force
+      # The KB4IT action of this commit: installs this KB4IT, checks the pages, builds.
+      - id: kb4it
+        uses: ./
+        with:
+          config: help/config/repo.json
+          python-version: "3.11"
+          force: "true"
 
       - name: Upload the site
         if: github.ref == 'refs/heads/master'
         uses: actions/upload-pages-artifact@v5
         with:
-          path: help/target
+          path: ${{ steps.kb4it.outputs.target }}
 
   deploy:
     needs: build

@@ -46,6 +46,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The container image installs the release wheel with its extras on `python:3.13-slim`, instead of building its own wheel on 3.12. It runs as the non-root user `kb4it` (UID 1000), works in `/work`, exposes port 8642 for `kb4it serve`, keeps its per-user files in `/tmp/kb4it` so it also runs with `--user "$(id -u):$(id -g)"`, and carries the OCI labels (version, revision, source, licence, documentation). `scripts/distribution/docker/smoke.sh IMAGE` checks the version, a build owned by the calling user and `serve` (GI-01, DS-07).
 - `scripts/distribution/README.md` describes what each distribution script builds and needs, and the help page "Install KB4IT" has a section on the `.deb` and `.rpm` packages (DS-09).
 - `README.md` and the help page "Install KB4IT" show how to run KB4IT from the container image with Docker or Podman (with `:Z` on SELinux hosts), and where to find the Linux packages. `RELEASING.md` and the help page "Release a version" describe the image and package jobs, what to do when one fails after the PyPI upload, and the one-time step that makes the image public on GitHub (GI-05).
+- The help site is built and checked with the KB4IT GitHub Action of the same commit (`uses: ./`), so every change to the help also tests the action (GA-03).
 
 ### Fixed
 
