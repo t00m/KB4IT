@@ -47,7 +47,7 @@ run_step "Docker image" \
          "command -v docker || command -v podman"
 
 run_step ".deb package" \
-         "SKIP_BUILD=1 ${SCRIPT_DIR}/deb/build_deb.sh" \
+         "${SCRIPT_DIR}/deb/build_deb.sh" \
          "command -v dpkg-deb"
 
 run_step ".rpm package" \

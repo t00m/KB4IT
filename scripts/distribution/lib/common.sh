@@ -28,3 +28,30 @@ ensure_wheel() {
         "${DIST_DIR}/build/build_python.sh"
     fi
 }
+
+# Machine name (x86_64, aarch64) and Debian name (amd64, arm64) of an architecture given either way.
+arch_machine() {
+    case "$1" in
+        amd64|x86_64) echo "x86_64" ;;
+        arm64|aarch64) echo "aarch64" ;;
+        *) return 1 ;;
+    esac
+}
+
+arch_debian() {
+    case "$1" in
+        amd64|x86_64) echo "amd64" ;;
+        arm64|aarch64) echo "arm64" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Folder with the dependency wheels of an architecture; downloads them when missing.
+ensure_dep_wheels() {
+    local dir
+    dir="${OUT_DIR}/wheels/$(arch_machine "$1")"
+    if [[ ! -d "${dir}" ]]; then
+        "${DIST_DIR}/wheels/download_wheels.sh" "$1" >&2
+    fi
+    echo "${dir}"
+}

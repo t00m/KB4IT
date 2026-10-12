@@ -12,11 +12,10 @@ set -euo pipefail
 # shellcheck source=../lib/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
-case "${1:-}" in
-    amd64|x86_64)  MACHINE="x86_64" ;;
-    arm64|aarch64) MACHINE="aarch64" ;;
-    *) echo "Usage: $(basename "$0") amd64|x86_64|arm64|aarch64" >&2; exit 1 ;;
-esac
+if ! MACHINE="$(arch_machine "${1:-}")"; then
+    echo "Usage: $(basename "$0") amd64|x86_64|arm64|aarch64" >&2
+    exit 1
+fi
 
 if python3 -m pip --version >/dev/null 2>&1; then
     PIP=(python3 -m pip)
