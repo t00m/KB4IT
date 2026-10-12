@@ -123,7 +123,11 @@ Pushing the tag runs `.github/workflows/publish.yml`:
 
 1. **Check:** it confirms the tag equals `kb4it/VERSION` and `pyproject.toml`, the changelog has the dated section, and the notes exist without `TODO`. Then it runs the tests and the theme check, builds, confirms the wheel holds every tracked theme, and runs `twine check`.
 2. **Publish:** it uploads to PyPI with trusted publishing (no stored token).
-3. **Release:** it creates the GitHub release `vX.Y.Z` with `releases/X.Y.Z.md` as the body and the wheel and sdist attached.
+3. **Image:** from the same wheel it builds the container image, smoke-tests the amd64 build (the version it prints must equal the tag), then pushes `ghcr.io/t00m/kb4it` for amd64 and arm64 as `X.Y.Z`, `X.Y` and `latest`, with an SBOM and a build provenance attestation. It logs in with the workflow token; nothing is stored.
+4. **Packages:** from the same wheel it builds the `.deb` (amd64, arm64) and `.rpm` (x86_64, aarch64) and installs them offline in Debian, Ubuntu, Fedora and Rocky Linux containers.
+5. **Release:** once PyPI, the image and the packages succeeded, it creates the GitHub release `vX.Y.Z` with `releases/X.Y.Z.md` as the body, a line with the image and its digest, and the wheel, the sdist and the four packages attached.
+
+Image and packages run next to the PyPI upload, so a failure in either can leave a version on PyPI without a GitHub release. When the failure is transient (a registry or mirror that did not answer), open the failed run and use **Re-run failed jobs**: the PyPI upload is not repeated, and the release job runs once everything is green. A re-run uses the tagged commit, so when the cause is in that code, fix it on `master` and release the next patch version. Never move or re-push a tag.
 
 Only plain `vX.Y.Z` tags trigger it. A tag such as `v0.7.39-fix1` is not a PyPI version and is ignored.
 
@@ -131,15 +135,17 @@ Only plain `vX.Y.Z` tags trigger it. A tag such as `v0.7.39-fix1` is not a PyPI 
 
 ```bash
 pip install --no-cache-dir KB4IT==X.Y.Z && kb4it themes
+docker run --rm ghcr.io/t00m/kb4it:X.Y.Z --version
 scripts/release.sh --open 0.8.0         # commits "chore: target version 0.8.0"
 ```
 
 ## One-time setup
 
-The workflow needs two things it cannot set up itself:
+The workflow needs a few things it cannot set up itself:
 
 - On pypi.org: KB4IT, Settings, Publishing, add a GitHub Actions publisher with owner `t00m`, repository `KB4IT`, workflow `publish.yml` and environment `pypi`.
 - On GitHub: Settings, Environments, an environment named `pypi`; then enable the workflow with `gh workflow enable publish.yml`.
+- After the first release that pushes the image: on GitHub, your profile, **Packages**, `kb4it`, **Package settings**: under **Danger Zone** change the visibility to **Public**, so anyone can pull it. Check that the package is linked to the KB4IT repository (the image's `source` label normally links it; if not, use **Connect repository**). New packages start private, so until this is done `docker pull ghcr.io/t00m/kb4it` fails for everyone else.
 
 If the workflow cannot be used, `scripts/distribution/pypi/publish_pypi.sh` uploads by hand. Build from a clean export of the tag, never from a working tree, because a working tree may hold themes that are not tracked.
 

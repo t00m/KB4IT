@@ -113,6 +113,14 @@ pip install --user KB4IT
 uv tool install "KB4IT[extras]"
 ```
 
+**Container** - Docker or Podman, nothing else to install:
+
+```bash
+docker run --rm -v "$PWD:/work" --user "$(id -u):$(id -g)" ghcr.io/t00m/kb4it build config/repo.json
+```
+
+**Linux packages** - a `.deb` and an `.rpm` for each release on the [releases page](https://github.com/t00m/KB4IT/releases); they install without internet access.
+
 **From source**:
 
 ```bash

@@ -2,11 +2,11 @@
 DocType: How-to guide
 Feature: Development
 HelpId: dev-release
-Keyword: release, version, tag, pypi, changelog, release notes, semver
+Keyword: release, version, tag, pypi, ghcr, container, deb, rpm, changelog, release notes, semver
 Level: advanced
 Order: 730
 Section: Development
-Summary: Cut a KB4IT release, from the changelog to PyPI and the GitHub release.
+Summary: Cut a KB4IT release, from the changelog to PyPI, the container image and the GitHub release.
 ---
 
 # Release a version
@@ -50,13 +50,16 @@ This is for maintainers. `RELEASING.md` in the repository has every detail and t
     git tag vX.Y.Z && git push origin vX.Y.Z
     ```
 
-7. The tag starts `.github/workflows/publish.yml`. It checks that the tag, the version files, the changelog and the notes agree, runs the tests and the theme check, publishes to PyPI and creates the GitHub release.
+7. The tag starts `.github/workflows/publish.yml`. It checks that the tag, the version files, the changelog and the notes agree, runs the tests and the theme check, and publishes to PyPI. From the same wheel it pushes the container image `ghcr.io/t00m/kb4it` (amd64 and arm64) and builds the `.deb` and `.rpm`. When all of that succeeded it creates the GitHub release with the packages attached. If a job fails for a transient reason, use **Re-run failed jobs** on that run; if the cause is in the tagged code, fix it and release the next patch version. Never move a tag.
 
-7. Install the new version from PyPI to check it, then open the next cycle:
+8. Install the new version from PyPI to check it, then open the next cycle:
 
     ```bash
     scripts/release.sh --open 0.9.0
     ```
+
+!!! note "Once, after the first release with an image"
+    New packages on GitHub are private. Open your profile, **Packages**, `kb4it`, **Package settings**, and change the visibility to **Public**, so everyone can pull the image. `RELEASING.md` has the details.
 
 !!! important "Themes declare the KB4IT they need"
     When a theme starts using something new from the core, raise the `kb4it` requirement in its `theme.json` in the same change. The theme check refuses a release whose themes need a newer KB4IT.

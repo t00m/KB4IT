@@ -2,11 +2,11 @@
 DocType: How-to guide
 Feature: Installation
 HelpId: install
-Keyword: pip, pipx, uv, deb, rpm, apt, dnf, upgrade, uninstall, requirements, windows, macos, linux, wsl, powershell
+Keyword: pip, pipx, uv, deb, rpm, apt, dnf, docker, podman, container, upgrade, uninstall, requirements, windows, macos, linux, wsl, powershell
 Level: basic
 Order: 130
 Section: Get started
-Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx, pip or a Linux package, upgrade it, remove it, or run it from a clone.
+Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx, pip, a Linux package or a container, upgrade it, remove it, or run it from a clone.
 ---
 
 # Install KB4IT
@@ -70,6 +70,28 @@ sudo dnf install ./kb4it-0.9.0-1.x86_64.rpm
 ```
 
 The package uses a Python from 3.11 to 3.14. On RHEL 9, whose `python3` is 3.9, dnf installs `python3.11` or `python3.12` next to it. Remove the package with `sudo apt remove kb4it` or `sudo dnf remove kb4it`.
+
+## Run in a container {#container}
+
+The image `ghcr.io/t00m/kb4it` has KB4IT with its extras, for `amd64` and `arm64`, and needs no Python on your machine. Run it from the folder of your knowledge base, which it sees as `/work`:
+
+```bash
+docker run --rm -v "$PWD:/work" --user "$(id -u):$(id -g)" ghcr.io/t00m/kb4it:0.9.0 build config/repo.json
+```
+
+`--user` makes the files it writes yours. To preview the site while you write, publish the port and listen on every address inside the container:
+
+```bash
+docker run --rm -p 8642:8642 -v "$PWD:/work" ghcr.io/t00m/kb4it:0.9.0 serve config/repo.json --host 0.0.0.0
+```
+
+Then open `http://127.0.0.1:8642/`. With Podman, on hosts with SELinux such as Fedora and RHEL, add `:Z` to the folder so the container may read it:
+
+```bash
+podman run --rm -v "$PWD:/work:Z" ghcr.io/t00m/kb4it:0.9.0 build config/repo.json
+```
+
+Use a fixed version such as `0.9.0`, or `0.9` for its latest fixes; `latest` follows every release.
 
 ## Check the installation {#check}
 
