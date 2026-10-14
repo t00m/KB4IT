@@ -14,7 +14,7 @@ starts only after review.
 | 1 Automated baseline | Done |
 | 2 Correctness and robustness | Done |
 | 3 Security | Done |
-| 4 Architecture and maintainability | Pending |
+| 4 Architecture and maintainability | Done |
 | 5 Dependencies and packaging | Pending |
 | 6 Tests and HTML output quality | Pending |
 
@@ -870,4 +870,211 @@ Effort: S
 | 4 | SEC-04 | Hooks and theme code run during CI builds of pull requests; undocumented in the action |
 | 5 | SEC-06 and SEC-07 | Feed attribute escaping and YAML alias expansion: small fixes that close the remaining input paths |
 
-Phase 3 is complete. Stopped here, waiting for your go-ahead before Phase 4.
+
+---
+
+## Phase 4: Architecture and maintainability
+
+Method: service dependencies were taken from `get_service("...")` calls; the import
+graph and class sizes from an `ast` walk of `kb4it/`; theme duplication by comparing
+methods of the same name across the four `theme.py` files with `difflib`
+(similarity ratio) and templates by SHA-256; template use by searching every
+`.py` and `.tpl` for each template name (including the transformation names built
+with f-strings in `builder.py`).
+
+### Summary
+
+| Area | Result |
+|---|---|
+| Coupling | Service locator; Backend is a hub with two-way links to six services (ARC-03) |
+| Circular imports | None at module level. 22 imports inside functions; three of them make `core` depend on `services` (ARC-04) |
+| God classes | techdoc `Theme` 1,187 lines / 40 methods; blog `Theme` 926 / 27; bookshelf 681 / 33; `Builder` 467 / 36; `tui/app.py` 1,449 lines (ARC-02) |
+| Duplicated logic | 19 methods exist in three or more themes; several pairs are 93 to 100% identical; 51 duplicate template files (ARC-01) |
+| Dead code | 62 bundled templates never referenced; 12 of 24 page transformations can never match (ARC-05); dead functions in BASE-03 |
+| Type hints | 39% of functions (251 of 632) carry any annotation; 25% of parameters (132 of 525) (ARC-07) |
+| Config sprawl | Contained: 40 `repo.json` keys read, all documented in `help/source/reference-repo-json.md` except the runtime `updated` (COR-13) and apphelp's `version` (documented in its theme reference). Global `ENV` dict: 95 references, read-mostly |
+| Testability | 316 test functions; `KB4IT_HOME` isolates per-user files; services can only be tested through a full `KB4IT` app (ARC-03); module-level state (ARC-06) |
+
+Service dependencies (`get_service` calls):
+
+| Service | Asks for |
+|---|---|
+| Backend (`services/backend.py`) | Builder, Compiler, Deployer, Frontend, Processor, Theme |
+| Processor | Backend, DB, Theme |
+| Compiler | Backend, DB, Processor, Theme |
+| Builder (and every Theme) | Backend, DB |
+| Deployer | Backend, Theme |
+| Frontend | Backend, Theme |
+| Workflow | Backend, Frontend, Theme |
+| Database | Backend |
+
+### Findings
+
+**ARC-01** | Severity: Medium
+Location: `kb4it/resources/themes/blog/logic/theme.py` and `kb4it/resources/themes/techdoc/logic/theme.py` (pairs below); templates under `kb4it/resources/themes/*/templates/`
+Evidence (similarity of same-named methods):
+
+| Method | Lines | Similarity | Locations |
+|---|---|---|---|
+| `get_labels` | 11 | 100% | blog `:828`, techdoc `:1060` |
+| `get_html_values_from_key` | 9 | 100% | blog `:840`, techdoc `:1072` |
+| `extract_toc` | 31 | 97% | bookshelf `:636`, techdoc `:855` |
+| `build_metadata_section` | 25 | 96% | blog `:850`, techdoc `:1082` |
+| `build_events` | 132 | 95% | blog `:186`, techdoc `:492` |
+| `build_page_key` | 24 | 95% | blog `:704`, techdoc `:972` |
+| `build_page_key_value` | 26 | 93% | blog `:729`, techdoc `:999` |
+| `build_datatable` | 84 | 81% | blog `:34`, techdoc `:91` (and bookshelf `:671`) |
+
+19 methods appear in three or more themes (`build_page`, `build_page_key`,
+`build_page_key_value`, `build_page_properties`, `build_page_stats`,
+`build_datatable`, `build_tagcloud_from_key`, `extract_toc`, `get_labels`, and 10
+more). Templates: 47 groups of byte-identical `.tpl` files, 51 redundant copies.
+Why it matters: every fix must be made two or three times. The Phase 2 and 3
+findings show it: COR-08 (blog only, but `build_events` is shared logic), SEC-01
+(the same unescaped templates in three themes).
+Recommended fix: move the shared methods into `Builder` (or a mixin such as
+`services/themekit.py`) and keep only real differences in each theme; move
+identical templates to `resources/common/templates/`, which
+`_template_candidates` already falls back to. Do it after SEC-01, so escaping is
+fixed once.
+Effort: L
+
+**ARC-02** | Severity: Medium
+Location: `kb4it/resources/themes/techdoc/logic/theme.py:82`, `kb4it/resources/themes/blog/logic/theme.py:24`, `kb4it/resources/themes/bookshelf/logic/theme.py:80`, `kb4it/services/builder.py:67`, `kb4it/tui/app.py`
+Evidence: class sizes from `ast`: techdoc `Theme` 1,187 lines and 40 methods,
+blog `Theme` 926 and 27, bookshelf `Theme` 681 and 33, `Builder` 467 and 36;
+`tui/app.py` is one 1,449-line module with 15 screen and widget classes. Five
+of the seven rank-D functions of Phase 1 live in these classes.
+Why it matters: each theme class mixes page assembly, the events calendar,
+datatables, tag clouds and statistics; changes need a full build to test, and
+reviews of one feature drag in the whole file.
+Recommended fix: after ARC-01, split by concern (calendar, tables, page
+builders) into small modules; split `tui/app.py` into one module per screen.
+Effort: L
+
+**ARC-03** | Severity: Medium
+Location: `kb4it/core/service.py:82`, `kb4it/services/backend.py:315`, `:447`, `:454`, `kb4it/services/frontend.py:163`
+Evidence:
+```python
+    def get_services(self):
+        """Get services needed."""
+        self.srvbld = self.get_service("Builder")
+        self.app.register_service("Processor", Processor())
+```
+(`backend.py:312-315`), and the table above.
+Why it matters: any service can reach any other by name, Backend both owns and
+depends on the pipeline services, and four services are registered in the
+middle of a build. The order in which things exist is implicit, and no service
+can be tested without a whole `KB4IT` app; the tests in `tests/` drive full
+builds through subprocesses or the controller for that reason.
+Recommended fix: keep the registry for application-level services (Backend, DB,
+Workflow), but pass the pipeline's collaborators explicitly
+(`Processor(backend, db, theme)`, `Compiler(...)`), created once in stage 1;
+document the lifecycle in `AGENTS.md`.
+Effort: L
+
+**ARC-04** | Severity: Low
+Location: `kb4it/core/hooks.py:76`, `kb4it/core/serve.py:43`, `:51`, `kb4it/services/backend.py:38`
+Evidence:
+```python
+def load_hooks(repo: dict, root) -> Hooks:
+    from kb4it.services.backend import resolve_repo_path
+```
+Why it matters: `core` is the lower layer, but two `core` modules import a
+service module (inside functions, to avoid a cycle) only to reach a pure path
+helper. It invites real cycles later.
+Recommended fix: move `resolve_repo_path` to `kb4it/core/util.py` (or a new
+`core/paths.py`) and import it from there everywhere.
+Effort: S
+
+**ARC-05** | Severity: Low
+Location: `kb4it/services/builder.py:74-87`, `:117-120`; `kb4it/resources/common/templates/HTML_TAG_*_MD.tpl`; `kb4it/services/compiler.py:251-295`
+Evidence:
+```python
+        for old, new in self._xform_pairs:
+            if old:
+                content = content.replace(old, new)
+```
+Of the 24 transformation sources, 12 are Asciidoctor markup that python-markdown
+never produces: `HTML_TAG_PRE_MD` is `<pre class="CodeRay highlight">`,
+`HTML_TAG_TABLE_MD` is `<table class="tableblock frame-all grid-all spread">`,
+the five `HTML_TAG_ADMONITION_*_MD` are `<div class="admonitionblock ...`, and
+the five `HTML_TAG_ADMONITION_ICON_*_MD` are `<i class="fa icon-...`.
+python-markdown 3 emits `<pre><code>`, `<table>` and `<div class="admonition note">`
+(checked with `extra` and `admonition`). Separately, 62 bundled templates are
+never referenced by name: techdoc 16 (for example `EVENTCAL_TABLE_YEAR`,
+`TABLE_EVENT`), blog 45 (for example `CARD_DOC`, `PAGINATION_PAGE_ACTIVE`,
+`TIMELINEJS`, `HTML_TAG_TABLE_OLD_2`), bookshelf 1. No `<%include>`,
+`<%namespace>` or `<%inherit>` exists in any template.
+Why it matters: dead templates and transformations make the themes look bigger
+and more fragile than they are, and every page pays 24 string replacements. The
+compiler also rewrites python-markdown output into AsciiDoc-style
+`sect1`/`sectionbody` blocks (`compiler.py:251-295`) only to keep the old
+transformations and CSS working: legacy coupling between the compiler and the
+themes. Whether a custom theme or override relies on these names is Needs
+verification.
+Recommended fix: remove the 12 dead pairs and the unreferenced templates, checking
+the output with `scripts/devel/theme_snapshot.py` before and after; in the long
+run, style python-markdown's own markup with CSS instead of string replacement.
+Effort: M
+
+**ARC-06** | Severity: Low
+Location: `kb4it/services/builder.py:70`, `kb4it/services/compiler.py:28-53`, `kb4it/services/backend.py:290`
+Evidence:
+```python
+class Builder(Service):
+    theme_var = {}
+```
+```python
+_progress_callback = None
+_compile_start_callback = None
+```
+```python
+                self.params["force"] = True
+```
+Why it matters: a class-level dict shared by every `Builder` and theme instance,
+module-level callbacks set by the TUI that every later build in the same process
+sees, and runtime decisions written back into the parameters and settings (also
+`repo["updated"]`, COR-13). Builds in one process (the TUI, `kb4it serve`) can
+leak state into each other.
+Recommended fix: make `theme_var` an instance attribute, pass callbacks through
+the `KB4IT` parameters or the `Compiler` constructor, and keep runtime flags in
+the runtime dict, not in `params` or `repo`.
+Effort: S
+
+**ARC-07** | Severity: Low
+Location: whole package; for example `kb4it/services/database.py` (10 mypy errors, Phase 1)
+Evidence: 251 of 632 functions (39%) have any annotation; 132 of 525
+parameters (25%); no mypy step in CI (BASE-04).
+Why it matters: the service-locator design (ARC-03) hides types already; without
+annotations, tools cannot follow a value from `get_service` to its use.
+Recommended fix: annotate `core/` and the public methods of `services/` first,
+with typed returns for `get_service` (overloads or a typed registry), and run
+mypy on those packages in CI.
+Effort: M
+
+**ARC-08** | Severity: Info
+Location: `index.html` (repository root), `pypi/README.rst`, `tests/conftest.py:8`
+Evidence: `index.html` is a redirect to `https://t00m.github.io/KB4IT/demo/index.html`,
+last changed in `d0e2862`; GitHub Pages is now published by
+`.github/workflows/help.yml` with "GitHub Actions" as the source, so the file is
+not served. `pypi/README.rst` is not referenced (`pyproject.toml:7` uses
+`readme = "README.md"`). The comment at `tests/conftest.py:8` says
+`kb4it.core.env` creates its folder at import time; `core/env.py` no longer calls
+`makedirs` (folders are created by `KB4IT.__setup_environment`, `core/main.py:100-104`).
+Why it matters: leftovers mislead contributors and reviewers.
+Recommended fix: delete `index.html` and `pypi/` after confirming nothing external
+links to them; update the comment.
+Effort: S
+
+### Phase 4 top 5
+
+| # | ID | Why |
+|---|---|---|
+| 1 | ARC-01 | Duplicated theme code: every fix (SEC-01, COR-08) has to be made two or three times |
+| 2 | ARC-03 | Service locator and hub: hard to test and to reason about build order |
+| 3 | ARC-05 | 62 dead templates and 12 transformations that never match: cheap to remove with the snapshot tool |
+| 4 | ARC-02 | God classes in the themes and the TUI, to split after ARC-01 |
+| 5 | ARC-04 and ARC-06 | Small, safe fixes: move the path helper down, remove shared class and module state |
+
+Phase 4 is complete. Stopped here, waiting for your go-ahead before Phase 5.
