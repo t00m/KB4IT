@@ -12,7 +12,7 @@ starts only after review.
 |---|---|
 | 0 Inventory | Done |
 | 1 Automated baseline | Done |
-| 2 Correctness and robustness | Pending |
+| 2 Correctness and robustness | Done |
 | 3 Security | Pending |
 | 4 Architecture and maintainability | Pending |
 | 5 Dependencies and packaging | Pending |
@@ -353,4 +353,325 @@ Effort: M
 | 4 | BASE-04 | No linter or type checker in CI, so the numbers above will grow |
 | 5 | BASE-02 and the mypy `None` cases (`env.py:111`, `log.py:46`, `database.py:140`) | Latent crashes; checked for reachability in Phase 2 |
 
-Phase 1 is complete. Stopped here, waiting for your go-ahead before Phase 2.
+
+---
+
+## Phase 2: Correctness and robustness
+
+Method: the 45 broad `except` clauses and 9 `except: pass/continue` from Phase 1
+were read one by one with their context. Each suspected failure was then
+reproduced with throwaway knowledge bases created with `kb4it create` in a scratch
+folder outside the repository (`KB4IT_HOME` pointed there too). "Reproduced" below
+means the behaviour was observed, with the command outcome quoted.
+
+### Summary
+
+| Area | Result |
+|---|---|
+| Error handling | Page compile and render failures are logged but never fail the build (COR-01); a template syntax error is hidden (COR-06); several theme `except: pass` blocks (COR-10) |
+| Incremental cache | The new cache is saved before compilation, so a failed build leaves stale pages (COR-02); settings shown on every page do not trigger a rebuild (COR-05) |
+| File I/O and paths | The target folder is not checked, and the stale-page sweep deletes user files (COR-03); JSON files are not written atomically and a corrupt registry is silently replaced (COR-04); `copydir` builds paths with `str.replace` (COR-11) |
+| YAML | `yaml.safe_load` is the only YAML loader (`kb4it/core/util.py:362`); no `yaml.load` anywhere in `kb4it/`. Nested mappings become text (COR-12) |
+| Encodings | Every text open passes an encoding; enforced by `tests/core/test_encoding_rule.py`. No finding |
+| Concurrency | Worker threads write into shared dictionaries (COR-13); per-repository lock in place |
+| Phase 1 leads | `env.py:111`, `log.py:46`: false positives. `database.py:140` returns `None`, but every caller handles it (`database.py:113`, `:279`, `themes/blog/logic/theme.py:80-81`, `:193-195`, `themes/bookshelf/logic/theme.py:143`): typing gap only. BASE-02 stays latent |
+
+### Findings
+
+**COR-01** | Severity: High
+Location: `kb4it/services/compiler.py:208-220`, `kb4it/core/main.py:202`
+Evidence:
+```python
+            if rc is True:
+                try:
+                    self.srvthm.build_page(path_hdoc)
+                ...
+                except Exception as error:
+                    self.log.error(f"[COMPILER] ERROR {error}")
+                    self.print_traceback()
+                return x
+            else:
+                self.log.error(f"[COMPILER] COMPILE_FAILED doc={basename}")
+                return x
+```
+Reproduced: blog sample with `tagline` removed from `repo.json`: 9 `[COMPILER] ERROR 'tagline'` lines, exit status 0, and the summary says `invalid=0`.
+Why it matters: a build whose pages failed reports success. CI, the GitHub Action
+and scripts publish a broken or partial site; `fail_on_invalid` does not cover it.
+Recommended fix: collect failed documents in the `Compiler` (both the `rc is False`
+branch and `build_page` exceptions), add them to the summary as `failed=`, and
+raise `CompilationError` after the pool finishes, so `KB4IT.run()` returns
+`False` and the process exits 1. A failing theme can stay non-fatal under
+`kb4it serve` by catching it there.
+Effort: M
+
+**COR-02** | Severity: High
+Location: `kb4it/services/processor.py:187` (in `step_00_extraction`; saved again at `:301` after analysis), `kb4it/services/backend.py:300-304`
+Evidence:
+```python
+        # Save new kbdict
+        self.srvbes.save_kbdict(self.kbdict_new)
+```
+This runs at the end of extraction (stage 3), before compilation (stage 5) and deployment (stage 7).
+Reproduced: techdoc sample with a hook that fails once for `page.md`:
+build 1 `rc=0` "Version one"; body changed to "Version two" and build 2 fails
+(`rc=1`); build 3 `rc=0`, `compiled=0 skipped=1`, and `target/page.html` still
+says "Version one".
+Why it matters: after any failed or interrupted build (hook error, crash,
+Ctrl+C, full disk), incremental builds keep serving stale pages until someone
+runs `--force`, and nothing tells them to.
+Recommended fix: write the new `kbdict.json` only after a successful deploy, or
+keep the previous hashes for every document that was not compiled and deployed
+in this run. Combine with COR-01, so failed documents are never marked done.
+Effort: M
+
+**COR-03** | Severity: Medium
+Location: `kb4it/services/deployer.py:130-134`, `kb4it/services/backend.py:346-348`
+Evidence:
+```python
+        for filename in os.listdir(dir_target):
+            if not filename.endswith('.html'):
+                continue
+            if filename not in expected:
+                os.unlink(os.path.join(dir_target, filename))
+```
+Reproduced: `"target": "."` (the repository root) with a user file `notes.html`
+there: the build exits 0 and `notes.html` is deleted; the root fills with
+generated pages, `resources/` and `sources/`.
+Why it matters: one wrong `target` value (`.`, the source folder, an existing
+web folder) deletes user HTML files without a warning. Stage 1 only creates the
+target folder (`backend.py:346-348`); nothing checks it against the repository
+root, `source/`, `config/` or the home folder.
+Recommended fix: in stage 1, refuse a target that equals or contains the
+repository root, the source folder, `config/` or `$HOME`; and limit the stale
+sweep to files KB4IT wrote in an earlier build (keep the list in `kbdict.json`).
+Effort: M
+
+**COR-04** | Severity: Medium
+Location: `kb4it/services/workflow.py:89-94`, `kb4it/core/util.py:301-304`
+Evidence:
+```python
+        if os.path.exists(projects_file):
+            try:
+                data = json_load(projects_file)
+                projects = data.get("projects", [])
+            except Exception:
+                pass
+```
+```python
+def json_save(filepath: str, adict: dict) -> None:
+    with open(filepath, "w", encoding="utf-8") as fout:
+        json.dump(adict, fout, sort_keys=True, indent=4)
+```
+Reproduced: a truncated `projects.json` listing projects A and B, then
+`kb4it create techdoc ...`: exit 0, nothing logged, and the file now lists only
+the new project.
+Why it matters: the project list of the TUI is lost silently. Because `json_save`
+truncates the file and then writes, a crash or a full disk during any save can
+produce exactly that truncated file; for `kbdict.json` it turns the next builds
+into `KBDICT_LOAD_FAIL` errors (`backend.py:294-296`) until `--force`.
+Recommended fix: write JSON atomically (temporary file in the same folder, then
+`os.replace`). On a parse error of `projects.json`, log it, keep a copy
+(`projects.json.bak`) and do not overwrite it. On a corrupt `kbdict.json`,
+rebuild from scratch with a warning instead of failing.
+Effort: S
+
+**COR-05** | Severity: Medium
+Location: `kb4it/services/processor.py:190-198`, `kb4it/services/builder.py:135-140`
+Evidence:
+```python
+        return {"markdown": repo.get("markdown") or {}, "search": repo.get("search", True),
+                "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed"),
+                "overrides": ..., "hooks": ..., "backlinks": repo.get("backlinks", True)}
+```
+and the default `site_signature()` returns `""`; only apphelp overrides it.
+Reproduced: techdoc sample, build with `"title": "Old Site Name"`, change it to
+"New Site Name", build again: `index.html` has the new name 6 times,
+`page.html` keeps the old name (2 times, 0 for the new one).
+Why it matters: a change to `title`, `tagline`, `logo` or any theme option in
+`repo.json` leaves every unchanged document page with the old header in
+techdoc, blog and bookshelf, until `--force`.
+Recommended fix: hash the whole `repo.json` (minus keys that do not reach pages,
+such as `workers` and `force`) into `signature_parts()`, or give each theme a
+`site_signature()` that covers the keys its templates read.
+Effort: S
+
+**COR-06** | Severity: Medium
+Location: `kb4it/services/builder.py:195-207`
+Evidence:
+```python
+            for template_path in candidates:
+                try:
+                    tpl = Template(filename=template_path)
+                    ...
+                    return tpl
+                except Exception as err:
+                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason={err}")
+                    continue
+            self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
+```
+Why it matters: the same `except` covers "file does not exist" (the normal case
+for override and theme candidates) and "Mako syntax error". A syntax error in an
+`overrides/` template is logged at DEBUG only, and the theme's template is used
+instead, so the user's change silently does nothing. A syntax error in a theme
+template ends as "Template not found", which points the wrong way. Behaviour
+derived from the code; Needs verification with a deliberately broken override.
+Recommended fix: skip candidates with `os.path.exists()`, and let a
+`mako.exceptions.SyntaxException` (or any compile error) raise `ThemeError` with
+the file and line.
+Effort: S
+
+**COR-07** | Severity: Medium
+Location: `kb4it/core/util.py:368`
+Evidence:
+```python
+        title_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
+```
+Reproduced: a document with a fenced `bash` block containing `# install the tool`
+before its `# Real title` heading gets the title `install the tool`.
+Why it matters: shell, Python and YAML comments inside code blocks are common in
+technical documents; the wrong title appears in navigation, indexes, search
+and the feed.
+Recommended fix: ignore lines inside fenced code blocks (track ```` ``` ```` and
+`~~~` fences) when looking for the first H1, or take the title from
+python-markdown's `toc_tokens` after conversion.
+Effort: S
+
+**COR-08** | Severity: Medium
+Location: `kb4it/resources/themes/blog/logic/theme.py:169`
+Evidence:
+```python
+            timestamp = var['post'][sort_by][0]
+```
+Reproduced: blog sample plus one post without `Date`: exit 1, and the only message
+is `Error: 'Date'` (from `kb4it/core/main.py:369-370`); traceback
+`build_page_index` -> `KeyError: 'Date'`.
+Why it matters: one post stops the whole blog, and the message names neither the
+document nor the cause. `Date` is documented as optional elsewhere, and
+`get_doc_timestamp` already returns `None` for it.
+Recommended fix: skip or sort undated posts last (`var['post'].get(sort_by)`), and
+report them with a `DOC_*` warning; in `main.py:369` print the exception type
+and suggest the log file.
+Effort: S
+
+**COR-09** | Severity: Low
+Location: `kb4it/services/deployer.py:125-128`
+Evidence:
+```python
+            except FileNotFoundError as error:
+                self.log.error(f"[DEPLOYER] ERROR {error}")
+                self.log.error("[DEPLOYER] HINT rerun with -force")
+                return
+```
+Why it matters: when one compiled page is missing from the cache (the usual
+result of COR-01 or COR-02), the deploy stops copying the remaining pages and
+skips the stale sweep, but the build still exits 0. The hint also names a flag
+that does not exist (`-force` instead of `--force`).
+Recommended fix: copy every other page, collect the missing ones, and fail the
+build with their names; fix the hint text.
+Effort: S
+
+**COR-10** | Severity: Low
+Location: `kb4it/resources/themes/blog/logic/theme.py:665-674`, `:690-693`; `themes/techdoc/logic/theme.py:945-948`; `themes/bookshelf/logic/theme.py:494-497`; `kb4it/tui/app.py:94-97`, `:159-162`, `:236-239`
+Evidence (blog, `:690-693`):
+```python
+        except Exception:
+            BODY = HTML_BODY.render(var=var)
+```
+Why it matters: when the post template fails, the blog silently renders the page
+with a different template, and the error is never logged. The other places drop
+an error with `pass` (page title, theme list, notifications). The remaining
+broad excepts (in `tui/app.py`, `frontend.py`, `workflow.py:113`,
+`processor.py:219`) log the error and are acceptable at a UI or per-item
+boundary.
+Recommended fix: log every swallowed exception at WARNING with the document id;
+in the blog, let a template error reach COR-01's failure path.
+Effort: S
+
+**COR-11** | Severity: Low
+Location: `kb4it/core/util.py:189`, `kb4it/core/util.py:270-274`
+Evidence:
+```python
+            rel_path = root.replace(source, "").lstrip(os.sep)
+```
+```python
+                if os.path.isfile(file_object_path):
+                    os.unlink(file_object_path)
+                else:
+                    shutil.rmtree(file_object_path)
+```
+Why it matters: `str.replace` removes every occurrence of the source path, not
+only the prefix, so a path that repeats it (or a source given with a trailing
+separator) lands in the wrong folder. In `delete_target_contents`, a symbolic
+link to a folder is not a file, and `shutil.rmtree` refuses symbolic links with
+`OSError`, which stops the build. Both derived from the code; Needs verification
+for a real layout that triggers them.
+Recommended fix: `os.path.relpath(root, source)`; unlink symbolic links
+(`os.path.islink`) before the file/folder test.
+Effort: S
+
+**COR-12** | Severity: Low
+Location: `kb4it/core/util.py:380-388`
+Evidence:
+```python
+            else:
+                keys[k] = [str(v).strip()]
+```
+Reproduced: `Meta: {a: 1}` in frontmatter becomes the property value `"{'a': 1}"`,
+and `Author: Virseda, Tomas` becomes two authors.
+Why it matters: nested YAML produces Python-repr text on pages and odd property
+pages; the comma rule is documented, but surprising for names.
+Recommended fix: report nested mappings as `DOC_INVALID reason=nested_mapping`
+(or a warning) instead of stringifying them; document how to keep a comma inside
+a value (a YAML list).
+Effort: S
+
+**COR-13** | Severity: Low
+Location: `kb4it/services/builder.py:221-237`, `kb4it/services/database.py:218-222`, `kb4it/services/compiler.py:110`
+Evidence:
+```python
+        theme_var["repo"] = self.srvbes.get_dict("repo")
+        ...
+        theme_var["kb"]["keys"] = self.srvdtb.get_keys()
+        theme_var["repo"]["updated"] = get_human_datetime(datetime.now())
+        ...
+        theme_var["kb"]["keys"]["menu"] = sorted(...)
+```
+`get_dict("repo")` and `get_keys()` return the shared objects, and
+`get_theme_var()` runs from `compilation_finished`, a future callback that
+executes in the worker threads.
+Why it matters: every worker writes into the repository settings and the
+database's key cache at the same time. The values written are the same today,
+so no wrong output was seen, but any per-page value put there later would leak
+between pages. Needs verification under load.
+Recommended fix: build `theme_var["repo"]` and `theme_var["kb"]["keys"]` as
+copies (`dict(...)`) inside `get_theme_var`.
+Effort: S
+
+**COR-14** | Severity: Low
+Location: `kb4it/core/publish.py:69-73`
+Evidence:
+```python
+def atom_date(value) -> str:
+    """'2026-10-08' or '2026-10-08 14:30:00' as an Atom timestamp (UTC)."""
+    text = str(value).strip().replace("T", " ")
+    date, _, time = text.partition(" ")
+    return f"{date}T{(time or '00:00:00')[:8]}Z"
+```
+Why it matters: a local time is labelled UTC (`Z`), and a `Date` with an offset
+(`2026-10-08T14:30:00+02:00`) loses the offset, so feed readers show posts hours
+off.
+Recommended fix: keep a given offset; for naive values, either take a `timezone`
+from `repo.json` or write the local offset.
+Effort: S
+
+### Phase 2 top 5
+
+| # | ID | Why |
+|---|---|---|
+| 1 | COR-01 | Failed pages exit 0: CI and the GitHub Action publish broken sites |
+| 2 | COR-02 | A failed build leaves pages stale for good, with nothing pointing to `--force` |
+| 3 | COR-03 | A wrong `target` deletes user HTML files |
+| 4 | COR-04 | Non-atomic JSON writes and a silently replaced project registry |
+| 5 | COR-05 and COR-07 | Stale headers after a settings change, and wrong titles from code-block comments: both visible on real sites |
+
+Phase 2 is complete. Stopped here, waiting for your go-ahead before Phase 3.
