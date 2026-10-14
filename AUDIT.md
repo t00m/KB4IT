@@ -16,7 +16,7 @@ starts only after review.
 | 3 Security | Done |
 | 4 Architecture and maintainability | Done |
 | 5 Dependencies and packaging | Done |
-| 6 Tests and HTML output quality | Pending |
+| 6 Tests and HTML output quality | Done |
 
 ---
 
@@ -1239,4 +1239,220 @@ Effort: S
 | 4 | DEP-03 | No upper bounds on fast-moving dependencies such as textual |
 | 5 | DEP-01 | Stale pixi files: a third, unchecked dependency source |
 
-Phase 5 is complete. Stopped here, waiting for your go-ahead before Phase 6.
+
+---
+
+## Phase 6: Tests and HTML output quality
+
+Method:
+- Coverage: the full suite (455 tests, all passing) ran under `coverage` 7 with
+  subprocess measurement enabled (`COVERAGE_PROCESS_START` and a temporary `.pth`
+  hook in the throwaway uv environment), so builds started by the tests in a
+  separate process are counted.
+- HTML: one site per bundled theme was created with `kb4it create` in a scratch
+  folder, plus one document using lists, a task list, a table, an admonition, a
+  code block and an image; the `target/*.html` pages were checked with the Nu
+  HTML Checker (`vnu.jar` through `uvx html5validator`, Java 21) and with an
+  `lxml` script for `lang`, `<h1>`, `alt` and `<main>`.
+- Markdown: extension combinations were rendered with `MarkdownSettings` from
+  `kb4it/core/mdconfig.py`, with and without `pymdown-extensions` 12.2.
+
+### Summary
+
+| Area | Result |
+|---|---|
+| Coverage | 85% of 5,739 statements. Lowest: `themes/techdoc/logic/theme.py` 60% (354 of 888 missed), `themes/apphelp/logic/apphelp_versions.py` 27%, `core/serve.py` 76%. `core/types.py` shows 0% because it only holds type aliases imported under `TYPE_CHECKING` |
+| Critical paths without tests | Page compile and render failures, the deploy abort, the cache after a failed build, escaping, title extraction (TST-01, TST-02) |
+| HTML validity | apphelp: 0 errors on 14 pages. bookshelf: 6 errors. techdoc: 353 (73 not UIkit-related). blog: 384 (97 not UIkit-related) (HTML-01, HTML-03) |
+| Accessibility basics | `lang` present on every page of every theme. blog: no `<h1>` and an image without `alt` on all 17 pages; techdoc and blog: placeholder `alt` text, no `<main>` landmark (HTML-02) |
+| Markdown extensions | A fenced code block inside an admonition breaks with the default extensions (MD-01); `sane_lists` swallows a list that directly follows a list of the other type (MD-02); `pymdownx.superfences` in the default highlight mode produces unstyled Pygments markup (MD-03). `sane_lists` with `pymdownx.tasklist` renders task items and nested ordered lists correctly |
+
+### Findings
+
+**TST-01** | Severity: High
+Location: `kb4it/services/compiler.py:191-193`, `:211-216`, `:219-220`; `kb4it/services/deployer.py:125-128`
+Evidence: coverage report, missing lines:
+```
+kb4it/services/compiler.py   196   23   88%   77-78, 93-94, 121, 170, 191-193, 206-207, 211-216, 219-220, ...
+kb4it/services/deployer.py   175   12   93%   57-58, 99, 125-128, 147-148, ...
+```
+Why it matters: these are exactly the branches behind COR-01 (a failed page
+exits 0), COR-09 (the deploy stops copying) and SEC-03 (one property name empties
+the site). No test makes a page fail and checks the exit status, the summary or
+the next incremental build (COR-02), which is why those defects went unnoticed.
+Recommended fix: add tests that make one document fail to compile and to render
+(a hook or a broken template in `overrides/`), and assert: exit status 1, a
+`failed=` count in the summary, every other page still deployed, and the failed
+page rebuilt by the next incremental build.
+Effort: M
+
+**TST-02** | Severity: Medium
+Location: `tests/themes/test_techdoc.py`, `tests/themes/test_blog.py`, `tests/themes/test_bookshelf.py`; `kb4it/resources/themes/techdoc/logic/theme.py` (60% covered); `kb4it/core/util.py:368`
+Evidence: no test feeds HTML in frontmatter or titles to the themes (SEC-01); no
+test covers a `# comment` in a code block before the H1 (COR-07); no test changes
+`repo.json` between two builds (COR-05); no generated page is checked for valid
+HTML. The largest theme module is the least covered.
+Why it matters: the themes are where users see defects, and the tests check that
+pages exist more than what is in them.
+Recommended fix: one parametrised test over the four bundled themes that builds a
+document with hostile values and asserts no raw `<script>` and no `on*=` in any
+page; a title extraction test; a settings-change test; and, in the CI `package`
+job, run `html5validator` on the smoke-build output of apphelp and bookshelf
+(already nearly clean) to keep them valid.
+Effort: M
+
+**HTML-01** | Severity: Medium
+Location: `kb4it/resources/themes/techdoc/templates/HTML_TAG_A_NEW.tpl:1`, `kb4it/resources/themes/blog/templates/HTML_TAG_A_NEW.tpl:1`, `kb4it/resources/themes/bookshelf/templates/HTML_TAG_A_NEW.tpl:1`, `kb4it/resources/themes/blog/templates/HTML_TAG_SECT1_NEW.tpl:1`, `kb4it/resources/themes/blog/templates/HTML_TAG_SECTIONBODY_NEW.tpl:1`
+Evidence:
+```html
+<a class="" target="" href=
+```
+(techdoc and blog), `<a class="bk-link" href=` (bookshelf), and
+```html
+<div id="kb-sect1" class="uk-margin-small-bottom uk-card ...">
+<div id="kb-section-body" class="uk-container">
+```
+vnu results: techdoc `rich.html:275` "Bad value '' for attribute 'target'" (31
+times in techdoc, 29 in blog); bookshelf `properties.html:66` "Duplicate attribute
+'class'" (6), from `WORDCLOUD.tpl:3` links that already have a class; blog
+`rich.html:220`, `:222` "Duplicate ID 'kb-sect1'", "Duplicate ID 'kb-section-body'";
+blog `rich.html:330` "Stray end tag 'div'" (34); techdoc `all.html:204` "Element
+'div' not allowed as child of element 'span'"; techdoc `rich.html:193` "Element 'ul'
+not allowed as child of element 'ul'".
+Why it matters: the string-replacement transformations (ARC-05) rewrite every
+`<a href=` on the page, including links that templates already styled, so the
+second `class` is ignored and the styling is lost; repeated IDs break in-page
+anchors and scripts that look up an element by id; stray end tags change the
+layout depending on how the browser recovers.
+Recommended fix: drop the `HTML_TAG_A` transformation (style links with CSS
+instead), use classes instead of fixed IDs in the section templates, and fix the
+templates behind the stray `</div>` (blog `rich.html:330`) and the block elements
+inside `<span>`; validate in CI (TST-02).
+Effort: M
+
+**HTML-02** | Severity: Medium
+Location: `kb4it/resources/themes/blog/templates/HTML_FOOTER.tpl:67`, `kb4it/resources/themes/techdoc/apps/default/config/repo.json:22-32`, `kb4it/resources/themes/blog/apps/default/config/repo.json:10-20`, `kb4it/resources/themes/techdoc/apps/sapbasis/config/repo.json:26-32`
+Evidence:
+```html
+<img src="resources/common/images/kb4it-badge-built-with.svg">
+```
+```json
+    "git": false,
+    "git_server": "{https://{server.fqdn}",
+    "logo_alt": "{alternative_text}",
+```
+Checked on the built sample sites: blog 17 of 17 pages have no `<h1>` and an
+image without `alt`; techdoc 16 of 16 pages have `alt="{alternative_text}"` on the
+logo; blog `rich.html:187` links to
+`{https://{server.fqdn}/{username}/{repository_name}/edit/...}` although
+`"git": false`; techdoc and blog pages have no `<main>` landmark (apphelp and
+bookshelf pass all four checks).
+Why it matters: screen readers announce the placeholder text or the file name of
+the image; pages without a main heading or landmark are hard to navigate; a
+placeholder edit link is a broken link on every page of every new blog. These
+values come from the sample configuration that `kb4it create` copies.
+Recommended fix: use real defaults in the sample `repo.json` (`"logo_alt": ""` or
+the site title, no git placeholders), skip the edit link in blog when `git` is
+false, add `alt` to the badge, give each page one `<h1>` and wrap the content in
+`<main>`.
+Effort: S
+
+**MD-01** | Severity: Medium
+Location: `kb4it/core/mdconfig.py:21`
+Evidence:
+```python
+BASE_EXTENSIONS = ["extra", "admonition", "toc", "sane_lists"]
+```
+Rendered with the defaults:
+```
+!!! note
+    ```python
+    y = 2
+    ```
+```
+gives `<div class="admonition note"> <p class="admonition-title">Note</p> <p><code>python y = 2</code></p> </div>`:
+the fence is not recognised inside the admonition, and the code block becomes
+inline code with the language name in it.
+Why it matters: code inside a note or warning is common in technical
+documentation, which is what techdoc targets; the output is silently wrong.
+Recommended fix: document the limitation (indent code blocks inside admonitions,
+or enable `pymdownx.superfences`), or make `pymdownx.superfences` a default when
+`KB4IT[extras]` is installed, with MD-03 fixed first.
+Effort: S
+
+**MD-02** | Severity: Low
+Location: `kb4it/core/mdconfig.py:21` (`sane_lists`)
+Evidence: `1. one\n2. two\n- bullet\n- [ ] task` renders as
+`<ol><li>one</li><li>two- bullet- [ ] task</li></ol>`.
+Why it matters: with `sane_lists`, a list of the other type needs a blank line
+before it, otherwise its items are swallowed into the last item as text. This is
+documented python-markdown behaviour, but not in the KB4IT help. Task lists
+themselves work with `sane_lists` and `pymdownx.tasklist`, including nested
+ordered lists.
+Recommended fix: add one line to the Markdown section of the help.
+Effort: S
+
+**MD-03** | Severity: Low
+Location: `kb4it/core/mdconfig.py:37-49`
+Evidence: with `"extensions": ["pymdownx.superfences"]` and the default
+`highlight: "client"`, a fenced block renders as
+`<div class="highlight"><pre><span></span><code><span class="n">x</span> ...`
+(Pygments markup), but `pygments.css` is only written in `pygments` mode and
+highlight.js is still loaded.
+Why it matters: code blocks lose their colours, or get both systems at once,
+depending on the theme CSS.
+Recommended fix: when `pymdownx.superfences` or `pymdownx.highlight` is enabled,
+set `pymdownx.highlight: {"use_pygments": highlight == "pygments"}` in
+`all_configs()`, so client mode gets plain `language-*` classes.
+Effort: S
+
+**HTML-03** | Severity: Info
+Location: UIkit markup in techdoc and blog templates (for example `kb4it/resources/themes/techdoc/templates/HTML_HEADER_COMMON.tpl`)
+Evidence: vnu reports 280 techdoc and 287 blog errors of the form "Attribute
+'uk-icon' not allowed on element 'span'", and the same for `uk-grid`, `uk-sticky`,
+`uk-navbar`, `uk-dropdown`, `uk-tooltip`.
+Why it matters: browsers ignore unknown attributes, so nothing breaks, but the
+noise hides the real errors of HTML-01 in any validator run.
+Recommended fix: use the equivalent `data-uk-*` attributes, which UIkit accepts and
+HTML5 allows, when templates are next touched.
+Effort: M
+
+**TST-03** | Severity: Info
+Location: `tests/blog/post1.adoc`
+Evidence: an AsciiDoc file in a folder with no tests; KB4IT no longer reads
+AsciiDoc (`kb4it/core/util.py:410-414` accepts `.md` and `.markdown` only).
+Why it matters: a leftover from the AsciiDoc era.
+Recommended fix: delete it.
+Effort: S
+
+### Phase 6 top 5
+
+| # | ID | Why |
+|---|---|---|
+| 1 | TST-01 | The failure branches are untested, which hid the two High correctness findings |
+| 2 | HTML-01 | Link rewriting and fixed IDs produce invalid HTML and lose styling in three themes |
+| 3 | MD-01 | Code inside admonitions renders wrong with the default extensions |
+| 4 | HTML-02 | Placeholder `alt` text and edit links shipped by `kb4it create`, missing `<h1>` in blog |
+| 5 | TST-02 | No escaping, title or settings-change tests; no HTML validation in CI |
+
+---
+
+## Overall priorities
+
+The audit is complete. Across the six phases, in the order I would fix them:
+
+| # | Finding | Severity | Effort | Why first |
+|---|---|---|---|---|
+| 1 | SEC-01 | High | L | Stored XSS from any frontmatter value in three of four themes |
+| 2 | COR-01 + TST-01 | High | M | Failed pages exit 0; CI and the GitHub Action publish broken sites |
+| 3 | COR-02 | High | M | A failed build leaves stale pages until `--force` |
+| 4 | COR-03 | Medium | M | A wrong `target` deletes user files |
+| 5 | SEC-03 | Medium | S | One property name empties the published site |
+| 6 | COR-04 | Medium | S | Non-atomic JSON writes; registry silently replaced |
+| 7 | COR-05, COR-07, COR-08, MD-01 | Medium | S | Wrong output visible to readers: stale headers, wrong titles, blog stopped by one post, broken code in notes |
+| 8 | SEC-02, SEC-04 | Medium/Low | S | Document the trust model for Markdown HTML and hooks |
+| 9 | ARC-01, ARC-05, HTML-01 | Medium | L | Deduplicate the themes and remove the string-replacement layer; fixes many HTML errors at once |
+| 10 | BASE-04, DEP-02, TST-02 | Info/Low/Medium | M | Lint, pinned dependencies and HTML checks in CI so the fixes stay fixed |
+
+51 findings in total: 4 High (COR-01, COR-02, SEC-01, TST-01), 16 Medium,
+23 Low and 8 Info. Each phase section lists them with location, evidence and fix.
