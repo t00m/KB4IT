@@ -13,7 +13,7 @@ starts only after review.
 | 0 Inventory | Done |
 | 1 Automated baseline | Done |
 | 2 Correctness and robustness | Done |
-| 3 Security | Pending |
+| 3 Security | Done |
 | 4 Architecture and maintainability | Pending |
 | 5 Dependencies and packaging | Pending |
 | 6 Tests and HTML output quality | Pending |
@@ -674,4 +674,200 @@ Effort: S
 | 4 | COR-04 | Non-atomic JSON writes and a silently replaced project registry |
 | 5 | COR-05 and COR-07 | Stale headers after a settings change, and wrong titles from code-block comments: both visible on real sites |
 
-Phase 2 is complete. Stopped here, waiting for your go-ahead before Phase 3.
+
+---
+
+## Phase 3: Security
+
+Threat model used: the person who runs `kb4it build` trusts `repo.json`, the
+theme and any hooks (they are code they chose to run). Document content
+(frontmatter and Markdown) may come from other people: several authors, merged
+pull requests, imported notes. Readers of the generated site are the victims of
+anything that runs in their browser. Payloads were tested by building throwaway
+sites in a scratch folder with the bundled themes; "Reproduced" quotes the
+generated HTML.
+
+### Summary
+
+| Area | Result |
+|---|---|
+| Mako autoescaping | No default filter (`Template(filename=...)` at `kb4it/services/builder.py:197`). apphelp escapes 100 of 115 expressions with `\| h`; techdoc 0 of 219, blog 0 of 202, bookshelf 0 of 170; common templates 11 of 19. No `\| n` anywhere, because nothing is escaped by default (SEC-01) |
+| Markdown raw HTML | Passed through: `<script>`, `on*=` attributes and `javascript:` links reach the page (SEC-02) |
+| Path traversal from properties | Not possible: `valid_filename` (`kb4it/core/util.py:444-456`) removes `/` and `\`; a property named `../../escaped` produced `....escaped`, and no file was written outside the target. But a name starting with a dot empties the site (SEC-03) |
+| subprocess / shell | One `shell=True`, in unused `exec_cmd` (BASE-01). Other calls use argument lists: `core/version.py:39`, `tui/app.py:204`. The generated `compile.sh` quotes the path with `shlex.quote` (`kb4it/services/workflow.py:36`) |
+| Untrusted YAML | `yaml.safe_load` only (`kb4it/core/util.py:362`): no object construction. Alias expansion is not limited (SEC-07) |
+| Code execution by design | Hooks and theme logic are Python run in-process (SEC-04) |
+| Escaped correctly | `HTML_HEAD_META.tpl` (`\| h` on every user value), Atom feed and sitemap (`xml.sax.saxutils.escape`, `kb4it/core/publish.py:40-95`), search results (`textContent` only, `kb4it/resources/common/js/kb4it-search-ui.js:15`), search index (JSON in a separate `.js` file, `kb4it/core/search.py:70-73`), the source viewer (`&lt;` in `xss.html`), and the GitHub Action (inputs reach scripts through `env:`, never `${{ }}` inside `run:`, `action.yml`) |
+| Local web server | Standard library handler with its path normalisation; binds `127.0.0.1` by default and warns for other hosts (SEC-08) |
+
+### Findings
+
+**SEC-01** | Severity: High
+Location: `kb4it/services/builder.py:197`; for example `kb4it/resources/themes/techdoc/templates/METADATA_VALUE_LINK.tpl:1`
+Evidence:
+```python
+                    tpl = Template(filename=template_path)
+```
+```mako
+<a class="kb-meta-val" href="${var['link_url']}">${var['link_name']}</a>
+```
+Reproduced (techdoc, `target/xss.html` and `target/Author.html`), from the frontmatter
+`Tag: <script>alert("tag")</script>` and `Author: Eve" onmouseover="alert(1)`:
+```html
+<a class="kb-meta-val" href="Tag_scriptalerttagscript.html"><script>alert("tag")</script></a>
+<span class="kb-cloud-word">Eve" onmouseover="alert(1)</span>
+```
+The same payloads appear unescaped in 7 pages of techdoc, 13 of blog and 10 of
+bookshelf (document page, `properties.html`, key and key/value pages, blog
+index and event pages). In blog, the title lands inside an attribute:
+`<div uk-tooltip="Title <svg onload=alert("title")>">`.
+Why it matters: anyone who can add or edit one document can run script in the
+browser of every reader, on every page that lists that property. Static sites
+are often hosted on a shared origin (GitHub Pages `user.github.io`), so the
+script runs with that origin's rights.
+Recommended fix: compile templates with escaping on by default, through one
+`TemplateLookup(..., default_filters=["h"])` (or `["str", "h"]`) shared by
+`Builder.template`, and mark the expressions that carry ready-made HTML (page
+bodies, rendered fragments) with `| n`. Then review the 591 expressions of
+techdoc, blog and bookshelf; apphelp shows the target state. Add a test that
+builds every theme with an HTML payload in each property and title and fails on
+raw `<script>`.
+Effort: L
+
+**SEC-02** | Severity: Medium
+Location: `kb4it/core/mdconfig.py:51-52`
+Evidence:
+```python
+    def new_markdown(self):
+        return markdown.Markdown(extensions=self.all_extensions(), extension_configs=self.all_configs())
+```
+Reproduced (techdoc, `target/dot.html`): the body lines `[raw](javascript:alert(1))`,
+`<script>alert("body")</script>` and `<div onclick="alert(2)">x</div>` appear
+unchanged as `href="javascript:alert(1)"`, `<script>alert("body")</script>` and
+`<div onclick="alert(2)">`.
+Why it matters: python-markdown passes raw HTML by design, and for a single
+author it is a feature (the help documents embedding Mermaid this way). For a
+knowledge base with several contributors it is the same stored XSS as SEC-01,
+and the documentation does not say so.
+Recommended fix: document the trust model in the help ("documents can contain
+HTML and scripts; review contributions"). Optionally add `"markdown":
+{"sanitize": true}` that cleans the compiled HTML with an allow-list (for
+example `nh3`, a binary wheel with no Node, or `lxml_html_clean`, which is no
+longer part of lxml), off by default for compatibility. Always drop
+`javascript:` URLs from links generated by KB4IT itself.
+Effort: M
+
+**SEC-03** | Severity: Medium
+Location: `kb4it/services/processor.py:468`, `kb4it/core/util.py:202-207`, `kb4it/services/deployer.py:125-128`
+Evidence:
+```python
+            docId = f"{valid_filename(key)}.md"
+```
+```python
+    for ext in ("*.md", "*.markdown"):
+        docs.extend(glob.glob(os.path.join(path, ext)))
+```
+Reproduced: one document with the frontmatter key `.note: a` (or `../../escaped: a`,
+which becomes `....escaped`): the build exits 0, `target/index.html` does not
+exist, and the log ends with `[DEPLOYER] ERROR [Errno 2] No such file or
+directory: '.../var/cache/....escaped.html'`.
+Why it matters: the key page gets a name starting with a dot; `glob` skips hidden
+files, so the page is never compiled; the deployer stops at the missing file
+(COR-09), so no page reaches the target, and the build still reports success
+(COR-01). A single crafted or mistyped property name takes the published site
+down.
+Recommended fix: make `valid_filename` strip leading dots and return a fallback
+for empty results, or reject property names without a letter or digit as
+`DOC_INVALID`; fixing COR-01 and COR-09 turns the remaining cases into a visible
+failure.
+Effort: S
+
+**SEC-04** | Severity: Low
+Location: `kb4it/core/hooks.py:43-50`, `action.yml` (no option to disable hooks), `help/source/reference-github-action.md`
+Evidence:
+```python
+        spec = importlib.util.spec_from_file_location(f"kb4it_repo_hooks_{digest}", path)
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+```
+Why it matters: building a repository runs its `hooks` file and the Python logic of
+its theme (`theme_path` or a user theme). `help/source/howto-hooks.md:18` warns
+about hooks; the GitHub Action reference does not. A workflow that builds pull
+requests runs code from the pull request. On `pull_request` from a fork GitHub
+gives a read-only token and no secrets, which limits the damage, but
+`pull_request_target` or self-hosted runners would not.
+Recommended fix: add a sentence to the action reference and to "Publish on GitHub
+Pages"; add a `--no-hooks` option (and a `hooks` input to the action) for
+building untrusted changes.
+Effort: S
+
+**SEC-05** | Severity: Low
+Location: `kb4it/core/util.py:210-224`
+Evidence: `subprocess.Popen([cmd], shell=True, ...)` (see BASE-01).
+Why it matters: the only shell invocation in the package; unused, so not
+reachable today.
+Recommended fix: delete it (BASE-01).
+Effort: S
+
+**SEC-06** | Severity: Low
+Location: `kb4it/core/publish.py:81`, `:85-86`, `:93`, `:95`
+Evidence:
+```python
+           f'<feed xmlns="http://www.w3.org/2005/Atom" xml:base="{escape(base)}">',
+                f'    <link href="{escape(e["url"])}"/>',
+                f"    <updated>{e['updated']}</updated>"]
+```
+Why it matters: `xml.sax.saxutils.escape` does not escape `"`, so a `site_url`
+or document URL containing `"` breaks out of the attribute; and `<updated>` is
+written from the document's `Date` without escaping. `site_url` comes from
+`repo.json` (trusted) and URLs are built from sanitised file names, so the
+practical risk is a malformed feed. Whether a crafted `Date` reaches
+`<updated>` unchanged depends on `string_timestamp` (`kb4it/services/processor.py:124`):
+Needs verification.
+Recommended fix: use `xml.sax.saxutils.quoteattr` for attribute values and
+`escape` for `<updated>`, or build the feed with `xml.etree.ElementTree`.
+Effort: S
+
+**SEC-07** | Severity: Low
+Location: `kb4it/core/util.py:362`
+Evidence:
+```python
+        fm = yaml.safe_load(fm_text) if fm_text else {}
+```
+Why it matters: `safe_load` constructs no objects, but it still expands YAML
+aliases, so a few hundred bytes of nested anchors ("billion laughs") can use a
+large amount of memory and time while parsing one document. This matters only
+for documents from untrusted sources. Not reproduced; Needs verification of the
+actual cost with the installed PyYAML.
+Recommended fix: reject frontmatter that contains anchors or aliases (`&`, `*`
+tokens), or cap the frontmatter size (for example 64 KB) before parsing.
+Effort: S
+
+**SEC-08** | Severity: Info
+Location: `kb4it/core/webserver.py:104-107`, `kb4it/core/serve.py:152-154`
+Evidence:
+```python
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=directory, **kwargs)
+```
+Why it matters: the preview server relies on the standard library for path
+handling (it normalises `..`), binds to `127.0.0.1` unless `--host` is given,
+and warns for other addresses. It also lists folder contents and follows
+symbolic links inside the target, which is acceptable for a local preview.
+Recommended fix: none needed; keep the warning, and mention in the `serve` help
+that `--host 0.0.0.0` exposes the site without authentication.
+Effort: S
+
+### Phase 3 top 5
+
+| # | ID | Why |
+|---|---|---|
+| 1 | SEC-01 | Stored XSS from any frontmatter value or title, on every page that lists it, in three of four themes |
+| 2 | SEC-02 | Raw HTML and scripts in Markdown, undocumented as a trust decision |
+| 3 | SEC-03 | One property name empties the published site while the build reports success |
+| 4 | SEC-04 | Hooks and theme code run during CI builds of pull requests; undocumented in the action |
+| 5 | SEC-06 and SEC-07 | Feed attribute escaping and YAML alias expansion: small fixes that close the remaining input paths |
+
+Phase 3 is complete. Stopped here, waiting for your go-ahead before Phase 4.
