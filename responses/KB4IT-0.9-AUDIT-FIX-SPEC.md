@@ -6,7 +6,7 @@ DocType: Reference
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: specification, audit, security, correctness, html
 Topic: Architecture, Development
 ---
@@ -29,7 +29,7 @@ MD-01) and ARC-05 (the link transformation removed by HTML-01). The remaining Lo
 and Info findings stay in `AUDIT.md` for later.
 
 The base is the branch after patch 0075. The work follows the usual cycle:
-this specification, then an implementation plan, then a `git am` patch series.
+this specification (approved 2026-10-14), then an implementation plan, then a `git am` patch series.
 
 ### Requirement groups
 
@@ -382,6 +382,8 @@ stand-in collaborators, without a `KB4IT` app; snapshot identical.
 | HT-02 sample configs | New repositories only | Existing `repo.json` files are not touched |
 
 ## Decisions for review
+
+Answered on 2026-10-14: the recommendation was chosen for each one, and the specification was approved. AR-01 to AR-03 move to a separate series (D-6).
 
 | # | Decision | Recommendation | Alternative |
 |---|---|---|---|
