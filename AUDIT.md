@@ -15,7 +15,7 @@ starts only after review.
 | 2 Correctness and robustness | Done |
 | 3 Security | Done |
 | 4 Architecture and maintainability | Done |
-| 5 Dependencies and packaging | Pending |
+| 5 Dependencies and packaging | Done |
 | 6 Tests and HTML output quality | Pending |
 
 ---
@@ -1077,4 +1077,166 @@ Effort: S
 | 4 | ARC-02 | God classes in the themes and the TUI, to split after ARC-01 |
 | 5 | ARC-04 and ARC-06 | Small, safe fixes: move the path helper down, remove shared class and module state |
 
-Phase 4 is complete. Stopped here, waiting for your go-ahead before Phase 5.
+
+---
+
+## Phase 5: Dependencies and packaging
+
+Method: third-party imports found with an `ast` walk of `kb4it/` and compared with
+`pyproject.toml:44-56` and `requirements.txt:1-7`; resolved versions taken from a
+fresh `uv` environment built from `requirements.txt` (the same resolution
+`scripts/devel/test.sh` uses); the wheel `dist/kb4it-0.8.0-py3-none-any.whl` built
+from this tree in Phase 1 was listed with `zipfile`; built sites from the Phase 3
+tests were measured with `du`.
+
+### Summary
+
+| Area | Result |
+|---|---|
+| Declared vs used | All 7 runtime dependencies are imported: `mako` (`core/env.py`, `services/builder.py`), `markdown`, `yaml`, `pygments`, `lxml`, `rich`, `textual`. Nothing undeclared (the `theme` import in `services/frontend.py` is the theme module loaded at runtime). `pymdown-extensions` is an optional extra and is only loaded by name through `markdown.extensions` |
+| pyproject vs requirements.txt | Identical (enforced by `tests/core/test_requirements.py`). Two more copies are not checked (DEP-02) |
+| Pins | `Mako==1.3.12` exact (kept current by Dependabot, commit `34dbf8b`); `lxml` unbounded; the rest lower bounds only, no upper bounds (DEP-03) |
+| Resolved today | Mako 1.3.12, Markdown 3.11.1, PyYAML 6.0.3, Pygments 2.21.0, lxml 6.1.3, rich 15.0.0, textual 8.2.8, pymdown-extensions 12.2; the full suite passes with them (Phase 2 runs) |
+| Node toolchain | None in the build: no `node_modules`, no bundler config, no `.ts` sources. The wheel and every built site carry vendored, pre-built JavaScript, including four `package.json` files and two `.map` files (DEP-04) |
+| Licences | Project: GPL-3.0-or-later, consistent in `pyproject.toml:6`, `:19` and `LICENSE`. Vendored: UIkit 3.21.13 (MIT, header in each file), DataTables 1.11.3 (MIT, header), jQuery 3.5.1 (MIT, header), Highlight.js 11.11.1 (BSD-3-Clause, `LICENSE` file). TimelineJS refers to a licence file that is not shipped (DEP-05) |
+| Python versions | `python = ">=3.11,<4.0"` (`pyproject.toml:45`); classifiers 3.11 to 3.14; CI runs 3.11, 3.13 and 3.14 on three systems. 3.12 is not in the CI matrix (DEP-07) |
+| Third dependency source | `pixi.toml` and `pixi.lock` are stale and unused (DEP-01) |
+| Build backend | `poetry-core>=1.5.0` with metadata in `[tool.poetry]` (`pyproject.toml:1-63`). It works today (wheel built in Phase 1); see DEP-06 |
+
+### Findings
+
+**DEP-01** | Severity: Low
+Location: `pixi.lock:100-104`, `pixi.toml:14-24`
+Evidence:
+```yaml
+  name: kb4it
+  version: 0.7.20+build.18
+  sha256: caea46b923a9e2fa07193c81cdc62e3440a96c5609eb06d614249961bf1359d9
+  requires_python: '>=3.12'
+  editable: true
+```
+```toml
+[tasks]
+check = "kb4it --version"
+build = "python -m build"
+```
+Why it matters: the lock was last changed on 2025-12-20 (`5bcf187`), records
+KB4IT 0.7.20 with `requires_python >=3.12` (the project says `>=3.11`), and holds
+no entry for any runtime dependency (only 2 `pypi:` lines). The `build` task needs
+the `build` package, which is not declared. No workflow, README or help page uses
+pixi, so it is a third dependency source that nobody checks.
+Recommended fix: remove `pixi.toml` and `pixi.lock`, or regenerate the lock, add
+`build` to it and test `pixi run check` in CI.
+Effort: S
+
+**DEP-02** | Severity: Low
+Location: `scripts/devel/test.sh:12-13`, `scripts/devel/check_themes.sh:6-7`
+Evidence:
+```bash
+    --with pytest --with "Mako==1.3.12" --with "Markdown>=3.5" --with "PyYAML>=6.0" --with "Pygments>=2.15" \
+    --with lxml --with "rich>=13.0" --with "textual>=0.47.0" \
+```
+Why it matters: the dependency list exists four times. `tests/core/test_requirements.py`
+keeps `requirements.txt` equal to `pyproject.toml`, but not these two scripts. The
+last Mako bump (`34dbf8b`) changed `requirements.txt` and `setup.py` only: when
+the next bump lands, the tests and the theme check will keep running the old
+version without anyone noticing.
+Recommended fix: use `uv run --no-project --with-requirements requirements.txt`
+in both scripts (as the GitHub Action steps already do), or extend
+`test_requirements.py` to read them.
+Effort: S
+
+**DEP-03** | Severity: Low
+Location: `pyproject.toml:46-52`, `requirements.txt:1-7`
+Evidence:
+```toml
+Mako = "1.3.12"
+lxml = "*"
+rich = ">=13.0"
+textual = ">=0.47.0"
+```
+Why it matters: lower bounds only mean a new major version of `textual` (8.x
+today, from 0.47 when the bound was written) or `Markdown` can break the TUI or
+the compiler on a fresh install with no code change; the exact Mako pin makes
+KB4IT hard to install next to other packages in one environment. For an
+application installed with uv, pipx or the Linux packages, the risk is the
+first one.
+Recommended fix: keep lower bounds, add tested upper bounds on the next major
+(`textual>=0.47,<9`, `Markdown>=3.5,<4`, `lxml>=5,<7`), relax Mako to
+`>=1.3.12,<2`, and let Dependabot raise them; or publish a constraints file used
+by CI and the packages.
+Effort: S
+
+**DEP-04** | Severity: Low
+Location: `kb4it/resources/themes/techdoc/framework/Highlight/package.json:2`, `kb4it/resources/themes/techdoc/templates/HTML_HEADER_COMMON.tpl`, `kb4it/services/deployer.py:140-209`
+Evidence: the templates load only `Highlight/highlight.js` and
+`Highlight/styles/github-dark.css` (2 references each), but each of techdoc and
+blog ships the whole Highlight.js CDN package (6.4 MB): the `es/` module build
+(2.1 MB, with its own `package.json`), `languages/` (1.5 MB), `highlight.min.js`
+and every style. The wheel is 15.9 MB uncompressed, 14.9 MB of it under
+`framework/` (1,868 files). The deployer copies the framework into every site:
+the Phase 3 techdoc site was 9.8 MB and blog 12 MB, both with
+`resources/themes/.../Highlight/package.json`.
+Why it matters: no Node is involved, so the hard constraint holds, but
+`package.json` files in published sites suggest an npm toolchain, and every user
+downloads and publishes megabytes of unused files.
+Recommended fix: keep only `highlight.min.js`, the styles in use and `LICENSE` in
+each theme (or one shared copy in `resources/common/`), and drop `es/`,
+`languages/` and `package.json`; with `markdown.highlight: pygments` the theme
+could skip Highlight.js entirely.
+Effort: S
+
+**DEP-05** | Severity: Low
+Location: `kb4it/resources/themes/blog/framework/TimelineJS/js/timeline.js:1`, `kb4it/resources/themes/blog/templates/TIMELINEJS.tpl`
+Evidence:
+```js
+/*! For license information please see timeline.js.LICENSE.txt */
+```
+`kb4it/resources/themes/blog/framework/TimelineJS/js/` contains only
+`timeline.js` and `timeline.js.map`.
+Why it matters: TimelineJS 3 is distributed under the Mozilla Public License 2.0,
+which asks that the licence notice travel with the code; the file the header
+points to is missing from the repository, the wheel and every published blog
+site. TimelineJS (1.5 MB) is also only used by `TIMELINEJS.tpl`, which nothing
+references (ARC-05). The licence of the shipped build is Needs verification
+against the upstream release.
+Recommended fix: remove TimelineJS with the dead template; if it stays, add the
+upstream `timeline.js.LICENSE.txt` and a `LICENSE` file. Add a
+`THIRD-PARTY-NOTICES` file listing every vendored library, version and licence.
+Effort: S
+
+**DEP-06** | Severity: Info
+Location: `pyproject.toml:1-63`
+Evidence: `[tool.poetry]` holds name, version, dependencies, extras and scripts;
+there is no `[project]` table; `[build-system] requires = ["poetry-core>=1.5.0"]`.
+Why it matters: poetry-core 2 accepts the standard `[project]` table (PEP 621),
+which other tools read directly (uv, pip, Dependabot, pip-audit, the
+`test_requirements.py` parser). The `tool.poetry` form still builds, so there is
+no defect today.
+Recommended fix: move the metadata to `[project]` in a later release, keep
+`poetry-core>=2` as the backend, and simplify `test_requirements.py`.
+Effort: M
+
+**DEP-07** | Severity: Info
+Location: `.github/workflows/kb4it.yml:16`
+Evidence:
+```yaml
+        python: ["3.11", "3.13", "3.14"]
+```
+Why it matters: Python 3.12 is declared (`pyproject.toml:24`) and is the
+`python3` of Ubuntu 24.04, but only the `.deb` install test exercises it.
+Recommended fix: add 3.12 to the matrix on Linux only, or accept the gap and say
+so in `AGENTS.md`.
+Effort: S
+
+### Phase 5 top 5
+
+| # | ID | Why |
+|---|---|---|
+| 1 | DEP-02 | Tests and the theme check use their own copy of the pins and will silently drift after the next bump |
+| 2 | DEP-05 | A licence notice the shipped TimelineJS refers to is missing from every published blog |
+| 3 | DEP-04 | About 5 MB of unused Highlight.js per theme, with `package.json`, copied into every site |
+| 4 | DEP-03 | No upper bounds on fast-moving dependencies such as textual |
+| 5 | DEP-01 | Stale pixi files: a third, unchecked dependency source |
+
+Phase 5 is complete. Stopped here, waiting for your go-ahead before Phase 6.
