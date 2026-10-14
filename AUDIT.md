@@ -11,7 +11,7 @@ starts only after review.
 | Phase | Status |
 |---|---|
 | 0 Inventory | Done |
-| 1 Automated baseline | Pending |
+| 1 Automated baseline | Done |
 | 2 Correctness and robustness | Pending |
 | 3 Security | Pending |
 | 4 Architecture and maintainability | Pending |
@@ -173,4 +173,184 @@ source/*.md --(Processor: safe_load + BLAKE2b, compare kbdict.json)--> BuildPlan
 | 4 | Size of the TUI and the theme modules | `kb4it/tui/app.py` (1,449 lines), `themes/techdoc/logic/theme.py` (1,269 lines) | Likely duplication between themes and a god-class TUI (Phase 4) |
 | 5 | Vendored front-end assets with `package.json` | `kb4it/resources/themes/techdoc/framework/Highlight/package.json:2` | Check against the no-Node constraint and the licences of 19 MB of bundled JavaScript (Phase 5) |
 
-Phase 0 is complete. I stopped here, waiting for your go-ahead before Phase 1.
+
+---
+
+## Phase 1: Automated baseline
+
+All tools ran on `kb4it/` (the package, including theme logic and the TUI), not on
+`tests/` or `scripts/`. `bandit`, `vulture`, `radon` and `pip-audit` were run with
+`uvx` (isolated, nothing installed in the project). No project configuration
+exists for any of them (`pyproject.toml` has no `[tool.ruff]`, `[tool.mypy]` or
+`[tool.bandit]`), so each ran with its defaults.
+
+| Tool | Version | Result |
+|---|---|---|
+| ruff check | 0.16.8 | 261 issues, 29 rules; 47 auto-fixable |
+| mypy --ignore-missing-imports | 2.3.1 | 33 errors in 14 files (42 files checked); 24 are missing annotations |
+| bandit -r | 1.9.4 | 20 issues over 8,928 lines: 1 high, 2 medium, 17 low |
+| vulture (60% confidence) | 2.16 | 155 candidates; most are dynamic entry points (false positives) |
+| radon cc -s -n C | 6.0.1 | 36 blocks at rank C or worse: 29 C (11-20), 7 D (21-30), none E/F |
+| pip-audit | 2.10.1 | No known vulnerabilities (requirements.txt plus `pymdown-extensions>=10.0`) |
+
+### ruff, grouped
+
+| Group | Rules (count) | Comment |
+|---|---|---|
+| Broad exception handling | BLE001 (45), S110 (8), S112 (1) | 18 of the 45 are in `tui/app.py`; reviewed in Phase 2 |
+| Dead code in functions | F841 (17), F401 (11), RUF059 (1) | Mostly theme modules and `tui/app.py`; see BASE-05 |
+| Naive datetimes | DTZ005 (10), DTZ001 (5), DTZ006 (2), DTZ007 (2), DTZ901 (1) | Effect on feed and sitemap dates checked in Phase 2 |
+| Style and modernisation | UP031 (61), UP009 (4), UP032 (3), I001 (14), SIM102 (4), SIM113 (1), RET501 (4), PIE790 (2), PLR1730 (3), PERF402 (2), PLC0206 (1), F541 (1), RUF100 (2) | Style only; not reported individually |
+| Packaging hygiene | EXE001 (29) | Files with a shebang that are not executable (theme logic, modules); cosmetic |
+| Class and argument defaults | RUF012 (22), B006 (3), RUF013 (1) | The three B006 cases were read and are safe (see below) |
+| Subprocess | PLW1510 (1) | `core/version.py:39`, `git describe` with its error handled; harmless |
+
+B006 check: `themes/blog/logic/theme.py:577` (`var={}`) replaces the empty default
+before writing to it (`if len(var) == 0: var = self.get_theme_var()`), and
+`themes/techdoc/logic/theme.py:91` (`headers=[]`, `doclist=[]`) reassigns
+`headers` and never mutates either list. No shared-state bug.
+
+### mypy, beyond missing annotations
+
+| Location | Error | Assessment |
+|---|---|---|
+| `kb4it/core/main.py:51` | `params: argparse.Namespace = None` | Real typing gap (implicit Optional); harmless at runtime |
+| `kb4it/core/main.py:70` | `__class__` not defined | False positive: `__class__` is valid inside a method |
+| `kb4it/core/version.py:28` | `Match | None` has no `.groups()` | False positive in practice: clauses are stripped and non-empty (`version.py:21`), and `CLAUSE_RE` (`version.py:8`) ends in `(.+)$`, so it always matches |
+| `apphelp/logic/apphelp_checks.py:57` | Too many arguments for `_target_exists` | False positive: `*url.partition("#")[::2]` expands to exactly two arguments |
+| `kb4it/core/env.py:111`, `kb4it/core/log.py:46` | `None` used as a string/path | Values that are `None` only before setup; Needs verification in Phase 2 |
+| `kb4it/services/database.py:140` | Returns `None` for `-> str` | Real typing gap; callers must handle `None` (Phase 2) |
+| `kb4it/services/processor.py:214-215` | `object` not indexable | Typing gap from an untyped dict; harmless |
+
+### bandit
+
+| ID | Location | Assessment |
+|---|---|---|
+| B602 high | `kb4it/core/util.py:219-220` | Real: `subprocess.Popen([cmd], shell=True)` in `exec_cmd`; see BASE-01 |
+| B702 medium | `kb4it/services/builder.py:197` | Real lead: Mako `Template(...)` with no escaping filters; Phase 3 |
+| B104 medium | `kb4it/core/webserver.py:159` | False positive: compares a host string for display, binds nothing |
+| B406 low (2) | `kb4it/core/publish.py:40`, `:78` | False positive: `xml.sax.saxutils` used to escape output, no XML parsing |
+| B110/B112 low (9) | Same places as ruff S110/S112 | Phase 2 |
+| B404/B603/B607 low | `core/version.py:39`, `tui/app.py:204` | Argument lists, no shell; acceptable |
+
+### vulture
+
+Of 155 candidates, 87 are "unused methods"; most are called dynamically
+(Textual `on_*`, `compose`, `action_*` handlers, theme hooks called by name, and
+methods called from Mako templates), so they are not reported. The unused
+module-level functions were cross-checked with a search over `kb4it/`, `tests/`
+and `scripts/`, templates included:
+
+| Function | Location | Used by |
+|---|---|---|
+| `exec_cmd` | `kb4it/core/util.py:210` | Tests only (`tests/core/test_util.py:66-67`) |
+| `delete_files` | `kb4it/core/util.py:283` | Tests only |
+| `get_hash_from_file` | `kb4it/core/util.py:312` | Tests only |
+| `get_year`, `get_month`, `get_day` | `kb4it/core/util.py:486-496` | Tests, and unused imports in `themes/techdoc/logic/theme.py:24-27` |
+| `log_timestamp`, `kb4it_timestamp`, `get_timestamp_yyyymmdd` | `kb4it/core/util.py:501-590` | Nothing found |
+| `_start_project_server` | `kb4it/tui/app.py:172` | Nothing found |
+| `DocumentMeta` | `kb4it/core/types.py:47` | Nothing found |
+
+Custom themes in `~/.kb4it/opt/resources/themes/` may import `kb4it.core.util`
+functions; whether any of these are a public API for themes is Needs
+verification before removal.
+
+### radon, rank D (complexity 21 to 30)
+
+| CC | Function |
+|---|---|
+| 30 | `themes/apphelp/logic/apphelp_meta.py:117` `validate_all` |
+| 25 | `services/deployer.py:140` `Deployer.step_08_copy_global_resources_to_target` |
+| 24 | `themes/techdoc/logic/theme.py:492` `Theme.build_events` |
+| 23 | `services/workflow.py:126` `Workflow.verify_sources` |
+| 23 | `services/processor.py:86` `Processor.step_00_extraction` |
+| 23 | `services/builder.py:366` `Builder.write_feed` |
+| 22 | `themes/blog/logic/theme.py:186` `Theme.build_events` |
+
+`build_events` (techdoc and blog) and `build_datatable` (techdoc `:91`, blog `:34`,
+bookshelf `:671`, all rank C) appear in more than one theme: a duplication lead
+for Phase 4.
+
+### pip-audit
+
+No known vulnerabilities. pip-audit resolved the newest versions allowed by
+`requirements.txt` (only `Mako==1.3.12` is pinned), so this covers a fresh
+install, not older versions already installed on a machine or the `pixi.lock`
+environment (Phase 5).
+
+### Phase 1 findings
+
+**BASE-01** | Severity: Medium
+Location: `kb4it/core/util.py:210-224`
+Evidence:
+```python
+def exec_cmd(data):
+    doc, cmd, num = data
+    process = subprocess.Popen(
+        [cmd], shell=True,
+```
+Why it matters: a helper that runs an arbitrary string through the shell, with no
+caller in the package (only `tests/core/test_util.py:66-67`). It is not exploitable
+today, but it is an easy way to add command injection later, and it keeps a bandit
+high finding open.
+Recommended fix: delete `exec_cmd` and its test; if a command runner is ever
+needed, take an argument list and no shell.
+Effort: S
+
+**BASE-02** | Severity: Low
+Location: `kb4it/core/main.py:67-69`
+Evidence:
+```python
+if "log_level" not in self.params:
+    self.params["LOGLEVEL"] = "INFO"
+setup_logging(self.params["log_level"], self.log_file)
+```
+Why it matters: the fallback writes a different key (`LOGLEVEL`) from the one read
+(`log_level`), so the fallback can never work; a caller without `log_level` gets a
+`KeyError`. Today every caller passes it (`main.py:249` argparse option,
+`tui/app.py:322-331`, `tui/app.py:1022-1030`, `core/serve.py:96-98`), so it is
+latent.
+Recommended fix: set `self.params["log_level"]`, or read with
+`self.params.get("log_level", "INFO")`.
+Effort: S
+
+**BASE-03** | Severity: Low
+Location: `kb4it/core/util.py:210-590`, `kb4it/core/types.py:47`, `kb4it/tui/app.py:172`, plus ruff F401/F841 (28 places, for example `themes/blog/logic/theme.py:189-421`, `services/processor.py:88`)
+Evidence: see the vulture table; `themes/blog/logic/theme.py:339-348` assigns
+`ecats`, `event_types`, `category` and `title` and never uses them.
+Why it matters: dead code hides the real data flow, keeps unused imports alive in
+themes and makes reviews slower. Unused locals inside `build_events` may also mean
+a half-finished feature.
+Recommended fix: remove after confirming which `util` functions themes may use
+(Needs verification); run `ruff check --select F401,F841 --fix` for the safe part.
+Effort: S
+
+**BASE-04** | Severity: Info
+Location: `pyproject.toml` (no `[tool.ruff]`, `[tool.mypy]`); `.github/workflows/kb4it.yml`
+Evidence: no lint or type-check step in CI; ruff reports 261 issues and mypy 33.
+Why it matters: nothing stops new broad excepts, unused code or type errors.
+Recommended fix: add a `[tool.ruff]` section with a chosen rule set (start with
+`E,F,B,BLE,S` and grow), fix or baseline the current issues, and run
+`ruff check` in CI; add `mypy` later, per package.
+Effort: M
+
+**BASE-05** | Severity: Info
+Location: 7 functions of rank D, listed above (for example `apphelp_meta.py:117`, `deployer.py:140`)
+Evidence: radon complexity 22 to 30.
+Why it matters: these are the hardest functions to test and change; three of them
+are on the main build path (`processor.py:86`, `deployer.py:140`, `builder.py:366`).
+Recommended fix: split when they are next changed, guided by the Phase 2 and 4
+findings; no change on its own.
+Effort: M
+
+### Phase 1 top 5
+
+| # | ID | Why |
+|---|---|---|
+| 1 | B702, `services/builder.py:197` | Mako without escaping: the main security question, carried to Phase 3 |
+| 2 | BASE-01 | `shell=True` helper with no caller; trivial to remove |
+| 3 | Broad excepts (BLE001 45, S110 8), worst in `tui/app.py` | Swallowed errors hide build failures; reviewed one by one in Phase 2 |
+| 4 | BASE-04 | No linter or type checker in CI, so the numbers above will grow |
+| 5 | BASE-02 and the mypy `None` cases (`env.py:111`, `log.py:46`, `database.py:140`) | Latent crashes; checked for reachability in Phase 2 |
+
+Phase 1 is complete. Stopped here, waiting for your go-ahead before Phase 2.
