@@ -91,6 +91,7 @@ class Builder(Service):
         # Caches belong to this build. Class-level caches leaked templates from one
         # build into the next when the TUI or kb4it serve built twice in one process.
         self.templates = {}
+        self._template_errors = {}
         self._xform_pairs = None
         self.log.debug("[BUILDER] CACHE_RESET")
         self.get_services()
@@ -193,16 +194,26 @@ class Builder(Service):
                 template, theme["templates"], ENV["GPATH"]["TEMPLATES"], override_dir
             )
             for template_path in candidates:
+                if not os.path.isfile(template_path):
+                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason=missing")
+                    continue
+                # A template that exists but does not compile is an error, never a reason to fall back.
+                failed = self._template_errors.get(template)
+                if failed is not None:
+                    raise failed
                 try:
                     tpl = Template(filename=template_path)
-                    self.templates[template] = tpl
-                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
-                    if override_dir and template_path == candidates[0]:
-                        self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={template} path={template_path}")
-                    return tpl
                 except Exception as err:
-                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason={err}")
-                    continue
+                    reason = " ".join(str(err).split())  # Mako puts the line number on a line of its own
+                    self.log.error(f"[BUILDER] TEMPLATE_COMPILE_FAIL name={template} path={template_path} error={reason}")
+                    failed = ThemeError(f"Template {template} at {template_path}: {reason}")
+                    self._template_errors[template] = failed
+                    raise failed from err
+                self.templates[template] = tpl
+                self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
+                if override_dir and template_path == candidates[0]:
+                    self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={template} path={template_path}")
+                return tpl
 
             self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
             raise ThemeError(f"Template not found: {template}")

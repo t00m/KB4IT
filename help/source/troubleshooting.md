@@ -50,6 +50,16 @@ No theme has the name in `"theme"`.
 
 Run `kb4it themes` and use one of the names it lists. For your own theme, check its folder name and the `id` in its `theme.json`.
 
+## The build fails with TEMPLATE_COMPILE_FAIL {#template-compile}
+
+### Cause
+
+A template in `overrides/templates/` or in your own theme has a Mako syntax error, such as a `% if` without its `% endif`. Every page that uses it fails.
+
+### Fix
+
+Open the file in `path=` and fix the line the message names (`at line: N`). The build stops on such a template instead of falling back to the theme's own.
+
 ## A theme is refused with THEME_REQUIREMENT_UNMET {#requirement}
 
 ### Cause

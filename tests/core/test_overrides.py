@@ -49,3 +49,17 @@ def test_override_can_supply_a_required_template(tmp_path, home):
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert json.loads((tmp_path / "repo" / "target" / "documents.json").read_text(encoding="utf-8"))
+
+
+def test_broken_override_fails_the_build_with_file_and_line(tmp_path, home):
+    """The audit reproduction of COR-06: a template that did not compile was skipped in silence."""
+    cfg, repo = _repo(tmp_path)
+    override = repo / "overrides" / "templates" / "HTML_FOOTER.tpl"
+    override.parent.mkdir(parents=True)
+    override.write_text("<footer>\n% if True:\n<p>never closed</p>\n", encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 1, result.stdout
+    fail = [line for line in result.stdout.splitlines() if "TEMPLATE_COMPILE_FAIL" in line]
+    assert len(fail) == 1, fail  # once, not once per page
+    assert f"path={override}" in fail[0] and "at line: 2" in fail[0]
+    assert "PAGES_FAILED" in result.stdout
