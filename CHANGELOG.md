@@ -49,6 +49,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `scripts/distribution/README.md` describes what each distribution script builds and needs, and the help page "Install KB4IT" has a section on the `.deb` and `.rpm` packages (DS-09).
 - `README.md` and the help page "Install KB4IT" show how to run KB4IT from the container image with Docker or Podman (with `:Z` on SELinux hosts), and where to find the Linux packages. `RELEASING.md` and the help page "Release a version" describe the image and package jobs, what to do when one fails after the PyPI upload, and the one-time step that makes the image public on GitHub (GI-05).
 - The help site is built and checked with the KB4IT GitHub Action of the same commit (`uses: ./`), so every change to the help also tests the action (GA-03).
+- The help pages "Command line" and "GitHub Action" list every case in which `kb4it build` ends with status 1, including a page that could not be made (BO-03).
 
 ### Fixed
 

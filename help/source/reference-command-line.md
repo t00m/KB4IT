@@ -44,9 +44,18 @@ Put them before the command.
 | Status | Meaning |
 |---|---|
 | `0` | Done |
-| `1` | Something failed: missing or broken settings, a theme that cannot load, a failed build, problems found by `verify`, or another KB4IT already building the same knowledge base |
+| `1` | Something failed (see below) |
 
-A build with unreadable documents still ends with `0` and reports them as `invalid=`; set `"fail_on_invalid": true` to make it fail.
+`kb4it build` ends with `1` when:
+
+- the settings are missing or broken, or the theme cannot load;
+- a page could not be made: its Markdown, its template or a hook failed. The other pages are still published, the log lists the failed ones after `PAGES_FAILED`, and the summary shows `failed=`;
+- documents cannot be read and `"fail_on_invalid": true` is set (without it, they are only reported as `invalid=`);
+- another KB4IT is already building the same knowledge base.
+
+After a failed build the next build compiles again every document that changed since the last successful one, so there is no need for `--force`.
+
+`kb4it verify` ends with `1` when it finds a problem in a document, a theme or a link.
 
 ## Files KB4IT keeps {#files}
 

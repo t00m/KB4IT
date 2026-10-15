@@ -34,6 +34,8 @@ It runs on Linux, macOS and Windows runners and needs no Python on the runner: i
 | `verify` | `true` | Run `kb4it verify` first; a document that cannot be read, a broken link or a theme problem fails the step before anything is built |
 | `force` | `false` | `true` builds with `--force`, compiling every page |
 
+The step fails whenever `kb4it build` ends with status 1 (see [Exit status](reference-command-line.md#exit)), for example when a page could not be made; the job summary then shows the `failed` count.
+
 ## Outputs {#outputs}
 
 | Output | Meaning |
