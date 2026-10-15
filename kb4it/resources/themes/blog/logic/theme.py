@@ -10,6 +10,7 @@
 import math
 import os
 import sys
+import threading
 from datetime import datetime
 
 from kb4it.core.env import ENV
@@ -29,6 +30,19 @@ class Theme(Builder):
         super()._initialize()
         self.dey = {}
         self.events_docs = {}
+        self._undated = set()
+        self._undated_lock = threading.Lock()
+
+    def note_undated(self, doc, dates):
+        """Log once a post without a usable Date: it is listed after the dated ones, without a calendar line."""
+        stamp = (dates or [None])[0]
+        if stamp and guess_datetime(stamp) is not None:
+            return
+        with self._undated_lock:
+            if doc in self._undated:
+                return
+            self._undated.add(doc)
+        self.log.warning(f"[THEME] DOC_UNDATED doc={doc}")
 
     # ~ @timeit
     def build_datatable(self, headers=None, doclist=None):
@@ -166,8 +180,7 @@ class Theme(Builder):
                 )
             else:
                 var['post']['Excerpt'] = "<p>Excerpt missing</p>"
-            timestamp = var['post'][sort_by][0]
-            guess_datetime(timestamp)
+            self.note_undated(post, var['post'].get(sort_by))
             var['basename_md'] = post
             var['metadata'] = self.build_metadata_section(post)
             var['source_md'] = md_content
@@ -630,6 +643,8 @@ class Theme(Builder):
         metadata = self.srvdtb.get_doc_properties(basename_md)
         for prop in metadata:
             var['post'][prop] = metadata[prop]
+        if not self.srvdtb.is_system(basename_md):
+            self.note_undated(basename_md, var['post'].get('Date'))
         var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
         var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
         now = datetime.now()
@@ -682,7 +697,11 @@ class Theme(Builder):
 
         HEADER = HTML_HEADER_COMMON.render(var=var)
         try:
-            if strict:
+            if self.srvdtb.is_system(basename_md):
+                # Index, property and key pages are not posts. (They used to reach the plain
+                # body only because the post template failed on their missing Date.)
+                BODY = HTML_BODY.render(var=var)
+            elif strict:
                 if 'Post' in var['post']['Category']:
                     BODY = HTML_BODY_POST.render(var=var)
                 else:

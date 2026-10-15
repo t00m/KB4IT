@@ -71,6 +71,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changing a `repo.json` setting that a theme can print, such as `title`, `tagline` or a theme option, rebuilds every page. Before, unchanged documents kept the old header until `--force`. `workers`, `force`, `fail_on_invalid`, `source` and `target` do not trigger a rebuild (OC-01, COR-05).
 - A template that exists but does not compile (an override, a custom theme) fails the build with `[BUILDER] TEMPLATE_COMPILE_FAIL`, the file and the line, logged once. Before, it was skipped in silence and the theme's own template was used, or the build said the template was not found (OC-02, COR-06).
 - The document title is the first `# ` heading outside fenced and indented code blocks. Before, a `# comment` in a shell or Python block above the title became the title. The same rule finds the line that the page body leaves out and that the change detection ignores (OC-03, COR-07).
+- A blog post without `Date` no longer stops the blog: it is listed after the dated posts, has no calendar line, and is logged once with `[THEME] DOC_UNDATED`. An unexpected error now prints its type and the log file, as in `Error: KeyError: 'Date' (see <repo>/var/log/kb4it.log)`, instead of the bare message (OC-04, COR-08).
 
 ### Removed
 

@@ -3,16 +3,19 @@
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
     sort_by = var['repo']['sort']
-    timestamp = var['post'][sort_by][0]
-    dt = guess_datetime(timestamp)
-    var['post']['updated_human'] = get_human_datetime(dt)
-    var['post']['updated_day_text'] = f"{dt.day:02d}"
-    var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"
-    var['post']['updated_month_text'] = f"{dt.month:02d}"
-    var['post']['updated_month'] = f"{dt.year:04d}{dt.month:02d}"
-    var['post']['updated_year_text'] = f"{dt.year:04d}"
-    var['post']['updated_year'] = f"{dt.year:04d}"
-    var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
+    timestamp = (var['post'].get(sort_by) or [None])[0]
+    dt = guess_datetime(timestamp) if timestamp else None
+    # An undated post has no calendar line (the theme logs DOC_UNDATED for it).
+    var['post']['dated'] = dt is not None
+    if dt is not None:
+        var['post']['updated_human'] = get_human_datetime(dt)
+        var['post']['updated_day_text'] = f"{dt.day:02d}"
+        var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"
+        var['post']['updated_month_text'] = f"{dt.month:02d}"
+        var['post']['updated_month'] = f"{dt.year:04d}{dt.month:02d}"
+        var['post']['updated_year_text'] = f"{dt.year:04d}"
+        var['post']['updated_year'] = f"{dt.year:04d}"
+        var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
 %>
 <!-- Template POST_HTML_SINGLE.tpl :: START -->
 <!-- Blog Post :: START -->
@@ -35,12 +38,14 @@
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
                             </li>
 % endif
+% if var['post']['dated']:
                             <!-- Update :: START -->
                             <li uk-tooltip="title: Document last update">
                                 <span uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
                             <!-- Update :: END -->
+% endif
                             <!-- Metadata Button :: START -->
                             <li uk-tooltip="title: Document properties">
                                 <span uk-icon="hashtag"></span>

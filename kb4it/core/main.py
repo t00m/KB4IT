@@ -221,6 +221,15 @@ def version_text():
     return f"{text} ({described})" if described else text
 
 
+def _log_hint(params) -> str:
+    """' (see <repo>/var/log/kb4it.log)' when the action has a repository whose log exists, else ''."""
+    config = getattr(params, "config", None)
+    if not isinstance(config, str):
+        return ""
+    log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(config))), "var", "log", "kb4it.log")
+    return f" (see {log_file})" if os.path.exists(log_file) else ""
+
+
 def main():
     """Set up application arguments and execute."""
     # When called with no arguments in an interactive terminal, launch the TUI
@@ -355,6 +364,7 @@ def main():
     )
 
     # Dispatch to the appropriate action handler
+    params = None
     try:
         params = parser.parse_args()
         if params.action == "serve":
@@ -366,7 +376,7 @@ def main():
     except SystemExit:
         raise
     except Exception as error:
-        print(f"Error: {error}")
+        print(f"Error: {type(error).__name__}: {error}{_log_hint(params)}")
         print("Run 'kb4it <action name> --help' to get help for a specific command.")
         sys.exit(1)
 
