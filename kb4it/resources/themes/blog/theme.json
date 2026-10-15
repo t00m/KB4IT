@@ -9,5 +9,6 @@
     "search": true,
     "feed": true,
     "kb4it": ">=0.7.9",
-    "autoescape": true
+    "autoescape": true,
+    "template_base": "uikit"
 }

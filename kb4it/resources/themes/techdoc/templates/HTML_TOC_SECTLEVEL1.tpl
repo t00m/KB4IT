@@ -1,1 +1,0 @@
-uk-nav uk-nav-default
