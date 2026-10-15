@@ -6,7 +6,7 @@ DocType: Reference
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: specification, audit, architecture, refactoring, themes
 Topic: Architecture, Development
 ---
@@ -41,8 +41,11 @@ sample site is byte-identical before and after each commit, `kb4it` commands and
 their output are unchanged, and themes written for 0.9 keep working. The only
 exceptions are named in Compatibility.
 
-The base is the branch after patch 0107. The work follows the usual cycle: this
-specification, then an implementation plan, then a `git am` patch series.
+The base is the branch after patch 0108. The work follows the usual cycle: this
+specification (approved 2026-10-15), then an implementation plan, then a `git am`
+patch series. It ships in 0.9.0, before the release is tagged (Decision D-G1): its
+`CHANGELOG.md` entries go under 0.9.0, and every "for one release" below means kept
+in 0.9.x and removed in 0.10.0.
 
 ### Measurements at the base (patch 0107)
 
@@ -201,7 +204,7 @@ new modules.
 - The TUI's progress callbacks are passed to the build (through the `KB4IT`
   parameters and on to the `Compiler`), not set as module globals in
   `compiler.py`; `set_progress_callback` and `clear_progress_callback` stay as
-  thin wrappers for one release.
+  thin wrappers in 0.9.x, removed in 0.10.0.
 - Decisions taken during a build (a full rebuild because the cache is corrupt or
   from another version) go to `runtime`, not into `params["force"]`; the
   generation time shown on pages goes to the template variables, not into
@@ -225,7 +228,7 @@ nothing of the first reaches the second; the `repo` dictionary seen by
 - The registry keeps the application-level services: `Backend`, `DB`, `Builder`
   (the theme base), `Frontend`, `Workflow`, and `Theme` once loaded. Bundled and
   custom themes keep `self.srvbes`, `self.srvdtb` and `get_service` as today.
-- For one release, `get_service("Processor")`, `"Compiler"` and `"Deployer"` still
+- In 0.9.x, `get_service("Processor")`, `"Compiler"` and `"Deployer"` still
   answer, with the pipeline's objects and one `[CONTROLLER] SERVICE_DEPRECATED
   name=...` warning per build (Decision D-G4).
 - `AGENTS.md` describes the lifecycle: what exists before stage 1, what stage 1
@@ -259,11 +262,13 @@ package:
 | `DocumentTheme` and `themekit` (AR-01) | Nobody: techdoc, blog and bookshelf change their base class; `Builder` is unchanged for custom themes | Help: custom themes may subclass `DocumentTheme` to reuse the document pages |
 | `template_base` (AR-01) | Custom themes copied from techdoc or blog keep their own copies and do not need the key | Help documents the key |
 | Split modules (AR-02) | Code importing from `kb4it.core.util` or `kb4it.tui.app` | Old import paths keep working |
-| Pipeline services (AR-03) | Code calling `get_service("Processor")`, `"Compiler"` or `"Deployer"` | Works for one release with a warning; release notes name the replacement |
-| Progress callbacks (AR-05) | Applications embedding KB4IT that call `set_progress_callback` | Works for one release; release notes show the parameter |
-| `repo["updated"]` (AR-05) | Custom templates reading `var['repo']['updated']` | Kept as an alias in the template variables for one release |
+| Pipeline services (AR-03) | Code calling `get_service("Processor")`, `"Compiler"` or `"Deployer"` | Works in 0.9.x with a warning, removed in 0.10.0; release notes name the replacement |
+| Progress callbacks (AR-05) | Applications embedding KB4IT that call `set_progress_callback` | Works in 0.9.x, removed in 0.10.0; release notes show the parameter |
+| `repo["updated"]` (AR-05) | Custom templates reading `var['repo']['updated']` | Kept as an alias in the template variables in 0.9.x, removed in 0.10.0 |
 
 ## Decisions for review
+
+Answered on 2026-10-15, and the specification was approved: D-G1 the alternative (the series ships in 0.9.0, before the tag); D-G2 to D-G6 the recommendation. With D-G1, the deprecation window of D-G4 is 0.9.x, with removal in 0.10.0.
 
 | # | Decision | Recommendation | Alternative |
 |---|---|---|---|
