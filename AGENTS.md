@@ -17,6 +17,7 @@ scripts/install/local/install_kb4it_from_source.sh   # Install this checkout (uv
 uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py  # Nu HTML Checker on every sample site (needs Java)
 uv run -q --no-project --with-requirements requirements.txt python scripts/devel/theme_snapshot.py --content DIR  # Normalised pages of every sample site; diff -r two runs
 python3 scripts/devel/escape_audit.py <theme> --raw  # List the template expressions printed raw (| n)
+./scripts/devel/typecheck.sh                         # mypy --strict on the annotated modules (CI package job)
 scripts/release.sh --dry-run                         # See what a release would do
 ```
 
@@ -46,7 +47,7 @@ CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows wit
 
 ## Architecture
 
-Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers services and routes `get_service(name)` lookups. Services share state through the controller's `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata.
+Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers the long-lived services (`DB`, `Backend`, `Frontend`, `Builder`, `Workflow`, and `Theme` once loaded) and routes `get_service(name)` lookups. The services of one build, Processor, Compiler and Deployer, are not registered: `Backend.start_pipeline()` makes them together as `backend.pipeline` (`kb4it/services/pipeline.py`) at the end of stage 1, once the theme is loaded, and passes each its collaborators (backend, database, theme, processor, callbacks, log file) in its constructor. `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` still answers from the current pipeline in 0.9.x and logs `[CONTROLLER] SERVICE_DEPRECATED name=... replacement=backend.pipeline` once per name; it goes in 0.10.0. Services share state through the `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata. Nothing a build decides is written into `params` or `repo`: see `runtime["force_all"]` below.
 
 A per-repository lock (`<repo>/var/kb4it.lock`, `kb4it/core/lock.py`, `flock` on POSIX and `msvcrt.locking` on Windows) stops two builds of the same repository; `create` locks under `~/.kb4it/var/`, and `projects.json` writes take `~/.kb4it/var/projects.lock`. Other actions and the TUI itself take no lock. When `kb4it` is run with no arguments in an interactive terminal, the Textual-based TUI launches instead of showing help.
 
@@ -57,14 +58,14 @@ CLI args (or TUI)
   -> KB4IT.__init__()           # setup ENV, acquire lock, log file, register services
   -> KB4IT.run()                # dispatch by action
        -> Workflow.<action>()   # build_website / create_repository / info / list_* / verify_sources
-            -> Backend.stage_01_check_environment       # paths, theme load, template validation
+            -> Backend.stage_01_check_environment       # paths, theme load, template validation, backend.pipeline
             -> theme.generate_sources()                 # generate system pages (about, help); nothing is written into source/
             -> Backend.stage_02_get_source_documents    # collect .md sources
-            -> Backend.stage_03_process_sources         # Processor steps 00, 01, 02
+            -> Backend.stage_03_process_sources         # pipeline.processor steps 00, 01, 02
             -> Backend.stage_04_process_theme           # theme.build()
-            -> Backend.stage_05_compilation             # Compiler.execute() in parallel
+            -> Backend.stage_05_compilation             # pipeline.compiler.execute() in parallel
             -> Theme.post_activities()                  # post-processing (stage 6)
-            -> Backend.stage_06_deploy                  # Deployer.execute() (stage 7)
+            -> Backend.stage_06_deploy                  # pipeline.deployer.execute() (stage 7)
             -> Theme.post_deploy_activities()           # runs on the deployed target (stage 8)
 ```
 
@@ -81,15 +82,20 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/exceptions.py`        | `KB4ITError`, `ConfigError`, `ThemeError`, `CompilationError` hierarchy |
 | `kb4it/core/service.py`           | Base `Service` class all services inherit |
 | `kb4it/core/types.py`             | `TypedDict` definitions: `Runtime`, `DirPaths`, `DocsInfo`, `KBDict`, `DocumentMeta`, `DBRecord` |
-| `kb4it/core/util.py`              | File ops, hashing (blake2b), `DateCache`, date helpers, `@timeit`, `get_document_attributes`, `first_heading` (title rule), `json_save` (atomic: temp file, fsync, `os.replace`) and `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`) |
+| `kb4it/core/util.py`              | `@timeit`, page names (`html_id_for`, `source_ext`, `page_name_clashes`), `slugify`, tag cloud sizes, `ellipsize_text`; imports and re-exports (`__all__`) every name of `dates.py`, `documents.py` and `files.py`, so `from kb4it.core.util import ...` keeps working in themes, hooks and templates |
+| `kb4it/core/dates.py`             | `DateCache`, `guess_datetime`, the `get_human_*` and timestamp helpers |
+| `kb4it/core/documents.py`         | Frontmatter and title: `get_document_attributes`, `first_heading` (title rule), `strip_first_heading`, `fences_in_blocks`, `raw_script_lines`, `extract_sections_from_md`, `get_hash_from_body` |
+| `kb4it/core/files.py`             | `valid_filename`, `SOURCE_ENCODING`, copy and delete, `json_load`, `json_save` (atomic: temp file, fsync, `os.replace`), `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`), blake2b hashes. `dates`, `documents` and `files` import nothing from `util` |
 | `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
 | `kb4it/core/log.py`               | Logging setup, file redirection |
 | `kb4it/services/workflow.py`      | Orchestrates build / create / info / list / verify actions |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |
 | `kb4it/services/database.py`      | In-memory document index keyed by docId, metadata caches |
+| `kb4it/services/pipeline.py`      | `Pipeline`: the Processor, Compiler and Deployer of one build, made by `Backend.start_pipeline()` |
 | `kb4it/services/processor.py`     | Frontmatter extraction, change detection, owns `BuildPlan` + `AnalysisResult` |
 | `kb4it/services/compiler.py`      | Markdown -> HTML via `python-markdown` in a `ThreadPoolExecutor` |
-| `kb4it/services/builder.py`       | Renders Mako templates (escaped when the theme opts in, see Escaping); defines `REQUIRED_TEMPLATES` + `_template_candidates()`, `git_ready()` |
+| `kb4it/services/builder.py`       | Renders Mako templates (escaped when the theme opts in, see Escaping); defines `REQUIRED_TEMPLATES` + `_template_candidates()`, `template_base_dir()`, `git_ready()` |
+| `kb4it/services/themekit/`        | `DocumentTheme(Builder)`, the base of techdoc, blog and bookshelf, from the mixins `metadata.py`, `keypages.py`, `tables.py`, `events.py`, `toc.py`; `host.py` declares for mypy what they use from `Builder` |
 | `kb4it/services/frontend.py`      | Theme discovery, theme load, required-template validation |
 | `kb4it/services/deployer.py`      | Copies the compiled output to `repo.target`; removes only pages listed in `kbdict.json` `deployed` by an earlier build (none on the first build after an upgrade) |
 | `kb4it/core/serve.py`             | `kb4it serve`: build, serve, poll for changes, rebuild in-process (holds the repo lock; builds pass `lock_held`) |
@@ -99,14 +105,15 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/publish.py`           | `site_url`, `sitemap.xml`/`robots.txt`, Atom feed; `Builder.write_sitemap()`/`write_feed()` run after stage 8; `Deployer.step_05_add_head_meta()` injects `HTML_HEAD_META.tpl` (description, Open Graph, canonical, feed link) into the pages built in this run, between `<!-- kb4it:meta -->` markers |
 | `kb4it/core/hooks.py`             | Per-repository hooks named by `repo.json` `hooks`: `on_config` (Backend), `on_document` (Compiler, worker threads), `on_page` (Deployer step 5), `on_build_end` (Workflow); a failing hook raises `CompilationError`; the file hash is part of the core signature |
 | `kb4it/core/lock.py`              | `FileLock` (flock / msvcrt), `repo_lock_path`, `registry_lock` |
-| `kb4it/tui/app.py`                | Textual-based Terminal User Interface (project CRUD, build, browse, explore metadata, log viewer, web server) |
+| `kb4it/tui/`                      | Textual-based Terminal User Interface: `app.py` (`KB4ITTUI`, `run`, and every name it had before the split, re-exported), `projects.py` (registry, themes, apps, paths), `servers.py`, `clipboard.py`, `screens/` (one module per screen or pair of small screens) |
 
 ### Themes
 
 Each theme lives under `kb4it/resources/themes/<name>/`:
 
-- `logic/theme.py` -- `Theme` class that extends `Builder` and overrides `build_page`, `build_page_key`, `build_page_key_value`, etc.
-- Mako `.tpl` files directly in `templates/` (flat, no subdirectories). Shared fallbacks live in `kb4it/resources/common/templates/`.
+- `logic/theme.py` -- `Theme` class that extends `Builder` and overrides `build_page`, `build_page_key`, `build_page_key_value`, etc. techdoc, blog and bookshelf extend `DocumentTheme` instead (`kb4it/services/themekit/`), which holds the code they share: the property, value, properties, stats, bookmarks and all-documents pages, the datatable, the day/month/year event pages, the TOC and the metadata section. Where they differ, the theme sets a class attribute or overrides a small hook (`properties_title`, `reuse_unchanged_pages`, `tagcloud_scale_skips_empty`, `cloud_measure`, `frequency_keys`, `stats_keys`, `datatable_link_template`, `datatable_default_headers`, `datatable_date_cell`, `datatable_title_cell`, `datatable_value_link`, `events_rebuild_all`). A theme that overrides a shared method starts its docstring with `Override:` and says why; `tests/core/test_themekit.py` checks it. apphelp and custom themes keep extending `Builder`, which does not grow.
+- Helper modules next to `theme.py` in `logic/` are imported by name, so they carry the theme's prefix: `apphelp_*.py`, `techdoc_dashboard.py` (home page) and `techdoc_addpage.py` (the "Add" page) hold mixins or functions of their theme.
+- Mako `.tpl` files directly in `templates/` (flat, no subdirectories). Shared fallbacks live in `kb4it/resources/common/templates/`; templates shared by a family of themes live in a template base, `kb4it/resources/bases/<name>/templates/` (see `template_base`). No bundled template is byte-identical in two themes of the same base (`tests/themes/test_templates_used.py`).
 - Optional `templates/skeletons/*.md` -- per-category Markdown document skeletons (used by the techdoc `PAGE_ADD` page).
 - Optional `logic/verify.py` -- hook `verify(repo, docs) -> list[str]`, run by `kb4it verify` (`Workflow.verify_sources`); `docs` is `{file name: {key: [values]}}`; every returned string is reported as a problem.
 - Static assets under `framework/` (CSS, JS, images, UIKit, DataTables).
@@ -115,6 +122,7 @@ Each theme lives under `kb4it/resources/themes/<name>/`:
 Optional `theme.json` keys:
 
 - `metadata_pages` (default `true`): when `false`, the processor skips the per-key and per-key/value pages, and `PAGE_KEY` and `PAGE_KEY_VALUE` are no longer required templates.
+- `template_base` (no default): the name of a folder under `kb4it/resources/bases/` whose templates the theme builds on; techdoc and blog use `"uikit"`. An unknown name raises `ThemeError` naming the key. Base templates compile with the theme's `autoescape`. The bases live outside `common/`, which is deployed into sites.
 - `deploy_dirs` (default: the whole theme folder, plus `default` and `common`): list of plain folder names under the theme that are copied to the target. Names are validated (no paths, no `..`); an invalid entry raises `ThemeError`. An explicit list does not deploy the `default` theme or the common resources, so the theme must bring everything its pages need. The theme `id` must be a plain name (no path, not `.` or `..`). Themes without it deploy exactly as before.
 
 Custom themes installable to `~/.kb4it/opt/resources/themes/<name>/`.
@@ -125,7 +133,7 @@ Custom themes installable to `~/.kb4it/opt/resources/themes/<name>/`.
 
 Required template names per theme: `HTML_BODY`, `PAGE_INDEX`, `PAGE_KEY`, `PAGE_KEY_VALUE`. Missing any of these raises `ThemeError` at `stage_01_check_environment`.
 
-Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first existing file among `<repo>/overrides/templates/<NAME>.tpl` (folder from `repo.json` `overrides`, default `overrides`; logged `[BUILDER] TEMPLATE_OVERRIDE`), `<theme>/templates/<NAME>.tpl`, then `kb4it/resources/common/templates/<NAME>.tpl`. There is no cross-theme inheritance. `<repo>/overrides/static/` is copied into the target root; a hash of the overrides folder is part of the core signature.
+Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first existing file among `<repo>/overrides/templates/<NAME>.tpl` (folder from `repo.json` `overrides`, default `overrides`; logged `[BUILDER] TEMPLATE_OVERRIDE`), `<theme>/templates/<NAME>.tpl`, the theme's template base (`kb4it/resources/bases/<base>/templates/<NAME>.tpl`) when it has one, then `kb4it/resources/common/templates/<NAME>.tpl`. There is no other cross-theme inheritance. Every bundled template is rendered by some code or is half of a transformation pair; `tests/themes/test_templates_used.py` fails on an unused one. `<repo>/overrides/static/` is copied into the target root; a hash of the overrides folder is part of the core signature.
 
 **Built-in themes:**
 
@@ -154,7 +162,7 @@ Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first e
 
 ### Template transformations
 
-`Builder.apply_transformations()` (in `builder.py`) rewrites HTML from `python-markdown` using Mako template pairs. For each transformation name, a `_MD` template (source pattern, from common templates) and a `_NEW` template (replacement, from the active theme) are loaded. The theme supplies `_NEW` templates to override the default HTML wrappers. This system is used for element-level theming (e.g. wrapping tables, code blocks, or admonitions in theme-specific markup). It is plain string replacement on the page body, so a `_NEW` replacement must not add an attribute the matched element may already carry (the link transformation `HTML_TAG_A` was removed for that reason; style document links with CSS on the body container). Section wrappers use classes, never fixed ids, since they repeat on a page.
+`Builder.apply_transformations()` (in `builder.py`) rewrites HTML from `python-markdown` using Mako template pairs. For each name in `Builder._XFORM_NAMES` (`HTML_TAG_TOC`, `HTML_TAG_SECT1` to `SECT4`, `HTML_TAG_SECTIONBODY`, `HTML_TAG_H2` to `H4`, `HTML_TAG_IMG`), a `_MD` template (source pattern, from common templates) and a `_NEW` template (replacement, from the active theme or its base) are loaded; `tests/core/test_transformations.py` checks that each `_MD` pattern occurs in python-markdown output. The theme supplies `_NEW` templates to override the default HTML wrappers. This system is used for element-level theming (e.g. wrapping tables, code blocks, or admonitions in theme-specific markup). It is plain string replacement on the page body, so a `_NEW` replacement must not add an attribute the matched element may already carry (the link transformation `HTML_TAG_A` was removed for that reason; style document links with CSS on the body container). Section wrappers use classes, never fixed ids, since they repeat on a page.
 
 Additional system templates (not in the required set): `PAGE_ABOUT_KB4IT`, `PAGE_ABOUT_APP`, `PAGE_HELP`.
 
@@ -212,7 +220,7 @@ Edit links (`git`, `git_*`) appear only when `git_ready(repo)` is true: `"git": 
 
 **Type of document (`apphelp`).** Every content page must be classified with `DocType`, the same key and values as `techdoc`, following the Diátaxis framework: exactly one of `Tutorial`, `How-to guide`, `Reference`, `Explanation` (exact spelling). A page without a valid `DocType` is never published: it is left out of the site, the navigation, the search index and `helpids.js` (`[APPHELP] DOC_LEFT_OUT`), and reported as `DOCTYPE_MISSING` or `DOCTYPE_INVALID`, which fails the build when `strict` is on. The optional `Layout` key (`faq`, `tips`, `troubleshooting`) selects a special rendering on top of the type. The old `Kind` key is reported as `META_INVALID reason=replaced_by_DocType_and_Layout`. In the generated site the classification is called "Type of document"; the theme never shows the word Diátaxis. See `kb4it/resources/themes/apphelp/README.md` for all page properties.
 
-The `force` field can also be set per-build via `--force` (CLI) or the TUI; CLI/TUI takes priority over `repo.json`.
+The `force` field can also be set per-build via `--force` (CLI) or the TUI; either one turns on `runtime["force_all"]` without changing `params` or `repo`.
 
 ### Admin area (`admin`, techdoc only)
 
@@ -233,7 +241,7 @@ Because the page lives one level down, `Theme.relocate_links()` rewrites every r
 
 ### Key data structures
 
-- **`runtime`** -- the live build state, accessed via `backend.get_dict("runtime")` or `backend.get_value("runtime", key)`. Holds `theme`, `dir` (`DirPaths`, including `root`, the repository root), `docs` (`DocsInfo`), `logfile`. **Does NOT hold** `ncd`, `nck`, `K_PATH`, `KV_PATH` anymore -- these moved to `BuildPlan`.
+- **`runtime`** -- the live build state, accessed via `backend.get_dict("runtime")` or `backend.get_value("runtime", key)`. Holds `theme`, `dir` (`DirPaths`, including `root`, the repository root), `docs` (`DocsInfo`), `logfile`, and `force_all`: the build rebuilds everything because `--force` or `repo.json` `force` asked for it, or because the cache was unreadable or from another version (`params` and `repo` stay as given; the processor reads `params["force"] or runtime["force_all"]`, techdoc's backups read `force_all`). **Does NOT hold** `ncd`, `nck`, `K_PATH`, `KV_PATH` anymore -- these moved to `BuildPlan`.
 - **`BuildPlan`** (in `kb4it/services/processor.py`) -- dataclass produced by `Processor.step_01_analysis()`. Fields: `docs_to_compile`, `K_PATH` (`[(key, values, compile_flag), ...]`), `KV_PATH` (`[(key, value, compile_flag), ...]`), `force_kv_pairs`. Exposes `doc_count`, `key_count`, `kv_count` properties. Access via `backend.get_plan()`.
 - **`AnalysisResult`** (in `kb4it/services/processor.py`) -- dataclass passed explicitly between `step_01_analysis` and `step_01_01_decide_keys_compilation`. Carries the `force_kv_pairs` set.
 - **`kbdict`** (`KBDict` TypedDict) -- the persisted compilation cache at `<repo>/var/db/kbdict.json`. Maps docs to body/metadata hashes and metadata key/value indices for incremental compilation.
@@ -242,6 +250,8 @@ Because the page lives one level down, `Theme.relocate_links()` rewrites every r
 ### Backward-compat shim
 
 `Backend.get_value("runtime", "ncd"|"nck"|"K_PATH"|"KV_PATH")` redirects to the BuildPlan so the techdoc/blog themes' existing reads keep working. New code should use `backend.get_plan()` directly.
+
+Kept in 0.9.x, removed in 0.10.0: `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` (use `backend.pipeline`), `compiler.set_progress_callback` and `set_compile_start_callback` (pass the callbacks to `KB4IT(params)`), and `var['repo']['updated']` (templates read `var['updated']`; `var['repo']` is a copy). `Builder.theme_var` is set per builder in `_initialize`; the shared class-level dict is gone.
 
 ### Error handling
 
@@ -302,13 +312,15 @@ KB4IT ships with a full-featured TUI built on [Textual](https://textual.textuali
 
 ### Compiler callbacks
 
-The TUI hooks into the compiler via module-level callbacks in `compiler.py`:
-- `set_progress_callback(fn)` -- called per compiled doc with `(current, total, filename)`
-- `set_compile_start_callback(fn)` -- called when compilation starts
+A build takes its callbacks as parameters: `KB4IT(argparse.Namespace(..., progress_callback=fn, compile_start_callback=fn))`. The controller moves them out of `params` into `KB4IT.callbacks` (`CALLBACK_PARAMS`), and the pipeline gives them to that build's Compiler:
+- `progress_callback(basename, rc)` -- called per compiled doc
+- `compile_start_callback(total)` -- called once with the number of documents
+
+`compiler.set_progress_callback` / `set_compile_start_callback` are deprecated: what they register is used by the next build only, which logs `[COMPILER] CALLBACK_DEPRECATED`.
 
 ### Clipboard
 
-Uses the platform's tool found on `PATH` (`wl-copy`, `xclip`, `xsel` on Linux; `pbcopy` on macOS; `clip.exe` on Windows, fed UTF-16), falling back to the OSC 52 escape sequence, for copy-to-clipboard in the Build screen.
+`kb4it/tui/clipboard.py` uses the platform's tool found on `PATH` (`wl-copy`, `xclip`, `xsel` on Linux; `pbcopy` on macOS; `clip.exe` on Windows, fed UTF-16), falling back to the OSC 52 escape sequence. Screens call it as `clipboard._copy_to_clipboard`, so tests patch that one module.
 
 ### Project registry
 
@@ -372,10 +384,13 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
   - If a hook or guard blocks a git command, do not work around it; use another way that respects the rule, or tell the user.
 - **Save analysis responses and plans** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).
 - **Match KB4IT's existing log style** (`[<COMPONENT>] EVENT key=value`).
-- **Prefer dataclasses + typed exceptions over runtime side-channels** when adding new cross-service communication.
+- **Prefer dataclasses + typed exceptions over runtime side-channels** when adding new cross-service communication. A service that belongs to one build takes its collaborators in its constructor (see `Pipeline`) instead of `get_service`; a build's decisions go into `runtime` or the build's objects, never into `params` or `repo`.
+- **Module size.** No module under `kb4it/` is over 600 lines (theme `framework/` folders aside); `tests/test_module_size.py` enforces it. Split by concern, and when a name moves, keep the old import path working (`tests/test_public_names.py` lists the names of `kb4it.core.util` and `kb4it.tui.app`).
+- **Types.** The modules that `scripts/devel/typecheck.sh` lists pass `mypy --strict`; keep them annotated, and add a module to the list when it is fully annotated.
+- **Shared theme code.** Code that two document themes need goes into `kb4it/services/themekit/`, with a class attribute or hook method for each difference, not into a copy in each `theme.py`; templates two UIkit themes share go into `kb4it/resources/bases/uikit/templates/`.
 - **Templates are Mako** -- `${var}` and `% for`/`% if`, never `{var}` or `{include:...}`.
 - **`ENV` is frozen** after `env.py` finishes initializing. Do not attempt to write to it from services; raise an `ENV is frozen` error early at runtime.
 - **`@timeit` everything that runs as a stage.** Visible per-stage timing is part of the public observability surface.
-- **TUI screens** live in `kb4it/tui/app.py` as Textual `Screen` subclasses. Add new screens by subclassing `Screen` and registering them in the app's screen map.
+- **TUI screens** live in `kb4it/tui/screens/`, one module per screen or pair of small screens, as Textual `Screen` subclasses; a new screen is added to `kb4it/tui/app.py`'s imports and `__all__` only if outside code needs it by that path.
 - **CLI actions** require three touches: (1) argparse subparser in `main.py`, (2) dispatch `elif` in `KB4IT.run()`, (3) method on `Workflow` service in `workflow.py`.
 - **User help.** `help/` is the user documentation, an `apphelp` knowledge base published to https://t00m.github.io/KB4IT/ by `.github/workflows/help.yml`, which builds it with the KB4IT of the same commit. When a change alters what users see (commands, `repo.json` keys, document rules, theme behaviour, the TUI), update the matching page in `help/source/` in the same change, and check it with `kb4it verify help/config/repo.json`. `help/source/dev-help.md` describes how to write the pages.
