@@ -1,3 +1,3 @@
 <div class ="uk-container uk-overflow-auto">
-${var['content']}
+${var['content'] | n}
 </div>

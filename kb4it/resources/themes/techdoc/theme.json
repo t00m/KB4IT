@@ -8,5 +8,6 @@
     "version": "0.3.0",
     "search": true,
     "feed": false,
-    "kb4it": ">=0.7.9"
+    "kb4it": ">=0.7.9",
+    "autoescape": true
 }

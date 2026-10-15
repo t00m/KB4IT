@@ -1,3 +1,3 @@
 <div class="uk-card">
-${var['content']}
+${var['content'] | n}
 </div>

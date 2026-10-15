@@ -1,1 +1,1 @@
-<tr class="week">${var['content']}</tr>
+<tr class="week">${var['content'] | n}</tr>

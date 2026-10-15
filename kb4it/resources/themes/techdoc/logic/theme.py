@@ -19,6 +19,7 @@ import zipfile
 from calendar import monthrange
 from collections import Counter
 from datetime import datetime, timedelta
+from html import escape
 from lxml import etree
 
 from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
@@ -137,8 +138,8 @@ class Theme(Builder):
                 if timestamp is None:
                     datatable['rows'] += '<td class="uk-text-left"></td>'
                 else:
-                    ts_title = timestamp[:16]
-                    ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                    ts_title = escape(timestamp[:16])
+                    ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
                     datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
                 final_headers = headers[1:]
             else:
@@ -149,7 +150,9 @@ class Theme(Builder):
                 item = {}
                 if key == 'Title':
                     try:
-                        item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
+                        title = documents[docId][key]
+                        # Built as HTML here, printed raw by the template: escape the document title.
+                        item['title'] = f"<div uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</div>"
                         item['url'] = documents[docId]['%s_Url' % key]
                         datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
                     except (KeyError, AttributeError) as e:
@@ -815,7 +818,8 @@ class Theme(Builder):
             except OSError:
                 skeletons[cat_id] = f"---\nDate: YYYY-MM-DD\nVersion: 1.0\nCategory: {cat_id.capitalize()}\n---\n\n# Title of the {cat_id.capitalize()}\n\n## Overview\n\nDescribe here.\n"
         var['page']['skeletons'] = skeletons
-        var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True)
+        # Printed raw inside <script>: "<" as \u003c so no value can close the script element.
+        var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True).replace("<", "\\u003c")
         keys_data = {}
         all_docs = self.srvdtb.get_documents()
         for key in self.srvdtb.get_theme_keys():
@@ -826,7 +830,7 @@ class Theme(Builder):
                         counter[val] += 1
             if counter:
                 keys_data[key] = [{'v': v, 'c': c} for v, c in sorted(counter.items())]
-        var['page']['keys_json'] = json.dumps(keys_data, ensure_ascii=True)
+        var['page']['keys_json'] = json.dumps(keys_data, ensure_ascii=True).replace("<", "\\u003c")
         page = TPL.render(var=var)
         self.distribute_md('add', page)
         self.srvdtb.add_document('add.md')

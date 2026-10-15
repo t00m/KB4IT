@@ -11,7 +11,7 @@
 <details id="kb-toc-inline" open class="kb-toc-panel">
     <summary class="kb-toc-summary">Table of Contents</summary>
     <nav class="kb-toc-nav">
-        ${var['toc']}
+        ${var['toc'] | n}
     </nav>
 </details>
 % endif
@@ -22,7 +22,7 @@
     </ul>
     <!-- This is the container of the content items -->
     <ul class="uk-switcher uk-margin">
-        <li class="uk-active"><div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html']}</div></li>
+        <li class="uk-active"><div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div></li>
     </ul>
 
 % if var['metadata']:
@@ -30,12 +30,12 @@
 <div class="kb-sect1 kb-sect1-collapsed uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded">
     <h2 class="kb-h2">Document Properties</h2>
     <div class="kb-section-body uk-container">
-        ${var['metadata']}
+        ${var['metadata'] | n}
     </div>
 </div>
 % endif
 
 % else:
-    <div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html']}</div>
+    <div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div>
 % endif
 <!-- Template HTML_BODY_DOC.tpl :: END -->

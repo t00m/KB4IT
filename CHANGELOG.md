@@ -85,6 +85,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Security
 
 - apphelp escapes template output (`"autoescape": true`); only the page body, the `aria-current` attribute and the labels for the scripts are printed raw. Its explicit `| h` filters are gone (SC-01, SEC-01).
+- techdoc escapes template output. Titles, property names and values, dates and the document source shown under "Source" print as text; before, a value such as `<img src=x onerror=...>` ran in every page that listed it. The tables, the date cells and the tooltips that techdoc builds in Python escape the values they hold, and the JSON of the "Add" page cannot close its `<script>` (SC-01, SEC-01).
 
 ---
 

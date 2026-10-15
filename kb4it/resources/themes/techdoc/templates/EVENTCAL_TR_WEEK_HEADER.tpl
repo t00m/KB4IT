@@ -1,1 +1,1 @@
-<tr class="weekheader uk-background-muted">${var['content']}</tr>
+<tr class="weekheader uk-background-muted">${var['content'] | n}</tr>

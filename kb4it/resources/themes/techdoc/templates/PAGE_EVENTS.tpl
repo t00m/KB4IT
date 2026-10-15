@@ -13,10 +13,10 @@
     <li>
       <div hidden></div>
       <div class="uk-margin-bottom">
-        ${ydata['calendar']}
+        ${ydata['calendar'] | n}
       </div>
       <div class="uk-overflow-auto">
-        ${ydata['datatable']}
+        ${ydata['datatable'] | n}
       </div>
     </li>
     % endfor

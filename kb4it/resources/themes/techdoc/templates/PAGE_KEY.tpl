@@ -15,7 +15,7 @@
 
 <ul class="uk-switcher uk-margin">
     <li>
-        ${var['cloud']}
+        ${var['cloud'] | n}
     </li>
     <li>
         <table id="kb4it-datatable" class="uk-table uk-table-small uk-table-hover uk-table-striped" style="width:100%">

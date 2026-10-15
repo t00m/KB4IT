@@ -11,8 +11,8 @@ CATEGORIES = [
 ]
 %>
 
-<script id="kb-add-keys" type="application/json">${var['page']['keys_json']}</script>
-<script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json']}</script>
+<script id="kb-add-keys" type="application/json">${var['page']['keys_json'] | n}</script>
+<script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json'] | n}</script>
 
 <div class="uk-container kb-add">
 

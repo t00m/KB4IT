@@ -91,7 +91,7 @@
                 </ul>
                 <ul class="uk-navbar-nav noprint">
                     <!-- MENU CONTENTS :: START -->
-                    ${var['actions']}
+                    ${var['actions'] | n}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
@@ -105,7 +105,7 @@
 % if var['has_toc'] and len(var['toc']) > 0:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
                                     <ul class="uk-nav uk-navbar-dropdown-nav">
-${var['toc']}
+${var['toc'] | n}
                                     </ul>
                                 </div>
 % endif
@@ -119,7 +119,7 @@ ${var['toc']}
                 <ul class="uk-navbar-nav noprint">
 % if var.get('search_box'):
                     <li class="uk-flex uk-flex-middle uk-padding-small uk-padding-remove-vertical">
-                        ${var['search_box']}
+                        ${var['search_box'] | n}
                     </li>
 % endif
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
