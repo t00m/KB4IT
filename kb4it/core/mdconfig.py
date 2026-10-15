@@ -20,6 +20,8 @@ log = get_logger(__name__)
 # Always on: the documented KB4IT Markdown dialect.
 BASE_EXTENSIONS = ["extra", "admonition", "toc", "sane_lists"]
 HIGHLIGHT_MODES = ("client", "pygments", "none")
+# PyMdown extensions that highlight code through pymdownx.highlight.
+_PYMDOWNX_HIGHLIGHTERS = ("pymdownx.superfences", "pymdownx.highlight", "pymdownx.inlinehilite")
 
 # Package to install for well-known extension modules, for the error hint.
 _PACKAGES = {"pymdownx": "pymdown-extensions", "markdown_katex": "markdown-katex",
@@ -39,13 +41,25 @@ class MarkdownSettings:
         names = list(BASE_EXTENSIONS)
         if self.highlight == "pygments":
             names.append("codehilite")
+        if self._uses_pymdownx_highlight() and "pymdownx.highlight" not in self.extensions:
+            # Loaded explicitly so its use_pygments setting (see all_configs) reaches superfences.
+            names.append("pymdownx.highlight")
         names += [name for name in self.extensions if name not in names]
         return names + [MdLinkExtension()]
+
+    def _uses_pymdownx_highlight(self):
+        return any(name in _PYMDOWNX_HIGHLIGHTERS for name in self.extensions)
 
     def all_configs(self):
         configs = dict(self.extension_configs)
         if self.highlight == "pygments":
             configs.setdefault("codehilite", {"css_class": "highlight", "guess_lang": False})
+        if self._uses_pymdownx_highlight():
+            # Pygments markup only when KB4IT writes pygments.css; otherwise plain language-* classes
+            # for highlight.js (client) or for no highlighting at all (none).
+            highlight = dict(configs.get("pymdownx.highlight", {}))
+            highlight.setdefault("use_pygments", self.highlight == "pygments")
+            configs["pymdownx.highlight"] = highlight
         return configs
 
     def new_markdown(self):

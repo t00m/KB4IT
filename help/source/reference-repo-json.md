@@ -83,6 +83,8 @@ The optional `markdown` block adds python-markdown extensions to the built-in on
 
 With `"highlight": "pygments"` the build writes `resources/pygments.css`, and the pages no longer load highlight.js. Code blocks without a language are left plain.
 
+With `pymdownx.superfences` (or `pymdownx.highlight`), code blocks follow `highlight` too: KB4IT sets `use_pygments` of `pymdownx.highlight` to `true` only in `pygments` mode, so in `client` mode highlight.js colours them. A `use_pygments` of your own in `extension_configs` wins.
+
 Changing the block rebuilds every page. An extension that is not installed stops the build with `MD_EXTENSION_MISSING name=... hint=pip install ...`; `kb4it verify` reports it too.
 
 The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT when you ask for its extras: `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`.

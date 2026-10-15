@@ -72,6 +72,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A template that exists but does not compile (an override, a custom theme) fails the build with `[BUILDER] TEMPLATE_COMPILE_FAIL`, the file and the line, logged once. Before, it was skipped in silence and the theme's own template was used, or the build said the template was not found (OC-02, COR-06).
 - The document title is the first `# ` heading outside fenced and indented code blocks. Before, a `# comment` in a shell or Python block above the title became the title. The same rule finds the line that the page body leaves out and that the change detection ignores (OC-03, COR-07).
 - A blog post without `Date` no longer stops the blog: it is listed after the dated posts, has no calendar line, and is logged once with `[THEME] DOC_UNDATED`. An unexpected error now prints its type and the log file, as in `Error: KeyError: 'Date' (see <repo>/var/log/kb4it.log)`, instead of the bare message (OC-04, COR-08).
+- With `pymdownx.superfences` and the default `"highlight": "client"`, code blocks get plain `language-*` classes for highlight.js instead of Pygments markup without its stylesheet; `pygments` mode still gives Pygments markup and `pygments.css`. `scripts/devel/test.sh` installs `pymdown-extensions`, so these paths run in CI (OC-05, MD-03).
 
 ### Removed
 
