@@ -20,7 +20,7 @@ from kb4it.core.mdconfig import load_settings
 from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
-                              html_id_for, source_ext)
+                              html_id_for, source_ext, strip_first_heading)
 
 # Optional TUI callbacks set by kb4it.tui.app before a build, cleared after.
 # _progress_callback: called per document,  signature: (basename: str, rc: bool)
@@ -162,7 +162,7 @@ class Compiler(Service):
                     line_end = text.find("\n", end + 4)
                     text = text[line_end + 1:].lstrip("\n") if line_end >= 0 else ""
             # Strip the first H1 heading,  the title is already shown in the page header
-            text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
+            text = strip_first_heading(text)
             hooks = getattr(self.srvbes, "hooks", None)
             if hooks is not None and hooks.has("on_document"):
                 doc_id = os.path.basename(doc)

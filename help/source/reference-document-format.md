@@ -30,6 +30,8 @@ Summary: The rules a source document must follow, the date formats KB4IT reads a
 4. A level 1 heading `# Title`.
 5. The body in Markdown.
 
+The title is the first `# ` line outside code blocks: a `# comment` in a fenced or indented code block is never taken for it. That line is shown in the page header, not in the body.
+
 ## Property values {#values}
 
 | You write | KB4IT reads |

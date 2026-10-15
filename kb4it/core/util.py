@@ -334,6 +334,55 @@ def get_hash_from_file(path):
     return fhash
 
 
+_FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+_H1_RE = re.compile(r"^#[ \t]+(\S.*?)[ \t]*$")
+
+
+def first_heading(body: str):
+    """Return (title, line index) of the first level-1 heading of body, or (None, None).
+
+    Lines inside fenced code blocks (three or more backticks or tildes, indented up
+    to three spaces) and indented code blocks are skipped, so a "# comment" in a
+    shell or Python block is never taken for the title.
+    """
+    fence = None  # the opening run of the fenced block we are in
+    prev_blank = True
+    in_indented = False
+    for index, line in enumerate(body.splitlines()):
+        if fence is not None:
+            stripped = line.strip()
+            if stripped.startswith(fence) and set(stripped) == {fence[0]}:
+                fence = None
+            continue
+        match = _FENCE_RE.match(line)
+        if match:
+            fence = match.group(1)
+            prev_blank = in_indented = False
+            continue
+        blank = not line.strip()
+        if not blank and line.startswith(("    ", "\t")) and (prev_blank or in_indented):
+            in_indented = True
+            prev_blank = False
+            continue
+        if not blank:
+            in_indented = False
+        prev_blank = blank
+        heading = _H1_RE.match(line)
+        if heading:
+            return heading.group(1), index
+    return None, None
+
+
+def strip_first_heading(body: str) -> str:
+    """Return body without the line of its first level-1 heading (see first_heading)."""
+    _title, index = first_heading(body)
+    if index is None:
+        return body
+    lines = body.splitlines(keepends=True)
+    del lines[index]
+    return "".join(lines)
+
+
 def get_hash_from_body(path):
     """Get blake2b hash for the document body.
 
@@ -346,8 +395,7 @@ def get_hash_from_body(path):
         content = fin.read()
     end = content.find("\n---", 3)
     if end >= 0:
-        body = content[end + 4:].lstrip("\n")
-        body = re.sub(r"^#[^\n]*\n?", "", body, count=1)
+        body = strip_first_heading(content[end + 4:].lstrip("\n"))
     else:
         body = content
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
@@ -380,12 +428,12 @@ def get_markdown_attributes(docpath: str):
             return {}, False, "invalid_frontmatter"
 
         # Title comes from the first # heading in the body
-        title_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
-        if not title_match:
+        title, _index = first_heading(body)
+        if title is None:
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_h1_title")
             return {}, False, "missing_h1_title"
 
-        keys["Title"] = [title_match.group(1).strip()]
+        keys["Title"] = [title.strip()]
 
         if "title" in fm or "Title" in fm:
             log.warning(f"[UTIL] DOC_WARN doc={basename} reason=title_in_frontmatter_ignored")
