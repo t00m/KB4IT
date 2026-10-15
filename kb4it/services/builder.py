@@ -101,7 +101,6 @@ def _written_by_kb4it(path) -> bool:
 class Builder(Service):
     """Build HTML blocks."""
 
-    theme_var = {}
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
 
@@ -120,6 +119,7 @@ class Builder(Service):
         # Caches belong to this build. Class-level caches leaked templates from one
         # build into the next when the TUI or kb4it serve built twice in one process.
         self.templates = {}
+        self.theme_var = {}
         self._template_errors = {}
         self._autoescape_warned = False
         self._xform_pairs = None
