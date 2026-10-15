@@ -25,6 +25,7 @@ from kb4it.services.themekit import DocumentTheme
 class Theme(DocumentTheme):
     properties_title = 'Metadata'
     reuse_unchanged_pages = True
+    datatable_link_template = 'LINK'
     dey = {}
     events_docs = {}
 
@@ -47,93 +48,13 @@ class Theme(DocumentTheme):
         self.log.warning(f"[THEME] DOC_UNDATED doc={doc}")
 
     # ~ @timeit
-    def build_datatable(self, headers=None, doclist=None):
-        """Given a list of columns, it builds a datatable.
-        First column is always a date field, which is got by using the
-        method get_doc_timestamp from the database module. It means
-        that, firstly, it will retrieve the first date property defined
-        by the theme (or one of the next ones defined if the first isn't
-        found). If none is found, it will retrieve the timestamp of the
-        file from the OS).
-        So, it is not necessary to pass a date property in the headers.
-        """
-        if headers is None:
-            headers = []
-        if doclist is None:
-            doclist = []
-        # ~ self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
-        TPL_LINK = self.template('LINK')
-        TPL_DATATABLE = self.template('DATATABLE')
-        TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
-        TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
-
-        datatable = {}
-        repo = self.srvbes.get_dict('repo')
-        sort_attribute = "Date"
-
-        # Add datatable hearders
-        if len(headers) == 0:
-            headers = repo['datatable']
-
-        header_parts = []
-        for item in headers:
-            var = {}
-            var['item'] = item
-            header_parts.append(TPL_DATATABLE_HEADER_ITEM.render(var=var))
-        datatable['header'] = ''.join(header_parts)
-
-        # Add datatable body
-        documents = {}
-        for docId in doclist:
-            documents[docId] = self.srvdtb.get_doc_properties(docId)
-        rows = []
-        for docId in documents:
-            if self.srvdtb.is_system(docId):
-                continue
-
-            row = ['<tr>']
-            if sort_attribute in headers:
-                timestamp = self.srvdtb.get_doc_timestamp(docId)
-                if timestamp is None:
-                    row.append( '<td class=""></td>')
-                else:
-                    ts_title = escape(timestamp[:16])
-                    ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
-                    row.append(f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>""")
-                final_headers = headers[1:]
-            else:
-                final_headers = headers
-
-            for key in final_headers:
-                item = {}
-                if key == 'Title':
-                    try:
-                        title = documents[docId][key]
-                        # Built as HTML here, printed raw by the template: escape the document title.
-                        item['title'] = f"<span uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
-                        item['url'] = documents[docId]['%s_Url' % key]
-                        row.append(TPL_DATATABLE_BODY_ITEM.render(var=item))
-                    except (KeyError, AttributeError) as e:
-                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
-                        raise
-                else:
-                    link = {}
-                    link['class'] = 'uk-link-heading'
-                    field = []
-                    try:
-                        for value in documents[docId][key]:
-                            link['title'] = value
-                            link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
-                            field.append(TPL_LINK.render(var=link))
-                    except KeyError:
-                        field = []
-                    row.append("""<td class="">%s</td>""" % ', '.join(field))
-            row.append('</tr>')
-            rows.append(''.join(row))
-        datatable['rows'] = ''.join(rows)
-
-        return TPL_DATATABLE.render(var=datatable)
-
+    def datatable_date_cell(self, timestamp):
+        """Blog's date cell: a link to the day's page, no alignment class."""
+        if timestamp is None:
+            return '<td class=""></td>'
+        ts_title = escape(timestamp[:16])
+        ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
+        return f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
 
     def build_page_index(self):
         """Create blog index page.

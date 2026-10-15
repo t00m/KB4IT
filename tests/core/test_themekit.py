@@ -17,6 +17,7 @@ SHARED = {
     "metadata": ["get_labels", "get_html_values_from_key", "build_metadata_section", "get_page_actions"],
     "keypages": ["build_page_key", "build_page_key_value", "build_page_properties", "build_tagcloud_from_key",
                  "get_maxkv_freq", "build_page_stats", "build_page_bookmarks", "build_page_index_all"],
+    "tables": ["build_datatable"],
 }
 
 
@@ -143,3 +144,42 @@ def test_tagcloud_scale_with_and_without_the_empty_value(skip_empty, weight):
     theme.tagcloud_scale_skips_empty = skip_empty
     cloud = theme.build_tagcloud_from_key("Tag")
     assert cloud.startswith("<WORDCLOUD") and f"'weight': {weight}" in cloud and "'word': 'a'" in cloud
+
+
+_TABLE_PROPS = {
+    "a.html": {"Title": "A <b>", "Title_Url": "a.html", "Tag": ["x", "y"], "Tag_x_Url": "Tag_x.html"},
+    "sys.html": {"Title": "System"},
+}
+
+
+class _TableDb:
+    def get_doc_properties(self, doc):
+        return _TABLE_PROPS[doc]
+
+    def is_system(self, doc):
+        return doc == "sys.html"
+
+    def get_doc_timestamp(self, doc):
+        return "2026-10-15T09:30:00"
+
+
+class _Backend:
+    def get_dict(self, name):
+        return {}
+
+
+def test_datatable_rows_and_hooks():
+    theme = _Theme()
+    theme.srvdtb, theme.srvbes = _TableDb(), _Backend()
+    html = theme.build_datatable([], ["a.html", "sys.html"], table_id="t1")
+    assert html.startswith("<DATATABLE") and "'table_id', 't1'" in html
+    assert "events_20261015.html" in html and "2026-10-15T09:30" in html
+    assert "A &lt;b&gt;" in html and "System" not in html
+    # Tag_y has no page: the whole cell stays empty, as before the move
+    assert "LINK_DATATABLE" not in html
+    html = theme.build_datatable(["Tag"], ["a.html"])
+    assert "<td class=\"\"></td>" in html
+
+    theme.datatable_value_link = lambda props, key, value: {"title": value, "url": props.get(f"{key}_{value}_Url", "#")}
+    html = theme.build_datatable(["Tag"], ["a.html"])
+    assert html.count("<LINK_DATATABLE") == 2 and "Tag_x.html" in html

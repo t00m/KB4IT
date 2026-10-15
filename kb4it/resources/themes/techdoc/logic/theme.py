@@ -18,7 +18,6 @@ import zipfile
 from calendar import monthrange
 from collections import Counter
 from datetime import datetime, timedelta
-from html import escape
 from lxml import etree
 
 from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
@@ -88,96 +87,14 @@ class Theme(DocumentTheme):
         self.dey = {}
         self.events_docs = {}
 
-    def build_datatable(self, headers=[], doclist=[], table_id='kb4it-datatable'):
-        """Given a list of columns, it builds a datatable.
-        First column is always a date field, which is got by using the
-        method get_doc_timestamp from the database module. It means
-        that, firstly, it will retrieve the first date property defined
-        by the theme (or one of the next ones defined if the first isn't
-        found). If none is found, it will retrieve the timestamp of the
-        file from the OS).
-        So, it is not necessary to pass a date property in the headers.
-        """
-        #self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
-        TPL_LINK = self.template('LINK_DATATABLE')
-        TPL_DATATABLE = self.template('DATATABLE')
-        TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
-        TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
-
-        datatable = {}
-        datatable['table_id'] = table_id
-        repo = self.srvbes.get_dict('repo')
-        sort_attribute = "Date"
-
-        # Add datatable hearders
-        datatable['header'] = ''
-        if len(headers) == 0:
-            headers = repo.get('datatable', ['Date', 'Title'])
-        # ~ sort_attr = repo['sort'][0]
-        # ~ headers.insert(0, sort_attr)
-
-        for item in headers:
-            var = {}
-            var['item'] = item
-            datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var=var)
-
-        # Add datatable body
-        documents = {}
-        for docId in doclist:
-            documents[docId] = self.srvdtb.get_doc_properties(docId)
-        datatable['rows'] = ''
-        for docId in documents:
-            if self.srvdtb.is_system(docId):
-                continue
-
-            datatable['rows'] += '<tr>'
-            if sort_attribute in headers:
-
-                timestamp = self.srvdtb.get_doc_timestamp(docId)
-                if timestamp is None:
-                    datatable['rows'] += '<td class="uk-text-left"></td>'
-                else:
-                    ts_title = escape(timestamp[:16])
-                    ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
-                    datatable['rows'] += f"""<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}"><span class="uk-text-left">{ts_title}</span></a></td>"""
-                final_headers = headers[1:]
-            else:
-                final_headers = headers
-
-
-            for key in final_headers:
-                item = {}
-                if key == 'Title':
-                    try:
-                        title = documents[docId][key]
-                        # Built as HTML here, printed raw by the template: escape the document title.
-                        item['title'] = f"<span uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
-                        item['url'] = documents[docId]['%s_Url' % key]
-                        datatable['rows'] += TPL_DATATABLE_BODY_ITEM.render(var=item)
-                    except (KeyError, AttributeError) as e:
-                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
-                        raise
-                else:
-                    link = {}
-                    field = []
-                    try:
-                        for value in documents[docId][key]:
-                            if key == 'Priority' and value:
-                                link['class'] = 'uk-label kb-dt-label %s' % priority_css(value)
-                            elif key == 'Status' and value:
-                                link['class'] = 'uk-label kb-dt-label %s' % status_css(value)
-                            else:
-                                link['class'] = 'uk-link-heading'
-                            link['title'] = value
-                            link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
-                            field.append(TPL_LINK.render(var=link))
-                    except KeyError:
-                        field = ''
-                    datatable['rows'] += """<td class="">%s</td>""" % ', '.join(field)
-            datatable['rows'] += '</tr>'
-
-        return TPL_DATATABLE.render(var=datatable)
-
+    def datatable_value_link(self, properties, key, value):
+        """Priority and Status values show as colored labels."""
+        link = super().datatable_value_link(properties, key, value)
+        if key == 'Priority' and value:
+            link['class'] = 'uk-label kb-dt-label %s' % priority_css(value)
+        elif key == 'Status' and value:
+            link['class'] = 'uk-label kb-dt-label %s' % status_css(value)
+        return link
 
     def build_page_index(self, var):
         """Create landing page."""

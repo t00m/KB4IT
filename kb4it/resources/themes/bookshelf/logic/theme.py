@@ -81,6 +81,8 @@ class Theme(DocumentTheme):
     """Builder for the Bookshelf theme."""
 
     tagcloud_scale_skips_empty = True
+    datatable_link_template = 'LINK'
+    datatable_default_headers = ('Date', 'Title', 'Chapter')
 
     books = OrderedDict()
     doc_index = {}
@@ -524,60 +526,25 @@ class Theme(DocumentTheme):
             toc = '\n'.join(items)
         return toc
 
-    def build_datatable(self, headers=None, doclist=None):
-        if headers is None:
-            headers = []
-        if doclist is None:
-            doclist = []
-        TPL_LINK = self.template('LINK')
-        TPL_DATATABLE = self.template('DATATABLE')
-        TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
-        repo = self.srvbes.get_dict('repo')
-        sort_attribute = 'Date'
-        if len(headers) == 0:
-            headers = repo.get('datatable', ['Date', 'Title', 'Chapter'])
+    def datatable_date_cell(self, timestamp):
+        """Bookshelf's date cell: the date only, no link."""
+        if timestamp is None:
+            return '<td class="bk-td-date"></td>'
+        return f'<td class="bk-td-date">{escape(timestamp[:16])}</td>'
 
-        datatable = {'header': '', 'rows': ''}
-        for item in headers:
-            datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var={'item': item})
+    def datatable_title_cell(self, docId, properties):
+        """Bookshelf's title cell: a plain link, empty when the document has no title."""
+        try:
+            title = properties['Title']
+            url = properties.get('Title_Url', html_id_for(docId))
+            # Built as HTML here and printed raw: escape what comes from the document.
+            return f'<td class="bk-td-title"><a href="{escape(url)}">{escape(ellipsize_text(title, 80))}</a></td>'
+        except (KeyError, AttributeError):
+            return '<td></td>'
 
-        documents = {docId: self.srvdtb.get_doc_properties(docId) for docId in doclist}
-        for docId in documents:
-            if self.srvdtb.is_system(docId):
-                continue
-            datatable['rows'] += '<tr>'
-            if sort_attribute in headers:
-                timestamp = self.srvdtb.get_doc_timestamp(docId)
-                if timestamp is None:
-                    datatable['rows'] += '<td class="bk-td-date"></td>'
-                else:
-                    datatable['rows'] += f'<td class="bk-td-date">{escape(timestamp[:16])}</td>'
-                final_headers = headers[1:]
-            else:
-                final_headers = headers
-            for key in final_headers:
-                if key == 'Title':
-                    try:
-                        title = documents[docId][key]
-                        url = documents[docId].get(f'{key}_Url', html_id_for(docId))
-                        # Built as HTML here and printed raw: escape what comes from the document.
-                        datatable['rows'] += f'<td class="bk-td-title"><a href="{escape(url)}">{escape(ellipsize_text(title, 80))}</a></td>'
-                    except (KeyError, AttributeError):
-                        datatable['rows'] += '<td></td>'
-                else:
-                    field = []
-                    try:
-                        for value in documents[docId][key]:
-                            field.append(TPL_LINK.render(var={
-                                'class': 'bk-link',
-                                'title': value,
-                                'url': documents[docId].get(f'{key}_{value}_Url', '#'),
-                            }))
-                    except KeyError:
-                        field = []
-                    datatable['rows'] += f'<td class="">{", ".join(field)}</td>'
-            datatable['rows'] += '</tr>'
-        return TPL_DATATABLE.render(var=datatable)
+    def datatable_value_link(self, properties, key, value):
+        """Bookshelf's value link: its own class, and "#" when the value has no page."""
+        return {'class': 'bk-link', 'title': value, 'url': properties.get(f'{key}_{value}_Url', '#')}
 
     def build_metadata_section(self, docId):
         """Override: a study page is still built when its metadata fails; the section is left empty."""
