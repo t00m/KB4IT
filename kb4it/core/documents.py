@@ -5,9 +5,12 @@ Document helpers: frontmatter, title and body of a Markdown document.
 # License: GPL v3
 """
 
+from __future__ import annotations
+
 import hashlib
 import os
 import re
+from typing import Any
 
 import yaml
 
@@ -16,12 +19,12 @@ from kb4it.core.log import get_logger
 
 log = get_logger("Util")
 
-def extract_sections_from_md(file_path: str) -> dict:
+def extract_sections_from_md(file_path: str) -> dict[str, dict[str, int]]:
     """Extract H2 sections from a Markdown file.
 
     Returns a dict mapping section name -> {start, end} (1-indexed line numbers).
     """
-    sections = []
+    sections: list[dict[str, Any]] = []
 
     with open(file_path, "r", encoding=SOURCE_ENCODING) as fh:
         lines = fh.readlines()
@@ -54,7 +57,7 @@ _FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 _H1_RE = re.compile(r"^#[ \t]+(\S.*?)[ \t]*$")
 
 
-def first_heading(body: str):
+def first_heading(body: str) -> tuple[str | None, int | None]:
     """Return (title, line index) of the first level-1 heading of body, or (None, None).
 
     Lines inside fenced code blocks (three or more backticks or tildes, indented up
@@ -89,7 +92,7 @@ def first_heading(body: str):
     return None, None
 
 
-def fences_in_blocks(body: str) -> list:
+def fences_in_blocks(body: str) -> list[int]:
     """Line numbers (1-based) of code fences indented four spaces or a tab, outside top-level fences.
 
     python-markdown's fenced_code only sees fences at the start of a line, so such a
@@ -115,7 +118,7 @@ def fences_in_blocks(body: str) -> list:
 _RAW_SCRIPT_RE = re.compile(r"<script\b|<[a-zA-Z][^>]*\son[a-zA-Z]+\s*=", re.IGNORECASE)
 
 
-def raw_script_lines(body: str) -> list:
+def raw_script_lines(body: str) -> list[int]:
     """Line numbers (1-based) with a <script> element or an on*= handler outside code.
 
     Fenced and indented code blocks and `inline code` are skipped: there the text
@@ -158,7 +161,7 @@ def strip_first_heading(body: str) -> str:
     return "".join(lines)
 
 
-def get_hash_from_body(path):
+def get_hash_from_body(path: str) -> str | None:
     """Get blake2b hash for the document body.
 
     Body is the content after the closing YAML frontmatter delimiter, with the
@@ -176,7 +179,7 @@ def get_hash_from_body(path):
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
 
 
-def get_markdown_attributes(docpath: str):
+def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, str]:
     """Get metadata from a Markdown document's YAML frontmatter."""
     basename = os.path.basename(docpath)
     keys = {}
@@ -259,7 +262,7 @@ def get_markdown_attributes(docpath: str):
     return keys, True, "Success"
 
 
-def get_document_attributes(docpath: str):
+def get_document_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, str]:
     """Extract metadata from a Markdown document."""
     if docpath.endswith((".md", ".markdown")):
         return get_markdown_attributes(docpath)

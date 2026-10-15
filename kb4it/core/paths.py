@@ -7,13 +7,18 @@ Repository path helpers: resolve repo.json paths and check that the target folde
 # License: GPLv3
 """
 
+from __future__ import annotations
+
 import os
 import sys
+from typing import Union
 
 from kb4it.core.exceptions import ConfigError
 
+StrPath = Union[str, "os.PathLike[str]"]
 
-def resolve_repo_path(raw: str, root) -> str:
+
+def resolve_repo_path(raw: str, root: StrPath) -> str:
     """Expand ~ and $VARS and anchor a relative path to the repository root."""
     expanded = os.path.expanduser(os.path.expandvars(raw))
     if not os.path.isabs(expanded):
@@ -21,7 +26,7 @@ def resolve_repo_path(raw: str, root) -> str:
     return os.path.realpath(expanded)
 
 
-def _key(path) -> str:
+def _key(path: StrPath) -> str:
     """Comparable form of path: real, absolute and, on Windows and macOS, case folded."""
     path = os.path.normcase(os.path.realpath(str(path)))
     if sys.platform == "darwin":
@@ -37,7 +42,7 @@ def _inside(parent: str, child: str) -> bool:
         return False
 
 
-def check_target(target, root, source, home=None) -> None:
+def check_target(target: StrPath, root: StrPath, source: StrPath, home: StrPath | None = None) -> None:
     """Raise ConfigError if the target folder overlaps a folder KB4IT must never sweep.
 
     The deployer deletes pages from the target, so the target may not be, or hold, the

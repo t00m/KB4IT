@@ -10,11 +10,12 @@ Service Deployer.
 import glob
 import os
 import shutil
+from typing import Any
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError, ThemeError
-from kb4it.core.mdconfig import pygments_css
 from kb4it.core.log import get_logger
+from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
 
@@ -22,7 +23,7 @@ from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_con
 class Deployer(Service):
     """KB4IT Deployer Service."""
 
-    def __init__(self, backend, theme, log_file=None):
+    def __init__(self, backend: Any, theme: Any, log_file: str | None = None) -> None:
         """Deployer of one build; log_file is the temporary log removed at the end."""
         super().__init__()
         self.log = get_logger(self.modname)

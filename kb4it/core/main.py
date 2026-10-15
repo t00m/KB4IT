@@ -8,11 +8,14 @@ KB4IT module. Entry point.
 # Description: Website static-generator based on Markdown
 """
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import os
 import sys
 import uuid
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
@@ -24,6 +27,12 @@ from kb4it.services.builder import Builder
 from kb4it.services.database import Database
 from kb4it.services.frontend import Frontend
 from kb4it.services.workflow import Workflow
+
+if TYPE_CHECKING:
+    from kb4it.core.service import Service
+    from kb4it.services.compiler import Compiler
+    from kb4it.services.deployer import Deployer
+    from kb4it.services.processor import Processor
 
 # Actions that write into a repository take its lock: <root>/var/kb4it.lock.
 LOCKED_ACTIONS = ("build", "create")
@@ -128,7 +137,28 @@ class KB4IT:
         """Get all registered services."""
         return self.services
 
-    def get_service(self, name: str):
+    @overload
+    def get_service(self, name: Literal["DB"]) -> Database: ...
+    @overload
+    def get_service(self, name: Literal["Backend"]) -> Backend: ...
+    @overload
+    def get_service(self, name: Literal["Frontend"]) -> Frontend: ...
+    @overload
+    def get_service(self, name: Literal["Builder"]) -> Builder: ...
+    @overload
+    def get_service(self, name: Literal["Workflow"]) -> Workflow: ...
+    @overload
+    def get_service(self, name: Literal["Theme"]) -> Builder: ...
+    @overload
+    def get_service(self, name: Literal["Processor"]) -> Processor: ...
+    @overload
+    def get_service(self, name: Literal["Compiler"]) -> Compiler: ...
+    @overload
+    def get_service(self, name: Literal["Deployer"]) -> Deployer: ...
+    @overload
+    def get_service(self, name: str) -> Service: ...
+
+    def get_service(self, name: str) -> Any:
         """Get or start a registered service."""
         if name in PIPELINE_SERVICES:
             return self._pipeline_service(name)

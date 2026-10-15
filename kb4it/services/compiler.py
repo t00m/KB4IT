@@ -12,13 +12,15 @@ import os
 import re
 import shutil
 import threading
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor as Executor
+from typing import Any
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
+from kb4it.core.log import get_logger
 from kb4it.core.mdconfig import load_settings, sanitize_html
 from kb4it.core.search import save_doc_sections
-from kb4it.core.log import get_logger
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext, strip_first_heading)
@@ -60,7 +62,8 @@ def take_pending_callbacks() -> dict:
 class Compiler(Service):
     """KB4IT Compiler Service."""
 
-    def __init__(self, backend, db, theme, processor, callbacks=None):
+    def __init__(self, backend: Any, db: Any, theme: Any, processor: Any,
+                 callbacks: dict[str, Callable[..., Any]] | None = None) -> None:
         """Compiler of one build; callbacks maps "progress_callback" and "compile_start_callback"."""
         super().__init__()
         self.log = get_logger(self.modname)

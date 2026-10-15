@@ -1,13 +1,17 @@
 """System pages built from the metadata: properties, property and value pages, stats,
 bookmarks and the list of every document."""
 
+from __future__ import annotations
+
 import math
 import os
+from typing import Any
 
 from kb4it.core.util import set_max_frequency, valid_filename
+from kb4it.services.themekit.host import ThemeHost
 
 
-class KeyPagesMixin:
+class KeyPagesMixin(ThemeHost):
     """Pages about properties and values; needs `Builder` and `build_datatable`."""
 
     #: Title of the properties page.
@@ -18,21 +22,21 @@ class KeyPagesMixin:
     #: Scale a tag cloud without the empty value, which stands for "property not set".
     tagcloud_scale_skips_empty = False
 
-    def cloud_measure(self, frequency, max_frequency):
+    def cloud_measure(self, frequency: int, max_frequency: int) -> dict[str, Any]:
         """Return the size fields of a property button or a tag cloud word."""
         log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
         weight = math.log(1 + frequency) / log_max if log_max else 0.0
         return {'count': frequency, 'weight': round(weight, 3)}
 
-    def frequency_keys(self):
+    def frequency_keys(self) -> list[str]:
         """Return the properties whose value count sizes the property buttons."""
-        return self.srvdtb.get_theme_keys()
+        return list(self.srvdtb.get_theme_keys())
 
-    def stats_keys(self):
+    def stats_keys(self) -> list[str]:
         """Return the properties listed on the stats page."""
-        return self.srvdtb.get_theme_keys()
+        return list(self.srvdtb.get_theme_keys())
 
-    def _reuse_cached_page(self, name, counter, reason, func):
+    def _reuse_cached_page(self, name: str, counter: str, reason: str, func: str) -> bool:
         """Keep the cached `name`.html when nothing it shows changed; True if kept."""
         if not self.reuse_unchanged_pages or self.srvbes.get_value('runtime', counter) != 0:
             return False
@@ -42,21 +46,21 @@ class KeyPagesMixin:
         self.srvbes.add_target(f'{name}.md', f'{name}.html')
         return True
 
-    def _add_system_page(self, name, title):
+    def _add_system_page(self, name: str, title: str) -> None:
         self.srvdtb.add_document(f'{name}.md')
         self.srvdtb.add_document_key(f'{name}.md', 'Title', title)
         self.srvdtb.add_document_key(f'{name}.md', 'SystemPage', 'Yes')
 
-    def get_maxkv_freq(self):
+    def get_maxkv_freq(self) -> int:
         """Return the highest number of values of a property."""
         maxkvfreq = 0
         for key in self.frequency_keys():
             maxkvfreq = max(maxkvfreq, len(self.srvdtb.get_all_values_for_key(key)))
         return maxkvfreq
 
-    def build_tagcloud_from_key(self, key):
+    def build_tagcloud_from_key(self, key: str) -> str:
         """Return a tag cloud of the values of a property, or '' when it has none."""
-        dkeyurl = {}
+        dkeyurl: dict[str, set[str]] = {}
         for docId in self.srvdtb.get_documents():
             url = os.path.basename(docId)[:-5]
             for tag in self.srvdtb.get_values(docId, key):
@@ -79,7 +83,7 @@ class KeyPagesMixin:
             var['items'].append(item)
         return self.template('WORDCLOUD').render(var=var)
 
-    def build_page_properties(self):
+    def build_page_properties(self) -> None:
         """Create the properties page: one button per property, with its tag cloud."""
         if self._reuse_cached_page('properties', 'nck', 'no_key_changes', 'build_page_properties'):
             return
@@ -101,7 +105,7 @@ class KeyPagesMixin:
         self.distribute_md('properties', self.template('PAGE_PROPERTIES').render(var=var))
         self._add_system_page('properties', self.properties_title)
 
-    def build_page_key(self, key, values):
+    def build_page_key(self, key: str, values: list[str]) -> None:
         """Create the page of a property: its tag cloud and the count of each value."""
         var = self.get_theme_var()
         var['title'] = key
@@ -122,7 +126,7 @@ class KeyPagesMixin:
         self._add_system_page(var['pagename'], key)
         self.log.debug(f"[THEME] KEY_TARGET key={key} resource={var['pagename']}")
 
-    def build_page_key_value(self, kvpath):
+    def build_page_key_value(self, kvpath: tuple[str, str, bool]) -> None:
         """Create the page of a property value: the documents that have it."""
         key, value, compile_value = kvpath
         docs = self.srvbes.get_kbdict_value(key, value, new=True)
@@ -142,7 +146,7 @@ class KeyPagesMixin:
             self._add_system_page(var['pagename'], var['title'])
             self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
 
-    def build_page_stats(self):
+    def build_page_stats(self) -> None:
         """Create the stats page: documents, properties and values of each."""
         if self._reuse_cached_page('stats', 'nck', 'no_key_changes', 'build_page_stats'):
             return
@@ -160,7 +164,7 @@ class KeyPagesMixin:
         self.distribute_md('stats', self.template('PAGE_STATS').render(var=var))
         self._add_system_page('stats', 'Stats')
 
-    def build_page_bookmarks(self):
+    def build_page_bookmarks(self) -> str | None:
         """Create the bookmarks page: documents with Bookmark set to Yes or True."""
         if self._reuse_cached_page('bookmarks', 'ncd', 'no_doc_changes', 'build_page_bookmarks'):
             return None
@@ -182,7 +186,7 @@ class KeyPagesMixin:
         self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
         return page
 
-    def build_page_index_all(self):
+    def build_page_index_all(self) -> str | None:
         """Create the page that lists every document."""
         if self._reuse_cached_page('all', 'ncd', 'no_doc_changes', 'build_page_index_all'):
             return None

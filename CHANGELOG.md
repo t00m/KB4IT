@@ -41,6 +41,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `scripts/devel/validate_html.py` builds the sample site of every bundled theme (with the audit documents) and checks every page with the Nu HTML Checker, ignoring only the UIkit `uk-*` attributes; CI runs it in the `package` job, so the markup fixed in this release stays valid (TS-02, TST-02).
 - Tests for the failure branches of the compiler: a document that cannot compile, a page that runs out of memory and a progress callback that fails; the next build makes the failed pages. Test coverage, with the builds the tests start in their own process, rose from 85% at the audit to 91% (TS-01, TST-01).
 - Themes can share templates: `"template_base": "uikit"` in `theme.json` adds a bundled set of templates to the lookup, after the theme and before KB4IT's shared ones. techdoc and blog use it for the 17 templates they had in identical copies (AR-01, ARC-01).
+- `scripts/devel/typecheck.sh` runs `mypy --strict` on the modules with type annotations (`core/paths.py`, `core/dates.py`, `core/documents.py`, `core/files.py`, `services/themekit/`, `services/pipeline.py`), and CI runs it in the `package` job. `KB4IT.get_service` tells type checkers which service each name returns (AR-06, ARC-07).
 
 ### Changed
 

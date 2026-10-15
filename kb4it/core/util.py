@@ -21,6 +21,7 @@ import re
 import time
 import unicodedata
 from functools import wraps
+from typing import Any
 
 from kb4it.core.dates import (
     DateCache,
@@ -189,7 +190,7 @@ def get_default_workers():
     return math.ceil(workers)
 
 
-def set_max_frequency(dkeyurl):
+def set_max_frequency(dkeyurl: dict[str, Any]) -> int:
     """Calculate and set max frequency."""
     max_frequency = 1
     for keyword in dkeyurl:

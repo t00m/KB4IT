@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from kb4it.core.types import KBDict
@@ -71,7 +71,7 @@ class BuildPlan:
 class Processor(Service):
     """KB4IT Processor Service."""
 
-    def __init__(self, backend, db, theme):
+    def __init__(self, backend: Any, db: Any, theme: Any) -> None:
         """Processor of one build; the pipeline gives it the backend, the database and the theme."""
         super().__init__()
         self.log = get_logger(self.modname)

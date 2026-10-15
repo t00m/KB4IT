@@ -1,15 +1,26 @@
 """Event pages: one page per day, month and year that has dated documents."""
 
+from __future__ import annotations
+
 import os
+from datetime import datetime
 
 from kb4it.core.util import (
     get_human_datetime_day,
     get_human_datetime_month,
     guess_datetime,
 )
+from kb4it.services.themekit.host import ThemeHost
 
 
-class EventsMixin:
+def _parse_date(text: str) -> datetime:
+    parsed = guess_datetime(text)
+    if parsed is None:
+        raise ValueError(f"not a date: {text}")
+    return parsed
+
+
+class EventsMixin(ThemeHost):
     """`build_events`; needs `Builder` and `build_datatable`.
 
     `dey` maps a year to its (month, day) pairs and `events_docs` maps year, month
@@ -20,19 +31,19 @@ class EventsMixin:
     #: dates whose documents did not change.
     events_rebuild_all = False
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         super()._initialize()
-        self.dey = {}
-        self.events_docs = {}
+        self.dey: dict[int, list[tuple[int, int]]] = {}
+        self.events_docs: dict[int, dict[int, dict[int, list[str]]]] = {}
 
-    def _collect_events(self, doclist):
+    def _collect_events(self, doclist: list[str]) -> None:
         for docId in doclist:
             timestamp = self.srvdtb.get_doc_timestamp(docId)
             if timestamp is None:
                 continue
             try:
-                timestamp = guess_datetime(timestamp)
-                y, m, d = timestamp.year, timestamp.month, timestamp.day
+                parsed = _parse_date(timestamp)
+                y, m, d = parsed.year, parsed.month, parsed.day
                 self.dey.setdefault(y, []).append((m, d))
                 self.events_docs.setdefault(y, {}).setdefault(m, {}).setdefault(d, []).append(docId)
             except Exception as error:
@@ -40,15 +51,15 @@ class EventsMixin:
                 self.log.error(f"[THEME] ERROR {error}")
                 raise
 
-    def _cached_page(self, name):
+    def _cached_page(self, name: str) -> str:
         return os.path.join(self.srvbes.get_path('cache'), f"{name}.html")
 
-    def _add_event_page(self, name, title):
+    def _add_event_page(self, name: str, title: str) -> None:
         self.srvdtb.add_document(f"{name}.md")
         self.srvdtb.add_document_key(f"{name}.md", 'Title', title)
         self.srvdtb.add_document_key(f"{name}.md", 'SystemPage', 'Yes')
 
-    def build_events(self, doclist):
+    def build_events(self, doclist: list[str]) -> set[str]:
         """Create the day, month and year pages of the dated documents in `doclist`.
 
         A page is rebuilt when one of its documents changed or its cached copy is
@@ -75,7 +86,7 @@ class EventsMixin:
                     if must_compile_day:
                         must_compile_month.add(f"{year:4d}{month:02d}")
                         must_compile_year.add(f"{year:4d}")
-                        edt = guess_datetime(f"{year:4d}.{month:02d}.{day:02d}")
+                        edt = _parse_date(f"{year:4d}.{month:02d}.{day:02d}")
                         var['page'] = {'datatable': self.build_datatable([], day_docs)}
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
                         self.distribute_md(name, tpl_days.render(var=var))
@@ -89,7 +100,7 @@ class EventsMixin:
                 name = f"events_{year:4d}{month:02d}"
                 cached = self._cached_page(name)
                 if f"{year:4d}{month:02d}" in must_compile_month or not os.path.exists(cached):
-                    edt = guess_datetime(f"{year:4d}.{month:02d}.01")
+                    edt = _parse_date(f"{year:4d}.{month:02d}.01")
                     month_docs = [docId for day in self.events_docs[year][month]
                                   for docId in self.events_docs[year][month][day]]
                     var['page'] = {'datatable': self.build_datatable([], month_docs)}

@@ -1,10 +1,14 @@
 """Table of contents of a document page, in the theme's markup."""
 
+from __future__ import annotations
 
-class TocMixin:
+from kb4it.services.themekit.host import ThemeHost
+
+
+class TocMixin(ThemeHost):
     """`extract_toc`; needs `Builder.template` and `get_theme_var`."""
 
-    def extract_toc(self, source):
+    def extract_toc(self, source: str) -> str:
         """Extract TOC from compiled HTML code and make it theme dependent.
 
         The compiler writes the TOC block after a "toctitle" line; its lines up to

@@ -1,19 +1,23 @@
 """The document table (datatable) of the list pages: all, bookmarks, events, values."""
 
+from __future__ import annotations
+
 from html import escape
+from typing import Any
 
 from kb4it.core.util import ellipsize_text
+from kb4it.services.themekit.host import ThemeHost
 
 
-class TableMixin:
+class TableMixin(ThemeHost):
     """`build_datatable` and its hooks; needs `Builder.template`, `srvbes` and `srvdtb`."""
 
     #: Template of a value link in a cell.
     datatable_link_template = 'LINK_DATATABLE'
     #: Columns when neither the caller nor repo.json "datatable" names them.
-    datatable_default_headers = ('Date', 'Title')
+    datatable_default_headers: tuple[str, ...] = ('Date', 'Title')
 
-    def datatable_date_cell(self, timestamp):
+    def datatable_date_cell(self, timestamp: str | None) -> str:
         """Return the cell of the date column; `timestamp` is None when the document has none."""
         if timestamp is None:
             return '<td class="uk-text-left"></td>'
@@ -22,7 +26,7 @@ class TableMixin:
         return (f'<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}">'
                 f'<span class="uk-text-left">{ts_title}</span></a></td>')
 
-    def datatable_title_cell(self, docId, properties):
+    def datatable_title_cell(self, docId: str, properties: dict[str, Any]) -> str:
         """Return the cell of the Title column: the title, shortened, with a tooltip."""
         item = {}
         try:
@@ -35,11 +39,12 @@ class TableMixin:
             self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
             raise
 
-    def datatable_value_link(self, properties, key, value):
+    def datatable_value_link(self, properties: dict[str, Any], key: str, value: str) -> dict[str, str]:
         """Return the variables of the link to the page of a value; KeyError leaves the cell empty."""
         return {'class': 'uk-link-heading', 'title': value, 'url': properties[f'{key}_{value}_Url']}
 
-    def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
+    def build_datatable(self, headers: list[str] | None = None, doclist: list[str] | None = None,
+                        table_id: str = 'kb4it-datatable') -> str:
         """Given a list of columns, it builds a datatable.
 
         First column is always a date field, which is got by using the

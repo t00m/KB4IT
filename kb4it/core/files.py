@@ -5,6 +5,8 @@ File helpers: file names, copy and delete, JSON files, quarantine and hashes.
 # License: GPL v3
 """
 
+from __future__ import annotations
+
 import glob
 import hashlib
 import json
@@ -12,7 +14,9 @@ import os
 import re
 import shutil
 import tempfile
+from collections.abc import Iterable
 from datetime import datetime
+from typing import Any
 
 from kb4it.core.log import get_logger
 
@@ -23,7 +27,7 @@ log = get_logger("Util")
 SOURCE_ENCODING = "utf-8-sig"
 
 
-def valid_filename(s):
+def valid_filename(s: object) -> str:
     """Return a clean filename.
 
     Remove leading and trailing spaces; convert other spaces to
@@ -39,7 +43,7 @@ def valid_filename(s):
     return re.sub(r"(?u)[^-\w.]", "", s).lstrip(".")
 
 
-def get_source_docs(path: str):
+def get_source_docs(path: str) -> list[str]:
     """Get source documents (.md, .markdown) from a given path."""
     docs = []
     for ext in ("*.md", "*.markdown"):
@@ -47,7 +51,7 @@ def get_source_docs(path: str):
     return docs
 
 
-def copy_docs(docs: list, target: str) -> None:
+def copy_docs(docs: list[str], target: str) -> None:
     """Copy a list of docs to target directory."""
     for doc in docs:
         try:
@@ -58,7 +62,7 @@ def copy_docs(docs: list, target: str) -> None:
     log.debug(f"{len(docs)} documents copied to '{target}'")
 
 
-def copydir(source, dest):
+def copydir(source: str, dest: str) -> None:
     """Copy a directory structure overwriting existing files.
 
     https://gist.github.com/dreikanter/5650973#gistcomment-835606
@@ -100,7 +104,7 @@ def delete_target_contents(target_path: str) -> bool:
     return error
 
 
-def delete_files(files):
+def delete_files(files: Iterable[str]) -> None:
     """Delete a list of given files."""
     for path in files:
         try:
@@ -111,14 +115,14 @@ def delete_files(files):
             log.warning("[UTIL] - %s", path)
 
 
-def json_load(filepath: str) -> dict:
+def json_load(filepath: str | os.PathLike[str]) -> dict[str, Any]:
     """Load into a dictionary a file in json format (a repo.json saved with a byte order mark loads too)."""
     with open(filepath, "r", encoding=SOURCE_ENCODING) as fin:
-        adict = json.load(fin)
+        adict: dict[str, Any] = json.load(fin)
     return adict
 
 
-def json_save(filepath: str, adict: dict) -> None:
+def json_save(filepath: str, adict: dict[str, Any]) -> None:
     """Save dictionary into a file in json format.
 
     The data goes to a temporary file in the same folder, which then replaces the
@@ -160,12 +164,12 @@ def quarantine(filepath: str) -> str:
     return dest
 
 
-def get_hash_from_content(content: str):
+def get_hash_from_content(content: str) -> str:
     """Get the blake2b hash for any string."""
     return hashlib.blake2b(content.encode("utf-8")).hexdigest()
 
 
-def get_hash_from_file(path):
+def get_hash_from_file(path: str) -> str | None:
     """Get the blake2b hash for a given filename."""
     if os.path.exists(path):
         with open(path, "rb") as fin:
@@ -175,7 +179,7 @@ def get_hash_from_file(path):
     return fhash
 
 
-def tree_hash(path) -> str:
+def tree_hash(path: str | os.PathLike[str] | None) -> str:
     """Hash of every file name and content under path; '' when path is missing."""
     if not path or not os.path.isdir(path):
         return ""
@@ -190,13 +194,13 @@ def tree_hash(path) -> str:
     return digest.hexdigest()
 
 
-def get_hash_from_dict(adict: dict) -> str:
+def get_hash_from_dict(adict: dict[str, Any]) -> str:
     """Get the blake2b hash for a given dictionary."""
     serialized = json.dumps(adict, sort_keys=True, ensure_ascii=False)
     return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
 
 
-def get_hash_from_list(alist: list) -> str:
+def get_hash_from_list(alist: list[Any]) -> str:
     """Get the blake2b hash for a given list."""
     serialized = json.dumps(alist, ensure_ascii=False)
     return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()

@@ -56,6 +56,9 @@ jobs:
       - name: The sample sites are valid HTML (UIkit attributes aside)
         run: uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py
 
+      - name: The annotated modules pass mypy --strict
+        run: ./scripts/devel/typecheck.sh
+
       - name: Build wheel
         run: uv build --wheel
 
