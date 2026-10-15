@@ -303,6 +303,11 @@ class Backend(Service):
                 return empty_kbdict
         except FileNotFoundError:
             kbdict = empty_kbdict
+        except (ValueError, AttributeError) as error:
+            # Unreadable cache (a truncated write, a hand edit): rebuild everything; the next save replaces it.
+            self.log.warning(f"[BACKEND] KBDICT_CORRUPT path={kb4it_dbfile} reason={error}")
+            self.params["force"] = True
+            return empty_kbdict
         except Exception as error:
             self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
             raise KB4ITError(f"kbdict load failed: {error}") from error

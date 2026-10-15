@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 import time
 import unicodedata
 from datetime import datetime
@@ -299,9 +300,45 @@ def json_load(filepath: str) -> dict:
 
 
 def json_save(filepath: str, adict: dict) -> None:
-    """Save dictionary into a file in json format."""
-    with open(filepath, "w", encoding="utf-8") as fout:
-        json.dump(adict, fout, sort_keys=True, indent=4)
+    """Save dictionary into a file in json format.
+
+    The data goes to a temporary file in the same folder, which then replaces the
+    old file in one step: a crash or a full disk leaves the old file whole.
+    """
+    folder = os.path.dirname(os.path.abspath(filepath))
+    fd, tmp = tempfile.mkstemp(dir=folder, prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fout:
+            json.dump(adict, fout, sort_keys=True, indent=4)
+            fout.flush()
+            os.fsync(fout.fileno())
+        # mkstemp makes the file private; keep the mode a plain open() would give.
+        if os.path.exists(filepath):
+            mode = os.stat(filepath).st_mode & 0o777
+        else:
+            umask = os.umask(0)
+            os.umask(umask)
+            mode = 0o666 & ~umask
+        os.chmod(tmp, mode)
+        os.replace(tmp, filepath)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def quarantine(filepath: str) -> str:
+    """Rename a file that cannot be read to <name>.corrupt-<timestamp>, so it is never overwritten.
+
+    Returns the new path.
+    """
+    dest = f"{filepath}.corrupt-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    n = 1
+    while os.path.exists(dest):
+        n += 1
+        dest = f"{filepath}.corrupt-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{n}"
+    os.replace(filepath, dest)
+    return dest
 
 
 def get_hash_from_content(content: str):

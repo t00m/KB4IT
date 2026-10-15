@@ -21,7 +21,7 @@ from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.service import Service
 from kb4it.core.util import (copydir, delete_target_contents, get_document_attributes, get_source_docs,
-                             is_windows_reserved, json_load, json_save, page_name_clashes)
+                             is_windows_reserved, json_load, json_save, page_name_clashes, quarantine)
 from kb4it.core.paths import resolve_repo_path
 
 
@@ -89,9 +89,13 @@ class Workflow(Service):
         if os.path.exists(projects_file):
             try:
                 data = json_load(projects_file)
-                projects = data.get("projects", [])
-            except Exception:
-                pass
+                projects = data["projects"]
+                if not isinstance(projects, list):
+                    raise TypeError("'projects' is not a list")
+            except (ValueError, KeyError, TypeError) as error:
+                kept = quarantine(projects_file)
+                self.log.warning(f"[WORKFLOW] PROJECTS_CORRUPT path={projects_file} kept={kept} reason={error}")
+                projects = []
 
         # Avoid duplicates
         if any(p["config"] == config_path for p in projects):

@@ -30,7 +30,7 @@ from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
 
 from kb4it.core.env import ENV
 from kb4it.core.log import reset_logging
-from kb4it.core.util import json_load, json_save
+from kb4it.core.util import json_load, json_save, quarantine
 from kb4it.core.webserver import DEFAULT_PORT, PORT_SCAN_LIMIT, SiteServer
 
 # ─── constants ────────────────────────────────────────────────────────────────
@@ -54,8 +54,16 @@ def load_projects() -> list[dict]:
         return []
     try:
         data = json_load(str(PROJECTS_FILE))
-        return data.get("projects", [])
-    except Exception:
+        projects = data["projects"]
+        if not isinstance(projects, list):
+            raise TypeError("'projects' is not a list")
+        return projects
+    except (ValueError, KeyError, TypeError) as error:
+        # Keep the unreadable file: the next save would otherwise replace the whole list.
+        kept = quarantine(str(PROJECTS_FILE))
+        logging.getLogger(__name__).warning(f"[TUI] PROJECTS_CORRUPT path={PROJECTS_FILE} kept={kept} reason={error}")
+        return []
+    except OSError:
         return []
 
 
