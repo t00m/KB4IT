@@ -58,7 +58,7 @@
                                         <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-primary">Metadata</div>
-                                                <div class="" style="border: 1px solid transparent;">${var['metadata']}</div>
+                                                <div class="" style="border: 1px solid transparent;">${var['metadata'] | n}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -101,7 +101,7 @@
         <!-- Body -->
         <article class="uk-article">
             <!-- BODY :: START -->
-            ${var['source_html']}
+            ${var['source_html'] | n}
             <!-- BODY :: END -->
         </article>
 

@@ -12,6 +12,7 @@ import os
 import sys
 import threading
 from datetime import datetime
+from html import escape
 
 from kb4it.core.env import ENV
 from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
@@ -95,8 +96,8 @@ class Theme(Builder):
                 if timestamp is None:
                     row.append( '<td class=""></td>')
                 else:
-                    ts_title = timestamp[:16]
-                    ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
+                    ts_title = escape(timestamp[:16])
+                    ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
                     row.append(f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>""")
                 final_headers = headers[1:]
             else:
@@ -106,7 +107,9 @@ class Theme(Builder):
                 item = {}
                 if key == 'Title':
                     try:
-                        item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
+                        title = documents[docId][key]
+                        # Built as HTML here, printed raw by the template: escape the document title.
+                        item['title'] = f"<div uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</div>"
                         item['url'] = documents[docId]['%s_Url' % key]
                         row.append(TPL_DATATABLE_BODY_ITEM.render(var=item))
                     except (KeyError, AttributeError) as e:

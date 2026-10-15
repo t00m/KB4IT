@@ -13,7 +13,7 @@
                 <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">${item['key']}</div>
             </a>
         </td>
-        <td class=""><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta">${item['labels']}</div></td>
+        <td class=""><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta">${item['labels'] | n}</div></td>
     </tr>
 % endfor
 </tbody>

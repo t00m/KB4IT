@@ -14,7 +14,7 @@
 <ul class="uk-switcher uk-margin">
     <!-- Cloud :: Start -->
     <li>
-        ${var['cloud']}
+        ${var['cloud'] | n}
     </li>
     <!-- Cloud :: End -->
     <!-- Table :: Start -->

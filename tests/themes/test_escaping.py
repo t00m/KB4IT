@@ -61,7 +61,7 @@ def _site(tmp_path, home, theme):
     return repo / "target"
 
 
-@pytest.mark.parametrize("theme", ["apphelp", "techdoc"])
+@pytest.mark.parametrize("theme", ["apphelp", "techdoc", "blog"])
 def test_hostile_values_are_text(tmp_path, home, theme):
     target = _site(tmp_path, home, theme)
     pages = sorted(target.rglob("*.html"))

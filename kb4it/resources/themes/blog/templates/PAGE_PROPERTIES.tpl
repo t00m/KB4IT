@@ -5,7 +5,7 @@
             <div class="uk-width-expand">
                 <div class="uk-flex uk-flex-center uk-flex-wrap">
 % for button in var['buttons']:
-    ${button}
+    ${button | n}
 % endfor
                 </div>
             </div>

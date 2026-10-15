@@ -8,7 +8,7 @@
                         </a>
                     </h2>
 % if var.get('search_box'):
-                    <div class="uk-flex uk-flex-center uk-margin-small">${var['search_box']}</div>
+                    <div class="uk-flex uk-flex-center uk-margin-small">${var['search_box'] | n}</div>
 % endif
                     <div class="uk-flex uk-flex-top uk-flex-center uk-margin">
             <blockquote>

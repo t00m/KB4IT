@@ -1,1 +1,1 @@
-${var['content']}
+${var['content'] | n}
