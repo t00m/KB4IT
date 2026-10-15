@@ -78,6 +78,10 @@ class Processor(Service):
         self.kbdict_new: KBDict = {"document": {}, "metadata": {}}
         self.plan = BuildPlan()
 
+    def _forced(self) -> bool:
+        """Every page is rebuilt: asked for (--force, repo.json "force") or decided by the backend."""
+        return bool(self.srvbes.get_value("app", "force") or self.srvbes.get_value("runtime", "force_all"))
+
     @property
     def changed_docs(self) -> set:
         return self.plan.docs_to_compile
@@ -360,7 +364,7 @@ class Processor(Service):
         step_01_01_decide_keys_compilation.
         """
         result = {}
-        FORCE_COMPILATION = bool(self.srvbes.get_value("repo", "force")) or self.plan.force_all
+        FORCE_COMPILATION = self._forced() or self.plan.force_all
 
         # Body hash
         try:
@@ -416,7 +420,7 @@ class Processor(Service):
         """
         K_PATH = []
         KV_PATH = []
-        FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
+        FORCE_COMPILATION = self._forced()
 
         for key in sorted(available_keys):
             values = self.srvdtb.get_all_values_for_key(key)

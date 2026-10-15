@@ -300,7 +300,7 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         """Rebuild the backups on a forced build, when the build compiled
         something, or when any of the zip files is missing.
         """
-        if self.srvbes.get_value('app', 'force'):
+        if self.srvbes.get_value('runtime', 'force_all'):
             return True
         for path in paths:
             if not os.path.exists(path):

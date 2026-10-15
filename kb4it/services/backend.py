@@ -41,7 +41,9 @@ class Backend(Service):
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime: Runtime = {"theme": {}}  # type: ignore[typeddict-item]
+        # force_all: rebuild everything. The command line or repo.json asks for it, or the
+        # build decides it (an unreadable or older cache); params and repo stay as given.
+        self.runtime: Runtime = {"theme": {}, "force_all": False}  # type: ignore[typeddict-item]
         self.repo = {}  # Only build and info load a repo.json
         self.params = self.app.get_params()  # Get params from command line
 
@@ -68,9 +70,7 @@ class Backend(Service):
                 self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
                 raise ConfigError(f"Config file not found: {config_path}")
 
-            # Params-level force (e.g. from TUI) takes priority over repo.json
-            if not self.params.get("force"):
-                self.params["force"] = self.repo.get("force") or False
+            self.runtime["force_all"] = bool(self.params.get("force") or self.repo.get("force"))
             self.runtime["dir"] = {}
             dir_root = config_path.parent.parent.absolute()
             source, target = self._resolve_source_target(dir_root)
@@ -92,7 +92,7 @@ class Backend(Service):
             self.runtime["dir"]["log"] = dir_log
             self.runtime["dir"]["db"] = dir_db
 
-            if self.params.get("force"):
+            if self.runtime["force_all"]:
                 # Force clears KB4IT's build artifacts only. It must never
                 # delete the user's source or target, which may be nested
                 # inside var when an app stores them under <root>/var/...
@@ -299,14 +299,14 @@ class Backend(Service):
                 self.log.warning(
                     f"[BACKEND] KBDICT_VERSION_MISMATCH stored={stored_version} current={current_version}"
                 )
-                self.params["force"] = True
+                self.runtime["force_all"] = True
                 return empty_kbdict
         except FileNotFoundError:
             kbdict = empty_kbdict
         except (ValueError, AttributeError) as error:
             # Unreadable cache (a truncated write, a hand edit): rebuild everything; the next save replaces it.
             self.log.warning(f"[BACKEND] KBDICT_CORRUPT path={kb4it_dbfile} reason={error}")
-            self.params["force"] = True
+            self.runtime["force_all"] = True
             return empty_kbdict
         except Exception as error:
             self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")

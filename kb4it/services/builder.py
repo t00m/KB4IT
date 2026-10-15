@@ -276,7 +276,8 @@ class Builder(Service):
         """Create a new variable for rendering templates."""
         theme_var = {}
         theme_var["theme"] = self.srvbes.get_dict("theme")
-        theme_var["repo"] = self.srvbes.get_dict("repo")
+        # A copy: the generation time below is for the templates, not a setting of the build.
+        theme_var["repo"] = dict(self.srvbes.get_dict("repo"))
         theme_var["env"] = ENV
         theme_var["conf"] = self.app.get_params()
         theme_var["page"] = {}
@@ -284,7 +285,8 @@ class Builder(Service):
         theme_var["kb"] = {}
         theme_var["kb"]["keys"] = self.srvdtb.get_keys()
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
-        theme_var["repo"]["updated"] = get_human_datetime(datetime.now())
+        theme_var["updated"] = get_human_datetime(datetime.now())
+        theme_var["repo"]["updated"] = theme_var["updated"]  # templates of 0.9 read it here; removed in 0.10.0
         theme_var["git_ok"] = git_ready(theme_var["repo"])
 
         # Only pass to theme those keys used by documents

@@ -1,11 +1,12 @@
 """State belongs to one build: nothing a build sets leaks into the next one in the same process (AR-05, ARC-06)."""
 
 import ast
+import json
 import subprocess
 import sys
 
 from kb4it.services.builder import Builder
-from tests.helpers import isolated_env, mini_theme, page, write_repo
+from tests.helpers import isolated_env, mini_theme, page, run_kb4it, write_repo
 
 
 class _App:
@@ -66,3 +67,39 @@ def test_each_build_calls_its_own_callbacks(tmp_path, home):
     # A callback set the deprecated way serves the next build only, once.
     assert seen["DEPRECATED"] == pages
     assert out.count("CALLBACK_DEPRECATED name=progress_callback") == 1
+
+
+_KEEP_SETTINGS = '''
+import json, os
+
+kept = {}
+
+def on_config(repo):
+    kept["repo"] = repo
+    return repo
+
+def on_build_end(target, summary):
+    with open(os.path.join(target, "repo-at-end.json"), "w", encoding="utf-8") as fh:
+        json.dump(kept["repo"], fh)
+'''
+
+
+def test_settings_stay_as_loaded(tmp_path, home):
+    """The build writes its decisions and the generation time elsewhere, not into repo.json's settings."""
+    theme = mini_theme(tmp_path / "mini")
+    cfg = write_repo(tmp_path / "repo", "mini", {"a.md": page("A", Tag="x")}, theme_path=str(theme),
+                     hooks="hooks/hooks.py", force=False)
+    (tmp_path / "repo" / "hooks").mkdir()
+    (tmp_path / "repo" / "hooks" / "hooks.py").write_text(_KEEP_SETTINGS, encoding="utf-8")
+    overrides = tmp_path / "repo" / "overrides" / "templates"
+    overrides.mkdir(parents=True)
+    (overrides / "PAGE_ABOUT_KB4IT.tpl").write_text(
+        "<p id='a'>${var['updated']}</p><p id='b'>${var['repo']['updated']}</p>", encoding="utf-8")
+    result = run_kb4it("build", cfg, "--force", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    target = tmp_path / "repo" / "target"
+    seen = json.loads((target / "repo-at-end.json").read_text(encoding="utf-8"))
+    assert "updated" not in seen and seen["force"] is False
+    about = (target / "about_kb4it.html").read_text(encoding="utf-8")
+    first = about.split("<p id='a'>", 1)[1].split("</p>", 1)[0]
+    assert first and f"<p id='b'>{first}</p>" in about

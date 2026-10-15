@@ -42,6 +42,7 @@ class Runtime(TypedDict, total=False):
     dir:     DirPaths
     docs:    DocsInfo
     logfile: Path
+    force_all: bool
 
 
 class DocumentMeta(TypedDict, total=False):
