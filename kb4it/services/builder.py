@@ -72,7 +72,7 @@ class Builder(Service):
     _xform_lock = threading.Lock()
 
     _XFORM_NAMES = [
-        'HTML_TAG_A', 'HTML_TAG_TOC',
+        'HTML_TAG_TOC',
         'HTML_TAG_SECT1', 'HTML_TAG_SECT2', 'HTML_TAG_SECT3', 'HTML_TAG_SECT4',
         'HTML_TAG_SECTIONBODY', 'HTML_TAG_PRE',
         'HTML_TAG_H2', 'HTML_TAG_H3', 'HTML_TAG_H4',

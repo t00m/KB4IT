@@ -401,6 +401,9 @@ table.bk-table tr:last-child td { border-bottom: none; }
 .bk-td-date { font-family: var(--f-mono); font-size: 0.8rem; color: var(--ink-3); white-space: nowrap; }
 .bk-td-title a, .bk-link { color: var(--accent-ink); }
 .bk-td-title a:hover, .bk-link:hover { color: var(--accent); }
+/* Links written in a document (they carry no class of their own). */
+.page .wrap a:not([class]), .chapter-body a:not([class]) { color: var(--accent-ink); }
+.page .wrap a:not([class]):hover, .chapter-body a:not([class]):hover { color: var(--accent); }
 
 /* properties / key cloud / leader */
 .bk-prop-group { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 12px; box-shadow: var(--sh-1); overflow: hidden; }

@@ -6,7 +6,7 @@
                 <div class="uk-modal-dialog" uk-overflow-auto>
                     <button class="uk-modal-close-full uk-close-large uk-light uk-background-secondary uk-border-rounded" type="button" uk-close></button>
                     <div class="uk-modal-header uk-light uk-background-secondary">
-                        <h2 class="uk-modal-title"><a href="${var['vfkey']}.html">${var['key']}</a></h2>
+                        <div class="uk-modal-title uk-h2"><a href="${var['vfkey']}.html">${var['key']}</a></div>
                     </div>
                     <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                         <div class="uk-padding-large">
