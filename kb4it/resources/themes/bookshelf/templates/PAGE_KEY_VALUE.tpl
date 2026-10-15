@@ -10,6 +10,6 @@
     <p class="sub">${len(var['doclist'])} document${'s' if len(var['doclist']) != 1 else ''}</p>
 </div>
 <div class="bk-panel">
-    ${var['page']['dt_documents']}
+    ${var['page']['dt_documents'] | n}
 </div>
 <!-- PAGE_KEY_VALUE :: END -->

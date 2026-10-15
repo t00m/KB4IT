@@ -33,7 +33,7 @@ from kb4it.core.util import valid_filename
         </a>
 % endif
 % if var.get('search_box'):
-        <div class="search">${var['search_box']}</div>
+        <div class="search">${var['search_box'] | n}</div>
 % else:
         <a class="search" href="all.html">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6"></circle><path d="M14 14l4 4"></path></svg>

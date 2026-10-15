@@ -4,6 +4,6 @@
         <span class="bk-prop-count">${var['count']}</span>
     </summary>
     <div class="bk-prop-content">
-        ${var['content']}
+        ${var['content'] | n}
     </div>
 </details>

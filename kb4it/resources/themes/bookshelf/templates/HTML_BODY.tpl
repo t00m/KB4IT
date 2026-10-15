@@ -1,11 +1,13 @@
 <%!
+from markupsafe import escape
+
 from kb4it.core.util import valid_filename
 %>
 <!-- HTML_BODY :: START -->
 <main class="page">
 % if var['SystemPage'] or not var.get('reading'):
     <div class="wrap">
-        ${var['source_html']}
+        ${var['source_html'] | n}
     </div>
 % else:
 <% rd = var['reading'] %>\
@@ -47,7 +49,7 @@ from kb4it.core.util import valid_filename
                 <h1>${info['title']}</h1>
 
                 <div class="chapter-body">
-                    ${var['source_html']}
+                    ${var['source_html'] | n}
                 </div>
 
                 <div class="prevnext">
@@ -79,13 +81,13 @@ from kb4it.core.util import valid_filename
                     </ul>
 % endif
 % if rd['tags']:
-                    <p class="appendix-tags"><b>Tags:</b> ${' &middot; '.join(rd['tags'])}</p>
+                    <p class="appendix-tags"><b>Tags:</b> ${' &middot; '.join(escape(tag) for tag in rd['tags']) | n}</p>
 % endif
                 </section>
 
                 <div class="docmeta">
                     <div class="row"><span class="k">Book</span><span>${book['title']}</span></div>
-                    <div class="row"><span class="k">Part</span><span>${rd['part_label']}${(' &middot; ' + rd['part_title']) if rd['part_title'] else ''}</span></div>
+                    <div class="row"><span class="k">Part</span><span>${rd['part_label']}${(' &middot; ' if rd['part_title'] else '') | n}${rd['part_title'] or ''}</span></div>
                     <div class="row"><span class="k">Chapter</span><span>${info['chapter']}</span></div>
 % if info['author']:
                     <div class="row"><span class="k">Author</span><span>${info['author']}</span></div>

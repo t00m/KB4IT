@@ -38,7 +38,7 @@
     <div>
         <div class="eyebrow">Continue where you left off</div>
         <h3>Chapter ${cb['chapter']} &middot; ${cb['chapter_title']}</h3>
-        <div class="crumb">${cb['short']}<span class="sep">&#9656;</span>${cb['part_label']}${('<span class="sep">&#9656;</span>' + cb['part_title']) if cb['part_title'] else ''}</div>
+        <div class="crumb">${cb['short']}<span class="sep">&#9656;</span>${cb['part_label']}${('<span class="sep">&#9656;</span>' if cb['part_title'] else '') | n}${cb['part_title'] or ''}</div>
     </div>
     <a class="resume" href="${cb['chapter_url']}">Resume reading
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10h11M11 5l5 5-5 5"></path></svg>
@@ -63,7 +63,7 @@
             <div class="cover" style="background:${b['gradient']}"></div>
             <div>
                 <div class="title">${b['short']}</div>
-                <div class="author">${b['author']}${(' &middot; ' + b['code']) if b['code'] else ''}</div>
+                <div class="author">${b['author']}${(' &middot; ' if b['code'] else '') | n}${b['code'] or ''}</div>
             </div>
         </div>
         <div class="struct">

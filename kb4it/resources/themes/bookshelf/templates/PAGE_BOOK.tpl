@@ -9,7 +9,7 @@
         <div class="cover-xs" style="background:${book['gradient']}"></div>
         <div>
             <h1 style="font-size:1.5rem">${book['title']}</h1>
-            <div class="sub" style="color:var(--ink-3);font-size:0.84rem">${book['author']}${(' &middot; ' + book['code']) if book['code'] else ''} &middot; ${book['part_count']} part${'s' if book['part_count'] != 1 else ''} &middot; ${book['total']} chapter${'s' if book['total'] != 1 else ''}</div>
+            <div class="sub" style="color:var(--ink-3);font-size:0.84rem">${book['author']}${(' &middot; ' if book['code'] else '') | n}${book['code'] or ''} &middot; ${book['part_count']} part${'s' if book['part_count'] != 1 else ''} &middot; ${book['total']} chapter${'s' if book['total'] != 1 else ''}</div>
         </div>
     </div>
     <div class="whole">
@@ -31,7 +31,7 @@
 % for col in book['columns']:
     <div class="col ${'current' if col['is_current'] else ''}">
         <div class="col-head">
-            <div class="pnum">PART ${col['roman']}${' &middot; CURRENT' if col['is_current'] else ''}</div>
+            <div class="pnum">PART ${col['roman']}${(' &middot; CURRENT' if col['is_current'] else '') | n}</div>
 % if col['title']:
             <div class="ptitle">${col['title']}</div>
 % endif

@@ -16,6 +16,7 @@ import os
 import re
 from collections import Counter, OrderedDict
 from datetime import datetime
+from html import escape
 
 from kb4it.core.util import (ellipsize_text, get_human_datetime,
                              guess_datetime, html_id_for, valid_filename)
@@ -695,7 +696,7 @@ class Theme(Builder):
                 if timestamp is None:
                     datatable['rows'] += '<td class="bk-td-date"></td>'
                 else:
-                    datatable['rows'] += f'<td class="bk-td-date">{timestamp[:16]}</td>'
+                    datatable['rows'] += f'<td class="bk-td-date">{escape(timestamp[:16])}</td>'
                 final_headers = headers[1:]
             else:
                 final_headers = headers
@@ -704,7 +705,8 @@ class Theme(Builder):
                     try:
                         title = documents[docId][key]
                         url = documents[docId].get(f'{key}_Url', html_id_for(docId))
-                        datatable['rows'] += f'<td class="bk-td-title"><a href="{url}">{ellipsize_text(title, 80)}</a></td>'
+                        # Built as HTML here and printed raw: escape what comes from the document.
+                        datatable['rows'] += f'<td class="bk-td-title"><a href="{escape(url)}">{escape(ellipsize_text(title, 80))}</a></td>'
                     except (KeyError, AttributeError):
                         datatable['rows'] += '<td></td>'
                 else:

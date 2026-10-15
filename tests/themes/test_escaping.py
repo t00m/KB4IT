@@ -1,6 +1,7 @@
 """Hostile titles, property names and values show as text in every bundled theme (SC-01, SEC-01)."""
 
 import json
+import re
 import shutil
 
 import pytest
@@ -22,6 +23,22 @@ Summary: Eve" onmouseover="alert('summary')
 ---
 
 # Title <svg onload=alert("title")>
+
+Body text.
+"""
+
+
+BOOKSHELF_DOC = """---
+Book: EX200 <script>alert("book")</script>
+Part: 1
+PartTitle: <img src=x onerror=alert("part")>
+Chapter: 1
+Status: done
+Author: Eve" onmouseover="alert('author')
+Tag: <b onmouseover=alert("tag")>x</b>, plain
+---
+
+# Chapter <svg onload=alert("chapter")>
 
 Body text.
 """
@@ -50,6 +67,8 @@ def _site(tmp_path, home, theme):
         (repo / "source" / "hostile.md").write_text(APPHELP_DOC, encoding="utf-8")
     else:
         shutil.copy(FIXTURES / "audit" / "hostile.md", repo / "source" / "hostile.md")
+    if theme == "bookshelf":
+        (repo / "source" / "chapter.md").write_text(BOOKSHELF_DOC, encoding="utf-8")
     if theme == "techdoc":
         # Make the hostile document an event, so the calendar and archive pages show it too.
         cfg = repo / "config" / "repo.json"
@@ -61,7 +80,7 @@ def _site(tmp_path, home, theme):
     return repo / "target"
 
 
-@pytest.mark.parametrize("theme", ["apphelp", "techdoc", "blog"])
+@pytest.mark.parametrize("theme", ["apphelp", "techdoc", "blog", "bookshelf"])
 def test_hostile_values_are_text(tmp_path, home, theme):
     target = _site(tmp_path, home, theme)
     pages = sorted(target.rglob("*.html"))
@@ -71,5 +90,10 @@ def test_hostile_values_are_text(tmp_path, home, theme):
     # The payloads did reach the pages, as text.
     text = "".join(p.read_text(encoding="utf-8") for p in pages)
     assert "&lt;svg onload=alert(" in text
+    # Entities written by the templates are not escaped a second time.
+    assert not re.search(r"&amp;(?:[a-z]+|#[0-9]+);", text)
     if theme == "techdoc":
         assert (target / "events_2026.html").is_file()
+    if theme == "bookshelf":
+        book = next(target.glob("Book_*.html")).read_text(encoding="utf-8")
+        assert "EX200 &middot;" in book or "EX200" in book
