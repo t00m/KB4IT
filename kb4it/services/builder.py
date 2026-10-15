@@ -32,15 +32,33 @@ REQUIRED_TEMPLATES = [
 ]
 
 
-def _template_candidates(template_name, theme_templates_dir, global_templates_dir, override_dir=None):
-    """Files that may hold a template, first match wins: repository overrides, theme, common."""
-    candidates = [
-        os.path.join(theme_templates_dir, f"{template_name}.tpl"),
-        os.path.join(global_templates_dir, f"{template_name}.tpl"),
-    ]
+def _template_candidates(template_name, theme_templates_dir, global_templates_dir, override_dir=None,
+                         base_templates_dir=None):
+    """Files that may hold a template, first match wins: repository overrides, theme, its base, common."""
+    candidates = [os.path.join(theme_templates_dir, f"{template_name}.tpl")]
+    if base_templates_dir:
+        candidates.append(os.path.join(base_templates_dir, f"{template_name}.tpl"))
+    candidates.append(os.path.join(global_templates_dir, f"{template_name}.tpl"))
     if override_dir:
         candidates.insert(0, os.path.join(override_dir, "templates", f"{template_name}.tpl"))
     return candidates
+
+
+def template_base_dir(theme):
+    """Templates folder of the theme's "template_base" (theme.json), or None when it has none.
+
+    Raises ThemeError for a value that is not the name of a bundled base.
+    """
+    name = theme.get("template_base")
+    if name is None:
+        return None
+    if not isinstance(name, str) or not name or os.path.basename(name) != name or name in (".", ".."):
+        raise ThemeError(f"theme.json 'template_base' must be the name of a template base, not {name!r}")
+    folder = os.path.join(ENV["GPATH"]["BASES"], name, "templates")
+    if not os.path.isdir(folder):
+        bases = sorted(os.listdir(ENV["GPATH"]["BASES"])) if os.path.isdir(ENV["GPATH"]["BASES"]) else []
+        raise ThemeError(f"theme.json 'template_base' {name!r} is not one of: {', '.join(bases) or 'none'}")
+    return folder
 
 
 GIT_KEYS = ("git_server", "git_user", "git_repo", "git_branch")
@@ -203,7 +221,7 @@ class Builder(Service):
             theme = runtime["theme"]
             override_dir = getattr(self.srvbes, "overrides_dir", None)
             candidates = _template_candidates(
-                template, theme["templates"], ENV["GPATH"]["TEMPLATES"], override_dir
+                template, theme["templates"], ENV["GPATH"]["TEMPLATES"], override_dir, template_base_dir(theme)
             )
             autoescape = self._theme_autoescape(theme)
             for template_path in candidates:

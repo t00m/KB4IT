@@ -156,6 +156,8 @@ ENV["GPATH"]["COMMON"] = os.path.join(ENV["GPATH"]["RESOURCES"], "common")
 ENV["GPATH"]["COMMON_IMG"] = os.path.join(ENV["GPATH"]["COMMON"], "images")
 ENV["GPATH"]["TEMPLATES"] = os.path.join(ENV["GPATH"]["COMMON"], "templates")
 ENV["GPATH"]["THEMES"] = os.path.join(ENV["GPATH"]["RESOURCES"], "themes")
+# Template bases: folders of templates that several themes share ("template_base" in theme.json).
+ENV["GPATH"]["BASES"] = os.path.join(ENV["GPATH"]["RESOURCES"], "bases")
 ENV["GPATH"]["APPDATA"] = os.path.join(ENV["GPATH"]["COMMON"], "appdata")
 ENV["GPATH"]["RES"] = os.path.join(ENV["GPATH"]["DATA"], "res")
 

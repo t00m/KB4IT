@@ -172,16 +172,17 @@ class Frontend(Service):
 
     def _validate_required_templates(self, theme):
         """Check that all required templates exist for the loaded theme."""
-        from kb4it.services.builder import REQUIRED_TEMPLATES, _template_candidates
+        from kb4it.services.builder import REQUIRED_TEMPLATES, _template_candidates, template_base_dir
         global_tpl_dir = ENV["GPATH"]["TEMPLATES"]
         theme_tpl_dir = theme["templates"]
         required = list(REQUIRED_TEMPLATES)
         if theme.get("metadata_pages", True) is False:
             required = [n for n in required if n not in ("PAGE_KEY", "PAGE_KEY_VALUE")]
+        base_tpl_dir = template_base_dir(theme)  # also refuses an unknown base before any page is built
         missing = [
             name for name in required
             if not any(os.path.isfile(c) for c in _template_candidates(
-                name, theme_tpl_dir, global_tpl_dir, getattr(self.srvbes, "overrides_dir", None)))
+                name, theme_tpl_dir, global_tpl_dir, getattr(self.srvbes, "overrides_dir", None), base_tpl_dir))
         ]
         if missing:
             for name in missing:

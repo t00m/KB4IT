@@ -177,6 +177,7 @@ A theme without `"autoescape": true` prints values as they are, and every build 
 | `metadata_pages` | `false` skips the pages per property and per value |
 | `deploy_dirs` | Only these folders of the theme are copied to the website, for example `["framework"]` |
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |
+| `template_base` | Name of a set of templates bundled with KB4IT that the theme builds on, such as `"uikit"`, the UIkit layout techdoc and blog share. A template is looked up in the repository's overrides, then the theme, then its base, then KB4IT's shared templates, so the theme only holds the ones it changes |
 
 ## Add your own checks {#verify}
 

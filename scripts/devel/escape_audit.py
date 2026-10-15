@@ -3,9 +3,10 @@
 
 Usage: escape_audit.py THEME_OR_FOLDER [--raw]
 
-THEME_OR_FOLDER is the name of a bundled theme (techdoc, blog, ...), "common" for
-KB4IT's common templates, or a folder holding .tpl files. Each line shows
-file:line, whether the output is escaped or raw ("| n"), and the expression.
+THEME_OR_FOLDER is the name of a bundled theme (techdoc, blog, ...), of a template
+base (uikit), "common" for KB4IT's common templates, or a folder holding .tpl
+files. Each line shows file:line, whether the output is escaped or raw ("| n"),
+and the expression.
 --raw lists only the raw ones, which must print HTML built by KB4IT or the theme,
 never a value taken from a document or repo.json as it is.
 """
@@ -53,6 +54,9 @@ def templates_dir(name):
         return name
     if name == "common":
         return os.path.join(RESOURCES, "common", "templates")
+    base = os.path.join(RESOURCES, "bases", name, "templates")
+    if os.path.isdir(base):
+        return base
     return os.path.join(RESOURCES, "themes", name, "templates")
 
 
