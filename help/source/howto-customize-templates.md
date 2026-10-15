@@ -19,9 +19,7 @@ A knowledge base can replace single templates of its theme and add its own files
 1. Create the folder `overrides/templates/` next to `config/` and `source/`.
 2. Copy the template you want to change from the theme into it, keeping its name. The bundled themes are in the KB4IT package; this prints the folder of techdoc:
 
-    ```bash
-    python3 -c "import kb4it, os; print(os.path.join(os.path.dirname(kb4it.__file__), 'resources', 'themes', 'techdoc', 'templates'))"
-    ```
+        python3 -c "import kb4it, os; print(os.path.join(os.path.dirname(kb4it.__file__), 'resources', 'themes', 'techdoc', 'templates'))"
 
 3. Edit the copy and build. The build log shows `TEMPLATE_OVERRIDE name=<template>`, and every page is rebuilt.
 
@@ -49,18 +47,14 @@ Use another folder than `overrides` with `"overrides": "my-folder"` in `repo.jso
 1. Download `mermaid.min.js` into `overrides/static/js/`.
 2. Copy techdoc's `HTML_FOOTER.tpl` into `overrides/templates/` and add these lines just before its `</body>` line (anything after `</html>` is dropped):
 
-    ```html
-    <script src="js/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad: true});</script>
-    ```
+        <script src="js/mermaid.min.js"></script>
+        <script>mermaid.initialize({startOnLoad: true});</script>
 
 3. Write each diagram in a document as an HTML block. Markdown keeps HTML blocks as they are:
 
-    ```html
-    <div class="mermaid">
-    graph LR
-      Write --> Build --> Publish
-    </div>
-    ```
+        <div class="mermaid">
+        graph LR
+          Write --> Build --> Publish
+        </div>
 
 The same works for other browser libraries, such as KaTeX for formulas.

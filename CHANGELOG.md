@@ -35,6 +35,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI workflow `action`: runs the GitHub Action of the same commit with `uses: ./` on Linux, macOS and Windows, checks its outputs, and checks that a broken link makes it fail (GA-02).
 - Help page "GitHub Action" lists the action inputs and outputs and how to pin its version; "Publish on GitHub Pages" uses the action, and keeps the plain commands as an alternative. `README.md` mentions the action, `RELEASING.md` says how to list a release on the GitHub Marketplace and that there is no moving `v0` tag, and `AGENTS.md` describes the distribution scripts and the action (GA-04).
 - `scripts/devel/theme_snapshot.py --content DIR` also saves every page of each sample site, normalised (build dates, times and the version replaced), with the documents of `tests/fixtures/audit/` added, so `diff -r` of two runs shows every change in the HTML a theme or template change makes.
+- `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...` about a fenced code block inside an admonition or a list item, which the default extensions render as inline code; the warning does not fail the check, and it is silent when `pymdownx.superfences` is enabled. The document format help explains both ways to write such code (OC-05, MD-01).
 
 ### Changed
 
@@ -73,6 +74,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The document title is the first `# ` heading outside fenced and indented code blocks. Before, a `# comment` in a shell or Python block above the title became the title. The same rule finds the line that the page body leaves out and that the change detection ignores (OC-03, COR-07).
 - A blog post without `Date` no longer stops the blog: it is listed after the dated posts, has no calendar line, and is logged once with `[THEME] DOC_UNDATED`. An unexpected error now prints its type and the log file, as in `Error: KeyError: 'Date' (see <repo>/var/log/kb4it.log)`, instead of the bare message (OC-04, COR-08).
 - With `pymdownx.superfences` and the default `"highlight": "client"`, code blocks get plain `language-*` classes for highlight.js instead of Pygments markup without its stylesheet; `pygments` mode still gives Pygments markup and `pygments.css`. `scripts/devel/test.sh` installs `pymdown-extensions`, so these paths run in CI (OC-05, MD-03).
+- Help pages "Customize templates", "Create a theme" and "Release" showed the commands of their numbered steps as inline code; the new `verify` warning found them, and they are now code blocks (MD-01).
 
 ### Removed
 

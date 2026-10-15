@@ -67,6 +67,19 @@ KB4IT uses [Python-Markdown](https://python-markdown.github.io/) with these exte
 
 Add more extensions with the [`markdown` setting](reference-repo-json.md#markdown).
 
+### Code inside a note or a list {#code-in-blocks}
+
+With these extensions a fenced block (```` ``` ````) only works at the start of a line. Inside an admonition or a list item, indent the code by four more spaces instead of fencing it:
+
+```markdown
+!!! note
+    Run:
+
+        kb4it build config/repo.json
+```
+
+To fence code there, enable `pymdownx.superfences` (from `KB4IT[extras]`) in the [`markdown` setting](reference-repo-json.md#markdown). Without it, `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...`.
+
 ## Why a document is rejected {#invalid}
 
 A document KB4IT cannot read is left out of the site. The build logs `DOC_INVALID` with a reason, counts it as `invalid=` in the summary, and `kb4it verify` lists it.

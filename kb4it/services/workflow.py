@@ -20,8 +20,9 @@ from kb4it.core.lock import registry_lock
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.service import Service
-from kb4it.core.util import (copydir, delete_target_contents, get_document_attributes, get_source_docs,
-                             is_windows_reserved, json_load, json_save, page_name_clashes, quarantine)
+from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, fences_in_blocks,
+                             get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
+                             page_name_clashes, quarantine)
 from kb4it.core.paths import resolve_repo_path
 
 
@@ -184,8 +185,9 @@ class Workflow(Service):
         except Exception as e:
             self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={e}")
             raise KB4ITError(f"Theme verify hook failed: {e}") from e
+        settings = None
         try:
-            load_settings(repo)
+            settings = load_settings(repo)
         except ConfigError as e:
             problems = [f"repo.json: {e}", *problems]
         if problems:
@@ -193,6 +195,12 @@ class Workflow(Service):
             for line in problems:
                 print(f"  {line}")
             print(f"Total: {len(problems)} theme problems.")
+
+        markdown_warnings = self._verify_fences(docs, settings)
+        if markdown_warnings:
+            print("\nMarkdown (warnings):")
+            for line in markdown_warnings:
+                print(f"  {line}")
 
         link_problems = self._verify_links(docs)
         if link_problems:
@@ -204,6 +212,21 @@ class Workflow(Service):
         if non_conformant or problems or link_problems:
             raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
                              f"{len(problems)} theme problems, {len(link_problems)} broken links")
+
+    def _verify_fences(self, docs, settings):
+        """MD_FENCE_IN_BLOCK lines for fences that python-markdown cannot see without superfences."""
+        if settings is None or "pymdownx.superfences" in settings.extensions:
+            return []
+        lines = []
+        for doc in sorted(docs):
+            with open(doc, encoding=SOURCE_ENCODING) as fh:
+                numbers = fences_in_blocks(fh.read())
+            if numbers:
+                name = os.path.basename(doc)
+                self.log.warning(f"[WORKFLOW] MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}")
+                lines.append(f"MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}: "
+                             "indent the code instead of fencing it, or enable pymdownx.superfences")
+        return lines
 
     def _find_theme_dir(self, repo, config_file):
         """Return the theme folder for a repo, following the same order as the build."""

@@ -373,6 +373,29 @@ def first_heading(body: str):
     return None, None
 
 
+def fences_in_blocks(body: str) -> list:
+    """Line numbers (1-based) of code fences indented four spaces or a tab, outside top-level fences.
+
+    python-markdown's fenced_code only sees fences at the start of a line, so such a
+    fence (inside an admonition or a list item) renders as inline code unless
+    pymdownx.superfences is enabled.
+    """
+    found = []
+    fence = None
+    for number, line in enumerate(body.splitlines(), start=1):
+        if fence is not None:
+            stripped = line.strip()
+            if stripped.startswith(fence) and set(stripped) == {fence[0]}:
+                fence = None
+            continue
+        match = _FENCE_RE.match(line)
+        if match:
+            fence = match.group(1)
+        elif re.match(r"^(?: {4,}|\t)\s*(?:`{3,}|~{3,})", line):
+            found.append(number)
+    return found
+
+
 def strip_first_heading(body: str) -> str:
     """Return body without the line of its first level-1 heading (see first_heading)."""
     _title, index = first_heading(body)

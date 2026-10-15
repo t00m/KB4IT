@@ -18,16 +18,12 @@ A theme is a folder with a description, some Python and some templates. Start fr
 
 1. Find where KB4IT keeps its themes:
 
-    ```bash
-    kb4it -L DEBUG themes 2>&1 | grep THEME_SEARCH_GLOBAL
-    ```
+        kb4it -L DEBUG themes 2>&1 | grep THEME_SEARCH_GLOBAL
 
 2. Copy one into your own themes folder under a new name, replacing `<path>` with the folder the first command printed:
 
-    ```bash
-    mkdir -p ~/.kb4it/opt/resources/themes
-    cp -r <path>/techdoc ~/.kb4it/opt/resources/themes/mytheme
-    ```
+        mkdir -p ~/.kb4it/opt/resources/themes
+        cp -r <path>/techdoc ~/.kb4it/opt/resources/themes/mytheme
 
 3. In `mytheme/theme.json`, set `"id": "mytheme"` and a new `name`.
 4. Set `"theme": "mytheme"` in the `repo.json` of a knowledge base and build it with `--force`.
