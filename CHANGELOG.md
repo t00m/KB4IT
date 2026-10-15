@@ -58,6 +58,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The help pages "Command line" and "GitHub Action" list every case in which `kb4it build` ends with status 1, including a page that could not be made (BO-03).
 - `scripts/devel/theme_snapshot.py --content` builds every app of every theme (techdoc's `sapbasis` too) and, for techdoc and blog, a second incremental build after one document changed, so refactors can be checked against the output of both paths (AR-01 to AR-05, support).
 - techdoc, blog and bookshelf share their code: `kb4it.services.themekit.DocumentTheme` holds the property and value pages, the properties, stats, bookmarks and all-documents pages, the document table, the event pages, the table of contents and the metadata section, with class attributes and small methods where the themes differ. The three `theme.py` files lost about 1,300 lines; pages are unchanged. The help page "Create your own theme" explains how a theme builds on it (AR-01, ARC-01).
+- No Python module of KB4IT is over 600 lines, and a test keeps it so: `kb4it.core.util` is split into `core/dates.py`, `core/documents.py` and `core/files.py`, the TUI into `tui/projects.py`, `tui/servers.py`, `tui/clipboard.py` and one module per screen under `tui/screens/`, and the techdoc dashboard and "Add" page into `techdoc_dashboard.py` and `techdoc_addpage.py`. `kb4it.core.util` and `kb4it.tui.app` still offer every name they had, so themes, hooks and templates that import from them keep working (AR-02, ARC-02).
 
 ### Fixed
 

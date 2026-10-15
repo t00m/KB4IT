@@ -35,7 +35,7 @@ def _theme_methods(theme):
 def test_document_themes_subclass_document_theme(theme):
     tree = ast.parse((THEMES / theme / "logic" / "theme.py").read_text(encoding="utf-8"))
     bases = [ast.unparse(b) for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Theme" for b in n.bases]
-    assert bases == ["DocumentTheme"]
+    assert bases[-1] == "DocumentTheme"  # techdoc adds its own mixins before it
 
 
 def test_shared_methods_are_defined_once():
