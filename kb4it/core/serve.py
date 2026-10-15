@@ -40,7 +40,7 @@ class _ErrorCollector(logging.Handler):
 
 def repo_paths(config):
     """(repo dict, source dir, target dir) of the repository whose repo.json is config."""
-    from kb4it.services.backend import resolve_repo_path
+    from kb4it.core.paths import resolve_repo_path
     root = os.path.dirname(os.path.dirname(os.path.abspath(config)))
     repo = json_load(config)
     return repo, resolve_repo_path(repo["source"], root), resolve_repo_path(repo["target"], root)
@@ -48,7 +48,7 @@ def repo_paths(config):
 
 def watched_paths(config):
     """Files and folders whose changes trigger a rebuild, and the subset that forces a full one."""
-    from kb4it.services.backend import resolve_repo_path
+    from kb4it.core.paths import resolve_repo_path
     root = os.path.dirname(os.path.dirname(os.path.abspath(config)))
     try:
         repo, source, _target = repo_paths(config)

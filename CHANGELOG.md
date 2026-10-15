@@ -65,6 +65,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `scripts/uninstall/local/uninstall.sh` removes KB4IT installed with uv, pipx or `pip --user`, whichever has it, instead of only pip. `--purge` also deletes `~/.kb4it` (or `KB4IT_HOME`) after asking. The unused install routine with `pip --trusted-host`, which turned off certificate checks, is gone (DS-06).
 - A page that cannot be made now fails the build: `kb4it build` exits 1, logs `[WORKFLOW] PAGES_FAILED` with the page names, and the summary (also in the GitHub Action job summary and the `on_build_end` hook) has a `failed=` count. Before, a page whose Markdown or template failed was only logged and the build reported success. Every other page is still deployed, and the deployer no longer stops at the first page missing from its cache (COR-01, COR-09).
 - `var/db/kbdict.json` is written only after a build succeeds. Before, it was written during the analysis, so after a failed or interrupted build the next incremental build treated the changed documents as done and kept serving their old pages until `--force` (COR-02).
+- The build refuses a `target` folder that is, or holds, the repository root, `source`, `config/`, `var/`, the home folder or a filesystem root, or that lies inside `source`; before, `"target": "."` let the deployer delete files of the repository (FS-01, COR-03).
 
 ---
 

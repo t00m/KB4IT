@@ -22,7 +22,7 @@ from kb4it.core.mdlinks import scan_document
 from kb4it.core.service import Service
 from kb4it.core.util import (copydir, delete_target_contents, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, json_save, page_name_clashes)
-from kb4it.services.backend import resolve_repo_path
+from kb4it.core.paths import resolve_repo_path
 
 
 def build_script(config_file, platform=None):

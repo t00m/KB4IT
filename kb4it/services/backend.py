@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import redirect_logs
+from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save, timeit
 from kb4it.services.compiler import Compiler
@@ -33,14 +34,6 @@ def _dir_contains(parent, child) -> bool:
     parent = os.path.realpath(str(parent))
     child = os.path.realpath(str(child))
     return parent == child or child.startswith(parent + os.sep)
-
-
-def resolve_repo_path(raw: str, root) -> str:
-    """Expand ~ and $VARS and anchor a relative path to the repository root."""
-    expanded = os.path.expanduser(os.path.expandvars(raw))
-    if not os.path.isabs(expanded):
-        expanded = os.path.join(str(root), expanded)
-    return os.path.realpath(expanded)
 
 
 class Backend(Service):
@@ -81,6 +74,8 @@ class Backend(Service):
             self.runtime["dir"] = {}
             dir_root = config_path.parent.parent.absolute()
             source, target = self._resolve_source_target(dir_root)
+            # Before anything touches the disk: the deployer sweeps the target.
+            check_target(target, dir_root, source)
             self.runtime["dir"]["source"] = source
             self.runtime["dir"]["target"] = target
             dir_var = Path.joinpath(dir_root, "var")

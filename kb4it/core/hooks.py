@@ -73,7 +73,7 @@ class Hooks:
 
 def load_hooks(repo: dict, root) -> Hooks:
     """Hooks named by repo.json "hooks" (relative to the repository root), or an empty Hooks()."""
-    from kb4it.services.backend import resolve_repo_path
+    from kb4it.core.paths import resolve_repo_path
     value = repo.get("hooks")
     if value in (None, ""):
         return Hooks()
