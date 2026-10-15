@@ -87,18 +87,13 @@ class Builder(Service):
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
 
+    # Source patterns (common HTML_TAG_<name>_MD templates) that python-markdown's output, after
+    # the compiler's section restructuring, can contain; tests/core/test_transformations.py checks it.
     _XFORM_NAMES = [
         'HTML_TAG_TOC',
         'HTML_TAG_SECT1', 'HTML_TAG_SECT2', 'HTML_TAG_SECT3', 'HTML_TAG_SECT4',
-        'HTML_TAG_SECTIONBODY', 'HTML_TAG_PRE',
+        'HTML_TAG_SECTIONBODY',
         'HTML_TAG_H2', 'HTML_TAG_H3', 'HTML_TAG_H4',
-        'HTML_TAG_TABLE', 'HTML_TAG_TABLE_KB4IT',
-        'HTML_TAG_ADMONITION_ICON_NOTE', 'HTML_TAG_ADMONITION_ICON_TIP',
-        'HTML_TAG_ADMONITION_ICON_IMPORTANT', 'HTML_TAG_ADMONITION_ICON_CAUTION',
-        'HTML_TAG_ADMONITION_ICON_WARNING',
-        'HTML_TAG_ADMONITION_IMPORTANT', 'HTML_TAG_ADMONITION_CAUTION',
-        'HTML_TAG_ADMONITION_NOTE', 'HTML_TAG_ADMONITION_TIP',
-        'HTML_TAG_ADMONITION_WARNING',
         'HTML_TAG_IMG',
     ]
 
