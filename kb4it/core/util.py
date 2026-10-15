@@ -18,7 +18,6 @@ import operator
 import os
 import re
 import shutil
-import subprocess
 import tempfile
 import time
 import unicodedata
@@ -206,27 +205,6 @@ def get_source_docs(path: str):
     for ext in ("*.md", "*.markdown"):
         docs.extend(glob.glob(os.path.join(path, ext)))
     return docs
-
-
-def exec_cmd(data):
-    """Execute an operating system command.
-
-    Return:
-    - document
-    - True if success, False if not
-    - num is the job number
-    """
-    doc, cmd, num = data
-    process = subprocess.Popen(
-        [cmd], shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    _outs, errs = process.communicate()
-    compiled = process.returncode == 0
-    if not compiled:
-        log.debug("[UTIL] CMD_FAIL doc=%s rc=%d stderr=%s", doc, process.returncode, errs)
-    return doc, compiled, num
 
 
 def set_max_frequency(dkeyurl):

@@ -76,7 +76,7 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/exceptions.py`        | `KB4ITError`, `ConfigError`, `ThemeError`, `CompilationError` hierarchy |
 | `kb4it/core/service.py`           | Base `Service` class all services inherit |
 | `kb4it/core/types.py`             | `TypedDict` definitions: `Runtime`, `DirPaths`, `DocsInfo`, `KBDict`, `DocumentMeta`, `DBRecord` |
-| `kb4it/core/util.py`              | File ops, hashing (blake2b), `exec_cmd`, `DateCache`, date helpers, `@timeit`, `get_document_attributes` |
+| `kb4it/core/util.py`              | File ops, hashing (blake2b), `DateCache`, date helpers, `@timeit`, `get_document_attributes` |
 | `kb4it/core/log.py`               | Logging setup, file redirection |
 | `kb4it/services/workflow.py`      | Orchestrates build / create / info / list / verify actions |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |

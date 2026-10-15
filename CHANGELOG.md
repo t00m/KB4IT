@@ -69,6 +69,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The deployer removes from `target` only the pages that an earlier build recorded as its own (`deployed` in `var/db/kbdict.json`). Other `.html` files you keep in `target` are no longer deleted, and the first build after an upgrade deletes nothing. The unused step that emptied the whole target is gone (FS-01, COR-03).
 - JSON files (`projects.json`, `var/db/kbdict.json`) are written to a temporary file and then moved into place, so a crash or a full disk leaves the old file whole. An unreadable `projects.json` is kept as `projects.json.corrupt-<timestamp>` with a `PROJECTS_CORRUPT` warning instead of being replaced by a list holding only the new project; an unreadable `kbdict.json` logs `KBDICT_CORRUPT` and the build runs as a full rebuild instead of failing (FS-02, COR-04).
 
+### Removed
+
+- The unused `exec_cmd` helper, which ran commands through a shell (`shell=True`). A test now checks that no module of the package uses a shell (FS-03, BASE-01).
+
 ---
 
 ## [0.8.0] - 2026-10-03

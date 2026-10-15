@@ -62,9 +62,13 @@ def test_get_default_workers_is_half_the_cpus(monkeypatch):
     assert util.get_default_workers() == 1
 
 
-def test_exec_cmd_reports_success_and_failure():
-    assert util.exec_cmd(("doc.md", "true", 7)) == ("doc.md", True, 7)
-    assert util.exec_cmd(("doc.md", "exit 3", 8)) == ("doc.md", False, 8)
+def test_no_shell_commands_in_the_package():
+    """BASE-01: KB4IT runs no command through a shell."""
+    import pathlib
+    package = pathlib.Path(util.__file__).resolve().parent.parent
+    offenders = [str(p.relative_to(package)) for p in package.rglob("*.py")
+                 if "shell=True" in p.read_text(encoding="utf-8")]
+    assert offenders == []
 
 
 def test_word_cloud_sizes():
