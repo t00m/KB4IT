@@ -20,7 +20,7 @@ from html import escape
 
 from kb4it.core.util import (ellipsize_text, get_human_datetime,
                              guess_datetime, html_id_for, valid_filename)
-from kb4it.services.builder import Builder
+from kb4it.services.themekit import DocumentTheme
 
 
 # Status -> study bucket. Anything not matched falls into 'todo'.
@@ -78,7 +78,7 @@ def status_bucket(status):
     return 'todo'
 
 
-class Theme(Builder):
+class Theme(DocumentTheme):
     """Builder for the Bookshelf theme."""
 
     books = OrderedDict()
@@ -666,9 +666,6 @@ class Theme(Builder):
             toc = '\n'.join(items)
         return toc
 
-    def get_page_actions(self, var):
-        return self.template('SECTION_ACTIONS').render(var=var)
-
     def build_datatable(self, headers=None, doclist=None):
         if headers is None:
             headers = []
@@ -724,36 +721,13 @@ class Theme(Builder):
             datatable['rows'] += '</tr>'
         return TPL_DATATABLE.render(var=datatable)
 
-    def get_labels(self, values):
-        label_links = ''
-        TPL_METADATA_VALUE_LINK = self.template('METADATA_VALUE_LINK')
-        for page, text in values:
-            if text:
-                label_links += TPL_METADATA_VALUE_LINK.render(var={
-                    'link_url': valid_filename(page), 'link_name': text})
-        return label_links
-
-    def get_html_values_from_key(self, docId, key):
-        return [(f"{key}_{value}.html", value) for value in self.srvdtb.get_values(docId, key)]
-
     def build_metadata_section(self, docId):
+        """Override: a study page is still built when its metadata fails; the section is left empty."""
         try:
-            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(docId))
-            var = {'items': []}
-            for key in custom_keys:
-                values = self.get_html_values_from_key(docId, key)
-                var['items'].append({
-                    'doc': docId,
-                    'key': key,
-                    'vfkey': valid_filename(key),
-                    'labels': self.get_labels(values),
-                })
-            html = TPL_METADATA_SECTION.render(var=var)
+            return super().build_metadata_section(docId)
         except Exception as error:
             self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={docId} error={error}")
-            html = ''
-        return html
+            return ''
 
     def generate_sources(self):
         pass

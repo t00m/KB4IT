@@ -29,7 +29,7 @@ from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
                              guess_datetime, html_id_for, human_size,
                              set_max_frequency, slugify, source_ext,
                              valid_filename)
-from kb4it.services.builder import Builder
+from kb4it.services.themekit import DocumentTheme
 
 parser = etree.HTMLParser()
 
@@ -80,7 +80,7 @@ def status_css(value):
     return STATUS_CSS.get(value, 'kb-label-muted')
 
 
-class Theme(Builder):
+class Theme(DocumentTheme):
     dey = {}
     events_docs = {}
 
@@ -1056,58 +1056,6 @@ class Theme(Builder):
         self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
 
         return page
-
-    def get_page_actions(self, var):
-        TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
-        return TPL_SECTION_ACTIONS.render(var=var)
-
-    def get_labels(self, values):
-        """C0111: Missing function docstring (missing-docstring)."""
-        var = {}
-        label_links = ''
-        TPL_METADATA_VALUE_LINK = self.template('METADATA_VALUE_LINK')
-        for page, text in values:
-            var['link_url'] = valid_filename(page)
-            var['link_name'] = text
-            if len(text) != 0:
-                label_links += TPL_METADATA_VALUE_LINK.render(var=var)
-        return label_links
-
-    def get_html_values_from_key(self, docId, key):
-        """Return the html link for a value."""
-        html = []
-
-        values = self.srvdtb.get_values(docId, key)
-        for value in values:
-            url = "%s_%s.html" % (key, value)
-            html.append((url, value))
-        return html
-
-    def build_metadata_section(self, docId):
-        """Return a html block for displaying metadata (keys and values)."""
-        try:
-            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(docId))
-            var = {}
-            var['items'] = []
-            for key in custom_keys:
-                ckey = {}
-                ckey['doc'] = docId
-                ckey['key'] = key
-                ckey['vfkey'] = valid_filename(key)
-                try:
-                    values = self.get_html_values_from_key(docId, key)
-                    ckey['labels'] = self.get_labels(values)
-                    var['items'].append(ckey)
-                except Exception as error:
-                    self.log.error(f"[THEME] KEY_FAIL key={key} error={error}")
-                    raise
-            html = TPL_METADATA_SECTION.render(var=var)
-        except Exception as error:
-            self.log.error(f"[THEME] METADATA_FAIL doc={docId} error={error}")
-            html = ''
-            raise
-        return html
 
     def post_deploy_activities(self):
         """Build the admin area once the site has been deployed.

@@ -20,10 +20,10 @@ from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              get_human_datetime_day, get_human_datetime_month,
                              get_human_datetime_year, guess_datetime,
                              html_id_for, set_max_frequency, valid_filename)
-from kb4it.services.builder import Builder
+from kb4it.services.themekit import DocumentTheme
 
 
-class Theme(Builder):
+class Theme(DocumentTheme):
     dey = {}
     events_docs = {}
 
@@ -812,10 +812,6 @@ class Theme(Builder):
 
         return page
 
-    def get_page_actions(self, var):
-        TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
-        return TPL_SECTION_ACTIONS.render(var=var)
-
     def get_related(self, docId):
         """Get a list of related documents for each tag"""
         # DISABLED:
@@ -846,54 +842,6 @@ class Theme(Builder):
         var['datatable'] = self.build_datatable(headers, doclist)
         html_related = TPL_SECTION_RELATED.render(var=var)
         return html_related
-
-    def get_labels(self, values):
-        """C0111: Missing function docstring (missing-docstring)."""
-        var = {}
-        label_links = ''
-        TPL_METADATA_VALUE_LINK = self.template('METADATA_VALUE_LINK')
-        for page, text in values:
-            var['link_url'] = valid_filename(page)
-            var['link_name'] = text
-            if len(text) != 0:
-                label_links += TPL_METADATA_VALUE_LINK.render(var=var)
-        return label_links
-
-    def get_html_values_from_key(self, docId, key):
-        """Return the html link for a value."""
-        html = []
-
-        values = self.srvdtb.get_values(docId, key)
-        for value in values:
-            url = "%s_%s.html" % (key, value)
-            html.append((url, value))
-        return html
-
-    def build_metadata_section(self, docId):
-        """Return a html block for displaying metadata (keys and values)."""
-        try:
-            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(docId))
-            var = {}
-            var['items'] = []
-            for key in custom_keys:
-                ckey = {}
-                ckey['doc'] = docId
-                ckey['key'] = key
-                ckey['vfkey'] = valid_filename(key)
-                try:
-                    values = self.get_html_values_from_key(docId, key)
-                    ckey['labels'] = self.get_labels(values)
-                    var['items'].append(ckey)
-                except Exception as error:
-                    self.log.error("[THEME] KEY_FAIL key=%s error=%s", key, error)
-                    raise
-            html = TPL_METADATA_SECTION.render(var=var)
-        except Exception as error:
-            self.log.error("[THEME] METADATA_FAIL doc=%s error=%s", docId, error)
-            html = ''
-            raise
-        return html
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""
