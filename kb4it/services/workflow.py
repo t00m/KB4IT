@@ -388,6 +388,8 @@ class Workflow(Service):
         keys_compiled = plan.key_count if plan is not None else 0
         kv_compiled   = plan.kv_count if plan is not None else 0
         failed = self._failed_pages()
+        if not failed:
+            backend.commit_kbdict()
         elapsed = time.perf_counter() - t0
 
         self.log.info(

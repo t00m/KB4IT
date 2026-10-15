@@ -183,8 +183,7 @@ class Processor(Service):
             self.plan.force_all = True
             self.log.info("[PROCESSOR] CORE_SIGNATURE_CHANGED action=rebuild_all")
 
-        # Save new kbdict
-        self.srvbes.save_kbdict(self.kbdict_new)
+        # The new kbdict stays in memory; Backend.commit_kbdict() writes it once the build succeeded.
 
 
     def signature_parts(self) -> dict:
@@ -297,8 +296,6 @@ class Processor(Service):
         self.plan.K_PATH, self.plan.KV_PATH = self.step_01_01_decide_keys_compilation(
             available_keys, analysis.force_kv_pairs
         )
-        # Save again: the links found in this step belong in the cache too.
-        self.srvbes.save_kbdict(self.kbdict_new)
 
     def get_kb_dict(self):
         """Get new KB4IT Dictionary."""

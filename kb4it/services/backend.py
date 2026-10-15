@@ -319,6 +319,15 @@ class Backend(Service):
         """Shortcut to Processor method."""
         return self.srvprc.get_kb_dict()
 
+    def commit_kbdict(self):
+        """Write the new kbdict once the whole build succeeded.
+
+        A failed or interrupted build leaves the previous kbdict.json in place, so the next
+        incremental build compiles again every document that changed since the last good one.
+        """
+        self.save_kbdict(self.srvprc.get_kb_dict())
+        self.log.debug("[BACKEND] KBDICT_COMMIT")
+
     def get_kbdict_key(self, key, new=True):
         """Shortcut to Processor method."""
         return self.srvprc.get_kbdict_key(key, new)

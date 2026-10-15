@@ -63,6 +63,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `scripts/install/local/install_kb4it_from_source.sh` lists its real requirements (uv, or pipx with Python 3.11 or newer) instead of asciidoctor. With uv it needs no Python in `/usr/bin`, so it also works on macOS; with pipx it passes the newest Python 3.11+ it finds in `/usr/bin` or on `PATH`. It works from any folder and no longer deletes `dist/` (DS-02).
 - `scripts/uninstall/local/uninstall.sh` removes KB4IT installed with uv, pipx or `pip --user`, whichever has it, instead of only pip. `--purge` also deletes `~/.kb4it` (or `KB4IT_HOME`) after asking. The unused install routine with `pip --trusted-host`, which turned off certificate checks, is gone (DS-06).
 - A page that cannot be made now fails the build: `kb4it build` exits 1, logs `[WORKFLOW] PAGES_FAILED` with the page names, and the summary (also in the GitHub Action job summary and the `on_build_end` hook) has a `failed=` count. Before, a page whose Markdown or template failed was only logged and the build reported success. Every other page is still deployed, and the deployer no longer stops at the first page missing from its cache (COR-01, COR-09).
+- `var/db/kbdict.json` is written only after a build succeeds. Before, it was written during the analysis, so after a failed or interrupted build the next incremental build treated the changed documents as done and kept serving their old pages until `--force` (COR-02).
 
 ---
 
