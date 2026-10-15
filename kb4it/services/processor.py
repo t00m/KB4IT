@@ -23,6 +23,9 @@ from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              page_name_clashes, string_timestamp, valid_filename,
                              SOURCE_ENCODING, tree_hash)
 
+# repo.json keys that never reach a page: changing them must not rebuild the site.
+NON_PAGE_KEYS = frozenset({"workers", "force", "fail_on_invalid", "source", "target"})
+
 
 @dataclass
 class AnalysisResult:
@@ -194,7 +197,9 @@ class Processor(Service):
                 "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed"),
                 "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
                 "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else "",
-                "backlinks": repo.get("backlinks", True)}
+                "backlinks": repo.get("backlinks", True),
+                # Any other setting may be printed by the theme (title, tagline, menus): rebuild on change.
+                "repo": get_hash_from_dict({k: v for k, v in repo.items() if k not in NON_PAGE_KEYS})}
 
     def core_signature(self) -> str:
         """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""

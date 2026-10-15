@@ -44,6 +44,8 @@ Every build ends with a summary line:
 
 Run the same command again. KB4IT compares every document with the last build and compiles only the ones you changed, added or removed, plus the property pages they appear on.
 
+A change to `repo.json` that can show on a page, such as `title` or a theme option, rebuilds every page. `workers`, `force`, `fail_on_invalid`, `source` and `target` never reach a page, so changing them rebuilds nothing.
+
 ## Rebuild everything {#force}
 
 ```bash
