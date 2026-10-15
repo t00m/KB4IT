@@ -7,12 +7,13 @@ why in a docstring that starts with "Override:". Other themes keep subclassing
 """
 
 from kb4it.services.builder import Builder
+from kb4it.services.themekit.events import EventsMixin
 from kb4it.services.themekit.keypages import KeyPagesMixin
 from kb4it.services.themekit.metadata import MetadataMixin
 from kb4it.services.themekit.tables import TableMixin
 
-__all__ = ["DocumentTheme", "KeyPagesMixin", "MetadataMixin", "TableMixin"]
+__all__ = ["DocumentTheme", "EventsMixin", "KeyPagesMixin", "MetadataMixin", "TableMixin"]
 
 
-class DocumentTheme(MetadataMixin, KeyPagesMixin, TableMixin, Builder):
+class DocumentTheme(MetadataMixin, KeyPagesMixin, TableMixin, EventsMixin, Builder):
     """Base class of the document themes."""

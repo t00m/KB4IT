@@ -16,7 +16,6 @@ from html import escape
 from kb4it.core.env import ENV
 from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              get_font_size, get_human_datetime,
-                             get_human_datetime_day, get_human_datetime_month,
                              get_human_datetime_year, guess_datetime,
                              html_id_for, valid_filename)
 from kb4it.services.themekit import DocumentTheme
@@ -26,13 +25,10 @@ class Theme(DocumentTheme):
     properties_title = 'Metadata'
     reuse_unchanged_pages = True
     datatable_link_template = 'LINK'
-    dey = {}
-    events_docs = {}
+    events_rebuild_all = True
 
     def _initialize(self):
         super()._initialize()
-        self.dey = {}
-        self.events_docs = {}
         self._undated = set()
         self._undated_lock = threading.Lock()
 
@@ -120,139 +116,6 @@ class Theme(DocumentTheme):
         self.srvdtb.add_document('index.md')
         self.srvdtb.add_document_key('index.md', 'Title', 'Index')
         self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
-
-    def build_events(self, doclist):
-        TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
-        TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
-        SORT = "Date"
-        # Get events dates
-        for docId in doclist:
-            props = self.srvdtb.get_doc_properties(docId)
-            timestamp = self.srvdtb.get_doc_timestamp(docId)
-            if timestamp is None:
-                continue
-            # Build dict of events for a given date as a list of tuples
-            # (month, day) indexed by year
-            # Also, build a dict to store those docs ocurring in that date
-            try:
-                timestamp = guess_datetime(timestamp)
-                y = timestamp.year
-                m = timestamp.month
-                d = timestamp.day
-                self.dey.setdefault(y, []).append((m, d))
-
-                # Build dict of documents
-                if not y in self.events_docs:
-                    self.events_docs[y] = {}
-
-                if not m in self.events_docs[y]:
-                    self.events_docs[y][m] = {}
-
-                if not d in self.events_docs[y][m]:
-                    self.events_docs[y][m][d] = []
-
-                docs = self.events_docs[y][m][d]
-                docs.append(docId)
-                self.events_docs[y][m][d] = docs
-            except Exception as error:
-                # Doc doesn't have a valid date field. Skip it.
-                self.log.error(f"[THEME] DATE_INVALID doc={os.path.basename(docId)} timestamp={timestamp}")
-                self.log.error(f"[THEME] ERROR {error}")
-                raise
-
-        kbdict = self.srvbes.get_kb_dict()
-        base_var = self.get_theme_var()
-        # Build day event pages
-        must_compile_month = set()
-        must_compile_year = set()
-        for year in self.events_docs:
-            for month in self.events_docs[year]:
-                for day in self.events_docs[year][month]:
-                    EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
-                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_DAY)
-                    doclist = self.events_docs[year][month][day]
-                    must_compile_day = True
-                    for docId in doclist:
-                        doc_changed = kbdict['document'][docId]['compile']
-                        doc_not_cached = not os.path.exists(pagename)
-                        if doc_changed or doc_not_cached:
-                            must_compile_day = True
-                            break
-                    # ~ self.log.debug(f"DOC[{EVENT_PAGE_DAY}.md] targeting RESOURCE[{os.path.basename(pagename)}] COMPILE[{must_compile_day}]")
-                    if must_compile_day:
-                        must_compile_month.add("%4d%02d" % (year, month))
-                        must_compile_year.add("%4d" % (year))
-                        edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
-                        var = base_var
-                        var['page'] = {}
-                        headers = []
-                        var['page']['datatable'] = self.build_datatable(headers, doclist)
-                        var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
-                        html = TPL_PAGE_EVENTS_DAYS.render(var=var)
-                        self.distribute_md(EVENT_PAGE_DAY, html)
-
-                        #FIXME
-                        human_title = get_human_datetime_day(edt)
-                        self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.md")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.md", 'Title', f"Events on {human_title}")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.md", 'SystemPage', 'Yes')
-                    else:
-                        self.distribute_html(EVENT_PAGE_DAY, pagename)
-                    self.srvbes.add_target(f"{EVENT_PAGE_DAY}.md", f"{EVENT_PAGE_DAY}.html")
-
-        # Build month event pages
-        for year in self.events_docs:
-            for month in self.events_docs[year]:
-                thismonth = "%4d%02d" % (year, month)
-                EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
-                if thismonth in must_compile_month:
-                    var = base_var
-                    var['page'] = {}
-                    doclist = []
-                    edt = guess_datetime("%4d.%02d.01" % (year, month))
-                    for day in self.events_docs[year][month]:
-                        doclist.extend(self.events_docs[year][month][day])
-                    var['doclist'] = doclist
-                    headers = []
-                    var['page']['datatable'] = self.build_datatable(headers, doclist)
-                    var['page']['title'] = edt.strftime("Events on %B, %Y")
-                    html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
-                    self.distribute_md(EVENT_PAGE_MONTH, html)
-
-                    human_title = get_human_datetime_month(edt)
-                    self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.md")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.md", 'Title', f"Events on {human_title}")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.md", 'SystemPage', 'Yes')
-
-                else:
-                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
-                    self.distribute_html(EVENT_PAGE_MONTH, pagename)
-                self.srvbes.add_target(f"{EVENT_PAGE_MONTH}.md", f"{EVENT_PAGE_MONTH}.html")
-
-        # Build year event pages
-        for year in sorted(self.dey.keys(), reverse=True):
-            var = base_var
-            var['page'] = {}
-            headers = []
-            doclist = []
-            EVENT_PAGE_YEAR = "events_%4d" % year
-            PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
-            page_name = "events_%4d" % year
-            if str(year) in must_compile_year:
-                for month in self.events_docs[year]:
-                    for day in self.events_docs[year][month]:
-                        doclist.extend(self.events_docs[year][month][day])
-                var['page']['title'] = f"Archive / {year}"
-                var['page']['datatable'] = self.build_datatable(headers, doclist)
-                self.distribute_md(page_name, PAGE.render(var=var))
-                self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.md")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.md", 'Title', f"Archive / {year}")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.md", 'SystemPage', 'Yes')
-
-            else:
-                pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
-                self.distribute_html(EVENT_PAGE_YEAR, pagename)
-            self.srvbes.add_target(f"{EVENT_PAGE_YEAR}.md", f"{EVENT_PAGE_YEAR}.html")
 
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')

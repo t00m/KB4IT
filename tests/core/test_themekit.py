@@ -18,6 +18,7 @@ SHARED = {
     "keypages": ["build_page_key", "build_page_key_value", "build_page_properties", "build_tagcloud_from_key",
                  "get_maxkv_freq", "build_page_stats", "build_page_bookmarks", "build_page_index_all"],
     "tables": ["build_datatable"],
+    "events": ["build_events"],
 }
 
 
@@ -183,3 +184,79 @@ def test_datatable_rows_and_hooks():
     theme.datatable_value_link = lambda props, key, value: {"title": value, "url": props.get(f"{key}_{value}_Url", "#")}
     html = theme.build_datatable(["Tag"], ["a.html"])
     assert html.count("<LINK_DATATABLE") == 2 and "Tag_x.html" in html
+
+
+class _EventsDb:
+    def get_doc_timestamp(self, doc):
+        return {"a.md": "2026-10-15", "b.md": "2026-10-16"}.get(doc)
+
+    def add_document(self, doc):
+        pass
+
+    def add_document_key(self, doc, key, value):
+        pass
+
+
+class _EventsBackend:
+    def __init__(self, cache, changed):
+        self.cache, self.changed, self.targets = cache, changed, []
+
+    def get_path(self, name):
+        return str(self.cache)
+
+    def get_kb_dict(self):
+        return {"document": {doc: {"compile": doc in self.changed} for doc in ("a.md", "b.md")}}
+
+    def add_target(self, md, html):
+        self.targets.append(html)
+
+
+class _EventsTheme(_Theme):
+    def __init__(self, cache, changed=()):
+        super().__init__()
+        self.srvdtb, self.srvbes = _EventsDb(), _EventsBackend(cache, set(changed))
+        self.dey, self.events_docs = {}, {}
+        self.built, self.reused = [], []
+
+    def build_datatable(self, headers=None, doclist=None, table_id="kb4it-datatable"):
+        return "table"
+
+    def distribute_md(self, name, content):
+        self.built.append(name)
+
+    def distribute_html(self, name, path):
+        self.reused.append(name)
+
+
+EVENT_PAGES = ["events_20261015", "events_20261016", "events_202610", "events_2026"]
+
+
+def _cache_every_event_page(cache):
+    for name in EVENT_PAGES:
+        (cache / f"{name}.html").write_text("cached", encoding="utf-8")
+
+
+def test_events_reuse_the_cache_of_unchanged_dates(tmp_path):
+    _cache_every_event_page(tmp_path)
+    theme = _EventsTheme(tmp_path, changed=["b.md"])
+    assert theme.build_events(["a.md", "b.md", "undated.md"]) == {"2026"}
+    assert theme.built == ["events_20261016", "events_202610", "events_2026"]
+    assert theme.reused == ["events_20261015"]
+    assert sorted(theme.srvbes.targets) == sorted(f"{name}.html" for name in EVENT_PAGES)
+
+
+def test_events_rebuild_a_page_whose_cache_is_missing(tmp_path):
+    _cache_every_event_page(tmp_path)
+    (tmp_path / "events_202610.html").unlink()
+    theme = _EventsTheme(tmp_path)
+    assert theme.build_events(["a.md", "b.md"]) == set()
+    assert theme.built == ["events_202610"]
+
+
+def test_events_rebuild_all_rebuilds_every_page(tmp_path):
+    """blog has always rebuilt its event pages on every build."""
+    _cache_every_event_page(tmp_path)
+    theme = _EventsTheme(tmp_path)
+    theme.events_rebuild_all = True
+    theme.build_events(["a.md", "b.md"])
+    assert sorted(theme.built) == sorted(EVENT_PAGES) and theme.reused == []
