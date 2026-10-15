@@ -1,1 +1,1 @@
-<div id="kb-section-body" class="uk-container">
+<div class="kb-section-body uk-container">

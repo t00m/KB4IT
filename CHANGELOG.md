@@ -79,6 +79,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Help pages "Customize templates", "Create a theme" and "Release" showed the commands of their numbered steps as inline code; the new `verify` warning found them, and they are now code blocks (MD-01).
 - Page names made from property names and values never start with a dot. A property such as `.note` used to make a hidden key page that was never built, and with it no page reached the target; it now makes `note.html`. A property name or value that cleans to nothing, such as `...`, makes the document invalid (`bad_property_name` or `bad_property_value`, so `fail_on_invalid` applies) instead of breaking the site (SC-03, SEC-03).
 - Links in documents are no longer rewritten: the `HTML_TAG_A` transformation added an empty `target=""` and `class=""` (techdoc, blog) or a second `class` to links that had one (bookshelf, where it also overrode the tag cloud style). bookshelf colours document links with CSS instead, and the blog key modal title no longer gets a second `class` (HT-01, HTML-01).
+- blog marks document sections with the classes `kb-sect1` to `kb-sect4` and `kb-section-body` instead of the same `id` on every section, which repeated ids on any page with more than one section (HT-01, HTML-01).
 
 ### Removed
 

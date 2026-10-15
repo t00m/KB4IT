@@ -56,3 +56,12 @@ def test_no_empty_target_and_no_duplicate_attribute(sites, theme):
         if 'target=""' in page.read_text(encoding="utf-8"):
             problems.append(f'{page.name}: target=""')
     assert problems == []
+
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_section_blocks_use_classes(sites, theme):
+    """Every document section is a block of its own: no fixed id repeated per section."""
+    problems = [page.name for page in sites[theme]
+                if re.search(r'id="kb-sect[1-4]"|id="kb-section-body"', page.read_text(encoding="utf-8"))]
+    assert problems == []
