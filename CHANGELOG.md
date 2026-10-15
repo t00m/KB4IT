@@ -82,6 +82,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - The unused `exec_cmd` helper, which ran commands through a shell (`shell=True`). A test now checks that no module of the package uses a shell (FS-03, BASE-01).
 
+### Security
+
+- apphelp escapes template output (`"autoescape": true`); only the page body, the `aria-current` attribute and the labels for the scripts are printed raw. Its explicit `| h` filters are gone (SC-01, SEC-01).
+
 ---
 
 ## [0.8.0] - 2026-10-03
