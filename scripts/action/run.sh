@@ -70,7 +70,7 @@ build() {
         echo "| | |"
         echo "|---|---|"
         echo "| KB4IT | $(kb4it --version | awk '{print $2}') |"
-        for key in docs_total compiled skipped invalid; do
+        for key in docs_total compiled skipped invalid failed; do
             echo "| ${key} | $(grep -o " ${key}=[0-9]*" <<<"${summary}" | cut -d= -f2) |"
         done
         echo "| target | \`${target}\` |"

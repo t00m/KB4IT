@@ -24,6 +24,7 @@ class Deployer(Service):
     def _initialize(self):
         """Initialize deployer service."""
         self.srvbes = self.app.get_service("Backend")
+        self.missing = []
 
     def execute(self):
         """Deploy website build by KB4IT."""
@@ -109,7 +110,11 @@ class Deployer(Service):
         self.log.debug(f"[DEPLOYER] COPIED_ALL_TO_CACHE n={len(files)}")
 
     def step_07_copy_compiled_documents_to_target(self):
-        """Incrementally sync compiled HTML to target: copy expected, delete stale."""
+        """Incrementally sync compiled HTML to target: copy expected, delete stale.
+
+        A page missing from the cache does not stop the others; it is recorded in
+        self.missing and the build fails at the end.
+        """
         runtime = self.srvbes.get_dict("runtime")
         expected = runtime["docs"]["targets"]
         dir_cache = self.srvbes.get_path("cache")
@@ -122,10 +127,11 @@ class Deployer(Service):
             try:
                 shutil.copy(source, target)
                 n_copied += 1
-            except FileNotFoundError as error:
-                self.log.error(f"[DEPLOYER] ERROR {error}")
-                self.log.error("[DEPLOYER] HINT rerun with -force")
-                return
+            except FileNotFoundError:
+                self.log.error(f"[DEPLOYER] PAGE_MISSING page={filename}")
+                self.missing.append(filename)
+        if self.missing:
+            self.log.error("[DEPLOYER] HINT rebuild with --force")
 
         for filename in os.listdir(dir_target):
             if not filename.endswith('.html'):

@@ -63,6 +63,9 @@ class Compiler(Service):
         self.srvprc = self.get_service("Processor")
         self.links = {}
         self._links_lock = threading.Lock()
+        # Documents whose page could not be made, with the reason; the build fails at the end.
+        self.failed = []
+        self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
 
     def execute(self):
@@ -190,7 +193,17 @@ class Compiler(Service):
             raise  # a failing hook stops the build
         except Exception as err:
             self.log.error(f"[COMPILER] MD_COMPILE_FAIL doc={os.path.basename(doc)} error={err}")
+            self._fail(doc, f"compile: {err}")
             return doc, False, num
+
+    def _fail(self, doc, reason):
+        """Record a document whose page failed (by page name), and drop its half-made page from tmp."""
+        page = html_id_for(os.path.basename(doc))
+        with self._failed_lock:
+            self.failed.append((page, reason))
+        partial = os.path.join(self.srvbes.get_path("tmp"), page)
+        if os.path.exists(partial):
+            os.unlink(partial)
 
     def compilation_finished(self, future):
         """Once compiled, build page."""
@@ -211,9 +224,11 @@ class Compiler(Service):
                 except MemoryError:
                     self.log.error("[COMPILER] MEMORY_EXHAUSTED")
                     self.log.error("[COMPILER] HINT use fewer workers or add memory")
+                    self._fail(path_hdoc, "render: out of memory")
                 except Exception as error:
-                    self.log.error(f"[COMPILER] ERROR {error}")
+                    self.log.error(f"[COMPILER] ERROR doc={basename} error={error}")
                     self.print_traceback()
+                    self._fail(path_hdoc, f"render: {error}")
                 return x
             else:
                 self.log.error(f"[COMPILER] COMPILE_FAILED doc={basename}")

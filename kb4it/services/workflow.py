@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
+from kb4it.core.exceptions import CompilationError, ConfigError, KB4ITError, ThemeError
 from kb4it.core.lock import registry_lock
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document
@@ -309,6 +309,17 @@ class Workflow(Service):
             repo_title = repoconf.get("title") or os.path.basename(repo_path)
             self._save_project(repo_title, config_file)
 
+    def _failed_pages(self) -> dict:
+        """Pages the compiler could not make or the deployer could not find, with the reason."""
+        failed = {}
+        compiler = self.app.get_services().get("Compiler")
+        for name, reason in getattr(compiler, "failed", []) or []:
+            failed[name] = reason
+        deployer = self.app.get_services().get("Deployer")
+        for name in getattr(deployer, "missing", []) or []:
+            failed.setdefault(name, "missing from the cache")
+        return failed
+
     def build_website(self):
         """Build workflow:
         1. Check environment
@@ -376,6 +387,7 @@ class Workflow(Service):
         skipped    = docs_total - compiled - invalid
         keys_compiled = plan.key_count if plan is not None else 0
         kv_compiled   = plan.kv_count if plan is not None else 0
+        failed = self._failed_pages()
         elapsed = time.perf_counter() - t0
 
         self.log.info(
@@ -386,6 +398,7 @@ class Workflow(Service):
             f" invalid={invalid}"
             f" keys_compiled={keys_compiled}"
             f" kv_pages_compiled={kv_compiled}"
+            f" failed={len(failed)}"
         )
         self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 
@@ -393,8 +406,13 @@ class Workflow(Service):
         if hooks is not None and hooks.has("on_build_end"):
             summary = {"docs_total": docs_total, "compiled": compiled, "skipped": skipped, "invalid": invalid,
                        "keys_compiled": keys_compiled, "kv_pages_compiled": kv_compiled,
-                       "elapsed": round(elapsed, 2)}
+                       "failed": len(failed), "elapsed": round(elapsed, 2)}
             hooks.call("on_build_end", str(backend.get_path("target")), summary)
+
+        if failed:
+            names = ", ".join(sorted(failed))
+            self.log.error(f"[WORKFLOW] PAGES_FAILED n={len(failed)} pages={names}")
+            raise CompilationError(f"{len(failed)} page(s) could not be built: {names}")
 
         # Report
         homepage = os.path.join(
