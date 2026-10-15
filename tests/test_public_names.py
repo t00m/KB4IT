@@ -62,6 +62,47 @@ UTIL_NAMES = [
     "ellipsize_text",
 ]
 
+# Every name kb4it.tui.app had before it was split into projects, servers, clipboard and screens.
+TUI_NAMES = [
+    "PROJECTS_FILE",
+    "VERSION",
+    "_LOG_STYLE",
+    "load_projects",
+    "save_projects",
+    "get_themes",
+    "get_apps",
+    "_project_root",
+    "_resolve_repo_path",
+    "_log_path",
+    "_kbdict_path",
+    "KB4IT_DEFAULT_PORT",
+    "KB4IT_PORT_SCAN_LIMIT",
+    "_WEB_SERVERS",
+    "_start_live_server",
+    "_start_project_server",
+    "_CLIPBOARD_TOOLS",
+    "clipboard_commands",
+    "_copy_to_clipboard",
+    "_parse_level",
+    "_reset_logging",
+    "_TUILogHandler",
+    "ConfirmScreen",
+    "BuildScreen",
+    "LogViewerScreen",
+    "DocumentViewerScreen",
+    "ExplorerScreen",
+    "ProjectInfoScreen",
+    "FileListScreen",
+    "ThemesScreen",
+    "AppsScreen",
+    "CreateProjectScreen",
+    "ImportProjectScreen",
+    "ProjectScreen",
+    "MainScreen",
+    "KB4ITTUI",
+    "run",
+]
+
 
 @pytest.mark.parametrize("name", UTIL_NAMES)
 def test_util_names_still_import(name):
@@ -87,3 +128,14 @@ def test_moved_names_are_the_same_objects():
     assert util.guess_datetime is dates.guess_datetime
     assert util.get_markdown_attributes is documents.get_markdown_attributes
     assert util.valid_filename is files.valid_filename
+
+
+@pytest.mark.parametrize("name", TUI_NAMES)
+def test_tui_names_still_import(name):
+    app = importlib.import_module("kb4it.tui.app")
+    assert hasattr(app, name), name
+
+
+def test_tui_app_all_is_the_recorded_list():
+    from kb4it.tui import app
+    assert sorted(app.__all__) == sorted(TUI_NAMES)

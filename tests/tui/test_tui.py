@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import pathlib
 import time
 import urllib.request
 
@@ -9,6 +10,8 @@ import pytest
 from textual.widgets import Button, DataTable, Input, Label, ListView, RichLog
 
 from kb4it.tui import app as tui
+from kb4it.tui import clipboard, projects
+from kb4it.tui.screens import project as project_screens
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 SIZE = (140, 60)
@@ -18,7 +21,7 @@ SIZE = (140, 60)
 def registry(tmp_path, monkeypatch):
     """Point the TUI project registry at a fresh file."""
     path = tmp_path / "projects.json"
-    monkeypatch.setattr(tui, "PROJECTS_FILE", path)
+    monkeypatch.setattr(projects, "PROJECTS_FILE", path)
     return path
 
 
@@ -85,7 +88,7 @@ def test_helpers(tmp_path):
     cfg = str(tmp_path / "repo" / "config" / "repo.json")
     assert tui._resolve_repo_path(cfg, "target") == tmp_path / "repo" / "target"
     absolute = str(tmp_path / "abs")  # "/abs" is not absolute on Windows
-    assert tui._resolve_repo_path(cfg, absolute) == tui.Path(absolute)
+    assert tui._resolve_repo_path(cfg, absolute) == pathlib.Path(absolute)
     assert tui._log_path(cfg) is None and tui._kbdict_path(cfg) is None
     assert tui._parse_level("   ERROR | x") == "ERROR"
     assert tui._parse_level("plain line") == "INFO"
@@ -120,7 +123,7 @@ def test_clipboard_skips_tools_not_on_path(monkeypatch):
 
 def test_windows_clipboard_gets_utf16(monkeypatch):
     sent = []
-    monkeypatch.setattr(tui, "clipboard_commands", lambda family=None: [(["clip.exe"], "utf-16")])
+    monkeypatch.setattr(clipboard, "clipboard_commands", lambda family=None: [(["clip.exe"], "utf-16")])
     monkeypatch.setattr("subprocess.run", lambda cmd, input, check, timeout: sent.append(input))
     assert tui._copy_to_clipboard(object(), "Tomás") == (True, "clip.exe")
     assert sent[0].decode("utf-16") == "Tomás"
@@ -151,8 +154,8 @@ def test_main_screen_without_projects(registry):
 
 def test_project_screens_after_a_build(registry, built_repo, monkeypatch):
     opened = []
-    monkeypatch.setattr(tui.webbrowser, "open", opened.append)
-    monkeypatch.setattr(tui, "_copy_to_clipboard", lambda _app, text: (True, "test"))
+    monkeypatch.setattr(project_screens.webbrowser, "open", opened.append)
+    monkeypatch.setattr(clipboard, "_copy_to_clipboard", lambda _app, text: (True, "test"))
     register(registry, built_repo)
 
     async def scenario(app, pilot):
