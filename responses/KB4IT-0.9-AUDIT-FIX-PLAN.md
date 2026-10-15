@@ -6,7 +6,7 @@ DocType: How-to guide
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Draft
+Status: Done
 Tag: implementation-plan, audit, security, correctness, html
 Topic: Architecture, Development
 ---
@@ -168,6 +168,43 @@ escaping can be reviewed on CI before the HTML work, if you want it.
 | `bandit -r kb4it` without B602 | Here | Commit 86 |
 | `git am` of 0077 to 0107 on a clean checkout of 0076 | Here | Before the zip |
 | macOS and Windows (paths, atomic replace, case-insensitive target check) | CI after you push | After applying |
+
+## Implementation notes
+
+The series is patches 0079 to 0107, as planned: the snapshot tool, 26 commits for the requirements in groups A to F, the `AGENTS.md` update and these notes. Patches 0079 to 0099 went out first as `kb4it-audit-fix-interim.zip`. Differences from the plan, decided while implementing:
+
+| Item | Plan | Delivered | Why |
+|---|---|---|---|
+| Common templates (SC-01) | Spec: escaped like the theme that uses them | Always escaped, as the plan's design table says | Their explicit `\| h` filters are gone; "like the theme" would have printed those values raw for a custom theme without the flag |
+| `THEME_AUTOESCAPE_OFF` | Warned for every theme without the flag | Custom themes only (the spec's wording) | No intermediate commit warned about a bundled theme still being converted |
+| Python-built HTML | Commits 96 to 98 | Datatable titles, tooltips and dates in techdoc, blog and bookshelf escape their values; the JSON in the techdoc "Add" page writes `<` as `\u003c` | Found with an instrumented build that records every escaped value looking like HTML, with its template and line |
+| Entities in expressions | Not foreseen | bookshelf printed `&middot;` and `&#9656;` inside `${...}`; the separators are now raw and the values beside them escaped | Escaping would have shown the entity text |
+| `pymdown-extensions` in `test.sh` | Commit 99 | Commit 91; `nh3` in 99 | The superfences tests of 91 run in CI from that commit on |
+| `nh3` version | Any | `>=0.3.0` | `filter_style_properties`, used to keep only `text-align` in table cells, arrived in 0.3.0 |
+| Title rule (OC-03) | `get_markdown_attributes` and `get_hash_from_body` | Also the line the compiler leaves out of the page body | One definition of the title line everywhere |
+| Blog system pages (OC-04) | Not foreseen | Rendered with the plain body template explicitly | They reached it only because the post template failed on their missing `Date`; tolerating undated posts would have turned them into post cards |
+| SC-03 | Property names | Also property values that clean to nothing (`bad_property_value`) | They made pages such as `Tag_.html` shared by unrelated values |
+| MD-01 | Help page and warning | Also three help pages ("Customize templates", "Create a theme", "Release") converted from fenced to indented code | The new warning found them: their commands rendered as inline code |
+| Template errors (OC-02) | Raise | Raise, logged once per build with the error on one line | A broken footer otherwise logged one multi-line error per page |
+| Duplicate `class` (HT-01) | `HTML_TAG_A` only | Also the blog key modal title, now a `div` with `uk-h2` | The `HTML_TAG_H2` pair adds a `class` to every `<h2 `; changing the shared pattern would break custom themes |
+| Blog home ids (HT-01) | Not listed | The metadata and source dialogs of each post carry the post name in their ids | The home page repeats them per post |
+| `h1` (HT-02) | Techdoc and blog | Blog posts use their title as `h1`; other blog pages get a visually hidden `h1`; bookshelf pages without a heading get a visible one | Acceptance covers all four themes |
+| `git_path` (HT-02) | Every `git_*` key set | Server, user, repository and branch set; `git_path` may be empty | Documents at the repository root, as apphelp already allows |
+| Windows `os.replace` retry | Risk table: retry three times | Not done | No failure seen; it waits for CI on Windows |
+| `validate_html.py` | Runs on the smoke-build sites | Builds the sample site of every bundled theme itself (five sites with techdoc's sapbasis), with the audit documents | One command here and in CI; checks only pages, not third-party demo files such as TimelineJS's `icons.html` |
+
+Raw expressions (`| n`) per theme after the series: apphelp 3, techdoc 33, blog 24, bookshelf 18 (`scripts/devel/escape_audit.py <theme> --raw`).
+
+What ran here and what only CI can show:
+
+- Ran here: the full test suite at every commit (569 tests at the end, Python 3.11); the content snapshot before and after every theme commit; the Nu HTML Checker on the five sample sites (118 pages, 0 errors besides `uk-*`; 437 before Phase F); coverage with subprocess builds counted (91%, 85% at the audit); `git am` of the interim series on a clean checkout of 0078; shellcheck and actionlint.
+- Only CI: macOS and Windows (case-insensitive target check, atomic replace, file modes), the other Python versions of the matrix, and the HTML validation step on GitHub's runner.
+
+Follow-ups outside this series:
+
+- Pages left in a target by a build older than this series stay there, since no record says KB4IT wrote them; delete them by hand, or empty the target once.
+- The bookshelf help promises edit links, but the theme never prints its page actions.
+- AR-01 to AR-03 (decision D-6).
 
 ## Troubleshooting
 

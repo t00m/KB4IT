@@ -18,6 +18,8 @@ starts only after review.
 | 5 Dependencies and packaging | Done |
 | 6 Tests and HTML output quality | Done |
 
+The High and Medium findings were fixed by patches 0080 to 0105 (`responses/KB4IT-0.9-AUDIT-FIX-PLAN.md`), except ARC-01 to ARC-03, which wait for the architecture series. Each finding in scope carries a `Status:` line.
+
 ---
 
 ## Phase 0: Inventory
@@ -281,6 +283,7 @@ environment (Phase 5).
 ### Phase 1 findings
 
 **BASE-01** | Severity: Medium
+Status: Fixed in patch 0086 (FS-03).
 Location: `kb4it/core/util.py:210-224`
 Evidence:
 ```python
@@ -379,6 +382,7 @@ means the behaviour was observed, with the command outcome quoted.
 ### Findings
 
 **COR-01** | Severity: High
+Status: Fixed in patch 0080 (BO-01); exit status documented in 0082 (BO-03).
 Location: `kb4it/services/compiler.py:208-220`, `kb4it/core/main.py:202`
 Evidence:
 ```python
@@ -405,6 +409,7 @@ raise `CompilationError` after the pool finishes, so `KB4IT.run()` returns
 Effort: M
 
 **COR-02** | Severity: High
+Status: Fixed in patch 0081 (BO-02).
 Location: `kb4it/services/processor.py:187` (in `step_00_extraction`; saved again at `:301` after analysis), `kb4it/services/backend.py:300-304`
 Evidence:
 ```python
@@ -425,6 +430,7 @@ in this run. Combine with COR-01, so failed documents are never marked done.
 Effort: M
 
 **COR-03** | Severity: Medium
+Status: Fixed in patches 0083 (target check) and 0084 (owned pages) (FS-01).
 Location: `kb4it/services/deployer.py:130-134`, `kb4it/services/backend.py:346-348`
 Evidence:
 ```python
@@ -447,6 +453,7 @@ sweep to files KB4IT wrote in an earlier build (keep the list in `kbdict.json`).
 Effort: M
 
 **COR-04** | Severity: Medium
+Status: Fixed in patch 0085 (FS-02).
 Location: `kb4it/services/workflow.py:89-94`, `kb4it/core/util.py:301-304`
 Evidence:
 ```python
@@ -476,6 +483,7 @@ rebuild from scratch with a warning instead of failing.
 Effort: S
 
 **COR-05** | Severity: Medium
+Status: Fixed in patch 0087 (OC-01).
 Location: `kb4it/services/processor.py:190-198`, `kb4it/services/builder.py:135-140`
 Evidence:
 ```python
@@ -496,6 +504,7 @@ such as `workers` and `force`) into `signature_parts()`, or give each theme a
 Effort: S
 
 **COR-06** | Severity: Medium
+Status: Fixed in patch 0088 (OC-02).
 Location: `kb4it/services/builder.py:195-207`
 Evidence:
 ```python
@@ -521,6 +530,7 @@ the file and line.
 Effort: S
 
 **COR-07** | Severity: Medium
+Status: Fixed in patch 0089 (OC-03).
 Location: `kb4it/core/util.py:368`
 Evidence:
 ```python
@@ -537,6 +547,7 @@ python-markdown's `toc_tokens` after conversion.
 Effort: S
 
 **COR-08** | Severity: Medium
+Status: Fixed in patch 0090 (OC-04).
 Location: `kb4it/resources/themes/blog/logic/theme.py:169`
 Evidence:
 ```python
@@ -554,6 +565,7 @@ and suggest the log file.
 Effort: S
 
 **COR-09** | Severity: Low
+Status: Fixed in patch 0080 (BO-01).
 Location: `kb4it/services/deployer.py:125-128`
 Evidence:
 ```python
@@ -703,6 +715,7 @@ generated HTML.
 ### Findings
 
 **SEC-01** | Severity: High
+Status: Fixed in patches 0094 (switch, common templates) and 0095 to 0098 (apphelp, techdoc, blog, bookshelf) (SC-01).
 Location: `kb4it/services/builder.py:197`; for example `kb4it/resources/themes/techdoc/templates/METADATA_VALUE_LINK.tpl:1`
 Evidence:
 ```python
@@ -735,6 +748,7 @@ raw `<script>`.
 Effort: L
 
 **SEC-02** | Severity: Medium
+Status: Fixed in patch 0099: trust model documented, optional `markdown.sanitize` with nh3, `DOC_RAW_SCRIPT` in verify (SC-02).
 Location: `kb4it/core/mdconfig.py:51-52`
 Evidence:
 ```python
@@ -758,6 +772,7 @@ longer part of lxml), off by default for compatibility. Always drop
 Effort: M
 
 **SEC-03** | Severity: Medium
+Status: Fixed in patch 0093 (SC-03).
 Location: `kb4it/services/processor.py:468`, `kb4it/core/util.py:202-207`, `kb4it/services/deployer.py:125-128`
 Evidence:
 ```python
@@ -911,6 +926,7 @@ Service dependencies (`get_service` calls):
 ### Findings
 
 **ARC-01** | Severity: Medium
+Status: Deferred to the architecture series (AR-01, decision D-6).
 Location: `kb4it/resources/themes/blog/logic/theme.py` and `kb4it/resources/themes/techdoc/logic/theme.py` (pairs below); templates under `kb4it/resources/themes/*/templates/`
 Evidence (similarity of same-named methods):
 
@@ -940,6 +956,7 @@ fixed once.
 Effort: L
 
 **ARC-02** | Severity: Medium
+Status: Deferred to the architecture series (AR-02, decision D-6).
 Location: `kb4it/resources/themes/techdoc/logic/theme.py:82`, `kb4it/resources/themes/blog/logic/theme.py:24`, `kb4it/resources/themes/bookshelf/logic/theme.py:80`, `kb4it/services/builder.py:67`, `kb4it/tui/app.py`
 Evidence: class sizes from `ast`: techdoc `Theme` 1,187 lines and 40 methods,
 blog `Theme` 926 and 27, bookshelf `Theme` 681 and 33, `Builder` 467 and 36;
@@ -953,6 +970,7 @@ builders) into small modules; split `tui/app.py` into one module per screen.
 Effort: L
 
 **ARC-03** | Severity: Medium
+Status: Deferred to the architecture series (AR-03, decision D-6).
 Location: `kb4it/core/service.py:82`, `kb4it/services/backend.py:315`, `:447`, `:454`, `kb4it/services/frontend.py:163`
 Evidence:
 ```python
@@ -974,6 +992,7 @@ document the lifecycle in `AGENTS.md`.
 Effort: L
 
 **ARC-04** | Severity: Low
+Status: In part: `resolve_repo_path` moved to `kb4it/core/paths.py` in patch 0083.
 Location: `kb4it/core/hooks.py:76`, `kb4it/core/serve.py:43`, `:51`, `kb4it/services/backend.py:38`
 Evidence:
 ```python
@@ -988,6 +1007,7 @@ Recommended fix: move `resolve_repo_path` to `kb4it/core/util.py` (or a new
 Effort: S
 
 **ARC-05** | Severity: Low
+Status: In part: the `HTML_TAG_A` transformation removed in patch 0100; the other pairs remain.
 Location: `kb4it/services/builder.py:74-87`, `:117-120`; `kb4it/resources/common/templates/HTML_TAG_*_MD.tpl`; `kb4it/services/compiler.py:251-295`
 Evidence:
 ```python
@@ -1270,6 +1290,7 @@ Method:
 ### Findings
 
 **TST-01** | Severity: High
+Status: Fixed in patches 0080, 0081 and 0105 (TS-01); coverage 91% with subprocess builds counted.
 Location: `kb4it/services/compiler.py:191-193`, `:211-216`, `:219-220`; `kb4it/services/deployer.py:125-128`
 Evidence: coverage report, missing lines:
 ```
@@ -1287,6 +1308,7 @@ page rebuilt by the next incremental build.
 Effort: M
 
 **TST-02** | Severity: Medium
+Status: Fixed in patches 0087, 0089, 0095 to 0098 (output tests) and 0104 (HTML validation in CI) (TS-02).
 Location: `tests/themes/test_techdoc.py`, `tests/themes/test_blog.py`, `tests/themes/test_bookshelf.py`; `kb4it/resources/themes/techdoc/logic/theme.py` (60% covered); `kb4it/core/util.py:368`
 Evidence: no test feeds HTML in frontmatter or titles to the themes (SEC-01); no
 test covers a `# comment` in a code block before the H1 (COR-07); no test changes
@@ -1302,6 +1324,7 @@ job, run `html5validator` on the smoke-build output of apphelp and bookshelf
 Effort: M
 
 **HTML-01** | Severity: Medium
+Status: Fixed in patches 0100 to 0102 (HT-01); the Nu HTML Checker reports 0 errors besides `uk-*` on every sample site.
 Location: `kb4it/resources/themes/techdoc/templates/HTML_TAG_A_NEW.tpl:1`, `kb4it/resources/themes/blog/templates/HTML_TAG_A_NEW.tpl:1`, `kb4it/resources/themes/bookshelf/templates/HTML_TAG_A_NEW.tpl:1`, `kb4it/resources/themes/blog/templates/HTML_TAG_SECT1_NEW.tpl:1`, `kb4it/resources/themes/blog/templates/HTML_TAG_SECTIONBODY_NEW.tpl:1`
 Evidence:
 ```html
@@ -1331,6 +1354,7 @@ inside `<span>`; validate in CI (TST-02).
 Effort: M
 
 **HTML-02** | Severity: Medium
+Status: Fixed in patch 0103 (HT-02).
 Location: `kb4it/resources/themes/blog/templates/HTML_FOOTER.tpl:67`, `kb4it/resources/themes/techdoc/apps/default/config/repo.json:22-32`, `kb4it/resources/themes/blog/apps/default/config/repo.json:10-20`, `kb4it/resources/themes/techdoc/apps/sapbasis/config/repo.json:26-32`
 Evidence:
 ```html
@@ -1358,6 +1382,7 @@ false, add `alt` to the badge, give each page one `<h1>` and wrap the content in
 Effort: S
 
 **MD-01** | Severity: Medium
+Status: Fixed in patch 0092: documented, `MD_FENCE_IN_BLOCK` in verify; three help pages corrected (OC-05).
 Location: `kb4it/core/mdconfig.py:21`
 Evidence:
 ```python
@@ -1393,6 +1418,7 @@ Recommended fix: add one line to the Markdown section of the help.
 Effort: S
 
 **MD-03** | Severity: Low
+Status: Fixed in patch 0091 (OC-05).
 Location: `kb4it/core/mdconfig.py:37-49`
 Evidence: with `"extensions": ["pymdownx.superfences"]` and the default
 `highlight: "client"`, a fenced block renders as
