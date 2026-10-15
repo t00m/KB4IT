@@ -14,6 +14,9 @@ KB4IT is a static website generator for technical documentation. It reads Markdo
 scripts/install/local/install_kb4it_from_source.sh   # Install this checkout (uv tool or pipx)
 ./scripts/devel/test.sh                              # Run the tests
 ./scripts/devel/check_themes.sh                      # Check every tracked theme is releasable
+uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py  # Nu HTML Checker on every sample site (needs Java)
+uv run -q --no-project --with-requirements requirements.txt python scripts/devel/theme_snapshot.py --content DIR  # Normalised pages of every sample site; diff -r two runs
+python3 scripts/devel/escape_audit.py <theme> --raw  # List the template expressions printed raw (| n)
 scripts/release.sh --dry-run                         # See what a release would do
 ```
 
@@ -23,7 +26,7 @@ scripts/release.sh --dry-run                         # See what a release would 
 
 ```bash
 kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app defaults to "default")
-kb4it build <config>                      # Build the site from repo.json (use -f/--force to force recompilation)
+kb4it build <config>                      # Build the site from repo.json (use -f/--force to force recompilation); exits 1 when any page fails
 kb4it serve <config>                      # Build, serve on 127.0.0.1:8642 with live reload, rebuild on change (kb4it/core/serve.py)
 kb4it info <config>                       # Show repository info
 kb4it themes                              # List installed themes
@@ -65,7 +68,9 @@ CLI args (or TUI)
             -> Theme.post_deploy_activities()           # runs on the deployed target (stage 8)
 ```
 
-Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `invalid` (documents whose frontmatter could not be read, see `BuildPlan.invalid_docs`), `keys_compiled`, `kv_pages_compiled`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
+Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `invalid` (documents whose frontmatter could not be read, see `BuildPlan.invalid_docs`), `keys_compiled`, `kv_pages_compiled`, `failed`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
+
+**Build outcome.** A page that cannot be compiled or rendered is recorded in `Compiler.failed` (its partial page removed); a page missing from the cache at deploy time in `Deployer.missing`. Every other page is still deployed, then the workflow logs `[WORKFLOW] PAGES_FAILED n=... pages=...` and raises `CompilationError`: `kb4it build` exits 1 and `on_build_end` sees `failed` in its summary. `kbdict.json` is written only by `Backend.commit_kbdict()`, after a build without failures, so a failed or interrupted build leaves the previous cache and the next build compiles the same documents again.
 
 ### Modules
 
@@ -76,16 +81,17 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/exceptions.py`        | `KB4ITError`, `ConfigError`, `ThemeError`, `CompilationError` hierarchy |
 | `kb4it/core/service.py`           | Base `Service` class all services inherit |
 | `kb4it/core/types.py`             | `TypedDict` definitions: `Runtime`, `DirPaths`, `DocsInfo`, `KBDict`, `DocumentMeta`, `DBRecord` |
-| `kb4it/core/util.py`              | File ops, hashing (blake2b), `DateCache`, date helpers, `@timeit`, `get_document_attributes` |
+| `kb4it/core/util.py`              | File ops, hashing (blake2b), `DateCache`, date helpers, `@timeit`, `get_document_attributes`, `first_heading` (title rule), `json_save` (atomic: temp file, fsync, `os.replace`) and `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`) |
+| `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
 | `kb4it/core/log.py`               | Logging setup, file redirection |
 | `kb4it/services/workflow.py`      | Orchestrates build / create / info / list / verify actions |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |
 | `kb4it/services/database.py`      | In-memory document index keyed by docId, metadata caches |
 | `kb4it/services/processor.py`     | Frontmatter extraction, change detection, owns `BuildPlan` + `AnalysisResult` |
 | `kb4it/services/compiler.py`      | Markdown -> HTML via `python-markdown` in a `ThreadPoolExecutor` |
-| `kb4it/services/builder.py`       | Renders Mako templates; defines `REQUIRED_TEMPLATES` + `_template_candidates()` |
+| `kb4it/services/builder.py`       | Renders Mako templates (escaped when the theme opts in, see Escaping); defines `REQUIRED_TEMPLATES` + `_template_candidates()`, `git_ready()` |
 | `kb4it/services/frontend.py`      | Theme discovery, theme load, required-template validation |
-| `kb4it/services/deployer.py`      | Copies the compiled output to `repo.target` |
+| `kb4it/services/deployer.py`      | Copies the compiled output to `repo.target`; removes only pages listed in `kbdict.json` `deployed` by an earlier build (none on the first build after an upgrade) |
 | `kb4it/core/serve.py`             | `kb4it serve`: build, serve, poll for changes, rebuild in-process (holds the repo lock; builds pass `lock_held`) |
 | `kb4it/core/webserver.py`         | `SiteServer` (threaded `http.server`), `BuildStatus`, live reload script injection, `/__kb4it/status` |
 | `kb4it/core/watch.py`             | `PollingWatcher`: stdlib polling with debounce, ignores editor scratch files |
@@ -136,7 +142,10 @@ Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first e
 ### Builder hooks and core behaviour
 
 - `Builder.create_page_about_app()` builds the about-app page into the build tree; the backend never writes into `source/`.
-- `Processor.signature_parts()` lists core settings that shape every page (`markdown`, and later overrides and hooks); their hash is stored as `core_signature` in `kbdict.json`, and a change rebuilds everything (`[PROCESSOR] CORE_SIGNATURE_CHANGED`).
+- `Processor.signature_parts()` lists core settings that shape every page (`markdown`, overrides, hooks, and a hash of the whole `repo.json` minus `NON_PAGE_KEYS` = `workers`, `force`, `fail_on_invalid`, `source`, `target`); their hash is stored as `core_signature` in `kbdict.json`, and a change rebuilds everything (`[PROCESSOR] CORE_SIGNATURE_CHANGED`).
+- A template that exists but does not compile raises `ThemeError` (`[BUILDER] TEMPLATE_COMPILE_FAIL name= path= error=`, logged once per build); only missing candidates fall through to the next location.
+- The title is the first `# ` line outside fenced and indented code (`util.first_heading`); the same line is left out of the page body and of the body hash.
+- Page names from property names and values never start with a dot (`valid_filename`); a name or value that cleans to nothing makes the document invalid (`bad_property_name`, `bad_property_value`).
 - `Builder.site_signature()` returns a value that changes when every page must be rebuilt (default empty, which turns the check off). The processor stores it in the database and forces a full recompile when it changes; themes that render site-wide content (navigation, related pages) into every page override it.
 - Links between documents are scanned in stage 3 (`Processor.document_links()`, only for documents whose body changed) and stored in `kbdict.json` as `links`; `BuildPlan.backlinks` holds the inverse, a document whose backlinks changed is recompiled, and the compiler appends `HTML_BACKLINKS.tpl` ("Linked from") to each article unless `repo.json` has `"backlinks": false`. `kb4it verify` reports `LINK_BROKEN` and `ANCHOR_MISSING` and exits 1.
 - Markdown links to other `.md` files (`[text](other.md#anchor)`) are rewritten to the generated `.html` page. A target that is not a source document logs `[COMPILER] LINK_BROKEN` (rewrite logic in `kb4it/core/mdlinks.py`).
@@ -145,9 +154,15 @@ Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first e
 
 ### Template transformations
 
-`Builder.apply_transformations()` (in `builder.py`) rewrites HTML from `python-markdown` using Mako template pairs. For each transformation name, a `_MD` template (source pattern, from common templates) and a `_NEW` template (replacement, from the active theme) are loaded. The theme supplies `_NEW` templates to override the default HTML wrappers. This system is used for element-level theming (e.g. wrapping tables, code blocks, or admonitions in theme-specific markup).
+`Builder.apply_transformations()` (in `builder.py`) rewrites HTML from `python-markdown` using Mako template pairs. For each transformation name, a `_MD` template (source pattern, from common templates) and a `_NEW` template (replacement, from the active theme) are loaded. The theme supplies `_NEW` templates to override the default HTML wrappers. This system is used for element-level theming (e.g. wrapping tables, code blocks, or admonitions in theme-specific markup). It is plain string replacement on the page body, so a `_NEW` replacement must not add an attribute the matched element may already carry (the link transformation `HTML_TAG_A` was removed for that reason; style document links with CSS on the body container). Section wrappers use classes, never fixed ids, since they repeat on a page.
 
 Additional system templates (not in the required set): `PAGE_ABOUT_KB4IT`, `PAGE_ABOUT_APP`, `PAGE_HELP`.
+
+### Escaping
+
+A theme with `"autoescape": true` in `theme.json` (all bundled themes) compiles its templates, and their overrides, with `default_filters=["h"]`: every `${...}` is HTML-escaped. Print HTML built by KB4IT or the theme raw with `${value | n}` (page bodies, TOC, datatables, metadata sections, the search box, JSON inside `<script>`), never a value taken from a document or `repo.json` as it is. KB4IT's common templates are always escaped. A custom theme without the key renders as before and logs `[BUILDER] THEME_AUTOESCAPE_OFF` once per build. HTML that theme logic builds in Python and passes to a raw expression must escape the values it holds (`html.escape`); JSON printed inside `<script>` must replace `<` with `\u003c`. `scripts/devel/escape_audit.py` lists every expression of a theme; `tests/themes/test_escaping.py` builds every bundled theme with hostile titles and properties.
+
+Raw HTML written in a document reaches the page as written (the trust model is in `help/source/reference-document-format.md`). `"markdown": {"sanitize": true}` cleans each document's compiled HTML with nh3 (`mdconfig.sanitize_html`, allow-list in `SANITIZE_TAGS`/`SANITIZE_ATTRIBUTES`) in the compiler, before KB4IT adds its own markup.
 
 ### Mako templates
 
@@ -168,9 +183,11 @@ Strictly required (validated in `Backend._validate_config`, raises `ConfigError`
 
 Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `ignored_keys`, `events`, `logo`, `logo_alt`, `menu`, `datatable`, `webserver`, `admin`, `git`, `git_repo`, `git_server`, `git_user`, `git_branch`, `git_path`.
 
-Core optional fields added in 0.9 (all part of `Processor.signature_parts()`, so changing them rebuilds every page): `markdown` (`extensions`, `extension_configs`, `highlight` = `client`|`pygments`|`none`, `pygments_style`, `pygments_style_dark`), `search` (themes with `"search": true` in `theme.json`), `site_url`, `sitemap`, `feed` (`enabled`, `limit`, `categories`, `full_content`; themes declare `"feed": true|false` in `theme.json`), `og_image`, `overrides` (default `overrides`), `hooks`, `backlinks`.
+Core optional fields added in 0.9 (all part of `Processor.signature_parts()`, so changing them rebuilds every page): `markdown` (`extensions`, `extension_configs`, `highlight` = `client`|`pygments`|`none`, `pygments_style`, `pygments_style_dark`, `sanitize`), `search` (themes with `"search": true` in `theme.json`), `site_url`, `sitemap`, `feed` (`enabled`, `limit`, `categories`, `full_content`; themes declare `"feed": true|false` in `theme.json`), `og_image`, `overrides` (default `overrides`), `hooks`, `backlinks`.
 
-`kbdict.json` fields added in 0.9: `core_signature`, `links` (`{docId: [[target docId, fragment], ...]}`).
+`kbdict.json` fields added in 0.9: `core_signature`, `links` (`{docId: [[target docId, fragment], ...]}`), `deployed` (sorted list of the pages written into the target, kept across `--force` and version upgrades). An unreadable `kbdict.json` logs `[BACKEND] KBDICT_CORRUPT` and the build runs as a full rebuild; an unreadable `projects.json` is kept with `quarantine` (`PROJECTS_CORRUPT`).
+
+Edit links (`git`, `git_*`) appear only when `git_ready(repo)` is true: `"git": true` and `git_server`, `git_user`, `git_repo`, `git_branch` set (no `{placeholder}`); templates test `var['git_ok']`. Sample `repo.json` files carry no placeholders other than `{source_directory}` and `{target_directory}`, which `create` fills.
 
 `theme_path` (optional) overrides the name-based theme lookup with an explicit directory. When set, `Frontend.theme_search` skips the source-embedded, user-installed, and built-in lookup chain and uses this directory directly; it must contain a valid `theme.json`. Relative values are anchored to the repository root (the parent of the config file's parent), `~` and `$VARS` are expanded, and symlinks are resolved. Intended for applications that embed KB4IT as a library and ship their own theme without installing it under `~/.kb4it/`. The `theme` (name) field is still required and is used for identification and logging.
 
@@ -306,7 +323,7 @@ Projects are registered automatically by `kb4it create` and manually via ImportP
 
 KB4IT consumes Markdown files only (`.md` / `.markdown`). Each must begin with a YAML frontmatter block, followed by an H1 heading used as the document title.
 
-A document that does not meet this (`missing_frontmatter`, `missing_frontmatter_close`, `invalid_frontmatter`, `missing_h1_title`, `yaml_error line=<n> col=<n> <problem>`) is logged as `[UTIL] DOC_INVALID`, left out of the site and recorded in `BuildPlan.invalid_docs`. Quote values that contain `: ` (for example `Summary: "Plugins: how they load"`), otherwise YAML reads them as a nested mapping.
+A document that does not meet this (`missing_frontmatter`, `missing_frontmatter_close`, `invalid_frontmatter`, `missing_h1_title`, `yaml_error line=<n> col=<n> <problem>`, `bad_property_name key=<k>`, `bad_property_value key=<k>`) is logged as `[UTIL] DOC_INVALID`, left out of the site and recorded in `BuildPlan.invalid_docs`. Quote values that contain `: ` (for example `Summary: "Plugins: how they load"`), otherwise YAML reads them as a nested mapping.
 
 ```markdown
 ---
@@ -333,7 +350,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 
 - Python >= 3.11, < 4.0, on GNU/Linux, macOS and Windows (CI runs all three with 3.11, 3.13 and 3.14). Platform-specific code is limited to `kb4it/core/lock.py` (flock/msvcrt), `kb4it/core/env.py` (platform description) and the TUI clipboard; `KB4IT_HOME` relocates `~/.kb4it`.
 - `Mako==1.3.12` -- templates.
-- `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions always on; `repo.json` `markdown.extensions`/`extension_configs` add more (`kb4it/core/mdconfig.py`, checked at config load). Optional extra `KB4IT[extras]` installs `pymdown-extensions`.
+- `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions always on; `repo.json` `markdown.extensions`/`extension_configs` add more (`kb4it/core/mdconfig.py`, checked at config load). Optional extra `KB4IT[extras]` installs `pymdown-extensions` and `nh3` (for `markdown.sanitize`); with `pymdownx.superfences` or `pymdownx.highlight`, `all_configs()` sets `pymdownx.highlight.use_pygments` from `highlight`. `kb4it verify` warns `MD_FENCE_IN_BLOCK` (fence inside an indented block, without superfences) and, while `sanitize` is off, lists `DOC_RAW_SCRIPT` (information).
 - `PyYAML>=6.0` -- frontmatter parsing.
 - `Pygments>=2.15` -- build-time code highlighting (`markdown.highlight: pygments`).
 - `lxml` -- XML parsing for post-processing.
