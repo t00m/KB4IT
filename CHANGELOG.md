@@ -89,6 +89,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 
 - The unused `exec_cmd` helper, which ran commands through a shell (`shell=True`). A test now checks that no module of the package uses a shell (FS-03, BASE-01).
+- 115 bundled templates that could never reach a page: the 52 files of 13 transformation pairs written for Asciidoctor markup that python-markdown never produces (`HTML_TAG_PRE`, `HTML_TAG_TABLE`, `HTML_TAG_TABLE_KB4IT`, the `HTML_TAG_ADMONITION_*` and `HTML_TAG_ADMONITION_ICON_*` families), and 63 templates no code renders. Pages are unchanged; tests now fail if a transformation can never match or a template is never used (AR-04, ARC-05).
 
 ### Security
 
