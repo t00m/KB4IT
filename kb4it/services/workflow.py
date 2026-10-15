@@ -22,7 +22,7 @@ from kb4it.core.mdlinks import scan_document
 from kb4it.core.service import Service
 from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, fences_in_blocks,
                              get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
-                             page_name_clashes, quarantine)
+                             page_name_clashes, quarantine, raw_script_lines)
 from kb4it.core.paths import resolve_repo_path
 
 
@@ -202,6 +202,12 @@ class Workflow(Service):
             for line in markdown_warnings:
                 print(f"  {line}")
 
+        raw_html = self._verify_raw_scripts(docs, settings)
+        if raw_html:
+            print("\nRaw HTML (information: it reaches the pages as written; see markdown.sanitize):")
+            for line in raw_html:
+                print(f"  {line}")
+
         link_problems = self._verify_links(docs)
         if link_problems:
             print("\nLinks:")
@@ -226,6 +232,21 @@ class Workflow(Service):
                 self.log.warning(f"[WORKFLOW] MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}")
                 lines.append(f"MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}: "
                              "indent the code instead of fencing it, or enable pymdownx.superfences")
+        return lines
+
+    def _verify_raw_scripts(self, docs, settings):
+        """DOC_RAW_SCRIPT lines for documents with scripts or event handlers, when sanitize is off."""
+        if settings is None or settings.sanitize:
+            return []
+        lines = []
+        for doc in sorted(docs):
+            with open(doc, encoding=SOURCE_ENCODING) as fh:
+                numbers = raw_script_lines(fh.read())
+            if numbers:
+                name = os.path.basename(doc)
+                line = f"DOC_RAW_SCRIPT doc={name} lines={','.join(map(str, numbers))}"
+                self.log.info(f"[WORKFLOW] {line}")
+                lines.append(line)
         return lines
 
     def _find_theme_dir(self, repo, config_file):

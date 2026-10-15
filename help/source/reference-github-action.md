@@ -30,7 +30,7 @@ It runs on Linux, macOS and Windows runners and needs no Python on the runner: i
 | `config` | (required) | Path of `repo.json`, relative to the workspace |
 | `version` | empty | KB4IT version to install from PyPI. Empty installs the KB4IT of the action itself, so `@v0.9.0` builds with KB4IT 0.9.0 |
 | `python-version` | `3.13` | Python that runs KB4IT, from 3.11 to 3.14 |
-| `extras` | `false` | `true` also installs the extras ([PyMdown Extensions](reference-repo-json.md#markdown)) |
+| `extras` | `false` | `true` also installs the extras ([PyMdown Extensions](reference-repo-json.md#markdown), and nh3 for [`sanitize`](reference-repo-json.md#markdown)) |
 | `verify` | `true` | Run `kb4it verify` first; a document that cannot be read, a broken link or a theme problem fails the step before anything is built |
 | `force` | `false` | `true` builds with `--force`, compiling every page |
 

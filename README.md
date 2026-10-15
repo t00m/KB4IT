@@ -107,7 +107,7 @@ pipx install KB4IT
 pip install --user KB4IT
 ```
 
-**Extras** - [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) for task lists, tabs, details and more:
+**Extras** - [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) for task lists, tabs, details and more, and [nh3](https://nh3.readthedocs.io/) to clean raw HTML from documents:
 
 ```bash
 uv tool install "KB4IT[extras]"

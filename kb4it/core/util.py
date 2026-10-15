@@ -396,6 +396,42 @@ def fences_in_blocks(body: str) -> list:
     return found
 
 
+_RAW_SCRIPT_RE = re.compile(r"<script\b|<[a-zA-Z][^>]*\son[a-zA-Z]+\s*=", re.IGNORECASE)
+
+
+def raw_script_lines(body: str) -> list:
+    """Line numbers (1-based) with a <script> element or an on*= handler outside code.
+
+    Fenced and indented code blocks and `inline code` are skipped: there the text
+    is shown, not run.
+    """
+    found = []
+    fence = None
+    prev_blank = True
+    in_indented = False
+    for number, line in enumerate(body.splitlines(), start=1):
+        if fence is not None:
+            stripped = line.strip()
+            if stripped.startswith(fence) and set(stripped) == {fence[0]}:
+                fence = None
+            continue
+        match = _FENCE_RE.match(line)
+        if match:
+            fence = match.group(1)
+            prev_blank = in_indented = False
+            continue
+        blank = not line.strip()
+        if not blank and line.startswith(("    ", "\t")) and (prev_blank or in_indented):
+            in_indented = True
+            prev_blank = False
+            continue
+        in_indented = False if not blank else in_indented
+        prev_blank = blank
+        if _RAW_SCRIPT_RE.search(re.sub(r"(`+).*?\1", "", line)):
+            found.append(number)
+    return found
+
+
 def strip_first_heading(body: str) -> str:
     """Return body without the line of its first level-1 heading (see first_heading)."""
     _title, index = first_heading(body)

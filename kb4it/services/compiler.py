@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor as Executor
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
-from kb4it.core.mdconfig import load_settings
+from kb4it.core.mdconfig import load_settings, sanitize_html
 from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
@@ -173,6 +173,9 @@ class Compiler(Service):
                     raise CompilationError("Hook on_document must return the Markdown text")
             md = self.markdown.new_markdown()
             html_fragment = md.convert(text)
+            if self.markdown.sanitize:
+                # Before KB4IT adds its own markup (backlinks, TOC, sections): only the document is cleaned.
+                html_fragment = sanitize_html(html_fragment)
             with self._links_lock:
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)
             # Sections for the full-text search index, cached per document for incremental builds.

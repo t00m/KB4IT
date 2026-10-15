@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Writing
 HelpId: document-format
-Keyword: DOC_INVALID, yaml_error, missing_h1_title, bad_property_name, bad_property_value, frontmatter, date format
+Keyword: DOC_INVALID, DOC_RAW_SCRIPT, raw html, script, sanitize, trust, yaml_error, missing_h1_title, bad_property_name, bad_property_value, frontmatter, date format
 Level: basic
 Order: 230
 Section: Write
@@ -79,6 +79,12 @@ With these extensions a fenced block (```` ``` ````) only works at the start of 
 ```
 
 To fence code there, enable `pymdownx.superfences` (from `KB4IT[extras]`) in the [`markdown` setting](reference-repo-json.md#markdown). Without it, `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...`.
+
+## Raw HTML {#raw-html}
+
+Markdown lets a document hold HTML, and KB4IT keeps it: a `<div>`, an embedded video, or a `<script>` reach the page as written, and a script runs for every reader. That is useful when you write alone, and a risk when others contribute: review their documents, or turn on [`"sanitize": true`](reference-repo-json.md#markdown) in the `markdown` block. It keeps what Markdown makes (text, links, images, tables, code, admonitions, task lists) and removes scripts, styles, event handlers such as `onclick`, and `javascript:` links. Titles and property values are always shown as text, whatever the setting.
+
+While `sanitize` is off, `kb4it verify` lists the documents that hold a `<script>` or an `on...=` handler outside code, as information: `DOC_RAW_SCRIPT doc=... lines=...`.
 
 ## Why a document is rejected {#invalid}
 

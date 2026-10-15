@@ -20,7 +20,7 @@ inputs:
     required: false
     default: "3.13"
   extras:
-    description: Install the extras (PyMdown Extensions) too.
+    description: Install the extras (PyMdown Extensions and nh3) too.
     required: false
     default: "false"
   verify:

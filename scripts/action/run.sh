@@ -23,7 +23,7 @@ install() {
     fi
     local with=()
     if [[ "${KB4IT_EXTRAS:-false}" == "true" ]]; then
-        with=(--with "pymdown-extensions>=10.0")
+        with=(--with "pymdown-extensions>=10.0" --with "nh3>=0.3.0")
     fi
     echo "Installing ${spec} with Python ${KB4IT_PYTHON}"
     uv tool install --force --python "${KB4IT_PYTHON}" "${with[@]}" "${spec}"

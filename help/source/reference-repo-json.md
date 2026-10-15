@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -80,6 +80,7 @@ The optional `markdown` block adds python-markdown extensions to the built-in on
 | `highlight` | `client` | How code blocks are coloured: `client` (highlight.js in the browser, as before), `pygments` (at build time, no JavaScript), or `none` |
 | `pygments_style` | `default` | [Pygments style](https://pygments.org/styles/) for light colour schemes, with `pygments` |
 | `pygments_style_dark` | `monokai` | Pygments style for dark colour schemes, with `pygments` |
+| `sanitize` | `false` | `true` removes scripts, event handlers, `javascript:` links and any other markup Markdown does not make from each document. Needs nh3, part of the extras. See [Raw HTML](reference-document-format.md#raw-html) |
 
 With `"highlight": "pygments"` the build writes `resources/pygments.css`, and the pages no longer load highlight.js. Code blocks without a language are left plain.
 
@@ -87,7 +88,7 @@ With `pymdownx.superfences` (or `pymdownx.highlight`), code blocks follow `highl
 
 Changing the block rebuilds every page. An extension that is not installed stops the build with `MD_EXTENSION_MISSING name=... hint=pip install ...`; `kb4it verify` reports it too.
 
-The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT when you ask for its extras: `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`.
+The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT when you ask for its extras: `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`. The extras also bring [nh3](https://nh3.readthedocs.io/), which `sanitize` needs.
 
 ## Search {#search}
 
