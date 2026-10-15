@@ -17,3 +17,9 @@ def test_every_command_is_in_the_readme_usage(tmp_path, home):
 
 def test_readme_has_no_em_dash():
     assert "\u2014" not in (ROOT / "README.md").read_text(encoding="utf-8")
+
+
+def test_no_leftover_files():
+    """AR-07 (ARC-08): the old root redirect and the unused PyPI readme are gone."""
+    assert not (ROOT / "index.html").exists()
+    assert not (ROOT / "pypi").exists()
