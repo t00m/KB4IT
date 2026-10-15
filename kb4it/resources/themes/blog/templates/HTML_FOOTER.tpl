@@ -1,4 +1,5 @@
                 </div>
+                <!-- Main Content Column :: END-->
                 <!-- Sidebar Column :: START-->
                 <div class="uk-width-1-4@m" uk-height-viewport="expand: true">
                   <div class="uk-sticky" uk-sticky="offset: 40">
@@ -71,10 +72,7 @@
                       </div>
                     </div>
                   </div>
-                </div>
                 <!-- Sidebar Column :: END-->
-            </div>
-            <!-- Main Content Column :: END-->
         </div>
         <!-- GRID :: END -->
     </div>

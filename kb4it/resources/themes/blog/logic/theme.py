@@ -109,7 +109,7 @@ class Theme(Builder):
                     try:
                         title = documents[docId][key]
                         # Built as HTML here, printed raw by the template: escape the document title.
-                        item['title'] = f"<div uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</div>"
+                        item['title'] = f"<span uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
                         item['url'] = documents[docId]['%s_Url' % key]
                         row.append(TPL_DATATABLE_BODY_ITEM.render(var=item))
                     except (KeyError, AttributeError) as e:

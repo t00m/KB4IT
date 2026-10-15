@@ -55,7 +55,7 @@
                 <ul class="uk-navbar-nav noprint">
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-logo uk-transition-scale-up uk-transition-opaque" href="index.html">
-                            <img src="${var['repo'].get('logo', 'resources/images/logo.png')}" alt="${var['repo'].get('logo_alt', '')}" width="24px" height="24px">
+                            <img src="${var['repo'].get('logo', 'resources/images/logo.png')}" alt="${var['repo'].get('logo_alt', '')}" width="24" height="24">
                         </a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
@@ -104,9 +104,9 @@
                                 <a class="uk-link-toggle uk-text-primary" href="#"><span id="kb4it-page-title" class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
 % if var['has_toc'] and len(var['toc']) > 0:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
-                                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                                    <div class="uk-navbar-dropdown-nav">
 ${var['toc'] | n}
-                                    </ul>
+                                    </div>
                                 </div>
 % endif
                             </div>

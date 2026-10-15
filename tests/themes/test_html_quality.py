@@ -65,3 +65,40 @@ def test_section_blocks_use_classes(sites, theme):
     problems = [page.name for page in sites[theme]
                 if re.search(r'id="kb-sect[1-4]"|id="kb-section-body"', page.read_text(encoding="utf-8"))]
     assert problems == []
+
+
+def _markup(page):
+    """Page text without comments, scripts and textareas, whose content is not markup."""
+    return re.sub(r"<!--.*?-->|<script\b.*?</script>|<textarea\b.*?</textarea>", "", page.read_text(encoding="utf-8"),
+                  flags=re.DOTALL)
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_no_duplicate_id(sites, theme):
+    problems = []
+    for page in sites[theme]:
+        ids = re.findall(r'\sid="([^"]*)"', _markup(page))
+        repeated = sorted({i for i in ids if ids.count(i) > 1})
+        if repeated:
+            problems.append(f"{page.name}: {repeated}")
+    assert problems == []
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_valid_structure(sites, theme):
+    """The errors the Nu HTML Checker found in Phase 6, checked without Java."""
+    problems = []
+    for page in sites[theme]:
+        text = _markup(page)
+        opened, closed = len(re.findall(r"<div\b", text)), len(re.findall(r"</div>", text))
+        if opened != closed:
+            problems.append(f"{page.name}: {opened} <div> and {closed} </div>")
+        if re.search(r'\s(?:width|height)="\d+px"', text):
+            problems.append(f"{page.name}: width or height in px")
+        if re.search(r"<span\b[^>]*>\s*<div\b", text):
+            problems.append(f"{page.name}: div inside span")
+        if re.search(r"<ul\b[^>]*>\s*<ul\b", text):
+            problems.append(f"{page.name}: ul inside ul")
+        if re.search(r"<div\b[^>]*>\s*<style\b", text) or re.search(r"<body\b.*<style\b", text, re.DOTALL):
+            problems.append(f"{page.name}: style element in the body")
+    assert problems == []
