@@ -66,6 +66,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A page that cannot be made now fails the build: `kb4it build` exits 1, logs `[WORKFLOW] PAGES_FAILED` with the page names, and the summary (also in the GitHub Action job summary and the `on_build_end` hook) has a `failed=` count. Before, a page whose Markdown or template failed was only logged and the build reported success. Every other page is still deployed, and the deployer no longer stops at the first page missing from its cache (COR-01, COR-09).
 - `var/db/kbdict.json` is written only after a build succeeds. Before, it was written during the analysis, so after a failed or interrupted build the next incremental build treated the changed documents as done and kept serving their old pages until `--force` (COR-02).
 - The build refuses a `target` folder that is, or holds, the repository root, `source`, `config/`, `var/`, the home folder or a filesystem root, or that lies inside `source`; before, `"target": "."` let the deployer delete files of the repository (FS-01, COR-03).
+- The deployer removes from `target` only the pages that an earlier build recorded as its own (`deployed` in `var/db/kbdict.json`). Other `.html` files you keep in `target` are no longer deleted, and the first build after an upgrade deletes nothing. The unused step that emptied the whole target is gone (FS-01, COR-03).
 
 ---
 

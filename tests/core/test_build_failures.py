@@ -73,6 +73,12 @@ class _Backend:
     def get_path(self, name):
         return self.paths[name]
 
+    def get_deployed_before(self):
+        return None
+
+    def set_deployed(self, pages):
+        self.deployed = sorted(pages)
+
 
 def test_a_page_missing_from_the_cache_does_not_stop_the_deploy(tmp_path):
     """COR-09: the deploy used to stop at the first missing page, leaving the rest uncopied."""

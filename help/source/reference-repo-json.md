@@ -36,7 +36,7 @@ A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 
 `source` and `target` are relative to the knowledge base folder, the one that holds `config/`. Absolute paths, `~` and `$VARIABLES` also work.
 
-KB4IT removes old pages from `target`, so `target` must be a folder of its own. The build stops with an error when `target` is the knowledge base folder, `source`, `config/`, `var/`, your home folder or a filesystem root, when it holds any of them, or when it lies inside `source`.
+KB4IT removes from `target` the pages of documents you deleted. It only removes pages it wrote itself, so other files you keep in `target` stay; still, `target` must be a folder of its own. The build stops with an error when `target` is the knowledge base folder, `source`, `config/`, `var/`, your home folder or a filesystem root, when it holds any of them, or when it lies inside `source`.
 
 ## Optional {#optional}
 

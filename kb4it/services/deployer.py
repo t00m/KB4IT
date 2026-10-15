@@ -53,11 +53,6 @@ class Deployer(Service):
         """Copy all from source directory to cache."""
         copy_docs(files, self.srvbes.get_path("cache"))
 
-    def step_03_clear_target(self):
-        """Clear target directory."""
-        delete_target_contents(self.srvbes.get_path("target"))
-        self.log.debug(f"[DEPLOYER] TARGET_CLEARED path={self.srvbes.get_path('target')}")
-
     def step_04_copy_sources_to_target(self, files):
         """Incrementally sync source Markdown files to target/sources/."""
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
@@ -113,7 +108,9 @@ class Deployer(Service):
         """Incrementally sync compiled HTML to target: copy expected, delete stale.
 
         A page missing from the cache does not stop the others; it is recorded in
-        self.missing and the build fails at the end.
+        self.missing and the build fails at the end. Only pages an earlier build
+        recorded as its own are deleted, so files the user keeps in the target
+        survive; the first build after an upgrade has no record and deletes nothing.
         """
         runtime = self.srvbes.get_dict("runtime")
         expected = runtime["docs"]["targets"]
@@ -133,13 +130,20 @@ class Deployer(Service):
         if self.missing:
             self.log.error("[DEPLOYER] HINT rebuild with --force")
 
-        for filename in os.listdir(dir_target):
-            if not filename.endswith('.html'):
+        previous = self.srvbes.get_deployed_before()
+        if previous is None:
+            self.log.debug("[DEPLOYER] STALE_SWEEP_SKIPPED reason=no_record")
+            previous = []
+        for filename in sorted(set(previous) - set(expected)):
+            # A plain page name only: the record is data read from disk, never a path to follow.
+            if not isinstance(filename, str) or not filename.endswith(".html") or os.path.basename(filename) != filename:
                 continue
-            if filename not in expected:
-                os.unlink(os.path.join(dir_target, filename))
+            stale = os.path.join(dir_target, filename)
+            if os.path.isfile(stale):
+                os.unlink(stale)
                 n_deleted += 1
                 self.log.debug(f"[DEPLOYER] STALE_HTML_DELETED file={filename}")
+        self.srvbes.set_deployed(expected)
 
         self.log.debug(f"[DEPLOYER] HTML_TO_TARGET copied={n_copied} deleted={n_deleted}")
 

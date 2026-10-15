@@ -110,6 +110,8 @@ class Backend(Service):
                 # may share var/db (e.g. an embedding app's own database).
                 kbdict_file = Path.joinpath(dir_db, "kbdict.json")
                 if os.path.exists(kbdict_file):
+                    # Keep the list of pages KB4IT wrote, so the deployer can still sweep them.
+                    self.deployed_kept = self._read_deployed(kbdict_file)
                     os.unlink(kbdict_file)
                 self.log.debug("[BACKEND] VAR_CLEARED scope=build_artifacts reason=force")
 
@@ -269,10 +271,25 @@ class Backend(Service):
         """Get path by name."""
         return self.runtime.get("dir", {}).get(name)
 
+    @staticmethod
+    def _read_deployed(path):
+        """Return the list of deployed pages stored in a kbdict.json, or None."""
+        try:
+            deployed = json_load(path).get("deployed")
+        except Exception:
+            return None
+        return deployed if isinstance(deployed, list) else None
+
     def load_kbdict(self):
         """Load KB4IT dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         empty_kbdict = {"document": {}, "metadata": {}}
+        # A forced or upgraded build starts from an empty dictionary but still knows its pages.
+        deployed = getattr(self, "deployed_kept", None)
+        if deployed is None and os.path.exists(kb4it_dbfile):
+            deployed = self._read_deployed(kb4it_dbfile)
+        if deployed is not None:
+            empty_kbdict["deployed"] = deployed
         try:
             kbdict = json_load(kb4it_dbfile)
             self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
@@ -322,6 +339,15 @@ class Backend(Service):
         """
         self.save_kbdict(self.srvprc.get_kb_dict())
         self.log.debug("[BACKEND] KBDICT_COMMIT")
+
+    def get_deployed_before(self):
+        """Pages the previous build wrote into the target, or None if it did not record them."""
+        deployed = self.srvprc.kbdict_cur.get("deployed")
+        return deployed if isinstance(deployed, list) else None
+
+    def set_deployed(self, pages):
+        """Record the pages this build wrote into the target; saved with the kbdict."""
+        self.srvprc.get_kb_dict()["deployed"] = sorted(pages)
 
     def get_kbdict_key(self, key, new=True):
         """Shortcut to Processor method."""
