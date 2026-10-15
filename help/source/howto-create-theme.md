@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Themes, Development
 HelpId: create-theme
-Keyword: custom theme, template, mako, theme.json, Builder, build_page, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
+Keyword: custom theme, template, mako, theme.json, Builder, DocumentTheme, themekit, template_base, build_page, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
 Level: advanced
 Order: 560
 Related: explanation-themes.md, dev-architecture.md
@@ -150,9 +150,42 @@ KB4IT copies the theme folder to `target/resources/themes/plain/`; that is why t
 | `site_signature()` | Returns a value that changes when every page must be rebuilt, for example when the navigation changes |
 | `self.srvdtb` | The documents and their properties: `get_documents()`, `get_values(doc, key)` |
 | `self.distribute_md(name, html)` | Adds a page the theme rendered |
-| `self.template(name)` | Loads a template from `templates/`, or from KB4IT's shared ones |
+| `self.template(name)` | Loads a template from `templates/`, then from the theme's `template_base`, then from KB4IT's shared ones |
 
 Templates use [Mako](https://www.makotemplates.org/): `${var['repo']['title']}` prints a value, and `% for` ... `% endfor` repeats a block. `var['repo']` holds every key of `repo.json`.
+
+## Build on the document themes {#document-theme}
+
+techdoc, blog and bookshelf share their code and part of their templates. A theme that looks like them can use both, and hold only what it does differently.
+
+For the code, subclass `DocumentTheme` instead of `Builder`:
+
+```python
+from kb4it.services.themekit import DocumentTheme
+
+class Theme(DocumentTheme):
+    datatable_link_template = 'LINK'
+```
+
+It brings the pages per property and per value, the properties, stats, bookmarks and "all documents" pages, the document table, the day, month and year event pages, the table of contents and the metadata section of a page. Where the bundled themes differ, it takes a class attribute or a small method that your theme sets:
+
+| Hook | Default | Sets |
+|---|---|---|
+| `properties_title` | `'Properties'` | Title of the properties page |
+| `reuse_unchanged_pages` | `False` | Keep the cached properties, stats, bookmarks and all-documents pages when nothing they show changed |
+| `tagcloud_scale_skips_empty` | `False` | Leave documents without the property out of a tag cloud's scale |
+| `cloud_measure(frequency, max_frequency)` | `count` and `weight` | The size fields of a property button or a tag cloud word |
+| `frequency_keys()`, `stats_keys()` | Every property not ignored | The properties that size the buttons, and those the stats page lists |
+| `datatable_link_template` | `'LINK_DATATABLE'` | Template of a value link in the document table |
+| `datatable_default_headers` | `('Date', 'Title')` | Columns when neither the page nor `repo.json` `"datatable"` names them |
+| `datatable_date_cell(timestamp)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table |
+| `events_rebuild_all` | `False` | Rebuild every event page on each build, instead of only the dates whose documents changed |
+
+You can still override any method. KB4IT's own themes start the docstring of such an override with `Override:` and say why; a test checks it.
+
+For the templates, set `"template_base": "uikit"` in `theme.json` (see [Options in theme.json](#options)) and delete from `templates/` the ones you have not changed: they come from the base. techdoc and blog use it.
+
+A theme that looks nothing like them keeps subclassing `Builder`, as apphelp does.
 
 ## Escaping {#escaping}
 

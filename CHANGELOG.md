@@ -40,6 +40,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `"markdown": {"sanitize": true}` cleans the HTML of each document with [nh3](https://nh3.readthedocs.io/): what Markdown and the bundled extensions make stays, while scripts, styles, event handlers, `javascript:` links and `data:` URLs other than images go. Off by default; nh3 joins the `extras` (also in the GitHub Action and the container image). With it off, `kb4it verify` lists documents holding a script or an `on...=` handler outside code (`DOC_RAW_SCRIPT`, information only), and the help explains the trust model (SC-02, SEC-02).
 - `scripts/devel/validate_html.py` builds the sample site of every bundled theme (with the audit documents) and checks every page with the Nu HTML Checker, ignoring only the UIkit `uk-*` attributes; CI runs it in the `package` job, so the markup fixed in this release stays valid (TS-02, TST-02).
 - Tests for the failure branches of the compiler: a document that cannot compile, a page that runs out of memory and a progress callback that fails; the next build makes the failed pages. Test coverage, with the builds the tests start in their own process, rose from 85% at the audit to 91% (TS-01, TST-01).
+- Themes can share templates: `"template_base": "uikit"` in `theme.json` adds a bundled set of templates to the lookup, after the theme and before KB4IT's shared ones. techdoc and blog use it for the 17 templates they had in identical copies (AR-01, ARC-01).
 
 ### Changed
 
@@ -56,6 +57,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The help site is built and checked with the KB4IT GitHub Action of the same commit (`uses: ./`), so every change to the help also tests the action (GA-03).
 - The help pages "Command line" and "GitHub Action" list every case in which `kb4it build` ends with status 1, including a page that could not be made (BO-03).
 - `scripts/devel/theme_snapshot.py --content` builds every app of every theme (techdoc's `sapbasis` too) and, for techdoc and blog, a second incremental build after one document changed, so refactors can be checked against the output of both paths (AR-01 to AR-05, support).
+- techdoc, blog and bookshelf share their code: `kb4it.services.themekit.DocumentTheme` holds the property and value pages, the properties, stats, bookmarks and all-documents pages, the document table, the event pages, the table of contents and the metadata section, with class attributes and small methods where the themes differ. The three `theme.py` files lost about 1,300 lines; pages are unchanged. The help page "Create your own theme" explains how a theme builds on it (AR-01, ARC-01).
 
 ### Fixed
 
