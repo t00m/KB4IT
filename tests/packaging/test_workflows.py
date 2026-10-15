@@ -65,3 +65,9 @@ def test_help_site_is_built_with_the_action():
     assert action["with"]["config"] == "help/config/repo.json"
     assert action["with"]["force"] == "true"
     assert not any("uv tool install" in str(step.get("run", "")) for step in steps)
+
+
+def test_ci_validates_the_html_of_the_sample_sites():
+    """TS-02: the Nu HTML Checker runs on the sample site of every bundled theme."""
+    text = steps_text(load("kb4it.yml")["jobs"]["package"])
+    assert "scripts/devel/validate_html.py" in text and "html5validator" in text

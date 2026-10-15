@@ -53,6 +53,9 @@ jobs:
       - name: Every tracked theme is compliant
         run: ./scripts/devel/check_themes.sh
 
+      - name: The sample sites are valid HTML (UIkit attributes aside)
+        run: uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py
+
       - name: Build wheel
         run: uv build --wheel
 
