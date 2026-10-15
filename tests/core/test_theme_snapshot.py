@@ -24,3 +24,9 @@ def test_normalise_keeps_document_dates():
 def test_fixtures_exist():
     names = {p.name for p in snapshot.FIXTURES.glob("*.md")}
     assert {"rich.md", "hostile.md"} <= names
+
+
+def test_every_app_is_snapshotted_with_content():
+    pairs = list(snapshot.apps(content=True))
+    assert ("techdoc", "sapbasis") in pairs and ("apphelp", "default") in pairs
+    assert list(snapshot.apps(content=False)) == [p for p in pairs if p[1] == "default" and p[0] != "apphelp"]

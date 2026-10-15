@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Build every theme's default app and record the produced files and log problems.
+"""Build every theme's sample apps and record the produced files and log problems.
 
 Usage:
-    theme_snapshot.py OUT                 file lists and log problems per theme
+    theme_snapshot.py OUT                 file lists and log problems per theme and app
     theme_snapshot.py --content OUT       also every page, normalised, so two runs can be
                                           compared with `diff -r` (theme and template work)
 
-With --content the techdoc, blog and bookshelf sites also get the documents in
-tests/fixtures/audit/ (a rich document and one with hostile values), and apphelp is
-included. Build dates, times and the KB4IT version are replaced by placeholders.
+With --content every app of every theme is built (apphelp included), the techdoc,
+blog and bookshelf sites also get the documents in tests/fixtures/audit/ (a rich
+document and one with hostile values), and techdoc and blog are built a second time
+after one dated document changed, so the incremental path is recorded too
+(OUT/<theme>-<app>.incremental). Build dates, times and the KB4IT version are
+replaced by placeholders.
 """
 
 import argparse
@@ -69,35 +72,62 @@ def save_pages(target, dest):
         out.write_text(normalise(path.read_text(encoding="utf-8")), encoding="utf-8")
 
 
+# Themes whose incremental build is recorded too (they have event pages built from cache).
+INCREMENTAL = ("techdoc", "blog")
+
+
+def apps(content):
+    """(theme, app) pairs to build: the default app only, or with --content every app."""
+    for theme_dir in sorted(THEMES.iterdir()):
+        apps_dir = theme_dir / "apps"
+        if not (apps_dir / "default").is_dir():
+            continue
+        if theme_dir.name == "apphelp" and not content:
+            continue
+        names = sorted(p.name for p in apps_dir.iterdir() if p.is_dir()) if content else ["default"]
+        for app in names:
+            yield theme_dir.name, app
+
+
+def problems_of(result):
+    problems = []
+    for line in result.stdout.splitlines():
+        if " ERROR " in line or " WARNING " in line:
+            fields = [f.strip() for f in line.split("|")]
+            problems.append(f"{fields[0]} {fields[-1]}")
+    return problems
+
+
 def main(out, content=False):
     out.mkdir(parents=True, exist_ok=True)
-    for theme_dir in sorted(THEMES.iterdir()):
-        theme = theme_dir.name
-        if not (theme_dir / "apps" / "default").is_dir():
-            continue
-        if theme == "apphelp" and not content:
-            continue
-        work = Path(tempfile.mkdtemp(prefix=f"snap-{theme}-"))
+    for theme, app in apps(content):
+        name = theme if not content else f"{theme}-{app}"
+        work = Path(tempfile.mkdtemp(prefix=f"snap-{name}-"))
         home = work / "home"
         home.mkdir()
         repo = work / "repo"
-        kb4it(["create", theme, str(repo)], work, home)
+        kb4it(["create", theme, app, str(repo)], work, home)
         if content and theme != "apphelp":
             for doc in sorted(FIXTURES.glob("*.md")):
                 shutil.copy(doc, repo / "source" / doc.name)
-        result = kb4it(["build", str(repo / "config" / "repo.json")], work, home)
-        (out / f"{theme}.target").write_text("\n".join(listing(repo / "target", True)) + "\n")
-        (out / f"{theme}.source").write_text("\n".join(listing(repo / "source")) + "\n")
-        problems = []
-        for line in result.stdout.splitlines():
-            if " ERROR " in line or " WARNING " in line:
-                fields = [f.strip() for f in line.split("|")]
-                problems.append(f"{fields[0]} {fields[-1]}")
-        (out / f"{theme}.log").write_text(f"exit={result.returncode}\n" + "\n".join(problems) + "\n")
+        config = str(repo / "config" / "repo.json")
+        result = kb4it(["build", config], work, home)
+        (out / f"{name}.target").write_text("\n".join(listing(repo / "target", True)) + "\n")
+        (out / f"{name}.source").write_text("\n".join(listing(repo / "source")) + "\n")
+        problems = problems_of(result)
+        (out / f"{name}.log").write_text(f"exit={result.returncode}\n" + "\n".join(problems) + "\n")
         if content:
-            save_pages(repo / "target", out / theme)
+            save_pages(repo / "target", out / name)
+            if theme in INCREMENTAL:
+                # One dated document changes; the second build takes the incremental path.
+                rich = repo / "source" / "rich.md"
+                rich.write_text(rich.read_text(encoding="utf-8") + "\nOne more line.\n", encoding="utf-8")
+                again = kb4it(["build", config], work, home)
+                (out / f"{name}.incremental.log").write_text(
+                    f"exit={again.returncode}\n" + "\n".join(problems_of(again)) + "\n")
+                save_pages(repo / "target", out / f"{name}.incremental")
         shutil.rmtree(work, ignore_errors=True)
-        print(f"{theme}: exit={result.returncode} problems={len(problems)}")
+        print(f"{name}: exit={result.returncode} problems={len(problems)}")
 
 
 if __name__ == "__main__":
