@@ -78,9 +78,6 @@ class BuildScreen(Screen):
         self._launch_build()
 
     def _launch_build(self) -> None:
-        from kb4it.services import compiler as cmod
-        cmod.set_progress_callback(self._on_compiled)
-        cmod.set_compile_start_callback(self._on_start)
         handler = _TUILogHandler(self._on_log)
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s: %(message)s"))
         t = threading.Thread(target=self._build_thread, args=(handler,), daemon=True)
@@ -88,7 +85,6 @@ class BuildScreen(Screen):
 
     def _build_thread(self, handler: _TUILogHandler) -> None:
         from kb4it.core.main import KB4IT
-        from kb4it.services import compiler as cmod
         error = ""
         try:
             _reset_logging()
@@ -97,6 +93,8 @@ class BuildScreen(Screen):
                 config=self._config,
                 log_level="DEBUG",
                 force=self._force,
+                progress_callback=self._on_compiled,
+                compile_start_callback=self._on_start,
             )
             inst = KB4IT(params)
             # KB4IT's __init__ has already called setup_logging() and registered
@@ -111,8 +109,6 @@ class BuildScreen(Screen):
             error = str(exc)
         finally:
             logging.getLogger().removeHandler(handler)
-            cmod.clear_progress_callback()
-            cmod.clear_compile_start_callback()
             self.app.call_from_thread(self._on_done, error)
 
     # ── callbacks invoked from the build thread ───────────────────────────────

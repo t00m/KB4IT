@@ -27,6 +27,8 @@ from kb4it.services.workflow import Workflow
 
 # Actions that write into a repository take its lock: <root>/var/kb4it.lock.
 LOCKED_ACTIONS = ("build", "create")
+# Parameters that carry code for the build to call, not settings (see services/compiler.py).
+CALLBACK_PARAMS = ("progress_callback", "compile_start_callback")
 
 
 def lock_path_for(params: dict):
@@ -62,6 +64,9 @@ class KB4IT:
         else:
             self.params = vars(argparse.Namespace())
             self.params["REPO_CONFIG_FILE"] = None
+        # Callbacks are code, not settings: keep them out of the parameters, which are logged
+        # and passed to the templates. The compiler of this build calls them.
+        self.callbacks = {name: self.params.pop(name) for name in CALLBACK_PARAMS if name in self.params}
 
         # Initialize log
         if "log_level" not in self.params:

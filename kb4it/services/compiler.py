@@ -22,35 +22,38 @@ from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext, strip_first_heading)
 
-# Optional TUI callbacks set by kb4it.tui.app before a build, cleared after.
-# _progress_callback: called per document,  signature: (basename: str, rc: bool)
-# _compile_start_callback: called once with the total doc count,  (total: int)
-_progress_callback = None
-_compile_start_callback = None
+# Callbacks of a build come with it: KB4IT(params) takes "progress_callback", called per
+# document with (basename: str, rc: bool), and "compile_start_callback", called once with the
+# number of documents (total: int). The set_* functions below are deprecated (removed in
+# 0.10.0): what they register is used by the next build only, then forgotten.
+_pending_callbacks = {}
 
 
 def set_progress_callback(callback) -> None:
-    """Register a per-document TUI progress callback."""
-    global _progress_callback
-    _progress_callback = callback
+    """Deprecated: pass "progress_callback" to KB4IT(params) instead."""
+    _pending_callbacks["progress_callback"] = callback
 
 
 def clear_progress_callback() -> None:
-    """Remove the per-document TUI progress callback."""
-    global _progress_callback
-    _progress_callback = None
+    """Deprecated: forget a progress callback registered with set_progress_callback."""
+    _pending_callbacks.pop("progress_callback", None)
 
 
 def set_compile_start_callback(callback) -> None:
-    """Register a callback invoked with the actual number of docs to compile."""
-    global _compile_start_callback
-    _compile_start_callback = callback
+    """Deprecated: pass "compile_start_callback" to KB4IT(params) instead."""
+    _pending_callbacks["compile_start_callback"] = callback
 
 
 def clear_compile_start_callback() -> None:
-    """Remove the compile-start callback."""
-    global _compile_start_callback
-    _compile_start_callback = None
+    """Deprecated: forget a callback registered with set_compile_start_callback."""
+    _pending_callbacks.pop("compile_start_callback", None)
+
+
+def take_pending_callbacks() -> dict:
+    """Return the callbacks registered with the deprecated set_* functions, and forget them."""
+    pending = dict(_pending_callbacks)
+    _pending_callbacks.clear()
+    return pending
 
 
 class Compiler(Service):
@@ -67,6 +70,12 @@ class Compiler(Service):
         self.failed = []
         self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
+        callbacks = dict(getattr(self.app, "callbacks", None) or {})
+        for name, callback in take_pending_callbacks().items():
+            self.log.debug(f"[COMPILER] CALLBACK_DEPRECATED name={name} replacement=params.{name}")
+            callbacks.setdefault(name, callback)
+        self.progress_callback = callbacks.get("progress_callback")
+        self.compile_start_callback = callbacks.get("compile_start_callback")
 
     def execute(self):
         """Compile Markdown documents to HTML."""
@@ -90,9 +99,9 @@ class Compiler(Service):
         self.log.debug(f"[COMPILER] WORKERS n={max_workers}")
         with Executor(max_workers=max_workers) as exe:
             docs = sorted(get_source_docs(self.srvbes.get_path("tmp")))
-            if _compile_start_callback is not None:
+            if self.compile_start_callback is not None:
                 try:
-                    _compile_start_callback(len(docs))
+                    self.compile_start_callback(len(docs))
                 except Exception as err:
                     self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=start err={err}")
             jobs = []
@@ -216,9 +225,9 @@ class Compiler(Service):
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
             self.log.info(f"[COMPILER] COMPILED doc={basename} rc={rc}")
-            if _progress_callback is not None:
+            if self.progress_callback is not None:
                 try:
-                    _progress_callback(basename, rc)
+                    self.progress_callback(basename, rc)
                 except Exception as err:
                     self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=progress err={err}")
             if rc is True:

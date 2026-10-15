@@ -38,10 +38,10 @@ compiler.Compiler.execute = faulty_execute
 
 def failing_callback(name, rc):
     raise RuntimeError("callback fault")
-compiler.set_progress_callback(failing_callback)
 
 from kb4it.core.main import KB4IT
-params = argparse.Namespace(action="build", config=sys.argv[1], force=False, log_level="INFO")
+params = argparse.Namespace(action="build", config=sys.argv[1], force=False, log_level="INFO",
+                            progress_callback=failing_callback)
 print("RUN_RESULT", KB4IT(params).run())
 """
 
