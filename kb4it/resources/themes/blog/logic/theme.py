@@ -195,41 +195,6 @@ class Theme(DocumentTheme):
     def page_hook_post(self, var):
         return var
 
-    def extract_toc(self, source):
-        """Extract TOC from compiled HTML code and make it theme dependent."""
-        toc = ''
-        items = []
-        lines = source.split('\n')
-        s = e = n = 0
-        var = self.get_theme_var()
-        toc_li_top = self.template('HTML_TOC_LI').render(var=var)
-        toc_sectlevel1 = self.template('HTML_TOC_SECTLEVEL1').render(var=var)
-        toc_sectlevel2 = self.template('HTML_TOC_SECTLEVEL2').render(var=var)
-        toc_sectlevel3 = self.template('HTML_TOC_SECTLEVEL3').render(var=var)
-        toc_sectlevel4 = self.template('HTML_TOC_SECTLEVEL4').render(var=var)
-
-        for line in lines:
-            if "toctitle" in line:
-                s = n + 1
-            if s > 0:
-                if line.startswith('</div>') and n > s:
-                    e = n
-                    break
-            n = n + 1
-
-        if s > 0 and e > s:
-            for line in lines[s:e]:
-                if line.startswith('<li><a href='):
-                    line = line.replace("<li><a ", toc_li_top)
-                else:
-                    line = line.replace("sectlevel1", toc_sectlevel1)
-                    line = line.replace("sectlevel2", toc_sectlevel2)
-                    line = line.replace("sectlevel3", toc_sectlevel3)
-                    line = line.replace("sectlevel4", toc_sectlevel4)
-                items.append(line)
-            toc = '\n'.join(items)
-        return toc
-
     def build_page(self, path_md, var={}):
         """Build the final HTML Page.
 

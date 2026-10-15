@@ -19,6 +19,7 @@ SHARED = {
                  "get_maxkv_freq", "build_page_stats", "build_page_bookmarks", "build_page_index_all"],
     "tables": ["build_datatable"],
     "events": ["build_events"],
+    "toc": ["extract_toc"],
 }
 
 
@@ -260,3 +261,29 @@ def test_events_rebuild_all_rebuilds_every_page(tmp_path):
     theme.events_rebuild_all = True
     theme.build_events(["a.md", "b.md"])
     assert sorted(theme.built) == sorted(EVENT_PAGES) and theme.reused == []
+
+
+TOC_SOURCE = """<p>intro</p>
+<div id="toc"><div id="toctitle">Contents</div>
+<ul class="sectlevel1">
+<li><a href="#a">A</a>
+<ul class="sectlevel2">
+<li><a href="#b">B</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>body</p>"""
+
+
+def test_extract_toc_uses_the_theme_markup():
+    toc = _Theme().extract_toc(TOC_SOURCE)
+    lines = toc.split("\n")
+    page = "[('page', {})]"
+    assert lines[0] == f'<ul class="<HTML_TOC_SECTLEVEL1 {page}>">'
+    assert lines[1] == f'<HTML_TOC_LI {page}>href="#a">A</a>'
+    assert f'<ul class="<HTML_TOC_SECTLEVEL2 {page}>">' in lines and "<p>body</p>" not in toc
+
+
+def test_extract_toc_without_toc():
+    assert _Theme().extract_toc("<p>no contents</p>\n</div>") == ""

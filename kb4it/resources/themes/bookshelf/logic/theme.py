@@ -494,38 +494,6 @@ class Theme(DocumentTheme):
             fhtml.write(HTML)
 
     # --------------------------------------------------------------- shared
-    def extract_toc(self, source):
-        toc = ''
-        items = []
-        lines = source.split('\n')
-        s = e = n = 0
-        var = self.get_theme_var()
-        TOC_LI_TOP = self.template('HTML_TOC_LI')
-        TOC_SECTLEVEL1 = self.template('HTML_TOC_SECTLEVEL1')
-        TOC_SECTLEVEL2 = self.template('HTML_TOC_SECTLEVEL2')
-        TOC_SECTLEVEL3 = self.template('HTML_TOC_SECTLEVEL3')
-        TOC_SECTLEVEL4 = self.template('HTML_TOC_SECTLEVEL4')
-        for line in lines:
-            if line.find("toctitle") > 0:
-                s = n + 1
-            if s > 0:
-                if line.startswith('</div>') and n > s:
-                    e = n
-                    break
-            n = n + 1
-        if s > 0 and e > s:
-            for line in lines[s:e]:
-                if line.startswith('<li><a href='):
-                    line = line.replace("<li><a ", TOC_LI_TOP.render(var=var))
-                else:
-                    line = line.replace("sectlevel1", TOC_SECTLEVEL1.render(var=var))
-                    line = line.replace("sectlevel2", TOC_SECTLEVEL2.render(var=var))
-                    line = line.replace("sectlevel3", TOC_SECTLEVEL3.render(var=var))
-                    line = line.replace("sectlevel4", TOC_SECTLEVEL4.render(var=var))
-                items.append(line)
-            toc = '\n'.join(items)
-        return toc
-
     def datatable_date_cell(self, timestamp):
         """Bookshelf's date cell: the date only, no link."""
         if timestamp is None:
@@ -553,9 +521,6 @@ class Theme(DocumentTheme):
         except Exception as error:
             self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={docId} error={error}")
             return ''
-
-    def generate_sources(self):
-        pass
 
     def post_activities(self):
         self.log.debug("[BOOKSHELF] POST_END")

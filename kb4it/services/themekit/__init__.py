@@ -11,9 +11,10 @@ from kb4it.services.themekit.events import EventsMixin
 from kb4it.services.themekit.keypages import KeyPagesMixin
 from kb4it.services.themekit.metadata import MetadataMixin
 from kb4it.services.themekit.tables import TableMixin
+from kb4it.services.themekit.toc import TocMixin
 
-__all__ = ["DocumentTheme", "EventsMixin", "KeyPagesMixin", "MetadataMixin", "TableMixin"]
+__all__ = ["DocumentTheme", "EventsMixin", "KeyPagesMixin", "MetadataMixin", "TableMixin", "TocMixin"]
 
 
-class DocumentTheme(MetadataMixin, KeyPagesMixin, TableMixin, EventsMixin, Builder):
+class DocumentTheme(MetadataMixin, KeyPagesMixin, TableMixin, EventsMixin, TocMixin, Builder):
     """Base class of the document themes."""
