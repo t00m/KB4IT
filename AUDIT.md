@@ -18,7 +18,7 @@ starts only after review.
 | 5 Dependencies and packaging | Done |
 | 6 Tests and HTML output quality | Done |
 
-The High and Medium findings were fixed by patches 0080 to 0105 (`responses/KB4IT-0.9-AUDIT-FIX-PLAN.md`), except ARC-01 to ARC-03, which wait for the architecture series. Each finding in scope carries a `Status:` line.
+The High and Medium findings were fixed by patches 0080 to 0105 (`responses/KB4IT-0.9-AUDIT-FIX-PLAN.md`); the architecture findings, ARC-01 to ARC-08, by the architecture series, patches 0111 to 0133 (`responses/KB4IT-0.9-ARCHITECTURE-PLAN.md`). Each finding in scope carries a `Status:` line.
 
 ---
 
@@ -926,7 +926,7 @@ Service dependencies (`get_service` calls):
 ### Findings
 
 **ARC-01** | Severity: Medium
-Status: Deferred to the architecture series (AR-01, decision D-6).
+Status: Fixed in patches 0115 to 0122 (AR-01): `DocumentTheme` in `kb4it/services/themekit/` and the `uikit` template base.
 Location: `kb4it/resources/themes/blog/logic/theme.py` and `kb4it/resources/themes/techdoc/logic/theme.py` (pairs below); templates under `kb4it/resources/themes/*/templates/`
 Evidence (similarity of same-named methods):
 
@@ -956,7 +956,7 @@ fixed once.
 Effort: L
 
 **ARC-02** | Severity: Medium
-Status: Deferred to the architecture series (AR-02, decision D-6).
+Status: Fixed in patches 0123 to 0125 (AR-02): no module over 600 lines, enforced by a test.
 Location: `kb4it/resources/themes/techdoc/logic/theme.py:82`, `kb4it/resources/themes/blog/logic/theme.py:24`, `kb4it/resources/themes/bookshelf/logic/theme.py:80`, `kb4it/services/builder.py:67`, `kb4it/tui/app.py`
 Evidence: class sizes from `ast`: techdoc `Theme` 1,187 lines and 40 methods,
 blog `Theme` 926 and 27, bookshelf `Theme` 681 and 33, `Builder` 467 and 36;
@@ -970,7 +970,7 @@ builders) into small modules; split `tui/app.py` into one module per screen.
 Effort: L
 
 **ARC-03** | Severity: Medium
-Status: Deferred to the architecture series (AR-03, decision D-6).
+Status: Fixed in patches 0129 and 0130 (AR-03): `backend.pipeline`; the old lookups are deprecated until 0.10.0.
 Location: `kb4it/core/service.py:82`, `kb4it/services/backend.py:315`, `:447`, `:454`, `kb4it/services/frontend.py:163`
 Evidence:
 ```python
@@ -992,7 +992,7 @@ document the lifecycle in `AGENTS.md`.
 Effort: L
 
 **ARC-04** | Severity: Low
-Status: In part: `resolve_repo_path` moved to `kb4it/core/paths.py` in patch 0083.
+Status: Fixed in patch 0083 (`kb4it/core/paths.py`); `core` imports services only in `main.py`, the controller.
 Location: `kb4it/core/hooks.py:76`, `kb4it/core/serve.py:43`, `:51`, `kb4it/services/backend.py:38`
 Evidence:
 ```python
@@ -1007,7 +1007,7 @@ Recommended fix: move `resolve_repo_path` to `kb4it/core/util.py` (or a new
 Effort: S
 
 **ARC-05** | Severity: Low
-Status: In part: the `HTML_TAG_A` transformation removed in patch 0100; the other pairs remain.
+Status: Fixed in patches 0100 (`HTML_TAG_A`), 0112 (13 transformation pairs) and 0113 (63 templates) (AR-04).
 Location: `kb4it/services/builder.py:74-87`, `:117-120`; `kb4it/resources/common/templates/HTML_TAG_*_MD.tpl`; `kb4it/services/compiler.py:251-295`
 Evidence:
 ```python
@@ -1039,6 +1039,7 @@ run, style python-markdown's own markup with CSS instead of string replacement.
 Effort: M
 
 **ARC-06** | Severity: Low
+Status: Fixed in patches 0126 to 0128 (AR-05).
 Location: `kb4it/services/builder.py:70`, `kb4it/services/compiler.py:28-53`, `kb4it/services/backend.py:290`
 Evidence:
 ```python
@@ -1063,6 +1064,7 @@ the runtime dict, not in `params` or `repo`.
 Effort: S
 
 **ARC-07** | Severity: Low
+Status: In part, as scoped by AR-06: patch 0131 annotates the seams, which pass `mypy --strict` in CI; the rest of the package is not annotated.
 Location: whole package; for example `kb4it/services/database.py` (10 mypy errors, Phase 1)
 Evidence: 251 of 632 functions (39%) have any annotation; 132 of 525
 parameters (25%); no mypy step in CI (BASE-04).
@@ -1074,6 +1076,7 @@ mypy on those packages in CI.
 Effort: M
 
 **ARC-08** | Severity: Info
+Status: Fixed in patch 0114 (AR-07).
 Location: `index.html` (repository root), `pypi/README.rst`, `tests/conftest.py:8`
 Evidence: `index.html` is a redirect to `https://t00m.github.io/KB4IT/demo/index.html`,
 last changed in `d0e2862`; GitHub Pages is now published by

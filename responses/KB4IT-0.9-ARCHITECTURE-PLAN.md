@@ -6,7 +6,7 @@ DocType: How-to guide
 OS: Linux, macOS, Windows
 Product: KB4IT
 Scope: Development
-Status: Draft
+Status: Done
 Tag: implementation-plan, audit, architecture, refactoring, themes
 Topic: Architecture, Development
 ---
@@ -162,6 +162,57 @@ splitting) if you want CI on the moved code before the wiring changes of Phase D
 | `git am` of 0109 to 0133 on a clean checkout of 0108 | Here | Before the zip |
 | macOS and Windows | CI after you push | After applying |
 
+## Implementation notes
+
+The series is patches 0111 to 0133, as planned: the snapshot tool, 20 commits for
+AR-01 to AR-07, the `AGENTS.md` update and these notes. At every commit the test
+suite passed, the content snapshot of every sample app (full and incremental build)
+was identical to the baseline, and the Nu HTML Checker reported 0 errors besides
+UIkit attributes on 118 pages of the five sample sites. Differences from the plan,
+decided while implementing:
+
+| Item | Plan | Delivered | Why |
+|---|---|---|---|
+| Template bases (115) | `kb4it/resources/common/bases/` | `kb4it/resources/bases/` | `common/` is copied into the sites of themes without `deploy_dirs`; the bases would have been published with them |
+| Unused templates (113) | 62 | 63 | Common `HTML_TAG_ADMONITION_MD` had no user once the admonition pairs of 112 were gone |
+| Shared templates (116) | techdoc and blog, bookshelf if it shared any | 17 files to `uikit`; bookshelf has none of them and keeps no base | Byte-identical comparison after 112 and 113 |
+| bookshelf metadata (117) | Shared method | An override that calls the shared one and leaves the section empty on failure | bookshelf has always built the page without its metadata instead of failing; a failure now also logs the shared `[THEME]` lines |
+| Key pages (118) | Hooks for template names and a filter | Also `properties_title`, `reuse_unchanged_pages`, `tagcloud_scale_skips_empty`, `cloud_measure`, `frequency_keys`, `stats_keys`; bookshelf's `build_page_all` is now `build_page_index_all` | The three themes differ in the title, the cache reuse of four pages, the font size or weight of the clouds, and the keys they count |
+| Tag cloud scale (118) | Not foreseen | Kept as it was: techdoc and blog count documents without the property (read as an empty value) in the scale; bookshelf does not | Changing it would change pages; a candidate fix for later |
+| Datatable (119) | `datatable_link_template`, `datatable_default_headers`, `datatable_title_cell` | Also `datatable_date_cell` and `datatable_value_link` (techdoc's Priority and Status labels; bookshelf's `#` link) | Each theme renders the date and the value cells differently |
+| blog `repo.json` without `datatable` (119) | Not foreseen | Falls back to Date and Title, like techdoc | blog read the key strictly and stopped with a `KeyError` |
+| Event pages (120) | blog adopts techdoc's rule (rebuild on a changed document or a missing cache) | Shared method with techdoc's rule; blog sets `events_rebuild_all` | blog's day check started at `True`, so blog has always rebuilt every event page; adopting the rule would have made blog reuse cached pages, a change the plan did not intend. Whether blog should reuse them is a separate decision |
+| Unused code in the moved methods (118, 120) | Not foreseen | Dropped: blog's `proportion` (could only raise), the month pages' `var['doclist']` (no template reads it), the `get_doc_properties` call in `build_events` | Found while unifying |
+| `util.py` split (123) | `valid_filename` stays in `util` | `valid_filename`, `SOURCE_ENCODING` and `get_source_docs` in `files.py`; `get_hash_from_body` in `documents.py` | `documents.py` needs them, and the new modules import nothing from `util` |
+| TUI split (124) | Patch targets move to the module that uses them | Screens call `clipboard._copy_to_clipboard` through the module, so tests patch one place; the registry warning logs as `kb4it.tui.projects` | Two screens copy text |
+| techdoc split (125) | `techdoc_dashboard.py`, `techdoc_addpage.py` | Mixins (`DashboardMixin`, `AddPageMixin`) that `Theme` inherits; the Priority and Status tables moved with the dashboard | The methods move unchanged, with `self` |
+| Callbacks (127) | In `params` | Taken out of `params` into `KB4IT.callbacks`, so they are neither logged as parameters nor passed to templates as `var['conf']` | `params` is data |
+| Forced builds (128) | `Processor` reads `params["force"] or runtime["force_all"]` | As planned; before, it read `repo.json` `force` only | Same pages: `--force` and a bad cache already empty the cache; techdoc's backups now read `force_all` |
+| Pipeline (129) | Made at the end of stage 1 | As planned; `kb4it info` no longer creates a Processor, which it never used, and the Compiler takes deprecated callbacks at stage 1 | The three classes keep `Service` for their logger but are not registered |
+| Types (131) | mypy on the seams | 12 files, `mypy --strict` 0 errors; `ThemeHost` declares for mypy what the mixins use from `Builder`; event dates parse through a helper that raises `ValueError` on a bad date (never reached: the processor normalizes `Date` first); `string_timestamp` keeps raising `AttributeError` | CI pins mypy 2.4.0 and `types-PyYAML` |
+
+Sizes after the series: techdoc `theme.py` 411 lines (1,273 at the base), blog 448
+(971), bookshelf 526 (762), `tui/app.py` 133 (1,457), `core/util.py` 265 (754); the
+largest module is `services/builder.py`, 594. `services/themekit/` holds 566 lines.
+
+What ran here and what only CI can show:
+
+- Ran here: the full test suite at every commit (702 tests at the end, Python 3.11);
+  the content snapshot at every commit; the Nu HTML Checker at every commit;
+  `scripts/devel/check_themes.py`; the help site's `verify` and build; mypy,
+  shellcheck and actionlint.
+- Only CI: macOS and Windows, the other Python versions of the matrix, and the new
+  type-check step on GitHub's runner.
+
+Follow-ups outside this series:
+
+- Remove in 0.10.0 what 0.9.x keeps: `KB4IT.get_service` for the pipeline services,
+  `compiler.set_progress_callback` and `set_compile_start_callback`, and
+  `var['repo']['updated']`.
+- Decide whether blog should reuse its cached event pages (`events_rebuild_all`).
+- Decide whether a tag cloud's scale should leave out documents without the property
+  in techdoc and blog, as bookshelf does.
+
 ## Troubleshooting
 
 ### Risks
@@ -180,5 +231,5 @@ splitting) if you want CI on the moved code before the wiring changes of Phase D
 
 ## Open questions
 
-None for now. If the shared code cannot be made byte-identical for a theme without
-changing its output, I will stop and ask before going on.
+None. The shared code was made byte-identical for every theme; where a theme's
+behavior differed, a hook keeps it (see Implementation notes).
