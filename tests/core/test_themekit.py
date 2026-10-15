@@ -1,6 +1,7 @@
 """The document themes share their code through kb4it.services.themekit (AR-01)."""
 
 import ast
+import math
 
 import pytest
 
@@ -14,6 +15,8 @@ DOCUMENT_THEMES = ("techdoc", "blog", "bookshelf")
 # Methods of the AR-01 table that live in themekit; the list grows with each mixin.
 SHARED = {
     "metadata": ["get_labels", "get_html_values_from_key", "build_metadata_section", "get_page_actions"],
+    "keypages": ["build_page_key", "build_page_key_value", "build_page_properties", "build_tagcloud_from_key",
+                 "get_maxkv_freq", "build_page_stats", "build_page_bookmarks", "build_page_index_all"],
 }
 
 
@@ -50,7 +53,12 @@ def test_shared_methods_live_in_themekit():
         for name in names:
             owner = next(c for c in DocumentTheme.__mro__ if name in vars(c))
             assert owner.__module__.startswith("kb4it.services.themekit."), name
-            assert not hasattr(Builder, name), f"Builder grew {name}"
+
+
+def test_builder_does_not_grow():
+    """apphelp and custom themes subclass Builder, which keeps only its own stubs (D-G2)."""
+    shared = {name for names in SHARED.values() for name in names}
+    assert shared & set(vars(Builder)) == {"build_page_key", "build_page_key_value"}
 
 
 class _Template:
@@ -68,6 +76,10 @@ class _Db:
     def get_values(self, doc, key):
         return {"Tag": ["a", "b", ""]}.get(key, [])
 
+    def get_documents(self):
+        # doc1 and doc2 have Tag=a; doc3 to doc5 have no Tag, which reads as [""]
+        return ["doc1.html", "doc2.html", "doc3.html", "doc4.html", "doc5.html"]
+
     def get_custom_keys(self, doc):
         if self.broken:
             raise KeyError(doc)
@@ -83,12 +95,20 @@ class _Log:
 
 
 class _Theme(DocumentTheme):
-    def __init__(self, broken=False):  # no services: only what the metadata methods use
+    def __init__(self, broken=False):  # no services: only what the shared methods use
         self.srvdtb = _Db(broken)
         self.log = _Log()
 
     def template(self, name):
         return _Template(name)
+
+    def get_theme_var(self):
+        return {"page": {}}
+
+
+class _CloudDb(_Db):
+    def get_values(self, doc, key):
+        return ["a"] if doc in ("doc1.html", "doc2.html") else [""]
 
 
 def test_metadata_helpers():
@@ -106,3 +126,20 @@ def test_metadata_failure_is_logged_and_raised():
     with pytest.raises(KeyError):
         theme.build_metadata_section("doc.md")
     assert theme.log.errors == ["[THEME] METADATA_FAIL doc=doc.md error='doc.md'"]
+
+
+def test_cloud_measure_scales_by_log():
+    theme = _Theme()
+    assert theme.cloud_measure(4, 4) == {"count": 4, "weight": 1.0}
+    assert theme.cloud_measure(1, 4)["weight"] == round(math.log(2) / math.log(5), 3)
+    assert theme.cloud_measure(0, 0) == {"count": 0, "weight": 0.0}
+
+
+@pytest.mark.parametrize("skip_empty, weight", [(False, round(math.log(3) / math.log(4), 3)), (True, 1.0)])
+def test_tagcloud_scale_with_and_without_the_empty_value(skip_empty, weight):
+    """Documents without the property read as an empty value; bookshelf leaves it out of the scale."""
+    theme = _Theme()
+    theme.srvdtb = _CloudDb()
+    theme.tagcloud_scale_skips_empty = skip_empty
+    cloud = theme.build_tagcloud_from_key("Tag")
+    assert cloud.startswith("<WORDCLOUD") and f"'weight': {weight}" in cloud and "'word': 'a'" in cloud

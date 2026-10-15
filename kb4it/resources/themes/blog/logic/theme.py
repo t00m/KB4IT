@@ -7,7 +7,6 @@
 # Description: Theme Blog for KB4IT
 """
 
-import math
 import os
 import sys
 import threading
@@ -19,11 +18,13 @@ from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              get_font_size, get_human_datetime,
                              get_human_datetime_day, get_human_datetime_month,
                              get_human_datetime_year, guess_datetime,
-                             html_id_for, set_max_frequency, valid_filename)
+                             html_id_for, valid_filename)
 from kb4it.services.themekit import DocumentTheme
 
 
 class Theme(DocumentTheme):
+    properties_title = 'Metadata'
+    reuse_unchanged_pages = True
     dey = {}
     events_docs = {}
 
@@ -410,151 +411,6 @@ class Theme(DocumentTheme):
     def page_hook_post(self, var):
         return var
 
-    def build_page_properties(self):
-        if self.srvbes.get_value('runtime', 'nck') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'properties.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
-                self.srvbes.add_target('properties.md', 'properties.html')
-                return
-
-        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
-        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-        max_frequency = self.get_maxkv_freq()
-        all_keys = self.srvdtb.get_all_keys()
-        custom_buttons = ''
-        var = self.get_theme_var()
-        var['buttons'] = []
-        ignored_keys = self.srvdtb.get_ignored_keys()
-        for key in all_keys:
-            if key not in ignored_keys:
-                vbtn = {}
-                vbtn['content'] = self.build_tagcloud_from_key(key)
-                values = self.srvdtb.get_all_values_for_key(key)
-                frequency = len(values)
-                size = get_font_size(frequency, max_frequency)
-                proportion = int(math.log((frequency * 100) / max_frequency))
-                vbtn['key'] = key
-                vbtn['vfkey'] = valid_filename(key)
-                vbtn['size'] = size
-                vbtn['tooltip'] = "%d values" % len(values)
-                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn)
-                var['buttons'].append(button)
-        content = TPL_PROPS_PAGE.render(var=var)
-        self.distribute_md('properties', content)
-
-        self.srvdtb.add_document('properties.md')
-        self.srvdtb.add_document_key('properties.md', 'Title', 'Metadata')
-        self.srvdtb.add_document_key('properties.md', 'SystemPage', 'Yes')
-
-    def build_tagcloud_from_key(self, key):
-        """Create a tag cloud based on key values."""
-        dkeyurl = {}
-        for docId in self.srvdtb.get_documents():
-            tags = self.srvdtb.get_values(docId, key)
-            url = os.path.basename(docId)[:-5]
-            for tag in tags:
-                dkeyurl.setdefault(tag, set()).add(url)
-
-        max_frequency = set_max_frequency(dkeyurl)
-        lwords = []
-
-        for word in dkeyurl:
-            len_word = len(word)
-            if len_word > 0:
-                lwords.append(word)
-
-        len_words = len(lwords)
-        if len_words > 0:
-            lwords.sort(key=lambda y: y.lower())
-            TPL_WORDCLOUD = self.template('WORDCLOUD')
-            var = self.get_theme_var()
-            var['items'] = []
-            for word in lwords:
-                frequency = len(dkeyurl[word])
-                size = get_font_size(frequency, max_frequency)
-                url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
-                tooltip = "%d documents" % frequency
-                item = {}
-                item['url'] = url
-                item['tooltip'] = tooltip
-                item['size'] = size
-                item['word'] = word
-                var['items'].append(item)
-            html = TPL_WORDCLOUD.render(var=var)
-        else:
-            html = ''
-
-        return html
-
-    def get_maxkv_freq(self):
-        """Calculate max frequency for all keys"""
-        maxkvfreq = 0
-        all_keys = self.srvdtb.get_all_keys()
-        blocked_keys = self.srvdtb.get_blocked_keys()
-        for key in all_keys:
-            if key not in blocked_keys:
-                values = self.srvdtb.get_all_values_for_key(key)
-                if len(values) > maxkvfreq:
-                    maxkvfreq = len(values)
-        return maxkvfreq
-
-    def build_page_stats(self):
-        """Create stats page"""
-        if self.srvbes.get_value('runtime', 'nck') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'stats.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
-                self.srvbes.add_target('stats.md', 'stats.html')
-                return
-
-        TPL_PAGE_STATS = self.template('PAGE_STATS')
-        var = self.get_theme_var()
-        var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.srvdtb.get_all_keys()
-        var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            values = self.srvdtb.get_all_values_for_key(key)
-            item = {}
-            item['key'] = key
-            item['vfkey'] = valid_filename(key)
-            item['count_values'] = len(values)
-            var['leader_items'].append(item)
-        stats = TPL_PAGE_STATS.render(var=var)
-        self.distribute_md('stats', stats)
-
-        self.srvdtb.add_document('stats.md')
-        self.srvdtb.add_document_key('stats.md', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.md', 'SystemPage', 'Yes')
-
-    def build_page_index_all(self):
-        """Create a page with all documents"""
-        if self.srvbes.get_value('runtime', 'ncd') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'all.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-                self.srvbes.add_target('all.md', 'all.html')
-                return
-
-        TPL_PAGE_ALL = self.template('PAGE_ALL')
-        var = self.get_theme_var()
-        doclist = list(self.srvdtb.get_documents())
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-        var['content'] = datatable
-        page = TPL_PAGE_ALL.render(var=var)
-        self.distribute_md('all', page)
-
-        self.srvdtb.add_document('all.md')
-        self.srvdtb.add_document_key('all.md', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.md', 'SystemPage', 'Yes')
-
-        return page
-
     def extract_toc(self, source):
         """Extract TOC from compiled HTML code and make it theme dependent."""
         toc = ''
@@ -723,95 +579,6 @@ class Theme(DocumentTheme):
         with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
             fhtml.write(HTML)
 
-    def build_page_key(self, key, values):
-        """Create page for a key."""
-        TPL_PAGE_KEY = self.template('PAGE_KEY')
-        var = self.get_theme_var()
-        var['title'] = key
-        var['cloud'] = self.build_tagcloud_from_key(key)
-        var['leader'] = []
-        var['key_values'] = {}
-        for value in values:
-            item = {}
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            item['count'] = len(docs)
-            item['vfkey'] = valid_filename(key)
-            item['vfvalue'] = valid_filename(value)
-            item['name'] = value
-            var['leader'].append(item)
-
-        content = TPL_PAGE_KEY.render(var=var)
-        var['pagename'] = "%s" % valid_filename(key)
-        self.distribute_md(var['pagename'], content)
-
-        self.srvdtb.add_document(f"{var['pagename']}.md")
-        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
-        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
-
-    def build_page_key_value(self, kvpath):
-        key, value, COMPILE_VALUE = kvpath
-        TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
-        docs = self.srvbes.get_kbdict_value(key, value, new=True)
-        sorted_docs = self.srvdtb.sort_by_date(docs)
-        pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
-        var = self.get_theme_var()
-        var['key'] = key
-        var['value'] = value
-        var['title'] = '%s: %s' % (key, value)
-        var['pagename'] = pagename
-        var['doclist'] = sorted_docs
-        var['compile'] = COMPILE_VALUE
-        var['has_toc'] = False
-
-        datatable = self.build_datatable([], sorted_docs)
-        var['page']['dt_documents'] = datatable
-
-        if var['compile']:
-            content = TPL_PAGE_KEY_VALUE.render(var=var)
-            self.distribute_md(var['pagename'], content)
-
-            self.srvdtb.add_document(f"{var['pagename']}.md")
-            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
-            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
-            self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
-
-    def build_page_bookmarks(self):
-        """Create bookmarks page."""
-        if self.srvbes.get_value('runtime', 'ncd') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'bookmarks.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-                self.srvbes.add_target('bookmarks.md', 'bookmarks.html')
-                return
-
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
-        var = self.get_theme_var()
-        doclist = []
-        for docId in self.srvdtb.get_documents():
-            bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
-            doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
-            self.log.debug(f"[THEME] BOOKMARK_CHECK doc={docId} bookmark={bookmark} is_bookmarked={doc_bookmarked}")
-            if doc_bookmarked:
-                doclist.append(docId)
-
-        self.log.debug("[THEME] BOOKMARKS_FOUND n=%d", len(doclist))
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-
-        self.srvdtb.add_document('bookmarks.md')
-        self.srvdtb.add_document_key('bookmarks.md', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.md', 'SystemPage', 'Yes')
-
-        var['page']['title'] = 'Bookmarks'
-        var['page']['dt_bookmarks'] = datatable
-        page = TPL_PAGE_BOOKMARKS.render(var=var)
-        self.distribute_md('bookmarks', page)
-
-        self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
-
-        return page
-
     def get_related(self, docId):
         """Get a list of related documents for each tag"""
         # DISABLED:
@@ -842,6 +609,19 @@ class Theme(DocumentTheme):
         var['datatable'] = self.build_datatable(headers, doclist)
         html_related = TPL_SECTION_RELATED.render(var=var)
         return html_related
+
+    def cloud_measure(self, frequency, max_frequency):
+        """Blog sizes property buttons and tag cloud words by font size."""
+        return {'size': get_font_size(frequency, max_frequency)}
+
+    def frequency_keys(self):
+        """Blog sizes the property buttons against every property that is not blocked."""
+        blocked_keys = self.srvdtb.get_blocked_keys()
+        return [key for key in self.srvdtb.get_all_keys() if key not in blocked_keys]
+
+    def stats_keys(self):
+        """Blog lists every property on the stats page."""
+        return self.srvdtb.get_all_keys()
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""

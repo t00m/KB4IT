@@ -12,7 +12,6 @@ Server module.
 
 import calendar as _calendar
 import json
-import math
 import os
 import shutil
 import zipfile
@@ -27,7 +26,7 @@ from kb4it.core.util import (ellipsize_text, get_day, get_font_size,
                              get_human_datetime_month, get_human_datetime_year,
                              get_month, get_source_docs, get_year,
                              guess_datetime, html_id_for, human_size,
-                             set_max_frequency, slugify, source_ext,
+                             slugify, source_ext,
                              valid_filename)
 from kb4it.services.themekit import DocumentTheme
 
@@ -689,118 +688,6 @@ class Theme(DocumentTheme):
         self.create_page_help()
         self.create_page_search()
 
-    def build_page_properties(self):
-        """Create properties page"""
-
-        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
-        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-        max_frequency = self.get_maxkv_freq()
-        all_keys = self.srvdtb.get_all_keys()
-        var = self.get_theme_var()
-        var['buttons'] = []
-        log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
-        for key in all_keys:
-            ignored_keys = self.srvdtb.get_ignored_keys()
-            if key not in ignored_keys:
-                vbtn = {}
-                vbtn['content'] = self.build_tagcloud_from_key(key)
-                values = self.srvdtb.get_all_values_for_key(key)
-                frequency = len(values)
-                self.log.debug(f"[THEME] KEY key={key} frequency={frequency}")
-                weight = math.log(1 + frequency) / log_max if log_max else 0.0
-                vbtn['key'] = key
-                vbtn['vfkey'] = valid_filename(key)
-                vbtn['count'] = frequency
-                vbtn['weight'] = round(weight, 3)
-                vbtn['tooltip'] = "%d values" % frequency
-                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn)
-                var['buttons'].append(button)
-        content = TPL_PROPS_PAGE.render(var=var)
-        self.distribute_md('properties', content)
-
-        self.srvdtb.add_document('properties.md')
-        self.srvdtb.add_document_key('properties.md', 'Title', 'Properties')
-        self.srvdtb.add_document_key('properties.md', 'SystemPage', 'Yes')
-
-    def build_tagcloud_from_key(self, key):
-        """Create a tag cloud based on key values."""
-        dkeyurl = {}
-        for docId in self.srvdtb.get_documents():
-            tags = self.srvdtb.get_values(docId, key)
-            url = os.path.basename(docId)[:-5]
-            for tag in tags:
-                try:
-                    urllist = dkeyurl[tag]
-                    surllist = set(urllist)
-                    surllist.add(url)
-                    dkeyurl[tag] = list(surllist)
-                except KeyError:
-                    surllist = set()
-                    surllist.add(url)
-                    dkeyurl[tag] = list(surllist)
-
-        max_frequency = set_max_frequency(dkeyurl)
-        lwords = []
-
-        for word in dkeyurl:
-            len_word = len(word)
-            if len_word > 0:
-                lwords.append(word)
-
-        len_words = len(lwords)
-        if len_words > 0:
-            lwords.sort(key=lambda y: y.lower())
-            TPL_WORDCLOUD = self.template('WORDCLOUD')
-            var = self.get_theme_var()
-            var['items'] = []
-            log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
-            for word in lwords:
-                frequency = len(dkeyurl[word])
-                weight = math.log(1 + frequency) / log_max if log_max else 0.0
-                item = {}
-                item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(word))
-                item['tooltip'] = "%d documents" % frequency
-                item['word'] = word
-                item['count'] = frequency
-                item['weight'] = round(weight, 3)
-                var['items'].append(item)
-            html = TPL_WORDCLOUD.render(var=var)
-        else:
-            html = ''
-
-        return html
-
-    def get_maxkv_freq(self):
-        """Calculate max frequency for all keys"""
-        maxkvfreq = 0
-        for key in self.srvdtb.get_theme_keys():
-            values = self.srvdtb.get_all_values_for_key(key)
-            if len(values) > maxkvfreq:
-                maxkvfreq = len(values)
-        return maxkvfreq
-
-    def build_page_stats(self):
-        """Create stats page"""
-        TPL_PAGE_STATS = self.template('PAGE_STATS')
-        var = self.get_theme_var()
-        var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.srvdtb.get_theme_keys()
-        var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            values = self.srvdtb.get_all_values_for_key(key)
-            item = {}
-            item['key'] = key
-            item['vfkey'] = valid_filename(key)
-            item['count_values'] = len(values)
-            var['leader_items'].append(item)
-        stats = TPL_PAGE_STATS.render(var=var)
-        self.distribute_md('stats', stats)
-
-        self.srvdtb.add_document('stats.md')
-        self.srvdtb.add_document_key('stats.md', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.md', 'SystemPage', 'Yes')
-
     def build_page_add(self):
         """Create the 'Add document' helper page with per-category skeletons."""
         TPL = self.template('PAGE_ADD')
@@ -836,25 +723,6 @@ class Theme(DocumentTheme):
         self.srvdtb.add_document('add.md')
         self.srvdtb.add_document_key('add.md', 'Title', 'Add document')
         self.srvdtb.add_document_key('add.md', 'SystemPage', 'Yes')
-
-    def build_page_index_all(self):
-        """Create a page with all documents"""
-        TPL_PAGE_ALL = self.template('PAGE_ALL')
-        var = self.get_theme_var()
-        doclist = []
-        for docId in self.srvdtb.get_documents():
-            doclist.append(docId)
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-        var['content'] = datatable
-        page = TPL_PAGE_ALL.render(var=var)
-        self.distribute_md('all', page)
-
-        self.srvdtb.add_document('all.md')
-        self.srvdtb.add_document_key('all.md', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.md', 'SystemPage', 'Yes')
-
-        return page
 
     def extract_toc(self, source):
         """Extract TOC from compiled HTML code and make it theme dependent."""
@@ -973,89 +841,7 @@ class Theme(DocumentTheme):
                 pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
                 fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
 
-    def build_page_key(self, key, values):
-        """Create page for a key."""
-        TPL_PAGE_KEY = self.template('PAGE_KEY')
-        var = self.get_theme_var()
-        var['title'] = key
-        var['cloud'] = self.build_tagcloud_from_key(key)
-        var['leader'] = []
-        var['key_values'] = {}
-        for value in values:
-            item = {}
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            item['count'] = len(docs)
-            item['vfkey'] = valid_filename(key)
-            item['vfvalue'] = valid_filename(value)
-            item['name'] = value
-            var['leader'].append(item)
-
-        adoc = TPL_PAGE_KEY.render(var=var)
-        var['pagename'] = "%s" % valid_filename(key)
-        self.distribute_md(var['pagename'], adoc)
-
-        self.srvdtb.add_document(f"{var['pagename']}.md")
-        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
-        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
-
-        self.log.debug(f"[THEME] KEY_TARGET key={key} resource={var['pagename']}")
-
-    def build_page_key_value(self, kvpath):
-        key, value, COMPILE_VALUE = kvpath
-        TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
-        docs = self.srvbes.get_kbdict_value(key, value, new=True)
-        sorted_docs = self.srvdtb.sort_by_date(docs)
-        pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
-        var = self.get_theme_var()
-        var['key'] = key
-        var['value'] = value
-        var['vfkey'] = valid_filename(key)
-        var['title'] = '%s: %s' % (key, value)
-        var['pagename'] = pagename
-        var['doclist'] = sorted_docs
-        var['compile'] = COMPILE_VALUE
-        var['has_toc'] = False
-
-        datatable = self.build_datatable([], sorted_docs)
-        var['page']['dt_documents'] = datatable
-
-        if var['compile']:
-            adoc = TPL_PAGE_KEY_VALUE.render(var=var)
-            self.distribute_md(var['pagename'], adoc)
-
-            self.srvdtb.add_document(f"{var['pagename']}.md")
-            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
-            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
             # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
-
-    def build_page_bookmarks(self):
-        """Create bookmarks page."""
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
-        var = self.get_theme_var()
-        doclist = []
-        for docId in self.srvdtb.get_documents():
-            bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
-            doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
-            self.log.debug(f"[THEME] BOOKMARK_CHECK doc={docId} bookmark={bookmark} is_bookmarked={doc_bookmarked}")
-            if doc_bookmarked:
-                doclist.append(docId)
-
-        self.log.debug(f"[THEME] BOOKMARKS_FOUND n={len(doclist)}")
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-
-        self.srvdtb.add_document('bookmarks.md')
-        self.srvdtb.add_document_key('bookmarks.md', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.md', 'SystemPage', 'Yes')
-
-        var['page']['title'] = 'Bookmarks'
-        var['page']['dt_bookmarks'] = datatable
-        page = TPL_PAGE_BOOKMARKS.render(var=var)
-        self.distribute_md('bookmarks', page)
-
-        self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
-
-        return page
 
     def post_deploy_activities(self):
         """Build the admin area once the site has been deployed.

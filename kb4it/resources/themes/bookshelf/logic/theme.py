@@ -11,7 +11,6 @@ Bookshelf theme.
 #              Book > Part > Chapter for certification preparation.
 """
 
-import math
 import os
 import re
 from collections import Counter, OrderedDict
@@ -80,6 +79,8 @@ def status_bucket(status):
 
 class Theme(DocumentTheme):
     """Builder for the Bookshelf theme."""
+
+    tagcloud_scale_skips_empty = True
 
     books = OrderedDict()
     doc_index = {}
@@ -363,7 +364,7 @@ class Theme(DocumentTheme):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
-        self.build_page_all()
+        self.build_page_index_all()
         self.build_page_index(var)
         self.create_page_about_kb4it()
         self.create_page_about_app()
@@ -383,6 +384,7 @@ class Theme(DocumentTheme):
         self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
 
     def build_page_key_value(self, kvpath):
+        """Override: the page of a Book value is the book overview (PAGE_BOOK), not a document list."""
         self._ensure_context()
         key, value, COMPILE_VALUE = kvpath
         pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
@@ -399,26 +401,7 @@ class Theme(DocumentTheme):
             self.srvdtb.add_document_key(f"{pagename}.md", 'Title', value)
             self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
             return
-
-        # Default: a plain key/value listing.
-        docs = self.srvbes.get_kbdict_value(key, value, new=True)
-        sorted_docs = self.srvdtb.sort_by_date(docs)
-        var = self.get_theme_var()
-        var['key'] = key
-        var['value'] = value
-        var['vfkey'] = valid_filename(key)
-        var['title'] = f'{key}: {value}'
-        var['pagename'] = pagename
-        var['doclist'] = sorted_docs
-        var['compile'] = COMPILE_VALUE
-        var['has_toc'] = False
-        var['page']['dt_documents'] = self.build_datatable([], sorted_docs)
-        if var['compile']:
-            adoc = self.template('PAGE_KEY_VALUE').render(var=var)
-            self.distribute_md(pagename, adoc)
-            self.srvdtb.add_document(f"{pagename}.md")
-            self.srvdtb.add_document_key(f"{pagename}.md", 'Title', var['title'])
-            self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
+        super().build_page_key_value(kvpath)
 
     def _book_view(self, book_title):
         """Shape a single book for the kanban (Book overview) template."""
@@ -507,131 +490,6 @@ class Theme(DocumentTheme):
                 + HTML_FOOTER.render(var=var))
         with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
             fhtml.write(HTML)
-
-    def build_page_key(self, key, values):
-        TPL_PAGE_KEY = self.template('PAGE_KEY')
-        var = self.get_theme_var()
-        var['title'] = key
-        var['cloud'] = self.build_tagcloud_from_key(key)
-        var['leader'] = []
-        for value in values:
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            var['leader'].append({
-                'count': len(docs),
-                'vfkey': valid_filename(key),
-                'vfvalue': valid_filename(value),
-                'name': value,
-            })
-        adoc = TPL_PAGE_KEY.render(var=var)
-        pagename = valid_filename(key)
-        self.distribute_md(pagename, adoc)
-        self.srvdtb.add_document(f"{pagename}.md")
-        self.srvdtb.add_document_key(f"{pagename}.md", 'Title', key)
-        self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
-
-    def build_page_all(self):
-        TPL_PAGE_ALL = self.template('PAGE_ALL')
-        var = self.get_theme_var()
-        var['content'] = self.build_datatable([], list(self.srvdtb.get_documents()))
-        self.distribute_md('all', TPL_PAGE_ALL.render(var=var))
-        self.srvdtb.add_document('all.md')
-        self.srvdtb.add_document_key('all.md', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.md', 'SystemPage', 'Yes')
-
-    def build_page_properties(self):
-        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
-        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-        max_frequency = self.get_maxkv_freq()
-        var = self.get_theme_var()
-        var['buttons'] = []
-        log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
-        for key in self.srvdtb.get_all_keys():
-            if key in self.srvdtb.get_ignored_keys():
-                continue
-            values = self.srvdtb.get_all_values_for_key(key)
-            frequency = len(values)
-            weight = math.log(1 + frequency) / log_max if log_max else 0.0
-            var['buttons'].append(TPL_KEY_MODAL_BUTTON.render(var={
-                'content': self.build_tagcloud_from_key(key),
-                'key': key,
-                'vfkey': valid_filename(key),
-                'count': frequency,
-                'weight': round(weight, 3),
-                'tooltip': f"{frequency} values",
-            }))
-        self.distribute_md('properties', TPL_PROPS_PAGE.render(var=var))
-        self.srvdtb.add_document('properties.md')
-        self.srvdtb.add_document_key('properties.md', 'Title', 'Properties')
-        self.srvdtb.add_document_key('properties.md', 'SystemPage', 'Yes')
-
-    def build_tagcloud_from_key(self, key):
-        dkeyurl = {}
-        for docId in self.srvdtb.get_documents():
-            url = os.path.basename(docId)[:-5]
-            for tag in self.srvdtb.get_values(docId, key):
-                if tag:
-                    dkeyurl.setdefault(tag, set()).add(url)
-        max_frequency = max((len(v) for v in dkeyurl.values()), default=1)
-        lwords = sorted((w for w in dkeyurl if len(w) > 0), key=lambda y: y.lower())
-        if not lwords:
-            return ''
-        TPL_WORDCLOUD = self.template('WORDCLOUD')
-        var = self.get_theme_var()
-        var['items'] = []
-        log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
-        for word in lwords:
-            freq = len(dkeyurl[word])
-            weight = math.log(1 + freq) / log_max if log_max else 0.0
-            var['items'].append({
-                'url': f"{valid_filename(key)}_{valid_filename(word)}.html",
-                'tooltip': f"{freq} documents",
-                'word': word,
-                'count': freq,
-                'weight': round(weight, 3),
-            })
-        return TPL_WORDCLOUD.render(var=var)
-
-    def get_maxkv_freq(self):
-        maxkvfreq = 0
-        for key in self.srvdtb.get_theme_keys():
-            values = self.srvdtb.get_all_values_for_key(key)
-            if len(values) > maxkvfreq:
-                maxkvfreq = len(values)
-        return maxkvfreq
-
-    def build_page_stats(self):
-        TPL_PAGE_STATS = self.template('PAGE_STATS')
-        var = self.get_theme_var()
-        var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.srvdtb.get_theme_keys()
-        var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            values = self.srvdtb.get_all_values_for_key(key)
-            var['leader_items'].append({
-                'key': key,
-                'vfkey': valid_filename(key),
-                'count_values': len(values),
-            })
-        self.distribute_md('stats', TPL_PAGE_STATS.render(var=var))
-        self.srvdtb.add_document('stats.md')
-        self.srvdtb.add_document_key('stats.md', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.md', 'SystemPage', 'Yes')
-
-    def build_page_bookmarks(self):
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
-        var = self.get_theme_var()
-        doclist = []
-        for docId in self.srvdtb.get_documents():
-            bm = self.srvdtb.get_values(docId, 'Bookmark')
-            if bm and bm[0] in ('Yes', 'True'):
-                doclist.append(docId)
-        var['page']['title'] = 'Bookmarks'
-        var['page']['dt_bookmarks'] = self.build_datatable([], doclist)
-        self.distribute_md('bookmarks', TPL_PAGE_BOOKMARKS.render(var=var))
-        self.srvdtb.add_document('bookmarks.md')
-        self.srvdtb.add_document_key('bookmarks.md', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.md', 'SystemPage', 'Yes')
 
     # --------------------------------------------------------------- shared
     def extract_toc(self, source):
