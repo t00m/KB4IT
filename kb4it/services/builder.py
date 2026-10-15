@@ -92,6 +92,7 @@ class Builder(Service):
         # build into the next when the TUI or kb4it serve built twice in one process.
         self.templates = {}
         self._template_errors = {}
+        self._autoescape_warned = False
         self._xform_pairs = None
         self.log.debug("[BUILDER] CACHE_RESET")
         self.get_services()
@@ -193,6 +194,7 @@ class Builder(Service):
             candidates = _template_candidates(
                 template, theme["templates"], ENV["GPATH"]["TEMPLATES"], override_dir
             )
+            autoescape = self._theme_autoescape(theme)
             for template_path in candidates:
                 if not os.path.isfile(template_path):
                     self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason=missing")
@@ -201,8 +203,12 @@ class Builder(Service):
                 failed = self._template_errors.get(template)
                 if failed is not None:
                     raise failed
+                # Every ${...} is HTML-escaped unless marked "| n": always in KB4IT's common
+                # templates, and in a theme's own templates (and their overrides) when it opts in.
+                common = os.path.dirname(os.path.abspath(template_path)) == os.path.abspath(ENV["GPATH"]["TEMPLATES"])
+                filters = ["h"] if autoescape or common else ["str"]
                 try:
-                    tpl = Template(filename=template_path)
+                    tpl = Template(filename=template_path, default_filters=filters)
                 except Exception as err:
                     reason = " ".join(str(err).split())  # Mako puts the line number on a line of its own
                     self.log.error(f"[BUILDER] TEMPLATE_COMPILE_FAIL name={template} path={template_path} error={reason}")
@@ -217,6 +223,18 @@ class Builder(Service):
 
             self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
             raise ThemeError(f"Template not found: {template}")
+
+    def _theme_autoescape(self, theme) -> bool:
+        """True when theme.json has "autoescape": true; otherwise a custom theme is warned once per build."""
+        if theme.get("autoescape") is True:
+            return True
+        bundled = os.path.abspath(ENV["GPATH"]["THEMES"])
+        custom = os.path.dirname(os.path.abspath(str(theme.get("path", "")))) != bundled
+        if custom and not self._autoescape_warned:
+            self._autoescape_warned = True
+            self.log.warning(f"[BUILDER] THEME_AUTOESCAPE_OFF theme={theme.get('id')}")
+            self.log.warning('[BUILDER] HINT add "autoescape": true to theme.json and mark HTML values with | n')
+        return False
 
     def render_template(self, name, var=None):
         """Render template according to dict var values."""

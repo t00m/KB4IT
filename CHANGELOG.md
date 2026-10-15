@@ -36,6 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Help page "GitHub Action" lists the action inputs and outputs and how to pin its version; "Publish on GitHub Pages" uses the action, and keeps the plain commands as an alternative. `README.md` mentions the action, `RELEASING.md` says how to list a release on the GitHub Marketplace and that there is no moving `v0` tag, and `AGENTS.md` describes the distribution scripts and the action (GA-04).
 - `scripts/devel/theme_snapshot.py --content DIR` also saves every page of each sample site, normalised (build dates, times and the version replaced), with the documents of `tests/fixtures/audit/` added, so `diff -r` of two runs shows every change in the HTML a theme or template change makes.
 - `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...` about a fenced code block inside an admonition or a list item, which the default extensions render as inline code; the warning does not fail the check, and it is silent when `pymdownx.superfences` is enabled. The document format help explains both ways to write such code (OC-05, MD-01).
+- Themes can escape template output: with `"autoescape": true` in `theme.json`, every `${...}` is HTML-escaped unless it is marked `| n`. KB4IT's common templates are always escaped. A custom theme without the key prints values as before and gets one `[BUILDER] THEME_AUTOESCAPE_OFF` warning per build. `scripts/devel/escape_audit.py` lists the expressions of a theme for review, and the theme how-to explains the flag (SC-01, SEC-01).
 
 ### Changed
 

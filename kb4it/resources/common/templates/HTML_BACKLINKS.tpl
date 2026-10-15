@@ -2,7 +2,7 @@
 <p class="kb4it-backlinks-title" style="font-weight:600;margin:0 0 .3em">Linked from</p>
 <ul class="kb4it-backlinks-list">
 % for item in var['backlinks']:
-<li><a href="${item['href'] | h}">${item['title'] | h}</a></li>
+<li><a href="${item['href']}">${item['title']}</a></li>
 % endfor
 </ul>
 </div>

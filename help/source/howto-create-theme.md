@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Themes, Development
 HelpId: create-theme
-Keyword: custom theme, template, mako, theme.json, Builder, build_page, verify.py
+Keyword: custom theme, template, mako, theme.json, Builder, build_page, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
 Level: advanced
 Order: 560
 Related: explanation-themes.md, dev-architecture.md
@@ -56,12 +56,13 @@ This theme, `plain`, makes a home page that lists every document and wraps each 
     "website": "",
     "description": "One page per document and a list of them",
     "version": "0.1.0",
-    "kb4it": ">=0.7.10",
-    "metadata_pages": false
+    "kb4it": ">=0.9.0",
+    "metadata_pages": false,
+    "autoescape": true
 }
 ```
 
-`"metadata_pages": false` skips the pages per property and per value, so the theme needs no templates for them.
+`"metadata_pages": false` skips the pages per property and per value, so the theme needs no templates for them. `"autoescape": true` escapes every value the templates print; see [Escaping](#escaping).
 
 `logic/theme.py`:
 
@@ -113,7 +114,7 @@ class Theme(Builder):
 </head>
 <body>
   <header><a href="index.html">${var['repo']['title']}</a></header>
-  <main>${var['body']}</main>
+  <main>${var['body'] | n}</main>
 </body>
 </html>
 ```
@@ -153,6 +154,19 @@ KB4IT copies the theme folder to `target/resources/themes/plain/`; that is why t
 
 Templates use [Mako](https://www.makotemplates.org/): `${var['repo']['title']}` prints a value, and `% for` ... `% endfor` repeats a block. `var['repo']` holds every key of `repo.json`.
 
+## Escaping {#escaping}
+
+Titles, property values and `repo.json` settings are written by people, and may hold `<`, `"` or a whole `<script>`. With `"autoescape": true` in `theme.json`, every `${...}` is HTML-escaped, so such text shows as text. A value that is HTML on purpose, such as the compiled body of a document or a fragment your `theme.py` built, must be printed raw with `| n`:
+
+```html
+<title>${var['title']}</title>       <!-- escaped -->
+<main>${var['body'] | n}</main>      <!-- HTML, printed as it is -->
+```
+
+Only use `| n` for HTML that KB4IT or your theme built; never for a value taken from a document as it is. `scripts/devel/escape_audit.py mytheme --raw` (in the KB4IT sources) lists the raw expressions of a theme for review. KB4IT's shared templates are always escaped.
+
+A theme without `"autoescape": true` prints values as they are, and every build warns with `[BUILDER] THEME_AUTOESCAPE_OFF`. The bundled themes all escape.
+
 `HTML_BODY` and `PAGE_INDEX` are always required, and `PAGE_KEY` and `PAGE_KEY_VALUE` too unless `metadata_pages` is `false`. A missing one stops the build with `TEMPLATE_MISSING`.
 
 ## Options in theme.json {#options}
@@ -162,6 +176,7 @@ Templates use [Mako](https://www.makotemplates.org/): `${var['repo']['title']}` 
 | `kb4it` | The KB4IT versions the theme works with, such as `">=0.7.10"` or `">=0.7.10, <0.9"` |
 | `metadata_pages` | `false` skips the pages per property and per value |
 | `deploy_dirs` | Only these folders of the theme are copied to the website, for example `["framework"]` |
+| `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |
 
 ## Add your own checks {#verify}
 
