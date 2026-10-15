@@ -14,6 +14,7 @@ import shutil
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError, ThemeError
 from kb4it.core.mdconfig import pygments_css
+from kb4it.core.log import get_logger
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
 
@@ -21,9 +22,14 @@ from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_con
 class Deployer(Service):
     """KB4IT Deployer Service."""
 
-    def _initialize(self):
-        """Initialize deployer service."""
-        self.srvbes = self.app.get_service("Backend")
+    def __init__(self, backend, theme, log_file=None):
+        """Deployer of one build; log_file is the temporary log removed at the end."""
+        super().__init__()
+        self.log = get_logger(self.modname)
+        self.started = True
+        self.srvbes = backend
+        self.srvthm = theme
+        self.log_file = log_file
         self.missing = []
 
     def execute(self):
@@ -80,7 +86,7 @@ class Deployer(Service):
 
     def step_05_add_head_meta(self, files):
         """Add description, Open Graph and canonical tags to the pages built in this run."""
-        theme = self.get_service("Theme")
+        theme = self.srvthm
         n = 0
         for path in files:
             if not path.endswith(".html"):
@@ -239,7 +245,7 @@ class Deployer(Service):
         target_path = os.path.realpath(self.srvbes.get_path("target"))
         if www_path != target_path:
             delete_target_contents(self.srvbes.get_path("www"))
-        log_file = self.app.get_log_file()
-        if os.path.exists(log_file):
+        log_file = self.log_file
+        if log_file and os.path.exists(log_file):
             os.unlink(log_file)
         self.log.debug("[DEPLOYER] CLEANUP")

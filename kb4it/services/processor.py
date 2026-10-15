@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from kb4it.core.types import KBDict
 
 from kb4it.core.exceptions import CompilationError
+from kb4it.core.log import get_logger
 from kb4it.core.service import Service
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
@@ -70,10 +71,14 @@ class BuildPlan:
 class Processor(Service):
     """KB4IT Processor Service."""
 
-    def _initialize(self):
-        """Initialize Processor service."""
-        self.srvbes = self.app.get_service("Backend")
-        self.srvdtb = self.app.get_service("DB")
+    def __init__(self, backend, db, theme):
+        """Processor of one build; the pipeline gives it the backend, the database and the theme."""
+        super().__init__()
+        self.log = get_logger(self.modname)
+        self.started = True
+        self.srvbes = backend
+        self.srvdtb = db
+        self.srvthm = theme
         self.kbdict_cur: KBDict = self.srvbes.load_kbdict()  # Previous run
         self.kbdict_new: KBDict = {"document": {}, "metadata": {}}
         self.plan = BuildPlan()
@@ -177,7 +182,7 @@ class Processor(Service):
             raise CompilationError(f"{len(problems)} invalid document(s): {names}")
 
         # Rebuild every page when the theme says the site as a whole changed.
-        signature = self.get_service("Theme").site_signature()
+        signature = self.srvthm.site_signature()
         self.kbdict_new["site_signature"] = signature
         self.plan.force_all = bool(signature) and signature != self.kbdict_cur.get("site_signature", "")
         if self.plan.force_all:
@@ -460,7 +465,6 @@ class Processor(Service):
         and CPU.
         """
         self.log.debug("[PROCESSOR] TRANSFORM_START")
-        self.srvthm = self.get_service("Theme")
         theme = self.srvbes.get_dict("theme")
         if theme.get("metadata_pages", True) is False:
             self.log.debug("[PROCESSOR] METADATA_PAGES_SKIP reason=theme")

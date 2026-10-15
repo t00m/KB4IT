@@ -82,17 +82,13 @@ class _Backend:
 
 def test_a_page_missing_from_the_cache_does_not_stop_the_deploy(tmp_path):
     """COR-09: the deploy used to stop at the first missing page, leaving the rest uncopied."""
-    from kb4it.core.log import get_logger
     from kb4it.services.deployer import Deployer
     cache, target = tmp_path / "cache", tmp_path / "target"
     cache.mkdir()
     target.mkdir()
     (cache / "b.html").write_text("b", encoding="utf-8")
     (cache / "c.html").write_text("c", encoding="utf-8")
-    deployer = Deployer()
-    deployer.log = get_logger("test")
-    deployer.srvbes = _Backend(cache, target, ["a.html", "b.html", "c.html"])
-    deployer.missing = []
+    deployer = Deployer(_Backend(cache, target, ["a.html", "b.html", "c.html"]), theme=None)
     deployer.step_07_copy_compiled_documents_to_target()
     assert deployer.missing == ["a.html"]
     assert (target / "b.html").is_file() and (target / "c.html").is_file()

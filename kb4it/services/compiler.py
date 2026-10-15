@@ -18,6 +18,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.mdconfig import load_settings, sanitize_html
 from kb4it.core.search import save_doc_sections
+from kb4it.core.log import get_logger
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
                               html_id_for, source_ext, strip_first_heading)
@@ -59,18 +60,22 @@ def take_pending_callbacks() -> dict:
 class Compiler(Service):
     """KB4IT Compiler Service."""
 
-    def _initialize(self):
-        """Initialize compiler service."""
-        self.srvbes = self.app.get_service("Backend")
-        self.srvthm = self.get_service("Theme")
-        self.srvprc = self.get_service("Processor")
+    def __init__(self, backend, db, theme, processor, callbacks=None):
+        """Compiler of one build; callbacks maps "progress_callback" and "compile_start_callback"."""
+        super().__init__()
+        self.log = get_logger(self.modname)
+        self.started = True
+        self.srvbes = backend
+        self.srvdtb = db
+        self.srvthm = theme
+        self.srvprc = processor
         self.links = {}
         self._links_lock = threading.Lock()
         # Documents whose page could not be made, with the reason; the build fails at the end.
         self.failed = []
         self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
-        callbacks = dict(getattr(self.app, "callbacks", None) or {})
+        callbacks = dict(callbacks or {})
         for name, callback in take_pending_callbacks().items():
             self.log.debug(f"[COMPILER] CALLBACK_DEPRECATED name={name} replacement=params.{name}")
             callbacks.setdefault(name, callback)
@@ -175,8 +180,7 @@ class Compiler(Service):
             hooks = getattr(self.srvbes, "hooks", None)
             if hooks is not None and hooks.has("on_document"):
                 doc_id = os.path.basename(doc)
-                srvdtb = self.get_service("DB")
-                meta = {key: list(srvdtb.get_values(doc_id, key) or []) for key in srvdtb.get_doc_keys(doc_id)}
+                meta = {key: list(self.srvdtb.get_values(doc_id, key) or []) for key in self.srvdtb.get_doc_keys(doc_id)}
                 text = hooks.call("on_document", doc_id, meta, text, doc=doc_id)
                 if not isinstance(text, str):
                     raise CompilationError("Hook on_document must return the Markdown text")

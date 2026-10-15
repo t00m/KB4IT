@@ -24,9 +24,7 @@ from kb4it.core.log import redirect_logs
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save, timeit
-from kb4it.services.compiler import Compiler
-from kb4it.services.deployer import Deployer
-from kb4it.services.processor import Processor
+from kb4it.services.pipeline import Pipeline
 
 
 def _dir_contains(parent, child) -> bool:
@@ -45,6 +43,7 @@ class Backend(Service):
         # build decides it (an unreadable or older cache); params and repo stay as given.
         self.runtime: Runtime = {"theme": {}, "force_all": False}  # type: ignore[typeddict-item]
         self.repo = {}  # Only build and info load a repo.json
+        self.pipeline = None  # Processor, Compiler and Deployer of this build, from the end of stage 1
         self.params = self.app.get_params()  # Get params from command line
 
         if self.params.get("action") in ("build", "info"):
@@ -329,8 +328,17 @@ class Backend(Service):
     def get_services(self):
         """Get services needed."""
         self.srvbld = self.get_service("Builder")
-        self.app.register_service("Processor", Processor())
-        self.srvprc = self.get_service("Processor")
+
+    @property
+    def srvprc(self):
+        """The Processor of this build, once the pipeline exists."""
+        return self.pipeline.processor if self.pipeline is not None else None
+
+    def start_pipeline(self):
+        """Make the Processor, Compiler and Deployer of this build; the theme must be loaded."""
+        self.pipeline = Pipeline(self, self.get_service("DB"), self.get_service("Theme"), self.params,
+                                 callbacks=getattr(self.app, "callbacks", None),
+                                 log_file=self.app.get_log_file())
 
     def get_kb_dict(self):
         """Shortcut to Processor method."""
@@ -400,6 +408,7 @@ class Backend(Service):
                 else:
                     frontend._validate_required_templates(self.runtime["theme"])
                     self._apply_target_subdir()
+                    self.start_pipeline()
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
                 raise ThemeError(f"Theme not found: {theme_name}")
@@ -479,13 +488,9 @@ class Backend(Service):
     @timeit
     def stage_05_compilation(self):
         """Compile Markdown documents to HTML."""
-        self.app.register_service("Compiler", Compiler())
-        compiler = self.app.get_service("Compiler")
-        compiler.execute()
+        self.pipeline.compiler.execute()
 
     @timeit
     def stage_06_deploy(self):
         """Recreate target."""
-        self.app.register_service("Deployer", Deployer())
-        deployer = self.app.get_service("Deployer")
-        deployer.execute()
+        self.pipeline.deployer.execute()

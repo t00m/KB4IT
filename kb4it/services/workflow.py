@@ -360,11 +360,12 @@ class Workflow(Service):
     def _failed_pages(self) -> dict:
         """Pages the compiler could not make or the deployer could not find, with the reason."""
         failed = {}
-        compiler = self.app.get_services().get("Compiler")
-        for name, reason in getattr(compiler, "failed", []) or []:
+        pipeline = getattr(self.get_service("Backend"), "pipeline", None)
+        if pipeline is None:
+            return failed
+        for name, reason in pipeline.compiler.failed:
             failed[name] = reason
-        deployer = self.app.get_services().get("Deployer")
-        for name in getattr(deployer, "missing", []) or []:
+        for name in pipeline.deployer.missing:
             failed.setdefault(name, "missing from the cache")
         return failed
 

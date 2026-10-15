@@ -29,6 +29,8 @@ from kb4it.services.workflow import Workflow
 LOCKED_ACTIONS = ("build", "create")
 # Parameters that carry code for the build to call, not settings (see services/compiler.py).
 CALLBACK_PARAMS = ("progress_callback", "compile_start_callback")
+# Services of one build that live in backend.pipeline; get_service still answers them in 0.9.x.
+PIPELINE_SERVICES = ("Processor", "Compiler", "Deployer")
 
 
 def lock_path_for(params: dict):
@@ -111,6 +113,7 @@ class KB4IT:
     def __setup_services(self):
         """Declare and register services."""
         self.services = {}
+        self._deprecated_logged = set()
         services = {
             "DB": Database(),
             "Backend": Backend(),
@@ -127,6 +130,8 @@ class KB4IT:
 
     def get_service(self, name: str):
         """Get or start a registered service."""
+        if name in PIPELINE_SERVICES:
+            return self._pipeline_service(name)
         service = self.services.get(name) or None
         if service is None:
             self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
@@ -134,6 +139,21 @@ class KB4IT:
         if not service.is_started():
             service.start(self)
         return service
+
+    def _pipeline_service(self, name: str):
+        """Deprecated: the Processor, Compiler and Deployer of this build belong to backend.pipeline.
+
+        Answered from the current pipeline in 0.9.x, with a debug line once per name; removed in 0.10.0.
+        """
+        backend = self.services.get("Backend")
+        pipeline = getattr(backend, "pipeline", None)
+        if pipeline is None:
+            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
+            raise KB4ITError(f"Service not registered: {name}")
+        if name not in self._deprecated_logged:
+            self._deprecated_logged.add(name)
+            self.log.debug(f"[CONTROLLER] SERVICE_DEPRECATED name={name} replacement=backend.pipeline")
+        return pipeline.service(name)
 
     def register_service(self, name, service):
         """Register a new service."""

@@ -103,3 +103,35 @@ def test_settings_stay_as_loaded(tmp_path, home):
     about = (target / "about_kb4it.html").read_text(encoding="utf-8")
     first = about.split("<p id='a'>", 1)[1].split("</p>", 1)[0]
     assert first and f"<p id='b'>{first}</p>" in about
+
+
+_OLD_LOOKUPS = """
+import argparse, sys
+from kb4it.core.main import KB4IT
+from kb4it.services import backend as backend_module
+
+compile_stage = backend_module.Backend.stage_05_compilation
+def stage_05(self):
+    for _ in range(2):
+        for name in ("Processor", "Compiler", "Deployer"):
+            assert self.app.get_service(name) is self.pipeline.service(name), name
+    print("SAME_OBJECTS")
+    return compile_stage(self)
+backend_module.Backend.stage_05_compilation = stage_05
+
+params = argparse.Namespace(action="build", config=sys.argv[1], force=False, log_level="DEBUG")
+print("RUN_RESULT", KB4IT(params).run())
+"""
+
+
+def test_old_service_lookups_answer_from_the_pipeline(tmp_path, home):
+    """get_service("Compiler") and the others still work in 0.9.x, logged once per name (AR-03, D-G4)."""
+    theme = mini_theme(tmp_path / "mini")
+    cfg = write_repo(tmp_path / "repo", "mini", {"a.md": page("A", Tag="x")}, theme_path=str(theme))
+    result = subprocess.run([sys.executable, "-c", _OLD_LOOKUPS, str(cfg)], cwd=str(tmp_path),
+                            env=isolated_env(home, NO_COLOR="1", COLUMNS="1000"), stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, text=True, timeout=600, check=False, encoding="utf-8")
+    out = result.stdout
+    assert "SAME_OBJECTS" in out and "RUN_RESULT True" in out, out
+    for name in ("Processor", "Compiler", "Deployer"):
+        assert out.count(f"SERVICE_DEPRECATED name={name} replacement=backend.pipeline") == 1, name
