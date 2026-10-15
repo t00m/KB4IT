@@ -24,7 +24,7 @@ CATEGORIES = [
         directory and rebuild.
     </div>
 
-% if var['repo'].get('git') == True:
+% if var.get('git_ok'):
     <div class="kb-add-note uk-alert-primary" uk-alert>
         <span uk-icon="icon: git-branch; ratio: 0.9"></span>
         <strong>Online repository:</strong> The document source is hosted at

@@ -43,6 +43,22 @@ def _template_candidates(template_name, theme_templates_dir, global_templates_di
     return candidates
 
 
+GIT_KEYS = ("git_server", "git_user", "git_repo", "git_branch")
+
+
+def git_ready(repo) -> bool:
+    """True when repo.json turns git links on and names server, user, repository and branch.
+
+    git_path may stay empty (documents at the repository root). A "{placeholder}" counts as unset,
+    so a sample configuration never produces edit links that lead nowhere.
+    """
+    if repo.get("git") is not True:
+        return False
+    values = [repo.get(key) for key in GIT_KEYS] + [repo.get("git_path") or ""]
+    return all(isinstance(v, str) for v in values) and all(v.strip() for v in values[:4]) and \
+        not any("{" in v for v in values)
+
+
 META_START = "<!-- kb4it:meta -->"
 META_END = "<!-- /kb4it:meta -->"
 
@@ -256,6 +272,7 @@ class Builder(Service):
         theme_var["kb"]["keys"] = self.srvdtb.get_keys()
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["repo"]["updated"] = get_human_datetime(datetime.now())
+        theme_var["git_ok"] = git_ready(theme_var["repo"])
 
         # Only pass to theme those keys used by documents
         kbdict = self.srvbes.get_kb_dict()

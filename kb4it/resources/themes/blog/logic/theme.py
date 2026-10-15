@@ -920,8 +920,8 @@ class Theme(Builder):
             self.log.error("[THEME] CONFIG_FAIL key=events reason=empty")
             go = False
 
-        self.log.info(f"[THEME] CONFIG key=git value={repo['git']}")
-        if repo['git']:
+        self.log.info(f"[THEME] CONFIG key=git value={repo.get('git')}")
+        if repo.get('git'):
             git_props = ['git_branch', 'git_path', 'git_repo', 'git_server', 'git_user']
             for git_prop in sorted(git_props):
                 if len(repo[git_prop]) == 0:

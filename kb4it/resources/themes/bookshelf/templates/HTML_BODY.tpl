@@ -7,6 +7,9 @@ from kb4it.core.util import valid_filename
 <main class="page">
 % if var['SystemPage'] or not var.get('reading'):
     <div class="wrap">
+% if '<h1' not in var['source_html']:
+        <h1>${var['page']['title']}</h1>
+% endif
         ${var['source_html'] | n}
     </div>
 % else:

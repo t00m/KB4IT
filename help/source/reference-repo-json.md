@@ -43,7 +43,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | Key | Default | Meaning |
 |---|---|---|
 | `tagline` | | Short subtitle |
-| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text |
+| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text for screen readers; empty uses the site `title` |
 | `workers` | half the processor cores | Documents converted at the same time |
 | `force` | `false` | Rebuild everything on every build, like `--force` |
 | `ignored_keys` | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
@@ -58,7 +58,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
 | `overrides` | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format |
+| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format. They appear only with `"git": true` and `git_server`, `git_user`, `git_repo` and `git_branch` all set; `git_path` may stay empty |
 
 ## Markdown {#markdown}
 

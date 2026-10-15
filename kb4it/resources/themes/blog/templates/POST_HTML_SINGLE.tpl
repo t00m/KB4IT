@@ -18,6 +18,7 @@
         var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
 %>
 <!-- Template POST_HTML_SINGLE.tpl :: START -->
+<main class="kb-main">
 <!-- Blog Post :: START -->
 <div class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
@@ -25,11 +26,11 @@
         <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
                 <div class="uk-width uk-margin-top">
-                    <h5 class="uk-card-title uk-margin-remove uk-text-center">
+                    <h1 class="uk-card-title uk-margin-remove uk-text-center">
                         <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
                             <span class="uk-link-heading">${var['post']['Title']}</span>
                         </a>
-                    </h5>
+                    </h1>
                     <div class="uk-width uk-margin-top">
                         <ul class="uk-subnav uk-subnav-divider uk-margin-small-top uk-flex-center uk-text-meta">
 % if 'Author_0_Url' in var['post']:
@@ -85,12 +86,14 @@
                                 </div>
                             </li>
                             <!-- View Source Button :: END -->
+% if var.get('git_ok'):
                             <li uk-tooltip="title: Edit document">
                                 <span uk-icon="pencil"></span>
                                 <span class="uk-margin-small-left">
                                     <a class="" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank" uk-toggle>Edit</a>
                                 </span>
                             </li>
+% endif
                         </ul>
                     </div>
                     <!-- Tags and Topics -->
@@ -113,4 +116,5 @@
     </div>
 </div>
 <p></p>
+</main>
 <!-- Template POST_HTML_SINGLE.tpl :: END -->

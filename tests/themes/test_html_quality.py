@@ -1,10 +1,13 @@
 """Markup of the sample sites: valid structure and accessible basics (HT-01, HT-02)."""
 
+import json
 import re
 import shutil
 
 import pytest
+from lxml import html as lxml_html
 
+from kb4it.services.builder import git_ready
 from tests.helpers import FIXTURES, run_kb4it
 
 THEMES = ["techdoc", "blog", "bookshelf", "apphelp"]
@@ -102,3 +105,48 @@ def test_valid_structure(sites, theme):
         if re.search(r"<div\b[^>]*>\s*<style\b", text) or re.search(r"<body\b.*<style\b", text, re.DOTALL):
             problems.append(f"{page.name}: style element in the body")
     assert problems == []
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_accessible_basics(sites, theme):
+    """lang, exactly one h1, a real alt on every image, a main landmark, no placeholder links (HT-02)."""
+    problems = []
+    for page in sites[theme]:
+        tree = lxml_html.fromstring(page.read_bytes())
+        if not tree.get("lang"):
+            problems.append(f"{page.name}: no lang")
+        if len(tree.findall(".//h1")) != 1:
+            problems.append(f"{page.name}: {len(tree.findall('.//h1'))} h1")
+        for img in tree.iter("img"):
+            if img.get("alt") is None or "{" in img.get("alt"):
+                problems.append(f"{page.name}: img {img.get('src')} alt={img.get('alt')!r}")
+        if tree.find(".//main") is None:
+            problems.append(f"{page.name}: no main")
+        if 'href="{' in page.read_text(encoding="utf-8"):
+            problems.append(f'{page.name}: href="{{...}}"')
+    assert problems == []
+
+
+def test_git_ready():
+    full = {"git": True, "git_server": "https://github.com", "git_user": "me", "git_repo": "kb",
+            "git_branch": "main", "git_path": "source"}
+    assert git_ready(full)
+    assert git_ready({**full, "git_path": ""})  # documents at the repository root
+    assert not git_ready({**full, "git": False})
+    assert not git_ready({k: v for k, v in full.items() if k != "git_user"})
+    assert not git_ready({**full, "git_server": "{https://{server.fqdn}"})
+
+
+@pytest.mark.parametrize("theme", ["techdoc", "blog"])  # bookshelf shows no page actions
+def test_edit_link_when_git_is_set(tmp_path, home, theme):
+    repo = tmp_path / theme
+    assert run_kb4it("create", theme, repo, cwd=tmp_path, home=home).returncode == 0
+    shutil.copy(FIXTURES / "audit" / "rich.md", repo / "source" / "rich.md")
+    cfg = repo / "config" / "repo.json"
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
+    conf.update(git=True, git_server="https://github.com", git_user="me", git_repo="kb", git_branch="main",
+                git_path="source")
+    cfg.write_text(json.dumps(conf), encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "https://github.com/me/kb/edit/main/source/rich.md" in (repo / "target" / "rich.html").read_text(encoding="utf-8")

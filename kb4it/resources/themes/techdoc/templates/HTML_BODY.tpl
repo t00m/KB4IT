@@ -1,4 +1,5 @@
 <!-- Template HTML_BODY_DOC.tpl :: START -->
+<main class="kb-main">
 % if var['has_toc']:
 
 <!-- Print-only document header (hidden on screen) -->
@@ -38,4 +39,5 @@
 % else:
     <div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div>
 % endif
+</main>
 <!-- Template HTML_BODY_DOC.tpl :: END -->

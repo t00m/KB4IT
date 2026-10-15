@@ -19,7 +19,7 @@
 
         <div class="uk-card uk-card-body uk-card-small uk-flex uk-flex-top uk-flex-left">
         <ul class="uk-list uk-text-left uk-margin-left">
-% if var['repo']['git'] == True:
+% if var.get('git_ok'):
                 <li>
                     <span uk-icon="icon: plus" uk-tooltip="Create new post"></span>
                     <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
@@ -65,7 +65,7 @@
                         <p>
                             <span class="uk-link">
                                 <a href="about_kb4it.html">
-                                    <img src="resources/common/images/kb4it-badge-built-with.svg">
+                                    <img src="resources/common/images/kb4it-badge-built-with.svg" alt="Built with KB4IT">
                                 </a>
                             </span>
                         </p>
