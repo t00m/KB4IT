@@ -473,6 +473,20 @@ def get_markdown_attributes(docpath: str):
             else:
                 keys[k] = [str(v).strip()]
 
+        # Every property name and value becomes part of a page name; one that cleans to nothing
+        # (such as "..." or "???") cannot, so the document is reported instead of breaking the site.
+        for k, values in keys.items():
+            if k == "Title":
+                continue
+            if not valid_filename(k):
+                reason = f"bad_property_name key={k}"
+            elif any(value and not valid_filename(value) for value in values):
+                reason = f"bad_property_value key={k}"
+            else:
+                continue
+            log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
+            return {}, False, reason
+
     except yaml.YAMLError as err:
         reason = "yaml_error"
         mark = getattr(err, "problem_mark", None)
@@ -531,15 +545,16 @@ def valid_filename(s):
     """Return a clean filename.
 
     Remove leading and trailing spaces; convert other spaces to
-    underscores; and remove anything that is not an alphanumeric, dash,
-    underscore, or dot.
+    underscores; remove anything that is not an alphanumeric, dash,
+    underscore, or dot; and drop leading dots, so the name is never hidden
+    (".note") nor a relative path ("..").
     >>> valid_filename("john's portrait in 2004.jpg")
     'johns_portrait_in_2004.jpg'
     Borrowed from:
     https://github.com/django/django/blob/master/django/utils/text.py
     """
     s = str(s).strip().replace(" ", "_")
-    return re.sub(r"(?u)[^-\w.]", "", s)
+    return re.sub(r"(?u)[^-\w.]", "", s).lstrip(".")
 
 
 def slugify(text: str) -> str:

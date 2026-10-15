@@ -75,6 +75,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A blog post without `Date` no longer stops the blog: it is listed after the dated posts, has no calendar line, and is logged once with `[THEME] DOC_UNDATED`. An unexpected error now prints its type and the log file, as in `Error: KeyError: 'Date' (see <repo>/var/log/kb4it.log)`, instead of the bare message (OC-04, COR-08).
 - With `pymdownx.superfences` and the default `"highlight": "client"`, code blocks get plain `language-*` classes for highlight.js instead of Pygments markup without its stylesheet; `pygments` mode still gives Pygments markup and `pygments.css`. `scripts/devel/test.sh` installs `pymdown-extensions`, so these paths run in CI (OC-05, MD-03).
 - Help pages "Customize templates", "Create a theme" and "Release" showed the commands of their numbered steps as inline code; the new `verify` warning found them, and they are now code blocks (MD-01).
+- Page names made from property names and values never start with a dot. A property such as `.note` used to make a hidden key page that was never built, and with it no page reached the target; it now makes `note.html`. A property name or value that cleans to nothing, such as `...`, makes the document invalid (`bad_property_name` or `bad_property_value`, so `fail_on_invalid` applies) instead of breaking the site (SC-03, SEC-03).
 
 ### Removed
 

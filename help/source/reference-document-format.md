@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Writing
 HelpId: document-format
-Keyword: DOC_INVALID, yaml_error, missing_h1_title, frontmatter, date format
+Keyword: DOC_INVALID, yaml_error, missing_h1_title, bad_property_name, bad_property_value, frontmatter, date format
 Level: basic
 Order: 230
 Section: Write
@@ -91,6 +91,8 @@ A document KB4IT cannot read is left out of the site. The build logs `DOC_INVALI
 | `invalid_frontmatter` | The block is not a list of properties | Write one `Key: value` per line |
 | `yaml_error line=2 col=17 ...` | YAML cannot read a line | Look at that line; usually a value with `: ` that needs quotes |
 | `missing_h1_title` | No `# Title` after the properties | Add the title line |
+| `bad_property_name key=...` | A property name has no letter, digit, `-` or `_`, such as `...`, so it cannot name a page | Rename the property |
+| `bad_property_value key=...` | A value of that property has none either, such as `???` | Change the value |
 | `reserved_name` | The file is named like a Windows device (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`), so its page cannot exist on Windows | Rename the file |
 
 Two files whose pages differ only by letter case or extension (`Note.md` and `note.md`, or `note.md` and `note.markdown`) overwrite each other's page on macOS and Windows. The build logs `DOC_NAME_CLASH` as a warning, and `kb4it verify` reports the second file as `name_clash_with=<first>`. Rename one of them.
