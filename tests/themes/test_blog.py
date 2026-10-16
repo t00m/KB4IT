@@ -83,3 +83,31 @@ def test_unchanged_rebuild_reuses_the_cached_pages(site):
     assert "compiled=0" in result.stdout
     assert read(site, "index.html") == before
     assert (site["target"] / "events.html").exists()
+
+
+def test_event_pages_are_rebuilt_only_when_needed(tmp_path):
+    """An unchanged build reuses every event page; a deleted post leaves the day it shared."""
+    home = tmp_path / "home"
+    home.mkdir()
+    assert run_kb4it("create", "blog", "repo", cwd=tmp_path, home=home).returncode == 0
+    repo = tmp_path / "repo"
+    cfg = repo / "config" / "repo.json"
+    for name in list((repo / "source").glob("*.md")):
+        name.unlink()
+    (repo / "source" / "a.md").write_text(post("Post A", "2026-05-10", Tag="x"), encoding="utf-8")
+    (repo / "source" / "b.md").write_text(post("Post B", "2026-05-10", Tag="x"), encoding="utf-8")
+    (repo / "source" / "c.md").write_text(post("Post C", "2026-06-20", Tag="x"), encoding="utf-8")
+    first = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
+    assert first.returncode == 0, first.stdout
+    assert "EVENT_PAGES built=5 reused=0" in first.stdout  # two days, two months, one year
+
+    again = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
+    assert again.returncode == 0, again.stdout
+    assert "EVENT_PAGES built=0 reused=5" in again.stdout
+
+    (repo / "source" / "b.md").unlink()
+    third = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
+    assert third.returncode == 0, third.stdout
+    assert "EVENT_PAGES built=3 reused=2" in third.stdout  # 2026-05-10, May and 2026
+    day = (repo / "target" / "events_20260510.html").read_text(encoding="utf-8")
+    assert "Post A" in day and "Post B" not in day

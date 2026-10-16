@@ -27,10 +27,6 @@ class EventsMixin(ThemeHost):
     and day to the documents of that date. Both belong to one build.
     """
 
-    #: Rebuild every event page on each build instead of reusing the cached pages of
-    #: dates whose documents did not change.
-    events_rebuild_all = False
-
     def _initialize(self) -> None:
         super()._initialize()
         self.dey: dict[int, list[tuple[int, int]]] = {}
@@ -62,9 +58,12 @@ class EventsMixin(ThemeHost):
     def build_events(self, doclist: list[str]) -> set[str]:
         """Create the day, month and year pages of the dated documents in `doclist`.
 
-        A page is rebuilt when one of its documents changed or its cached copy is
-        missing (always, with `events_rebuild_all`); otherwise the cached page is
-        reused. Returns the years whose page was rebuilt, as strings.
+        A page is rebuilt when one of its documents changed, when its documents are
+        not the ones it had after the last successful build (a document was added,
+        removed or moved to another date), when that build did not record them, or
+        when its cached copy is missing; a month and its year are also rebuilt when
+        one of their days is. Otherwise the cached page is reused. Returns the years
+        whose page was rebuilt, as strings.
         """
         tpl_days = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
         tpl_months = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
@@ -72,18 +71,28 @@ class EventsMixin(ThemeHost):
         self._collect_events(doclist)
 
         kbdict = self.srvbes.get_kb_dict()
+        before = self.srvbes.get_events_before()
+        pages: dict[str, list[str]] = {}
+        counts = {'built': 0, 'reused': 0}
+
+        def must_build(name: str, docs: list[str], cascade: bool = False) -> bool:
+            pages[name] = sorted(docs)
+            build = (cascade or before is None or before.get(name) != pages[name]
+                     or not os.path.exists(self._cached_page(name))
+                     or any(kbdict['document'][docId]['compile'] for docId in docs))
+            counts['built' if build else 'reused'] += 1
+            return build
+
         var = self.get_theme_var()
         must_compile_month = set()
         must_compile_year = set()
+        built_years: set[str] = set()
         for year in self.events_docs:
             for month in self.events_docs[year]:
                 for day in self.events_docs[year][month]:
                     name = f"events_{year:4d}{month:02d}{day:02d}"
-                    cached = self._cached_page(name)
                     day_docs = self.events_docs[year][month][day]
-                    must_compile_day = self.events_rebuild_all or not os.path.exists(cached) or any(
-                        kbdict['document'][docId]['compile'] for docId in day_docs)
-                    if must_compile_day:
+                    if must_build(name, day_docs):
                         must_compile_month.add(f"{year:4d}{month:02d}")
                         must_compile_year.add(f"{year:4d}")
                         edt = _parse_date(f"{year:4d}.{month:02d}.{day:02d}")
@@ -92,37 +101,38 @@ class EventsMixin(ThemeHost):
                         self.distribute_md(name, tpl_days.render(var=var))
                         self._add_event_page(name, f"Events on {get_human_datetime_day(edt)}")
                     else:
-                        self.distribute_html(name, cached)
+                        self.distribute_html(name, self._cached_page(name))
                     self.srvbes.add_target(f"{name}.md", f"{name}.html")
 
         for year in self.events_docs:
             for month in self.events_docs[year]:
                 name = f"events_{year:4d}{month:02d}"
-                cached = self._cached_page(name)
-                if f"{year:4d}{month:02d}" in must_compile_month or not os.path.exists(cached):
+                month_docs = [docId for day in self.events_docs[year][month]
+                              for docId in self.events_docs[year][month][day]]
+                if must_build(name, month_docs, f"{year:4d}{month:02d}" in must_compile_month):
                     edt = _parse_date(f"{year:4d}.{month:02d}.01")
-                    month_docs = [docId for day in self.events_docs[year][month]
-                                  for docId in self.events_docs[year][month][day]]
                     var['page'] = {'datatable': self.build_datatable([], month_docs)}
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
                     self.distribute_md(name, tpl_months.render(var=var))
                     self._add_event_page(name, f"Events on {get_human_datetime_month(edt)}")
                 else:
-                    self.distribute_html(name, cached)
+                    self.distribute_html(name, self._cached_page(name))
                 self.srvbes.add_target(f"{name}.md", f"{name}.html")
 
         for year in sorted(self.dey.keys(), reverse=True):
             name = f"events_{year:4d}"
-            cached = self._cached_page(name)
-            if str(year) in must_compile_year or not os.path.exists(cached):
-                year_docs = [docId for month in self.events_docs[year] for day in self.events_docs[year][month]
-                             for docId in self.events_docs[year][month][day]]
+            year_docs = [docId for month in self.events_docs[year] for day in self.events_docs[year][month]
+                         for docId in self.events_docs[year][month][day]]
+            if must_build(name, year_docs, str(year) in must_compile_year):
+                built_years.add(f"{year:4d}")
                 var['page'] = {'title': f"Archive / {year}"}
                 var['page']['datatable'] = self.build_datatable([], year_docs)
                 self.distribute_md(name, tpl_years.render(var=var))
                 self._add_event_page(name, f"Archive / {year}")
             else:
-                self.distribute_html(name, cached)
+                self.distribute_html(name, self._cached_page(name))
             self.srvbes.add_target(f"{name}.md", f"{name}.html")
 
-        return must_compile_year
+        self.srvbes.set_events(pages)
+        self.log.debug(f"[THEME] EVENT_PAGES built={counts['built']} reused={counts['reused']}")
+        return built_years

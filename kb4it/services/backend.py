@@ -362,6 +362,15 @@ class Backend(Service):
         """Record the pages this build wrote into the target; saved with the kbdict."""
         self.srvprc.get_kb_dict()["deployed"] = sorted(pages)
 
+    def get_events_before(self):
+        """Documents of each event page after the last successful build, or None if it did not record them."""
+        events = self.srvprc.kbdict_cur.get("events")
+        return events if isinstance(events, dict) else None
+
+    def set_events(self, pages):
+        """Record the documents of each event page of this build; saved with the kbdict."""
+        self.srvprc.get_kb_dict()["events"] = pages
+
     def get_kbdict_key(self, key, new=True):
         """Shortcut to Processor method."""
         return self.srvprc.get_kbdict_key(key, new)

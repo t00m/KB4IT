@@ -165,7 +165,8 @@ splitting) if you want CI on the moved code before the wiring changes of Phase D
 ## Implementation notes
 
 The series is patches 0111 to 0133, as planned: the snapshot tool, 20 commits for
-AR-01 to AR-07, the `AGENTS.md` update and these notes. At every commit the test
+AR-01 to AR-07, the `AGENTS.md` update and these notes. Patch 0134, asked for after
+review, makes blog rebuild its event pages only when needed. At every commit the test
 suite passed, the content snapshot of every sample app (full and incremental build)
 was identical to the baseline, and the Nu HTML Checker reported 0 errors besides
 UIkit attributes on 118 pages of the five sample sites. Differences from the plan,
@@ -181,7 +182,7 @@ decided while implementing:
 | Tag cloud scale (118) | Not foreseen | Kept as it was: techdoc and blog count documents without the property (read as an empty value) in the scale; bookshelf does not | Changing it would change pages; a candidate fix for later |
 | Datatable (119) | `datatable_link_template`, `datatable_default_headers`, `datatable_title_cell` | Also `datatable_date_cell` and `datatable_value_link` (techdoc's Priority and Status labels; bookshelf's `#` link) | Each theme renders the date and the value cells differently |
 | blog `repo.json` without `datatable` (119) | Not foreseen | Falls back to Date and Title, like techdoc | blog read the key strictly and stopped with a `KeyError` |
-| Event pages (120) | blog adopts techdoc's rule (rebuild on a changed document or a missing cache) | Shared method with techdoc's rule; blog sets `events_rebuild_all` | blog's day check started at `True`, so blog has always rebuilt every event page; adopting the rule would have made blog reuse cached pages, a change the plan did not intend. Whether blog should reuse them is a separate decision |
+| Event pages (120, 134) | blog adopts techdoc's rule (rebuild on a changed document or a missing cache) | 120 kept blog rebuilding every event page (its day check started at `True`) behind a flag; 134, on your request, removes the flag: both themes rebuild a page only when one of its documents changed, its set of documents differs from the last successful build (recorded as `events` in `kbdict.json`), there is no record, or its cached copy is missing | techdoc's rule alone kept a stale day page when a document was deleted or moved to another date; the record fixes that for both themes. Reused blog pages are byte-identical to rebuilt ones in the incremental snapshot |
 | Unused code in the moved methods (118, 120) | Not foreseen | Dropped: blog's `proportion` (could only raise), the month pages' `var['doclist']` (no template reads it), the `get_doc_properties` call in `build_events` | Found while unifying |
 | `util.py` split (123) | `valid_filename` stays in `util` | `valid_filename`, `SOURCE_ENCODING` and `get_source_docs` in `files.py`; `get_hash_from_body` in `documents.py` | `documents.py` needs them, and the new modules import nothing from `util` |
 | TUI split (124) | Patch targets move to the module that uses them | Screens call `clipboard._copy_to_clipboard` through the module, so tests patch one place; the registry warning logs as `kb4it.tui.projects` | Two screens copy text |
@@ -209,7 +210,6 @@ Follow-ups outside this series:
 - Remove in 0.10.0 what 0.9.x keeps: `KB4IT.get_service` for the pipeline services,
   `compiler.set_progress_callback` and `set_compile_start_callback`, and
   `var['repo']['updated']`.
-- Decide whether blog should reuse its cached event pages (`events_rebuild_all`).
 - Decide whether a tag cloud's scale should leave out documents without the property
   in techdoc and blog, as bookshelf does.
 

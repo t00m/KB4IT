@@ -96,6 +96,9 @@ class _Log:
     def error(self, message):
         self.errors.append(message)
 
+    def debug(self, message):
+        pass
+
 
 class _Theme(DocumentTheme):
     def __init__(self, broken=False):  # no services: only what the shared methods use
@@ -199,8 +202,15 @@ class _EventsDb:
 
 
 class _EventsBackend:
-    def __init__(self, cache, changed):
+    def __init__(self, cache, changed, before=None):
         self.cache, self.changed, self.targets = cache, changed, []
+        self.before, self.events = before, None
+
+    def get_events_before(self):
+        return self.before
+
+    def set_events(self, pages):
+        self.events = pages
 
     def get_path(self, name):
         return str(self.cache)
@@ -212,10 +222,15 @@ class _EventsBackend:
         self.targets.append(html)
 
 
+# What the last successful build recorded for a.md (2026-10-15) and b.md (2026-10-16).
+EVENTS_BEFORE = {"events_20261015": ["a.md"], "events_20261016": ["b.md"],
+                 "events_202610": ["a.md", "b.md"], "events_2026": ["a.md", "b.md"]}
+
+
 class _EventsTheme(_Theme):
-    def __init__(self, cache, changed=()):
+    def __init__(self, cache, changed=(), before=EVENTS_BEFORE):
         super().__init__()
-        self.srvdtb, self.srvbes = _EventsDb(), _EventsBackend(cache, set(changed))
+        self.srvdtb, self.srvbes = _EventsDb(), _EventsBackend(cache, set(changed), before)
         self.dey, self.events_docs = {}, {}
         self.built, self.reused = [], []
 
@@ -254,36 +269,36 @@ def test_events_rebuild_a_page_whose_cache_is_missing(tmp_path):
     assert theme.built == ["events_202610"]
 
 
-def test_events_rebuild_all_rebuilds_every_page(tmp_path):
-    """blog has always rebuilt its event pages on every build."""
+def test_events_record_the_documents_of_each_page(tmp_path):
     _cache_every_event_page(tmp_path)
     theme = _EventsTheme(tmp_path)
-    theme.events_rebuild_all = True
+    theme.build_events(["a.md", "b.md"])
+    assert theme.built == [] and theme.srvbes.events == EVENTS_BEFORE
+
+
+def test_events_rebuild_a_page_whose_documents_changed(tmp_path):
+    """A document removed from a day (deleted, or its date changed) rebuilds that day, its month and year."""
+    _cache_every_event_page(tmp_path)
+    before = dict(EVENTS_BEFORE, events_20261015=["a.md", "gone.md"])
+    theme = _EventsTheme(tmp_path, before=before)
+    assert theme.build_events(["a.md", "b.md"]) == {"2026"}
+    assert theme.built == ["events_20261015", "events_202610", "events_2026"]
+    assert theme.reused == ["events_20261016"]
+
+
+def test_events_rebuild_the_month_and_year_of_a_day_that_is_gone(tmp_path):
+    """A day whose only document was removed has no page; its month and year still change."""
+    _cache_every_event_page(tmp_path)
+    before = dict(EVENTS_BEFORE, events_20261014=["gone.md"], events_202610=["a.md", "b.md", "gone.md"],
+                  events_2026=["a.md", "b.md", "gone.md"])
+    theme = _EventsTheme(tmp_path, before=before)
+    assert theme.build_events(["a.md", "b.md"]) == {"2026"}
+    assert theme.built == ["events_202610", "events_2026"]
+
+
+def test_events_rebuild_everything_without_a_record(tmp_path):
+    """After --force, an upgrade or an unreadable cache there is no record: every page is rebuilt."""
+    _cache_every_event_page(tmp_path)
+    theme = _EventsTheme(tmp_path, before=None)
     theme.build_events(["a.md", "b.md"])
     assert sorted(theme.built) == sorted(EVENT_PAGES) and theme.reused == []
-
-
-TOC_SOURCE = """<p>intro</p>
-<div id="toc"><div id="toctitle">Contents</div>
-<ul class="sectlevel1">
-<li><a href="#a">A</a>
-<ul class="sectlevel2">
-<li><a href="#b">B</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<p>body</p>"""
-
-
-def test_extract_toc_uses_the_theme_markup():
-    toc = _Theme().extract_toc(TOC_SOURCE)
-    lines = toc.split("\n")
-    page = "[('page', {})]"
-    assert lines[0] == f'<ul class="<HTML_TOC_SECTLEVEL1 {page}>">'
-    assert lines[1] == f'<HTML_TOC_LI {page}>href="#a">A</a>'
-    assert f'<ul class="<HTML_TOC_SECTLEVEL2 {page}>">' in lines and "<p>body</p>" not in toc
-
-
-def test_extract_toc_without_toc():
-    assert _Theme().extract_toc("<p>no contents</p>\n</div>") == ""

@@ -179,7 +179,6 @@ It brings the pages per property and per value, the properties, stats, bookmarks
 | `datatable_link_template` | `'LINK_DATATABLE'` | Template of a value link in the document table |
 | `datatable_default_headers` | `('Date', 'Title')` | Columns when neither the page nor `repo.json` `"datatable"` names them |
 | `datatable_date_cell(timestamp)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table |
-| `events_rebuild_all` | `False` | Rebuild every event page on each build, instead of only the dates whose documents changed |
 
 You can still override any method. KB4IT's own themes start the docstring of such an override with `Override:` and say why; a test checks it.
 

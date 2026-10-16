@@ -61,6 +61,7 @@ class KBDict(TypedDict, total=False):
     kb4it_version:  str
     site_signature: str
     core_signature: str   # hash of core settings that shape every page (markdown, overrides, hooks)
+    events:         dict  # event page name -> sorted documents on it, after the last successful build
 
 
 class DBRecord(TypedDict, total=False):

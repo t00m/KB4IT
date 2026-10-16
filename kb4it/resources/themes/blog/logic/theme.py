@@ -25,7 +25,6 @@ class Theme(DocumentTheme):
     properties_title = 'Metadata'
     reuse_unchanged_pages = True
     datatable_link_template = 'LINK'
-    events_rebuild_all = True
 
     def _initialize(self):
         super()._initialize()
