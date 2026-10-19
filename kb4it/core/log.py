@@ -9,6 +9,7 @@ License: GPL v3
 """
 
 import logging
+import os
 
 _PATTERN = ("%(levelname)10s | %(lineno)4d | %(name)-15s | %(message)s")
 _DATEFMT = "%d/%m/%Y %H:%M:%S"
@@ -67,6 +68,21 @@ def reset_logging():
 def get_logger(name: str) -> logging.Logger:
     """Return a named logger."""
     return logging.getLogger(name)
+
+
+def release_log_file(logfile: str):
+    """Close the file handlers still writing to logfile, so it can be moved or removed.
+
+    A second build in the same process finds the handler of the first one open on
+    var/log/kb4it.log, and Windows does not remove an open file.
+    """
+    target = os.path.abspath(logfile)
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        if isinstance(handler, logging.FileHandler) and os.path.abspath(handler.baseFilename) == target:
+            handler.flush()
+            handler.close()
+            root.removeHandler(handler)
 
 
 def redirect_logs(logfile: str):

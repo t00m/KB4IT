@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
-from kb4it.core.log import redirect_logs
+from kb4it.core.log import redirect_logs, release_log_file
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save, timeit
@@ -122,6 +122,7 @@ class Backend(Service):
 
             # Activate application log
             app_log_file = Path.joinpath(dir_log, "kb4it.log")
+            release_log_file(app_log_file)
             # Rotate the existing log before redirecting
             if app_log_file.exists():
                 shutil.copy2(app_log_file, app_log_file.with_suffix('.log.old'))
