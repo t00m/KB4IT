@@ -13,3 +13,5 @@ __pycache__/
 
 # Claude Code local tooling (hooks, settings)
 .claude/
+responses
+tmp/
