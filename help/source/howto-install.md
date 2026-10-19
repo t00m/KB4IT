@@ -85,10 +85,10 @@ docker run --rm -v "$PWD:/work" --user "$(id -u):$(id -g)" ghcr.io/t00m/kb4it:0.
 docker run --rm -p 8642:8642 -v "$PWD:/work" ghcr.io/t00m/kb4it:0.9.0 serve config/repo.json --host 0.0.0.0
 ```
 
-Then open `http://127.0.0.1:8642/`. With Podman, on hosts with SELinux such as Fedora and RHEL, add `:Z` to the folder so the container may read it:
+Then open `http://127.0.0.1:8642/`. With rootless Podman, `--userns=keep-id` keeps your user ID inside the container, so it can write to the folder and the files stay yours. On hosts with SELinux, such as Fedora and RHEL, also add `:Z` to the folder so the container may read it:
 
 ```bash
-podman run --rm -v "$PWD:/work:Z" ghcr.io/t00m/kb4it:0.9.0 build config/repo.json
+podman run --rm --userns=keep-id --user "$(id -u):$(id -g)" -v "$PWD:/work:Z" ghcr.io/t00m/kb4it:0.9.0 build config/repo.json
 ```
 
 Use a fixed version such as `0.9.0`, or `0.9` for its latest fixes; `latest` follows every release.

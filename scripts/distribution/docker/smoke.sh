@@ -22,8 +22,13 @@ RUN_USER="${KB4IT_SMOKE_USER:-$(id -u):$(id -g)}"
 PORT="${KB4IT_SMOKE_PORT:-18642}"
 # SELinux hosts (Fedora, RHEL) need the :Z label on bind mounts with podman.
 LABEL=""
+# Rootless podman maps container UIDs to sub-UIDs; keep-id keeps the caller's UID.
+USERNS=()
 if [[ "${RUNTIME}" == "podman" ]]; then
     LABEL=":Z"
+    if [[ "$(podman info --format '{{.Host.Security.Rootless}}')" == "true" ]]; then
+        USERNS=(--userns=keep-id)
+    fi
 fi
 
 WORK="$(mktemp -d)"
@@ -36,7 +41,7 @@ cleanup() {
 trap cleanup EXIT
 
 run() {
-    "${RUNTIME}" run --rm --user "${RUN_USER}" -v "${WORK}:/work${LABEL}" "${IMAGE}" "$@"
+    "${RUNTIME}" run --rm ${USERNS[@]+"${USERNS[@]}"} --user "${RUN_USER}" -v "${WORK}:/work${LABEL}" "${IMAGE}" "$@"
 }
 
 echo ">>> Version"
@@ -59,7 +64,7 @@ fi
 echo "build: ok, files owned by UID ${OWNER}"
 
 echo ">>> Serve"
-"${RUNTIME}" run -d --name "${CONTAINER}" --user "${RUN_USER}" -p "127.0.0.1:${PORT}:8642" \
+"${RUNTIME}" run -d --name "${CONTAINER}" ${USERNS[@]+"${USERNS[@]}"} --user "${RUN_USER}" -p "127.0.0.1:${PORT}:8642" \
     -v "${WORK}:/work${LABEL}" "${IMAGE}" serve kb/config/repo.json --host 0.0.0.0 --no-watch >/dev/null
 for _ in $(seq 1 60); do
     if curl -fsS "http://127.0.0.1:${PORT}/index.html" -o /dev/null 2>/dev/null; then

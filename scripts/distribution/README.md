@@ -68,8 +68,11 @@ running as the non-root user `kb4it` (UID 1000) in `/work`:
 ```bash
 docker run --rm -v "$PWD:/work" --user "$(id -u):$(id -g)" kb4it:latest build config/repo.json
 docker run --rm -p 8642:8642 -v "$PWD:/work" kb4it:latest serve config/repo.json --host 0.0.0.0
-podman run --rm -v "$PWD:/work:Z" kb4it:latest build config/repo.json
+podman run --rm --userns=keep-id --user "$(id -u):$(id -g)" -v "$PWD:/work:Z" kb4it:latest build config/repo.json
 ```
+
+With rootless podman, `--userns=keep-id` keeps your UID inside the container;
+without it the container cannot write to the folder.
 
 The build context is `dist/image/`, which holds only the wheel. Released images are
 published as `ghcr.io/t00m/kb4it`.
