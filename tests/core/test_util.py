@@ -2,6 +2,7 @@
 
 # ruff: noqa: DTZ001, DTZ007  # KB4IT works with naive local datetimes
 
+import os
 from datetime import datetime
 
 import pytest
@@ -51,7 +52,7 @@ def test_copydir_merges_into_existing_tree(tmp_path):
 def test_get_source_docs_finds_both_extensions(tmp_path):
     for name in ("a.md", "b.markdown", "c.txt"):
         (tmp_path / name).write_text("x", encoding="utf-8")
-    found = sorted(p.rsplit("/", 1)[1] for p in util.get_source_docs(str(tmp_path)))
+    found = sorted(os.path.basename(p) for p in util.get_source_docs(str(tmp_path)))
     assert found == ["a.md", "b.markdown"]
 
 

@@ -33,15 +33,17 @@ def test_lock_is_free_again_after_release(tmp_path):
 
 def test_lock_of_a_killed_process_can_be_taken(tmp_path):
     path = tmp_path / "kb4it.lock"
-    code = ("import sys, time; from kb4it.core.lock import FileLock; FileLock(sys.argv[1]).acquire(); "
-            "print('held', flush=True); time.sleep(60)")
+    # The child prints its own PID: on Windows a venv python.exe is a launcher whose PID differs.
+    code = ("import os, sys, time; from kb4it.core.lock import FileLock; FileLock(sys.argv[1]).acquire(); "
+            "print('held', os.getpid(), flush=True); time.sleep(60)")
     proc = subprocess.Popen([sys.executable, "-c", code, str(path)], stdout=subprocess.PIPE, text=True,
                             encoding="utf-8", env=dict(os.environ, PYTHONPATH=str(ROOT)))
     try:
-        assert proc.stdout.readline().strip() == "held"
+        word, pid = proc.stdout.readline().split()
+        assert word == "held"
         with pytest.raises(LockBusyError) as busy:
             FileLock(path).acquire()
-        assert busy.value.pid == proc.pid
+        assert busy.value.pid == int(pid)
     finally:
         proc.kill()
         proc.wait()
