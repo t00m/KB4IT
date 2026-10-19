@@ -37,9 +37,12 @@ def _wait(predicate, timeout=60):
 def served(tmp_path, home):
     cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("Alpha", "First text.", Tag="x")})
     port = find_free_port(start=18642)
+    # A file, not a pipe: nobody reads the pipe, and on Windows its small buffer fills during
+    # the first rebuild, so the server blocks on its next log line.
+    out_path = tmp_path / "serve.log"
+    out = open(out_path, "w", encoding="utf-8")
     proc = subprocess.Popen([sys.executable, "-c", RUNNER, "serve", str(cfg), "--port", str(port), "--interval", "0.2"],
-                            cwd=str(tmp_path), env=isolated_env(home), stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, text=True, encoding="utf-8")
+                            cwd=str(tmp_path), env=isolated_env(home), stdout=out, stderr=subprocess.STDOUT)
     url = f"http://127.0.0.1:{port}/"
     try:
         _wait(lambda: _get(url + "__kb4it/status"))
@@ -50,6 +53,10 @@ def served(tmp_path, home):
             proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
             proc.kill()
+            proc.wait()
+        out.close()
+        # Shown by pytest only when the test fails.
+        print(out_path.read_text(encoding="utf-8", errors="replace"))
 
 
 def _status(url):
