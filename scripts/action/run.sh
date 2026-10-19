@@ -26,7 +26,8 @@ install() {
         with=(--with "pymdown-extensions>=10.0" --with "nh3>=0.3.0")
     fi
     echo "Installing ${spec} with Python ${KB4IT_PYTHON}"
-    uv tool install --force --python "${KB4IT_PYTHON}" "${with[@]}" "${spec}"
+    # macOS bash 3.2 treats an empty "${with[@]}" as unbound under set -u.
+    uv tool install --force --python "${KB4IT_PYTHON}" ${with[@]+"${with[@]}"} "${spec}"
     local version
     version="$(kb4it --version | awk '{print $2}')"
     echo "version=${version}" >> "${GITHUB_OUTPUT}"
