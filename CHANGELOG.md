@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.9.0] - 2026-10-19
+
 ### Added
 
 - `KB4IT_HOME` environment variable: puts the per-user files (`projects.json`, user themes, logs) in another folder instead of `~/.kb4it`. The test suite uses it so that it never writes to the real profile, also on Windows (CP-03).
