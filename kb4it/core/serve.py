@@ -152,6 +152,9 @@ class Server:
             host = self.params.get("host") or "127.0.0.1"
             if host not in ("127.0.0.1", "localhost", "::1"):
                 log.warning(f"[SERVE] WARNING_PUBLIC host={host}")
+            # Take the first snapshot before the server answers, so a file saved as soon as
+            # the site is up is seen as a change.
+            watcher = None if self.params.get("no_watch") else self.new_watcher()
             self.server = SiteServer(target, host=host, port=self.params.get("port"),
                                      reload=not self.params.get("no_reload"), status=self.status).start()
             log.info(f"[SERVE] LISTEN url={self.server.url}")
@@ -161,7 +164,7 @@ class Server:
             if self.params.get("no_watch"):
                 while True:
                     time.sleep(3600)
-            self.watch_loop(stop)
+            self.watch_loop(stop, watcher)
         except KeyboardInterrupt:
             pass
         finally:
