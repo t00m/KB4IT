@@ -1,3 +1,4 @@
+<% _hl = (var['repo'].get('markdown') or {}).get('highlight', 'client') %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,14 +6,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
-    <meta name="description" content="KB4IT document">
-    <meta name="author" content="KB4IT by t00mlabs.net">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet"href="resources/themes/techdoc/framework/Highlight/styles/github-dark.css">
+% if _hl == 'client':
+    <link rel="stylesheet" href="resources/themes/techdoc/framework/Highlight/styles/github-dark.css">
+% elif _hl == 'pygments':
+    <link rel="stylesheet" href="resources/pygments.css">
+% endif
     <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
+% if _hl == 'client':
     <script src="resources/themes/techdoc/framework/Highlight/highlight.js"></script>
+% endif
     <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
     <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
     <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
@@ -50,7 +55,7 @@
                 <ul class="uk-navbar-nav noprint">
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-logo uk-transition-scale-up uk-transition-opaque" href="index.html">
-                            <img src="${var['repo'].get('logo', 'resources/images/logo.png')}" alt="${var['repo'].get('logo_alt', '')}" width="24px" height="24px">
+                            <img src="${var['repo'].get('logo', 'resources/images/logo.png')}" alt="${var['repo'].get('logo_alt') or var['repo']['title']}" width="24" height="24">
                         </a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">
@@ -86,7 +91,7 @@
                 </ul>
                 <ul class="uk-navbar-nav noprint">
                     <!-- MENU CONTENTS :: START -->
-                    ${var['actions']}
+                    ${var['actions'] | n}
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
@@ -99,9 +104,9 @@
                                 <a class="uk-link-toggle uk-text-primary" href="#"><span id="kb4it-page-title" class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
 % if var['has_toc'] and len(var['toc']) > 0:
                                 <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
-                                    <ul class="uk-nav uk-navbar-dropdown-nav">
-${var['toc']}
-                                    </ul>
+                                    <div class="uk-navbar-dropdown-nav">
+${var['toc'] | n}
+                                    </div>
                                 </div>
 % endif
                             </div>
@@ -112,6 +117,11 @@ ${var['toc']}
             </div>
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
+% if var.get('search_box'):
+                    <li class="uk-flex uk-flex-middle uk-padding-small uk-padding-remove-vertical">
+                        ${var['search_box'] | n}
+                    </li>
+% endif
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
                     </li>

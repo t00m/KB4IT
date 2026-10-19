@@ -7,7 +7,9 @@
 </div><!-- /uk-container -->
 </div><!-- /uk-background-muted -->
 <!-- CONTENTS (Document) :: END -->
+% if (var['repo'].get('markdown') or {}).get('highlight', 'client') == 'client':
 <script>hljs.highlightAll();</script>
+% endif
 <script>
 var input = document.getElementById("text_filter");
 var filter = document.getElementById("filter");

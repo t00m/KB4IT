@@ -14,7 +14,7 @@ def test_undated_documents_are_kept(tmp_path, home):
     }, theme_path=str(theme))
     result = run_kb4it("build", cfg, cwd=repo, home=home)
     assert result.returncode == 0, result.stdout
-    docs = json.loads((repo / "target" / "documents.json").read_text())
+    docs = json.loads((repo / "target" / "documents.json").read_text(encoding="utf-8"))
     assert docs == ["a.md", "c.md", "b.md", "d.md"]
     assert "DATE_INVALID" not in result.stdout
 

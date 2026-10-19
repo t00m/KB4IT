@@ -20,7 +20,7 @@ Point `kb4it build` at the settings file of the knowledge base:
 kb4it build ~/mykb/config/repo.json
 ```
 
-Or run the script `kb4it create` made for you: `~/mykb/bin/compile.sh`.
+Or run the script `kb4it create` made for you: `~/mykb/bin/compile.sh` on Linux and macOS, `mykb\bin\compile.cmd` on Windows.
 
 The website is written to the `target/` folder. Open `target/index.html` in a browser, or see [Publish on any web server](howto-publish-web-server.md) to share it.
 
@@ -43,6 +43,8 @@ Every build ends with a summary line:
 ## Rebuild after a change {#rebuild}
 
 Run the same command again. KB4IT compares every document with the last build and compiles only the ones you changed, added or removed, plus the property pages they appear on.
+
+A change to `repo.json` that can show on a page, such as `title` or a theme option, rebuilds every page. `workers`, `force`, `fail_on_invalid`, `source` and `target` never reach a page, so changing them rebuilds nothing.
 
 ## Rebuild everything {#force}
 
@@ -73,4 +75,4 @@ kb4it -L DEBUG build ~/mykb/config/repo.json
 KB4IT converts several documents at a time, by default half the number of processor cores. Change it with `"workers"` in `repo.json`. Use fewer workers if the computer runs short of memory.
 
 !!! note
-    Only one KB4IT runs at a time. A second one stops with `KB4IT is already running (PID 1234)`.
+    Only one KB4IT builds a knowledge base at a time. A second build of the same knowledge base stops with `KB4IT is already working on this repository (PID 1234)`. Different knowledge bases can build at the same time.

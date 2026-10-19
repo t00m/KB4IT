@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import pathlib
 import time
 import urllib.request
 
@@ -9,6 +10,8 @@ import pytest
 from textual.widgets import Button, DataTable, Input, Label, ListView, RichLog
 
 from kb4it.tui import app as tui
+from kb4it.tui import clipboard, projects
+from kb4it.tui.screens import project as project_screens
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 SIZE = (140, 60)
@@ -18,7 +21,7 @@ SIZE = (140, 60)
 def registry(tmp_path, monkeypatch):
     """Point the TUI project registry at a fresh file."""
     path = tmp_path / "projects.json"
-    monkeypatch.setattr(tui, "PROJECTS_FILE", path)
+    monkeypatch.setattr(projects, "PROJECTS_FILE", path)
     return path
 
 
@@ -84,7 +87,8 @@ def test_helpers(tmp_path):
     assert tui.get_apps("nosuchtheme") == []
     cfg = str(tmp_path / "repo" / "config" / "repo.json")
     assert tui._resolve_repo_path(cfg, "target") == tmp_path / "repo" / "target"
-    assert tui._resolve_repo_path(cfg, "/abs") == tui.Path("/abs")
+    absolute = str(tmp_path / "abs")  # "/abs" is not absolute on Windows
+    assert tui._resolve_repo_path(cfg, absolute) == pathlib.Path(absolute)
     assert tui._log_path(cfg) is None and tui._kbdict_path(cfg) is None
     assert tui._parse_level("   ERROR | x") == "ERROR"
     assert tui._parse_level("plain line") == "INFO"
@@ -100,6 +104,29 @@ def test_copy_to_clipboard_falls_back_to_osc52(monkeypatch):
     monkeypatch.setattr("shutil.which", lambda _name: None)
     assert tui._copy_to_clipboard(FakeApp(), "hello") == (True, "OSC52")
     assert copied == ["hello"]
+
+
+@pytest.mark.parametrize("family, expected", [
+    ("linux", ["wl-copy", "xclip", "xsel"]),
+    ("darwin", ["pbcopy"]),
+    ("windows", ["clip.exe"]),
+])
+def test_clipboard_tools_per_platform(monkeypatch, family, expected):
+    monkeypatch.setattr("shutil.which", lambda name: f"/bin/{name}")
+    assert [cmd[0] for cmd, _enc in tui.clipboard_commands(family)] == expected
+
+
+def test_clipboard_skips_tools_not_on_path(monkeypatch):
+    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/xsel" if name == "xsel" else None)
+    assert [cmd[0] for cmd, _enc in tui.clipboard_commands("linux")] == ["xsel"]
+
+
+def test_windows_clipboard_gets_utf16(monkeypatch):
+    sent = []
+    monkeypatch.setattr(clipboard, "clipboard_commands", lambda family=None: [(["clip.exe"], "utf-16")])
+    monkeypatch.setattr("subprocess.run", lambda cmd, input, check, timeout: sent.append(input))
+    assert tui._copy_to_clipboard(object(), "Tomás") == (True, "clip.exe")
+    assert sent[0].decode("utf-16") == "Tomás"
 
 
 def test_main_screen_without_projects(registry):
@@ -127,8 +154,8 @@ def test_main_screen_without_projects(registry):
 
 def test_project_screens_after_a_build(registry, built_repo, monkeypatch):
     opened = []
-    monkeypatch.setattr(tui.webbrowser, "open", opened.append)
-    monkeypatch.setattr(tui, "_copy_to_clipboard", lambda _app, text: (True, "test"))
+    monkeypatch.setattr(project_screens.webbrowser, "open", opened.append)
+    monkeypatch.setattr(clipboard, "_copy_to_clipboard", lambda _app, text: (True, "test"))
     register(registry, built_repo)
 
     async def scenario(app, pilot):
@@ -188,6 +215,11 @@ def test_project_screens_after_a_build(registry, built_repo, monkeypatch):
         assert opened[1].startswith("http://127.0.0.1:")
         status = await asyncio.to_thread(lambda: urllib.request.urlopen(opened[1], timeout=5).status)
         assert status == 200
+        page = await asyncio.to_thread(lambda: urllib.request.urlopen(opened[1], timeout=5).read().decode("utf-8"))
+        assert "kb4it-live-reload" in page, "the TUI web server reloads pages after a rebuild"
+        live = await asyncio.to_thread(
+            lambda: urllib.request.urlopen(opened[1] + "__kb4it/status", timeout=5).read().decode("utf-8"))
+        assert '"build"' in live
         await pilot.click("#back")
         assert isinstance(app.screen, tui.MainScreen)
     run(scenario)
@@ -255,7 +287,7 @@ def test_create_project(registry, tmp_path):
         await pilot.pause()
         assert isinstance(app.screen, tui.MainScreen), create.query_one("#error-banner", Label).render()
     run(scenario)
-    assert json.loads((path / "config" / "repo.json").read_text())["theme"] == "blog"
+    assert json.loads((path / "config" / "repo.json").read_text(encoding="utf-8"))["theme"] == "blog"
     assert tui.load_projects() == [{"name": "New blog", "config": str(path / "config" / "repo.json")}]
 
 

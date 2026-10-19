@@ -8,15 +8,33 @@
 import importlib.util
 import json
 import os
+import shlex
 import stat
+import sys
 import time
 from pathlib import Path
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
+from kb4it.core.exceptions import CompilationError, ConfigError, KB4ITError, ThemeError
+from kb4it.core.lock import registry_lock
+from kb4it.core.mdconfig import load_settings
+from kb4it.core.mdlinks import scan_document
 from kb4it.core.service import Service
-from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, get_source_docs, get_document_attributes
-from kb4it.services.backend import resolve_repo_path
+from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, fences_in_blocks,
+                             get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
+                             page_name_clashes, quarantine, raw_script_lines)
+from kb4it.core.paths import resolve_repo_path
+
+
+def build_script(config_file, platform=None):
+    """Return (file name, content, executable) of the one-command build script for this platform.
+
+    The config path is quoted, so knowledge bases in folders with spaces build too.
+    """
+    platform = sys.platform if platform is None else platform
+    if platform == "win32":
+        return "compile.cmd", f'@echo off\r\nkb4it -L INFO build "{config_file}"\r\n', False
+    return "compile.sh", f"#!/bin/sh\nkb4it -L INFO build {shlex.quote(str(config_file))}\n", True
 
 
 class Workflow(Service):
@@ -63,14 +81,22 @@ class Workflow(Service):
 
     def _save_project(self, name, config_path):
         """Save project to projects.json registry."""
+        with registry_lock():
+            self._save_project_locked(name, config_path)
+
+    def _save_project_locked(self, name, config_path):
         projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
         projects = []
         if os.path.exists(projects_file):
             try:
                 data = json_load(projects_file)
-                projects = data.get("projects", [])
-            except Exception:
-                pass
+                projects = data["projects"]
+                if not isinstance(projects, list):
+                    raise TypeError("'projects' is not a list")
+            except (ValueError, KeyError, TypeError) as error:
+                kept = quarantine(projects_file)
+                self.log.warning(f"[WORKFLOW] PROJECTS_CORRUPT path={projects_file} kept={kept} reason={error}")
+                projects = []
 
         # Avoid duplicates
         if any(p["config"] == config_path for p in projects):
@@ -82,6 +108,25 @@ class Workflow(Service):
             self.log.info(f"[WORKFLOW] PROJECT_REGISTERED name={name}")
         except Exception as e:
             self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
+
+    def _verify_links(self, docs):
+        """LINK_BROKEN and ANCHOR_MISSING lines for links between source documents."""
+        scanned = {}
+        for doc in docs:
+            try:
+                scanned[os.path.basename(doc)] = scan_document(doc)
+            except Exception as e:
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={os.path.basename(doc)} error={e}")
+        problems = []
+        for name in sorted(scanned):
+            links, _anchors = scanned[name]
+            for path, fragment in links:
+                target = os.path.normpath(path).replace(os.sep, "/")
+                if target not in scanned:
+                    problems.append(f"LINK_BROKEN from={name} to={path}")
+                elif fragment and fragment not in scanned[target][1]:
+                    problems.append(f"ANCHOR_MISSING from={name} to={path}#{fragment}")
+        return problems
 
     def verify_sources(self):
         """Verify project sources, display non-conformant ones and fail when there are any."""
@@ -116,9 +161,14 @@ class Workflow(Service):
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
         for doc in docs:
+            if is_windows_reserved(doc):
+                non_conformant.append((doc, "reserved_name"))
+                continue
             _keys, success, reason = get_document_attributes(doc)
             if not success:
                 non_conformant.append((doc, reason))
+        for first, second in page_name_clashes(os.path.basename(d) for d in docs):
+            non_conformant.append((os.path.join(source_dir, second), f"name_clash_with={first}"))
 
         if non_conformant:
             print("\nNon-conformant source files found:")
@@ -135,15 +185,69 @@ class Workflow(Service):
         except Exception as e:
             self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={e}")
             raise KB4ITError(f"Theme verify hook failed: {e}") from e
+        settings = None
+        try:
+            settings = load_settings(repo)
+        except ConfigError as e:
+            problems = [f"repo.json: {e}", *problems]
         if problems:
             print("\nTheme checks:")
             for line in problems:
                 print(f"  {line}")
             print(f"Total: {len(problems)} theme problems.")
 
-        if non_conformant or problems:
+        markdown_warnings = self._verify_fences(docs, settings)
+        if markdown_warnings:
+            print("\nMarkdown (warnings):")
+            for line in markdown_warnings:
+                print(f"  {line}")
+
+        raw_html = self._verify_raw_scripts(docs, settings)
+        if raw_html:
+            print("\nRaw HTML (information: it reaches the pages as written; see markdown.sanitize):")
+            for line in raw_html:
+                print(f"  {line}")
+
+        link_problems = self._verify_links(docs)
+        if link_problems:
+            print("\nLinks:")
+            for line in link_problems:
+                print(f"  {line}")
+            print(f"Total: {len(link_problems)} broken links.")
+
+        if non_conformant or problems or link_problems:
             raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
-                             f"{len(problems)} theme problems")
+                             f"{len(problems)} theme problems, {len(link_problems)} broken links")
+
+    def _verify_fences(self, docs, settings):
+        """MD_FENCE_IN_BLOCK lines for fences that python-markdown cannot see without superfences."""
+        if settings is None or "pymdownx.superfences" in settings.extensions:
+            return []
+        lines = []
+        for doc in sorted(docs):
+            with open(doc, encoding=SOURCE_ENCODING) as fh:
+                numbers = fences_in_blocks(fh.read())
+            if numbers:
+                name = os.path.basename(doc)
+                self.log.warning(f"[WORKFLOW] MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}")
+                lines.append(f"MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}: "
+                             "indent the code instead of fencing it, or enable pymdownx.superfences")
+        return lines
+
+    def _verify_raw_scripts(self, docs, settings):
+        """DOC_RAW_SCRIPT lines for documents with scripts or event handlers, when sanitize is off."""
+        if settings is None or settings.sanitize:
+            return []
+        lines = []
+        for doc in sorted(docs):
+            with open(doc, encoding=SOURCE_ENCODING) as fh:
+                numbers = raw_script_lines(fh.read())
+            if numbers:
+                name = os.path.basename(doc)
+                line = f"DOC_RAW_SCRIPT doc={name} lines={','.join(map(str, numbers))}"
+                self.log.info(f"[WORKFLOW] {line}")
+                lines.append(line)
+        return lines
 
     def _find_theme_dir(self, repo, config_file):
         """Return the theme folder for a repo, following the same order as the build."""
@@ -227,7 +331,6 @@ class Workflow(Service):
             os.makedirs(source_dir, exist_ok=True)
             os.makedirs(target_dir, exist_ok=True)
             bin_dir = os.path.join(repo_path, "bin")
-            script = os.path.join(bin_dir, "compile.sh")
             config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
@@ -237,17 +340,12 @@ class Workflow(Service):
             with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
-            with open(script, "w", encoding="utf-8") as fs:
-                fs.write(f"kb4it -L INFO build {config_file}")
-            os.chmod(
-                script,
-                stat.S_IRUSR
-                | stat.S_IRGRP
-                | stat.S_IWUSR
-                | stat.S_IWGRP
-                | stat.S_IXUSR
-                | stat.S_IXGRP,
-            )
+            name, content, executable = build_script(config_file)
+            script = os.path.join(bin_dir, name)
+            with open(script, "w", encoding="utf-8", newline="") as fs:
+                fs.write(content)
+            if executable:
+                os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info("[WORKFLOW] REPO_INITIALIZED")
             self.log.info(f"[WORKFLOW] HINT compile_script path={script}")
             self.log.info(f"[WORKFLOW] HINT source_dir path={source_dir}")
@@ -258,6 +356,18 @@ class Workflow(Service):
             # Register project in projects.json
             repo_title = repoconf.get("title") or os.path.basename(repo_path)
             self._save_project(repo_title, config_file)
+
+    def _failed_pages(self) -> dict:
+        """Pages the compiler could not make or the deployer could not find, with the reason."""
+        failed = {}
+        pipeline = getattr(self.get_service("Backend"), "pipeline", None)
+        if pipeline is None:
+            return failed
+        for name, reason in pipeline.compiler.failed:
+            failed[name] = reason
+        for name in pipeline.deployer.missing:
+            failed.setdefault(name, "missing from the cache")
+        return failed
 
     def build_website(self):
         """Build workflow:
@@ -313,6 +423,9 @@ class Workflow(Service):
 
         self.log.info("[WORKFLOW] STAGE n=8 name=theme_post_deploy")
         theme.post_deploy_activities()
+        theme.write_search_index()
+        theme.write_sitemap()
+        theme.write_feed()
 
         # Build summary
         runtime = backend.get_dict("runtime")
@@ -323,6 +436,9 @@ class Workflow(Service):
         skipped    = docs_total - compiled - invalid
         keys_compiled = plan.key_count if plan is not None else 0
         kv_compiled   = plan.kv_count if plan is not None else 0
+        failed = self._failed_pages()
+        if not failed:
+            backend.commit_kbdict()
         elapsed = time.perf_counter() - t0
 
         self.log.info(
@@ -333,8 +449,21 @@ class Workflow(Service):
             f" invalid={invalid}"
             f" keys_compiled={keys_compiled}"
             f" kv_pages_compiled={kv_compiled}"
+            f" failed={len(failed)}"
         )
         self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
+
+        hooks = getattr(backend, "hooks", None)
+        if hooks is not None and hooks.has("on_build_end"):
+            summary = {"docs_total": docs_total, "compiled": compiled, "skipped": skipped, "invalid": invalid,
+                       "keys_compiled": keys_compiled, "kv_pages_compiled": kv_compiled,
+                       "failed": len(failed), "elapsed": round(elapsed, 2)}
+            hooks.call("on_build_end", str(backend.get_path("target")), summary)
+
+        if failed:
+            names = ", ".join(sorted(failed))
+            self.log.error(f"[WORKFLOW] PAGES_FAILED n={len(failed)} pages={names}")
+            raise CompilationError(f"{len(failed)} page(s) could not be built: {names}")
 
         # Report
         homepage = os.path.join(

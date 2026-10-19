@@ -45,6 +45,31 @@ class FrozenDict(dict):
         raise KeyError(f"ENV has no key '{key}'. Valid keys: {sorted(self.keys())}")
 
 
+def platform_family(name=None) -> str:
+    """Return 'linux', 'darwin', 'windows' or 'other' for sys.platform (or name)."""
+    name = sys.platform if name is None else name
+    if name.startswith("linux"):
+        return "linux"
+    if name == "darwin":
+        return "darwin"
+    if name in ("win32", "cygwin"):
+        return "windows"
+    return "other"
+
+
+def platform_description() -> str:
+    """Describe the operating system: os-release PRETTY_NAME where it exists, platform.platform() elsewhere."""
+    try:
+        return platform.freedesktop_os_release()["PRETTY_NAME"]
+    except (OSError, KeyError, AttributeError):
+        return platform.platform()
+
+
+def process_name() -> str:
+    """Name of the running program, read the same way on every platform."""
+    return Path(sys.argv[0]).name if sys.argv and sys.argv[0] else Path(sys.executable).name
+
+
 ENV = FrozenDict()
 
 # System info
@@ -73,27 +98,19 @@ except ModuleNotFoundError as error:
 
 ENV["SYS"]["PLATFORM"] = {}
 ENV["SYS"]["PLATFORM"]["NODE"] = platform.node()
-try:
-    ENV["SYS"]["PLATFORM"]["OS"] = platform.freedesktop_os_release()["PRETTY_NAME"]
-except FileNotFoundError:
-    print("KB4IT only runs in GNU/Linux systems")
-    sys.exit(-1)
-except AttributeError:
-    print("KB4IT couldn't start. Check traceback")
-    sys.exit(-1)
+ENV["SYS"]["PLATFORM"]["OS"] = platform_description()
+ENV["SYS"]["PLATFORM"]["FAMILY"] = platform_family()
 
 # KB4IT current process
-pid = os.getpid()
 ENV["SYS"]["PS"] = {}
 ENV["SYS"]["PS"]["PID"] = os.getpid()
-ENV["SYS"]["PS"]["NAME"] = Path(
-    f"/proc/{pid}/comm").read_text(encoding="utf-8").strip()
+ENV["SYS"]["PS"]["NAME"] = process_name()
 
 # Configuration
 ENV["CONF"] = {}
 ENV["CONF"]["ROOT"] = abspath(sys.modules[__name__].__file__ + "/../../")
 
-ENV["CONF"]["USER_DIR"] = os.path.expanduser("~")
+ENV["CONF"]["USER_DIR"] = str(Path.home())
 ENV["CONF"]["MAX_WORKERS"] = multiprocessing.cpu_count()  # Avoid MemoryError
 
 # App Info
@@ -118,7 +135,8 @@ ENV["APP"]["website"] = "https://github.com/t00m/KB4IT"
 
 # Local paths
 ENV["LPATH"] = {}
-ENV["LPATH"]["ROOT"] = os.path.join(
+# KB4IT_HOME relocates every per-user file (tests, portable installs); the default is ~/.kb4it on all systems.
+ENV["LPATH"]["ROOT"] = os.environ.get("KB4IT_HOME") or os.path.join(
     ENV["CONF"]["USER_DIR"], f".{ENV['APP']['shortname'].lower()}"
 )
 ENV["LPATH"]["VAR"] = os.path.join(ENV["LPATH"]["ROOT"], "var")
@@ -138,6 +156,8 @@ ENV["GPATH"]["COMMON"] = os.path.join(ENV["GPATH"]["RESOURCES"], "common")
 ENV["GPATH"]["COMMON_IMG"] = os.path.join(ENV["GPATH"]["COMMON"], "images")
 ENV["GPATH"]["TEMPLATES"] = os.path.join(ENV["GPATH"]["COMMON"], "templates")
 ENV["GPATH"]["THEMES"] = os.path.join(ENV["GPATH"]["RESOURCES"], "themes")
+# Template bases: folders of templates that several themes share ("template_base" in theme.json).
+ENV["GPATH"]["BASES"] = os.path.join(ENV["GPATH"]["RESOURCES"], "bases")
 ENV["GPATH"]["APPDATA"] = os.path.join(ENV["GPATH"]["COMMON"], "appdata")
 ENV["GPATH"]["RES"] = os.path.join(ENV["GPATH"]["DATA"], "res")
 
@@ -145,9 +165,6 @@ ENV["GPATH"]["RES"] = os.path.join(ENV["GPATH"]["DATA"], "res")
 ENV["FILE"] = {}
 ENV["FILE"]["LOG"] = os.path.join(
     ENV["LPATH"]["LOG"], f"{ENV['APP']['shortname'].lower()}.log"
-)
-ENV["FILE"]["LOCK"] = os.path.join(
-    ENV["LPATH"]["VAR"], f"{ENV['APP']['shortname'].lower()}.lock"
 )
 
 ENV.freeze()

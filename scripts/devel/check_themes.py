@@ -23,6 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 THEMES = "kb4it/resources/themes"
 COMMON_TEMPLATES = "kb4it/resources/common/templates"
+BASES = "kb4it/resources/bases"
 REQUIRED_KEYS = ("id", "name", "version", "kb4it")
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 
@@ -79,8 +80,14 @@ def check_static(code_root, theme_dir, version):
     required = ["HTML_BODY", "PAGE_INDEX"]
     if conf.get("metadata_pages", True) is not False:
         required += ["PAGE_KEY", "PAGE_KEY_VALUE"]
+    template_dirs = [theme_dir / "templates", code_root / COMMON_TEMPLATES]
+    if conf.get("template_base"):
+        base_dir = code_root / BASES / str(conf["template_base"]) / "templates"
+        if not base_dir.is_dir():
+            problems.append(f"template_base '{conf['template_base']}' is not a template base")
+        template_dirs.insert(1, base_dir)
     for name in required:
-        if not any((d / f"{name}.tpl").is_file() for d in (theme_dir / "templates", code_root / COMMON_TEMPLATES)):
+        if not any((d / f"{name}.tpl").is_file() for d in template_dirs):
             problems.append(f"required template {name} is missing")
     for name in conf.get("deploy_dirs") or []:
         if not (theme_dir / name).is_dir():

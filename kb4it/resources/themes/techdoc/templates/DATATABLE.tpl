@@ -2,11 +2,11 @@
 <table id="${var['table_id']}" class="kb4it-datatable uk-table uk-table-small uk-table-responsive uk-table-divider uk-table-hover uk-table-striped uk-text-small" style="width: 100%">
     <thead class="">
         <tr class="">
-            ${var['header']}
+            ${var['header'] | n}
         </tr>
     </thead>
     <tbody class="">
-            ${var['rows']}
+            ${var['rows'] | n}
     </tbody>
     <tfoot class="">
     </tfoot>

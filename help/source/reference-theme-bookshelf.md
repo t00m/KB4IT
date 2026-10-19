@@ -61,6 +61,7 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 | `Book_<name>.html` | The book overview: one column per part, one card per chapter |
 | Chapter pages | Navigation through the part, previous and next chapter, commands and tags |
 | `all.html`, `bookmarks.html`, `properties.html`, `stats.html` | As in the other themes |
+| `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the top bar (it replaces the link to `all.html`) shows the best matches as you type. See [search](reference-repo-json.md#search) |
 
 ## Settings {#settings}
 

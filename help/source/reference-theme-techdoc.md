@@ -44,7 +44,7 @@ The home page shows, from top to bottom:
 
 ![A techdoc document](resources/images/techdoc-page.webp)
 
-Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server.
+Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
 ## Other pages {#pages}
 
@@ -57,6 +57,7 @@ Each document gets a table of contents, sections that fold when you click their 
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `add.html` | A form that fills a ready-made skeleton per category, to copy into a new file |
 | `help.html` | A short guide to writing documents |
+| `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the header shows the best matches as you type. See [search](reference-repo-json.md#search) |
 
 ## Settings {#settings}
 

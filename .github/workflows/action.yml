@@ -1,0 +1,87 @@
+# Tests the KB4IT GitHub Action (action.yml at the repository root) with `uses: ./`,
+# so the action and the KB4IT of the same commit are tested together.
+name: action
+
+on:
+  push:
+    paths:
+      - 'action.yml'
+      - 'scripts/action/**'
+      - 'kb4it/**'
+      - 'pyproject.toml'
+      - '.github/workflows/action.yml'
+  pull_request:
+    paths:
+      - 'action.yml'
+      - 'scripts/action/**'
+      - 'kb4it/**'
+      - 'pyproject.toml'
+      - '.github/workflows/action.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: builds a site on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Create a sample site with the KB4IT of this commit
+        run: |
+          uv run --no-project --with-requirements requirements.txt python -m kb4it.core.main create techdoc sample
+          printf -- '---\nTitle: Page\n---\n\n# A page\n\nSome text.\n' > sample/source/page.md
+
+      - id: kb4it
+        uses: ./
+        with:
+          config: sample/config/repo.json
+
+      - name: The outputs point at the site and name this version
+        env:
+          TARGET: ${{ steps.kb4it.outputs.target }}
+          VERSION: ${{ steps.kb4it.outputs.version }}
+        run: |
+          if command -v cygpath >/dev/null 2>&1; then TARGET="$(cygpath -u "$TARGET")"; fi
+          echo "target=$TARGET version=$VERSION"
+          test -f "$TARGET/index.html"
+          test -f "$TARGET/page.html"
+          test "$VERSION" = "$(tr -d '[:space:]' < kb4it/VERSION)"
+
+  verify-fails:
+    name: a broken link fails the step
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Create a sample site with a broken link
+        run: |
+          uv run --no-project --with-requirements requirements.txt python -m kb4it.core.main create techdoc sample
+          printf -- '---\nTitle: Links\n---\n\n# Links\n\n[gone](missing.md)\n' > sample/source/links.md
+
+      - id: kb4it
+        uses: ./
+        continue-on-error: true
+        with:
+          config: sample/config/repo.json
+
+      - name: The action failed and built nothing
+        env:
+          OUTCOME: ${{ steps.kb4it.outcome }}
+        run: |
+          test "$OUTCOME" = "failure"
+          test ! -e sample/target/links.html

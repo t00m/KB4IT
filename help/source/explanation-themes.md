@@ -63,6 +63,8 @@ When you build, KB4IT looks for the theme named in `repo.json` in this order and
 
 `"theme_path"` in `repo.json` skips the search and names the theme folder directly.
 
+To change only one template of a theme, put your version in the knowledge base's `overrides/templates/` folder; see [Change one template of a theme](howto-customize-templates.md).
+
 ## Themes and KB4IT versions {#versions}
 
 Each theme says which KB4IT it needs, in the `kb4it` field of its `theme.json`, for example `">=0.7.9"`. A theme that needs a newer KB4IT is refused with `THEME_REQUIREMENT_UNMET`, so you learn it before the build, not halfway through.

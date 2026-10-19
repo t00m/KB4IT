@@ -7,115 +7,49 @@
 # Description: Theme Blog for KB4IT
 """
 
-import math
 import os
 import sys
+import threading
 from datetime import datetime
+from html import escape
 
 from kb4it.core.env import ENV
 from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              get_font_size, get_human_datetime,
-                             get_human_datetime_day, get_human_datetime_month,
                              get_human_datetime_year, guess_datetime,
-                             html_id_for, set_max_frequency, valid_filename)
-from kb4it.services.builder import Builder
+                             html_id_for, valid_filename)
+from kb4it.services.themekit import DocumentTheme
 
 
-class Theme(Builder):
-    dey = {}
-    events_docs = {}
+class Theme(DocumentTheme):
+    properties_title = 'Metadata'
+    reuse_unchanged_pages = True
+    datatable_link_template = 'LINK'
 
     def _initialize(self):
         super()._initialize()
-        self.dey = {}
-        self.events_docs = {}
+        self._undated = set()
+        self._undated_lock = threading.Lock()
+
+    def note_undated(self, doc, dates):
+        """Log once a post without a usable Date: it is listed after the dated ones, without a calendar line."""
+        stamp = (dates or [None])[0]
+        if stamp and guess_datetime(stamp) is not None:
+            return
+        with self._undated_lock:
+            if doc in self._undated:
+                return
+            self._undated.add(doc)
+        self.log.warning(f"[THEME] DOC_UNDATED doc={doc}")
 
     # ~ @timeit
-    def build_datatable(self, headers=None, doclist=None):
-        """Given a list of columns, it builds a datatable.
-        First column is always a date field, which is got by using the
-        method get_doc_timestamp from the database module. It means
-        that, firstly, it will retrieve the first date property defined
-        by the theme (or one of the next ones defined if the first isn't
-        found). If none is found, it will retrieve the timestamp of the
-        file from the OS).
-        So, it is not necessary to pass a date property in the headers.
-        """
-        if headers is None:
-            headers = []
-        if doclist is None:
-            doclist = []
-        # ~ self.log.debug(f"DATATABLE HEADERS[{headers}] DOCLIST[{doclist}]")
-        TPL_LINK = self.template('LINK')
-        TPL_DATATABLE = self.template('DATATABLE')
-        TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
-        TPL_DATATABLE_BODY_ITEM = self.template('DATATABLE_BODY_ITEM')
-
-        datatable = {}
-        repo = self.srvbes.get_dict('repo')
-        sort_attribute = "Date"
-
-        # Add datatable hearders
-        if len(headers) == 0:
-            headers = repo['datatable']
-
-        header_parts = []
-        for item in headers:
-            var = {}
-            var['item'] = item
-            header_parts.append(TPL_DATATABLE_HEADER_ITEM.render(var=var))
-        datatable['header'] = ''.join(header_parts)
-
-        # Add datatable body
-        documents = {}
-        for docId in doclist:
-            documents[docId] = self.srvdtb.get_doc_properties(docId)
-        rows = []
-        for docId in documents:
-            if self.srvdtb.is_system(docId):
-                continue
-
-            row = ['<tr>']
-            if sort_attribute in headers:
-                timestamp = self.srvdtb.get_doc_timestamp(docId)
-                if timestamp is None:
-                    row.append( '<td class=""></td>')
-                else:
-                    ts_title = timestamp[:16]
-                    ts_link = f"events_{ts_title[:10].replace('-', '')}.html"
-                    row.append(f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>""")
-                final_headers = headers[1:]
-            else:
-                final_headers = headers
-
-            for key in final_headers:
-                item = {}
-                if key == 'Title':
-                    try:
-                        item['title'] = f"<div uk-tooltip=\"{documents[docId][key]}\">{ellipsize_text(documents[docId][key], 80)}</div>"
-                        item['url'] = documents[docId]['%s_Url' % key]
-                        row.append(TPL_DATATABLE_BODY_ITEM.render(var=item))
-                    except (KeyError, AttributeError) as e:
-                        self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
-                        raise
-                else:
-                    link = {}
-                    link['class'] = 'uk-link-heading'
-                    field = []
-                    try:
-                        for value in documents[docId][key]:
-                            link['title'] = value
-                            link['url'] = documents[docId]['%s_%s_Url' % (key, value)]
-                            field.append(TPL_LINK.render(var=link))
-                    except KeyError:
-                        field = []
-                    row.append("""<td class="">%s</td>""" % ', '.join(field))
-            row.append('</tr>')
-            rows.append(''.join(row))
-        datatable['rows'] = ''.join(rows)
-
-        return TPL_DATATABLE.render(var=datatable)
-
+    def datatable_date_cell(self, timestamp):
+        """Blog's date cell: a link to the day's page, no alignment class."""
+        if timestamp is None:
+            return '<td class=""></td>'
+        ts_title = escape(timestamp[:16])
+        ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
+        return f"""<td class=""><a class="uk-link-heading" href="{ts_link}">{ts_title}</a></td>"""
 
     def build_page_index(self):
         """Create blog index page.
@@ -152,7 +86,7 @@ class Theme(Builder):
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
             md_filepath = os.path.join(self.srvbes.get_path('source'), post)
-            with open(md_filepath, 'r') as fmd:
+            with open(md_filepath, 'r', encoding='utf-8') as fmd:
                 md_content = fmd.read()
             sections = extract_sections_from_md(md_filepath)
             if 'Excerpt' in sections:
@@ -166,8 +100,7 @@ class Theme(Builder):
                 )
             else:
                 var['post']['Excerpt'] = "<p>Excerpt missing</p>"
-            timestamp = var['post'][sort_by][0]
-            guess_datetime(timestamp)
+            self.note_undated(post, var['post'].get(sort_by))
             var['basename_md'] = post
             var['metadata'] = self.build_metadata_section(post)
             var['source_md'] = md_content
@@ -182,139 +115,6 @@ class Theme(Builder):
         self.srvdtb.add_document('index.md')
         self.srvdtb.add_document_key('index.md', 'Title', 'Index')
         self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
-
-    def build_events(self, doclist):
-        TPL_PAGE_EVENTS_DAYS = self.template('EVENTCAL_PAGE_EVENTS_DAYS')
-        TPL_PAGE_EVENTS_MONTHS = self.template('EVENTCAL_PAGE_EVENTS_MONTHS')
-        SORT = "Date"
-        # Get events dates
-        for docId in doclist:
-            props = self.srvdtb.get_doc_properties(docId)
-            timestamp = self.srvdtb.get_doc_timestamp(docId)
-            if timestamp is None:
-                continue
-            # Build dict of events for a given date as a list of tuples
-            # (month, day) indexed by year
-            # Also, build a dict to store those docs ocurring in that date
-            try:
-                timestamp = guess_datetime(timestamp)
-                y = timestamp.year
-                m = timestamp.month
-                d = timestamp.day
-                self.dey.setdefault(y, []).append((m, d))
-
-                # Build dict of documents
-                if not y in self.events_docs:
-                    self.events_docs[y] = {}
-
-                if not m in self.events_docs[y]:
-                    self.events_docs[y][m] = {}
-
-                if not d in self.events_docs[y][m]:
-                    self.events_docs[y][m][d] = []
-
-                docs = self.events_docs[y][m][d]
-                docs.append(docId)
-                self.events_docs[y][m][d] = docs
-            except Exception as error:
-                # Doc doesn't have a valid date field. Skip it.
-                self.log.error(f"[THEME] DATE_INVALID doc={os.path.basename(docId)} timestamp={timestamp}")
-                self.log.error(f"[THEME] ERROR {error}")
-                raise
-
-        kbdict = self.srvbes.get_kb_dict()
-        base_var = self.get_theme_var()
-        # Build day event pages
-        must_compile_month = set()
-        must_compile_year = set()
-        for year in self.events_docs:
-            for month in self.events_docs[year]:
-                for day in self.events_docs[year][month]:
-                    EVENT_PAGE_DAY = "events_%4d%02d%02d" % (year, month, day)
-                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_DAY)
-                    doclist = self.events_docs[year][month][day]
-                    must_compile_day = True
-                    for docId in doclist:
-                        doc_changed = kbdict['document'][docId]['compile']
-                        doc_not_cached = not os.path.exists(pagename)
-                        if doc_changed or doc_not_cached:
-                            must_compile_day = True
-                            break
-                    # ~ self.log.debug(f"DOC[{EVENT_PAGE_DAY}.md] targeting RESOURCE[{os.path.basename(pagename)}] COMPILE[{must_compile_day}]")
-                    if must_compile_day:
-                        must_compile_month.add("%4d%02d" % (year, month))
-                        must_compile_year.add("%4d" % (year))
-                        edt = guess_datetime("%4d.%02d.%02d" % (year, month, day))
-                        var = base_var
-                        var['page'] = {}
-                        headers = []
-                        var['page']['datatable'] = self.build_datatable(headers, doclist)
-                        var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
-                        html = TPL_PAGE_EVENTS_DAYS.render(var=var)
-                        self.distribute_md(EVENT_PAGE_DAY, html)
-
-                        #FIXME
-                        human_title = get_human_datetime_day(edt)
-                        self.srvdtb.add_document(f"{EVENT_PAGE_DAY}.md")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.md", 'Title', f"Events on {human_title}")
-                        self.srvdtb.add_document_key(f"{EVENT_PAGE_DAY}.md", 'SystemPage', 'Yes')
-                    else:
-                        self.distribute_html(EVENT_PAGE_DAY, pagename)
-                    self.srvbes.add_target(f"{EVENT_PAGE_DAY}.md", f"{EVENT_PAGE_DAY}.html")
-
-        # Build month event pages
-        for year in self.events_docs:
-            for month in self.events_docs[year]:
-                thismonth = "%4d%02d" % (year, month)
-                EVENT_PAGE_MONTH = "events_%4d%02d" % (year, month)
-                if thismonth in must_compile_month:
-                    var = base_var
-                    var['page'] = {}
-                    doclist = []
-                    edt = guess_datetime("%4d.%02d.01" % (year, month))
-                    for day in self.events_docs[year][month]:
-                        doclist.extend(self.events_docs[year][month][day])
-                    var['doclist'] = doclist
-                    headers = []
-                    var['page']['datatable'] = self.build_datatable(headers, doclist)
-                    var['page']['title'] = edt.strftime("Events on %B, %Y")
-                    html = TPL_PAGE_EVENTS_MONTHS.render(var=var)
-                    self.distribute_md(EVENT_PAGE_MONTH, html)
-
-                    human_title = get_human_datetime_month(edt)
-                    self.srvdtb.add_document(f"{EVENT_PAGE_MONTH}.md")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.md", 'Title', f"Events on {human_title}")
-                    self.srvdtb.add_document_key(f"{EVENT_PAGE_MONTH}.md", 'SystemPage', 'Yes')
-
-                else:
-                    pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_MONTH)
-                    self.distribute_html(EVENT_PAGE_MONTH, pagename)
-                self.srvbes.add_target(f"{EVENT_PAGE_MONTH}.md", f"{EVENT_PAGE_MONTH}.html")
-
-        # Build year event pages
-        for year in sorted(self.dey.keys(), reverse=True):
-            var = base_var
-            var['page'] = {}
-            headers = []
-            doclist = []
-            EVENT_PAGE_YEAR = "events_%4d" % year
-            PAGE = self.template('EVENTCAL_PAGE_EVENTS_YEARS')
-            page_name = "events_%4d" % year
-            if str(year) in must_compile_year:
-                for month in self.events_docs[year]:
-                    for day in self.events_docs[year][month]:
-                        doclist.extend(self.events_docs[year][month][day])
-                var['page']['title'] = f"Archive / {year}"
-                var['page']['datatable'] = self.build_datatable(headers, doclist)
-                self.distribute_md(page_name, PAGE.render(var=var))
-                self.srvdtb.add_document(f"{EVENT_PAGE_YEAR}.md")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.md", 'Title', f"Archive / {year}")
-                self.srvdtb.add_document_key(f"{EVENT_PAGE_YEAR}.md", 'SystemPage', 'Yes')
-
-            else:
-                pagename = os.path.join(self.srvbes.get_path('cache'), "%s.html" % EVENT_PAGE_YEAR)
-                self.distribute_html(EVENT_PAGE_YEAR, pagename)
-            self.srvbes.add_target(f"{EVENT_PAGE_YEAR}.md", f"{EVENT_PAGE_YEAR}.html")
 
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
@@ -382,6 +182,7 @@ class Theme(Builder):
         self.build_page_index_all()
         self.create_page_about_kb4it()
         self.create_page_about_app()
+        self.create_page_search()
 
     def page_hook_pre(self, var):
         var['related'] = ''
@@ -392,186 +193,6 @@ class Theme(Builder):
 
     def page_hook_post(self, var):
         return var
-
-    def build_page_properties(self):
-        if self.srvbes.get_value('runtime', 'nck') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'properties.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
-                self.srvbes.add_target('properties.md', 'properties.html')
-                return
-
-        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
-        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-        max_frequency = self.get_maxkv_freq()
-        all_keys = self.srvdtb.get_all_keys()
-        custom_buttons = ''
-        var = self.get_theme_var()
-        var['buttons'] = []
-        ignored_keys = self.srvdtb.get_ignored_keys()
-        for key in all_keys:
-            if key not in ignored_keys:
-                vbtn = {}
-                vbtn['content'] = self.build_tagcloud_from_key(key)
-                values = self.srvdtb.get_all_values_for_key(key)
-                frequency = len(values)
-                size = get_font_size(frequency, max_frequency)
-                proportion = int(math.log((frequency * 100) / max_frequency))
-                vbtn['key'] = key
-                vbtn['vfkey'] = valid_filename(key)
-                vbtn['size'] = size
-                vbtn['tooltip'] = "%d values" % len(values)
-                button = TPL_KEY_MODAL_BUTTON.render(var=vbtn)
-                var['buttons'].append(button)
-        content = TPL_PROPS_PAGE.render(var=var)
-        self.distribute_md('properties', content)
-
-        self.srvdtb.add_document('properties.md')
-        self.srvdtb.add_document_key('properties.md', 'Title', 'Metadata')
-        self.srvdtb.add_document_key('properties.md', 'SystemPage', 'Yes')
-
-    def build_tagcloud_from_key(self, key):
-        """Create a tag cloud based on key values."""
-        dkeyurl = {}
-        for docId in self.srvdtb.get_documents():
-            tags = self.srvdtb.get_values(docId, key)
-            url = os.path.basename(docId)[:-5]
-            for tag in tags:
-                dkeyurl.setdefault(tag, set()).add(url)
-
-        max_frequency = set_max_frequency(dkeyurl)
-        lwords = []
-
-        for word in dkeyurl:
-            len_word = len(word)
-            if len_word > 0:
-                lwords.append(word)
-
-        len_words = len(lwords)
-        if len_words > 0:
-            lwords.sort(key=lambda y: y.lower())
-            TPL_WORDCLOUD = self.template('WORDCLOUD')
-            var = self.get_theme_var()
-            var['items'] = []
-            for word in lwords:
-                frequency = len(dkeyurl[word])
-                size = get_font_size(frequency, max_frequency)
-                url = "%s_%s.html" % (valid_filename(key), valid_filename(word))
-                tooltip = "%d documents" % frequency
-                item = {}
-                item['url'] = url
-                item['tooltip'] = tooltip
-                item['size'] = size
-                item['word'] = word
-                var['items'].append(item)
-            html = TPL_WORDCLOUD.render(var=var)
-        else:
-            html = ''
-
-        return html
-
-    def get_maxkv_freq(self):
-        """Calculate max frequency for all keys"""
-        maxkvfreq = 0
-        all_keys = self.srvdtb.get_all_keys()
-        blocked_keys = self.srvdtb.get_blocked_keys()
-        for key in all_keys:
-            if key not in blocked_keys:
-                values = self.srvdtb.get_all_values_for_key(key)
-                if len(values) > maxkvfreq:
-                    maxkvfreq = len(values)
-        return maxkvfreq
-
-    def build_page_stats(self):
-        """Create stats page"""
-        if self.srvbes.get_value('runtime', 'nck') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'stats.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_key_changes func={func_name}")
-                self.srvbes.add_target('stats.md', 'stats.html')
-                return
-
-        TPL_PAGE_STATS = self.template('PAGE_STATS')
-        var = self.get_theme_var()
-        var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.srvdtb.get_all_keys()
-        var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            values = self.srvdtb.get_all_values_for_key(key)
-            item = {}
-            item['key'] = key
-            item['vfkey'] = valid_filename(key)
-            item['count_values'] = len(values)
-            var['leader_items'].append(item)
-        stats = TPL_PAGE_STATS.render(var=var)
-        self.distribute_md('stats', stats)
-
-        self.srvdtb.add_document('stats.md')
-        self.srvdtb.add_document_key('stats.md', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.md', 'SystemPage', 'Yes')
-
-    def build_page_index_all(self):
-        """Create a page with all documents"""
-        if self.srvbes.get_value('runtime', 'ncd') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'all.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-                self.srvbes.add_target('all.md', 'all.html')
-                return
-
-        TPL_PAGE_ALL = self.template('PAGE_ALL')
-        var = self.get_theme_var()
-        doclist = list(self.srvdtb.get_documents())
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-        var['content'] = datatable
-        page = TPL_PAGE_ALL.render(var=var)
-        self.distribute_md('all', page)
-
-        self.srvdtb.add_document('all.md')
-        self.srvdtb.add_document_key('all.md', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.md', 'SystemPage', 'Yes')
-
-        return page
-
-    def extract_toc(self, source):
-        """Extract TOC from compiled HTML code and make it theme dependent."""
-        toc = ''
-        items = []
-        lines = source.split('\n')
-        s = e = n = 0
-        var = self.get_theme_var()
-        toc_li_top = self.template('HTML_TOC_LI').render(var=var)
-        toc_sectlevel1 = self.template('HTML_TOC_SECTLEVEL1').render(var=var)
-        toc_sectlevel2 = self.template('HTML_TOC_SECTLEVEL2').render(var=var)
-        toc_sectlevel3 = self.template('HTML_TOC_SECTLEVEL3').render(var=var)
-        toc_sectlevel4 = self.template('HTML_TOC_SECTLEVEL4').render(var=var)
-
-        for line in lines:
-            if "toctitle" in line:
-                s = n + 1
-            if s > 0:
-                if line.startswith('</div>') and n > s:
-                    e = n
-                    break
-            n = n + 1
-
-        if s > 0 and e > s:
-            for line in lines[s:e]:
-                if line.startswith('<li><a href='):
-                    line = line.replace("<li><a ", toc_li_top)
-                else:
-                    line = line.replace("sectlevel1", toc_sectlevel1)
-                    line = line.replace("sectlevel2", toc_sectlevel2)
-                    line = line.replace("sectlevel3", toc_sectlevel3)
-                    line = line.replace("sectlevel4", toc_sectlevel4)
-                items.append(line)
-            toc = '\n'.join(items)
-        return toc
 
     def build_page(self, path_md, var={}):
         """Build the final HTML Page.
@@ -629,16 +250,18 @@ class Theme(Builder):
         metadata = self.srvdtb.get_doc_properties(basename_md)
         for prop in metadata:
             var['post'][prop] = metadata[prop]
+        if not self.srvdtb.is_system(basename_md):
+            self.note_undated(basename_md, var['post'].get('Date'))
         var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
         var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
         now = datetime.now()
         timestamp = get_human_datetime(now)
         keys = self.srvdtb.get_doc_properties(basename_md)
 
-        with open(path_md, 'r') as fpa:
+        with open(path_md, 'r', encoding='utf-8') as fpa:
             source_md = fpa.read()
 
-        with open(path_hdoc, 'r') as fph:
+        with open(path_hdoc, 'r', encoding='utf-8') as fph:
             source_html = fph.read()
 
         var['toc'] = self.extract_toc(source_html)
@@ -681,7 +304,11 @@ class Theme(Builder):
 
         HEADER = HTML_HEADER_COMMON.render(var=var)
         try:
-            if strict:
+            if self.srvdtb.is_system(basename_md):
+                # Index, property and key pages are not posts. (They used to reach the plain
+                # body only because the post template failed on their missing Date.)
+                BODY = HTML_BODY.render(var=var)
+            elif strict:
                 if 'Post' in var['post']['Category']:
                     BODY = HTML_BODY_POST.render(var=var)
                 else:
@@ -697,101 +324,8 @@ class Theme(Builder):
         HTML += BODY
         HTML += FOOTER
 
-        with open(path_hdoc, 'w') as fhtml:
+        with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
             fhtml.write(HTML)
-
-    def build_page_key(self, key, values):
-        """Create page for a key."""
-        TPL_PAGE_KEY = self.template('PAGE_KEY')
-        var = self.get_theme_var()
-        var['title'] = key
-        var['cloud'] = self.build_tagcloud_from_key(key)
-        var['leader'] = []
-        var['key_values'] = {}
-        for value in values:
-            item = {}
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            item['count'] = len(docs)
-            item['vfkey'] = valid_filename(key)
-            item['vfvalue'] = valid_filename(value)
-            item['name'] = value
-            var['leader'].append(item)
-
-        content = TPL_PAGE_KEY.render(var=var)
-        var['pagename'] = "%s" % valid_filename(key)
-        self.distribute_md(var['pagename'], content)
-
-        self.srvdtb.add_document(f"{var['pagename']}.md")
-        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
-        self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
-
-    def build_page_key_value(self, kvpath):
-        key, value, COMPILE_VALUE = kvpath
-        TPL_PAGE_KEY_VALUE = self.template('PAGE_KEY_VALUE')
-        docs = self.srvbes.get_kbdict_value(key, value, new=True)
-        sorted_docs = self.srvdtb.sort_by_date(docs)
-        pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
-        var = self.get_theme_var()
-        var['key'] = key
-        var['value'] = value
-        var['title'] = '%s: %s' % (key, value)
-        var['pagename'] = pagename
-        var['doclist'] = sorted_docs
-        var['compile'] = COMPILE_VALUE
-        var['has_toc'] = False
-
-        datatable = self.build_datatable([], sorted_docs)
-        var['page']['dt_documents'] = datatable
-
-        if var['compile']:
-            content = TPL_PAGE_KEY_VALUE.render(var=var)
-            self.distribute_md(var['pagename'], content)
-
-            self.srvdtb.add_document(f"{var['pagename']}.md")
-            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'Title', f"{var['title']}")
-            self.srvdtb.add_document_key(f"{var['pagename']}.md", 'SystemPage', 'Yes')
-            self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
-
-    def build_page_bookmarks(self):
-        """Create bookmarks page."""
-        if self.srvbes.get_value('runtime', 'ncd') == 0:
-            func_name = sys._getframe().f_code.co_name
-            cached = os.path.join(self.srvbes.get_path('cache'), 'bookmarks.html')
-            if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
-                self.srvbes.add_target('bookmarks.md', 'bookmarks.html')
-                return
-
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
-        var = self.get_theme_var()
-        doclist = []
-        for docId in self.srvdtb.get_documents():
-            bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
-            doc_bookmarked = bookmark == 'Yes' or bookmark == 'True'
-            self.log.debug(f"[THEME] BOOKMARK_CHECK doc={docId} bookmark={bookmark} is_bookmarked={doc_bookmarked}")
-            if doc_bookmarked:
-                doclist.append(docId)
-
-        self.log.debug("[THEME] BOOKMARKS_FOUND n=%d", len(doclist))
-        headers = []
-        datatable = self.build_datatable(headers, doclist)
-
-        self.srvdtb.add_document('bookmarks.md')
-        self.srvdtb.add_document_key('bookmarks.md', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.md', 'SystemPage', 'Yes')
-
-        var['page']['title'] = 'Bookmarks'
-        var['page']['dt_bookmarks'] = datatable
-        page = TPL_PAGE_BOOKMARKS.render(var=var)
-        self.distribute_md('bookmarks', page)
-
-        self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
-
-        return page
-
-    def get_page_actions(self, var):
-        TPL_SECTION_ACTIONS = self.template('SECTION_ACTIONS')
-        return TPL_SECTION_ACTIONS.render(var=var)
 
     def get_related(self, docId):
         """Get a list of related documents for each tag"""
@@ -824,53 +358,18 @@ class Theme(Builder):
         html_related = TPL_SECTION_RELATED.render(var=var)
         return html_related
 
-    def get_labels(self, values):
-        """C0111: Missing function docstring (missing-docstring)."""
-        var = {}
-        label_links = ''
-        TPL_METADATA_VALUE_LINK = self.template('METADATA_VALUE_LINK')
-        for page, text in values:
-            var['link_url'] = valid_filename(page)
-            var['link_name'] = text
-            if len(text) != 0:
-                label_links += TPL_METADATA_VALUE_LINK.render(var=var)
-        return label_links
+    def cloud_measure(self, frequency, max_frequency):
+        """Blog sizes property buttons and tag cloud words by font size."""
+        return {'size': get_font_size(frequency, max_frequency)}
 
-    def get_html_values_from_key(self, docId, key):
-        """Return the html link for a value."""
-        html = []
+    def frequency_keys(self):
+        """Blog sizes the property buttons against every property that is not blocked."""
+        blocked_keys = self.srvdtb.get_blocked_keys()
+        return [key for key in self.srvdtb.get_all_keys() if key not in blocked_keys]
 
-        values = self.srvdtb.get_values(docId, key)
-        for value in values:
-            url = "%s_%s.html" % (key, value)
-            html.append((url, value))
-        return html
-
-    def build_metadata_section(self, docId):
-        """Return a html block for displaying metadata (keys and values)."""
-        try:
-            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(docId))
-            var = {}
-            var['items'] = []
-            for key in custom_keys:
-                ckey = {}
-                ckey['doc'] = docId
-                ckey['key'] = key
-                ckey['vfkey'] = valid_filename(key)
-                try:
-                    values = self.get_html_values_from_key(docId, key)
-                    ckey['labels'] = self.get_labels(values)
-                    var['items'].append(ckey)
-                except Exception as error:
-                    self.log.error("[THEME] KEY_FAIL key=%s error=%s", key, error)
-                    raise
-            html = TPL_METADATA_SECTION.render(var=var)
-        except Exception as error:
-            self.log.error("[THEME] METADATA_FAIL doc=%s error=%s", docId, error)
-            html = ''
-            raise
-        return html
+    def stats_keys(self):
+        """Blog lists every property on the stats page."""
+        return self.srvdtb.get_all_keys()
 
     def generate_sources(self):
         """This theme doesn't generate sources, yet."""
@@ -897,8 +396,8 @@ class Theme(Builder):
             self.log.error("[THEME] CONFIG_FAIL key=events reason=empty")
             go = False
 
-        self.log.info(f"[THEME] CONFIG key=git value={repo['git']}")
-        if repo['git']:
+        self.log.info(f"[THEME] CONFIG key=git value={repo.get('git')}")
+        if repo.get('git'):
             git_props = ['git_branch', 'git_path', 'git_repo', 'git_server', 'git_user']
             for git_prop in sorted(git_props):
                 if len(repo[git_prop]) == 0:

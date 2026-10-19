@@ -1,1 +1,0 @@
-<table id="kb4it-datatable" class="tableblock

@@ -1,4 +1,4 @@
-<table id="kb4it-table-metadata" class="uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-small uk-card-hover">
+<table class="kb4it-table-metadata uk-table uk-table-divider uk-table-striped uk-table-hover uk-table-small uk-card uk-card-small uk-card-hover">
 <thead class="">
     <tr class="">
         <th class="uk-width-small"><span class="uk-text-bold">Property</span></th>
@@ -13,7 +13,7 @@
                 <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">${item['key']}</div>
             </a>
         </td>
-        <td class=""><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta">${item['labels']}</div></td>
+        <td class=""><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta">${item['labels'] | n}</div></td>
     </tr>
 % endfor
 </tbody>

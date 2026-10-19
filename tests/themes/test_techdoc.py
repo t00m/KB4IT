@@ -38,7 +38,7 @@ def site(tmp_path_factory):
     assert result.returncode == 0, result.stdout
     repo = base / "repo"
     cfg = repo / "config" / "repo.json"
-    conf = json.loads(cfg.read_text())
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf["admin"] = True
     cfg.write_text(json.dumps(conf), encoding="utf-8")
     for name, text in PAGES.items():
@@ -109,7 +109,7 @@ def test_admin_backups_follow_changes(site):
     result = run_kb4it("build", site["cfg"], cwd=site["base"], home=site["home"])
     assert result.returncode == 0, result.stdout
     assert (admin / "kb4it_site.zip").stat().st_mtime_ns == before
-    conf = json.loads(site["cfg"].read_text())
+    conf = json.loads(site["cfg"].read_text(encoding="utf-8"))
     conf["title"] = "Ops Notes"
     site["cfg"].write_text(json.dumps(conf), encoding="utf-8")
     result = run_kb4it("build", site["cfg"], cwd=site["base"], home=site["home"])

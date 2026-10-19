@@ -11,15 +11,15 @@ Bookshelf theme.
 #              Book > Part > Chapter for certification preparation.
 """
 
-import math
 import os
 import re
 from collections import Counter, OrderedDict
 from datetime import datetime
+from html import escape
 
 from kb4it.core.util import (ellipsize_text, get_human_datetime,
                              guess_datetime, html_id_for, valid_filename)
-from kb4it.services.builder import Builder
+from kb4it.services.themekit import DocumentTheme
 
 
 # Status -> study bucket. Anything not matched falls into 'todo'.
@@ -77,8 +77,12 @@ def status_bucket(status):
     return 'todo'
 
 
-class Theme(Builder):
+class Theme(DocumentTheme):
     """Builder for the Bookshelf theme."""
+
+    tagcloud_scale_skips_empty = True
+    datatable_link_template = 'LINK'
+    datatable_default_headers = ('Date', 'Title', 'Chapter')
 
     books = OrderedDict()
     doc_index = {}
@@ -362,11 +366,12 @@ class Theme(Builder):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
-        self.build_page_all()
+        self.build_page_index_all()
         self.build_page_index(var)
         self.create_page_about_kb4it()
         self.create_page_about_app()
         self.create_page_help()
+        self.create_page_search()
 
     def build_page_index(self, var):
         runtime = self.srvbes.get_dict('runtime')
@@ -381,6 +386,7 @@ class Theme(Builder):
         self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
 
     def build_page_key_value(self, kvpath):
+        """Override: the page of a Book value is the book overview (PAGE_BOOK), not a document list."""
         self._ensure_context()
         key, value, COMPILE_VALUE = kvpath
         pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
@@ -397,26 +403,7 @@ class Theme(Builder):
             self.srvdtb.add_document_key(f"{pagename}.md", 'Title', value)
             self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
             return
-
-        # Default: a plain key/value listing.
-        docs = self.srvbes.get_kbdict_value(key, value, new=True)
-        sorted_docs = self.srvdtb.sort_by_date(docs)
-        var = self.get_theme_var()
-        var['key'] = key
-        var['value'] = value
-        var['vfkey'] = valid_filename(key)
-        var['title'] = f'{key}: {value}'
-        var['pagename'] = pagename
-        var['doclist'] = sorted_docs
-        var['compile'] = COMPILE_VALUE
-        var['has_toc'] = False
-        var['page']['dt_documents'] = self.build_datatable([], sorted_docs)
-        if var['compile']:
-            adoc = self.template('PAGE_KEY_VALUE').render(var=var)
-            self.distribute_md(pagename, adoc)
-            self.srvdtb.add_document(f"{pagename}.md")
-            self.srvdtb.add_document_key(f"{pagename}.md", 'Title', var['title'])
-            self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
+        super().build_page_key_value(kvpath)
 
     def _book_view(self, book_title):
         """Shape a single book for the kanban (Book overview) template."""
@@ -471,9 +458,9 @@ class Theme(Builder):
         var['timestamp'] = get_human_datetime(datetime.now())
         var['keys'] = self.srvdtb.get_doc_properties(basename_md)
 
-        with open(path_md, 'r') as fpa:
+        with open(path_md, 'r', encoding='utf-8') as fpa:
             source_md = fpa.read()
-        with open(path_hdoc, 'r') as fph:
+        with open(path_hdoc, 'r', encoding='utf-8') as fph:
             source_html = fph.read()
 
         var['toc'] = self.extract_toc(source_html)
@@ -506,254 +493,34 @@ class Theme(Builder):
         with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
             fhtml.write(HTML)
 
-    def build_page_key(self, key, values):
-        TPL_PAGE_KEY = self.template('PAGE_KEY')
-        var = self.get_theme_var()
-        var['title'] = key
-        var['cloud'] = self.build_tagcloud_from_key(key)
-        var['leader'] = []
-        for value in values:
-            docs = self.srvdtb.get_docs_by_key_value(key, value)
-            var['leader'].append({
-                'count': len(docs),
-                'vfkey': valid_filename(key),
-                'vfvalue': valid_filename(value),
-                'name': value,
-            })
-        adoc = TPL_PAGE_KEY.render(var=var)
-        pagename = valid_filename(key)
-        self.distribute_md(pagename, adoc)
-        self.srvdtb.add_document(f"{pagename}.md")
-        self.srvdtb.add_document_key(f"{pagename}.md", 'Title', key)
-        self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
-
-    def build_page_all(self):
-        TPL_PAGE_ALL = self.template('PAGE_ALL')
-        var = self.get_theme_var()
-        var['content'] = self.build_datatable([], list(self.srvdtb.get_documents()))
-        self.distribute_md('all', TPL_PAGE_ALL.render(var=var))
-        self.srvdtb.add_document('all.md')
-        self.srvdtb.add_document_key('all.md', 'Title', 'All documents')
-        self.srvdtb.add_document_key('all.md', 'SystemPage', 'Yes')
-
-    def build_page_properties(self):
-        TPL_PROPS_PAGE = self.template('PAGE_PROPERTIES')
-        TPL_KEY_MODAL_BUTTON = self.template('KEY_MODAL_BUTTON')
-        max_frequency = self.get_maxkv_freq()
-        var = self.get_theme_var()
-        var['buttons'] = []
-        log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
-        for key in self.srvdtb.get_all_keys():
-            if key in self.srvdtb.get_ignored_keys():
-                continue
-            values = self.srvdtb.get_all_values_for_key(key)
-            frequency = len(values)
-            weight = math.log(1 + frequency) / log_max if log_max else 0.0
-            var['buttons'].append(TPL_KEY_MODAL_BUTTON.render(var={
-                'content': self.build_tagcloud_from_key(key),
-                'key': key,
-                'vfkey': valid_filename(key),
-                'count': frequency,
-                'weight': round(weight, 3),
-                'tooltip': f"{frequency} values",
-            }))
-        self.distribute_md('properties', TPL_PROPS_PAGE.render(var=var))
-        self.srvdtb.add_document('properties.md')
-        self.srvdtb.add_document_key('properties.md', 'Title', 'Properties')
-        self.srvdtb.add_document_key('properties.md', 'SystemPage', 'Yes')
-
-    def build_tagcloud_from_key(self, key):
-        dkeyurl = {}
-        for docId in self.srvdtb.get_documents():
-            url = os.path.basename(docId)[:-5]
-            for tag in self.srvdtb.get_values(docId, key):
-                if tag:
-                    dkeyurl.setdefault(tag, set()).add(url)
-        max_frequency = max((len(v) for v in dkeyurl.values()), default=1)
-        lwords = sorted((w for w in dkeyurl if len(w) > 0), key=lambda y: y.lower())
-        if not lwords:
-            return ''
-        TPL_WORDCLOUD = self.template('WORDCLOUD')
-        var = self.get_theme_var()
-        var['items'] = []
-        log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
-        for word in lwords:
-            freq = len(dkeyurl[word])
-            weight = math.log(1 + freq) / log_max if log_max else 0.0
-            var['items'].append({
-                'url': f"{valid_filename(key)}_{valid_filename(word)}.html",
-                'tooltip': f"{freq} documents",
-                'word': word,
-                'count': freq,
-                'weight': round(weight, 3),
-            })
-        return TPL_WORDCLOUD.render(var=var)
-
-    def get_maxkv_freq(self):
-        maxkvfreq = 0
-        for key in self.srvdtb.get_theme_keys():
-            values = self.srvdtb.get_all_values_for_key(key)
-            if len(values) > maxkvfreq:
-                maxkvfreq = len(values)
-        return maxkvfreq
-
-    def build_page_stats(self):
-        TPL_PAGE_STATS = self.template('PAGE_STATS')
-        var = self.get_theme_var()
-        var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.srvdtb.get_theme_keys()
-        var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            values = self.srvdtb.get_all_values_for_key(key)
-            var['leader_items'].append({
-                'key': key,
-                'vfkey': valid_filename(key),
-                'count_values': len(values),
-            })
-        self.distribute_md('stats', TPL_PAGE_STATS.render(var=var))
-        self.srvdtb.add_document('stats.md')
-        self.srvdtb.add_document_key('stats.md', 'Title', 'Stats')
-        self.srvdtb.add_document_key('stats.md', 'SystemPage', 'Yes')
-
-    def build_page_bookmarks(self):
-        TPL_PAGE_BOOKMARKS = self.template('PAGE_BOOKMARKS')
-        var = self.get_theme_var()
-        doclist = []
-        for docId in self.srvdtb.get_documents():
-            bm = self.srvdtb.get_values(docId, 'Bookmark')
-            if bm and bm[0] in ('Yes', 'True'):
-                doclist.append(docId)
-        var['page']['title'] = 'Bookmarks'
-        var['page']['dt_bookmarks'] = self.build_datatable([], doclist)
-        self.distribute_md('bookmarks', TPL_PAGE_BOOKMARKS.render(var=var))
-        self.srvdtb.add_document('bookmarks.md')
-        self.srvdtb.add_document_key('bookmarks.md', 'Title', 'Bookmarks')
-        self.srvdtb.add_document_key('bookmarks.md', 'SystemPage', 'Yes')
-
     # --------------------------------------------------------------- shared
-    def extract_toc(self, source):
-        toc = ''
-        items = []
-        lines = source.split('\n')
-        s = e = n = 0
-        var = self.get_theme_var()
-        TOC_LI_TOP = self.template('HTML_TOC_LI')
-        TOC_SECTLEVEL1 = self.template('HTML_TOC_SECTLEVEL1')
-        TOC_SECTLEVEL2 = self.template('HTML_TOC_SECTLEVEL2')
-        TOC_SECTLEVEL3 = self.template('HTML_TOC_SECTLEVEL3')
-        TOC_SECTLEVEL4 = self.template('HTML_TOC_SECTLEVEL4')
-        for line in lines:
-            if line.find("toctitle") > 0:
-                s = n + 1
-            if s > 0:
-                if line.startswith('</div>') and n > s:
-                    e = n
-                    break
-            n = n + 1
-        if s > 0 and e > s:
-            for line in lines[s:e]:
-                if line.startswith('<li><a href='):
-                    line = line.replace("<li><a ", TOC_LI_TOP.render(var=var))
-                else:
-                    line = line.replace("sectlevel1", TOC_SECTLEVEL1.render(var=var))
-                    line = line.replace("sectlevel2", TOC_SECTLEVEL2.render(var=var))
-                    line = line.replace("sectlevel3", TOC_SECTLEVEL3.render(var=var))
-                    line = line.replace("sectlevel4", TOC_SECTLEVEL4.render(var=var))
-                items.append(line)
-            toc = '\n'.join(items)
-        return toc
+    def datatable_date_cell(self, timestamp):
+        """Bookshelf's date cell: the date only, no link."""
+        if timestamp is None:
+            return '<td class="bk-td-date"></td>'
+        return f'<td class="bk-td-date">{escape(timestamp[:16])}</td>'
 
-    def get_page_actions(self, var):
-        return self.template('SECTION_ACTIONS').render(var=var)
+    def datatable_title_cell(self, docId, properties):
+        """Bookshelf's title cell: a plain link, empty when the document has no title."""
+        try:
+            title = properties['Title']
+            url = properties.get('Title_Url', html_id_for(docId))
+            # Built as HTML here and printed raw: escape what comes from the document.
+            return f'<td class="bk-td-title"><a href="{escape(url)}">{escape(ellipsize_text(title, 80))}</a></td>'
+        except (KeyError, AttributeError):
+            return '<td></td>'
 
-    def build_datatable(self, headers=None, doclist=None):
-        if headers is None:
-            headers = []
-        if doclist is None:
-            doclist = []
-        TPL_LINK = self.template('LINK')
-        TPL_DATATABLE = self.template('DATATABLE')
-        TPL_DATATABLE_HEADER_ITEM = self.template('DATATABLE_HEADER_ITEM')
-        repo = self.srvbes.get_dict('repo')
-        sort_attribute = 'Date'
-        if len(headers) == 0:
-            headers = repo.get('datatable', ['Date', 'Title', 'Chapter'])
-
-        datatable = {'header': '', 'rows': ''}
-        for item in headers:
-            datatable['header'] += TPL_DATATABLE_HEADER_ITEM.render(var={'item': item})
-
-        documents = {docId: self.srvdtb.get_doc_properties(docId) for docId in doclist}
-        for docId in documents:
-            if self.srvdtb.is_system(docId):
-                continue
-            datatable['rows'] += '<tr>'
-            if sort_attribute in headers:
-                timestamp = self.srvdtb.get_doc_timestamp(docId)
-                if timestamp is None:
-                    datatable['rows'] += '<td class="bk-td-date"></td>'
-                else:
-                    datatable['rows'] += f'<td class="bk-td-date">{timestamp[:16]}</td>'
-                final_headers = headers[1:]
-            else:
-                final_headers = headers
-            for key in final_headers:
-                if key == 'Title':
-                    try:
-                        title = documents[docId][key]
-                        url = documents[docId].get(f'{key}_Url', html_id_for(docId))
-                        datatable['rows'] += f'<td class="bk-td-title"><a href="{url}">{ellipsize_text(title, 80)}</a></td>'
-                    except (KeyError, AttributeError):
-                        datatable['rows'] += '<td></td>'
-                else:
-                    field = []
-                    try:
-                        for value in documents[docId][key]:
-                            field.append(TPL_LINK.render(var={
-                                'class': 'bk-link',
-                                'title': value,
-                                'url': documents[docId].get(f'{key}_{value}_Url', '#'),
-                            }))
-                    except KeyError:
-                        field = []
-                    datatable['rows'] += f'<td class="">{", ".join(field)}</td>'
-            datatable['rows'] += '</tr>'
-        return TPL_DATATABLE.render(var=datatable)
-
-    def get_labels(self, values):
-        label_links = ''
-        TPL_METADATA_VALUE_LINK = self.template('METADATA_VALUE_LINK')
-        for page, text in values:
-            if text:
-                label_links += TPL_METADATA_VALUE_LINK.render(var={
-                    'link_url': valid_filename(page), 'link_name': text})
-        return label_links
-
-    def get_html_values_from_key(self, docId, key):
-        return [(f"{key}_{value}.html", value) for value in self.srvdtb.get_values(docId, key)]
+    def datatable_value_link(self, properties, key, value):
+        """Bookshelf's value link: its own class, and "#" when the value has no page."""
+        return {'class': 'bk-link', 'title': value, 'url': properties.get(f'{key}_{value}_Url', '#')}
 
     def build_metadata_section(self, docId):
+        """Override: a study page is still built when its metadata fails; the section is left empty."""
         try:
-            TPL_METADATA_SECTION = self.template('METADATA_SECTION')
-            custom_keys = self.srvdtb.get_custom_keys(os.path.basename(docId))
-            var = {'items': []}
-            for key in custom_keys:
-                values = self.get_html_values_from_key(docId, key)
-                var['items'].append({
-                    'doc': docId,
-                    'key': key,
-                    'vfkey': valid_filename(key),
-                    'labels': self.get_labels(values),
-                })
-            html = TPL_METADATA_SECTION.render(var=var)
+            return super().build_metadata_section(docId)
         except Exception as error:
             self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={docId} error={error}")
-            html = ''
-        return html
-
-    def generate_sources(self):
-        pass
+            return ''
 
     def post_activities(self):
         self.log.debug("[BOOKSHELF] POST_END")

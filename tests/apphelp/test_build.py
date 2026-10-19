@@ -33,13 +33,13 @@ def test_basic_site(tmp_path, home):
         assert (target / name).exists(), name
     for name in ("DocType.html", "Feature.html", "Feature_Backup.html", "all.html", "stats.html"):
         assert not (target / name).exists(), name
-    backup = (target / "backup.html").read_text()
+    backup = (target / "backup.html").read_text(encoding="utf-8")
     assert 'href="rename.html#how"' in backup
     assert 'href="topics.html#feature-backup"' in backup
     assert 'aria-current="page"' in backup
     assert "ah-related" in backup
-    assert "window.APPHELP_HELPIDS" in (target / "helpids.js").read_text()
-    assert '"backup-dialog": "backup.html#restore"' in (target / "helpids.js").read_text()
+    assert "window.APPHELP_HELPIDS" in (target / "helpids.js").read_text(encoding="utf-8")
+    assert '"backup-dialog": "backup.html#restore"' in (target / "helpids.js").read_text(encoding="utf-8")
     assert not (target / "sources").exists()
     assert not list(target.rglob("*.py"))
 
@@ -50,11 +50,11 @@ def test_special_characters_are_escaped(tmp_path, home):
                            Summary="Move data in & out."),
     })
     assert result.returncode == 0, result.stdout
-    html = (repo / "target" / "io.html").read_text()
+    html = (repo / "target" / "io.html").read_text(encoding="utf-8")
     assert "Use &lt;kbd&gt; &amp; &#34;quotes&#34; en camión" in html or \
            "Use &lt;kbd&gt; &amp; &quot;quotes&quot; en camión" in html
     assert 'href="topics.html#feature-import-export"' in html
-    assert 'id="feature-import-export"' in (repo / "target" / "topics.html").read_text()
+    assert 'id="feature-import-export"' in (repo / "target" / "topics.html").read_text(encoding="utf-8")
     assert "ANCHOR_MISSING" not in result.stdout
 
 
@@ -80,9 +80,9 @@ def test_non_strict_unclassified_page_is_left_out(tmp_path, home):
     target = repo / "target"
     assert not (target / "g.html").exists()
     assert not (target / "n.html").exists()
-    assert "g.html" not in (target / "a.html").read_text()
-    assert "zanzibar" not in (target / "search-index.js").read_text()
-    assert '"guide"' not in (target / "helpids.js").read_text()
+    assert "g.html" not in (target / "a.html").read_text(encoding="utf-8")
+    assert "zanzibar" not in (target / "search-index.js").read_text(encoding="utf-8")
+    assert '"guide"' not in (target / "helpids.js").read_text(encoding="utf-8")
 
 
 def test_strict_unclassified_page_fails_the_build(tmp_path, home):
@@ -94,7 +94,7 @@ def test_strict_unclassified_page_fails_the_build(tmp_path, home):
 def test_landing_page_groups_by_type_of_document(tmp_path, home):
     repo, result = build(tmp_path, home, {"a.md": help_page("A"), "t.md": help_page("T", DocType="Tutorial")})
     assert result.returncode == 0, result.stdout
-    index = (repo / "target" / "index.html").read_text()
+    index = (repo / "target" / "index.html").read_text(encoding="utf-8")
     assert "Types of document" in index
     assert "Goal-oriented recipes to solve a specific problem." in index
     for path in (repo / "target").rglob("*"):
@@ -108,7 +108,7 @@ def test_undated_pages_are_in_navigation(tmp_path, home):
         "a.md": help_page("A", Order="1"), "b.md": help_page("B", Order="2"),
     })
     assert result.returncode == 0, result.stdout
-    html = (repo / "target" / "a.html").read_text()
+    html = (repo / "target" / "a.html").read_text(encoding="utf-8")
     assert 'href="b.html"' in html
     assert "DATE_INVALID" not in result.stdout
 
@@ -117,7 +117,7 @@ def test_relative_links_only(tmp_path, home):
     repo, result = build(tmp_path, home, {"a.md": help_page("A", "[b](b.md)"), "b.md": help_page("B")})
     assert result.returncode == 0, result.stdout
     for path in (repo / "target").glob("*.html"):
-        for value in re.findall(r'(?:href|src)="([^"]*)"', path.read_text()):
+        for value in re.findall(r'(?:href|src)="([^"]*)"', path.read_text(encoding="utf-8")):
             assert not value.startswith("/"), (path.name, value)
             assert not value.split("#")[0].split("?")[0].endswith(".md"), (path.name, value)
 
@@ -125,7 +125,7 @@ def test_relative_links_only(tmp_path, home):
 def test_contract_failure(tmp_path, home):
     repo = tmp_path / "repo"
     (repo / "config").mkdir(parents=True)
-    (repo / "config" / "contract.txt").write_text("backup-dialog\nmissing-id\nbackup.html#nope\n")
+    (repo / "config" / "contract.txt").write_text("backup-dialog\nmissing-id\nbackup.html#nope\n", encoding="utf-8")
     cfg = write_repo(repo, "apphelp", {"backup.md": help_page("Back up", "## Restore {#restore}\n\nx",
                                                               HelpId="backup-dialog=#restore")},
                      apphelp={"vocabulary": VOCAB})

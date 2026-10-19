@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Writing
 HelpId: document-format
-Keyword: DOC_INVALID, yaml_error, missing_h1_title, frontmatter, date format
+Keyword: DOC_INVALID, DOC_RAW_SCRIPT, raw html, script, sanitize, trust, yaml_error, missing_h1_title, bad_property_name, bad_property_value, frontmatter, date format
 Level: basic
 Order: 230
 Section: Write
@@ -17,7 +17,8 @@ Summary: The rules a source document must follow, the date formats KB4IT reads a
 |---|---|
 | Location | Directly in the `source/` folder of the knowledge base |
 | Extension | `.md` or `.markdown` |
-| Encoding | UTF-8 |
+| Encoding | UTF-8, with or without a byte order mark |
+| Line endings | LF or CRLF; both give the same page and do not trigger a rebuild when a checkout changes them |
 | Published name | Same name with `.html` |
 | Other files | `source/resources/` is copied to the website unchanged |
 
@@ -28,6 +29,8 @@ Summary: The rules a source document must follow, the date formats KB4IT reads a
 3. A line with `---`.
 4. A level 1 heading `# Title`.
 5. The body in Markdown.
+
+The title is the first `# ` line outside code blocks: a `# comment` in a fenced or indented code block is never taken for it. That line is shown in the page header, not in the body.
 
 ## Property values {#values}
 
@@ -62,6 +65,27 @@ KB4IT uses [Python-Markdown](https://python-markdown.github.io/) with these exte
 | `toc` | heading anchors; `## Heading {#my-anchor}` sets your own |
 | `sane_lists` | lists that behave as you expect |
 
+Add more extensions with the [`markdown` setting](reference-repo-json.md#markdown).
+
+### Code inside a note or a list {#code-in-blocks}
+
+With these extensions a fenced block (```` ``` ````) only works at the start of a line. Inside an admonition or a list item, indent the code by four more spaces instead of fencing it:
+
+```markdown
+!!! note
+    Run:
+
+        kb4it build config/repo.json
+```
+
+To fence code there, enable `pymdownx.superfences` (from `KB4IT[extras]`) in the [`markdown` setting](reference-repo-json.md#markdown). Without it, `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...`.
+
+## Raw HTML {#raw-html}
+
+Markdown lets a document hold HTML, and KB4IT keeps it: a `<div>`, an embedded video, or a `<script>` reach the page as written, and a script runs for every reader. That is useful when you write alone, and a risk when others contribute: review their documents, or turn on [`"sanitize": true`](reference-repo-json.md#markdown) in the `markdown` block. It keeps what Markdown makes (text, links, images, tables, code, admonitions, task lists) and removes scripts, styles, event handlers such as `onclick`, and `javascript:` links. Titles and property values are always shown as text, whatever the setting.
+
+While `sanitize` is off, `kb4it verify` lists the documents that hold a `<script>` or an `on...=` handler outside code, as information: `DOC_RAW_SCRIPT doc=... lines=...`.
+
 ## Why a document is rejected {#invalid}
 
 A document KB4IT cannot read is left out of the site. The build logs `DOC_INVALID` with a reason, counts it as `invalid=` in the summary, and `kb4it verify` lists it.
@@ -73,5 +97,10 @@ A document KB4IT cannot read is left out of the site. The build logs `DOC_INVALI
 | `invalid_frontmatter` | The block is not a list of properties | Write one `Key: value` per line |
 | `yaml_error line=2 col=17 ...` | YAML cannot read a line | Look at that line; usually a value with `: ` that needs quotes |
 | `missing_h1_title` | No `# Title` after the properties | Add the title line |
+| `bad_property_name key=...` | A property name has no letter, digit, `-` or `_`, such as `...`, so it cannot name a page | Rename the property |
+| `bad_property_value key=...` | A value of that property has none either, such as `???` | Change the value |
+| `reserved_name` | The file is named like a Windows device (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`), so its page cannot exist on Windows | Rename the file |
 
-Set `"fail_on_invalid": true` in `repo.json` to make such a document stop the build instead.
+Two files whose pages differ only by letter case or extension (`Note.md` and `note.md`, or `note.md` and `note.markdown`) overwrite each other's page on macOS and Windows. The build logs `DOC_NAME_CLASH` as a warning, and `kb4it verify` reports the second file as `name_clash_with=<first>`. Rename one of them.
+
+Set `"fail_on_invalid": true` in `repo.json` to make such a document, or a name clash, stop the build instead.

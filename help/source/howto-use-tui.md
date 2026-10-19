@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Terminal interface
 HelpId: tui
-Keyword: tui, textual, menu, projects, explorer, web server, clipboard
+Keyword: tui, textual, menu, projects, explorer, web server, live reload, clipboard
 Level: basic
 Order: 320
 Section: Build and preview
@@ -38,9 +38,9 @@ Select a project and press <kbd>Enter</kbd>.
 | **Explore Keys & Values** | Browses the properties, see below |
 | **View Build Log** | Shows the last log, filtered by level |
 | **Browse Local** | Opens the site from disk in your browser |
-| **Browse via Web Server** | Serves the site on `http://127.0.0.1` and opens it |
+| **Browse via Web Server** | Serves the site on `http://127.0.0.1`, opens it, and rebuilds it when you save a document; open pages reload by themselves |
 
-The build screen shows a progress bar and the log as it happens. It says **Done** or **FAILED** at the end; **Copy Log** puts the log on the clipboard.
+The build screen shows a progress bar and the log as it happens. It says **Done** or **FAILED** at the end; **Copy Log** puts the log on the clipboard: with `wl-copy`, `xclip` or `xsel` on Linux, `pbcopy` on macOS and `clip.exe` on Windows, or through the terminal when none of them is available.
 
 ## Explore your properties {#explore}
 
@@ -55,4 +55,4 @@ It works after the first build, because it reads the index the build writes.
 **Themes** lists the installed themes, and **Apps** the sample apps each theme can create.
 
 !!! tip
-    The web server picks a free port from 8642 up and keeps running until you quit, so you can rebuild and reload the browser.
+    The web server picks a free port from 8642 up and keeps running until you quit. It watches the knowledge base like [`kb4it serve`](howto-preview.md): after each save it rebuilds, shows a notification and reloads the page. **Compile** still works while it runs.

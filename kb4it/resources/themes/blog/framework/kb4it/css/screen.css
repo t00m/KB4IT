@@ -38,21 +38,21 @@ table.month tbody tr th {
     font-size: smaller;
 }
 
-#kb4it-table-metadata {
+.kb4it-table-metadata {
     border: 2px solid black;
     font-size: smaller;
 }
 
-#kb4it-table-metadata  td {
+.kb4it-table-metadata  td {
     border: 1px solid lightgray;
     font-size: smaller;
 }
 
-#kb4it-table-metadata td span {
+.kb4it-table-metadata td span {
     color: gray;
 }
 
-#kb4it-table-metadata td span:hover {
+.kb4it-table-metadata td span:hover {
     color: blue;
 }
 
@@ -102,35 +102,35 @@ table.month tbody tr th {
 }
 
 
-#kb-sect1 {
+.kb-sect1 {
     border: 1px solid transparent;
 }
 
-#kb-sect2 {
+.kb-sect2 {
     border: 1px solid transparent;
 }
 
-#kb-sect3 {
+.kb-sect3 {
     border: 1px solid transparent;
 }
 
-#kb-sect4 {
+.kb-sect4 {
     border: 1px solid transparent;
 }
 
 
-#kb-sect1:hover {
+.kb-sect1:hover {
     border: 1px solid black;
 }
 
-#kb-sect2:hover {
+.kb-sect2:hover {
     border: 1px solid black;
 }
 
-#kb-sect3:hover {
+.kb-sect3:hover {
     border: 1px solid black;
 }
 
-#kb-sect4:hover {
+.kb-sect4:hover {
     border: 1px solid black;
 }

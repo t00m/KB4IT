@@ -1,5 +1,7 @@
 KB4IT.egg-info/
 build/
+# build/ is also the folder of the Python build script
+!scripts/distribution/build/
 dist/
 kb4it/__pycache__/
 kb4it/core/__pycache__/
@@ -11,3 +13,5 @@ __pycache__/
 
 # Claude Code local tooling (hooks, settings)
 .claude/
+responses
+tmp/

@@ -21,7 +21,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
     <p><strong>Start</strong></p>
     <ul class="ah-list">
       <li><a href="getting-started.html">Build your first website</a><br><span class="ah-muted">Install, create, write, build, open.</span></li>
-      <li><a href="howto-install.html">Install or upgrade KB4IT</a><br><span class="ah-muted">With uv, pipx, pip or from source.</span></li>
+      <li><a href="howto-install.html">Install or upgrade KB4IT</a><br><span class="ah-muted">On Linux, macOS or Windows, with uv, pipx or pip.</span></li>
       <li><a href="explanation-how-it-works.html">How KB4IT works</a><br><span class="ah-muted">Files in, website out, and why it is fast.</span></li>
     </ul>
   </section>
@@ -37,6 +37,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
     <p><strong>Build and publish</strong></p>
     <ul class="ah-list">
       <li><a href="howto-build.html">Build and rebuild a website</a><br><span class="ah-muted">Fast rebuilds, full rebuilds and checks.</span></li>
+      <li><a href="howto-preview.html">Preview while you write</a><br><span class="ah-muted">kb4it serve rebuilds and reloads the page when you save.</span></li>
       <li><a href="howto-use-tui.html">Use the terminal interface</a><br><span class="ah-muted">Manage, build and browse projects from one screen.</span></li>
       <li><a href="howto-publish-github-pages.html">Publish on GitHub Pages</a><br><span class="ah-muted">Build and publish on every push.</span></li>
       <li><a href="howto-publish-web-server.html">Publish on any web server</a><br><span class="ah-muted">Copy one folder; no server software needed.</span></li>
@@ -47,6 +48,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
     <ul class="ah-list">
       <li><a href="explanation-themes.html">Themes</a><br><span class="ah-muted">Pick the theme that fits what you write.</span></li>
       <li><a href="reference-theme-techdoc.html">techdoc</a>, <a href="reference-theme-blog.html">blog</a>, <a href="reference-theme-bookshelf.html">bookshelf</a>, <a href="reference-theme-apphelp.html">apphelp</a><br><span class="ah-muted">What each bundled theme offers.</span></li>
+      <li><a href="howto-customize-templates.html">Change one template</a><br><span class="ah-muted">Adjust a theme for one site, without copying it.</span></li>
       <li><a href="howto-create-theme.html">Create your own theme</a><br><span class="ah-muted">Templates, logic and where to install it.</span></li>
     </ul>
   </section>

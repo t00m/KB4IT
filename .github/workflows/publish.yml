@@ -1,6 +1,9 @@
-name: Publish to PyPI
+name: Publish a release
 
 # Runs when a release tag is pushed (git tag v0.7.10 && git push origin v0.7.10).
+# Publishes the wheel and sdist to PyPI and the container image to GHCR
+# (ghcr.io/t00m/kb4it, amd64 and arm64), builds the .deb and .rpm, then creates
+# the GitHub release with the wheel, the sdist and the four packages.
 # Only plain vX.Y.Z tags: anything with a suffix is not a PyPI version.
 #
 # The tag must match the version committed in kb4it/VERSION and pyproject.toml;
@@ -11,6 +14,8 @@ name: Publish to PyPI
 #     Publisher: GitHub Actions   Owner: t00m   Repository: KB4IT
 #     Workflow:  publish.yml      Environment: pypi
 # and on GitHub: Settings > Environments > New environment "pypi".
+# The image needs no secret: the job pushes with the workflow token. After the
+# first release, set the package kb4it on GitHub to Public (see RELEASING.md).
 
 on:
   push:
@@ -76,9 +81,130 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@release/v1
 
+  image:
+    name: Container image on GHCR
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write       # push to ghcr.io with the workflow token
+      id-token: write       # build provenance attestation
+      attestations: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Image name, tags and build context
+        id: meta
+        run: |
+          # shellcheck source=/dev/null
+          source scripts/distribution/lib/common.sh
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/image
+          cp "dist/kb4it-${VERSION}-py3-none-any.whl" dist/image/
+          {
+            echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/kb4it"
+            echo "version=${VERSION}"
+            echo "minor=${VERSION%.*}"
+            echo "description=${KB4IT_DESCRIPTION}"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v4.4.0
+
+      - uses: docker/setup-buildx-action@v4.4.1
+
+      - name: Build the amd64 image for the smoke test
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: dist/image
+          file: scripts/distribution/docker/Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: kb4it:smoke
+          build-args: |
+            KB4IT_VERSION=${{ steps.meta.outputs.version }}
+            KB4IT_REVISION=${{ github.sha }}
+            KB4IT_DESCRIPTION=${{ steps.meta.outputs.description }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test (the version must equal the tag)
+        run: ./scripts/distribution/docker/smoke.sh kb4it:smoke
+
+      - uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push amd64 and arm64
+        id: push
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: dist/image
+          file: scripts/distribution/docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.minor }}
+            ${{ steps.meta.outputs.image }}:latest
+          build-args: |
+            KB4IT_VERSION=${{ steps.meta.outputs.version }}
+            KB4IT_REVISION=${{ github.sha }}
+            KB4IT_DESCRIPTION=${{ steps.meta.outputs.description }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+
+      - uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-name: ${{ steps.meta.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  packages:
+    name: Linux packages
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install rpmbuild
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends rpm
+
+      - name: Build the .deb and .rpm for both architectures from the released wheel
+        run: |
+          for arch in amd64 arm64; do ./scripts/distribution/deb/build_deb.sh "$arch"; done
+          for arch in x86_64 aarch64; do ./scripts/distribution/rpm/build_rpm.sh "$arch"; done
+
+      - name: Install the packages offline in containers
+        run: ./scripts/distribution/test/test_packages.sh all
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-packages
+          path: |
+            dist/*.deb
+            dist/*.rpm
+
   release:
     name: GitHub release
-    needs: publish
+    needs: [publish, image, packages]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -90,10 +216,24 @@ jobs:
           name: dist
           path: dist/
 
+      - uses: actions/download-artifact@v8
+        with:
+          name: linux-packages
+          path: dist/
+
       - name: Create the release from the notes
         env:
           GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ needs.image.outputs.image }}
+          DIGEST: ${{ needs.image.outputs.digest }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          {
+            cat "releases/$VERSION.md"
+            echo ""
+            echo "## Container image"
+            echo ""
+            echo "\`docker pull $IMAGE:$VERSION\` (amd64 and arm64, digest \`$DIGEST\`)"
+          } > "$RUNNER_TEMP/notes.md"
           gh release create "$GITHUB_REF_NAME" --title "KB4IT $VERSION" \
-            --notes-file "releases/$VERSION.md" dist/*
+            --notes-file "$RUNNER_TEMP/notes.md" dist/*

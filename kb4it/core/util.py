@@ -3,67 +3,128 @@
 """
 Utils functions used along the project.
 
-# File: srv_utils.py
+Dates, documents and files have their own modules (kb4it.core.dates, documents and
+files); their names are imported here too, since themes, hooks and templates import
+them from kb4it.core.util.
+
+# File: util.py
 # Author: Tomás Vírseda
 # License: GPL v3
 # Description: Generic functions module
 """
 
-import glob
-import hashlib
-import json
 import math
 import multiprocessing
 import operator
 import os
 import re
-import shutil
-import subprocess
 import time
 import unicodedata
-from datetime import datetime
 from functools import wraps
+from typing import Any
 
-import yaml
-
-from kb4it.core.env import ENV
+from kb4it.core.dates import (
+    DateCache,
+    get_day,
+    get_human_datetime,
+    get_human_datetime_day,
+    get_human_datetime_month,
+    get_human_datetime_year,
+    get_month,
+    get_timestamp_yyyymmdd,
+    get_year,
+    guess_datetime,
+    kb4it_timestamp,
+    log_timestamp,
+    now,
+    string_timestamp,
+)
+from kb4it.core.documents import (
+    extract_sections_from_md,
+    fences_in_blocks,
+    first_heading,
+    get_document_attributes,
+    get_hash_from_body,
+    get_markdown_attributes,
+    raw_script_lines,
+    strip_first_heading,
+)
+from kb4it.core.files import (
+    SOURCE_ENCODING,
+    copy_docs,
+    copydir,
+    delete_files,
+    delete_target_contents,
+    get_hash_from_content,
+    get_hash_from_dict,
+    get_hash_from_file,
+    get_hash_from_list,
+    get_source_docs,
+    json_load,
+    json_save,
+    quarantine,
+    tree_hash,
+    valid_filename,
+)
 from kb4it.core.log import get_logger
 
 log = get_logger("Util")
 
-class DateCache:
-    """Isolated cache for date-string parsing and formatting results.
+# Every public name of this module before the split; the moved ones are imported above.
+__all__ = [
+    "SOURCE_ENCODING",
+    "SOURCE_EXT_RE",
+    "WINDOWS_RESERVED_NAMES",
+    "DateCache",
+    "copy_docs",
+    "copydir",
+    "delete_files",
+    "delete_target_contents",
+    "ellipsize_text",
+    "extract_sections_from_md",
+    "fences_in_blocks",
+    "first_heading",
+    "get_day",
+    "get_default_workers",
+    "get_document_attributes",
+    "get_font_size",
+    "get_hash_from_body",
+    "get_hash_from_content",
+    "get_hash_from_dict",
+    "get_hash_from_file",
+    "get_hash_from_list",
+    "get_human_datetime",
+    "get_human_datetime_day",
+    "get_human_datetime_month",
+    "get_human_datetime_year",
+    "get_markdown_attributes",
+    "get_month",
+    "get_source_docs",
+    "get_timestamp_yyyymmdd",
+    "get_year",
+    "guess_datetime",
+    "html_id_for",
+    "human_size",
+    "is_windows_reserved",
+    "json_load",
+    "json_save",
+    "kb4it_timestamp",
+    "log_timestamp",
+    "now",
+    "page_name_clashes",
+    "quarantine",
+    "raw_script_lines",
+    "set_max_frequency",
+    "slugify",
+    "sort_dictionary",
+    "source_ext",
+    "string_timestamp",
+    "strip_first_heading",
+    "timeit",
+    "tree_hash",
+    "valid_filename",
+]
 
-    Using a class instead of module-level dicts allows test code to inject
-    a fresh instance (no cross-test contamination) while production callers
-    rely on the module-level singleton without any change.
-    """
-
-    def __init__(self):
-        self._dt = {}
-        self._ymd = {}
-
-    def has_dt(self, key):
-        return key in self._dt
-
-    def get_dt(self, key):
-        return self._dt[key]
-
-    def set_dt(self, key, value):
-        self._dt[key] = value
-
-    def get_ymd(self, key):
-        return self._ymd.get(key)
-
-    def set_ymd(self, key, value):
-        self._ymd[key] = value
-
-    def clear(self):
-        self._dt.clear()
-        self._ymd.clear()
-
-
-_default_date_cache = DateCache()
 
 SOURCE_EXT_RE = re.compile(r"\.(md|markdown)$", re.IGNORECASE)
 
@@ -71,6 +132,30 @@ SOURCE_EXT_RE = re.compile(r"\.(md|markdown)$", re.IGNORECASE)
 def html_id_for(doc_id: str) -> str:
     """Return the HTML filename corresponding to a source docId."""
     return SOURCE_EXT_RE.sub(".html", doc_id)
+
+
+WINDOWS_RESERVED_NAMES = frozenset(
+    ["CON", "PRN", "AUX", "NUL"] + [f"COM{n}" for n in range(1, 10)] + [f"LPT{n}" for n in range(1, 10)])
+
+
+def is_windows_reserved(filename: str) -> bool:
+    """True when Windows cannot create a file with this name (CON, NUL, COM1, ... with any extension)."""
+    return os.path.basename(filename).split(".", 1)[0].upper() in WINDOWS_RESERVED_NAMES
+
+
+def page_name_clashes(doc_ids) -> list[tuple[str, str]]:
+    """Pairs of documents whose pages differ only by letter case or extension (Foo.md, foo.markdown).
+
+    Their pages overwrite each other on macOS and Windows, whose file systems ignore case.
+    """
+    seen, clashes = {}, []
+    for doc_id in sorted(doc_ids):
+        page = html_id_for(doc_id).lower()
+        if page in seen:
+            clashes.append((seen[page], doc_id))
+        else:
+            seen[page] = doc_id
+    return clashes
 
 
 def source_ext(doc_id: str) -> str:
@@ -94,49 +179,6 @@ def timeit(func):
     return timeit_wrapper
 
 
-def extract_sections_from_md(file_path: str) -> dict:
-    """Extract H2 sections from a Markdown file.
-
-    Returns a dict mapping section name -> {start, end} (1-indexed line numbers).
-    """
-    sections = []
-
-    with open(file_path, "r", encoding="utf-8") as fh:
-        lines = fh.readlines()
-
-    current_section = None
-    start = None
-
-    for i, line in enumerate(lines, 1):
-        line = line.rstrip("\n")
-        if line.startswith("## ") and not line.startswith("###"):
-            if current_section:
-                sections.append(
-                    {"name": current_section, "start": start, "end": i - 1})
-            current_section = line[3:].strip()
-            start = i
-
-    if current_section:
-        sections.append(
-            {"name": current_section, "start": start, "end": len(lines)})
-
-    return {
-        s["name"]: {"start": s["start"], "end": s["end"]}
-        for s in sections
-    }
-
-
-def copy_docs(docs: list, target: str) -> None:
-    """Copy a list of docs to target directory."""
-    for doc in docs:
-        try:
-            shutil.copy(doc, target)
-            log.debug(f"Copied {doc} to {target}")
-        except FileNotFoundError:
-            log.warning(f"File {doc} not found")
-    log.debug(f"{len(docs)} documents copied to '{target}'")
-
-
 def get_default_workers():
     """Calculate default number or workers.
 
@@ -148,59 +190,7 @@ def get_default_workers():
     return math.ceil(workers)
 
 
-def copydir(source, dest):
-    """Copy a directory structure overwriting existing files.
-
-    https://gist.github.com/dreikanter/5650973#gistcomment-835606
-    """
-    for root, dirs, files in os.walk(source):
-        if not os.path.isdir(root):
-            os.makedirs(root, exist_ok=True)
-
-        for file in files:
-            rel_path = root.replace(source, "").lstrip(os.sep)
-            dest_path = os.path.join(dest, rel_path)
-
-            if not os.path.isdir(dest_path):
-                os.makedirs(dest_path, exist_ok=True)
-
-            try:
-                shutil.copyfile(os.path.join(root, file),
-                                os.path.join(dest_path, file))
-            except PermissionError:
-                log.warning(f"Check permissions for file {file}")
-
-
-def get_source_docs(path: str):
-    """Get source documents (.md, .markdown) from a given path."""
-    docs = []
-    for ext in ("*.md", "*.markdown"):
-        docs.extend(glob.glob(os.path.join(path, ext)))
-    return docs
-
-
-def exec_cmd(data):
-    """Execute an operating system command.
-
-    Return:
-    - document
-    - True if success, False if not
-    - num is the job number
-    """
-    doc, cmd, num = data
-    process = subprocess.Popen(
-        [cmd], shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    _outs, errs = process.communicate()
-    compiled = process.returncode == 0
-    if not compiled:
-        log.debug("[UTIL] CMD_FAIL doc=%s rc=%d stderr=%s", doc, process.returncode, errs)
-    return doc, compiled, num
-
-
-def set_max_frequency(dkeyurl):
+def set_max_frequency(dkeyurl: dict[str, Any]) -> int:
     """Calculate and set max frequency."""
     max_frequency = 1
     for keyword in dkeyurl:
@@ -233,186 +223,6 @@ def get_font_size(frequency, max_frequency):
     return size
 
 
-def delete_target_contents(target_path: str) -> bool:
-    """Delete contents from target directory."""
-    error = False
-    if os.path.exists(target_path):
-        if os.path.isdir(target_path):
-            for file_object in os.listdir(target_path):
-                file_object_path = os.path.join(target_path, file_object)
-                if os.path.isfile(file_object_path):
-                    os.unlink(file_object_path)
-                else:
-                    shutil.rmtree(file_object_path)
-        elif os.path.isfile(target_path):
-            os.unlink(target_path)
-    else:
-        log.error(f"Target path {target_path} does not exist")
-        error = True
-    return error
-
-
-def delete_files(files):
-    """Delete a list of given files."""
-    for path in files:
-        try:
-            if os.path.exists(path):
-                os.unlink(path)
-        except FileNotFoundError as error:
-            log.warning("[UTIL] - %s", error)
-            log.warning("[UTIL] - %s", path)
-
-
-def json_load(filepath: str) -> dict:
-    """Load into a dictionary a file in json format."""
-    with open(filepath, "r", encoding="utf-8") as fin:
-        adict = json.load(fin)
-    return adict
-
-
-def json_save(filepath: str, adict: dict) -> None:
-    """Save dictionary into a file in json format."""
-    with open(filepath, "w", encoding="utf-8") as fout:
-        json.dump(adict, fout, sort_keys=True, indent=4)
-
-
-def get_hash_from_content(content: str):
-    """Get the blake2b hash for any string."""
-    return hashlib.blake2b(content.encode("utf-8")).hexdigest()
-
-
-def get_hash_from_file(path):
-    """Get the blake2b hash for a given filename."""
-    if os.path.exists(path):
-        with open(path, "rb") as fin:
-            fhash = hashlib.file_digest(fin, "blake2b").hexdigest()
-    else:
-        fhash = None
-    return fhash
-
-
-def get_hash_from_body(path):
-    """Get blake2b hash for the document body.
-
-    Body is the content after the closing YAML frontmatter delimiter, with the
-    leading H1 heading stripped so title renames don't invalidate the cache.
-    """
-    if not os.path.exists(path):
-        return None
-    with open(path, "r", encoding="utf-8") as fin:
-        content = fin.read()
-    end = content.find("\n---", 3)
-    if end >= 0:
-        body = content[end + 4:].lstrip("\n")
-        body = re.sub(r"^#[^\n]*\n?", "", body, count=1)
-    else:
-        body = content
-    return hashlib.blake2b(body.encode("utf-8")).hexdigest()
-
-
-def get_markdown_attributes(docpath: str):
-    """Get metadata from a Markdown document's YAML frontmatter."""
-    basename = os.path.basename(docpath)
-    keys = {}
-
-    try:
-        with open(docpath, "r", encoding="utf-8") as fh:
-            content = fh.read()
-
-        if not content.startswith("---"):
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter")
-            return {}, False, "missing_frontmatter"
-
-        end = content.find("\n---", 3)
-        if end < 0:
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter_close")
-            return {}, False, "missing_frontmatter_close"
-
-        fm_text = content[3:end].strip()
-        body = content[end + 4:].lstrip("\n")
-
-        fm = yaml.safe_load(fm_text) if fm_text else {}
-        if not isinstance(fm, dict):
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=invalid_frontmatter")
-            return {}, False, "invalid_frontmatter"
-
-        # Title comes from the first # heading in the body
-        title_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
-        if not title_match:
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_h1_title")
-            return {}, False, "missing_h1_title"
-
-        keys["Title"] = [title_match.group(1).strip()]
-
-        if "title" in fm or "Title" in fm:
-            log.warning(f"[UTIL] DOC_WARN doc={basename} reason=title_in_frontmatter_ignored")
-            fm.pop("title", None)
-            fm.pop("Title", None)
-
-        for k, v in fm.items():
-            if v is None:
-                keys[k] = []
-            elif isinstance(v, list):
-                keys[k] = [str(i).strip() for i in v if i is not None]
-            elif isinstance(v, str) and "," in v:
-                keys[k] = [i.strip() for i in v.split(",")]
-            else:
-                keys[k] = [str(v).strip()]
-
-    except yaml.YAMLError as err:
-        reason = "yaml_error"
-        mark = getattr(err, "problem_mark", None)
-        if mark is not None:
-            # The mark counts from the stripped frontmatter; add the lines before it.
-            raw = content[3:end]
-            offset = content[:3 + len(raw) - len(raw.lstrip())].count("\n")
-            reason += f" line={offset + mark.line + 1} col={mark.column + 1}"
-        problem = getattr(err, "problem", None)
-        if problem:
-            reason += f" {problem}"
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
-        return {}, False, reason
-    except Exception as err:
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
-        return {}, False, str(err)
-
-    return keys, True, "Success"
-
-
-def get_document_attributes(docpath: str):
-    """Extract metadata from a Markdown document."""
-    if docpath.endswith((".md", ".markdown")):
-        return get_markdown_attributes(docpath)
-    return {}, False, "unsupported_format"
-
-
-def get_hash_from_dict(adict: dict) -> str:
-    """Get the blake2b hash for a given dictionary."""
-    serialized = json.dumps(adict, sort_keys=True, ensure_ascii=False)
-    return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
-
-
-def get_hash_from_list(alist: list) -> str:
-    """Get the blake2b hash for a given list."""
-    serialized = json.dumps(alist, ensure_ascii=False)
-    return hashlib.blake2b(serialized.encode("utf-8")).hexdigest()
-
-
-def valid_filename(s):
-    """Return a clean filename.
-
-    Remove leading and trailing spaces; convert other spaces to
-    underscores; and remove anything that is not an alphanumeric, dash,
-    underscore, or dot.
-    >>> valid_filename("john's portrait in 2004.jpg")
-    'johns_portrait_in_2004.jpg'
-    Borrowed from:
-    https://github.com/django/django/blob/master/django/utils/text.py
-    """
-    s = str(s).strip().replace(" ", "_")
-    return re.sub(r"(?u)[^-\w.]", "", s)
-
-
 def slugify(text: str) -> str:
     """Return a lowercase, dash separated version of *text*.
 
@@ -433,125 +243,6 @@ def human_size(nbytes: float) -> str:
             return f"{nbytes:.0f} {unit}" if unit == "B" else f"{nbytes:.1f} {unit}"
         nbytes /= 1024
     return f"{nbytes:.1f} TB"
-
-
-def now():
-    """Return datetime.now in isoformat."""
-    return datetime.now().isoformat()
-
-
-def get_year(timestamp: str) -> int:
-    """Return year from timestamp."""
-    return int(timestamp[:4])
-
-
-def get_month(timestamp: str):
-    """Return month from timestamp."""
-    return int(timestamp[4:6])
-
-
-def get_day(timestamp: str):
-    """Return day from timestamp."""
-    return int(timestamp[6:8])
-
-
-def log_timestamp():
-    """Return timestamp for logging purposes."""
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
-def kb4it_timestamp():
-    """Return timestamp in KB4IT format."""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-def guess_datetime(sdate, _cache=None):
-    """Guess a datetime object for a given string."""
-    cache = _cache if _cache is not None else _default_date_cache
-    if cache.has_dt(sdate):
-        return cache.get_dt(sdate)
-
-    patterns = [
-        "%d/%m/%Y",
-        "%d/%m/%Y %H:%M",
-        "%d/%m/%Y %H:%M:%S",
-        "%d.%m.%Y",
-        "%d.%m.%Y %H:%M",
-        "%d.%m.%Y %H:%M:%S",
-        "%d-%m-%Y",
-        "%d-%m-%Y %H:%M",
-        "%d-%m-%Y %H:%M:%S",
-        "%Y/%m/%d",
-        "%Y/%m/%d %H:%M",
-        "%Y/%m/%d %H:%M:%S",
-        "%Y.%m.%d",
-        "%Y.%m.%d %H:%M",
-        "%Y.%m.%d %H:%M:%S",
-        "%Y-%m-%d",
-        "%Y-%m-%d %H:%M",
-        "%Y-%m-%d %H:%M:%S",
-        "%Y/%m/%d",
-        "%Y/%m/%d %H:%M",
-        "%Y/%m/%d %H:%M:%S.%f",
-        "%Y.%m.%d",
-        "%Y.%m.%d %H:%M",
-        "%Y.%m.%d %H:%M:%S.%f",
-        "%Y-%m-%d",
-        "%Y-%m-%d %H:%M",
-        "%Y-%m-%d %H:%M:%S.%f",
-        "%Y-%m-%dT%H:%M:%S",
-        "%Y-%m-%dT%H:%M:%SZ",
-        "%Y%m%d",
-        "%Y%m%d%H%M%S",
-    ]
-    timestamp = None
-    for pattern in patterns:
-        try:
-            td = datetime.strptime(sdate, pattern)
-            ts = td.strftime("%Y-%m-%d %H:%M:%S")
-            timestamp = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-            break
-        except ValueError:
-            continue
-    cache.set_dt(sdate, timestamp)
-    return timestamp
-
-
-def string_timestamp(string):
-    """Return datetime object from a given timestamp."""
-    dt = guess_datetime(string)
-    sdate = dt.strftime("%Y-%m-%d %H:%M:%S")
-    return sdate
-
-
-def get_human_datetime(dt):
-    """Return datetime for humans."""
-    return dt.strftime("%A, %B %d, %Y at %H:%M")
-
-
-def get_human_datetime_day(dt):
-    """Return day datetime for humans."""
-    return dt.strftime("%A, %B %d, %Y")
-
-
-def get_human_datetime_month(dt):
-    """Return month datetime for humans."""
-    return dt.strftime("%B, %Y")
-
-
-def get_human_datetime_year(dt):
-    """Return year datetime for humans."""
-    return dt.strftime("%Y")
-
-
-def get_timestamp_yyyymmdd(dt, _cache=None):
-    """Return timestamp in yyyymmdd format."""
-    cache = _cache if _cache is not None else _default_date_cache
-    result = cache.get_ymd(dt)
-    if result is None:
-        result = dt.strftime("%Y%m%d")
-        cache.set_ymd(dt, result)
-    return result
 
 
 def sort_dictionary(adict, reverse=True):

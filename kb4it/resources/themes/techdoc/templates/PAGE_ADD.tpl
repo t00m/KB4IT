@@ -11,8 +11,8 @@ CATEGORIES = [
 ]
 %>
 
-<script id="kb-add-keys" type="application/json">${var['page']['keys_json']}</script>
-<script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json']}</script>
+<script id="kb-add-keys" type="application/json">${var['page']['keys_json'] | n}</script>
+<script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json'] | n}</script>
 
 <div class="uk-container kb-add">
 
@@ -24,7 +24,7 @@ CATEGORIES = [
         directory and rebuild.
     </div>
 
-% if var['repo'].get('git') == True:
+% if var.get('git_ok'):
     <div class="kb-add-note uk-alert-primary" uk-alert>
         <span uk-icon="icon: git-branch; ratio: 0.9"></span>
         <strong>Online repository:</strong> The document source is hosted at
@@ -104,132 +104,6 @@ CATEGORIES = [
     </div><!-- /kb-dialog -->
 </div><!-- /modal -->
 % endfor
-
-<style>
-/* ── Dialog chrome ── */
-.kb-dialog {
-    position: relative;
-    overflow: hidden;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-.kb-dialog-header {
-    flex-shrink: 0;
-    padding: 11px 20px;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.kb-dialog-title {
-    font-size: 1rem;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-.kb-dialog-desc {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.82rem;
-    color: #888;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.kb-dialog-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-/* ── Split body ── */
-.kb-dialog-body {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-}
-
-/* ── Left pane: editor ── */
-.kb-pane-left {
-    flex: 3;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    border-right: 1px solid #ddd;
-}
-
-/* ── Right pane: accordion ── */
-.kb-pane-right {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    background: #fff;
-}
-.kb-accord-wrap {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 16px 16px;
-}
-
-/* ── Panel label strip ── */
-.kb-pane-label {
-    flex-shrink: 0;
-    padding: 5px 16px;
-    font-size: 0.69rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #bbb;
-    background: #f8f8f8;
-    border-bottom: 1px solid #ebebeb;
-}
-
-/* ── Editor textarea ── */
-.kb-editor {
-    flex: 1;
-    resize: none;
-    border: none;
-    outline: none;
-    padding: 20px 24px;
-    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
-    font-size: 0.84rem;
-    line-height: 1.65;
-    background: #1e1e1e;
-    color: #d4d4d4;
-}
-
-/* ── Accordion tuning for right pane ── */
-.kb-accord-wrap .uk-accordion { margin: 0; }
-.kb-accord-wrap .uk-accordion > li { border-bottom: 1px solid #f0f0f0; }
-.kb-accord-wrap .uk-accordion-title {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #555;
-    padding: 7px 0 6px;
-    line-height: 1.3;
-}
-.kb-accord-wrap .uk-accordion-content { padding-top: 2px; padding-bottom: 8px; }
-
-/* ── Word cloud (no links) ── */
-.kb-wcloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 3px 7px;
-    padding: 2px 0 2px;
-}
-.kb-wcloud-word {
-    --kb-weight: 0;
-    display: inline-block;
-    cursor: default;
-    font-size: calc(0.72rem + var(--kb-weight) * 1.0rem);
-    font-weight: calc(400 + var(--kb-weight) * 300);
-    color: hsl(210, 14%, calc(60% - var(--kb-weight) * 36%));
-    line-height: 1.6;
-}
-</style>
 
 <script>
 (function () {

@@ -1,6 +1,6 @@
 <!-- Template SECTION_ACTIONS.tpl :: START -->
 % if not var['SystemPage']:
-  % if var['repo']['git']:
+  % if var.get('git_ok'):
         <!-- Edit Button :: START -->
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Edit document">
             <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span uk-icon="pencil"></span></a>
@@ -16,7 +16,7 @@
                     <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                         <div class="uk-padding-large uk-background-muted">
                             <div class="uk-text-lead uk-text-center uk-text-primary">Metadata</div>
-                            <div class="" style="border: 1px solid transparent;">${var['metadata']}</div>
+                            <div class="" style="border: 1px solid transparent;">${var['metadata'] | n}</div>
                         </div>
                     </div>
                 </div>

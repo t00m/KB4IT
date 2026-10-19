@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "KB4IT"
-version = "0.8.0"
+version = "0.9.0"
 description = "A static website generator based on Markdown sources."
 authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -18,11 +18,12 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Natural Language :: English",
-    "Operating System :: POSIX :: Linux",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Documentation",
     "Topic :: Software Development :: Documentation",
     "Topic :: Utilities",
@@ -48,6 +49,12 @@ rich = ">=13.0"
 textual = ">=0.47.0"
 PyYAML = ">=6.0"
 Markdown = ">=3.5"
+Pygments = ">=2.15"
+pymdown-extensions = { version = ">=10.0", optional = true }
+nh3 = { version = ">=0.3.0", optional = true }
+
+[tool.poetry.extras]
+extras = ["pymdown-extensions", "nh3"]
 
 [tool.poetry.scripts]
 kb4it = "kb4it.core.main:main"

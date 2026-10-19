@@ -219,7 +219,30 @@
     });
   }
 
+  // Version switcher: same page in the other version when it exists, its landing page otherwise.
+  function setupVersions() {
+    var select = document.getElementById("ah-version");
+    var data = window.APPHELP_VERSIONS;
+    if (!select || !data || !data.versions || data.versions.length < 2) { return; }
+    var current = select.getAttribute("data-current");
+    var page = location.pathname.split("/").pop() || "index.html";
+    data.versions.forEach(function (v) {
+      var option = el("option", null, v.label + (v.label === data.latest ? " (latest)" : ""));
+      option.value = v.label;
+      option.selected = v.label === current;
+      select.appendChild(option);
+    });
+    select.hidden = false;
+    select.addEventListener("change", function () {
+      var chosen = data.versions.filter(function (v) { return v.label === select.value; })[0];
+      if (!chosen) { return; }
+      var target = chosen.pages.indexOf(page) !== -1 ? page : "index.html";
+      location.href = link("../" + chosen.path + "/" + target) + location.hash;
+    });
+  }
+
   setupScheme();
+  setupVersions();
   setupDrawer();
   setupCopy();
   setupDropdown();

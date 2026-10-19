@@ -20,16 +20,11 @@
         "Task"
     ],
     "git": false,
-    "git_branch": "{branch_name}",
-    "git_path": "{relative_path}",
-    "git_repo": "{repository_name}",
-    "git_server": "{https://{server.fqdn}",
-    "git_user": "{username}",
     "ignored_keys": [
         "Date"
     ],
     "logo": "resources/themes/techdoc/images/logo.svg",
-    "logo_alt": "{alternative_text}",
+    "logo_alt": "",
     "menu": [
         "Author",
         "Category",

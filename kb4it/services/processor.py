@@ -10,16 +10,22 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from kb4it.core.types import KBDict
 
 from kb4it.core.exceptions import CompilationError
+from kb4it.core.log import get_logger
 from kb4it.core.service import Service
+from kb4it.core.mdlinks import scan_document
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
-                             get_hash_from_dict, html_id_for, string_timestamp,
-                             valid_filename)
+                             get_hash_from_dict, html_id_for, is_windows_reserved,
+                             page_name_clashes, string_timestamp, valid_filename,
+                             SOURCE_ENCODING, tree_hash)
+
+# repo.json keys that never reach a page: changing them must not rebuild the site.
+NON_PAGE_KEYS = frozenset({"workers", "force", "fail_on_invalid", "source", "target"})
 
 
 @dataclass
@@ -42,6 +48,8 @@ class BuildPlan:
     force_kv_pairs: set = field(default_factory=set)
     force_all: bool = False
     invalid_docs: list = field(default_factory=list)  # [(docId, reason), ...]
+    name_clashes: list = field(default_factory=list)  # [(docId, docId), ...] pages differing only by case
+    backlinks: dict = field(default_factory=dict)  # {docId: [[title, source docId], ...]}
 
     @property
     def invalid_count(self) -> int:
@@ -63,13 +71,21 @@ class BuildPlan:
 class Processor(Service):
     """KB4IT Processor Service."""
 
-    def _initialize(self):
-        """Initialize Processor service."""
-        self.srvbes = self.app.get_service("Backend")
-        self.srvdtb = self.app.get_service("DB")
+    def __init__(self, backend: Any, db: Any, theme: Any) -> None:
+        """Processor of one build; the pipeline gives it the backend, the database and the theme."""
+        super().__init__()
+        self.log = get_logger(self.modname)
+        self.started = True
+        self.srvbes = backend
+        self.srvdtb = db
+        self.srvthm = theme
         self.kbdict_cur: KBDict = self.srvbes.load_kbdict()  # Previous run
         self.kbdict_new: KBDict = {"document": {}, "metadata": {}}
         self.plan = BuildPlan()
+
+    def _forced(self) -> bool:
+        """Every page is rebuilt: asked for (--force, repo.json "force") or decided by the backend."""
+        return bool(self.srvbes.get_value("app", "force") or self.srvbes.get_value("runtime", "force_all"))
 
     @property
     def changed_docs(self) -> set:
@@ -83,9 +99,18 @@ class Processor(Service):
         """Extract metadata."""
         runtime = self.srvbes.get_dict("runtime")
         sources = self.srvbes.get_value("docs", "bag")
+        for first, second in page_name_clashes(os.path.basename(f) for f in sources):
+            self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={first} b={second}")
+            self.plan.name_clashes.append((first, second))
         for filepath in sources:
             # Get Id
             docId = os.path.basename(filepath)
+
+            # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
+            if is_windows_reserved(docId):
+                self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
+                self.plan.invalid_docs.append((docId, "reserved_name"))
+                continue
 
             # Get metadata
             keys, valid, reason = get_document_attributes(filepath)
@@ -151,20 +176,75 @@ class Processor(Service):
             self.srvbes.add_target(docId, htmlId)
 
         # A repo can ask that any unreadable document fails the build instead of vanishing.
-        if self.plan.invalid_docs and self.srvbes.get_value("repo", "fail_on_invalid") is True:
-            names = ", ".join(f"{doc} ({reason})" for doc, reason in self.plan.invalid_docs)
-            raise CompilationError(f"{self.plan.invalid_count} invalid document(s): {names}")
+        problems = self.plan.invalid_docs + [(b, f"name_clash_with={a}") for a, b in self.plan.name_clashes]
+        if problems and self.srvbes.get_value("repo", "fail_on_invalid") is True:
+            names = ", ".join(f"{doc} ({reason})" for doc, reason in problems)
+            raise CompilationError(f"{len(problems)} invalid document(s): {names}")
 
         # Rebuild every page when the theme says the site as a whole changed.
-        signature = self.get_service("Theme").site_signature()
+        signature = self.srvthm.site_signature()
         self.kbdict_new["site_signature"] = signature
         self.plan.force_all = bool(signature) and signature != self.kbdict_cur.get("site_signature", "")
         if self.plan.force_all:
             self.log.info("[PROCESSOR] SITE_SIGNATURE_CHANGED action=rebuild_all")
 
-        # Save new kbdict
-        self.srvbes.save_kbdict(self.kbdict_new)
+        # And when a core setting that shapes every page changed (Markdown settings, overrides, hooks).
+        core = self.core_signature()
+        self.kbdict_new["core_signature"] = core
+        if self.kbdict_cur.get("document") and core != self.kbdict_cur.get("core_signature"):
+            self.plan.force_all = True
+            self.log.info("[PROCESSOR] CORE_SIGNATURE_CHANGED action=rebuild_all")
 
+        # The new kbdict stays in memory; Backend.commit_kbdict() writes it once the build succeeded.
+
+
+    def signature_parts(self) -> dict:
+        """Core settings whose change must rebuild every page; each feature adds its own entry."""
+        repo = self.srvbes.get_dict("repo")
+        # site_url and og_image end up in every page head (canonical link, Open Graph tags).
+        return {"markdown": repo.get("markdown") or {}, "search": repo.get("search", True),
+                "site_url": repo.get("site_url"), "og_image": repo.get("og_image"), "feed": repo.get("feed"),
+                "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
+                "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else "",
+                "backlinks": repo.get("backlinks", True),
+                # Any other setting may be printed by the theme (title, tagline, menus): rebuild on change.
+                "repo": get_hash_from_dict({k: v for k, v in repo.items() if k not in NON_PAGE_KEYS})}
+
+    def core_signature(self) -> str:
+        """Hash of signature_parts(), stored in kbdict.json next to the theme's site signature."""
+        return get_hash_from_dict(self.signature_parts())
+
+    def document_links(self) -> dict:
+        """Outgoing links to other sources: {docId: [[target docId, fragment], ...]}.
+
+        Only documents whose body changed are parsed; the others keep the links stored in kbdict.json.
+        """
+        known = set(self.kbdict_new["document"])
+        links_cur = self.kbdict_cur.get("links", {}) or {}
+        links = {}
+        for doc_id, entry in self.kbdict_new["document"].items():
+            cur = self.kbdict_cur.get("document", {}).get(doc_id, {})
+            if doc_id in links_cur and cur.get("body_hash") == entry.get("body_hash"):
+                links[doc_id] = links_cur[doc_id]
+                continue
+            try:
+                found, _anchors = scan_document(entry["content"])
+            except Exception as err:
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={doc_id} error={err}")
+                found = []
+            pairs = sorted({(os.path.normpath(path).replace(os.sep, "/"), frag) for path, frag in found})
+            links[doc_id] = [[path, frag] for path, frag in pairs]
+        self.log.debug(f"[LINKS] SCANNED docs={len(known)}")
+        return links
+
+    def backlinks_from(self, links, titles) -> dict:
+        """{target docId: [[source title, source docId], ...]} sorted by title, for existing targets only."""
+        back = {}
+        for source, targets in links.items():
+            for path, _frag in targets:
+                if path in titles and path != source:
+                    back.setdefault(path, set()).add((titles.get(source, source), source))
+        return {doc: [list(item) for item in sorted(items)] for doc, items in back.items()}
 
     def step_01_analysis(self):
         """Compilation strategy."""
@@ -172,6 +252,18 @@ class Processor(Service):
         sources = self.srvbes.get_value("docs", "bag")
         ignored = set(self.srvdtb.get_ignored_keys())
         blocked = set(self.srvdtb.get_blocked_keys())
+
+        # Links between documents: a page whose list of linking pages changed is rebuilt.
+        links = self.document_links()
+        self.kbdict_new["links"] = links
+        titles_new = {d: (e.get("Title") or [d])[0] for d, e in self.kbdict_new["document"].items()}
+        titles_cur = {d: (e.get("Title") or [d])[0] for d, e in (self.kbdict_cur.get("document") or {}).items()}
+        self.plan.backlinks = self.backlinks_from(links, titles_new)
+        backlinks_cur = self.backlinks_from(self.kbdict_cur.get("links", {}) or {}, titles_cur)
+        backlinks_changed = {d for d in titles_new if self.plan.backlinks.get(d) != backlinks_cur.get(d)}
+        for doc in sorted(backlinks_changed):
+            self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={doc}")
+
         for filepath in sources:
             docId = os.path.basename(filepath)
             try:
@@ -180,13 +272,15 @@ class Processor(Service):
                 continue
 
             result = self.step_01_00_analyze_document(docId)
+            if docId in backlinks_changed and not result['compile']:
+                result['compile'] = True
             if result['compile']:
                 # Write new source file to temporary dir for the compiler
                 self.plan.docs_to_compile.add(docId)
                 source_path = os.path.join(self.srvbes.get_path("source"), docId)
-                with open(source_path, "r", encoding="utf-8") as fh:
+                with open(source_path, "r", encoding=SOURCE_ENCODING) as fh:
                     content = fh.read()
-                target = f"{self.srvbes.get_path('tmp')}/{valid_filename(docId)}"
+                target = os.path.join(self.srvbes.get_path("tmp"), valid_filename(docId))
                 with open(target, "w", encoding="utf-8") as fout:
                     fout.write(content)
 
@@ -275,7 +369,7 @@ class Processor(Service):
         step_01_01_decide_keys_compilation.
         """
         result = {}
-        FORCE_COMPILATION = bool(self.srvbes.get_value("repo", "force")) or self.plan.force_all
+        FORCE_COMPILATION = self._forced() or self.plan.force_all
 
         # Body hash
         try:
@@ -331,7 +425,7 @@ class Processor(Service):
         """
         K_PATH = []
         KV_PATH = []
-        FORCE_COMPILATION = self.srvbes.get_value("repo", "force") or False
+        FORCE_COMPILATION = self._forced()
 
         for key in sorted(available_keys):
             values = self.srvdtb.get_all_values_for_key(key)
@@ -371,7 +465,6 @@ class Processor(Service):
         and CPU.
         """
         self.log.debug("[PROCESSOR] TRANSFORM_START")
-        self.srvthm = self.get_service("Theme")
         theme = self.srvbes.get_dict("theme")
         if theme.get("metadata_pages", True) is False:
             self.log.debug("[PROCESSOR] METADATA_PAGES_SKIP reason=theme")

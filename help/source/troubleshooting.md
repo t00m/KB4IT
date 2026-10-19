@@ -28,7 +28,7 @@ A document links to a `.md` file that is not in `source/`.
 
 ### Fix
 
-The warning names both documents. Correct the file name in the link, or create the missing document.
+The warning names both documents. Correct the file name in the link, or create the missing document. `kb4it verify` lists every broken link at once, and also links to a section that does not exist (`ANCHOR_MISSING`); it ends with exit status 1 when it finds any, so it can stop a publishing workflow.
 
 ## The build stops with CONFIG_KEY_MISSING {#config-key}
 
@@ -50,6 +50,16 @@ No theme has the name in `"theme"`.
 
 Run `kb4it themes` and use one of the names it lists. For your own theme, check its folder name and the `id` in its `theme.json`.
 
+## The build fails with TEMPLATE_COMPILE_FAIL {#template-compile}
+
+### Cause
+
+A template in `overrides/templates/` or in your own theme has a Mako syntax error, such as a `% if` without its `% endif`. Every page that uses it fails.
+
+### Fix
+
+Open the file in `path=` and fix the line the message names (`at line: N`). The build stops on such a template instead of falling back to the theme's own.
+
 ## A theme is refused with THEME_REQUIREMENT_UNMET {#requirement}
 
 ### Cause
@@ -70,15 +80,49 @@ The `source` folder in `repo.json` does not exist.
 
 Create it, or correct the path. Relative paths start at the knowledge base folder, the one that holds `config/`.
 
-## KB4IT is already running {#lock}
+## KB4IT is already working on this repository {#lock}
 
 ### Cause
 
-Another `kb4it` command, or the terminal interface, is running.
+Another `kb4it build`, or a build started from the terminal interface, is working on the same knowledge base. The message names its process id (PID).
 
 ### Fix
 
-Wait for it to finish or close it. Only one KB4IT runs at a time, so two builds never write the same files.
+Wait for it to finish. Only one build of a knowledge base runs at a time, so two builds never write the same files. Other knowledge bases are not affected.
+
+If no KB4IT is running, the lock was left by a process that no longer exists and the next build takes it. The lock file is `var/kb4it.lock` inside the knowledge base.
+
+## The build stops with MD_EXTENSION_MISSING {#md-extension}
+
+### Cause
+
+`repo.json` asks for a Markdown extension, in the `markdown` block, that is not installed where KB4IT runs.
+
+### Fix
+
+Install the package the message names, in the same environment as KB4IT. For PyMdown Extensions: `uv tool install --force "KB4IT[extras]"`. Or remove the extension from `markdown.extensions`.
+
+## The build warns DOC_NAME_CLASH or leaves out a document with DOC_NAME_RESERVED {#names}
+
+### Cause
+
+`DOC_NAME_CLASH`: two documents would publish pages whose names differ only by letter case or extension, such as `Note.md` and `note.md`. macOS and Windows treat them as the same file, so one page would overwrite the other.
+
+`DOC_NAME_RESERVED`: the file is named like a Windows device (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`). Windows cannot create its page.
+
+### Fix
+
+Rename the file. `kb4it verify` lists every such name.
+
+## The page shows a red bar "KB4IT build failed" {#serve-error}
+
+### Cause
+
+`kb4it serve` (or **Browse via Web Server** in the terminal interface) rebuilt the site after a change, and the build failed. The bar shows the first error.
+
+### Fix
+
+Correct the document or setting the message names and save it. The next good build removes the bar.
 
 ## The site does not show my latest change {#stale}
 

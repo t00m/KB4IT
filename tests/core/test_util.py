@@ -2,6 +2,7 @@
 
 # ruff: noqa: DTZ001, DTZ007  # KB4IT works with naive local datetimes
 
+import os
 from datetime import datetime
 
 import pytest
@@ -43,15 +44,15 @@ def test_copydir_merges_into_existing_tree(tmp_path):
     (dest / "top.txt").write_text("old", encoding="utf-8")
     (dest / "keep.txt").write_text("keep", encoding="utf-8")
     util.copydir(str(source), str(dest))
-    assert (dest / "top.txt").read_text() == "new"
-    assert (dest / "sub" / "deep.txt").read_text() == "deep"
+    assert (dest / "top.txt").read_text(encoding="utf-8") == "new"
+    assert (dest / "sub" / "deep.txt").read_text(encoding="utf-8") == "deep"
     assert (dest / "keep.txt").exists()
 
 
 def test_get_source_docs_finds_both_extensions(tmp_path):
     for name in ("a.md", "b.markdown", "c.txt"):
         (tmp_path / name).write_text("x", encoding="utf-8")
-    found = sorted(p.rsplit("/", 1)[1] for p in util.get_source_docs(str(tmp_path)))
+    found = sorted(os.path.basename(p) for p in util.get_source_docs(str(tmp_path)))
     assert found == ["a.md", "b.markdown"]
 
 
@@ -62,9 +63,13 @@ def test_get_default_workers_is_half_the_cpus(monkeypatch):
     assert util.get_default_workers() == 1
 
 
-def test_exec_cmd_reports_success_and_failure():
-    assert util.exec_cmd(("doc.md", "true", 7)) == ("doc.md", True, 7)
-    assert util.exec_cmd(("doc.md", "exit 3", 8)) == ("doc.md", False, 8)
+def test_no_shell_commands_in_the_package():
+    """BASE-01: KB4IT runs no command through a shell."""
+    import pathlib
+    package = pathlib.Path(util.__file__).resolve().parent.parent
+    offenders = [str(p.relative_to(package)) for p in package.rglob("*.py")
+                 if "shell=True" in p.read_text(encoding="utf-8")]
+    assert offenders == []
 
 
 def test_word_cloud_sizes():
@@ -104,7 +109,7 @@ def test_json_round_trip(tmp_path):
     path = tmp_path / "data.json"
     util.json_save(str(path), {"b": 1, "a": [1, 2]})
     assert util.json_load(str(path)) == {"a": [1, 2], "b": 1}
-    assert path.read_text().index('"a"') < path.read_text().index('"b"')
+    assert path.read_text(encoding="utf-8").index('"a"') < path.read_text(encoding="utf-8").index('"b"')
 
 
 def test_hashes(tmp_path):

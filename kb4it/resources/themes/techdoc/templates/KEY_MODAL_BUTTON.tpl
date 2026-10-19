@@ -9,7 +9,7 @@
                 <h2 class="uk-modal-title"><a href="${var['vfkey']}.html" class="uk-link-reset">${var['key']}</a></h2>
             </div>
             <div class="uk-modal-body">
-${var['content']}
+${var['content'] | n}
             </div>
         </div>
     </div>

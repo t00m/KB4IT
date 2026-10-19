@@ -1,2 +1,8 @@
 # SCM syntax highlighting & preventing 3-way merges
 pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff
+
+# Shell scripts must keep LF line endings to run, also from a Windows checkout.
+*.sh text eol=lf
+# Windows scripts keep CRLF.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

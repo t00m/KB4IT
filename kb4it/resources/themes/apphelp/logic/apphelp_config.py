@@ -69,6 +69,8 @@ class HelpConfig:
     vocabulary: dict = field(default_factory=dict)
     labels: dict = field(default_factory=lambda: dict(DEFAULT_LABELS))
     version: str = ""
+    versions: bool = False   # build into <target>/<version>/ and keep the other versions
+    latest: str = ""         # version the site root and latest/ point to; default the highest
 
 
 def load_config(repo: dict) -> HelpConfig:
@@ -91,4 +93,6 @@ def load_config(repo: dict) -> HelpConfig:
         vocabulary=vocabulary,
         labels=labels,
         version=str(repo.get("version") or ""),
+        versions=bool((block.get("versions") or {}).get("enabled", False)),
+        latest=str((block.get("versions") or {}).get("latest", "") or ""),
     )

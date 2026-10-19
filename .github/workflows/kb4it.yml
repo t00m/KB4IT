@@ -7,6 +7,38 @@ on:
 
 jobs:
   check:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.13", "3.14"]
+    defaults:
+      run:
+        # Git Bash on Windows, so the same scripts run on every system.
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Install KB4IT
+        run: uv tool install --python ${{ matrix.python }} .
+
+      - name: Run kb4it
+        run: kb4it --version
+
+      - name: Run tests
+        run: ./scripts/devel/test.sh --python ${{ matrix.python }}
+
+      - name: Create and build every bundled theme
+        run: uv run --no-project --python ${{ matrix.python }} python scripts/devel/smoke_build.py
+
+  package:
+    name: themes and wheel
     runs-on: ubuntu-latest
 
     steps:
@@ -18,17 +50,71 @@ jobs:
       - name: Install KB4IT
         run: uv tool install .
 
-      - name: Run kb4it
-        run: kb4it --version
-
-      - name: Run tests
-        run: ./scripts/devel/test.sh
-
       - name: Every tracked theme is compliant
         run: ./scripts/devel/check_themes.sh
+
+      - name: The sample sites are valid HTML (UIkit attributes aside)
+        run: uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py
+
+      - name: The annotated modules pass mypy --strict
+        run: ./scripts/devel/typecheck.sh
 
       - name: Build wheel
         run: uv build --wheel
 
       - name: Check that every tracked theme is in the wheel
         run: python3 scripts/devel/check_wheel_themes.py
+
+  packages:
+    name: linux packages and container image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Install rpmbuild and shellcheck
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends rpm shellcheck
+
+      - name: Check the shell scripts
+        run: find scripts/distribution scripts/install scripts/uninstall scripts/action -name '*.sh' -print0 | xargs -0 shellcheck -x -P SCRIPTDIR -S warning
+
+      - name: Build the sdist, the wheel and the source tarball
+        run: |
+          ./scripts/distribution/build/build_python.sh
+          ./scripts/distribution/tarball/build_tarball.sh
+
+      - name: Build the .deb and .rpm for both architectures
+        run: |
+          for arch in amd64 arm64; do ./scripts/distribution/deb/build_deb.sh "$arch"; done
+          for arch in x86_64 aarch64; do ./scripts/distribution/rpm/build_rpm.sh "$arch"; done
+          {
+            echo "| Package | Size |"
+            echo "|---|---|"
+            for f in dist/*.deb dist/*.rpm; do echo "| $(basename "$f") | $(du -h "$f" | cut -f1) |"; done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install the packages offline in Debian, Ubuntu, Fedora and Rocky Linux containers
+        run: ./scripts/distribution/test/test_packages.sh all
+
+      - name: Build and test the container image
+        run: |
+          ./scripts/distribution/docker/build.sh
+          ./scripts/distribution/docker/smoke.sh kb4it:latest
+
+      - name: The image also runs with Podman
+        run: |
+          docker save kb4it:latest | podman load
+          RUNTIME=podman KB4IT_SMOKE_PORT=18643 ./scripts/distribution/docker/smoke.sh docker.io/library/kb4it:latest
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-packages
+          path: |
+            dist/*.deb
+            dist/*.rpm
+            dist/KB4IT-*.tar.gz
+            dist/KB4IT-*.zip
+          retention-days: 7

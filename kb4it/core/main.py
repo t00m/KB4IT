@@ -8,14 +8,18 @@ KB4IT module. Entry point.
 # Description: Website static-generator based on Markdown
 """
 
+from __future__ import annotations
+
 import argparse
-import fcntl
+import hashlib
 import os
 import sys
 import uuid
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, ThemeError
+from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
+from kb4it.core.lock import FileLock, repo_lock_path
 from kb4it.core.log import get_logger, setup_logging
 from kb4it.core.version import git_describe
 from kb4it.services.backend import Backend
@@ -24,33 +28,32 @@ from kb4it.services.database import Database
 from kb4it.services.frontend import Frontend
 from kb4it.services.workflow import Workflow
 
-# Held open for the lifetime of the process; released automatically on exit.
-_lock_fd = None
+if TYPE_CHECKING:
+    from kb4it.core.service import Service
+    from kb4it.services.compiler import Compiler
+    from kb4it.services.deployer import Deployer
+    from kb4it.services.processor import Processor
+
+# Actions that write into a repository take its lock: <root>/var/kb4it.lock.
+LOCKED_ACTIONS = ("build", "create")
+# Parameters that carry code for the build to call, not settings (see services/compiler.py).
+CALLBACK_PARAMS = ("progress_callback", "compile_start_callback")
+# Services of one build that live in backend.pipeline; get_service still answers them in 0.9.x.
+PIPELINE_SERVICES = ("Processor", "Compiler", "Deployer")
 
 
-def _acquire_process_lock():
-    """Acquire an exclusive process lock at startup."""
-    global _lock_fd
-    lock_path = ENV["FILE"]["LOCK"]
-    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
-    # O_RDWR|O_CREAT never truncates, so if flock fails, the other
-    # process's PID is still readable from the file.
-    raw = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o644)
-    fd = os.fdopen(raw, "r+")
-    try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        fd.seek(0)
-        other_pid = fd.read().strip()
-        fd.close()
-        msg = f"KB4IT is already running (PID {other_pid})" if other_pid else "KB4IT is already running"
-        print(msg, file=sys.stderr)
-        sys.exit(1)
-    fd.seek(0)
-    fd.truncate()
-    fd.write(str(os.getpid()))
-    fd.flush()
-    _lock_fd = fd
+def lock_path_for(params: dict):
+    """Lock file for the action in params, or None when the action takes no lock."""
+    action = params.get("action")
+    if params.get("lock_held"):
+        return None  # kb4it serve holds the repository lock for its whole run
+    if action == "build" and params.get("config"):
+        return repo_lock_path(params["config"])
+    if action == "create" and params.get("repo_path"):
+        # Kept outside the new repository, so a failed create leaves no folder behind.
+        digest = hashlib.blake2b(os.path.abspath(params["repo_path"]).encode("utf-8"), digest_size=8).hexdigest()
+        return os.path.join(ENV["LPATH"]["VAR"], f"create-{digest}.lock")
+    return None
 
 
 class KB4IT:
@@ -72,6 +75,9 @@ class KB4IT:
         else:
             self.params = vars(argparse.Namespace())
             self.params["REPO_CONFIG_FILE"] = None
+        # Callbacks are code, not settings: keep them out of the parameters, which are logged
+        # and passed to the templates. The compiler of this build calls them.
+        self.callbacks = {name: self.params.pop(name) for name in CALLBACK_PARAMS if name in self.params}
 
         # Initialize log
         if "log_level" not in self.params:
@@ -81,7 +87,7 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")
-        self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']}")
+        self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']} family={ENV['SYS']['PLATFORM']['FAMILY']}")
         self.log.debug(f"[CONTROLLER] GPATH_ROOT path={ENV['GPATH']['ROOT']}")
         self.log.debug(f"[CONTROLLER] LPATH_ROOT path={ENV['LPATH']['ROOT']}")
 
@@ -116,6 +122,7 @@ class KB4IT:
     def __setup_services(self):
         """Declare and register services."""
         self.services = {}
+        self._deprecated_logged = set()
         services = {
             "DB": Database(),
             "Backend": Backend(),
@@ -130,8 +137,31 @@ class KB4IT:
         """Get all registered services."""
         return self.services
 
-    def get_service(self, name: str):
+    @overload
+    def get_service(self, name: Literal["DB"]) -> Database: ...
+    @overload
+    def get_service(self, name: Literal["Backend"]) -> Backend: ...
+    @overload
+    def get_service(self, name: Literal["Frontend"]) -> Frontend: ...
+    @overload
+    def get_service(self, name: Literal["Builder"]) -> Builder: ...
+    @overload
+    def get_service(self, name: Literal["Workflow"]) -> Workflow: ...
+    @overload
+    def get_service(self, name: Literal["Theme"]) -> Builder: ...
+    @overload
+    def get_service(self, name: Literal["Processor"]) -> Processor: ...
+    @overload
+    def get_service(self, name: Literal["Compiler"]) -> Compiler: ...
+    @overload
+    def get_service(self, name: Literal["Deployer"]) -> Deployer: ...
+    @overload
+    def get_service(self, name: str) -> Service: ...
+
+    def get_service(self, name: str) -> Any:
         """Get or start a registered service."""
+        if name in PIPELINE_SERVICES:
+            return self._pipeline_service(name)
         service = self.services.get(name) or None
         if service is None:
             self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
@@ -139,6 +169,21 @@ class KB4IT:
         if not service.is_started():
             service.start(self)
         return service
+
+    def _pipeline_service(self, name: str):
+        """Deprecated: the Processor, Compiler and Deployer of this build belong to backend.pipeline.
+
+        Answered from the current pipeline in 0.9.x, with a debug line once per name; removed in 0.10.0.
+        """
+        backend = self.services.get("Backend")
+        pipeline = getattr(backend, "pipeline", None)
+        if pipeline is None:
+            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
+            raise KB4ITError(f"Service not registered: {name}")
+        if name not in self._deprecated_logged:
+            self._deprecated_logged.add(name)
+            self.log.debug(f"[CONTROLLER] SERVICE_DEPRECATED name={name} replacement=backend.pipeline")
+        return pipeline.service(name)
 
     def register_service(self, name, service):
         """Register a new service."""
@@ -166,7 +211,13 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
         error = False
+        lock = None
         try:
+            path = lock_path_for(self.params)
+            if path is not None:
+                lock = FileLock(path)
+                lock.acquire()
+                self.log.debug(f"[LOCK] ACQUIRED path={path}")
             workflow = self.get_service("Workflow")
             if action == "themes":
                 workflow.list_themes()
@@ -182,6 +233,11 @@ class KB4IT:
                 workflow.verify_sources()
             elif action == "apps":
                 workflow.list_apps(self.params["theme"])
+        except LockBusyError as e:
+            self.log.error(f"[LOCK] BUSY path={e.path} pid={e.pid}")
+            holder = f" (PID {e.pid})" if e.pid else ""
+            print(f"KB4IT is already working on this repository{holder}", file=sys.stderr)
+            error = True
         except ConfigError as e:
             self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
             error = True
@@ -194,6 +250,9 @@ class KB4IT:
         except KB4ITError as e:
             self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
             error = True
+        finally:
+            if lock is not None:
+                lock.release()
         self.stop(error=error)
         return not error
 
@@ -217,10 +276,17 @@ def version_text():
     return f"{text} ({described})" if described else text
 
 
+def _log_hint(params) -> str:
+    """' (see <repo>/var/log/kb4it.log)' when the action has a repository whose log exists, else ''."""
+    config = getattr(params, "config", None)
+    if not isinstance(config, str):
+        return ""
+    log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(config))), "var", "log", "kb4it.log")
+    return f" (see {log_file})" if os.path.exists(log_file) else ""
+
+
 def main():
     """Set up application arguments and execute."""
-    _acquire_process_lock()
-
     # When called with no arguments in an interactive terminal, launch the TUI
     if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
         try:
@@ -304,6 +370,28 @@ def main():
         help="Force recompilation of all documents, ignoring content hashes",
     )
 
+    # Build, serve and rebuild on change
+    repo_serve = subparsers.add_parser(
+        "serve",
+        help="Build, serve the site locally and rebuild when sources change",
+        description="Build the website, serve it on a local web server and rebuild it when a source, "
+        "repo.json or the theme changes. Pages reload in the browser after each rebuild.",
+        epilog="Example:\n\n"
+        "   kb4it serve /home/jsmith/Documents/myrepo/config/repo.json",
+    )
+    repo_serve.add_argument("config", help="Path to the repository config file (mandatory)")
+    repo_serve.add_argument("--host", default="127.0.0.1",
+                            help="Address to listen on (default 127.0.0.1, this computer only)")
+    repo_serve.add_argument("--port", type=int, default=8642,
+                            help="First port to try; the next free one is used when it is busy (default 8642)")
+    repo_serve.add_argument("--no-watch", action="store_true", help="Serve without rebuilding on changes")
+    repo_serve.add_argument("--no-reload", action="store_true", help="Do not reload pages in the browser")
+    repo_serve.add_argument("--open", action="store_true", help="Open the site in the web browser")
+    repo_serve.add_argument("--interval", type=float, default=1.0,
+                            help="Seconds between checks for changes (default 1.0)")
+    repo_serve.add_argument("-f", "--force", action="store_true", default=False,
+                            help="Force recompilation of all documents in the first build")
+
     # Get repository info
     repo_info = subparsers.add_parser(
         "info",
@@ -331,15 +419,19 @@ def main():
     )
 
     # Dispatch to the appropriate action handler
+    params = None
     try:
         params = parser.parse_args()
+        if params.action == "serve":
+            from kb4it.core.serve import run_serve
+            sys.exit(run_serve(vars(params)))
         app = KB4IT(params)
         success = app.run()
         sys.exit(0 if success else 1)
     except SystemExit:
         raise
     except Exception as error:
-        print(f"Error: {error}")
+        print(f"Error: {type(error).__name__}: {error}{_log_hint(params)}")
         print("Run 'kb4it <action name> --help' to get help for a specific command.")
         sys.exit(1)
 

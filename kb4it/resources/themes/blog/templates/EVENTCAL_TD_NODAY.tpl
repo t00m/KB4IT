@@ -1,1 +1,0 @@
-<td class="noday day uk-margin-remove uk-padding-remove ">&nbsp;</td>

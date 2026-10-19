@@ -9,6 +9,7 @@ License: GPL v3
 """
 
 import logging
+import os
 
 _PATTERN = ("%(levelname)10s | %(lineno)4d | %(name)-15s | %(message)s")
 _DATEFMT = "%d/%m/%Y %H:%M:%S"
@@ -43,14 +44,45 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
     root.addHandler(console)
 
     # File handler
-    file_handler = logging.FileHandler(logfile, mode="w")
+    file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)
+
+
+def reset_logging():
+    """Remove every root handler, so the next KB4IT instance in this process sets up logging from scratch.
+
+    setup_logging() returns early while a file handler exists; the TUI and kb4it serve
+    build several times in one process and call this before each build.
+    """
+    root = logging.getLogger()
+    for handler in list(root.handlers):
+        try:
+            handler.flush()
+            handler.close()
+        except Exception:
+            pass
+        root.removeHandler(handler)
 
 
 def get_logger(name: str) -> logging.Logger:
     """Return a named logger."""
     return logging.getLogger(name)
+
+
+def release_log_file(logfile: str):
+    """Close the file handlers still writing to logfile, so it can be moved or removed.
+
+    A second build in the same process finds the handler of the first one open on
+    var/log/kb4it.log, and Windows does not remove an open file.
+    """
+    target = os.path.abspath(logfile)
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        if isinstance(handler, logging.FileHandler) and os.path.abspath(handler.baseFilename) == target:
+            handler.flush()
+            handler.close()
+            root.removeHandler(handler)
 
 
 def redirect_logs(logfile: str):
@@ -66,7 +98,7 @@ def redirect_logs(logfile: str):
             root.removeHandler(handler)
 
     # Add new file handler
-    file_handler = logging.FileHandler(logfile, mode="a")
+    file_handler = logging.FileHandler(logfile, mode="a", encoding="utf-8")
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
     root.addHandler(file_handler)

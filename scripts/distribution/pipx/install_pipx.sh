@@ -29,12 +29,10 @@ case "${MODE}" in
         pipx install . --force
         ;;
     wheel)
-        WHEEL="$(ls -1t dist/*.whl 2>/dev/null | head -n 1 || true)"
-        if [[ -z "${WHEEL}" ]]; then
-            echo ">>> No wheel found, building one"
-            "${SCRIPT_DIR}/../build/build_python.sh"
-            WHEEL="$(ls -1t dist/*.whl | head -n 1)"
-        fi
+        # shellcheck source=../lib/common.sh
+        source "${SCRIPT_DIR}/../lib/common.sh"
+        ensure_wheel
+        WHEEL="$(wheel_path)"
         echo ">>> Installing from wheel: ${WHEEL}"
         pipx install "${WHEEL}" --force
         ;;

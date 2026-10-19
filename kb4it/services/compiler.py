@@ -12,57 +12,78 @@ import os
 import re
 import shutil
 import threading
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor as Executor
-
-import markdown as _markdown_lib
+from typing import Any
 
 from kb4it.core.env import ENV
-from kb4it.core.mdlinks import MdLinkExtension
+from kb4it.core.exceptions import CompilationError
+from kb4it.core.log import get_logger
+from kb4it.core.mdconfig import load_settings, sanitize_html
+from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
-                              html_id_for, source_ext)
+                              html_id_for, source_ext, strip_first_heading)
 
-# Optional TUI callbacks set by kb4it.tui.app before a build, cleared after.
-# _progress_callback: called per document,  signature: (basename: str, rc: bool)
-# _compile_start_callback: called once with the total doc count,  (total: int)
-_progress_callback = None
-_compile_start_callback = None
+# Callbacks of a build come with it: KB4IT(params) takes "progress_callback", called per
+# document with (basename: str, rc: bool), and "compile_start_callback", called once with the
+# number of documents (total: int). The set_* functions below are deprecated (removed in
+# 0.10.0): what they register is used by the next build only, then forgotten.
+_pending_callbacks = {}
 
 
 def set_progress_callback(callback) -> None:
-    """Register a per-document TUI progress callback."""
-    global _progress_callback
-    _progress_callback = callback
+    """Deprecated: pass "progress_callback" to KB4IT(params) instead."""
+    _pending_callbacks["progress_callback"] = callback
 
 
 def clear_progress_callback() -> None:
-    """Remove the per-document TUI progress callback."""
-    global _progress_callback
-    _progress_callback = None
+    """Deprecated: forget a progress callback registered with set_progress_callback."""
+    _pending_callbacks.pop("progress_callback", None)
 
 
 def set_compile_start_callback(callback) -> None:
-    """Register a callback invoked with the actual number of docs to compile."""
-    global _compile_start_callback
-    _compile_start_callback = callback
+    """Deprecated: pass "compile_start_callback" to KB4IT(params) instead."""
+    _pending_callbacks["compile_start_callback"] = callback
 
 
 def clear_compile_start_callback() -> None:
-    """Remove the compile-start callback."""
-    global _compile_start_callback
-    _compile_start_callback = None
+    """Deprecated: forget a callback registered with set_compile_start_callback."""
+    _pending_callbacks.pop("compile_start_callback", None)
+
+
+def take_pending_callbacks() -> dict:
+    """Return the callbacks registered with the deprecated set_* functions, and forget them."""
+    pending = dict(_pending_callbacks)
+    _pending_callbacks.clear()
+    return pending
 
 
 class Compiler(Service):
     """KB4IT Compiler Service."""
 
-    def _initialize(self):
-        """Initialize compiler service."""
-        self.srvbes = self.app.get_service("Backend")
-        self.srvthm = self.get_service("Theme")
-        self.srvprc = self.get_service("Processor")
+    def __init__(self, backend: Any, db: Any, theme: Any, processor: Any,
+                 callbacks: dict[str, Callable[..., Any]] | None = None) -> None:
+        """Compiler of one build; callbacks maps "progress_callback" and "compile_start_callback"."""
+        super().__init__()
+        self.log = get_logger(self.modname)
+        self.started = True
+        self.srvbes = backend
+        self.srvdtb = db
+        self.srvthm = theme
+        self.srvprc = processor
         self.links = {}
         self._links_lock = threading.Lock()
+        # Documents whose page could not be made, with the reason; the build fails at the end.
+        self.failed = []
+        self._failed_lock = threading.Lock()
+        self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
+        callbacks = dict(callbacks or {})
+        for name, callback in take_pending_callbacks().items():
+            self.log.debug(f"[COMPILER] CALLBACK_DEPRECATED name={name} replacement=params.{name}")
+            callbacks.setdefault(name, callback)
+        self.progress_callback = callbacks.get("progress_callback")
+        self.compile_start_callback = callbacks.get("compile_start_callback")
 
     def execute(self):
         """Compile Markdown documents to HTML."""
@@ -86,9 +107,9 @@ class Compiler(Service):
         self.log.debug(f"[COMPILER] WORKERS n={max_workers}")
         with Executor(max_workers=max_workers) as exe:
             docs = sorted(get_source_docs(self.srvbes.get_path("tmp")))
-            if _compile_start_callback is not None:
+            if self.compile_start_callback is not None:
                 try:
-                    _compile_start_callback(len(docs))
+                    self.compile_start_callback(len(docs))
                 except Exception as err:
                     self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=start err={err}")
             jobs = []
@@ -154,15 +175,29 @@ class Compiler(Service):
             if text.startswith("---"):
                 end = text.find("\n---", 3)
                 if end >= 0:
-                    text = text[end + 4:].lstrip("\n")
+                    # Skip the rest of the closing line too, so "--- " with trailing spaces works.
+                    line_end = text.find("\n", end + 4)
+                    text = text[line_end + 1:].lstrip("\n") if line_end >= 0 else ""
             # Strip the first H1 heading,  the title is already shown in the page header
-            text = re.sub(r"^#\s+[^\n]+\n?", "", text, count=1)
-            md = _markdown_lib.Markdown(
-                extensions=["extra", "admonition", "toc", "sane_lists", MdLinkExtension()],
-            )
+            text = strip_first_heading(text)
+            hooks = getattr(self.srvbes, "hooks", None)
+            if hooks is not None and hooks.has("on_document"):
+                doc_id = os.path.basename(doc)
+                meta = {key: list(self.srvdtb.get_values(doc_id, key) or []) for key in self.srvdtb.get_doc_keys(doc_id)}
+                text = hooks.call("on_document", doc_id, meta, text, doc=doc_id)
+                if not isinstance(text, str):
+                    raise CompilationError("Hook on_document must return the Markdown text")
+            md = self.markdown.new_markdown()
             html_fragment = md.convert(text)
+            if self.markdown.sanitize:
+                # Before KB4IT adds its own markup (backlinks, TOC, sections): only the document is cleaned.
+                html_fragment = sanitize_html(html_fragment)
             with self._links_lock:
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)
+            # Sections for the full-text search index, cached per document for incremental builds.
+            save_doc_sections(self.srvbes.get_path("root"), os.path.basename(doc), html_fragment)
+            # Documents that link here, at the end of the article (not part of the search index).
+            html_fragment += self.srvthm.backlinks_html(os.path.basename(doc))
             # Inject a TOC block so extract_toc() can populate the Contents nav menu.
             toc_block = _md_toc_block(md.toc)
             if toc_block:
@@ -173,9 +208,21 @@ class Compiler(Service):
             with open(out_path, "w", encoding="utf-8") as fh:
                 fh.write(html_fragment)
             return doc, True, num
+        except CompilationError:
+            raise  # a failing hook stops the build
         except Exception as err:
             self.log.error(f"[COMPILER] MD_COMPILE_FAIL doc={os.path.basename(doc)} error={err}")
+            self._fail(doc, f"compile: {err}")
             return doc, False, num
+
+    def _fail(self, doc, reason):
+        """Record a document whose page failed (by page name), and drop its half-made page from tmp."""
+        page = html_id_for(os.path.basename(doc))
+        with self._failed_lock:
+            self.failed.append((page, reason))
+        partial = os.path.join(self.srvbes.get_path("tmp"), page)
+        if os.path.exists(partial):
+            os.unlink(partial)
 
     def compilation_finished(self, future):
         """Once compiled, build page."""
@@ -185,9 +232,9 @@ class Compiler(Service):
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
             self.log.info(f"[COMPILER] COMPILED doc={basename} rc={rc}")
-            if _progress_callback is not None:
+            if self.progress_callback is not None:
                 try:
-                    _progress_callback(basename, rc)
+                    self.progress_callback(basename, rc)
                 except Exception as err:
                     self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=progress err={err}")
             if rc is True:
@@ -196,9 +243,11 @@ class Compiler(Service):
                 except MemoryError:
                     self.log.error("[COMPILER] MEMORY_EXHAUSTED")
                     self.log.error("[COMPILER] HINT use fewer workers or add memory")
+                    self._fail(path_hdoc, "render: out of memory")
                 except Exception as error:
-                    self.log.error(f"[COMPILER] ERROR {error}")
+                    self.log.error(f"[COMPILER] ERROR doc={basename} error={error}")
                     self.print_traceback()
+                    self._fail(path_hdoc, f"render: {error}")
                 return x
             else:
                 self.log.error(f"[COMPILER] COMPILE_FAILED doc={basename}")

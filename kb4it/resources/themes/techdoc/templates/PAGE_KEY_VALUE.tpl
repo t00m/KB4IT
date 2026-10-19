@@ -14,5 +14,5 @@
     </div>
 </div>
 <div class="uk-container uk-overflow-auto">
-${var['page']['dt_documents']}
+${var['page']['dt_documents'] | n}
 </div>

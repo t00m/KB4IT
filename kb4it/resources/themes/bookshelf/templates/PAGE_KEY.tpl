@@ -14,7 +14,7 @@
 </div>
 
 <div class="bk-tab-content bk-tab-content-active" id="tab-cloud">
-    ${var['cloud']}
+    ${var['cloud'] | n}
 </div>
 <div class="bk-tab-content" id="tab-table">
     <table class="bk-table bk-table-key">

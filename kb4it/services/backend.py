@@ -10,6 +10,7 @@ Backend module for initialization.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -19,12 +20,11 @@ if TYPE_CHECKING:
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
-from kb4it.core.log import redirect_logs
+from kb4it.core.log import redirect_logs, release_log_file
+from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save, timeit
-from kb4it.services.compiler import Compiler
-from kb4it.services.deployer import Deployer
-from kb4it.services.processor import Processor
+from kb4it.services.pipeline import Pipeline
 
 
 def _dir_contains(parent, child) -> bool:
@@ -34,21 +34,16 @@ def _dir_contains(parent, child) -> bool:
     return parent == child or child.startswith(parent + os.sep)
 
 
-def resolve_repo_path(raw: str, root) -> str:
-    """Expand ~ and $VARS and anchor a relative path to the repository root."""
-    expanded = os.path.expanduser(os.path.expandvars(raw))
-    if not os.path.isabs(expanded):
-        expanded = os.path.join(str(root), expanded)
-    return os.path.realpath(expanded)
-
-
 class Backend(Service):
     """(Second) KB4IT Initialization."""
 
     def _initialize(self):
         """Initialize application structure."""
-        self.runtime: Runtime = {"theme": {}}  # type: ignore[typeddict-item]
+        # force_all: rebuild everything. The command line or repo.json asks for it, or the
+        # build decides it (an unreadable or older cache); params and repo stay as given.
+        self.runtime: Runtime = {"theme": {}, "force_all": False}  # type: ignore[typeddict-item]
         self.repo = {}  # Only build and info load a repo.json
+        self.pipeline = None  # Processor, Compiler and Deployer of this build, from the end of stage 1
         self.params = self.app.get_params()  # Get params from command line
 
         if self.params.get("action") in ("build", "info"):
@@ -74,12 +69,12 @@ class Backend(Service):
                 self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
                 raise ConfigError(f"Config file not found: {config_path}")
 
-            # Params-level force (e.g. from TUI) takes priority over repo.json
-            if not self.params.get("force"):
-                self.params["force"] = self.repo.get("force") or False
+            self.runtime["force_all"] = bool(self.params.get("force") or self.repo.get("force"))
             self.runtime["dir"] = {}
             dir_root = config_path.parent.parent.absolute()
             source, target = self._resolve_source_target(dir_root)
+            # Before anything touches the disk: the deployer sweeps the target.
+            check_target(target, dir_root, source)
             self.runtime["dir"]["source"] = source
             self.runtime["dir"]["target"] = target
             dir_var = Path.joinpath(dir_root, "var")
@@ -96,7 +91,7 @@ class Backend(Service):
             self.runtime["dir"]["log"] = dir_log
             self.runtime["dir"]["db"] = dir_db
 
-            if self.params.get("force"):
+            if self.runtime["force_all"]:
                 # Force clears KB4IT's build artifacts only. It must never
                 # delete the user's source or target, which may be nested
                 # inside var when an app stores them under <root>/var/...
@@ -114,6 +109,8 @@ class Backend(Service):
                 # may share var/db (e.g. an embedding app's own database).
                 kbdict_file = Path.joinpath(dir_db, "kbdict.json")
                 if os.path.exists(kbdict_file):
+                    # Keep the list of pages KB4IT wrote, so the deployer can still sweep them.
+                    self.deployed_kept = self._read_deployed(kbdict_file)
                     os.unlink(kbdict_file)
                 self.log.debug("[BACKEND] VAR_CLEARED scope=build_artifacts reason=force")
 
@@ -125,6 +122,7 @@ class Backend(Service):
 
             # Activate application log
             app_log_file = Path.joinpath(dir_log, "kb4it.log")
+            release_log_file(app_log_file)
             # Rotate the existing log before redirecting
             if app_log_file.exists():
                 shutil.copy2(app_log_file, app_log_file.with_suffix('.log.old'))
@@ -155,6 +153,23 @@ class Backend(Service):
             for key in missing:
                 self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
             raise ConfigError(f"Missing required config keys: {missing}")
+        # Fail early on a bad markdown block or a missing extension package.
+        from kb4it.core.mdconfig import load_settings
+        self.markdown = load_settings(self.repo)
+        from kb4it.core.publish import site_url
+        self.site_url = site_url(self.repo)
+        overrides = self.repo.get("overrides", "overrides")
+        if not isinstance(overrides, str) or not overrides.strip():
+            raise ConfigError("repo.json 'overrides' must be a folder path")
+        root = Path(self.params["config"]).absolute().parent.parent
+        self.overrides_dir = resolve_repo_path(overrides, root)
+        from kb4it.core.hooks import load_hooks
+        self.hooks = load_hooks(self.repo, root)
+        if self.hooks.has("on_config"):
+            repo = self.hooks.call("on_config", dict(self.repo))
+            if not isinstance(repo, dict):
+                raise ConfigError("Hook on_config must return the settings dictionary")
+            self.repo = repo
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""
@@ -256,10 +271,25 @@ class Backend(Service):
         """Get path by name."""
         return self.runtime.get("dir", {}).get(name)
 
+    @staticmethod
+    def _read_deployed(path):
+        """Return the list of deployed pages stored in a kbdict.json, or None."""
+        try:
+            deployed = json_load(path).get("deployed")
+        except Exception:
+            return None
+        return deployed if isinstance(deployed, list) else None
+
     def load_kbdict(self):
         """Load KB4IT dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         empty_kbdict = {"document": {}, "metadata": {}}
+        # A forced or upgraded build starts from an empty dictionary but still knows its pages.
+        deployed = getattr(self, "deployed_kept", None)
+        if deployed is None and os.path.exists(kb4it_dbfile):
+            deployed = self._read_deployed(kb4it_dbfile)
+        if deployed is not None:
+            empty_kbdict["deployed"] = deployed
         try:
             kbdict = json_load(kb4it_dbfile)
             self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
@@ -269,10 +299,15 @@ class Backend(Service):
                 self.log.warning(
                     f"[BACKEND] KBDICT_VERSION_MISMATCH stored={stored_version} current={current_version}"
                 )
-                self.params["force"] = True
+                self.runtime["force_all"] = True
                 return empty_kbdict
         except FileNotFoundError:
             kbdict = empty_kbdict
+        except (ValueError, AttributeError) as error:
+            # Unreadable cache (a truncated write, a hand edit): rebuild everything; the next save replaces it.
+            self.log.warning(f"[BACKEND] KBDICT_CORRUPT path={kb4it_dbfile} reason={error}")
+            self.runtime["force_all"] = True
+            return empty_kbdict
         except Exception as error:
             self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
             raise KB4ITError(f"kbdict load failed: {error}") from error
@@ -294,12 +329,48 @@ class Backend(Service):
     def get_services(self):
         """Get services needed."""
         self.srvbld = self.get_service("Builder")
-        self.app.register_service("Processor", Processor())
-        self.srvprc = self.get_service("Processor")
+
+    @property
+    def srvprc(self):
+        """The Processor of this build, once the pipeline exists."""
+        return self.pipeline.processor if self.pipeline is not None else None
+
+    def start_pipeline(self):
+        """Make the Processor, Compiler and Deployer of this build; the theme must be loaded."""
+        self.pipeline = Pipeline(self, self.get_service("DB"), self.get_service("Theme"), self.params,
+                                 callbacks=getattr(self.app, "callbacks", None),
+                                 log_file=self.app.get_log_file())
 
     def get_kb_dict(self):
         """Shortcut to Processor method."""
         return self.srvprc.get_kb_dict()
+
+    def commit_kbdict(self):
+        """Write the new kbdict once the whole build succeeded.
+
+        A failed or interrupted build leaves the previous kbdict.json in place, so the next
+        incremental build compiles again every document that changed since the last good one.
+        """
+        self.save_kbdict(self.srvprc.get_kb_dict())
+        self.log.debug("[BACKEND] KBDICT_COMMIT")
+
+    def get_deployed_before(self):
+        """Pages the previous build wrote into the target, or None if it did not record them."""
+        deployed = self.srvprc.kbdict_cur.get("deployed")
+        return deployed if isinstance(deployed, list) else None
+
+    def set_deployed(self, pages):
+        """Record the pages this build wrote into the target; saved with the kbdict."""
+        self.srvprc.get_kb_dict()["deployed"] = sorted(pages)
+
+    def get_events_before(self):
+        """Documents of each event page after the last successful build, or None if it did not record them."""
+        events = self.srvprc.kbdict_cur.get("events")
+        return events if isinstance(events, dict) else None
+
+    def set_events(self, pages):
+        """Record the documents of each event page of this build; saved with the kbdict."""
+        self.srvprc.get_kb_dict()["events"] = pages
 
     def get_kbdict_key(self, key, new=True):
         """Shortcut to Processor method."""
@@ -346,10 +417,27 @@ class Backend(Service):
                     raise ThemeError(f"Theme load failed: {theme_name}")
                 else:
                     frontend._validate_required_templates(self.runtime["theme"])
+                    self._apply_target_subdir()
+                    self.start_pipeline()
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
                 raise ThemeError(f"Theme not found: {theme_name}")
         self.log.debug("[BACKEND] CHECKS_END")
+
+    def _apply_target_subdir(self):
+        """Let the theme build into a sub-folder of target (apphelp versions); the target becomes site_root/sub."""
+        sub = self.get_service("Theme").target_subdir()
+        if not sub:
+            return
+        if os.path.basename(sub) != sub or sub in (".", "..") or not re.fullmatch(r"[A-Za-z0-9._-]+", sub):
+            raise ThemeError(f"Version folder must be a plain name such as 0.9, not {sub!r}")
+        root = self.runtime["dir"]["target"]
+        self.runtime["dir"]["site_root"] = root
+        self.runtime["dir"]["target"] = os.path.join(root, sub)
+        os.makedirs(self.runtime["dir"]["target"], exist_ok=True)
+        if getattr(self, "site_url", None):
+            self.site_url = f"{self.site_url}{sub}/"
+        self.log.info(f"[BACKEND] TARGET_SUBDIR name={sub} path={self.runtime['dir']['target']}")
 
     @timeit
     def stage_02_get_source_documents(self):
@@ -410,13 +498,9 @@ class Backend(Service):
     @timeit
     def stage_05_compilation(self):
         """Compile Markdown documents to HTML."""
-        self.app.register_service("Compiler", Compiler())
-        compiler = self.app.get_service("Compiler")
-        compiler.execute()
+        self.pipeline.compiler.execute()
 
     @timeit
     def stage_06_deploy(self):
         """Recreate target."""
-        self.app.register_service("Deployer", Deployer())
-        deployer = self.app.get_service("Deployer")
-        deployer.execute()
+        self.pipeline.deployer.execute()

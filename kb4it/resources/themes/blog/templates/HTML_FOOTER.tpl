@@ -1,4 +1,5 @@
                 </div>
+                <!-- Main Content Column :: END-->
                 <!-- Sidebar Column :: START-->
                 <div class="uk-width-1-4@m" uk-height-viewport="expand: true">
                   <div class="uk-sticky" uk-sticky="offset: 40">
@@ -7,6 +8,9 @@
                         <span class="uk-link-heading">${var['repo']['title']}</span>
                         </a>
                     </h2>
+% if var.get('search_box'):
+                    <div class="uk-flex uk-flex-center uk-margin-small">${var['search_box'] | n}</div>
+% endif
                     <div class="uk-flex uk-flex-top uk-flex-center uk-margin">
             <blockquote>
             <p class="uk-text-center">${var['repo']['tagline']}</p>
@@ -15,7 +19,7 @@
 
         <div class="uk-card uk-card-body uk-card-small uk-flex uk-flex-top uk-flex-left">
         <ul class="uk-list uk-text-left uk-margin-left">
-% if var['repo']['git'] == True:
+% if var.get('git_ok'):
                 <li>
                     <span uk-icon="icon: plus" uk-tooltip="Create new post"></span>
                     <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
@@ -61,22 +65,21 @@
                         <p>
                             <span class="uk-link">
                                 <a href="about_kb4it.html">
-                                    <img src="resources/common/images/kb4it-badge-built-with.svg">
+                                    <img src="resources/common/images/kb4it-badge-built-with.svg" alt="Built with KB4IT">
                                 </a>
                             </span>
                         </p>
                       </div>
                     </div>
                   </div>
-                </div>
                 <!-- Sidebar Column :: END-->
-            </div>
-            <!-- Main Content Column :: END-->
         </div>
         <!-- GRID :: END -->
     </div>
     <!-- Blog container :: END -->
+% if (var['repo'].get('markdown') or {}).get('highlight', 'client') == 'client':
 <script>hljs.highlightAll();</script>
+% endif
 <script>
 <!-- Necessary javascript for filtering results -->
 <!-- Hack found in: https://codepen.io/acidrums4/pen/GBpYbO -->

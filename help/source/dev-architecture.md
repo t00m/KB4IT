@@ -15,7 +15,7 @@ KB4IT is a Python package (`kb4it/`) built around a small controller and a set o
 
 ## The controller and the services {#services}
 
-`KB4IT` in `kb4it/core/main.py` reads the command line, takes the process lock, sets up logging and registers the services. Each service asks the controller for the others by name.
+`KB4IT` in `kb4it/core/main.py` reads the command line, takes the process lock, sets up logging and registers the services. Each service asks the controller for the others by name. The Processor, Compiler and Deployer are different: they belong to one build, so the Backend makes them together, as `backend.pipeline` (`services/pipeline.py`), once the theme is loaded, and gives each the services it needs.
 
 | Service | File | Job |
 |---|---|---|
@@ -28,21 +28,21 @@ KB4IT is a Python package (`kb4it/`) built around a small controller and a set o
 | Frontend | `services/frontend.py` | Finds, checks and loads the theme |
 | Deployer | `services/deployer.py` | Copies the result to `target/` |
 
-The terminal interface (`kb4it/tui/app.py`) is a Textual application. It creates the same controller for each build and runs it on a separate thread of its own process.
+The terminal interface (`kb4it/tui/`) is a Textual application: `app.py` starts it, `screens/` holds one module per screen. It creates the same controller for each build, with its progress callbacks as parameters, and runs it on a separate thread of its own process.
 
 ## A build, stage by stage {#stages}
 
 ```text
 kb4it build repo.json
   Workflow.build_website()
-    1  Backend.stage_01_check_environment   folders, theme load, required templates
+    1  Backend.stage_01_check_environment   folders, theme load, required templates, pipeline
        Theme.generate_sources()
     2  Backend.stage_02_get_source_documents
-    3  Backend.stage_03_process_sources     Processor: properties, hashes, BuildPlan
+    3  Backend.stage_03_process_sources     pipeline.processor: properties, hashes, BuildPlan
     4  Backend.stage_04_process_theme       Theme.build()
-    5  Backend.stage_05_compilation         Compiler, then Theme.build_page() per page
+    5  Backend.stage_05_compilation         pipeline.compiler, then Theme.build_page() per page
     6  Theme.post_activities()
-    7  Backend.stage_06_deploy              Deployer
+    7  Backend.stage_06_deploy              pipeline.deployer
     8  Theme.post_deploy_activities()
 ```
 

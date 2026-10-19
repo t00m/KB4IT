@@ -34,11 +34,15 @@ Run the same command again after each change. `scripts/install/local/install_kb4
 ## Run the tests {#tests}
 
 ```bash
-./scripts/devel/test.sh             # everything
+./scripts/devel/test.sh                       # everything
 ./scripts/devel/test.sh -q tests/core/test_cli.py
+./scripts/devel/test.sh --python 3.13         # another Python version
+python3 scripts/devel/smoke_build.py --from-source   # create and build every theme's sample app
 ```
 
-The script runs pytest under Python 3.11 with the exact dependencies, through uv, so nothing is installed in your system. Any pytest option works after it.
+The script runs pytest under Python 3.11 (or the version after `--python`) with the exact dependencies, through uv, so nothing is installed in your system. Any pytest option works after it. On Windows, run it from Git Bash.
+
+CI runs the tests and the smoke build on Linux, macOS and Windows, with Python 3.11, 3.13 and 3.14.
 
 The tests run KB4IT on throwaway knowledge bases with their own home folder, so they never touch your `~/.kb4it`.
 
@@ -48,6 +52,7 @@ The tests run KB4IT on throwaway knowledge bases with their own home folder, so 
 | `tests/themes/` | techdoc, blog and bookshelf |
 | `tests/apphelp/` | The apphelp theme in detail |
 | `tests/tui/` | Every screen of the terminal interface |
+| `tests/serve/` | `kb4it serve`, the local web server and the file watcher |
 
 ## Check the themes {#themes}
 

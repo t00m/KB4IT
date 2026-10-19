@@ -3,16 +3,21 @@
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
     sort_by = 'Date' # var['repo']['sort']
-    timestamp = var['post'][sort_by][0]
-    dt = guess_datetime(timestamp)
-    var['post']['updated_human'] = get_human_datetime(dt)
-    var['post']['updated_day_text'] = f"{dt.day:02d}"
-    var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"
-    var['post']['updated_month_text'] = f"{dt.month:02d}"
-    var['post']['updated_month'] = f"{dt.year:04d}{dt.month:02d}"
-    var['post']['updated_year_text'] = f"{dt.year:04d}"
-    var['post']['updated_year'] = f"{dt.year:04d}"
-    var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
+    # The index repeats this block per post: its ids carry the post name to stay unique.
+    pid = valid_filename(var['basename_md']).replace('.', '-')
+    timestamp = (var['post'].get(sort_by) or [None])[0]
+    dt = guess_datetime(timestamp) if timestamp else None
+    # An undated post has no calendar line (the theme logs DOC_UNDATED for it).
+    var['post']['dated'] = dt is not None
+    if dt is not None:
+        var['post']['updated_human'] = get_human_datetime(dt)
+        var['post']['updated_day_text'] = f"{dt.day:02d}"
+        var['post']['updated_day'] = f"{dt.year:04d}{dt.month:02d}{dt.day:02d}"
+        var['post']['updated_month_text'] = f"{dt.month:02d}"
+        var['post']['updated_month'] = f"{dt.year:04d}{dt.month:02d}"
+        var['post']['updated_year_text'] = f"{dt.year:04d}"
+        var['post']['updated_year'] = f"{dt.year:04d}"
+        var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
 %>
 <!-- Template POST_MD_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
@@ -36,23 +41,25 @@
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
                             </li>
 % endif
+% if var['post']['dated']:
                             <li>
                                 <span uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
+% endif
                             <!-- Metadata Button :: START -->
                             <li uk-tooltip="title: Document properties">
                                 <span uk-icon="hashtag"></span>
                                 <span class="uk-margin-small-left">
-                                    <a href="#modal-metadata" uk-toggle>Metadata</a>
+                                    <a href="#modal-metadata-${pid}" uk-toggle>Metadata</a>
                                 </span>
-                                <div id="modal-metadata" class="uk-modal-full" uk-modal>
+                                <div id="modal-metadata-${pid}" class="uk-modal-full" uk-modal>
                                     <div class="uk-modal-dialog uk-height-viewport">
                                         <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                                         <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-primary">Metadata</div>
-                                                <div class="" style="border: 1px solid transparent;">${var['metadata']}</div>
+                                                <div class="" style="border: 1px solid transparent;">${var['metadata'] | n}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -63,16 +70,16 @@
                             <li uk-tooltip="title: Document source">
                                 <span uk-icon="code"></span>
                                 <span class="uk-margin-small-left">
-                                    <a href="#modal-full-source" uk-toggle>Source</a>
+                                    <a href="#modal-full-source-${pid}" uk-toggle>Source</a>
                                 </span>
-                                <div id="modal-full-source" class="uk-modal-full" uk-modal>
+                                <div id="modal-full-source-${pid}" class="uk-modal-full" uk-modal>
                                     <div class="uk-modal-dialog uk-height-viewport">
                                         <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
                                         <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
                                                 <div class="uk-text-lead">${var['basename_md']}</div>
-                                                <div class=""><textarea id="source-code" class="uk-width-1-1 uk-height-viewport">${var['source_md']}</textarea></div>
+                                                <div class=""><textarea id="source-code-${pid}" class="uk-width-1-1 uk-height-viewport">${var['source_md']}</textarea></div>
                                             </div>
                                         </div>
                                     </div>
@@ -88,7 +95,7 @@
 
         <!-- Body -->
         <article class="uk-article">
-            ${var['post']['Excerpt']}
+            ${var['post']['Excerpt'] | n}
         </article>
 
         <!-- Footer -->

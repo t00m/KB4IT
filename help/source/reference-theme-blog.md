@@ -50,6 +50,8 @@ The full text...
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `properties.html` | Every property and its values |
 | `stats.html` | A tag cloud of the values |
+| `feed.xml` | Atom feed of the newest posts, when `site_url` is set; see [feed](reference-repo-json.md#feed) |
+| `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the sidebar shows the best matches as you type. See [search](reference-repo-json.md#search) |
 
 ## Settings {#settings}
 
