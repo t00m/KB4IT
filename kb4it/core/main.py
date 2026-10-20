@@ -288,20 +288,8 @@ def _log_hint(params) -> str:
     return f" (see {log_file})" if os.path.exists(log_file) else ""
 
 
-def main():
-    """Set up application arguments and execute."""
-    # When called with no arguments in an interactive terminal, launch the TUI
-    if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
-        try:
-            from kb4it.tui.app import run as run_tui
-            run_tui()
-        except ImportError as exc:
-            print(f"TUI requires the 'textual' library: {exc}")
-            print("Install it with: pip install textual")
-        except KeyboardInterrupt:
-            pass
-        return
-
+def build_parser() -> argparse.ArgumentParser:
+    """Build the command line parser with every subcommand."""
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog="kb4it",
@@ -426,6 +414,25 @@ def main():
     repo_verify.add_argument(
         "config", help="Path to the repository config file (mandatory)"
     )
+
+    return parser
+
+
+def main():
+    """Set up application arguments and execute."""
+    # When called with no arguments in an interactive terminal, launch the TUI
+    if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
+        try:
+            from kb4it.tui.app import run as run_tui
+            run_tui()
+        except ImportError as exc:
+            print(f"TUI requires the 'textual' library: {exc}")
+            print("Install it with: pip install textual")
+        except KeyboardInterrupt:
+            pass
+        return
+
+    parser = build_parser()
 
     # Dispatch to the appropriate action handler
     params = None
