@@ -37,3 +37,7 @@ Add properties such as a ticket number to `ignored_keys`: they stay in the docum
 ## Link sections, not just pages {#anchors}
 
 `[restore](restore-postgresql.md#steps)` opens the page at the right section. Set your own anchor with `## Steps {#steps}`. [More](reference-document-format.md#markdown)
+
+## Still stuck? {#still-stuck}
+
+Ask on [GitHub issues](https://github.com/t00m/KB4IT/issues). Say what you ran, what you expected, and paste the log or the message you got.

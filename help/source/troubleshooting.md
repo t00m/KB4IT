@@ -133,3 +133,7 @@ The browser shows a cached page, or the change was in a theme template, which KB
 ### Fix
 
 Reload the page without the cache (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>). After editing a theme, build with `--force`.
+
+## Still stuck? {#still-stuck}
+
+Ask on [GitHub issues](https://github.com/t00m/KB4IT/issues). Say what you ran, what you expected, and paste the log or the message you got.
