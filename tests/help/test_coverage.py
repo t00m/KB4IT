@@ -198,10 +198,10 @@ def test_every_logged_error_code_is_documented():
     assert not missing, f"error codes not in troubleshooting.md or reference-*.md: {missing}"
 
 
-@pytest.mark.skip(reason="Task 8: section mapping")
 def test_section_names_only():
+    # index.md is the landing page, not a content page; it has no Section.
     wrong = {name: _front_matter(body).get("Section") for name, body in _pages().items()
-             if _front_matter(body).get("Section") not in SECTIONS}
+             if name != "index.md" and _front_matter(body).get("Section") not in SECTIONS}
     assert not wrong, f"pages with a section outside {SECTIONS}: {wrong}"
 
 

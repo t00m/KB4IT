@@ -5,7 +5,7 @@ HelpId: dev-help
 Keyword: documentation, help pages, apphelp, github pages, workflow
 Level: advanced
 Order: 740
-Section: Development
+Section: Reference
 Summary: Add or change a page of this help, check it locally and get it published.
 ---
 

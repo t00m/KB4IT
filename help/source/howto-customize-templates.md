@@ -6,7 +6,7 @@ Keyword: overrides, template, footer, css, static, mermaid, customize, change on
 Level: advanced
 Order: 555
 Related: explanation-themes.md, howto-create-theme.md, reference-repo-json.md
-Section: Themes
+Section: Guides
 Summary: Change one template of a theme, or add your own CSS and scripts, without copying the whole theme.
 ---
 

@@ -5,7 +5,7 @@ HelpId: install
 Keyword: pip, pipx, uv, deb, rpm, apt, dnf, docker, podman, container, upgrade, uninstall, requirements, windows, macos, linux, wsl, powershell
 Level: basic
 Order: 130
-Section: Get started
+Section: Guides
 Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx, pip, a Linux package or a container, upgrade it, remove it, or run it from a clone.
 ---
 

@@ -5,7 +5,7 @@ HelpId: techdoc
 Keyword: dashboard, incident, change, meeting, procedure, priority, status, periodicity, monitoring, bookmark, backup, admin, datatable
 Level: basic
 Order: 520
-Section: Themes
+Section: Reference
 Summary: The techdoc theme for team knowledge bases, the properties it reacts to and its settings.
 ---
 

@@ -5,7 +5,7 @@ HelpId: bookshelf
 Keyword: book, part, chapter, study, certification, progress, reading
 Level: basic
 Order: 540
-Section: Themes
+Section: Reference
 Summary: The bookshelf theme for study notes organised as books, parts and chapters, with reading progress.
 ---
 

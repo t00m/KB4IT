@@ -4,7 +4,7 @@ Feature: Building, Writing, Themes
 HelpId: troubleshooting
 Layout: troubleshooting
 Order: 630
-Section: Reference
+Section: Questions
 Summary: What to do when a document is missing, a link is broken, a theme is refused or the build stops.
 ---
 

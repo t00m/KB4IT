@@ -5,7 +5,7 @@ HelpId: blog
 Keyword: post, excerpt, archive, index_posts, strict, tag cloud
 Level: basic
 Order: 530
-Section: Themes
+Section: Reference
 Summary: The blog theme, how to write a post with an excerpt and the settings it reads.
 ---
 

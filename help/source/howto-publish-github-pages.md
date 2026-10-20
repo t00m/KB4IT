@@ -6,7 +6,7 @@ Keyword: github actions, ci, deploy, workflow, pages, site_url, sitemap, version
 Level: advanced
 Order: 410
 Related: howto-publish-web-server.md, reference-github-action.md
-Section: Publish
+Section: Guides
 Summary: Keep the knowledge base in a GitHub repository and publish it on GitHub Pages on every push.
 ---
 

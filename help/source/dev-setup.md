@@ -5,7 +5,7 @@ HelpId: dev-setup
 Keyword: clone, test, pytest, coverage, check_themes, contribute, pull request
 Level: advanced
 Order: 720
-Section: Development
+Section: Reference
 Summary: Get the source, run KB4IT from it, run the tests and the theme check, and send a change.
 ---
 

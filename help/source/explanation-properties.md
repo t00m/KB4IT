@@ -4,7 +4,7 @@ Feature: Writing, Configuration
 Keyword: metadata, key, value, navigation, ignored_keys, index
 Level: basic
 Order: 220
-Section: Write
+Section: Concepts
 Summary: Every property you use becomes a page, and every value becomes a list of the documents that share it.
 ---
 

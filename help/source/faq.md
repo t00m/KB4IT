@@ -4,7 +4,7 @@ Feature: Getting started, Writing, Publishing
 HelpId: faq
 Layout: faq
 Order: 640
-Section: Reference
+Section: Questions
 Summary: Short answers to the questions people ask most about KB4IT.
 ---
 

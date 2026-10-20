@@ -5,7 +5,7 @@ HelpId: web-server
 Keyword: nginx, apache, rsync, http.server, intranet, file share
 Level: basic
 Order: 420
-Section: Publish
+Section: Guides
 Summary: Share the website by copying one folder to a web server, a file share or a laptop.
 ---
 

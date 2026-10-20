@@ -5,7 +5,7 @@ HelpId: tui
 Keyword: tui, textual, menu, projects, explorer, web server, live reload, clipboard
 Level: basic
 Order: 320
-Section: Build and preview
+Section: Guides
 Summary: Create, build, explore and preview your knowledge bases from a full-screen terminal interface.
 ---
 

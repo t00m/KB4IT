@@ -5,7 +5,7 @@ HelpId: dev-release
 Keyword: release, version, tag, pypi, ghcr, container, deb, rpm, changelog, release notes, semver
 Level: advanced
 Order: 730
-Section: Development
+Section: Reference
 Summary: Cut a KB4IT release, from the changelog to PyPI, the container image and the GitHub release.
 ---
 

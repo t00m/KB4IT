@@ -6,7 +6,7 @@ Keyword: custom theme, template, mako, theme.json, Builder, DocumentTheme, theme
 Level: advanced
 Order: 560
 Related: explanation-themes.md, dev-architecture.md
-Section: Themes
+Section: Guides
 Summary: Make your own theme, starting from a bundled one or from a small working example.
 ---
 

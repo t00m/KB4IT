@@ -6,7 +6,7 @@ Keyword: hooks, python, on_config, on_document, on_page, on_build_end, plugin, a
 Level: advanced
 Order: 330
 Related: reference-repo-json.md, howto-customize-templates.md
-Section: Build and preview
+Section: Guides
 Summary: Run your own Python code at fixed points of a build, without writing a theme.
 ---
 

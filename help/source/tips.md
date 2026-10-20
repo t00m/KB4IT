@@ -4,7 +4,7 @@ Feature: Writing, Building, Terminal interface
 HelpId: tips
 Layout: tips
 Order: 650
-Section: Reference
+Section: Questions
 Summary: Small things that make writing and building with KB4IT easier.
 ---
 

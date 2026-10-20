@@ -5,7 +5,7 @@ HelpId: document-format
 Keyword: DOC_INVALID, DOC_RAW_SCRIPT, raw html, script, sanitize, trust, yaml_error, missing_h1_title, bad_property_name, bad_property_value, frontmatter, date format
 Level: basic
 Order: 230
-Section: Write
+Section: Reference
 Summary: The rules a source document must follow, the date formats KB4IT reads and the reasons a document is rejected.
 ---
 

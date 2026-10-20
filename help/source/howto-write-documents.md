@@ -6,7 +6,7 @@ Keyword: frontmatter, yaml, markdown, admonition, note, warning, image, link, ta
 Level: basic
 Order: 210
 Related: reference-document-format.md, explanation-properties.md
-Section: Write
+Section: Guides
 Summary: Write a document with properties, a title, sections, links to other documents, notes, code, tables and images.
 ---
 

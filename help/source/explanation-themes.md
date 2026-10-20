@@ -5,7 +5,7 @@ HelpId: themes
 Keyword: look, layout, design, app, sample, template
 Level: basic
 Order: 510
-Section: Themes
+Section: Concepts
 Summary: What a theme is, the four themes that come with KB4IT and how to pick one.
 ---
 

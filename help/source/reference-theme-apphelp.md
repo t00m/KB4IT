@@ -5,7 +5,7 @@ HelpId: apphelp
 Keyword: help, application, help id, go.html, embed, contract, offline search, doctype, layout, faq, tips, troubleshooting
 Level: advanced
 Order: 550
-Section: Themes
+Section: Reference
 Summary: The apphelp theme for application help sites, its page properties, help ids and settings.
 ---
 

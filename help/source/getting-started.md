@@ -5,7 +5,7 @@ HelpId: first-steps
 Level: basic
 Order: 110
 Related: howto-write-documents.md, howto-build.md
-Section: Get started
+Section: Start here
 Summary: Install KB4IT, create a knowledge base, write a document and open your first website.
 ---
 
