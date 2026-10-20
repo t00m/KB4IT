@@ -48,3 +48,21 @@ def test_offline_index_uses_the_override_when_present(tmp_path, monkeypatch):
     index.write_text("x", encoding="utf-8")
     monkeypatch.setenv("KB4IT_HELP_INDEX", str(index))
     assert notice.offline_index() == index
+
+
+def test_relative_override_opens_a_file_url(tmp_path, monkeypatch):
+    (tmp_path / "index.html").write_text("x", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("KB4IT_HELP_INDEX", "index.html")
+    opened = []
+    import webbrowser
+    monkeypatch.setattr(webbrowser, "open", lambda url: opened.append(url) or True)
+    assert notice.run_help() == 0
+    assert opened == [(tmp_path / "index.html").resolve().as_uri()]
+
+
+def test_override_that_is_not_html_is_ignored(tmp_path, monkeypatch):
+    script = tmp_path / "run.sh"
+    script.write_text("echo x", encoding="utf-8")
+    monkeypatch.setenv("KB4IT_HELP_INDEX", str(script))
+    assert notice.offline_index() is None

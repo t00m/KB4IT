@@ -23,8 +23,9 @@ MARKER_NAME = "help-notice-dismissed"
 def offline_index() -> Path | None:
     override = os.environ.get("KB4IT_HELP_INDEX")
     if override:
-        path = Path(override)
-        return path if path.is_file() else None
+        # Absolute, so as_uri() works; .html only, so the browser gets a web page.
+        path = Path(override).expanduser().resolve()
+        return path if path.suffix.lower() == ".html" and path.is_file() else None
     try:
         path = Path(str(resources.files("kb4it").joinpath("resources", "help", "index.html")))
     except (ModuleNotFoundError, FileNotFoundError):
