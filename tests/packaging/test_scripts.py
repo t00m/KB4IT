@@ -134,7 +134,6 @@ def test_dockerfile_installs_the_release_wheel_as_non_root():
 _OFFLINE = "scripts/help/build_offline.py"
 _PACKAGE_BUILD = re.compile(r"uv build|python3 -m build|build_python\.sh")
 _BUILDERS = [
-    DIST / "build_all.sh",
     DIST / "build" / "build_python.sh",
     ROOT / "scripts" / "release.sh",
     ROOT / ".github" / "workflows" / "publish.yml",
@@ -150,3 +149,21 @@ def test_release_builds_the_offline_help_before_packaging(script):
     first_build = _PACKAGE_BUILD.search(text)
     assert first_build is not None
     assert offline < first_build.start()
+
+
+def test_build_all_leaves_the_offline_help_to_build_python():
+    # build_python.sh builds the help under uv with the extras; a second, bare python3 run here
+    # would fail on a machine without the extras before uv gets a chance.
+    text = (DIST / "build_all.sh").read_text(encoding="utf-8")
+    assert _OFFLINE not in text
+    first_build = _PACKAGE_BUILD.search(text)
+    assert first_build is not None and first_build.group(0) == "build_python.sh"
+
+
+def test_release_builds_the_offline_help_like_build_python():
+    # The same uv command, so the release check does not depend on the extras in the system python3.
+    uv_line = next(line.strip() for line in (DIST / "build" / "build_python.sh").read_text(encoding="utf-8").splitlines()
+                   if line.strip().startswith("uv run") and _OFFLINE in line)
+    release = (ROOT / "scripts" / "release.sh").read_text(encoding="utf-8")
+    assert f"python3 {_OFFLINE}" not in release
+    assert uv_line in release

@@ -5,8 +5,7 @@
 # so this script is safe to run on any GNU/Linux host.
 #
 # Steps:
-#   0. Offline help             (required: fails the build when it cannot run)
-#   1. Python sdist + wheel      (requires uv or python3)
+#   1. Python sdist + wheel      (requires uv or python3; builds the offline help first)
 #   2. Source tarball + zip      (requires git or tar)
 #   3. Docker image              (requires docker or podman)
 #   4. .deb package              (requires dpkg-deb)
@@ -35,17 +34,8 @@ run_step() {
 
 FAILED=()
 
-# The offline help is git-ignored and must exist before any package is built.
-# It needs the extras (pymdownx, nh3, pygments); without them the build stops here.
-echo ""
-echo "============================================================"
-echo "  Offline help"
-echo "============================================================"
-python3 scripts/help/build_offline.py || {
-    echo "  FAIL: offline help (install KB4IT[extras] in this environment)" >&2
-    exit 1
-}
-
+# build_python.sh builds the offline help first and fails when it cannot,
+# and every later package step reuses its wheel.
 run_step "Python sdist + wheel" \
          "${SCRIPT_DIR}/build/build_python.sh" \
          "command -v uv || command -v python3"
