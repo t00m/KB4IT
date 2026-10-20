@@ -46,3 +46,13 @@ def test_create_keeps_same_name_user_file(tmp_path):
     (tmp_path / "repo" / "source" / "backup-check.md").write_text("my runbook", encoding="utf-8")
     assert run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home).returncode == 0
     assert (tmp_path / "repo" / "source" / "backup-check.md").read_text(encoding="utf-8") == "my runbook"
+
+
+def test_blog_samples_build_and_show(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    assert run_kb4it("create", "blog", "repo", cwd=tmp_path, home=home).returncode == 0
+    cfg = tmp_path / "repo" / "config" / "repo.json"
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    index = (tmp_path / "repo" / "target" / "index.html").read_text(encoding="utf-8")
+    assert "Welcome to my notes" in index
