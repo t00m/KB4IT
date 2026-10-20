@@ -56,3 +56,13 @@ def test_blog_samples_build_and_show(tmp_path):
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
     index = (tmp_path / "repo" / "target" / "index.html").read_text(encoding="utf-8")
     assert "Welcome to my notes" in index
+
+
+def test_bookshelf_samples_build_and_show(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    assert run_kb4it("create", "bookshelf", "repo", cwd=tmp_path, home=home).returncode == 0
+    cfg = tmp_path / "repo" / "config" / "repo.json"
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    index = (tmp_path / "repo" / "target" / "index.html").read_text(encoding="utf-8")
+    assert "Sample Book" in index
