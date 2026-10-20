@@ -93,3 +93,34 @@ def test_stale_index_does_not_hide_a_failed_build(tmp_path, monkeypatch):
     (out / "index.html").write_text("old", encoding="utf-8")
     assert module.main(["--out", str(out)]) == 1
     assert not (out / "index.html").exists()
+
+
+def _no_build(module, monkeypatch):
+    """Skip the preflight and the real build, so only the --out checks run."""
+    monkeypatch.setattr(module, "missing_packages", lambda: [])
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0))
+
+
+def test_out_dot_with_other_files_is_refused(tmp_path, monkeypatch, capsys):
+    module = _load_script()
+    _no_build(module, monkeypatch)
+    work = tmp_path / "work"
+    work.mkdir()
+    keep = work / "keep.txt"
+    keep.write_text("x", encoding="utf-8")
+    monkeypatch.chdir(work)
+    assert module.main(["--out", "."]) == 1
+    assert "refusing --out" in capsys.readouterr().err
+    assert keep.is_file()
+
+
+def test_out_outside_resources_and_temp_is_refused(tmp_path, monkeypatch, capsys):
+    module = _load_script()
+    _no_build(module, monkeypatch)
+    fake_temp = tmp_path / "fake-temp"
+    fake_temp.mkdir()
+    monkeypatch.setattr(module.tempfile, "gettempdir", lambda: str(fake_temp))
+    out = tmp_path / "elsewhere" / "help"
+    assert module.main(["--out", str(out)]) == 1
+    assert "refusing --out" in capsys.readouterr().err
+    assert not out.exists()
