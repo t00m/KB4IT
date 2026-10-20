@@ -376,6 +376,12 @@ class Theme(DocumentTheme):
         # ~ self.build_page_index()
         self.log.debug("[THEME] NO_SOURCES_GENERATED")
 
+    def get_theme_var(self):
+        var = super().get_theme_var()
+        # The footer prints the tagline; an empty line when repo.json has none.
+        var['repo'].setdefault('tagline', '')
+        return var
+
     def check_config(self):
         go = True
         repo = self.app.get_repo_config_dict()
