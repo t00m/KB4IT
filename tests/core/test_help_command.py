@@ -15,9 +15,12 @@ def test_help_url_prints_the_online_address(tmp_path, home):
 
 
 def test_help_dismiss_hides_the_notice(tmp_path, home):
-    first = run_kb4it("help", "--dismiss", cwd=tmp_path, home=home)
+    control = run_kb4it("themes", cwd=tmp_path, home=home, env={"CI": ""}, split_streams=True)
+    assert "kb4it help" in control.stderr
+    first = run_kb4it("help", "--dismiss", cwd=tmp_path, home=home, env={"CI": ""})
     assert first.returncode == 0, first.stdout
-    second = run_kb4it("themes", cwd=tmp_path, home=home, split_streams=True)
+    assert (home / ".kb4it" / "help-notice-dismissed").exists()
+    second = run_kb4it("themes", cwd=tmp_path, home=home, env={"CI": ""}, split_streams=True)
     assert "kb4it help" not in second.stdout
     assert "kb4it help" not in second.stderr
 

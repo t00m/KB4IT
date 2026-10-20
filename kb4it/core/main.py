@@ -431,6 +431,12 @@ def main():
     params = None
     try:
         params = parser.parse_args()
+        if params.action != "help" and not os.environ.get("CI"):
+            from kb4it.core.notice import (HELP_ONLINE_URL, help_notice_dismissed,
+                                           help_notice_lines, offline_index)
+            if not help_notice_dismissed():
+                for line in help_notice_lines(offline_index(), HELP_ONLINE_URL):
+                    print(line, file=sys.stderr)
         if params.action == "serve":
             from kb4it.core.serve import run_serve
             sys.exit(run_serve(vars(params)))
