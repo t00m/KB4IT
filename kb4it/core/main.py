@@ -345,6 +345,12 @@ def main():
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
 
+    # Help center
+    help_parser = subparsers.add_parser("help", help="Open the KB4IT help center")
+    help_group = help_parser.add_mutually_exclusive_group()
+    help_group.add_argument("--url", action="store_true", help="Print the online help address and exit")
+    help_group.add_argument("--dismiss", action="store_true", help="Hide the first-run help notice")
+
     # List projects
     subparsers.add_parser("projects", help="List all projects created by the user")
 
@@ -428,6 +434,9 @@ def main():
         if params.action == "serve":
             from kb4it.core.serve import run_serve
             sys.exit(run_serve(vars(params)))
+        if params.action == "help":
+            from kb4it.core.notice import run_help
+            sys.exit(run_help(url=params.url, dismiss=params.dismiss))
         app = KB4IT(params)
         success = app.run()
         sys.exit(0 if success else 1)

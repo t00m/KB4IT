@@ -24,12 +24,16 @@ def isolated_env(home, **extra):
     return env
 
 
-def run_kb4it(*args, cwd, home):
-    """Run kb4it with an isolated HOME and return the finished process."""
-    env = isolated_env(home, NO_COLOR="1")
+def run_kb4it(*args, cwd, home, env=None, split_streams=False):
+    """Run kb4it with an isolated HOME and return the finished process.
+
+    env adds environment variables; split_streams keeps stderr apart from stdout.
+    """
+    full_env = isolated_env(home, NO_COLOR="1", **(env or {}))
     return subprocess.run(
         [sys.executable, "-c", _RUNNER, *map(str, args)],
-        cwd=str(cwd), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        cwd=str(cwd), env=full_env, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE if split_streams else subprocess.STDOUT,
         text=True, timeout=600,
     encoding="utf-8")
 

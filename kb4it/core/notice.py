@@ -53,3 +53,27 @@ def dismiss_help_notice() -> None:
     marker = _marker()
     marker.parent.mkdir(parents=True, exist_ok=True)
     marker.touch()
+
+
+def run_help(url: bool = False, dismiss: bool = False) -> int:
+    """Run 'kb4it help' and return the process exit code."""
+    if url:
+        print(HELP_ONLINE_URL)
+        return 0
+    if dismiss:
+        try:
+            dismiss_help_notice()
+        except OSError as error:
+            print(f"Cannot dismiss the help notice: {error}")
+            return 1
+        print("Help notice dismissed.")
+        return 0
+    index = offline_index()
+    if index is None:
+        print("No offline help copy found. Build it with scripts/help/build_offline.py "
+              f"or read the online help at {HELP_ONLINE_URL}")
+        return 1
+    import webbrowser
+    if not webbrowser.open(index.as_uri()):
+        print(f"Could not start a browser. Open this file manually: {index}")
+    return 0
