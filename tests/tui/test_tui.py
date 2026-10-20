@@ -365,3 +365,30 @@ def test_import_and_delete_project(registry, mini_repo):
         await pilot.pause()
         assert tui.load_projects() == []
     run(scenario)
+
+
+def test_tui_shows_the_help_banner_until_dismissed(registry, tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    from kb4it.core.notice import help_notice_dismissed
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))
+    monkeypatch.delenv("CI", raising=False)
+
+    async def scenario(app, pilot):
+        banner = app.screen.query_one("#help-banner")
+        assert banner.display
+        assert not help_notice_dismissed()
+        await pilot.press("d")
+        await pilot.pause()
+        assert not banner.display
+        assert help_notice_dismissed()
+    run(scenario)
+
+
+def test_tui_hides_the_help_banner_in_ci(registry, tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))
+    monkeypatch.setenv("CI", "true")
+
+    async def scenario(app, pilot):
+        assert not app.screen.query_one("#help-banner").display
+    run(scenario)

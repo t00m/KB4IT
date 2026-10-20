@@ -55,6 +55,11 @@ def dismiss_help_notice() -> None:
     marker.touch()
 
 
+def help_notice_visible() -> bool:
+    """True when the notice should be shown: not dismissed and not running under CI."""
+    return not os.environ.get("CI") and not help_notice_dismissed()
+
+
 def run_help(url: bool = False, dismiss: bool = False) -> int:
     """Run 'kb4it help' and return the process exit code."""
     if url:

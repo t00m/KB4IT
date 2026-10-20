@@ -18,8 +18,11 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
+    Static,
 )
 
+from kb4it.core.notice import (HELP_ONLINE_URL, dismiss_help_notice, help_notice_lines,
+                               help_notice_visible, offline_index)
 from kb4it.tui.projects import VERSION, load_projects, save_projects
 from kb4it.tui.screens.catalog import AppsScreen, ThemesScreen
 from kb4it.tui.screens.confirm import ConfirmScreen
@@ -30,6 +33,7 @@ from kb4it.tui.screens.project import ProjectScreen
 class MainScreen(Screen):
     CSS = """
     MainScreen { layout: vertical; }
+    #help-banner { margin: 1 1 0 1; color: $text-muted; }
     #list-label { margin: 1 1 0 1; color: $text-muted; }
     #proj-list { height: 1fr; margin: 0 1; border: solid $primary; }
     #row1, #row2 { height: 3; align: center middle; padding: 0 1; }
@@ -39,6 +43,7 @@ class MainScreen(Screen):
     BINDINGS = [
         Binding("enter", "open_project", "Open", show=True),
         Binding("q", "request_quit", "Quit", show=True),
+        Binding("d", "dismiss_help", "Dismiss help notice", show=True),
     ]
 
     def __init__(self, **kw: Any):
@@ -47,6 +52,10 @@ class MainScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        line = help_notice_lines(offline_index(), HELP_ONLINE_URL)[0]
+        banner = Static(f"{line} Press d to hide this notice.", id="help-banner")
+        banner.display = help_notice_visible()
+        yield banner
         yield Label("Projects:", id="list-label")
         yield ListView(id="proj-list")
         with Horizontal(id="row1"):
@@ -96,6 +105,17 @@ class MainScreen(Screen):
         idx = self.query_one("#proj-list", ListView).index
         if idx is not None:
             self._open_at(idx)
+
+    def action_dismiss_help(self) -> None:
+        banner = self.query_one("#help-banner", Static)
+        if not banner.display:
+            return
+        try:
+            dismiss_help_notice()
+        except OSError as error:
+            self.app.notify(f"Cannot dismiss the help notice: {error}", severity="warning")
+            return
+        banner.display = False
 
     def action_request_quit(self) -> None:
         self.app.exit()
