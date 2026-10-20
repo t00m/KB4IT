@@ -34,7 +34,7 @@ A theme is a folder with a description, some Python and some templates. Start fr
 
 ```text
 mytheme/
-├── theme.json        # id, name, description, version, KB4IT it needs
+├── theme.json        # id, name, description, KB4IT it needs
 ├── logic/theme.py    # class Theme: builds the pages
 ├── templates/*.tpl   # Mako templates
 ├── framework/        # CSS, JavaScript, fonts, images
@@ -55,8 +55,7 @@ This theme, `plain`, makes a home page that lists every document and wraps each 
     "email": "ann@example.com",
     "website": "",
     "description": "One page per document and a list of them",
-    "version": "0.1.0",
-    "kb4it": ">=0.9.0",
+    "kb4it": ">=X.Y.Z",
     "metadata_pages": false,
     "autoescape": true
 }
@@ -203,9 +202,11 @@ A theme without `"autoescape": true` prints values as they are, and every build 
 
 ## Options in theme.json {#options}
 
+The theme version is not in `theme.json`. KB4IT gives every theme its own version, so a theme always shows the KB4IT it runs with.
+
 | Key | Meaning |
 |---|---|
-| `kb4it` | The KB4IT versions the theme works with, such as `">=0.7.10"` or `">=0.7.10, <0.9"` |
+| `kb4it` | The KB4IT versions the theme works with, such as `">=X.Y.Z"` or `">=X.Y.Z, <A.B.C"` |
 | `metadata_pages` | `false` skips the pages per property and per value |
 | `deploy_dirs` | Only these folders of the theme are copied to the website, for example `["framework"]` |
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |

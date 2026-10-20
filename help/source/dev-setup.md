@@ -26,7 +26,7 @@ Install it as your `kb4it` command:
 
 ```bash
 uv tool install . --force
-kb4it --version          # KB4IT 0.8.0 (v0.7.10-12-gd925c10)
+kb4it --version          # KB4IT X.Y.Z (vX.Y.Z-12-gd925c10)
 ```
 
 Run the same command again after each change. `scripts/install/local/install_kb4it_from_source.sh` does the same and falls back to pipx when uv is missing.

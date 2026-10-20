@@ -16,7 +16,7 @@ The KB4IT repository is also a GitHub Action. One step in a workflow installs KB
 
 ```yaml
 - id: kb4it
-  uses: t00m/KB4IT@v0.9.0
+  uses: t00m/KB4IT@vX.Y.Z
   with:
     config: config/repo.json
 ```
@@ -28,7 +28,7 @@ It runs on Linux, macOS and Windows runners and needs no Python on the runner: i
 | Input | Default | Meaning |
 |---|---|---|
 | `config` | (required) | Path of `repo.json`, relative to the workspace |
-| `version` | empty | KB4IT version to install from PyPI. Empty installs the KB4IT of the action itself, so `@v0.9.0` builds with KB4IT 0.9.0 |
+| `version` | empty | KB4IT version to install from PyPI. Empty installs the KB4IT of the action itself, so `@vX.Y.Z` builds with KB4IT X.Y.Z |
 | `python-version` | `3.13` | Python that runs KB4IT, from 3.11 to 3.14 |
 | `extras` | `false` | `true` also installs the extras ([PyMdown Extensions](reference-repo-json.md#markdown), and nh3 for [`sanitize`](reference-repo-json.md#markdown)) |
 | `verify` | `true` | Run `kb4it verify` first; a document that cannot be read, a broken link or a theme problem fails the step before anything is built |
@@ -47,13 +47,13 @@ The step also writes a summary on the workflow run page: the KB4IT version, the 
 
 ## Choose the version {#version}
 
-Refer to the action by a release tag, such as `t00m/KB4IT@v0.9.0`, or by a full commit hash. Then the site is built the same way until you change it. There is no moving tag such as `@v0`: a new KB4IT can change how pages look, so upgrade on purpose, after a local build.
+Refer to the action by a release tag, such as `t00m/KB4IT@vX.Y.Z`, or by a full commit hash. Then the site is built the same way until you change it. There is no moving tag such as `@v0`: a new KB4IT can change how pages look, so upgrade on purpose, after a local build.
 
 To keep the action of one release but build with another KB4IT, set `version`:
 
 ```yaml
-- uses: t00m/KB4IT@v0.9.0
+- uses: t00m/KB4IT@vX.Y.Z
   with:
     config: config/repo.json
-    version: 0.9.1
+    version: X.Y.Z
 ```

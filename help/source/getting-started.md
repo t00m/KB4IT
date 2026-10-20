@@ -22,7 +22,7 @@ uv tool install KB4IT
 kb4it --version
 ```
 
-The second command prints the version, for example `KB4IT 0.9.1`. Other ways to install are in [Install KB4IT](howto-install.md).
+The second command prints the version, for example `KB4IT X.Y.Z`. Other ways to install are in [Install KB4IT](howto-install.md).
 
 ## Create a knowledge base {#create}
 

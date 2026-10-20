@@ -198,7 +198,7 @@ git commit -m "feat(tui): show the help banner until it is dismissed"
 - Test: `tests/packaging/test_help_offline.py`
 
 **Interfaces:**
-- Produces: `python scripts/help/build_offline.py` builds `help/` into `kb4it/resources/help/`. It writes a temporary copy of `help/config/repo.json` with `target` set to the output folder and `version` set to the text of `kb4it/VERSION`, then runs `kb4it build` on the copy with the working tree's KB4IT (`PYTHONPATH` set to the repo root). It exits non-zero when the build fails.
+- Produces: `python scripts/help/build_offline.py` builds `help/` into `kb4it/resources/help/`. It writes a temporary copy of `help/config/repo.json` with `target` set to the output folder, then runs `kb4it build` on the copy with the working tree's KB4IT (`PYTHONPATH` set to the repo root). It exits non-zero when the build fails.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -212,7 +212,7 @@ git commit -m "feat(tui): show the help banner until it is dismissed"
 Run: `uv run pytest tests/packaging/test_help_offline.py -v`
 Expected: FAIL, script missing; the version test fails on `"0.8"`.
 
-- [ ] **Step 3: Implement the script; remove the `version` key from `help/config/repo.json`**
+- [ ] **Step 3: Implement the script.** The version needs no change here: `help/config/repo.json` already says `"version": "kb4it"` (done in the version fix).
 
 - [ ] **Step 4: Run and watch them pass**
 
@@ -341,5 +341,6 @@ git commit -m "docs(help): group pages into start, guides, reference, concepts a
 
 - Ruling: the offline copy is git-ignored and built by release tooling, not committed. The spec said "committed for releases only"; a generated folder in git drifts. Cost if wrong: a release needs the build step to succeed.
 - Ruling: the notice is silent when `CI` is set. The spec said "every start"; CI logs would fill with it. Cost if wrong: CI users do not see the notice, and the online docs remain the source.
-- Ruling: `help/config/repo.json` loses its hard-coded `version`. The offline build sets it from `kb4it/VERSION`. Cost if wrong: none; the file's version was stale at 0.8.
+- Ruling: `help/config/repo.json` names the version with the token `"kb4it"`, which apphelp resolves to `kb4it/VERSION`. Every version in code, theme metadata and docs now comes from that file, checked by `tests/core/test_version_sources.py`. Cost if wrong: a user app that wants the literal word `kb4it` as its version cannot have it.
+- Ruling: theme versions are set at load from `kb4it/VERSION`. `theme.json` no longer has a `version` key, and the unused `theme.csv` files were removed. The `kb4it` requirement floors stay, because they name the oldest KB4IT a theme works with.
 - Ruling: the TUI banner uses one line, not a panel. Cost if wrong: a later visual change.

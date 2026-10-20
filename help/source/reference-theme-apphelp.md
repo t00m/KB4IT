@@ -89,8 +89,8 @@ Edit links use `"git": true` and `git_server` without `https://`, for example `g
 An application often needs the help of each release. Turn on versions in the `apphelp` block and name the version with the top-level `version` key:
 
 ```json
-"version": "0.9",
-"apphelp": {"versions": {"enabled": true, "latest": "0.9"}}
+"version": "2.1",
+"apphelp": {"versions": {"enabled": true, "latest": "2.1"}}
 ```
 
 Each build then writes into `target/<version>/` and leaves the other version folders alone. At the top of `target/` it keeps:

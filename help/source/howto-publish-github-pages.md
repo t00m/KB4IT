@@ -66,7 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - id: kb4it
-        uses: t00m/KB4IT@v0.9.0
+        uses: t00m/KB4IT@vX.Y.Z
         with:
           config: config/repo.json
       - uses: actions/upload-pages-artifact@v5
@@ -90,7 +90,7 @@ jobs:
 The [KB4IT action](reference-github-action.md) installs KB4IT, checks the documents with `kb4it verify` and builds the site; its `target` output is the folder to publish. If the knowledge base is in a folder, say `docs-site/`, use `config: docs-site/config/repo.json`.
 
 !!! tip "Pin the version"
-    `@v0.9.0` builds with KB4IT 0.9.0, so the site does not change when a new KB4IT is released. Upgrade on purpose, after a local build.
+    `@vX.Y.Z` builds with KB4IT X.Y.Z, so the site does not change when a new KB4IT is released. Upgrade on purpose, after a local build.
 
 ### Without the action {#manual}
 
@@ -102,7 +102,7 @@ The same build with plain commands, for example to run extra `kb4it` commands in
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - run: pip install KB4IT==0.9.0
+      - run: pip install KB4IT==X.Y.Z
       - run: kb4it verify config/repo.json
       - run: kb4it build config/repo.json
       - uses: actions/upload-pages-artifact@v5

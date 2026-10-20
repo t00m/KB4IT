@@ -60,7 +60,7 @@ The help center is the official documentation. It ships inside the installed pac
 - **Offline build.** A build script runs the apphelp theme over `help/` and writes the result to `kb4it/resources/help/`. The output is committed for releases only, so a normal commit does not carry it. Release tooling runs the script and includes the output in the wheel and sdist. (Alternative: generate it at install time. Rejected: the install step has no hook.)
 - **Dismiss.** The notice ends with the command `kb4it help --dismiss`. A marker file under `KB4IT_HOME` (or `~/.kb4it`) records the choice. Until then, every `kb4it` start prints one notice line with the path to the offline copy and the online URL. The TUI shows the same text as a banner until dismissed.
 - **Open.** `kb4it help` opens the offline copy in the browser. `kb4it help --url` prints the online URL only.
-- **Version.** Each page of the site shows the version it documents, read from `kb4it/VERSION` at build time. The online copy at master shows the development version. The release build shows the release version.
+- **Version.** `help/config/repo.json` sets `"version": "kb4it"`. The apphelp theme turns that token into the version in `kb4it/VERSION`, so every build shows the version it ships with.
 - **Coverage check.** A test lists every CLI command, every key in the repo.json reference, every bundled theme and every error code, and fails when a name has no page. It checks names only, not prose.
 - **Diataxis labels.** The four kinds map to the four section names above. A test fails if the built site contains the framework name.
 

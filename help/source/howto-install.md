@@ -66,7 +66,7 @@ sudo apt install ./kb4it_0.9.0_amd64.deb
 On Fedora, and on RHEL, Rocky Linux and AlmaLinux 9 or newer:
 
 ```bash
-sudo dnf install ./kb4it-0.9.0-1.x86_64.rpm
+sudo dnf install ./kb4it-X.Y.Z-1.x86_64.rpm
 ```
 
 The package uses a Python from 3.11 to 3.14. On RHEL 9, whose `python3` is 3.9, dnf installs `python3.11` or `python3.12` next to it. Remove the package with `sudo apt remove kb4it` or `sudo dnf remove kb4it`.
@@ -76,22 +76,22 @@ The package uses a Python from 3.11 to 3.14. On RHEL 9, whose `python3` is 3.9, 
 The image `ghcr.io/t00m/kb4it` has KB4IT with its extras, for `amd64` and `arm64`, and needs no Python on your machine. Run it from the folder of your knowledge base, which it sees as `/work`:
 
 ```bash
-docker run --rm -v "$PWD:/work" --user "$(id -u):$(id -g)" ghcr.io/t00m/kb4it:0.9.0 build config/repo.json
+docker run --rm -v "$PWD:/work" --user "$(id -u):$(id -g)" ghcr.io/t00m/kb4it:X.Y.Z build config/repo.json
 ```
 
 `--user` makes the files it writes yours. To preview the site while you write, publish the port and listen on every address inside the container:
 
 ```bash
-docker run --rm -p 8642:8642 -v "$PWD:/work" ghcr.io/t00m/kb4it:0.9.0 serve config/repo.json --host 0.0.0.0
+docker run --rm -p 8642:8642 -v "$PWD:/work" ghcr.io/t00m/kb4it:X.Y.Z serve config/repo.json --host 0.0.0.0
 ```
 
 Then open `http://127.0.0.1:8642/`. With rootless Podman, `--userns=keep-id` keeps your user ID inside the container, so it can write to the folder and the files stay yours. On hosts with SELinux, such as Fedora and RHEL, also add `:Z` to the folder so the container may read it:
 
 ```bash
-podman run --rm --userns=keep-id --user "$(id -u):$(id -g)" -v "$PWD:/work:Z" ghcr.io/t00m/kb4it:0.9.0 build config/repo.json
+podman run --rm --userns=keep-id --user "$(id -u):$(id -g)" -v "$PWD:/work:Z" ghcr.io/t00m/kb4it:X.Y.Z build config/repo.json
 ```
 
-Use a fixed version such as `0.9.0`, or `0.9` for its latest fixes; `latest` follows every release.
+Use a fixed version such as `X.Y.Z`, or `X.Y` for its latest fixes; `latest` follows every release.
 
 ## Check the installation {#check}
 
@@ -132,4 +132,4 @@ cd KB4IT
 uv tool install . --force
 ```
 
-`kb4it --version` then adds the git commit, for example `KB4IT 0.8.0 (v0.7.10-12-gd925c10)`.
+`kb4it --version` then adds the git commit, for example `KB4IT X.Y.Z (vX.Y.Z-12-gd925c10)`.
