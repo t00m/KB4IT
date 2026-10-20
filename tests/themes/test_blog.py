@@ -31,6 +31,8 @@ def site(tmp_path_factory):
     conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf.update(index_posts=2, strict=True)
     cfg.write_text(json.dumps(conf), encoding="utf-8")
+    for sample in (repo / "source").glob("*.md"):
+        sample.unlink()
     for name, text in PAGES.items():
         (repo / "source" / name).write_text(text, encoding="utf-8")
     result = run_kb4it("build", cfg, cwd=base, home=home)
