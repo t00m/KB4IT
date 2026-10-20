@@ -36,3 +36,24 @@ def test_help_action_does_not_print_the_notice(tmp_path, home):
     result = run_kb4it("help", "--url", cwd=tmp_path, home=home, env=NO_CI, split_streams=True)
     assert result.stdout.strip() == HELP_ONLINE_URL
     assert result.stderr.strip() == ""
+
+
+def test_notice_that_cannot_read_kb4it_home_does_not_stop_the_command(monkeypatch, capsys):
+    # On Python 3.11, Path.exists() raises PermissionError when KB4IT_HOME cannot be searched;
+    # later versions return False. Simulate the 3.11 case so the test runs on every version.
+    import sys
+
+    import pytest
+
+    from kb4it.core import main as cli
+    from kb4it.core import notice
+
+    def unreadable():
+        raise PermissionError(13, "Permission denied", "/unreadable/help-notice-dismissed")
+
+    monkeypatch.setattr(notice, "help_notice_dismissed", unreadable)
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setattr(sys, "argv", ["kb4it", "themes"])
+    with pytest.raises(SystemExit) as stop:
+        cli.main()
+    assert stop.value.code == 0, capsys.readouterr().out
