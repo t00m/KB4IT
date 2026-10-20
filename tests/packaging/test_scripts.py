@@ -167,3 +167,21 @@ def test_release_builds_the_offline_help_like_build_python():
     release = (ROOT / "scripts" / "release.sh").read_text(encoding="utf-8")
     assert f"python3 {_OFFLINE}" not in release
     assert uv_line in release
+
+
+def _check_wheel_module():
+    import importlib.util
+    path = ROOT / "scripts" / "devel" / "check_wheel_themes.py"
+    spec = importlib.util.spec_from_file_location("check_wheel_themes", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_wheel_check_wants_the_offline_help_index():
+    # Building a wheel in a test is slow, so check the function over a list of wheel names.
+    module = _check_wheel_module()
+    theme = "kb4it/resources/themes/apphelp/templates/PAGE.tpl"
+    assert module.has_offline_help([theme, "kb4it/resources/help/index.html"])
+    assert not module.has_offline_help([theme])
+    assert not module.has_offline_help([theme, "kb4it/resources/help/search.html"])
