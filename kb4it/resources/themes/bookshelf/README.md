@@ -42,7 +42,7 @@ These keys are optional. Add one to `repo.json` only to change it.
 
 | Key | Without it | Effect of setting it |
 | --- | --- | --- |
-| `tagline` | No tagline | Short line under the title |
+| `tagline` | No tagline | Short site description |
 
 The bundled `default` app has no sample documents. Your first `kb4it build` produces an empty library until you add documents.
 
