@@ -133,9 +133,16 @@ def test_dockerfile_installs_the_release_wheel_as_non_root():
 
 _OFFLINE = "scripts/help/build_offline.py"
 _PACKAGE_BUILD = re.compile(r"uv build|python3 -m build|build_python\.sh")
+_BUILDERS = [
+    DIST / "build_all.sh",
+    DIST / "build" / "build_python.sh",
+    ROOT / "scripts" / "release.sh",
+    ROOT / ".github" / "workflows" / "publish.yml",
+    ROOT / ".github" / "workflows" / "kb4it.yml",
+]
 
 
-@pytest.mark.parametrize("script", [DIST / "build_all.sh", ROOT / "scripts" / "release.sh"], ids=lambda p: p.name)
+@pytest.mark.parametrize("script", _BUILDERS, ids=lambda p: p.name)
 def test_release_builds_the_offline_help_before_packaging(script):
     text = script.read_text(encoding="utf-8")
     offline = text.find(_OFFLINE)

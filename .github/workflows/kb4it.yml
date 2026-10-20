@@ -59,6 +59,9 @@ jobs:
       - name: The annotated modules pass mypy --strict
         run: ./scripts/devel/typecheck.sh
 
+      - name: Build the offline help
+        run: uv run --no-project --with-requirements requirements.txt --with pymdown-extensions --with nh3 --with pygments python scripts/help/build_offline.py
+
       - name: Build wheel
         run: uv build --wheel
 

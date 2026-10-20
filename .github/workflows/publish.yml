@@ -52,6 +52,9 @@ jobs:
       - name: Every tracked theme is compliant
         run: ./scripts/devel/check_themes.sh
 
+      - name: Build the offline help
+        run: uv run --no-project --with-requirements requirements.txt --with pymdown-extensions --with nh3 --with pygments python scripts/help/build_offline.py
+
       - name: Build sdist and wheel
         run: uv build
 
