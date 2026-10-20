@@ -1,5 +1,6 @@
 """The offline help copy is built from the working tree into a throwaway folder."""
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -41,8 +42,10 @@ def test_offline_build_shows_the_package_version(built):
 def test_offline_build_has_no_absolute_paths(built):
     # The help text shows example paths such as /home/ann, so look for the real build paths instead.
     _, out = built
+    pages = list(out.rglob("*.html"))
+    assert pages, "no html files were built"
     leaks = [str(ROOT), str(out), str(out.parent), str(HELP_SOURCE)]
-    for path in out.rglob("*.html"):
+    for path in pages:
         text = path.read_text(encoding="utf-8")
         for leak in leaks:
             assert leak not in text, (path, leak)
@@ -51,3 +54,42 @@ def test_offline_build_has_no_absolute_paths(built):
 def test_help_config_version_is_not_hardcoded():
     conf = json.loads((ROOT / "help" / "config" / "repo.json").read_text(encoding="utf-8"))
     assert conf.get("version", "kb4it") in ("kb4it", VERSION)
+
+
+def _load_script():
+    spec = importlib.util.spec_from_file_location("build_offline", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_missing_package_fails_before_touching_the_output(tmp_path, monkeypatch, capsys):
+    module = _load_script()
+    real = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a: None if name == "nh3" else real(name, *a))
+    out = tmp_path / "help"
+    out.mkdir()
+    keep = out / "keep.txt"
+    keep.write_text("x", encoding="utf-8")
+    assert module.main(["--out", str(out)]) == 1
+    err = capsys.readouterr().err
+    assert "missing package(s): nh3; run: pip install KB4IT[extras]" in err
+    assert keep.is_file()
+
+
+def test_build_that_writes_nothing_fails(tmp_path, monkeypatch, capsys):
+    module = _load_script()
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0))
+    out = tmp_path / "help"
+    assert module.main(["--out", str(out)]) == 1
+    assert str(out / "index.html") in capsys.readouterr().err
+
+
+def test_stale_index_does_not_hide_a_failed_build(tmp_path, monkeypatch):
+    module = _load_script()
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0))
+    out = tmp_path / "help"
+    out.mkdir()
+    (out / "index.html").write_text("old", encoding="utf-8")
+    assert module.main(["--out", str(out)]) == 1
+    assert not (out / "index.html").exists()
