@@ -334,7 +334,7 @@ git commit -m "docs(help): group pages into start, guides, reference, concepts a
 
 - [ ] Run the full suite: `uv run pytest`. Expected: all pass except tests that need a build (skipped when the offline copy is absent).
 - [ ] Build the offline copy and run `kb4it help` on it. Expected: the page opens (or the path prints when no browser is set).
-- [ ] Run the self-review: spec coverage, Review Focus tests present, no em dash in changed files (`git diff --name-only master... | xargs grep -n "—"`).
+- [ ] Run the self-review: spec coverage, Review Focus tests present, no em dash (U+2014) in changed files, checked with `grep -n $'\xe2\x80\x94'` on each file.
 - [ ] Write the response doc with the `kb4itdoc` skill in `responses/`.
 
 ## Rulings to record in the ledger
