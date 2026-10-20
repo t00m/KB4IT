@@ -17,6 +17,8 @@ HELP_SOURCE = ROOT / "help" / "source"
 PACKAGE = ROOT / "kb4it"
 THEMES = PACKAGE / "resources" / "themes"
 OFFLINE = PACKAGE / "resources" / "help"
+APPHELP = THEMES / "apphelp"
+FRAMEWORK_NAME = "taxis"  # matches both spellings of the framework name, in any case
 SECTIONS = ("Start here", "Guides", "Reference", "Concepts", "Questions")
 
 # A log tag: "[COMPONENT] CODE ...", where CODE is upper case words joined by "_".
@@ -68,6 +70,17 @@ def _command_names() -> list[str]:
     for action in parser._subparsers._group_actions:  # noqa: SLF001, argparse keeps them here
         return sorted(action.choices)
     return []
+
+
+def _site_sources() -> list[Path]:
+    """Tracked text that ends up in a help site: the help pages and the apphelp theme.
+
+    The theme README is contributor documentation; it is not deployed and may name the framework.
+    """
+    files = sorted(HELP_SOURCE.glob("*.md"))
+    files += sorted(p for p in APPHELP.rglob("*") if p.is_file() and p.name != "README.md"
+                    and p.suffix in {".md", ".tpl", ".js", ".css", ".html", ".json"})
+    return files
 
 
 def _theme_names() -> list[str]:
@@ -137,6 +150,7 @@ def test_the_lists_are_not_empty():
     assert _theme_names()
     assert _repo_json_keys()
     assert _error_codes()
+    assert _site_sources()
 
 
 def test_every_command_has_a_page_mention():
@@ -171,10 +185,16 @@ def test_section_names_only():
     assert not wrong, f"pages with a section outside {SECTIONS}: {wrong}"
 
 
+def test_no_framework_name_in_the_sources():
+    found = [str(p.relative_to(ROOT)) for p in _site_sources()
+             if FRAMEWORK_NAME in p.read_text(encoding="utf-8", errors="replace").lower()]
+    assert not found, f"files that name the framework: {found}"
+
+
 def test_no_framework_name_in_the_site():
     if not (OFFLINE / "index.html").exists():
         pytest.skip("offline help copy not built")
     found = [str(p.relative_to(OFFLINE)) for p in sorted(OFFLINE.rglob("*"))
              if p.is_file() and p.suffix in {".html", ".js", ".json", ".txt", ".xml", ".md"}
-             and "taxis" in p.read_text(encoding="utf-8", errors="replace").lower()]
+             and FRAMEWORK_NAME in p.read_text(encoding="utf-8", errors="replace").lower()]
     assert not found, f"files that name the framework: {found}"
