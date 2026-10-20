@@ -25,3 +25,9 @@ def test_create_with_app_without_samples_still_prints_steps(tmp_path):
     result = run_kb4it("create", "bookshelf", "repo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert "Preview the site with: kb4it serve" in result.stdout
+
+
+def test_tutorial_no_longer_linux_only():
+    text = open("help/source/getting-started.md", encoding="utf-8").read()
+    assert "GNU/Linux computer" not in text
+    assert "KB4IT 0.8.0" not in text

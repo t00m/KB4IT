@@ -11,7 +11,7 @@ Summary: Install KB4IT, create a knowledge base, write a document and open your 
 
 # Get started with KB4IT
 
-This tutorial takes you from nothing to a working website in about ten minutes. You need a GNU/Linux computer with Python 3.11 or newer.
+This tutorial takes you from nothing to a working website in about ten minutes. You need Python 3.11 or newer on Linux, macOS or Windows.
 
 ## Install KB4IT {#install}
 
@@ -22,7 +22,7 @@ uv tool install KB4IT
 kb4it --version
 ```
 
-The second command prints the version, for example `KB4IT 0.8.0`. Other ways to install are in [Install KB4IT](howto-install.md).
+The second command prints the version, for example `KB4IT 0.9.1`. Other ways to install are in [Install KB4IT](howto-install.md).
 
 ## Create a knowledge base {#create}
 
@@ -44,9 +44,11 @@ mykb/
 
 Open `~/mykb/config/repo.json` and change `"title"` to the name of your site.
 
+The new knowledge base already has sample documents in `source/`. Each sample shows how a finished document looks and says which properties it uses. Read one, then copy it or delete it.
+
 ## Write your first document {#write}
 
-Create `~/mykb/source/backup-check.md` with any text editor:
+Create `~/mykb/source/my-first-document.md` with any text editor:
 
 ```markdown
 ---
@@ -72,10 +74,10 @@ The block between the two `---` lines holds the document's properties. The `#` l
 kb4it build ~/mykb/config/repo.json
 ```
 
-The last lines tell you what happened:
+The last lines tell you what happened. The count is three: your document and the two samples.
 
 ```text
-[WORKFLOW] SUMMARY docs_total=1 compiled=1 skipped=0 invalid=0 ...
+[WORKFLOW] SUMMARY docs_total=3 compiled=3 skipped=0 invalid=0 ...
 [WORKFLOW] URL /home/ann/mykb/target/index.html
 ```
 
