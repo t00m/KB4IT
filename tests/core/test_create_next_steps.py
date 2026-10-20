@@ -21,7 +21,7 @@ def test_create_path_with_spaces_and_unicode(tmp_path):
     assert str(tmp_path / "mi base ñ" / "config" / "repo.json") in result.stdout
 
 
-def test_create_with_app_without_samples_still_prints_steps(tmp_path):
+def test_create_bookshelf_prints_steps(tmp_path):
     home = tmp_path / "home"
     home.mkdir()
     result = run_kb4it("create", "bookshelf", "repo", cwd=tmp_path, home=home)

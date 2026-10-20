@@ -313,6 +313,29 @@ def test_create_project_shows_next_steps(registry, tmp_path):
     assert any("Write documents in" in message for message in seen)
 
 
+def test_create_failure_shows_no_next_steps(registry, tmp_path):
+    blocked = tmp_path / "blocked"
+    blocked.write_text("a file, not a folder", encoding="utf-8")
+    seen = []
+
+    async def scenario(app, pilot):
+        app.notify = lambda message, **kwargs: seen.append(message)
+        await pilot.click("#new")
+        await pilot.pause()
+        create = app.screen
+        ids = [t["id"] for t in create._themes]
+        create.query_one("#themes-list", ListView).index = ids.index("blog")
+        await pilot.pause()
+        create.query_one("#inp-name", Input).value = "Blocked"
+        create.query_one("#inp-path", Input).value = str(blocked)
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert create.query_one("#error-banner", Label).display
+        assert not isinstance(app.screen, tui.MainScreen)
+    run(scenario)
+    assert not any("Preview the site with: kb4it serve" in message for message in seen)
+
+
 def test_import_and_delete_project(registry, mini_repo):
     async def scenario(app, pilot):
         await pilot.click("#import")
