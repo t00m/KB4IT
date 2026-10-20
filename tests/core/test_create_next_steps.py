@@ -1,3 +1,5 @@
+import json
+
 from tests.helpers import run_kb4it
 
 
@@ -25,6 +27,15 @@ def test_create_with_app_without_samples_still_prints_steps(tmp_path):
     result = run_kb4it("create", "bookshelf", "repo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert "Preview the site with: kb4it serve" in result.stdout
+
+
+def test_create_into_existing_repo_uses_requested_theme(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    assert run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home).returncode == 0
+    assert run_kb4it("create", "blog", "repo", cwd=tmp_path, home=home).returncode == 0
+    conf = json.loads((tmp_path / "repo" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["theme"] == "blog"
 
 
 def test_tutorial_no_longer_linux_only():

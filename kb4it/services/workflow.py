@@ -9,6 +9,7 @@ import importlib.util
 import json
 import os
 import shlex
+import shutil
 import stat
 import sys
 import time
@@ -325,6 +326,8 @@ class Workflow(Service):
                 repo_demo = os.path.join(theme_path, "example", "repo")
             self.log.info(f"[WORKFLOW] APP_TEMPLATE name={app_name} path={repo_demo}")
             copydir(repo_demo, repo_path, keep_existing=True)
+            # The theme's own config always replaces an old one, so the theme matches the request.
+            shutil.copyfile(os.path.join(repo_demo, "config", "repo.json"), os.path.join(repo_path, "config", "repo.json"))
             source_dir = os.path.join(repo_path, "source")
             target_dir = os.path.join(repo_path, "target")
             # Git cannot store empty folders, so a sample app may ship without them.
