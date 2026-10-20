@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 LOCKED_ACTIONS = ("build", "create")
 # Parameters that carry code for the build to call, not settings (see services/compiler.py).
 CALLBACK_PARAMS = ("progress_callback", "compile_start_callback")
-# Services of one build that live in backend.pipeline; get_service still answers them in 0.9.x.
+# Services of one build that live in backend.pipeline; get_service still answers them for now.
 PIPELINE_SERVICES = ("Processor", "Compiler", "Deployer")
 
 
@@ -174,7 +174,7 @@ class KB4IT:
     def _pipeline_service(self, name: str):
         """Deprecated: the Processor, Compiler and Deployer of this build belong to backend.pipeline.
 
-        Answered from the current pipeline in 0.9.x, with a debug line once per name; removed in 0.10.0.
+        Answered from the current pipeline for now, with a debug line once per name; removed in the next minor release.
         """
         backend = self.services.get("Backend")
         pipeline = getattr(backend, "pipeline", None)
@@ -273,7 +273,7 @@ class KB4IT:
 
 
 def version_text():
-    """'KB4IT 0.7.10', plus the git describe of a source checkout so development builds are identifiable."""
+    """'KB4IT 1.2.3', plus the git describe of a source checkout so development builds are identifiable."""
     text = f"{ENV['APP']['shortname']} {ENV['APP']['version']}"
     described = git_describe(os.path.dirname(ENV["CONF"]["ROOT"]))
     return f"{text} ({described})" if described else text

@@ -28,7 +28,7 @@ from kb4it.core.util import (get_default_workers, get_source_docs,
 # Callbacks of a build come with it: KB4IT(params) takes "progress_callback", called per
 # document with (basename: str, rc: bool), and "compile_start_callback", called once with the
 # number of documents (total: int). The set_* functions below are deprecated (removed in
-# 0.10.0): what they register is used by the next build only, then forgotten.
+# the next minor release): what they register is used by the next build only, then forgotten.
 _pending_callbacks = {}
 
 

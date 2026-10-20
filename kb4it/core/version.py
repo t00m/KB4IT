@@ -9,7 +9,7 @@ CLAUSE_RE = re.compile(r"^(>=|<=|==|!=|>|<)?\s*(.+)$")
 
 
 def parse_version(text: str) -> tuple:
-    """Return (major, minor, patch) from '0.7.10'; local '+...' parts are ignored."""
+    """Return (major, minor, patch) from '1.2.3'; local '+...' parts are ignored."""
     match = VERSION_RE.match(str(text).strip().split("+", 1)[0])
     if not match:
         raise ValueError(f"not a version: {text!r}")

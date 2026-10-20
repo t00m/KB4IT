@@ -5,7 +5,6 @@
     "email": "[tomasvirseda@gmail.com]",
     "website": "https://github.com/t00m/KB4IT",
     "description": "Theme for technical documentation",
-    "version": "0.3.0",
     "search": true,
     "feed": false,
     "kb4it": ">=0.9.0",

@@ -125,7 +125,7 @@ print("RUN_RESULT", KB4IT(params).run())
 
 
 def test_old_service_lookups_answer_from_the_pipeline(tmp_path, home):
-    """get_service("Compiler") and the others still work in 0.9.x, logged once per name (AR-03, D-G4)."""
+    """get_service("Compiler") and the others still work for now, logged once per name (AR-03, D-G4)."""
     theme = mini_theme(tmp_path / "mini")
     cfg = write_repo(tmp_path / "repo", "mini", {"a.md": page("A", Tag="x")}, theme_path=str(theme))
     result = subprocess.run([sys.executable, "-c", _OLD_LOOKUPS, str(cfg)], cwd=str(tmp_path),

@@ -1,4 +1,5 @@
 import json
+import re
 
 from tests.helpers import run_kb4it
 
@@ -41,4 +42,4 @@ def test_create_into_existing_repo_uses_requested_theme(tmp_path):
 def test_tutorial_no_longer_linux_only():
     text = open("help/source/getting-started.md", encoding="utf-8").read()
     assert "GNU/Linux computer" not in text
-    assert "KB4IT 0.8.0" not in text
+    assert re.search(r"KB4IT \d+\.\d+", text) is None

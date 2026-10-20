@@ -64,6 +64,7 @@ def get_themes() -> list[dict]:
                     continue
                 seen_ids.add(tid)
                 data["_scope"] = scope
+                data["version"] = VERSION  # every theme listed has KB4IT\'s version
                 data["_path"] = str(entry)
                 themes.append(data)
             except Exception:

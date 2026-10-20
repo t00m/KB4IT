@@ -1,5 +1,7 @@
 from apphelp_config import DEFAULT_LABELS, load_config
 
+from kb4it.core.env import ENV
+
 
 def test_defaults():
     config = load_config({"title": "X"})
@@ -41,3 +43,11 @@ def test_accent_accepts_only_exact_hex_forms():
 def test_missing_or_null_version_is_empty():
     assert load_config({}).version == ""
     assert load_config({"version": None}).version == ""
+
+
+def test_version_token_is_the_kb4it_version():
+    assert load_config({"version": "kb4it"}).version == ENV["APP"]["version"]
+
+
+def test_plain_version_is_kept():
+    assert load_config({"version": "2.1"}).version == "2.1"
