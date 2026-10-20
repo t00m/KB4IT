@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import site
 import subprocess
 import sys
 from pathlib import Path
@@ -16,8 +17,9 @@ _RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; 
 
 def isolated_env(home, **extra):
     """Environment for a kb4it subprocess whose per-user files live under home/.kb4it on every OS."""
+    # A fake HOME hides ~/.local, so keep the user base: optional packages stay visible.
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
-               PYTHONPATH=str(ROOT), COLUMNS="1000")
+               PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000")
     env.update(extra)
     return env
 
