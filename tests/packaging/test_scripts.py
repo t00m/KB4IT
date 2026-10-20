@@ -129,3 +129,17 @@ def test_dockerfile_installs_the_release_wheel_as_non_root():
     assert "KB4IT_HOME=/tmp/kb4it" in text and "WORKDIR /work" in text and "EXPOSE 8642" in text
     for label in ("title", "description", "version", "revision", "source", "licenses", "documentation"):
         assert f"org.opencontainers.image.{label}=" in text, label
+
+
+_OFFLINE = "scripts/help/build_offline.py"
+_PACKAGE_BUILD = re.compile(r"uv build|python3 -m build|build_python\.sh")
+
+
+@pytest.mark.parametrize("script", [DIST / "build_all.sh", ROOT / "scripts" / "release.sh"], ids=lambda p: p.name)
+def test_release_builds_the_offline_help_before_packaging(script):
+    text = script.read_text(encoding="utf-8")
+    offline = text.find(_OFFLINE)
+    assert offline != -1, f"{script.name} never builds the offline help"
+    first_build = _PACKAGE_BUILD.search(text)
+    assert first_build is not None
+    assert offline < first_build.start()
