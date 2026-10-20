@@ -1,6 +1,6 @@
 # First run: a new knowledge base that explains itself
 
-Status: draft, waiting for approval.
+Status: approved on 2026-10-20 with the default answers to the open questions.
 Date: 2026-10-20
 Scope: KB4IT 0.9.x. Themes techdoc, blog, bookshelf, apphelp. The `kb4it create` command and the TUI create screen.
 
@@ -108,11 +108,11 @@ Done. Each theme's README lists the minimum keys. The `create` command still wri
 
 ## Open questions
 
-These need your answer. They change what gets built.
+Answered on 2026-10-20. The defaults were approved.
 
-1. Should the samples say "delete me" in their text, or only explain the properties? My default: explain the properties and say they can be copied and deleted, without a "delete me" banner.
-2. Does the TUI create screen also show the next steps? My default: yes, the same three lines in its status area.
-3. Should `create` write the full sample `repo.json` as it does now, or the minimum keys with the rest commented out? My default: keep the full file, because the minimum file has no comments.
+1. Samples explain the properties and say they can be copied and deleted. No "delete me" banner.
+2. The TUI create screen shows the same three next-step lines in its status area.
+3. `create` keeps writing the full sample `repo.json`.
 
 ## What is left to the builder
 
