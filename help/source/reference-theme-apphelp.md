@@ -38,6 +38,7 @@ apphelp builds the help of an application, like the site you are reading. The sa
 | `HelpId` | no | Ids the application opens with `go.html?id=<id>` |
 | `Keyword` | no | Words readers search for that the text does not use |
 | `Level` | no | From the `Level` vocabulary |
+| `Platform` | no | One or more platforms the page applies to; each value is shown as a chip under the title and offered as a search filter. Checked against the `Platform` vocabulary when `repo.json` defines one |
 | `Since` | no | Version that introduced the feature; pages for the current version are listed as new |
 | `Plugin` | no | Plugin the page belongs to; shown under the title as "Plugin: name" and offered as a search filter. Only the first value is used, and it is not checked against a vocabulary |
 | `Related` | no | Pages listed first under **Related pages** |
