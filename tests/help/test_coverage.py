@@ -72,6 +72,19 @@ def _command_names() -> list[str]:
     return []
 
 
+def _option_strings() -> list[str]:
+    """Every option of the top-level parser and of each subcommand, without -h and --help."""
+    parser = build_parser()
+    parsers = [parser]
+    for action in parser._subparsers._group_actions:  # noqa: SLF001
+        parsers.extend(action.choices.values())
+    options = set()
+    for sub in parsers:
+        for action in sub._actions:  # noqa: SLF001
+            options.update(o for o in action.option_strings if o not in ("-h", "--help"))
+    return sorted(options)
+
+
 def _site_sources() -> list[Path]:
     """Tracked text that ends up in a help site: the help pages and the apphelp theme.
 
@@ -150,6 +163,7 @@ def test_the_lists_are_not_empty():
     assert _theme_names()
     assert _repo_json_keys()
     assert _error_codes()
+    assert _option_strings()
     assert _site_sources()
 
 
@@ -157,6 +171,12 @@ def test_every_command_has_a_page_mention():
     text = "\n".join(_pages().values())
     missing = [name for name in _command_names() if f"kb4it {name}" not in text]
     assert not missing, f"commands with no page: {missing}"
+
+
+def test_every_command_option_has_a_page_mention():
+    text = "\n".join(_pages().values())
+    missing = [opt for opt in _option_strings() if not re.search(rf"(?<![\w-]){re.escape(opt)}(?![\w-])", text)]
+    assert not missing, f"options with no page: {missing}"
 
 
 def test_every_bundled_theme_has_a_reference_page():
