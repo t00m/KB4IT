@@ -384,6 +384,23 @@ def test_tui_shows_the_help_banner_until_dismissed(registry, tmp_path, monkeypat
     run(scenario)
 
 
+def test_tui_drops_the_dismiss_key_once_the_banner_is_gone(registry, tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))
+    monkeypatch.delenv("CI", raising=False)
+
+    def dismiss_offered(app):
+        active = app.screen.active_bindings.get("d")
+        return active is not None and active.enabled
+
+    async def scenario(app, pilot):
+        assert dismiss_offered(app)
+        await pilot.press("d")
+        await pilot.pause()
+        assert not dismiss_offered(app)
+    run(scenario)
+
+
 def test_tui_hides_the_help_banner_in_ci(registry, tmp_path, monkeypatch):
     from kb4it.core.env import ENV
     monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))

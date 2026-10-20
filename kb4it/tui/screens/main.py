@@ -106,6 +106,13 @@ class MainScreen(Screen):
         if idx is not None:
             self._open_at(idx)
 
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        # Offer "d" only while the banner shows; afterwards it leaves the footer.
+        if action == "dismiss_help":
+            banner = self.query("#help-banner")
+            return bool(banner) and bool(banner.first().display)
+        return True
+
     def action_dismiss_help(self) -> None:
         banner = self.query_one("#help-banner", Static)
         if not banner.display:
@@ -116,6 +123,7 @@ class MainScreen(Screen):
             self.app.notify(f"Cannot dismiss the help notice: {error}", severity="warning")
             return
         banner.display = False
+        self.refresh_bindings()
 
     def action_request_quit(self) -> None:
         self.app.exit()
