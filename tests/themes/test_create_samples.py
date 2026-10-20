@@ -26,3 +26,23 @@ def test_build_with_no_documents_succeeds(tmp_path):
         doc.unlink()
     result = run_kb4it("build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
+
+
+def test_techdoc_samples_build_and_show(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    assert run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home).returncode == 0
+    cfg = tmp_path / "repo" / "config" / "repo.json"
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    index = (tmp_path / "repo" / "target" / "index.html").read_text(encoding="utf-8")
+    assert "Check last night" in index
+    assert "Disk full on the file server" in index
+
+
+def test_create_keeps_same_name_user_file(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    (tmp_path / "repo" / "source").mkdir(parents=True)
+    (tmp_path / "repo" / "source" / "backup-check.md").write_text("my runbook", encoding="utf-8")
+    assert run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home).returncode == 0
+    assert (tmp_path / "repo" / "source" / "backup-check.md").read_text(encoding="utf-8") == "my runbook"

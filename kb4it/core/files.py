@@ -62,8 +62,10 @@ def copy_docs(docs: list[str], target: str) -> None:
     log.debug(f"{len(docs)} documents copied to '{target}'")
 
 
-def copydir(source: str, dest: str) -> None:
+def copydir(source: str, dest: str, keep_existing: bool = False) -> None:
     """Copy a directory structure overwriting existing files.
+
+    With keep_existing, a file already in dest is left as it is.
 
     https://gist.github.com/dreikanter/5650973#gistcomment-835606
     """
@@ -74,6 +76,10 @@ def copydir(source: str, dest: str) -> None:
         for file in files:
             rel_path = root.replace(source, "").lstrip(os.sep)
             dest_path = os.path.join(dest, rel_path)
+
+            if keep_existing and os.path.exists(os.path.join(dest_path, file)):
+                log.info(f"[FILES] KEEP_EXISTING path={os.path.join(dest_path, file)}")
+                continue
 
             if not os.path.isdir(dest_path):
                 os.makedirs(dest_path, exist_ok=True)
