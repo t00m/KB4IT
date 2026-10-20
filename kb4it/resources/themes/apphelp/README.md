@@ -4,6 +4,40 @@ AppHelp builds a help site for an application. The site works when opened from d
 
 Create a site with `kb4it create apphelp <path>`; the sample in `apps/default/` shows every page type.
 
+## Minimum core
+
+A new `config/repo.json` needs these four keys, plus an `apphelp` block that lists the allowed `Feature` values:
+
+```json
+{
+    "source": "source",
+    "target": "target",
+    "theme": "apphelp",
+    "title": "My App Help",
+    "apphelp": {
+        "vocabulary": {
+            "Feature": ["Getting started", "Documents", "Search", "Settings", "Plugins"]
+        }
+    }
+}
+```
+
+| Key | Meaning |
+| --- | --- |
+| `source` | Folder with your Markdown pages |
+| `target` | Folder where the site is written |
+| `theme` | Must be `apphelp` |
+| `title` | Application name, shown in the header and the browser tab |
+| `apphelp.vocabulary.Feature` | The only values a page may use for `Feature` |
+
+Without the `apphelp` block the build fails with `META_CONFIG reason=missing_feature_vocabulary`. This is because `strict` is on by default.
+
+Tested: this file with one page from the sample builds with exit code 0.
+
+Every page needs these properties: `DocType`, `Feature`, `Order`, `Section` and `Summary`. A page with a missing or unknown value fails the build while `strict` is on.
+
+`Level` and `Platform` are optional. They are checked only when you list their values in `apphelp.vocabulary`.
+
 ## Type of document
 
 AppHelp follows the [Diátaxis](https://diataxis.fr/) framework, like the `techdoc` theme. Every page has exactly one type of document, set with the `DocType` key:
