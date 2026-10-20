@@ -291,6 +291,28 @@ def test_create_project(registry, tmp_path):
     assert tui.load_projects() == [{"name": "New blog", "config": str(path / "config" / "repo.json")}]
 
 
+def test_create_project_shows_next_steps(registry, tmp_path):
+    path = tmp_path / "steps"
+    seen = []
+
+    async def scenario(app, pilot):
+        app.notify = lambda message, **kwargs: seen.append(message)
+        await pilot.click("#new")
+        await pilot.pause()
+        create = app.screen
+        ids = [t["id"] for t in create._themes]
+        create.query_one("#themes-list", ListView).index = ids.index("blog")
+        await pilot.pause()
+        create.query_one("#inp-name", Input).value = "Steps"
+        create.query_one("#inp-path", Input).value = str(path)
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.MainScreen)
+    run(scenario)
+    assert any("Preview the site with: kb4it serve" in message for message in seen)
+    assert any("Write documents in" in message for message in seen)
+
+
 def test_import_and_delete_project(registry, mini_repo):
     async def scenario(app, pilot):
         await pilot.click("#import")
