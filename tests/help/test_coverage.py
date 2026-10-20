@@ -218,3 +218,18 @@ def test_no_framework_name_in_the_site():
              if p.is_file() and p.suffix in {".html", ".js", ".json", ".txt", ".xml", ".md"}
              and FRAMEWORK_NAME in p.read_text(encoding="utf-8", errors="replace").lower()]
     assert not found, f"files that name the framework: {found}"
+
+
+def _index_warn_mb(path: Path) -> int:
+    """INDEX_WARN_BYTES of a module, in MB, read from its source."""
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Assign) and any(_name_of(t) == "INDEX_WARN_BYTES" for t in node.targets):
+            return eval(compile(ast.Expression(node.value), str(path), "eval")) // (1024 * 1024)  # noqa: S307
+    raise AssertionError(f"no INDEX_WARN_BYTES in {path}")
+
+
+def test_index_large_thresholds_match_the_code():
+    page = (HELP_SOURCE / "reference-log-codes.md").read_text(encoding="utf-8")
+    row = next(line for line in page.splitlines() if line.startswith("| `INDEX_LARGE`"))
+    for source in (PACKAGE / "core" / "search.py", APPHELP / "logic" / "theme.py"):
+        assert f"{_index_warn_mb(source)} MB" in row, f"INDEX_LARGE row lacks the threshold of {source.name}"

@@ -36,7 +36,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 
 `kb4it help --url` prints the online address and does nothing else.
 
-Until you dismiss it, every other command prints a two-line notice on standard error. The notice gives the path of the offline copy and the online address. `kb4it help --dismiss` hides it for good: it writes the file `help-notice-dismissed` in `~/.kb4it` (or in `KB4IT_HOME`). Delete that file to see the notice again. The terminal interface shows the same text as a banner, until you press `d` there or run this command. The notice never shows when the variable `CI` is set.
+Until you dismiss it, every other command prints a two-line notice on standard error. The notice gives the path of the offline copy and the online address. `kb4it help --dismiss` hides it for good: it writes the file `help-notice-dismissed` in `~/.kb4it` (or in `KB4IT_HOME`). Delete that file to see the notice again. The terminal interface shows the first line of the notice as a banner, until you press `d` there or run this command. The notice never shows when the variable `CI` is set.
 
 ## Options {#options}
 
