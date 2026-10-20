@@ -95,5 +95,6 @@ def test_hostile_values_are_text(tmp_path, home, theme):
     if theme == "techdoc":
         assert (target / "events_2026.html").is_file()
     if theme == "bookshelf":
-        book = next(target.glob("Book_*.html")).read_text(encoding="utf-8")
+        # The shipped sample book shares the shelf, so pick the page with the hostile book.
+        book = next(text for p in target.glob("Book_*.html") if "EX200" in (text := p.read_text(encoding="utf-8")))
         assert "EX200 &middot;" in book or "EX200" in book
