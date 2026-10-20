@@ -68,6 +68,7 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
+        self.next_steps = []
         self.set_log_file()
         self.__setup_environment()
         if params is not None:
@@ -225,6 +226,8 @@ class KB4IT:
                 workflow.list_projects()
             elif action == "create":
                 workflow.create_repository()
+                for line in self.next_steps:
+                    print(line)
             elif action == "build":
                 workflow.build_website()
             elif action == "info":

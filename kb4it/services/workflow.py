@@ -347,11 +347,12 @@ class Workflow(Service):
             if executable:
                 os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info("[WORKFLOW] REPO_INITIALIZED")
-            self.log.info(f"[WORKFLOW] HINT compile_script path={script}")
-            self.log.info(f"[WORKFLOW] HINT source_dir path={source_dir}")
-            self.log.info(f"[WORKFLOW] HINT target_dir path={target_dir}")
-            self.log.info(f"[WORKFLOW] HINT config_file path={config_file}")
-            self.log.info("[WORKFLOW] HINT help command='kb4it -h'")
+            repo_abs = os.path.abspath(repo_path)
+            self.app.next_steps = [
+                f"Your knowledge base is ready at {repo_abs}.",
+                f"Write documents in {os.path.join(repo_abs, 'source')}/ and copy or delete the samples there.",
+                f"Preview the site with: kb4it serve {config_file}",
+            ]
 
             # Register project in projects.json
             repo_title = repoconf.get("title") or os.path.basename(repo_path)
