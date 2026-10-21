@@ -21,7 +21,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (window.mermaid) {
             mermaid.initialize({startOnLoad: false, theme: pageIsDark() ? 'dark' : 'default'});
-            mermaid.run({querySelector: 'pre.mermaid'}).catch(function () {});
+            mermaid.run({querySelector: 'pre.mermaid', suppressErrors: true}).catch(function () {});
         }
         if (window.katex) {
             document.querySelectorAll('.kb4it-math').forEach(function (el) {
