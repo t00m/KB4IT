@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 THEMES = "kb4it/resources/themes"
 COMMON_TEMPLATES = "kb4it/resources/common/templates"
 BASES = "kb4it/resources/bases"
-REQUIRED_KEYS = ("id", "name", "version", "kb4it")
+REQUIRED_KEYS = ("id", "name", "kb4it")
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 
 

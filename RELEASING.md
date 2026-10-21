@@ -27,7 +27,7 @@ Every theme's `theme.json` has a `kb4it` requirement, for example `">=0.7.9"` or
 
 `scripts/devel/check_themes.sh` checks every theme tracked in git:
 
-- `theme.json` has `id`, `name`, `version` and `kb4it`, and the `id` matches the folder
+- `theme.json` has `id`, `name` and `kb4it` (KB4IT gives every theme its own version), and the `id` matches the folder
 - the requirement is met by the version being released
 - the required templates and the `deploy_dirs` folders exist
 - every sample app under `apps/` is created and built with no error and no warning
