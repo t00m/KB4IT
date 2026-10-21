@@ -7,9 +7,10 @@ Head meta service: description, Open Graph and canonical link of each page.
 # License: GPL v3
 """
 
+import html as htmllib
 import re
 
-from kb4it.core.mdrich import MATH_MARK, MERMAID_MARK
+from kb4it.core.mdrich import MATH_MARKS, MERMAID_MARK
 from kb4it.core.publish import absolute
 from kb4it.core.search import load_doc_sections
 from kb4it.core.util import html_id_for
@@ -56,7 +57,7 @@ class HeadMetaMixin:
             "description": short_text(text, 160), "author": ", ".join(values("Author")),
             "url": absolute(base, page_name) if base else "",
             "image": absolute(base, image) if base and image else "",
-            "favicon": repo.get("logo") or theme_icon, "mermaid": MERMAID_MARK in html, "math": MATH_MARK in html,
+            "favicon": repo.get("logo") or theme_icon, "mermaid": MERMAID_MARK in html, "math": any(mark in html for mark in MATH_MARKS),
             "feed": "feed.xml" if self.feed_enabled() else "",
             "has_description": '<meta name="description"' in head, "has_author": '<meta name="author"' in head,
         }
@@ -83,5 +84,5 @@ class HeadMetaMixin:
             return html
         head_end = html.lower().find("</head>")
         head = BASE_TAG.sub("", html[opening.end():head_end])
-        tag = f'<base href="{base.rstrip("/")}/">\n'
+        tag = f'<base href="{htmllib.escape(base.rstrip("/") + "/", quote=True)}">\n'
         return html[:opening.end()] + "\n" + tag + head.lstrip("\n") + html[head_end:]

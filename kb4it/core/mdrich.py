@@ -9,9 +9,9 @@ from markdown.extensions import Extension
 from markdown.inlinepatterns import AUTOLINK_RE, AUTOMAIL_RE, HTML_RE, InlineProcessor
 from markdown.preprocessors import Preprocessor
 
-# Pages whose HTML contains these need the Mermaid or KaTeX scripts.
-MERMAID_MARK = 'class="mermaid"'
-MATH_MARK = 'class="kb4it-math'
+# Pages whose HTML contains these need the Mermaid or KaTeX scripts; inline code escapes the "<", so it never matches.
+MERMAID_MARK = '<pre class="mermaid">'
+MATH_MARKS = ('<span class="kb4it-math', '<div class="kb4it-math')
 # User extensions that render formulas themselves; the core math processors then stay off.
 MATH_EXTENSIONS = ("pymdownx.arithmatex", "markdown_katex")
 

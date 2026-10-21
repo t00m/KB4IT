@@ -19,6 +19,8 @@ def _pages():
                            Category="Post", Date="2026-10-08", DocType="Reference"),
         "formula.md": page("Formula", "Inline $a^2 + b^2$ here.\n\n$$\nE = mc^2\n$$\n",
                            Category="Post", Date="2026-10-08", DocType="Reference"),
+        "markup.md": page("Markup", 'Write `<pre class="mermaid">` or `<span class="kb4it-math">`.\n',
+                          Category="Post", Date="2026-10-08", DocType="Reference"),
     }
 
 
@@ -73,6 +75,8 @@ def test_render_scripts_only_where_needed(tmp_path, home, theme):
     diagram = (target / "diagram.html").read_text(encoding="utf-8")
     formula = (target / "formula.html").read_text(encoding="utf-8")
     assert "resources/render/" not in plain
+    # Inline code that shows the markup is not a diagram or a formula.
+    assert "resources/render/" not in (target / "markup.html").read_text(encoding="utf-8")
     assert "resources/render/mermaid/mermaid.min.js" in diagram
     assert "resources/render/kb4it-render.js" in diagram
     assert "katex" not in diagram
@@ -96,3 +100,12 @@ def test_admin_page_has_favicon(tmp_path, home):
     target = _build(tmp_path, home, "techdoc", admin=True, logo="resources/mylogo.svg")
     html = (target / "admin" / "index.html").read_text(encoding="utf-8")
     assert _icon(html) == ["../resources/mylogo.svg"]
+
+
+def test_base_href_is_escaped():
+    from types import SimpleNamespace
+
+    from kb4it.services.headmeta import HeadMetaMixin
+    builder = SimpleNamespace(srvbes=SimpleNamespace(site_url='https://ex.org/a"b&c'))
+    html = HeadMetaMixin._with_base(builder, "<html><head><title>x</title></head><body></body></html>")
+    assert '<base href="https://ex.org/a&quot;b&amp;c/">' in html
