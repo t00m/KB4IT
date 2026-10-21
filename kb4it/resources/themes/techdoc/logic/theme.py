@@ -404,6 +404,7 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         HTML += HTML_FOOTER.render(var=var)
 
         page_path = os.path.join(admin_dir, 'index.html')
+        HTML = self.inject_head_meta(HTML, 'admin/index.html')
         tree = etree.fromstring(HTML, parser)
         self.relocate_links(tree)
         pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()

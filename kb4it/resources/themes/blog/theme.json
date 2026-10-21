@@ -7,7 +7,8 @@
     "description": "Theme for creating simple blogs",
     "search": true,
     "feed": true,
-    "kb4it": ">=0.9.0",
+    "kb4it": ">=0.9.1",
+    "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit"
 }

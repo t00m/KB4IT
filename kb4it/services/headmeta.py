@@ -7,6 +7,7 @@ Head meta service: description, Open Graph and canonical link of each page.
 # License: GPL v3
 """
 
+from kb4it.core.mdrich import MATH_MARK, MERMAID_MARK
 from kb4it.core.publish import absolute
 from kb4it.core.search import load_doc_sections
 from kb4it.core.util import html_id_for
@@ -44,11 +45,14 @@ class HeadMetaMixin:
             text, title = repo.get("tagline", ""), repo.get("title", "")
         head = html[:html.lower().find("</head>")].lower()
         image = repo.get("og_image")
+        theme = self.srvbes.get_dict("theme") or {}
+        theme_icon = f"resources/themes/{theme['id']}/{theme['favicon']}" if theme.get("id") and theme.get("favicon") else ""
         return {
             "title": title, "site_name": repo.get("title", ""), "type": "article" if doc_id else "website",
             "description": short_text(text, 160), "author": ", ".join(values("Author")),
             "url": absolute(base, page_name) if base else "",
             "image": absolute(base, image) if base and image else "",
+            "favicon": repo.get("logo") or theme_icon, "mermaid": MERMAID_MARK in html, "math": MATH_MARK in html,
             "feed": "feed.xml" if self.feed_enabled() else "",
             "has_description": '<meta name="description"' in head, "has_author": '<meta name="author"' in head,
         }
