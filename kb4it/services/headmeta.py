@@ -7,6 +7,8 @@ Head meta service: description, Open Graph and canonical link of each page.
 # License: GPL v3
 """
 
+import re
+
 from kb4it.core.mdrich import MATH_MARK, MERMAID_MARK
 from kb4it.core.publish import absolute
 from kb4it.core.search import load_doc_sections
@@ -14,6 +16,8 @@ from kb4it.core.util import html_id_for
 
 META_START = "<!-- kb4it:meta -->"
 META_END = "<!-- /kb4it:meta -->"
+HEAD_OPEN = re.compile(r"<head\b[^>]*>", re.IGNORECASE)
+BASE_TAG = re.compile(r"<base\b[^>]*>\s*", re.IGNORECASE)
 
 
 def short_text(text, limit) -> str:
@@ -65,5 +69,19 @@ class HeadMetaMixin:
         close = html.lower().find("</head>")
         if close < 0:
             return html
+        if page_name == "404.html":
+            html = self._with_base(html)
+            close = html.lower().find("</head>")
         block = self.render_template("HTML_HEAD_META", {"meta": self.page_meta(page_name, html)}).strip()
         return html[:close] + block + "\n" + html[close:]
+
+    def _with_base(self, html) -> str:
+        """html with <base href> right after <head>, so the 404 page finds its files from any URL."""
+        base = getattr(self.srvbes, "site_url", None)
+        opening = HEAD_OPEN.search(html)
+        if not base or not opening:
+            return html
+        head_end = html.lower().find("</head>")
+        head = BASE_TAG.sub("", html[opening.end():head_end])
+        tag = f'<base href="{base.rstrip("/")}/">\n'
+        return html[:opening.end()] + "\n" + tag + head.lstrip("\n") + html[head_end:]

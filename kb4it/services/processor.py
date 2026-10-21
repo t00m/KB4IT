@@ -107,7 +107,7 @@ class Processor(Service):
             docId = os.path.basename(filepath)
 
             # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
-            if is_windows_reserved(docId):
+            if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()):
                 self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
                 self.plan.invalid_docs.append((docId, "reserved_name"))
                 continue

@@ -162,6 +162,7 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        self.build_page_404()
         self.build_page_add()
         self.build_page_index(var)
         self.build_page_index_all()

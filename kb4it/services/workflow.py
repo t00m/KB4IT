@@ -161,8 +161,9 @@ class Workflow(Service):
 
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
+        reserved = self._theme_reserved_pages(repo, config_file)
         for doc in docs:
-            if is_windows_reserved(doc):
+            if is_windows_reserved(doc) or os.path.basename(doc) in reserved:
                 non_conformant.append((doc, "reserved_name"))
                 continue
             _keys, success, reason = get_document_attributes(doc)
@@ -262,6 +263,24 @@ class Workflow(Service):
             if os.path.isfile(os.path.join(candidate, "theme.json")):
                 return candidate
         return None
+
+    def _theme_reserved_pages(self, repo, config_file):
+        """Source page names the theme writes itself (its `reserved_pages`), or an empty tuple."""
+        theme_dir = self._find_theme_dir(repo, config_file)
+        logic = os.path.join(theme_dir, "logic") if theme_dir else ""
+        path = os.path.join(logic, "theme.py")
+        if not os.path.isfile(path):
+            return ()
+        sys.path.insert(0, logic)
+        try:
+            spec = importlib.util.spec_from_file_location(f"kb4it_reserved_{repo.get('theme', 'theme')}", path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return tuple(getattr(module.Theme, "reserved_pages", ()))
+        except Exception:
+            return ()
+        finally:
+            sys.path.remove(logic)
 
     def _theme_verify(self, repo, config_file, docs):
         """Run the theme's optional logic/verify.py and return its problem lines."""
