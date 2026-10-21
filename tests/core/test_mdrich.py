@@ -1,5 +1,7 @@
 """Core Markdown extension: mermaid fences and dollar formulas become marked elements."""
 
+import re
+
 import pytest
 
 from kb4it.core.mdconfig import MarkdownSettings, sanitize_html
@@ -127,3 +129,33 @@ def test_user_math_extension_disables_core():
 def test_sanitize_keeps_rich_markup(markup):
     pytest.importorskip("nh3")
     assert sanitize_html(markup) == markup
+
+
+DISPLAY_SPAN = '<span class="kb4it-math kb4it-math-display">'
+
+
+def test_double_dollar_mid_sentence_is_display_span():
+    assert f"{DISPLAY_SPAN}x</span>" in _html("see $$x$$ here")
+
+
+def test_display_math_in_list_item_is_display_span():
+    html = _html("- item\n\n    $$\n    x\n    $$\n")
+    assert f"{DISPLAY_SPAN}x</span>" in html
+    assert '<span class="kb4it-math">$' not in html
+
+
+def test_single_dollar_never_takes_half_a_pair():
+    html = _html("$a$$b$")
+    assert not re.search(r'<span class="kb4it-math[^"]*">[^<]*\$', html)
+
+
+def test_two_display_formulas_on_one_line():
+    html = _html("$$a$$ text $$b$$\n")
+    assert f"{DISPLAY_SPAN}a</span> text {DISPLAY_SPAN}b</span>" in html
+    assert "<div" not in html
+
+
+def test_display_math_in_tilde_fence_stays_code():
+    html = _html("~~~\n$$\nx\n$$\n~~~\n")
+    assert "kb4it-math" not in html
+    assert "$$\nx\n$$" in html

@@ -16,8 +16,11 @@ MATH_MARK = 'class="kb4it-math'
 MATH_EXTENSIONS = ("pymdownx.arithmatex", "markdown_katex")
 
 FENCE_RE = re.compile(r"^(`{3,}|~{3,})(.*)$")
-DISPLAY_LINE_RE = re.compile(r"^\$\$(.*\S.*)\$\$\s*$")
-INLINE_MATH_RE = r"(?<!\$)\$(?=\S)(.+?)(?<=\S)\$(?!\$)"
+# A whole line $$...$$; no bare $ inside, so "$$a$$ text $$b$$" is left to the inline processors.
+DISPLAY_LINE_RE = re.compile(r"^\$\$((?:\\.|[^$\\])+)\$\$\s*$")
+# Escaped dollars are stashed before these run, so a bare $ never belongs to the formula.
+INLINE_DISPLAY_RE = r"(?<!\$)\$\$([^$]+)\$\$(?!\$)"
+INLINE_MATH_RE = r"(?<!\$)\$(?![\s$])([^$]+?)(?<!\s)\$(?!\$)"
 # What the escape processor stashes for a backslash escape: STX + code point + ETX.
 ESCAPED_RE = re.compile(f"^{util.STX}([0-9]+){util.ETX}$")
 
@@ -58,7 +61,7 @@ class _DisplayMathPreprocessor(Preprocessor):
         while index < len(lines):
             line = lines[index].rstrip()
             single = DISPLAY_LINE_RE.match(line)
-            if single:
+            if single and single.group(1).strip():
                 out += self._stash(single.group(1).strip())
                 index += 1
                 continue
@@ -78,7 +81,11 @@ class _DisplayMathPreprocessor(Preprocessor):
         return ["", self.md.htmlStash.store(markup), ""]
 
 
-class _InlineMathProcessor(InlineProcessor):
+class _MathProcessor(InlineProcessor):
+    """A formula in paragraph text, as a span with the class below."""
+
+    css_class = "kb4it-math"
+
     def handleMatch(self, m, data):
         stashed = self.md.treeprocessors["inline"].stashed_nodes
 
@@ -91,12 +98,19 @@ class _InlineMathProcessor(InlineProcessor):
             return "\\" + chr(int(escaped.group(1)))
 
         try:
-            tex = util.INLINE_PLACEHOLDER_RE.sub(unescape, m.group(1))
+            tex = util.INLINE_PLACEHOLDER_RE.sub(unescape, m.group(1)).strip()
         except LookupError:
             return None, None, None
-        element = etree.Element("span", {"class": "kb4it-math"})
+        if not tex:
+            return None, None, None
+        element = etree.Element("span", {"class": self.css_class})
         element.text = util.AtomicString(tex)
         return element, m.start(0), m.end(0)
+
+
+class _InlineDisplayMathProcessor(_MathProcessor):
+    # A span, not a div, so the HTML stays valid inside <p>.
+    css_class = "kb4it-math kb4it-math-display"
 
 
 class RichContentExtension(Extension):
@@ -108,5 +122,7 @@ class RichContentExtension(Extension):
         md.preprocessors.register(_MermaidPreprocessor(md), "kb4it_mermaid", 30)
         # 20: after the fences (25) and the raw HTML blocks (also 20, registered earlier).
         md.preprocessors.register(_DisplayMathPreprocessor(md), "kb4it_display_math", 20)
-        # 155: after backticks (190), escapes (180) and links (160), before emphasis (60).
-        md.inlinePatterns.register(_InlineMathProcessor(INLINE_MATH_RE, md), "kb4it_inline_math", 155)
+        # 156 and 155: after backticks (190), escapes (180) and links (160), before emphasis (60);
+        # $$...$$ first, so a single $ never starts on half of a $$ pair.
+        md.inlinePatterns.register(_InlineDisplayMathProcessor(INLINE_DISPLAY_RE, md), "kb4it_inline_display_math", 156)
+        md.inlinePatterns.register(_MathProcessor(INLINE_MATH_RE, md), "kb4it_inline_math", 155)
