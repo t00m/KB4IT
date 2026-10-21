@@ -7,8 +7,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.9.1] - 2026-10-21
+
 ### Added
 
+- `kb4it help` opens the copy of the help that ships inside the package, with no network; `kb4it help --url` prints the online address. Until `kb4it help --dismiss`, every command prints a two-line notice with both addresses (never when `CI` is set), and the terminal interface shows it as a banner (press `d` to hide it).
+- `kb4it create` prints three next steps, and the default apps of techdoc, blog and bookshelf come with sample documents to read and replace. The terminal interface shows the same next steps.
 - Mermaid diagrams: a fenced block named `mermaid` is drawn in the browser, in all four themes. The files are bundled and deployed to `resources/render/` only when a page of the site uses them, so it works from `file://`; only pages with a diagram load them. Diagrams use dark colours when the page background is dark. A diagram with an error shows a message in the page, does not fail the build and does not stop the other diagrams of the page. Mermaid 11.17.2 is bundled (12.2.0 hangs on state and class diagrams).
 - Help: a [diagram and formula gallery](https://t00m.github.io/KB4IT/reference-diagrams-formulas.html) with the source and the result of each example, and live examples in "Write a document".
 - Math formulas: `$...$` (inline), `$$...$$` (display) and `$$` blocks are drawn with KaTeX, in all four themes, with the same offline files. `\$` writes a literal dollar sign and code is never changed. `pymdownx.arithmatex` or `markdown_katex` in `markdown.extensions` turns the built-in formula handling off; diagrams still work. A price such as `$5/$10` is now read as a formula; see the troubleshooting entry "Text between dollar signs shows as a formula".
@@ -17,8 +23,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `kb4it serve` answers a missing page with the site's `404.html` and status 404, with its `<base>` pointed at the local server.
 - apphelp: its own `404.html` now also gets a `<base>` element with `site_url` when `site_url` is set, so it finds its files from any depth.
 
+### Changed
+
+- Every version is read from `kb4it/VERSION`. Themes get KB4IT's version when they load; `theme.json` no longer has a `version` key.
+- blog: `tagline` is optional.
+
 ### Fixed
 
+- `kb4it create` keeps files of yours that share a name with a sample, and writes the theme's `config/repo.json` even when the folder already has one, so the theme matches the one you asked for.
+- The default apps no longer ship an `EMPTY` marker file.
+- `scripts/devel/check_themes.sh` no longer asks for a `version` key in `theme.json`.
 - techdoc: the header logo fallback pointed to a file that does not exist; it now uses the theme's logo.
 
 ---
