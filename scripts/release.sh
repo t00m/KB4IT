@@ -126,7 +126,8 @@ guard "CHANGELOG.md has a dated [$VERSION] section" "grep -q '^## \[$VERSION\] -
 guard "kb4it/VERSION and pyproject.toml agree" "grep -q '^version = \"$VERSION\"$' pyproject.toml && [[ \"\$(cat kb4it/VERSION)\" == '$VERSION' ]]"
 guard "tests pass" "./scripts/devel/test.sh -q >/tmp/kb4it-release-tests.log 2>&1"
 guard "every tracked theme is compliant" "./scripts/devel/check_themes.sh --worktree >/tmp/kb4it-release-themes.log 2>&1"
-guard "the wheel holds every tracked theme" "rm -rf dist && uv build --wheel >/dev/null 2>&1 && python3 scripts/devel/check_wheel_themes.py >/dev/null"
+guard "the offline help builds" "uv run --no-project --with-requirements requirements.txt --with pymdown-extensions --with nh3 --with pygments python scripts/help/build_offline.py >/tmp/kb4it-release-help.log 2>&1"
+guard "the wheel holds every tracked theme and the offline help" "rm -rf dist && uv build --wheel >/dev/null 2>&1 && python3 scripts/devel/check_wheel_themes.py >/dev/null"
 [[ $FAILED -eq 0 ]] || die "checks failed, nothing committed (logs in /tmp/kb4it-release-*.log)"
 
 git add kb4it/VERSION pyproject.toml CHANGELOG.md "$NOTES"

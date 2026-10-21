@@ -175,6 +175,7 @@ class CreateProjectScreen(Screen):
                 inst.run()
             except SystemExit:
                 pass
+            next_steps = inst.next_steps
         except PermissionError:
             self._show_error(
                 f"Permission denied. Check that you have write access to: {path}"
@@ -202,6 +203,7 @@ class CreateProjectScreen(Screen):
             )
             return
         self.app.notify(f"Project '{name}' created at: {path}", severity="information")
+        self.app.notify("\n".join(next_steps), severity="information", timeout=20)
         self.dismiss({"name": name, "config": config})
 
 

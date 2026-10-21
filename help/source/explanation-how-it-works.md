@@ -4,7 +4,7 @@ Feature: Getting started, Building
 Keyword: static site generator, incremental, cache
 Level: basic
 Order: 120
-Section: Get started
+Section: Concepts
 Summary: Files in, website out. What KB4IT does with your documents and why rebuilds are fast.
 ---
 

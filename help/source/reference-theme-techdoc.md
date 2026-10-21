@@ -5,7 +5,7 @@ HelpId: techdoc
 Keyword: dashboard, incident, change, meeting, procedure, priority, status, periodicity, monitoring, bookmark, backup, admin, datatable
 Level: basic
 Order: 520
-Section: Themes
+Section: Reference
 Summary: The techdoc theme for team knowledge bases, the properties it reacts to and its settings.
 ---
 
@@ -58,6 +58,12 @@ Each document gets a table of contents, sections that fold when you click their 
 | `add.html` | A form that fills a ready-made skeleton per category, to copy into a new file |
 | `help.html` | A short guide to writing documents |
 | `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the header shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
+
+## Icon, diagrams and formulas {#render}
+
+- The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo (`images/logo.svg`).
+- Documents can hold [Mermaid diagrams and formulas](reference-document-format.md#diagrams).
 
 ## Settings {#settings}
 

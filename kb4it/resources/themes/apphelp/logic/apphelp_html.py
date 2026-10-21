@@ -97,7 +97,8 @@ def transform(fragment: str, doctype: str, layout: str = "", labels: dict | None
     for img in root.iter("img"):
         img.set("loading", "lazy")
     for pre in list(root.iter("pre")):
-        _wrap_code(pre)
+        if "mermaid" not in (pre.get("class") or "").split():  # a diagram, not code to copy
+            _wrap_code(pre)
     if layout == "faq":
         _faq(root)
     elif layout == "troubleshooting":

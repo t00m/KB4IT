@@ -1,3 +1,5 @@
 * Yannick Kirschhoffer: I knew Asciidoctor thanks to one of his projects at Luxair
 * Asciidoctor Discussion list: https://discuss.asciidoctor.org
 * Stackoverflow forums: https://stackoverflow.com/
+* Mermaid (https://mermaid.js.org, MIT): diagrams rendered in the browser from fenced mermaid blocks
+* KaTeX (https://katex.org, MIT): fast math typesetting for formulas written between dollar signs

@@ -3,8 +3,19 @@
 import re
 from dataclasses import dataclass, field
 
+from kb4it.core.env import ENV
+
 ACCENT_RE = re.compile(r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})")
 DEFAULT_ACCENT = "#3584e4"
+
+# The repo.json "version" value that means the KB4IT version.
+KB4IT_VERSION_TOKEN = "kb4it"
+
+
+def help_version(value) -> str:
+    """The site version: the KB4IT version for the "kb4it" token, otherwise the value as written."""
+    text = str(value or "")
+    return ENV["APP"]["version"] if text == KB4IT_VERSION_TOKEN else text
 
 DEFAULT_LABELS = {
     "home": "Home",
@@ -92,7 +103,7 @@ def load_config(repo: dict) -> HelpConfig:
         contract_explicit="contract" in block,
         vocabulary=vocabulary,
         labels=labels,
-        version=str(repo.get("version") or ""),
+        version=help_version(repo.get("version")),
         versions=bool((block.get("versions") or {}).get("enabled", False)),
         latest=str((block.get("versions") or {}).get("latest", "") or ""),
     )

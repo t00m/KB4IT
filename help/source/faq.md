@@ -4,7 +4,7 @@ Feature: Getting started, Writing, Publishing
 HelpId: faq
 Layout: faq
 Order: 640
-Section: Reference
+Section: Questions
 Summary: Short answers to the questions people ask most about KB4IT.
 ---
 
@@ -51,3 +51,7 @@ Nothing changed since the last build. That is the fast path working. [Rebuild ev
 ## How do I start over? {#start-over}
 
 Delete the `var/` and `target/` folders of the knowledge base and build again. Your documents in `source/` are not affected.
+
+## Still stuck? {#still-stuck}
+
+Ask on [GitHub issues](https://github.com/t00m/KB4IT/issues). Say what you ran, what you expected, and paste the log or the message you got.

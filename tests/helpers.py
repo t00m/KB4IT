@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import site
 import subprocess
 import sys
 from pathlib import Path
@@ -16,18 +17,23 @@ _RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; 
 
 def isolated_env(home, **extra):
     """Environment for a kb4it subprocess whose per-user files live under home/.kb4it on every OS."""
+    # A fake HOME hides ~/.local, so keep the user base: optional packages stay visible.
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
-               PYTHONPATH=str(ROOT), COLUMNS="1000")
+               PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000")
     env.update(extra)
     return env
 
 
-def run_kb4it(*args, cwd, home):
-    """Run kb4it with an isolated HOME and return the finished process."""
-    env = isolated_env(home, NO_COLOR="1")
+def run_kb4it(*args, cwd, home, env=None, split_streams=False):
+    """Run kb4it with an isolated HOME and return the finished process.
+
+    env adds environment variables; split_streams keeps stderr apart from stdout.
+    """
+    full_env = isolated_env(home, NO_COLOR="1", **(env or {}))
     return subprocess.run(
         [sys.executable, "-c", _RUNNER, *map(str, args)],
-        cwd=str(cwd), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        cwd=str(cwd), env=full_env, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE if split_streams else subprocess.STDOUT,
         text=True, timeout=600,
     encoding="utf-8")
 

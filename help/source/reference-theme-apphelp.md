@@ -5,7 +5,7 @@ HelpId: apphelp
 Keyword: help, application, help id, go.html, embed, contract, offline search, doctype, layout, faq, tips, troubleshooting
 Level: advanced
 Order: 550
-Section: Themes
+Section: Reference
 Summary: The apphelp theme for application help sites, its page properties, help ids and settings.
 ---
 
@@ -23,6 +23,9 @@ apphelp builds the help of an application, like the site you are reading. The sa
 - A **Topics** page listing pages by feature.
 - Help ids: the application opens `go.html?id=rename` and lands on the right page or section.
 - `?embed=1` hides the header and sidebar, for a help viewer inside the application.
+- The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo.
+- [Mermaid diagrams and formulas](reference-document-format.md#diagrams) in pages.
+- A `404.html` page for missing addresses, in every build.
 - Strict checks: a page with a missing or unknown property fails the build, so the help never ships half written.
 
 ## Page properties {#properties}
@@ -38,7 +41,9 @@ apphelp builds the help of an application, like the site you are reading. The sa
 | `HelpId` | no | Ids the application opens with `go.html?id=<id>` |
 | `Keyword` | no | Words readers search for that the text does not use |
 | `Level` | no | From the `Level` vocabulary |
+| `Platform` | no | One or more platforms the page applies to; each value is shown as a chip under the title and offered as a search filter. Checked against the `Platform` vocabulary when `repo.json` defines one |
 | `Since` | no | Version that introduced the feature; pages for the current version are listed as new |
+| `Plugin` | no | Plugin the page belongs to; shown under the title as "Plugin: name" and offered as a search filter. Only the first value is used, and it is not checked against a vocabulary |
 | `Related` | no | Pages listed first under **Related pages** |
 
 `index.md` is the home page and needs none of them. `search.md`, `topics.md`, `go.md` and `404.md` are reserved.
@@ -89,8 +94,8 @@ Edit links use `"git": true` and `git_server` without `https://`, for example `g
 An application often needs the help of each release. Turn on versions in the `apphelp` block and name the version with the top-level `version` key:
 
 ```json
-"version": "0.9",
-"apphelp": {"versions": {"enabled": true, "latest": "0.9"}}
+"version": "2.1",
+"apphelp": {"versions": {"enabled": true, "latest": "2.1"}}
 ```
 
 Each build then writes into `target/<version>/` and leaves the other version folders alone. At the top of `target/` it keeps:

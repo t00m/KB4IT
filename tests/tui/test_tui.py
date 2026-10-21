@@ -291,6 +291,51 @@ def test_create_project(registry, tmp_path):
     assert tui.load_projects() == [{"name": "New blog", "config": str(path / "config" / "repo.json")}]
 
 
+def test_create_project_shows_next_steps(registry, tmp_path):
+    path = tmp_path / "steps"
+    seen = []
+
+    async def scenario(app, pilot):
+        app.notify = lambda message, **kwargs: seen.append(message)
+        await pilot.click("#new")
+        await pilot.pause()
+        create = app.screen
+        ids = [t["id"] for t in create._themes]
+        create.query_one("#themes-list", ListView).index = ids.index("blog")
+        await pilot.pause()
+        create.query_one("#inp-name", Input).value = "Steps"
+        create.query_one("#inp-path", Input).value = str(path)
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.MainScreen)
+    run(scenario)
+    assert any("Preview the site with: kb4it serve" in message for message in seen)
+    assert any("Write documents in" in message for message in seen)
+
+
+def test_create_failure_shows_no_next_steps(registry, tmp_path):
+    blocked = tmp_path / "blocked"
+    blocked.write_text("a file, not a folder", encoding="utf-8")
+    seen = []
+
+    async def scenario(app, pilot):
+        app.notify = lambda message, **kwargs: seen.append(message)
+        await pilot.click("#new")
+        await pilot.pause()
+        create = app.screen
+        ids = [t["id"] for t in create._themes]
+        create.query_one("#themes-list", ListView).index = ids.index("blog")
+        await pilot.pause()
+        create.query_one("#inp-name", Input).value = "Blocked"
+        create.query_one("#inp-path", Input).value = str(blocked)
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert create.query_one("#error-banner", Label).display
+        assert not isinstance(app.screen, tui.MainScreen)
+    run(scenario)
+    assert not any("Preview the site with: kb4it serve" in message for message in seen)
+
+
 def test_import_and_delete_project(registry, mini_repo):
     async def scenario(app, pilot):
         await pilot.click("#import")
@@ -319,4 +364,48 @@ def test_import_and_delete_project(registry, mini_repo):
         await pilot.click("#yes")
         await pilot.pause()
         assert tui.load_projects() == []
+    run(scenario)
+
+
+def test_tui_shows_the_help_banner_until_dismissed(registry, tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    from kb4it.core.notice import help_notice_dismissed
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))
+    monkeypatch.delenv("CI", raising=False)
+
+    async def scenario(app, pilot):
+        banner = app.screen.query_one("#help-banner")
+        assert banner.display
+        assert not help_notice_dismissed()
+        await pilot.press("d")
+        await pilot.pause()
+        assert not banner.display
+        assert help_notice_dismissed()
+    run(scenario)
+
+
+def test_tui_drops_the_dismiss_key_once_the_banner_is_gone(registry, tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))
+    monkeypatch.delenv("CI", raising=False)
+
+    def dismiss_offered(app):
+        active = app.screen.active_bindings.get("d")
+        return active is not None and active.enabled
+
+    async def scenario(app, pilot):
+        assert dismiss_offered(app)
+        await pilot.press("d")
+        await pilot.pause()
+        assert not dismiss_offered(app)
+    run(scenario)
+
+
+def test_tui_hides_the_help_banner_in_ci(registry, tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(tmp_path / "home"))
+    monkeypatch.setenv("CI", "true")
+
+    async def scenario(app, pilot):
+        assert not app.screen.query_one("#help-banner").display
     run(scenario)

@@ -1,6 +1,6 @@
 name: Publish a release
 
-# Runs when a release tag is pushed (git tag v0.7.10 && git push origin v0.7.10).
+# Runs when a release tag is pushed (git tag v1.2.3 && git push origin v1.2.3).
 # Publishes the wheel and sdist to PyPI and the container image to GHCR
 # (ghcr.io/t00m/kb4it, amd64 and arm64), builds the .deb and .rpm, then creates
 # the GitHub release with the wheel, the sdist and the four packages.
@@ -51,6 +51,9 @@ jobs:
 
       - name: Every tracked theme is compliant
         run: ./scripts/devel/check_themes.sh
+
+      - name: Build the offline help
+        run: uv run --no-project --with-requirements requirements.txt --with pymdown-extensions --with nh3 --with pygments python scripts/help/build_offline.py
 
       - name: Build sdist and wheel
         run: uv build

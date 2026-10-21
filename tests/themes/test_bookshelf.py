@@ -1,5 +1,7 @@
 """bookshelf theme: Book > Part > Chapter model, book overview, chapter navigation."""
 
+import shutil
+
 import pytest
 
 from tests.helpers import page, run_kb4it
@@ -65,9 +67,13 @@ def test_metadata_pages(site):
         assert (site["target"] / name).exists(), name
 
 
-def test_user_index_page_wins(site):
-    (site["repo"] / "source" / "index.md").write_text(page("My own index", Tag="home"), encoding="utf-8")
-    result = run_kb4it("build", site["cfg"], cwd=site["base"], home=site["home"])
+def test_user_index_page_wins(site, tmp_path):
+    # Own copy: a user index.md would replace the shelf for the other tests.
+    repo = tmp_path / "repo"
+    shutil.copytree(site["repo"], repo)
+    cfg = repo / "config" / "repo.json"
+    (repo / "source" / "index.md").write_text(page("My own index", Tag="home"), encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
     assert result.returncode == 0, result.stdout
     assert "INDEX_SKIP reason=user_generated" in result.stdout
-    assert "My own index" in read(site, "index.html")
+    assert "My own index" in (repo / "target" / "index.html").read_text(encoding="utf-8")

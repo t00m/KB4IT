@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, build, serve, verify, info, themes, apps, projects, --force, --log-level, exit status, KB4IT_HOME
+Keyword: cli, kb4it, create, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --log-level, exit status, KB4IT_HOME
 Level: basic
 Order: 610
 Section: Reference
@@ -24,8 +24,19 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it themes` | Lists the installed themes |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
 | `kb4it projects` | Lists the knowledge bases you created or imported |
+| `kb4it help` | Opens the offline copy of this help in your browser; see [Help center](#help) |
+| `kb4it help --url` | Prints the address of the online help |
+| `kb4it help --dismiss` | Hides the help notice |
 
 `CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`.
+
+## Help center {#help}
+
+`kb4it help` opens the copy of this help that ships inside the installed package. It needs no network. When the package has no copy, the command prints the online address and ends with `1`. When no browser starts, it prints the path of the file to open by hand.
+
+`kb4it help --url` prints the online address and does nothing else.
+
+Until you dismiss it, every command that runs, except `kb4it help`, prints a two-line notice on standard error. The notice gives the path of the offline copy and the online address. `kb4it help --dismiss` hides it for good: it writes the file `help-notice-dismissed` in `~/.kb4it` (or in `KB4IT_HOME`). Delete that file to see the notice again. The terminal interface shows the first line of the notice as a banner, until you press `d` there or run this command. The notice never shows when the variable `CI` has a non-empty value.
 
 ## Options {#options}
 
@@ -64,6 +75,7 @@ After a failed build the next build compiles again every document that changed s
 | `~/.kb4it/projects.json` | The list behind `kb4it projects` and the terminal interface |
 | `~/.kb4it/opt/resources/themes/` | Your own themes |
 | `~/.kb4it/var/projects.lock` | Held for a moment while `projects.json` is written |
+| `~/.kb4it/help-notice-dismissed` | Written by `kb4it help --dismiss`; hides the help notice |
 | `<knowledge base>/var/` | Build cache and logs; safe to delete |
 | `<knowledge base>/var/kb4it.lock` | Stops two builds of the same knowledge base at once |
 
@@ -74,3 +86,5 @@ After a failed build the next build compiles again every document that changed s
 | Variable | Effect |
 |---|---|
 | `KB4IT_HOME` | Folder for the files above instead of `~/.kb4it`. Useful for a portable install or to keep test runs apart |
+| `KB4IT_HELP_INDEX` | Path of the `index.html` that `kb4it help` opens, instead of the copy in the package |
+| `CI` | Any non-empty value hides the help notice |

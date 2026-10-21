@@ -47,8 +47,8 @@ def test_on_build_end_sees_the_failure(tmp_path, home):
     assert json.loads((target / "summary.json").read_text(encoding="utf-8"))["failed"] == 1
 
 
-def test_blog_without_tagline_fails(tmp_path, home):
-    """The audit reproduction of COR-01: every page failed and the build exited 0."""
+def test_blog_without_tagline_builds(tmp_path, home):
+    """Blog defaults tagline to an empty string, so no page fails without it (COR-01)."""
     repo = tmp_path / "blog"
     assert run_kb4it("create", "blog", repo, cwd=tmp_path, home=home).returncode == 0
     cfg = repo / "config" / "repo.json"
@@ -56,8 +56,8 @@ def test_blog_without_tagline_fails(tmp_path, home):
     conf.pop("tagline", None)
     cfg.write_text(json.dumps(conf), encoding="utf-8")
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
-    assert result.returncode == 1
-    assert "PAGES_FAILED" in result.stdout
+    assert result.returncode == 0, result.stdout
+    assert "PAGES_FAILED" not in result.stdout
 
 
 class _Backend:

@@ -5,7 +5,7 @@ HelpId: bookshelf
 Keyword: book, part, chapter, study, certification, progress, reading
 Level: basic
 Order: 540
-Section: Themes
+Section: Reference
 Summary: The bookshelf theme for study notes organised as books, parts and chapters, with reading progress.
 ---
 
@@ -62,6 +62,12 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 | Chapter pages | Navigation through the part, previous and next chapter, commands and tags |
 | `all.html`, `bookmarks.html`, `properties.html`, `stats.html` | As in the other themes |
 | `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the top bar (it replaces the link to `all.html`) shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
+
+## Icon, diagrams and formulas {#render}
+
+- The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo (`images/logo.svg`).
+- Documents can hold [Mermaid diagrams and formulas](reference-document-format.md#diagrams).
 
 ## Settings {#settings}
 

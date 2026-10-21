@@ -15,7 +15,15 @@ os.environ["KB4IT_HOME"] = os.path.join(os.environ["HOME"], ".kb4it")
 import pytest  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+FIXTURES = ROOT / "tests" / "fixtures"
 sys.path.insert(0, str(ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic"))
+
+
+def pytest_ignore_collect(collection_path, config):
+    # pytest-relaxed (a plugin, not a dependency) collects every module, so skip the helpers and fixtures.
+    if collection_path.name == "helpers.py" or FIXTURES in collection_path.parents:
+        return True
+    return None
 
 
 @pytest.fixture

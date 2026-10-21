@@ -4,7 +4,7 @@
     "theme": "apphelp",
     "source": "source",
     "target": "target",
-    "version": "0.8",
+    "version": "kb4it",
     "logo": "resources/images/logo.svg",
     "logo_alt": "KB4IT",
     "publish_sources": false,

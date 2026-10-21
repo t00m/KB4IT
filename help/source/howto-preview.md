@@ -6,7 +6,7 @@ Keyword: serve, preview, live reload, watch, port, browser, localhost
 Level: basic
 Order: 315
 Related: howto-build.md, reference-command-line.md
-Section: Build and preview
+Section: Guides
 Summary: See your changes in the browser while you write, with kb4it serve.
 ---
 

@@ -14,6 +14,7 @@ import markdown
 from kb4it.core.exceptions import ConfigError
 from kb4it.core.log import get_logger
 from kb4it.core.mdlinks import MdLinkExtension
+from kb4it.core.mdrich import MATH_EXTENSIONS, RichContentExtension
 
 log = get_logger(__name__)
 
@@ -46,6 +47,7 @@ class MarkdownSettings:
             # Loaded explicitly so its use_pygments setting (see all_configs) reaches superfences.
             names.append("pymdownx.highlight")
         names += [name for name in self.extensions if name not in names]
+        names.append(RichContentExtension(math=not any(name in MATH_EXTENSIONS for name in self.extensions)))
         return names + [MdLinkExtension()]
 
     def _uses_pymdownx_highlight(self):

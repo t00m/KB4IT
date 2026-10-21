@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -43,7 +43,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | Key | Default | Meaning |
 |---|---|---|
 | `tagline` | | Short subtitle |
-| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text for screen readers; empty uses the site `title` |
+| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text for screen readers; empty uses the site `title`. The logo is also the favicon of every page; without `logo`, the page uses the theme's own logo |
 | `workers` | half the processor cores | Documents converted at the same time |
 | `force` | `false` | Rebuild everything on every build, like `--force` |
 | `ignored_keys` | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
@@ -126,6 +126,8 @@ Each theme reads its own keys as well:
 - [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`
 - [blog](reference-theme-blog.md#settings): `index_posts`, `strict`, `datatable`
 - [bookshelf](reference-theme-bookshelf.md#settings): `datatable`
-- [apphelp](reference-theme-apphelp.md#settings): the `apphelp` block
+- [apphelp](reference-theme-apphelp.md#settings): the `apphelp` block and `version`
+
+`version` is the version of the application the help describes. apphelp shows it on the home page, next to the pages new in that version, and uses it to name the folder of each version; see [versions](reference-theme-apphelp.md#versions). The value `"kb4it"` stands for the version of the installed KB4IT. The other themes ignore it.
 
 Sample apps from older versions also contain `menu`, `sort`, `timeline` and `webserver`. KB4IT no longer reads them; you can leave them or delete them.

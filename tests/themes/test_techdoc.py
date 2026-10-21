@@ -3,6 +3,7 @@
 # ruff: noqa: DTZ005  # KB4IT works with naive local datetimes
 
 import json
+import shutil
 import zipfile
 from datetime import datetime, timedelta
 
@@ -103,15 +104,19 @@ def test_admin_backups(site):
     assert "../" in (admin / "index.html").read_text(encoding="utf-8")
 
 
-def test_admin_backups_follow_changes(site):
-    admin = site["target"] / "admin"
+def test_admin_backups_follow_changes(site, tmp_path):
+    # Own copy: the title change would rename the zips the other tests read.
+    repo = tmp_path / "repo"
+    shutil.copytree(site["repo"], repo)
+    cfg = repo / "config" / "repo.json"
+    admin = repo / "target" / "admin"
     before = (admin / "kb4it_site.zip").stat().st_mtime_ns
-    result = run_kb4it("build", site["cfg"], cwd=site["base"], home=site["home"])
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
     assert result.returncode == 0, result.stdout
     assert (admin / "kb4it_site.zip").stat().st_mtime_ns == before
-    conf = json.loads(site["cfg"].read_text(encoding="utf-8"))
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf["title"] = "Ops Notes"
-    site["cfg"].write_text(json.dumps(conf), encoding="utf-8")
-    result = run_kb4it("build", site["cfg"], cwd=site["base"], home=site["home"])
+    cfg.write_text(json.dumps(conf), encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
     assert result.returncode == 0, result.stdout
     assert sorted(p.name for p in admin.glob("*.zip")) == ["ops-notes_site.zip", "ops-notes_sources.zip"]

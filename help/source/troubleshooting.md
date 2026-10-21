@@ -4,7 +4,7 @@ Feature: Building, Writing, Themes
 HelpId: troubleshooting
 Layout: troubleshooting
 Order: 630
-Section: Reference
+Section: Questions
 Summary: What to do when a document is missing, a link is broken, a theme is refused or the build stops.
 ---
 
@@ -108,11 +108,27 @@ Install the package the message names, in the same environment as KB4IT. For PyM
 
 `DOC_NAME_CLASH`: two documents would publish pages whose names differ only by letter case or extension, such as `Note.md` and `note.md`. macOS and Windows treat them as the same file, so one page would overwrite the other.
 
-`DOC_NAME_RESERVED`: the file is named like a Windows device (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`). Windows cannot create its page.
+`DOC_NAME_RESERVED`: the file cannot be a document. Two kinds of name are reserved:
+
+- A Windows device name (`con`, `prn`, `aux`, `nul`, `com1` to `com9`, `lpt1` to `lpt9`). Windows cannot create its page.
+- A page the theme writes itself. techdoc, blog and bookshelf write `404.html`, so a document named `404.md` is left out. apphelp has its own reserved names.
 
 ### Fix
 
 Rename the file. `kb4it verify` lists every such name.
+
+## Text between dollar signs shows as a formula {#dollar-sign}
+
+### Cause
+
+`$...$` is formula syntax. The text between two dollar signs is drawn as a formula, so a line such as "The plans cost \$5/\$10" shows a formula instead of text. A dollar sign counts as an opening one when a non-space character follows it, and as a closing one when a non-space character comes before it and no other `$` is in between. "costs \$5 and \$10" stays text because of the spaces; "\$5/\$10" does not.
+
+### Fix
+
+- Write `\$` for a literal dollar sign: `The plans cost \$5/\$10`.
+- Or put the text in inline code, where nothing changes: `` `$5/$10` ``.
+
+See [formulas](reference-document-format.md#formulas) for the exact rules.
 
 ## The page shows a red bar "KB4IT build failed" {#serve-error}
 
@@ -133,3 +149,7 @@ The browser shows a cached page, or the change was in a theme template, which KB
 ### Fix
 
 Reload the page without the cache (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>). After editing a theme, build with `--force`.
+
+## Still stuck? {#still-stuck}
+
+Ask on [GitHub issues](https://github.com/t00m/KB4IT/issues). Say what you ran, what you expected, and paste the log or the message you got.

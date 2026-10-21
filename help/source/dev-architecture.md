@@ -5,7 +5,7 @@ HelpId: dev-architecture
 Keyword: services, workflow, backend, processor, compiler, builder, frontend, deployer, kbdict, BuildPlan, cache
 Level: advanced
 Order: 710
-Section: Development
+Section: Concepts
 Summary: How KB4IT is put together, from the command line to the files in target/, and how incremental builds work.
 ---
 

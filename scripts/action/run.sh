@@ -18,7 +18,7 @@ install() {
     if [[ -n "${KB4IT_VERSION:-}" ]]; then
         spec="KB4IT==${KB4IT_VERSION}"
     else
-        # The KB4IT of the action's own commit: @v0.9.0 means KB4IT 0.9.0.
+        # The KB4IT of the action's own commit: @v1.2.3 means KB4IT 1.2.3.
         spec="${ACTION_PATH}"
     fi
     local with=()

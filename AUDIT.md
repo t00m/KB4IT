@@ -1453,6 +1453,7 @@ AsciiDoc (`kb4it/core/util.py:410-414` accepts `.md` and `.markdown` only).
 Why it matters: a leftover from the AsciiDoc era.
 Recommended fix: delete it.
 Effort: S
+Status: Fixed in commit ff02094 (TST-03).
 
 ### Phase 6 top 5
 

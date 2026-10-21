@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install KB4IT
-        run: pip install "KB4IT>=0.7.9"
+        run: pip install KB4IT
       - name: Build the help
         run: kb4it build help/config/repo.json --force
       - uses: actions/upload-pages-artifact@v3

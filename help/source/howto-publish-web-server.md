@@ -5,7 +5,7 @@ HelpId: web-server
 Keyword: nginx, apache, rsync, http.server, intranet, file share
 Level: basic
 Order: 420
-Section: Publish
+Section: Guides
 Summary: Share the website by copying one folder to a web server, a file share or a laptop.
 ---
 
@@ -31,6 +31,24 @@ server {
     index index.html;
 }
 ```
+
+## Show your own page for a missing address {#not-found}
+
+techdoc, blog and bookshelf write `404.html` at the top of the site. GitHub Pages shows it on its own. Other servers need one line.
+
+nginx, inside the `server` block:
+
+```nginx
+error_page 404 /404.html;
+```
+
+Apache, in the site configuration or `.htaccess`:
+
+```apache
+ErrorDocument 404 /404.html
+```
+
+The server shows the same file for a missing address at any depth, so a relative link in it only works at the top of the site. Set `site_url` in `repo.json` and the page uses absolute links and a `<base>` element, which works at any depth. `kb4it serve` also answers a missing page with `404.html` and status 404; it points the `<base>` element at its own address, so the page loads its files from the local copy, not from `site_url`.
 
 ## Preview it on your computer {#preview}
 

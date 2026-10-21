@@ -5,10 +5,10 @@
     "email": "[tomasvirseda@gmail.com]",
     "website": "https://github.com/t00m/KB4IT",
     "description": "Theme for creating simple blogs",
-    "version": "0.1.0",
     "search": true,
     "feed": true,
-    "kb4it": ">=0.9.0",
+    "kb4it": ">=0.9.1",
+    "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit"
 }

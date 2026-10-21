@@ -5,7 +5,7 @@ HelpId: dev-release
 Keyword: release, version, tag, pypi, ghcr, container, deb, rpm, changelog, release notes, semver
 Level: advanced
 Order: 730
-Section: Development
+Section: Reference
 Summary: Cut a KB4IT release, from the changelog to PyPI, the container image and the GitHub release.
 ---
 
@@ -15,7 +15,7 @@ This is for maintainers. `RELEASING.md` in the repository has every detail and t
 
 ## How versions work {#versions}
 
-- `kb4it/VERSION` names the release being prepared, for example `0.8.0`. Only `scripts/release.sh` changes it.
+- `kb4it/VERSION` names the release being prepared, for example `X.Y.Z`. Only `scripts/release.sh` changes it.
 - KB4IT follows [Semantic Versioning](https://semver.org/). While the major number is 0, a change that breaks sites or themes raises the minor number.
 - A build from a clone adds `git describe` to `kb4it --version`, so development builds need no extra numbering.
 
@@ -46,7 +46,7 @@ This is for maintainers. `RELEASING.md` in the repository has every detail and t
 
 8. Install the new version from PyPI to check it, then open the next cycle:
 
-        scripts/release.sh --open 0.9.0
+        scripts/release.sh --open X.Y.Z
 
 !!! note "Once, after the first release with an image"
     New packages on GitHub are private. Open your profile, **Packages**, `kb4it`, **Package settings**, and change the visibility to **Public**, so everyone can pull the image. `RELEASING.md` has the details.

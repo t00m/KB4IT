@@ -7,7 +7,7 @@
 #   PYTHON_VERSION   base image python       (default: 3.13)
 #
 # Tags produced:
-#   <name>:<version>        e.g. kb4it:0.9.0
+#   <name>:<version>        e.g. kb4it:1.2.3
 #   <name>:latest
 #
 # The build context is dist/image/, which holds only the wheel.

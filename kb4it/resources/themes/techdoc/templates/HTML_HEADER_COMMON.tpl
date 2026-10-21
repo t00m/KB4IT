@@ -55,7 +55,7 @@
                 <ul class="uk-navbar-nav noprint">
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-logo uk-transition-scale-up uk-transition-opaque" href="index.html">
-                            <img src="${var['repo'].get('logo', 'resources/images/logo.png')}" alt="${var['repo'].get('logo_alt') or var['repo']['title']}" width="24" height="24">
+                            <img src="${var['repo'].get('logo', 'resources/themes/techdoc/images/logo.svg')}" alt="${var['repo'].get('logo_alt') or var['repo']['title']}" width="24" height="24">
                         </a>
                         <div class="uk-navbar-dropdown">
                             <ul class="uk-nav uk-navbar-dropdown-nav">

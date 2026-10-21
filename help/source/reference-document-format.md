@@ -5,7 +5,7 @@ HelpId: document-format
 Keyword: DOC_INVALID, DOC_RAW_SCRIPT, raw html, script, sanitize, trust, yaml_error, missing_h1_title, bad_property_name, bad_property_value, frontmatter, date format
 Level: basic
 Order: 230
-Section: Write
+Section: Reference
 Summary: The rules a source document must follow, the date formats KB4IT reads and the reasons a document is rejected.
 ---
 
@@ -79,6 +79,35 @@ With these extensions a fenced block (```` ``` ````) only works at the start of 
 ```
 
 To fence code there, enable `pymdownx.superfences` (from `KB4IT[extras]`) in the [`markdown` setting](reference-repo-json.md#markdown). Without it, `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...`.
+
+### Diagrams {#diagrams}
+
+A fenced block named `mermaid`, with the fence at the start of a line, becomes a [Mermaid](https://mermaid.js.org/) diagram. A `mermaid` fence inside another fence, an admonition or a list item stays code. Colouring from `markdown.highlight` does not touch it.
+
+The browser draws the diagram, from files KB4IT copies to `resources/render/` in the site when at least one page has a diagram or a formula; a site without any gets no such folder. They work from disk and need no network. Only pages with a diagram load them. A diagram Mermaid cannot read shows an error in the page; the build does not fail. The diagram uses dark colours when the page background is dark (for example apphelp in dark mode), and light colours otherwise, as the page looks when it loads. The theme does not frame a diagram as a code block.
+
+### Formulas {#formulas}
+
+TeX between dollar signs is drawn by [KaTeX](https://katex.org/) in the browser, with the same offline files and the same rules as diagrams.
+
+| You write | You get |
+|---|---|
+| `$x^2$` | A formula inside the line |
+| `$$x^2$$` inside a paragraph or a list item | A display formula |
+| `$$` alone on a line, TeX on the next lines, `$$` alone again | A display formula; the block may span lines |
+| `\$` | A literal dollar sign |
+
+Rules for `$...$`:
+
+- A non-space character must follow the opening `$` and come before the closing `$`. The text between cannot hold another `$`.
+- So "costs \$5 and \$10" stays text, but "\$5/\$10" is a formula. Write `\$5/\$10` for the text.
+- The formula stays inside one paragraph.
+
+Fenced, indented and inline code never change, so a `$` in code is safe. A `$` inside an HTML tag, an autolink such as `<https://...>` or the address of an image is not a formula either.
+
+If `pymdownx.arithmatex` or `markdown_katex` is in [`markdown.extensions`](reference-repo-json.md#markdown), KB4IT leaves `$` to that extension and its own formula handling is off. Diagrams still work.
+
+With `"sanitize": true` diagrams and formulas are kept. The search index and the feed hold the diagram or formula source as text. See [Text between dollar signs shows as a formula](troubleshooting.md#dollar-sign) if a price turns into a formula.
 
 ## Raw HTML {#raw-html}
 

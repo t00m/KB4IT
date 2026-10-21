@@ -26,7 +26,7 @@ if ! ARCH="$(arch_machine "${1:-$(uname -m)}")"; then
     exit 1
 fi
 
-RPM_VERSION="${KB4IT_VERSION%%+*}"           # 0.7.31
+RPM_VERSION="${KB4IT_VERSION%%+*}"           
 if [[ "${KB4IT_VERSION}" == *"+"* ]]; then
     RPM_RELEASE="${KB4IT_VERSION#*+}"        # build.0
     # Release must not contain '+' or '-'

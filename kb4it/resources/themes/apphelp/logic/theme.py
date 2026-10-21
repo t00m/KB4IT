@@ -49,7 +49,7 @@ class Theme(Builder):
         if not config.versions:
             return None
         if not config.version:
-            raise ThemeError("apphelp versions need the 'version' key in repo.json, such as \"0.9\"")
+            raise ThemeError("apphelp versions need the 'version' key in repo.json, such as \"1.0\" or \"kb4it\"")
         return config.version
 
     def build(self):

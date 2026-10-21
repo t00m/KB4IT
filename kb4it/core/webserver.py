@@ -15,6 +15,7 @@ disk are never changed, so a deployed site never carries the script.
 import http.server
 import json
 import os
+import re
 import socket
 import threading
 
@@ -23,6 +24,8 @@ from kb4it.core.log import get_logger
 DEFAULT_PORT = 8642
 PORT_SCAN_LIMIT = 50
 STATUS_PATH = "/__kb4it/status"
+# The 404 page's <base> points to site_url; served locally, it must point to this server's root.
+BASE_HREF = re.compile(rb'<base\s+href="[^"]*"', re.IGNORECASE)
 
 log = get_logger(__name__)
 
@@ -131,6 +134,23 @@ def _make_handler(directory, status, reload):
                         self._send(200, "text/html; charset=utf-8", inject_reload(fh.read()))
                     return
             super().do_GET()
+
+        def send_error(self, code, message=None, explain=None):
+            page = os.path.join(directory, "404.html")
+            if code != 404 or not os.path.isfile(page):
+                super().send_error(code, message, explain)
+                return
+            with open(page, "rb") as fh:
+                body = BASE_HREF.sub(b'<base href="/"', fh.read(), count=1)
+            if reload:
+                body = inject_reload(body)
+            if self.command == "HEAD":
+                self.send_response(404)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                return
+            self._send(404, "text/html; charset=utf-8", body)
 
         def _send(self, code, content_type, body):
             self.send_response(code)

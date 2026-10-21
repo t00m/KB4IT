@@ -36,6 +36,7 @@ parser = etree.HTMLParser()
 
 
 class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
+    reserved_pages = ('404.md',)  # build() writes 404.html
 
     def datatable_value_link(self, properties, key, value):
         """Priority and Status values show as colored labels."""
@@ -162,6 +163,7 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        self.build_page_404()
         self.build_page_add()
         self.build_page_index(var)
         self.build_page_index_all()
@@ -404,6 +406,7 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         HTML += HTML_FOOTER.render(var=var)
 
         page_path = os.path.join(admin_dir, 'index.html')
+        HTML = self.inject_head_meta(HTML, 'admin/index.html')
         tree = etree.fromstring(HTML, parser)
         self.relocate_links(tree)
         pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()

@@ -9,10 +9,11 @@
 
 - **Markdown native** - sources are plain `.md` files with a YAML frontmatter block; rendered with `python-markdown` plus the `extra`, `admonition`, `toc`, and `sane_lists` extensions, and any other extension you enable in `repo.json`.
 - **Property-driven navigation** - every frontmatter property becomes a filterable index page automatically.
+- **Diagrams and formulas** - a `mermaid` code block becomes a diagram, `$...$` and `$$...$$` become formulas. Mermaid and KaTeX ship with KB4IT, so they work offline and from disk, and only pages that use them load them.
 - **Live preview** - `kb4it serve` rebuilds the site when you save and reloads the page in the browser.
 - **Full-text search** - runs in the browser, needs no server, and also works when you open the site from disk.
 - **Smart incremental builds** - only changed documents and their key/value index pages are recompiled, driven by per-document body and metadata hashes (blake2b).
-- **Ready to publish** - `sitemap.xml`, `robots.txt`, an Atom feed, Open Graph tags and canonical links once you set `site_url`.
+- **Ready to publish** - a favicon from your logo, a 404 page, and `sitemap.xml`, `robots.txt`, an Atom feed, Open Graph tags and canonical links once you set `site_url`.
 - **Links you can trust** - every document lists the documents that link to it, and `kb4it verify` reports broken links and anchors.
 - **Yours to adjust** - replace a single template per site, add your own CSS or scripts, or run Python hooks during the build.
 - **Four themes out of the box** - `techdoc`, `blog`, `bookshelf` and `apphelp` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
@@ -49,6 +50,38 @@ Tag: backup, housekeeping
 ```
 
 Frontmatter values are either scalars or comma-separated lists. Property names are case-sensitive and singular (`Tag`, `Product`, `OS`).
+
+## Diagrams and formulas
+
+Write the diagram source in a `mermaid` code block, and TeX between dollar signs. KB4IT draws them in the browser with the copies of [Mermaid](https://mermaid.js.org/) and [KaTeX](https://katex.org/) it ships, so the site needs no network:
+
+````markdown
+```mermaid
+flowchart LR
+    A[Markdown files] --> B(kb4it build) --> C[Website]
+```
+
+The area of a circle is $A = \pi r^2$.
+
+$$
+\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+$$
+````
+
+GitHub renders the same syntax, so this is what readers see:
+
+```mermaid
+flowchart LR
+    A[Markdown files] --> B(kb4it build) --> C[Website]
+```
+
+The area of a circle is $A = \pi r^2$.
+
+$$
+\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+$$
+
+Code blocks and inline code are never touched. To write a dollar sign as text, use `\$`. More examples: the [diagram and formula gallery](https://t00m.github.io/KB4IT/reference-diagrams-formulas.html).
 
 ## Quick start
 
@@ -140,7 +173,7 @@ On Windows, KB4IT runs natively; the Windows Subsystem for Linux works too but i
 
 ```bash
 kb4it create <theme> [<app>] <repo_path>  # scaffold a new repo
-kb4it serve <config.json>                 # build, serve on 127.0.0.1:8642 and rebuild on change
+kb4it serve <config.json>                 # build, serve on 127.0.0.1:8642, rebuild on change, answer missing pages with 404.html
 kb4it build <config.json>                 # build the site (incremental)
 kb4it build <config.json> --force         # force recompile everything
 kb4it verify <config.json>                # check documents and links without building
@@ -148,6 +181,7 @@ kb4it info <config.json>                  # show repo stats
 kb4it themes                              # list available themes
 kb4it apps <theme>                        # list theme apps
 kb4it projects                            # list your knowledge bases
+kb4it help                              # open the help center (--url, --dismiss)
 kb4it --version                           # show version
 ```
 
@@ -192,7 +226,7 @@ Common optional keys:
 - `force`         - force full rebuild on every run (overridden by `--force`)
 - `workers`       - parallel compiler workers (default: `CPU_COUNT / 2`)
 - `ignored_keys`  - frontmatter keys excluded from navigation
-- `logo`, `logo_alt` - paths to navbar logo assets
+- `logo`, `logo_alt` - navbar logo and its text; the logo is also the favicon (without it, the theme's logo is used)
 
 New in 0.9, all optional:
 
@@ -215,7 +249,7 @@ Every key is described in the [repository settings reference](https://t00m.githu
 - **bookshelf** - Study companion organised as books, parts and chapters, with reading progress and search.
 - **apphelp** - Help site for an application. Works from `file://`, from a GitHub Pages subpath and embedded in the app; strict metadata, offline search, help ids and versioned help. Start with `kb4it create apphelp <path>`.
 
-All themes show the documents that link to each page. Custom themes live in `~/.kb4it/opt/resources/themes/<your-theme>/`; to change only one template of a theme, use the `overrides/` folder.
+All themes draw diagrams and formulas, put a favicon in every page and show the documents that link to each page. techdoc, blog and bookshelf write a `404.html` page that web servers can show for missing pages (apphelp has its own). Custom themes live in `~/.kb4it/opt/resources/themes/<your-theme>/`; to change only one template of a theme, use the `overrides/` folder.
 
 ## Contributing
 
@@ -237,7 +271,6 @@ Open an issue before starting a large change so we can align on the approach.
 
 - No online editor
 - No multilingual sites yet
-- No built-in diagrams or math: add a browser library such as Mermaid or KaTeX with the `overrides/` folder
 - No image processing (resizing, minification)
 - API is still evolving; minor releases may change internals.
 
@@ -247,6 +280,8 @@ Open an issue before starting a large change so we can align on the approach.
 - [python-markdown](https://python-markdown.github.io/) - Markdown to HTML conversion.
 - [Mako](https://www.makotemplates.org/) - server-side templating.
 - [Pygments](https://pygments.org/) - code highlighting.
+- [Mermaid](https://mermaid.js.org/) - diagrams.
+- [KaTeX](https://katex.org/) - math formulas.
 - [UIKit](https://getuikit.com) - the front-end framework used by the bundled themes.
 - [Geany](https://www.geany.org/) - the editor used to build KB4IT.
 

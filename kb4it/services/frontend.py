@@ -128,6 +128,7 @@ class Frontend(Service):
             try:
                 with open(theme_conf, "r", encoding="utf-8") as fth:
                     theme = json.load(fth)
+                    theme["version"] = ENV["APP"]["version"]  # every theme deployed has KB4IT\'s version
                     for prop in theme:
                         self.runtime["theme"][prop] = theme[prop]
                 self.log.debug(f"[FRONTEND] THEME_CONF name={theme['name']} version={theme['version']}")

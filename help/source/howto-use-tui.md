@@ -5,13 +5,13 @@ HelpId: tui
 Keyword: tui, textual, menu, projects, explorer, web server, live reload, clipboard
 Level: basic
 Order: 320
-Section: Build and preview
+Section: Guides
 Summary: Create, build, explore and preview your knowledge bases from a full-screen terminal interface.
 ---
 
 # Use the terminal interface
 
-Run `kb4it` without any command in a terminal and it opens a full-screen interface. Use the mouse or the keyboard: <kbd>Tab</kbd> moves between buttons and <kbd>Enter</kbd> activates them. On the project list, <kbd>q</kbd> quits; inside a project, <kbd>Esc</kbd> goes back to the list.
+Run `kb4it` without any command in a terminal and it opens a full-screen interface. Use the mouse or the keyboard: <kbd>Tab</kbd> moves between buttons and <kbd>Enter</kbd> activates them. On the project list, <kbd>q</kbd> quits; inside a project, <kbd>Esc</kbd> goes back to the list. The main screen shows the help banner until <kbd>d</kbd> dismisses it.
 
 ![The project list](resources/images/tui-main.webp)
 

@@ -71,3 +71,17 @@ def test_ci_validates_the_html_of_the_sample_sites():
     """TS-02: the Nu HTML Checker runs on the sample site of every bundled theme."""
     text = steps_text(load("kb4it.yml")["jobs"]["package"])
     assert "scripts/devel/validate_html.py" in text and "html5validator" in text
+
+
+def test_help_site_deploys_only_from_master_after_the_build():
+    """A release tag points at a master merge, so the online help follows every release."""
+    jobs = load("help.yml")["jobs"]
+    steps = jobs["build"]["steps"]
+    action = next(step for step in steps if step.get("uses") == "./")
+    assert action["with"]["config"] == "help/config/repo.json"
+    upload = next(step for step in steps if "upload-pages-artifact" in str(step.get("uses", "")))
+    assert upload["if"] == "github.ref == 'refs/heads/master'"
+    deploy = jobs["deploy"]
+    assert deploy["needs"] == "build"
+    assert deploy["if"] == "github.ref == 'refs/heads/master'"
+    assert any("deploy-pages" in str(step.get("uses", "")) for step in deploy["steps"])

@@ -5,7 +5,7 @@ HelpId: themes
 Keyword: look, layout, design, app, sample, template
 Level: basic
 Order: 510
-Section: Themes
+Section: Concepts
 Summary: What a theme is, the four themes that come with KB4IT and how to pick one.
 ---
 
@@ -67,6 +67,6 @@ To change only one template of a theme, put your version in the knowledge base's
 
 ## Themes and KB4IT versions {#versions}
 
-Each theme says which KB4IT it needs, in the `kb4it` field of its `theme.json`, for example `">=0.7.9"`. A theme that needs a newer KB4IT is refused with `THEME_REQUIREMENT_UNMET`, so you learn it before the build, not halfway through.
+Each theme says which KB4IT it needs, in the `kb4it` field of its `theme.json`, for example `">=X.Y.Z"`. A theme that needs a newer KB4IT is refused with `THEME_REQUIREMENT_UNMET`, so you learn it before the build, not halfway through.
 
 Want something different? [Create your own theme](howto-create-theme.md).

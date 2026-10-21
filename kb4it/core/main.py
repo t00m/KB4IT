@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 LOCKED_ACTIONS = ("build", "create")
 # Parameters that carry code for the build to call, not settings (see services/compiler.py).
 CALLBACK_PARAMS = ("progress_callback", "compile_start_callback")
-# Services of one build that live in backend.pipeline; get_service still answers them in 0.9.x.
+# Services of one build that live in backend.pipeline; get_service still answers them for now.
 PIPELINE_SERVICES = ("Processor", "Compiler", "Deployer")
 
 
@@ -68,6 +68,7 @@ class KB4IT:
         Initialize main log.
         Register main services.
         """
+        self.next_steps = []
         self.set_log_file()
         self.__setup_environment()
         if params is not None:
@@ -173,7 +174,7 @@ class KB4IT:
     def _pipeline_service(self, name: str):
         """Deprecated: the Processor, Compiler and Deployer of this build belong to backend.pipeline.
 
-        Answered from the current pipeline in 0.9.x, with a debug line once per name; removed in 0.10.0.
+        Answered from the current pipeline for now, with a debug line once per name; removed in the next minor release.
         """
         backend = self.services.get("Backend")
         pipeline = getattr(backend, "pipeline", None)
@@ -225,6 +226,8 @@ class KB4IT:
                 workflow.list_projects()
             elif action == "create":
                 workflow.create_repository()
+                for line in self.next_steps:
+                    print(line)
             elif action == "build":
                 workflow.build_website()
             elif action == "info":
@@ -270,7 +273,7 @@ class KB4IT:
 
 
 def version_text():
-    """'KB4IT 0.7.10', plus the git describe of a source checkout so development builds are identifiable."""
+    """'KB4IT 1.2.3', plus the git describe of a source checkout so development builds are identifiable."""
     text = f"{ENV['APP']['shortname']} {ENV['APP']['version']}"
     described = git_describe(os.path.dirname(ENV["CONF"]["ROOT"]))
     return f"{text} ({described})" if described else text
@@ -285,20 +288,8 @@ def _log_hint(params) -> str:
     return f" (see {log_file})" if os.path.exists(log_file) else ""
 
 
-def main():
-    """Set up application arguments and execute."""
-    # When called with no arguments in an interactive terminal, launch the TUI
-    if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
-        try:
-            from kb4it.tui.app import run as run_tui
-            run_tui()
-        except ImportError as exc:
-            print(f"TUI requires the 'textual' library: {exc}")
-            print("Install it with: pip install textual")
-        except KeyboardInterrupt:
-            pass
-        return
-
+def build_parser() -> argparse.ArgumentParser:
+    """Build the command line parser with every subcommand."""
     extra_usage = """Thanks for using KB4IT!\n"""
     parser = argparse.ArgumentParser(
         prog="kb4it",
@@ -341,6 +332,12 @@ def main():
 
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
+
+    # Help center
+    help_parser = subparsers.add_parser("help", help="Open the KB4IT help center")
+    help_group = help_parser.add_mutually_exclusive_group()
+    help_group.add_argument("--url", action="store_true", help="Print the online help address and exit")
+    help_group.add_argument("--dismiss", action="store_true", help="Hide the first-run help notice")
 
     # List projects
     subparsers.add_parser("projects", help="List all projects created by the user")
@@ -418,13 +415,44 @@ def main():
         "config", help="Path to the repository config file (mandatory)"
     )
 
+    return parser
+
+
+def main():
+    """Set up application arguments and execute."""
+    # When called with no arguments in an interactive terminal, launch the TUI
+    if len(sys.argv) == 1 and sys.stdin.isatty() and sys.stdout.isatty():
+        try:
+            from kb4it.tui.app import run as run_tui
+            run_tui()
+        except ImportError as exc:
+            print(f"TUI requires the 'textual' library: {exc}")
+            print("Install it with: pip install textual")
+        except KeyboardInterrupt:
+            pass
+        return
+
+    parser = build_parser()
+
     # Dispatch to the appropriate action handler
     params = None
     try:
         params = parser.parse_args()
+        if params.action != "help" and not os.environ.get("CI"):
+            from kb4it.core.notice import (HELP_ONLINE_URL, help_notice_dismissed,
+                                           help_notice_lines, offline_index)
+            try:
+                if not help_notice_dismissed():
+                    for line in help_notice_lines(offline_index(), HELP_ONLINE_URL):
+                        print(line, file=sys.stderr)
+            except OSError:
+                pass  # The notice is optional; an unreadable KB4IT_HOME must not stop the command.
         if params.action == "serve":
             from kb4it.core.serve import run_serve
             sys.exit(run_serve(vars(params)))
+        if params.action == "help":
+            from kb4it.core.notice import run_help
+            sys.exit(run_help(url=params.url, dismiss=params.dismiss))
         app = KB4IT(params)
         success = app.run()
         sys.exit(0 if success else 1)

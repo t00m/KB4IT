@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail when a theme tracked in git is missing from the built wheel."""
+"""Fail when a theme tracked in git, or the offline help, is missing from the built wheel."""
 
 import glob
 import subprocess
@@ -7,10 +7,15 @@ import sys
 import zipfile
 
 PREFIX = "kb4it/resources/themes/"
+HELP_INDEX = "kb4it/resources/help/index.html"
 
 
 def themes(paths):
     return {p[len(PREFIX):].split("/")[0] for p in paths if p.startswith(PREFIX) and p.count("/") >= 4}
+
+
+def has_offline_help(paths):
+    return HELP_INDEX in paths
 
 
 def main():
@@ -19,7 +24,10 @@ def main():
         sys.exit("No wheel in dist/. Run: uv build --wheel")
     tracked = themes(subprocess.run(["git", "ls-files", PREFIX], capture_output=True, text=True,
                                     check=True).stdout.split())
-    packaged = themes(zipfile.ZipFile(wheels[-1]).namelist())
+    names = zipfile.ZipFile(wheels[-1]).namelist()
+    if not has_offline_help(names):
+        sys.exit(f"Offline help missing from {wheels[-1]}: no {HELP_INDEX}. Run scripts/help/build_offline.py first")
+    packaged = themes(names)
     missing = sorted(tracked - packaged)
     if missing or "apphelp" not in packaged:
         sys.exit(f"Themes missing from {wheels[-1]}: {', '.join(missing or ['apphelp'])}")

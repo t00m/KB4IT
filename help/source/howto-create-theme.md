@@ -6,7 +6,7 @@ Keyword: custom theme, template, mako, theme.json, Builder, DocumentTheme, theme
 Level: advanced
 Order: 560
 Related: explanation-themes.md, dev-architecture.md
-Section: Themes
+Section: Guides
 Summary: Make your own theme, starting from a bundled one or from a small working example.
 ---
 
@@ -34,7 +34,7 @@ A theme is a folder with a description, some Python and some templates. Start fr
 
 ```text
 mytheme/
-├── theme.json        # id, name, description, version, KB4IT it needs
+├── theme.json        # id, name, description, KB4IT it needs
 ├── logic/theme.py    # class Theme: builds the pages
 ├── templates/*.tpl   # Mako templates
 ├── framework/        # CSS, JavaScript, fonts, images
@@ -55,8 +55,7 @@ This theme, `plain`, makes a home page that lists every document and wraps each 
     "email": "ann@example.com",
     "website": "",
     "description": "One page per document and a list of them",
-    "version": "0.1.0",
-    "kb4it": ">=0.9.0",
+    "kb4it": ">=X.Y.Z",
     "metadata_pages": false,
     "autoescape": true
 }
@@ -180,6 +179,8 @@ It brings the pages per property and per value, the properties, stats, bookmarks
 | `datatable_default_headers` | `('Date', 'Title')` | Columns when neither the page nor `repo.json` `"datatable"` names them |
 | `datatable_date_cell(timestamp)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table |
 
+A document theme writes a `404.html` page at the end of its build: call `self.build_page_404()` from `build()` and give the theme a `PAGE_404` template. To keep a source file name for itself, a theme lists it in `reserved_pages`, a tuple that is empty by default. A theme that writes the 404 page sets `reserved_pages = ("404.md",)`; a document with that name is then reported with `DOC_NAME_RESERVED` and left out.
+
 You can still override any method. KB4IT's own themes start the docstring of such an override with `Override:` and say why; a test checks it.
 
 For the templates, set `"template_base": "uikit"` in `theme.json` (see [Options in theme.json](#options)) and delete from `templates/` the ones you have not changed: they come from the base. techdoc and blog use it.
@@ -203,9 +204,12 @@ A theme without `"autoescape": true` prints values as they are, and every build 
 
 ## Options in theme.json {#options}
 
+The theme version is not in `theme.json`. KB4IT gives every theme its own version, so a theme always shows the KB4IT it runs with.
+
 | Key | Meaning |
 |---|---|
-| `kb4it` | The KB4IT versions the theme works with, such as `">=0.7.10"` or `">=0.7.10, <0.9"` |
+| `favicon` | Path of the theme's icon inside the theme folder, such as `images/logo.svg`. Pages use it when `repo.json` has no `logo`. The folder must be in `deploy_dirs` if you set that list |
+| `kb4it` | The KB4IT versions the theme works with, such as `">=X.Y.Z"` or `">=X.Y.Z, <A.B.C"` |
 | `metadata_pages` | `false` skips the pages per property and per value |
 | `deploy_dirs` | Only these folders of the theme are copied to the website, for example `["framework"]` |
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |

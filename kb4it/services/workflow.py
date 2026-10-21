@@ -9,6 +9,7 @@ import importlib.util
 import json
 import os
 import shlex
+import shutil
 import stat
 import sys
 import time
@@ -160,8 +161,9 @@ class Workflow(Service):
 
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
+        reserved = self._theme_reserved_pages(repo, config_file)
         for doc in docs:
-            if is_windows_reserved(doc):
+            if is_windows_reserved(doc) or os.path.basename(doc) in reserved:
                 non_conformant.append((doc, "reserved_name"))
                 continue
             _keys, success, reason = get_document_attributes(doc)
@@ -262,6 +264,24 @@ class Workflow(Service):
                 return candidate
         return None
 
+    def _theme_reserved_pages(self, repo, config_file):
+        """Source page names the theme writes itself (its `reserved_pages`), or an empty tuple."""
+        theme_dir = self._find_theme_dir(repo, config_file)
+        logic = os.path.join(theme_dir, "logic") if theme_dir else ""
+        path = os.path.join(logic, "theme.py")
+        if not os.path.isfile(path):
+            return ()
+        sys.path.insert(0, logic)
+        try:
+            spec = importlib.util.spec_from_file_location(f"kb4it_reserved_{repo.get('theme', 'theme')}", path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return tuple(getattr(module.Theme, "reserved_pages", ()))
+        except Exception:
+            return ()
+        finally:
+            sys.path.remove(logic)
+
     def _theme_verify(self, repo, config_file, docs):
         """Run the theme's optional logic/verify.py and return its problem lines."""
         theme_dir = self._find_theme_dir(repo, config_file)
@@ -324,7 +344,9 @@ class Workflow(Service):
             if not os.path.isdir(repo_demo):
                 repo_demo = os.path.join(theme_path, "example", "repo")
             self.log.info(f"[WORKFLOW] APP_TEMPLATE name={app_name} path={repo_demo}")
-            copydir(repo_demo, repo_path)
+            copydir(repo_demo, repo_path, keep_existing=True)
+            # The theme's own config always replaces an old one, so the theme matches the request.
+            shutil.copyfile(os.path.join(repo_demo, "config", "repo.json"), os.path.join(repo_path, "config", "repo.json"))
             source_dir = os.path.join(repo_path, "source")
             target_dir = os.path.join(repo_path, "target")
             # Git cannot store empty folders, so a sample app may ship without them.
@@ -347,11 +369,12 @@ class Workflow(Service):
             if executable:
                 os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info("[WORKFLOW] REPO_INITIALIZED")
-            self.log.info(f"[WORKFLOW] HINT compile_script path={script}")
-            self.log.info(f"[WORKFLOW] HINT source_dir path={source_dir}")
-            self.log.info(f"[WORKFLOW] HINT target_dir path={target_dir}")
-            self.log.info(f"[WORKFLOW] HINT config_file path={config_file}")
-            self.log.info("[WORKFLOW] HINT help command='kb4it -h'")
+            repo_abs = os.path.abspath(repo_path)
+            self.app.next_steps = [
+                f"Your knowledge base is ready at {repo_abs}.",
+                f"Write documents in {os.path.join(repo_abs, 'source')}/ and copy or delete the samples there.",
+                f"Preview the site with: kb4it serve {config_file}",
+            ]
 
             # Register project in projects.json
             repo_title = repoconf.get("title") or os.path.basename(repo_path)

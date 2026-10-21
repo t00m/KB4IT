@@ -81,6 +81,7 @@ class Theme(DocumentTheme):
     """Builder for the Bookshelf theme."""
 
     tagcloud_scale_skips_empty = True
+    reserved_pages = ('404.md',)  # build() writes 404.html
     datatable_link_template = 'LINK'
     datatable_default_headers = ('Date', 'Title', 'Chapter')
 
@@ -366,6 +367,7 @@ class Theme(DocumentTheme):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        self.build_page_404()
         self.build_page_index_all()
         self.build_page_index(var)
         self.create_page_about_kb4it()
@@ -397,8 +399,8 @@ class Theme(DocumentTheme):
             var['has_toc'] = False
             var['page']['title'] = value
             var['book'] = self._book_view(value)
-            adoc = self.template('PAGE_BOOK').render(var=var)
-            self.distribute_md(pagename, adoc)
+            content = self.template('PAGE_BOOK').render(var=var)
+            self.distribute_md(pagename, content)
             self.srvdtb.add_document(f"{pagename}.md")
             self.srvdtb.add_document_key(f"{pagename}.md", 'Title', value)
             self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')

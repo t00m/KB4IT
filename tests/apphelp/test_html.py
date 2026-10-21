@@ -52,3 +52,10 @@ def test_tutorial_prerequisite_note():
 
 def test_empty_fragment():
     assert transform("", "howto") == ("", [])
+
+
+def test_diagram_gets_no_copy_button():
+    html, _ = transform('<pre class="mermaid">graph LR\n  A--&gt;B</pre>\n<pre>ls</pre>', "howto")
+    assert '<pre class="mermaid">' in html
+    assert html.count("ah-copy") == 1
+    assert '"ah-code"><button class="ah-copy" type="button">Copy</button><pre class="mermaid">' not in html

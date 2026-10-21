@@ -2,12 +2,12 @@
 DocType: How-to guide
 Feature: Writing
 HelpId: write
-Keyword: frontmatter, yaml, markdown, admonition, note, warning, image, link, table, code
+Keyword: frontmatter, yaml, markdown, admonition, note, warning, image, link, table, code, diagram, mermaid, formula, math, latex
 Level: basic
 Order: 210
 Related: reference-document-format.md, explanation-properties.md
-Section: Write
-Summary: Write a document with properties, a title, sections, links to other documents, notes, code, tables and images.
+Section: Guides
+Summary: Write a document with properties, a title, sections, links to other documents, notes, code, diagrams, formulas, tables and images.
 ---
 
 # Write a document
@@ -86,6 +86,48 @@ Fence code with three backticks and name the language:
 pg_restore -d appdb appdb.dump
 ```
 ````
+
+## Draw a diagram {#diagrams}
+
+Fence the diagram source with `mermaid`:
+
+````markdown
+```mermaid
+flowchart LR
+    Source --> Build --> Site
+```
+````
+
+The reader sees a drawing instead of the text:
+
+```mermaid
+flowchart LR
+    Source --> Build --> Site
+```
+
+Mermaid draws flowcharts, sequence diagrams and more; its [documentation](https://mermaid.js.org/) lists the types, and the [gallery](reference-diagrams-formulas.md) has more examples. A diagram with an error shows Mermaid's message in its place, and the build goes on. The drawing uses dark colours when the page background is dark (for example apphelp in dark mode), and light colours otherwise, as the page looks when it loads.
+
+## Write a formula {#formulas}
+
+Put TeX between single dollar signs inside a sentence, or between double dollar signs for a block:
+
+````markdown
+The area is $A = \pi r^2$.
+
+$$
+\int_0^1 x^2\,dx = \frac{1}{3}
+$$
+````
+
+The reader sees:
+
+The area is $A = \pi r^2$.
+
+$$
+\int_0^1 x^2\,dx = \frac{1}{3}
+$$
+
+The [gallery](reference-diagrams-formulas.md) shows matrices, aligned equations and more. A formula KaTeX cannot read shows its source in red, and the build goes on. To write a dollar sign as text, use `\$`. Rules and limits: [formulas](reference-document-format.md#formulas).
 
 ## Add tables {#tables}
 

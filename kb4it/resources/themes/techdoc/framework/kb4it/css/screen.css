@@ -975,7 +975,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-footer-top:hover { color: #1e87f0; }
 .kb-footer-meta { color: #666; }
 
-/* ── Markdown content wrapper (visual parity with AsciiDoc) ── */
+/* ── Markdown content wrapper ── */
 .kb-content-md h1,
 .kb-content-md h2,
 .kb-content-md h3,

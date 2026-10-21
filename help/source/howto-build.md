@@ -6,7 +6,7 @@ Keyword: compile, force, rebuild, verify, log, summary, workers
 Level: basic
 Order: 310
 Related: howto-use-tui.md, troubleshooting.md
-Section: Build and preview
+Section: Guides
 Summary: Build a website, rebuild only what changed, force a full rebuild, check documents and read the build log.
 ---
 
