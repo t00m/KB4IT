@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Themes
 HelpId: customize-templates
-Keyword: overrides, template, footer, css, static, mermaid, customize, change one page
+Keyword: overrides, template, footer, css, static, library, customize, change one page
 Level: advanced
 Order: 555
 Related: explanation-themes.md, howto-create-theme.md, reference-repo-json.md
@@ -40,21 +40,14 @@ Everything in `overrides/static/` is copied, as it is, into the website root. Pu
 
 Use another folder than `overrides` with `"overrides": "my-folder"` in `repo.json`.
 
-## Example: diagrams with Mermaid {#mermaid}
+## Example: a browser library of your own {#library}
 
-[Mermaid](https://mermaid.js.org/) draws diagrams from text in the browser. To use it in techdoc:
+Mermaid diagrams and KaTeX formulas are built in; see [diagrams](reference-document-format.md#diagrams). For another browser library, such as a chart or a map:
 
-1. Download `mermaid.min.js` into `overrides/static/js/`.
-2. Copy techdoc's `HTML_FOOTER.tpl` into `overrides/templates/` and add these lines just before its `</body>` line (anything after `</html>` is dropped):
+1. Put the library file in `overrides/static/js/`.
+2. Copy techdoc's `HTML_FOOTER.tpl` into `overrides/templates/` and add the script lines just before its `</body>` line (anything after `</html>` is dropped):
 
-        <script src="js/mermaid.min.js"></script>
-        <script>mermaid.initialize({startOnLoad: true});</script>
+        <script src="js/library.min.js"></script>
+        <script>startLibrary();</script>
 
-3. Write each diagram in a document as an HTML block. Markdown keeps HTML blocks as they are:
-
-        <div class="mermaid">
-        graph LR
-          Write --> Build --> Publish
-        </div>
-
-The same works for other browser libraries, such as KaTeX for formulas.
+3. Write what the library needs in a document as an HTML block. Markdown keeps HTML blocks as they are.

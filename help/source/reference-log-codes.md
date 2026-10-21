@@ -55,7 +55,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DOC_INVALID` | error | A document cannot be read. It is left out of the site; with `"fail_on_invalid": true` the build stops | See [why a document is rejected](reference-document-format.md#invalid) |
 | `DOC_WARN` | warning | The document sets `title` in its front matter. KB4IT ignores it and uses the first `#` heading | Remove `title` from the front matter |
 | `DOC_NAME_CLASH` | warning | Two documents differ only by letter case or extension | See [file names](troubleshooting.md#names) |
-| `DOC_NAME_RESERVED` | error | The file name is reserved on Windows. The document is left out | See [file names](troubleshooting.md#names) |
+| `DOC_NAME_RESERVED` | error | The file name is reserved: a Windows device name, or a page the theme writes (`404.md` in techdoc, blog and bookshelf). The document is left out | See [file names](troubleshooting.md#names) |
 | `DATE_INVALID` | warning, error | A date value cannot be read as a date. The document is sorted with the undated ones | Use a [date form KB4IT reads](reference-document-format.md#dates) |
 | `DOC_UNDATED` | warning | The blog theme found a post without a `Date` | Add a `Date` property |
 | `LINK_BROKEN` | warning | A link points to a `.md` file that is not in `source/` | See [LINK_BROKEN](troubleshooting.md#link-broken) |

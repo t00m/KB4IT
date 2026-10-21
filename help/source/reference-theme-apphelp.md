@@ -23,6 +23,9 @@ apphelp builds the help of an application, like the site you are reading. The sa
 - A **Topics** page listing pages by feature.
 - Help ids: the application opens `go.html?id=rename` and lands on the right page or section.
 - `?embed=1` hides the header and sidebar, for a help viewer inside the application.
+- The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo.
+- [Mermaid diagrams and formulas](reference-document-format.md#diagrams) in pages.
+- A `404.html` page for missing addresses, in every build.
 - Strict checks: a page with a missing or unknown property fails the build, so the help never ships half written.
 
 ## Page properties {#properties}

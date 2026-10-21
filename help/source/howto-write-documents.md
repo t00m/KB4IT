@@ -87,6 +87,33 @@ pg_restore -d appdb appdb.dump
 ```
 ````
 
+## Draw a diagram {#diagrams}
+
+Fence the diagram source with `mermaid`:
+
+````markdown
+```mermaid
+flowchart LR
+    Source --> Build --> Site
+```
+````
+
+The reader sees a drawing instead of the text. Mermaid draws flowcharts, sequence diagrams and more; its [documentation](https://mermaid.js.org/) lists the types. A diagram with an error shows Mermaid's message in its place, and the build goes on. The drawing follows the light or dark setting of the system when the page loads.
+
+## Write a formula {#formulas}
+
+Put TeX between single dollar signs inside a sentence, or between double dollar signs for a block:
+
+````markdown
+The area is $A = \pi r^2$.
+
+$$
+\int_0^1 x^2\,dx = \frac{1}{3}
+$$
+````
+
+A formula KaTeX cannot read shows its source in red, and the build goes on. To write a dollar sign as text, use `\$`. Rules and limits: [formulas](reference-document-format.md#formulas).
+
 ## Add tables {#tables}
 
 ```markdown

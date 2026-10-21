@@ -52,6 +52,12 @@ The full text...
 | `stats.html` | A tag cloud of the values |
 | `feed.xml` | Atom feed of the newest posts, when `site_url` is set; see [feed](reference-repo-json.md#feed) |
 | `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the sidebar shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
+
+## Icon, diagrams and formulas {#render}
+
+- The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo (`images/logo.svg`).
+- Documents can hold [Mermaid diagrams and formulas](reference-document-format.md#diagrams).
 
 ## Settings {#settings}
 

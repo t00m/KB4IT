@@ -43,7 +43,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | Key | Default | Meaning |
 |---|---|---|
 | `tagline` | | Short subtitle |
-| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text for screen readers; empty uses the site `title` |
+| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text for screen readers; empty uses the site `title`. The logo is also the favicon of every page; without `logo`, the page uses the theme's own logo |
 | `workers` | half the processor cores | Documents converted at the same time |
 | `force` | `false` | Rebuild everything on every build, like `--force` |
 | `ignored_keys` | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
