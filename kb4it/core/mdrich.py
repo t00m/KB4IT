@@ -6,13 +6,13 @@ import xml.etree.ElementTree as etree
 
 from markdown import util
 from markdown.extensions import Extension
-from markdown.inlinepatterns import InlineProcessor
+from markdown.inlinepatterns import AUTOLINK_RE, AUTOMAIL_RE, HTML_RE, InlineProcessor
 from markdown.preprocessors import Preprocessor
 
 # Pages whose HTML contains these need the Mermaid or KaTeX scripts.
 MERMAID_MARK = 'class="mermaid"'
 MATH_MARK = 'class="kb4it-math'
-# User extensions that render formulas themselves; the core one then stays out.
+# User extensions that render formulas themselves; the core math processors then stay off.
 MATH_EXTENSIONS = ("pymdownx.arithmatex", "markdown_katex")
 
 FENCE_RE = re.compile(r"^(`{3,}|~{3,})(.*)$")
@@ -21,8 +21,18 @@ DISPLAY_LINE_RE = re.compile(r"^\$\$((?:\\.|[^$\\])+)\$\$\s*$")
 # Escaped dollars are stashed before these run, so a bare $ never belongs to the formula.
 INLINE_DISPLAY_RE = r"(?<!\$)\$\$([^$]+)\$\$(?!\$)"
 INLINE_MATH_RE = r"(?<!\$)\$(?![\s$])([^$]+?)(?<!\s)\$(?!\$)"
+# Spans owned by inline patterns that run after the math ones: raw HTML tags, autolinks, image destinations.
+PROTECTED_RES = [re.compile(r, re.DOTALL) for r in (HTML_RE, AUTOLINK_RE, AUTOMAIL_RE)]
+IMAGE_DEST_RE = re.compile(r"!\[[^\]]*\](\([^)]*\))")
 # What the escape processor stashes for a backslash escape: STX + code point + ETX.
 ESCAPED_RE = re.compile(f"^{util.STX}([0-9]+){util.ETX}$")
+
+
+def _protected(data, pos):
+    """True when position pos of data is inside a raw HTML tag, an autolink or an image destination."""
+    spans = [m.span() for regex in PROTECTED_RES for m in regex.finditer(data)]
+    spans += [m.span(1) for m in IMAGE_DEST_RE.finditer(data)]
+    return any(start < pos < end for start, end in spans)
 
 
 def _closing_fence(lines, start, fence):
@@ -87,6 +97,8 @@ class _MathProcessor(InlineProcessor):
     css_class = "kb4it-math"
 
     def handleMatch(self, m, data):
+        if _protected(data, m.start(0)):
+            return None, None, None
         stashed = self.md.treeprocessors["inline"].stashed_nodes
 
         def unescape(placeholder):
@@ -116,13 +128,20 @@ class _InlineDisplayMathProcessor(_MathProcessor):
 class RichContentExtension(Extension):
     """python-markdown extension: mermaid fences and $...$ / $$...$$ formulas as marked elements."""
 
+    def __init__(self, **kwargs):
+        self.config = {"math": [True, "Turn $...$ and $$...$$ into formulas; off when a user extension does it"]}
+        super().__init__(**kwargs)
+
     def extendMarkdown(self, md):
-        md.ESCAPED_CHARS.append("$")
         # 30: after normalize_whitespace (also 30, registered earlier), before the fences (25).
         md.preprocessors.register(_MermaidPreprocessor(md), "kb4it_mermaid", 30)
+        if not self.getConfig("math"):
+            return
+        md.ESCAPED_CHARS.append("$")
         # 20: after the fences (25) and the raw HTML blocks (also 20, registered earlier).
         md.preprocessors.register(_DisplayMathPreprocessor(md), "kb4it_display_math", 20)
         # 156 and 155: after backticks (190), escapes (180) and links (160), before emphasis (60);
         # $$...$$ first, so a single $ never starts on half of a $$ pair.
+        # Image links (150), autolinks (120) and raw HTML (90) come later, so _protected() guards them.
         md.inlinePatterns.register(_InlineDisplayMathProcessor(INLINE_DISPLAY_RE, md), "kb4it_inline_display_math", 156)
         md.inlinePatterns.register(_MathProcessor(INLINE_MATH_RE, md), "kb4it_inline_math", 155)

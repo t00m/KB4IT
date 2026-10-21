@@ -47,8 +47,7 @@ class MarkdownSettings:
             # Loaded explicitly so its use_pygments setting (see all_configs) reaches superfences.
             names.append("pymdownx.highlight")
         names += [name for name in self.extensions if name not in names]
-        if not any(name in MATH_EXTENSIONS for name in self.extensions):
-            names.append(RichContentExtension())
+        names.append(RichContentExtension(math=not any(name in MATH_EXTENSIONS for name in self.extensions)))
         return names + [MdLinkExtension()]
 
     def _uses_pymdownx_highlight(self):

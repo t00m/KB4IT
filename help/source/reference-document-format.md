@@ -103,9 +103,9 @@ Rules for `$...$`:
 - So "costs \$5 and \$10" stays text, but "\$5/\$10" is a formula. Write `\$5/\$10` for the text.
 - The formula stays inside one paragraph.
 
-Fenced, indented and inline code never change, so a `$` in code is safe.
+Fenced, indented and inline code never change, so a `$` in code is safe. A `$` inside an HTML tag, an autolink such as `<https://...>` or the address of an image is not a formula either.
 
-If `pymdownx.arithmatex` or `markdown_katex` is in [`markdown.extensions`](reference-repo-json.md#markdown), KB4IT leaves `$` to that extension and its own handling is off.
+If `pymdownx.arithmatex` or `markdown_katex` is in [`markdown.extensions`](reference-repo-json.md#markdown), KB4IT leaves `$` to that extension and its own formula handling is off. Diagrams still work.
 
 With `"sanitize": true` diagrams and formulas are kept. The search index and the feed hold the diagram or formula source as text. See [Text between dollar signs shows as a formula](troubleshooting.md#dollar-sign) if a price turns into a formula.
 

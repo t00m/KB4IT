@@ -113,12 +113,51 @@ def test_math_source_is_escaped():
     assert '<div class="kb4it-math kb4it-math-display">a &lt; b &amp; c</div>' in _html("$$\na < b & c\n$$\n")
 
 
-def test_user_math_extension_disables_core():
-    default = MarkdownSettings().all_extensions()
-    assert any(isinstance(e, RichContentExtension) for e in default)
+def _rich(settings):
+    return [e for e in settings.all_extensions() if isinstance(e, RichContentExtension)]
+
+
+def test_user_math_extension_disables_core_math_only():
+    default = _rich(MarkdownSettings())
+    assert len(default) == 1 and default[0].getConfig("math") is True
     for name in ("markdown_katex", "pymdownx.arithmatex"):
-        names = MarkdownSettings(extensions=[name]).all_extensions()
-        assert not any(isinstance(e, RichContentExtension) for e in names)
+        rich = _rich(MarkdownSettings(extensions=[name]))
+        assert len(rich) == 1 and rich[0].getConfig("math") is False
+
+
+def test_mermaid_kept_when_math_off():
+    import markdown
+    html = markdown.Markdown(extensions=[RichContentExtension(math=False)]).convert(MERMAID_SOURCE + "\n$x$ and\n\n$$\ny\n$$\n")
+    assert DIAGRAM in html
+    assert "kb4it-math" not in html
+    assert "$x$" in html
+
+
+def test_mermaid_kept_with_arithmatex():
+    pytest.importorskip("pymdownx")
+    html = _html(MERMAID_SOURCE + "\n$x$\n", extensions=["pymdownx.arithmatex"])
+    assert DIAGRAM in html
+    assert "kb4it-math" not in html
+
+
+@pytest.mark.parametrize("text, kept", [
+    ("<https://x.org/?a=$1&b=$2>", 'href="https://x.org/?a=$1&amp;b=$2"'),
+    ('<a href="https://x.org/?a=$1&b=$2">pay</a>', '<a href="https://x.org/?a=$1&b=$2">pay</a>'),
+    ('<span title="$x$">t</span>', '<span title="$x$">t</span>'),
+    ("![alt](a$b$.png)", 'src="a$b$.png"'),
+])
+def test_dollar_in_raw_html_autolink_or_image_is_not_math(text, kept):
+    html = _html(text)
+    assert kept in html
+    assert "kb4it-math" not in html
+
+
+def test_math_next_to_html_and_comparisons():
+    html = _html("$x<y$ and $y>z$")
+    assert '<span class="kb4it-math">x&lt;y</span>' in html
+    assert '<span class="kb4it-math">y&gt;z</span>' in html
+    assert '<span class="kb4it-math">x</span>' in _html("<b>bold</b> $x$ <i>it</i>")
+    assert '<span class="kb4it-math">x</span>' in _html("a < b and $x$")
 
 
 @pytest.mark.parametrize("markup", [
