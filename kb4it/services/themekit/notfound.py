@@ -9,7 +9,8 @@ class NotFoundMixin(ThemeHost):
     """Builds 404.html; needs `Builder`."""
 
     #: Source pages a document cannot take, because the theme writes a page of that name.
-    reserved_pages: tuple[str, ...] = ("404.md",)
+    #: Empty here; a theme that calls build_page_404() sets ("404.md",).
+    reserved_pages: tuple[str, ...] = ()
 
     def build_page_404(self) -> None:
         """Create the 404 page; as a system page it stays out of listings, search, feed and sitemap."""

@@ -81,6 +81,7 @@ class Theme(DocumentTheme):
     """Builder for the Bookshelf theme."""
 
     tagcloud_scale_skips_empty = True
+    reserved_pages = ('404.md',)  # build() writes 404.html
     datatable_link_template = 'LINK'
     datatable_default_headers = ('Date', 'Title', 'Chapter')
 

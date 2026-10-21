@@ -179,7 +179,7 @@ It brings the pages per property and per value, the properties, stats, bookmarks
 | `datatable_default_headers` | `('Date', 'Title')` | Columns when neither the page nor `repo.json` `"datatable"` names them |
 | `datatable_date_cell(timestamp)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table |
 
-A document theme writes a `404.html` page at the end of its build: call `self.build_page_404()` from `build()` and give the theme a `PAGE_404` template. To keep a source file name for itself, a theme lists it in `reserved_pages`, a tuple that defaults to `("404.md",)`; a document with that name is reported with `DOC_NAME_RESERVED` and left out.
+A document theme writes a `404.html` page at the end of its build: call `self.build_page_404()` from `build()` and give the theme a `PAGE_404` template. To keep a source file name for itself, a theme lists it in `reserved_pages`, a tuple that is empty by default. A theme that writes the 404 page sets `reserved_pages = ("404.md",)`; a document with that name is then reported with `DOC_NAME_RESERVED` and left out.
 
 You can still override any method. KB4IT's own themes start the docstring of such an override with `Override:` and say why; a test checks it.
 

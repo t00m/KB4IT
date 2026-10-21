@@ -94,3 +94,18 @@ def test_base_tag_is_not_duplicated():
     assert once == twice
     assert once.count("<base ") == 1
     assert once.startswith('<html><head lang="en">\n<base href="https://ex.org/kb/">')
+
+
+def test_reserved_pages_only_where_a_404_page_is_written():
+    import ast
+
+    from kb4it.services.themekit import DocumentTheme
+
+    assert DocumentTheme.reserved_pages == ()
+    for theme in THEMES:
+        source = (ROOT / "kb4it" / "resources" / "themes" / theme / "logic" / "theme.py").read_text(encoding="utf-8")
+        cls = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
+        values = [ast.literal_eval(n.value) for n in cls.body
+                  if isinstance(n, ast.AnnAssign | ast.Assign) and "reserved_pages" in ast.unparse(n)]
+        assert values == [("404.md",)], theme
+        assert "self.build_page_404()" in source, theme

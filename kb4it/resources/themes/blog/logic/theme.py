@@ -23,6 +23,7 @@ from kb4it.services.themekit import DocumentTheme
 
 class Theme(DocumentTheme):
     properties_title = 'Metadata'
+    reserved_pages = ('404.md',)  # build() writes 404.html
     reuse_unchanged_pages = True
     datatable_link_template = 'LINK'
 

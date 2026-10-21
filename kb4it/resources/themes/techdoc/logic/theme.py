@@ -36,6 +36,7 @@ parser = etree.HTMLParser()
 
 
 class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
+    reserved_pages = ('404.md',)  # build() writes 404.html
 
     def datatable_value_link(self, properties, key, value):
         """Priority and Status values show as colored labels."""
