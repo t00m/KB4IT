@@ -214,8 +214,10 @@ def test_no_framework_name_in_the_sources():
 def test_no_framework_name_in_the_site():
     if not (OFFLINE / "index.html").exists():
         pytest.skip("offline help copy not built")
+    # Vendored Mermaid and KaTeX under resources/render/ are third-party code, not KB4IT text.
+    vendored = OFFLINE / "resources" / "render"
     found = [str(p.relative_to(OFFLINE)) for p in sorted(OFFLINE.rglob("*"))
-             if p.is_file() and p.suffix in {".html", ".js", ".json", ".txt", ".xml", ".md"}
+             if p.is_file() and vendored not in p.parents and p.suffix in {".html", ".js", ".json", ".txt", ".xml", ".md"}
              and FRAMEWORK_NAME in p.read_text(encoding="utf-8", errors="replace").lower()]
     assert not found, f"files that name the framework: {found}"
 
