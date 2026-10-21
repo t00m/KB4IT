@@ -9,6 +9,7 @@ Service Deployer.
 
 import glob
 import os
+import re
 import shutil
 from typing import Any
 
@@ -18,6 +19,10 @@ from kb4it.core.log import get_logger
 from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_contents
+
+
+# A tag that loads a render file; text that only names the folder does not count.
+RENDER_REF = re.compile(r'(?:src|href)="[^"]*resources/render/')
 
 
 class Deployer(Service):
@@ -210,10 +215,7 @@ class Deployer(Service):
                 fh.write(pygments_css(settings))
             self.log.debug(f"[DEPLOYER] PYGMENTS_CSS path={css_path}")
 
-        # Mermaid, KaTeX and their init script; pages load them only when they hold a diagram or formula.
-        copydir(os.path.join(ENV["GPATH"]["RESOURCES"], "render"),
-                os.path.join(self.srvbes.get_path("target"), "resources", "render"))
-        self.log.debug("[DEPLOYER] RENDER_ASSETS")
+        self.deploy_render_assets()
 
         # Files of the repository's overrides/static folder, copied as they are into the site root.
         static = os.path.join(getattr(self.srvbes, "overrides_dir", "") or "", "static")
@@ -230,6 +232,23 @@ class Deployer(Service):
             )
             copydir(source_resources_dir, resources_dir_target)
             self.log.debug("[DEPLOYER] COPIED_LOCAL_RESOURCES")
+
+    def deploy_render_assets(self):
+        """Copy Mermaid, KaTeX and their init script only when a page in the target loads one of them."""
+        target = self.srvbes.get_path("target")
+        render = os.path.join(target, "resources", "render")
+        # Pages from earlier builds count too, so an incremental build keeps what an older page needs.
+        needed = any(self._page_uses_render(path) for path in glob.glob(os.path.join(target, "*.html")))
+        if needed:
+            copydir(os.path.join(ENV["GPATH"]["RESOURCES"], "render"), render)
+        elif os.path.isdir(render):
+            shutil.rmtree(render)
+        self.log.debug(f"[DEPLOYER] RENDER_ASSETS deployed={needed}")
+
+    @staticmethod
+    def _page_uses_render(path):
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            return RENDER_REF.search(fh.read()) is not None
 
     def step_09_copy_html_to_cache(self):
         """Copy back all HTML files from target to cache."""
