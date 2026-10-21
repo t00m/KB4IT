@@ -1,6 +1,6 @@
 # 404 page, favicon, diagrams and math design
 
-Status: draft, waiting for approval.
+Status: approved.
 Date: 2026-10-21
 Release: 0.9.1
 Roadmap: `tmp/KB4IT-SSG-ROADMAP.md`, Plan B (publishing basics) and Plan D (diagrams and math)
