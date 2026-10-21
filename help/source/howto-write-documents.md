@@ -98,7 +98,7 @@ flowchart LR
 ```
 ````
 
-The reader sees a drawing instead of the text. Mermaid draws flowcharts, sequence diagrams and more; its [documentation](https://mermaid.js.org/) lists the types. A diagram with an error shows Mermaid's message in its place, and the build goes on. The drawing follows the light or dark setting of the system when the page loads.
+The reader sees a drawing instead of the text. Mermaid draws flowcharts, sequence diagrams and more; its [documentation](https://mermaid.js.org/) lists the types. A diagram with an error shows Mermaid's message in its place, and the build goes on. The drawing uses dark colours when the page background is dark (for example apphelp in dark mode), and light colours otherwise, as the page looks when it loads.
 
 ## Write a formula {#formulas}
 

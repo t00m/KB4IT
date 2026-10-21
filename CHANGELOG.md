@@ -9,11 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Mermaid diagrams: a fenced block named `mermaid` is drawn in the browser, in all four themes. The files are bundled and deployed to `resources/render/`, so it works from `file://`; only pages with a diagram load them. A diagram with an error shows a message in the page and does not fail the build.
+- Mermaid diagrams: a fenced block named `mermaid` is drawn in the browser, in all four themes. The files are bundled and deployed to `resources/render/` only when a page of the site uses them, so it works from `file://`; only pages with a diagram load them. Diagrams use dark colours when the page background is dark. A diagram with an error shows a message in the page and does not fail the build.
 - Math formulas: `$...$` (inline), `$$...$$` (display) and `$$` blocks are drawn with KaTeX, in all four themes, with the same offline files. `\$` writes a literal dollar sign and code is never changed. `pymdownx.arithmatex` or `markdown_katex` in `markdown.extensions` turns the built-in formula handling off; diagrams still work. A price such as `$5/$10` is now read as a formula; see the troubleshooting entry "Text between dollar signs shows as a formula".
 - Favicon on every page: `repo.json` `logo`, else the theme's own logo. Themes name it with the new optional `theme.json` key `favicon`.
 - 404 page: techdoc, blog and bookshelf write `404.html`, with the search box and a link home (absolute links when `site_url` is set). A document named `404.md` is left out with `DOC_NAME_RESERVED`, also reported by `kb4it verify`; themes declare such names with `reserved_pages`.
-- `kb4it serve` answers a missing page with the site's `404.html` and status 404.
+- `kb4it serve` answers a missing page with the site's `404.html` and status 404, with its `<base>` pointed at the local server.
+- apphelp: its own `404.html` now also gets a `<base>` element with `site_url` when `site_url` is set, so it finds its files from any depth.
 
 ### Fixed
 

@@ -84,7 +84,7 @@ To fence code there, enable `pymdownx.superfences` (from `KB4IT[extras]`) in the
 
 A fenced block named `mermaid`, with the fence at the start of a line, becomes a [Mermaid](https://mermaid.js.org/) diagram. A `mermaid` fence inside another fence, an admonition or a list item stays code. Colouring from `markdown.highlight` does not touch it.
 
-The browser draws the diagram, from files KB4IT copies to `resources/render/` in the site. They work from disk and need no network. Only pages with a diagram load them. A diagram Mermaid cannot read shows an error in the page; the build does not fail. The colours follow the light or dark setting of the system when the page loads.
+The browser draws the diagram, from files KB4IT copies to `resources/render/` in the site when at least one page has a diagram or a formula; a site without any gets no such folder. They work from disk and need no network. Only pages with a diagram load them. A diagram Mermaid cannot read shows an error in the page; the build does not fail. The diagram uses dark colours when the page background is dark (for example apphelp in dark mode), and light colours otherwise, as the page looks when it loads. The theme does not frame a diagram as a code block.
 
 ### Formulas {#formulas}
 
