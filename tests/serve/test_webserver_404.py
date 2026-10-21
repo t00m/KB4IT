@@ -44,3 +44,17 @@ def test_missing_page_without_404_html(tmp_path):
         assert "Error response" in body and "Lost page" not in body
     finally:
         server.shutdown()
+
+
+def test_served_404_base_points_to_local_root(tmp_path):
+    page = '<html><head>\n<base href="https://ex.org/kb/">\n</head><body><h1>Lost page</h1></body></html>'
+    (tmp_path / "404.html").write_text(page, encoding="utf-8")
+    server = SiteServer(tmp_path).start()
+    try:
+        status, body = _fetch(server.url + "deep/nope.html")
+        assert status == 404
+        assert '<base href="/">' in body
+        assert "ex.org" not in body
+    finally:
+        server.shutdown()
+    assert (tmp_path / "404.html").read_text(encoding="utf-8") == page

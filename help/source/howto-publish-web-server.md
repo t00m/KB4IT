@@ -48,7 +48,7 @@ Apache, in the site configuration or `.htaccess`:
 ErrorDocument 404 /404.html
 ```
 
-The server shows the same file for a missing address at any depth, so a relative link in it only works at the top of the site. Set `site_url` in `repo.json` and the page uses absolute links and a `<base>` element, which works at any depth. `kb4it serve` also answers a missing page with `404.html` and status 404.
+The server shows the same file for a missing address at any depth, so a relative link in it only works at the top of the site. Set `site_url` in `repo.json` and the page uses absolute links and a `<base>` element, which works at any depth. `kb4it serve` also answers a missing page with `404.html` and status 404; it points the `<base>` element at its own address, so the page loads its files from the local copy, not from `site_url`.
 
 ## Preview it on your computer {#preview}
 
