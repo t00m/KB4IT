@@ -51,7 +51,8 @@
     }
 
     function decorateCodeBlocks(root) {
-        var pres = root.querySelectorAll("pre");
+        // pre.mermaid is a diagram for kb4it-render.js, not code.
+        var pres = root.querySelectorAll("pre:not(.mermaid)");
         pres.forEach(function (pre) {
             if (pre.closest(".code")) { return; }
             var code = pre.querySelector("code");
