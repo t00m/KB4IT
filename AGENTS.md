@@ -361,7 +361,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 ## Dependencies
 
 - Python >= 3.11, < 4.0, on GNU/Linux, macOS and Windows (CI runs all three with 3.11, 3.13 and 3.14). Platform-specific code is limited to `kb4it/core/lock.py` (flock/msvcrt), `kb4it/core/env.py` (platform description) and the TUI clipboard; `KB4IT_HOME` relocates `~/.kb4it`.
-- `Mako==1.3.12` -- templates.
+- `Mako==1.4.2` -- templates.
 - `Markdown>=3.5` -- Markdown -> HTML, with `extra`, `admonition`, `toc`, `sane_lists` extensions always on; `repo.json` `markdown.extensions`/`extension_configs` add more (`kb4it/core/mdconfig.py`, checked at config load). Optional extra `KB4IT[extras]` installs `pymdown-extensions` and `nh3` (for `markdown.sanitize`); with `pymdownx.superfences` or `pymdownx.highlight`, `all_configs()` sets `pymdownx.highlight.use_pygments` from `highlight`. `kb4it verify` warns `MD_FENCE_IN_BLOCK` (fence inside an indented block, without superfences) and, while `sanitize` is off, lists `DOC_RAW_SCRIPT` (information).
 - `PyYAML>=6.0` -- frontmatter parsing.
 - `Pygments>=2.15` -- build-time code highlighting (`markdown.highlight: pygments`).
