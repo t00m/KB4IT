@@ -87,6 +87,7 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/documents.py`         | Frontmatter and title: `get_document_attributes`, `first_heading` (title rule), `strip_first_heading`, `fences_in_blocks`, `raw_script_lines`, `extract_sections_from_md`, `get_hash_from_body` |
 | `kb4it/core/files.py`             | `valid_filename`, `SOURCE_ENCODING`, copy and delete, `json_load`, `json_save` (atomic: temp file, fsync, `os.replace`), `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`), blake2b hashes. `dates`, `documents` and `files` import nothing from `util` |
 | `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
+| `kb4it/core/mdrich.py`            | `RichContentExtension` (python-markdown, always on unless `pymdownx.arithmatex` or `markdown_katex` is configured): `mermaid` fences become `<pre class="mermaid">`; `$$` blocks, `$$...$$` and `$...$` become `kb4it-math` elements; `\$` is a literal dollar sign; code is never touched |
 | `kb4it/core/log.py`               | Logging setup, file redirection |
 | `kb4it/services/workflow.py`      | Orchestrates build / create / info / list / verify actions |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |
@@ -95,7 +96,8 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/services/processor.py`     | Frontmatter extraction, change detection, owns `BuildPlan` + `AnalysisResult` |
 | `kb4it/services/compiler.py`      | Markdown -> HTML via `python-markdown` in a `ThreadPoolExecutor` |
 | `kb4it/services/builder.py`       | Renders Mako templates (escaped when the theme opts in, see Escaping); defines `REQUIRED_TEMPLATES` + `_template_candidates()`, `template_base_dir()`, `git_ready()` |
-| `kb4it/services/themekit/`        | `DocumentTheme(Builder)`, the base of techdoc, blog and bookshelf, from the mixins `metadata.py`, `keypages.py`, `tables.py`, `events.py`, `toc.py`; `host.py` declares for mypy what they use from `Builder` |
+| `kb4it/services/themekit/`        | `DocumentTheme(Builder)`, the base of techdoc, blog and bookshelf, from the mixins `metadata.py`, `keypages.py`, `tables.py`, `events.py`, `toc.py`; `notfound.py` writes `404.html`; `host.py` declares for mypy what they use from `Builder` |
+| `kb4it/services/headmeta.py`      | `HeadMetaMixin` of `Builder`: `page_meta()`, `inject_head_meta()` (description, Open Graph, canonical, favicon link, and the Mermaid and KaTeX tags only on pages whose HTML holds a diagram or formula) |
 | `kb4it/services/frontend.py`      | Theme discovery, theme load, required-template validation |
 | `kb4it/services/deployer.py`      | Copies the compiled output to `repo.target`; removes only pages listed in `kbdict.json` `deployed` by an earlier build (none on the first build after an upgrade) |
 | `kb4it/core/serve.py`             | `kb4it serve`: build, serve, poll for changes, rebuild in-process (holds the repo lock; builds pass `lock_held`) |
@@ -111,7 +113,7 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 
 Each theme lives under `kb4it/resources/themes/<name>/`:
 
-- `logic/theme.py` -- `Theme` class that extends `Builder` and overrides `build_page`, `build_page_key`, `build_page_key_value`, etc. techdoc, blog and bookshelf extend `DocumentTheme` instead (`kb4it/services/themekit/`), which holds the code they share: the property, value, properties, stats, bookmarks and all-documents pages, the datatable, the day/month/year event pages, the TOC and the metadata section. Where they differ, the theme sets a class attribute or overrides a small hook (`properties_title`, `reuse_unchanged_pages`, `tagcloud_scale_skips_empty`, `cloud_measure`, `frequency_keys`, `stats_keys`, `datatable_link_template`, `datatable_default_headers`, `datatable_date_cell`, `datatable_title_cell`, `datatable_value_link`). A theme that overrides a shared method starts its docstring with `Override:` and says why; `tests/core/test_themekit.py` checks it. apphelp and custom themes keep extending `Builder`, which does not grow.
+- `logic/theme.py` -- `Theme` class that extends `Builder` and overrides `build_page`, `build_page_key`, `build_page_key_value`, etc. techdoc, blog and bookshelf extend `DocumentTheme` instead (`kb4it/services/themekit/`), which holds the code they share: the property, value, properties, stats, bookmarks and all-documents pages, the datatable, the day/month/year event pages, the TOC, the metadata section and the 404 page. Where they differ, the theme sets a class attribute or overrides a small hook (`properties_title`, `reuse_unchanged_pages`, `tagcloud_scale_skips_empty`, `reserved_pages`, `cloud_measure`, `frequency_keys`, `stats_keys`, `datatable_link_template`, `datatable_default_headers`, `datatable_date_cell`, `datatable_title_cell`, `datatable_value_link`). A theme that overrides a shared method starts its docstring with `Override:` and says why; `tests/core/test_themekit.py` checks it. apphelp and custom themes keep extending `Builder`, which does not grow.
 - Helper modules next to `theme.py` in `logic/` are imported by name, so they carry the theme's prefix: `apphelp_*.py`, `techdoc_dashboard.py` (home page) and `techdoc_addpage.py` (the "Add" page) hold mixins or functions of their theme.
 - Mako `.tpl` files directly in `templates/` (flat, no subdirectories). Shared fallbacks live in `kb4it/resources/common/templates/`; templates shared by a family of themes live in a template base, `kb4it/resources/bases/<name>/templates/` (see `template_base`). No bundled template is byte-identical in two themes of the same base (`tests/themes/test_templates_used.py`).
 - Optional `templates/skeletons/*.md` -- per-category Markdown document skeletons (used by the techdoc `PAGE_ADD` page).
@@ -124,6 +126,8 @@ Optional `theme.json` keys:
 - `metadata_pages` (default `true`): when `false`, the processor skips the per-key and per-key/value pages, and `PAGE_KEY` and `PAGE_KEY_VALUE` are no longer required templates.
 - `template_base` (no default): the name of a folder under `kb4it/resources/bases/` whose templates the theme builds on; techdoc and blog use `"uikit"`. An unknown name raises `ThemeError` naming the key. Base templates compile with the theme's `autoescape`. The bases live outside `common/`, which is deployed into sites.
 - `deploy_dirs` (default: the whole theme folder, plus `default` and `common`): list of plain folder names under the theme that are copied to the target. Names are validated (no paths, no `..`); an invalid entry raises `ThemeError`. An explicit list does not deploy the `default` theme or the common resources, so the theme must bring everything its pages need. The theme `id` must be a plain name (no path, not `.` or `..`). Themes without it deploy exactly as before.
+
+- `favicon` (no default): path of the theme's icon inside its folder, such as `images/logo.svg`; pages use `repo.json` `logo`, else `resources/themes/<id>/<favicon>`. All bundled themes set it.
 
 Custom themes installable to `~/.kb4it/opt/resources/themes/<name>/`.
 
@@ -149,6 +153,9 @@ Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first e
 
 ### Builder hooks and core behaviour
 
+- Diagrams and formulas: `RichContentExtension` (`core/mdrich.py`) marks them in the compiled HTML (`class="mermaid"`, `class="kb4it-math"`). `HeadMetaMixin` adds the Mermaid and KaTeX tags to a page only when its HTML holds a mark. The browser files live once in `kb4it/resources/render/` (`kb4it-render.js`, `mermaid/`, `katex/`, `VERSIONS`) and `Deployer` copies them to `target/resources/render/` for every theme (`[DEPLOYER] RENDER_ASSETS`), so they work from `file://`. A `$` rule: `$...$` needs a non-space character after the opening and before the closing `$`, and no `$` between; `$5/$10` is a formula, `$5 and $10` is text. Bad source shows an error in the page, never fails the build. The extension is skipped when `pymdownx.arithmatex` or `markdown_katex` is in `markdown.extensions`.
+- Favicon: `HTML_HEAD_META.tpl` writes `<link rel="icon">` in every page (`repo.json` `logo`, else the theme's `favicon`).
+- 404 page: `DocumentTheme` (`themekit/notfound.py`) writes `404.html` through `build_page_404()` for techdoc, blog and bookshelf (apphelp has its own `PAGE_404`); it is a system page (`SystemPage: Yes`) and uses absolute links with a `<base>` when `site_url` is set. The class attribute `reserved_pages` (default `("404.md",)`) lists source names the theme writes itself; `Workflow` reports them with `DOC_NAME_RESERVED` and leaves them out, and `kb4it verify` reports them. `kb4it serve` answers a missing page with the site's `404.html` and status 404 (`webserver.py`).
 - `Builder.create_page_about_app()` builds the about-app page into the build tree; the backend never writes into `source/`.
 - `Processor.signature_parts()` lists core settings that shape every page (`markdown`, overrides, hooks, and a hash of the whole `repo.json` minus `NON_PAGE_KEYS` = `workers`, `force`, `fail_on_invalid`, `source`, `target`); their hash is stored as `core_signature` in `kbdict.json`, and a change rebuilds everything (`[PROCESSOR] CORE_SIGNATURE_CHANGED`).
 - A template that exists but does not compile raises `ThemeError` (`[BUILDER] TEMPLATE_COMPILE_FAIL name= path= error=`, logged once per build); only missing candidates fall through to the next location.
@@ -368,6 +375,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 - `lxml` -- XML parsing for post-processing.
 - `rich>=13.0` -- terminal formatting (used by TUI and log output).
 - `textual>=0.47.0` -- TUI framework.
+- Mermaid and KaTeX are bundled browser files in `kb4it/resources/render/`, not Python dependencies. `scripts/devel/fetch_render_assets.sh` downloads the versions pinned in `kb4it/resources/render/VERSIONS` (needs network; run it only to update them).
 
 ## Conventions for contributions by AI assistants
 

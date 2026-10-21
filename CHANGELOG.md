@@ -7,6 +7,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Mermaid diagrams: a fenced block named `mermaid` is drawn in the browser, in all four themes. The files are bundled and deployed to `resources/render/`, so it works from `file://`; only pages with a diagram load them. A diagram with an error shows a message in the page and does not fail the build.
+- Math formulas: `$...$` (inline), `$$...$$` (display) and `$$` blocks are drawn with KaTeX, in all four themes, with the same offline files. `\$` writes a literal dollar sign and code is never changed. `pymdownx.arithmatex` or `markdown_katex` in `markdown.extensions` turns the built-in handling off. A price such as `$5/$10` is now read as a formula; see the troubleshooting entry "Text between dollar signs shows as a formula".
+- Favicon on every page: `repo.json` `logo`, else the theme's own logo. Themes name it with the new optional `theme.json` key `favicon`.
+- 404 page: techdoc, blog and bookshelf write `404.html`, with the search box and a link home (absolute links when `site_url` is set). A document named `404.md` is left out with `DOC_NAME_RESERVED`, also reported by `kb4it verify`; themes declare such names with `reserved_pages`.
+- `kb4it serve` answers a missing page with the site's `404.html` and status 404.
+
+### Fixed
+
+- techdoc: the header logo fallback pointed to a file that does not exist; it now uses the theme's logo.
+
 ---
 
 ## [0.9.0] - 2026-10-19
