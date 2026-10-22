@@ -65,3 +65,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["browser: needs Playwright and Chromium"]

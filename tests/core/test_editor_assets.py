@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EDITOR = ROOT / "kb4it" / "resources" / "editor"
-EDITOR_FILES = ["codemirror.min.js", "kb4it-frontmatter.js", "LICENSE", "THIRD-PARTY-NOTICES.txt", "VERSIONS"]
+EDITOR_FILES = ["codemirror.min.js", "kb4it-frontmatter.js", "kb4it-editor.js", "kb4it-editor.css", "LICENSE", "THIRD-PARTY-NOTICES.txt", "VERSIONS"]
 
 
 def _versions():

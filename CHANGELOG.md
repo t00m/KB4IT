@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - ED-03: techdoc requires KB4IT 0.10.0 or later.
+- ED-04: the techdoc Add page edits documents in a CodeMirror editor instead of a plain text box: line numbers, Markdown and frontmatter highlighting, undo and redo, search (`Ctrl+F`), bracket closing, lists and quotes continued on Enter, Tab inserts four spaces (`Escape` then `Tab` leaves the editor). The colours follow the page background, light or dark. Opening a category again asks before discarding an edited document. Browser tests (Playwright and Chromium) run in a separate CI job and are skipped where Playwright is missing.
 
 ---
 

@@ -11,6 +11,7 @@ CATEGORIES = [
 ]
 %>
 
+<link rel="stylesheet" href="resources/editor/kb4it-editor.css">
 <script id="kb-add-keys" type="application/json">${var['page']['keys_json'] | n}</script>
 <script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json'] | n}</script>
 
@@ -86,9 +87,7 @@ CATEGORIES = [
             <!-- Left: editable Markdown template -->
             <div class="kb-pane-left">
                 <div class="kb-pane-label">Template</div>
-                <textarea id="kb-editor-${cat['id']}"
-                          class="kb-editor"
-                          spellcheck="false"></textarea>
+                <div id="kb-editor-${cat['id']}" class="kb-editor-host"></div>
             </div>
 
             <!-- Right: key values reference as accordion word clouds -->
@@ -105,140 +104,11 @@ CATEGORIES = [
 </div><!-- /modal -->
 % endfor
 
+<script src="resources/editor/codemirror.min.js"></script>
+<script src="resources/editor/kb4it-frontmatter.js"></script>
+<script src="resources/editor/kb4it-editor.js"></script>
 <script>
-(function () {
-    var KB_KEYS = JSON.parse(document.getElementById('kb-add-keys').textContent);
-    var KB_SKEL = JSON.parse(document.getElementById('kb-add-skeletons').textContent);
-
-    /* YYYY-MM-DD in local time */
-    function timestamp() {
-        var d = new Date();
-        var p = function (n) { return String(n).padStart(2, '0'); };
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-        // return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':00';
-    }
-
-    /* Extract keys from Markdown skeleton (YAML front matter between --- delimiters) */
-    function parseKeysMd(catId) {
-        var keys = [];
-        var lines = KB_SKEL[catId].split('\n');
-        var inFm = false, fmCount = 0;
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i].trim() === '---') {
-                fmCount++;
-                if (fmCount === 1) { inFm = true; continue; }
-                if (fmCount === 2) { break; }
-            }
-            if (inFm) {
-                var m = lines[i].match(/^([A-Za-z][^:]+):\s*(.*)/);
-                if (m) keys.push({ name: m[1].trim(), val: m[2].trim() });
-            }
-        }
-        return keys;
-    }
-
-    /* Build Markdown template: substitute date and title in skeleton */
-    function buildTemplateMd(catId) {
-        var lines = KB_SKEL[catId].split('\n');
-        var out = [];
-        var inFm = false, fmDone = false, fmCount = 0, titleReplaced = false;
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            if (!fmDone && line.trim() === '---') {
-                fmCount++;
-                if (fmCount === 1) { inFm = true; out.push(line); continue; }
-                if (fmCount === 2) { inFm = false; fmDone = true; out.push(line); continue; }
-            }
-            if (inFm) {
-                var dm = line.match(/^(Date:\s*)(.*)/);
-                if (dm) { out.push('Date: ' + timestamp()); continue; }
-                out.push(line);
-            } else if (fmDone && !titleReplaced && /^#\s+/.test(line)) {
-                out.push('# ' + catId.charAt(0).toUpperCase() + catId.slice(1) + ' title');
-                titleReplaced = true;
-            } else {
-                out.push(line);
-            }
-        }
-        return out.join('\n');
-    }
-
-    /* Build the clean editable template for the left pane */
-    function buildTemplate(catId) {
-        return buildTemplateMd(catId);
-    }
-
-    /* Build the accordion + word clouds for the right pane */
-    function buildAccordion(catId) {
-        var container = document.getElementById('kb-accord-' + catId);
-        container.innerHTML = '';
-
-        var ul = document.createElement('ul');
-        ul.setAttribute('uk-accordion', '');
-
-        Object.keys(KB_KEYS).sort(function (a, b) {
-            return a.toLowerCase().localeCompare(b.toLowerCase());
-        }).forEach(function (keyName) {
-            var items = KB_KEYS[keyName];
-
-            var li = document.createElement('li');
-
-            var a = document.createElement('a');
-            a.className = 'uk-accordion-title';
-            a.href = '';
-            a.innerHTML = keyName +
-                (items.length > 0
-                    ? '<span style="font-size:0.7rem;font-weight:400;color:#ccc;margin-left:5px;">(' + items.length + ')</span>'
-                    : '');
-
-            var div = document.createElement('div');
-            div.className = 'uk-accordion-content';
-
-            var cloud = document.createElement('div');
-            cloud.className = 'kb-wcloud';
-
-            if (items.length > 0) {
-                var maxC = 1;
-                items.forEach(function (it) { if (it.c > maxC) maxC = it.c; });
-                var logMax = Math.log(1 + maxC) || 1;
-                items.forEach(function (it) {
-                    var w = Math.log(1 + it.c) / logMax;
-                    var sp = document.createElement('span');
-                    sp.className = 'kb-wcloud-word';
-                    sp.style.setProperty('--kb-weight', w.toFixed(3));
-                    sp.textContent = it.v;
-                    sp.title = it.c + (it.c === 1 ? ' document' : ' documents');
-                    cloud.appendChild(sp);
-                });
-            } else {
-                var empty = document.createElement('span');
-                empty.style.cssText = 'font-size:0.75rem;color:#bbb;font-style:italic;';
-                empty.textContent = 'No values yet';
-                cloud.appendChild(empty);
-            }
-
-            div.appendChild(cloud);
-            li.appendChild(a);
-            li.appendChild(div);
-            ul.appendChild(li);
-        });
-
-        container.appendChild(ul);
-    }
-
-    window.kbAddOpen = function (catId) {
-        document.getElementById('kb-editor-' + catId).value = buildTemplate(catId);
-        buildAccordion(catId);
-        UIkit.modal('#modal-add-' + catId).show();
-    };
-
-    window.kbAddCopy = function (catId) {
-        var el = document.getElementById('kb-editor-' + catId);
-        navigator.clipboard.writeText(el.value).catch(function () {
-            el.select();
-            document.execCommand('copy');
-        });
-        UIkit.notification({ message: 'Copied to clipboard', status: 'success', timeout: 2000 });
-    };
-})();
+/* Card and modal buttons call these; the editor lives in kb4it-editor.js. */
+function kbAddOpen(cat) { KB4ITEditor.open(cat); }
+function kbAddCopy(cat) { KB4ITEditor.copy(cat); }
 </script>

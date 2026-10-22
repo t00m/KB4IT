@@ -1,0 +1,92 @@
+/* KB4IT editor of the techdoc Add page (ED-04).
+ * Light by default; .kb4it-cm-dark is set by kb4it-editor.js when the page background is dark. */
+
+.kb-editor-host {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.kb4it-cm {
+    --kb4it-cm-bg: #ffffff;
+    --kb4it-cm-fg: #24292f;
+    --kb4it-cm-gutter-bg: #f6f8fa;
+    --kb4it-cm-gutter-fg: #8c959f;
+    --kb4it-cm-border: #e5e7eb;
+    --kb4it-cm-active: rgba(9, 105, 218, 0.06);
+    --kb4it-cm-selection: #cfe3ff;
+    --kb4it-cm-cursor: #24292f;
+    --kb4it-cm-heading: #0b5cad;
+    --kb4it-cm-link: #0969da;
+    --kb4it-cm-code: #9a3412;
+    --kb4it-cm-quote: #57606a;
+    --kb4it-cm-mark: #8250df;
+    --kb4it-cm-key: #116329;
+    --kb4it-cm-text: inherit;
+    --kb4it-cm-atom: #b35900;
+    --kb4it-cm-comment: #6e7781;
+    --kb4it-cm-invalid: #cf222e;
+}
+
+.kb4it-cm.kb4it-cm-dark {
+    --kb4it-cm-bg: #1e1e1e;
+    --kb4it-cm-fg: #d4d4d4;
+    --kb4it-cm-gutter-bg: #252526;
+    --kb4it-cm-gutter-fg: #858585;
+    --kb4it-cm-border: #333333;
+    --kb4it-cm-active: rgba(255, 255, 255, 0.06);
+    --kb4it-cm-selection: #264f78;
+    --kb4it-cm-cursor: #d4d4d4;
+    --kb4it-cm-heading: #79b8ff;
+    --kb4it-cm-link: #58a6ff;
+    --kb4it-cm-code: #ce9178;
+    --kb4it-cm-quote: #a0a0a0;
+    --kb4it-cm-mark: #c586c0;
+    --kb4it-cm-key: #9cdcfe;
+    --kb4it-cm-atom: #b5cea8;
+    --kb4it-cm-comment: #6a9955;
+    --kb4it-cm-invalid: #f48771;
+}
+
+.kb4it-cm.cm-editor {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    background: var(--kb4it-cm-bg);
+    color: var(--kb4it-cm-fg);
+    font-size: 0.84rem;
+}
+.kb4it-cm.cm-editor.cm-focused { outline: none; }
+.kb4it-cm .cm-scroller {
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    line-height: 1.65;
+    overflow: auto;
+}
+.kb4it-cm .cm-content { padding: 12px 0; caret-color: var(--kb4it-cm-cursor); }
+.kb4it-cm .cm-line { padding: 0 16px; }
+.kb4it-cm .cm-gutters {
+    background: var(--kb4it-cm-gutter-bg);
+    color: var(--kb4it-cm-gutter-fg);
+    border-right: 1px solid var(--kb4it-cm-border);
+}
+.kb4it-cm .cm-activeLine { background: var(--kb4it-cm-active); }
+.kb4it-cm .cm-activeLineGutter { background: var(--kb4it-cm-active); }
+.kb4it-cm .cm-cursor { border-left-color: var(--kb4it-cm-cursor); }
+/* The selection colour is set in kb4it-editor.js: it must outrank CodeMirror's base theme.
+ * drawSelection paints it behind the text; the native one keeps the token colours. */
+.kb4it-cm .cm-line::selection, .kb4it-cm .cm-line ::selection { color: currentColor; }
+
+/* Right pane: property counts and empty word clouds. */
+.kb-accord-count {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #ccc;
+    margin-left: 5px;
+}
+.kb-wcloud-empty {
+    font-size: 0.75rem;
+    color: #bbb;
+    font-style: italic;
+}

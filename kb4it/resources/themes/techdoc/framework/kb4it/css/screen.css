@@ -1208,20 +1208,6 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     border-bottom: 1px solid #ebebeb;
 }
 
-/* ── Editor textarea ── */
-.kb-editor {
-    flex: 1;
-    resize: none;
-    border: none;
-    outline: none;
-    padding: 20px 24px;
-    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
-    font-size: 0.84rem;
-    line-height: 1.65;
-    background: #1e1e1e;
-    color: #d4d4d4;
-}
-
 /* ── Accordion tuning for right pane ── */
 .kb-accord-wrap .uk-accordion { margin: 0; }
 .kb-accord-wrap .uk-accordion > li { border-bottom: 1px solid #f0f0f0; }

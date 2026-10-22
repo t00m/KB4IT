@@ -1,7 +1,5 @@
 """ED-02: the editor assets are deployed only to sites whose pages load them."""
 
-import pytest
-
 from tests.core.test_highlight import _app_conf
 from tests.core.test_build_failures import _Backend
 from tests.helpers import page, run_kb4it, write_repo
@@ -47,7 +45,6 @@ def _build(tmp_path, home, theme, extra_args=()):
     return result, tmp_path / theme / "target"
 
 
-@pytest.mark.xfail(strict=True, reason="Task 5")
 def test_techdoc_build_deploys_editor(tmp_path, home):
     _result, target = _build(tmp_path, home, "techdoc")
     assert (target / "resources" / "editor" / "codemirror.min.js").is_file()
