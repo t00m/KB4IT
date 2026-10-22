@@ -23,6 +23,8 @@ from kb4it.core.util import SOURCE_EXT_RE, copy_docs, copydir, delete_target_con
 
 # A tag that loads a render file; text that only names the folder does not count.
 RENDER_REF = re.compile(r'(?:src|href)="[^"]*resources/render/')
+# Same rule for the Markdown editor files.
+EDITOR_REF = re.compile(r'(?:src|href)="[^"]*resources/editor/')
 
 
 class Deployer(Service):
@@ -216,6 +218,7 @@ class Deployer(Service):
             self.log.debug(f"[DEPLOYER] PYGMENTS_CSS path={css_path}")
 
         self.deploy_render_assets()
+        self.deploy_editor_assets()
 
         # Files of the repository's overrides/static folder, copied as they are into the site root.
         static = os.path.join(getattr(self.srvbes, "overrides_dir", "") or "", "static")
@@ -238,17 +241,28 @@ class Deployer(Service):
         target = self.srvbes.get_path("target")
         render = os.path.join(target, "resources", "render")
         # Pages from earlier builds count too, so an incremental build keeps what an older page needs.
-        needed = any(self._page_uses_render(path) for path in glob.glob(os.path.join(target, "*.html")))
+        needed = any(self._page_matches(path, RENDER_REF) for path in glob.glob(os.path.join(target, "*.html")))
         if needed:
             copydir(os.path.join(ENV["GPATH"]["RESOURCES"], "render"), render)
         elif os.path.isdir(render):
             shutil.rmtree(render)
         self.log.debug(f"[DEPLOYER] RENDER_ASSETS deployed={needed}")
 
+    def deploy_editor_assets(self):
+        """Copy the editor files only when a page in the target loads one of them."""
+        target = self.srvbes.get_path("target")
+        editor = os.path.join(target, "resources", "editor")
+        needed = any(self._page_matches(path, EDITOR_REF) for path in glob.glob(os.path.join(target, "*.html")))
+        if needed:
+            copydir(os.path.join(ENV["GPATH"]["RESOURCES"], "editor"), editor)
+        elif os.path.isdir(editor):
+            shutil.rmtree(editor)
+        self.log.debug(f"[DEPLOYER] EDITOR_ASSETS deployed={needed}")
+
     @staticmethod
-    def _page_uses_render(path):
+    def _page_matches(path, pattern):
         with open(path, encoding="utf-8", errors="replace") as fh:
-            return RENDER_REF.search(fh.read()) is not None
+            return pattern.search(fh.read()) is not None
 
     def step_09_copy_html_to_cache(self):
         """Copy back all HTML files from target to cache."""
