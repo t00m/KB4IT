@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- techdoc Add page editor (ED-01 to ED-12): the Add page now edits new documents in a Markdown editor that works offline, also from `file://`. The items below describe its parts.
 - ED-01: a CodeMirror 6 bundle (`kb4it/resources/editor/codemirror.min.js`, global `KB4ITEditor.cm`) for the techdoc Add page editor. It is built with `scripts/devel/editor/build.sh`, committed, works offline from `file://` and stays under 700 KB. `check_wheel_themes.py` also checks that the wheel ships it.
 - ED-02: the editor files (`resources/editor/`) are deployed only to sites with a page that loads them, and removed from the site when no page does. Logged as `[DEPLOYER] EDITOR_ASSETS deployed=<bool>`.
 - ED-03: CodeMirror licence and `THIRD-PARTY-NOTICES.txt` ship with the package; `THANKS` credits CodeMirror.
@@ -17,6 +18,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ED-08: the Properties pane follows the text. 300 ms after the last edit the frontmatter is parsed again and the form is redrawn, keeping the focus and the text typed in a value input. While the frontmatter has an error (missing or unclosed `---`, YAML error, not a mapping) the pane shows the reason and its inputs and buttons are disabled.
 - ED-09: a toolbar above the Add page editor inserts Markdown and KB4IT elements: bold, italic, inline code, link, headings H2 to H4, bullet, numbered and task lists, quote, code block, horizontal rule, table, image, admonitions (note, tip, warning, danger), Mermaid diagram, inline formula and formula block. A button wraps the selection or inserts a template and selects the text to write next; one action is one undo step. `Ctrl+B`, `Ctrl+I`, `Ctrl+E` and `Ctrl+K` work as shortcuts (`Ctrl+I` replaces CodeMirror's select parent syntax). While the cursor is in the frontmatter the buttons are disabled and the shortcuts do nothing. Several cursors can be used (`Ctrl+click`).
 - ED-10: the Add page has a Save button. In Chromium browsers it opens the system save dialog (suggested name from the title, the folder used last time) and later saves write the same file without asking, the button showing `Save (<name>)`; elsewhere, or when the dialog is cancelled and a download is accepted, the file is downloaded. The file is UTF-8 with LF line endings and one final newline. Documents with errors ask for confirmation first; closing the modal or leaving the page with unsaved edits asks too. Copy writes the same text. The page note now says the page saves or downloads the file and that it goes in the `source` folder before a rebuild.
+- ED-11: help pages for the editor: the new how-to "Write a document in the editor" and an editor section in the techdoc reference, with the list of checks and the browser support for saving. `AGENTS.md` describes `kb4it/resources/editor/`, `scripts/devel/editor/build.sh`, `deploy_editor_assets()` and the browser test command.
+- ED-12: tests for the editor: asset and deploy tests in Python, the frontmatter logic run with `node` (skipped when node is missing) and browser tests with Playwright and Chromium (skipped when Playwright is missing; required in the CI browser job).
 
 ### Changed
 

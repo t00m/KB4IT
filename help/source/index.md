@@ -29,6 +29,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
     <p><strong>Write</strong></p>
     <ul class="ah-list">
       <li><a href="howto-write-documents.html">Write a document</a><br><span class="ah-muted">Properties, title, sections, links, notes, diagrams, formulas and images.</span></li>
+      <li><a href="howto-write-document-editor.html">Write in the editor</a><br><span class="ah-muted">The techdoc Add page: completion, checks, properties, toolbar and saving.</span></li>
       <li><a href="explanation-properties.html">How properties become navigation</a><br><span class="ah-muted">Every property you use gets its own pages.</span></li>
       <li><a href="reference-document-format.html">Document format</a><br><span class="ah-muted">The exact rules a document must follow.</span></li>
       <li><a href="reference-diagrams-formulas.html">Diagrams and formulas</a><br><span class="ah-muted">Mermaid diagrams and math, with the source of each example.</span></li>

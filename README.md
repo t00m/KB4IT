@@ -15,6 +15,7 @@
 - **Smart incremental builds** - only changed documents and their key/value index pages are recompiled, driven by per-document body and metadata hashes (blake2b).
 - **Ready to publish** - a favicon from your logo, a 404 page, and `sitemap.xml`, `robots.txt`, an Atom feed, Open Graph tags and canonical links once you set `site_url`.
 - **Links you can trust** - every document lists the documents that link to it, and `kb4it verify` reports broken links and anchors.
+- **Write in the browser** - the techdoc Add page is a Markdown editor that completes your properties, checks the frontmatter and saves the file, offline.
 - **Yours to adjust** - replace a single template per site, add your own CSS or scripts, or run Python hooks during the build.
 - **Four themes out of the box** - `techdoc`, `blog`, `bookshelf` and `apphelp` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
 - **Runs everywhere** - GNU/Linux, macOS and Windows.

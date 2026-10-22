@@ -46,6 +46,57 @@ The home page shows, from top to bottom:
 
 Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
+## Add page and editor {#editor}
+
+`add.html` writes new documents in a Markdown editor (CodeMirror 6, bundled, no network). Click **Create** on a category card to open its skeleton. For a walk-through see [Write a document in the editor](howto-write-document-editor.md).
+
+| Part | What it does |
+|---|---|
+| Editor | Line numbers, Markdown and frontmatter highlighting, undo, search (`Ctrl+F`), lists and quotes continued on Enter. Tab indents (four spaces), Shift-Tab outdents, `Escape` then `Tab` leaves the editor |
+| Completion | In the frontmatter: property names, and values of the repository, most used first. Values that YAML needs quoted are quoted |
+| Lint | A gutter with the diagnostics below |
+| Properties pane | One row per property: value chips, suggestions with counts, a property selector with "New property...", and a word cloud per property |
+| Toolbar | Bold, italic, code, link, headings H2 to H4, lists, quote, code block, rule, table, image, admonitions, Mermaid diagram, formulas. Disabled while the cursor is in the frontmatter |
+| Save and Copy | Save a file or download it; Copy writes the text to the clipboard |
+
+On open, the text of the H1 title is selected, so typing replaces it.
+
+### Checks {#lint}
+
+The gutter uses the reason names of the build. Errors stop the document from building; warnings and info do not.
+
+| Reason | Level | Meaning |
+|---|---|---|
+| `missing_frontmatter` | error | The text does not start with `---` |
+| `missing_frontmatter_close` | error | The frontmatter has no closing `---` |
+| `yaml_error` | error | The YAML has a syntax error |
+| `invalid_frontmatter` | error | The frontmatter is not a key/value mapping |
+| `missing_h1_title` | error | There is no `#` title |
+| `title_in_frontmatter_ignored` | warning | A `Title:` property is ignored; the title comes from the H1 |
+| `bad_property_name` | error | The property name is not valid |
+| `bad_property_value` | error | The value is not valid |
+| `duplicate_property` | warning | The property appears twice; the build keeps the last |
+| `new_property`, `new_value` | info | The name or value is not used in the repository yet |
+
+The editor's YAML check can miss some malformed nested values, for example `A:` followed by `  b: [x`. `kb4it build` and `kb4it verify` remain the authority.
+
+### Properties pane {#pane}
+
+- Values cannot contain commas, because KB4IT splits on commas.
+- Complex properties (block lists, several lines, anchors, unusual numbers or escapes) are read-only and say "Edit this property in the text".
+- A repeated property is edited at its last occurrence.
+- When one of several values needs quotes, the line is written as a flow list: `Key: [a, "b: c"]`.
+- The pane follows the text 300 ms after the last edit. While the frontmatter has an error, its inputs are disabled.
+
+### Saving and browsers {#save}
+
+| Browser | Save |
+|---|---|
+| Chromium-based (Chrome, Edge, ...) | System save dialog; later saves reuse the file and the button reads `Save (<name>)` |
+| Firefox, Safari | Downloads the file |
+
+If the dialog is cancelled or the write fails, the page offers a download. A document with errors asks for confirmation. The text is saved as UTF-8 with LF line endings and one final newline. Everything works offline, from `file://` or `kb4it serve`; the editor files are copied to `resources/editor/` only in sites that have the Add page.
+
 ## Other pages {#pages}
 
 | Page | Shows |
@@ -55,7 +106,7 @@ Each document gets a table of contents, sections that fold when you click their 
 | `properties.html` | Every property and its values |
 | `stats.html` | Counts and a word cloud of the values |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
-| `add.html` | A form that fills a ready-made skeleton per category, to copy into a new file |
+| `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
 | `help.html` | A short guide to writing documents |
 | `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the header shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
