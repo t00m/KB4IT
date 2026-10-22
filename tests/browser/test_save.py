@@ -250,3 +250,102 @@ def test_page_note_rewritten(make_page):
     flat = " ".join(note.split())
     assert "saves or downloads" in flat
     assert "source" in flat and "rebuild" in flat
+
+
+FAIL_STUB = """
+window.__written = [];
+window.__aborted = 0;
+window.__mode = 'create';
+window.__fail = 'create';
+window.showSaveFilePicker = async (options) => ({
+  name: options.suggestedName,
+  createWritable: async () => {
+    if (window.__fail === 'create') { throw new DOMException('denied', 'NotAllowedError'); }
+    return {
+      write: async (t) => {
+        if (window.__fail === 'write') { throw new DOMException('disk', 'NotReadableError'); }
+        window.__written.push(t);
+      },
+      close: async () => {},
+      abort: async () => { window.__aborted += 1; },
+    };
+  },
+});
+"""
+
+NOTIFY = ".uk-notification-message"
+
+
+@pytest.mark.parametrize("mode", ["create", "write"])
+def test_write_failure_first_save(make_page, tmp_path, mode):
+    page = make_page(FAIL_STUB + f"window.__fail = '{mode}';")
+    open_cat(page, "note")
+    set_text(page, "note", "---\r\nCategory: Note\r\n---\r\n# F\r\n")
+    messages = []
+
+    def dismiss(dialog):
+        messages.append(dialog.message)
+        dialog.dismiss()
+
+    page.once("dialog", dismiss)
+    assert page.evaluate("KB4ITEditor.save('note')") == "cancelled"
+    assert messages == ["The file was not saved. Download it instead?"]
+    page.wait_for_selector(NOTIFY)
+    assert "Saving failed" in page.text_content(NOTIFY)
+    assert page.evaluate("KB4ITEditor.dirty('note')") is True
+    assert label(page) == "Save"
+    if mode == "write":
+        assert page.evaluate("window.__aborted") == 1
+    page.once("dialog", lambda d: d.accept())
+    with page.expect_download() as info:
+        page.click("#kb-save-note")
+    target = tmp_path / "f.md"
+    info.value.save_as(target)
+    assert target.read_bytes() == b"---\nCategory: Note\n---\n# F\n"
+    assert page.evaluate("KB4ITEditor.dirty('note')") is False
+
+
+@pytest.mark.parametrize("mode", ["create", "write"])
+def test_write_failure_kept_handle(make_page, mode):
+    page = make_page(FAIL_STUB + "window.__fail = 'none';")
+    open_cat(page, "note")
+    page.click("#kb-save-note")
+    page.wait_for_function("window.__written.length === 1")
+    assert label(page).startswith("Save (")
+    set_text(page, "note", editor_text(page, "note") + "more")
+    page.evaluate(f"window.__fail = '{mode}'")
+    messages = []
+
+    def dismiss(dialog):
+        messages.append(dialog.message)
+        dialog.dismiss()
+
+    page.once("dialog", dismiss)
+    assert page.evaluate("KB4ITEditor.save('note')") == "cancelled"
+    assert messages == ["The file was not saved. Download it instead?"]
+    page.wait_for_selector(NOTIFY)
+    assert page.evaluate("KB4ITEditor.dirty('note')") is True
+    assert label(page) == "Save"
+
+
+def test_second_save_while_pending_is_ignored(make_page):
+    page = make_page(
+        "window.__n = 0; window.showSaveFilePicker = (o) => { window.__n += 1;"
+        " return new Promise(r => setTimeout(() => r({name: 'a.md', createWritable: async () => ({"
+        "write: async () => {}, close: async () => {}})}), 300)); };"
+    )
+    open_cat(page, "note")
+    result = page.evaluate("Promise.all([KB4ITEditor.save('note'), KB4ITEditor.save('note')])")
+    assert result == ["saved", "saved"]
+    assert page.evaluate("window.__n") == 1
+
+
+def test_edit_during_write_stays_dirty(make_page):
+    page = make_page(
+        "window.showSaveFilePicker = async (o) => ({name: 'a.md', createWritable: async () => ({"
+        "write: async () => { const v = KB4ITEditor.views.note;"
+        " v.dispatch({changes: {from: v.state.doc.length, insert: 'late'}}); }, close: async () => {}})});"
+    )
+    open_cat(page, "note")
+    assert page.evaluate("KB4ITEditor.save('note')") == "saved"
+    assert page.evaluate("KB4ITEditor.dirty('note')") is True

@@ -918,9 +918,12 @@
     return E.diagnostics(cat).filter(function (d) { return d.severity === "error"; }).length;
   }
 
-  // Downloads the text through an <a download> link.
-  E.download = function (cat) {
-    var text = normalised(cat);
+  // Marks the editor clean only when it still holds the text that was written.
+  function markCleanIf(cat, text) {
+    if (E.views[cat] && normalised(cat) === text) { E.markClean(cat); }
+  }
+
+  function downloadText(cat, text) {
     var name = KB4ITFrontmatter.fileName(text, cat);
     var url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
     var link = document.createElement("a");
@@ -931,32 +934,56 @@
     link.click();
     document.body.removeChild(link);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    E.markClean(cat);
-  };
+    markCleanIf(cat, text);
+  }
+
+  // Downloads the text through an <a download> link.
+  E.download = function (cat) { downloadText(cat, normalised(cat)); };
 
   function saveFailed(message) {
     UIkit.notification({ message: message, status: "danger" });
   }
 
+  var saving = {};    // pending save promise, per category
+
   // Resolves "saved", "downloaded" or "cancelled".
   E.save = function (cat) {
+    if (saving[cat]) { return saving[cat]; }
+    var pending = doSave(cat);
+    saving[cat] = pending;
+    var done = function () { delete saving[cat]; };
+    pending.then(done, done);
+    return pending;
+  };
+
+  function doSave(cat) {
     var count = errorCount(cat);
     if (count > 0 && !window.confirm(
       "This document has " + count + (count === 1 ? " error" : " errors") + " and will not build. Save anyway?")) {
       return Promise.resolve("cancelled");
     }
     var text = normalised(cat);
-    var downloadInstead = function () { E.download(cat); return "downloaded"; };
+    var offer = function () {
+      if (window.confirm(OFFER_DOWNLOAD)) { downloadText(cat, text); return "downloaded"; }
+      return "cancelled";
+    };
     if (typeof window.showSaveFilePicker !== "function") {
-      return Promise.resolve(downloadInstead());
+      downloadText(cat, text);
+      return Promise.resolve("downloaded");
     }
     var write = function (handle) {
       return handle.createWritable().then(function (writable) {
-        return Promise.resolve(writable.write(text)).then(function () { return writable.close(); });
+        var undo = function (error) {
+          return Promise.resolve().then(function () { return writable.abort(); }).then(
+            function () { throw error; }, function () { throw error; });
+        };
+        return Promise.resolve().then(function () { return writable.write(text); })
+          .then(function () { return writable.close(); })
+          .catch(undo);
       }).then(function () {
         handles[cat] = handle;
         setLabel(cat, handle.name);
-        E.markClean(cat);
+        markCleanIf(cat, text);
         return "saved";
       });
     };
@@ -967,15 +994,13 @@
         types: [{ description: "Markdown", accept: { "text/markdown": [".md"] } }]
       }).then(write);
     };
-    var first = handles[cat] ? write(handles[cat]).catch(function () { forgetHandle(cat); return ask(); }) : ask();
-    return first.catch(function (error) {
-      if (error && error.name === "AbortError") {
-        return window.confirm(OFFER_DOWNLOAD) ? downloadInstead() : "cancelled";
-      }
-      saveFailed("Saving failed (" + (error && error.name ? error.name : "error") + "): downloading the file instead");
-      return downloadInstead();
+    return (handles[cat] ? write(handles[cat]) : ask()).catch(function (error) {
+      if (error && error.name === "AbortError") { return offer(); }
+      forgetHandle(cat);
+      saveFailed("Saving failed (" + (error && error.name ? error.name : "error") + ")");
+      return offer();
     });
-  };
+  }
 
   // Leaving the page with unsaved edits asks for confirmation.
   window.addEventListener("beforeunload", function (event) {
