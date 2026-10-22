@@ -7,7 +7,7 @@
     "description": "Theme for technical documentation",
     "search": true,
     "feed": false,
-    "kb4it": ">=0.9.1",
+    "kb4it": ">=0.10.0",
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit"

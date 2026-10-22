@@ -16,3 +16,5 @@ __pycache__/
 responses
 tmp/
 kb4it/resources/help/
+
+scripts/devel/editor/node_modules/

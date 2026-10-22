@@ -8,6 +8,7 @@ import zipfile
 
 PREFIX = "kb4it/resources/themes/"
 HELP_INDEX = "kb4it/resources/help/index.html"
+EDITOR_BUNDLE = "kb4it/resources/editor/codemirror.min.js"
 
 
 def themes(paths):
@@ -16,6 +17,10 @@ def themes(paths):
 
 def has_offline_help(paths):
     return HELP_INDEX in paths
+
+
+def has_editor_bundle(paths):
+    return EDITOR_BUNDLE in paths
 
 
 def main():
@@ -27,6 +32,8 @@ def main():
     names = zipfile.ZipFile(wheels[-1]).namelist()
     if not has_offline_help(names):
         sys.exit(f"Offline help missing from {wheels[-1]}: no {HELP_INDEX}. Run scripts/help/build_offline.py first")
+    if not has_editor_bundle(names):
+        sys.exit(f"Editor bundle missing from {wheels[-1]}: no {EDITOR_BUNDLE}")
     packaged = themes(names)
     missing = sorted(tracked - packaged)
     if missing or "apphelp" not in packaged:

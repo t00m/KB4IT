@@ -3,3 +3,4 @@
 * Stackoverflow forums: https://stackoverflow.com/
 * Mermaid (https://mermaid.js.org, MIT): diagrams rendered in the browser from fenced mermaid blocks
 * KaTeX (https://katex.org, MIT): fast math typesetting for formulas written between dollar signs
+* CodeMirror (https://codemirror.net, MIT): source editor of the techdoc Add page

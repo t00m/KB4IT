@@ -11,7 +11,7 @@ VERSION = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
 
 SCANNED = ("kb4it", "scripts", "help", ".github", "tests", "action.yml", "pyproject.toml")
 TEXT_SUFFIXES = {".py", ".sh", ".cmd", ".ps1", ".tpl", ".json", ".yml", ".yaml", ".md", ".toml", ".cfg", ".csv", ".txt"}
-SKIPPED_PARTS = {"framework", "images", "__pycache__", "var"}  # var: generated build state
+SKIPPED_PARTS = {"framework", "images", "__pycache__", "var", "node_modules"}  # var: generated build state
 
 # A hand-written 0.x version: KB4IT next to it, a version key, or a release named after "in", "since", "until" or "from".
 PATTERNS = [
@@ -27,6 +27,9 @@ FLOOR = re.compile(r'"kb4it"\s*:\s*"[<>=!~]')
 # Files that keep a version on purpose. Each reason says why.
 ALLOWED = {
     "pyproject.toml": "release.sh writes it from kb4it/VERSION; test_pyproject_matches_version checks it",
+    "scripts/devel/editor/package.json": "pinned versions of the npm packages of the editor bundle",
+    "scripts/devel/editor/package-lock.json": "pinned versions of the npm packages of the editor bundle",
+    "kb4it/resources/editor/THIRD-PARTY-NOTICES.txt": "generated list of bundled third-party packages and versions",
     "tests/apphelp/test_versions.py": "fixtures for the apphelp version folders, not KB4IT's version",
     "tests/apphelp/test_config.py": "an apphelp repo.json fixture with its own version",
     "tests/core/test_version.py": "parser cases for version strings",
