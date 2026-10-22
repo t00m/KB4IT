@@ -16,7 +16,7 @@ Summary: Small things that make writing and building with KB4IT easier.
 
 ## Start from a skeleton {#skeletons}
 
-In techdoc, **Add document** fills a ready-made skeleton per category and copies it for you. [More](reference-theme-techdoc.md#pages)
+In techdoc, **Add document** fills a ready-made skeleton per category. Edit it there, then save it, download it or copy it. [More](reference-theme-techdoc.md#pages)
 
 ## Let properties do the filing {#properties}
 

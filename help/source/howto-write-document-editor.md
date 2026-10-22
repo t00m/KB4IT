@@ -30,7 +30,7 @@ Each property of the frontmatter is a row in the Properties pane.
 - To add a property, pick a name in the selector, or choose "New property..." and type a new one.
 - Click a word in the cloud of a property to add that value.
 - A value cannot contain a comma: KB4IT splits values on commas.
-- A property written as a block list, over several lines or with an anchor is read-only in the pane. It says "Edit this property in the text".
+- A property written as a block list, over several lines, with an anchor, or with a number that YAML would rewrite (`1.50`, `010`) is read-only in the pane. It says "Edit this property in the text".
 - If a property appears twice, the pane edits the last one, which is the one the build keeps.
 
 Every change from the pane is one change in the editor, so `Ctrl+Z` undoes it. If the frontmatter has an error, the pane shows the reason and disables its inputs until you fix the text.

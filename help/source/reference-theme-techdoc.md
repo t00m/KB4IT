@@ -83,7 +83,7 @@ The editor's YAML check can miss some malformed nested values, for example `A:` 
 ### Properties pane {#pane}
 
 - Values cannot contain commas, because KB4IT splits on commas.
-- Complex properties (block lists, several lines, anchors, unusual numbers or escapes) are read-only and say "Edit this property in the text".
+- Complex properties (block lists, several lines, anchors, or numbers that YAML would rewrite, such as `1.50` or `010`; `1.0` is editable) are read-only and say "Edit this property in the text".
 - A repeated property is edited at its last occurrence.
 - When one of several values needs quotes, the line is written as a flow list: `Key: [a, "b: c"]`.
 - The pane follows the text 300 ms after the last edit. While the frontmatter has an error, its inputs are disabled.

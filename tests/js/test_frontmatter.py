@@ -141,8 +141,24 @@ def test_quote_escapes_backslash_and_quote():
     assert call("quote", '"a\\b') == '"\\"a\\\\b"'
 
 
+def _build_values_doc(doc_text, key):
+    import yaml
+
+    fm = doc_text.split("\n---", 1)[0][3:]
+    value = yaml.safe_load(fm)[key]
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(i).strip() for i in value if i is not None]
+    if isinstance(value, str) and "," in value:
+        return [i.strip() for i in value.split(",")]
+    return [str(value).strip()]
+
+
 ROUND_TRIP = [
     ["a"], ["a", "b"], [], ["a: b"], ["[x"], ["true", "SAP Basis"], ['q"q'], ["back\\slash"], ["12"], ["- a"], ["a[1]", "b: c"], ["x]", "y"],
+    ["Why?", "x: y"], ["?a", "x: y"], ["1.0", "yes"], ["Why?", "b"], ["?a", "b"], ["x: y", "1.0", "yes"],
+    ["a?b", "c: d"], ["1.0", "x: y"],
 ]
 
 
@@ -154,6 +170,7 @@ def test_set_values_round_trip(line, _values, new):
     out = text[:change["from"]] + change["insert"] + text[change["to"]:]
     assert props(out)["Key"]["values"] == new
     assert props(out)["Key"]["complex"] is False
+    assert _build_values_doc(out, "Key") == new  # PyYAML, through the build's rules
     before = [ln for ln in text.split("\n") if ln != line]
     after = [ln for ln in out.split("\n") if not ln.startswith("Key:")]
     assert before == after
@@ -239,10 +256,10 @@ def _build_values(raw):
 
 SIMPLE_SCALARS = [
     "null", "Null", "NULL", "~", "true", "True", "TRUE", "false", "False", "yes", "Yes", "YES", "no", "No", "NO",
-    "on", "On", "ON", "off", "Off", "OFF", "0", "7", "-3", "42", "2026-10-22", "e5", "word", "[null, a]",
+    "on", "On", "ON", "off", "Off", "OFF", "1.0", "2.5", "-0.5", "0.0", "0.0001", "[1.5, a]", "0", "7", "-3", "42", "2026-10-22", "e5", "word", "[null, a]",
     "[true, No, x]", "[~, 5]", "a, b", "1, 2", "[1, 2]",
 ]
-NUMERIC_SCALARS = ["1.50", "1.5", "010", "0x1F", "1e3", ".5", "+1", "1_000", "-0", "0o7", "[1.5, a]", "1:30",
+NUMERIC_SCALARS = ["1.50", "0.10", "0.00001", "010", "0x1F", "1e3", ".5", "+1", "1_000", "-0", "0o7", "1:30",
                    ".inf", "2026-10-22 10:00:00"]
 
 
@@ -351,6 +368,11 @@ def test_lint_skips_complex_values_and_bom():
     assert lint("---\nTag: 1.50\n---" + H1) == []
     assert lint("\ufeff---\nTag: a\n---" + H1) == []
     assert reasons("\ufeff---\nTag: a\n---\n\nnone\n") == [("missing_h1_title", "error")]
+
+
+def test_lint_does_not_report_blocked_keys_as_new():
+    assert reasons("---\nDate: 2026-10-22\nSystemPage: x\nTag: a\n---" + H1) == []
+    assert reasons("---\nDate: 2026-10-22\nSystem: s4\n---" + H1) == [("new_property", "info")]
 
 
 def test_lint_without_known_keys_reports_new():
@@ -491,3 +513,21 @@ def test_lint_repeated_key_checks_only_the_last():
     assert reasons(text) == [("duplicate_property", "warning")]
     text = "---\nTag: a\nTag: ...\n---\n\n# Heading\n"
     assert reasons(text) == [("duplicate_property", "warning"), ("bad_property_value", "error")]
+
+
+def test_flow_list_rewrite_keeps_items_after_the_cursor():
+    keys = {"Tag": [{"v": "Bad Idea: x", "c": 1}]}
+    tail = "\n---\n\n# H\n"
+    for first, after, want in [
+        ("---\nTag: a, ", "b", ["a", "Bad Idea: x", "b"]),
+        ("---\nTag: a, ", "b # note", ["a", "Bad Idea: x", "b"]),
+        ("---\nTag: a, ", "b, c # note", ["a", "Bad Idea: x", "b", "c"]),
+        ("---\nTag: Why?, ", "b", ["Why?", "Bad Idea: x", "b"]),
+    ]:
+        text = first + after + tail
+        result = call("complete", text, len(first), keys)
+        option = next(o for o in result["options"] if o["label"] == "Bad Idea: x")
+        out = _apply(text, len(first), option, result)
+        assert _doc_values(out) == want, out
+        if "# note" in after:
+            assert "# note" in out

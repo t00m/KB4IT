@@ -118,6 +118,18 @@ var KB4ITFrontmatter = (function () {
     /^\d{4}-\d\d?-\d\d?([Tt]|[ \t]+)\d\d?:\d\d/
   ];
 
+  // A plain decimal such as 1.0 or -0.5 that Python writes back unchanged with str(float(s)),
+  // so the build sees the same text. 1.50, 0.10, 1e3 and .5 are not canonical and stay complex.
+  function canonicalDecimal(s) {
+    if (s.length > 15 || !/^-?\d+\.\d+$/.test(s)) { return false; }
+    var f = parseFloat(s);
+    var abs = Math.abs(f);
+    if (abs !== 0 && abs < 1e-4) { return false; }  // Python switches to an exponent form here
+    var t = (f === 0 && s.charAt(0) === "-") ? "-0" : String(f);
+    if (t.indexOf(".") < 0 && t.indexOf("e") < 0) { t += ".0"; }
+    return t === s;
+  }
+
   // How yaml.safe_load reads a plain scalar, as the build then sees it: {v: text},
   // {skip: true} for null, or null when the text is a number or timestamp that the
   // build would turn into something else (the property is then complex).
@@ -125,7 +137,7 @@ var KB4ITFrontmatter = (function () {
     if (s === "" || NULLS.indexOf(s) >= 0) { return { skip: true }; }
     if (TRUES.indexOf(s) >= 0) { return { v: "True" }; }
     if (FALSES.indexOf(s) >= 0) { return { v: "False" }; }
-    if (INT_RE.test(s) || DATE_RE.test(s)) { return { v: s }; }
+    if (INT_RE.test(s) || DATE_RE.test(s) || canonicalDecimal(s)) { return { v: s }; }
     for (var i = 0; i < NUMERIC_RE.length; i++) {
       if (NUMERIC_RE[i].test(s) && /[0-9.]/.test(s)) { return null; }
     }
@@ -273,10 +285,7 @@ var KB4ITFrontmatter = (function () {
     var quoted = values.map(quote);
     var plain = quoted.every(function (q, i) { return q === String(values[i]); });
     if (values.length === 1 || plain) { return key + ": " + quoted.join(", "); }
-    var items = values.map(function (v) {
-      return /[\[\]{}]/.test(v) ? dquote(v) : quote(v);
-    });
-    return key + ": [" + items.join(", ") + "]";
+    return key + ": [" + values.map(quoteForFlow).join(", ") + "]";
   }
 
   // Python: valid_filename (kb4it/core/files.py). \w is alphanumerics (isalnum) plus "_".
@@ -402,6 +411,8 @@ var KB4ITFrontmatter = (function () {
           if (end < 0) { return "unclosed quote"; }
           if (ch === '"' && badEscape(s, i, end)) { return badEscape(s, i, end); }
           i = end - 1;
+        } else if (ch === "?") {
+          return "a plain item in a flow list cannot contain '?', quote it";
         } else if (ch === "[" || ch === "{") {
           stack.push(ch === "[" ? "]" : "}");
         } else if (ch === "]" || ch === "}") {
@@ -530,6 +541,7 @@ var KB4ITFrontmatter = (function () {
           "'" + bad[0] + "' cannot be used as a value of " + p.key + "."));
         return;
       }
+      if (BLOCKED_KEYS.indexOf(p.key) >= 0) { return; }
       if (!has(keys, p.key)) {
         out.push(diag(p.from, first, "info", "new_property", p.key + " is new in this repository."));
         return;
@@ -549,12 +561,40 @@ var KB4ITFrontmatter = (function () {
     return out;
   }
 
+  // Keys the build never offers as values (self.keys["blocked"] in kb4it/services/database.py),
+  // so they are never in the known keys and must not be reported as new.
+  var BLOCKED_KEYS = ["Title", "SystemPage", "Date"];
+
   function count(n, one, many) { return n + " " + (n === 1 ? one : many); }
 
   // Inside a flow list "[a, b]" PyYAML rejects a plain item with a question mark, a colon, a hash, a comma,
   // brackets or braces, so any such value is double-quoted; otherwise quote() rules.
   function quoteForFlow(v) {
     return /[?:#,\[\]{}]/.test(v) ? dquote(v) : quote(v);
+  }
+
+  // An existing plain list item moved into a flow list: quoted as needed there.
+  function flowItem(raw) {
+    var c = raw.charAt(0);
+    if (c === '"' || c === "'") { return raw; }
+    return /[?:#,\[\]{}]/.test(raw) ? dquote(raw) : raw;
+  }
+
+  // Index of the "#" that starts a trailing comment (after whitespace, outside quotes), or -1.
+  function commentStart(s) {
+    var q = null;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (q) {
+        if (q === '"' && c === "\\") { i++; }
+        else if (c === q) { q = null; }
+      } else if ((c === '"' || c === "'") && /(^|[,\[])\s*$/.test(s.slice(0, i))) {
+        q = c;
+      } else if (c === "#" && i > 0 && /\s/.test(s.charAt(i - 1))) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   // Frontmatter extent for the cursor: while the closing fence is missing it runs to the end.
@@ -602,8 +642,11 @@ var KB4ITFrontmatter = (function () {
     if (!has(keys, key)) { return null; }
     var valueFrom = lineStart + prefix.length - m[3].length;
     var valueTo = lineTo;
-    var rest = text.slice(valueFrom, valueTo);
-    var cursor = m[3].length;
+    var whole = text.slice(valueFrom, valueTo);
+    var ci = commentStart(whole);
+    var comment = ci >= 0 ? whole.slice(ci) : "";
+    var rest = ci >= 0 ? whole.slice(0, ci) : whole;
+    var cursor = Math.min(m[3].length, rest.length);
     // Items of the value with their offsets inside rest; the one holding the cursor is being typed.
     var items = [];
     var at = 0;
@@ -641,12 +684,16 @@ var KB4ITFrontmatter = (function () {
           var parts = [];
           items.forEach(function (it) {
             var raw = it.text.trim();
-            if (it === current) { parts.push(quoteForFlow(v)); }
-            else if (raw !== "") { parts.push(raw); }
+            if (it === current) {
+              parts.push(quoteForFlow(v));
+              // text after the cursor in this item is an existing value: keep it
+              var tail = it.text.slice(cursor - it.from).trim();
+              if (cursor < it.to && tail !== "") { parts.push(flowItem(tail)); }
+            } else if (raw !== "") { parts.push(flowItem(raw)); }
           });
           return {
             label: v,
-            insert: (m[2] === "" ? " " : "") + "[" + parts.join(", ") + "]",
+            insert: (m[2] === "" ? " " : "") + "[" + parts.join(", ") + "]" + (comment ? " " + comment : ""),
             detail: count(x.e.c, "document", "documents"),
             from: valueFrom,
             to: valueTo
