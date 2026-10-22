@@ -318,6 +318,245 @@ var KB4ITFrontmatter = (function () {
     return (slug || category) + ".md";
   }
 
+  // ---- Lint (ED-06) and completion (ED-05) ----
+
+  function lineEnd(text, from) {
+    var nl = text.indexOf("\n", from);
+    var to = nl < 0 ? text.length : nl;
+    if (to > from && text.charAt(to - 1) === "\r") { to -= 1; }
+    return to;
+  }
+
+  // Index after the closing quote of a quoted scalar starting at s[0], or -1 when unclosed.
+  function quoteEnd(s, i) {
+    var q = s.charAt(i);
+    for (var k = i + 1; k < s.length; k++) {
+      var c = s.charAt(k);
+      if (q === '"' && c === "\\") { k++; }
+      else if (c === q) {
+        if (q === "'" && s.charAt(k + 1) === "'") { k++; } else { return k + 1; }
+      }
+    }
+    return -1;
+  }
+
+  function onlyComment(rest) {
+    return rest.trim() === "" || /^\s+#/.test(rest);
+  }
+
+  // What the build's YAML loader would reject in a one line value, or null.
+  function valueError(raw) {
+    var s = raw.trim();
+    if (s === "") { return null; }
+    var c = s.charAt(0);
+    var end;
+    if (c === '"' || c === "'") {
+      end = quoteEnd(s, 0);
+      if (end < 0) { return "unclosed quote"; }
+      return onlyComment(s.slice(end)) ? null : "text after the closing quote";
+    }
+    if (c === "[" || c === "{") {
+      var stack = [];
+      for (var i = 0; i < s.length; i++) {
+        var ch = s.charAt(i);
+        if (ch === '"' || ch === "'") {
+          end = quoteEnd(s, i);
+          if (end < 0) { return "unclosed quote"; }
+          i = end - 1;
+        } else if (ch === "[" || ch === "{") {
+          stack.push(ch === "[" ? "]" : "}");
+        } else if (ch === "]" || ch === "}") {
+          if (stack.pop() !== ch) { return "unbalanced brackets"; }
+          if (!stack.length) { return onlyComment(s.slice(i + 1)) ? null : "text after the closing bracket"; }
+        }
+      }
+      return "unclosed bracket";
+    }
+    var plain = s.replace(/\s#.*$/, "").trim();
+    if (plain === "-" || plain.indexOf("- ") === 0) { return "a plain value cannot start with '- '"; }
+    if (plain.indexOf(": ") >= 0 || plain.charAt(plain.length - 1) === ":") {
+      return "a plain value cannot contain ': ', quote it";
+    }
+    if (plain.charAt(0) === "@" || plain.charAt(0) === "`") { return "a plain value cannot start with " + plain.charAt(0); }
+    return null;
+  }
+
+  function diag(from, to, severity, reason, message) {
+    return { from: from, to: to, severity: severity, reason: reason, message: message };
+  }
+
+  function has(keys, key) {
+    return !!keys && Object.prototype.hasOwnProperty.call(keys, key);
+  }
+
+  function lint(text, keys) {
+    var b = bounds(text);
+    if (!b.open) {
+      return [diag(0, 0, "error", "missing_frontmatter", "The document must start with '---'.")];
+    }
+    if (b.close === null) {
+      return [diag(0, 0, "error", "missing_frontmatter_close", "The frontmatter is not closed with '---'.")];
+    }
+    var out = [];
+    var result = parse(text);
+    var lines = splitLines(text, b.start, b.end);
+    var covered = [];
+    result.props.forEach(function (p) { covered.push([p.from, p.to]); });
+    var stray = null;
+    lines.forEach(function (ln) {
+      if (/^\s*(#.*)?$/.test(ln.text)) { return; }
+      var inside = covered.some(function (r) { return ln.from >= r[0] && ln.from <= r[1]; });
+      if (!inside && stray === null) { stray = ln; }
+    });
+    if (!result.props.length && stray !== null) {
+      out.push(diag(stray.from, stray.to, "error", "invalid_frontmatter",
+        "The frontmatter must be a list of 'Key: value' lines."));
+    } else if (stray !== null) {
+      out.push(diag(stray.from, stray.to, "error", "yaml_error",
+        "This line is not 'Key: value', a continuation, a comment or blank."));
+    }
+    var seen = {};
+    result.props.forEach(function (p) {
+      var first = lineEnd(text, p.from);
+      var single = first >= p.to;
+      if (single) {
+        var m = KEY_RE.exec(text.slice(p.from, first));
+        var err = m ? valueError(m[2] === undefined ? "" : m[2]) : null;
+        if (err) {
+          out.push(diag(p.from, first, "error", "yaml_error", "YAML error in " + p.key + ": " + err + "."));
+          seen[p.key] = true;
+          return;
+        }
+      }
+      var dup = has(seen, p.key);
+      seen[p.key] = true;
+      if (dup) {
+        out.push(diag(p.from, first, "warning", "duplicate_property",
+          p.key + " is defined more than once; the build keeps the last one."));
+      }
+      if (p.key === "Title" || p.key === "title") {
+        out.push(diag(p.from, first, "warning", "title_in_frontmatter_ignored",
+          "The title comes from the first heading; " + p.key + " in the frontmatter is ignored."));
+        return;
+      }
+      if (!validFilename(p.key)) {
+        out.push(diag(p.from, first, "error", "bad_property_name", "'" + p.key + "' cannot be used as a property name."));
+        return;
+      }
+      if (p.complex) { return; }
+      var bad = p.values.filter(function (v) { return v && !validFilename(v); });
+      if (bad.length) {
+        out.push(diag(p.from, first, "error", "bad_property_value",
+          "'" + bad[0] + "' cannot be used as a value of " + p.key + "."));
+        return;
+      }
+      if (!has(keys, p.key)) {
+        out.push(diag(p.from, first, "info", "new_property", p.key + " is new in this repository."));
+        return;
+      }
+      var known = keys[p.key].map(function (e) { return e.v; });
+      p.values.forEach(function (v) {
+        if (v && known.indexOf(v) < 0) {
+          out.push(diag(p.from, first, "info", "new_value", "'" + v + "' is a new value for " + p.key + "."));
+        }
+      });
+    });
+    var body = text.slice(b.close + 4).replace(/^\n+/, "");
+    if (firstHeading(body) === null) {
+      out.push(diag(0, 0, "error", "missing_h1_title", "The document needs a '# ' heading outside code."));
+    }
+    out.sort(function (a, c) { return a.from - c.from; });
+    return out;
+  }
+
+  function count(n, one, many) { return n + " " + (n === 1 ? one : many); }
+
+  function dquoteFlow(v) {
+    return /[\[\]{}]/.test(v) ? dquote(v) : quote(v);
+  }
+
+  // Frontmatter extent for the cursor: while the closing fence is missing it runs to the end.
+  function completeRegion(text) {
+    var b = bounds(text);
+    if (!b.open) { return null; }
+    var off = text.charCodeAt(0) === 0xFEFF ? 1 : 0;
+    var nl = text.indexOf("\n", off + 3);
+    if (nl < 0) { return null; }
+    return { start: nl + 1, end: b.close === null ? text.length : b.close };
+  }
+
+  function complete(text, pos, keys) {
+    var region = completeRegion(text);
+    if (region === null || pos < region.start || pos > region.end) { return null; }
+    var lineStart = text.lastIndexOf("\n", pos - 1) + 1;
+    var prefix = text.slice(lineStart, pos);
+    if (prefix.charAt(prefix.length - 1) === "\r") { return null; }
+    if (/^[ \t]/.test(prefix) || /^(-([ \t]|$)|#)/.test(prefix)) { return null; }
+    var lineTo = lineEnd(text, lineStart);
+    var m = /^([^\s#:][^:]*?):([ \t]*)(.*)$/.exec(prefix);
+    if (!m) {
+      if (prefix.indexOf(":") >= 0) { return null; }
+      var present = {};
+      splitLines(text, region.start, Math.min(region.end, text.length)).forEach(function (ln) {
+        if (ln.from === lineStart) { return; }
+        var km = KEY_RE.exec(ln.text);
+        if (km && !/^[ \t]/.test(ln.text)) { present[km[1].trim()] = true; }
+      });
+      var names = Object.keys(keys || {}).filter(function (k) {
+        return k !== "Title" && k !== "title" && !present[k];
+      });
+      return {
+        from: lineStart,
+        options: names.map(function (k) {
+          return { label: k, insert: k + ": ", detail: count(keys[k].length, "value", "values") };
+        })
+      };
+    }
+    var key = m[1].trim();
+    if (!has(keys, key)) { return null; }
+    var valueFrom = lineStart + prefix.length - m[3].length;
+    var valueTo = lineTo;
+    var rest = text.slice(valueFrom, valueTo);
+    var cursor = m[3].length;
+    // Items of the value with their offsets inside rest; the one holding the cursor is being typed.
+    var items = [];
+    var at = 0;
+    rest.split(",").forEach(function (part) {
+      items.push({ from: at, to: at + part.length, text: part });
+      at += part.length + 1;
+    });
+    var current = items[items.length - 1];
+    for (var i = 0; i < items.length; i++) {
+      if (cursor <= items[i].to) { current = items[i]; break; }
+    }
+    var flow = rest.trim().charAt(0) === "[";
+    var existing = {};
+    items.forEach(function (it) {
+      if (it === current) { return; }
+      var r = scalar(it.text.replace(/^\s*\[/, "").replace(/\]\s*$/, ""));
+      if (r && !r.skip) { existing[r.v] = true; }
+    });
+    var head = current.text.slice(0, Math.max(0, Math.min(cursor, current.to) - current.from));
+    var lead = head.length - head.replace(/^[\s\[]+/, "").length;
+    var from = valueFrom + current.from + lead;
+    var pad = "";
+    if (m[2] === "" && current === items[0] && !flow) { pad = " "; }
+    var list = keys[key].filter(function (e) { return !existing[e.v]; })
+      .map(function (e, idx) { return { e: e, idx: idx }; })
+      .sort(function (a, c) { return (c.e.c - a.e.c) || (a.idx - c.idx); });
+    return {
+      from: from,
+      options: list.map(function (x) {
+        var v = x.e.v;
+        return {
+          label: v,
+          insert: pad + (flow ? dquoteFlow(v) : quote(v)),
+          detail: count(x.e.c, "document", "documents")
+        };
+      })
+    };
+  }
+
   return {
     bounds: bounds,
     parse: parse,
@@ -326,6 +565,8 @@ var KB4ITFrontmatter = (function () {
     validFilename: validFilename,
     slugify: slugify,
     firstHeading: firstHeading,
-    fileName: fileName
+    fileName: fileName,
+    lint: lint,
+    complete: complete
   };
 })();

@@ -268,3 +268,122 @@ def test_double_quoted_escapes(raw, expected):
     else:
         assert prop["complex"] is False and prop["values"] == expected
         assert prop["values"] == _build_values(raw)
+
+
+KEYS = {
+    "Category": [{"v": "Note", "c": 9}, {"v": "Howto", "c": 5}, {"v": "Bad Idea: x", "c": 1}],
+    "Tag": [{"v": "a", "c": 4}, {"v": "b", "c": 2}],
+    "Title": [{"v": "x", "c": 1}],
+}
+H1 = "\n# Heading\n"
+
+
+def lint(text, keys=None):
+    return call("lint", text, KEYS if keys is None else keys)
+
+
+def reasons(text, keys=None):
+    return [(d["reason"], d["severity"]) for d in lint(text, keys)]
+
+
+LINT_CASES = [
+    ("# Heading\n", "missing_frontmatter", "error"),
+    ("---\nCategory: Note\n# Heading\n", "missing_frontmatter_close", "error"),
+    ("---\nCategory: [a\n---" + H1, "yaml_error", "error"),
+    ('---\nCategory: "a\n---' + H1, "yaml_error", "error"),
+    ("---\nCategory: a: b\n---" + H1, "yaml_error", "error"),
+    ("---\nCategory: - a\n---" + H1, "yaml_error", "error"),
+    ("---\nCategory: Note\nstray\n---" + H1, "yaml_error", "error"),
+    ("---\njust text\n---" + H1, "invalid_frontmatter", "error"),
+    ("---\n- a\n---" + H1, "invalid_frontmatter", "error"),
+    ("---\nCategory: Note\n---\n\nno heading\n", "missing_h1_title", "error"),
+    ("---\nTitle: x\nCategory: Note\n---" + H1, "title_in_frontmatter_ignored", "warning"),
+    ("---\n...: x\n---" + H1, "bad_property_name", "error"),
+    ("---\nCategory: ...\n---" + H1, "bad_property_value", "error"),
+    ("---\nCategory: Note, ???\n---" + H1, "bad_property_value", "error"),
+    ("---\nSystem: s4\n---" + H1, "new_property", "info"),
+    ("---\nCategory: Brand New\n---" + H1, "new_value", "info"),
+    ("---\nTag: a\nTag: b\n---" + H1, "duplicate_property", "warning"),
+]
+
+
+@pytest.mark.parametrize("text,reason,severity", LINT_CASES)
+def test_lint_reasons(text, reason, severity):
+    assert reasons(text) == [(reason, severity)]
+
+
+def test_lint_clean_document():
+    text = "---\nCategory: Note\nTag: a, b\n---\n\n# Heading\n\ntext\n"
+    assert lint(text) == []
+    assert lint("---\n# comment\n\nCategory: Howto\nTag: [a, b]\n---" + H1) == []
+    assert lint("---\n---" + H1) == []
+
+
+def test_lint_positions():
+    text = "---\nCategory: Note\nSystem: s4\n---\n\n# Heading\n"
+    diag = lint(text)[0]
+    assert text[diag["from"]:diag["to"]] == "System: s4"
+    assert lint("# Heading\n")[0]["from"] == 0 and lint("# Heading\n")[0]["to"] == 0
+    dup = lint("---\nTag: a\nTag: b\n---" + H1)[0]
+    assert "---\nTag: a\nTag: b\n---"[dup["from"]:dup["to"]] == "Tag: b"
+
+
+def test_lint_h1_rule_matches_python():
+    text = "---\nCategory: Note\n---\n\n```\n# x\n```\n"
+    assert reasons(text) == [("missing_h1_title", "error")]
+    assert reasons("---\nCategory: Note\n---\n\n    # x\n") == [("missing_h1_title", "error")]
+
+
+def test_lint_title_key_both_cases():
+    for key in ("Title", "title"):
+        assert reasons("---\n" + key + ": x\n---" + H1) == [("title_in_frontmatter_ignored", "warning")]
+
+
+def test_lint_skips_complex_values_and_bom():
+    assert lint("---\nTag: 1.50\n---" + H1) == []
+    assert lint("\ufeff---\nTag: a\n---" + H1) == []
+    assert reasons("\ufeff---\nTag: a\n---\n\nnone\n") == [("missing_h1_title", "error")]
+
+
+def test_lint_without_known_keys_reports_new():
+    assert reasons("---\nTag: a\n---" + H1, {}) == [("new_property", "info")]
+
+
+def complete(text, pos=None, keys=None):
+    return call("complete", text, len(text) if pos is None else pos, KEYS if keys is None else keys)
+
+
+def test_complete_property_names():
+    result = complete("---\nCat")
+    assert result["from"] == 4
+    options = {o["label"]: o for o in result["options"]}
+    assert options["Category"]["insert"] == "Category: "
+    assert options["Category"]["detail"] == "3 values"
+    assert options["Tag"]["detail"] == "2 values"
+    assert "Title" not in options
+    present = complete("---\nCategory: Note\nT\n---\n# x\n", 20)
+    assert [o["label"] for o in present["options"]] == ["Tag"]
+
+
+def test_complete_values_by_use():
+    result = complete("---\nCategory: ")
+    assert [o["label"] for o in result["options"]] == ["Note", "Howto", "Bad Idea: x"]
+    assert result["options"][0]["detail"] == "9 documents"
+    assert result["options"][2]["insert"] == '"Bad Idea: x"'
+    assert result["from"] == len("---\nCategory: ")
+    tags = complete("---\nTag: a, ")
+    assert [o["label"] for o in tags["options"]] == ["b"]
+    assert tags["from"] == len("---\nTag: a, ")
+    partial = complete("---\nTag: a, b\n---\n# x\n", len("---\nTag: a, b"))
+    assert partial["from"] == len("---\nTag: a, ") and [o["label"] for o in partial["options"]] == ["b"]
+    flow = complete("---\nTag: [a, \n---\n# x\n", len("---\nTag: [a, "))
+    assert [o["label"] for o in flow["options"]] == ["b"]
+
+
+def test_complete_outside_frontmatter():
+    text = "---\nTag: a\n---\n\n# Heading\nbody\n"
+    assert complete(text, len(text) - 2) is None
+    assert complete("---\nUnknown: ") is None
+    assert complete("# Heading") is None
+    assert complete("---\nTag: a\n  indented") is None
+    assert complete("---\nTag: a\n---\n", 2) is None
