@@ -19,10 +19,10 @@ CATEGORIES = [
 
     <div class="kb-add-note uk-alert-primary" uk-alert>
         <span uk-icon="icon: info; ratio: 0.9"></span>
-        <strong>Note:</strong> KB4IT is a static site generator, it cannot create files for you.
-        Click <em>Create</em> on any card, edit the template, then copy the
-        ready-to-use Markdown file into your repository's <strong>source</strong>
-        directory and rebuild.
+        <strong>Note:</strong> This page saves or downloads the Markdown file for you.
+        Click <em>Create</em> on any card, edit the template, then <em>Save</em> it
+        (or <em>Copy</em> the text). Put the file in your repository's <strong>source</strong>
+        folder and rebuild.
     </div>
 
 % if var.get('git_ok'):
@@ -73,7 +73,11 @@ CATEGORIES = [
             <span class="kb-dialog-title" style="color: ${cat['color']};">Add ${cat['name']}</span>
             <span class="kb-dialog-desc">${cat['desc']}</span>
             <div class="kb-dialog-actions">
-                <button class="uk-button uk-button-primary uk-button-small"
+                <button id="kb-save-${cat['id']}" class="uk-button uk-button-primary uk-button-small"
+                        onclick="kbAddSave('${cat['id']}')">
+                    <span uk-icon="icon: download; ratio: 0.85"></span> <span class="kb-save-label">Save</span>
+                </button>
+                <button class="uk-button uk-button-default uk-button-small"
                         onclick="kbAddCopy('${cat['id']}')">
                     <span uk-icon="icon: copy; ratio: 0.85"></span> Copy
                 </button>
@@ -112,4 +116,5 @@ CATEGORIES = [
 /* Card and modal buttons call these; the editor lives in kb4it-editor.js. */
 function kbAddOpen(cat) { KB4ITEditor.open(cat); }
 function kbAddCopy(cat) { KB4ITEditor.copy(cat); }
+function kbAddSave(cat) { KB4ITEditor.save(cat); }
 </script>

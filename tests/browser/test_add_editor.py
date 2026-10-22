@@ -18,8 +18,14 @@ def open_cat(page, cat):
 
 
 def close_cat(page, cat):
-    page.evaluate("c => UIkit.modal('#modal-add-' + c).hide()", cat)
-    page.wait_for_selector(f"#modal-add-{cat}", state="hidden")
+    """Close the modal, accepting the unsaved-changes prompt (ED-10) when edits are pending."""
+    accept = lambda dialog: dialog.accept()  # noqa: E731
+    page.on("dialog", accept)
+    try:
+        page.evaluate("c => UIkit.modal('#modal-add-' + c).hide()", cat)
+        page.wait_for_selector(f"#modal-add-{cat}", state="hidden")
+    finally:
+        page.remove_listener("dialog", accept)
 
 
 def type_at_end(page, cat, text):

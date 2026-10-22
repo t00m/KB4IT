@@ -7,9 +7,12 @@
   var cm = E.cm;
   var TAB = "    ";
   var DISCARD = "Discard your changes and start again?";
+  var UNSAVED = "You have unsaved changes. Close and lose them?";
+  var OFFER_DOWNLOAD = "The file was not saved. Download it instead?";
 
   E.views = {};
   var base = {};      // text at creation or at the last save, per category
+  var handles = {};   // file handle of the last save, per category
   var look = {};      // Compartment of the light or dark look, per category
   var data = null;
 
@@ -483,6 +486,7 @@
   function freshState(cat) {
     var doc = E.skeleton(cat);
     base[cat] = doc;
+    forgetHandle(cat);
     return cm.EditorState.create({ doc: doc, selection: titleSelection(doc), extensions: E.extensions(cat) });
   }
 
@@ -873,6 +877,11 @@
       });
       view = new cm.EditorView({ state: freshState(cat), parent: host });
       E.views[cat] = view;
+      // Close button, Escape outside the editor and the backdrop all end in a UIkit hide.
+      var modal = document.getElementById("modal-add-" + cat);
+      modal.addEventListener("beforehide", function (event) {
+        if (event.target === modal && E.dirty(cat) && !window.confirm(UNSAVED)) { event.preventDefault(); }
+      });
     } else if (!E.dirty(cat) || window.confirm(DISCARD)) {
       view.setState(freshState(cat));
     } else {
@@ -887,9 +896,99 @@
     if (shown && typeof shown.then === "function") { shown.then(ready); } else { ready(); }
   };
 
+  // ---- ED-10: save, download, copy ----
+
+  // The editor text with LF line endings and one final newline, nothing else changed.
+  function normalised(cat) {
+    var text = E.text(cat).replace(/\r\n?/g, "\n");
+    return text.slice(-1) === "\n" ? text : text + "\n";
+  }
+
+  function setLabel(cat, name) {
+    var node = document.querySelector("#kb-save-" + cat + " .kb-save-label");
+    if (node) { node.textContent = name ? "Save (" + name + ")" : "Save"; }
+  }
+
+  function forgetHandle(cat) {
+    delete handles[cat];
+    setLabel(cat, null);
+  }
+
+  function errorCount(cat) {
+    return E.diagnostics(cat).filter(function (d) { return d.severity === "error"; }).length;
+  }
+
+  // Downloads the text through an <a download> link.
+  E.download = function (cat) {
+    var text = normalised(cat);
+    var name = KB4ITFrontmatter.fileName(text, cat);
+    var url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
+    var link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", name);
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    E.markClean(cat);
+  };
+
+  function saveFailed(message) {
+    UIkit.notification({ message: message, status: "danger" });
+  }
+
+  // Resolves "saved", "downloaded" or "cancelled".
+  E.save = function (cat) {
+    var count = errorCount(cat);
+    if (count > 0 && !window.confirm(
+      "This document has " + count + (count === 1 ? " error" : " errors") + " and will not build. Save anyway?")) {
+      return Promise.resolve("cancelled");
+    }
+    var text = normalised(cat);
+    var downloadInstead = function () { E.download(cat); return "downloaded"; };
+    if (typeof window.showSaveFilePicker !== "function") {
+      return Promise.resolve(downloadInstead());
+    }
+    var write = function (handle) {
+      return handle.createWritable().then(function (writable) {
+        return Promise.resolve(writable.write(text)).then(function () { return writable.close(); });
+      }).then(function () {
+        handles[cat] = handle;
+        setLabel(cat, handle.name);
+        E.markClean(cat);
+        return "saved";
+      });
+    };
+    var ask = function () {
+      return window.showSaveFilePicker({
+        suggestedName: KB4ITFrontmatter.fileName(text, cat),
+        id: "kb4it-source",
+        types: [{ description: "Markdown", accept: { "text/markdown": [".md"] } }]
+      }).then(write);
+    };
+    var first = handles[cat] ? write(handles[cat]).catch(function () { forgetHandle(cat); return ask(); }) : ask();
+    return first.catch(function (error) {
+      if (error && error.name === "AbortError") {
+        return window.confirm(OFFER_DOWNLOAD) ? downloadInstead() : "cancelled";
+      }
+      saveFailed("Saving failed (" + (error && error.name ? error.name : "error") + "): downloading the file instead");
+      return downloadInstead();
+    });
+  };
+
+  // Leaving the page with unsaved edits asks for confirmation.
+  window.addEventListener("beforeunload", function (event) {
+    var open = Object.keys(E.views).some(function (cat) { return E.dirty(cat); });
+    if (open) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+  });
+
   // Clipboard API first; a hidden textarea and execCommand where it is not allowed.
   E.copy = function (cat) {
-    var text = E.text(cat);
+    var text = normalised(cat);
     var done = function () {
       UIkit.notification({ message: "Copied to clipboard", status: "success", timeout: 2000 });
     };
