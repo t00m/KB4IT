@@ -208,6 +208,21 @@ var KB4ITFrontmatter = (function () {
     return { ok: true, reason: null, props: props };
   }
 
+  // True when the build's YAML loader would read the plain text as something else than the same string
+  // (null, boolean, number such as 0x1F, 1_000, 12:30 or .inf, timestamp).
+  function changedByYaml(v) {
+    var r = resolve(v);
+    return r === null || r.skip === true || r.v !== v;
+  }
+
+  // A date the loader reads as another text (2026-1-2 becomes 2026-01-02) or rejects (2026-13-45).
+  function oddDate(v) {
+    if (!DATE_RE.test(v)) { return false; }
+    if (!/^\d{4}-\d\d-\d\d$/.test(v)) { return true; }
+    var d = new Date(v + "T00:00:00Z");
+    return isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v;
+  }
+
   // A single value that holds a comma is written unquoted: the form refuses commas (ED-07).
   function quote(value) {
     var v = String(value);
@@ -217,7 +232,9 @@ var KB4ITFrontmatter = (function () {
       v === "-" || v.indexOf("- ") === 0 || v.indexOf("? ") === 0 ||
       v.indexOf(": ") >= 0 || v.charAt(v.length - 1) === ":" ||
       v.indexOf(" #") >= 0 ||
-      RESERVED_RE.test(v) || NUMBER_RE.test(v);
+      v.charAt(0) === "#" || v.charAt(0) === "," || v === "=" || v === "<<" || v === "?" ||
+      v.indexOf("\t") >= 0 ||
+      RESERVED_RE.test(v) || NUMBER_RE.test(v) || oddDate(v) || changedByYaml(v);
     return needs ? dquote(v) : v;
   }
 
@@ -340,6 +357,26 @@ var KB4ITFrontmatter = (function () {
     return -1;
   }
 
+  var ESCAPES = "0abt\tnvfre \"/\\N_LP";
+
+  // First bad escape of a double-quoted scalar s[i..end), as PyYAML scans them, or null.
+  function badEscape(s, i, end) {
+    for (var k = i + 1; k < end - 1; k++) {
+      if (s.charAt(k) !== "\\") { continue; }
+      var n = s.charAt(k + 1);
+      var width = n === "x" ? 2 : (n === "u" ? 4 : (n === "U" ? 8 : 0));
+      if (width) {
+        if (!new RegExp("^[0-9a-fA-F]{" + width + "}$").test(s.substr(k + 2, width))) { return "bad escape \\" + n; }
+        k += width + 1;
+      } else if (ESCAPES.indexOf(n) < 0) {
+        return "unsupported escape \\" + n;
+      } else {
+        k++;
+      }
+    }
+    return null;
+  }
+
   function onlyComment(rest) {
     return rest.trim() === "" || /^\s+#/.test(rest);
   }
@@ -353,6 +390,7 @@ var KB4ITFrontmatter = (function () {
     if (c === '"' || c === "'") {
       end = quoteEnd(s, 0);
       if (end < 0) { return "unclosed quote"; }
+      if (c === '"' && badEscape(s, 0, end)) { return badEscape(s, 0, end); }
       return onlyComment(s.slice(end)) ? null : "text after the closing quote";
     }
     if (c === "[" || c === "{") {
@@ -362,6 +400,7 @@ var KB4ITFrontmatter = (function () {
         if (ch === '"' || ch === "'") {
           end = quoteEnd(s, i);
           if (end < 0) { return "unclosed quote"; }
+          if (ch === '"' && badEscape(s, i, end)) { return badEscape(s, i, end); }
           i = end - 1;
         } else if (ch === "[" || ch === "{") {
           stack.push(ch === "[" ? "]" : "}");
@@ -372,12 +411,38 @@ var KB4ITFrontmatter = (function () {
       }
       return "unclosed bracket";
     }
+    if ((c === "|" || c === ">") && !/^[|>][-+0-9]*\s*(#.*)?$/.test(s)) {
+      return "text after the block scalar indicator";
+    }
     var plain = s.replace(/\s#.*$/, "").trim();
+    if (c === "|" || c === ">") { return null; }
+    if (plain.charAt(0) === "*") { return "alias without an anchor"; }
+    if (plain.charAt(0) === "!" && plain.charAt(1) !== "!") { return "unknown tag"; }
+    if (plain.charAt(0) === "%") { return "a plain value cannot start with %"; }
+    if (plain === "?" || plain.indexOf("? ") === 0) { return "a plain value cannot start with '? '"; }
+    if ("]},".indexOf(plain.charAt(0)) >= 0 && plain !== "") { return "a plain value cannot start with " + plain.charAt(0); }
+    if (plain === "=" || plain === "<<") { return "'" + plain + "' is a YAML special value, quote it"; }
+    if (plain.indexOf("\t") >= 0) { return "a tab inside a plain value"; }
     if (plain === "-" || plain.indexOf("- ") === 0) { return "a plain value cannot start with '- '"; }
     if (plain.indexOf(": ") >= 0 || plain.charAt(plain.length - 1) === ":") {
       return "a plain value cannot contain ': ', quote it";
     }
     if (plain.charAt(0) === "@" || plain.charAt(0) === "`") { return "a plain value cannot start with " + plain.charAt(0); }
+    return null;
+  }
+
+  // A key with a plain value on its line followed by an indented line with ': ' is a YAML error.
+  function continuationError(text, p, first) {
+    var m = KEY_RE.exec(text.slice(p.from, first));
+    var v = m && m[2] !== undefined ? m[2].trim() : "";
+    if (v === "" || "[{\"'|>".indexOf(v.charAt(0)) >= 0) { return null; }
+    var lines = splitLines(text, first + 1, p.to);
+    for (var i = 0; i < lines.length; i++) {
+      var t = lines[i].text.replace(/(^|\s)#.*$/, "").trim();
+      if (t !== "" && (t.indexOf(": ") >= 0 || t.charAt(t.length - 1) === ":")) {
+        return { from: lines[i].from, to: lines[i].to, message: "a line continuing a plain value cannot contain ': '" };
+      }
+    }
     return null;
   }
 
@@ -389,6 +454,9 @@ var KB4ITFrontmatter = (function () {
     return !!keys && Object.prototype.hasOwnProperty.call(keys, key);
   }
 
+  // Lint mirrors the build line by line. Left to the YAML tree of Task 6: anchors and aliases that are
+  // defined (an alias after its anchor is flagged here), nested block mappings, multi-line quoted or
+  // flow values, and every other error the full YAML grammar reports.
   function lint(text, keys) {
     var b = bounds(text);
     if (!b.open) {
@@ -416,20 +484,32 @@ var KB4ITFrontmatter = (function () {
         "This line is not 'Key: value', a continuation, a comment or blank."));
     }
     var seen = {};
+    var lastIndex = {};
+    result.props.forEach(function (p) { lastIndex[p.key] = p.from; });
     result.props.forEach(function (p) {
       var first = lineEnd(text, p.from);
       var single = first >= p.to;
       if (single) {
         var m = KEY_RE.exec(text.slice(p.from, first));
         var err = m ? valueError(m[2] === undefined ? "" : m[2]) : null;
+        if (!err && /^[^:]*:\t/.test(text.slice(p.from, first))) { err = "a tab after the colon"; }
         if (err) {
           out.push(diag(p.from, first, "error", "yaml_error", "YAML error in " + p.key + ": " + err + "."));
           seen[p.key] = true;
           return;
         }
       }
+      if (!single) {
+        var cerr = continuationError(text, p, first);
+        if (cerr) {
+          out.push(diag(cerr.from, cerr.to, "error", "yaml_error", "YAML error in " + p.key + ": " + cerr.message + "."));
+          seen[p.key] = true;
+          return;
+        }
+      }
       var dup = has(seen, p.key);
       seen[p.key] = true;
+      var finalOne = lastIndex[p.key] === p.from;
       if (dup) {
         out.push(diag(p.from, first, "warning", "duplicate_property",
           p.key + " is defined more than once; the build keeps the last one."));
@@ -443,7 +523,7 @@ var KB4ITFrontmatter = (function () {
         out.push(diag(p.from, first, "error", "bad_property_name", "'" + p.key + "' cannot be used as a property name."));
         return;
       }
-      if (p.complex) { return; }
+      if (p.complex || !finalOne) { return; }
       var bad = p.values.filter(function (v) { return v && !validFilename(v); });
       if (bad.length) {
         out.push(diag(p.from, first, "error", "bad_property_value",
@@ -471,7 +551,8 @@ var KB4ITFrontmatter = (function () {
 
   function count(n, one, many) { return n + " " + (n === 1 ? one : many); }
 
-  function dquoteFlow(v) {
+  // Inside a flow list "[a, b]" a value with brackets or braces must be double-quoted; otherwise quote() rules.
+  function quoteForFlow(v) {
     return /[\[\]{}]/.test(v) ? dquote(v) : quote(v);
   }
 
@@ -485,6 +566,10 @@ var KB4ITFrontmatter = (function () {
     return { start: nl + 1, end: b.close === null ? text.length : b.close };
   }
 
+  // Option shape: {label, insert, detail, from?, to?}. Without from/to the option replaces
+  // [result.from, cursor] with insert. With them it replaces [from, to] instead; this is used to rewrite
+  // a whole plain comma list as a flow list when a value that needs quoting joins other items,
+  // because the build reads quotes inside a plain list as part of the value.
   function complete(text, pos, keys) {
     var region = completeRegion(text);
     if (region === null || pos < region.start || pos > region.end) { return null; }
@@ -541,6 +626,9 @@ var KB4ITFrontmatter = (function () {
     var from = valueFrom + current.from + lead;
     var pad = "";
     if (m[2] === "" && current === items[0] && !flow) { pad = " "; }
+    var others = items.filter(function (it) {
+      return it !== current && it.text.replace(/^\s*\[|\]\s*$/g, "").trim() !== "";
+    });
     var list = keys[key].filter(function (e) { return !existing[e.v]; })
       .map(function (e, idx) { return { e: e, idx: idx }; })
       .sort(function (a, c) { return (c.e.c - a.e.c) || (a.idx - c.idx); });
@@ -548,9 +636,24 @@ var KB4ITFrontmatter = (function () {
       from: from,
       options: list.map(function (x) {
         var v = x.e.v;
+        if (!flow && others.length && quote(v) !== v) {
+          var parts = [];
+          items.forEach(function (it) {
+            var raw = it.text.trim();
+            if (it === current) { parts.push(quoteForFlow(v)); }
+            else if (raw !== "") { parts.push(raw); }
+          });
+          return {
+            label: v,
+            insert: (m[2] === "" ? " " : "") + "[" + parts.join(", ") + "]",
+            detail: count(x.e.c, "document", "documents"),
+            from: valueFrom,
+            to: valueTo
+          };
+        }
         return {
           label: v,
-          insert: pad + (flow ? dquoteFlow(v) : quote(v)),
+          insert: pad + (flow ? quoteForFlow(v) : quote(v)),
           detail: count(x.e.c, "document", "documents")
         };
       })

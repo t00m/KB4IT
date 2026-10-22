@@ -387,3 +387,98 @@ def test_complete_outside_frontmatter():
     assert complete("# Heading") is None
     assert complete("---\nTag: a\n  indented") is None
     assert complete("---\nTag: a\n---\n", 2) is None
+
+
+NEEDY_VALUES = [
+    "12:30", "0x1F", "0o7", "1_000", ".inf", ".NaN", "#x", "=", "<<", "yes", "No", "null", "~", "1.5", "7",
+    "2026-10-22", "2026-1-2", "a #b", "Bad Idea: x", "- x", "@x", "`x", "*x", "&x", "!x", "%x", "? x", "?",
+    "[x]", "{x}", "a\tb", "> x", "| x", 'say "hi"', "it's", "tail:", "plain", "two words",
+]
+
+
+def _apply(text, pos, option, result):
+    start = option.get("from", result["from"])
+    end = option.get("to", pos)
+    return text[:start] + option["insert"] + text[end:]
+
+
+def _doc_values(doc_text):
+    import yaml
+
+    fm = doc_text.split("\n---", 1)[0][3:]
+    value = yaml.safe_load(fm)["Tag"]
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(i).strip() for i in value if i is not None]
+    if isinstance(value, str) and "," in value:
+        return [i.strip() for i in value.split(",")]
+    return [str(value).strip()]
+
+
+@pytest.mark.parametrize("value", NEEDY_VALUES)
+def test_completed_values_read_back_like_the_build(value):
+    keys = {"Tag": [{"v": value, "c": 1}, {"v": "a", "c": 0}], "Other": [{"v": value, "c": 1}]}
+    tail = "\n---\n\n# H\n"
+    first = "---\nTag: "
+    result = call("complete", first + tail, len(first), keys)
+    option = next(o for o in result["options"] if o["label"] == value)
+    assert _doc_values(_apply(first + tail, len(first), option, result)) == [value]
+    later = "---\nTag: a, "
+    result = call("complete", later + tail, len(later), keys)
+    option = next(o for o in result["options"] if o["label"] == value)
+    assert _doc_values(_apply(later + tail, len(later), option, result)) == ["a", value]
+    middle = "---\nTag: , b"
+    result = call("complete", middle + tail, len("---\nTag: "), keys)
+    option = next(o for o in result["options"] if o["label"] == value)
+    assert _doc_values(_apply(middle + tail, len("---\nTag: "), option, result)) == [value, "b"]
+    flow = "---\nTag: [a, "
+    result = call("complete", flow + "]" + tail, len(flow), keys)
+    option = next(o for o in result["options"] if o["label"] == value)
+    assert _doc_values(_apply(flow + "]" + tail, len(flow), option, result)) == ["a", value]
+
+
+def test_plain_list_is_rewritten_as_flow_list():
+    text = "---\nTag: a, \n---\n\n# H\n"
+    keys = {"Tag": [{"v": "Bad Idea: x", "c": 1}, {"v": "b", "c": 0}]}
+    result = call("complete", text, len("---\nTag: a, "), keys)
+    options = {o["label"]: o for o in result["options"]}
+    assert options["Bad Idea: x"]["insert"] == '[a, "Bad Idea: x"]'
+    assert options["Bad Idea: x"]["from"] == len("---\nTag: ")
+    assert options["Bad Idea: x"]["to"] == len("---\nTag: a, ")
+    assert "from" not in options["b"]
+
+
+AGREE_CASES = [
+    ("K: a", False), ("K: [a, b]", False), ('K: "a b"', False), ("K: 'a b'", False), ("K:", False),
+    ("K: a # note", False), ("K: >", False), ("K: !!str x", False), ("K: &a x", False), ("K: ?a", False),
+    ("K: a\n b", False), ("K: a\n - b", False), ("K:\n - a\n - b", False), ('K: "a\\x41"', False),
+    ('K: "a\\/b"', False), ('K: "tab\there"', False), ("K: 'a\\q'", False),
+    ("K: [a", True), ('K: "a', True), ("K: a: b", True), ("K: - a", True), ("K: *a", True),
+    ("K: !t x", True), ("K: %x", True), ("K: ? a", True), ("K: > x", True), ("K: | x", True),
+    ('K: "a\\q"', True), ("K: a\tb", True), ("K:\tx", True), ("K: a\n b: c", True), ("K: =", True),
+    ("K: <<", True), ("K: @x", True), ("K: [a, b] x", True), ('K: ["a\\q"]', True), ("K: ,a", True),
+    ("K: a\nstray", True), ("K: ?", True),
+]
+
+
+@pytest.mark.parametrize("fm,rejected", AGREE_CASES)
+def test_lint_agrees_with_the_build(tmp_path, fm, rejected):
+    from kb4it.core.documents import get_markdown_attributes
+
+    text = "---\n" + fm + "\n---\n\n# Heading\n"
+    path = tmp_path / "doc.md"
+    path.write_text(text, encoding="utf-8")
+    _keys, ok, _reason = get_markdown_attributes(str(path))
+    assert (not ok) is rejected
+    has_error = any(d["severity"] == "error" for d in lint(text, {}))
+    assert has_error is rejected
+
+
+def test_lint_repeated_key_checks_only_the_last():
+    text = "---\nTag: ...\nTag: a\n---\n\n# Heading\n"
+    assert reasons(text) == [("duplicate_property", "warning")]
+    text = "---\nTag: Brand\nTag: a\n---\n\n# Heading\n"
+    assert reasons(text) == [("duplicate_property", "warning")]
+    text = "---\nTag: a\nTag: ...\n---\n\n# Heading\n"
+    assert reasons(text) == [("duplicate_property", "warning"), ("bad_property_value", "error")]
