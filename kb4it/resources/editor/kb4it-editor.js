@@ -1,4 +1,4 @@
-/* KB4IT editor of the techdoc Add page (ED-04).
+/* KB4IT editor of the techdoc Add page (ED-04, ED-05, ED-06).
  * Needs codemirror.min.js (KB4ITEditor.cm) and kb4it-frontmatter.js, loaded before it.
  * Document data reaches the DOM only through textContent, setAttribute or CodeMirror. */
 (function (E) {
@@ -98,10 +98,85 @@
     ];
   }
 
-  // Tab inserts four spaces; Escape then Tab still leaves the editor (CodeMirror's tab focus mode).
+  // Tab with a selection indents its lines; on an empty cursor it inserts four spaces. Escape then Tab
+  // still leaves the editor (CodeMirror's tab focus mode).
   function insertTab(view) {
+    if (!view.state.selection.main.empty) { return cm.indentMore(view); }
     view.dispatch(view.state.replaceSelection(TAB), { scrollIntoView: true, userEvent: "input" });
     return true;
+  }
+
+  // ED-05: property names and values of the repository, from KB4ITFrontmatter.complete.
+  function completionSource(context) {
+    var result = KB4ITFrontmatter.complete(context.state.doc.toString(), context.pos, E.keys());
+    if (!result || !result.options.length) { return null; }
+    return {
+      from: result.from,
+      options: result.options.map(function (o) {
+        var option = { label: o.label, detail: o.detail, type: "text" };
+        if (typeof o.from === "number") {
+          // A whole-value rewrite (plain list turned into a flow list).
+          option.apply = function (view) {
+            view.dispatch({
+              changes: { from: o.from, to: o.to, insert: o.insert },
+              selection: { anchor: o.from + o.insert.length },
+              userEvent: "input.complete"
+            });
+          };
+        } else {
+          option.apply = o.insert;
+        }
+        return option;
+      })
+    };
+  }
+
+  // Error nodes of the YAML tree inside the frontmatter, one per line.
+  function yamlTreeErrors(state) {
+    var text = state.doc.toString();
+    var b = KB4ITFrontmatter.bounds(text);
+    var out = [];
+    if (!b.open || b.close === null) { return out; }
+    var lines = {};
+    cm.syntaxTree(state).iterate({
+      from: b.start,
+      to: b.end,
+      enter: function (node) {
+        if (!node.type.isError) { return; }
+        var line = state.doc.lineAt(Math.min(node.from, b.end));
+        if (line.from < b.start || line.from >= b.end || lines[line.number]) { return; }
+        lines[line.number] = true;
+        out.push({
+          from: line.from, to: line.to, severity: "error", reason: "yaml_error",
+          message: "YAML syntax error in the frontmatter."
+        });
+      }
+    });
+    return out;
+  }
+
+  // ED-06: the line checks of KB4ITFrontmatter plus the YAML tree errors that they do not report.
+  function diagnosticsOf(state) {
+    var found = KB4ITFrontmatter.lint(state.doc.toString(), E.keys());
+    var reported = found.some(function (d) { return d.reason === "yaml_error" || d.reason === "invalid_frontmatter"; });
+    if (!reported) { found = found.concat(yamlTreeErrors(state)); }
+    return found;
+  }
+
+  E.diagnostics = function (cat) {
+    var view = E.views[cat];
+    if (!view) { return []; }
+    return diagnosticsOf(view.state).map(function (d) {
+      return { reason: d.reason, severity: d.severity, from: d.from, to: d.to, message: d.message };
+    });
+  };
+
+  function lintSource(view) {
+    return diagnosticsOf(view.state).map(function (d) {
+      var to = d.to;
+      if (to <= d.from) { to = view.state.doc.lineAt(d.from).to; }
+      return { from: d.from, to: Math.max(to, d.from), severity: d.severity, message: d.message, source: d.reason };
+    });
   }
 
   // Every extension of a category's editor. Later features append theirs here.
@@ -116,7 +191,10 @@
       cm.EditorView.lineWrapping,
       cm.EditorState.tabSize.of(4),
       cm.indentUnit.of(TAB),
-      cm.keymap.of([{ key: "Tab", run: insertTab }]),
+      cm.autocompletion({ override: [completionSource] }),
+      cm.linter(lintSource, { delay: 150 }),
+      cm.lintGutter(),
+      cm.keymap.of([{ key: "Tab", run: insertTab }, { key: "Shift-Tab", run: cm.indentLess }]),
       cm.keymap.of([].concat(cm.closeBracketsKeymap, cm.defaultKeymap, cm.searchKeymap, cm.historyKeymap)),
       cm.yamlFrontmatter({ content: cm.markdown() }),
       look[cat].of(lookFor(pageIsDark()))

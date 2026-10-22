@@ -551,9 +551,10 @@ var KB4ITFrontmatter = (function () {
 
   function count(n, one, many) { return n + " " + (n === 1 ? one : many); }
 
-  // Inside a flow list "[a, b]" a value with brackets or braces must be double-quoted; otherwise quote() rules.
+  // Inside a flow list "[a, b]" PyYAML rejects a plain item with a question mark, a colon, a hash, a comma,
+  // brackets or braces, so any such value is double-quoted; otherwise quote() rules.
   function quoteForFlow(v) {
-    return /[\[\]{}]/.test(v) ? dquote(v) : quote(v);
+    return /[?:#,\[\]{}]/.test(v) ? dquote(v) : quote(v);
   }
 
   // Frontmatter extent for the cursor: while the closing fence is missing it runs to the end.

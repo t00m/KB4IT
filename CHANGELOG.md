@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ED-01: a CodeMirror 6 bundle (`kb4it/resources/editor/codemirror.min.js`, global `KB4ITEditor.cm`) for the techdoc Add page editor. It is built with `scripts/devel/editor/build.sh`, committed, works offline from `file://` and stays under 700 KB. `check_wheel_themes.py` also checks that the wheel ships it.
 - ED-02: the editor files (`resources/editor/`) are deployed only to sites with a page that loads them, and removed from the site when no page does. Logged as `[DEPLOYER] EDITOR_ASSETS deployed=<bool>`.
 - ED-03: CodeMirror licence and `THIRD-PARTY-NOTICES.txt` ship with the package; `THANKS` credits CodeMirror.
+- ED-05, ED-06: the Add page editor completes property names and values of the repository inside the frontmatter (values most used first, quoted when YAML needs it; new names and values can always be typed) and shows diagnostics in a lint gutter with the build's reason names: missing or unclosed frontmatter, YAML errors, missing H1, `Title` in the frontmatter, bad property names and values, new properties and values. Tab indents the selected lines and Shift-Tab outdents them. Completion into a flow list `[a, ]` now quotes values with `?`, `:`, `#`, `,`, brackets or braces.
 
 ### Changed
 
