@@ -123,8 +123,8 @@ def test_multiple_lines_and_selections(add_page):
         """() => {
             const v = KB4ITEditor.views.note;
             const n = v.state.doc.length - 1;
-            v.dispatch({selection: v.state.selection.constructor.create([
-                v.state.selection.constructor.range(n - 6, n - 5), v.state.selection.constructor.range(n - 1, n)], 0)});
+            const S = KB4ITEditor.cm.EditorSelection;
+            v.dispatch({selection: S.create([S.range(n - 6, n - 5), S.range(n - 1, n)], 0)});
         }"""
     )
     click(add_page, "note", "bold")
@@ -133,7 +133,7 @@ def test_multiple_lines_and_selections(add_page):
     add_page.evaluate(
         """() => {
             const v = KB4ITEditor.views.note;
-            const S = v.state.selection.constructor;
+            const S = KB4ITEditor.cm.EditorSelection;
             const p = v.state.doc.length - 3;
             v.dispatch({selection: S.create([S.cursor(p), S.cursor(p + 1)], 0)});
         }"""
@@ -178,3 +178,19 @@ def test_no_network_requests(add_page):
     set_doc(add_page, "note", EMPTY, len(EMPTY))
     click(add_page, "note", "bold")
     assert add_page.aborted == []
+
+
+def test_toolbar_enabled_on_open(add_page):
+    open_cat(add_page, "note")
+    assert not add_page.is_disabled("#kb-toolbar-note [data-action=italic]")
+    assert selected(add_page, "note") == "Note title"
+    click(add_page, "note", "italic")
+    assert "\n# *Note title*\n" in editor_text(add_page, "note")
+
+
+def test_block_after_paragraph_is_separated(add_page):
+    open_cat(add_page, "note")
+    doc = HEAD + "word\n"
+    set_doc(add_page, "note", doc, len(doc))
+    click(add_page, "note", "hr")
+    assert editor_text(add_page, "note") == HEAD + "word\n\n---\n"

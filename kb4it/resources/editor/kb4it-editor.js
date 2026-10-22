@@ -101,7 +101,7 @@
   // Tab with a selection indents its lines; on an empty cursor it inserts four spaces. Escape then Tab
   // still leaves the editor (CodeMirror's tab focus mode).
   function insertTab(view) {
-    if (!view.state.selection.main.empty) { return cm.indentMore(view); }
+    if (!view.state.selection.ranges.every(function (r) { return r.empty; })) { return cm.indentMore(view); }
     view.dispatch(view.state.replaceSelection(TAB), { scrollIntoView: true, userEvent: "input" });
     return true;
   }
@@ -194,7 +194,7 @@
 
   // ---- ED-09: toolbar ----
 
-  var Sel = cm.EditorState.create({ doc: "" }).selection.constructor;  // EditorSelection
+  var Sel = cm.EditorSelection;
   var NOTE_TEXT = "Text of the note, indented by four spaces.";
   var TABLE = "| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |";
 
@@ -216,7 +216,7 @@
   }
 
   // Wraps the selection in open and close; with no selection inserts open + placeholder + close and
-  // selects the placeholder. Layout (optional) tells where the selection goes for a wrapped selection.
+  // selects the placeholder.
   function wrap(open, close, placeholder) {
     return function (view) {
       return apply(view, function (r) {
@@ -290,7 +290,8 @@
     var blank = line.text.trim() === "";
     var from = blank ? line.from : line.to;
     var to = line.to;
-    var lead = blank ? "" : "\n\n";
+    var prev = line.number > 1 ? state.doc.line(line.number - 1) : null;
+    var lead = !blank ? "\n\n" : (prev && prev.text.trim() !== "" ? "\n" : "");
     var next = line.number < state.doc.lines ? state.doc.line(line.number + 1) : null;
     var tail = "";
     if (!next) { tail = trailNl ? "\n" : ""; } else if (next.text.trim() !== "") { tail = "\n"; }
@@ -482,7 +483,24 @@
   function freshState(cat) {
     var doc = E.skeleton(cat);
     base[cat] = doc;
-    return cm.EditorState.create({ doc: doc, extensions: E.extensions(cat) });
+    return cm.EditorState.create({ doc: doc, selection: titleSelection(doc), extensions: E.extensions(cat) });
+  }
+
+  // The text of the first "# " heading below the frontmatter, so typing replaces the placeholder and
+  // the toolbar is enabled on open; else the start of the line after the closing "---".
+  function titleSelection(doc) {
+    var b = KB4ITFrontmatter.bounds(doc);
+    var from = 0;
+    if (b.open && b.close !== null) {
+      from = doc.indexOf("\n", b.end);
+      from = from < 0 ? doc.length : from + 1;
+    }
+    var m = /^#[ \t]+(.*)$/m.exec(doc.slice(from));
+    if (m) {
+      var start = from + m.index + m[0].length - m[1].length;
+      return cm.EditorSelection.range(start, start + m[1].length);
+    }
+    return cm.EditorSelection.cursor(from);
   }
 
   E.text = function (cat) {
