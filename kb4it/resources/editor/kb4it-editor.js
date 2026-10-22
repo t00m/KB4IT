@@ -1,4 +1,4 @@
-/* KB4IT editor of the techdoc Add page (ED-04, ED-05, ED-06).
+/* KB4IT editor of the techdoc Add page (ED-04 to ED-09).
  * Needs codemirror.min.js (KB4ITEditor.cm) and kb4it-frontmatter.js, loaded before it.
  * Document data reaches the DOM only through textContent, setAttribute or CodeMirror. */
 (function (E) {
@@ -192,16 +192,279 @@
     syncTimer[cat] = setTimeout(function () { E.renderPane(cat); }, 300);
   }
 
+  // ---- ED-09: toolbar ----
+
+  var Sel = cm.EditorState.create({ doc: "" }).selection.constructor;  // EditorSelection
+  var NOTE_TEXT = "Text of the note, indented by four spaces.";
+  var TABLE = "| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |";
+
+  // True when a selection range touches the frontmatter (or the text opens one that is not closed):
+  // an action there would corrupt the YAML, so the toolbar is disabled.
+  function inFrontmatter(state) {
+    var text = state.doc.toString();
+    var b = KB4ITFrontmatter.bounds(text);
+    if (!b.open) { return false; }
+    if (b.close === null) { return true; }
+    var closeEnd = text.indexOf("\n", b.end);
+    if (closeEnd < 0) { closeEnd = text.length; }
+    return state.selection.ranges.some(function (r) { return r.from <= closeEnd; });
+  }
+
+  function apply(view, spec) {
+    view.dispatch(view.state.changeByRange(spec), { scrollIntoView: true, userEvent: "input.toolbar" });
+    return true;
+  }
+
+  // Wraps the selection in open and close; with no selection inserts open + placeholder + close and
+  // selects the placeholder. Layout (optional) tells where the selection goes for a wrapped selection.
+  function wrap(open, close, placeholder) {
+    return function (view) {
+      return apply(view, function (r) {
+        if (r.empty) {
+          var at = r.from + open.length;
+          return {
+            changes: { from: r.from, insert: open + placeholder + close },
+            range: Sel.range(at, at + placeholder.length)
+          };
+        }
+        return {
+          changes: [{ from: r.from, insert: open }, { from: r.to, insert: close }],
+          range: Sel.range(r.from + open.length, r.to + open.length)
+        };
+      });
+    };
+  }
+
+  // [text](url) and ![alt](path): the selection becomes the text or the alt. For a link with no
+  // selection the placeholder text is selected; otherwise the url or path is.
+  function linkLike(open, textPh, tailPh) {
+    return function (view) {
+      return apply(view, function (r) {
+        var txt = r.empty ? textPh : view.state.sliceDoc(r.from, r.to);
+        var start = r.from + open.length + txt.length + 2;
+        var range = (r.empty && open === "[") ? Sel.range(r.from + 1, r.from + 1 + txt.length)
+          : Sel.range(start, start + tailPh.length);
+        return { changes: { from: r.from, to: r.to, insert: open + txt + "](" + tailPh + ")" }, range: range };
+      });
+    };
+  }
+
+  // Lines touched by a range; a selection that ends at the start of a line leaves that line out.
+  function linesOf(state, r) {
+    var first = state.doc.lineAt(r.from);
+    var last = state.doc.lineAt(r.to);
+    if (!r.empty && last.number > first.number && r.to === last.from) { last = state.doc.line(last.number - 1); }
+    var out = [];
+    for (var n = first.number; n <= last.number; n++) { out.push(state.doc.line(n)); }
+    return out;
+  }
+
+  // Puts a prefix at the start of every line of the selection (once per line, also with several
+  // cursors). strip (RegExp) removes an existing marker of the same family first.
+  function prefix(make, strip) {
+    return function (view) {
+      var seen = {};
+      return apply(view, function (r) {
+        var lines = linesOf(view.state, r);
+        var changes = [];
+        var count = 0;
+        lines.forEach(function (line) {
+          if (seen[line.from]) { return; }
+          seen[line.from] = true;
+          if (lines.length > 1 && line.text.trim() === "") { return; }
+          count++;
+          var m = strip ? strip.exec(line.text) : null;
+          changes.push({ from: line.from, to: line.from + (m ? m[0].length : 0), insert: make(count) });
+        });
+        var cs = view.state.changes(changes);
+        return { changes: changes, range: r.map(cs, 1) };
+      });
+    };
+  }
+
+  // The text of a block as one insertion, on its own lines: it replaces the blank line of the cursor
+  // or goes after the cursor line with a blank line between. trailNl adds a line break when the
+  // block ends the document. Returns the change and where the block starts.
+  function blockChange(state, r, template, trailNl) {
+    var line = state.doc.lineAt(r.to);
+    var blank = line.text.trim() === "";
+    var from = blank ? line.from : line.to;
+    var to = line.to;
+    var lead = blank ? "" : "\n\n";
+    var next = line.number < state.doc.lines ? state.doc.line(line.number + 1) : null;
+    var tail = "";
+    if (!next) { tail = trailNl ? "\n" : ""; } else if (next.text.trim() !== "") { tail = "\n"; }
+    return { change: { from: from, to: to, insert: lead + template + tail }, start: from + lead.length };
+  }
+
+  // A block inserted from a template; sel = [offset, length] of the text to select in it.
+  function block(template, sel, trailNl) {
+    return function (view) {
+      return apply(view, function (r) {
+        var b = blockChange(view.state, r, template, trailNl);
+        return { changes: b.change, range: Sel.range(b.start + sel[0], b.start + sel[0] + sel[1]) };
+      });
+    };
+  }
+
+  // Selected lines between open and close fences (own lines); with a cursor, the template with
+  // the placeholder selected.
+  function fence(open, close, placeholder) {
+    return function (view) {
+      return apply(view, function (r) {
+        if (r.empty) {
+          var b = blockChange(view.state, r, open + "\n" + placeholder + "\n" + close, false);
+          var at = b.start + open.length + 1;
+          return { changes: b.change, range: Sel.range(at, at + placeholder.length) };
+        }
+        var lines = linesOf(view.state, r);
+        var from = lines[0].from;
+        var to = lines[lines.length - 1].to;
+        var text = view.state.sliceDoc(from, to);
+        return {
+          changes: { from: from, to: to, insert: open + "\n" + text + "\n" + close },
+          range: Sel.range(from + open.length + 1, from + open.length + 1 + text.length)
+        };
+      });
+    };
+  }
+
+  function admonition(kind) {
+    var head = "!!! " + kind + ' "Title"';
+    return function (view) {
+      return apply(view, function (r) {
+        if (r.empty) {
+          var b = blockChange(view.state, r, head + "\n" + TAB + NOTE_TEXT, false);
+          var at = b.start + head.length + 1 + TAB.length;
+          return { changes: b.change, range: Sel.range(at, at + NOTE_TEXT.length) };
+        }
+        var lines = linesOf(view.state, r);
+        var from = lines[0].from;
+        var to = lines[lines.length - 1].to;
+        var body = lines.map(function (l) { return l.text.trim() === "" ? l.text : TAB + l.text; }).join("\n");
+        var at2 = from + head.length + 1 + TAB.length;
+        return {
+          changes: { from: from, to: to, insert: head + "\n" + body },
+          range: Sel.range(at2, from + head.length + 1 + body.length)
+        };
+      });
+    };
+  }
+
+  E.ACTIONS = {
+    bold: wrap("**", "**", "text"),
+    italic: wrap("*", "*", "text"),
+    code: wrap("`", "`", "code"),
+    link: linkLike("[", "text", "url"),
+    h2: prefix(function () { return "## "; }, /^#{1,6}[ \t]+/),
+    h3: prefix(function () { return "### "; }, /^#{1,6}[ \t]+/),
+    h4: prefix(function () { return "#### "; }, /^#{1,6}[ \t]+/),
+    ul: prefix(function () { return "- "; }),
+    ol: prefix(function (n) { return n + ". "; }),
+    task: prefix(function () { return "- [ ] "; }),
+    quote: prefix(function () { return "> "; }),
+    codeblock: fence("```", "```", ""),
+    hr: block("---", [0, 0], true),
+    table: block(TABLE, [0, 0], false),
+    image: linkLike("![", "alt", "path"),
+    note: admonition("note"),
+    tip: admonition("tip"),
+    warning: admonition("warning"),
+    danger: admonition("danger"),
+    mermaid: block("```mermaid\ngraph TD\n    A --> B\n```", [0, 0], false),
+    math: wrap("$", "$", "x"),
+    mathblock: fence("$$", "$$", "x")
+  };
+
+  // Each ACTIONS function is wrapped so that nothing happens in the frontmatter.
+  function run(name, view) {
+    if (!inFrontmatter(view.state)) { E.ACTIONS[name](view); }
+    return true;
+  }
+
+  // Order of the buttons. icon: UIkit icon; label: short text when there is no icon.
+  var GROUPS = [
+    [["bold", "Bold", "Ctrl+B", "bold"], ["italic", "Italic", "Ctrl+I", "italic"],
+      ["code", "Inline code", "Ctrl+E", "code"], ["link", "Link", "Ctrl+K", "link"]],
+    [["h2", "Heading 2", "", null, "H2"], ["h3", "Heading 3", "", null, "H3"], ["h4", "Heading 4", "", null, "H4"]],
+    [["ul", "Bullet list", "", "list"], ["ol", "Numbered list", "", null, "1."], ["task", "Task list", "", null, "[ ]"],
+      ["quote", "Quote", "", "quote-right"], ["codeblock", "Code block", "", null, "```"],
+      ["hr", "Horizontal rule", "", "minus"]],
+    [["table", "Table", "", "table"], ["image", "Image", "", "image"]],
+    [["note", "Admonition: note", "", null, "Note"], ["tip", "Admonition: tip", "", null, "Tip"],
+      ["warning", "Admonition: warning", "", null, "Warning"], ["danger", "Admonition: danger", "", null, "Danger"],
+      ["mermaid", "Mermaid diagram", "", null, "Mermaid"], ["math", "Inline formula", "", null, "$x$"],
+      ["mathblock", "Formula block", "", null, "$$"]]
+  ];
+
+  function refreshToolbar(cat) {
+    var bar = document.getElementById("kb-toolbar-" + cat);
+    var view = E.views[cat];
+    if (!bar || !view) { return; }
+    var off = inFrontmatter(view.state);
+    Array.prototype.forEach.call(bar.querySelectorAll("button[data-action]"), function (b) {
+      if (off) { b.setAttribute("disabled", ""); } else { b.removeAttribute("disabled"); }
+    });
+  }
+
+  function buildToolbar(cat) {
+    var bar = document.getElementById("kb-toolbar-" + cat);
+    if (!bar || bar.firstChild) { return; }
+    bar.setAttribute("role", "toolbar");
+    bar.setAttribute("aria-label", "Markdown elements");
+    GROUPS.forEach(function (group) {
+      var box = el("span", "kb-tb-group");
+      group.forEach(function (def) {
+        var b = el("button", "kb-tb-btn uk-button uk-button-default uk-button-small");
+        b.setAttribute("type", "button");
+        b.setAttribute("data-action", def[0]);
+        b.setAttribute("title", def[1] + (def[2] ? " (" + def[2] + ")" : ""));
+        b.setAttribute("aria-label", def[1]);
+        if (def[3]) {
+          var icon = el("span");
+          icon.setAttribute("uk-icon", "icon: " + def[3] + "; ratio: 0.8");
+          b.appendChild(icon);
+        } else {
+          b.appendChild(el("span", "kb-tb-text", def[4]));
+        }
+        // Keep the focus (and the selection) in the editor.
+        b.addEventListener("mousedown", function (event) { event.preventDefault(); });
+        b.addEventListener("click", function () {
+          var view = E.views[cat];
+          if (!view) { return; }
+          run(def[0], view);
+          view.focus();
+        });
+        box.appendChild(b);
+      });
+      bar.appendChild(box);
+    });
+  }
+
+  // Before the other keymaps, so Mod-i wins over CodeMirror's "select parent syntax".
+  function toolbarKeymap() {
+    function key(k, name) { return { key: k, run: function (view) { return run(name, view); }, preventDefault: true }; }
+    return cm.keymap.of([key("Mod-b", "bold"), key("Mod-i", "italic"), key("Mod-e", "code"), key("Mod-k", "link")]);
+  }
+
+  function toolbarListener(cat) {
+    return cm.EditorView.updateListener.of(function (update) {
+      if (update.selectionSet || update.docChanged) { refreshToolbar(cat); }
+    });
+  }
+
   // Every extension of a category's editor. Later features append theirs here.
   E.extensions = function (cat) {
     if (!look[cat]) { look[cat] = new cm.Compartment(); }
     return [
+      toolbarKeymap(),
       cm.lineNumbers(),
       cm.highlightActiveLine(),
       cm.drawSelection(),
       cm.history(),
       cm.closeBrackets(),
       cm.EditorView.lineWrapping,
+      cm.EditorState.allowMultipleSelections.of(true),
       cm.EditorState.tabSize.of(4),
       cm.indentUnit.of(TAB),
       cm.autocompletion({ override: [completionSource] }),
@@ -211,7 +474,8 @@
       cm.keymap.of([].concat(cm.closeBracketsKeymap, cm.defaultKeymap, cm.searchKeymap, cm.historyKeymap)),
       cm.yamlFrontmatter({ content: cm.markdown() }),
       look[cat].of(lookFor(pageIsDark())),
-      cm.EditorView.updateListener.of(function (update) { syncPane(cat, update); })
+      cm.EditorView.updateListener.of(function (update) { syncPane(cat, update); }),
+      toolbarListener(cat)
     ];
   };
 
@@ -596,6 +860,9 @@
     } else {
       view.dispatch({ effects: look[cat].reconfigure(lookFor(pageIsDark())) });
     }
+    buildToolbar(cat);
+    document.getElementById("kb-toolbar-" + cat).classList.toggle("kb-tb-dark", pageIsDark());
+    refreshToolbar(cat);
     E.renderPane(cat);
     var shown = UIkit.modal("#modal-add-" + cat).show();
     var ready = function () { view.requestMeasure(); view.focus(); };

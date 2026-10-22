@@ -78,6 +78,31 @@
  * drawSelection paints it behind the text; the native one keeps the token colours. */
 .kb4it-cm .cm-line::selection, .kb4it-cm .cm-line ::selection { color: currentColor; }
 
+/* Toolbar above the editor (ED-09) */
+.kb-toolbar {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding: 4px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8f8f8;
+}
+.kb-toolbar.kb-tb-dark { background: #252526; border-bottom-color: #333; }
+.kb-tb-dark .kb-tb-btn.uk-button { background: #1e1e1e; color: #d4d4d4; border-color: #444; }
+.kb-tb-group { display: inline-flex; gap: 2px; }
+.kb-tb-btn.uk-button {
+    min-width: 28px;
+    height: 26px;
+    line-height: 24px;
+    padding: 0 6px;
+    text-transform: none;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+.kb-tb-btn[disabled] { opacity: 0.4; cursor: default; }
+.kb-tb-text { font-family: 'SF Mono', 'Fira Code', Consolas, monospace; }
+
 /* Right pane: Properties (ED-07). Colours are custom properties; the dark set follows the page background. */
 .kb-pane-right {
     --kb-p-faint: #bbb; --kb-p-name: #555; --kb-p-line: #f0f0f0; --kb-p-fg: #333;

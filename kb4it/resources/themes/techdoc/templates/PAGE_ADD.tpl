@@ -87,6 +87,7 @@ CATEGORIES = [
             <!-- Left: editable Markdown template -->
             <div class="kb-pane-left">
                 <div class="kb-pane-label">Template</div>
+                <div id="kb-toolbar-${cat['id']}" class="kb-toolbar"></div>
                 <div id="kb-editor-${cat['id']}" class="kb-editor-host"></div>
             </div>
 
