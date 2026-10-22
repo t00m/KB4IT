@@ -226,58 +226,290 @@
     while (node.firstChild) { node.removeChild(node.firstChild); }
   }
 
-  // Right pane: one accordion entry per property with a word cloud of its values.
-  function buildAccordion(cat) {
-    var container = document.getElementById("kb-accord-" + cat);
-    if (!container) { return; }
-    clear(container);
-    var keys = E.keys();
-    var ul = document.createElement("ul");
-    ul.setAttribute("uk-accordion", "");
-    Object.keys(keys).sort(function (a, b) {
+  // ---- ED-07: Properties pane ----
+
+  var NO_COMMA = "A value cannot contain a comma: KB4IT splits values on commas.";
+  var NEW_PROP = "__new__";
+  var expanded = {};  // cat -> {key: true}: rows whose word cloud is open
+  var focusKey = {};  // cat -> key whose value input gets the focus after a redraw
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) { node.className = cls; }
+    if (text !== undefined) { node.textContent = text; }
+    return node;
+  }
+
+  // Word cloud of {v, c} items, weights as in the old accordion. pick(value) is called on a click.
+  function buildCloud(items, pick) {
+    var cloud = el("div", "kb-wcloud");
+    if (!items || !items.length) {
+      cloud.appendChild(el("span", "kb-wcloud-empty", "No values yet"));
+      return cloud;
+    }
+    var maxC = 1;
+    items.forEach(function (it) { if (it.c > maxC) { maxC = it.c; } });
+    var logMax = Math.log(1 + maxC) || 1;
+    items.forEach(function (it) {
+      var sp = el("span", "kb-wcloud-word", it.v);
+      sp.style.setProperty("--kb-weight", (Math.log(1 + it.c) / logMax).toFixed(3));
+      sp.setAttribute("title", it.c + (it.c === 1 ? " document" : " documents"));
+      sp.setAttribute("role", "button");
+      sp.setAttribute("tabindex", "0");
+      sp.setAttribute("data-value", it.v);
+      sp.addEventListener("click", function () { pick(it.v); });
+      sp.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); pick(it.v); }
+      });
+      cloud.appendChild(sp);
+    });
+    return cloud;
+  }
+
+  // One entry per key, in text order; the last occurrence wins, as PyYAML does.
+  function rowsOf(parsed) {
+    var order = [];
+    var byKey = {};
+    parsed.props.forEach(function (p) {
+      if (!byKey[p.key]) { order.push(p.key); }
+      byKey[p.key] = p;
+    });
+    return order.map(function (k) { return byKey[k]; });
+  }
+
+  // Replaces the property's line (one transaction, so undo restores it) and redraws the pane.
+  function change(cat, key, values) {
+    var view = E.views[cat];
+    var c = KB4ITFrontmatter.setValues(view.state.doc.toString(), key, values);
+    if (c && (c.from !== c.to || c.insert !== "")) {
+      view.dispatch({ changes: { from: c.from, to: c.to, insert: c.insert }, userEvent: "input.form" });
+    }
+    focusKey[cat] = key;
+    E.renderPane(cat);
+  }
+
+  function addValue(cat, prop, value, message) {
+    var v = value.trim();
+    if (!v) { return; }
+    if (v.indexOf(",") !== -1) { message.textContent = NO_COMMA; return; }
+    if (prop.values.indexOf(v) !== -1) { message.textContent = "Already there: " + v; return; }
+    change(cat, prop.key, prop.values.concat([v]));
+  }
+
+  function suggestionsFor(prop, typed) {
+    var q = typed.trim().toLowerCase();
+    return (E.keys()[prop.key] || []).filter(function (it) {
+      return prop.values.indexOf(it.v) === -1 && (!q || it.v.toLowerCase().indexOf(q) !== -1);
+    }).sort(function (a, b) { return b.c - a.c || a.v.localeCompare(b.v); }).slice(0, 12);
+  }
+
+  function buildValueInput(cat, prop, message) {
+    var wrap = el("div", "kb-value-wrap");
+    var input = el("input", "kb-value-input uk-input uk-form-small");
+    input.setAttribute("type", "text");
+    input.setAttribute("placeholder", "Add a value");
+    input.setAttribute("autocomplete", "off");
+    var list = el("ul", "kb-suggest");
+    list.hidden = true;
+    var active = -1;
+
+    function items() { return Array.prototype.slice.call(list.children); }
+    function mark(i) {
+      active = i;
+      items().forEach(function (li, n) { li.classList.toggle("kb-suggest-active", n === i); });
+    }
+    function refresh() {
+      while (list.firstChild) { list.removeChild(list.firstChild); }
+      var found = suggestionsFor(prop, input.value);
+      found.forEach(function (it) {
+        var li = el("li", "kb-suggest-item");
+        li.setAttribute("data-value", it.v);
+        li.appendChild(el("span", "kb-suggest-value", it.v));
+        li.appendChild(el("span", "kb-suggest-count", String(it.c)));
+        li.addEventListener("mousedown", function (event) {
+          event.preventDefault();
+          addValue(cat, prop, it.v, message);
+        });
+        list.appendChild(li);
+      });
+      list.hidden = !found.length;
+      active = -1;
+    }
+
+    input.addEventListener("input", function () {
+      message.textContent = input.value.indexOf(",") !== -1 ? NO_COMMA : "";
+      refresh();
+    });
+    input.addEventListener("focus", refresh);
+    input.addEventListener("blur", function () { list.hidden = true; });
+    input.addEventListener("keydown", function (event) {
+      var shown = items();
+      if (event.key === "ArrowDown" && shown.length) {
+        event.preventDefault();
+        list.hidden = false;
+        mark((active + 1) % shown.length);
+      } else if (event.key === "ArrowUp" && shown.length) {
+        event.preventDefault();
+        mark((active - 1 + shown.length) % shown.length);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        var chosen = active >= 0 && !list.hidden ? shown[active].getAttribute("data-value") : input.value;
+        addValue(cat, prop, chosen, message);
+      } else if (event.key === "Escape") {
+        event.stopPropagation();
+        list.hidden = true;
+      }
+    });
+    wrap.appendChild(input);
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function buildRow(cat, prop) {
+    var row = el("div", "kb-prop-row");
+    row.setAttribute("data-key", prop.key);
+    var head = el("div", "kb-prop-head");
+    head.appendChild(el("span", "kb-prop-name", prop.key));
+    var tools = el("span", "kb-prop-tools");
+    if (!prop.complex) {
+      var toggle = el("button", "kb-cloud-toggle uk-button uk-button-link", "Cloud");
+      toggle.setAttribute("type", "button");
+      toggle.setAttribute("title", "Show the values used in the repository");
+      var remove = el("button", "kb-prop-remove uk-button uk-button-link", "Remove");
+      remove.setAttribute("type", "button");
+      remove.setAttribute("title", "Remove this property");
+      remove.addEventListener("click", function () { change(cat, prop.key, null); });
+      tools.appendChild(toggle);
+      tools.appendChild(remove);
+      head.appendChild(tools);
+      row.appendChild(head);
+
+      var chips = el("div", "kb-chips");
+      prop.values.forEach(function (v) {
+        var chip = el("span", "kb-chip");
+        chip.setAttribute("data-value", v);
+        chip.appendChild(el("span", "kb-chip-text", v));
+        var x = el("button", "kb-chip-remove", "×");
+        x.setAttribute("type", "button");
+        x.setAttribute("title", "Remove " + v);
+        x.addEventListener("click", function () {
+          change(cat, prop.key, prop.values.filter(function (o) { return o !== v; }));
+        });
+        chip.appendChild(x);
+        chips.appendChild(chip);
+      });
+      row.appendChild(chips);
+      var message = el("div", "kb-prop-msg");
+      message.setAttribute("role", "status");
+      row.appendChild(buildValueInput(cat, prop, message));
+      row.appendChild(message);
+
+      var cloudHost = el("div", "kb-cloud-host");
+      cloudHost.hidden = !(expanded[cat] && expanded[cat][prop.key]);
+      cloudHost.appendChild(buildCloud(E.keys()[prop.key], function (v) { addValue(cat, prop, v, message); }));
+      toggle.addEventListener("click", function () {
+        expanded[cat] = expanded[cat] || {};
+        expanded[cat][prop.key] = cloudHost.hidden;
+        cloudHost.hidden = !cloudHost.hidden;
+      });
+      row.appendChild(cloudHost);
+    } else {
+      row.appendChild(head);
+      row.appendChild(el("div", "kb-prop-complex", "Edit this property in the text"));
+    }
+    return row;
+  }
+
+  // The selector of properties of the repository that the document does not have, plus a free name.
+  function buildAdder(cat, present) {
+    var wrap = el("div", "kb-add-wrap");
+    var select = el("select", "kb-add-prop uk-select uk-form-small");
+    var first = el("option", "", "Add property...");
+    first.setAttribute("value", "");
+    select.appendChild(first);
+    Object.keys(E.keys()).sort(function (a, b) {
       return a.toLowerCase().localeCompare(b.toLowerCase());
     }).forEach(function (name) {
-      var items = keys[name];
-      var li = document.createElement("li");
-      var a = document.createElement("a");
-      a.className = "uk-accordion-title";
-      a.setAttribute("href", "");
-      a.appendChild(document.createTextNode(name));
-      if (items.length > 0) {
-        var count = document.createElement("span");
-        count.className = "kb-accord-count";
-        count.textContent = "(" + items.length + ")";
-        a.appendChild(count);
-      }
-      var content = document.createElement("div");
-      content.className = "uk-accordion-content";
-      var cloud = document.createElement("div");
-      cloud.className = "kb-wcloud";
-      if (items.length > 0) {
-        var maxC = 1;
-        items.forEach(function (it) { if (it.c > maxC) { maxC = it.c; } });
-        var logMax = Math.log(1 + maxC) || 1;
-        items.forEach(function (it) {
-          var sp = document.createElement("span");
-          sp.className = "kb-wcloud-word";
-          sp.style.setProperty("--kb-weight", (Math.log(1 + it.c) / logMax).toFixed(3));
-          sp.textContent = it.v;
-          sp.setAttribute("title", it.c + (it.c === 1 ? " document" : " documents"));
-          cloud.appendChild(sp);
-        });
-      } else {
-        var empty = document.createElement("span");
-        empty.className = "kb-wcloud-empty";
-        empty.textContent = "No values yet";
-        cloud.appendChild(empty);
-      }
-      content.appendChild(cloud);
-      li.appendChild(a);
-      li.appendChild(content);
-      ul.appendChild(li);
+      if (present[name]) { return; }
+      var o = el("option", "", name);
+      o.setAttribute("value", name);
+      select.appendChild(o);
     });
-    container.appendChild(ul);
+    var free = el("option", "", "New property...");
+    free.setAttribute("value", NEW_PROP);
+    select.appendChild(free);
+
+    var box = el("div", "kb-new-prop");
+    box.hidden = true;
+    var name = el("input", "kb-new-prop-name uk-input uk-form-small");
+    name.setAttribute("type", "text");
+    name.setAttribute("placeholder", "Property name");
+    var ok = el("button", "kb-new-prop-add uk-button uk-button-small uk-button-default", "Add");
+    ok.setAttribute("type", "button");
+    var message = el("div", "kb-prop-msg");
+    message.setAttribute("role", "status");
+
+    function create() {
+      var n = name.value.trim();
+      if (!n || KB4ITFrontmatter.validFilename(n) !== n) {
+        message.textContent = "'" + n + "' cannot be used as a property name.";
+        return;
+      }
+      if (present[n]) { message.textContent = "The document already has " + n + "."; return; }
+      change(cat, n, []);
+    }
+    ok.addEventListener("click", create);
+    name.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") { event.preventDefault(); create(); }
+      if (event.key === "Escape") { event.stopPropagation(); }
+    });
+    select.addEventListener("change", function () {
+      message.textContent = "";
+      if (select.value === NEW_PROP) {
+        box.hidden = false;
+        name.focus();
+      } else if (select.value) {
+        change(cat, select.value, []);
+      } else {
+        box.hidden = true;
+      }
+    });
+    box.appendChild(name);
+    box.appendChild(ok);
+    wrap.appendChild(select);
+    wrap.appendChild(box);
+    wrap.appendChild(message);
+    return wrap;
   }
+
+  // Draws the Properties pane from the frontmatter of the editor text.
+  E.renderPane = function (cat) {
+    var container = document.getElementById("kb-props-" + cat);
+    var view = E.views[cat];
+    if (!container || !view) { return; }
+    clear(container);
+    var parsed = KB4ITFrontmatter.parse(view.state.doc.toString());
+    if (!parsed.ok) {
+      container.appendChild(el("div", "kb-prop-error", "Fix the frontmatter in the text to edit the properties here."));
+      return;
+    }
+    var present = {};
+    var rows = rowsOf(parsed);
+    rows.forEach(function (p) {
+      present[p.key] = true;
+      container.appendChild(buildRow(cat, p));
+    });
+    container.appendChild(buildAdder(cat, present));
+    var key = focusKey[cat];
+    focusKey[cat] = null;
+    if (key) {
+      var rowNode = Array.prototype.find.call(container.querySelectorAll(".kb-prop-row"), function (n) {
+        return n.getAttribute("data-key") === key;
+      });
+      var input = rowNode && rowNode.querySelector(".kb-value-input");
+      if (input) { input.focus(); }
+    }
+  };
 
   // Creates the editor on the first open; on a later open, starts again unless the
   // user keeps an edited document.
@@ -291,12 +523,12 @@
       });
       view = new cm.EditorView({ state: freshState(cat), parent: host });
       E.views[cat] = view;
-      buildAccordion(cat);
     } else if (!E.dirty(cat) || window.confirm(DISCARD)) {
       view.setState(freshState(cat));
     } else {
       view.dispatch({ effects: look[cat].reconfigure(lookFor(pageIsDark())) });
     }
+    E.renderPane(cat);
     var shown = UIkit.modal("#modal-add-" + cat).show();
     var ready = function () { view.requestMeasure(); view.focus(); };
     if (shown && typeof shown.then === "function") { shown.then(ready); } else { ready(); }

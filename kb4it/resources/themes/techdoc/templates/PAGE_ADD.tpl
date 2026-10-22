@@ -90,11 +90,11 @@ CATEGORIES = [
                 <div id="kb-editor-${cat['id']}" class="kb-editor-host"></div>
             </div>
 
-            <!-- Right: key values reference as accordion word clouds -->
+            <!-- Right: visual frontmatter editor -->
             <div class="kb-pane-right">
-                <div class="kb-pane-label">Values reference</div>
-                <div class="kb-accord-wrap">
-                    <div id="kb-accord-${cat['id']}"></div>
+                <div class="kb-pane-label">Properties</div>
+                <div class="kb-props-wrap">
+                    <div id="kb-props-${cat['id']}"></div>
                 </div>
             </div>
 

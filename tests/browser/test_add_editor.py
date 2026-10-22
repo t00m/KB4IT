@@ -226,3 +226,124 @@ def test_nested_yaml_error_comes_from_the_tree(add_page):
     open_cat(add_page, "note")
     set_doc(add_page, "note", "---\nA:\n  - b\n c: 1\n---\n\n# T\n")
     assert reasons(add_page, "note").count("yaml_error") == 1
+
+
+# ---- ED-07 Properties pane ----
+
+PANE = "#kb-props-note"
+FM_END = "\n---\n"
+
+
+def row(cat, key):
+    return f'#kb-props-{cat} .kb-prop-row[data-key="{key}"]'
+
+
+def add_prop(page, cat, name):
+    page.select_option(f"#kb-props-{cat} .kb-add-prop", value=name)
+
+
+def ensure_prop(page, cat, name):
+    if not page.locator(row(cat, name)).count():
+        add_prop(page, cat, name)
+
+
+def lines(page, cat):
+    return editor_text(page, cat).split("\n")
+
+
+def test_add_value_from_form(add_page):
+    open_cat(add_page, "note")
+    ensure_prop(add_page, "note", "Tag")
+    add_page.fill(row("note", "Tag") + " .kb-value-input", "sap")
+    add_page.press(row("note", "Tag") + " .kb-value-input", "Enter")
+    assert "Tag: sap" in lines(add_page, "note")
+    assert add_page.locator(row("note", "Tag") + ' .kb-chip[data-value="sap"]').count() == 1
+
+
+def test_remove_chip_changes_text(add_page):
+    open_cat(add_page, "note")
+    set_doc(add_page, "note", "---\nCategory: Note\nTag: sap, linux\n---\n\n# T\n")
+    add_page.evaluate("c => KB4ITEditor.renderPane(c)", "note")
+    add_page.click(row("note", "Tag") + ' .kb-chip[data-value="linux"] .kb-chip-remove')
+    assert "Tag: sap" in lines(add_page, "note")
+    assert "Tag: sap, linux" not in lines(add_page, "note")
+    add_page.click("#kb-editor-note .cm-content")
+    add_page.keyboard.press("Control+z")
+    assert "Tag: sap, linux" in lines(add_page, "note")
+
+
+def test_remove_property(add_page):
+    open_cat(add_page, "note")
+    set_doc(add_page, "note", "---\nCategory: Note\nTag: sap\n---\n\n# T\n")
+    add_page.evaluate("c => KB4ITEditor.renderPane(c)", "note")
+    add_page.click(row("note", "Tag") + " .kb-prop-remove")
+    assert editor_text(add_page, "note") == "---\nCategory: Note\n---\n\n# T\n"
+
+
+def test_comma_refused(add_page):
+    open_cat(add_page, "note")
+    ensure_prop(add_page, "note", "Tag")
+    box = row("note", "Tag") + " .kb-value-input"
+    add_page.fill(box, "a,b")
+    msg = "A value cannot contain a comma: KB4IT splits values on commas."
+    assert add_page.inner_text(row("note", "Tag") + " .kb-prop-msg") == msg
+    add_page.press(box, "Enter")
+    assert add_page.locator(row("note", "Tag") + " .kb-chip").count() == 0
+    assert "Tag: a,b" not in editor_text(add_page, "note")
+
+
+def test_new_property_name_checked(add_page):
+    open_cat(add_page, "note")
+    add_prop(add_page, "note", "__new__")
+    add_page.fill("#kb-props-note .kb-new-prop-name", "???")
+    add_page.click("#kb-props-note .kb-new-prop-add")
+    assert "???" not in editor_text(add_page, "note")
+    add_page.fill("#kb-props-note .kb-new-prop-name", "Owner")
+    add_page.click("#kb-props-note .kb-new-prop-add")
+    text = editor_text(add_page, "note")
+    assert "Owner:\n---\n" in text
+    assert add_page.locator(row("note", "Owner")).count() == 1
+
+
+def test_complex_property_read_only(add_page):
+    open_cat(add_page, "note")
+    set_doc(add_page, "note", "---\nTags:\n  - a\n---\n\n# T\n")
+    add_page.evaluate("c => KB4ITEditor.renderPane(c)", "note")
+    cell = row("note", "Tags") + " .kb-prop-complex"
+    assert "Edit this property in the text" in add_page.inner_text(cell)
+    assert add_page.locator(row("note", "Tags") + " input").count() == 0
+
+
+def test_cloud_click_adds_value(add_page):
+    open_cat(add_page, "note")
+    add_page.click(row("note", "Category") + " .kb-cloud-toggle")
+    add_page.click(row("note", "Category") + ' .kb-wcloud-word[data-value="Procedure"]')
+    assert "Category: Note, Procedure" in lines(add_page, "note")
+
+
+def test_hostile_values_stay_text(add_page):
+    open_cat(add_page, "note")
+    ensure_prop(add_page, "note", "Tag")
+    box = row("note", "Tag") + " .kb-value-input"
+    add_page.fill(box, "x<")
+    add_page.wait_for_selector(row("note", "Tag") + ' .kb-suggest-item[data-value="x<b>y</b>"]')
+    assert "x<b>y</b>" in add_page.inner_text(row("note", "Tag") + " .kb-suggest")
+    add_page.click(row("note", "Tag") + " .kb-cloud-toggle")
+    assert "x<b>y</b>" in add_page.inner_text(row("note", "Tag") + " .kb-wcloud")
+    add_page.press(box, "ArrowDown")
+    add_page.press(box, "Enter")
+    assert add_page.locator(row("note", "Tag") + ' .kb-chip[data-value="x<b>y</b>"]').count() == 1
+    assert "x<b>y</b>" in add_page.inner_text(row("note", "Tag") + " .kb-chips")
+    assert add_page.locator("#modal-add-note b").count() == 0
+
+
+def test_undo_after_form_edit(add_page):
+    open_cat(add_page, "note")
+    skeleton = editor_text(add_page, "note")
+    add_prop(add_page, "note", "__new__")
+    add_page.fill("#kb-props-note .kb-new-prop-name", "Owner")
+    add_page.click("#kb-props-note .kb-new-prop-add")
+    assert editor_text(add_page, "note") != skeleton
+    add_page.click("#kb-editor-note .cm-content")
+    add_page.keyboard.press("Control+z")
+    assert editor_text(add_page, "note") == skeleton

@@ -78,15 +78,67 @@
  * drawSelection paints it behind the text; the native one keeps the token colours. */
 .kb4it-cm .cm-line::selection, .kb4it-cm .cm-line ::selection { color: currentColor; }
 
-/* Right pane: property counts and empty word clouds. */
-.kb-accord-count {
-    font-size: 0.7rem;
-    font-weight: 400;
-    color: #ccc;
-    margin-left: 5px;
-}
+/* Right pane: Properties (ED-07). */
 .kb-wcloud-empty {
     font-size: 0.75rem;
     color: #bbb;
     font-style: italic;
 }
+.kb-prop-row { padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; }
+.kb-prop-head { display: flex; align-items: baseline; gap: 8px; }
+.kb-prop-name { flex: 1; font-size: 0.82rem; font-weight: 600; color: #555; }
+.kb-prop-tools { display: flex; gap: 10px; }
+.kb-prop-tools .uk-button { font-size: 0.72rem; text-transform: none; }
+.kb-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.kb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 2px 0 8px;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: #333;
+    background: #eef3fa;
+    border: 1px solid #d5e0f0;
+    border-radius: 10px;
+}
+.kb-chip-remove {
+    border: 0;
+    background: none;
+    padding: 0 5px;
+    cursor: pointer;
+    color: #777;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+.kb-chip-remove:hover { color: #cf222e; }
+.kb-value-wrap { position: relative; }
+.kb-suggest {
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: 0;
+    margin: 2px 0 0;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.kb-suggest[hidden] { display: none; }
+.kb-suggest-item { display: flex; justify-content: space-between; padding: 3px 8px; font-size: 0.8rem; cursor: pointer; }
+.kb-suggest-item:hover, .kb-suggest-active { background: #eef3fa; }
+.kb-suggest-count { color: #999; margin-left: 8px; }
+.kb-prop-msg { min-height: 0; font-size: 0.75rem; color: #cf222e; }
+.kb-prop-msg:empty { display: none; }
+.kb-prop-complex { font-size: 0.78rem; font-style: italic; color: #888; margin-top: 4px; }
+.kb-prop-error { padding: 12px 0; font-size: 0.82rem; color: #cf222e; }
+.kb-cloud-host[hidden] { display: none; }
+.kb-cloud-host { margin-top: 6px; }
+.kb-prop-row .kb-wcloud-word { cursor: pointer; }
+.kb-prop-row .kb-wcloud-word:hover { text-decoration: underline; }
+.kb-add-wrap { padding-top: 12px; }
+.kb-new-prop { display: flex; gap: 6px; margin-top: 6px; }
+.kb-new-prop[hidden] { display: none; }

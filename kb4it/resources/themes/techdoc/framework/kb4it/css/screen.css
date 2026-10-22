@@ -1181,7 +1181,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     border-right: 1px solid #ddd;
 }
 
-/* ── Right pane: accordion ── */
+/* ── Right pane: properties ── */
 .kb-pane-right {
     flex: 2;
     display: flex;
@@ -1189,7 +1189,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     min-width: 0;
     background: #fff;
 }
-.kb-accord-wrap {
+.kb-props-wrap {
     flex: 1;
     overflow-y: auto;
     padding: 8px 16px 16px;
@@ -1207,18 +1207,6 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     background: #f8f8f8;
     border-bottom: 1px solid #ebebeb;
 }
-
-/* ── Accordion tuning for right pane ── */
-.kb-accord-wrap .uk-accordion { margin: 0; }
-.kb-accord-wrap .uk-accordion > li { border-bottom: 1px solid #f0f0f0; }
-.kb-accord-wrap .uk-accordion-title {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #555;
-    padding: 7px 0 6px;
-    line-height: 1.3;
-}
-.kb-accord-wrap .uk-accordion-content { padding-top: 2px; padding-bottom: 8px; }
 
 /* ── Word cloud (no links) ── */
 .kb-wcloud {
