@@ -78,15 +78,34 @@
  * drawSelection paints it behind the text; the native one keeps the token colours. */
 .kb4it-cm .cm-line::selection, .kb4it-cm .cm-line ::selection { color: currentColor; }
 
-/* Right pane: Properties (ED-07). */
+/* Right pane: Properties (ED-07). Colours are custom properties; the dark set follows the page background. */
+.kb-pane-right {
+    --kb-p-faint: #bbb; --kb-p-name: #555; --kb-p-line: #f0f0f0; --kb-p-fg: #333;
+    --kb-p-chip: #eef3fa; --kb-p-chip-line: #d5e0f0; --kb-p-muted: #777; --kb-p-error: #cf222e;
+    --kb-p-bg: #fff; --kb-p-border: #ccc; --kb-p-count: #999; --kb-p-note: #888;
+    --kb-p-shadow: rgba(0, 0, 0, 0.12);
+}
+.kb-pane-right.kb-props-dark {
+    --kb-p-faint: #777; --kb-p-name: #c9d1d9; --kb-p-line: #333; --kb-p-fg: #d4d4d4;
+    --kb-p-chip: #264f78; --kb-p-chip-line: #3a6ea5; --kb-p-muted: #a0a0a0; --kb-p-error: #f48771;
+    --kb-p-bg: #1e1e1e; --kb-p-border: #444; --kb-p-count: #858585; --kb-p-note: #a0a0a0;
+    --kb-p-shadow: rgba(0, 0, 0, 0.5);
+    background: var(--kb-p-bg);
+    color: var(--kb-p-fg);
+}
+.kb-pane-right.kb-props-dark .kb-pane-label { background: #252526; border-bottom-color: #333; }
+.kb-pane-right.kb-props-dark .kb-wcloud-word { color: hsl(210, 14%, calc(45% + var(--kb-weight) * 35%)); }
+.kb-pane-right.kb-props-dark .uk-input, .kb-pane-right.kb-props-dark .uk-select {
+    background: var(--kb-p-bg); color: var(--kb-p-fg); border-color: var(--kb-p-border);
+}
 .kb-wcloud-empty {
     font-size: 0.75rem;
-    color: #bbb;
+    color: var(--kb-p-faint);
     font-style: italic;
 }
-.kb-prop-row { padding: 8px 0 10px; border-bottom: 1px solid #f0f0f0; }
+.kb-prop-row { padding: 8px 0 10px; border-bottom: 1px solid var(--kb-p-line); }
 .kb-prop-head { display: flex; align-items: baseline; gap: 8px; }
-.kb-prop-name { flex: 1; font-size: 0.82rem; font-weight: 600; color: #555; }
+.kb-prop-name { flex: 1; font-size: 0.82rem; font-weight: 600; color: var(--kb-p-name); }
 .kb-prop-tools { display: flex; gap: 10px; }
 .kb-prop-tools .uk-button { font-size: 0.72rem; text-transform: none; }
 .kb-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
@@ -97,9 +116,9 @@
     padding: 0 2px 0 8px;
     font-size: 0.78rem;
     line-height: 1.7;
-    color: #333;
-    background: #eef3fa;
-    border: 1px solid #d5e0f0;
+    color: var(--kb-p-fg);
+    background: var(--kb-p-chip);
+    border: 1px solid var(--kb-p-chip-line);
     border-radius: 10px;
 }
 .kb-chip-remove {
@@ -107,11 +126,11 @@
     background: none;
     padding: 0 5px;
     cursor: pointer;
-    color: #777;
+    color: var(--kb-p-muted);
     font-size: 0.9rem;
     line-height: 1.4;
 }
-.kb-chip-remove:hover { color: #cf222e; }
+.kb-chip-remove:hover { color: var(--kb-p-error); }
 .kb-value-wrap { position: relative; }
 .kb-suggest {
     position: absolute;
@@ -123,18 +142,18 @@
     max-height: 200px;
     overflow-y: auto;
     list-style: none;
-    background: #fff;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    background: var(--kb-p-bg);
+    border: 1px solid var(--kb-p-border);
+    box-shadow: 0 2px 6px var(--kb-p-shadow);
 }
 .kb-suggest[hidden] { display: none; }
 .kb-suggest-item { display: flex; justify-content: space-between; padding: 3px 8px; font-size: 0.8rem; cursor: pointer; }
-.kb-suggest-item:hover, .kb-suggest-active { background: #eef3fa; }
-.kb-suggest-count { color: #999; margin-left: 8px; }
-.kb-prop-msg { min-height: 0; font-size: 0.75rem; color: #cf222e; }
+.kb-suggest-item:hover, .kb-suggest-active { background: var(--kb-p-chip); }
+.kb-suggest-count { color: var(--kb-p-count); margin-left: 8px; }
+.kb-prop-msg { min-height: 0; font-size: 0.75rem; color: var(--kb-p-error); }
 .kb-prop-msg:empty { display: none; }
-.kb-prop-complex { font-size: 0.78rem; font-style: italic; color: #888; margin-top: 4px; }
-.kb-prop-error { padding: 12px 0; font-size: 0.82rem; color: #cf222e; }
+.kb-prop-complex { font-size: 0.78rem; font-style: italic; color: var(--kb-p-note); margin-top: 4px; }
+.kb-prop-error { padding: 12px 0; font-size: 0.82rem; color: var(--kb-p-error); }
 .kb-cloud-host[hidden] { display: none; }
 .kb-cloud-host { margin-top: 6px; }
 .kb-prop-row .kb-wcloud-word { cursor: pointer; }

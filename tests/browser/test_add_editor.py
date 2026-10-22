@@ -347,3 +347,51 @@ def test_undo_after_form_edit(add_page):
     add_page.click("#kb-editor-note .cm-content")
     add_page.keyboard.press("Control+z")
     assert editor_text(add_page, "note") == skeleton
+
+
+DUP = "---\nCategory: Note\nTag: a\nTag: b\n---\n\n# T\n"
+
+
+def load_dup(page):
+    open_cat(page, "note")
+    set_doc(page, "note", DUP)
+    page.evaluate("c => KB4ITEditor.renderPane(c)", "note")
+
+
+def test_duplicate_key_add_value_edits_last(add_page):
+    load_dup(add_page)
+    add_page.fill(row("note", "Tag") + " .kb-value-input", "c")
+    add_page.press(row("note", "Tag") + " .kb-value-input", "Enter")
+    assert editor_text(add_page, "note") == DUP.replace("Tag: b", "Tag: b, c")
+    assert add_page.locator(row("note", "Tag") + ' .kb-chip[data-value="c"]').count() == 1
+
+
+def test_duplicate_key_remove_chip_edits_last(add_page):
+    load_dup(add_page)
+    add_page.click(row("note", "Tag") + ' .kb-chip[data-value="b"] .kb-chip-remove')
+    assert editor_text(add_page, "note") == DUP.replace("Tag: b", "Tag:")
+    assert add_page.locator(row("note", "Tag") + " .kb-chip").count() == 0
+
+
+def test_duplicate_key_remove_property_edits_last(add_page):
+    load_dup(add_page)
+    add_page.click(row("note", "Tag") + " .kb-prop-remove")
+    assert editor_text(add_page, "note") == DUP.replace("Tag: b\n", "")
+    assert add_page.locator(row("note", "Tag") + ' .kb-chip[data-value="a"]').count() == 1
+
+
+def test_escape_in_value_input_closes_modal_only_without_list(add_page):
+    open_cat(add_page, "note")
+    box = row("note", "Tag") + " .kb-value-input"
+    add_page.focus(box)
+    add_page.wait_for_selector(row("note", "Tag") + " .kb-suggest-item")
+    add_page.press(box, "Escape")
+    assert add_page.evaluate("document.getElementById('modal-add-note').classList.contains('uk-open')")
+    add_page.press(box, "Escape")
+    add_page.wait_for_selector("#modal-add-note", state="hidden")
+
+
+def test_pane_follows_dark_page(add_page):
+    add_page.evaluate("document.body.style.background = '#111'")
+    open_cat(add_page, "note")
+    assert add_page.evaluate("document.querySelector('#modal-add-note .kb-pane-right').classList.contains('kb-props-dark')")

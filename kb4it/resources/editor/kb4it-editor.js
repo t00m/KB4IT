@@ -355,7 +355,7 @@
         event.preventDefault();
         var chosen = active >= 0 && !list.hidden ? shown[active].getAttribute("data-value") : input.value;
         addValue(cat, prop, chosen, message);
-      } else if (event.key === "Escape") {
+      } else if (event.key === "Escape" && !list.hidden) {
         event.stopPropagation();
         list.hidden = true;
       }
@@ -461,7 +461,6 @@
     ok.addEventListener("click", create);
     name.addEventListener("keydown", function (event) {
       if (event.key === "Enter") { event.preventDefault(); create(); }
-      if (event.key === "Escape") { event.stopPropagation(); }
     });
     select.addEventListener("change", function () {
       message.textContent = "";
@@ -488,6 +487,8 @@
     var view = E.views[cat];
     if (!container || !view) { return; }
     clear(container);
+    var pane = container.closest(".kb-pane-right");
+    if (pane) { pane.classList.toggle("kb-props-dark", pageIsDark()); }
     var parsed = KB4ITFrontmatter.parse(view.state.doc.toString());
     if (!parsed.ok) {
       container.appendChild(el("div", "kb-prop-error", "Fix the frontmatter in the text to edit the properties here."));

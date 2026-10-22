@@ -192,6 +192,14 @@ def test_set_values_remove():
     assert text[:change["from"]] + change["insert"] + text[change["to"]:] == doc("A: 1", "B: 2")
 
 
+def test_set_values_targets_the_last_duplicate():
+    text = doc("Tag: a", "Tag: b")
+    change = call("setValues", text, "Tag", ["b", "c"])
+    assert text[:change["from"]] + change["insert"] + text[change["to"]:] == doc("Tag: a", "Tag: b, c")
+    change = call("setValues", text, "Tag", None)
+    assert text[:change["from"]] + change["insert"] + text[change["to"]:] == doc("Tag: a")
+
+
 def test_set_values_keeps_crlf():
     text = doc("A: 1", "Key: a").replace("\n", "\r\n")
     change = call("setValues", text, "Key", ["b"])

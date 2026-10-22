@@ -252,7 +252,7 @@ var KB4ITFrontmatter = (function () {
     if (!result.ok) { return { from: 0, to: 0, insert: "" }; }
     var prop = null;
     for (var i = 0; i < result.props.length; i++) {
-      if (result.props[i].key === key) { prop = result.props[i]; break; }
+      if (result.props[i].key === key) { prop = result.props[i]; }  // the last one wins, as in PyYAML
     }
     var eol = text.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
     if (prop === null) {
