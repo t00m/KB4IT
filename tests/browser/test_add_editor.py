@@ -395,3 +395,59 @@ def test_pane_follows_dark_page(add_page):
     add_page.evaluate("document.body.style.background = '#111'")
     open_cat(add_page, "note")
     assert add_page.evaluate("document.querySelector('#modal-add-note .kb-pane-right').classList.contains('kb-props-dark')")
+
+
+# ---- ED-08: text to form ----
+
+def test_text_edit_updates_form(add_page):
+    open_cat(add_page, "note")
+    set_doc(add_page, "note", "---\nCategory: Note\nTag: sap\n---\n\n# T\n", anchor=len("---\nCategory: Note\nTag: sap"))
+    add_page.click("#kb-editor-note .cm-content")
+    add_page.keyboard.press("Control+Home")
+    add_page.keyboard.press("ArrowDown")
+    add_page.keyboard.press("ArrowDown")
+    add_page.keyboard.press("End")
+    add_page.keyboard.type(", linux")
+    add_page.wait_for_timeout(400)
+    chips = add_page.locator(row("note", "Tag") + " .kb-chip")
+    assert chips.count() == 2
+    assert add_page.locator(row("note", "Tag") + ' .kb-chip[data-value="linux"]').count() == 1
+
+
+def test_form_read_only_on_error(add_page):
+    open_cat(add_page, "note")
+    text = editor_text(add_page, "note")
+    broken = text.replace("\n---\n", "\n--\n", 1)
+    assert broken != text
+    set_doc(add_page, "note", broken)
+    add_page.wait_for_timeout(400)
+    assert add_page.locator("#kb-props-note .kb-prop-error").count() == 1
+    assert add_page.locator("#kb-props-note .kb-prop-error").get_attribute("data-reason") == "missing_frontmatter_close"
+    controls = add_page.locator("#kb-props-note input, #kb-props-note button, #kb-props-note select")
+    assert controls.count() > 0
+    assert controls.evaluate_all("els => els.every(e => e.disabled)")
+    set_doc(add_page, "note", text)
+    add_page.wait_for_timeout(400)
+    assert add_page.locator("#kb-props-note .kb-prop-error").count() == 0
+    assert add_page.locator("#kb-props-note input:disabled, #kb-props-note button:disabled").count() == 0
+
+
+def test_pending_sync_keeps_typed_value(add_page):
+    open_cat(add_page, "note")
+    box = row("note", "Tag") + " .kb-value-input"
+    type_at_end(add_page, "note", "x")
+    add_page.focus(box)
+    add_page.keyboard.type("abc")
+    add_page.wait_for_timeout(500)
+    assert add_page.input_value(box) == "abc"
+    assert add_page.evaluate("document.activeElement.classList.contains('kb-value-input')")
+
+
+def test_form_action_is_not_redrawn_again(add_page):
+    open_cat(add_page, "note")
+    add_prop(add_page, "note", "__new__")
+    add_page.fill("#kb-props-note .kb-new-prop-name", "Owner")
+    add_page.click("#kb-props-note .kb-new-prop-add")
+    add_page.fill(row("note", "Owner") + " .kb-value-input", "zed")
+    add_page.wait_for_timeout(500)
+    assert add_page.input_value(row("note", "Owner") + " .kb-value-input") == "zed"

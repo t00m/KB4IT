@@ -179,6 +179,19 @@
     });
   }
 
+  // ED-08: 300 ms after the last edit of the text the pane is drawn again. Changes made by the form
+  // (userEvent input.form) were drawn already by their action.
+  var syncTimer = {};
+  function syncPane(cat, update) {
+    if (!update.docChanged) { return; }
+    var own = update.transactions.length > 0 && update.transactions.every(function (tr) {
+      return tr.isUserEvent("input.form");
+    });
+    if (own) { return; }
+    clearTimeout(syncTimer[cat]);
+    syncTimer[cat] = setTimeout(function () { E.renderPane(cat); }, 300);
+  }
+
   // Every extension of a category's editor. Later features append theirs here.
   E.extensions = function (cat) {
     if (!look[cat]) { look[cat] = new cm.Compartment(); }
@@ -197,7 +210,8 @@
       cm.keymap.of([{ key: "Tab", run: insertTab }, { key: "Shift-Tab", run: cm.indentLess }]),
       cm.keymap.of([].concat(cm.closeBracketsKeymap, cm.defaultKeymap, cm.searchKeymap, cm.historyKeymap)),
       cm.yamlFrontmatter({ content: cm.markdown() }),
-      look[cat].of(lookFor(pageIsDark()))
+      look[cat].of(lookFor(pageIsDark())),
+      cm.EditorView.updateListener.of(function (update) { syncPane(cat, update); })
     ];
   };
 
@@ -481,35 +495,88 @@
     return wrap;
   }
 
-  // Draws the Properties pane from the frontmatter of the editor text.
+  var FM_ERRORS = ["missing_frontmatter", "missing_frontmatter_close", "yaml_error", "invalid_frontmatter"];
+  var FAILED = "Fix the frontmatter in the text to edit the properties here.";
+
+  // The first frontmatter error of the text, or null.
+  function frontmatterError(cat) {
+    var found = E.diagnostics(cat).filter(function (d) { return FM_ERRORS.indexOf(d.reason) !== -1; });
+    return found.length ? found[0] : null;
+  }
+
+  // What the user is typing in the pane, so a redraw can give it back: the value input of a row
+  // or the name of a new property.
+  function typingState(container) {
+    var a = document.activeElement;
+    if (!a || !container.contains(a)) { return null; }
+    var row = a.closest(".kb-prop-row");
+    if (row && a.classList.contains("kb-value-input")) {
+      return { kind: "value", key: row.getAttribute("data-key"), text: a.value, at: a.selectionStart };
+    }
+    if (a.classList.contains("kb-new-prop-name")) {
+      return { kind: "name", text: a.value, at: a.selectionStart };
+    }
+    return null;
+  }
+
+  function restoreTyping(container, st) {
+    var input = null;
+    if (st.kind === "value") {
+      var rowNode = Array.prototype.find.call(container.querySelectorAll(".kb-prop-row"), function (n) {
+        return n.getAttribute("data-key") === st.key;
+      });
+      input = rowNode && rowNode.querySelector(".kb-value-input");
+    } else {
+      input = container.querySelector(".kb-new-prop-name");
+      var select = container.querySelector(".kb-add-prop");
+      var box = container.querySelector(".kb-new-prop");
+      if (input && select && box) { select.value = NEW_PROP; box.hidden = false; }
+    }
+    if (!input || input.disabled) { return; }
+    input.value = st.text;
+    input.focus();
+    try { input.setSelectionRange(st.at, st.at); } catch (e) { /* not a text input */ }
+    if (st.kind === "value") { input.dispatchEvent(new Event("input")); }
+  }
+
+  // Draws the Properties pane from the frontmatter of the editor text. While the frontmatter has
+  // an error the pane shows it and every input and button is disabled (ED-08).
   E.renderPane = function (cat) {
     var container = document.getElementById("kb-props-" + cat);
     var view = E.views[cat];
     if (!container || !view) { return; }
+    var typing = typingState(container);
     clear(container);
     var pane = container.closest(".kb-pane-right");
     if (pane) { pane.classList.toggle("kb-props-dark", pageIsDark()); }
     var parsed = KB4ITFrontmatter.parse(view.state.doc.toString());
-    if (!parsed.ok) {
-      container.appendChild(el("div", "kb-prop-error", "Fix the frontmatter in the text to edit the properties here."));
-      return;
+    var failure = frontmatterError(cat);
+    if (failure || !parsed.ok) {
+      var box = el("div", "kb-prop-error", failure ? failure.message : FAILED);
+      box.setAttribute("data-reason", failure ? failure.reason : "parse_error");
+      box.setAttribute("role", "alert");
+      container.appendChild(box);
     }
     var present = {};
-    var rows = rowsOf(parsed);
-    rows.forEach(function (p) {
-      present[p.key] = true;
-      container.appendChild(buildRow(cat, p));
-    });
+    if (parsed.ok) {
+      rowsOf(parsed).forEach(function (p) {
+        present[p.key] = true;
+        container.appendChild(buildRow(cat, p));
+      });
+    }
     container.appendChild(buildAdder(cat, present));
+    if (failure || !parsed.ok) {
+      Array.prototype.forEach.call(container.querySelectorAll("input, button, select"), function (n) {
+        n.setAttribute("disabled", "");
+      });
+      return;
+    }
     var key = focusKey[cat];
     focusKey[cat] = null;
     if (key) {
-      var rowNode = Array.prototype.find.call(container.querySelectorAll(".kb-prop-row"), function (n) {
-        return n.getAttribute("data-key") === key;
-      });
-      var input = rowNode && rowNode.querySelector(".kb-value-input");
-      if (input) { input.focus(); }
+      typing = { kind: "value", key: key, text: "", at: 0 };
     }
+    if (typing) { restoreTyping(container, typing); }
   };
 
   // Creates the editor on the first open; on a later open, starts again unless the
