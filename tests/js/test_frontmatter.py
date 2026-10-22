@@ -95,12 +95,22 @@ def test_crlf_input():
     [
         ("# Title\n", "missing_frontmatter"),
         ("---\nKey: a\n", "missing_frontmatter_close"),
-        ("﻿---\nKey: a\n---\n", "missing_frontmatter"),
     ],
 )
 def test_bounds_follow_the_build(text, reason):
     result = call("parse", text)
     assert result["ok"] is False and result["reason"] == reason and result["props"] == []
+
+
+def test_bom_is_skipped_like_the_build():
+    text = "\ufeff---\nKey: a\n---\n\n# T\n"
+    result = call("parse", text)
+    assert result["ok"] is True and result["props"][0]["values"] == ["a"]
+    prop = result["props"][0]
+    assert text[prop["from"]:prop["to"]] == "Key: a"
+    change = call("setValues", text, "Key", ["b"])
+    assert text[:change["from"]] + change["insert"] + text[change["to"]:] == text.replace("Key: a", "Key: b")
+    assert call("bounds", "\ufeff# T")["open"] is False
 
 
 def test_bounds_offsets():
@@ -203,3 +213,58 @@ def test_file_name_fallback():
     assert call("fileName", "---\nA: b\n---\n\n# Disk full on SAP\n", "note") == "disk-full-on-sap.md"
     assert call("fileName", "---\nA: b\n---\n\nno heading\n", "note") == "note.md"
     assert call("fileName", "# In a fence-less doc\n", "note") == "in-a-fence-less-doc.md"
+
+
+def _build_values(raw):
+    """What the build makes of `K: <raw>`, or None when the property must be complex."""
+    import yaml
+
+    value = yaml.safe_load("K: " + raw)["K"]
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(i).strip() for i in value if i is not None]
+    if isinstance(value, str) and "," in value:
+        return [i.strip() for i in value.split(",")]
+    return [str(value).strip()]
+
+
+SIMPLE_SCALARS = [
+    "null", "Null", "NULL", "~", "true", "True", "TRUE", "false", "False", "yes", "Yes", "YES", "no", "No", "NO",
+    "on", "On", "ON", "off", "Off", "OFF", "0", "7", "-3", "42", "2026-10-22", "e5", "word", "[null, a]",
+    "[true, No, x]", "[~, 5]", "a, b", "1, 2", "[1, 2]",
+]
+NUMERIC_SCALARS = ["1.50", "1.5", "010", "0x1F", "1e3", ".5", "+1", "1_000", "-0", "0o7", "[1.5, a]", "1:30",
+                   ".inf", "2026-10-22 10:00:00"]
+
+
+@pytest.mark.parametrize("raw", SIMPLE_SCALARS)
+def test_plain_scalars_read_like_the_build(raw):
+    prop = call("parse", doc("K: " + raw))["props"][0]
+    assert prop["complex"] is False
+    assert prop["values"] == _build_values(raw)
+
+
+@pytest.mark.parametrize("raw", NUMERIC_SCALARS)
+def test_non_canonical_numbers_are_complex(raw):
+    prop = call("parse", doc("K: " + raw))["props"][0]
+    assert prop["complex"] is True and prop["values"] == []
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ('"caf\u00e9"', ["caf\u00e9"]),
+    ('"caf\\u00e9"', ["caf\u00e9"]),
+    ('"a\\u0041"', ["aA"]),
+    ('"a\\"b"', ['a"b']),
+    ('"a\\\\b"', ["a\\b"]),
+    ('"a\\x41"', None),
+    ('"a\\/b"', None),
+    ('"a\\u00zz"', None),
+])
+def test_double_quoted_escapes(raw, expected):
+    prop = call("parse", doc("K: " + raw))["props"][0]
+    if expected is None:
+        assert prop["complex"] is True and prop["values"] == []
+    else:
+        assert prop["complex"] is False and prop["values"] == expected
+        assert prop["values"] == _build_values(raw)

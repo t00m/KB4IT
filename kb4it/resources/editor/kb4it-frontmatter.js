@@ -14,14 +14,16 @@ var KB4ITFrontmatter = (function () {
   // Same rule as the build (documents.get_markdown_attributes): the text starts with
   // "---" and the frontmatter closes at the first "\n---" after offset 3.
   function bounds(text) {
-    if (text.indexOf("---") !== 0) {
+    // The build reads sources as utf-8-sig, so a leading BOM is skipped; offsets stay in text.
+    var off = text.charCodeAt(0) === 0xFEFF ? 1 : 0;
+    if (text.indexOf("---", off) !== off) {
       return { open: false, close: null, start: 0, end: 0 };
     }
-    var close = text.indexOf("\n---", 3);
+    var close = text.indexOf("\n---", off + 3);
     if (close < 0) {
       return { open: true, close: null, start: 0, end: 0 };
     }
-    var nl = text.indexOf("\n", 3);
+    var nl = text.indexOf("\n", off + 3);
     return { open: true, close: close, start: nl + 1, end: close + 1 };
   }
 
@@ -55,7 +57,13 @@ var KB4ITFrontmatter = (function () {
       if (q === '"' && c === "\\") {
         if (i + 1 >= inner.length) { return null; }
         var n = inner.charAt(++i);
-        out += n === "n" ? "\n" : n === "t" ? "\t" : n;
+        if (n === "n") { out += "\n"; }
+        else if (n === "t") { out += "\t"; }
+        else if (n === "\\" || n === '"') { out += n; }
+        else if (n === "u" && /^[0-9a-fA-F]{4}$/.test(inner.substr(i + 1, 4))) {
+          out += String.fromCharCode(parseInt(inner.substr(i + 1, 4), 16));
+          i += 4;
+        } else { return null; }
       } else if (q === "'" && c === "'") {
         if (inner.charAt(i + 1) !== "'") { return null; }
         out += "'";
@@ -98,12 +106,41 @@ var KB4ITFrontmatter = (function () {
     return items;
   }
 
+  var NULLS = ["null", "Null", "NULL", "~"];
+  var TRUES = ["true", "True", "TRUE", "yes", "Yes", "YES", "on", "On", "ON"];
+  var FALSES = ["false", "False", "FALSE", "no", "No", "NO", "off", "Off", "OFF"];
+  var INT_RE = /^(0|-?[1-9][0-9]*)$/;
+  var DATE_RE = /^\d{4}-\d\d?-\d\d?$/;
+  var NUMERIC_RE = [
+    /^[-+]?(0[xob][0-9a-fA-F_]+|([0-9_]+\.?[0-9_]*|\.[0-9_]+)([eE][-+]?[0-9]+)?)$/,
+    /^[-+]?[0-9][0-9_]*(:[0-5]?[0-9])+(\.[0-9_]*)?$/,
+    /^[-+]?\.(inf|Inf|INF)$|^\.(nan|NaN|NAN)$/,
+    /^\d{4}-\d\d?-\d\d?([Tt]|[ \t]+)\d\d?:\d\d/
+  ];
+
+  // How yaml.safe_load reads a plain scalar, as the build then sees it: {v: text},
+  // {skip: true} for null, or null when the text is a number or timestamp that the
+  // build would turn into something else (the property is then complex).
+  function resolve(s) {
+    if (s === "" || NULLS.indexOf(s) >= 0) { return { skip: true }; }
+    if (TRUES.indexOf(s) >= 0) { return { v: "True" }; }
+    if (FALSES.indexOf(s) >= 0) { return { v: "False" }; }
+    if (INT_RE.test(s) || DATE_RE.test(s)) { return { v: s }; }
+    for (var i = 0; i < NUMERIC_RE.length; i++) {
+      if (NUMERIC_RE[i].test(s) && /[0-9.]/.test(s)) { return null; }
+    }
+    return { v: s };
+  }
+
   function scalar(raw) {
-    // One list item or scalar: a quoted string is unquoted, anything else is trimmed text.
+    // One list item or scalar: {v}, {skip}, or null when the form is not in the subset.
     var s = raw.trim();
-    if (s.charAt(0) === '"' || s.charAt(0) === "'") { return unquote(s); }
+    if (s.charAt(0) === '"' || s.charAt(0) === "'") {
+      var u = unquote(s);
+      return u === null ? null : { v: u, quoted: true };
+    }
     if (/\s#/.test(s) || INDICATORS.indexOf(s.charAt(0)) >= 0) { return null; }
-    return s;
+    return resolve(s);
   }
 
   // Values of the text after "Key:", or null when the form is not in the subset.
@@ -119,21 +156,16 @@ var KB4ITFrontmatter = (function () {
       if (items === null) { return null; }
       var vals = [];
       for (var i = 0; i < items.length; i++) {
-        var v = scalar(items[i]);
-        if (v === null) { return null; }
-        vals.push(v);
+        var r = scalar(items[i]);
+        if (r === null) { return null; }
+        if (!r.skip) { vals.push(r.v); }
       }
       return vals;
     }
-    var text;
-    if (first === '"' || first === "'") {
-      text = unquote(s);
-    } else {
-      text = scalar(s);
-    }
-    if (text === null) { return null; }
-    if (first !== '"' && first !== "'" && text === "") { return []; }
-    return text.split(",").map(function (p) { return p.trim(); });
+    var one = scalar(s);
+    if (one === null) { return null; }
+    if (one.skip) { return []; }
+    return one.v.split(",").map(function (p) { return p.trim(); });
   }
 
   function parse(text) {
@@ -176,6 +208,7 @@ var KB4ITFrontmatter = (function () {
     return { ok: true, reason: null, props: props };
   }
 
+  // A single value that holds a comma is written unquoted: the form refuses commas (ED-07).
   function quote(value) {
     var v = String(value);
     var needs = v === "" ||
@@ -240,7 +273,7 @@ var KB4ITFrontmatter = (function () {
       .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
 
-  // Python: documents.first_heading. Lines split as str.splitlines does.
+  // Python: documents.first_heading. The returned line is relative to the body passed in. Lines split as str.splitlines does.
   function firstHeading(body) {
     var lines = body.split(/\r\n|[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]/);
     if (lines.length && lines[lines.length - 1] === "") { lines.pop(); }
