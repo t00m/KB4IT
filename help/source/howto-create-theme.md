@@ -37,6 +37,7 @@ mytheme/
 ├── theme.json        # id, name, description, KB4IT it needs
 ├── logic/theme.py    # class Theme: builds the pages
 ├── templates/*.tpl   # Mako templates
+│   └── skeletons/    # optional: skeletons of the Add page
 ├── framework/        # CSS, JavaScript, fonts, images
 └── apps/default/     # optional sample knowledge base for kb4it create
 ```
@@ -213,7 +214,32 @@ The theme version is not in `theme.json`. KB4IT gives every theme its own versio
 | `metadata_pages` | `false` skips the pages per property and per value |
 | `deploy_dirs` | Only these folders of the theme are copied to the website, for example `["framework"]` |
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |
+| `editor` | `true` or `false`: whether the Add page is on when `repo.json` has no `editor` key. Without it, the page is off. See [Add the editor page](#editor) |
 | `template_base` | Name of a set of templates bundled with KB4IT that the theme builds on, such as `"uikit"`, the UIkit layout techdoc and blog share. A template is looked up in the repository's overrides, then the theme, then its base, then KB4IT's shared templates, so the theme only holds the ones it changes |
+
+## Add the editor page {#editor}
+
+The [Add page](howto-write-document-editor.md) is built by KB4IT. `Builder` includes it through `AddPageMixin`, so any theme can have it with three steps.
+
+1. Call `self.create_page_add()` in `build()`. It builds `add.html` when the editor is on and removes a stale one when it is off:
+
+        def build(self):
+            ...
+            self.create_page_add()
+
+2. Link to `add.html` where your layout shows its links, only when `var['editor']` is true:
+
+        % if var['editor']:
+        <a href="add.html">Add document</a>
+        % endif
+
+3. Make `build_page()` wrap the page like it wraps `search.html`. The page starts with `<!-- kb4it:theme-html -->`, which marks HTML the theme made itself. A theme that wraps its own pages in another way can override `register_add_page(html)`; apphelp does.
+
+Optionally, ship skeletons in `templates/skeletons/`: `*-SKELETON.md` files and a `skeletons.json`, as described in [Use your own skeletons](howto-write-document-editor.md#skeletons). Without them the cards come from the common set. Set `"editor": true` in `theme.json` to have the page on by default, and require `"kb4it": ">=0.10.0"`.
+
+The page uses the common `PAGE_ADD.tpl`; put a `PAGE_ADD.tpl` in `templates/` to replace the cards. Do not replace `EDITOR_DIALOGS.tpl`. To offer more values in completion, override `editor_keys()`.
+
+A theme that does not call `create_page_add()` never gets the page, whatever `repo.json` says.
 
 ## Add your own checks {#verify}
 

@@ -2,21 +2,42 @@
 DocType: How-to guide
 Feature: Writing
 HelpId: editor
-Keyword: editor, add page, techdoc, markdown, frontmatter, properties, toolbar, save, completion
+Keyword: editor, add page, skeletons, skeletons.json, repo.json, markdown, frontmatter, properties, toolbar, save, completion
 Level: basic
 Order: 215
-Related: howto-write-documents.md, reference-theme-techdoc.md
+Related: howto-write-documents.md, reference-repo-json.md, reference-theme-techdoc.md, howto-customize-templates.md
 Section: Guides
-Summary: Write a new document in the editor of the techdoc Add page and save it into the source folder.
+Summary: Turn on the Add page, write a new document in its editor, use your own skeletons and save the file into the source folder.
 ---
 
 # Write a document in the editor
 
-The Add page of a [techdoc](reference-theme-techdoc.md) site (`add.html`) is a Markdown editor that knows your repository. It suggests the properties and values you already use, warns about mistakes the build would report, and saves the file for you. It works offline, also from `file://`.
+The Add page (`add.html`) is a Markdown editor that knows your repository. It suggests the properties and values you already use, warns about mistakes the build would report, and saves the file for you. It works offline, also from `file://`.
+
+Every bundled theme can have it: [techdoc](reference-theme-techdoc.md), [blog](reference-theme-blog.md), [bookshelf](reference-theme-bookshelf.md) and [apphelp](reference-theme-apphelp.md). It is on by default in techdoc and off in the others.
+
+## Turn it on {#enable}
+
+Set `editor` in `repo.json`:
+
+```json
+{
+    "editor": true
+}
+```
+
+- `true` builds the Add page and links to it from the site.
+- `false` removes `add.html` and the link. Use it to take the page out of a techdoc site.
+- Without the key, the theme decides: techdoc on; blog, bookshelf and apphelp off.
+- Any other value stops the build with `repo.json 'editor' must be true or false`.
+
+The link is in the header menu of techdoc, the footer of blog, a plus button in the header of bookshelf and the sidebar of apphelp ("Add a page", a translatable label).
+
+With the editor on, a source document named `add.md` is reserved: it is left out and logged as `DOC_NAME_RESERVED`, and `kb4it verify` lists it as `reserved_name`. With the editor off, `add.md` is a normal name. See [repo.json](reference-repo-json.md#optional).
 
 ## Create the document {#create}
 
-1. Open `add.html` and click **Create** on the card of a category. The editor opens with a skeleton for that category.
+1. Open `add.html` and click **Create** on a card. The editor opens in a dialog with the skeleton of that card.
 2. Write the title: the text of the `#` heading is already selected, so type to replace it.
 3. Fill the properties in the **Properties** pane or in the text. Both stay in sync.
 4. Write the body. Use the toolbar for headings, lists, tables, notes, diagrams and formulas.
@@ -71,3 +92,36 @@ The file is UTF-8 with LF line endings and one final newline. Nothing else is ch
 **Copy** puts the same text on the clipboard.
 
 Put the file in the `source/` folder of your repository, then run `kb4it build`. The file name becomes the page name, so use short names without spaces.
+
+## Use your own skeletons {#skeletons}
+
+The page shows one card per skeleton. KB4IT takes the skeletons from the first of these folders that holds at least one `*-SKELETON.md` file:
+
+1. `overrides/templates/skeletons/` in your repository.
+2. `templates/skeletons/` of the theme.
+3. The common set of KB4IT, with one generic `DOCUMENT` skeleton.
+
+The sets are never merged: a folder of yours replaces the theme's skeletons completely. The file `TASK-SKELETON.md` makes the card `TASK`.
+
+To choose the names, the order and the look of the cards, add a `skeletons.json` next to the files. It is a list; the order of the list is the order of the cards:
+
+```json
+[
+    {"id": "task", "name": "Task", "description": "Something to do, with an owner and a due date", "color": "#1e87f0", "icon": "check"},
+    {"id": "note", "name": "Note", "description": "A short note"}
+]
+```
+
+| Field | Meaning |
+|---|---|
+| `id` | Required. Lowercase letters, digits and hyphens, starting with a letter (`^[a-z][a-z0-9-]*$`). It matches the file `<ID>-SKELETON.md`, in capitals |
+| `name` | The title of the card |
+| `description` | A line under the title |
+| `color` | A CSS colour for the card, such as `#1e87f0` |
+| `icon` | The icon of the card; only techdoc shows it |
+
+An error in the file stops the build and names the file. A skeleton file that is not listed is ignored, and the build logs `[BUILDER] SKELETON_UNLISTED`. Without a `skeletons.json`, the id comes from the file name, the name is the id capitalised and the cards are sorted by id.
+
+In apphelp, completion also offers the values of the `vocabulary` lists in `repo.json`, the `DocType` names and the `Layout` names, even before a document uses them.
+
+To change the page itself, see [Change one template of a theme](howto-customize-templates.md#editor).
