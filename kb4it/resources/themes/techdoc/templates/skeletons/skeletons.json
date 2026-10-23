@@ -1,0 +1,58 @@
+[
+  {
+    "id": "change",
+    "name": "Change",
+    "description": "A planned or completed modification to a system, process, or infrastructure component.",
+    "color": "#f0506e",
+    "icon": "cog"
+  },
+  {
+    "id": "incident",
+    "name": "Incident",
+    "description": "An unexpected disruption or quality degradation of a service.",
+    "color": "#faa05a",
+    "icon": "warning"
+  },
+  {
+    "id": "meeting",
+    "name": "Meeting",
+    "description": "Minutes or agenda for a team meeting, review, or discussion.",
+    "color": "#32d296",
+    "icon": "users"
+  },
+  {
+    "id": "note",
+    "name": "Note",
+    "description": "A free-form note, observation, or brief record.",
+    "color": "#1e87f0",
+    "icon": "file-text"
+  },
+  {
+    "id": "post",
+    "name": "Post",
+    "description": "A blog-style post, announcement, or article.",
+    "color": "#1e87f0",
+    "icon": "comment"
+  },
+  {
+    "id": "procedure",
+    "name": "Procedure",
+    "description": "A step-by-step operational procedure or runbook.",
+    "color": "#32d296",
+    "icon": "list"
+  },
+  {
+    "id": "report",
+    "name": "Report",
+    "description": "A formal or informal report summarising findings, metrics, or status.",
+    "color": "#888888",
+    "icon": "album"
+  },
+  {
+    "id": "task",
+    "name": "Task",
+    "description": "A work item or action to be tracked and completed.",
+    "color": "#faa05a",
+    "icon": "check"
+  }
+]
