@@ -494,7 +494,6 @@ class Backend(Service):
     def stage_04_process_theme(self):
         """Run theme logic."""
         self.log.debug("[BACKEND] THEME_START")
-        self.srvthm.log_add_page()
         self.srvthm.build()
         self.log.debug("[BACKEND] THEME_END")
 

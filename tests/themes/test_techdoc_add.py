@@ -72,3 +72,8 @@ def test_editor_js_never_uses_innerhtml():
         text = (EDITOR / name).read_text(encoding="utf-8")
         for word in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
             assert word not in text, (name, word)
+
+
+def test_dialogs_from_shared_template(add_html):
+    assert add_html.count("<dialog") == 8
+    assert add_html.count('id="kb-add-keys"') == 1

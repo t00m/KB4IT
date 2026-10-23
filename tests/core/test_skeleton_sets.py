@@ -52,10 +52,10 @@ def test_theme_set_with_json(make):
     source, cats = make().skeleton_set()
     assert source == "theme"
     assert [c["id"] for c in cats] == ["change", "incident", "meeting", "note", "post", "procedure", "report", "task"]
-    tpl = (TECHDOC / "PAGE_ADD.tpl").read_text(encoding="utf-8")
-    for c in cats:
-        m = re.search(r"\{'id': '%s',\s+'name': '([^']*)',\s+'icon': '([^']*)',\s+'color': '([^']*)',\s+'desc': '([^']*)'" % c["id"], tpl)
-        assert (c["name"], c["icon"], c["color"], c["description"]) == m.groups()
+    listed = json.loads((TECHDOC / "skeletons" / "skeletons.json").read_text(encoding="utf-8"))
+    for c, entry in zip(cats, listed):
+        assert (c["name"], c["icon"], c["color"], c["description"]) == (
+            entry["name"], entry["icon"], entry["color"], entry["description"])
         assert c["text"].strip()
 
 

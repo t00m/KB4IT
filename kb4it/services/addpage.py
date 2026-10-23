@@ -3,6 +3,7 @@
 import json
 import os
 import re
+from collections import Counter
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, ThemeError
@@ -35,9 +36,49 @@ class AddPageMixin:
             if os.path.exists(path):
                 os.unlink(path)
 
-    def log_add_page(self) -> None:
-        """Log whether the Add page is built."""
-        self.log.info(f"[BUILDER] ADD_PAGE enabled={self.editor_enabled()}")
+    def create_page_add(self) -> None:
+        """Build add.html when the editor is on, otherwise remove the page an earlier build left."""
+        if not self.editor_enabled():
+            self.remove_stale_add_page()
+            self.log.info("[BUILDER] ADD_PAGE enabled=False")
+            return
+        html, source, count = self._render_add_page()
+        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={source} categories={count}")
+        self.distribute_md("add", html)
+        self.srvdtb.add_document("add.md")
+        self.srvdtb.add_document_key("add.md", "Title", "Add document")
+        self.srvdtb.add_document_key("add.md", "SystemPage", "Yes")
+
+    def add_page_html(self) -> str:
+        """Return the body of the Add page, rendered with the theme's or the common PAGE_ADD template."""
+        return self._render_add_page()[0]
+
+    def _render_add_page(self) -> tuple[str, str, int]:
+        """Return (html, skeleton source, number of categories) of the Add page."""
+        source, categories = self.skeleton_set()
+        var = self.get_theme_var()
+        var["page"]["title"] = "Add document"
+        var["page"]["categories"] = categories
+        # Printed raw inside <script>: "<" as \u003c so no value can close the script element.
+        skeletons = {c["id"]: {"name": c["name"], "text": c["text"]} for c in categories}
+        var["page"]["skeletons_json"] = json.dumps(skeletons, ensure_ascii=True).replace("<", "\\u003c")
+        var["page"]["keys_json"] = json.dumps(self.editor_keys(), ensure_ascii=True).replace("<", "\\u003c")
+        var["page"]["editor_dialogs"] = self.render_template("EDITOR_DIALOGS", var)
+        return self.render_template("PAGE_ADD", var), source, len(categories)
+
+    def editor_keys(self) -> dict:
+        """Completion data {Key: [{"v": value, "c": count}]} from the repository's documents."""
+        keys_data = {}
+        all_docs = self.srvdtb.get_documents()
+        for key in self.srvdtb.get_theme_keys():
+            counter = Counter()
+            for doc_id in all_docs:
+                for val in self.srvdtb.get_values(doc_id, key):
+                    if val:
+                        counter[val] += 1
+            if counter:
+                keys_data[key] = [{"v": v, "c": c} for v, c in sorted(counter.items())]
+        return keys_data
 
     def skeleton_set(self) -> tuple[str, list[dict]]:
         """Return (source, categories) of the first skeleton folder that holds a *-SKELETON.md file.

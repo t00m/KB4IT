@@ -17,7 +17,6 @@ import zipfile
 from datetime import datetime
 
 from lxml import etree
-from techdoc_addpage import AddPageMixin
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 
 from kb4it.core.util import (
@@ -35,7 +34,7 @@ from kb4it.services.themekit import DocumentTheme
 parser = etree.HTMLParser()
 
 
-class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
+class Theme(DashboardMixin, DocumentTheme):
     reserved_pages = ('404.md',)  # build() writes 404.html
 
     def datatable_value_link(self, properties, key, value):
@@ -164,10 +163,7 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         self.build_page_stats()
         self.build_page_bookmarks()
         self.build_page_404()
-        if self.editor_enabled():
-            self.build_page_add()
-        else:
-            self.remove_stale_add_page()
+        self.create_page_add()
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()

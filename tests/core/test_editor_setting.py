@@ -67,7 +67,7 @@ def test_editor_off_removes_page_and_link(tmp_path, home):
 
 
 def test_add_page_log(tmp_path, home):
-    _, result = build(tmp_path, home, "blog")
+    _, result = build(tmp_path, home, "techdoc", editor=False)
     assert result.returncode == 0, result.stdout
     log = (tmp_path / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
     assert "[BUILDER] ADD_PAGE enabled=False" in log

@@ -44,6 +44,7 @@ These keys are optional. Add one to `repo.json` only to change it.
 | --- | --- | --- |
 | `datatable` | Columns `Date` and `Title` | Sets the columns of the document table |
 | `events` | No calendar | Lists the `Category` values that appear in the calendar, for example `["Incident", "Meeting"]` |
+| `editor` | `true` | `false` removes the Add page (`add.html`) and the link to it. The cards come from `templates/skeletons/skeletons.json` |
 | `admin` | `false` | `true` builds the admin pages after deploy |
 
 The navigation menu is built from the properties your documents use. It is not set in `repo.json`.

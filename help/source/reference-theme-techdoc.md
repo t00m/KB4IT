@@ -48,7 +48,7 @@ Each document gets a table of contents, sections that fold when you click their 
 
 ## Add page and editor {#editor}
 
-`add.html` writes new documents in a Markdown editor (CodeMirror 6, bundled, no network). Click **Create** on a category card to open its skeleton. For a walk-through see [Write a document in the editor](howto-write-document-editor.md).
+`add.html` writes new documents in a Markdown editor (CodeMirror 6, bundled, no network). Click **Create** on a category card to open its skeleton. The page is built by KB4IT itself and follows the `editor` setting of `repo.json`, which is on by default for techdoc. The cards come from `templates/skeletons/skeletons.json`; a repository can replace them with its own `overrides/templates/skeletons/` folder. For a walk-through see [Write a document in the editor](howto-write-document-editor.md).
 
 | Part | What it does |
 |---|---|
@@ -124,6 +124,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 |---|---|---|
 | `datatable` | `["Date", "Title"]` | Columns of the document tables |
 | `events` | `[]` | Categories that count as events |
+| `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
 | `admin` | `false` | Builds the backup page, see below |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 

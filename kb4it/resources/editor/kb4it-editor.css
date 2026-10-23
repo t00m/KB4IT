@@ -427,3 +427,6 @@ body.kb-dialog-lock { overflow: hidden; }
 .kb-toast-success { border-left-color: #32d296; }
 .kb-toast-danger { border-left-color: #f0506e; }
 .kb-dialog-dark #kb-toasts .kb-toast, .kb-toast.kb-toast-dark { color: #d4d4d4; background: #2d2d2d; }
+
+/* Cards of the common Add page (themes without a framework) */
+.kb-add-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
