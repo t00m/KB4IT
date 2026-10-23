@@ -141,11 +141,34 @@ A custom theme gets the Add page by calling `self.create_page_add()` in `build()
 
 ### ET-12 Documentation
 
-- `help/source/reference-repo-json.md`: the `editor` key.
-- `help/source/howto-write-document-editor.md`: no longer techdoc-only; how to turn it on; how to replace the skeletons.
-- Theme references and the theme authoring page: `theme.json` `editor`, skeleton sets, `create_page_add()` for custom themes.
-- `AGENTS.md`, `README.md`, each theme's `README.md`, `CHANGELOG.md` under `## [Unreleased]`.
-- The offline help in `kb4it/resources/help/` is regenerated with `scripts/help/build_offline.py`.
+Every page that describes the editor as techdoc-only, or that lists what a theme or `repo.json` offers, is updated. The theme pages change in the task that changes the theme; the application pages change at the end.
+
+**Themes.**
+
+| File | Change |
+|---|---|
+| `help/source/reference-theme-techdoc.md` | "Add page and editor" says the page follows `"editor"` (on by default); the skeletons come from `skeletons.json`; Settings table gains `editor` |
+| `help/source/reference-theme-blog.md` | Pages table gains `add.html` (with `"editor": true`); Settings gains `editor`; the Post skeleton |
+| `help/source/reference-theme-bookshelf.md` | Same, with the Chapter skeleton and the header button |
+| `help/source/reference-theme-apphelp.md` | Same, with the four skeletons, the `add` label in the labels list, and the note that completion offers the `vocabulary` values |
+| `kb4it/resources/themes/<theme>/README.md` | A line on the Add page and how to turn it on or off, for all four themes |
+
+**Application.**
+
+| File | Change |
+|---|---|
+| `help/source/reference-repo-json.md` | `editor` row in the Optional table: default "techdoc: on; blog, bookshelf, apphelp: off" |
+| `help/source/howto-write-document-editor.md` | No longer techdoc-only: "Turn it on" and "Use your own skeletons" sections; card and dialog wording without UIkit |
+| `help/source/explanation-themes.md` | The bundled themes section says which ones have the Add page on by default |
+| `help/source/howto-create-theme.md` | `theme.json` `editor` in "Options in theme.json"; a section on `create_page_add()`, `var['editor']`, skeleton sets and `skeletons.json` |
+| `help/source/howto-customize-templates.md` | Replacing the skeletons with `overrides/templates/skeletons/`; replacing `PAGE_ADD.tpl` but not `EDITOR_DIALOGS.tpl`; the 0.9.x `PAGE_ADD.tpl` override note |
+| `help/source/reference-log-codes.md` | `[BUILDER] ADD_PAGE` and `[BUILDER] SKELETON_UNLISTED` |
+| `help/source/tips.md`, `help/source/index.md` | Drop "techdoc" from the editor lines; mention the setting |
+| `README.md` | The "Write in the browser" feature line covers every theme |
+| `AGENTS.md` | Editor section: no UIkit, `AddPageMixin` in `kb4it/services/addpage.py`, shared templates, skeleton lookup, `techdoc_addpage.py` gone, new tests |
+| `CHANGELOG.md` | Entries under `## [Unreleased]` with the ET IDs |
+
+The offline help in `kb4it/resources/help/` is regenerated with `scripts/help/build_offline.py` and committed. `kb4it verify help/config/repo.json` must pass.
 
 ## Compatibility
 

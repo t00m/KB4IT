@@ -33,7 +33,8 @@ Topic: Architecture, Development
 - Exact texts: `repo.json 'editor' must be true or false`; "Add document" (page title and link text in techdoc, blog, bookshelf); apphelp label `add` = "Add a page".
 - Log events: `[BUILDER] ADD_PAGE enabled=<bool> skeletons=<overrides|theme|common> categories=<n>`, `[BUILDER] SKELETON_UNLISTED file=<name>`.
 - techdoc behaviour does not change: every existing browser test keeps its assertion, only selectors move to the new markup.
-- Each task updates `CHANGELOG.md` under `## [Unreleased]` where the user sees a change, with its ET IDs.
+- Each task updates `CHANGELOG.md` under `## [Unreleased]` where the user sees a change, with its ET IDs, and the documentation files its **Docs** line names (from the ET-12 tables).
+- A new log event is documented in `help/source/reference-log-codes.md` in the task that adds it.
 - Commits: one line, Conventional Commits, no trailers. Never push, never branch. No em dashes anywhere.
 
 ## Review Focus
@@ -107,6 +108,7 @@ techdoc only. At the end the techdoc Add page works as before, with no UIkit in 
 - Create: `kb4it/services/addpage.py`
 - Modify: `kb4it/services/builder.py`, `kb4it/services/backend.py`, `kb4it/services/workflow.py` (verify), `kb4it/resources/themes/techdoc/theme.json`, `kb4it/resources/themes/techdoc/logic/theme.py`, `kb4it/resources/themes/techdoc/templates/HTML_HEADER_COMMON.tpl`
 - Test: `tests/core/test_editor_setting.py`
+- Docs: `help/source/reference-log-codes.md` (`[BUILDER] ADD_PAGE`), `help/source/reference-repo-json.md` (`editor` row)
 
 **Interfaces:**
 - Produces: `check_editor_setting(repo: dict) -> None` in `addpage.py` (raises `ConfigError` with the exact text), `AddPageMixin.editor_enabled(self) -> bool`, `var['editor']: bool` in `get_theme_var()`.
@@ -133,6 +135,7 @@ techdoc only. At the end the techdoc Add page works as before, with no UIkit in 
 - Modify: `kb4it/services/addpage.py`
 - Create: `kb4it/resources/common/templates/skeletons/DOCUMENT-SKELETON.md`, `kb4it/resources/themes/techdoc/templates/skeletons/skeletons.json`
 - Test: `tests/core/test_skeleton_sets.py`
+- Docs: `help/source/reference-log-codes.md` (`[BUILDER] SKELETON_UNLISTED`)
 
 **Interfaces:**
 - Produces: `AddPageMixin.skeleton_set(self) -> tuple[str, list[dict]]`: `source` is `"overrides"`, `"theme"` or `"common"`; each dict has `id`, `name`, `description`, `color`, `icon`, `text` (missing optional fields are `""`).
@@ -177,6 +180,7 @@ techdoc only. At the end the techdoc Add page works as before, with no UIkit in 
 - Modify: `kb4it/resources/themes/techdoc/templates/PAGE_ADD.tpl`, `kb4it/resources/themes/techdoc/logic/theme.py`
 - Delete: `kb4it/resources/themes/techdoc/logic/techdoc_addpage.py`
 - Test: `tests/themes/test_techdoc_add.py`, `tests/core/test_add_page_core.py`
+- Docs: `help/source/reference-theme-techdoc.md`, `kb4it/resources/themes/techdoc/README.md`
 
 **Interfaces:**
 - Consumes: `editor_enabled()`, `remove_stale_add_page()` (Task 2), `skeleton_set()` (Task 3).
@@ -208,6 +212,7 @@ techdoc only. At the end the techdoc Add page works as before, with no UIkit in 
 - Create: `kb4it/resources/themes/bookshelf/templates/skeletons/CHAPTER-SKELETON.md`
 - Modify: `kb4it/resources/themes/apphelp/theme.json` (`kb4it` floor only)
 - Test: `tests/themes/test_editor_themes.py`
+- Docs: `help/source/reference-theme-blog.md`, `help/source/reference-theme-bookshelf.md`, `kb4it/resources/themes/blog/README.md`, `kb4it/resources/themes/bookshelf/README.md`
 
 **Interfaces:**
 - Consumes: `create_page_add()`, `var['editor']`.
@@ -232,6 +237,7 @@ techdoc only. At the end the techdoc Add page works as before, with no UIkit in 
 - Modify: `kb4it/resources/themes/apphelp/logic/theme.py`, `logic/apphelp_config.py` (label), `templates/HTML_BODY.tpl` (sidebar link)
 - Create: `kb4it/resources/themes/apphelp/templates/skeletons/{TUTORIAL,HOWTO,REFERENCE,EXPLANATION}-SKELETON.md`, `skeletons.json`
 - Test: `tests/apphelp/test_apphelp_editor.py`
+- Docs: `help/source/reference-theme-apphelp.md`, `kb4it/resources/themes/apphelp/README.md`
 
 **Interfaces:**
 - Consumes: `add_page_html()`, `editor_keys()`, `editor_enabled()`, `remove_stale_add_page()`.
@@ -271,13 +277,23 @@ techdoc only. At the end the techdoc Add page works as before, with no UIkit in 
 
 - [ ] **Step 3: Commit** `test(editor): run the editor browser tests on every theme`.
 
-### Task 8: Documentation (ET-12)
+### Task 8: Application documentation (ET-12)
+
+The theme pages were updated in Tasks 4 to 6. This task covers the application pages and checks the whole set.
 
 **Files:**
-- Modify: `help/source/reference-repo-json.md`, `help/source/howto-write-document-editor.md`, the theme reference pages and the theme authoring page in `help/source/`, `AGENTS.md`, `README.md`, `kb4it/resources/themes/*/README.md`, `CHANGELOG.md`
+- Modify: `help/source/howto-write-document-editor.md`, `help/source/explanation-themes.md`, `help/source/howto-create-theme.md`, `help/source/howto-customize-templates.md`, `help/source/tips.md`, `help/source/index.md`, `README.md`, `AGENTS.md`, `CHANGELOG.md`
 - Regenerate: `kb4it/resources/help/` with `scripts/help/build_offline.py`
 
-- [ ] **Step 1: Write** the `editor` row in the Optional table of `reference-repo-json.md` (default: "techdoc: on; others: off"); rewrite the intro of `howto-write-document-editor.md` for every theme, with "Turn it on" and "Use your own skeletons" sections; document `theme.json` `editor`, skeleton sets, `skeletons.json` fields and `create_page_add()` for custom themes; note the 0.9.x `PAGE_ADD.tpl` override in the compatibility notes; CHANGELOG entries.
+- [ ] **Step 1: Write** each change in the "Application" table of ET-12:
+  - `howto-write-document-editor.md`: intro for every theme; "Turn it on" (`"editor": true`, and `false` to remove it from techdoc); "Use your own skeletons" (`overrides/templates/skeletons/`, `skeletons.json` fields, no merging); dialog wording without UIkit.
+  - `explanation-themes.md`: one line per bundled theme on whether the Add page is on by default.
+  - `howto-create-theme.md`: `editor` in "Options in theme.json"; a section "Add the editor page" with `create_page_add()`, the `var['editor']` link, a `templates/skeletons/` set, and the `<!-- kb4it:theme-html -->` wrapping rule.
+  - `howto-customize-templates.md`: replacing the skeletons; `PAGE_ADD.tpl` may be replaced, `EDITOR_DIALOGS.tpl` not; a 0.9.x `PAGE_ADD.tpl` override has no editor and should be deleted or rebased.
+  - `tips.md`, `index.md`, `README.md`: drop "techdoc" from the editor lines and name the setting.
+  - `AGENTS.md`: rewrite "Techdoc editor" as "Editor" with `AddPageMixin`, the shared templates, the skeleton lookup, no UIkit, and the new test files; drop `techdoc_addpage.py`; update the `templates/skeletons/` line of the theme layout.
+
+- [ ] **Step 1b: Check** with `grep -rn "techdoc Add page\|techdoc only\|kbAddOpen\|uk-modal\|techdoc_addpage" help/source README.md AGENTS.md kb4it/resources/themes/*/README.md`; expected: no line left that describes the editor as techdoc-only or names removed code.
 
 - [ ] **Step 2: Run** `uv run --no-project --with-requirements requirements.txt python -m kb4it.core.main verify help/config/repo.json`, the offline help build, `./scripts/devel/test.sh -q` (help and README tests included); expected: pass, and `git status` shows the regenerated help files.
 
