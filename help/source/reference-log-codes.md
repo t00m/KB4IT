@@ -78,6 +78,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DATATABLE_FAIL` | error | The theme cannot add a document to a table | Check the properties of the document the line names |
 | `INDEX_SKIP` | warning | The blog theme left a post out of its home page | Check the post the line names; the line has the error |
 | `INDEX_LARGE` | warning | The search index is larger than 5 MB, or 2 MB for apphelp sites | See [search](reference-repo-json.md#search). The build goes on |
+| `ADD_PAGE` | info | Written as `[BUILDER] ADD_PAGE enabled=<true or false>`: whether this build makes the Add page. See the `editor` key in [repo.json](reference-repo-json.md) | Nothing |
 | `DEPLOY_DIR_MISSING` | warning | A folder listed in `deploy_dirs` of `theme.json` does not exist in the theme | Create the folder, or remove it from the list |
 | `FORCE_SKIP` | warning | With `--force`, a build folder in `var/` was kept because it holds `source` or `target` | Move `source` and `target` out of `var/` |
 | `KBDICT_VERSION_MISMATCH` | warning | The build cache was made by another KB4IT version. Every page is rebuilt | Nothing |

@@ -25,6 +25,7 @@ from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, f
                              get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
                              page_name_clashes, quarantine, raw_script_lines)
 from kb4it.core.paths import resolve_repo_path
+from kb4it.services.addpage import check_editor_setting
 
 
 def build_script(config_file, platform=None):
@@ -192,6 +193,10 @@ class Workflow(Service):
             settings = load_settings(repo)
         except ConfigError as e:
             problems = [f"repo.json: {e}", *problems]
+        try:
+            check_editor_setting(repo)
+        except ConfigError as e:
+            problems = [str(e), *problems]
         if problems:
             print("\nTheme checks:")
             for line in problems:

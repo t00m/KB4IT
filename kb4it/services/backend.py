@@ -155,6 +155,8 @@ class Backend(Service):
             raise ConfigError(f"Missing required config keys: {missing}")
         # Fail early on a bad markdown block or a missing extension package.
         from kb4it.core.mdconfig import load_settings
+        from kb4it.services.addpage import check_editor_setting
+        check_editor_setting(self.repo)
         self.markdown = load_settings(self.repo)
         from kb4it.core.publish import site_url
         self.site_url = site_url(self.repo)
@@ -492,6 +494,7 @@ class Backend(Service):
     def stage_04_process_theme(self):
         """Run theme logic."""
         self.log.debug("[BACKEND] THEME_START")
+        self.srvthm.log_add_page()
         self.srvthm.build()
         self.log.debug("[BACKEND] THEME_END")
 

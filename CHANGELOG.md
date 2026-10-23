@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- ET-04: the `editor` key in `repo.json` (`true` or `false`) turns the Add page on or off; the default comes from `theme.json` (techdoc on, other themes off). A value that is not a boolean stops the build and shows in `kb4it verify`. With the editor off, `add.html` and the link to it are removed. Logged as `[BUILDER] ADD_PAGE enabled=<bool>`.
 - techdoc Add page editor (ED-01 to ED-12): the Add page now edits new documents in a Markdown editor that works offline, also from `file://`. The items below describe its parts.
 - ED-01: a CodeMirror 6 bundle (`kb4it/resources/editor/codemirror.min.js`, global `KB4ITEditor.cm`) for the techdoc Add page editor. It is built with `scripts/devel/editor/build.sh`, committed, works offline from `file://` and stays under 700 KB. `check_wheel_themes.py` also checks that the wheel ships it.
 - ED-02: the editor files (`resources/editor/`) are deployed only to sites with a page that loads them, and removed from the site when no page does. Logged as `[DEPLOYER] EDITOR_ASSETS deployed=<bool>`.

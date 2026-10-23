@@ -6,6 +6,7 @@
     "website": "https://github.com/t00m/KB4IT",
     "description": "Theme for technical documentation",
     "search": true,
+    "editor": true,
     "feed": false,
     "kb4it": ">=0.10.0",
     "favicon": "images/logo.svg",

@@ -164,7 +164,10 @@ class Theme(DashboardMixin, AddPageMixin, DocumentTheme):
         self.build_page_stats()
         self.build_page_bookmarks()
         self.build_page_404()
-        self.build_page_add()
+        if self.editor_enabled():
+            self.build_page_add()
+        else:
+            self.remove_stale_add_page()
         self.build_page_index(var)
         self.build_page_index_all()
         self.create_page_about_kb4it()

@@ -425,7 +425,7 @@ class Processor(Service):
         """
         K_PATH = []
         KV_PATH = []
-        FORCE_COMPILATION = self._forced()
+        FORCE_COMPILATION = self._forced() or self.plan.force_all
 
         for key in sorted(available_keys):
             values = self.srvdtb.get_all_values_for_key(key)

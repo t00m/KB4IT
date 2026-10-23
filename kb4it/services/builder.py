@@ -21,6 +21,7 @@ from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, rob
 from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_html, load_doc_sections, prune_sections,
                                render_index_js)
 from kb4it.core.service import Service
+from kb4it.services.addpage import AddPageMixin
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 from kb4it.services.headmeta import META_END, META_START, HeadMetaMixin, short_text  # noqa: F401
 
@@ -86,7 +87,7 @@ def _written_by_kb4it(path) -> bool:
         return False
 
 
-class Builder(HeadMetaMixin, Service):
+class Builder(AddPageMixin, HeadMetaMixin, Service):
     """Build HTML blocks."""
 
     _templates_lock = threading.Lock()
@@ -289,6 +290,7 @@ class Builder(HeadMetaMixin, Service):
         )
 
         theme_var["search_box"] = self.search_box()
+        theme_var["editor"] = self.editor_enabled()
         return theme_var
 
     def target_subdir(self):

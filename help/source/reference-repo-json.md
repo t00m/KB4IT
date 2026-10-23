@@ -58,6 +58,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
 | `overrides` | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
+| `editor` | techdoc: on; blog, bookshelf, apphelp: off | Add page (`add.html`) with a Markdown editor for new documents. `true` or `false`; any other value stops the build. `false` removes the page and the link to it |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format. They appear only with `"git": true` and `git_server`, `git_user`, `git_repo` and `git_branch` all set; `git_path` may stay empty |
 
 ## Markdown {#markdown}
