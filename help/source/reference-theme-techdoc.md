@@ -47,10 +47,10 @@ The home page shows, from top to bottom:
 The top bar holds the logo menu on the left, the page title in the middle and a search icon on the right:
 
 - The logo menu links to the dashboard (click the logo), the Add page, Events, Bookmarks, Properties, Stats, Reload page, Help, About this app and About KB4IT.
-- A long title ends in an ellipsis; hover over it to read it whole. On a document, the title opens the table of contents.
+- A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field.
 
-Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
+Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons in the title menu to show the properties and the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
 ## Add page and editor {#editor}
 

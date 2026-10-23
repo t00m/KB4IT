@@ -88,6 +88,46 @@ table.month tbody tr th {
 .kb4it-navbar-title .uk-navbar-nav > li { min-width: 0; }
 .kb4it-navbar-title .uk-navbar-nav > li > a { min-width: 0; text-transform: none; }
 
+/* Title menu: page actions in one row at the top, then the table of contents. */
+.kb4it-title-menu {
+    width: min(40rem, calc(100vw - 32px));
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding: 0;
+}
+.kb4it-page-actions {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+.kb4it-page-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    color: #4a5568;
+}
+.kb4it-page-action:hover { background: #dbeafe; color: #1e87f0; }
+.kb4it-title-toc { padding: 10px 12px 14px; }
+.kb4it-title-toc ul { list-style: none; margin: 0; padding: 0; }
+.kb4it-title-toc ul ul { padding-left: 16px; border-left: 1px solid #e2e8f0; margin-left: 8px; }
+.kb4it-title-toc a {
+    display: block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #374151;
+}
+.kb4it-title-toc > ul > li > a { font-weight: 600; color: #1f2937; margin-top: 4px; }
+.kb4it-title-toc ul ul a { font-size: 0.84rem; color: #4b5563; }
+.kb4it-title-toc a:hover { background: #dbeafe; color: #1e87f0; text-decoration: none; }
+
 /* Search dialog: the shared search box fills the dialog and its results flow below it. */
 #kb4it-search-modal .kb4it-search { display: block; }
 #kb4it-search-modal .kb4it-search-input { width: 100%; font-size: 1.1em; padding: 8px 10px; }

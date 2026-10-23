@@ -8,6 +8,7 @@ from tests.themes.test_techdoc_add import build_techdoc
 
 pytestmark = pytest.mark.browser
 
+TOC_BODY = "\n\n".join(f"## Part {n} of a long procedure with many steps\n\nText.\n\n### Detail {n}\n\nMore." for n in range(1, 4))
 LONG = "A very long document title that would never fit in the top bar next to the logo menu and the search icon"
 
 
@@ -19,6 +20,7 @@ def navbar_site(tmp_path_factory):
     docs = {
         "long.md": md_page(LONG, Category="Note", Date="2026-10-01"),
         "zebra.md": md_page("Zebra", Category="Note", Date="2026-10-02"),
+        "toc.md": md_page("Sections", body=TOC_BODY, Category="Note", Date="2026-10-03"),
     }
     return build_techdoc(base, home, docs)
 
@@ -40,6 +42,7 @@ def _box(page, selector):
 
 
 def test_long_title_is_cut_before_the_search_icon(nav_page):
+    nav_page.set_viewport_size({"width": 700, "height": 700})
     title = "#kb4it-page-title"
     assert nav_page.eval_on_selector(title, "e => e.scrollWidth > e.clientWidth"), "the title is not cut"
     assert _box(nav_page, title)[1] <= _box(nav_page, 'a[href="#kb4it-search-modal"]')[0]
@@ -92,3 +95,34 @@ def test_reload_help_and_about_are_in_the_logo_menu(nav_page):
     for href in ("javascript:location.reload();", "help.html", "about_app.html", "about_kb4it.html"):
         assert nav_page.query_selector(f'{menu} a[href="{href}"]'), href
     assert not nav_page.query_selector('#kb4it-menu .uk-navbar-right a[href="help.html"]')
+
+
+def _open_title_menu(page, doc):
+    page.goto(page.url.rsplit("/", 1)[0] + "/" + doc)
+    page.hover(".kb4it-navbar-title a")
+    page.wait_for_selector(".kb4it-title-menu", state="visible")
+
+
+def test_page_actions_are_one_row_at_the_top_of_the_title_menu(nav_page):
+    assert not nav_page.query_selector("#kb4it-menu .uk-navbar-left .kb4it-page-action")
+    _open_title_menu(nav_page, "toc.html")
+    tops = nav_page.eval_on_selector_all(".kb4it-page-action", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
+    assert len(tops) == 3 and len(set(tops)) == 1, tops
+    first_toc = nav_page.eval_on_selector(".kb4it-title-toc a", "e => e.getBoundingClientRect().top")
+    assert tops[0] < first_toc
+
+
+@pytest.mark.parametrize(("action", "dialog"), [("#modal-metadata", "#modal-metadata"), ("#modal-full-source", "#modal-full-source")])
+def test_page_action_opens_its_dialog_from_the_title_menu(nav_page, action, dialog):
+    _open_title_menu(nav_page, "toc.html")
+    nav_page.click(f'.kb4it-page-action[href="{action}"]')
+    nav_page.wait_for_selector(f"{dialog}.uk-open", state="visible")
+
+
+def test_title_menu_is_wide_and_nests_the_contents(nav_page):
+    _open_title_menu(nav_page, "toc.html")
+    assert nav_page.eval_on_selector(".kb4it-title-menu", "e => e.getBoundingClientRect().width") >= 600
+    top = nav_page.eval_on_selector('.kb4it-title-toc a[href="#part-1-of-a-long-procedure-with-many-steps"]', "e => e.getBoundingClientRect().left")
+    sub = nav_page.eval_on_selector('.kb4it-title-toc a[href="#detail-1"]', "e => e.getBoundingClientRect().left")
+    assert sub > top
+    assert nav_page.eval_on_selector(".kb4it-title-toc a", "e => e.scrollWidth <= e.clientWidth"), "an entry runs over"

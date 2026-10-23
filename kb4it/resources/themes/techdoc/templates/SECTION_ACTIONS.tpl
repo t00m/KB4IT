@@ -2,14 +2,11 @@
 % if not var['SystemPage']:
   % if var.get('git_ok'):
         <!-- Edit Button :: START -->
-        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Edit document">
-            <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span uk-icon="pencil"></span></a>
-        </li>
+        <a class="kb4it-page-action" uk-tooltip="title: Edit document" aria-label="Edit document" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span uk-icon="pencil"></span></a>
         <!-- Edit Button :: END -->
   % endif
         <!-- Metadata Button :: START -->
-        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Document properties">
-            <a class="uk-link-heading" href="#modal-metadata" uk-toggle><span class="uk-link-heading" uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
+        <a class="kb4it-page-action" href="#modal-metadata" uk-toggle uk-tooltip="title: Document properties" aria-label="Document properties"><span uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
             <div id="modal-metadata" class="uk-modal-full" uk-modal>
                 <div class="uk-modal-dialog uk-height-viewport">
                     <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
@@ -21,11 +18,9 @@
                     </div>
                 </div>
             </div>
-        </li>
         <!-- Metadata Button :: END -->
         <!-- View Markdown Source Button :: START -->
-        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" uk-tooltip="title: Document source">
-            <a class="uk-link-heading" href="#modal-full-source" uk-toggle><span class="uk-link-heading" uk-icon="icon: code; ratio: 1.0;"></span></a>
+        <a class="kb4it-page-action" href="#modal-full-source" uk-toggle uk-tooltip="title: Document source" aria-label="Document source"><span uk-icon="icon: code; ratio: 1.0;"></span></a>
             <div id="modal-full-source" class="uk-modal-full" uk-modal>
                 <div class="uk-modal-dialog uk-height-viewport">
                     <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
@@ -38,12 +33,9 @@
                     </div>
                 </div>
             </div>
-        </li>
         <!-- View Source Button :: END -->
         <!-- Print Button :: START -->
-        <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
-            <a class="uk-link-heading" href="javascript:window.print()"><span uk-icon="icon: print; ratio: 1.0;"></span></a>
-        </li>
+        <a class="kb4it-page-action" href="javascript:window.print()" uk-tooltip="title: Print document" aria-label="Print document"><span uk-icon="icon: print; ratio: 1.0;"></span></a>
         <!-- Print Button :: END -->
 % endif
 <!-- Template SECTION_ACTIONS.tpl :: END -->

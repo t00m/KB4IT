@@ -104,11 +104,6 @@
                         </div>
                     </li>
                 </ul>
-                <ul class="uk-navbar-nav noprint">
-                    <!-- MENU CONTENTS :: START -->
-                    ${var['actions'] | n}
-                    <!-- MENU CONTENTS :: END -->
-                </ul>
             </div>
             <!-- The title takes the room the left and right blocks leave, and is cut with an ellipsis. -->
             <div class="kb4it-navbar-title">
@@ -116,11 +111,23 @@
                 <ul class="uk-navbar-nav">
                     <li>
                         <a class="uk-link-toggle uk-text-primary" href="#" title="${var['page']['title']}"><span id="kb4it-page-title" class="uk-text-primary uk-text-small">${var['page']['title']}</span></a>
-% if var['has_toc'] and len(var['toc']) > 0:
-                        <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
-                            <div class="uk-navbar-dropdown-nav">
+<%
+    _has_actions = '<a ' in var['actions']
+    _has_toc = var['has_toc'] and len(var['toc']) > 0
+%>
+% if _has_actions or _has_toc:
+                        <!-- Title menu: the page actions in one row, then the table of contents. -->
+                        <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center kb4it-title-menu">
+    % if _has_actions:
+                            <div class="kb4it-page-actions noprint">
+${var['actions'] | n}
+                            </div>
+    % endif
+    % if _has_toc:
+                            <div class="uk-navbar-dropdown-nav kb4it-title-toc">
 ${var['toc'] | n}
                             </div>
+    % endif
                         </div>
 % endif
                     </li>
