@@ -78,6 +78,12 @@ def test_landing_page_panels(site):
     assert "Check backups" in html
 
 
+def test_landing_page_order(site):
+    html = read(site, "index.html")
+    marks = ["kb-hero-bar", "kb-diataxis-card", "Open items"]
+    assert [html.index(m) for m in marks] == sorted(html.index(m) for m in marks)
+
+
 def test_metadata_pages(site):
     assert "monitor.html" in read(site, "Periodicity_Daily.html")
     assert "change.html" in read(site, "Priority_High.html")

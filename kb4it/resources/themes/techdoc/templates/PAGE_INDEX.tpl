@@ -43,7 +43,33 @@ def category_url(category):
         </div>
     </section>
 
-    <!-- 1b. OPEN ITEMS -->
+    <!-- 2. DIATAXIS GRID -->
+    <section class="kb-section">
+        <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" uk-grid>
+% for item in var['page']['diataxis']:
+            <div>
+% if item['url']:
+                <a class="kb-diataxis-card ${item['css']}" href="${item['url']}">
+% else:
+                <div class="kb-diataxis-card ${item['css']} kb-diataxis-empty">
+% endif
+                    <div class="kb-diataxis-headline">
+                        <span class="kb-diataxis-icon"><span uk-icon="icon: ${item['icon']}; ratio: 0.9"></span></span>
+                        <span class="kb-diataxis-count">${item['count']}</span>
+                        <span class="kb-diataxis-label">${item['label']}</span>
+                    </div>
+                    <p class="kb-diataxis-desc">${item['desc']}</p>
+% if item['url']:
+                </a>
+% else:
+                </div>
+% endif
+            </div>
+% endfor
+        </div>
+    </section>
+
+    <!-- 2b. OPEN ITEMS -->
 % if var['page']['open_items']:
     <section class="kb-section">
         <h2 class="kb-section-title">Open items</h2>
@@ -72,32 +98,6 @@ def category_url(category):
         </div>
     </section>
 % endif
-
-    <!-- 2. DIATAXIS GRID -->
-    <section class="kb-section">
-        <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" uk-grid>
-% for item in var['page']['diataxis']:
-            <div>
-% if item['url']:
-                <a class="kb-diataxis-card ${item['css']}" href="${item['url']}">
-% else:
-                <div class="kb-diataxis-card ${item['css']} kb-diataxis-empty">
-% endif
-                    <div class="kb-diataxis-headline">
-                        <span class="kb-diataxis-icon"><span uk-icon="icon: ${item['icon']}; ratio: 0.9"></span></span>
-                        <span class="kb-diataxis-count">${item['count']}</span>
-                        <span class="kb-diataxis-label">${item['label']}</span>
-                    </div>
-                    <p class="kb-diataxis-desc">${item['desc']}</p>
-% if item['url']:
-                </a>
-% else:
-                </div>
-% endif
-            </div>
-% endfor
-        </div>
-    </section>
 
     <!-- 3. CHANGES & INCIDENTS BAR -->
     <section class="kb-section">

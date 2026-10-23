@@ -34,8 +34,8 @@ Any other property gets its own pages, as in every theme.
 The home page shows, from top to bottom:
 
 - Counts of documents, authors, categories, events and bookmarks.
-- **Open items**: incidents, changes and tasks with an open status, highest priority first.
 - The four types of document, with counts.
+- **Open items**: incidents, changes and tasks with an open status, highest priority first.
 - The latest changes and incidents.
 - **Upcoming events** for this month and the next, and recent events from the last month.
 - **Monitoring**: recurring checks grouped by periodicity.
