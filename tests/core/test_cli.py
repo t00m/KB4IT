@@ -19,6 +19,14 @@ def test_version(tmp_path, home):
     assert result.stdout.startswith("KB4IT ")
 
 
+def test_python_m_kb4it_runs_the_command(tmp_path, home):
+    # Profilers start KB4IT as python -m kb4it.
+    result = subprocess.run([sys.executable, "-m", "kb4it", "--version"], cwd=tmp_path, env=isolated_env(home),
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.startswith("KB4IT ")
+
+
 def test_themes_lists_every_tracked_theme(tmp_path, home):
     result = run_kb4it("themes", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout

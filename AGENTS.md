@@ -80,7 +80,7 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 
 | Location                          | Role |
 |---|---|
-| `kb4it/core/main.py`              | Entry point, `KB4IT` controller, argparse, process lock, top-level exception catch, TUI auto-launch |
+| `kb4it/core/main.py`              | Entry point (also `python -m kb4it` through `kb4it/__main__.py`), `KB4IT` controller, argparse, process lock, top-level exception catch, TUI auto-launch |
 | `kb4it/core/env.py`               | `FrozenDict`-backed `ENV` (sealed after init), system paths, app metadata |
 | `kb4it/core/exceptions.py`        | `KB4ITError`, `ConfigError`, `ThemeError`, `CompilationError` hierarchy |
 | `kb4it/core/service.py`           | Base `Service` class all services inherit |
