@@ -542,9 +542,16 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     text-decoration: none;
     white-space: nowrap;
     flex-shrink: 0;
+    /* One width for every badge; a longer value ends in an ellipsis and shows whole in its tooltip. */
+    display: inline-block;
+    box-sizing: border-box;
+    width: 6.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    vertical-align: middle;
 }
 .kb-badge:hover { color: #fff; opacity: 0.85; text-decoration: none; }
-.kb-events-table .uk-label.kb-badge { width: auto; }
 .kb-label-muted { background: #999; }
 .kb-dt-label { font-size: 0.7rem; color: #fff !important; }
 .kb-alert-item .kb-alert-title { flex: 1; min-width: 0; }
@@ -614,14 +621,6 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 }
 .kb-event-title a { color: #222; font-weight: 500; text-decoration: none; }
 .kb-event-title a:hover { color: #1e87f0; }
-.kb-events-table .uk-label {
-    display: inline-block;
-    width: 7rem;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 .kb-events-month-header a { color: #1e87f0; text-decoration: none; }
 .kb-events-month-header a:hover { text-decoration: underline; }
 .kb-events-month-header {

@@ -94,6 +94,14 @@ def test_landing_page_sections_fold_except_counts_and_doctypes(site):
     assert "kb-hero-bar" in head and "kb-diataxis-card" in head
 
 
+def test_landing_page_labels_are_all_badges(site):
+    """Every coloured label on the dashboard is a kb-badge, so they all get one width."""
+    html = read(site, "index.html")
+    labels = re.findall(r'<a class="uk-label([^"]*)"', html)
+    assert labels and all(" kb-badge " in f"{c} " for c in labels), labels
+    assert 'style="color: white;"' not in html
+
+
 def test_metadata_pages(site):
     assert "monitor.html" in read(site, "Periodicity_Daily.html")
     assert "change.html" in read(site, "Priority_High.html")

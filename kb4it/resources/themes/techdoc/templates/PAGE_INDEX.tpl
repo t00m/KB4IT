@@ -82,13 +82,13 @@ def category_url(category):
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
                         <td class="kb-open-badges">
 %         if row['priority']:
-                            <a class="uk-label kb-badge ${row['priority_css']}" href="${prop_url('Priority', row['priority'])}">${row['priority']}</a>
+                            <a class="uk-label kb-badge ${row['priority_css']}" href="${prop_url('Priority', row['priority'])}" title="${row['priority']}">${row['priority']}</a>
 %         endif
 %         if row['status']:
-                            <a class="uk-label kb-badge ${row['status_css']}" href="${prop_url('Status', row['status'])}">${row['status']}</a>
+                            <a class="uk-label kb-badge ${row['status_css']}" href="${prop_url('Status', row['status'])}" title="${row['status']}">${row['status']}</a>
 %         endif
 %         if row['category']:
-                            <a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}">${row['category']}</a>
+                            <a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}" title="${row['category']}">${row['category']}</a>
 %         endif
                         </td>
                     </tr>
@@ -115,10 +115,10 @@ def category_url(category):
                         <span class="kb-alert-date">${item['date']}</span>
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
 %         if item['status']:
-                        <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}">${item['status']}</a>
+                        <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}" title="${item['status']}">${item['status']}</a>
 %         endif
 %         if item['priority']:
-                        <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}">${item['priority']}</a>
+                        <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}" title="${item['priority']}">${item['priority']}</a>
 %         endif
                     </li>
 %     endfor
@@ -140,10 +140,10 @@ def category_url(category):
                         <span class="kb-alert-date">${item['date']}</span>
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
 %         if item['status']:
-                        <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}">${item['status']}</a>
+                        <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}" title="${item['status']}">${item['status']}</a>
 %         endif
 %         if item['priority']:
-                        <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}">${item['priority']}</a>
+                        <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}" title="${item['priority']}">${item['priority']}</a>
 %         endif
                     </li>
 %     endfor
@@ -174,7 +174,7 @@ def category_url(category):
                                 <td class="kb-event-date">${row['date']}</td>
                                 <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 %             if row['category']:
-                                <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}" style="color: white;">${row['category']}</a></td>
+                                <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}" title="${row['category']}">${row['category']}</a></td>
 %             else:
                                 <td></td>
 %             endif
@@ -238,7 +238,7 @@ def category_url(category):
                         <td class="kb-event-date">${row['date']}</td>
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 % if row['category']:
-                        <td class="uk-flex uk-flex-right"><a class="uk-flex uk-flex-center uk-label ${category_css(row['category'])}" href="${category_url(row['category'])}" style="color: white;">${row['category']}</a></td>
+                        <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}" title="${row['category']}">${row['category']}</a></td>
 % else:
                         <td></td>
 % endif
