@@ -127,3 +127,17 @@ def test_document_named_add_is_normal_while_editor_is_off(tmp_path, home):
     assert "Own add." in (target / "add.html").read_text(encoding="utf-8")
     verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
     assert "add.md" not in verify.stdout
+
+
+def test_verify_loads_theme_py_once(tmp_path, home):
+    import shutil
+
+    theme_dir = tmp_path / "counted"
+    shutil.copytree(ROOT / "kb4it" / "resources" / "themes" / "techdoc", theme_dir)
+    logic = theme_dir / "logic" / "theme.py"
+    logic.write_text(logic.read_text(encoding="utf-8")
+                     + '\nwith open(__file__ + ".loads", "a", encoding="utf-8") as _fout:\n    _fout.write("x")\n', encoding="utf-8")
+    cfg = write_repo(tmp_path / "repo", "techdoc", PAGES, theme_path=str(theme_dir))
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert verify.returncode == 0, verify.stdout
+    assert (theme_dir / "logic" / "theme.py.loads").read_text(encoding="utf-8") == "x"

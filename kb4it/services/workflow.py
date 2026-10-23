@@ -162,8 +162,9 @@ class Workflow(Service):
 
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
-        reserved = self._theme_reserved_pages(repo, config_file)
-        if self._editor_on(repo, config_file):
+        theme_class = self._theme_class(repo, config_file)
+        reserved = tuple(getattr(theme_class, "reserved_pages", ()))
+        if self._editor_on(repo, config_file, theme_class):
             reserved = (*reserved, ADD_DOC)
         for doc in docs:
             if is_windows_reserved(doc) or os.path.basename(doc) in reserved:
@@ -271,8 +272,8 @@ class Workflow(Service):
                 return candidate
         return None
 
-    def _editor_on(self, repo, config_file):
-        """True when the Add page is on: the theme class supports it and editor_on() says so."""
+    def _editor_on(self, repo, config_file, theme_class):
+        """True when the Add page is on: theme_class supports it and editor_on() says so."""
         theme_dir = self._find_theme_dir(repo, config_file)
         try:
             with open(os.path.join(theme_dir, "theme.json"), encoding="utf-8") as fin:
@@ -282,12 +283,12 @@ class Workflow(Service):
         if not isinstance(theme, dict):
             theme = {}
         check_theme_editor(theme)
-        if not getattr(self._theme_class(repo, config_file), "add_page", False):
+        if not getattr(theme_class, "add_page", False):
             return False
         return editor_on(repo, theme)
 
     def _theme_class(self, repo, config_file):
-        """The Theme class of logic/theme.py in the repository's theme, or None."""
+        """The Theme class of logic/theme.py in the repository's theme, or None. It runs theme.py, so call it once."""
         theme_dir = self._find_theme_dir(repo, config_file)
         logic = os.path.join(theme_dir, "logic") if theme_dir else ""
         path = os.path.join(logic, "theme.py")
@@ -303,10 +304,6 @@ class Workflow(Service):
             return None
         finally:
             sys.path.remove(logic)
-
-    def _theme_reserved_pages(self, repo, config_file):
-        """Source page names the theme writes itself (its `reserved_pages`), or an empty tuple."""
-        return tuple(getattr(self._theme_class(repo, config_file), "reserved_pages", ()))
 
     def _theme_verify(self, repo, config_file, docs):
         """Run the theme's optional logic/verify.py and return its problem lines."""
