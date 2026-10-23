@@ -46,7 +46,7 @@ kb4it build repo.json
     8  Theme.post_deploy_activities()
 ```
 
-Each stage logs `[WORKFLOW] STAGE n=...`, and its time shows as `[PERFORMANCE]` at `DEBUG` level. Errors are typed (`ConfigError`, `ThemeError`, `CompilationError`, `KB4ITError`) and caught once in `KB4IT.run()`, which turns them into exit status 1.
+Each stage logs `[WORKFLOW] STAGE n=...`. `kb4it build --trace` times the stages and steps in `var/log/trace.json`, apart from the log. Errors are typed (`ConfigError`, `ThemeError`, `CompilationError`, `KB4ITError`) and caught once in `KB4IT.run()`, which turns them into exit status 1.
 
 ## Incremental builds {#incremental}
 

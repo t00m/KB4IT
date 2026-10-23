@@ -18,11 +18,11 @@ import multiprocessing
 import operator
 import os
 import re
-import time
 import unicodedata
 from functools import wraps
 from typing import Any
 
+from kb4it.core import trace
 from kb4it.core.dates import (
     DateCache,
     get_day,
@@ -165,16 +165,12 @@ def source_ext(doc_id: str) -> str:
 
 
 def timeit(func):
-    """Time a method for measuring performance."""
+    """Record the time a method takes in the performance trace (kb4it build --trace)."""
 
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
-        start_time = time.perf_counter()
-        result = func(*args, **kwargs)
-        end_time = time.perf_counter()
-        total_time = end_time - start_time
-        log.debug(f"[PERFORMANCE] {total_time:.4f}s => Stage {func.__name__}")
-        return result
+        with trace.span(func.__name__):
+            return func(*args, **kwargs)
 
     return timeit_wrapper
 

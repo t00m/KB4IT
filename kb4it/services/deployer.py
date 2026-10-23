@@ -19,7 +19,7 @@ from kb4it.core.files import prune_tree, sync_file, sync_tree
 from kb4it.core.log import get_logger
 from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
-from kb4it.core.util import SOURCE_EXT_RE, delete_target_contents
+from kb4it.core.util import SOURCE_EXT_RE, delete_target_contents, timeit
 
 # A tag that loads a render file; text that only names the folder does not count.
 RENDER_REF = re.compile(r'(?:src|href)="[^"]*resources/render/')
@@ -64,6 +64,7 @@ class Deployer(Service):
         self.step_11_cleanup()
         self.log.debug("[DEPLOYER] END")
 
+    @timeit
     def step_04_copy_sources_to_target(self, files):
         """Incrementally sync source Markdown files to target/sources/."""
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
@@ -79,6 +80,7 @@ class Deployer(Service):
                 self.log.debug(f"[DEPLOYER] STALE_SOURCE_DELETED file={filename}")
         self.log.debug(f"[DEPLOYER] SOURCES_TO_TARGET copied={n_copied} deleted={n_deleted}")
 
+    @timeit
     def step_04b_remove_sources_from_target(self):
         """Remove target/sources/ when the repo does not publish its Markdown sources."""
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
@@ -86,6 +88,7 @@ class Deployer(Service):
             shutil.rmtree(docsdir)
             self.log.debug(f"[DEPLOYER] SOURCES_REMOVED path={docsdir}")
 
+    @timeit
     def step_05_add_head_meta(self, files):
         """Add description, Open Graph and canonical tags to the pages built in this run."""
         theme = self.srvthm
@@ -107,6 +110,7 @@ class Deployer(Service):
                 n += 1
         self.log.debug(f"[DEPLOYER] HEAD_META pages={n}")
 
+    @timeit
     def step_06_copy_all_to_cache(self, files):
         """Copy the files built in this run from the temporary directory to the cache, keeping their times."""
         dir_cache = self.srvbes.get_path("cache")
@@ -115,6 +119,7 @@ class Deployer(Service):
             sync_file(path, os.path.join(dir_cache, os.path.basename(path)))
         self.log.debug(f"[DEPLOYER] COPIED_ALL_TO_CACHE n={len(files)}")
 
+    @timeit
     def step_07_copy_compiled_documents_to_target(self):
         """Incrementally sync compiled HTML to target: copy new and changed pages, delete stale.
 
@@ -158,6 +163,7 @@ class Deployer(Service):
         n_unchanged = len(expected) - n_copied - len(self.missing)
         self.log.debug(f"[DEPLOYER] HTML_TO_TARGET copied={n_copied} unchanged={n_unchanged} deleted={n_deleted}")
 
+    @timeit
     def step_08_copy_global_resources_to_target(self):
         """Sync theme, common and local resources into the target: copy new or changed files, delete stale ones.
 
@@ -330,6 +336,7 @@ class Deployer(Service):
                 self.log.debug(f"[DEPLOYER] STALE_STATIC_DELETED file={rel}")
         self.log.debug(f"[DEPLOYER] STATIC_TO_TARGET files={len(deployed)} deleted={n_deleted}")
 
+    @timeit
     def deploy_page_assets(self, keep=()):
         """Mirror the render (Mermaid, KaTeX) and editor files into the target when a page loads them, else remove them.
 
@@ -358,6 +365,7 @@ class Deployer(Service):
             self.log.debug(f"[DEPLOYER] {name.upper()}_ASSETS deployed={used}")
         return provided
 
+    @timeit
     def step_09_copy_html_to_cache(self):
         """Make the cache hold the target's HTML pages: copy new or changed ones, delete the rest."""
         dir_cache = self.srvbes.get_path("cache")
@@ -379,9 +387,11 @@ class Deployer(Service):
             deleted += 1
         self.log.debug(f"[DEPLOYER] COPIED_HTML_BACK_TO_CACHE copied={copied} deleted={deleted}")
 
+    @timeit
     def step_10_copy_kbdict_to_target(self):
         """Copy JSON database to target path."""
 
+    @timeit
     def step_11_cleanup(self):
         """Cleanup temporary files."""
         delete_target_contents(self.srvbes.get_path("tmp"))

@@ -23,7 +23,7 @@ from kb4it.core.mdlinks import scan_document
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
-                             SOURCE_ENCODING, tree_hash)
+                             SOURCE_ENCODING, timeit, tree_hash)
 
 # repo.json keys that never reach a page: changing them must not rebuild the site.
 NON_PAGE_KEYS = frozenset({"workers", "force", "fail_on_invalid", "source", "target"})
@@ -96,6 +96,7 @@ class Processor(Service):
         """Return the current BuildPlan."""
         return self.plan
 
+    @timeit
     def step_00_extraction(self):
         """Extract metadata."""
         runtime = self.srvbes.get_dict("runtime")
@@ -248,6 +249,7 @@ class Processor(Service):
                     back.setdefault(path, set()).add((titles.get(source, source), source))
         return {doc: [list(item) for item in sorted(items)] for doc, items in back.items()}
 
+    @timeit
     def step_01_analysis(self):
         """Compilation strategy."""
         analysis = AnalysisResult()
@@ -459,6 +461,7 @@ class Processor(Service):
 
         return K_PATH, KV_PATH
 
+    @timeit
     def step_02_transformation(self):
         """Process all keys/values got from documents.
 

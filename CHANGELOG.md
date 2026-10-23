@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `kb4it build --trace` and `kb4it serve --trace` time each build stage, each processor and deploy step and each document compile. The build prints a table and writes `var/log/trace.json` (Chrome Trace Event format; open it in https://ui.perfetto.dev). Timings no longer go to the log: the `[PERFORMANCE]` debug lines are gone. Logged as `[WORKFLOW] TRACE path=...`.
 - ET-05: skeleton sets for the Add page. The first of `overrides/templates/skeletons/`, the theme's `templates/skeletons/` and the common set (one generic `DOCUMENT` skeleton) that holds a `*-SKELETON.md` is used; sets are never merged. An optional `skeletons.json` sets id, name, description, color, icon and the card order; errors name the file and unlisted files are logged as `[BUILDER] SKELETON_UNLISTED`.
 - ET-11, ET-12: tests for the setting, skeleton sets, the page in each theme and a browser subset on all four themes; the help pages and the offline help describe the editor setting, the skeleton sets and how a custom theme adds the page.
 - ET-10: the apphelp theme builds the Add page when `"editor": true` is set in `repo.json` (off by default). The sidebar links to it with the new label `add` ("Add a page"), and the page ships Tutorial, How-to guide, Reference and Explanation skeletons. Completion also offers the `vocabulary` values, the `DocType` names and the `Layout` names that no document uses yet.

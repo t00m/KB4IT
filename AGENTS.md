@@ -72,7 +72,7 @@ CLI args (or TUI)
             -> Theme.post_deploy_activities()           # runs on the deployed target (stage 8)
 ```
 
-Each `stage_*` method is decorated with `@timeit` so per-stage durations land in the `[PERFORMANCE]` debug log. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `invalid` (documents whose frontmatter could not be read, see `BuildPlan.invalid_docs`), `keys_compiled`, `kv_pages_compiled`, `failed`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
+With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` times each stage, the processor and deployer steps (`@timeit`) and each document compile (`compile` span, one per worker thread) with `kb4it/core/trace.py`, writes `var/log/trace.json` (Chrome Trace Event format) and prints a table; the log never gets timings. Workflow emits a final `[WORKFLOW] SUMMARY` line with `docs_total`, `compiled`, `skipped`, `invalid` (documents whose frontmatter could not be read, see `BuildPlan.invalid_docs`), `keys_compiled`, `kv_pages_compiled`, `failed`, and `[WORKFLOW] TOTAL_TIME elapsed=...`.
 
 **Build outcome.** A page that cannot be compiled or rendered is recorded in `Compiler.failed` (its partial page removed); a page missing from the cache at deploy time in `Deployer.missing`. Every other page is still deployed, then the workflow logs `[WORKFLOW] PAGES_FAILED n=... pages=...` and raises `CompilationError`: `kb4it build` exits 1 and `on_build_end` sees `failed` in its summary. `kbdict.json` is written only by `Backend.commit_kbdict()`, after a build without failures, so a failed or interrupted build leaves the previous cache and the next build compiles the same documents again.
 
@@ -85,13 +85,14 @@ Each `stage_*` method is decorated with `@timeit` so per-stage durations land in
 | `kb4it/core/exceptions.py`        | `KB4ITError`, `ConfigError`, `ThemeError`, `CompilationError` hierarchy |
 | `kb4it/core/service.py`           | Base `Service` class all services inherit |
 | `kb4it/core/types.py`             | `TypedDict` definitions: `Runtime`, `DirPaths`, `DocsInfo`, `KBDict`, `DocumentMeta`, `DBRecord` |
-| `kb4it/core/util.py`              | `@timeit`, page names (`html_id_for`, `source_ext`, `page_name_clashes`), `slugify`, tag cloud sizes, `ellipsize_text`; imports and re-exports (`__all__`) every name of `dates.py`, `documents.py` and `files.py`, so `from kb4it.core.util import ...` keeps working in themes, hooks and templates |
+| `kb4it/core/util.py`              | `@timeit` (a `trace.span` named after the method), page names (`html_id_for`, `source_ext`, `page_name_clashes`), `slugify`, tag cloud sizes, `ellipsize_text`; imports and re-exports (`__all__`) every name of `dates.py`, `documents.py` and `files.py`, so `from kb4it.core.util import ...` keeps working in themes, hooks and templates |
 | `kb4it/core/dates.py`             | `DateCache`, `guess_datetime`, the `get_human_*` and timestamp helpers |
 | `kb4it/core/documents.py`         | Frontmatter and title: `get_document_attributes`, `first_heading` (title rule), `strip_first_heading`, `fences_in_blocks`, `raw_script_lines`, `extract_sections_from_md`, `get_hash_from_body` |
 | `kb4it/core/files.py`             | `valid_filename`, `SOURCE_ENCODING`, copy and delete (`sync_file`, `sync_tree`, `prune_tree` for incremental deploys), `json_load`, `json_save` (atomic: temp file, fsync, `os.replace`), `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`), blake2b hashes. `dates`, `documents` and `files` import nothing from `util` |
 | `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
 | `kb4it/core/mdrich.py`            | `RichContentExtension` (python-markdown, always on; its math processors are off, `math=False`, when `pymdownx.arithmatex` or `markdown_katex` is configured): `mermaid` fences become `<pre class="mermaid">`; `$$` blocks, `$$...$$` and `$...$` become `kb4it-math` elements; `\$` is a literal dollar sign; code is never touched |
 | `kb4it/core/log.py`               | Logging setup, file redirection |
+| `kb4it/core/trace.py`             | Performance traces apart from the log: `start()`, `span(name, **args)` (does nothing when no trace runs), `stop(folder)` writes `trace.json`, `summary(events)` |
 | `kb4it/services/workflow.py`      | Orchestrates build / create / info / list / verify actions |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |
 | `kb4it/services/database.py`      | In-memory document index keyed by docId, metadata caches |
@@ -297,7 +298,7 @@ Stage names and structured events use `[<COMPONENT>] EVENT key=value` form, e.g.
 - `[BACKEND] CONFIG_LOADED`
 - `[BUILDER] TEMPLATE_NOT_FOUND name=PAGE_KEY`
 
-Performance log lines come from `@timeit` and look like `[PERFORMANCE] 0.1234s => Stage stage_03_process_sources`.
+Timings are not logged. `kb4it build --trace` writes them to `var/log/trace.json` and logs only `[WORKFLOW] TRACE path=...`.
 
 ### Key runtime paths
 
@@ -422,7 +423,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 - **Shared theme code.** Code that two document themes need goes into `kb4it/services/themekit/`, with a class attribute or hook method for each difference, not into a copy in each `theme.py`; templates two UIkit themes share go into `kb4it/resources/bases/uikit/templates/`.
 - **Templates are Mako** -- `${var}` and `% for`/`% if`, never `{var}` or `{include:...}`.
 - **`ENV` is frozen** after `env.py` finishes initializing. Do not attempt to write to it from services; raise an `ENV is frozen` error early at runtime.
-- **`@timeit` everything that runs as a stage.** Visible per-stage timing is part of the public observability surface.
+- **Time every step that can be slow** with `@timeit` or `with trace.span(name):`. Timings go to the trace (`--trace`), never to the log.
 - **TUI screens** live in `kb4it/tui/screens/`, one module per screen or pair of small screens, as Textual `Screen` subclasses; a new screen is added to `kb4it/tui/app.py`'s imports and `__all__` only if outside code needs it by that path.
 - **CLI actions** require three touches: (1) argparse subparser in `main.py`, (2) dispatch `elif` in `KB4IT.run()`, (3) method on `Workflow` service in `workflow.py`.
 - **User help.** `help/` is the user documentation, an `apphelp` knowledge base published to https://t00m.github.io/KB4IT/ by `.github/workflows/help.yml`, which builds it with the KB4IT of the same commit. When a change alters what users see (commands, `repo.json` keys, document rules, theme behaviour, the TUI), update the matching page in `help/source/` in the same change, and check it with `kb4it verify help/config/repo.json`. `help/source/dev-help.md` describes how to write the pages.

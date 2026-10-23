@@ -15,6 +15,7 @@ import sys
 import time
 from pathlib import Path
 
+from kb4it.core import trace
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError, ConfigError, KB4ITError, ThemeError
 from kb4it.core.lock import registry_lock
@@ -416,6 +417,24 @@ class Workflow(Service):
         return failed
 
     def build_website(self):
+        """Build the website; with the trace parameter (kb4it build --trace), record its timings in var/log/trace.json."""
+        if not self.app.get_params().get("trace"):
+            self._build_website()
+            return
+        trace.start()
+        try:
+            with trace.span("build"):
+                self._build_website()
+        finally:
+            backend = self.get_service("Backend")
+            result = trace.stop(backend.get_path("log") or ENV["LPATH"]["LOG"])
+            if result is not None:
+                path, events = result
+                self.log.info(f"[WORKFLOW] TRACE path={path}")
+                print("\n".join(trace.summary(events)))
+                print(f"Trace: {path} (open it in https://ui.perfetto.dev)")
+
+    def _build_website(self):
         """Build workflow:
         1. Check environment
         2. Get source documents
@@ -435,18 +454,22 @@ class Workflow(Service):
         self.log.info(f"[WORKFLOW] BUILD theme={repo_theme} repo={repo_title}")
 
         self.log.info("[WORKFLOW] STAGE n=1 name=check_environment")
-        backend.stage_01_check_environment()
+        with trace.span("1 check_environment"):
+            backend.stage_01_check_environment()
         theme = self.get_service("Theme")
 
         # A failed build leaves files in tmp; clear them before anything writes there.
         delete_target_contents(backend.get_path("tmp"))
 
         self.log.info("[WORKFLOW] STAGE n=2 name=get_sources")
-        theme.generate_sources()
-        backend.stage_02_get_source_documents()
+        with trace.span("2 get_sources"):
+            with trace.span("theme.generate_sources"):
+                theme.generate_sources()
+            backend.stage_02_get_source_documents()
 
         self.log.info("[WORKFLOW] STAGE n=3 name=process_sources")
-        backend.stage_03_process_sources()
+        with trace.span("3 process_sources"):
+            backend.stage_03_process_sources()
         plan = backend.get_plan()
         if plan is not None:
             self.log.info(
@@ -456,22 +479,31 @@ class Workflow(Service):
             )
 
         self.log.info("[WORKFLOW] STAGE n=4 name=process_theme")
-        backend.stage_04_process_theme()
+        with trace.span("4 process_theme"):
+            backend.stage_04_process_theme()
 
         self.log.info("[WORKFLOW] STAGE n=5 name=compilation")
-        backend.stage_05_compilation()
+        with trace.span("5 compilation"):
+            backend.stage_05_compilation()
 
         self.log.info("[WORKFLOW] STAGE n=6 name=theme_post")
-        theme.post_activities()
+        with trace.span("6 theme_post"):
+            theme.post_activities()
 
         self.log.info("[WORKFLOW] STAGE n=7 name=deploy")
-        backend.stage_06_deploy()
+        with trace.span("7 deploy"):
+            backend.stage_06_deploy()
 
         self.log.info("[WORKFLOW] STAGE n=8 name=theme_post_deploy")
-        theme.post_deploy_activities()
-        theme.write_search_index()
-        theme.write_sitemap()
-        theme.write_feed()
+        with trace.span("8 theme_post_deploy"):
+            with trace.span("theme.post_deploy_activities"):
+                theme.post_deploy_activities()
+            with trace.span("theme.write_search_index"):
+                theme.write_search_index()
+            with trace.span("theme.write_sitemap"):
+                theme.write_sitemap()
+            with trace.span("theme.write_feed"):
+                theme.write_feed()
 
         # Build summary
         runtime = backend.get_dict("runtime")
@@ -484,7 +516,8 @@ class Workflow(Service):
         kv_compiled   = plan.kv_count if plan is not None else 0
         failed = self._failed_pages()
         if not failed:
-            backend.commit_kbdict()
+            with trace.span("commit_kbdict"):
+                backend.commit_kbdict()
         elapsed = time.perf_counter() - t0
 
         self.log.info(

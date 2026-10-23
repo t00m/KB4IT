@@ -366,6 +366,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Force recompilation of all documents, ignoring content hashes",
     )
+    repo_build.add_argument(
+        "--trace", action="store_true", default=False,
+        help="Time each part of the build and write var/log/trace.json (open it in https://ui.perfetto.dev)",
+    )
 
     # Build, serve and rebuild on change
     repo_serve = subparsers.add_parser(
@@ -388,6 +392,8 @@ def build_parser() -> argparse.ArgumentParser:
                             help="Seconds between checks for changes (default 1.0)")
     repo_serve.add_argument("-f", "--force", action="store_true", default=False,
                             help="Force recompilation of all documents in the first build")
+    repo_serve.add_argument("--trace", action="store_true", default=False,
+                            help="Write var/log/trace.json with the timings of each build")
 
     # Get repository info
     repo_info = subparsers.add_parser(

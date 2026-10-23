@@ -95,7 +95,7 @@ class Server:
         reset_logging()
         build_params = argparse.Namespace(action="build", config=self.config, force=force,
                                           log_level=self.params.get("log_level") or "INFO",
-                                          lock_held=self.holds_lock)
+                                          lock_held=self.holds_lock, trace=bool(self.params.get("trace")))
         collector = _ErrorCollector()
         error = ""
         try:

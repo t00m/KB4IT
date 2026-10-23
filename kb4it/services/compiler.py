@@ -16,6 +16,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor as Executor
 from typing import Any
 
+from kb4it.core import trace
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
@@ -23,7 +24,7 @@ from kb4it.core.mdconfig import load_settings, sanitize_html
 from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
-                              html_id_for, source_ext, strip_first_heading)
+                              html_id_for, source_ext, strip_first_heading, timeit)
 
 # Callbacks of a build come with it: KB4IT(params) takes "progress_callback", called per
 # document with (basename: str, rc: bool), and "compile_start_callback", called once with the
@@ -126,7 +127,7 @@ class Compiler(Service):
                     "num": num,
                 }
                 self.log.debug(f"[COMPILER] QUEUE doc={basename} format={fmt}")
-                job = exe.submit(self._compile_md, data)
+                job = exe.submit(self._compile_job, data)
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
                 num += 1
@@ -141,6 +142,7 @@ class Compiler(Service):
                 self.log.debug("[COMPILER] NOTHING_TO_COMPILE")
             self.log.debug("[COMPILER] END")
 
+    @timeit
     def check_links(self):
         """Warn about links to Markdown documents that do not exist."""
         known = set(self.srvbes.get_value("docs", "filenames") or [])
@@ -149,6 +151,11 @@ class Compiler(Service):
             for path, _fragment in links:
                 if os.path.normpath(path) not in known:
                     self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
+
+    def _compile_job(self, data):
+        """Compile one document in a worker thread; the trace records each one as a compile span."""
+        with trace.span("compile", doc=os.path.basename(data["doc"])):
+            return self._compile_md(data)
 
     def _compile_md(self, data):
         """Compile a Markdown file in-process via python-markdown.
