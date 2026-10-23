@@ -3,6 +3,7 @@
 # ruff: noqa: DTZ005  # KB4IT works with naive local datetimes
 
 import json
+import re
 import shutil
 import zipfile
 from datetime import datetime, timedelta
@@ -82,6 +83,15 @@ def test_landing_page_order(site):
     html = read(site, "index.html")
     marks = ["kb-hero-bar", "kb-diataxis-card", "Open items"]
     assert [html.index(m) for m in marks] == sorted(html.index(m) for m in marks)
+
+
+def test_landing_page_sections_fold_except_counts_and_doctypes(site):
+    html = read(site, "index.html")
+    folding = re.findall(r'<details class="kb-section kb-collapsible" data-kb-section="([\w-]+)" open>', html)
+    assert folding == ["open-items", "changes-incidents", "upcoming-events", "monitoring", "recent-events"]
+    assert html.count("<details") == html.count("</details>")
+    head = html[:html.index("<details")]
+    assert "kb-hero-bar" in head and "kb-diataxis-card" in head
 
 
 def test_metadata_pages(site):

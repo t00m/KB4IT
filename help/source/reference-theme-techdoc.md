@@ -40,6 +40,8 @@ The home page shows, from top to bottom:
 - **Upcoming events** for this month and the next, and recent events from the last month.
 - **Monitoring**: recurring checks grouped by periodicity.
 
+Every section except the counts and the four document types folds when you click its title. The browser remembers which sections you folded.
+
 ## Document pages {#document}
 
 ![A techdoc document](resources/images/techdoc-page.webp)

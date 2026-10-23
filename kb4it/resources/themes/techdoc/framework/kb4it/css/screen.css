@@ -353,6 +353,23 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
    ========================================================================== */
 .kb-index { font-size: 14px; }
 .kb-index .kb-section { margin-bottom: 20px; }
+/* Collapsible dashboard sections: the title folds and unfolds the panel. */
+.kb-index .kb-collapsible > summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+.kb-index .kb-collapsible > summary::-webkit-details-marker { display: none; }
+.kb-index .kb-collapsible > summary::before {
+    content: '\25BA';
+    font-size: 0.55rem;
+    transition: transform 0.15s ease;
+}
+.kb-index .kb-collapsible[open] > summary::before { transform: rotate(90deg); }
+.kb-index .kb-collapsible > summary:hover { color: #1e87f0; }
 .kb-index .kb-panel {
     background: #fff;
     border-radius: 6px;

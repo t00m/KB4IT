@@ -71,8 +71,8 @@ def category_url(category):
 
     <!-- 2b. OPEN ITEMS -->
 % if var['page']['open_items']:
-    <section class="kb-section">
-        <h2 class="kb-section-title">Open items</h2>
+    <details class="kb-section kb-collapsible" data-kb-section="open-items" open>
+        <summary class="kb-section-title">Open items</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
             <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
                 <tbody>
@@ -96,11 +96,12 @@ def category_url(category):
                 </tbody>
             </table>
         </div>
-    </section>
+    </details>
 % endif
 
     <!-- 3. CHANGES & INCIDENTS BAR -->
-    <section class="kb-section">
+    <details class="kb-section kb-collapsible" data-kb-section="changes-incidents" open>
+        <summary class="kb-section-title">Changes and incidents</summary>
         <div class="kb-alert-bar">
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-changes">
@@ -152,11 +153,11 @@ def category_url(category):
 % endif
             </div>
         </div>
-    </section>
+    </details>
 
     <!-- 4. UPCOMING EVENTS -->
-    <section class="kb-section">
-        <h2 class="kb-section-title">Upcoming events</h2>
+    <details class="kb-section kb-collapsible" data-kb-section="upcoming-events" open>
+        <summary class="kb-section-title">Upcoming events</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
             <div class="uk-grid-small" uk-grid>
 % for side in ('current', 'next'):
@@ -186,12 +187,12 @@ def category_url(category):
 % endfor
             </div>
         </div>
-    </section>
+    </details>
 
     <!-- 4b. MONITORING -->
 % if var['page']['monitoring_panel']:
-    <section class="kb-section">
-        <h2 class="kb-section-title">Monitoring</h2>
+    <details class="kb-section kb-collapsible" data-kb-section="monitoring" open>
+        <summary class="kb-section-title">Monitoring</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
 % if len(var['page']['monitoring_panel']) == 0:
             <div class="kb-events-empty">No monitoring articles found.</div>
@@ -220,12 +221,12 @@ def category_url(category):
             </div>
 % endif
         </div>
-    </section>
+    </details>
 % endif
 
     <!-- 5. RECENT EVENTS -->
-    <section class="kb-section">
-        <h2 class="kb-section-title">Recent events</h2>
+    <details class="kb-section kb-collapsible" data-kb-section="recent-events" open>
+        <summary class="kb-section-title">Recent events</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
 % if len(var['page']['recent_events']) == 0:
             <div class="kb-events-empty">No events in the past month.</div>
@@ -247,6 +248,16 @@ def category_url(category):
             </table>
 % endif
         </div>
-    </section>
+    </details>
 
 </div>
+<script>
+    // Remember which dashboard sections the reader folded, in this browser only.
+    document.querySelectorAll("details.kb-collapsible").forEach(function (box) {
+        var key = "kb4it-dashboard-" + box.dataset.kbSection;
+        try { if (localStorage.getItem(key) === "closed") { box.open = false; } } catch (e) {}
+        box.addEventListener("toggle", function () {
+            try { if (box.open) { localStorage.removeItem(key); } else { localStorage.setItem(key, "closed"); } } catch (e) {}
+        });
+    });
+</script>
