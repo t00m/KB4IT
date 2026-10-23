@@ -114,9 +114,10 @@ table.month tbody tr th {
 }
 .kb4it-page-action:hover { background: #dbeafe; color: #1e87f0; }
 .kb4it-title-toc { padding: 10px 12px 14px; }
-.kb4it-title-toc ul { list-style: none; margin: 0; padding: 0; }
-.kb4it-title-toc ul ul { padding-left: 16px; border-left: 1px solid #e2e8f0; margin-left: 8px; }
-.kb4it-title-toc a {
+/* Table of contents entries: the title menu and the panel at the top of a document. */
+.kb4it-title-toc ul, .kb-toc-nav ul { list-style: none; margin: 0; padding: 0; }
+.kb4it-title-toc ul ul, .kb-toc-nav ul ul { padding-left: 16px; border-left: 1px solid #e2e8f0; margin-left: 8px; }
+.kb4it-title-toc a, .kb-toc-nav a {
     display: block;
     padding: 3px 8px;
     border-radius: 3px;
@@ -124,9 +125,9 @@ table.month tbody tr th {
     line-height: 1.4;
     color: #374151;
 }
-.kb4it-title-toc > ul > li > a { font-weight: 600; color: #1f2937; margin-top: 4px; }
-.kb4it-title-toc ul ul a { font-size: 0.84rem; color: #4b5563; }
-.kb4it-title-toc a:hover { background: #dbeafe; color: #1e87f0; text-decoration: none; }
+.kb4it-title-toc > ul > li > a, .kb-toc-nav > ul > li > a { font-weight: 600; color: #1f2937; margin-top: 4px; }
+.kb4it-title-toc ul ul a, .kb-toc-nav ul ul a { font-size: 0.84rem; color: #4b5563; }
+.kb4it-title-toc a:hover, .kb-toc-nav a:hover { background: #dbeafe; color: #1e87f0; text-decoration: none; }
 
 /* Search dialog: the shared search box fills the dialog and its results flow below it. */
 #kb4it-search-modal .kb4it-search { display: block; }
@@ -324,45 +325,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     max-height: 360px;
 }
 
-.kb-toc-nav ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.kb-toc-nav li {
-    margin: 1px 0;
-}
-
-.kb-toc-nav .uk-nav-default > li > a,
-.kb-toc-nav a {
-    font-size: 0.84rem;
-    color: #374151;
-    text-decoration: none;
-    display: block;
-    padding: 3px 8px;
-    border-radius: 3px;
-    transition: background 0.1s ease, color 0.1s ease;
-}
-
-.kb-toc-nav a:hover {
-    background: #dbeafe;
-    color: #1e87f0;
-}
-
-.kb-toc-nav .uk-nav-sub {
-    padding-left: 14px;
-}
-
-.kb-toc-nav .uk-nav-sub a,
-.kb-toc-nav .uk-nav-sub li a {
-    font-size: 0.79rem;
-    color: #6b7280;
-}
-
-.kb-toc-nav .uk-nav-sub a:hover {
-    color: #1e87f0;
-}
+/* Its entries share the title menu rules (.kb4it-title-toc). */
 
 /* ==========================================================================
    Landing page (PAGE_INDEX) — compact layout
