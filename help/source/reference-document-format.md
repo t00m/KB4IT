@@ -40,6 +40,7 @@ The title is the first `# ` line outside code blocks: a `# comment` in a fenced 
 | `Tag: backup, postgresql` | two values |
 | `Tag:` | no values |
 | `Summary: "Backups: how they run"` | one value; the quotes are needed because of `: ` |
+| `Bookmark: Yes` | one value, `Yes`; `yes`, `no`, `on`, `off`, `true` and `false` stay as you write them |
 
 ## Dates {#dates}
 

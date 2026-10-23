@@ -8,7 +8,7 @@ var KB4ITFrontmatter = (function () {
   var H1_RE = /^#[ \t]+(\S.*?)[ \t]*$/;
   var KEY_RE = /^(?!-[ \t])([^\s#:][^:]*?):(?:[ \t]+(.*))?$/;
   var NUMBER_RE = /^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/;
-  var RESERVED_RE = /^(true|false|yes|no|null|on|off|~)$/i;
+  var RESERVED_RE = /^(null|~)$/i;
   var INDICATORS = "[]{}&*!|>'\"%@`";
 
   // Same rule as the build (documents.get_markdown_attributes): the text starts with
@@ -107,8 +107,6 @@ var KB4ITFrontmatter = (function () {
   }
 
   var NULLS = ["null", "Null", "NULL", "~"];
-  var TRUES = ["true", "True", "TRUE", "yes", "Yes", "YES", "on", "On", "ON"];
-  var FALSES = ["false", "False", "FALSE", "no", "No", "NO", "off", "Off", "OFF"];
   var INT_RE = /^(0|-?[1-9][0-9]*)$/;
   var DATE_RE = /^\d{4}-\d\d?-\d\d?$/;
   var NUMERIC_RE = [
@@ -130,13 +128,12 @@ var KB4ITFrontmatter = (function () {
     return t === s;
   }
 
-  // How yaml.safe_load reads a plain scalar, as the build then sees it: {v: text},
+  // How the build's loader (documents.load_frontmatter) reads a plain scalar: {v: text},
   // {skip: true} for null, or null when the text is a number or timestamp that the
-  // build would turn into something else (the property is then complex).
+  // build would turn into something else (the property is then complex). Yes, no, on, off,
+  // true and false stay as written.
   function resolve(s) {
     if (s === "" || NULLS.indexOf(s) >= 0) { return { skip: true }; }
-    if (TRUES.indexOf(s) >= 0) { return { v: "True" }; }
-    if (FALSES.indexOf(s) >= 0) { return { v: "False" }; }
     if (INT_RE.test(s) || DATE_RE.test(s) || canonicalDecimal(s)) { return { v: s }; }
     for (var i = 0; i < NUMERIC_RE.length; i++) {
       if (NUMERIC_RE[i].test(s) && /[0-9.]/.test(s)) { return null; }

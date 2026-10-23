@@ -122,8 +122,9 @@ def test_bounds_offsets():
 
 
 QUOTED = ["[x", "]", "{", "}", "&a", "*a", "!a", "|a", ">a", "'a", '"a', "%a", "@a", "`a", "- a", "a: b",
-          "a #b", "true", "False", "yes", "NO", "null", "~", "12", "1.5", "-3"]
-PLAIN = ["sap", "a-b", "a#b", "SAP Basis", "2026-10-22"]
+          "a #b", "null", "~", "12", "1.5", "-3"]
+# Yes and no stay as written in the build (documents.load_frontmatter), so they need no quotes.
+PLAIN = ["sap", "a-b", "a#b", "SAP Basis", "2026-10-22", "true", "False", "yes", "NO", "on"]
 
 
 @pytest.mark.parametrize("value", QUOTED)
@@ -142,10 +143,10 @@ def test_quote_escapes_backslash_and_quote():
 
 
 def _build_values_doc(doc_text, key):
-    import yaml
+    from kb4it.core.documents import load_frontmatter
 
     fm = doc_text.split("\n---", 1)[0][3:]
-    value = yaml.safe_load(fm)[key]
+    value = load_frontmatter(fm)[key]
     if value is None:
         return []
     if isinstance(value, list):
@@ -242,9 +243,9 @@ def test_file_name_fallback():
 
 def _build_values(raw):
     """What the build makes of `K: <raw>`, or None when the property must be complex."""
-    import yaml
+    from kb4it.core.documents import load_frontmatter
 
-    value = yaml.safe_load("K: " + raw)["K"]
+    value = load_frontmatter("K: " + raw)["K"]
     if value is None:
         return []
     if isinstance(value, list):
@@ -434,10 +435,10 @@ def _apply(text, pos, option, result):
 
 
 def _doc_values(doc_text):
-    import yaml
+    from kb4it.core.documents import load_frontmatter
 
     fm = doc_text.split("\n---", 1)[0][3:]
-    value = yaml.safe_load(fm)["Tag"]
+    value = load_frontmatter(fm)["Tag"]
     if value is None:
         return []
     if isinstance(value, list):

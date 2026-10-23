@@ -7,6 +7,7 @@ import math
 import os
 from typing import Any
 
+from kb4it.core.documents import is_yes
 from kb4it.core.util import set_max_frequency, valid_filename
 from kb4it.services.themekit.host import ThemeHost
 
@@ -165,14 +166,14 @@ class KeyPagesMixin(ThemeHost):
         self._add_system_page('stats', 'Stats')
 
     def build_page_bookmarks(self) -> str | None:
-        """Create the bookmarks page: documents with Bookmark set to Yes or True."""
+        """Create the bookmarks page: documents with Bookmark set to Yes, True or On, in any case."""
         if self._reuse_cached_page('bookmarks', 'ncd', 'no_doc_changes', 'build_page_bookmarks'):
             return None
         var = self.get_theme_var()
         doclist = []
         for docId in self.srvdtb.get_documents():
             bookmark = (self.srvdtb.get_values(docId, 'Bookmark') or [''])[0]
-            doc_bookmarked = bookmark in ('Yes', 'True')
+            doc_bookmarked = is_yes(bookmark)
             self.log.debug(f"[THEME] BOOKMARK_CHECK doc={docId} bookmark={bookmark} is_bookmarked={doc_bookmarked}")
             if doc_bookmarked:
                 doclist.append(docId)

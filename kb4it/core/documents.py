@@ -19,6 +19,33 @@ from kb4it.core.log import get_logger
 
 log = get_logger("Util")
 
+
+class _FrontmatterLoader(yaml.SafeLoader):
+    """SafeLoader that keeps yes, no, on, off, true and false as written.
+
+    YAML 1.1 reads them as booleans, which str() turns into True and False: "Bookmark: Yes" made the
+    page Bookmark_True.html. A header value is text, so the author's word is kept.
+    """
+
+
+_FrontmatterLoader.yaml_implicit_resolvers = {
+    first: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:bool"]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+YES_VALUES = ("yes", "true", "on")
+
+
+def load_frontmatter(text: str) -> Any:
+    """Read a frontmatter block as the build does: safe YAML, with yes and no kept as text."""
+    return yaml.load(text, Loader=_FrontmatterLoader)  # a SafeLoader subclass: safe
+
+
+def is_yes(value: Any) -> bool:
+    """True for a header value that means yes (Yes, true, On, in any case), as Bookmark uses it."""
+    return str(value).strip().lower() in YES_VALUES
+
+
 def extract_sections_from_md(file_path: str) -> dict[str, dict[str, int]]:
     """Extract H2 sections from a Markdown file.
 
@@ -200,7 +227,7 @@ def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, s
         fm_text = content[3:end].strip()
         body = content[end + 4:].lstrip("\n")
 
-        fm = yaml.safe_load(fm_text) if fm_text else {}
+        fm = load_frontmatter(fm_text) if fm_text else {}
         if not isinstance(fm, dict):
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=invalid_frontmatter")
             return {}, False, "invalid_frontmatter"

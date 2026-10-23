@@ -3,6 +3,7 @@
 from calendar import monthrange
 from datetime import datetime, timedelta
 
+from kb4it.core.documents import is_yes
 from kb4it.core.util import guess_datetime, html_id_for, valid_filename
 
 PRIORITY_RANK = {
@@ -92,7 +93,7 @@ class DashboardMixin:
                 continue
             count_docs += 1
             bookmark = self.srvdtb.get_values(docId, 'Bookmark')[0]
-            if bookmark in ('Yes', 'True'):
+            if is_yes(bookmark):
                 count_bookmarks += 1
 
         count_authors = len(self.srvdtb.get_all_values_for_key('Author'))
