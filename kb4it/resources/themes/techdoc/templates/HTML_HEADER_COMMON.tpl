@@ -44,6 +44,15 @@
             });
         });
     </script>
+    <%
+        # Print footer: the page title as a CSS string. Escape backslashes and quotes, and "<" so
+        # "</style>" cannot close the block.
+        _footer = ' '.join(str(var['page']['title']).split())
+        _footer = _footer.replace('\\', '\\\\').replace('"', '\\"').replace('<', '\\3c ')
+    %>
+    <style media="print">
+        @page { @bottom-left { content: "${_footer | n}"; } }
+    </style>
 </head>
 <body>
 <!-- Template version ${var['env']['APP']['version']} -->

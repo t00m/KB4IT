@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from tests.helpers import page, run_kb4it
+from tests.themes.test_techdoc_add import build_techdoc
 
 TODAY = datetime.now()
 
@@ -129,6 +130,17 @@ def test_print_hides_tooltips_and_uses_sans_serif(site):
     assert ".uk-tooltip," in hidden and ".uk-navbar-dropdown," in hidden
     assert "Georgia" not in css and "sans-serif" in css
     assert "attr(href)" not in css  # links print as text only
+
+
+def test_print_footer_has_title_and_page_numbers(site, tmp_path):
+    css = (site["target"] / "resources/themes/techdoc/framework/kb4it/css/print.css").read_text(encoding="utf-8")
+    assert 'content: counter(page) "/" counter(pages);' in css
+    assert '@page { @bottom-left { content: "Check backups"; } }' in read(site, "monitor.html")
+    home = tmp_path / "home"
+    home.mkdir()
+    target = build_techdoc(tmp_path, home, {"x.md": page('Use "q" \\ and </style><b>', Category="Note")})
+    html = (target / "x.html").read_text(encoding="utf-8")
+    assert '@page { @bottom-left { content: "Use \\"q\\" \\\\ and \\3c /style>\\3c b>"; } }' in html
 
 
 def test_datatable_labels_are_badges(site):
