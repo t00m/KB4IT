@@ -128,6 +128,7 @@ def test_print_hides_tooltips_and_uses_sans_serif(site):
     hidden = css[:css.index("display: none !important;")]
     assert ".uk-tooltip," in hidden and ".uk-navbar-dropdown," in hidden
     assert "Georgia" not in css and "sans-serif" in css
+    assert "attr(href)" not in css  # links print as text only
 
 
 def test_datatable_labels_are_badges(site):

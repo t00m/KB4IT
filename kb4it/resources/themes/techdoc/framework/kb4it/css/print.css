@@ -239,22 +239,9 @@
     .sect1 + .sect1 { margin-top: 12pt; }
 
     /* -----------------------------------------------------------------------
-       Links: append URL after link text, skip anchors and js links
+       Links: no URL after the text; a PDF keeps them clickable
     ----------------------------------------------------------------------- */
-    a[href]::after {
-        content: " (" attr(href) ")";
-        font-size: 7.5pt;
-        color: #555;
-        font-style: italic;
-        word-break: break-all;
-    }
-
-    a[href^="#"]::after,
-    a[href^="javascript"]::after,
-    [uk-icon]::after,
-    .uk-icon::after {
-        content: "" !important;
-    }
+    a[href]::after { content: none !important; }
 
     /* -----------------------------------------------------------------------
        Code blocks — readable on paper, no neon colours
