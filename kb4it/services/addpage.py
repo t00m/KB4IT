@@ -1,4 +1,4 @@
-"""The Add page (add.html) of the editor: the `editor` setting and its stale page."""
+"""The Add page (add.html) of the editor: the `editor` setting, the skeletons and the whole page."""
 
 import json
 import os
@@ -19,16 +19,30 @@ def check_editor_setting(repo: dict) -> None:
         raise ConfigError("repo.json 'editor' must be true or false")
 
 
+def check_theme_editor(theme: dict) -> None:
+    """Raise ThemeError when theme.json 'editor' is set to anything but true or false."""
+    if "editor" in theme and not isinstance(theme["editor"], bool):
+        name = theme.get("id") or theme.get("name") or "?"
+        raise ThemeError(f"Theme {name}: theme.json 'editor' must be true or false")
+
+
+def editor_on(repo: dict, theme: dict) -> bool:
+    """True when repo.json 'editor' is true, or when it is unset and theme.json 'editor' is true."""
+    if "editor" in repo:
+        return repo["editor"] is True
+    return theme.get("editor") is True
+
+
 class AddPageMixin:
-    """Builder part that decides whether the Add page exists and which skeletons it offers."""
+    """Builder part that decides whether the Add page exists and builds it with its skeletons."""
+
+    add_page = False   # a Theme class sets True when it builds the Add page (create_page_add())
 
     def editor_enabled(self) -> bool:
-        """repo.json 'editor' when set, otherwise the theme default ("editor" in theme.json, false if missing)."""
-        theme = self.srvbes.get_dict("theme") or {}
-        repo = self.srvbes.get_dict("repo") or {}
-        if "editor" in repo:
-            return repo["editor"] is True
-        return theme.get("editor") is True
+        """True when the theme class supports the Add page and the editor setting is on."""
+        if not self.add_page:
+            return False
+        return editor_on(self.srvbes.get_dict("repo") or {}, self.srvbes.get_dict("theme") or {})
 
     def remove_stale_add_page(self) -> None:
         """Remove add.html left by an earlier build from the target and the cache."""
@@ -53,10 +67,6 @@ class AddPageMixin:
         self.srvdtb.add_document(ADD_DOC)
         self.srvdtb.add_document_key(ADD_DOC, "Title", "Add document")
         self.srvdtb.add_document_key(ADD_DOC, "SystemPage", "Yes")
-
-    def add_page_html(self) -> str:
-        """Return the body of the Add page, rendered with the theme's or the common PAGE_ADD template."""
-        return self._render_add_page()[0]
 
     def _render_add_page(self) -> tuple[str, str, int]:
         """Return (html, skeleton source, number of categories) of the Add page."""
@@ -114,10 +124,14 @@ class AddPageMixin:
                 entry["file"] = f"{entry['id'].upper()}{SUFFIX}"
         else:
             entries = []
+            ids = {}
             for name in files:
                 cat_id = name[:-len(SUFFIX)].lower()
                 if not SKELETON_ID.match(cat_id):
                     raise ThemeError(f"{os.path.join(folder, name)}: id '{cat_id}' must match ^[a-z][a-z0-9-]*$")
+                if cat_id in ids:
+                    raise ThemeError(f"{folder}: {ids[cat_id]} and {name} give the same id '{cat_id}'")
+                ids[cat_id] = name
                 entries.append({"id": cat_id, "file": name})
             entries.sort(key=lambda e: e["id"])
         categories = []

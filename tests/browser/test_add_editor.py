@@ -501,6 +501,7 @@ def test_body_does_not_scroll_while_open(add_page):
     open_cat(add_page, "note")
     assert add_page.evaluate(overflow) == "hidden"
     close_cat(add_page, "note")
+    add_page.wait_for_function("!document.body.classList.contains('kb-dialog-lock')")
     assert add_page.evaluate(overflow) != "hidden"
 
 

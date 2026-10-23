@@ -26,6 +26,8 @@ SIGNATURE_REPO_KEYS = ("title", "tagline", "version", "logo", "logo_alt", "git",
 
 
 class Theme(Builder):
+    add_page = True   # create_page_add() runs in build()
+
     def _initialize(self):
         super()._initialize()
         self.config = load_config({})
@@ -81,7 +83,7 @@ class Theme(Builder):
 
     def register_add_page(self, html):
         """Emit add.html through _emit() so build_page wraps it like the other theme pages."""
-        self._emit("add", "Add document", html)
+        self._emit("add", self.config.labels["add"], html)
 
     def editor_keys(self) -> dict:
         """Completion data of the documents plus the allowed values no document uses yet, with count 0."""

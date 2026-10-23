@@ -358,7 +358,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
 
     def sitemap_exclude(self) -> set:
         """Pages left out of sitemap.xml; themes may add their own."""
-        return {"404.html", "search.html"}
+        return {"404.html", "search.html", "add.html"}
 
     def page_dates(self) -> dict:
         """'page.html' -> 'YYYY-MM-DD' for documents with a Date."""

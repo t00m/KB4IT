@@ -32,7 +32,7 @@ def test_apphelp_add_page(tmp_path, home):
     assert result.returncode == 0, result.stdout
     html = (repo / "target" / "add.html").read_text(encoding="utf-8")
     assert "ah-sidebar" in html
-    assert "<title>Add document | Test</title>" in html
+    assert "<title>Add a page | Test</title>" in html
     for cat in ("tutorial", "howto", "reference", "explanation"):
         assert f'id="modal-add-{cat}"' in html
     assert "[BUILDER] ADD_PAGE enabled=True skeletons=theme categories=4" in result.stdout

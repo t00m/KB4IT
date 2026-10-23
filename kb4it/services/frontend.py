@@ -15,6 +15,7 @@ import sys
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
+from kb4it.services.addpage import check_theme_editor
 from kb4it.core.version import requirement_satisfied
 
 
@@ -138,6 +139,7 @@ class Frontend(Service):
                 return None
 
             self._check_requirement(theme)
+            check_theme_editor(theme)
 
             # Get theme directories
             self.runtime["theme"]["templates"] = os.path.join(

@@ -82,6 +82,7 @@ class Theme(DocumentTheme):
 
     tagcloud_scale_skips_empty = True
     reserved_pages = ('404.md',)  # build() writes 404.html
+    add_page = True   # create_page_add() runs in build()
     datatable_link_template = 'LINK'
     datatable_default_headers = ('Date', 'Title', 'Chapter')
 

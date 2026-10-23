@@ -219,27 +219,32 @@ The theme version is not in `theme.json`. KB4IT gives every theme its own versio
 
 ## Add the editor page {#editor}
 
-The [Add page](howto-write-document-editor.md) is built by KB4IT. `Builder` includes it through `AddPageMixin`, so any theme can have it with three steps.
+The [Add page](howto-write-document-editor.md) is built by KB4IT. `Builder` includes it through `AddPageMixin`, so any theme can have it with four steps.
 
-1. Call `self.create_page_add()` in `build()`. It builds `add.html` when the editor is on and removes a stale one when it is off:
+1. Set the class attribute `add_page = True` on your `Theme` class. Without it the editor is off, whatever `repo.json` says, and `add.md` stays a normal page:
+
+        class Theme(Builder):
+            add_page = True
+
+2. Call `self.create_page_add()` in `build()`. It builds `add.html` when the editor is on and removes a stale one when it is off:
 
         def build(self):
             ...
             self.create_page_add()
 
-2. Link to `add.html` where your layout shows its links, only when `var['editor']` is true:
+3. Link to `add.html` where your layout shows its links, only when `var['editor']` is true:
 
         % if var['editor']:
         <a href="add.html">Add document</a>
         % endif
 
-3. Make `build_page()` wrap the page like it wraps `search.html`. The page starts with `<!-- kb4it:theme-html -->`, which marks HTML the theme made itself. A theme that wraps its own pages in another way can override `register_add_page(html)`; apphelp does.
+4. Make `build_page()` wrap the page like it wraps `search.html`. The page starts with `<!-- kb4it:theme-html -->`, which marks HTML the theme made itself. A theme that wraps its own pages in another way can override `register_add_page(html)`; apphelp does.
 
 Optionally, ship skeletons in `templates/skeletons/`: `*-SKELETON.md` files and a `skeletons.json`, as described in [Use your own skeletons](howto-write-document-editor.md#skeletons). Without them the cards come from the common set. Set `"editor": true` in `theme.json` to have the page on by default, and require `"kb4it": ">=0.10.0"`.
 
 The page uses the common `PAGE_ADD.tpl`; put a `PAGE_ADD.tpl` in `templates/` to replace the cards. Do not replace `EDITOR_DIALOGS.tpl`. To offer more values in completion, override `editor_keys()`.
 
-A theme that does not call `create_page_add()` never gets the page, whatever `repo.json` says.
+A theme that does not set `add_page = True` and call `create_page_add()` never gets the page, whatever `repo.json` says.
 
 ## Add your own checks {#verify}
 

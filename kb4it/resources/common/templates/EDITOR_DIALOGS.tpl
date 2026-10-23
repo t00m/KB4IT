@@ -13,9 +13,9 @@
             <span class="kb-dialog-desc">${cat['description']}</span>
             <div class="kb-dialog-actions">
                 <button id="kb-save-${cat['id']}" class="kb-btn kb-btn-primary kb-btn-small" type="button"
-                        data-kb-save="${cat['id']}"><span class="kb-save-label">Save</span></button>
+                        data-kb-save="${cat['id']}"><svg class="kb-btn-icon" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><polyline points="14,10 9.5,14.5 5,10"/><rect width="13" height="1" x="3" y="17" fill="currentColor" stroke="none"/><line x1="9.5" y1="13.91" x2="9.5" y2="3"/></svg><span class="kb-save-label">Save</span></button>
                 <button class="kb-btn kb-btn-small" type="button"
-                        data-kb-copy="${cat['id']}">Copy</button>
+                        data-kb-copy="${cat['id']}"><svg class="kb-btn-icon" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><rect width="12" height="16" x="3.5" y="2.5"/><polyline points="5 0.5 17.5 0.5 17.5 17"/></svg>Copy</button>
                 <button class="kb-btn kb-btn-small" type="button"
                         data-kb-close="${cat['id']}">Close</button>
             </div>

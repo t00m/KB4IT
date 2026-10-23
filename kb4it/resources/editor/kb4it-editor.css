@@ -400,6 +400,7 @@ body.kb-dialog-lock { overflow: hidden; }
 .kb-dialog-dark .kb-btn-primary { color: #fff; background: #1e87f0; border-color: #1e87f0; }
 .kb-dialog-dark .kb-btn-link { color: #58a6ff; background: none; border: 0; }
 .kb-dialog-dark .kb-input, .kb-dialog-dark .kb-select { color: #d4d4d4; background: #1e1e1e; border-color: #444; }
+.kb-btn-icon { flex: none; }
 .kb-tb-btn svg { display: block; width: 16px; height: 16px; }
 
 /* ── Toasts (ET-02) ── */
