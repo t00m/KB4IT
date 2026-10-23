@@ -195,8 +195,8 @@
     .kb-h2 {
         font-size: 15pt !important;
         color: #000 !important;
-        border-left: 4pt solid #333 !important;
-        padding: 4pt 8pt 4pt 10pt !important;
+        border-left: none !important;
+        padding: 4pt 0 !important;
         margin: 10pt 0 4pt 0 !important;
         display: block !important;
     }
@@ -204,16 +204,16 @@
     .kb-h3 {
         font-size: 12.5pt !important;
         color: #000 !important;
-        border-left: 3pt solid #666 !important;
-        padding: 3pt 6pt 3pt 8pt !important;
+        border-left: none !important;
+        padding: 3pt 0 !important;
         font-style: normal !important;
     }
 
     .kb-h4 {
         font-size: 11pt !important;
         color: #000 !important;
-        border-left: 2pt solid #999 !important;
-        padding: 2pt 4pt 2pt 8pt !important;
+        border-left: none !important;
+        padding: 2pt 0 !important;
     }
 
     .kb-h2::after, .kb-fold-toggle::before { content: none !important; }
