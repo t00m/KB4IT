@@ -27,6 +27,7 @@ DEFAULT_LABELS = {
     "results": "results",
     "no_results": "No pages match your search.",
     "topics": "Topics",
+    "add": "Add a page",
     "topics_intro": "Every page, grouped by feature.",
     "on_this_page": "On this page",
     "previous": "Previous",

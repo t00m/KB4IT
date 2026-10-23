@@ -1,0 +1,30 @@
+[
+  {
+    "id": "tutorial",
+    "name": "Tutorial",
+    "description": "A lesson that takes the reader through a series of steps.",
+    "color": "#32d296",
+    "icon": "play-circle"
+  },
+  {
+    "id": "howto",
+    "name": "How-to guide",
+    "description": "A recipe that solves one specific problem.",
+    "color": "#1e87f0",
+    "icon": "list"
+  },
+  {
+    "id": "reference",
+    "name": "Reference",
+    "description": "A dry, structured description of settings, shortcuts or plugins.",
+    "color": "#888888",
+    "icon": "album"
+  },
+  {
+    "id": "explanation",
+    "name": "Explanation",
+    "description": "Background that clarifies how or why something works.",
+    "color": "#faa05a",
+    "icon": "info"
+  }
+]

@@ -8,7 +8,7 @@ from apphelp_checks import (check_anchors, check_contract, check_helpids, helpid
                             render_helpids_js)
 from apphelp_config import load_config
 from apphelp_html import transform
-from apphelp_meta import (DOCTYPES, LANDING, Problem, feature_anchor, is_classified, is_content, page_from_keys,
+from apphelp_meta import (DOCTYPES, LANDING, LAYOUTS, Problem, feature_anchor, is_classified, is_content, page_from_keys,
                           validate_all)
 from apphelp_nav import build_sections, flatten, neighbours, related_pages
 from apphelp_search import extract_sections, page_record, render_index_js
@@ -74,9 +74,33 @@ class Theme(Builder):
         self._emit("search", labels["search"], self._render("PAGE_SEARCH", {}))
         self._emit("go", labels["go_title"], self._render("PAGE_GO", {}))
         self._emit("404", labels["not_found_title"], self._render("PAGE_404", {}))
+        self.create_page_add()
         if self.config.about:
             self.create_page_about_kb4it()
             self.create_page_about_app()
+
+    def create_page_add(self):
+        """Emit add.html through _emit() when the editor is on, so build_page wraps it; else remove a stale one."""
+        if not self.editor_enabled():
+            self.remove_stale_add_page()
+            self.log.info("[BUILDER] ADD_PAGE enabled=False")
+            return
+        html, source, count = self._render_add_page()
+        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={source} categories={count}")
+        self._emit("add", "Add document", html)
+
+    def editor_keys(self) -> dict:
+        """Completion data of the documents plus the allowed values no document uses yet, with count 0."""
+        keys = super().editor_keys()
+        allowed = {name: list(values) for name, values in self.config.vocabulary.items()}
+        allowed["DocType"] = list(DOCTYPES)
+        allowed["Layout"] = list(LAYOUTS)
+        for name, values in allowed.items():
+            seen = {item["v"] for item in keys.get(name, [])}
+            extra = [{"v": value, "c": 0} for value in values if value not in seen]
+            if extra:
+                keys[name] = sorted(keys.get(name, []) + extra, key=lambda item: item["v"])
+        return keys
 
     def _leave_out(self, doc_id):
         """Keep a page without a valid type of document out of the site: not compiled, not deployed."""
@@ -127,6 +151,7 @@ class Theme(Builder):
             "assets": ASSETS,
             "highlight": (repo.get("markdown") or {}).get("highlight", "client"),
             "versions": self.config.versions,
+            "editor": self.editor_enabled(),
         }
 
     def _label(self, name, fallback):

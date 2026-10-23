@@ -21,6 +21,7 @@ apphelp builds the help of an application, like the site you are reading. The sa
 - Search that runs in the browser, with filters, and needs no server.
 - Versions: one folder per release of your application, with a version selector; see [versions](#versions).
 - A **Topics** page listing pages by feature.
+- An optional Add page with a Markdown editor, off by default; see [Add page and editor](#editor).
 - Help ids: the application opens `go.html?id=rename` and lands on the right page or section.
 - `?embed=1` hides the header and sidebar, for a help viewer inside the application.
 - The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo.
@@ -85,7 +86,18 @@ The `apphelp` block of `repo.json`:
 | `contract` | A file listing, one per line, the help ids and anchors the application opens; a missing one fails the build |
 | `vocabulary` | Allowed values per property |
 | `labels` | Your own texts for the interface |
+| `editor` | Top-level key of `repo.json`, not of the `apphelp` block. `true` builds `add.html` and the **Add a page** link in the sidebar; `false` by default; see [Add page and editor](#editor) |
 | `versions` | `{"enabled": true}` keeps one folder per version of the help; see [versions](#versions) |
+
+The `labels` object renames the texts of the interface. Besides the labels for the search, the sidebar and the types of document, `add` sets the sidebar link to the Add page (default "Add a page"). Unknown label names are ignored.
+
+## Add page and editor {#editor}
+
+Set `"editor": true` in `repo.json` (not in the `apphelp` block) to build `add.html`, a page with a Markdown editor for new documents. The sidebar then shows the `add` label ("Add a page") under **Topics**. With the key missing or `false`, the page and the link are not built, and an `add.html` left by an earlier build is removed. With versions on, the page and the editor files go into the version folder like the other pages.
+
+The page offers four skeletons, one per type of document: `TUTORIAL`, `HOWTO`, `REFERENCE` and `EXPLANATION`. Each one sets `DocType` and has empty `Section`, `Order`, `Summary`, `Feature` and `Level`. Replace them with `templates/skeletons/` in the repository overrides; see [Write a document in the editor](howto-write-document-editor.md).
+
+Completion and the Properties form offer the values of the documents plus the allowed ones that no document uses yet: the `vocabulary` lists, the four `DocType` names and the `Layout` names. `Section`, `Order` and `Summary` are free text. The editor does not check apphelp's rules; `kb4it verify` and the build do.
 
 Edit links use `"git": true` and `git_server` without `https://`, for example `github.com`.
 

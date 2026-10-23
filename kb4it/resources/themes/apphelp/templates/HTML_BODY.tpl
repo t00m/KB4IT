@@ -51,6 +51,9 @@
 <div class="ah-layout">
   <nav class="ah-sidebar" id="ah-sidebar" aria-label="${L['menu']}">
     <a class="ah-sidebar-top" href="topics.html">${L['topics']}</a>
+% if ah.get('editor'):
+    <a class="ah-sidebar-top" href="add.html">${L['add']}</a>
+% endif
 % for section in ah['sections']:
     <details class="ah-section"${' open' if section['current'] else ''}>
       <summary>${section['name']}</summary>
