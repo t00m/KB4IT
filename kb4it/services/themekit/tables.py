@@ -32,7 +32,7 @@ class TableMixin(ThemeHost):
         try:
             title = properties['Title']
             # Built as HTML here, printed raw by the template: escape the document title.
-            item['title'] = f"<span uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
+            item['title'] = f"<span data-uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
             item['url'] = properties['Title_Url']
             return self.template('DATATABLE_BODY_ITEM').render(var=item)
         except (KeyError, AttributeError) as e:

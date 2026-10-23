@@ -1,8 +1,8 @@
                 </div>
                 <!-- Main Content Column :: END-->
                 <!-- Sidebar Column :: START-->
-                <div class="uk-width-1-4@m" uk-height-viewport="expand: true">
-                  <div class="uk-sticky" uk-sticky="offset: 40">
+                <div class="uk-width-1-4@m" data-uk-height-viewport="expand: true">
+                  <div class="uk-sticky" data-uk-sticky="offset: 40">
                     <h2 class="uk-heading-line uk-text-center uk-margin-remove">
                         <a class="uk-link-toggle" href="index.html">
                         <span class="uk-link-heading">${var['repo']['title']}</span>
@@ -21,7 +21,7 @@
         <ul class="uk-list uk-text-left uk-margin-left">
 % if var.get('git_ok'):
                 <li>
-                    <span uk-icon="icon: plus" uk-tooltip="Create new post"></span>
+                    <span data-uk-icon="icon: plus" data-uk-tooltip="Create new post"></span>
                     <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
                         <span class="uk-link-toogle uk-margin-left">Create new post</span>
                     </a>
@@ -29,39 +29,39 @@
 % endif
 % if var['editor']:
                 <li>
-                    <span uk-icon="icon: plus-circle" uk-tooltip="Add document"></span>
+                    <span data-uk-icon="icon: plus-circle" data-uk-tooltip="Add document"></span>
                     <a class="uk-link-heading" href="add.html">
                         <span class="uk-link-toogle uk-margin-left">Add document</span>
                     </a>
                 </li>
 % endif
                 <li>
-                    <span uk-icon="icon: list" uk-tooltip="All posts"></span>
+                    <span data-uk-icon="icon: list" data-uk-tooltip="All posts"></span>
                     <a class="uk-link-heading" href="all.html">
                         <span class="uk-link-toogle uk-margin-left">All documents</span>
                     </a>
                 </li>
                 <li>
-                    <span uk-icon="icon: star" uk-tooltip="Bookmarks"></span>
+                    <span data-uk-icon="icon: star" data-uk-tooltip="Bookmarks"></span>
                     <a class="uk-link-heading" href="bookmarks.html">
                         <span class="uk-link-toogle uk-margin-left">Bookmarks</span>
                     </a>
                 </li>
                 <li>
-                    <span uk-icon="icon: world" uk-tooltip="Browse by metadata"></span>
+                    <span data-uk-icon="icon: world" data-uk-tooltip="Browse by metadata"></span>
                     <a class="uk-link-heading" href="properties.html">
                         <span class="uk-link-toogle uk-margin-left">Metadata</span>
                     </a>
                 </li>
                 <li>
-                    <span uk-icon="icon: calendar" uk-tooltip="Posts by year"></span>
+                    <span data-uk-icon="icon: calendar" data-uk-tooltip="Posts by year"></span>
                     <a class="uk-link-heading" href="events.html">
                         <span class="uk-link-toogle uk-margin-left">Archive</span>
                     </a>
                 </li>
                 <li class="uk-nav-divider"></li>
                 <li>
-                    <span uk-icon="icon: info" uk-tooltip="About"></span>
+                    <span data-uk-icon="icon: info" data-uk-tooltip="About"></span>
                     <a class="uk-link-heading" href="about_app.html">
                         <span class="uk-link-toogle uk-margin-left">About</span>
                     </a>

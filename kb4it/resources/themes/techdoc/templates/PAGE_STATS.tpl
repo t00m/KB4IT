@@ -1,11 +1,11 @@
 <div class="kb-stats-hero">
     <a class="kb-stat-card" href="all.html">
-        <span class="kb-stat-icon" uk-icon="icon: file-text; ratio: 1.4"></span>
+        <span class="kb-stat-icon" data-uk-icon="icon: file-text; ratio: 1.4"></span>
         <span class="kb-stat-num">${var['count_docs']}</span>
         <span class="kb-stat-label">Documents</span>
     </a>
     <a class="kb-stat-card" href="properties.html">
-        <span class="kb-stat-icon" uk-icon="icon: tag; ratio: 1.4"></span>
+        <span class="kb-stat-icon" data-uk-icon="icon: tag; ratio: 1.4"></span>
         <span class="kb-stat-num">${var['count_keys']}</span>
         <span class="kb-stat-label">Properties</span>
     </a>

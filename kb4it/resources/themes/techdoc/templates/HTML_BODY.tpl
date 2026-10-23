@@ -18,7 +18,7 @@
 % endif
 
     <!-- This is the nav containing the toggling elements -->
-    <ul class="uk-flex uk-flex-center uk-tab noprint uk-hidden" uk-switcher>
+    <ul class="uk-flex uk-flex-center uk-tab noprint uk-hidden" data-uk-switcher>
         <li><a href="#">Document</a></li>
     </ul>
     <!-- This is the container of the content items -->

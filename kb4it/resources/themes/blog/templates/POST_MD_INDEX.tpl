@@ -21,42 +21,43 @@
 %>
 <!-- Template POST_MD_INDEX.tpl :: START -->
 <!-- Blog Post :: START -->
-<div class="uk-card uk-card-small uk-card-body post-card">
+<article class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
 
         <!-- Header -->
         <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
-                <div class="uk-width uk-margin-top">
-                    <h5 class="uk-card-title uk-margin-remove uk-text-center">
+                <div class="uk-width uk-margin-top uk-text-center">
+                    <%doc> A bare <h2>: the build rewrites "<h2 " with the theme's class, which would give this tag two. blog.css styles it. </%doc>
+                    <h2>
                         <a class="uk-link-toggle" href="${var['post']['Title_Url']}">
                             <span class="uk-link-heading">${var['post']['Title']}</span>
                         </a>
-                    </h5>
+                    </h2>
                     <div class="uk-width uk-margin-top">
                         <ul class="uk-subnav uk-subnav-divider uk-margin-small-top uk-flex-center uk-text-meta">
 % if 'Author_0_Url' in var['post']:
                             <li>
-                                <span uk-icon="user"></span>
+                                <span data-uk-icon="user"></span>
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
                             </li>
 % endif
 % if var['post']['dated']:
                             <li>
-                                <span uk-icon="calendar"></span>
+                                <span data-uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
 % endif
                             <!-- Metadata Button :: START -->
-                            <li uk-tooltip="title: Document properties">
-                                <span uk-icon="hashtag"></span>
+                            <li data-uk-tooltip="title: Document properties">
+                                <span data-uk-icon="hashtag"></span>
                                 <span class="uk-margin-small-left">
-                                    <a href="#modal-metadata-${pid}" uk-toggle>Metadata</a>
+                                    <a href="#modal-metadata-${pid}" data-uk-toggle>Metadata</a>
                                 </span>
-                                <div id="modal-metadata-${pid}" class="uk-modal-full" uk-modal>
+                                <div id="modal-metadata-${pid}" class="uk-modal-full" data-uk-modal>
                                     <div class="uk-modal-dialog uk-height-viewport">
-                                        <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
-                                        <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                                        <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" data-uk-close></button>
+                                        <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" data-uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-primary">Metadata</div>
                                                 <div class="" style="border: 1px solid transparent;">${var['metadata'] | n}</div>
@@ -67,15 +68,15 @@
                             </li>
                             <!-- Metadata Button :: END -->
                             <!-- View Markdown Source Button :: START -->
-                            <li uk-tooltip="title: Document source">
-                                <span uk-icon="code"></span>
+                            <li data-uk-tooltip="title: Document source">
+                                <span data-uk-icon="code"></span>
                                 <span class="uk-margin-small-left">
-                                    <a href="#modal-full-source-${pid}" uk-toggle>Source</a>
+                                    <a href="#modal-full-source-${pid}" data-uk-toggle>Source</a>
                                 </span>
-                                <div id="modal-full-source-${pid}" class="uk-modal-full" uk-modal>
+                                <div id="modal-full-source-${pid}" class="uk-modal-full" data-uk-modal>
                                     <div class="uk-modal-dialog uk-height-viewport">
-                                        <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" uk-close></button>
-                                        <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" uk-grid>
+                                        <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" data-uk-close></button>
+                                        <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" data-uk-grid>
                                             <div class="uk-padding-large uk-background-muted">
                                                 <div class="uk-text-lead uk-text-center uk-text-danger">Source</div>
                                                 <div class="uk-text-lead">${var['basename_md']}</div>
@@ -94,9 +95,9 @@
         </header>
 
         <!-- Body -->
-        <article class="uk-article">
+        <div class="uk-article">
             ${var['post']['Excerpt'] | n}
-        </article>
+        </div>
 
         <!-- Footer -->
         <footer class="uk-margin-small-top uk-text-muted">
@@ -109,6 +110,6 @@
             </div>
         </footer>
     </div>
-</div>
+</article>
 <p></p>
 <!-- Template POST_MD_INDEX.tpl :: END -->

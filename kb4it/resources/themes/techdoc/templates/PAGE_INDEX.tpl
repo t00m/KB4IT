@@ -29,7 +29,8 @@ def category_url(category):
 <div class="uk-container kb-index">
 
     <!-- 1. HERO STATS BAR -->
-    <section class="kb-section">
+    <section class="kb-section" aria-labelledby="kb-hero-heading">
+        <h2 id="kb-hero-heading" class="uk-hidden-visually">Summary</h2>
         <div class="kb-hero-bar">
 % for i, stat in enumerate(var['page']['stats']):
 %     if i > 0:
@@ -44,8 +45,9 @@ def category_url(category):
     </section>
 
     <!-- 2. DIATAXIS GRID -->
-    <section class="kb-section">
-        <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" uk-grid>
+    <section class="kb-section" aria-labelledby="kb-doctypes-heading">
+        <h2 id="kb-doctypes-heading" class="uk-hidden-visually">Document types</h2>
+        <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" data-uk-grid>
 % for item in var['page']['diataxis']:
             <div>
 % if item['url']:
@@ -54,7 +56,7 @@ def category_url(category):
                 <div class="kb-diataxis-card ${item['css']} kb-diataxis-empty">
 % endif
                     <div class="kb-diataxis-headline">
-                        <span class="kb-diataxis-icon"><span uk-icon="icon: ${item['icon']}; ratio: 0.9"></span></span>
+                        <span class="kb-diataxis-icon"><span data-uk-icon="icon: ${item['icon']}; ratio: 0.9"></span></span>
                         <span class="kb-diataxis-count">${item['count']}</span>
                         <span class="kb-diataxis-label">${item['label']}</span>
                     </div>
@@ -105,7 +107,7 @@ def category_url(category):
         <div class="kb-alert-bar">
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-changes">
-                    <span uk-icon="icon: warning; ratio: 0.75"></span>
+                    <span data-uk-icon="icon: warning; ratio: 0.75"></span>
                     <a href="Category_Change.html">Changes</a>
                 </div>
 % if var['page']['alert_bar']['changes']:
@@ -130,7 +132,7 @@ def category_url(category):
             <div class="kb-alert-divider"></div>
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-incidents">
-                    <span uk-icon="icon: warning; ratio: 0.75"></span>
+                    <span data-uk-icon="icon: warning; ratio: 0.75"></span>
                     <a href="Category_Incident.html">Incidents</a>
                 </div>
 % if var['page']['alert_bar']['incidents']:
@@ -159,7 +161,7 @@ def category_url(category):
     <details class="kb-section kb-collapsible" data-kb-section="upcoming-events" open>
         <summary class="kb-section-title">Upcoming events</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
-            <div class="uk-grid-small" uk-grid>
+            <div class="uk-grid-small" data-uk-grid>
 % for side in ('current', 'next'):
 <%  panel = var['page']['events_panel'][side] %>
                 <div class="uk-width-1-2@m">
@@ -197,7 +199,7 @@ def category_url(category):
 % if len(var['page']['monitoring_panel']) == 0:
             <div class="kb-events-empty">No monitoring articles found.</div>
 % else:
-            <div class="uk-grid-small" uk-grid>
+            <div class="uk-grid-small" data-uk-grid>
 % for group in var['page']['monitoring_panel']:
                 <div class="uk-width-1-${ len(var['page']['monitoring_panel']) }@m">
                     <div class="kb-events-month-header">

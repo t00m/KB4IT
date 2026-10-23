@@ -17,7 +17,7 @@ scripts/install/local/install_kb4it_from_source.sh   # Install this checkout (uv
 scripts/devel/editor/build.sh                        # Rebuild the CodeMirror bundle (needs node and npm; only to upgrade CodeMirror)
 uv run --no-project --with playwright playwright install chromium   # Once, for the browser tests
 KB4IT_BROWSER_TESTS=required uv run --no-project --with-requirements requirements.txt --with pytest --with playwright python -m pytest -m browser tests/browser  # Editor tests in Chromium (add the other --with packages of scripts/devel/test.sh if an import fails)
-uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py  # Nu HTML Checker on every sample site (needs Java)
+uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py  # Nu HTML Checker on every sample site (needs Java): 0 errors and 0 warnings
 uv run -q --no-project --with-requirements requirements.txt python scripts/devel/theme_snapshot.py --content DIR  # Normalised pages of every sample site; diff -r two runs
 python3 scripts/devel/escape_audit.py <theme> --raw  # List the template expressions printed raw (| n)
 ./scripts/devel/typecheck.sh                         # mypy --strict on the annotated modules (CI package job)
@@ -201,6 +201,8 @@ Additional system templates (not in the required set): `PAGE_ABOUT_KB4IT`, `PAGE
 ### Escaping
 
 A theme with `"autoescape": true` in `theme.json` (all bundled themes) compiles its templates, and their overrides, with `default_filters=["h"]`: every `${...}` is HTML-escaped. Print HTML built by KB4IT or the theme raw with `${value | n}` (page bodies, TOC, datatables, metadata sections, the search box, JSON inside `<script>`), never a value taken from a document or `repo.json` as it is. KB4IT's common templates are always escaped. A custom theme without the key renders as before and logs `[BUILDER] THEME_AUTOESCAPE_OFF` once per build. HTML that theme logic builds in Python and passes to a raw expression must escape the values it holds (`html.escape`); JSON printed inside `<script>` must replace `<` with `\u003c`. `scripts/devel/escape_audit.py` lists every expression of a theme; `tests/themes/test_escaping.py` builds every bundled theme with hostile titles and properties.
+
+HTML output must pass `scripts/devel/validate_html.py` with no error and no warning (only the outdated `<dialog>` polyfill notice is ignored). Write UIkit components as `data-uk-*` attributes (`data-uk-icon`, `data-uk-toggle`, `data-uk-modal`...): UIkit reads both forms and `uk-*` is not HTML. Script tags take no `type="text/javascript"`. Every `<section>` and `<article>` has a heading (a visually hidden one, `uk-hidden-visually`, when the design shows none). The build rewrites `<h2 ` (and the other `HTML_TAG_*_MD` patterns) in pages built through `distribute_md`, so a tag written there must not carry its own `class`.
 
 Raw HTML written in a document reaches the page as written (the trust model is in `help/source/reference-document-format.md`). `"markdown": {"sanitize": true}` cleans each document's compiled HTML with nh3 (`mdconfig.sanitize_html`, allow-list in `SANITIZE_TAGS`/`SANITIZE_ATTRIBUTES`) in the compiler, before KB4IT adds its own markup.
 

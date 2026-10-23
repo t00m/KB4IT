@@ -22,7 +22,7 @@
   <script src="resources/themes/blog/framework/datatables/js/jquery-3.5.1.js"></script>
   <script src="resources/themes/blog/framework/datatables/js/jquery.dataTables.min.js"></script>
   <script src="resources/themes/blog/framework/datatables/js/dataTables.uikit.min.js"></script>
-  <script type="text/javascript" class="init">
+  <script class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {
                 dom: '<"kbfilter"Bifrt>',
@@ -45,7 +45,7 @@
 </head>
 <body>
     <!-- Blog container :: START -->
-    <div class="blog-container uk-container" uk-height-viewport="expand: true">
+    <div class="blog-container uk-container" data-uk-height-viewport="expand: true">
         <!-- GRID :: START -->
         <div class="uk-grid">
             <!-- Main Content Column :: START-->

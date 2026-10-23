@@ -83,7 +83,7 @@ function copyToClipboard() {
     window.addEventListener('hashchange', fromHash);
     document.addEventListener('click', function(e) {
         var a = e.target.closest && e.target.closest('a[href^="#"]');
-        if (a && a.getAttribute('href').length > 1 && !a.hasAttribute('uk-toggle')) {
+        if (a && a.getAttribute('href').length > 1 && !a.hasAttribute('data-uk-toggle')) {
             // A click on the current hash fires no hashchange, so reveal it here too.
             setTimeout(function() { reveal(decodeURIComponent(a.getAttribute('href').slice(1))); }, 0);
         }
