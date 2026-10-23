@@ -20,7 +20,6 @@ from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 
 from kb4it.core.util import (
-    ellipsize_text,
     get_human_datetime,
     get_source_docs,
     html_id_for,
@@ -227,7 +226,7 @@ class Theme(DashboardMixin, DocumentTheme):
             var['page']['title'] = 'No title found...'
             var['page']['title-tooltip'] = 'No title found...'
             try:
-                var['page']['title'] = ellipsize_text(keys['Title'])
+                var['page']['title'] = keys['Title']  # the top bar cuts it with CSS
                 var['page']['title-tooltip'] = keys['Title']
             except Exception:
                 pass

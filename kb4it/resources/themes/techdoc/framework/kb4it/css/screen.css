@@ -72,10 +72,27 @@ table.month tbody tr th {
 }
 
 #kb4it-page-title {
-    display: inline;
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font: 18px Arial, Helvetica,"Lucida Grande", serif;
     color: #000;
-    padding-top: 2em;
+}
+
+/* Top bar: the left and right blocks keep their size, the title gets the rest. */
+#kb4it-menu .uk-navbar-left,
+#kb4it-menu .uk-navbar-right { flex: none; }
+.kb4it-navbar-title { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
+.kb4it-navbar-title .uk-navbar-nav { min-width: 0; max-width: 100%; }
+.kb4it-navbar-title .uk-navbar-nav > li { min-width: 0; }
+.kb4it-navbar-title .uk-navbar-nav > li > a { min-width: 0; text-transform: none; }
+
+/* Search dialog: the shared search box fills the dialog and its results flow below it. */
+#kb4it-search-modal .kb4it-search { display: block; }
+#kb4it-search-modal .kb4it-search-input { width: 100%; font-size: 1.1em; padding: 8px 10px; }
+#kb4it-search-modal .kb4it-search-dropdown {
+    position: static; width: auto; max-width: none; margin-top: 8px; box-shadow: none;
 }
 
 .admonitionblock {

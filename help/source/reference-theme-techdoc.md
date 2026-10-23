@@ -44,6 +44,12 @@ The home page shows, from top to bottom:
 
 ![A techdoc document](resources/images/techdoc-page.webp)
 
+The top bar holds the logo menu on the left, the page title in the middle and a search icon on the right:
+
+- The logo menu links to the dashboard (click the logo), the Add page, Events, Bookmarks, Properties, Stats, Reload page, Help, About this app and About KB4IT.
+- A long title ends in an ellipsis; hover over it to read it whole. On a document, the title opens the table of contents.
+- The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field.
+
 Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons to show the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
 ## Add page and editor {#editor}
@@ -108,7 +114,7 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
 | `help.html` | A short guide to writing documents |
-| `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the header shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `search.html` | Full-text search over every document, with filters by Category and Tag; the search dialog in the top bar shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
 
 ## Icon, diagrams and formulas {#render}

@@ -87,6 +87,19 @@
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="stats.html"><span uk-icon="list"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Stats</span></a>
                                 </li>
+                                <li class="uk-nav-divider"></li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Reload page</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="help.html"><span uk-icon="question"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Help</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="about_app.html"><span uk-icon="info"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">About this app</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="about_kb4it.html"><span uk-icon="info"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">About KB4IT</span></a>
+                                </li>
                             </ul>
                         </div>
                     </li>
@@ -97,57 +110,54 @@
                     <!-- MENU CONTENTS :: END -->
                 </ul>
             </div>
-            <div class="uk-navbar-center">
+            <!-- The title takes the room the left and right blocks leave, and is cut with an ellipsis. -->
+            <div class="kb4it-navbar-title">
                 <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
-                    <li class="uk-card uk-card-small uk-padding-small uk-padding-remove-vertical">
-                        <div class="uk-child-width-expand@s uk-text-center" uk-grid>
-                            <div class="uk-card uk-card-small">
-                                <a class="uk-link-toggle uk-text-primary" href="#"><span id="kb4it-page-title" class="uk-text-primary uk-text-small uk-text-truncate">${var['page']['title']}</span></a>
+                    <li>
+                        <a class="uk-link-toggle uk-text-primary" href="#" title="${var['page']['title']}"><span id="kb4it-page-title" class="uk-text-primary uk-text-small">${var['page']['title']}</span></a>
 % if var['has_toc'] and len(var['toc']) > 0:
-                                <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
-                                    <div class="uk-navbar-dropdown-nav">
+                        <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center">
+                            <div class="uk-navbar-dropdown-nav">
 ${var['toc'] | n}
-                                    </div>
-                                </div>
-% endif
                             </div>
                         </div>
+% endif
                     </li>
                 </ul>
                 <!-- DOCUMENT TITLE :: END -->
             </div>
+% if var.get('search_box'):
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
-% if var.get('search_box'):
-                    <li class="uk-flex uk-flex-middle uk-padding-small uk-padding-remove-vertical">
-                        ${var['search_box'] | n}
-                    </li>
-% endif
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
-                        <a class="uk-link-heading" href="javascript:location.reload();"><span uk-icon="refresh"></span></a>
-                    </li>
-                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
-                        <a class="uk-link-heading" href="#"><span uk-icon="info"></span></a>
-                        <div class="uk-navbar-dropdown">
-                            <ul class="uk-nav uk-navbar-dropdown-nav">
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about_app.html"><span class="uk-padding-none">About this app</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html"><span class="uk-padding-none">Help</span></a>
-                                </li>
-                                <li class="uk-nav-divider"></li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="about_kb4it.html"><span class="uk-padding-none">About KB4IT</span></a>
-                                </li>
-                            </ul>
-                        </div>
+                        <a class="uk-link-heading" href="#kb4it-search-modal" title="Search (/ or Ctrl+K)" aria-label="Search" uk-toggle><span uk-icon="search"></span></a>
                     </li>
                 </ul>
             </div>
+% endif
         </nav>
     </div>
+% if var.get('search_box'):
+    <div id="kb4it-search-modal" class="kb4it-search-modal" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body">
+            ${var['search_box'] | n}
+        </div>
+    </div>
+    <script>
+        (function () {
+            var modal = document.getElementById("kb4it-search-modal");
+            UIkit.util.on(modal, "shown", function () { document.getElementById("kb4it-search-input").focus(); });
+            document.addEventListener("keydown", function (e) {
+                // Keys typed in a field are left alone: Ctrl+K inserts a link in the Add page editor.
+                var target = e.target, typing = target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+                var slash = e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey;
+                var ctrlK = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k";
+                if (!typing && (slash || ctrlK)) { e.preventDefault(); UIkit.modal(modal).show(); }
+            });
+        })();
+    </script>
+% endif
 </div>
 <div class="uk-container uk-container-center">
     <div id="container-2" class="uk-container uk-container-center uk-flex uk-flex-center uk-hidden">
