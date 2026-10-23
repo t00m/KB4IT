@@ -69,6 +69,7 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 
 - The icon of the browser tab is `logo` from `repo.json`; without it, the theme's own logo (`images/logo.svg`).
 - Documents can hold [Mermaid diagrams and formulas](reference-document-format.md#diagrams).
+- Fonts: the theme downloads none. It uses Red Hat Display, Red Hat Text and IBM Plex Mono when they are installed on the reader's computer (Fedora and RHEL ship the Red Hat fonts), and the system's own fonts otherwise. Pages look slightly different from one system to another.
 
 ## Settings {#settings}
 

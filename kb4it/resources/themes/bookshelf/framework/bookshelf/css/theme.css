@@ -3,7 +3,7 @@
    A focused study companion for certification books.
    Hierarchy it expresses:  Book > Part > Chapter
    ----------------------------------------------------------------------------
-   Type   : Red Hat Display (titles) . Red Hat Text (UI/body) . IBM Plex Mono
+   Type   : system font stacks, led by Red Hat Display (titles) . Red Hat Text (UI/body) . IBM Plex Mono
    Palette: warm paper neutrals + a single Red Hat-red accent + status hues
    ============================================================================ */
 
@@ -27,9 +27,10 @@
     --reading:    var(--accent);
     --todo:       #b7b3a8;
 
-    --f-display: "Red Hat Display", system-ui, sans-serif;
-    --f-text:    "Red Hat Text", system-ui, sans-serif;
-    --f-mono:    "IBM Plex Mono", ui-monospace, monospace;
+    /* Fonts installed on the reader's computer only; nothing is downloaded */
+    --f-display: "Red Hat Display", "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", Ubuntu, Cantarell, "Noto Sans", system-ui, sans-serif;
+    --f-text:    "Red Hat Text", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
 
     --r-sm: 6px;
     --r-md: 10px;
