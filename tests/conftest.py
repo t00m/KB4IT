@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "lo
 
 def pytest_ignore_collect(collection_path, config):
     # pytest-relaxed (a plugin, not a dependency) collects every module, so skip the helpers and fixtures.
-    if collection_path.name == "helpers.py" or FIXTURES in collection_path.parents:
+    if collection_path.name in ("helpers.py", "nodejs.py") or FIXTURES in collection_path.parents:
         return True
     return None
 
