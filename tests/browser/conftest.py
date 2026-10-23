@@ -7,6 +7,9 @@ import os
 
 import pytest
 
+from tests.core.test_highlight import _app_conf
+from tests.helpers import page as md_page
+from tests.helpers import run_kb4it, write_repo
 from tests.themes.test_techdoc_add import ADD_DOCS, build_techdoc
 
 
@@ -17,6 +20,54 @@ def site(tmp_path_factory):
     home = base / "home"
     home.mkdir()
     return build_techdoc(base, home, ADD_DOCS)
+
+
+VOCAB = {"Feature": ["Backup", "Rename"], "Level": ["basic", "advanced"], "Platform": ["Linux", "Windows"]}
+
+# Per theme: the category to open, a property and a value that two documents share.
+THEME_CASES = {
+    "techdoc": {"cat": "note", "key": "Tag", "value": "sharedtag"},
+    "blog": {"cat": "post", "key": "Tag", "value": "sharedtag"},
+    "bookshelf": {"cat": "chapter", "key": "Book", "value": "Sharedbook"},
+    "apphelp": {"cat": "tutorial", "key": "Feature", "value": "Backup"},
+}
+
+
+def _theme_docs(theme):
+    key, value = THEME_CASES[theme]["key"], THEME_CASES[theme]["value"]
+    if theme == "apphelp":
+        extra = {"DocType": "How-to guide", "Section": "How-to", "Summary": "A summary."}
+        return {
+            "one.md": md_page("One", Order="10", **{key: value}, **extra),
+            "two.md": md_page("Two", Order="20", **{key: value}, **extra),
+        }
+    extra = {"Category": "Note"} if theme == "techdoc" else {"Category": "Post"} if theme == "blog" else {}
+    return {
+        "one.md": md_page("One", Date="2026-10-01", **{key: value}, **extra),
+        "two.md": md_page("Two", Date="2026-10-02", **{key: value}, **extra),
+    }
+
+
+@pytest.fixture(scope="session")
+def theme_site(tmp_path_factory):
+    """theme_site(theme): the target folder of a site built with the editor on and two documents sharing a value."""
+    built = {}
+
+    def make(theme):
+        if theme not in built:
+            base = tmp_path_factory.mktemp(f"theme-{theme}")
+            home = base / "home"
+            home.mkdir()
+            conf = {**_app_conf(theme), "editor": True}
+            if theme == "apphelp":
+                conf["apphelp"] = {"strict": True, "vocabulary": VOCAB}
+            cfg = write_repo(base, theme, _theme_docs(theme), **conf)
+            result = run_kb4it("build", cfg, cwd=base, home=home)
+            assert result.returncode == 0, result.stdout
+            built[theme] = base / "target"
+        return built[theme]
+
+    return make
 
 
 @pytest.fixture(scope="session")
