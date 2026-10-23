@@ -8,6 +8,7 @@ from collections import Counter
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, ThemeError
 
+ADD_DOC = "add.md"   # source name reserved while the editor is on
 SUFFIX = "-SKELETON.md"
 SKELETON_ID = re.compile(r"^[a-z][a-z0-9-]*$")
 
@@ -44,10 +45,14 @@ class AddPageMixin:
             return
         html, source, count = self._render_add_page()
         self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={source} categories={count}")
+        self.register_add_page(html)
+
+    def register_add_page(self, html: str) -> None:
+        """Write the Add page body and register it as a system page; a theme may override this only."""
         self.distribute_md("add", html)
-        self.srvdtb.add_document("add.md")
-        self.srvdtb.add_document_key("add.md", "Title", "Add document")
-        self.srvdtb.add_document_key("add.md", "SystemPage", "Yes")
+        self.srvdtb.add_document(ADD_DOC)
+        self.srvdtb.add_document_key(ADD_DOC, "Title", "Add document")
+        self.srvdtb.add_document_key(ADD_DOC, "SystemPage", "Yes")
 
     def add_page_html(self) -> str:
         """Return the body of the Add page, rendered with the theme's or the common PAGE_ADD template."""

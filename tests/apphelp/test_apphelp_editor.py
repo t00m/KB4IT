@@ -103,3 +103,16 @@ def test_apphelp_versions_add_page(tmp_path, home):
     assert result.returncode == 0, result.stdout
     assert (repo / "target" / "1.0" / "add.html").exists()
     assert (repo / "target" / "1.0" / "resources" / "editor" / "kb4it-editor.js").exists()
+
+
+def test_apphelp_source_add_md_is_reserved(tmp_path, home):
+    repo = tmp_path / "repo"
+    docs = dict(DOCS)
+    docs["add.md"] = page("Mine", DocType="How-to guide", Section="How-to", Order="1",
+                          Summary="S.", Feature="Backup")
+    cfg = write_repo(repo, "apphelp", docs, editor=True, apphelp={"strict": False, "vocabulary": VOCAB})
+    result = run_kb4it("build", cfg, cwd=repo, home=home)
+    assert "DOC_NAME_RESERVED doc=add.md" in result.stdout
+    assert 'id="modal-add-howto"' in (repo / "target" / "add.html").read_text(encoding="utf-8")
+    verify = run_kb4it("verify", cfg, cwd=repo, home=home)
+    assert "add.md" in verify.stdout and "reserved_name" in verify.stdout

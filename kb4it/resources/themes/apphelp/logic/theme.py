@@ -79,14 +79,8 @@ class Theme(Builder):
             self.create_page_about_kb4it()
             self.create_page_about_app()
 
-    def create_page_add(self):
-        """Emit add.html through _emit() when the editor is on, so build_page wraps it; else remove a stale one."""
-        if not self.editor_enabled():
-            self.remove_stale_add_page()
-            self.log.info("[BUILDER] ADD_PAGE enabled=False")
-            return
-        html, source, count = self._render_add_page()
-        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={source} categories={count}")
+    def register_add_page(self, html):
+        """Emit add.html through _emit() so build_page wraps it like the other theme pages."""
         self._emit("add", "Add document", html)
 
     def editor_keys(self) -> dict:

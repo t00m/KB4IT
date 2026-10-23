@@ -25,7 +25,7 @@ from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, f
                              get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
                              page_name_clashes, quarantine, raw_script_lines)
 from kb4it.core.paths import resolve_repo_path
-from kb4it.services.addpage import check_editor_setting
+from kb4it.services.addpage import ADD_DOC, check_editor_setting
 
 
 def build_script(config_file, platform=None):
@@ -163,6 +163,8 @@ class Workflow(Service):
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
         reserved = self._theme_reserved_pages(repo, config_file)
+        if self._editor_on(repo, config_file):
+            reserved = (*reserved, ADD_DOC)
         for doc in docs:
             if is_windows_reserved(doc) or os.path.basename(doc) in reserved:
                 non_conformant.append((doc, "reserved_name"))
@@ -268,6 +270,17 @@ class Workflow(Service):
             if os.path.isfile(os.path.join(candidate, "theme.json")):
                 return candidate
         return None
+
+    def _editor_on(self, repo, config_file):
+        """True when the Add page is on: repo.json 'editor', else the theme default in theme.json."""
+        if "editor" in repo:
+            return repo["editor"] is True
+        theme_dir = self._find_theme_dir(repo, config_file)
+        try:
+            with open(os.path.join(theme_dir, "theme.json"), encoding="utf-8") as fin:
+                return json.load(fin).get("editor") is True
+        except (OSError, ValueError, TypeError, AttributeError):
+            return False
 
     def _theme_reserved_pages(self, repo, config_file):
         """Source page names the theme writes itself (its `reserved_pages`), or an empty tuple."""

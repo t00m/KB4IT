@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
 from kb4it.core.service import Service
+from kb4it.services.addpage import ADD_DOC
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.util import (get_document_attributes, get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
@@ -107,7 +108,8 @@ class Processor(Service):
             docId = os.path.basename(filepath)
 
             # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
-            if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()):
+            if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()) \
+                    or (docId == ADD_DOC and getattr(self.srvthm, "editor_enabled", lambda: False)()):
                 self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
                 self.plan.invalid_docs.append((docId, "reserved_name"))
                 continue

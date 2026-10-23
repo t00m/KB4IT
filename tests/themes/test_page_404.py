@@ -109,3 +109,21 @@ def test_reserved_pages_only_where_a_404_page_is_written():
                   if isinstance(n, ast.AnnAssign | ast.Assign) and "reserved_pages" in ast.unparse(n)]
         assert values == [("404.md",)], theme
         assert "self.build_page_404()" in source, theme
+
+
+def test_document_named_add_is_reserved_while_editor_is_on(tmp_path, home):
+    pages = dict(PAGES, **{"add.md": page("Mine", "Own add.", Category="Post")})
+    cfg, target, result = _build(tmp_path, home, "techdoc", pages)
+    assert "DOC_NAME_RESERVED doc=add.md" in result.stdout
+    assert 'id="modal-add-' in (target / "add.html").read_text(encoding="utf-8")
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert "add.md" in verify.stdout and "reserved_name" in verify.stdout
+
+
+def test_document_named_add_is_normal_while_editor_is_off(tmp_path, home):
+    pages = dict(PAGES, **{"add.md": page("Mine", "Own add.", Category="Post", Date="2026-10-01")})
+    cfg, target, result = _build(tmp_path, home, "blog", pages)
+    assert "DOC_NAME_RESERVED doc=add.md" not in result.stdout
+    assert "Own add." in (target / "add.html").read_text(encoding="utf-8")
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert "add.md" not in verify.stdout

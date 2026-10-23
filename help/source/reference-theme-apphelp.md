@@ -93,9 +93,9 @@ The `labels` object renames the texts of the interface. Besides the labels for t
 
 ## Add page and editor {#editor}
 
-Set `"editor": true` in `repo.json` (not in the `apphelp` block) to build `add.html`, a page with a Markdown editor for new documents. The sidebar then shows the `add` label ("Add a page") under **Topics**. With the key missing or `false`, the page and the link are not built, and an `add.html` left by an earlier build is removed. With versions on, the page and the editor files go into the version folder like the other pages.
+Set `"editor": true` in `repo.json` (not in the `apphelp` block) to build `add.html`, a page with a Markdown editor for new documents. The sidebar then shows the `add` label ("Add a page") under **Topics**. While the editor is on, `add.md` is a reserved source name: the build reports `DOC_NAME_RESERVED` and `kb4it verify` lists it as `reserved_name`. With the key missing or `false`, the page and the link are not built, and an `add.html` left by an earlier build is removed. With versions on, the page and the editor files go into the version folder like the other pages.
 
-The page offers four skeletons, one per type of document: `TUTORIAL`, `HOWTO`, `REFERENCE` and `EXPLANATION`. Each one sets `DocType` and has empty `Section`, `Order`, `Summary`, `Feature` and `Level`. Replace them with `templates/skeletons/` in the repository overrides; see [Write a document in the editor](howto-write-document-editor.md).
+The page offers four skeletons, one per type of document: `TUTORIAL`, `HOWTO`, `REFERENCE` and `EXPLANATION`. Each one sets `DocType` and has empty `Section`, `Order`, `Summary`, `Feature` and `Level`. apphelp ignores the `icon` field of `skeletons.json`. Replace them with `templates/skeletons/` in the repository overrides; see [Write a document in the editor](howto-write-document-editor.md).
 
 Completion and the Properties form offer the values of the documents plus the allowed ones that no document uses yet: the `vocabulary` lists, the four `DocType` names and the `Layout` names. `Section`, `Order` and `Summary` are free text. The editor does not check apphelp's rules; `kb4it verify` and the build do.
 
