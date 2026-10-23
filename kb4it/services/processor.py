@@ -144,23 +144,23 @@ class Processor(Service):
                         values = self.kbdict_new["document"][docId][key]
                         if value not in values:
                             values.append(value)
-                        self.kbdict_new["document"][docId][key] = sorted(
-                            values)
                     except KeyError:
                         self.kbdict_new["document"][docId][key] = [value]
 
                     # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                     try:
-                        documents = self.kbdict_new["metadata"][key][value]
-                        documents.append(docId)
-                        self.kbdict_new["metadata"][key][value] = sorted(
-                            documents, key=lambda y: y.lower()
-                        )
+                        self.kbdict_new["metadata"][key][value].append(docId)
                     except KeyError:
                         if key not in self.kbdict_new["metadata"]:
                             self.kbdict_new["metadata"][key] = {}
                         if value not in self.kbdict_new["metadata"][key]:
                             self.kbdict_new["metadata"][key][value] = [docId]
+
+            # Sorted once per document, not after each value.
+            for key in keys:
+                values = self.kbdict_new["document"][docId].get(key)
+                if isinstance(values, list):
+                    values.sort()
 
             # To track changes in a document, hashes for metadata and
             # content are created. Comparing them with those in the
@@ -177,6 +177,12 @@ class Processor(Service):
             # Add compiled page to the target list
             htmlId = html_id_for(docId)
             self.srvbes.add_target(docId, htmlId)
+
+        # Sorted once, after every document: sorting after each append grew with the square of the documents.
+        # The sort is stable, so documents read in the same order give the same list as before.
+        for values in self.kbdict_new["metadata"].values():
+            for documents in values.values():
+                documents.sort(key=str.lower)
 
         # A repo can ask that any unreadable document fails the build instead of vanishing.
         problems = self.plan.invalid_docs + [(b, f"name_clash_with={a}") for a, b in self.plan.name_clashes]
