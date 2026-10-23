@@ -17,6 +17,10 @@
     .uk-navbar-container,
     .kb-footer,
     .uk-modal,
+    .uk-tooltip,
+    .uk-dropdown,
+    .uk-navbar-dropdown,
+    .uk-notification,
     .uk-sticky-placeholder,
     .kbfilter,
     .dataTables_filter,
@@ -54,27 +58,31 @@
     }
 
     /* -----------------------------------------------------------------------
-       Typography — tighter line spacing
+       Typography: the screen's sans-serif font on paper, code in monospace
     ----------------------------------------------------------------------- */
     body {
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 10.5pt;
-        line-height: 1.35;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+                     "Noto Sans", "Liberation Sans", sans-serif;
+        font-size: 11pt;
+        line-height: 1.45;
         color: #000;
     }
 
+    body * { font-family: inherit !important; }
+
     h1, h2, h3, h4, h5, h6 {
-        font-family: Arial, Helvetica, sans-serif;
         color: #000;
         page-break-after: avoid;
     }
 
-    h1 { font-size: 22pt; margin: 0 0 10pt; }
-    h2 { font-size: 14pt; margin: 12pt 0 5pt; }
-    h3 { font-size: 12pt; margin: 9pt 0 4pt; }
-    h4 { font-size: 10.5pt; margin: 7pt 0 3pt; }
+    h1 { font-size: 20pt; margin: 0 0 10pt; }
+    h2 { font-size: 15pt; margin: 14pt 0 6pt; }
+    h3 { font-size: 12.5pt; margin: 10pt 0 4pt; }
+    h4 { font-size: 11pt; margin: 8pt 0 3pt; }
 
-    p { margin: 0 0 4pt; orphans: 3; widows: 3; }
+    p, li, td, th, dd, dt { font-size: 11pt; }
+    p { margin: 0 0 6pt; orphans: 3; widows: 3; }
+    li { margin-bottom: 2pt; }
 
     /* -----------------------------------------------------------------------
        Print-only document title block
@@ -87,7 +95,8 @@
     }
 
     .kb-print-doc-title {
-        font-size: 22pt !important;
+        font-size: 20pt !important;
+        line-height: 1.2;
         font-weight: bold;
         color: #000 !important;
         margin: 0 !important;
@@ -132,20 +141,22 @@
     ----------------------------------------------------------------------- */
     details.kb-toc-panel {
         display: block !important;
-        border: 1pt solid #ccc !important;
+        border: none !important;
+        border-left: 2pt solid #999 !important;
         border-radius: 0;
         background: none !important;
-        margin: 8pt 0 12pt 0;
+        margin: 4pt 0 14pt 0;
         page-break-inside: avoid;
     }
 
     .kb-toc-summary {
-        font-size: 9.5pt;
+        font-size: 9pt;
         font-weight: bold;
-        color: #000 !important;
-        background: #f0f0f0 !important;
-        border-bottom: 0.5pt solid #ccc;
-        padding: 4pt 8pt;
+        letter-spacing: 1pt;
+        color: #444 !important;
+        background: none !important;
+        border: none !important;
+        padding: 0 0 3pt 10pt;
         display: block !important;
     }
 
@@ -164,19 +175,25 @@
     }
 
     .kb-toc-nav a {
-        font-size: 9.5pt;
-        color: #000;
+        font-size: 10.5pt;
+        color: #000 !important;
+        padding: 1pt 0 !important;
     }
 
+    .kb-toc-nav > ul > li > a { margin-top: 3pt; }
+
     .kb-toc-nav ul ul a {
-        font-size: 9pt;
+        font-size: 10pt;
+        color: #333 !important;
     }
+
+    .kb-toc-nav ul ul { border-left-color: #ccc !important; }
 
     /* -----------------------------------------------------------------------
        Section headings — grayscale for print
     ----------------------------------------------------------------------- */
     .kb-h2 {
-        font-size: 14pt !important;
+        font-size: 15pt !important;
         color: #000 !important;
         border-left: 4pt solid #333 !important;
         padding: 4pt 8pt 4pt 10pt !important;
@@ -185,7 +202,7 @@
     }
 
     .kb-h3 {
-        font-size: 12pt !important;
+        font-size: 12.5pt !important;
         color: #000 !important;
         border-left: 3pt solid #666 !important;
         padding: 3pt 6pt 3pt 8pt !important;
@@ -193,7 +210,7 @@
     }
 
     .kb-h4 {
-        font-size: 10.5pt !important;
+        font-size: 11pt !important;
         color: #000 !important;
         border-left: 2pt solid #999 !important;
         padding: 2pt 4pt 2pt 8pt !important;
@@ -242,10 +259,12 @@
     /* -----------------------------------------------------------------------
        Code blocks — readable on paper, no neon colours
     ----------------------------------------------------------------------- */
-    pre, code, kbd, samp {
-        font-family: "Courier New", Courier, monospace;
-        font-size: 8.5pt;
+    pre, code, kbd, samp, pre * {
+        font-family: "DejaVu Sans Mono", "Liberation Mono", Menlo, Consolas, "Courier New", monospace !important;
+        font-size: 9pt;
     }
+
+    p code, li code, td code { font-size: 9.5pt; }
 
     pre {
         background: #f5f5f5 !important;
@@ -278,8 +297,10 @@
     table {
         border-collapse: collapse;
         width: 100%;
-        font-size: 9pt;
+        font-size: 10pt;
     }
+
+    table td, table th { font-size: 10pt; }
 
     th, td {
         border: 1px solid #bbb;
@@ -318,7 +339,7 @@
     }
 
     .admonitionblock td.icon    { display: none; }
-    .admonitionblock td.content { font-size: 9.5pt; }
+    .admonitionblock td.content { font-size: 10.5pt; }
 
     /* -----------------------------------------------------------------------
        Images

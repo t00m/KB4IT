@@ -123,6 +123,13 @@ def test_document_page_folds_sections_and_has_no_properties_section(site):
     assert 'id="kb-toc-inline" open' in html
 
 
+def test_print_hides_tooltips_and_uses_sans_serif(site):
+    css = (site["target"] / "resources/themes/techdoc/framework/kb4it/css/print.css").read_text(encoding="utf-8")
+    hidden = css[:css.index("display: none !important;")]
+    assert ".uk-tooltip," in hidden and ".uk-navbar-dropdown," in hidden
+    assert "Georgia" not in css and "sans-serif" in css
+
+
 def test_datatable_labels_are_badges(site):
     labels = re.findall(r'class="uk-label([^"]*kb-dt-label[^"]*)"', read(site, "all.html"))
     assert labels and all(" kb-badge " in f"{c} " for c in labels), labels
