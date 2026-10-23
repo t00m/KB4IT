@@ -7,7 +7,6 @@ var KB4ITFrontmatter = (function () {
   var FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
   var H1_RE = /^#[ \t]+(\S.*?)[ \t]*$/;
   var KEY_RE = /^(?!-[ \t])([^\s#:][^:]*?):(?:[ \t]+(.*))?$/;
-  var NUMBER_RE = /^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/;
   var RESERVED_RE = /^(null|~)$/i;
   var INDICATORS = "[]{}&*!|>'\"%@`";
 
@@ -107,37 +106,12 @@ var KB4ITFrontmatter = (function () {
   }
 
   var NULLS = ["null", "Null", "NULL", "~"];
-  var INT_RE = /^(0|-?[1-9][0-9]*)$/;
-  var DATE_RE = /^\d{4}-\d\d?-\d\d?$/;
-  var NUMERIC_RE = [
-    /^[-+]?(0[xob][0-9a-fA-F_]+|([0-9_]+\.?[0-9_]*|\.[0-9_]+)([eE][-+]?[0-9]+)?)$/,
-    /^[-+]?[0-9][0-9_]*(:[0-5]?[0-9])+(\.[0-9_]*)?$/,
-    /^[-+]?\.(inf|Inf|INF)$|^\.(nan|NaN|NAN)$/,
-    /^\d{4}-\d\d?-\d\d?([Tt]|[ \t]+)\d\d?:\d\d/
-  ];
 
-  // A plain decimal such as 1.0 or -0.5 that Python writes back unchanged with str(float(s)),
-  // so the build sees the same text. 1.50, 0.10, 1e3 and .5 are not canonical and stay complex.
-  function canonicalDecimal(s) {
-    if (s.length > 15 || !/^-?\d+\.\d+$/.test(s)) { return false; }
-    var f = parseFloat(s);
-    var abs = Math.abs(f);
-    if (abs !== 0 && abs < 1e-4) { return false; }  // Python switches to an exponent form here
-    var t = (f === 0 && s.charAt(0) === "-") ? "-0" : String(f);
-    if (t.indexOf(".") < 0 && t.indexOf("e") < 0) { t += ".0"; }
-    return t === s;
-  }
-
-  // How the build's loader (documents.load_frontmatter) reads a plain scalar: {v: text},
-  // {skip: true} for null, or null when the text is a number or timestamp that the
-  // build would turn into something else (the property is then complex). Yes, no, on, off,
-  // true and false stay as written.
+  // How the build's loader (documents.load_frontmatter) reads a plain scalar: {skip: true}
+  // for an empty value or null, otherwise {v: text} as written. Numbers, dates, yes and no
+  // are text too.
   function resolve(s) {
     if (s === "" || NULLS.indexOf(s) >= 0) { return { skip: true }; }
-    if (INT_RE.test(s) || DATE_RE.test(s) || canonicalDecimal(s)) { return { v: s }; }
-    for (var i = 0; i < NUMERIC_RE.length; i++) {
-      if (NUMERIC_RE[i].test(s) && /[0-9.]/.test(s)) { return null; }
-    }
     return { v: s };
   }
 
@@ -217,19 +191,9 @@ var KB4ITFrontmatter = (function () {
     return { ok: true, reason: null, props: props };
   }
 
-  // True when the build's YAML loader would read the plain text as something else than the same string
-  // (null, boolean, number such as 0x1F, 1_000, 12:30 or .inf, timestamp).
+  // True when the build's loader would not read the plain text as the same string (empty or null).
   function changedByYaml(v) {
-    var r = resolve(v);
-    return r === null || r.skip === true || r.v !== v;
-  }
-
-  // A date the loader reads as another text (2026-1-2 becomes 2026-01-02) or rejects (2026-13-45).
-  function oddDate(v) {
-    if (!DATE_RE.test(v)) { return false; }
-    if (!/^\d{4}-\d\d-\d\d$/.test(v)) { return true; }
-    var d = new Date(v + "T00:00:00Z");
-    return isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v;
+    return resolve(v).skip === true;
   }
 
   // A single value that holds a comma is written unquoted: the form refuses commas (ED-07).
@@ -243,7 +207,7 @@ var KB4ITFrontmatter = (function () {
       v.indexOf(" #") >= 0 ||
       v.charAt(0) === "#" || v.charAt(0) === "," || v === "=" || v === "<<" || v === "?" ||
       v.indexOf("\t") >= 0 ||
-      RESERVED_RE.test(v) || NUMBER_RE.test(v) || oddDate(v) || changedByYaml(v);
+      RESERVED_RE.test(v) || changedByYaml(v);
     return needs ? dquote(v) : v;
   }
 

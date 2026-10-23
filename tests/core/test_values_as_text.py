@@ -1,4 +1,4 @@
-"""Yes, No, On, Off, True and False in a header stay as written; YAML would read them as booleans."""
+"""Header values are text: yes, no, numbers and dates stay as written, where YAML would change them."""
 
 import pytest
 
@@ -9,10 +9,11 @@ from tests.helpers import page, run_kb4it, write_repo
 @pytest.mark.parametrize("raw,expected", [
     ("Yes", ["Yes"]), ("no", ["no"]), ("ON", ["ON"]), ("off", ["off"]), ("True", ["True"]), ("false", ["false"]),
     ("[yes, No, x]", ["yes", "No", "x"]), ("Yes, No", ["Yes", "No"]),
-    # Other types are read as before.
-    ("12", ["12"]), ("2026-10-22", ["2026-10-22"]), ("~", []), ("", []),
+    ("12", ["12"]), ("0.10", ["0.10"]), ("010", ["010"]), ("12:30", ["12:30"]), ("1_000", ["1_000"]),
+    ("2026-10-22", ["2026-10-22"]), ("2026-10-22 10:00:00", ["2026-10-22 10:00:00"]), ("[1, 2.50]", ["1", "2.50"]),
+    ("~", []), ("null", []), ("", []),
 ])
-def test_yes_no_values_stay_as_written(tmp_path, raw, expected):
+def test_values_stay_as_written(tmp_path, raw, expected):
     path = tmp_path / "doc.md"
     path.write_text(f"---\nK: {raw}\n---\n\n# Heading\n", encoding="utf-8")
     keys, ok, _reason = get_markdown_attributes(str(path))
@@ -20,9 +21,9 @@ def test_yes_no_values_stay_as_written(tmp_path, raw, expected):
     assert keys["K"] == expected
 
 
-def test_load_frontmatter_keeps_booleans_as_text():
+def test_load_frontmatter_keeps_values_as_text():
     assert load_frontmatter("Bookmark: Yes\nPublic: no") == {"Bookmark": "Yes", "Public": "no"}
-    assert load_frontmatter("Order: 10\nEmpty:") == {"Order": 10, "Empty": None}
+    assert load_frontmatter("Order: 010\nSince: 0.10\nEmpty:") == {"Order": "010", "Since": "0.10", "Empty": None}
 
 
 @pytest.mark.parametrize("value,expected", [

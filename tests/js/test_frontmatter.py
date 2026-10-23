@@ -122,9 +122,10 @@ def test_bounds_offsets():
 
 
 QUOTED = ["[x", "]", "{", "}", "&a", "*a", "!a", "|a", ">a", "'a", '"a', "%a", "@a", "`a", "- a", "a: b",
-          "a #b", "null", "~", "12", "1.5", "-3"]
-# Yes and no stay as written in the build (documents.load_frontmatter), so they need no quotes.
-PLAIN = ["sap", "a-b", "a#b", "SAP Basis", "2026-10-22", "true", "False", "yes", "NO", "on"]
+          "a #b", "null", "~"]
+# Every value is text in the build (documents.load_frontmatter), so yes, no, numbers and dates need no quotes.
+PLAIN = ["sap", "a-b", "a#b", "SAP Basis", "2026-10-22", "true", "False", "yes", "NO", "on", "12", "1.5", "-3",
+         "0.10", "010", "12:30", "2026-1-2"]
 
 
 @pytest.mark.parametrize("value", QUOTED)
@@ -261,7 +262,7 @@ SIMPLE_SCALARS = [
     "[true, No, x]", "[~, 5]", "a, b", "1, 2", "[1, 2]",
 ]
 NUMERIC_SCALARS = ["1.50", "0.10", "0.00001", "010", "0x1F", "1e3", ".5", "+1", "1_000", "-0", "0o7", "1:30",
-                   ".inf", "2026-10-22 10:00:00"]
+                   ".inf", "2026-10-22 10:00:00", "2026-1-2"]
 
 
 @pytest.mark.parametrize("raw", SIMPLE_SCALARS)
@@ -272,9 +273,10 @@ def test_plain_scalars_read_like_the_build(raw):
 
 
 @pytest.mark.parametrize("raw", NUMERIC_SCALARS)
-def test_non_canonical_numbers_are_complex(raw):
+def test_numbers_and_dates_read_as_written(raw):
     prop = call("parse", doc("K: " + raw))["props"][0]
-    assert prop["complex"] is True and prop["values"] == []
+    assert prop["complex"] is False
+    assert prop["values"] == [raw] == _build_values(raw)
 
 
 @pytest.mark.parametrize("raw,expected", [
@@ -366,7 +368,7 @@ def test_lint_title_key_both_cases():
 
 
 def test_lint_skips_complex_values_and_bom():
-    assert lint("---\nTag: 1.50\n---" + H1) == []
+    assert lint("---\nTag: &a x\n---" + H1) == []
     assert lint("\ufeff---\nTag: a\n---" + H1) == []
     assert reasons("\ufeff---\nTag: a\n---\n\nnone\n") == [("missing_h1_title", "error")]
 

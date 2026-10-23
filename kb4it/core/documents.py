@@ -21,15 +21,18 @@ log = get_logger("Util")
 
 
 class _FrontmatterLoader(yaml.SafeLoader):
-    """SafeLoader that keeps yes, no, on, off, true and false as written.
+    """SafeLoader that reads every plain value as written; only an empty value, null or ~ means none.
 
-    YAML 1.1 reads them as booleans, which str() turns into True and False: "Bookmark: Yes" made the
-    page Bookmark_True.html. A header value is text, so the author's word is kept.
+    YAML 1.1 reads yes and no as booleans, 0.10 as 0.1, 010 as 8, 12:30 as 750 and dates as dates,
+    and str() then wrote something else than the author did ("Bookmark: Yes" made Bookmark_True.html).
+    A header value is text, so the author's text is kept.
     """
 
 
+_TYPED = {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:int", "tag:yaml.org,2002:float",
+          "tag:yaml.org,2002:timestamp"}
 _FrontmatterLoader.yaml_implicit_resolvers = {
-    first: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:bool"]
+    first: [(tag, regexp) for tag, regexp in resolvers if tag not in _TYPED]
     for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
 }
 
@@ -37,7 +40,7 @@ YES_VALUES = ("yes", "true", "on")
 
 
 def load_frontmatter(text: str) -> Any:
-    """Read a frontmatter block as the build does: safe YAML, with yes and no kept as text."""
+    """Read a frontmatter block as the build does: safe YAML, every plain value kept as text."""
     return yaml.load(text, Loader=_FrontmatterLoader)  # a SafeLoader subclass: safe
 
 
