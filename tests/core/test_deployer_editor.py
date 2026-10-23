@@ -17,23 +17,23 @@ def _deployer(tmp_path):
 def test_deploy_copies_when_a_page_loads_the_editor(tmp_path):
     deployer, target = _deployer(tmp_path)
     (target / "add.html").write_text(LOADS, encoding="utf-8")
-    deployer.deploy_editor_assets()
+    deployer.deploy_page_assets()
     assert (target / "resources" / "editor" / "codemirror.min.js").is_file()
 
 
 def test_deploy_removes_stale_folder(tmp_path):
     deployer, target = _deployer(tmp_path)
     (target / "add.html").write_text(LOADS, encoding="utf-8")
-    deployer.deploy_editor_assets()
+    deployer.deploy_page_assets()
     (target / "add.html").write_text("<html>plain</html>", encoding="utf-8")
-    deployer.deploy_editor_assets()
+    deployer.deploy_page_assets()
     assert not (target / "resources" / "editor").exists()
 
 
 def test_text_naming_the_folder_does_not_count(tmp_path):
     deployer, target = _deployer(tmp_path)
     (target / "add.html").write_text("<p>resources/editor/</p>", encoding="utf-8")
-    deployer.deploy_editor_assets()
+    deployer.deploy_page_assets()
     assert not (target / "resources" / "editor").exists()
 
 

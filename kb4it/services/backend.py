@@ -26,6 +26,9 @@ from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save, timeit
 from kb4it.services.pipeline import Pipeline
 
+# kbdict keys listing the files a build wrote into the target; a forced build keeps them so the deployer can sweep.
+DEPLOY_RECORDS = ("deployed", "deployed_static")
+
 
 def _dir_contains(parent, child) -> bool:
     """Return True if *child* is *parent* or lives inside it."""
@@ -109,7 +112,7 @@ class Backend(Service):
                 # may share var/db (e.g. an embedding app's own database).
                 kbdict_file = Path.joinpath(dir_db, "kbdict.json")
                 if os.path.exists(kbdict_file):
-                    # Keep the list of pages KB4IT wrote, so the deployer can still sweep them.
+                    # Keep the lists of files KB4IT wrote, so the deployer can still sweep them.
                     self.deployed_kept = self._read_deployed(kbdict_file)
                     os.unlink(kbdict_file)
                 self.log.debug("[BACKEND] VAR_CLEARED scope=build_artifacts reason=force")
@@ -275,23 +278,22 @@ class Backend(Service):
 
     @staticmethod
     def _read_deployed(path):
-        """Return the list of deployed pages stored in a kbdict.json, or None."""
+        """Return the deploy records stored in a kbdict.json ("deployed", "deployed_static"), each a list."""
         try:
-            deployed = json_load(path).get("deployed")
+            kbdict = json_load(path)
         except Exception:
-            return None
-        return deployed if isinstance(deployed, list) else None
+            return {}
+        return {key: kbdict[key] for key in DEPLOY_RECORDS if isinstance(kbdict.get(key), list)}
 
     def load_kbdict(self):
         """Load KB4IT dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         empty_kbdict = {"document": {}, "metadata": {}}
-        # A forced or upgraded build starts from an empty dictionary but still knows its pages.
-        deployed = getattr(self, "deployed_kept", None)
-        if deployed is None and os.path.exists(kb4it_dbfile):
-            deployed = self._read_deployed(kb4it_dbfile)
-        if deployed is not None:
-            empty_kbdict["deployed"] = deployed
+        # A forced or upgraded build starts from an empty dictionary but still knows the files it wrote.
+        records = getattr(self, "deployed_kept", None)
+        if records is None and os.path.exists(kb4it_dbfile):
+            records = self._read_deployed(kb4it_dbfile)
+        empty_kbdict.update(records or {})
         try:
             kbdict = json_load(kb4it_dbfile)
             self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
@@ -364,6 +366,15 @@ class Backend(Service):
     def set_deployed(self, pages):
         """Record the pages this build wrote into the target; saved with the kbdict."""
         self.srvprc.get_kb_dict()["deployed"] = sorted(pages)
+
+    def get_static_before(self):
+        """Target paths (relative) the previous build copied from source/resources and overrides/static, or None."""
+        static = self.srvprc.kbdict_cur.get("deployed_static")
+        return static if isinstance(static, list) else None
+
+    def set_static(self, paths):
+        """Record the target paths (relative) this build copied from source/resources and overrides/static."""
+        self.srvprc.get_kb_dict()["deployed_static"] = sorted(paths)
 
     def get_events_before(self):
         """Documents of each event page after the last successful build, or None if it did not record them."""
