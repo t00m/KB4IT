@@ -1,6 +1,8 @@
 """Pytest setup: isolate HOME before kb4it is imported, expose shared fixtures."""
 
+import atexit
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -15,6 +17,8 @@ if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and sys.platform != "win32":
               else os.environ.get("XDG_CACHE_HOME") or os.path.join(os.path.expanduser("~"), ".cache"))
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.join(_cache, "ms-playwright")
 os.environ["HOME"] = tempfile.mkdtemp(prefix="kb4it-test-home-")
+# Remove the scratch HOME when the run ends, or each run leaves it behind in the temp folder.
+atexit.register(shutil.rmtree, os.environ["HOME"], ignore_errors=True)
 os.environ["USERPROFILE"] = os.environ["HOME"]
 os.environ["KB4IT_HOME"] = os.path.join(os.environ["HOME"], ".kb4it")
 
