@@ -41,28 +41,54 @@ function copyToClipboard() {
 }
 </script>
 <script>
+// Every section folds when you click its heading. Top-level sections start folded, except the
+// first; subsections start open. A link to a section unfolds it and the sections around it.
 (function() {
     var content = document.querySelector('.kb-content');
     if (!content) return;
-    var sects = Array.from(content.querySelectorAll(':scope > .kb-sect1'));
+    var SECT = '.kb-sect1, .kb-sect2, .kb-sect3, .kb-sect4';
+    var sects = Array.from(content.querySelectorAll(SECT)).filter(function(s) {
+        return s.querySelector(':scope > .kb-section-body');
+    });
     if (!sects.length) return;
-
-    var acc = document.createElement('div');
-    acc.setAttribute('uk-accordion', '');
-    sects[0].parentNode.insertBefore(acc, sects[0]);
+    var top = sects.filter(function(s) { return s.classList.contains('kb-sect1'); });
+    top.slice(1).forEach(function(s) { s.classList.add('kb-closed'); });
     sects.forEach(function(s) {
-        s.classList.add('uk-open');
-        acc.appendChild(s);
+        var heading = s.firstElementChild;
+        if (!heading || !/^H[2-5]$/.test(heading.tagName)) return;
+        heading.classList.add('kb-fold-toggle');
+        heading.setAttribute('role', 'button');
+        heading.setAttribute('tabindex', '0');
+        function sync() { heading.setAttribute('aria-expanded', String(!s.classList.contains('kb-closed'))); }
+        function toggle() { s.classList.toggle('kb-closed'); sync(); }
+        heading.addEventListener('click', toggle);
+        heading.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+        sync();
     });
-
-    UIkit.accordion(acc, {
-        targets: '> .kb-sect1',
-        toggle: '> h2',
-        content: '> .kb-section-body',
-        multiple: true,
-        animation: true,
-        duration: 200
+    function reveal(id) {
+        var target = id && document.getElementById(id);
+        if (!target || !content.contains(target)) return;
+        for (var node = target; node && node !== content; node = node.parentElement) {
+            if (node.matches && node.matches(SECT) && node.classList.contains('kb-closed')) {
+                node.classList.remove('kb-closed');
+                var h = node.firstElementChild;
+                if (h) h.setAttribute('aria-expanded', 'true');
+            }
+        }
+        target.scrollIntoView();
+    }
+    function fromHash() { try { reveal(decodeURIComponent(location.hash.slice(1))); } catch (e) {} }
+    window.addEventListener('hashchange', fromHash);
+    document.addEventListener('click', function(e) {
+        var a = e.target.closest && e.target.closest('a[href^="#"]');
+        if (a && a.getAttribute('href').length > 1 && !a.hasAttribute('uk-toggle')) {
+            // A click on the current hash fires no hashchange, so reveal it here too.
+            setTimeout(function() { reveal(decodeURIComponent(a.getAttribute('href').slice(1))); }, 0);
+        }
     });
+    fromHash();
 })();
 </script>
 <!-- GRID LAYOUT :: END -->

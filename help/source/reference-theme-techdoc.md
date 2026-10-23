@@ -52,7 +52,7 @@ The top bar holds the logo menu on the left, the page title in the middle and a 
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field.
 
-Each document gets a table of contents, sections that fold when you click their title, its properties at the end, and buttons in the title menu to show the properties and the Markdown source and to print. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
+Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. Every heading level folds. The table of contents and the first section start open; the other top-level sections start folded, and their subsections open with them. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
 ## Add page and editor {#editor}
 

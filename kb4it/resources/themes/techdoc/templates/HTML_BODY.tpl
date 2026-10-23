@@ -26,16 +26,6 @@
         <li class="uk-active"><div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div></li>
     </ul>
 
-% if var['metadata']:
-<!-- Document properties section at bottom (collapsed by default on screen) -->
-<div class="kb-sect1 kb-sect1-collapsed uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded">
-    <h2 class="kb-h2">Document Properties</h2>
-    <div class="kb-section-body uk-container">
-        ${var['metadata'] | n}
-    </div>
-</div>
-% endif
-
 % else:
     <div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div>
 % endif

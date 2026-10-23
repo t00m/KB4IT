@@ -41,9 +41,9 @@ class Theme(DashboardMixin, DocumentTheme):
         """Priority and Status values show as colored labels."""
         link = super().datatable_value_link(properties, key, value)
         if key == 'Priority' and value:
-            link['class'] = 'uk-label kb-dt-label %s' % priority_css(value)
+            link['class'] = 'uk-label kb-badge kb-dt-label %s' % priority_css(value)
         elif key == 'Status' and value:
-            link['class'] = 'uk-label kb-dt-label %s' % status_css(value)
+            link['class'] = 'uk-label kb-badge kb-dt-label %s' % status_css(value)
         return link
 
     def _build_year_calendar_html(self, year):

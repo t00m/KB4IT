@@ -168,7 +168,7 @@ table.month tbody tr th {
     box-shadow: 0 4px 14px rgba(30,135,240,0.10);
 }
 
-.kb-sect1:not(.uk-open) {
+.kb-sect1.kb-closed {
     border-top-color: #cbd5e0;
 }
 
@@ -252,9 +252,25 @@ table.month tbody tr th {
     pointer-events: none;
 }
 
-.kb-sect1.uk-open .kb-h2::after {
+.kb-sect1:not(.kb-closed) > .kb-h2::after {
     content: '\25BE';
 }
+
+/* Folding: a closed section shows only its heading (print.css shows every body). */
+.kb-closed > .kb-section-body { display: none; }
+.kb-closed > .kb-h2 { margin-bottom: 0; }
+.kb-fold-toggle { cursor: pointer; user-select: none; }
+.kb-fold-toggle:focus-visible { outline: 2px solid #1e87f0; outline-offset: 2px; }
+.kb-h3.kb-fold-toggle::before,
+.kb-h4.kb-fold-toggle::before {
+    content: '\25BE';
+    display: inline-block;
+    width: 1em;
+    font-size: 0.7em;
+    color: #94a3b8;
+}
+.kb-closed > .kb-h3.kb-fold-toggle::before,
+.kb-closed > .kb-h4.kb-fold-toggle::before { content: '\25B8'; }
 
 /* ==========================================================================
    Inline collapsible TOC panel
@@ -553,7 +569,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 }
 .kb-badge:hover { color: #fff; opacity: 0.85; text-decoration: none; }
 .kb-label-muted { background: #999; }
-.kb-dt-label { font-size: 0.7rem; color: #fff !important; }
+.kb-dt-label { color: #fff !important; }  /* size and width come from .kb-badge */
 .kb-alert-item .kb-alert-title { flex: 1; min-width: 0; }
 .kb-open-badges { text-align: right; white-space: nowrap; width: 1%; }
 .kb-open-badges .kb-badge { margin-left: 4px; }

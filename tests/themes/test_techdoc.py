@@ -115,6 +115,19 @@ def test_document_page_has_toc_and_properties(site):
     assert "Periodicity_Daily.html" in html
 
 
+def test_document_page_folds_sections_and_has_no_properties_section(site):
+    html = read(site, "monitor.html")
+    assert "Document Properties" not in html  # the properties stay in the title menu dialog
+    assert 'id="modal-metadata"' in html
+    assert "top.slice(1).forEach(function(s) { s.classList.add('kb-closed'); });" in html
+    assert 'id="kb-toc-inline" open' in html
+
+
+def test_datatable_labels_are_badges(site):
+    labels = re.findall(r'class="uk-label([^"]*kb-dt-label[^"]*)"', read(site, "all.html"))
+    assert labels and all(" kb-badge " in f"{c} " for c in labels), labels
+
+
 def test_admin_backups(site):
     admin = site["target"] / "admin"
     assert (admin / "index.html").exists()

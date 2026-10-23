@@ -199,7 +199,7 @@
         padding: 2pt 4pt 2pt 8pt !important;
     }
 
-    .kb-h2::after, .kb-sect1-collapsed .kb-h2::after { content: none !important; }
+    .kb-h2::after, .kb-fold-toggle::before { content: none !important; }
 
     .kb-sect1,
     .kb-sect2,
