@@ -185,6 +185,7 @@ class Theme(DocumentTheme):
         self.create_page_about_kb4it()
         self.create_page_about_app()
         self.create_page_search()
+        self.create_page_add()
 
     def page_hook_pre(self, var):
         var['related'] = ''

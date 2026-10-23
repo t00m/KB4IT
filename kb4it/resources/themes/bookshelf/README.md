@@ -43,6 +43,7 @@ These keys are optional. Add one to `repo.json` only to change it.
 | Key | Without it | Effect of setting it |
 | --- | --- | --- |
 | `tagline` | No tagline | Short site description |
+| `editor` | `false` | `true` builds the Add page (`add.html`) with a Markdown editor and a plus button in the top bar |
 
 The bundled `default` app has no sample documents. Your first `kb4it build` produces an empty library until you add documents.
 

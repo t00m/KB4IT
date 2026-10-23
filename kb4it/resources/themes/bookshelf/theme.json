@@ -7,7 +7,7 @@
     "description": "Study companion theme organized as Book, Part and Chapter for certification prep",
     "search": true,
     "feed": false,
-    "kb4it": ">=0.9.1",
+    "kb4it": ">=0.10.0",
     "favicon": "images/logo.svg",
     "autoescape": true
 }

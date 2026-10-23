@@ -374,6 +374,7 @@ class Theme(DocumentTheme):
         self.create_page_about_app()
         self.create_page_help()
         self.create_page_search()
+        self.create_page_add()
 
     def build_page_index(self, var):
         runtime = self.srvbes.get_dict('runtime')

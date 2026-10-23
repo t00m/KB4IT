@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- ET-08, ET-09: the blog and bookshelf themes build the Add page when `"editor": true` is set in `repo.json` (off by default). blog shows an "Add document" link in the footer and ships `POST-SKELETON.md`; bookshelf shows a plus button in the top bar and ships `CHAPTER-SKELETON.md`. Every bundled `theme.json` now requires KB4IT `>=0.10.0`.
 - ET-06, ET-07: the Add page is built in core (`AddPageMixin.create_page_add()`, `add_page_html()`, `editor_keys()`) from the common templates `PAGE_ADD.tpl` and `EDITOR_DIALOGS.tpl`. A theme gets the page by calling `self.create_page_add()` in `build()`; techdoc keeps its UIkit cards and its `techdoc_addpage.py` is gone. `ADD_PAGE` is now logged by `create_page_add()` as `[BUILDER] ADD_PAGE enabled=<bool> skeletons=<source> categories=<n>`.
 - ET-04: the `editor` key in `repo.json` (`true` or `false`) turns the Add page on or off; the default comes from `theme.json` (techdoc on, other themes off). A value that is not a boolean stops the build and shows in `kb4it verify`. With the editor off, `add.html` and the link to it are removed. Logged as `[BUILDER] ADD_PAGE enabled=<bool>`.
 - techdoc Add page editor (ED-01 to ED-12): the Add page now edits new documents in a Markdown editor that works offline, also from `file://`. The items below describe its parts.

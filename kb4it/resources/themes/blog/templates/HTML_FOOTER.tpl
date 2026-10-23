@@ -27,6 +27,14 @@
                     </a>
                 </li>
 % endif
+% if var['editor']:
+                <li>
+                    <span uk-icon="icon: plus-circle" uk-tooltip="Add document"></span>
+                    <a class="uk-link-heading" href="add.html">
+                        <span class="uk-link-toogle uk-margin-left">Add document</span>
+                    </a>
+                </li>
+% endif
                 <li>
                     <span uk-icon="icon: list" uk-tooltip="All posts"></span>
                     <a class="uk-link-heading" href="all.html">

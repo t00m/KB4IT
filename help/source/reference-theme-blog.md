@@ -52,6 +52,7 @@ The full text...
 | `stats.html` | A tag cloud of the values |
 | `feed.xml` | Atom feed of the newest posts, when `site_url` is set; see [feed](reference-repo-json.md#feed) |
 | `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the sidebar shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `add.html` | Markdown editor for a new post; only when `"editor": true` is set in `repo.json`. The footer then shows an "Add document" link. See [the editor](howto-write-document-editor.md) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
 
 ## Icon, diagrams and formulas {#render}
@@ -65,6 +66,7 @@ The full text...
 |---|---|---|
 | `index_posts` | `10` | Number of posts on the home page |
 | `strict` | `false` | When `true`, only `Category: Post` documents use the post layout; other documents use a plain page |
+| `editor` | `false` | `true` builds the Add page. The skeleton is `POST-SKELETON.md` (`Author`, `Category: Post`, `Date`, `Tag`, `Topic`, an `## Excerpt` and a `## Body`); put your own in `templates/skeletons/` of the repository overrides to replace it |
 | `datatable` | | Columns of the document tables; the `default` app uses Date, Title and Topic |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 

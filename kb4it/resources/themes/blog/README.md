@@ -44,5 +44,6 @@ These keys are optional. Add one to `repo.json` only to change it.
 | `index_posts` | `10` | Number of posts on the home page |
 | `strict` | `false` | `true` uses the post layout only for `Category: Post` documents |
 | `tagline` | Empty footer line | Text shown in the footer |
+| `editor` | `false` | `true` builds the Add page (`add.html`) with a Markdown editor and an "Add document" link in the footer |
 
 See [reference-theme-blog.md](../../../../help/source/reference-theme-blog.md) for the full theme reference.
