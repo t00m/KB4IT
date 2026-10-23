@@ -60,3 +60,28 @@ def add_page(browser, site):
 
 def editor_text(page, cat):
     return page.evaluate("c => KB4ITEditor.text(c)", cat)
+
+
+TOAST = "#kb-toasts .kb-toast"
+
+
+def open_dialog(page, cat):
+    """Click Create on the card of a category and wait for the dialog and the editor."""
+    page.click(f'[data-kb-open="{cat}"]')
+    page.wait_for_selector(f"#kb-editor-{cat} .cm-editor", state="visible")
+    page.wait_for_function("c => document.getElementById('modal-add-' + c).open", arg=cat)
+
+
+def dialog_open(page, cat):
+    return page.evaluate("c => document.getElementById('modal-add-' + c).open", arg=cat)
+
+
+def close_dialog(page, cat):
+    """Close the dialog with its Close button, accepting the unsaved-changes prompt."""
+    accept = lambda dialog: dialog.accept()  # noqa: E731
+    page.on("dialog", accept)
+    try:
+        page.click(f'[data-kb-close="{cat}"]')
+        page.wait_for_function("c => !document.getElementById('modal-add-' + c).open", arg=cat)
+    finally:
+        page.remove_listener("dialog", accept)

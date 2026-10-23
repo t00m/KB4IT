@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from tests.browser.conftest import editor_text
+from tests.browser.conftest import TOAST, close_dialog, dialog_open, editor_text, open_dialog
 
 pytestmark = pytest.mark.browser
 
@@ -12,20 +12,12 @@ CATEGORIES = ["change", "incident", "meeting", "note", "post", "procedure", "rep
 
 
 def open_cat(page, cat):
-    page.click(f"button[onclick=\"kbAddOpen('{cat}')\"]")
-    page.wait_for_selector(f"#kb-editor-{cat} .cm-editor", state="visible")
-    page.wait_for_selector(f"#modal-add-{cat}.uk-open")
+    open_dialog(page, cat)
 
 
 def close_cat(page, cat):
-    """Close the modal, accepting the unsaved-changes prompt (ED-10) when edits are pending."""
-    accept = lambda dialog: dialog.accept()  # noqa: E731
-    page.on("dialog", accept)
-    try:
-        page.evaluate("c => UIkit.modal('#modal-add-' + c).hide()", cat)
-        page.wait_for_selector(f"#modal-add-{cat}", state="hidden")
-    finally:
-        page.remove_listener("dialog", accept)
+    """Close the dialog, accepting the unsaved-changes prompt (ED-10) when edits are pending."""
+    close_dialog(page, cat)
 
 
 def type_at_end(page, cat, text):
@@ -120,7 +112,7 @@ def test_escape_then_tab_leaves_editor(add_page):
     assert editor_text(add_page, "note") == skeleton
     assert not add_page.evaluate("document.querySelector('#kb-editor-note .cm-editor').contains(document.activeElement)")
     # Escape inside the editor does not close the modal.
-    assert add_page.evaluate("document.getElementById('modal-add-note').classList.contains('uk-open')")
+    assert dialog_open(add_page, "note")
 
 
 # ---- ED-05 completion, ED-06 lint, Tab indentation ----
@@ -392,9 +384,9 @@ def test_escape_in_value_input_closes_modal_only_without_list(add_page):
     add_page.focus(box)
     add_page.wait_for_selector(row("note", "Tag") + " .kb-suggest-item")
     add_page.press(box, "Escape")
-    assert add_page.evaluate("document.getElementById('modal-add-note').classList.contains('uk-open')")
+    assert dialog_open(add_page, "note")
     add_page.press(box, "Escape")
-    add_page.wait_for_selector("#modal-add-note", state="hidden")
+    add_page.wait_for_function("!document.getElementById('modal-add-note').open")
 
 
 def test_pane_follows_dark_page(add_page):
@@ -465,3 +457,66 @@ def test_fresh_document_version_row_is_editable(add_page):
     add_page.wait_for_selector(row("note", "Version"))
     assert add_page.locator(row("note", "Version") + " .kb-prop-complex").count() == 0
     assert add_page.locator(row("note", "Version") + " input").count() >= 1
+
+
+# ---- ET-01 and ET-02: native dialog, toasts, icons ----
+
+
+def test_escape_dirty_asks_once(add_page):
+    open_cat(add_page, "note")
+    add_page.click("#kb-editor-note .cm-content")
+    add_page.keyboard.type("x")
+    typed = editor_text(add_page, "note")
+    messages = []
+
+    def dismiss(dialog):
+        messages.append(dialog.message)
+        dialog.dismiss()
+
+    add_page.on("dialog", dismiss)
+    add_page.focus("#modal-add-note .kb-dialog-header")
+    add_page.keyboard.press("Escape")
+    add_page.wait_for_timeout(500)
+    add_page.remove_listener("dialog", dismiss)
+    assert messages == ["You have unsaved changes. Close and lose them?"]
+    assert dialog_open(add_page, "note")
+    assert editor_text(add_page, "note") == typed
+    assert "x" in typed
+
+
+def test_escape_in_editor_keeps_dialog(add_page):
+    open_cat(add_page, "note")
+    messages = []
+    add_page.on("dialog", lambda d: (messages.append(d.message), d.dismiss()))
+    add_page.click("#kb-editor-note .cm-content")
+    add_page.keyboard.press("Escape")
+    add_page.keyboard.press("Escape")
+    add_page.wait_for_timeout(300)
+    assert dialog_open(add_page, "note")
+    assert messages == []
+
+
+def test_body_does_not_scroll_while_open(add_page):
+    overflow = "getComputedStyle(document.body).overflow"
+    open_cat(add_page, "note")
+    assert add_page.evaluate(overflow) == "hidden"
+    close_cat(add_page, "note")
+    assert add_page.evaluate(overflow) != "hidden"
+
+
+def test_toolbar_icons_are_svg(add_page):
+    open_cat(add_page, "note")
+    for action in ["bold", "italic", "code", "link", "ul", "quote", "hr", "table", "image"]:
+        assert add_page.locator(f'#kb-toolbar-note [data-action="{action}"] svg').count() == 1, action
+    assert add_page.locator("#kb-toolbar-note [uk-icon]").count() == 0
+
+
+def test_toast_copy(add_page):
+    add_page.evaluate(
+        "Object.defineProperty(navigator, 'clipboard', {value: {writeText: async () => {}}})"
+    )
+    open_cat(add_page, "note")
+    add_page.click('[data-kb-copy="note"]')
+    add_page.wait_for_selector(TOAST)
+    assert "Copied to clipboard" in add_page.text_content(TOAST)
+    assert "kb-toast-success" in add_page.get_attribute(TOAST, "class")

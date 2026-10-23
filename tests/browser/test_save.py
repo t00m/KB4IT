@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.browser.conftest import editor_text
+from tests.browser.conftest import TOAST, dialog_open, editor_text
 from tests.browser.test_add_editor import close_cat, open_cat
 
 pytestmark = pytest.mark.browser
@@ -123,8 +123,8 @@ def test_discard_drops_handle(make_page):
     set_text(page, "note", "---\nCategory: Note\n---\n# Other\n")
     close_cat(page, "note")
     page.once("dialog", lambda d: d.accept())  # the discard prompt
-    page.click("button[onclick=\"kbAddOpen('note')\"]")
-    page.wait_for_selector("#modal-add-note.uk-open")
+    page.click('[data-kb-open="note"]')
+    page.wait_for_function("document.getElementById('modal-add-note').open")
     assert label(page) == "Save"
 
 
@@ -196,16 +196,16 @@ def test_unsaved_changes_prompt(make_page):
         dialog.dismiss()
 
     page.once("dialog", dismiss)
-    page.evaluate("UIkit.modal('#modal-add-note').hide()")
+    page.click('[data-kb-close="note"]')
     page.wait_for_timeout(500)
     assert len(messages) == 1
-    assert page.evaluate("document.getElementById('modal-add-note').classList.contains('uk-open')")
+    assert dialog_open(page, "note")
     # a save marks clean: closing does not ask
     with page.expect_download():
         page.click("#kb-save-note")
     page.once("dialog", lambda d: messages.append("unexpected"))
-    page.evaluate("UIkit.modal('#modal-add-note').hide()")
-    page.wait_for_selector("#modal-add-note", state="hidden")
+    page.click('[data-kb-close="note"]')
+    page.wait_for_function("!document.getElementById('modal-add-note').open")
     assert len(messages) == 1
 
 
@@ -214,8 +214,8 @@ def test_close_button_asks_and_accepts(make_page):
     open_cat(page, "note")
     set_text(page, "note", "---\nCategory: Note\n---\n# Changed\n")
     page.once("dialog", lambda d: d.accept())
-    page.click("#modal-add-note .uk-modal-close")
-    page.wait_for_selector("#modal-add-note", state="hidden")
+    page.click('[data-kb-close="note"]')
+    page.wait_for_function("!document.getElementById('modal-add-note').open")
 
 
 def test_beforeunload_while_dirty(make_page):
@@ -238,7 +238,7 @@ def test_copy_writes_normalised_text(make_page):
     )
     open_cat(page, "note")
     set_text(page, "note", "---\r\nCategory: Note\r\n---\r\n# T\r\n")
-    page.click("#modal-add-note button[onclick=\"kbAddCopy('note')\"]")
+    page.click('[data-kb-copy="note"]')
     page.wait_for_function("window.__copied.length === 1")
     assert page.evaluate("window.__copied[0]") == "---\nCategory: Note\n---\n# T\n"
 
@@ -273,7 +273,7 @@ window.showSaveFilePicker = async (options) => ({
 });
 """
 
-NOTIFY = ".uk-notification-message"
+NOTIFY = TOAST
 
 
 @pytest.mark.parametrize("mode", ["create", "write"])

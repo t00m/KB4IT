@@ -21,9 +21,10 @@ class AddPageMixin:
             skel_path = os.path.join(skeletons_dir, f"{cat_id.upper()}-SKELETON.md")
             try:
                 with open(skel_path, encoding="utf-8") as fh:
-                    skeletons[cat_id] = fh.read()
+                    text = fh.read()
             except OSError:
-                skeletons[cat_id] = f"---\nDate: YYYY-MM-DD\nVersion: 1.0\nCategory: {cat_id.capitalize()}\n---\n\n# Title of the {cat_id.capitalize()}\n\n## Overview\n\nDescribe here.\n"
+                text = f"---\nDate: YYYY-MM-DD\nVersion: 1.0\nCategory: {cat_id.capitalize()}\n---\n\n# Title of the {cat_id.capitalize()}\n\n## Overview\n\nDescribe here.\n"
+            skeletons[cat_id] = {"name": cat_id.capitalize(), "text": text}
         var['page']['skeletons'] = skeletons
         # Printed raw inside <script>: "<" as \u003c so no value can close the script element.
         var['page']['skeletons_json'] = json.dumps(skeletons, ensure_ascii=True).replace("<", "\\u003c")

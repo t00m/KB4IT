@@ -23,6 +23,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- ET-01 to ET-03: the Add page editor no longer uses UIkit. Each category opens in a native `<dialog>` (Escape and Close ask before losing edits, the page behind does not scroll), messages are shown by `KB4ITEditor.notify()` in a `#kb-toasts` container, toolbar icons are inline SVG, and buttons use `data-kb-open`, `data-kb-save`, `data-kb-copy` and `data-kb-close` handled by one delegated listener. The `kb-add-skeletons` data is now `{cat: {"name", "text"}}`. The editor styles moved from techdoc's `screen.css` to `kb4it-editor.css`, and the UIkit MIT notice is in `THIRD-PARTY-NOTICES.txt`.
 - ED-03: techdoc requires KB4IT 0.10.0 or later.
 - ED-04: the techdoc Add page edits documents in a CodeMirror editor instead of a plain text box: line numbers, Markdown and frontmatter highlighting, undo and redo, search (`Ctrl+F`), bracket closing, lists and quotes continued on Enter, Tab inserts four spaces (`Escape` then `Tab` leaves the editor). The colours follow the page background, light or dark. Opening a category again asks before discarding an edited document. Browser tests (Playwright and Chromium) run in a separate CI job and are skipped where Playwright is missing.
 

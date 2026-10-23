@@ -52,7 +52,7 @@ CATEGORIES = [
                 </div>
                 <div class="uk-card-footer kb-add-card-footer">
                     <button class="uk-button uk-button-small uk-button-primary"
-                            onclick="kbAddOpen('${cat['id']}')">Create</button>
+                            data-kb-open="${cat['id']}">Create</button>
                 </div>
             </div>
         </div>
@@ -63,25 +63,20 @@ CATEGORIES = [
 
 <!-- ── Full-screen modal,  one per category ── -->
 % for cat in CATEGORIES:
-<div id="modal-add-${cat['id']}" class="uk-modal-full" uk-modal>
+<dialog id="modal-add-${cat['id']}" class="kb-dialog-modal">
     <div class="kb-dialog">
 
         <!-- Header -->
-        <div class="kb-dialog-header" style="border-bottom: 3px solid ${cat['color']};">
-            <span uk-icon="icon: ${cat['icon']}; ratio: 1.2"
-                  style="color: ${cat['color']}; flex-shrink: 0;"></span>
+        <div class="kb-dialog-header" tabindex="-1" style="border-bottom: 3px solid ${cat['color']};">
             <span class="kb-dialog-title" style="color: ${cat['color']};">Add ${cat['name']}</span>
             <span class="kb-dialog-desc">${cat['desc']}</span>
             <div class="kb-dialog-actions">
-                <button id="kb-save-${cat['id']}" class="uk-button uk-button-primary uk-button-small"
-                        onclick="kbAddSave('${cat['id']}')">
-                    <span uk-icon="icon: download; ratio: 0.85"></span> <span class="kb-save-label">Save</span>
-                </button>
-                <button class="uk-button uk-button-default uk-button-small"
-                        onclick="kbAddCopy('${cat['id']}')">
-                    <span uk-icon="icon: copy; ratio: 0.85"></span> Copy
-                </button>
-                <button class="uk-button uk-button-small uk-modal-close uk-close" type="button" uk-close> Close </button>
+                <button id="kb-save-${cat['id']}" class="kb-btn kb-btn-primary kb-btn-small" type="button"
+                        data-kb-save="${cat['id']}"><span class="kb-save-label">Save</span></button>
+                <button class="kb-btn kb-btn-small" type="button"
+                        data-kb-copy="${cat['id']}">Copy</button>
+                <button class="kb-btn kb-btn-small" type="button"
+                        data-kb-close="${cat['id']}">Close</button>
             </div>
         </div>
 
@@ -106,15 +101,9 @@ CATEGORIES = [
         </div><!-- /kb-dialog-body -->
 
     </div><!-- /kb-dialog -->
-</div><!-- /modal -->
+</dialog><!-- /modal -->
 % endfor
 
 <script src="resources/editor/codemirror.min.js"></script>
 <script src="resources/editor/kb4it-frontmatter.js"></script>
 <script src="resources/editor/kb4it-editor.js"></script>
-<script>
-/* Card and modal buttons call these; the editor lives in kb4it-editor.js. */
-function kbAddOpen(cat) { KB4ITEditor.open(cat); }
-function kbAddCopy(cat) { KB4ITEditor.copy(cat); }
-function kbAddSave(cat) { KB4ITEditor.save(cat); }
-</script>

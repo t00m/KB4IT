@@ -1,4 +1,4 @@
-/* KB4IT editor of the techdoc Add page (ED-04 to ED-09).
+/* KB4IT editor of the Add page (ED-04 to ED-09).
  * Needs codemirror.min.js (KB4ITEditor.cm) and kb4it-frontmatter.js, loaded before it.
  * Document data reaches the DOM only through textContent, setAttribute or CodeMirror. */
 (function (E) {
@@ -16,7 +16,7 @@
   var look = {};      // Compartment of the light or dark look, per category
   var data = null;
 
-  // keys: {Key: [{v, c}]} of the repository; skeletons: {cat: Markdown}.
+  // keys: {Key: [{v, c}]} of the repository; skeletons: {cat: {name, text}}.
   function load() {
     if (!data) {
       data = {
@@ -38,7 +38,8 @@
 
   // The skeleton of a category with today's date and a title placeholder.
   E.skeleton = function (cat) {
-    var lines = load().skeletons[cat].split("\n");
+    var skeleton = load().skeletons[cat];
+    var lines = skeleton.text.split("\n");
     var out = [];
     var inFm = false, fmDone = false, fmCount = 0, titleReplaced = false;
     for (var i = 0; i < lines.length; i++) {
@@ -51,7 +52,7 @@
       if (inFm) {
         out.push(/^Date:/.test(line) ? "Date: " + timestamp() : line);
       } else if (fmDone && !titleReplaced && /^#\s+/.test(line)) {
-        out.push("# " + cat.charAt(0).toUpperCase() + cat.slice(1) + " title");
+        out.push("# " + skeleton.name + " title");
         titleReplaced = true;
       } else {
         out.push(line);
@@ -386,7 +387,7 @@
     return true;
   }
 
-  // Order of the buttons. icon: UIkit icon; label: short text when there is no icon.
+  // Order of the buttons. icon: key of ICONS; label: short text when there is no icon.
   var GROUPS = [
     [["bold", "Bold", "Ctrl+B", "bold"], ["italic", "Italic", "Ctrl+I", "italic"],
       ["code", "Inline code", "Ctrl+E", "code"], ["link", "Link", "Ctrl+K", "link"]],
@@ -400,6 +401,53 @@
       ["mermaid", "Mermaid diagram", "", null, "Mermaid"], ["math", "Inline formula", "", null, "$x$"],
       ["mathblock", "Formula block", "", null, "$$"]]
   ];
+
+  // Icon shapes from the Uikit 3 icon set (MIT, see THIRD-PARTY-NOTICES.txt) on a 20 x 20 grid.
+  // Each shape is [tag, attributes]; "fill" shapes are painted, "line" shapes are outlined.
+  var QUOTE_1 = "M17.27,7.79 C17.27,9.45 16.97,10.43 15.99,12.02 C14.98,13.64 13,15.23 11.56,15.97 L11.1,15.08 C12.34,14.2 13.14,13.51 14.02,11.82 C14.27,11.34 14.41,10.92 14.49,10.54 C14.3,10.58 14.09,10.6 13.88,10.6 C12.06,10.6 10.59,9.12 10.59,7.3 C10.59,5.48 12.06,4 13.88,4 C15.39,4 16.67,5.02 17.05,6.42 C17.19,6.82 17.27,7.27 17.27,7.79 L17.27,7.79 Z";
+  var QUOTE_2 = "M8.68,7.79 C8.68,9.45 8.38,10.43 7.4,12.02 C6.39,13.64 4.41,15.23 2.97,15.97 L2.51,15.08 C3.75,14.2 4.55,13.51 5.43,11.82 C5.68,11.34 5.82,10.92 5.9,10.54 C5.71,10.58 5.5,10.6 5.29,10.6 C3.47,10.6 2,9.12 2,7.3 C2,5.48 3.47,4 5.29,4 C6.8,4 8.08,5.02 8.46,6.42 C8.6,6.82 8.68,7.27 8.68,7.79 L8.68,7.79 Z";
+  var ICONS = {
+    bold: [["path", { d: "M5,15.3 C5.66,15.3 5.9,15 5.9,14.53 L5.9,5.5 C5.9,4.92 5.56,4.7 5,4.7 L5,4 L8.95,4 C12.6,4 13.7,5.37 13.7,6.9 C13.7,7.87 13.14,9.17 10.86,9.59 L10.86,9.7 C13.25,9.86 14.29,11.28 14.3,12.54 C14.3,14.47 12.94,16 9,16 L5,16 L5,15.3 Z M9,9.3 C11.19,9.3 11.8,8.5 11.85,7 C11.85,5.65 11.3,4.8 9,4.8 L7.67,4.8 L7.67,9.3 L9,9.3 Z M9.185,15.22 C11.97,15 12.39,14 12.4,12.58 C12.4,11.15 11.39,10 9,10 L7.67,10 L7.67,15 L9.18,15 Z" }]],
+    italic: [["path", { d: "M12.63,5.48 L10.15,14.52 C10,15.08 10.37,15.25 11.92,15.3 L11.72,16 L6,16 L6.2,15.31 C7.78,15.26 8.19,15.09 8.34,14.53 L10.82,5.49 C10.97,4.92 10.63,4.76 9.09,4.71 L9.28,4 L15,4 L14.81,4.69 C13.23,4.75 12.78,4.91 12.63,5.48 L12.63,5.48 Z" }]],
+    code: [["polyline", { points: "13,4 19,10 13,16", line: 1 }], ["polyline", { points: "7,4 1,10 7,16", line: 1 }]],
+    link: [["path", { d: "M10.625,12.375 L7.525,15.475 C6.825,16.175 5.925,16.175 5.225,15.475 L4.525,14.775 C3.825,14.074 3.825,13.175 4.525,12.475 L7.625,9.375", line: 1.1 }],
+      ["path", { d: "M9.325,7.375 L12.425,4.275 C13.125,3.575 14.025,3.575 14.724,4.275 L15.425,4.975 C16.125,5.675 16.125,6.575 15.425,7.275 L12.325,10.375", line: 1.1 }],
+      ["path", { d: "M7.925,11.875 L11.925,7.975", line: 1.1 }]],
+    list: [["rect", { width: 12, height: 1, x: 6, y: 4 }], ["rect", { width: 12, height: 1, x: 6, y: 9 }],
+      ["rect", { width: 12, height: 1, x: 6, y: 14 }], ["rect", { width: 2, height: 1, x: 2, y: 4 }],
+      ["rect", { width: 2, height: 1, x: 2, y: 9 }], ["rect", { width: 2, height: 1, x: 2, y: 14 }]],
+    "quote-right": [["path", { d: QUOTE_1 }], ["path", { d: QUOTE_2 }]],
+    minus: [["rect", { width: 18, height: 1, x: 1, y: 9 }]],
+    table: [["rect", { width: 18, height: 1, x: 1, y: 3 }], ["rect", { width: 18, height: 1, x: 1, y: 7 }],
+      ["rect", { width: 18, height: 1, x: 1, y: 11 }], ["rect", { width: 18, height: 1, x: 1, y: 15 }]],
+    image: [["circle", { cx: 16.1, cy: 6.1, r: 1.1 }], ["rect", { width: 19, height: 15, x: 0.5, y: 2.5, line: 1 }],
+      ["polyline", { points: "4,13 8,9 13,14", line: 1.01 }], ["polyline", { points: "11,12 12.5,10.5 16,14", line: 1.01 }]]
+  };
+
+  // An inline SVG built node by node; colours follow currentColor.
+  function icon(name) {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.setAttribute("aria-hidden", "true");
+    ICONS[name].forEach(function (shape) {
+      var node = document.createElementNS(ns, shape[0]);
+      Object.keys(shape[1]).forEach(function (attr) {
+        if (attr === "line") {
+          node.setAttribute("fill", "none");
+          node.setAttribute("stroke", "currentColor");
+          node.setAttribute("stroke-width", String(shape[1].line));
+        } else {
+          node.setAttribute(attr, String(shape[1][attr]));
+        }
+      });
+      if (!node.hasAttribute("fill")) { node.setAttribute("fill", "currentColor"); }
+      svg.appendChild(node);
+    });
+    return svg;
+  }
 
   function refreshToolbar(cat) {
     var bar = document.getElementById("kb-toolbar-" + cat);
@@ -419,15 +467,13 @@
     GROUPS.forEach(function (group) {
       var box = el("span", "kb-tb-group");
       group.forEach(function (def) {
-        var b = el("button", "kb-tb-btn uk-button uk-button-default uk-button-small");
+        var b = el("button", "kb-btn kb-btn-small kb-tb-btn");
         b.setAttribute("type", "button");
         b.setAttribute("data-action", def[0]);
         b.setAttribute("title", def[1] + (def[2] ? " (" + def[2] + ")" : ""));
         b.setAttribute("aria-label", def[1]);
         if (def[3]) {
-          var icon = el("span");
-          icon.setAttribute("uk-icon", "icon: " + def[3] + "; ratio: 0.8");
-          b.appendChild(icon);
+          b.appendChild(icon(def[3]));
         } else {
           b.appendChild(el("span", "kb-tb-text", def[4]));
         }
@@ -605,7 +651,7 @@
 
   function buildValueInput(cat, prop, message) {
     var wrap = el("div", "kb-value-wrap");
-    var input = el("input", "kb-value-input uk-input uk-form-small");
+    var input = el("input", "kb-value-input kb-input kb-input-small");
     input.setAttribute("type", "text");
     input.setAttribute("placeholder", "Add a value");
     input.setAttribute("autocomplete", "off");
@@ -657,6 +703,7 @@
         addValue(cat, prop, chosen, message);
       } else if (event.key === "Escape" && !list.hidden) {
         event.stopPropagation();
+        event.preventDefault();   // the browser's own cancel must not close the dialog
         list.hidden = true;
       }
     });
@@ -672,10 +719,10 @@
     head.appendChild(el("span", "kb-prop-name", prop.key));
     var tools = el("span", "kb-prop-tools");
     if (!prop.complex) {
-      var toggle = el("button", "kb-cloud-toggle uk-button uk-button-link", "Cloud");
+      var toggle = el("button", "kb-cloud-toggle kb-btn kb-btn-link", "Cloud");
       toggle.setAttribute("type", "button");
       toggle.setAttribute("title", "Show the values used in the repository");
-      var remove = el("button", "kb-prop-remove uk-button uk-button-link", "Remove");
+      var remove = el("button", "kb-prop-remove kb-btn kb-btn-link", "Remove");
       remove.setAttribute("type", "button");
       remove.setAttribute("title", "Remove this property");
       remove.addEventListener("click", function () { change(cat, prop.key, null); });
@@ -723,7 +770,7 @@
   // The selector of properties of the repository that the document does not have, plus a free name.
   function buildAdder(cat, present) {
     var wrap = el("div", "kb-add-wrap");
-    var select = el("select", "kb-add-prop uk-select uk-form-small");
+    var select = el("select", "kb-add-prop kb-select kb-input-small");
     var first = el("option", "", "Add property...");
     first.setAttribute("value", "");
     select.appendChild(first);
@@ -741,10 +788,10 @@
 
     var box = el("div", "kb-new-prop");
     box.hidden = true;
-    var name = el("input", "kb-new-prop-name uk-input uk-form-small");
+    var name = el("input", "kb-new-prop-name kb-input kb-input-small");
     name.setAttribute("type", "text");
     name.setAttribute("placeholder", "Property name");
-    var ok = el("button", "kb-new-prop-add uk-button uk-button-small uk-button-default", "Add");
+    var ok = el("button", "kb-new-prop-add kb-btn kb-btn-small", "Add");
     ok.setAttribute("type", "button");
     var message = el("div", "kb-prop-msg");
     message.setAttribute("role", "status");
@@ -871,17 +918,13 @@
     var view = E.views[cat];
     if (!view) {
       var host = document.getElementById("kb-editor-" + cat);
-      // Escape belongs to the editor (search, completion, then Tab to leave): the modal must not close.
+      // Escape belongs to the editor (search, completion, then Tab to leave): the dialog must not close.
       host.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") { event.stopPropagation(); }
+        if (event.key === "Escape") { event.stopPropagation(); event.preventDefault(); }
       });
       view = new cm.EditorView({ state: freshState(cat), parent: host });
       E.views[cat] = view;
-      // Close button, Escape outside the editor and the backdrop all end in a UIkit hide.
-      var modal = document.getElementById("modal-add-" + cat);
-      modal.addEventListener("beforehide", function (event) {
-        if (event.target === modal && E.dirty(cat) && !window.confirm(UNSAVED)) { event.preventDefault(); }
-      });
+      bindDialog(cat);
     } else if (!E.dirty(cat) || window.confirm(DISCARD)) {
       view.setState(freshState(cat));
     } else {
@@ -891,9 +934,65 @@
     document.getElementById("kb-toolbar-" + cat).classList.toggle("kb-tb-dark", pageIsDark());
     refreshToolbar(cat);
     E.renderPane(cat);
-    var shown = UIkit.modal("#modal-add-" + cat).show();
-    var ready = function () { view.requestMeasure(); view.focus(); };
-    if (shown && typeof shown.then === "function") { shown.then(ready); } else { ready(); }
+    var dialog = document.getElementById("modal-add-" + cat);
+    dialog.classList.toggle("kb-dialog-dark", pageIsDark());
+    if (!dialog.open) { dialog.showModal(); }
+    lockBody();
+    view.requestMeasure();
+    view.focus();
+  };
+
+  // True while any editor dialog is open: the page behind it does not scroll.
+  function lockBody() {
+    var any = document.querySelector("dialog.kb-dialog-modal[open]") !== null;
+    document.body.classList.toggle("kb-dialog-lock", any);
+  }
+
+  // Escape on the dialog goes through close(); the browser's own cancel never closes it.
+  function bindDialog(cat) {
+    var dialog = document.getElementById("modal-add-" + cat);
+    dialog.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        E.close(cat);
+      }
+    });
+    // Only close(cat) closes the dialog, so the browser's own cancel is always refused.
+    dialog.addEventListener("cancel", function (event) { event.preventDefault(); });
+    dialog.addEventListener("close", function () {
+      var box = document.getElementById("kb-toasts");
+      if (box && dialog.contains(box)) { document.body.appendChild(box); }
+      lockBody();
+    });
+  }
+
+  // Closes the dialog; with unsaved edits it asks first. True when it closed.
+  E.close = function (cat) {
+    var dialog = document.getElementById("modal-add-" + cat);
+    if (!dialog || !dialog.open) { return true; }
+    if (E.dirty(cat) && !window.confirm(UNSAVED)) { return false; }
+    dialog.close();
+    return true;
+  };
+
+  // A message in the corner; a click removes it. status: "success" or "danger".
+  E.notify = function (message, status, timeout) {
+    var box = document.getElementById("kb-toasts");
+    if (!box) {
+      box = el("div");
+      box.id = "kb-toasts";
+      box.setAttribute("role", "status");
+      box.setAttribute("aria-live", "polite");
+    }
+    // A modal dialog makes the rest of the page inert: the container lives inside the open one.
+    var host = document.querySelector("dialog.kb-dialog-modal[open]") || document.body;
+    if (box.parentNode !== host) { host.appendChild(box); }
+    var toast = el("div", "kb-toast kb-toast-" + (status === "danger" ? "danger" : "success"), message);
+    if (pageIsDark()) { toast.classList.add("kb-toast-dark"); }
+    var remove = function () { if (toast.parentNode) { toast.parentNode.removeChild(toast); } };
+    toast.addEventListener("click", remove);
+    box.appendChild(toast);
+    setTimeout(remove, timeout === undefined ? 5000 : timeout);
   };
 
   // ---- ED-10: save, download, copy ----
@@ -941,7 +1040,7 @@
   E.download = function (cat) { downloadText(cat, normalised(cat)); };
 
   function saveFailed(message) {
-    UIkit.notification({ message: message, status: "danger" });
+    E.notify(message, "danger");
   }
 
   var saving = {};    // pending save promise, per category
@@ -1015,7 +1114,7 @@
   E.copy = function (cat) {
     var text = normalised(cat);
     var done = function () {
-      UIkit.notification({ message: "Copied to clipboard", status: "success", timeout: 2000 });
+      E.notify("Copied to clipboard", "success", 2000);
     };
     var fallback = function () {
       var area = document.createElement("textarea");
@@ -1029,7 +1128,7 @@
       try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
       document.body.removeChild(area);
       if (ok) { done(); } else {
-        UIkit.notification({ message: "Copy failed: select the text and copy it by hand", status: "danger" });
+        E.notify("Copy failed: select the text and copy it by hand", "danger");
       }
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1038,4 +1137,27 @@
       fallback();
     }
   };
+
+  // One delegated listener serves every button of the page.
+  var bound = false;
+  E.init = function () {
+    if (bound) { return; }
+    bound = true;
+    document.addEventListener("click", function (event) {
+      var node = event.target instanceof Element ? event.target : null;
+      var button = node ? node.closest("[data-kb-open], [data-kb-save], [data-kb-copy], [data-kb-close]") : null;
+      if (!button) { return; }
+      var cat;
+      if ((cat = button.getAttribute("data-kb-open")) !== null) { E.open(cat); }
+      else if ((cat = button.getAttribute("data-kb-save")) !== null) { E.save(cat); }
+      else if ((cat = button.getAttribute("data-kb-copy")) !== null) { E.copy(cat); }
+      else if ((cat = button.getAttribute("data-kb-close")) !== null) { E.close(cat); }
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", E.init);
+  } else {
+    E.init();
+  }
 })(KB4ITEditor);

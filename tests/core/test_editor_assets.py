@@ -53,3 +53,15 @@ def test_thanks_credits_codemirror():
 def test_techdoc_requires_0_10():
     theme = json.loads((ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "theme.json").read_text(encoding="utf-8"))
     assert theme["kb4it"] == ">=0.10.0"
+
+
+def test_editor_js_has_no_uikit():
+    source = (EDITOR / "kb4it-editor.js").read_text(encoding="utf-8")
+    assert "UIkit" not in source
+    assert "uk-" not in source
+
+
+def test_notices_name_uikit():
+    notices = (EDITOR / "THIRD-PARTY-NOTICES.txt").read_text(encoding="utf-8")
+    assert "UIkit" in notices
+    assert "MIT" in notices
