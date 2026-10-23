@@ -1,3 +1,4 @@
+<!-- PROPERTY HEADER :: START -->
 <div class="bk-key-header">
     <h1 class="bk-key-title">Property: ${var['title']}</h1>
     <div class="bk-key-meta">
@@ -6,16 +7,22 @@
         <span>${sum(item['count'] for item in var['leader'])} document${'s' if sum(item['count'] for item in var['leader']) != 1 else ''}</span>
     </div>
 </div>
+<!-- PROPERTY HEADER :: END -->
 
+<!-- VIEW TABS :: START -->
 <div class="bk-key-tabs">
     <button class="bk-tab-btn bk-tab-active" data-tab="cloud">Cloud</button>
     <button class="bk-tab-btn" data-tab="table">Table</button>
     <button class="bk-tab-btn" data-tab="leader">Leader</button>
 </div>
+<!-- VIEW TABS :: END -->
 
+<!-- CLOUD VIEW :: START -->
 <div class="bk-tab-content bk-tab-content-active" id="tab-cloud">
     ${var['cloud'] | n}
 </div>
+<!-- CLOUD VIEW :: END -->
+<!-- TABLE VIEW :: START -->
 <div class="bk-tab-content" id="tab-table">
     <table class="bk-table bk-table-key">
         <thead>
@@ -34,6 +41,8 @@
         </tbody>
     </table>
 </div>
+<!-- TABLE VIEW :: END -->
+<!-- LIST VIEW :: START -->
 <div class="bk-tab-content" id="tab-leader">
 % for item in var['leader']:
     <div class="bk-leader-row">
@@ -42,3 +51,4 @@
     </div>
 % endfor
 </div>
+<!-- LIST VIEW :: END -->

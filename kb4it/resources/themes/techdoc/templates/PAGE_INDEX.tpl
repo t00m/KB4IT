@@ -26,9 +26,10 @@ def category_url(category):
     return prop_url("Category", category)
 %>
 
+<!-- DASHBOARD :: START -->
 <div class="uk-container kb-index">
 
-    <!-- 1. HERO STATS BAR -->
+    <!-- SUMMARY COUNTS :: START -->
     <section class="kb-section" aria-labelledby="kb-hero-heading">
         <h2 id="kb-hero-heading" class="uk-hidden-visually">Summary</h2>
         <div class="kb-hero-bar">
@@ -43,8 +44,9 @@ def category_url(category):
 % endfor
         </div>
     </section>
+    <!-- SUMMARY COUNTS :: END -->
 
-    <!-- 2. DIATAXIS GRID -->
+    <!-- DOCUMENT TYPES :: START -->
     <section class="kb-section" aria-labelledby="kb-doctypes-heading">
         <h2 id="kb-doctypes-heading" class="uk-hidden-visually">Document types</h2>
         <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" data-uk-grid>
@@ -70,9 +72,10 @@ def category_url(category):
 % endfor
         </div>
     </section>
+    <!-- DOCUMENT TYPES :: END -->
 
-    <!-- 2b. OPEN ITEMS -->
 % if var['page']['open_items']:
+    <!-- OPEN ITEMS :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="open-items" open>
         <summary class="kb-section-title">Open items</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
@@ -99,9 +102,10 @@ def category_url(category):
             </table>
         </div>
     </details>
+    <!-- OPEN ITEMS :: END -->
 % endif
 
-    <!-- 3. CHANGES & INCIDENTS BAR -->
+    <!-- CHANGES AND INCIDENTS :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="changes-incidents" open>
         <summary class="kb-section-title">Changes and incidents</summary>
         <div class="kb-alert-bar">
@@ -156,8 +160,9 @@ def category_url(category):
             </div>
         </div>
     </details>
+    <!-- CHANGES AND INCIDENTS :: END -->
 
-    <!-- 4. UPCOMING EVENTS -->
+    <!-- UPCOMING EVENTS :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="upcoming-events" open>
         <summary class="kb-section-title">Upcoming events</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
@@ -190,9 +195,10 @@ def category_url(category):
             </div>
         </div>
     </details>
+    <!-- UPCOMING EVENTS :: END -->
 
-    <!-- 4b. MONITORING -->
 % if var['page']['monitoring_panel']:
+    <!-- MONITORING :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="monitoring" open>
         <summary class="kb-section-title">Monitoring</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
@@ -224,9 +230,10 @@ def category_url(category):
 % endif
         </div>
     </details>
+    <!-- MONITORING :: END -->
 % endif
 
-    <!-- 5. RECENT EVENTS -->
+    <!-- RECENT EVENTS :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="recent-events" open>
         <summary class="kb-section-title">Recent events</summary>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
@@ -251,8 +258,10 @@ def category_url(category):
 % endif
         </div>
     </details>
+    <!-- RECENT EVENTS :: END -->
 
 </div>
+<!-- DASHBOARD :: END -->
 <script>
     // Remember which dashboard sections the reader folded, in this browser only.
     document.querySelectorAll("details.kb-collapsible").forEach(function (box) {

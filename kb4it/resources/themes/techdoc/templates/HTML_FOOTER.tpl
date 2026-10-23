@@ -1,34 +1,19 @@
 <!-- FOOTER :: START -->
-<div class="kb-footer">
+<footer class="kb-footer">
     <a class="kb-footer-top" href="#">&#8593; Back to top</a>
     <span class="kb-footer-meta">Last updated ${var['timestamp']}</span>
-</div>
+</footer>
 <!-- FOOTER :: END -->
-</div><!-- /uk-container -->
-</div><!-- /uk-background-muted -->
-<!-- CONTENTS (Document) :: END -->
+</div>
+<!-- CONTENT :: END -->
+</div>
+<!-- PAGE :: END -->
+<!-- PAGE SCRIPTS :: START -->
 % if (var['repo'].get('markdown') or {}).get('highlight', 'client') == 'client':
+<!-- Code highlighting -->
 <script>hljs.highlightAll();</script>
 % endif
-<script>
-var input = document.getElementById("text_filter");
-var filter = document.getElementById("filter");
-
-input.addEventListener( "keyup", function(event)
-{
-    if ( input.value == "" )
-    {
-        filter.setAttribute( "uk-filter-control", "" );
-    }
-
-    else
-    {
-        filter.setAttribute( "uk-filter-control", "filter:[data-title*=" + JSON.stringify(input.value) + "i]" );
-    }
-
-    filter.click();
-});
-</script>
+<!-- Copy the document source to the clipboard (source dialog) -->
 <script>
 function copyToClipboard() {
   var el = document.getElementById("source-code");
@@ -40,6 +25,7 @@ function copyToClipboard() {
   UIkit.notification({message: "Source copied to clipboard", status: "success", timeout: 2000});
 }
 </script>
+<!-- Section folding -->
 <script>
 // Every section folds when you click its heading. Top-level sections start folded, except the
 // first; subsections start open. A link to a section unfolds it and the sections around it.
@@ -91,6 +77,6 @@ function copyToClipboard() {
     fromHash();
 })();
 </script>
-<!-- GRID LAYOUT :: END -->
+<!-- PAGE SCRIPTS :: END -->
 </body>
 </html>

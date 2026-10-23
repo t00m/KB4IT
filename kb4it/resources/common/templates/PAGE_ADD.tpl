@@ -1,3 +1,4 @@
+<!-- ADD DOCUMENT :: START -->
 <div class="kb-add">
 
     <div class="kb-add-note">
@@ -7,6 +8,7 @@
         folder and rebuild.
     </div>
 
+    <!-- CATEGORY CARDS :: START -->
     <div class="kb-add-cards">
 % for cat in var['page']['categories']:
         <div class="kb-add-card" style="border-top: 3px solid ${cat['color']};">
@@ -17,7 +19,9 @@
         </div>
 % endfor
     </div>
+    <!-- CATEGORY CARDS :: END -->
 
-</div><!-- /kb-add -->
+</div>
+<!-- ADD DOCUMENT :: END -->
 
 ${var['page']['editor_dialogs'] | n}

@@ -203,6 +203,15 @@ A theme without `"autoescape": true` prints values as they are, and every build 
 
 `HTML_BODY` and `PAGE_INDEX` are always required, and `PAGE_KEY` and `PAGE_KEY_VALUE` too unless `metadata_pages` is `false`. A missing one stops the build with `TEMPLATE_MISSING`.
 
+## Clean, valid HTML {#html}
+
+The bundled themes follow these rules, and a theme you share should too:
+
+- **Mark the blocks of a page.** Put a pair of comments around each part a reader looks for: `<!-- NAME :: START -->` and `<!-- NAME :: END -->`, with the name in capitals (`TOP BAR`, `MAIN CONTENT`, `TABLE OF CONTENTS`, `FOOTER`). Pairs nest like the markup. Every page has at least `PAGE METADATA`, `STYLESHEETS`, `MAIN CONTENT` and `FOOTER`. Put a pair inside a `% if` together with its block, so a page never has a `START` without its `END`. Do not write values from documents inside a comment: a `--` in a title would end it.
+- **Write UIkit components as `data-uk-*` attributes** (`data-uk-icon`, `data-uk-toggle`, `data-uk-modal`). UIkit reads them the same way, and `uk-*` is not valid HTML.
+- **Give every `<section>` and `<article>` a heading.** When the design shows none, use a heading only screen readers see (`class="uk-hidden-visually"` with UIkit).
+- **Check the result** with the W3C checker: `uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py <target folder>` (it needs Java). The bundled themes have no error and no warning.
+
 ## Options in theme.json {#options}
 
 The theme version is not in `theme.json`. KB4IT gives every theme its own version, so a theme always shows the KB4IT it runs with.

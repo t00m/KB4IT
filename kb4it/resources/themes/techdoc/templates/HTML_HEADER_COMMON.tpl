@@ -2,11 +2,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>${var['repo']['title']} - ${var['page']['title']}</title>
+    <!-- PAGE METADATA :: START -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
+    <title>${var['repo']['title']} - ${var['page']['title']}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
+    <!-- PAGE METADATA :: END -->
+    <!-- STYLESHEETS :: START -->
 % if _hl == 'client':
     <link rel="stylesheet" href="resources/themes/techdoc/framework/Highlight/styles/github-dark.css">
 % elif _hl == 'pygments':
@@ -15,6 +17,8 @@
     <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
+    <!-- STYLESHEETS :: END -->
+    <!-- LIBRARIES :: START -->
 % if _hl == 'client':
     <script src="resources/themes/techdoc/framework/Highlight/highlight.js"></script>
 % endif
@@ -23,6 +27,8 @@
     <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
     <script src="resources/themes/techdoc/framework/datatables/js/jquery.dataTables.min.js"></script>
     <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
+    <!-- LIBRARIES :: END -->
+    <!-- DATATABLES SETUP :: START -->
     <script class="init">
         $(document).ready(function() {
             $('.kb4it-datatable:not([data-dt-init])').each(function() {
@@ -44,6 +50,8 @@
             });
         });
     </script>
+    <!-- DATATABLES SETUP :: END -->
+    <!-- PRINT FOOTER :: START -->
     <%
         # Print footer: the page title as a CSS string. Escape backslashes and quotes, and "<" so
         # "</style>" cannot close the block.
@@ -53,13 +61,16 @@
     <style media="print">
         @page { @bottom-left { content: "${_footer | n}"; } }
     </style>
+    <!-- PRINT FOOTER :: END -->
 </head>
 <body>
-<!-- Template version ${var['env']['APP']['version']} -->
+<!-- PAGE :: START -->
 <div class="uk-background-muted uk-height-viewport">
+<!-- TOP BAR :: START -->
 <div id="container-1" class="uk-container uk-container-center noprint">
     <div id="kb4it-menu" style="z-index: 980;" data-uk-sticky="show-on-up: true">
         <nav class="uk-navbar-container uk-border-rounded uk-card-hover uk-box-shadow-large" style="background-color: white;" data-uk-navbar>
+            <!-- LOGO MENU :: START -->
             <div class="uk-navbar-left">
                 <ul class="uk-navbar-nav noprint">
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
@@ -114,9 +125,10 @@
                     </li>
                 </ul>
             </div>
+            <!-- LOGO MENU :: END -->
+            <!-- PAGE TITLE :: START -->
             <!-- The title takes the room the left and right blocks leave, and is cut with an ellipsis. -->
             <div class="kb4it-navbar-title">
-                <!-- DOCUMENT TITLE :: START -->
                 <ul class="uk-navbar-nav">
                     <li>
                         <a class="uk-link-toggle uk-text-primary" href="#" title="${var['page']['title']}"><span id="kb4it-page-title" class="uk-text-primary uk-text-small">${var['page']['title']}</span></a>
@@ -125,25 +137,32 @@
     _has_toc = var['has_toc'] and len(var['toc']) > 0
 %>
 % if _has_actions or _has_toc:
-                        <!-- Title menu: the page actions in one row, then the table of contents. -->
+                        <!-- TITLE MENU :: START -->
+                        <!-- Shown on hover: the page actions in one row, then the table of contents. -->
                         <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center kb4it-title-menu">
     % if _has_actions:
+                            <!-- PAGE ACTIONS :: START -->
                             <div class="kb4it-page-actions noprint">
 ${var['actions'] | n}
                             </div>
+                            <!-- PAGE ACTIONS :: END -->
     % endif
     % if _has_toc:
+                            <!-- TITLE MENU CONTENTS :: START -->
                             <div class="uk-navbar-dropdown-nav kb4it-title-toc">
 ${var['toc'] | n}
                             </div>
+                            <!-- TITLE MENU CONTENTS :: END -->
     % endif
                         </div>
+                        <!-- TITLE MENU :: END -->
 % endif
                     </li>
                 </ul>
-                <!-- DOCUMENT TITLE :: END -->
             </div>
+            <!-- PAGE TITLE :: END -->
 % if var.get('search_box'):
+            <!-- SEARCH BUTTON :: START -->
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
@@ -151,10 +170,12 @@ ${var['toc'] | n}
                     </li>
                 </ul>
             </div>
+            <!-- SEARCH BUTTON :: END -->
 % endif
         </nav>
     </div>
 % if var.get('search_box'):
+    <!-- SEARCH DIALOG :: START -->
     <div id="kb4it-search-modal" class="kb4it-search-modal" data-uk-modal>
         <div class="uk-modal-dialog uk-modal-body">
             ${var['search_box'] | n}
@@ -173,9 +194,9 @@ ${var['toc'] | n}
             });
         })();
     </script>
+    <!-- SEARCH DIALOG :: END -->
 % endif
 </div>
+<!-- TOP BAR :: END -->
+<!-- CONTENT :: START -->
 <div class="uk-container uk-container-center">
-    <div id="container-2" class="uk-container uk-container-center uk-flex uk-flex-center uk-hidden">
-        <span class="uk-text-lead">${var['page']['title']}</span>
-    </div>

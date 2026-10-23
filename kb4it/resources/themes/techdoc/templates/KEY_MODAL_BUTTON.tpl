@@ -1,4 +1,4 @@
-    <!-- Button :: START -->
+    <!-- PROPERTY BUTTON AND DIALOG :: START -->
     <a class="kb-cloud-item kb-cloud-key" style="--kb-weight: ${var['weight']};" href="#modal-full-${var['vfkey']}" data-uk-tooltip="${var['tooltip']}" data-uk-toggle>
         <span class="kb-cloud-word">${var['key']}</span>
     </a>
@@ -13,4 +13,4 @@ ${var['content'] | n}
             </div>
         </div>
     </div>
-    <!-- Button :: END -->
+    <!-- PROPERTY BUTTON AND DIALOG :: END -->

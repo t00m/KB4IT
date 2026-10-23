@@ -1,4 +1,4 @@
-<!-- Template PAGE_ADMIN.tpl :: START -->
+<!-- BACKUPS :: START -->
 <div class="kb-sect1 uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded">
     <h2 class="kb-h2">Backup</h2>
     <div class="kb-section-body uk-container">
@@ -17,4 +17,4 @@
         </div>
     </div>
 </div>
-<!-- Template PAGE_ADMIN.tpl :: END -->
+<!-- BACKUPS :: END -->

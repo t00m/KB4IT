@@ -1,5 +1,5 @@
-<!-- EVENTCAL_PAGE_EVENTS_YEARS.tpl :: START -->
+<!-- EVENTS OF THE YEAR :: START -->
 <div class ="uk-container uk-overflow-auto">
 ${var['page']['datatable'] | n}
 </div>
-<!-- EVENTCAL_PAGE_EVENTS_YEARS.tpl :: END -->
+<!-- EVENTS OF THE YEAR :: END -->

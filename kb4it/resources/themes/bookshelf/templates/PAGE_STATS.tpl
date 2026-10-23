@@ -1,4 +1,5 @@
 <h1>Statistics</h1>
+<!-- TOTALS :: START -->
 <div class="bk-stats-summary">
     <div class="bk-stat-card">
         <span class="bk-stat-value">${var['count_docs']}</span>
@@ -9,7 +10,9 @@
         <span class="bk-stat-label">Metadata Keys</span>
     </div>
 </div>
+<!-- TOTALS :: END -->
 <h2>Key Leaders</h2>
+<!-- PROPERTY COUNTS :: START -->
 <table class="bk-table">
     <thead>
         <tr>
@@ -26,3 +29,4 @@
 % endfor
     </tbody>
 </table>
+<!-- PROPERTY COUNTS :: END -->

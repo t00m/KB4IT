@@ -1,4 +1,4 @@
-    <!-- Button :: START -->
+    <!-- PROPERTY BUTTON AND DIALOG :: START -->
     <div>
         <div class="uk-card uk-card-small uk-border-rounded uk-card-hover uk-card-body uk-text-lead">
             <a class="uk-link-heading" href="#modal-full-${var['vfkey']}" data-uk-tooltip="${var['tooltip']}" data-uk-toggle><span style="font-size:${var['size']}pt;">${var['key']}</span></a>
@@ -17,4 +17,4 @@ ${var['content'] | n}
             </div>
         </div>
     </div>
-    <!-- Button :: END -->
+    <!-- PROPERTY BUTTON AND DIALOG :: END -->

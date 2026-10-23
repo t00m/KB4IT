@@ -127,6 +127,38 @@ def test_accessible_basics(sites, theme):
     assert problems == []
 
 
+BLOCK_COMMENT = re.compile(r"<!-- ([A-Z0-9][A-Z0-9 ,&/-]*?) :: (START|END) -->")
+# Blocks every page has: where its parts start and end, so a reader finds them in the source.
+LANDMARKS = {"PAGE METADATA", "STYLESHEETS", "MAIN CONTENT", "FOOTER"}
+THEME_LANDMARKS = {"techdoc": {"TOP BAR", "PAGE SCRIPTS"}, "blog": {"SIDEBAR", "PAGE SCRIPTS"},
+                   "bookshelf": {"TOP BAR", "PAGE SCRIPTS"}, "apphelp": {"TOP BAR", "SIDEBAR", "PAGE SCRIPTS"}}
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_block_comments_are_paired_and_mark_the_landmarks(sites, theme):
+    """Block comments come in <!-- NAME :: START --> / <!-- NAME :: END --> pairs, nested like the markup."""
+    problems = []
+    for page in sites[theme]:
+        text = page.read_text(encoding="utf-8")
+        for comment in re.findall(r"<!--(?:(?!-->).)*?::(?:(?!-->).)*?-->", text, flags=re.DOTALL):
+            if not BLOCK_COMMENT.fullmatch(comment):
+                problems.append(f"{page.name}: malformed block comment {comment!r}")
+        stack, names = [], set()
+        for name, edge in BLOCK_COMMENT.findall(text):
+            names.add(name)
+            if edge == "START":
+                stack.append(name)
+            elif not stack or stack.pop() != name:
+                problems.append(f"{page.name}: END of {name} does not close the last START")
+                break
+        if stack:
+            problems.append(f"{page.name}: {stack} not closed")
+        missing = (LANDMARKS | THEME_LANDMARKS[theme]) - names
+        if missing:
+            problems.append(f"{page.name}: no {sorted(missing)}")
+    assert problems == []
+
+
 def test_git_ready():
     full = {"git": True, "git_server": "https://github.com", "git_user": "me", "git_repo": "kb",
             "git_branch": "main", "git_path": "source"}

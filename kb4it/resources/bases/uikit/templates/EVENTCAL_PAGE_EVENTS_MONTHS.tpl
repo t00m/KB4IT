@@ -1,6 +1,6 @@
-<!-- EVENTCAL_PAGE_EVENTS_MONTHS.tpl :: START -->
+<!-- EVENTS OF THE MONTH :: START -->
 <div class ="uk-container uk-overflow-auto">
 ${var['page']['datatable'] | n}
 </div>
-<!-- EVENTCAL_PAGE_EVENTS_MONTHS.tpl :: END -->
+<!-- EVENTS OF THE MONTH :: END -->
 

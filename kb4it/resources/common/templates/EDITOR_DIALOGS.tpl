@@ -1,13 +1,16 @@
+<!-- EDITOR DATA :: START -->
 <link rel="stylesheet" href="resources/editor/kb4it-editor.css">
 <script id="kb-add-keys" type="application/json">${var['page']['keys_json'] | n}</script>
 <script id="kb-add-skeletons" type="application/json">${var['page']['skeletons_json'] | n}</script>
+<!-- EDITOR DATA :: END -->
 
-<!-- Full-screen modal, one per category -->
 % for cat in var['page']['categories']:
+<!-- EDITOR DIALOG :: START -->
+<!-- Full-screen dialog to write a new document of one category (see its id). -->
 <dialog id="modal-add-${cat['id']}" class="kb-dialog-modal">
     <div class="kb-dialog">
 
-        <!-- Header -->
+        <!-- DIALOG HEADER :: START -->
         <div class="kb-dialog-header" tabindex="-1" style="border-bottom: 3px solid ${cat['color']};">
             <span class="kb-dialog-title" style="color: ${cat['color']};">Add ${cat['name']}</span>
             <span class="kb-dialog-desc">${cat['description']}</span>
@@ -20,31 +23,38 @@
                         data-kb-close="${cat['id']}">Close</button>
             </div>
         </div>
+        <!-- DIALOG HEADER :: END -->
 
-        <!-- Split body -->
+        <!-- DIALOG BODY :: START -->
         <div class="kb-dialog-body">
 
-            <!-- Left: editable Markdown template -->
+            <!-- TEMPLATE EDITOR :: START -->
             <div class="kb-pane-left">
                 <div class="kb-pane-label">Template</div>
                 <div id="kb-toolbar-${cat['id']}" class="kb-toolbar"></div>
                 <div id="kb-editor-${cat['id']}" class="kb-editor-host"></div>
             </div>
+            <!-- TEMPLATE EDITOR :: END -->
 
-            <!-- Right: visual frontmatter editor -->
+            <!-- PROPERTIES PANE :: START -->
             <div class="kb-pane-right">
                 <div class="kb-pane-label">Properties</div>
                 <div class="kb-props-wrap">
                     <div id="kb-props-${cat['id']}"></div>
                 </div>
             </div>
+            <!-- PROPERTIES PANE :: END -->
 
-        </div><!-- /kb-dialog-body -->
+        </div>
+        <!-- DIALOG BODY :: END -->
 
-    </div><!-- /kb-dialog -->
-</dialog><!-- /modal -->
+    </div>
+</dialog>
+<!-- EDITOR DIALOG :: END -->
 % endfor
 
+<!-- EDITOR SCRIPTS :: START -->
 <script src="resources/editor/codemirror.min.js"></script>
 <script src="resources/editor/kb4it-frontmatter.js"></script>
 <script src="resources/editor/kb4it-editor.js"></script>
+<!-- EDITOR SCRIPTS :: END -->

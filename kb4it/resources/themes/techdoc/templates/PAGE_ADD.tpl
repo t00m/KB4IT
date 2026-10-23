@@ -1,3 +1,4 @@
+<!-- ADD DOCUMENT :: START -->
 <div class="uk-container kb-add">
 
     <div class="kb-add-note uk-alert-primary" data-uk-alert>
@@ -18,6 +19,7 @@
     </div>
 % endif
 
+    <!-- CATEGORY CARDS :: START -->
     <div class="uk-grid-small uk-child-width-1-2@s uk-child-width-1-4@m" data-uk-grid>
 % for cat in var['page']['categories']:
         <div>
@@ -41,7 +43,9 @@
         </div>
 % endfor
     </div>
+    <!-- CATEGORY CARDS :: END -->
 
-</div><!-- /kb-add -->
+</div>
+<!-- ADD DOCUMENT :: END -->
 
 ${var['page']['editor_dialogs'] | n}

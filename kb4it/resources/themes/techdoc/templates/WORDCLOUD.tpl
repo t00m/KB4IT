@@ -1,4 +1,4 @@
-<!-- WORDCLOUD.tpl :: START -->
+<!-- WORD CLOUD :: START -->
 <div class="kb-cloud">
 % for item in var['items']:
     <a class="kb-cloud-item" style="--kb-weight: ${item['weight']};" href="${item['url']}" data-uk-tooltip="${item['tooltip']}">
@@ -6,4 +6,4 @@
     </a>
 % endfor
 </div>
-<!-- WORDCLOUD.tpl :: END -->
+<!-- WORD CLOUD :: END -->

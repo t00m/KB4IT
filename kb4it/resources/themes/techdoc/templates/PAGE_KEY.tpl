@@ -1,3 +1,4 @@
+<!-- PROPERTY HEADER :: START -->
 <div class="kb-key-header">
     <span class="kb-key-title">${var['title']}</span>
     <div class="kb-key-meta">
@@ -6,13 +7,17 @@
         <span>${sum(item['count'] for item in var['leader'])} document${'s' if sum(item['count'] for item in var['leader']) != 1 else ''}</span>
     </div>
 </div>
+<!-- PROPERTY HEADER :: END -->
 
+<!-- VIEW TABS :: START -->
 <ul class="uk uk-flex-center" data-uk-tab>
     <li><a href="#">Cloud</a></li>
     <li><a href="#">Table</a></li>
     <li><a href="#">Leader</a></li>
 </ul>
+<!-- VIEW TABS :: END -->
 
+<!-- VIEWS :: START -->
 <ul class="uk-switcher uk-margin">
     <li>
         ${var['cloud'] | n}
@@ -46,3 +51,4 @@
 % endfor
     </li>
 </ul>
+<!-- VIEWS :: END -->

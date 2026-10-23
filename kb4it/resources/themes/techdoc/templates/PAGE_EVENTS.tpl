@@ -1,5 +1,7 @@
+<!-- EVENTS CALENDAR :: START -->
 <div class="uk-container uk-margin-top">
 
+  <!-- YEAR SELECTOR :: START -->
   <div class="uk-flex uk-flex-center uk-margin">
     <select id="kb4it-events-year-select" class="uk-select uk-form-width-medium uk-text-center">
       % for i, ydata in enumerate(var['years']):
@@ -7,7 +9,9 @@
       % endfor
     </select>
   </div>
+  <!-- YEAR SELECTOR :: END -->
 
+  <!-- YEARS :: START -->
   <ul id="kb4it-events-switcher" class="uk-switcher uk-margin">
     % for ydata in var['years']:
     <li>
@@ -21,8 +25,10 @@
     </li>
     % endfor
   </ul>
+  <!-- YEARS :: END -->
 
 </div>
+<!-- EVENTS CALENDAR :: END -->
 
 <script>
 (function () {

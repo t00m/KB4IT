@@ -3,7 +3,7 @@ from markupsafe import escape
 
 from kb4it.core.util import valid_filename
 %>
-<!-- HTML_BODY :: START -->
+<!-- MAIN CONTENT :: START -->
 <main class="page">
 % if var['SystemPage'] or not var.get('reading'):
     <div class="wrap">
@@ -17,6 +17,7 @@ from kb4it.core.util import valid_filename
 <% info = rd['info'] %>\
 <% book = rd['book'] %>\
     <div class="wrap">
+        <!-- BREADCRUMB :: START -->
         <div class="crumb">
             <a href="index.html">Library</a><span class="sep">&#9656;</span>
             <a href="${book['url']}">${book['short']}</a><span class="sep">&#9656;</span>
@@ -24,8 +25,11 @@ from kb4it.core.util import valid_filename
             <span class="here">Ch ${info['chapter']} &middot; ${info['title']}</span>
             <span class="chip mono jump">On this page &darr;</span>
         </div>
+        <!-- BREADCRUMB :: END -->
 
+        <!-- READER :: START -->
         <div class="reader">
+            <!-- CHAPTER LIST :: START -->
             <nav class="chapnav">
                 <div class="partlabel">${rd['part_label']} &middot; chapters</div>
 % for sib in rd['siblings']:
@@ -40,7 +44,9 @@ from kb4it.core.util import valid_filename
                 <div class="navdiv"></div>
                 <a href="${book['url']}"><span class="cnum">&#128213;</span> Book overview</a>
             </nav>
+            <!-- CHAPTER LIST :: END -->
 
+            <!-- CHAPTER :: START -->
             <article class="article">
                 <div class="meta-top">
                     <span class="chip accent"><span class="dot ${info['bucket']}"></span> ${info['status']}</span>
@@ -51,10 +57,13 @@ from kb4it.core.util import valid_filename
                 </div>
                 <h1>${info['title']}</h1>
 
+                <!-- CHAPTER BODY :: START -->
                 <div class="chapter-body">
                     ${var['source_html'] | n}
                 </div>
+                <!-- CHAPTER BODY :: END -->
 
+                <!-- PREVIOUS AND NEXT :: START -->
                 <div class="prevnext">
 % if rd['prev']:
                     <a class="pn" href="${rd['prev']['url']}">
@@ -73,7 +82,9 @@ from kb4it.core.util import valid_filename
                     <span></span>
 % endif
                 </div>
+                <!-- PREVIOUS AND NEXT :: END -->
 
+                <!-- PRINT APPENDIX :: START -->
                 <section class="print-only print-appendix">
                     <h2><span class="n">&#9000;</span> Command reference</h2>
 % if rd['commands']:
@@ -87,7 +98,9 @@ from kb4it.core.util import valid_filename
                     <p class="appendix-tags"><b>Tags:</b> ${' &middot; '.join(escape(tag) for tag in rd['tags']) | n}</p>
 % endif
                 </section>
+                <!-- PRINT APPENDIX :: END -->
 
+                <!-- CHAPTER DETAILS :: START -->
                 <div class="docmeta">
                     <div class="row"><span class="k">Book</span><span>${book['title']}</span></div>
                     <div class="row"><span class="k">Part</span><span>${rd['part_label']}${(' &middot; ' if rd['part_title'] else '') | n}${rd['part_title'] or ''}</span></div>
@@ -97,8 +110,11 @@ from kb4it.core.util import valid_filename
 % endif
                     <div class="row"><span class="k">Updated</span><span>${info['date'][:16]} &middot; ${info['status']}</span></div>
                 </div>
+                <!-- CHAPTER DETAILS :: END -->
             </article>
+            <!-- CHAPTER :: END -->
 
+            <!-- SIDE PANEL :: START -->
             <aside class="rail">
                 <div class="rail-card">
                     <div class="rh"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h12M4 10h12M4 15h8"></path></svg><span class="eyebrow">On this page</span></div>
@@ -125,8 +141,10 @@ from kb4it.core.util import valid_filename
                 </div>
 % endif
             </aside>
+            <!-- SIDE PANEL :: END -->
         </div>
+        <!-- READER :: END -->
     </div>
 % endif
 </main>
-<!-- HTML_BODY :: END -->
+<!-- MAIN CONTENT :: END -->

@@ -1,13 +1,12 @@
-<!-- Template SECTION_ACTIONS.tpl :: START -->
 % if not var['SystemPage']:
   % if var.get('git_ok'):
-        <!-- Edit Button :: START -->
+        <!-- EDIT BUTTON :: START -->
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" data-uk-tooltip="title: Edit document">
             <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span data-uk-icon="pencil"></span></a>
         </li>
-        <!-- Edit Button :: END -->
+        <!-- EDIT BUTTON :: END -->
   % endif
-        <!-- Metadata Button :: START -->
+        <!-- PROPERTIES BUTTON AND DIALOG :: START -->
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" data-uk-tooltip="title: Document properties">
             <a class="uk-link-heading" href="#modal-metadata" data-uk-toggle><span class="uk-link-heading" data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
             <div id="modal-metadata" class="uk-modal-full" data-uk-modal>
@@ -22,8 +21,8 @@
                 </div>
             </div>
         </li>
-        <!-- Metadata Button :: END -->
-        <!-- View Markdown Source Button :: START -->
+        <!-- PROPERTIES BUTTON AND DIALOG :: END -->
+        <!-- SOURCE BUTTON AND DIALOG :: START -->
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" data-uk-tooltip="title: Document source">
             <a class="uk-link-heading" href="#modal-full-source" data-uk-toggle><span class="uk-link-heading" data-uk-icon="icon: code; ratio: 1.0;"></span></a>
             <div id="modal-full-source" class="uk-modal-full" data-uk-modal>
@@ -39,8 +38,7 @@
                 </div>
             </div>
         </li>
-        <!-- View Source Button :: END -->
+        <!-- SOURCE BUTTON AND DIALOG :: END -->
 % endif
-<!-- Template SECTION_ACTIONS.tpl :: END -->
 
 

@@ -1,9 +1,12 @@
-<!-- PAGE_BOOK :: START -->
+<!-- BOOK :: START -->
 <% book = var['book'] %>\
+<!-- BREADCRUMB :: START -->
 <div class="crumb">
     <a href="index.html">Library</a><span class="sep">&#9656;</span><span class="here">${book['title']}</span>
 </div>
+<!-- BREADCRUMB :: END -->
 
+<!-- BOOK HEADER :: START -->
 <div class="kanban-head">
     <div class="bookline">
         <div class="cover-xs" style="background:${book['gradient']}"></div>
@@ -18,7 +21,9 @@
         <span class="mono" style="font-size:0.8rem;color:var(--ink-2)">${book['percent']}%</span>
     </div>
 </div>
+<!-- BOOK HEADER :: END -->
 
+<!-- LEGEND :: START -->
 <div class="legend" style="margin-bottom:14px">
     <span class="eyebrow" style="letter-spacing:.08em">Each Part is a column &mdash; push chapters toward done</span>
     <span style="margin-left:auto"></span>
@@ -26,7 +31,9 @@
     <span><span class="dot reading"></span> reading</span>
     <span><span class="dot todo"></span> to-do</span>
 </div>
+<!-- LEGEND :: END -->
 
+<!-- CHAPTER BOARD :: START -->
 <div class="board">
 % for col in book['columns']:
     <div class="col ${'current' if col['is_current'] else ''}">
@@ -52,4 +59,5 @@
     </div>
 % endfor
 </div>
-<!-- PAGE_BOOK :: END -->
+<!-- CHAPTER BOARD :: END -->
+<!-- BOOK :: END -->

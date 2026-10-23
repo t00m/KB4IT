@@ -6,7 +6,10 @@
         <a href="#" class="foot-top">Back to top &uarr;</a>
     </div>
 </footer>
+<!-- FOOTER :: END -->
+<!-- PAGE :: END -->
+<!-- PAGE SCRIPTS :: START -->
 <script src="resources/themes/bookshelf/framework/bookshelf/js/bookshelf.js"></script>
+<!-- PAGE SCRIPTS :: END -->
 </body>
 </html>
-<!-- FOOTER :: END -->

@@ -17,12 +17,12 @@
         var['post']['updated_year'] = f"{dt.year:04d}"
         var['post']['updated_time'] = f"{dt.hour:02d}:{dt.minute:02d}"
 %>
-<!-- Template POST_HTML_SINGLE.tpl :: START -->
+<!-- MAIN CONTENT :: START -->
 <main class="kb-main">
-<!-- Blog Post :: START -->
+<!-- POST :: START -->
 <article class="uk-card uk-card-small uk-card-body post-card">
     <div class="uk-container uk-container-small">
-        <!-- Header -->
+        <!-- POST HEADER :: START -->
         <header class="uk-margin-small-bottom">
             <div class="uk-flex uk-flex-middle uk-margin-bottom">
                 <div class="uk-width uk-margin-top">
@@ -40,14 +40,14 @@
                             </li>
 % endif
 % if var['post']['dated']:
-                            <!-- Update :: START -->
+                            <!-- LAST UPDATE :: START -->
                             <li data-uk-tooltip="title: Document last update">
                                 <span data-uk-icon="calendar"></span>
                                 <span class="uk-margin-small-left"><a href="events_${var['post']['updated_day']}.html">${var['post']['updated_day_text']}</a>/<a href="events_${var['post']['updated_month']}.html">${var['post']['updated_month_text']}</a>/<a href="events_${var['post']['updated_year']}.html">${var['post']['updated_year_text']}</a></span>
                             </li>
-                            <!-- Update :: END -->
+                            <!-- LAST UPDATE :: END -->
 % endif
-                            <!-- Metadata Button :: START -->
+                            <!-- PROPERTIES BUTTON AND DIALOG :: START -->
                             <li data-uk-tooltip="title: Document properties">
                                 <span data-uk-icon="hashtag"></span>
                                 <span class="uk-margin-small-left">
@@ -65,8 +65,8 @@
                                     </div>
                                 </div>
                             </li>
-                            <!-- Metadata Button :: END -->
-                            <!-- View Markdown Source Button :: START -->
+                            <!-- PROPERTIES BUTTON AND DIALOG :: END -->
+                            <!-- SOURCE BUTTON AND DIALOG :: START -->
                             <li data-uk-tooltip="title: Document source">
                                 <span data-uk-icon="code"></span>
                                 <span class="uk-margin-small-left">
@@ -85,7 +85,7 @@
                                     </div>
                                 </div>
                             </li>
-                            <!-- View Source Button :: END -->
+                            <!-- SOURCE BUTTON AND DIALOG :: END -->
 % if var.get('git_ok'):
                             <li data-uk-tooltip="title: Edit document">
                                 <span data-uk-icon="pencil"></span>
@@ -96,25 +96,26 @@
 % endif
                         </ul>
                     </div>
-                    <!-- Tags and Topics -->
                 </div>
             </div>
         </header>
+        <!-- POST HEADER :: END -->
 
-        <!-- Body -->
+        <!-- POST BODY :: START -->
         <div class="uk-article">
-            <!-- BODY :: START -->
             ${var['source_html'] | n}
-            <!-- BODY :: END -->
         </div>
+        <!-- POST BODY :: END -->
 
-        <!-- Footer -->
+        <!-- POST FOOTER :: START -->
         <footer class="uk-margin-small-top uk-text-muted">
             <div class="uk-flex uk-flex-between uk-flex-middle">
             </div>
         </footer>
+        <!-- POST FOOTER :: END -->
     </div>
 </article>
+<!-- POST :: END -->
 <p></p>
 </main>
-<!-- Template POST_HTML_SINGLE.tpl :: END -->
+<!-- MAIN CONTENT :: END -->
