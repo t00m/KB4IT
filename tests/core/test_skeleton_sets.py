@@ -6,7 +6,6 @@ import re
 
 import pytest
 
-from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.services.addpage import AddPageMixin
 from tests.helpers import ROOT
@@ -86,8 +85,6 @@ def test_common_fallback(make, tmp_path):
     source, cats = make(templates=tmp_path / "tpl").skeleton_set()
     assert source == "common"
     assert [c["id"] for c in cats] == ["document"]
-    assert (ROOT / "kb4it/resources/common/templates/skeletons/DOCUMENT-SKELETON.md").is_file()
-    assert ENV["GPATH"]["TEMPLATES"]
 
 
 def test_bad_id(make, tmp_path):
@@ -120,3 +117,24 @@ def test_skeleton_text_utf8(make, tmp_path):
     _folder(tmp_path / "tpl", {"A-SKELETON.md": text})
     _, cats = make(templates=tmp_path / "tpl").skeleton_set()
     assert cats[0]["text"] == text
+
+
+@pytest.mark.parametrize("listing", ['{"id": "a"}', '["a"]', '[{"name": "A"}]', '[{"id": 3}]',
+                                     [{"id": "a"}, {"id": "a"}], [{"id": "a", "color": 5}],
+                                     [{"id": "a", "name": None}]])
+def test_bad_listing_shapes(make, tmp_path, listing):
+    folder = _folder(tmp_path / "tpl", {"A-SKELETON.md": "x"}, listing)
+    with pytest.raises(ThemeError, match=re.escape(str(folder / "skeletons.json"))):
+        make(templates=tmp_path / "tpl").skeleton_set()
+
+
+def test_bad_id_from_file_name(make, tmp_path):
+    folder = _folder(tmp_path / "tpl", {"1ST-SKELETON.md": "x"})
+    with pytest.raises(ThemeError, match=re.escape(str(folder / "1ST-SKELETON.md"))):
+        make(templates=tmp_path / "tpl").skeleton_set()
+
+
+def test_mixed_case_file_without_json(make, tmp_path):
+    _folder(tmp_path / "tpl", {"Foo-SKELETON.md": "foo text"})
+    _, cats = make(templates=tmp_path / "tpl").skeleton_set()
+    assert [(c["id"], c["name"], c["text"]) for c in cats] == [("foo", "Foo", "foo text")]

@@ -61,20 +61,24 @@ class AddPageMixin:
     def _read_skeleton_set(self, folder: str, files: list[str]) -> list[dict]:
         """Build the categories of one skeleton folder, in skeletons.json order when it exists."""
         listing = os.path.join(folder, "skeletons.json")
-        if os.path.exists(listing):
+        has_json = os.path.exists(listing)
+        if has_json:
             entries = self._read_skeleton_listing(listing)
+            for entry in entries:
+                entry["file"] = f"{entry['id'].upper()}{SUFFIX}"
         else:
             entries = []
             for name in files:
                 cat_id = name[:-len(SUFFIX)].lower()
-                entries.append({"id": cat_id, "name": cat_id[:1].upper() + cat_id[1:]})
+                if not SKELETON_ID.match(cat_id):
+                    raise ThemeError(f"{os.path.join(folder, name)}: id '{cat_id}' must match ^[a-z][a-z0-9-]*$")
+                entries.append({"id": cat_id, "file": name})
             entries.sort(key=lambda e: e["id"])
         categories = []
         for entry in entries:
-            name = f"{entry['id'].upper()}{SUFFIX}"
-            path = os.path.join(folder, name)
+            path = os.path.join(folder, entry["file"])
             if not os.path.isfile(path):
-                raise ThemeError(f"{listing}: id '{entry['id']}' has no file {name}")
+                raise ThemeError(f"{listing}: id '{entry['id']}' has no file {entry['file']}")
             with open(path, "rb") as fin:
                 text = fin.read().decode("utf-8")
             categories.append({
@@ -85,8 +89,8 @@ class AddPageMixin:
                 "icon": entry.get("icon") or "",
                 "text": text,
             })
-        if os.path.exists(listing):
-            listed = {f"{c['id'].upper()}{SUFFIX}" for c in categories}
+        if has_json:
+            listed = {e["file"] for e in entries}
             for name in files:
                 if name not in listed:
                     self.log.warning(f"[BUILDER] SKELETON_UNLISTED file={name}")
@@ -101,9 +105,16 @@ class AddPageMixin:
             raise ThemeError(f"{listing}: cannot read skeletons.json: {error}") from error
         if not isinstance(entries, list):
             raise ThemeError(f"{listing}: must be a list of objects")
+        seen = set()
         for entry in entries:
             if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
                 raise ThemeError(f"{listing}: every entry needs a string 'id'")
             if not SKELETON_ID.match(entry["id"]):
                 raise ThemeError(f"{listing}: id '{entry['id']}' must match ^[a-z][a-z0-9-]*$")
+            if entry["id"] in seen:
+                raise ThemeError(f"{listing}: id '{entry['id']}' appears twice")
+            seen.add(entry["id"])
+            for key in ("name", "description", "color", "icon"):
+                if key in entry and not isinstance(entry[key], str):
+                    raise ThemeError(f"{listing}: '{key}' of id '{entry['id']}' must be a string")
         return entries
