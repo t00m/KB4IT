@@ -104,7 +104,7 @@ CHECKS = {
         'example': '',
     },
     'check-backlinks': {
-        'title': 'Linked from another document',
+        'title': 'Other documents link to it',
         'dim': 'connected',
         'what': 'At least one other document links to this one, so readers can reach it by following links.',
         'how': 'In a related document, add a link to this file. The page then lists it under "Linked from".',

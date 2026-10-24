@@ -290,7 +290,7 @@ def connected(doc, prof):
     missing = [src for src in images
                if (local := resolve_src(src, doc.source_dir)) is not None and not os.path.isfile(local)]
     checks = [
-        Check('connected', 'Linked from another document', 'Link it from another document', 4 if doc.backlinks else 0, 4,
+        Check('connected', 'Other documents link to it', 'Link it from another document', 4 if doc.backlinks else 0, 4,
               'check-backlinks', 'In a related document, add a link to this file: [Title](FILE-NAME.md).'),
         Check('connected', 'Links to a related document', 'Link to a related document', 3 if linked else 0, 3,
               'check-internal-link', 'Link to another document by its file name: [Restore the database](RESTORE-DB.md).'),
