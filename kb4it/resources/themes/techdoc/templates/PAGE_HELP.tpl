@@ -1,4 +1,4 @@
-## What is KB4IT?
+${'##'} What is KB4IT?
 
 KB4IT is a **static website generator** for technical knowledge bases.
 It converts plain-text Markdown documents into a fully navigable HTML
@@ -10,9 +10,9 @@ Status, …) becomes a navigable index automatically.
 The result is a self-contained folder of HTML files you can open in any
 browser, host on any web server, or check into a Git repository.
 
-## Writing documents
+${'##'} Writing documents
 
-### Document structure
+${'##'}# Document structure
 
 Every KB4IT document has two sections:
 
@@ -30,7 +30,7 @@ Team:      Platform
 
 # Title of the document
 
-## First section
+${'##'} First section
 
 Write your content here using Markdown syntax.
 ```
@@ -39,7 +39,7 @@ The frontmatter must start at the very first line with `---` and must be
 closed with another `---` on its own line. Everything between those
 delimiters is the header; everything below is the body.
 
-### Properties
+${'##'}# Properties
 
 Properties are key-value pairs in the YAML frontmatter:
 
@@ -68,7 +68,7 @@ Built-in properties recognised by KB4IT:
 | `Summary`   | One-sentence summary, shown under the title |
 | `Bookmark`  | `Yes` to feature on the bookmarks page |
 
-## Replacing system pages
+${'##'} Replacing system pages
 
 System pages (`index`, `help`, `all`, `events`, `bookmarks`,
 `properties`, `stats`, `add`) are generated automatically. You can
@@ -76,7 +76,7 @@ override any of them by placing a file with the same basename — for
 example `help.md` or `index.md` — in your source directory. KB4IT will
 use your version instead of generating one automatically.
 
-## Getting help & reporting issues
+${'##'} Getting help & reporting issues
 
 | Resource | Link |
 |---|---|
