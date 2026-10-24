@@ -101,3 +101,8 @@ def test_engine_finds_a_section_in_the_built_index(tmp_path, home):
 def test_worktype_is_a_facet(tmp_path, home):
     _cfg, target, _ = _build(tmp_path, home, "techdoc", {"c.md": page("Change one", Category="Record", WorkType="Change", Date="2026-10-08")})
     assert _index(target)["c.html"]["f"] == {"Category": ["Record"], "WorkType": ["Change"]}
+
+
+def test_summary_with_commas_is_whole_in_the_index(tmp_path, home):
+    _cfg, target, _ = _build(tmp_path, home, "techdoc", {"a.md": page("Alpha", Summary="One, two, three", Date="2026-10-08")})
+    assert _index(target)["a.html"]["s"] == "One, two, three"

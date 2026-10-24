@@ -181,3 +181,13 @@ def test_feed_category_filter_matches_worktype(tmp_path, home):
     cfg = write_repo(tmp_path / "td", "techdoc", pages, site_url="https://x.org/", feed=feed)
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
     assert [e[0] for e in _feed(tmp_path / "td" / "target" / "feed.xml")] == ["Migrated"]
+
+
+def test_summary_with_commas_is_whole_in_description_and_feed(tmp_path, home):
+    pages = {"a.md": page("Alpha", "Body.", Summary="Request it, then register it.", Date="2026-01-02", Category="Note")}
+    feed = {"enabled": True, "limit": 5, "full_content": False}
+    cfg = write_repo(tmp_path / "td", "techdoc", pages, site_url="https://x.org/", feed=feed)
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    html = (tmp_path / "td" / "target" / "a.html").read_text(encoding="utf-8")
+    assert '<meta name="description" content="Request it, then register it.">' in _head(html)
+    assert _feed(tmp_path / "td" / "target" / "feed.xml")[0][3] == "Request it, then register it."

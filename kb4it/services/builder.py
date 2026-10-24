@@ -14,6 +14,7 @@ from datetime import datetime
 
 from mako.template import Template
 
+from kb4it.core.documents import joined_value
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, robots_txt, site_pages,
@@ -321,7 +322,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         """Index record of one document; themes may override to add facets or a summary."""
         values = lambda key: [v for v in (self.srvdtb.get_values(doc_id, key) or []) if v]
         title = (values("Title") or [doc_id])[0]
-        summary = (values("Summary") or [""])[0]
+        summary = joined_value(values("Summary"))
         facets = {key: values(key) for key in ("Category", "WorkType", "Tag") if values(key)}
         return {"u": html_id_for(doc_id), "t": title, "s": summary, "k": "", "c": "", "f": facets,
                 "w": [], "g": [], "x": []}
@@ -447,7 +448,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
                 content = load_doc_html(root, doc_id)
             else:
                 sections = load_doc_sections(root, doc_id)
-                summary = (self.srvdtb.get_values(doc_id, "Summary") or [""])[0]
+                summary = joined_value(self.srvdtb.get_values(doc_id, "Summary"))
                 content = summary or (sections[0]["text"][:300] if sections else "")
             entries.append({"title": (self.srvdtb.get_values(doc_id, "Title") or [doc_id])[0],
                             "url": absolute(base, html_id_for(doc_id)), "updated": atom_date(date),

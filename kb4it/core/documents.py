@@ -44,6 +44,11 @@ def load_frontmatter(text: str) -> Any:
     return yaml.load(text, Loader=_FrontmatterLoader)  # a SafeLoader subclass: safe
 
 
+def joined_value(values: list[str] | None) -> str:
+    """Join the values of a free-text key, such as Summary, that the frontmatter parser split on commas."""
+    return ", ".join(v for v in values or [] if v)
+
+
 def is_yes(value: Any) -> bool:
     """True for a header value that means yes (Yes, true, On, in any case), as Bookmark uses it."""
     return str(value).strip().lower() in YES_VALUES

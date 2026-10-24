@@ -4,6 +4,7 @@ import re
 
 from techdoc_dashboard import priority_css, status_css
 
+from kb4it.core.documents import joined_value
 from kb4it.core.util import valid_filename
 
 # Keys the Details tab never lists.
@@ -32,7 +33,7 @@ def values(srvdtb, doc_id, key):
 
 def summary(srvdtb, doc_id):
     """Return the Summary whole; KB4IT splits values on commas, so they are joined back."""
-    return ', '.join(values(srvdtb, doc_id, 'Summary'))
+    return joined_value(srvdtb.get_values(doc_id, 'Summary'))
 
 
 def header_strip(srvdtb, doc_id, conf):
