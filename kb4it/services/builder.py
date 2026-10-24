@@ -322,7 +322,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         values = lambda key: [v for v in (self.srvdtb.get_values(doc_id, key) or []) if v]
         title = (values("Title") or [doc_id])[0]
         summary = (values("Summary") or [""])[0]
-        facets = {key: values(key) for key in ("Category", "Tag") if values(key)}
+        facets = {key: values(key) for key in ("Category", "WorkType", "Tag") if values(key)}
         return {"u": html_id_for(doc_id), "t": title, "s": summary, "k": "", "c": "", "f": facets,
                 "w": [], "g": [], "x": []}
 
@@ -436,7 +436,8 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
             if doc_id not in known or self.srvdtb.is_system(doc_id):
                 continue
             date = (self.srvdtb.get_values(doc_id, "Date") or [None])[0]
-            categories = set(self.srvdtb.get_values(doc_id, "Category") or [])
+            # A feed category matches Category or WorkType, so settings written before WorkType keep working.
+            categories = set(self.srvdtb.get_values(doc_id, "Category") or []) | set(self.srvdtb.get_values(doc_id, "WorkType") or [])
             if not date or (wanted and not categories & wanted):
                 continue
             dated.append((str(date), doc_id))

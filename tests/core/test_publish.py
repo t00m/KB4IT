@@ -172,3 +172,12 @@ def test_blog_head_links_its_feed(tmp_path, home):
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
     head = _head((tmp_path / "bl" / "target" / "a.html").read_text(encoding="utf-8"))
     assert '<link rel="alternate" type="application/atom+xml"' in head and 'href="feed.xml"' in head
+
+
+def test_feed_category_filter_matches_worktype(tmp_path, home):
+    pages = {"r.md": page("Migrated", Category="Record", WorkType="Change", Date="2026-01-02"),
+             "n.md": page("Note", Category="Note", Date="2026-01-03")}
+    feed = {"enabled": True, "limit": 5, "categories": ["Change"], "full_content": False}
+    cfg = write_repo(tmp_path / "td", "techdoc", pages, site_url="https://x.org/", feed=feed)
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    assert [e[0] for e in _feed(tmp_path / "td" / "target" / "feed.xml")] == ["Migrated"]

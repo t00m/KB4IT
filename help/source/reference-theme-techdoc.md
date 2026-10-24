@@ -137,7 +137,7 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
 | `help.html` | A short guide to writing documents |
-| `search.html` | Full-text search over every document, with filters by Category and Tag; the search dialog in the top bar shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search dialog in the top bar shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
 
 ## Icon, diagrams and formulas {#render}

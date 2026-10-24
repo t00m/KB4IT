@@ -96,3 +96,8 @@ def test_engine_finds_a_section_in_the_built_index(tmp_path, home):
                ENGINE=str(target / "resources" / "common" / "js" / "kb4it-search.js"))
     out = subprocess.run([node, "-e", script], env=env, capture_output=True, text=True, encoding="utf-8", check=True)
     assert json.loads(out.stdout) == ["a.html#restore-steps"]
+
+
+def test_worktype_is_a_facet(tmp_path, home):
+    _cfg, target, _ = _build(tmp_path, home, "techdoc", {"c.md": page("Change one", Category="Record", WorkType="Change", Date="2026-10-08")})
+    assert _index(target)["c.html"]["f"] == {"Category": ["Record"], "WorkType": ["Change"]}

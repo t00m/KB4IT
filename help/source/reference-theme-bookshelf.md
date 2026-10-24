@@ -61,7 +61,7 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 | `Book_<name>.html` | The book overview: one column per part, one card per chapter |
 | Chapter pages | Navigation through the part, previous and next chapter, commands and tags |
 | `all.html`, `bookmarks.html`, `properties.html`, `stats.html` | As in the other themes |
-| `search.html` | Full-text search over every document, with filters by Category and Tag; the search box in the top bar (it replaces the link to `all.html`) shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search box in the top bar (it replaces the link to `all.html`) shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `add.html` | Markdown editor for a new chapter; only when `"editor": true` is set in `repo.json`. The top bar then shows a plus button titled "Add document". See [the editor](howto-write-document-editor.md) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
 

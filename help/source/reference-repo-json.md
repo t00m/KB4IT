@@ -93,7 +93,7 @@ The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (ta
 
 ## Search {#search}
 
-techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched.
+techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched. The search page offers filters by `Category`, `WorkType` and `Tag`, for the keys your documents use.
 
 The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
 
@@ -115,7 +115,7 @@ With `site_url` set, the blog theme writes an Atom feed, `feed.xml`, with the ne
 |---|---|---|
 | `enabled` | blog `true`, others `false` | Write the feed |
 | `limit` | `20` | Number of entries, newest first |
-| `categories` | all | Only documents with one of these `Category` values |
+| `categories` | all | Only documents with one of these `Category` or `WorkType` values |
 | `full_content` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |
 
 Documents without a `Date` are not in the feed.

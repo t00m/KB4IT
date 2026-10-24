@@ -1,7 +1,7 @@
 /* KB4IT search box (results as you type) and search page (full results and filters). */
 (function () {
   "use strict";
-  var FACETS = ["Category", "Tag"];
+  var FACETS = ["Category", "WorkType", "Tag"];
   var engine = null;
 
   function getEngine() {
