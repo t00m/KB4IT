@@ -1148,3 +1148,26 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     color: #999;
     margin-top: 2px;
 }
+
+/* Document images: figures with a caption, a frame for screenshots, click to zoom. */
+.kb-figure { margin: 1.2em 0; text-align: center; }
+.kb-figure figcaption { margin-top: 6px; font-size: 0.85rem; color: #666; }
+.kb-shot {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.kb-zoom { cursor: zoom-in; }
+.kb-gallery .kb-figure { margin: 0; }
+.kb-img-missing {
+    display: inline-block;
+    padding: 6px 10px;
+    border: 1px dashed #c3c9d2;
+    border-radius: 4px;
+    background: #f8f8f8;
+    color: #6b7480;
+    font-size: 0.85rem;
+}
+figure.kb-img-missing { display: block; padding: 24px 12px; }

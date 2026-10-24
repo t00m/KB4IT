@@ -75,6 +75,15 @@ The top bar holds the logo menu on the left, the page title in the middle and a 
 
 Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. Every heading level folds. The table of contents and the first section start open; the other top-level sections start folded, and their subsections open with them. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
+Images in a document:
+
+- Get their width and height from the file, so the page does not jump while they load. Images below the first one load when you scroll to them.
+- Become figures with a light frame. When the alt text describes the image (`![User list in SU01](...)`), it becomes a numbered caption ("Figure 1. User list in SU01"); an alt text that looks like a file name (`SAP-BC-00`, `image12`) gives no caption.
+- Open full size when you click them, with previous and next for the other images of the document.
+- Three or more images in a row, with no text between them, become a grid of thumbnails.
+- Stay as they are when they are inside a link, narrower than 64 pixels, or part of a sentence.
+- Show a grey box with the path when the file is missing, and the build warns [IMAGE_MISSING](troubleshooting.md#image-missing).
+
 ## Add page and editor {#editor}
 
 `add.html` writes new documents in a Markdown editor (CodeMirror 6, bundled, no network). Click **Create** on a category card to open its skeleton. The page is built by KB4IT itself and follows the `editor` setting of `repo.json`, which is on by default for techdoc. The cards come from `templates/skeletons/skeletons.json`; a repository can replace them with its own `overrides/templates/skeletons/` folder. For a walk-through see [Write a document in the editor](howto-write-document-editor.md).

@@ -30,6 +30,16 @@ A document links to a `.md` file that is not in `source/`.
 
 The warning names both documents. Correct the file name in the link, or create the missing document. `kb4it verify` lists every broken link at once, and also links to a section that does not exist (`ANCHOR_MISSING`); it ends with exit status 1 when it finds any, so it can stop a publishing workflow.
 
+## The build warns IMAGE_MISSING {#image-missing}
+
+### Cause
+
+The techdoc theme found an image in a document whose file is not in `source/`. The warning names the document and the image path, as written in the document: `IMAGE_MISSING doc=<file> src=<path>`. The page shows a grey box with the path instead of the image.
+
+### Fix
+
+Copy the image file to that path under `source/`, usually `source/resources/images/`, or correct the path in the document. Paths are relative to `source/`. Images on other sites (`https://...`) are never reported.
+
 ## The build stops with CONFIG_KEY_MISSING {#config-key}
 
 ### Cause

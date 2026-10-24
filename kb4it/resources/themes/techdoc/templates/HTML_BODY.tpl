@@ -18,7 +18,7 @@
     <!-- TABLE OF CONTENTS :: END -->
     % endif
     <!-- DOCUMENT BODY :: START -->
-    <div class="kb-content kb-content-${var.get('fmt', 'md')} uk-margin">
+    <div class="kb-content kb-content-${var.get('fmt', 'md')} uk-margin" data-uk-lightbox="toggle: a.kb-zoom; animation: fade">
 ${var['source_html'] | n}
     </div>
     <!-- DOCUMENT BODY :: END -->

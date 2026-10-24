@@ -354,5 +354,9 @@
         max-width: 100% !important;
         page-break-inside: avoid;
     }
+    .kb-figure { break-inside: avoid; }
+    .kb-zoom { cursor: auto; }
+    /* Gallery thumbnails print as full-width figures. */
+    .kb-gallery > * { width: 100% !important; }
 
 }

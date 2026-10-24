@@ -18,6 +18,7 @@ from datetime import datetime
 
 from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
+from techdoc_media import enhance_images
 from techdoc_records import event_type
 
 from kb4it.core.util import (
@@ -240,6 +241,10 @@ class Theme(DashboardMixin, DocumentTheme):
             var['source_md'] = source_md
             var['fmt'] = source_ext(basename_md) or "md"
             var['source_html'] = self.apply_transformations(source_html)
+            if not var['SystemPage']:
+                var['source_html'], missing = enhance_images(var['source_html'], self.srvbes.get_path('source'))
+                for src in missing:
+                    self.log.warning(f"[THEME] IMAGE_MISSING doc={basename_md} src={src}")
             actions = self.get_page_actions(var)
             var['actions'] = actions
             var['timestamp'] = timestamp
