@@ -1304,3 +1304,28 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-related li { padding: 3px 0; overflow-wrap: anywhere; }
 .kb-related .kb-q-chip { margin-left: 6px; }
 .kb-related-shared { display: block; font-size: 0.74rem; color: #888; }
+
+/* Quality page and dashboard: tier mix bars, lists, quick wins. */
+.kb-q-mix { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #eee; }
+.kb-q-mix span { display: block; }
+.kb-q-mix .kb-q-exemplary { background: var(--q-exemplary); }
+.kb-q-mix .kb-q-complete { background: var(--q-complete); }
+.kb-q-mix .kb-q-basic { background: var(--q-basic); }
+.kb-q-mix .kb-q-stub { background: var(--q-stub); }
+.kb-q-mixlabel { font-size: 0.72rem; color: #888; }
+.kb-q-mixrow { display: grid; grid-template-columns: 9rem 1fr; gap: 4px 12px; align-items: center; margin: 8px 0; }
+.kb-q-mixrow .kb-q-mixlabel { grid-column: 2; }
+.kb-q-mixpeer { font-size: 0.84rem; color: #333; grid-row: span 2; }
+.kb-q-list { font-size: 0.86rem; margin: 6px 0 0; }
+.kb-q-list li { padding: 2px 0; overflow-wrap: anywhere; }
+.kb-q-list-meta, .kb-q-intro, .kb-q-empty { font-size: 0.78rem; color: #888; }
+.kb-q-columns { columns: 2; column-gap: 24px; }
+.kb-wins { list-style: none; padding: 0; margin: 6px 0 0; }
+.kb-wins li { display: grid; grid-template-columns: 3.2rem 1fr auto; gap: 10px; align-items: center; font-size: 0.84rem; padding: 6px 0; border-bottom: 1px solid #f3f3f3; }
+.kb-wins a { min-width: 0; overflow-wrap: anywhere; }
+.kb-wins .act { font-size: 0.75rem; color: var(--q-exemplary-ink) !important; font-weight: 600; text-align: right; }
+@media (max-width: 640px) {
+    .kb-q-columns { columns: 1; }
+    .kb-wins li { grid-template-columns: 3.2rem 1fr; }
+    .kb-wins .act { grid-column: 2; text-align: left; }
+}

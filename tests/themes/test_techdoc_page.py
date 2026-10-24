@@ -273,3 +273,20 @@ def test_related_tab_holds_linked_from_and_related_documents(page_site):
 
 def test_no_related_tab_without_entries(page_site):
     assert 'data-kb-tab="related"' not in read(page_site, "plain.html")
+
+
+def test_quality_page_lists_the_maintenance_work(page_site):
+    html = read(page_site, "quality.html")
+    for section in ("quality-mix", "quality-exemplary", "quality-wins", "quality-broken", "quality-images",
+                    "quality-summary", "quality-duplicates"):
+        assert f'id="{section}"' in html, section
+    images = html[html.index('id="quality-images"'):html.index('id="quality-summary"')]
+    assert 'href="images.html"' in images and "resources/images/gone.png" in images
+    exemplary = html[html.index('id="quality-exemplary"'):html.index('id="quality-wins"')]
+    assert 'href="exemplary.html"' in exemplary
+    assert 'href="quality.html"' in read(page_site, "full.html")      # logo menu
+
+
+def test_no_quality_page_when_quality_is_off(off_site):
+    assert not (off_site["target"] / "quality.html").exists()
+    assert 'href="quality.html"' not in read(off_site, "full.html")

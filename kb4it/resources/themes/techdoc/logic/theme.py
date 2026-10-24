@@ -23,6 +23,7 @@ from techdoc_media import enhance_images
 from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInput, assess, checklist, index_js,
                              load_skeletons, peer_stats, profile)
 from techdoc_quality_guide import CHECKS as GUIDE_CHECKS
+from techdoc_quality_page import duplicates, quick_wins, tier_mix
 from techdoc_quality_guide import DIMS as GUIDE_DIMS
 from techdoc_records import event_type, work_type
 from techdoc_related import RELATED_KEYS, related
@@ -42,7 +43,7 @@ parser = etree.HTMLParser()
 
 
 class Theme(DashboardMixin, DocumentTheme):
-    reserved_pages = ('404.md', 'quality-guide.md')  # build() writes 404.html and quality-guide.html
+    reserved_pages = ('404.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
@@ -302,10 +303,46 @@ class Theme(DashboardMixin, DocumentTheme):
         self.srvdtb.add_document_key('quality-guide.md', 'Title', 'Quality guide')
         self.srvdtb.add_document_key('quality-guide.md', 'SystemPage', 'Yes')
 
+    def build_page_quality(self):
+        """The Quality page: tier mix, Exemplary documents, quick wins, broken links, missing images, no Summary, duplicates."""
+        if not self.quality:
+            return
+
+        def title(doc):
+            return (self.srvdtb.get_values(doc, 'Title') or [doc])[0]
+
+        def ref(doc, **extra):
+            return dict({'title': title(doc), 'href': html_id_for(doc)}, **extra)
+
+        live = {d: a for d, a in self.quality.items() if a.tier != 'retired'}
+        broken, images = [], []
+        for doc, a in sorted(live.items()):
+            for c in a.checks:
+                if c.key == 'check-broken-link' and not c.passed:
+                    broken.append(ref(doc, target=c.todo.rsplit(' to ', 1)[-1]))
+                elif c.key == 'check-missing-image' and not c.passed:
+                    images.append(ref(doc, target=c.todo.rsplit(' image ', 1)[-1]))
+        best = sorted((d for d, a in live.items() if a.tier == 'exemplary'), key=lambda d: (-live[d].score, d))
+        pairs = duplicates({d: title(d) for d in live})
+        q = {
+            'mix': tier_mix(self.quality),
+            'exemplary': [ref(d, score=live[d].score, peer=live[d].peer) for d in best],
+            'wins': [dict(ref(w['doc']), **w) for w in quick_wins(live, profile(self.srvbes.get_dict('theme')))],
+            'broken': broken,
+            'images': images,
+            'no_summary': [ref(d) for d in sorted(live) if not any(c.key == 'check-summary' and c.passed for c in live[d].checks)],
+            'duplicates': [(ref(a, score=live[a].score), ref(b, score=live[b].score), s) for a, b, s in pairs],
+        }
+        self.distribute_md('quality', self.template('PAGE_QUALITY').render(var={'q': q}))
+        self.srvdtb.add_document('quality.md')
+        self.srvdtb.add_document_key('quality.md', 'Title', 'Quality')
+        self.srvdtb.add_document_key('quality.md', 'SystemPage', 'Yes')
+
     def build(self):
         """Create standard pages for default theme"""
         self.ensure_quality()
         self.build_page_quality_guide()
+        self.build_page_quality()
         var = self.get_theme_var()
         self.build_page_events()
         self.build_page_properties()

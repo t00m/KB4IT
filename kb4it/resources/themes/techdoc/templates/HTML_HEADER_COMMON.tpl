@@ -121,6 +121,11 @@
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="stats.html"><span data-uk-icon="list"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Stats</span></a>
                                 </li>
+% if var['repo'].get('quality', True) is not False:
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="quality.html"><span data-uk-icon="star"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Quality</span></a>
+                                </li>
+% endif
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="javascript:location.reload();"><span data-uk-icon="refresh"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Reload page</span></a>
