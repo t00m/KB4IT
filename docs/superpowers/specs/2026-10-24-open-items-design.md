@@ -29,7 +29,7 @@ Why this order: the quality score's Connected dimension is near 0 for every sapb
 - Core changes run the full suite without browser tests (`pytest --ignore=tests/browser`); theme-only changes run `tests/themes` and `scripts/devel/check_themes.sh`. Browser tests are never run; a Playwright look at real pages is allowed and written in the response file.
 - HTML stays W3C valid (`scripts/devel/validate_html.py`), UIkit attributes as `data-uk-*`, every new template block with a `NAME :: START/END` comment pair.
 - Every new log code a user can see is documented in `help/source/troubleshooting.md` or a `reference-*.md` page (`test_every_logged_error_code_is_documented`).
-- sapbasis-docs never goes under git. Every scripted change first backs up `source/` to the scratchpad and writes a CSV of its changes. Rebuilds after a theme change use `build --force` until WP1 item 2 is done.
+- sapbasis-docs never goes under git. Every scripted change first backs up `source/` to the scratchpad and writes a CSV of its changes. Rebuilds after a theme change use `build --force` (WP1 item 2).
 - Commits: one-line Conventional Commits, no trailers, never push, never branch.
 - Writing: no em dash, plain sentences, no framework name in help pages.
 
@@ -45,11 +45,13 @@ Why this order: the quality score's Connected dimension is near 0 for every sapb
 
 ### 2. A theme change does not rebuild pages
 
-**Problem.** An incremental build skips documents whose source did not change, so after a theme change (templates, theme logic, `theme.json`) the old pages stay. `--force` is needed today.
+**Problem.** An incremental build skips documents whose source did not change, so after a theme change (templates, theme logic, `theme.json`) the old pages stay.
 
-**Change.** The kbdict stores a `theme_fingerprint` next to `kb4it_version`: a hash of the file names and contents of the active theme's `theme.json`, `templates/` and `logic/`, of the base templates it uses (`template_base`), of `kb4it/resources/common/templates/`, of the repository's `overrides/templates/` when present, and of `repo.json` (my call: a settings change such as `datatable` also changes the pages). Framework files (`framework/`: CSS, JS, fonts) are left out: they are copied at every build already. When the stored fingerprint differs, the build logs `[BACKEND] THEME_CHANGED` at info level and sets `force_all`, as `KBDICT_VERSION_MISMATCH` does today.
+**Decision (user, 2026-10-24).** Keep `kb4it build --force` as the way to rebuild after a theme change; no automatic detection.
 
-**Test.** Build, edit one template of a copied theme, build again: the log has `THEME_CHANGED` and the page shows the edit; a third build without changes has no `THEME_CHANGED`.
+**Change.** The help says it: in `help/source/howto-create-theme.md` (where theme files are edited) and in the troubleshooting page, a short entry "Pages do not change after a theme edit" with the fix `kb4it build --force`.
+
+**Test.** The existing help tests pass; no code change.
 
 ### 3. Links without an extension are not checked
 
@@ -88,8 +90,8 @@ Scripted, each step with a backup and a CSV, in `/home/t00m/Documents/devel/test
 
 ## WP3 techdoc small fixes
 
-1. **Date in the header strip.** Show only `YYYY-MM-DD`; the full value stays in the `title` attribute and in the Details tab.
-2. **Tables between 960 and 1199 px.** At 1024px a wide table (sapbasis `Category_Record.html`) still scrolls sideways by about 190px. Below 1200px: badges shrink from 6.5rem to 5rem, the title floor drops from 12rem to 8rem, and the date column shows the date without the time. If the table still scrolls at 1024px on `Category_Record.html`, the Scope and Topic columns are hidden below 1200px (they stay in the search filters and on the document page). My call; check it on the real page.
+1. **Date in the header strip (user, 2026-10-24).** Show the date on one line and the time below it, without seconds: `YYYY-MM-DD`, then `HH:MM`. A date without a time shows only `YYYY-MM-DD`. The full value stays in the `title` attribute and in the Details tab.
+2. **Tables between 960 and 1199 px.** At 1024px a wide table (sapbasis `Category_Record.html`) still scrolls sideways by about 190px. Below 1200px: badges shrink from 6.5rem to 5rem and the title floor drops from 12rem to 8rem. The date column keeps `YYYY-MM-DD` with `HH:MM` below it, as in the header strip. If the table still scrolls at 1024px on `Category_Record.html`, the Scope and Topic columns are hidden below 1200px (they stay in the search filters and on the document page). My call; check it on the real page.
 3. **Fold subsections.** Today top-level sections start folded except the first, and subsections start open. Subsections also start folded, except those under the first section. Links to a section still unfold it and its parents; print still shows everything. My call.
 4. **Footer filter script.** `HTML_FOOTER.tpl` has an old `text_filter` script that throws `Cannot read properties of null` on pages without the filter box. It returns early when the box is missing.
 5. **`#details` next to a heading with the same id.** When the body has a heading with the id `details` or `history`, the browser first jumps to that heading. `page.js` then scrolls to the card. A Playwright check confirms that the card ends up in view; only if it does not does the script change.
@@ -122,6 +124,9 @@ From the analysis of 2026-10-23 (`responses/20261023_154000_SORT-FIX-PROFILER-HE
 - New tests in `tests/browser`.
 
 ## Calls made without the user, to check
+
+Decided by the user on 2026-10-24: WP1.2 keeps `--force` (no theme fingerprint); WP3.1 shows `YYYY-MM-DD` with `HH:MM` below it.
+
 
 - WP1.3: extensionless links are reported, not rewritten.
 - WP2.4: dates keep their three valid formats.
