@@ -191,7 +191,7 @@ def test_emblem_tab_and_note_for_an_exemplary_document(page_site):
 def test_basic_page_has_a_grey_ring_and_next_steps_but_no_note(page_site):
     html = read(page_site, "full.html")
     assert "kb-q-emblem" in html and "kb-exemplary-note" not in html
-    assert '<li class="todo">Add a References section<span class="gain">+3</span></li>' in html
+    assert '<a href="quality-guide.html#check-references">Add a References section</a><span class="gain">+3</span></li>' in html
 
 
 def test_retired_document_has_no_score(page_site):
@@ -209,3 +209,36 @@ def test_quality_scripts_are_loaded(page_site):
     assert "quality-index.js" not in read(page_site, "index.html")
     script = (page_site["target"] / "resources/themes/techdoc/framework/kb4it/js/quality.js").read_text(encoding="utf-8")
     assert "KB_QUALITY" in script and "better than" in script
+
+
+def test_quality_items_have_tips_and_guide_links(page_site):
+    q = card(page_site, "full.html")
+    q = q[q.index("QUALITY PANEL :: START"):q.index("QUALITY PANEL :: END")]
+    # lxml quotes an attribute with single quotes when its value holds double quotes.
+    assert re.search(r"""<li class="todo" title=(["']).*?## References.*?\1 data-uk-tooltip="pos: top-left">"""
+                     r'<a href="quality-guide.html#check-references">Add a References section</a>', q)
+    assert '<a href="quality-guide.html#dim-findable">Findable</a>' in q
+    assert re.search(r"""<li class="ok" title=(["']).+?\1 data-uk-tooltip="pos: top-left"><a href="quality-guide.html#check-""", q)
+
+
+def test_quality_guide_page_explains_every_check(page_site):
+    sys.path.insert(0, str(LOGIC))
+    import techdoc_quality_guide as guide
+    html = read(page_site, "quality-guide.html")
+    for key in guide.CHECKS:
+        assert f'id="{key}"' in html, key
+    assert 'id="skeleton-incident"' in html and "## Timeline" in html
+    assert "Summary: " in html and "https://me.sap.com/notes/" in html
+
+
+def test_markdown_system_pages_keep_their_headings(page_site):
+    # Mako reads a line starting with ## as a comment, so the templates must escape it.
+    assert re.search(r'<h2 class="kb-h2" id="what-is-kb4it">', read(page_site, "help.html"))
+    assert re.search(r'<h3 class="kb-h3" id="check-summary">', read(page_site, "quality-guide.html"))
+
+
+def test_no_template_line_starts_with_a_mako_comment_by_accident():
+    # In Mako, "##" at the start of a line is a comment: a Markdown heading there vanishes.
+    found = [f"{p.relative_to(ROOT)}:{n}" for p in (ROOT / "kb4it" / "resources").rglob("*.tpl")
+             for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1) if line.startswith("##")]
+    assert not found, found

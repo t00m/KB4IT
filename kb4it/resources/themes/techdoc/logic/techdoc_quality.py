@@ -14,6 +14,7 @@ from datetime import date
 from urllib.parse import unquote, urlsplit
 
 from techdoc_media import resolve_src
+from techdoc_quality_guide import CHECKS as GUIDE
 
 from kb4it.core.mdlinks import bare_link_path, rewrite_md_href
 from kb4it.core.util import html_id_for
@@ -81,6 +82,9 @@ class Check:
     todo: str
     points: float
     max: float
+    # The guide entry (quality-guide.html#<key>) and a tip on what to do, for the Quality tab.
+    key: str = ''
+    tip: str = ''
 
     @property
     def passed(self):
@@ -163,13 +167,16 @@ def skeleton_for(doc, skeletons):
 
 def findable(doc, prof):
     """Core keys (1 each), known values (3) and a Summary (3)."""
-    checks = [Check('findable', f'{key} key', f'Add the {key} key', 1 if values(doc, key) else 0, 1) for key in CORE_KEYS]
+    checks = [Check('findable', f'{key} key', f'Add the {key} key', 1 if values(doc, key) else 0, 1,
+                    'check-core-keys', f'Add "{key}: ..." to the frontmatter, between the --- lines.') for key in CORE_KEYS]
     known = prof['known_values']
     present = [key for key in known if values(doc, key)]
     ok = bool(present) and all(v in known[key] for key in present for v in values(doc, key))
     checks.append(Check('findable', 'Known values for Status, Priority and DocType',
-                        'Use a known value for Status, Priority and DocType', 3 if ok else 0, 3))
-    checks.append(Check('findable', 'Summary key', 'Add a Summary key', 3 if values(doc, 'Summary') else 0, 3))
+                        'Use a known value for Status, Priority and DocType', 3 if ok else 0, 3, 'check-known-values',
+                        'Use values such as Status: Released, Priority: Normal, DocType: How-to guide.'))
+    checks.append(Check('findable', 'Summary key', 'Add a Summary key', 3 if values(doc, 'Summary') else 0, 3,
+                        'check-summary', 'Add "Summary: one sentence on what the document is for" to the frontmatter.'))
     return checks
 
 
@@ -178,13 +185,18 @@ def _doctype_fit(doctype, body, heads):
     numbered = len(NUMBERED.findall(body)) >= 3
     code = bool(FENCED.search(body))
     fits = {
-        'How-to guide': ('Fits a how-to guide: numbered steps or a command', 'Add numbered steps or a command', numbered or code),
-        'Tutorial': ('Fits a tutorial: numbered steps and a command', 'Add numbered steps and a command', numbered and code),
+        'How-to guide': ('Fits a how-to guide: numbered steps or a command', 'Add numbered steps or a command', numbered or code,
+                         'Write the steps as a numbered list (1. 2. 3.), or put the command in a ``` code block.'),
+        'Tutorial': ('Fits a tutorial: numbered steps and a command', 'Add numbered steps and a command', numbered and code,
+                     'A tutorial needs a numbered list of steps and at least one ``` code block.'),
         'Reference': ('Fits a reference: a table or a list', 'Add a table or a list of five or more items',
-                      bool(TABLE_RULE.search(body)) or len(LIST_ITEM.findall(body)) >= 5),
-        'Explanation': ('Fits an explanation: three or more sections', 'Discuss it in three or more sections', len(heads) >= 3),
+                      bool(TABLE_RULE.search(body)) or len(LIST_ITEM.findall(body)) >= 5,
+                      'Put the facts in a Markdown table (| a | b |) or a list of five or more items.'),
+        'Explanation': ('Fits an explanation: three or more sections', 'Discuss it in three or more sections', len(heads) >= 3,
+                        'Split the explanation into three or more ## sections.'),
     }
-    return fits.get(doctype, ('Fits its DocType', 'Set a DocType', False))
+    return fits.get(doctype, ('Fits its DocType', 'Set a DocType', False,
+                              'Add "DocType: How-to guide" (or Tutorial, Reference, Explanation) to the frontmatter.'))
 
 
 def structured(doc, prof, skeletons):
@@ -194,32 +206,40 @@ def structured(doc, prof, skeletons):
     lower = [h.lower() for h in heads]
     checks = [
         Check('structured', 'Two or more sections', 'Split it into two or more sections',
-              5 if len(heads) >= 2 else 3 if heads else 0, 5),
+              5 if len(heads) >= 2 else 3 if heads else 0, 5, 'check-sections',
+              'Start each part with a level-2 heading: "## Steps".'),
         Check('structured', 'Opens with context', 'Open with a Description or Introduction section',
-              4 if heads and CONTEXT.search(heads[0]) else 0, 4),
+              4 if heads and CONTEXT.search(heads[0]) else 0, 4, 'check-context',
+              'Make the first section "## Introduction" (or Description, Overview) and say what the document is for.'),
     ]
     if not doc.work_type:
-        name, todo, fits = _doctype_fit(first(doc, 'DocType'), body, heads)
-        checks.append(Check('structured', name, todo, 8 if fits else 0, 8))
+        name, todo, fits, tip = _doctype_fit(first(doc, 'DocType'), body, heads)
+        checks.append(Check('structured', name, todo, 8 if fits else 0, 8, 'check-doctype-fit', tip))
     skeleton = skeleton_for(doc, skeletons)
+    kind = (doc.work_type or first(doc, 'Category')).lower()
     weight = 16 if doc.work_type else 8
     if skeleton and skeleton.headings:
         share = weight / len(skeleton.headings)
         for expected in skeleton.headings:
             pattern = SYNONYMS.get(expected, re.escape(expected[:6]))
             found = any(re.search(pattern, h) for h in lower)
-            checks.append(Check('structured', f'{expected.capitalize()} section', f'Add the {expected.capitalize()} section',
-                                share if found else 0, share))
+            title = expected.capitalize()
+            checks.append(Check('structured', f'{title} section', f'Add the {title} section', share if found else 0, share,
+                                'check-skeleton-section',
+                                f'Add a "## {title}" section with its content: the {kind} skeleton expects it.'))
     else:
         checks.append(Check('structured', 'Three or more sections', 'Add a third section',
-                            weight if len(heads) >= 3 else weight / 2, weight))
+                            weight if len(heads) >= 3 else weight / 2, weight, 'check-third-section',
+                            'Split the content into three or more ## sections.'))
     empty = min(len(EMPTY_SECTION.findall(body)), 2)
     if empty:
-        checks.append(Check('structured', 'No empty sections', 'Fill or remove the empty section', -3 * empty, 0))
+        checks.append(Check('structured', 'No empty sections', 'Fill or remove the empty section', -3 * empty, 0,
+                            'check-empty-section', 'Write something under each heading, or remove the empty heading.'))
     if skeleton and skeleton.placeholders:
         lines = {LIST_MARK.sub('', line).strip() for line in body.splitlines()}
         if any(p in lines for p in skeleton.placeholders):
-            checks.append(Check('structured', 'No skeleton text left', 'Replace the skeleton text', -6, 0))
+            checks.append(Check('structured', 'No skeleton text left', 'Replace the skeleton text', -6, 0,
+                                'check-skeleton-text', 'Replace the example lines of the skeleton, such as "Step one".'))
     return checks
 
 
@@ -238,7 +258,8 @@ def complete(doc, prof):
     points = 25 * min(words / target, 1)
     if words < floor:
         points = min(points, 3)
-    return [Check('complete', 'Long enough for its type', f'Write more: about {max(target - words, 1)} words', points, 25)]
+    return [Check('complete', 'Long enough for its type', f'Write more: about {max(target - words, 1)} words', points, 25,
+                  'check-words', f'It has {words} words; the target for its type is {target}. Code blocks do not count.')]
 
 
 def connected(doc, prof):
@@ -258,15 +279,22 @@ def connected(doc, prof):
     missing = [src for src in images
                if (local := resolve_src(src, doc.source_dir)) is not None and not os.path.isfile(local)]
     checks = [
-        Check('connected', 'Linked from another document', 'Link it from another document', 4 if doc.backlinks else 0, 4),
-        Check('connected', 'Links to a related document', 'Link to a related document', 3 if linked else 0, 3),
-        Check('connected', 'Cites a source', 'Cite a source', 3 if EXTERNAL.search(body) else 0, 3),
-        Check('connected', 'References section', 'Add a References section', 3 if SOURCES.search(body) else 0, 3),
+        Check('connected', 'Linked from another document', 'Link it from another document', 4 if doc.backlinks else 0, 4,
+              'check-backlinks', 'In a related document, add a link to this file: [Title](FILE-NAME.md).'),
+        Check('connected', 'Links to a related document', 'Link to a related document', 3 if linked else 0, 3,
+              'check-internal-link', 'Link to another document by its file name: [Restore the database](RESTORE-DB.md).'),
+        Check('connected', 'Cites a source', 'Cite a source', 3 if EXTERNAL.search(body) else 0, 3,
+              'check-source', 'Add a web link to the source: [SAP Note 736902](https://me.sap.com/notes/736902).'),
+        Check('connected', 'References section', 'Add a References section', 3 if SOURCES.search(body) else 0, 3,
+              'check-references', 'Add a "## References" section at the end, with one link per line.'),
         Check('connected', 'Image or diagram', 'Add an image or a diagram',
-              2 if images or MERMAID.search(body_of(doc)) else 0, 2),
+              2 if images or MERMAID.search(body_of(doc)) else 0, 2,
+              'check-image', 'Add an image: ![What it shows](resources/images/file.png), or a ```mermaid diagram.'),
     ]
-    checks += [Check('connected', f'Link to {path} works', f'Fix the broken link to {path}', -3, 0) for path in broken]
-    checks += [Check('connected', f'Image {src} is there', f'Add the missing image {src}', -3, 0) for src in missing]
+    checks += [Check('connected', f'Link to {path} works', f'Fix the broken link to {path}', -3, 0, 'check-broken-link',
+                     f'No document is named {path}. Check the file name and the .md extension.') for path in broken]
+    checks += [Check('connected', f'Image {src} is there', f'Add the missing image {src}', -3, 0, 'check-missing-image',
+                     f'Copy the image to source/{src}, or correct the path.') for src in missing]
     return checks
 
 
@@ -281,15 +309,18 @@ def current(doc, prof, today):
     """A final status, and for knowledge documents, freshness that halves with every half-life."""
     final = any(v in prof['final_status'] for v in values(doc, 'Status'))
     if doc.work_type:
-        return [Check('current', 'Final status', 'Set a final status', 20 if final else 10, 20)]
-    checks = [Check('current', 'Final status', 'Set a final status', 8 if final else 3, 8)]
+        return [Check('current', 'Final status', 'Set a final status', 20 if final else 10, 20, 'check-final-status',
+                      'When the work is done, set "Status: Completed".')]
+    checks = [Check('current', 'Final status', 'Set a final status', 8 if final else 3, 8, 'check-final-status',
+                    'When the document is ready, set "Status: Released".')]
     age = _age_years(doc, today)
     if age is None:
-        checks.append(Check('current', 'Dated', 'Set a Date', 0, 12))
+        checks.append(Check('current', 'Dated', 'Set a Date', 0, 12, 'check-dated', 'Add "Date: YYYY-MM-DD" to the frontmatter.'))
     else:
         half_life = prof['half_life'].get(first(doc, 'DocType'), 4)
         checks.append(Check('current', 'Recently reviewed', f'Review it: it is {max(int(age), 0)} years old',
-                            12 * 0.5 ** (max(age, 0) / half_life), 12))
+                            12 * 0.5 ** (max(age, 0) / half_life), 12, 'check-freshness',
+                            f'Points halve every {half_life} years. Review the content, then set the Date to today.'))
     return checks
 
 
@@ -354,18 +385,24 @@ DIM_LABELS = {'findable': 'Findable', 'structured': 'Structured', 'complete': 'C
 
 
 def checklist(assessment):
-    """The panel's list: done items first, then next steps with the points they add, biggest first."""
+    """The panel's list: done items first, then next steps with the points they add, biggest first.
+
+    Every item has the guide id it links to and a tooltip: what the check measures for a done
+    item, what to do for a next step.
+    """
     keys = [c for c in assessment.checks if c.dim == 'findable' and c.name.endswith(' key') and c.name != 'Summary key']
+    all_keys = bool(keys) and all(c.passed for c in keys)
     done, todo = [], []
-    if keys and all(c.passed for c in keys):
-        done.append('All core keys set')
+    if all_keys:
+        done.append(('All core keys set', 'check-core-keys'))
     for check in assessment.checks:
-        if check in keys and all(c.passed for c in keys):
+        if all_keys and check in keys:
             continue
         if check.passed:
-            done.append(check.name)
+            done.append((check.name, check.key))
         elif round(check.max - check.points) > 0:
-            todo.append((round(check.max - check.points), check.todo))
+            todo.append((round(check.max - check.points), check.todo, check.key, check.tip))
     todo.sort(key=lambda item: -item[0])
-    return ([{'kind': 'ok', 'text': text, 'gain': 0} for text in done]
-            + [{'kind': 'todo', 'text': text, 'gain': gain} for gain, text in todo])
+    return ([{'kind': 'ok', 'text': text, 'gain': 0, 'key': key, 'tip': GUIDE.get(key, {}).get('what', '')}
+             for text, key in done]
+            + [{'kind': 'todo', 'text': text, 'gain': gain, 'key': key, 'tip': tip} for gain, text, key, tip in todo])

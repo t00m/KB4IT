@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- techdoc Quality guide: every item of the Quality tab has a tooltip on what to do and links to `quality-guide.html`, a system page that explains each check, shows the Markdown to write and lists every skeleton.
+
 - techdoc quality score: every document gets a score from 0 to 100 in five dimensions (Findable, Structured, Complete, Connected, Current) and a tier (Exemplary, Complete, Basic, Stub, or Retired with no score). Records are scored on a lighter scale and compared with records of the same WorkType. A ring in the header strip opens the new Quality tab of the info card, with bars, the median of similar documents and the next steps with the points they add. Exemplary documents get a gold line and a note. `quality-index.js` holds ranks and medians; `"quality": false` in `repo.json` turns it all off; the `quality` block of `theme.json` holds the thresholds.
 - techdoc document pages: a header strip with the DocType, Status and Priority badges and the Date, WorkType, Topic and Product links; the `Summary` as an opening line; banners for production documents, retired documents (`Obsolete`, `Deprecated`, `Withdrawn`, `Rejected`) and drafts; and an info card with a Details tab (properties in groups, technical objects as chips, SAP notes from the text) and a History tab. The card starts closed when the document has a Summary and open on Details when it does not, and remembers the last tab. The document properties button opens Details; the old properties dialog is gone. Print keeps the strip, the banners and Details. `theme.json` sets the keys with `header_keys`, `info_groups` and `info_tabs`.
 - techdoc document images: width and height from the file, lazy loading, figures with a numbered caption from a descriptive alt text, a frame, click to zoom with previous and next, galleries for three or more images in a row, and a placeholder for missing files with the warning `[THEME] IMAGE_MISSING`.
@@ -32,6 +34,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ED-10: the Add page has a Save button. In Chromium browsers it opens the system save dialog (suggested name from the title, the folder used last time) and later saves write the same file without asking, the button showing `Save (<name>)`; elsewhere, or when the dialog is cancelled and a download is accepted, the file is downloaded. The file is UTF-8 with LF line endings and one final newline. Documents with errors ask for confirmation first; closing the modal or leaving the page with unsaved edits asks too. Copy writes the same text. The page note now says the page saves or downloads the file and that it goes in the `source` folder before a rebuild.
 - ED-11: help pages for the editor: the new how-to "Write a document in the editor" and an editor section in the techdoc reference, with the list of checks and the browser support for saving. `AGENTS.md` describes `kb4it/resources/editor/`, `scripts/devel/editor/build.sh`, `deploy_editor_assets()` and the browser test command.
 - ED-12: tests for the editor: asset and deploy tests in Python, the frontmatter logic run with `node` (skipped when node is missing) and browser tests with Playwright and Chromium (skipped when Playwright is missing; required in the CI browser job).
+
+### Fixed
+
+- The help pages of techdoc and blog lost every heading: Mako reads a line starting with `##` as a comment. The templates now escape it, and a test keeps every template free of such lines.
 
 ### Changed
 

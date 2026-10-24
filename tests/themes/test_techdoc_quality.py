@@ -109,3 +109,21 @@ def test_peer_stats_ranks_within_peers_and_skips_retired():
     assert stats["docs"]["d.html"]["rank"] == 1 and stats["peers"]["Change"]["median"]["findable"] == 12
     assert "c.html" not in stats["docs"]
     assert quality.index_js(stats).startswith("window.KB_QUALITY = {")
+
+
+def test_every_check_has_a_guide_entry_and_a_tip(prof, skeletons, doc):
+    sys.path.insert(0, str(LOGIC))
+    import techdoc_quality_guide as guide
+    body = "# T\n\n## Summary\n\nX.\n\n## Empty\n\n## Root Cause\n\nY [gone](gone.md) ![i](resources/images/none.png)\n"
+    docs = [doc(body, work_type="Incident", Status="Open"), doc(body, DocType="Tutorial", Category="Note", Date="soon"),
+            doc("# T\n", DocType="Reference", Category="Procedure", Status="Released", Date="2010-01-01")]
+    for d in docs:
+        for check in quality.assess(d, prof, skeletons, date(2026, 10, 24)).checks:
+            assert check.key in guide.CHECKS, check.name
+            assert check.tip, check.name
+
+
+def test_skeleton_section_tip_shows_the_markdown(prof, skeletons, doc):
+    checks = quality.structured(doc("# T\n\n## Summary\n\nX.\n", work_type="Incident"), prof, skeletons)
+    timeline = next(c for c in checks if c.name == "Timeline section")
+    assert timeline.key == "check-skeleton-section" and "## Timeline" in timeline.tip and "incident" in timeline.tip.lower()

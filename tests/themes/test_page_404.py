@@ -107,7 +107,8 @@ def test_reserved_pages_only_where_a_404_page_is_written():
         cls = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
         values = [ast.literal_eval(n.value) for n in cls.body
                   if isinstance(n, ast.AnnAssign | ast.Assign) and "reserved_pages" in ast.unparse(n)]
-        assert values == [("404.md",)], theme
+        # Every theme reserves 404.md; techdoc also reserves the system pages it writes (quality-guide.md).
+        assert len(values) == 1 and "404.md" in values[0], theme
         assert "self.build_page_404()" in source, theme
 
 

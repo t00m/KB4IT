@@ -1285,3 +1285,6 @@ html.kb-exemplary #kb4it-menu > nav::after {
     .kb-q-panel { grid-template-columns: 1fr; }
     .kb-q-checks { columns: 1; }
 }
+/* Quality tab items link to the quality guide but read as plain text until hovered. */
+.kb-q-checks a, .kb-q-dim a, a.kb-q-chip { color: inherit !important; text-decoration: none; }
+.kb-q-checks a:hover, .kb-q-dim a:hover { text-decoration: underline; }

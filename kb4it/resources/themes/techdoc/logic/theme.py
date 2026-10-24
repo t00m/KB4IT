@@ -22,6 +22,8 @@ from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_media import enhance_images
 from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInput, assess, checklist, index_js,
                              load_skeletons, peer_stats, profile)
+from techdoc_quality_guide import CHECKS as GUIDE_CHECKS
+from techdoc_quality_guide import DIMS as GUIDE_DIMS
 from techdoc_records import event_type, work_type
 
 from kb4it.core.util import (
@@ -39,7 +41,7 @@ parser = etree.HTMLParser()
 
 
 class Theme(DashboardMixin, DocumentTheme):
-    reserved_pages = ('404.md',)  # build() writes 404.html
+    reserved_pages = ('404.md', 'quality-guide.md')  # build() writes 404.html and quality-guide.html
     add_page = True   # create_page_add() runs in build()
 
     def datatable_date_cell(self, timestamp):
@@ -183,7 +185,7 @@ class Theme(DashboardMixin, DocumentTheme):
             'peer_name': 'document' if peer == 'Other' else peer.lower(),
             'page': html_id_for(doc_id),
             'dims': [{'key': d, 'label': DIM_LABELS[d], 'points': round(assessment.dims[d]), 'max': MAXIMA[d],
-                      'percent': round(100 * assessment.dims[d] / MAXIMA[d])} for d in DIMENSIONS],
+                      'percent': round(100 * assessment.dims[d] / MAXIMA[d]), 'tip': GUIDE_DIMS[d][1]} for d in DIMENSIONS],
             'checklist': checklist(assessment),
         }
 
@@ -216,9 +218,34 @@ class Theme(DashboardMixin, DocumentTheme):
         counts = ' '.join(f'{t}={tiers.count(t)}' for t in ('exemplary', 'complete', 'basic', 'stub', 'retired'))
         self.log.info(f"[THEME] QUALITY docs={len(tiers)} {counts}")
 
+    def build_page_quality_guide(self):
+        """The system page every Quality tab item links to: tiers, every check with an example, the skeletons."""
+        if not self.quality_on():
+            return
+        prof = profile(self.srvbes.get_dict('theme'))
+        dims = []
+        for key in DIMENSIONS:
+            title, what = GUIDE_DIMS[key]
+            checks = [dict(entry, key=check_key) for check_key, entry in GUIDE_CHECKS.items() if entry['dim'] == key]
+            dims.append({'key': key, 'title': title, 'what': what, 'max': MAXIMA[key], 'checks': checks})
+        folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates', 'skeletons')
+        skeletons = []
+        for name, skeleton in sorted(load_skeletons(folder).items()):
+            with open(os.path.join(folder, f'{name}-SKELETON.md'), encoding='utf-8') as fh:
+                text = fh.read().strip()
+            skeletons.append({'key': name.lower(), 'title': name.capitalize(),
+                              'headings': [h.capitalize() for h in skeleton.headings], 'text': text})
+        page = self.template('PAGE_QUALITY_GUIDE').render(var={
+            'tiers': prof['tiers'], 'retired': prof['retired_status'], 'dims': dims, 'skeletons': skeletons})
+        self.distribute_md('quality-guide', page, as_html=False)
+        self.srvdtb.add_document('quality-guide.md')
+        self.srvdtb.add_document_key('quality-guide.md', 'Title', 'Quality guide')
+        self.srvdtb.add_document_key('quality-guide.md', 'SystemPage', 'Yes')
+
     def build(self):
         """Create standard pages for default theme"""
         self.assess_documents()
+        self.build_page_quality_guide()
         var = self.get_theme_var()
         self.build_page_events()
         self.build_page_properties()

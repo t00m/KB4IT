@@ -93,7 +93,7 @@ Images in a document:
 
 ## Quality score {#quality}
 
-Every document gets a score from 0 to 100. A ring in the header strip shows it; click it, or the star button in the title menu, to open the **Quality** tab of the info card. The tab shows five bars, a list of what the document has, and the next steps with the points each one adds. A black tick on each bar marks the median of the documents of the same kind.
+Every document gets a score from 0 to 100. A ring in the header strip shows it; click it, or the star button in the title menu, to open the **Quality** tab of the info card. The tab shows five bars, a list of what the document has, and the next steps with the points each one adds. A black tick on each bar marks the median of the documents of the same kind. Hover over any item for a tip on what to do; click it to open the **Quality guide** (`quality-guide.html`), a system page that explains every check with the Markdown to write, and lists the skeleton of each Category and WorkType.
 
 | Dimension | Points | What counts |
 |---|---|---|
