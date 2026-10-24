@@ -64,7 +64,10 @@ def test_build_python_makes_wheel_and_sdist(tmp_path):
     out.mkdir()
     (out / "kb4it-0.0.1-py3-none-any.whl").write_bytes(b"stale")
     env = dict(os.environ, KB4IT_DIST_OUT=str(out))
-    subprocess.run([BASH, str(DIST / "build" / "build_python.sh")], check=True, env=env, capture_output=True)
+    result = subprocess.run([BASH, str(DIST / "build" / "build_python.sh")], env=env, capture_output=True, text=True)
+    # The script's own output is the only record of why a build failed.
+    assert result.returncode == 0, (f"build_python.sh exit {result.returncode}\n--- stdout\n{result.stdout}"
+                                    f"\n--- stderr\n{result.stderr}")
     version = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
     built = sorted(p.name for p in out.iterdir() if not p.name.startswith("."))  # uv adds a .gitignore
     assert built == [f"kb4it-{version}-py3-none-any.whl", f"kb4it-{version}.tar.gz"]
