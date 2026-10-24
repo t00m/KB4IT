@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- PAGE METADATA :: START -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document Quality Mockup</title>
+<!-- PAGE METADATA :: END -->
+<!-- STYLESHEETS :: START -->
+<link rel="stylesheet" href="../../../kb4it/resources/themes/techdoc/framework/uikit/css/uikit.min.css">
+<link rel="stylesheet" href="../../../kb4it/resources/themes/techdoc/framework/kb4it/css/screen.css">
+<style>
+/* Mockup only: page frame and captions. */
+body { background: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.mk-wrap { max-width: 1060px; margin: 0 auto; padding: 24px 16px 64px; }
+.mk-step { margin: 40px 0 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #888; }
+.mk-note { font-size: 0.82rem; color: #666; margin: 6px 0 0; max-width: 60rem; }
+.mk-card { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 18px 22px; }
+.mk-topbar { background: #222; color: #fff; border-radius: 6px 6px 0 0; padding: 8px 16px; display: flex; gap: 12px; align-items: center; font-size: 0.95rem; }
+.mk-topbar .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.mk-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* Proposed: tier colours. Shape and text carry the tier too, never colour alone. */
+:root { --q-exemplary: #f5b301; --q-exemplary-ink: #8a6100; --q-complete: #32d296; --q-complete-ink: #1b7a55;
+        --q-basic: #8592a6; --q-stub: #c3c9d2; --q-retired: #999; }
+
+/* Proposed: quality emblem, a ring with the score inside. */
+.kb-q-emblem { position: relative; width: 40px; height: 40px; flex-shrink: 0; display: inline-block; vertical-align: middle; }
+.kb-q-emblem svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.kb-q-emblem .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #333; }
+.kb-q-emblem.small { width: 26px; height: 26px; }
+.kb-q-emblem.small .num { font-size: 0.62rem; }
+
+/* Proposed: tier chip. */
+.kb-q-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.kb-q-chip.exemplary { background: rgba(245,179,1,0.16); color: var(--q-exemplary-ink); }
+.kb-q-chip.complete  { background: rgba(50,210,150,0.14); color: var(--q-complete-ink); }
+.kb-q-chip.basic     { background: #eef0f3; color: #59657a; }
+.kb-q-chip.stub      { background: transparent; color: #6b7480; border: 1px dashed var(--q-stub); }
+.kb-q-chip.retired   { background: #eee; color: #777; text-decoration: line-through; }
+.kb-q-chip svg { width: 11px; height: 11px; }
+
+/* Proposed: document header strip under the top bar. */
+.kb-doc-strip { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 22px; background: #fff; border-bottom: 1px solid #eee; }
+.kb-doc-strip .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: #666; align-items: center; }
+.kb-doc-strip .meta a { color: #444; text-decoration: none; border-bottom: 1px dotted #bbb; }
+.kb-doc-strip .meta .k { color: #999; margin-right: 3px; }
+.kb-exemplary-ribbon { border-top: 3px solid var(--q-exemplary); }
+.kb-exemplary-note { display: flex; gap: 8px; align-items: center; background: linear-gradient(90deg, rgba(245,179,1,0.12), rgba(245,179,1,0)); color: var(--q-exemplary-ink); font-size: 0.8rem; font-weight: 600; padding: 6px 22px; }
+
+/* Proposed: banners from frontmatter values. */
+.kb-banner { display: flex; gap: 10px; align-items: center; font-size: 0.82rem; padding: 8px 22px; }
+.kb-banner.prod  { background: #fdecef; color: #b3263f; }
+.kb-banner.draft { background: #fff6e8; color: #9a5a00; }
+.kb-banner.retired { background: #f1f1f1; color: #555; }
+
+/* Proposed: quality panel. */
+.kb-q-panel { display: grid; grid-template-columns: 180px 1fr; gap: 22px; }
+.kb-q-panel .big { width: 120px; height: 120px; }
+.kb-q-panel .big .num { font-size: 1.8rem; }
+.kb-q-rank { font-size: 0.82rem; color: #555; margin-top: 8px; }
+.kb-q-dim { display: grid; grid-template-columns: 7.5rem 1fr 3.5rem; gap: 10px; align-items: center; font-size: 0.8rem; margin: 6px 0; }
+.kb-q-bar { position: relative; height: 8px; background: #eef0f3; border-radius: 4px; }
+.kb-q-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--q-complete); }
+.kb-q-bar .peer { position: absolute; top: -3px; width: 2px; height: 14px; background: #333; opacity: 0.55; }
+.kb-q-checks { list-style: none; padding: 0; margin: 12px 0 0; font-size: 0.8rem; columns: 2; column-gap: 24px; }
+.kb-q-checks li { padding: 2px 0; break-inside: avoid; }
+.kb-q-checks .ok::before { content: "\2713"; color: var(--q-complete-ink); font-weight: 700; margin-right: 6px; }
+.kb-q-checks .todo::before { content: "\25CB"; color: #aaa; margin-right: 6px; }
+.kb-q-checks .gain { color: var(--q-exemplary-ink); font-weight: 600; margin-left: 4px; }
+
+/* Proposed: objects box and related documents. */
+.kb-objects { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.78rem; }
+.kb-objects .grp { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.kb-objects .grp > span:first-child { color: #999; text-transform: uppercase; font-size: 0.64rem; letter-spacing: 0.8px; margin-right: 2px; }
+.kb-obj { font-family: "SF Mono", Menlo, monospace; background: #f3f5f8; border: 1px solid #e3e7ec; border-radius: 3px; padding: 0 6px; color: #333; text-decoration: none; }
+.kb-related li { display: flex; gap: 8px; align-items: center; padding: 4px 0; font-size: 0.85rem; border-bottom: 1px solid #f4f4f4; }
+.kb-related .why { margin-left: auto; color: #999; font-size: 0.72rem; }
+
+/* Proposed: tier mix bar on Diataxis cards and the quality page. */
+.kb-q-mix { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 8px 0 2px 36px; background: #eee; }
+.kb-q-mix span { display: block; }
+.kb-q-mix .e { background: var(--q-exemplary); } .kb-q-mix .c { background: var(--q-complete); }
+.kb-q-mix .b { background: var(--q-basic); } .kb-q-mix .s { background: var(--q-stub); }
+.kb-q-mixlabel { font-size: 0.68rem; color: #999; padding-left: 36px; }
+
+/* Proposed: best documents shelf. */
+.kb-best { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.kb-best-card { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 12px 14px; border-top: 3px solid var(--q-exemplary); display: flex; gap: 10px; }
+.kb-best-card .t { font-weight: 600; font-size: 0.88rem; color: #222; line-height: 1.3; }
+.kb-best-card .s { font-size: 0.74rem; color: #888; margin-top: 4px; }
+
+/* Proposed: datatable quality cell. */
+.kb-q-meter { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
+.kb-q-meter i { width: 9px; height: 9px; border-radius: 2px; background: #e6e9ee; display: block; }
+.kb-q-meter.e i { background: var(--q-exemplary); } .kb-q-meter.c i.on { background: var(--q-complete); } .kb-q-meter.b i.on { background: var(--q-basic); } .kb-q-meter.s i.on { background: var(--q-stub); }
+table.mk-table { width: 100%; font-size: 0.82rem; border-collapse: collapse; }
+table.mk-table th { text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.8px; color: #999; border-bottom: 1px solid #e5e5e5; padding: 6px; }
+table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
+.kb-wins li { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; font-size: 0.84rem; padding: 6px 0; border-bottom: 1px solid #f3f3f3; }
+.kb-wins .act { font-size: 0.75rem; color: var(--q-exemplary-ink); font-weight: 600; white-space: nowrap; }
+@media (max-width: 640px) { .kb-q-panel { grid-template-columns: 1fr; } .kb-q-checks { columns: 1; } }
+</style>
+<!-- STYLESHEETS :: END -->
+</head>
+<body>
+<!-- PAGE :: START -->
+<div class="mk-wrap">
+<h1 class="uk-h2">Document quality and frontmatter in techdoc: mockup</h1>
+<p class="mk-note">Static mockup for the spec <code>2026-10-24-document-quality-design.md</code>. Scores and counts come from the draft model run on the sapbasis-docs repository (1034 documents) on 2026-10-24. Titles are real, except in the banners and the related documents, which are examples. New elements are marked "Proposed" in the source.</p>
+
+<!-- 1. DOCUMENT PAGE :: START -->
+<div class="mk-step">1. Document page, Exemplary how-to guide</div>
+<div class="mk-card" style="padding:0;overflow:hidden">
+  <div class="mk-topbar"><span>&#9776;</span><span class="t">ADS BJP ReaderRights request</span><span>&#128269;</span></div>
+  <div class="kb-exemplary-ribbon"></div>
+  <div class="kb-exemplary-note">
+    <svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path fill="#f5b301" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>
+    Exemplary how-to guide: rank 10 of 495 how-to guides
+  </div>
+  <div class="kb-doc-strip">
+    <span class="kb-q-emblem" title="Quality 75 of 100, Exemplary. Click for details.">
+      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3.5"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="3.5" stroke-dasharray="75 100" stroke-linecap="round"/></svg>
+      <span class="num">75</span>
+    </span>
+    <span class="uk-label kb-badge" style="background:#1e87f0">How-to guide</span>
+    <span class="uk-label kb-badge" style="background:#32d296">Released</span>
+    <span class="uk-label kb-badge" style="background:#faa05a">High</span>
+    <span class="meta">
+      <span><span class="k">Date</span><a href="#">2022-12-27</a></span>
+      <span><span class="k">Author</span><a href="#">Tomás Vírseda</a></span>
+      <span><span class="k">Product</span><a href="#">ADS</a>, <a href="#">Adobe</a>, <a href="#">Portal</a></span>
+      <span><span class="k">Handover</span><a href="#">10 Applications and business requests</a></span>
+    </span>
+  </div>
+  <div style="padding:14px 22px">
+    <div class="kb-objects">
+      <span class="grp"><span>SID</span><a class="kb-obj" href="#">BJT</a><a class="kb-obj" href="#">BJA</a><a class="kb-obj" href="#">BJP</a></span>
+      <span class="grp"><span>Transaction</span><a class="kb-obj" href="#">SU01</a><a class="kb-obj" href="#">SICF</a></span>
+      <span class="grp"><span>Command</span><a class="kb-obj" href="#">openssl</a></span>
+      <span class="grp"><span>Component</span><a class="kb-obj" href="#">BC-SRV-FP-ICF</a></span>
+      <span class="grp"><span>SAP note</span><a class="kb-obj" href="#">736902</a></span>
+    </div>
+    <p class="mk-note">Header strip: the emblem (score ring) first, then the DocType, Status and Priority badges, then the main values as links. The Objects box lists the technical keys as chips; each chip opens its key page. SAP note numbers found in the body link to the SAP support site.</p>
+  </div>
+</div>
+
+<!-- BANNERS :: START -->
+<div class="mk-step">2. Banners from frontmatter values (one line each, under the strip)</div>
+<div class="mk-card" style="padding:0;overflow:hidden">
+  <div class="kb-banner prod"><strong>Production</strong> This document changes production systems: PRD.</div>
+  <div class="kb-banner draft"><strong>Draft</strong> Not final. Check with the author before you follow it.</div>
+  <div class="kb-banner retired"><strong>Obsolete</strong> Do not follow this document. Replaced by <a href="#">BWP - Upgrade SAP Kernel (2023)</a>.</div>
+</div>
+<p class="mk-note">The Draft banner reopens a non-goal of the 0.9.1 spec ("a draft is published with no label"). It is an open question in the spec.</p>
+<!-- BANNERS :: END -->
+
+<!-- QUALITY PANEL :: START -->
+<div class="mk-step">3. Quality panel (opens from the emblem or the title menu)</div>
+<div class="mk-card">
+  <div class="kb-q-panel">
+    <div>
+      <span class="kb-q-emblem big">
+        <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="3" stroke-dasharray="75 100" stroke-linecap="round"/></svg>
+        <span class="num">75</span>
+      </span>
+      <div style="margin-top:8px"><span class="kb-q-chip exemplary"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>Exemplary</span></div>
+      <div class="kb-q-rank">Rank 10 of 495 how-to guides.<br>Better than 98% of them.</div>
+    </div>
+    <div>
+      <div class="kb-q-dim"><span>Findable</span><span class="kb-q-bar"><span class="fill" style="width:80%"></span><span class="peer" style="left:73%"></span></span><span>12 / 15</span></div>
+      <div class="kb-q-dim"><span>Structured</span><span class="kb-q-bar"><span class="fill" style="width:68%"></span><span class="peer" style="left:36%"></span></span><span>17 / 25</span></div>
+      <div class="kb-q-dim"><span>Complete</span><span class="kb-q-bar"><span class="fill" style="width:100%"></span><span class="peer" style="left:12%"></span></span><span>25 / 25</span></div>
+      <div class="kb-q-dim"><span>Connected</span><span class="kb-q-bar"><span class="fill" style="width:53%"></span><span class="peer" style="left:0%"></span></span><span>8 / 15</span></div>
+      <div class="kb-q-dim"><span>Current</span><span class="kb-q-bar"><span class="fill" style="width:65%"></span><span class="peer" style="left:57%"></span></span><span>13 / 20</span></div>
+      <p class="mk-note">Bar: this document. Black tick: median of the 495 how-to guides.</p>
+      <ul class="kb-q-checks">
+        <li class="ok">All core keys set</li>
+        <li class="ok">Opens with an Introduction section</li>
+        <li class="ok">Steps or commands for a how-to guide</li>
+        <li class="ok">Longer than the 150-word target</li>
+        <li class="ok">Cites external sources, has a References section and an image</li>
+        <li class="ok">Status Released, dated 2022</li>
+        <li class="todo">Add a Summary key<span class="gain">+3</span></li>
+        <li class="todo">Link to another document<span class="gain">+3</span></li>
+        <li class="todo">Get a link from another document<span class="gain">+4</span></li>
+        <li class="todo">Add the Prerequisites, Steps and Verification sections of a Procedure<span class="gain">+8</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+<!-- QUALITY PANEL :: END -->
+
+<!-- RELATED :: START -->
+<div class="mk-step">4. End of the page: linked from and related documents, with their tier</div>
+<div class="mk-card">
+  <ul class="uk-list kb-related" style="margin:0">
+    <li><span class="kb-q-chip complete">Complete</span><a href="#">ADS: configure the Adobe credential in NWA</a><span class="why">same Component, SID BJP</span></li>
+    <li><span class="kb-q-chip basic">Basic</span><a href="#">ADS: renew the SSL certificate</a><span class="why">same Product, Command openssl</span></li>
+    <li><span class="kb-q-chip stub">Stub</span><a href="#">ADS rights request 2020</a><span class="why">same Tag readerrights</span></li>
+  </ul>
+  <p class="mk-note">When two documents cover the same thing, the tier shows the reader which one to open first.</p>
+</div>
+<!-- RELATED :: END -->
+<!-- 1. DOCUMENT PAGE :: END -->
+
+<!-- DASHBOARD :: START -->
+<div class="mk-step">5. Dashboard: hero bar, Diátaxis grid with tier mix, best documents shelf</div>
+<div class="kb-hero-bar">
+  <a class="kb-hero-stat" href="#"><span class="num">1034</span><span class="label">Documents</span></a><span class="kb-hero-divider"></span>
+  <a class="kb-hero-stat" href="#"><span class="num">&#9733; 37</span><span class="label">Exemplary</span></a><span class="kb-hero-divider"></span>
+  <a class="kb-hero-stat" href="#"><span class="num">106</span><span class="label">Bookmarks</span></a>
+</div>
+<div class="mk-grid" style="margin-top:12px">
+  <a class="kb-diataxis-card howto" href="#"><div class="kb-diataxis-headline"><span class="kb-diataxis-count">510</span><span class="kb-diataxis-label">How-to guides</span></div>
+    <div class="kb-q-mix"><span class="e" style="width:2.7%"></span><span class="c" style="width:24.3%"></span><span class="b" style="width:21.8%"></span><span class="s" style="width:48.2%"></span></div><div class="kb-q-mixlabel">14 exemplary, 124 complete</div></a>
+  <a class="kb-diataxis-card reference" href="#"><div class="kb-diataxis-headline"><span class="kb-diataxis-count">499</span><span class="kb-diataxis-label">Reference</span></div>
+    <div class="kb-q-mix"><span class="e" style="width:3.8%"></span><span class="c" style="width:26.5%"></span><span class="b" style="width:43.9%"></span><span class="s" style="width:24.8%"></span></div><div class="kb-q-mixlabel">19 exemplary, 132 complete</div></a>
+  <a class="kb-diataxis-card explanation" href="#"><div class="kb-diataxis-headline"><span class="kb-diataxis-count">21</span><span class="kb-diataxis-label">Explanation</span></div>
+    <div class="kb-q-mix"><span class="e" style="width:19%"></span><span class="c" style="width:47.6%"></span><span class="b" style="width:33.4%"></span></div><div class="kb-q-mixlabel">4 exemplary, 10 complete</div></a>
+  <a class="kb-diataxis-card tutorial" href="#"><div class="kb-diataxis-headline"><span class="kb-diataxis-count">4</span><span class="kb-diataxis-label">Tutorials</span></div>
+    <div class="kb-q-mix"><span class="c" style="width:25%"></span><span class="b" style="width:50%"></span><span class="s" style="width:25%"></span></div><div class="kb-q-mixlabel">0 exemplary, 1 complete</div></a>
+</div>
+<h3 class="uk-h5" style="margin:18px 0 8px">&#9733; Best documents</h3>
+<div class="kb-best">
+  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="83 100"/></svg><span class="num">83</span></span>
+    <div><div class="t">SAProuter Permission Table Reference</div><div class="s">Reference, 2026</div></div></div>
+  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="82 100"/></svg><span class="num">82</span></span>
+    <div><div class="t">SAP DRCCE Upgrade</div><div class="s">Explanation, 2026</div></div></div>
+  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="80 100"/></svg><span class="num">80</span></span>
+    <div><div class="t">BWP DB13 DBA Check Fails with ORA-01031 After Upgrade</div><div class="s">How-to guide, 2026</div></div></div>
+</div>
+<p class="mk-note">The shelf shows the best documents of each Diátaxis type, in a collapsible section like the others. It is the main place where good work is visible.</p>
+<!-- DASHBOARD :: END -->
+
+<!-- DATATABLE :: START -->
+<div class="mk-step">6. Every document list gets a sortable Quality column</div>
+<div class="mk-card">
+  <table class="mk-table">
+    <thead><tr><th>Date</th><th>Title</th><th>Status</th><th>Quality</th></tr></thead>
+    <tbody>
+      <tr><td>2022-12-27</td><td>ADS BJP ReaderRights request</td><td><span class="uk-label kb-badge" style="background:#32d296">Released</span></td><td><span class="kb-q-meter e"><i></i><i></i><i></i><i></i><i></i></span><span class="kb-q-chip exemplary">Exemplary</span></td></tr>
+      <tr><td>2026-08-17</td><td>Change 79784: BWP Upgrade Phase 1 (Batch 1), SAP_UI Component Upgrade</td><td><span class="uk-label kb-badge" style="background:#32d296">Completed</span></td><td><span class="kb-q-meter c"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="kb-q-chip complete">Complete</span></td></tr>
+      <tr><td>2020-06-30</td><td>Change 37486: upgrade Solaris 11.4 huy / hasselt</td><td><span class="uk-label kb-badge" style="background:#32d296">Released</span></td><td><span class="kb-q-meter b"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="kb-q-chip basic">Basic</span></td></tr>
+      <tr><td>2021-07-05</td><td>SAP Basis notes on Monday, July 05, 2021</td><td><span class="uk-label kb-badge" style="background:#faa05a">Draft</span></td><td><span class="kb-q-meter s"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="kb-q-chip stub">Stub</span></td></tr>
+    </tbody>
+  </table>
+  <p class="mk-note">The cell sorts by score (<code>data-order</code>). Five squares: one per 20 points. Retired documents show the struck-through chip.</p>
+</div>
+<!-- DATATABLE :: END -->
+
+<!-- QUALITY PAGE :: START -->
+<div class="mk-step">7. Quality page (logo menu): quick wins for maintainers</div>
+<div class="mk-card">
+  <h3 class="uk-h5" style="margin-top:0">Quick wins: one change lifts these documents to the next tier</h3>
+  <ul class="uk-list kb-wins" style="margin:0">
+    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#32d296" stroke-width="4" stroke-dasharray="74 100"/></svg><span class="num">74</span></span><a href="#">CR #78389: SAP Cloud Connector Upgrade</a><span class="act">Add a Summary key: Exemplary</span></li>
+    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#8592a6" stroke-width="4" stroke-dasharray="57 100"/></svg><span class="num">57</span></span><a href="#">Change 37486: upgrade Solaris 11.4 huy / hasselt</a><span class="act">Add a Summary key: Complete</span></li>
+    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#c3c9d2" stroke-width="4" stroke-dasharray="39 100"/></svg><span class="num">39</span></span><a href="#">SAP Basis notes on Monday, July 05, 2021</a><span class="act">Add a Summary key: Basic</span></li>
+  </ul>
+  <p class="mk-note">The page also shows the tier mix per type, the Exemplary list, broken links, documents without a Summary, and possible duplicates side by side with their scores.</p>
+</div>
+<!-- QUALITY PAGE :: END -->
+
+<!-- TIER LEGEND :: START -->
+<div class="mk-step">8. Tiers</div>
+<div class="mk-card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+  <span class="kb-q-chip exemplary"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>Exemplary 75+</span>
+  <span class="kb-q-chip complete">Complete 60 to 74</span>
+  <span class="kb-q-chip basic">Basic 40 to 59</span>
+  <span class="kb-q-chip stub">Stub under 40</span>
+  <span class="kb-q-chip retired">Retired</span>
+</div>
+<!-- TIER LEGEND :: END -->
+</div>
+<!-- PAGE :: END -->
+</body>
+</html>
