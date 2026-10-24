@@ -18,6 +18,7 @@ from datetime import datetime
 
 from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
+from techdoc_docpage import banners, header_strip, summary
 from techdoc_media import enhance_images
 from techdoc_records import event_type
 
@@ -226,6 +227,12 @@ class Theme(DashboardMixin, DocumentTheme):
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 var['metadata'] = self.build_metadata_section(basename_md)
+                theme_conf = self.srvbes.get_dict('theme') or {}
+                var['doc_header'] = self.template('DOC_HEADER').render(var={
+                    'strip': header_strip(self.srvdtb, basename_md, theme_conf.get('header_keys', {})),
+                    'summary': summary(self.srvdtb, basename_md),
+                    'banners': banners(self.srvdtb, basename_md),
+                })
 
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys

@@ -7,6 +7,7 @@
         <h1 class="kb-print-doc-title">${var['page']['title']}</h1>
     </div>
     <!-- PRINT HEADER :: END -->
+${var.get('doc_header', '') | n}
     % if len(var['toc']) > 0:
     <!-- TABLE OF CONTENTS :: START -->
     <details id="kb-toc-inline" open class="kb-toc-panel">

@@ -1171,3 +1171,15 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     font-size: 0.85rem;
 }
 figure.kb-img-missing { display: block; padding: 24px 12px; }
+
+/* Document header: strip of badges and key links, Summary, banners. */
+.kb-doc-strip { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid #eee; }
+.kb-doc-strip .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: #666; align-items: center; }
+.kb-doc-strip .meta a { color: #444; text-decoration: none; border-bottom: 1px dotted #bbb; }
+.kb-doc-strip .meta .k { color: #999; margin-right: 3px; }
+.kb-label-doctype { background: #1e87f0; }
+.kb-summary { font-size: 1.02rem; color: #555; margin: 12px 0 0; }
+.kb-banner { display: flex; gap: 10px; align-items: center; font-size: 0.82rem; padding: 8px 12px; margin-top: 10px; border-radius: 4px; }
+.kb-banner.prod { background: #fdecef; color: #b3263f; }
+.kb-banner.draft { background: #fff6e8; color: #9a5a00; }
+.kb-banner.retired { background: #f1f1f1; color: #555; }

@@ -50,3 +50,28 @@ def test_images_page_has_figures_lightbox_and_placeholder(page_site):
 
 def test_missing_image_is_logged(page_site):
     assert "[THEME] IMAGE_MISSING doc=images.md src=resources/images/gone.png" in page_site["log"]
+
+
+def test_header_strip_shows_badges_then_links(page_site):
+    html = read(page_site, "full.html")
+    strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
+    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("Ana")
+    assert 'href="events_20261001.html"' in strip and 'href="Author_Ana.html"' in strip and 'href="Product_ADS.html"' in strip
+    assert "Handover" not in strip                       # empty keys are skipped
+
+
+def test_summary_keeps_its_commas(page_site):
+    assert '<p class="kb-summary">Request the credential, then register it.</p>' in read(page_site, "full.html")
+    assert "kb-summary" not in read(page_site, "plain.html")
+
+
+def test_banners_in_spec_order(page_site):
+    html = read(page_site, "full.html")
+    assert "<strong>Production</strong> This document changes production systems: PRD, PRA." in html
+    assert "<strong>Draft</strong> Not final. Check with the author before you follow it." in html
+    assert html.index("kb-banner prod") < html.index("kb-banner draft")
+    assert "<strong>Obsolete</strong> Do not follow this document." in read(page_site, "plain.html")
+
+
+def test_system_pages_have_no_header(page_site):
+    assert "HEADER STRIP :: START" not in read(page_site, "index.html")

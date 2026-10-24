@@ -11,5 +11,9 @@
     "kb4it": ">=0.10.0",
     "favicon": "images/logo.svg",
     "autoescape": true,
-    "template_base": "uikit"
+    "template_base": "uikit",
+    "header_keys": {
+        "badges": ["DocType", "Status", "Priority"],
+        "links": ["Date", "Author", "Product", "Handover"]
+    }
 }
