@@ -26,3 +26,8 @@ def test_no_shared_value_gives_nothing_and_other_keys_do_not_count():
 def test_limit():
     meta = {f"{i}.md": {"Tag": ["x"]} for i in range(9)}
     assert len(related.related("0.md", meta)) == 5
+
+
+def test_shared_values_are_grouped_by_key():
+    meta = {"a.md": {"Tag": ["form", "pdf"], "SID": ["BJP"]}, "b.md": {"Tag": ["form", "pdf"], "SID": ["BJP"]}}
+    assert related.related("a.md", meta)[0]["shared"] == ["SID: BJP", "Tag: form, pdf"]

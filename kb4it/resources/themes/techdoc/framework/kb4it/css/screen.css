@@ -1344,5 +1344,5 @@ html.kb-exemplary #kb4it-menu > nav::after {
 /* Dashboard Activity card: Changes, Incidents, Events and Monitoring as tabs. */
 .kb-activity { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
 .kb-activity .uk-tab > * > a { font-size: 0.72rem; }
-.kb-activity .kb-alert-bar { display: block; }
+.kb-activity .kb-alert-bar { box-shadow: none; padding: 10px 0; }
 .kb-activity-sub { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 12px 0 6px; }

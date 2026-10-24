@@ -25,6 +25,10 @@ def related(doc_id, meta, limit=5):
         shared = [(key, v) for key in RELATED_KEYS for v in (props.get(key) or []) if (key, v) in mine]
         if shared:
             score = sum(math.log(total / frequency[pair]) for pair in set(shared))
-            found.append({'doc': other, 'score': score, 'shared': [f'{key}: {v}' for key, v in shared]})
+            grouped = {}
+            for key, v in shared:
+                grouped.setdefault(key, []).append(v)
+            found.append({'doc': other, 'score': score,
+                          'shared': [f"{key}: {', '.join(vals)}" for key, vals in grouped.items()]})
     found.sort(key=lambda item: (-item['score'], item['doc']))
     return found[:limit]
