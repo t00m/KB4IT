@@ -114,7 +114,7 @@ The model takes ideas from five known sources:
 Order from the top of a document page, below the top bar:
 
 1. **Exemplary note** (only for Exemplary documents, see Part C).
-2. **Header strip.** Quality emblem, then DocType, Status and Priority badges (the existing `.kb-badge` colours), then Date, Author, Product and Handover as links to their key pages. Which keys appear is set in `theme.json` (`header_keys`). Empty keys are skipped.
+2. **Header strip.** Quality emblem, then DocType, Status and Priority badges (the existing `.kb-badge` colours), then Date (day and time on one line), WorkType, Topic and Product as links to their key pages (changed by the user on 2026-10-24; Author and Handover are in the Details tab). Which keys appear is set in `theme.json` (`header_keys`). Empty keys are skipped.
 3. **Summary.** When the `Summary` key exists, it shows as a lead paragraph (larger, muted text). Missing: nothing shows.
 4. **Banners.** One line each, in this order:
    - `Environment` contains Production: red, "This document changes production systems: <SID values>."

@@ -14,7 +14,7 @@
     "template_base": "uikit",
     "header_keys": {
         "badges": ["DocType", "Status", "Priority"],
-        "links": ["Date", "Author", "Product", "Handover"]
+        "links": ["Date", "WorkType", "Topic", "Product"]
     },
     "info_groups": [
         {"name": "Classification", "keys": ["DocType", "Category", "WorkType", "Topic", "Scope", "Handover"]},

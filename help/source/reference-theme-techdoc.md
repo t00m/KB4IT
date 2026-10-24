@@ -75,7 +75,7 @@ The top bar holds the logo menu on the left, the page title in the middle and a 
 
 Below the top bar, a document page shows:
 
-- **A header strip** with the DocType, Status and Priority badges, then Date, Author, Product and Handover as links to their pages. Keys a document does not have are left out.
+- **A header strip** with the DocType, Status and Priority badges, then Date (day and time), WorkType, Topic and Product as links to their pages. Keys a document does not have are left out.
 - **The Summary**, when the document has a `Summary` key, as an opening line.
 - **Banners** for documents that need care: red when `Environment` is `Production` ("This document changes production systems", with the `SID` values), grey when `Status` is `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` ("Do not follow this document"), amber when `Status` is `Draft`.
 - **An info card** with two tabs. **Details** lists every property in groups (Classification, Systems, Technical objects, Organisation, Lifecycle, Other); technical objects such as transactions and commands show as chips, and SAP notes named in the text ("note 736902") link to the SAP support portal. **History** shows the date, the source file with a link to view it, an edit link with `"git": true`, and the build time. The card starts closed when the document has a Summary and open on Details when it does not. Click a tab to open it, click the open tab or the arrow to close it; the card remembers your last tab. The document properties button in the title menu, or `#kb-info-details` at the end of the address, opens Details. `#details` does too, unless the document has a section with that name, which keeps the link.

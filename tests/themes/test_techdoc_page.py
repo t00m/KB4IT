@@ -72,9 +72,17 @@ def test_missing_image_is_logged(page_site):
 def test_header_strip_shows_badges_then_links(page_site):
     html = read(page_site, "full.html")
     strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
-    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("Ana")
-    assert 'href="events_20261001.html"' in strip and 'href="Author_Ana.html"' in strip and 'href="Product_ADS.html"' in strip
-    assert "Handover" not in strip                       # empty keys are skipped
+    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("events_20261001")
+    assert 'href="events_20261001.html"' in strip and 'href="Product_ADS.html"' in strip
+    assert "Author_Ana" not in strip and "Topic" not in strip   # Author is not a strip key; full.md has no Topic
+    ex = read(page_site, "exemplary.html")
+    ex_strip = ex[ex.index("HEADER STRIP :: START"):ex.index("HEADER STRIP :: END")]
+    assert ex_strip.index("events_20261020") < ex_strip.index("Topic_Security.html") < ex_strip.index("Product_ADS.html")
+
+
+def test_strip_links_are_date_worktype_topic_product():
+    conf = json.loads((ROOT / "kb4it/resources/themes/techdoc/theme.json").read_text(encoding="utf-8"))
+    assert conf["header_keys"]["links"] == ["Date", "WorkType", "Topic", "Product"]
 
 
 def test_summary_keeps_its_commas(page_site):
