@@ -91,6 +91,26 @@ Images in a document:
 - Stay as they are when they are inside a link, narrower than 64 pixels, or part of a sentence.
 - Show a grey box with the path when the file is missing, and the build warns [IMAGE_MISSING](troubleshooting.md#image-missing).
 
+## Quality score {#quality}
+
+Every document gets a score from 0 to 100. A ring in the header strip shows it; click it, or the star button in the title menu, to open the **Quality** tab of the info card. The tab shows five bars, a list of what the document has, and the next steps with the points each one adds. A black tick on each bar marks the median of the documents of the same kind.
+
+| Dimension | Points | What counts |
+|---|---|---|
+| Findable | 15 | Author, Date, DocType, Category, Status, Tag, Topic, Scope and Product (1 each); known values for Status, Priority and DocType (3); a `Summary` (3) |
+| Structured | 25 | Two or more sections; a first section that gives context (Description, Introduction, Overview); the shape of its DocType (steps for a how-to guide, a table or list for a reference); the sections of its skeleton. Empty sections and skeleton text left in cost points |
+| Complete | 25 | Words against a target: how-to guide 150, reference 200, explanation 500, tutorial 800 |
+| Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3 |
+| Current | 20 | A final status (Released, Completed, Finished, Successful); a recent `Date` (the points halve every 3 years for how-to guides and tutorials, 4 for references, 8 for explanations) |
+
+The score gives a tier: **Exemplary** (75 and up, gold ring and a note under the top bar), **Complete** (60 to 74, green), **Basic** (40 to 59) and **Stub** (under 40), both grey. Documents with the Status `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` are **Retired** and get no score.
+
+Records (documents with a `WorkType`) are short by nature and are scored on a lighter scale: the sections of their WorkType skeleton instead of a DocType shape, a 60-word target, and a final status instead of freshness. A record is compared with records of the same WorkType.
+
+Ranks and medians are in `quality-index.js`, written at every build. The score does not check that the content is correct.
+
+Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known.
+
 ## Add page and editor {#editor}
 
 `add.html` writes new documents in a Markdown editor (CodeMirror 6, bundled, no network). Click **Create** on a category card to open its skeleton. The page is built by KB4IT itself and follows the `editor` setting of `repo.json`, which is on by default for techdoc. The cards come from `templates/skeletons/skeletons.json`; a repository can replace them with its own `overrides/templates/skeletons/` folder. For a walk-through see [Write a document in the editor](howto-write-document-editor.md).
@@ -171,6 +191,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | `events` | `[]` | Categories that count as events |
 | `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
 | `admin` | `false` | Builds the backup page, see below |
+| `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab and `quality-index.js` |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
 The `default` app sets `datatable` to Date, Title, Category, Priority, Status, Scope and Topic, and lists every category in `events`.

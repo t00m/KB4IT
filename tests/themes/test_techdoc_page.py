@@ -175,7 +175,7 @@ def test_quality_off_removes_the_index(off_site):
 def test_emblem_tab_and_note_for_an_exemplary_document(page_site):
     html = read(page_site, "exemplary.html")
     assert re.search(r'class="kb-q-emblem-link kb-noprint" href="#kb-info-quality" title="Quality \d+ of 100, Exemplary"', html)
-    assert 'class="kb-exemplary-note kb-noprint"' in html and "kb-exemplary" in html[:html.index("<head>")]
+    assert 'class="kb-exemplary-note kb-noprint"' in html and '<html lang="en" class="kb-exemplary">' in html
     assert re.search(r'<div id="kb-info-quality" class="kb-noprint"><h2 class="kb-info-heading">Quality</h2>', card(page_site, "exemplary.html"))
     assert "It does not check that the content is correct." in html
 
@@ -193,3 +193,11 @@ def test_retired_document_has_no_score(page_site):
 
 def test_star_action_opens_the_quality_tab(page_site):
     assert 'href="#kb-info-quality" data-uk-tooltip="title: Document quality"' in read(page_site, "full.html")
+
+
+def test_quality_scripts_are_loaded(page_site):
+    html = read(page_site, "full.html")
+    assert '<script defer src="quality-index.js"></script>' in html and "js/quality.js" in html
+    assert "quality-index.js" not in read(page_site, "index.html")
+    script = (page_site["target"] / "resources/themes/techdoc/framework/kb4it/js/quality.js").read_text(encoding="utf-8")
+    assert "KB_QUALITY" in script and "better than" in script

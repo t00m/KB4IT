@@ -1256,7 +1256,12 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
 .kb-q-chip.kb-q-complete { background: rgba(50,210,150,0.14); color: var(--q-complete-ink); }
 .kb-q-chip.kb-q-basic { background: #eef0f3; color: #59657a; }
 .kb-q-chip.kb-q-stub { background: transparent; color: #6b7480; border: 1px dashed var(--q-stub); }
-html.kb-exemplary #kb4it-menu > * { border-bottom: 3px solid var(--q-exemplary); }
+/* Exemplary documents: a gold line along the bottom of the top bar. */
+html.kb-exemplary #kb4it-menu > nav { position: relative; }
+html.kb-exemplary #kb4it-menu > nav::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+    background: var(--q-exemplary); border-radius: 0 0 4px 4px;
+}
 .kb-exemplary-note { display: flex; gap: 8px; align-items: center; margin-top: 10px; padding: 6px 12px; border-radius: 4px;
     background: linear-gradient(90deg, rgba(245,179,1,0.14), rgba(245,179,1,0)); color: var(--q-exemplary-ink); font-size: 0.8rem; font-weight: 600; }
 .kb-q-panel { display: grid; grid-template-columns: 180px 1fr; gap: 22px; }
