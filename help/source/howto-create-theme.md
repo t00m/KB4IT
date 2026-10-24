@@ -28,7 +28,7 @@ A theme is a folder with a description, some Python and some templates. Start fr
 3. In `mytheme/theme.json`, set `"id": "mytheme"` and a new `name`.
 4. Set `"theme": "mytheme"` in the `repo.json` of a knowledge base and build it with `--force`.
 
-`kb4it themes` now lists it with `scope=local`. Change the templates and CSS step by step and rebuild.
+`kb4it themes` now lists it with `scope=local`. Change the templates and CSS step by step and rebuild. After you change a template, the theme's Python code or `theme.json`, run `kb4it build --force`: a normal build only rebuilds the documents whose source changed, so the other pages keep the old theme. CSS and JavaScript files are copied at every build and need no `--force`.
 
 ## What a theme contains {#layout}
 

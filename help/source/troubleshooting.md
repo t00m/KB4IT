@@ -50,6 +50,16 @@ A document links to another one without the `.md` extension, such as `[backups](
 
 Add `.md` to the link, or write the suggested file name: `[backups](BACKUP-POLICY.md)`. `kb4it verify` lists every such link at once.
 
+## Pages do not change after a theme edit {#theme-edit}
+
+### Cause
+
+A normal build only rebuilds the documents whose source changed. After you edit a template, the theme's Python code or `theme.json`, the other pages still have the old theme.
+
+### Fix
+
+Run `kb4it build --force` once. CSS and JavaScript files are copied at every build, so a change to them shows without `--force`.
+
 ## The build stops with CONFIG_KEY_MISSING {#config-key}
 
 ### Cause
