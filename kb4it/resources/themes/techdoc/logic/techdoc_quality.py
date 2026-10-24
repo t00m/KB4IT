@@ -9,6 +9,12 @@ import glob
 import os
 import re
 from dataclasses import dataclass, field
+from datetime import date
+from urllib.parse import unquote, urlsplit
+
+from techdoc_media import resolve_src
+
+from kb4it.core.mdlinks import bare_link_path, rewrite_md_href
 
 DIMENSIONS = ('findable', 'structured', 'complete', 'connected', 'current')
 MAXIMA = {'findable': 15, 'structured': 25, 'complete': 25, 'connected': 15, 'current': 20}
@@ -51,6 +57,13 @@ LIST_ITEM = re.compile(r'^\s*([-*]|\d+\.)\s', re.MULTILINE)
 TABLE_RULE = re.compile(r'^\|?\s*:?-{3,}', re.MULTILINE)
 EMPTY_SECTION = re.compile(r'^#{2,4} .+\n\s*(?=^#{1,4} |\Z)', re.MULTILINE)
 LIST_MARK = re.compile(r'^\s*([-*+]|\d+[.)])\s+')
+TITLE_LINE = re.compile(r'^# .*$', re.MULTILINE)
+WORD = re.compile(r'\w+')
+LINK = re.compile(r'(?<!!)\[[^\]]*\]\(([^)\s]+)')
+IMAGE = re.compile(r'!\[[^\]]*\]\(([^)\s]+)')
+EXTERNAL = re.compile(r'\]\(https?://|<https?://')
+SOURCES = re.compile(r'^## +(references|documentation|related)', re.IGNORECASE | re.MULTILINE)
+MERMAID = re.compile(r'^(```|~~~)\s*mermaid', re.MULTILINE)
 
 
 @dataclass
@@ -206,3 +219,101 @@ def structured(doc, prof, skeletons):
         if any(p in lines for p in skeleton.placeholders):
             checks.append(Check('structured', 'No skeleton text left', 'Replace the skeleton text', -6, 0))
     return checks
+
+
+def words_of(body):
+    """Words of the body, without the title line and fenced code."""
+    return len(WORD.findall(TITLE_LINE.sub('', FENCED.sub('', body), count=1)))
+
+
+def complete(doc, prof):
+    """25 points for reaching the word target of the type; at most 3 for very short documents."""
+    words = words_of(body_of(doc))
+    if doc.work_type:
+        target, floor = prof['record_target'], 20
+    else:
+        target, floor = prof['targets'].get(first(doc, 'DocType'), 200), 50
+    points = 25 * min(words / target, 1)
+    if words < floor:
+        points = min(points, 3)
+    return [Check('complete', 'Long enough for its type', f'Write more: about {max(target - words, 1)} words', points, 25)]
+
+
+def connected(doc, prof):
+    """Backlinks, links to documents and sources, a references section, images; broken links and missing images cost points."""
+    body = FENCED.sub('', body_of(doc))
+    linked, broken = False, []
+    for href in LINK.findall(body):
+        if rewrite_md_href(href) is not None:
+            path = os.path.normpath(unquote(urlsplit(href).path)).replace(os.sep, '/')
+            if path in doc.known_docs:
+                linked = True
+            else:
+                broken.append(path)
+        elif bare_link_path(href) is not None:
+            broken.append(bare_link_path(href))
+    images = IMAGE.findall(body)
+    missing = [src for src in images
+               if (local := resolve_src(src, doc.source_dir)) is not None and not os.path.isfile(local)]
+    checks = [
+        Check('connected', 'Linked from another document', 'Link it from another document', 4 if doc.backlinks else 0, 4),
+        Check('connected', 'Links to a related document', 'Link to a related document', 3 if linked else 0, 3),
+        Check('connected', 'Cites a source', 'Cite a source', 3 if EXTERNAL.search(body) else 0, 3),
+        Check('connected', 'References section', 'Add a References section', 3 if SOURCES.search(body) else 0, 3),
+        Check('connected', 'Image or diagram', 'Add an image or a diagram',
+              2 if images or MERMAID.search(body_of(doc)) else 0, 2),
+    ]
+    checks += [Check('connected', f'Link to {path} works', f'Fix the broken link to {path}', -3, 0) for path in broken]
+    checks += [Check('connected', f'Image {src} is there', f'Add the missing image {src}', -3, 0) for src in missing]
+    return checks
+
+
+def _age_years(doc, today):
+    try:
+        return (today - date.fromisoformat(first(doc, 'Date')[:10])).days / 365.25
+    except ValueError:
+        return None
+
+
+def current(doc, prof, today):
+    """A final status, and for knowledge documents, freshness that halves with every half-life."""
+    final = any(v in prof['final_status'] for v in values(doc, 'Status'))
+    if doc.work_type:
+        return [Check('current', 'Final status', 'Set a final status', 20 if final else 10, 20)]
+    checks = [Check('current', 'Final status', 'Set a final status', 8 if final else 3, 8)]
+    age = _age_years(doc, today)
+    if age is None:
+        checks.append(Check('current', 'Dated', 'Set a Date', 0, 12))
+    else:
+        half_life = prof['half_life'].get(first(doc, 'DocType'), 4)
+        checks.append(Check('current', 'Recently reviewed', f'Review it: it is {max(int(age), 0)} years old',
+                            12 * 0.5 ** (max(age, 0) / half_life), 12))
+    return checks
+
+
+def tier_of(score, status, prof):
+    """The tier of a score; retired when any Status value is a retired status."""
+    if any(v in prof['retired_status'] for v in status):
+        return 'retired'
+    tiers = prof['tiers']
+    if score >= tiers['exemplary']:
+        return 'exemplary'
+    if score >= tiers['complete']:
+        return 'complete'
+    if score >= tiers['basic']:
+        return 'basic'
+    return 'stub'
+
+
+def peer_of(doc):
+    """The group a document is compared with: its WorkType for records, else its DocType."""
+    return doc.work_type or first(doc, 'DocType') or 'Other'
+
+
+def assess(doc, prof, skeletons, today):
+    """Score one document: every check, the five dimensions (0 to their maximum), the total and the tier."""
+    checks = findable(doc, prof) + structured(doc, prof, skeletons) + complete(doc, prof) + connected(doc, prof) \
+        + current(doc, prof, today)
+    dims = {d: max(0, min(MAXIMA[d], sum(c.points for c in checks if c.dim == d))) for d in DIMENSIONS}
+    score = round(sum(dims.values()))
+    return Assessment(score, tier_of(score, values(doc, 'Status'), prof), dims, checks, peer_of(doc))

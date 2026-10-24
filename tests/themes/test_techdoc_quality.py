@@ -62,3 +62,36 @@ def test_empty_sections_and_placeholders_cost_points(prof, skeletons, doc):
 def test_almost_empty_document_does_not_raise(prof, skeletons, doc):
     d = doc("# T\n", Category="Note")
     assert quality.findable(d, prof) and quality.structured(d, prof, skeletons)
+
+
+def test_complete_is_capped_for_short_documents(prof, doc):
+    words = lambda n: "# T\n\n" + " ".join(["w"] * n) + "\n"
+    assert sum(c.points for c in quality.complete(doc(words(40), DocType="How-to guide"), prof)) == 3
+    assert sum(c.points for c in quality.complete(doc(words(75), DocType="How-to guide"), prof)) == 12.5
+    assert sum(c.points for c in quality.complete(doc(words(300), DocType="How-to guide"), prof)) == 25
+    assert sum(c.points for c in quality.complete(doc(words(30), work_type="Change"), prof)) == 12.5
+
+
+def test_connected_rewards_links_and_penalises_broken_ones(prof, doc):
+    body = "# T\n\nSee [b](b.md), [gone](gone.md), [web](https://x.org) and ![i](resources/images/none.png).\n\n## References\n\nx\n"
+    points = sum(c.points for c in quality.connected(doc(body, backlinks=2), prof))
+    assert points == max(0, 4 + 3 + 3 + 3 + 2 - 3 - 3)
+
+
+def test_current_decays_with_age_and_tolerates_bad_dates(prof, doc):
+    today = date(2026, 10, 24)
+    fresh = quality.current(doc("# T\n", DocType="Reference", Status="Released", Date="2026-10-24"), prof, today)
+    old = quality.current(doc("# T\n", DocType="Reference", Status="Released", Date="2018-10-24"), prof, today)
+    bad = quality.current(doc("# T\n", DocType="Reference", Status="Draft", Date="soon"), prof, today)
+    assert sum(c.points for c in fresh) == 20
+    assert round(sum(c.points for c in old), 1) == 11.0          # 8 + 12 * 0.5 ** 2
+    assert sum(c.points for c in bad) == 3
+    assert sum(c.points for c in quality.current(doc("# T\n", work_type="Incident", Status="Open"), prof, today)) == 10
+
+
+def test_assess_gives_tier_and_peer(prof, skeletons, doc):
+    a = quality.assess(doc("# T\n", Status="Obsolete", DocType="Reference"), prof, skeletons, date(2026, 10, 24))
+    assert a.tier == "retired" and a.peer == "Reference"
+    assert quality.assess(doc("# T\n", work_type="Change"), prof, skeletons, date(2026, 10, 24)).peer == "Change"
+    assert quality.tier_of(75, [], prof) == "exemplary" and quality.tier_of(74, [], prof) == "complete"
+    assert quality.tier_of(40, [], prof) == "basic" and quality.tier_of(39, [], prof) == "stub"
