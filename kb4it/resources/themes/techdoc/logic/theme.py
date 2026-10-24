@@ -38,6 +38,10 @@ class Theme(DashboardMixin, DocumentTheme):
     reserved_pages = ('404.md',)  # build() writes 404.html
     add_page = True   # create_page_add() runs in build()
 
+    def datatable_date_cell(self, timestamp):
+        """The date cell gets a class, so the date stays on one line and the time wraps below it."""
+        return super().datatable_date_cell(timestamp).replace('<td class="uk-text-left">', '<td class="uk-text-left kb-dt-date">', 1)
+
     def datatable_value_link(self, properties, key, value):
         """Priority and Status values show as colored labels."""
         link = super().datatable_value_link(properties, key, value)

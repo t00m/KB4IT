@@ -47,6 +47,25 @@ table.month tbody tr th {
     text-align: left;
 }
 
+/* The title column takes the width the other columns leave; a long title ends in an ellipsis and shows whole in its tooltip. */
+.kb4it-datatable td.kb-dt-title {
+    width: 100%;
+    max-width: 0;
+    min-width: 12rem;
+}
+
+/* Wide enough for YYYY-MM-DD on one line; the time wraps below it. */
+.kb4it-datatable td.kb-dt-date {
+    min-width: 5.5rem;
+}
+
+.kb4it-datatable td.kb-dt-title span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 #kb4it-table-metadata {
     border: 2px solid black;
     font-size: smaller;

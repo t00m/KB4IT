@@ -216,3 +216,10 @@ def test_datatable_header_scrolls_with_the_body(site):
     html = read(site, "all.html")
     setup = html[html.index("DATATABLES SETUP :: START"):html.index("DATATABLES SETUP :: END")]
     assert re.search(r"scrollY:[^\n]*\n", setup) and re.search(r"scrollX:\s*true", setup)
+
+
+def test_datatable_title_cell_can_shrink_to_fit(site):
+    html = read(site, "all.html")
+    assert '<td class="uk-text-small kb-dt-title">' in html
+    assert '<td class="uk-text-left kb-dt-date">' in html
+    assert ".kb-dt-title" in (site["target"] / "resources/themes/techdoc/framework/kb4it/css/screen.css").read_text(encoding="utf-8")
