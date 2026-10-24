@@ -54,12 +54,11 @@ It only rewrites the `Category` line of the frontmatter and adds `WorkType` belo
 
 The home page shows, from top to bottom:
 
-- Counts of documents, authors, categories, events and bookmarks.
-- The four types of document, with counts.
+- Counts of documents, authors, categories, events and bookmarks, and the number of Exemplary documents (a link to the Quality page).
+- The four types of document, with counts and, under each, a bar with the mix of quality tiers ("22 exemplary, 113 complete of 230").
+- **Best documents**: up to three Exemplary or Complete documents per type, best first.
 - **Open items**: incidents, changes and tasks with an open status, highest priority first.
-- The latest changes and incidents.
-- **Upcoming events** for this month and the next, and recent events from the last month.
-- **Monitoring**: recurring checks grouped by periodicity.
+- **Activity**: one card with a tab each for the latest changes, the latest incidents, events (this month and the next, then the last month) and monitoring (recurring checks by periodicity). A tab without entries is not shown; the card opens on the tab you chose last.
 
 Every section except the counts and the four document types folds when you click its title. The browser remembers which sections you folded.
 
@@ -69,7 +68,7 @@ Every section except the counts and the four document types folds when you click
 
 The top bar holds the logo menu on the left, the page title in the middle and a search icon on the right:
 
-- The logo menu links to the dashboard (click the logo), the Add page, Events, Bookmarks, Properties, Stats, Reload page, Help, About this app and About KB4IT.
+- The logo menu links to the dashboard (click the logo), the Add page, Events, Bookmarks, Properties, Stats, Quality, Reload page, Help, About this app and About KB4IT.
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field.
 
@@ -80,7 +79,7 @@ Below the top bar, a document page shows:
 - **Banners** for documents that need care: red when `Environment` is `Production` ("This document changes production systems", with the `SID` values), grey when `Status` is `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` ("Do not follow this document"), amber when `Status` is `Draft`.
 - **An info card** with two tabs. **Details** lists every property in groups (Classification, Systems, Technical objects, Organisation, Lifecycle, Other); technical objects such as transactions and commands show as chips, and SAP notes named in the text ("note 736902") link to the SAP support portal. **History** shows the date, the source file with a link to view it, an edit link with `"git": true`, and the build time. The card starts closed when the document has a Summary and open on Details when it does not. Click a tab to open it, click the open tab or the arrow to close it; the card remembers your last tab. The document properties button in the title menu, or `#kb-info-details` at the end of the address, opens Details. `#details` does too, unless the document has a section with that name, which keeps the link.
 
-Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. Every heading level folds. The table of contents and the first section start open, with its subsections; every other section starts folded, subsections too. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
+Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. Every heading level folds. The table of contents and the first section start open, with its subsections; every other section starts folded, subsections too. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. The **Related** tab of the info card lists the documents that link to this one (**Linked from**) and up to five **Related documents**: documents that share a SID, Product, Transaction, Component or Tag, the rarest shared values first. Each line shows the quality tier of the document.
 
 Images in a document:
 
@@ -119,7 +118,11 @@ The skeletons of the Add page are written to this standard. Each one has every c
 | Task | Objective, Acceptance Criteria, Notes, References |
 | Meeting | Objective, Attendees, Agenda, Notes, Action Items, References |
 
-Ranks and medians are in `quality-index.js`, written at every build. The score does not check that the content is correct.
+Ranks and medians are in `quality-index.js`, written at every build.
+
+Add `"Quality"` to the `datatable` list of `repo.json` to get a Quality column in the document tables: five squares (one per 20 points) and the tier; the column sorts by score, retired documents last.
+
+The **Quality page** (`quality.html`, in the logo menu) is for maintainers: the tier mix per type, the Exemplary documents, quick wins (documents within 5 points of the next tier, with the one change that gets them there), broken links, missing images, documents without a Summary and possible duplicates (titles that share most words; journal titles that differ only by a date are left out). The score does not check that the content is correct.
 
 Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known.
 
