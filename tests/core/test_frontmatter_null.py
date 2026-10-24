@@ -9,3 +9,12 @@ def test_null_frontmatter_value_is_empty_list(tmp_path):
     assert keys["Summary"] == []
     assert keys["Kind"] == ["howto"]
     assert keys["Keyword"] == ["one"]
+
+
+def test_repeated_values_are_kept_once(tmp_path):
+    doc = tmp_path / "a.md"
+    doc.write_text("---\nTag: zeta, alpha, zeta\nTopic: [a, a, b]\n---\n\n# Title\n\nBody\n", encoding="utf-8")
+    keys, ok, _reason = get_document_attributes(str(doc))
+    assert ok
+    assert keys["Tag"] == ["zeta", "alpha"]
+    assert keys["Topic"] == ["a", "b"]

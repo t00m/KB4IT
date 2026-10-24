@@ -262,6 +262,8 @@ def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, s
                 keys[k] = [i.strip() for i in v.split(",")]
             else:
                 keys[k] = [str(v).strip()]
+            # A value repeated in one key is kept once, in its first place.
+            keys[k] = list(dict.fromkeys(keys[k]))
 
         # Every property name and value becomes part of a page name; one that cleans to nothing
         # (such as "..." or "???") cannot, so the document is reported instead of breaking the site.
