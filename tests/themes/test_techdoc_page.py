@@ -258,3 +258,18 @@ def test_quality_column_sorts_by_score(page_site):
 
 def test_quality_column_is_left_out_when_quality_is_off(off_site):
     assert "Quality" not in _table_headers(read(off_site, "Category_Procedure.html"))
+
+
+def test_related_tab_holds_linked_from_and_related_documents(page_site):
+    c = card(page_site, "full.html")
+    panel = c[c.index("RELATED PANEL :: START"):c.index("RELATED PANEL :: END")]
+    assert '<li data-kb-tab="related"><a href="#kb-info-related">Related</a></li>' in c
+    assert "Linked from" in panel and 'href="exemplary.html"' in panel and "kb-q-chip" in panel
+    assert "Related documents" in panel and "Product: ADS" in panel
+    body = read(page_site, "full.html")
+    body = body[body.index("DOCUMENT BODY :: START"):body.index("DOCUMENT BODY :: END")]
+    assert "kb4it-backlinks" not in body
+
+
+def test_no_related_tab_without_entries(page_site):
+    assert 'data-kb-tab="related"' not in read(page_site, "plain.html")

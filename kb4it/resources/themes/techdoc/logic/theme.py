@@ -25,6 +25,7 @@ from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInp
 from techdoc_quality_guide import CHECKS as GUIDE_CHECKS
 from techdoc_quality_guide import DIMS as GUIDE_DIMS
 from techdoc_records import event_type, work_type
+from techdoc_related import RELATED_KEYS, related
 
 from kb4it.core.util import (
     get_human_datetime,
@@ -213,6 +214,33 @@ class Theme(DashboardMixin, DocumentTheme):
             'checklist': checklist(assessment),
         }
 
+    def backlinks_html(self, doc_id):
+        """Override: techdoc shows the documents that link here in the Related tab of the info card, not after the body."""
+        return ''
+
+    def related_view(self, doc_id):
+        """Linked from and related documents for the Related tab, each with the tier of its target."""
+        plan = self.srvbes.get_plan()
+        if getattr(self, '_related_plan', None) is not plan:
+            docs = [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)
+                    and (self.quality.get(d) is None or self.quality[d].tier != 'retired')]
+            self._related_meta = {d: {k: list(self.srvdtb.get_values(d, k)) for k in RELATED_KEYS} for d in docs}
+            self._related_plan = plan
+        tiers = (getattr(self, 'quality_stats', None) or {}).get('docs', {})
+
+        def chip(page):
+            tier = tiers.get(page, {}).get('tier')
+            return {'tier': tier, 'label': TIER_LABELS[tier]} if tier else None
+
+        linked = [dict(item, chip=chip(item['href'])) for item in self.backlinks(doc_id)]
+        similar = []
+        if doc_id in self._related_meta:
+            for item in related(doc_id, self._related_meta):
+                page = html_id_for(item['doc'])
+                title = (self.srvdtb.get_values(item['doc'], 'Title') or [item['doc']])[0]
+                similar.append({'title': title, 'href': page, 'shared': ', '.join(item['shared']), 'chip': chip(page)})
+        return {'linked': linked, 'similar': similar} if linked or similar else None
+
     def ensure_quality(self):
         """Score the documents once per build, whichever page needs the scores first (key pages come before build())."""
         plan = self.srvbes.get_plan()
@@ -367,7 +395,8 @@ class Theme(DashboardMixin, DocumentTheme):
                         'edit_url': edit_url,
                     },
                     'print': {name: info_tabs.get(name, {}).get('print', name == 'details')
-                              for name in ('details', 'quality', 'history')},
+                              for name in ('details', 'quality', 'related', 'history')},
+                    'related': self.related_view(basename_md),
                     'quality_html': self.template('QUALITY_PANEL').render(var={'q': q}) if q else '',
                 }})
 

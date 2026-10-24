@@ -1297,3 +1297,10 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-q-meter.kb-q-basic i.on { background: var(--q-basic); }
 .kb-q-meter.kb-q-stub i.on { background: var(--q-stub); }
 .kb-q-chip.kb-q-retired { background: #eee; color: #777; text-decoration: line-through; }
+
+/* Related tab: Linked from and related documents, with the tier of each. */
+.kb-related-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 4px 0 6px; }
+.kb-related { list-style: none; padding: 0; margin: 0 0 12px; font-size: 0.84rem; }
+.kb-related li { padding: 3px 0; overflow-wrap: anywhere; }
+.kb-related .kb-q-chip { margin-left: 6px; }
+.kb-related-shared { display: block; font-size: 0.74rem; color: #888; }

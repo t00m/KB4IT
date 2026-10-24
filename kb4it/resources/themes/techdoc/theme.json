@@ -41,6 +41,7 @@
     "info_tabs": {
         "details": {"print": true},
         "quality": {"print": false},
+        "related": {"print": false},
         "history": {"print": false}
     }
 }

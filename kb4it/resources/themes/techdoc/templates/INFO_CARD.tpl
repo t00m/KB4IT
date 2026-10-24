@@ -10,6 +10,9 @@
 % if card.get('quality_html'):
             <li data-kb-tab="quality"><a href="#kb-info-quality">Quality</a></li>
 % endif
+% if card.get('related'):
+            <li data-kb-tab="related"><a href="#kb-info-related">Related</a></li>
+% endif
             <li data-kb-tab="history"><a href="#kb-info-history">History</a></li>
         </ul>
         <button class="kb-info-toggle kb-noprint" type="button" aria-expanded="${'true' if card['open'] else 'false'}" aria-controls="kb-info-panels" title="Show or hide the document information"><span data-uk-icon="icon: chevron-down"></span></button>
@@ -48,6 +51,38 @@
 ${card['quality_html'] | n}
         </div>
         <!-- QUALITY PANEL :: END -->
+% endif
+% if card.get('related'):
+<% rel = card['related'] %>
+        <!-- RELATED PANEL :: START -->
+        <div id="kb-info-related" class="${'kb-print' if card['print']['related'] else 'kb-noprint'}">
+            <h2 class="kb-info-heading">Related</h2>
+%     if rel['linked']:
+            <h3 class="kb-related-title">Linked from</h3>
+            <ul class="kb-related">
+%         for item in rel['linked']:
+                <li><a href="${item['href']}">${item['title']}</a>
+%             if item['chip']:
+                    <span class="kb-q-chip kb-q-${item['chip']['tier']}">${item['chip']['label']}</span>
+%             endif
+                </li>
+%         endfor
+            </ul>
+%     endif
+%     if rel['similar']:
+            <h3 class="kb-related-title">Related documents</h3>
+            <ul class="kb-related">
+%         for item in rel['similar']:
+                <li><a href="${item['href']}">${item['title']}</a>
+%             if item['chip']:
+                    <span class="kb-q-chip kb-q-${item['chip']['tier']}">${item['chip']['label']}</span>
+%             endif
+                    <span class="kb-related-shared">${item['shared']}</span></li>
+%         endfor
+            </ul>
+%     endif
+        </div>
+        <!-- RELATED PANEL :: END -->
 % endif
         <!-- HISTORY PANEL :: START -->
         <div id="kb-info-history" class="${'kb-print' if card['print']['history'] else 'kb-noprint'}">
