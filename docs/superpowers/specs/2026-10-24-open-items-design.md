@@ -22,6 +22,8 @@ Each work package (WP) gets its own implementation plan and is done in this orde
 7. **WP7 Header cache** (core performance).
 8. **WP8 Quality phase 6** (optional): sticky table of contents, tier chip in search.
 
+Decided by the user on 2026-10-24: WP6, WP7 and WP8 move to the next version; this version ends with WP5.
+
 Why this order: the quality score's Connected dimension is near 0 for every sapbasis document until the links are fixed (WP2), and phases 3 and 4 show the score, so they need phase 2 first. The header cache is separate from all of it.
 
 ## Global constraints
