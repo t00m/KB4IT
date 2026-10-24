@@ -3,6 +3,8 @@
 import importlib.util
 import struct
 
+import pytest
+
 from tests.helpers import ROOT
 
 spec = importlib.util.spec_from_file_location(
@@ -52,3 +54,74 @@ def test_resolve_src(tmp_path):
     assert media.resolve_src("resources/images/my%20shot.png", str(tmp_path)) == str(tmp_path / "resources/images/my shot.png")
     for src in ("https://x.org/a.png", "http://x.org/a.png", "data:image/png;base64,AA", "//x.org/a.png", "/abs/a.png"):
         assert media.resolve_src(src, str(tmp_path)) is None
+
+
+@pytest.fixture
+def site(tmp_path):
+    images = tmp_path / "resources" / "images"
+    images.mkdir(parents=True)
+    (images / "wide.png").write_bytes(png(1100, 480))
+    (images / "icon.png").write_bytes(png(16, 16))
+    for i in (1, 2, 3):
+        (images / f"s{i}.png").write_bytes(png(900, 420))
+    return tmp_path
+
+
+def test_block_image_becomes_numbered_figure_with_lightbox_link(site):
+    html, missing = media.enhance_images('<p><img alt="User list in SU01" src="resources/images/wide.png"></p>', str(site))
+    assert missing == []
+    assert '<figure class="kb-figure"><a class="kb-zoom" href="resources/images/wide.png" data-caption="User list in SU01">' in html
+    assert 'class="kb-shot"' in html and 'width="1100"' in html and 'height="480"' in html
+    assert "<figcaption>Figure 1. User list in SU01</figcaption>" in html
+    assert "loading=" not in html            # the first image loads at once
+
+
+def test_file_name_alt_gets_no_caption_and_second_image_is_lazy(site):
+    html, _ = media.enhance_images('<p><img alt="x" src="resources/images/icon.png"></p><p><img alt="SAP-BC-00" src="resources/images/wide.png"></p>', str(site))
+    assert "<figcaption>" not in html
+    assert html.count('loading="lazy"') == 1 and 'decoding="async"' in html
+
+
+def test_small_linked_and_inline_images_are_left_alone(site):
+    for body in ('<p><img alt="Icon here" src="resources/images/icon.png"></p>',
+                 '<p><a href="x.html"><img alt="Big link" src="resources/images/wide.png"></a></p>',
+                 '<p>Click <img alt="the button" src="resources/images/wide.png"> to go on.</p>'):
+        html, _ = media.enhance_images(body, str(site))
+        assert "<figure" not in html and "kb-zoom" not in html
+
+
+def test_three_images_in_a_row_make_a_gallery(site):
+    body = "".join(f'<p><img alt="Step {i} of the wizard" src="resources/images/s{i}.png"></p>' for i in (1, 2, 3))
+    html, _ = media.enhance_images(body, str(site))
+    assert html.count('<div class="kb-gallery uk-child-width-1-2 uk-child-width-1-3@m" data-uk-grid="masonry: false">') == 1
+    assert html.count('<figure class="kb-figure">') == 3
+    two, _ = media.enhance_images(body.rsplit("<p>", 1)[0], str(site))
+    assert "kb-gallery" not in two
+
+
+def test_missing_images_become_placeholders(site):
+    html, missing = media.enhance_images('<p><img alt="Gone" src="resources/images/gone.png"></p><p>See <img alt="g" src="resources/images/g2.png"> here.</p>', str(site))
+    assert missing == ["resources/images/gone.png", "resources/images/g2.png"]
+    assert '<figure class="kb-figure kb-img-missing">Image missing: <code>resources/images/gone.png</code></figure>' in html
+    assert '<span class="kb-img-missing">Image missing: <code>resources/images/g2.png</code></span>' in html
+    assert "<p><figure" not in html
+
+
+def test_remote_images_are_never_missing(site):
+    html, missing = media.enhance_images('<p><img alt="Remote diagram" src="https://x.org/a.png"></p>', str(site))
+    assert missing == [] and 'href="https://x.org/a.png"' in html and "width=" not in html
+
+
+def test_text_and_other_markup_are_kept(site):
+    body = '<h2 id="s">Steps</h2><p>Run <code>a &lt; b</code>.</p><pre><code class="language-bash">ls</code></pre>'
+    assert media.enhance_images(body, str(site)) == (body, [])
+
+
+def test_bare_image_outside_a_paragraph_becomes_a_figure(site):
+    html, _ = media.enhance_images('<h2>A</h2><img alt="Bare diagram here" src="resources/images/wide.png">\nafter', str(site))
+    assert html.startswith('<h2>A</h2><figure class="kb-figure">') and html.endswith("</figure>\nafter")
+
+
+def test_missing_bare_image_is_replaced(site):
+    html, missing = media.enhance_images('<img alt="Gone diagram" src="resources/images/gone.png">', str(site))
+    assert missing == ["resources/images/gone.png"] and "<img" not in html
