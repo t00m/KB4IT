@@ -431,7 +431,7 @@ The theme rewrites each `<img>` inside the document body while `build_page` alre
 5. **Screenshot frame.** `.kb-shot`: 1px border, 4px radius, a light shadow. White SAP screens no longer merge into the page.
 6. **Galleries.** Three or more images in a row, with no text between them, become a grid of thumbnails (`uk-child-width-1-2 uk-child-width-1-3@m`). The lightbox still shows them one by one. One document has 58 screenshots.
 7. **Left alone.** Images inside a link keep the link and get no lightbox. Images smaller than 64px wide and images inside a paragraph of text stay inline, without figure or frame.
-8. **Missing files.** A missing image becomes a grey placeholder box with the file name: "Image missing: resources/images/x.png". The build logs `[THEME] IMAGE_MISSING doc=<doc> src=<src>`. The Quality page lists them. In the quality model, each missing image takes 3 points from Connected, like a broken link. The calibration above ran without this check; with today's sapbasis-docs, where every image file is missing, it would lower 158 documents.
+8. **Missing files.** A missing image becomes a grey placeholder box with the file name: "Image missing: resources/images/x.png". The build logs `[THEME] IMAGE_MISSING doc=<doc> src=<src>`. The Quality page lists them. In the quality model, each missing image takes 3 points from Connected, like a broken link. The calibration above ran without this check. On 2026-10-24, 267 of the 390 image files were copied into sapbasis-docs; 123 files are still missing (`images-missing.txt`), which leaves 131 broken references.
 
 The lightbox reads images through plain `<img>` elements, so it works from `file://`.
 
