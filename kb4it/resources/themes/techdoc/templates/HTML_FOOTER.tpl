@@ -27,8 +27,8 @@ function copyToClipboard() {
 </script>
 <!-- Section folding -->
 <script>
-// Every section folds when you click its heading. Top-level sections start folded, except the
-// first; subsections start open. A link to a section unfolds it and the sections around it.
+// Every section folds when you click its heading. Every section starts folded except the first
+// top-level one and the sections inside it. A link to a section unfolds it and the sections around it.
 (function() {
     var content = document.querySelector('.kb-content');
     if (!content) return;
@@ -38,7 +38,10 @@ function copyToClipboard() {
     });
     if (!sects.length) return;
     var top = sects.filter(function(s) { return s.classList.contains('kb-sect1'); });
-    top.slice(1).forEach(function(s) { s.classList.add('kb-closed'); });
+    var first = top[0] || sects[0];
+    sects.forEach(function(s) {
+        if (s !== first && !first.contains(s)) s.classList.add('kb-closed');
+    });
     sects.forEach(function(s) {
         var heading = s.firstElementChild;
         if (!heading || !/^H[2-5]$/.test(heading.tagName)) return;
