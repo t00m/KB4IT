@@ -26,6 +26,12 @@ def value_url(props, key, value):
     return props.get(f'{key}_{value}_Url') or f'{valid_filename(key)}_{valid_filename(value)}.html'
 
 
+def date_parts(value):
+    """Split a Date value into the day (YYYY-MM-DD) and the time without seconds (HH:MM, or '')."""
+    day, _, time = value.strip().partition(' ')
+    return day, time[:5]
+
+
 def values(srvdtb, doc_id, key):
     """Return the non-empty values of a key."""
     return [v for v in srvdtb.get_values(doc_id, key) if v]
@@ -46,7 +52,12 @@ def header_strip(srvdtb, doc_id, conf):
             badges.append({'key': key, 'text': value, 'css': css, 'url': value_url(props, key, value)})
     links = []
     for key in conf.get('links', []):
-        items = [{'text': v, 'url': value_url(props, key, v)} for v in values(srvdtb, doc_id, key)]
+        items = []
+        for v in values(srvdtb, doc_id, key):
+            item = {'text': v, 'url': value_url(props, key, v), 'time': '', 'full': v}
+            if key == 'Date':
+                item['text'], item['time'] = date_parts(v)
+            items.append(item)
         if items:
             links.append({'key': key, 'items': items})
     return {'badges': badges, 'links': links}

@@ -5,7 +5,7 @@
         <!-- EDIT BUTTON :: END -->
   % endif
         <!-- PROPERTIES BUTTON :: START -->
-        <a class="kb4it-page-action" href="#details" data-uk-tooltip="title: Document properties" aria-label="Document properties"><span data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
+        <a class="kb4it-page-action" href="#kb-info-details" data-uk-tooltip="title: Document properties" aria-label="Document properties"><span data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
         <!-- PROPERTIES BUTTON :: END -->
         <!-- SOURCE BUTTON AND DIALOG :: START -->
         <a class="kb4it-page-action" href="#modal-full-source" data-uk-toggle data-uk-tooltip="title: Document source" aria-label="Document source"><span data-uk-icon="icon: code; ratio: 1.0;"></span></a>

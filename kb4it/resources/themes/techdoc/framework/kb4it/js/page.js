@@ -41,9 +41,18 @@
         }
     }
 
-    // #details or #history in the address opens the card on that tab.
+    // #kb-info-details opens the card on Details; #details does too, unless the page has
+    // its own element with that id (a section heading), which keeps the link.
+    function tabFromHash() {
+        var hash = window.location.hash.replace('#', '');
+        if (hash.indexOf('kb-info-') === 0) {
+            return hash.slice('kb-info-'.length);
+        }
+        return document.getElementById(hash) ? '' : hash;
+    }
+
     function fromHash() {
-        var name = window.location.hash.replace('#', '');
+        var name = tabFromHash();
         if (names().indexOf(name) >= 0) {
             setOpen(true, false);
             show(name);

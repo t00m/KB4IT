@@ -115,9 +115,22 @@ def test_panels_have_headings_and_print_classes(page_site):
 def test_page_script_and_properties_action(page_site):
     html = read(page_site, "full.html")
     assert "document.documentElement.classList.add('kb-js')" in html and "js/page.js" in html
-    assert "modal-metadata" not in html and 'href="#details"' in html
+    assert "modal-metadata" not in html
+    assert 'href="#kb-info-details" data-uk-tooltip="title: Document properties"' in html
     assert "kb-info-card-tab" in (page_site["target"] / "resources/themes/techdoc/framework/kb4it/js/page.js").read_text(encoding="utf-8")
 
 
 def test_sap_notes_found_in_text():
     assert docpage.sap_notes("See SAP note 736902 and Note #1234567, not notes 12.") == ["736902", "1234567"]
+
+
+def test_strip_date_shows_the_time_below_the_date(page_site):
+    html = read(page_site, "full.html")
+    strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
+    assert '<a href="events_20261001.html" title="2026-10-01 00:00:00">2026-10-01<span class="kb-time">00:00</span></a>' in strip
+
+
+def test_strip_date_without_time_shows_only_the_date():
+    assert docpage.date_parts("2026-10-01") == ("2026-10-01", "")
+    assert docpage.date_parts("2026-10-01 08:15") == ("2026-10-01", "08:15")
+    assert docpage.date_parts("2026-10-01 08:15:59") == ("2026-10-01", "08:15")

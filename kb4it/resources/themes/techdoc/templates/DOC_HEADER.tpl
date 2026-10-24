@@ -12,7 +12,11 @@
 %         for link in strip['links']:
         <span><span class="k">${link['key']}</span>
 %             for item in link['items']:
+%                 if item['time']:
+            <a href="${item['url']}" title="${item['full']}">${item['text']}<span class="kb-time">${item['time']}</span></a>${'' if loop.last else ','}
+%                 else:
             <a href="${item['url']}">${item['text']}</a>${'' if loop.last else ','}
+%                 endif
 %             endfor
         </span>
 %         endfor

@@ -1224,3 +1224,12 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
 @media (max-width: 640px) {
     .kb-groups { grid-template-columns: 1fr; }
 }
+
+/* The time of a Date sits below the day in the header strip. */
+.kb-doc-strip .kb-time { display: block; font-size: 0.72rem; color: #888; line-height: 1.2; }
+
+/* Between the stacked phone layout and wide screens, tables get narrower badges and a smaller title floor. */
+@media (min-width: 960px) and (max-width: 1199px) {
+    .kb4it-datatable .kb-badge { width: 5rem; }
+    .kb4it-datatable td.kb-dt-title { min-width: 8rem; }
+}
