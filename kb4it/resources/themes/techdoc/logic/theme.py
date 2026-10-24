@@ -50,9 +50,23 @@ class Theme(DashboardMixin, DocumentTheme):
             headers = (self.srvbes.get_dict('repo') or {}).get('datatable', list(self.datatable_default_headers))
         docs = [d for d in doclist or [] if not self.srvdtb.is_system(d)]
         if docs:
-            headers = [key for key in headers if key in ('Date', 'Title')
+            quality = bool(self.ensure_quality())
+            headers = [key for key in headers if key in ('Date', 'Title') or (key == 'Quality' and quality)
                        or any(v for d in docs for v in self.srvdtb.get_values(d, key))]
         return super().build_datatable(headers, doclist, table_id)
+
+    def datatable_custom_cell(self, doc_id, key):
+        """The Quality column: a five-square meter and the tier chip, sorted by score; retired documents last."""
+        assessment = self.ensure_quality().get(doc_id) if key == 'Quality' else None
+        if assessment is None:
+            return None
+        tier = assessment.tier
+        if tier == 'retired':
+            return '<td data-order="-1"><span class="kb-q-chip kb-q-retired">Retired</span></td>'
+        on = 5 if tier == 'exemplary' else min(5, assessment.score // 20)
+        squares = '<i class="on"></i>' * on + '<i></i>' * (5 - on)
+        return (f'<td data-order="{assessment.score}"><span class="kb-q-meter kb-q-{tier}">{squares}</span>'
+                f'<span class="kb-q-chip kb-q-{tier}">{TIER_LABELS[tier]}</span></td>')
 
     def datatable_date_cell(self, timestamp):
         """The date cell gets a class, so the date stays on one line and the time wraps below it."""
@@ -199,6 +213,14 @@ class Theme(DashboardMixin, DocumentTheme):
             'checklist': checklist(assessment),
         }
 
+    def ensure_quality(self):
+        """Score the documents once per build, whichever page needs the scores first (key pages come before build())."""
+        plan = self.srvbes.get_plan()
+        if getattr(self, '_quality_plan', None) is not plan:
+            self.assess_documents()
+            self._quality_plan = plan
+        return self.quality
+
     def assess_documents(self):
         """Score every document once per build; build_page and quality-index.js read the results."""
         self.quality, self.quality_stats = {}, {}
@@ -254,7 +276,7 @@ class Theme(DashboardMixin, DocumentTheme):
 
     def build(self):
         """Create standard pages for default theme"""
-        self.assess_documents()
+        self.ensure_quality()
         self.build_page_quality_guide()
         var = self.get_theme_var()
         self.build_page_events()

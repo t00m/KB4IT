@@ -1288,3 +1288,12 @@ html.kb-exemplary #kb4it-menu > nav::after {
 /* Quality tab items link to the quality guide but read as plain text until hovered. */
 .kb-q-checks a, .kb-q-dim a, a.kb-q-chip { color: inherit !important; text-decoration: none; }
 .kb-q-checks a:hover, .kb-q-dim a:hover { text-decoration: underline; }
+
+/* Quality column of the document tables: five squares, one per 20 points, and the tier chip. */
+.kb-q-meter { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
+.kb-q-meter i { width: 9px; height: 9px; border-radius: 2px; background: #e6e9ee; display: block; }
+.kb-q-meter.kb-q-exemplary i.on { background: var(--q-exemplary); }
+.kb-q-meter.kb-q-complete i.on { background: var(--q-complete); }
+.kb-q-meter.kb-q-basic i.on { background: var(--q-basic); }
+.kb-q-meter.kb-q-stub i.on { background: var(--q-stub); }
+.kb-q-chip.kb-q-retired { background: #eee; color: #777; text-decoration: line-through; }

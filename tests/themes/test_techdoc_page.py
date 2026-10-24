@@ -42,7 +42,7 @@ def page_site(tmp_path_factory):
     base = tmp_path_factory.mktemp("techdoc-page")
     home = base / "home"
     home.mkdir()
-    cfg = write_repo(base / "repo", "techdoc", DOCS)
+    cfg = write_repo(base / "repo", "techdoc", DOCS, datatable=["Date", "Title", "Status", "Quality"])
     images = base / "repo" / "source" / "resources" / "images"
     images.mkdir(parents=True)
     (images / "wide.png").write_bytes(png(1100, 480))
@@ -168,7 +168,8 @@ def off_site(tmp_path_factory):
     base = tmp_path_factory.mktemp("techdoc-quality-off")
     home = base / "home"
     home.mkdir()
-    cfg = write_repo(base / "repo", "techdoc", {"full.md": DOCS["full.md"]}, quality=False)
+    cfg = write_repo(base / "repo", "techdoc", {"full.md": DOCS["full.md"]}, quality=False,
+                     datatable=["Date", "Title", "Status", "Quality"])
     result = run_kb4it("build", cfg, cwd=base, home=home)
     assert result.returncode == 0, result.stdout
     return {"target": base / "repo" / "target", "log": result.stdout}
@@ -242,3 +243,18 @@ def test_no_template_line_starts_with_a_mako_comment_by_accident():
     found = [f"{p.relative_to(ROOT)}:{n}" for p in (ROOT / "kb4it" / "resources").rglob("*.tpl")
              for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1) if line.startswith("##")]
     assert not found, found
+
+
+def _table_headers(html):
+    return re.findall(r'<span class="uk-text-secondary">([^<]+)</span>', html[html.index("<thead>"):html.index("</thead>")])
+
+
+def test_quality_column_sorts_by_score(page_site):
+    html = read(page_site, "Category_Procedure.html")
+    assert "Quality" in _table_headers(html)
+    assert re.search(r'<td data-order="\d+"><span class="kb-q-meter kb-q-exemplary">(<i class="on"></i>){5}</span>'
+                     r'<span class="kb-q-chip kb-q-exemplary">Exemplary</span></td>', html)
+
+
+def test_quality_column_is_left_out_when_quality_is_off(off_site):
+    assert "Quality" not in _table_headers(read(off_site, "Category_Procedure.html"))
