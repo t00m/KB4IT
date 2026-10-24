@@ -73,6 +73,13 @@ The top bar holds the logo menu on the left, the page title in the middle and a 
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field.
 
+Below the top bar, a document page shows:
+
+- **A header strip** with the DocType, Status and Priority badges, then Date, Author, Product and Handover as links to their pages. Keys a document does not have are left out.
+- **The Summary**, when the document has a `Summary` key, as an opening line.
+- **Banners** for documents that need care: red when `Environment` is `Production` ("This document changes production systems", with the `SID` values), grey when `Status` is `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` ("Do not follow this document"), amber when `Status` is `Draft`.
+- **An info card** with two tabs. **Details** lists every property in groups (Classification, Systems, Technical objects, Organisation, Lifecycle, Other); technical objects such as transactions and commands show as chips, and SAP notes named in the text ("note 736902") link to the SAP support portal. **History** shows the date, the source file with a link to view it, an edit link with `"git": true`, and the build time. The card starts closed when the document has a Summary and open on Details when it does not. Click a tab to open it, click the open tab or the arrow to close it; the card remembers your last tab. The document properties button in the title menu, or `#details` at the end of the address, opens Details.
+
 Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. Every heading level folds. The table of contents and the first section start open; the other top-level sections start folded, and their subsections open with them. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. Documents that other documents link to end with a **Linked from** list.
 
 Images in a document:
@@ -167,6 +174,16 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
 The `default` app sets `datatable` to Date, Title, Category, Priority, Status, Scope and Topic, and lists every category in `events`.
+
+The document page reads three keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
+
+| Key | Meaning |
+|---|---|
+| `header_keys` | `badges` and `links`: the keys shown in the header strip, in order |
+| `info_groups` | The groups of the Details tab: `name`, `keys`, and `"chips": true` for the group shown as chips. Keys in no group go to Other |
+| `info_tabs` | `details` and `history`, each with `print`: whether the tab is printed. By default Details is printed and History is not |
+
+On paper, the header strip is one line of text, banners have a border instead of a colour, Details follows the title under the heading "Document details" in two columns, and the tab bar is left out.
 
 ## Backups page {#admin}
 

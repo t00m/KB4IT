@@ -65,6 +65,7 @@ Built-in properties recognised by KB4IT:
 | `Team`      | Owning team |
 | `Tag`       | Free-form tags, comma-separated |
 | `Date`      | Publish or event date (YYYY-MM-DD) |
+| `Summary`   | One-sentence summary, shown under the title |
 | `Bookmark`  | `Yes` to feature on the bookmarks page |
 
 ## Replacing system pages
