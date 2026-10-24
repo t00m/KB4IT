@@ -125,3 +125,8 @@ def test_bare_image_outside_a_paragraph_becomes_a_figure(site):
 def test_missing_bare_image_is_replaced(site):
     html, missing = media.enhance_images('<img alt="Gone diagram" src="resources/images/gone.png">', str(site))
     assert missing == ["resources/images/gone.png"] and "<img" not in html
+
+
+@pytest.mark.parametrize("alt", ["image", "Image", "img", "picture", "screenshot", "Screen capture", "photo"])
+def test_generic_alt_words_give_no_caption(alt):
+    assert media.is_filename_alt(alt, "resources/images/x.png")

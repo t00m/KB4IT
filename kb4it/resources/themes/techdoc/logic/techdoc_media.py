@@ -20,6 +20,9 @@ GALLERY_MIN = 3
 
 GALLERY_CLASS = 'kb-gallery uk-child-width-1-2 uk-child-width-1-3@m'
 
+# Alt texts that name the kind of picture, not what it shows; they give no caption.
+GENERIC_ALTS = {'image', 'img', 'picture', 'pic', 'photo', 'screenshot', 'screen capture', 'screen shot', 'capture', 'untitled'}
+
 # JPEG start-of-frame markers; C4, C8 and CC are other segments.
 JPEG_SOF = {m for m in range(0xC0, 0xD0) if m not in (0xC4, 0xC8, 0xCC)}
 
@@ -95,7 +98,7 @@ def image_size(path):
 def is_filename_alt(alt, src):
     """Return True when an alt text looks like a file name rather than a caption."""
     alt = (alt or '').strip()
-    if not alt:
+    if not alt or alt.lower() in GENERIC_ALTS:
         return True
     stem = os.path.splitext(os.path.basename(unquote(src or '')))[0]
     if alt.lower() == stem.lower():
