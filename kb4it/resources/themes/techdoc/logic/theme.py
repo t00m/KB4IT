@@ -18,6 +18,7 @@ from datetime import datetime
 
 from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
+from techdoc_records import event_type
 
 from kb4it.core.util import (
     get_human_datetime,
@@ -120,7 +121,7 @@ class Theme(DashboardMixin, DocumentTheme):
         for docId in self.srvdtb.get_documents():
             if self.srvdtb.is_system(docId):
                 continue
-            category = self.srvdtb.get_values(docId, 'Category')[0]
+            category = event_type(self.srvdtb, docId)
             if category in event_types:
                 ecats.setdefault(category, set()).add(docId)
 

@@ -3,6 +3,8 @@
 from calendar import monthrange
 from datetime import datetime, timedelta
 
+from techdoc_records import docs_of_work_type, event_type, kind_url
+
 from kb4it.core.documents import is_yes
 from kb4it.core.util import guess_datetime, html_id_for, valid_filename
 
@@ -40,7 +42,7 @@ STATUS_CSS = {
 
 OPEN_STATUSES = {'New', 'Open', 'Draft', 'Planned'}
 
-OPEN_ITEM_CATEGORIES = ['Incident', 'Change', 'Task']
+OPEN_ITEM_TYPES = ['Incident', 'Change', 'Task']
 
 
 def priority_css(value):
@@ -128,7 +130,7 @@ class DashboardMixin:
                 date = dt.strftime('%b %d') if dt else ts[:10]
             except Exception:
                 date = ts[:10]
-        category = self.srvdtb.get_values(docId, 'Category')[0]
+        category = event_type(self.srvdtb, docId)
         priority = self.srvdtb.get_values(docId, 'Priority')[0]
         status = self.srvdtb.get_values(docId, 'Status')[0]
         return {
@@ -137,6 +139,7 @@ class DashboardMixin:
             'title': title,
             'url': url,
             'category': category,
+            'category_url': kind_url(self.srvdtb, category),
             'priority': priority,
             'priority_css': priority_css(priority) if priority else '',
             'status': status,
@@ -145,15 +148,14 @@ class DashboardMixin:
 
     def _build_index_alert_bar(self, limit=5):
         """Recent changes and incidents for the alert bar below the hero."""
-        def _rows(category):
-            rows = []
-            for docId in self.srvdtb.get_docs_by_key_value('Category', category)[:limit]:
-                rows.append(self._index_doc_row(docId))
-            return rows
+        def _rows(kind):
+            return [self._index_doc_row(docId) for docId in docs_of_work_type(self.srvdtb, kind)[:limit]]
 
         return {
             'changes': _rows('Change'),
             'incidents': _rows('Incident'),
+            'changes_url': kind_url(self.srvdtb, 'Change'),
+            'incidents_url': kind_url(self.srvdtb, 'Incident'),
         }
 
     def _build_index_open_items(self, limit=7):
@@ -164,8 +166,8 @@ class DashboardMixin:
         that do not use the property keep a clean index.
         """
         rows = []
-        for category in OPEN_ITEM_CATEGORIES:
-            for docId in self.srvdtb.get_docs_by_key_value('Category', category):
+        for kind in OPEN_ITEM_TYPES:
+            for docId in docs_of_work_type(self.srvdtb, kind):
                 if self.srvdtb.is_system(docId):
                     continue
                 status = self.srvdtb.get_values(docId, 'Status')[0]
@@ -222,13 +224,13 @@ class DashboardMixin:
                     if isinstance(title, list):
                         title = title[0] if title else docId
                     url = props.get('Title_Url', html_id_for(docId))
-                    categories = self.srvdtb.get_values(docId, 'Category')
-                    category = categories[0] if categories and categories[0] else ''
+                    category = event_type(self.srvdtb, docId)
                     rows.append({
                         'date': datetime(year, month, day).strftime('%b %d'),
                         'title': title,
                         'url': url,
                         'category': category,
+                        'category_url': kind_url(self.srvdtb, category),
                     })
             return rows
 
@@ -266,13 +268,13 @@ class DashboardMixin:
                         if isinstance(title, list):
                             title = title[0] if title else docId
                         url = props.get('Title_Url', html_id_for(docId))
-                        categories = self.srvdtb.get_values(docId, 'Category')
-                        category = categories[0] if categories and categories[0] else ''
+                        category = event_type(self.srvdtb, docId)
                         rows.append({
                             'date': d.strftime('%b %d'),
                             'title': title,
                             'url': url,
                             'category': category,
+                            'category_url': kind_url(self.srvdtb, category),
                         })
         rows.reverse()
         return rows

@@ -21,9 +21,6 @@ def prop_url(key, value):
     s = str(value).strip().replace(" ", "_")
     safe = re.sub(r"(?u)[^-\w.]", "", s)
     return "%s_%s.html" % (key, safe)
-
-def category_url(category):
-    return prop_url("Category", category)
 %>
 
 <!-- DASHBOARD :: START -->
@@ -93,7 +90,7 @@ def category_url(category):
                             <a class="uk-label kb-badge ${row['status_css']}" href="${prop_url('Status', row['status'])}" title="${row['status']}">${row['status']}</a>
 %         endif
 %         if row['category']:
-                            <a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}" title="${row['category']}">${row['category']}</a>
+                            <a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a>
 %         endif
                         </td>
                     </tr>
@@ -112,7 +109,7 @@ def category_url(category):
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-changes">
                     <span data-uk-icon="icon: warning; ratio: 0.75"></span>
-                    <a href="Category_Change.html">Changes</a>
+                    <a href="${var['page']['alert_bar']['changes_url']}">Changes</a>
                 </div>
 % if var['page']['alert_bar']['changes']:
                 <ul class="kb-alert-list">
@@ -137,7 +134,7 @@ def category_url(category):
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-incidents">
                     <span data-uk-icon="icon: warning; ratio: 0.75"></span>
-                    <a href="Category_Incident.html">Incidents</a>
+                    <a href="${var['page']['alert_bar']['incidents_url']}">Incidents</a>
                 </div>
 % if var['page']['alert_bar']['incidents']:
                 <ul class="kb-alert-list">
@@ -181,7 +178,7 @@ def category_url(category):
                                 <td class="kb-event-date">${row['date']}</td>
                                 <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 %             if row['category']:
-                                <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}" title="${row['category']}">${row['category']}</a></td>
+                                <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a></td>
 %             else:
                                 <td></td>
 %             endif
@@ -247,7 +244,7 @@ def category_url(category):
                         <td class="kb-event-date">${row['date']}</td>
                         <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
 % if row['category']:
-                        <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${category_url(row['category'])}" title="${row['category']}">${row['category']}</a></td>
+                        <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a></td>
 % else:
                         <td></td>
 % endif

@@ -23,6 +23,8 @@ def day(offset):
 PAGES = {
     "change.md": page("Upcoming change", Date=day(3), Category="Change", Priority="High", Status="Open",
                       Scope="Infrastructure"),
+    "change2.md": page("Migrated change", Date=day(2), Category="Record", WorkType="Change", Status="Open",
+                       Priority="Low"),
     "incident.md": page("Recent incident", Date=day(-5), Category="Incident", Priority="Critical",
                         Status="Open"),
     "meeting.md": page("Old meeting", Date="2025-01-15", Category="Meeting", Team="Linux"),
@@ -70,6 +72,19 @@ def test_events_page_lists_dated_events(site):
     assert str(TODAY.year) in html and "2025" in html
     assert "change.html" in html and "meeting.html" in html
     assert "undated.html" not in html
+
+
+def test_alert_bar_and_open_items_read_worktype_with_legacy_fallback(site):
+    html = read(site, "index.html")
+    bar = html[html.index("CHANGES AND INCIDENTS :: START"):html.index("CHANGES AND INCIDENTS :: END")]
+    assert bar.count('href="change2.html"') == 1 and bar.count('href="change.html"') == 1
+    assert bar.index('href="change.html"') < bar.index('href="change2.html"')  # newest Date first: day(3) before day(2)
+    assert 'href="WorkType_Change.html">Changes</a>' in html
+    assert 'href="Category_Incident.html">Incidents</a>' in html   # only legacy incidents in this site
+
+
+def test_events_page_uses_worktype(site):
+    assert "change2.html" in read(site, "events.html")
 
 
 def test_landing_page_panels(site):
