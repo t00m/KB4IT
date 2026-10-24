@@ -10,7 +10,7 @@ sys.path.insert(0, str(LOGIC))
 _spec = importlib.util.spec_from_file_location("techdoc_quality_page", LOGIC / "techdoc_quality_page.py")
 qpage = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(qpage)
-import techdoc_quality as quality  # noqa: E402
+import techdoc_quality as quality
 
 DIMS = {k: 0 for k in quality.DIMENSIONS}
 
