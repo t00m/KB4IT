@@ -359,8 +359,11 @@
     .kb-info-card { border: none; margin: 8pt 0; }
     .kb-info-panels { display: block !important; padding: 0; border: none; }
     .kb-info-panels > .kb-print { display: block !important; }
-    .kb-info-heading { position: static !important; width: auto; height: auto; overflow: visible; clip: auto; font-size: 11pt; }
-    .kb-groups { display: block; column-count: 2; column-gap: 16pt; }
+    .kb-js .kb-info-heading, .kb-info-heading {
+        position: static !important; width: auto !important; height: auto !important;
+        overflow: visible !important; clip: auto !important; font-size: 11pt;
+    }
+    .kb-groups { display: block !important; column-count: 2; column-gap: 16pt; }
     .kb-group { break-inside: avoid; margin-bottom: 6pt; }
     .kb-obj { border: none; background: none; padding: 0; }
     /* Header strip: one line of plain text. */

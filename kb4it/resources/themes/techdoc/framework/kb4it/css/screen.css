@@ -1197,7 +1197,7 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
 .kb-js .kb-info-card:not(.kb-open) .kb-info-panels { display: none; }
 .kb-js .kb-info-panels > :not(.uk-active) { display: none; }
 .kb-js .kb-info-heading {
-    position: absolute !important;
+    position: absolute;
     width: 1px;
     height: 1px;
     overflow: hidden;
