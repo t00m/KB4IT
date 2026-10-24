@@ -45,7 +45,7 @@ class Theme(DashboardMixin, DocumentTheme):
     add_page = True   # create_page_add() runs in build()
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
-        """Document tables leave out the columns that are empty in every row; Date and Title always stay."""
+        """Override: document tables leave out the columns that are empty in every row; Date and Title always stay."""
         if not headers:
             headers = (self.srvbes.get_dict('repo') or {}).get('datatable', list(self.datatable_default_headers))
         docs = [d for d in doclist or [] if not self.srvdtb.is_system(d)]
