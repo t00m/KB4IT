@@ -127,7 +127,8 @@ def test_sap_notes_found_in_text():
 def test_strip_date_shows_the_time_below_the_date(page_site):
     html = read(page_site, "full.html")
     strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
-    assert '<a href="events_20261001.html" title="2026-10-01 00:00:00">2026-10-01<span class="kb-time">00:00</span></a>' in strip
+    assert ('<a class="kb-date" href="events_20261001.html" title="2026-10-01 00:00:00">'
+            '<span class="kb-day">2026-10-01</span><span class="kb-time">00:00</span></a>') in strip
 
 
 def test_strip_date_without_time_shows_only_the_date():

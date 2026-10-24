@@ -1225,8 +1225,10 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
     .kb-groups { grid-template-columns: 1fr; }
 }
 
-/* The time of a Date sits below the day in the header strip. */
-.kb-doc-strip .kb-time { display: block; font-size: 0.72rem; color: #888; line-height: 1.2; }
+/* The time of a Date sits below the day in the header strip; only the day is underlined. */
+.kb-doc-strip .meta a.kb-date { display: inline-block; vertical-align: top; text-align: center; border-bottom: none; line-height: 1.25; }
+.kb-doc-strip .kb-day { border-bottom: 1px dotted #bbb; }
+.kb-doc-strip .kb-time { display: block; font-size: 0.72rem; color: #888; }
 
 /* Between the stacked phone layout and wide screens, tables get narrower badges and a smaller title floor. */
 @media (min-width: 960px) and (max-width: 1199px) {
