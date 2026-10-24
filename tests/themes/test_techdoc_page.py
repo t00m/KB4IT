@@ -290,3 +290,23 @@ def test_quality_page_lists_the_maintenance_work(page_site):
 def test_no_quality_page_when_quality_is_off(off_site):
     assert not (off_site["target"] / "quality.html").exists()
     assert 'href="quality.html"' not in read(off_site, "full.html")
+
+
+def _block(html, name):
+    return html[html.index(f"{name} :: START"):html.index(f"{name} :: END")]
+
+
+def test_dashboard_shows_exemplary_count_mix_and_best_documents(page_site):
+    index = read(page_site, "index.html")
+    hero = _block(index, "SUMMARY COUNTS")
+    assert re.search(r'<a class="kb-hero-stat" href="quality.html"><span class="num">(★|&#9733;) 1</span><span class="label">Exemplary</span></a>', hero)
+    types = _block(index, "DOCUMENT TYPES")
+    assert '<span class="kb-q-mixlabel">1 exemplary, 0 complete of 2</span>' in types
+    shelf = _block(index, "BEST DOCUMENTS")
+    assert 'data-kb-section="best-documents"' in shelf and 'href="exemplary.html"' in shelf and "kb-best-card" in shelf
+
+
+def test_dashboard_without_quality_has_no_stat_mix_or_shelf(off_site):
+    index = read(off_site, "index.html")
+    assert "quality.html" not in _block(index, "SUMMARY COUNTS")
+    assert "kb-q-mix" not in index and "BEST DOCUMENTS" not in index

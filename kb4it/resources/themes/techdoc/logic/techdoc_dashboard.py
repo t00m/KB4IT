@@ -3,6 +3,8 @@
 from calendar import monthrange
 from datetime import datetime, timedelta
 
+from techdoc_quality import profile
+from techdoc_quality_page import tier_mix
 from techdoc_records import docs_of_work_type, event_type, kind_url
 
 from kb4it.core.documents import is_yes
@@ -75,6 +77,7 @@ class DashboardMixin:
         var['page']['open_items'] = self._build_index_open_items()
         var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
+        var['page']['best'] = self._build_index_best(var['page']['diataxis'])
         var['page']['events_panel'] = self._build_index_events_panel(now)
         var['page']['recent_events'] = self._build_index_recent_events(now)
         var['page']['monitoring_panel'] = self._build_index_monitoring_panel()
@@ -113,7 +116,27 @@ class DashboardMixin:
             {'num': count_categories, 'label': 'Categories', 'url': 'Category.html'},
             {'num': count_events,     'label': 'Events',     'url': 'events.html'},
             {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
-        ]
+        ] + self._build_index_quality_stat()
+
+    def _build_index_quality_stat(self):
+        """The Exemplary count, linking to the Quality page; nothing when no document is Exemplary."""
+        exemplary = sum(1 for a in (getattr(self, 'quality', None) or {}).values() if a.tier == 'exemplary')
+        return [{'num': f'★ {exemplary}', 'label': 'Exemplary', 'url': 'quality.html'}] if exemplary else []
+
+    def _build_index_best(self, diataxis, per_type=3):
+        """Up to three Exemplary or Complete documents per DocType, best first, for the Best documents shelf."""
+        quality = getattr(self, 'quality', None) or {}
+        floor = profile(self.srvbes.get_dict('theme'))['tiers']['complete']
+        shelf = []
+        for item in diataxis:
+            docs = sorted((d for d, a in quality.items() if a.peer == item['name'] and a.tier != 'retired' and a.score >= floor),
+                          key=lambda d: (-quality[d].score, d))[:per_type]
+            for doc in docs:
+                a = quality[doc]
+                year = (self.srvdtb.get_values(doc, 'Date') or [''])[0][:4]
+                shelf.append({'title': (self.srvdtb.get_values(doc, 'Title') or [doc])[0], 'href': html_id_for(doc),
+                              'score': a.score, 'tier': a.tier, 'type': item['name'], 'year': year})
+        return shelf
 
     def _index_doc_row(self, docId):
         """Build one index row dict with badge data for a document."""
@@ -195,9 +218,12 @@ class DashboardMixin:
              'desc': 'Understanding-oriented discussions that clarify a topic.'},
         ]
         key = 'DocType'
+        quality = getattr(self, 'quality', None) or {}
         for item in diataxis:
             docs = self.srvdtb.get_docs_by_key_value(key, item['name'])
             item['count'] = len(docs)
+            # Tier mix of the knowledge documents of this type; records are compared apart.
+            item['mix'] = next((m for m in tier_mix({d: a for d, a in quality.items() if a.peer == item['name']})), None)
             item['url'] = "%s_%s.html" % (valid_filename(key), valid_filename(item['name'])) if docs else None
         return diataxis
 
