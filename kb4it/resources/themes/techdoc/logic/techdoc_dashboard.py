@@ -81,6 +81,14 @@ class DashboardMixin:
         var['page']['events_panel'] = self._build_index_events_panel(now)
         var['page']['recent_events'] = self._build_index_recent_events(now)
         var['page']['monitoring_panel'] = self._build_index_monitoring_panel()
+        # Activity tabs with entries; a tab without any is not shown.
+        events = var['page']['events_panel']
+        var['page']['activity'] = {
+            'changes': bool(var['page']['alert_bar']['changes']),
+            'incidents': bool(var['page']['alert_bar']['incidents']),
+            'events': bool(events['current']['rows'] or events['next']['rows'] or var['page']['recent_events']),
+            'monitoring': bool(var['page']['monitoring_panel']),
+        }
 
         page = self.template('PAGE_INDEX').render(var=var)
         self.distribute_md('index', page)

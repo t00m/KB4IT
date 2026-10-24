@@ -129,10 +129,23 @@ def prop_url(key, value):
     <!-- OPEN ITEMS :: END -->
 % endif
 
-    <!-- CHANGES AND INCIDENTS :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="changes-incidents" open>
-        <summary class="kb-section-title">Changes and incidents</summary>
-        <div class="kb-alert-bar">
+<% act = var['page']['activity'] %>
+% if any(act.values()):
+    <!-- ACTIVITY :: START -->
+    <details class="kb-section kb-collapsible" data-kb-section="activity" open>
+        <summary class="kb-section-title">Activity</summary>
+        <div class="kb-activity">
+            <ul class="kb-activity-tabs" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
+%     for name, label in (('changes', 'Changes'), ('incidents', 'Incidents'), ('events', 'Events'), ('monitoring', 'Monitoring')):
+%         if act[name]:
+                <li data-kb-tab="${name}"><a href="#">${label}</a></li>
+%         endif
+%     endfor
+            </ul>
+            <div class="uk-switcher" id="kb-activity-panels">
+%     if act['changes']:
+            <!-- CHANGES PANEL :: START -->
+            <div class="kb-alert-bar">
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-changes">
                     <span data-uk-icon="icon: warning; ratio: 0.75"></span>
@@ -157,7 +170,12 @@ def prop_url(key, value):
                 <div class="kb-alert-empty">No recent changes.</div>
 % endif
             </div>
-            <div class="kb-alert-divider"></div>
+            </div>
+            <!-- CHANGES PANEL :: END -->
+%     endif
+%     if act['incidents']:
+            <!-- INCIDENTS PANEL :: START -->
+            <div class="kb-alert-bar">
             <div class="kb-alert-col">
                 <div class="kb-alert-header kb-alert-incidents">
                     <span data-uk-icon="icon: warning; ratio: 0.75"></span>
@@ -182,13 +200,13 @@ def prop_url(key, value):
                 <div class="kb-alert-empty">No recent incidents.</div>
 % endif
             </div>
-        </div>
-    </details>
-    <!-- CHANGES AND INCIDENTS :: END -->
-
-    <!-- UPCOMING EVENTS :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="upcoming-events" open>
-        <summary class="kb-section-title">Upcoming events</summary>
+            </div>
+            <!-- INCIDENTS PANEL :: END -->
+%     endif
+%     if act['events']:
+            <!-- EVENTS PANEL :: START -->
+            <div>
+            <h3 class="kb-activity-sub">Upcoming</h3>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
             <div class="uk-grid-small" data-uk-grid>
 % for side in ('current', 'next'):
@@ -218,13 +236,34 @@ def prop_url(key, value):
 % endfor
             </div>
         </div>
-    </details>
-    <!-- UPCOMING EVENTS :: END -->
-
-% if var['page']['monitoring_panel']:
-    <!-- MONITORING :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="monitoring" open>
-        <summary class="kb-section-title">Monitoring</summary>
+            <h3 class="kb-activity-sub">Recent</h3>
+        <div class="kb-panel uk-card-hover uk-box-shadow-large">
+% if len(var['page']['recent_events']) == 0:
+            <div class="kb-events-empty">No events in the past month.</div>
+% else:
+            <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
+                <tbody>
+% for row in var['page']['recent_events']:
+                    <tr>
+                        <td class="kb-event-date">${row['date']}</td>
+                        <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
+% if row['category']:
+                        <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a></td>
+% else:
+                        <td></td>
+% endif
+                    </tr>
+% endfor
+                </tbody>
+            </table>
+% endif
+        </div>
+            </div>
+            <!-- EVENTS PANEL :: END -->
+%     endif
+%     if act['monitoring']:
+            <!-- MONITORING PANEL :: START -->
+            <div>
         <div class="kb-panel uk-card-hover uk-box-shadow-large">
 % if len(var['page']['monitoring_panel']) == 0:
             <div class="kb-events-empty">No monitoring articles found.</div>
@@ -253,36 +292,33 @@ def prop_url(key, value):
             </div>
 % endif
         </div>
-    </details>
-    <!-- MONITORING :: END -->
-% endif
-
-    <!-- RECENT EVENTS :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="recent-events" open>
-        <summary class="kb-section-title">Recent events</summary>
-        <div class="kb-panel uk-card-hover uk-box-shadow-large">
-% if len(var['page']['recent_events']) == 0:
-            <div class="kb-events-empty">No events in the past month.</div>
-% else:
-            <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
-                <tbody>
-% for row in var['page']['recent_events']:
-                    <tr>
-                        <td class="kb-event-date">${row['date']}</td>
-                        <td class="kb-event-title"><a href="${row['url']}">${row['title']}</a></td>
-% if row['category']:
-                        <td class="kb-open-badges"><a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a></td>
-% else:
-                        <td></td>
-% endif
-                    </tr>
-% endfor
-                </tbody>
-            </table>
-% endif
+            </div>
+            <!-- MONITORING PANEL :: END -->
+%     endif
+            </div>
         </div>
     </details>
-    <!-- RECENT EVENTS :: END -->
+    <!-- ACTIVITY :: END -->
+    <!-- ACTIVITY TAB MEMORY :: START -->
+    <script>
+    // The Activity card opens on the tab the reader chose last.
+    (function () {
+        var tabs = document.querySelector('.kb-activity-tabs');
+        if (!tabs || typeof UIkit === 'undefined') { return; }
+        var names = Array.prototype.map.call(tabs.children, function (li) { return li.getAttribute('data-kb-tab'); });
+        try {
+            var i = names.indexOf(window.localStorage.getItem('kb-activity-tab'));
+            if (i > 0) { UIkit.tab(tabs).show(i); }
+        } catch (e) { /* private window: start on the first tab */ }
+        tabs.addEventListener('click', function (event) {
+            var li = event.target.closest('li');
+            if (!li) { return; }
+            try { window.localStorage.setItem('kb-activity-tab', li.getAttribute('data-kb-tab')); } catch (e) { /* not kept */ }
+        });
+    })();
+    </script>
+    <!-- ACTIVITY TAB MEMORY :: END -->
+% endif
 
 </div>
 <!-- DASHBOARD :: END -->

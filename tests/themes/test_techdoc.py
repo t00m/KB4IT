@@ -76,7 +76,7 @@ def test_events_page_lists_dated_events(site):
 
 def test_alert_bar_and_open_items_read_worktype_with_legacy_fallback(site):
     html = read(site, "index.html")
-    bar = html[html.index("CHANGES AND INCIDENTS :: START"):html.index("CHANGES AND INCIDENTS :: END")]
+    bar = html[html.index("CHANGES PANEL :: START"):html.index("CHANGES PANEL :: END")]
     assert bar.count('href="change2.html"') == 1 and bar.count('href="change.html"') == 1
     assert bar.index('href="change.html"') < bar.index('href="change2.html"')  # newest Date first: day(3) before day(2)
     assert 'href="WorkType_Change.html">Changes</a>' in html
@@ -104,7 +104,7 @@ def test_landing_page_order(site):
 def test_landing_page_sections_fold_except_counts_and_doctypes(site):
     html = read(site, "index.html")
     folding = re.findall(r'<details class="kb-section kb-collapsible" data-kb-section="([\w-]+)" open>', html)
-    assert folding == ["open-items", "changes-incidents", "upcoming-events", "monitoring", "recent-events"]
+    assert folding == ["open-items", "activity"]
     assert html.count("<details") == html.count("</details>")
     head = html[:html.index("<details")]
     assert "kb-hero-bar" in head and "kb-diataxis-card" in head
@@ -234,3 +234,13 @@ def test_document_tables_hide_columns_empty_in_every_row(site):
     # Category_Note lists only undated.md: no WorkType, Priority, Status or Scope; Date and Title always stay.
     assert _headers(read(site, "Category_Note.html")) == ["Date", "Title", "Category"]
     assert "WorkType" in _headers(read(site, "Category_Record.html"))
+
+
+def test_activity_card_has_a_tab_per_kind_of_activity(site):
+    html = read(site, "index.html")
+    card = html[html.index("ACTIVITY :: START"):html.index("ACTIVITY :: END")]
+    tabs = re.findall(r'<li data-kb-tab="(\w+)"><a href="#">', card)
+    assert tabs == ["changes", "incidents", "events", "monitoring"]
+    for gone in ("changes-incidents", "upcoming-events", "recent-events", 'data-kb-section="monitoring"'):
+        assert gone not in html
+    assert "kb-activity-tab" in html                 # the last tab is remembered

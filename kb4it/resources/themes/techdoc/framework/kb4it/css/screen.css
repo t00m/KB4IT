@@ -1340,3 +1340,9 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-best-card .s { display: block; font-size: 0.74rem; color: #888; margin-top: 4px; }
 .kb-q-emblem.small { width: 26px; height: 26px; }
 .kb-q-emblem.small .num { font-size: 0.62rem; }
+
+/* Dashboard Activity card: Changes, Incidents, Events and Monitoring as tabs. */
+.kb-activity { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
+.kb-activity .uk-tab > * > a { font-size: 0.72rem; }
+.kb-activity .kb-alert-bar { display: block; }
+.kb-activity-sub { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 12px 0 6px; }
