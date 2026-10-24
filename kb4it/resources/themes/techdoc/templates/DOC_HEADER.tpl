@@ -1,9 +1,18 @@
 <%
     strip = var['strip']
+    q = var.get('quality')
 %>
-% if strip['badges'] or strip['links']:
+% if q and q['tier'] == 'exemplary':
+<!-- EXEMPLARY NOTE :: START -->
+<div class="kb-exemplary-note kb-noprint" data-kb-peer="${q['peer']}"><svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg> Exemplary ${q['peer_name']}<span class="kb-q-rank-note" data-kb-doc="${q['page']}"></span></div>
+<!-- EXEMPLARY NOTE :: END -->
+% endif
+% if strip['badges'] or strip['links'] or q:
 <!-- HEADER STRIP :: START -->
 <div class="kb-doc-strip">
+%     if q:
+    <a class="kb-q-emblem-link kb-noprint" href="#kb-info-quality" title="Quality ${q['score']} of 100, ${q['label']}" aria-label="Quality ${q['score']} of 100, ${q['label']}"><span class="kb-q-emblem kb-q-${q['tier']}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3.5"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-dasharray="${q['score']} 100" stroke-linecap="round"/></svg><span class="num">${q['score']}</span></span></a>
+%     endif
 %     for badge in strip['badges']:
     <a class="uk-label kb-badge ${badge['css']}" href="${badge['url']}" title="${badge['key']}: ${badge['text']}">${badge['text']}</a>
 %     endfor

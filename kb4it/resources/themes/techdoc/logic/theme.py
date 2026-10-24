@@ -20,7 +20,8 @@ from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_media import enhance_images
-from techdoc_quality import DocInput, assess, index_js, load_skeletons, peer_stats, profile
+from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInput, assess, checklist, index_js,
+                             load_skeletons, peer_stats, profile)
 from techdoc_records import event_type, work_type
 
 from kb4it.core.util import (
@@ -168,6 +169,24 @@ class Theme(DashboardMixin, DocumentTheme):
         repo = self.srvbes.get_dict('repo') or {}
         return repo.get('quality', True) is not False and profile(self.srvbes.get_dict('theme')).get('enabled', True)
 
+    def quality_view(self, doc_id):
+        """What the header, the note and the Quality tab show for a document; None when there is no score."""
+        assessment = (getattr(self, 'quality', None) or {}).get(doc_id)
+        if assessment is None or assessment.tier == 'retired':
+            return None
+        peer = assessment.peer
+        return {
+            'score': assessment.score,
+            'tier': assessment.tier,
+            'label': TIER_LABELS[assessment.tier],
+            'peer': peer,
+            'peer_name': 'document' if peer == 'Other' else peer.lower(),
+            'page': html_id_for(doc_id),
+            'dims': [{'key': d, 'label': DIM_LABELS[d], 'points': round(assessment.dims[d]), 'max': MAXIMA[d],
+                      'percent': round(100 * assessment.dims[d] / MAXIMA[d])} for d in DIMENSIONS],
+            'checklist': checklist(assessment),
+        }
+
     def assess_documents(self):
         """Score every document once per build; build_page and quality-index.js read the results."""
         self.quality, self.quality_stats = {}, {}
@@ -264,7 +283,11 @@ class Theme(DashboardMixin, DocumentTheme):
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 theme_conf = self.srvbes.get_dict('theme') or {}
                 doc_summary = summary(self.srvdtb, basename_md)
+                q = self.quality_view(basename_md)
+                var['has_quality'] = q is not None
+                var['page']['exemplary'] = bool(q) and q['tier'] == 'exemplary'
                 var['doc_header'] = self.template('DOC_HEADER').render(var={
+                    'quality': q,
                     'strip': header_strip(self.srvdtb, basename_md, theme_conf.get('header_keys', {})),
                     'summary': doc_summary,
                     'banners': banners(self.srvdtb, basename_md),
@@ -284,7 +307,9 @@ class Theme(DashboardMixin, DocumentTheme):
                         'built': timestamp,
                         'edit_url': edit_url,
                     },
-                    'print': {name: info_tabs.get(name, {}).get('print', name == 'details') for name in ('details', 'history')},
+                    'print': {name: info_tabs.get(name, {}).get('print', name == 'details')
+                              for name in ('details', 'quality', 'history')},
+                    'quality_html': self.template('QUALITY_PANEL').render(var={'q': q}) if q else '',
                 }})
 
             var['menu_contents'] = HTML_TOC

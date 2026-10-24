@@ -7,6 +7,9 @@
     <div class="kb-info-bar kb-noprint">
         <ul class="kb-info-tabs" data-uk-tab="connect: #kb-info-panels; animation: uk-animation-fade">
             <li class="uk-active" data-kb-tab="details"><a href="#kb-info-details">Details</a></li>
+% if card.get('quality_html'):
+            <li data-kb-tab="quality"><a href="#kb-info-quality">Quality</a></li>
+% endif
             <li data-kb-tab="history"><a href="#kb-info-history">History</a></li>
         </ul>
         <button class="kb-info-toggle kb-noprint" type="button" aria-expanded="${'true' if card['open'] else 'false'}" aria-controls="kb-info-panels" title="Show or hide the document information"><span data-uk-icon="icon: chevron-down"></span></button>
@@ -38,6 +41,14 @@
             </div>
         </div>
         <!-- DETAILS PANEL :: END -->
+% if card.get('quality_html'):
+        <!-- QUALITY PANEL :: START -->
+        <div id="kb-info-quality" class="${'kb-print' if card['print']['quality'] else 'kb-noprint'}">
+            <h2 class="kb-info-heading">Quality</h2>
+${card['quality_html'] | n}
+        </div>
+        <!-- QUALITY PANEL :: END -->
+% endif
         <!-- HISTORY PANEL :: START -->
         <div id="kb-info-history" class="${'kb-print' if card['print']['history'] else 'kb-noprint'}">
             <h2 class="kb-info-heading">History</h2>

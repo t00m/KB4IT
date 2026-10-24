@@ -1,6 +1,6 @@
 <% _hl = (var['repo'].get('markdown') or {}).get('highlight', 'client') %>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"${' class="kb-exemplary"' if var['page'].get('exemplary') else ''}>
 <head>
     <!-- PAGE METADATA :: START -->
     <meta charset="UTF-8">

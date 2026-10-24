@@ -17,6 +17,11 @@ docpage = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(docpage)
 
 BODY_FULL = "## Steps\n\nSee SAP note 736902 first.\n\nRun it."
+FILLER = " ".join(["Renew the credential with the portal and record the date of the change."] * 16)
+BODY_EXEMPLARY = (f"## Introduction\n\n{FILLER}\n\n## Prerequisites\n\nAccess to the portal.\n\n"
+                  "## Steps\n\n1. Open the portal.\n2. Request the credential.\n3. Install it.\n\n"
+                  "## Verification\n\nThe service starts.\n\n"
+                  "## References\n\n- [Full document](full.md)\n- [Vendor guide](https://example.org/guide)\n")
 BODY_IMAGES = "![User list in SU01](resources/images/wide.png)\n\n![Gone](resources/images/gone.png)\n"
 
 DOCS = {
@@ -26,6 +31,9 @@ DOCS = {
                     Summary="Request the credential, then register it."),
     "plain.md": page("Plain document", "Text.", Category="Note", Status="Obsolete"),
     "images.md": page("Images", BODY_IMAGES, Category="Note"),
+    "exemplary.md": page("Exemplary document", BODY_EXEMPLARY, Author="Ana", Date="2026-10-20", DocType="How-to guide",
+                         Category="Procedure", Status="Released", Priority="Normal", Tag="credential", Topic="Security",
+                         Scope="Infrastructure", Product="ADS", Summary="Renew the credential before it expires."),
 }
 
 
@@ -102,7 +110,8 @@ def test_details_groups_and_chips(page_site):
     assert c.index("<h3>Classification</h3>") < c.index("<h3>Systems</h3>") < c.index("<h3>Technical objects</h3>") < c.index("<h3>Other</h3>")
     assert '<a class="kb-obj" href="Transaction_SU01.html">SU01</a>' in c
     assert '<a class="kb-obj" href="https://me.sap.com/notes/736902">736902</a>' in c
-    assert "Color" in c and "Summary" not in c and "<dt>Title</dt>" not in c
+    details = c[c.index("DETAILS PANEL :: START"):c.index("DETAILS PANEL :: END")]
+    assert "Color" in details and "Summary" not in details and "<dt>Title</dt>" not in details
     assert "<h3>Systems</h3>" not in card(page_site, "plain.html")   # empty groups are hidden
 
 
@@ -161,3 +170,26 @@ def test_quality_off_removes_the_index(off_site):
     assert not (off_site["target"] / "quality-index.js").exists()
     html = read(off_site, "full.html")
     assert "kb-q-" not in html and "kb-info-quality" not in html
+
+
+def test_emblem_tab_and_note_for_an_exemplary_document(page_site):
+    html = read(page_site, "exemplary.html")
+    assert re.search(r'class="kb-q-emblem-link kb-noprint" href="#kb-info-quality" title="Quality \d+ of 100, Exemplary"', html)
+    assert 'class="kb-exemplary-note kb-noprint"' in html and "kb-exemplary" in html[:html.index("<head>")]
+    assert re.search(r'<div id="kb-info-quality" class="kb-noprint"><h2 class="kb-info-heading">Quality</h2>', card(page_site, "exemplary.html"))
+    assert "It does not check that the content is correct." in html
+
+
+def test_basic_page_has_a_grey_ring_and_next_steps_but_no_note(page_site):
+    html = read(page_site, "full.html")
+    assert "kb-q-emblem" in html and "kb-exemplary-note" not in html
+    assert '<li class="todo">Add a References section<span class="gain">+3</span></li>' in html
+
+
+def test_retired_document_has_no_score(page_site):
+    html = read(page_site, "plain.html")      # Status: Obsolete
+    assert "kb-q-emblem" not in html and "kb-info-quality" not in html
+
+
+def test_star_action_opens_the_quality_tab(page_site):
+    assert 'href="#kb-info-quality" data-uk-tooltip="title: Document quality"' in read(page_site, "full.html")

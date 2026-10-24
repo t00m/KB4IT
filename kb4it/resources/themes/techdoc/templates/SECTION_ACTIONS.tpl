@@ -7,6 +7,11 @@
         <!-- PROPERTIES BUTTON :: START -->
         <a class="kb4it-page-action" href="#kb-info-details" data-uk-tooltip="title: Document properties" aria-label="Document properties"><span data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
         <!-- PROPERTIES BUTTON :: END -->
+  % if var.get('has_quality'):
+        <!-- QUALITY BUTTON :: START -->
+        <a class="kb4it-page-action" href="#kb-info-quality" data-uk-tooltip="title: Document quality" aria-label="Document quality"><span data-uk-icon="icon: star; ratio: 1.0;"></span></a>
+        <!-- QUALITY BUTTON :: END -->
+  % endif
         <!-- SOURCE BUTTON AND DIALOG :: START -->
         <a class="kb4it-page-action" href="#modal-full-source" data-uk-toggle data-uk-tooltip="title: Document source" aria-label="Document source"><span data-uk-icon="icon: code; ratio: 1.0;"></span></a>
             <div id="modal-full-source" class="uk-modal-full" data-uk-modal>

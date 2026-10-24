@@ -346,3 +346,26 @@ def peer_stats(assessments):
 def index_js(stats):
     """The content of quality-index.js."""
     return 'window.KB_QUALITY = ' + json.dumps(stats, ensure_ascii=False, separators=(',', ':')) + ';\n'
+
+
+TIER_LABELS = {'exemplary': 'Exemplary', 'complete': 'Complete', 'basic': 'Basic', 'stub': 'Stub', 'retired': 'Retired'}
+DIM_LABELS = {'findable': 'Findable', 'structured': 'Structured', 'complete': 'Complete', 'connected': 'Connected',
+              'current': 'Current'}
+
+
+def checklist(assessment):
+    """The panel's list: done items first, then next steps with the points they add, biggest first."""
+    keys = [c for c in assessment.checks if c.dim == 'findable' and c.name.endswith(' key') and c.name != 'Summary key']
+    done, todo = [], []
+    if keys and all(c.passed for c in keys):
+        done.append('All core keys set')
+    for check in assessment.checks:
+        if check in keys and all(c.passed for c in keys):
+            continue
+        if check.passed:
+            done.append(check.name)
+        elif round(check.max - check.points) > 0:
+            todo.append((round(check.max - check.points), check.todo))
+    todo.sort(key=lambda item: -item[0])
+    return ([{'kind': 'ok', 'text': text, 'gain': 0} for text in done]
+            + [{'kind': 'todo', 'text': text, 'gain': gain} for gain, text in todo])
