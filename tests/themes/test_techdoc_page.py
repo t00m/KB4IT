@@ -1,11 +1,19 @@
 """techdoc document page: images, header strip, Summary, banners and the info card."""
 
+import importlib.util
 import re
+import sys
 
 import pytest
 
-from tests.helpers import page, run_kb4it, write_repo
+from tests.helpers import ROOT, page, run_kb4it, write_repo
 from tests.themes.test_techdoc_media import png
+
+LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
+sys.path.insert(0, str(LOGIC))  # techdoc_docpage imports techdoc_dashboard
+_spec = importlib.util.spec_from_file_location("techdoc_docpage", LOGIC / "techdoc_docpage.py")
+docpage = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(docpage)
 
 BODY_FULL = "## Steps\n\nSee SAP note 736902 first.\n\nRun it."
 BODY_IMAGES = "![User list in SU01](resources/images/wide.png)\n\n![Gone](resources/images/gone.png)\n"
@@ -75,3 +83,41 @@ def test_banners_in_spec_order(page_site):
 
 def test_system_pages_have_no_header(page_site):
     assert "HEADER STRIP :: START" not in read(page_site, "index.html")
+
+
+def card(site, name):
+    html = read(site, name)
+    return html[html.index("INFO CARD :: START"):html.index("INFO CARD :: END")]
+
+
+def test_card_is_closed_with_summary_and_open_without(page_site):
+    assert '<section class="kb-info-card" id="kb-info-card"' in card(page_site, "full.html")
+    assert 'aria-expanded="false"' in card(page_site, "full.html")
+    assert '<section class="kb-info-card kb-open" id="kb-info-card"' in card(page_site, "plain.html")
+
+
+def test_details_groups_and_chips(page_site):
+    c = card(page_site, "full.html")
+    assert c.index("<h3>Classification</h3>") < c.index("<h3>Systems</h3>") < c.index("<h3>Technical objects</h3>") < c.index("<h3>Other</h3>")
+    assert '<a class="kb-obj" href="Transaction_SU01.html">SU01</a>' in c
+    assert '<a class="kb-obj" href="https://me.sap.com/notes/736902">736902</a>' in c
+    assert "Color" in c and "Summary" not in c and "<dt>Title</dt>" not in c
+    assert "<h3>Systems</h3>" not in card(page_site, "plain.html")   # empty groups are hidden
+
+
+def test_panels_have_headings_and_print_classes(page_site):
+    c = card(page_site, "full.html")
+    assert re.search(r'<div id="kb-info-details" class="kb-print uk-active">\s*<h2 class="kb-info-heading">Document details</h2>', c)
+    assert re.search(r'<div id="kb-info-history" class="kb-noprint">\s*<h2 class="kb-info-heading">History</h2>', c)
+    assert "uk-switcher" not in c and 'class="kb-info-toggle kb-noprint"' in c
+
+
+def test_page_script_and_properties_action(page_site):
+    html = read(page_site, "full.html")
+    assert "document.documentElement.classList.add('kb-js')" in html and "js/page.js" in html
+    assert "modal-metadata" not in html and 'href="#details"' in html
+    assert "kb-info-card-tab" in (page_site["target"] / "resources/themes/techdoc/framework/kb4it/js/page.js").read_text(encoding="utf-8")
+
+
+def test_sap_notes_found_in_text():
+    assert docpage.sap_notes("See SAP note 736902 and Note #1234567, not notes 12.") == ["736902", "1234567"]

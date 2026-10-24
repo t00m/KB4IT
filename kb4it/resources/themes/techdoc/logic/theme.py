@@ -18,7 +18,7 @@ from datetime import datetime
 
 from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
-from techdoc_docpage import banners, header_strip, summary
+from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_media import enhance_images
 from techdoc_records import event_type
 
@@ -226,13 +226,30 @@ class Theme(DashboardMixin, DocumentTheme):
                 var['SystemPage'] = False
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                var['metadata'] = self.build_metadata_section(basename_md)
                 theme_conf = self.srvbes.get_dict('theme') or {}
+                doc_summary = summary(self.srvdtb, basename_md)
                 var['doc_header'] = self.template('DOC_HEADER').render(var={
                     'strip': header_strip(self.srvdtb, basename_md, theme_conf.get('header_keys', {})),
-                    'summary': summary(self.srvdtb, basename_md),
+                    'summary': doc_summary,
                     'banners': banners(self.srvdtb, basename_md),
                 })
+                info_tabs = theme_conf.get('info_tabs', {})
+                repo = var['repo']
+                edit_url = ''
+                if var.get('git_ok'):
+                    edit_url = (f"{repo['git_server']}/{repo['git_user']}/{repo['git_repo']}/edit/"
+                                f"{repo['git_branch']}/{repo['git_path']}/{basename_md}")
+                var['info_card'] = self.template('INFO_CARD').render(var={'card': {
+                    'open': not doc_summary,
+                    'groups': info_groups(self.srvdtb, basename_md, theme_conf.get('info_groups', []), source_md),
+                    'history': {
+                        'date': (self.srvdtb.get_values(basename_md, 'Date') or [''])[0],
+                        'source': basename_md,
+                        'built': timestamp,
+                        'edit_url': edit_url,
+                    },
+                    'print': {name: info_tabs.get(name, {}).get('print', name == 'details') for name in ('details', 'history')},
+                }})
 
             var['menu_contents'] = HTML_TOC
             var['keys'] = keys

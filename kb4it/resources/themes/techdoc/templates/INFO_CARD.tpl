@@ -1,0 +1,62 @@
+<%
+    card = var['card']
+    history = card['history']
+%>
+<!-- INFO CARD :: START -->
+<section class="kb-info-card${' kb-open' if card['open'] else ''}" id="kb-info-card" aria-label="Document information">
+    <div class="kb-info-bar kb-noprint">
+        <ul class="kb-info-tabs" data-uk-tab="connect: #kb-info-panels; animation: uk-animation-fade">
+            <li class="uk-active" data-kb-tab="details"><a href="#kb-info-details">Details</a></li>
+            <li data-kb-tab="history"><a href="#kb-info-history">History</a></li>
+        </ul>
+        <button class="kb-info-toggle kb-noprint" type="button" aria-expanded="${'true' if card['open'] else 'false'}" aria-controls="kb-info-panels" title="Show or hide the document information"><span data-uk-icon="icon: chevron-down"></span></button>
+    </div>
+    <div class="kb-info-panels" id="kb-info-panels">
+        <!-- DETAILS PANEL :: START -->
+        <div id="kb-info-details" class="${'kb-print' if card['print']['details'] else 'kb-noprint'} uk-active">
+            <h2 class="kb-info-heading">Document details</h2>
+            <div class="kb-groups">
+% for group in card['groups']:
+                <div class="kb-group">
+                    <h3>${group['name']}</h3>
+                    <dl>
+%     for item in group['items']:
+                        <dt>${item['key']}</dt>
+                        <dd>
+%         for value in item['values']:
+%             if group['chips']:
+                            <a class="kb-obj" href="${value['url']}">${value['text']}</a>
+%             else:
+                            <a href="${value['url']}">${value['text']}</a>${'' if loop.last else ','}
+%             endif
+%         endfor
+                        </dd>
+%     endfor
+                    </dl>
+                </div>
+% endfor
+            </div>
+        </div>
+        <!-- DETAILS PANEL :: END -->
+        <!-- HISTORY PANEL :: START -->
+        <div id="kb-info-history" class="${'kb-print' if card['print']['history'] else 'kb-noprint'}">
+            <h2 class="kb-info-heading">History</h2>
+            <dl class="kb-history">
+% if history['date']:
+                <dt>Date</dt>
+                <dd>${history['date']}</dd>
+% endif
+                <dt>Source file</dt>
+                <dd><code>${history['source']}</code>: <a href="#modal-full-source" data-uk-toggle>View source</a>
+% if history['edit_url']:
+                    , <a href="${history['edit_url']}" target="_blank" rel="noopener">Edit</a>
+% endif
+                </dd>
+                <dt>Built</dt>
+                <dd>${history['built']}</dd>
+            </dl>
+        </div>
+        <!-- HISTORY PANEL :: END -->
+    </div>
+</section>
+<!-- INFO CARD :: END -->

@@ -4,20 +4,9 @@
         <a class="kb4it-page-action" data-uk-tooltip="title: Edit document" aria-label="Edit document" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span data-uk-icon="pencil"></span></a>
         <!-- EDIT BUTTON :: END -->
   % endif
-        <!-- PROPERTIES BUTTON AND DIALOG :: START -->
-        <a class="kb4it-page-action" href="#modal-metadata" data-uk-toggle data-uk-tooltip="title: Document properties" aria-label="Document properties"><span data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
-            <div id="modal-metadata" class="uk-modal-full" data-uk-modal>
-                <div class="uk-modal-dialog uk-height-viewport">
-                    <button class="uk-modal-close-full uk-close-large uk-background-muted" type="button" data-uk-close></button>
-                    <div class="uk-grid-collapse uk-child-width-expand@s uk-flex-middle" data-uk-grid>
-                        <div class="uk-padding-large uk-background-muted">
-                            <div class="uk-text-lead uk-text-center uk-text-primary">Metadata</div>
-                            <div class="" style="border: 1px solid transparent;">${var['metadata'] | n}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <!-- PROPERTIES BUTTON AND DIALOG :: END -->
+        <!-- PROPERTIES BUTTON :: START -->
+        <a class="kb4it-page-action" href="#details" data-uk-tooltip="title: Document properties" aria-label="Document properties"><span data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
+        <!-- PROPERTIES BUTTON :: END -->
         <!-- SOURCE BUTTON AND DIALOG :: START -->
         <a class="kb4it-page-action" href="#modal-full-source" data-uk-toggle data-uk-tooltip="title: Document source" aria-label="Document source"><span data-uk-icon="icon: code; ratio: 1.0;"></span></a>
             <div id="modal-full-source" class="uk-modal-full" data-uk-modal>

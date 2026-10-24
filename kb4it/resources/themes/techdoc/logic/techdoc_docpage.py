@@ -1,8 +1,16 @@
-"""techdoc document page: the header strip, the Summary and the banners, as plain data for the templates."""
+"""techdoc document page: header strip, Summary, banners and the Details groups, as plain data for the templates."""
+
+import re
 
 from techdoc_dashboard import priority_css, status_css
 
 from kb4it.core.util import valid_filename
+
+# Keys the Details tab never lists.
+HIDDEN_KEYS = ('Title', 'Summary', 'Bookmark', 'SystemPage')
+
+SAP_NOTE = re.compile(r'\bnotes?\s+#?(\d{5,8})\b', re.IGNORECASE)
+SAP_NOTE_URL = 'https://me.sap.com/notes/'
 
 # A document with one of these statuses must not be followed.
 RETIRED_STATUSES = ('Obsolete', 'Deprecated', 'Withdrawn', 'Rejected')
@@ -58,3 +66,39 @@ def banners(srvdtb, doc_id):
     if 'Draft' in statuses:
         found.append({'kind': 'draft', 'label': 'Draft', 'text': 'Not final. Check with the author before you follow it.'})
     return found
+
+
+def sap_notes(text):
+    """Return the SAP note numbers named in a text ("note 123456"), each once, in order."""
+    found = []
+    for number in SAP_NOTE.findall(text or ''):
+        if number not in found:
+            found.append(number)
+    return found
+
+
+def info_groups(srvdtb, doc_id, groups, body_md):
+    """Return the non-empty groups of the Details tab, then Other with every key not in a group."""
+    props = srvdtb.get_doc_properties(doc_id)
+    present = [k for k in srvdtb.get_custom_keys(doc_id) if k not in HIDDEN_KEYS]
+
+    def item(key):
+        return {'key': key, 'values': [{'text': v, 'url': value_url(props, key, v)} for v in values(srvdtb, doc_id, key)]}
+
+    result = []
+    listed = set()
+    for group in groups:
+        keys = [k for k in group.get('keys', []) if k in present]
+        listed.update(group.get('keys', []))
+        items = [i for i in (item(k) for k in keys) if i['values']]
+        chips = bool(group.get('chips'))
+        if chips:
+            notes = sap_notes(body_md)
+            if notes:
+                items.append({'key': 'SAP note', 'values': [{'text': n, 'url': SAP_NOTE_URL + n} for n in notes]})
+        if items:
+            result.append({'name': group['name'], 'chips': chips, 'items': items})
+    other = [i for i in (item(k) for k in present if k not in listed) if i['values']]
+    if other:
+        result.append({'name': 'Other', 'chips': False, 'items': other})
+    return result

@@ -8,6 +8,7 @@
     </div>
     <!-- PRINT HEADER :: END -->
 ${var.get('doc_header', '') | n}
+${var.get('info_card', '') | n}
     % if len(var['toc']) > 0:
     <!-- TABLE OF CONTENTS :: START -->
     <details id="kb-toc-inline" open class="kb-toc-panel">

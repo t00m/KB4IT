@@ -8,6 +8,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
     <!-- PAGE METADATA :: END -->
+    <!-- SCRIPT FLAG :: START -->
+    <!-- With JavaScript on, panels that a script switches are hidden until shown. -->
+    <script>document.documentElement.classList.add('kb-js');</script>
+    <!-- SCRIPT FLAG :: END -->
     <!-- STYLESHEETS :: START -->
 % if _hl == 'client':
     <link rel="stylesheet" href="resources/themes/techdoc/framework/Highlight/styles/github-dark.css">
@@ -28,6 +32,7 @@
     <script src="resources/themes/techdoc/framework/datatables/js/jquery.dataTables.min.js"></script>
     <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
     <!-- LIBRARIES :: END -->
+    <script src="resources/themes/techdoc/framework/kb4it/js/page.js" defer></script>
     <!-- DATATABLES SETUP :: START -->
     <script class="init">
         $(document).ready(function() {

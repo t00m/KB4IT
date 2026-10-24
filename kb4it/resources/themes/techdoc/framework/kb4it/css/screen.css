@@ -1183,3 +1183,44 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
 .kb-banner.prod { background: #fdecef; color: #b3263f; }
 .kb-banner.draft { background: #fff6e8; color: #9a5a00; }
 .kb-banner.retired { background: #f1f1f1; color: #555; }
+
+/* Info card: Details and History tabs between the header and the body. */
+.kb-info-card { margin: 14px 0; border: 1px solid #eee; border-radius: 6px; background: #fff; }
+.kb-info-bar { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 2px; }
+.kb-info-bar .uk-tab { margin: 0; }
+.kb-info-bar .uk-tab > * > a { padding: 8px 12px; font-size: 0.8rem; }
+.kb-info-toggle { background: none; border: 0; cursor: pointer; color: #666; padding: 6px; transition: transform .15s ease; }
+.kb-info-card:not(.kb-open) .kb-info-toggle { transform: rotate(-90deg); }
+.kb-info-card:not(.kb-open) .kb-info-bar .uk-tab > .uk-active > a { border-color: transparent; color: #999; }
+.kb-info-panels { padding: 12px 16px 14px; border-top: 1px solid #eee; }
+.kb-info-heading { font-size: 1rem; margin: 0 0 8px; }
+.kb-js .kb-info-card:not(.kb-open) .kb-info-panels { display: none; }
+.kb-js .kb-info-panels > :not(.uk-active) { display: none; }
+.kb-js .kb-info-heading {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.kb-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 12px 24px; }
+.kb-group h3 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 0 0 6px; }
+.kb-group dl, .kb-history { display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; margin: 0; font-size: 0.82rem; }
+.kb-group dt, .kb-history dt { color: #777; font-weight: normal; margin: 0; }
+.kb-group dd, .kb-history dd { margin: 0; }
+.kb-obj {
+    display: inline-block;
+    margin: 0 4px 2px 0;
+    padding: 0 5px;
+    font-family: SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.76rem;
+    color: #333 !important;
+    background: #f3f5f8;
+    border: 1px solid #e1e5ea;
+    border-radius: 3px;
+    text-decoration: none !important;
+}
+@media (max-width: 640px) {
+    .kb-groups { grid-template-columns: 1fr; }
+}

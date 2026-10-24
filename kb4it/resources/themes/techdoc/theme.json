@@ -15,5 +15,17 @@
     "header_keys": {
         "badges": ["DocType", "Status", "Priority"],
         "links": ["Date", "Author", "Product", "Handover"]
+    },
+    "info_groups": [
+        {"name": "Classification", "keys": ["DocType", "Category", "WorkType", "Topic", "Scope", "Handover"]},
+        {"name": "Systems", "keys": ["Product", "SID", "Environment", "Database", "OS", "Stack", "Server", "Kernel"]},
+        {"name": "Technical objects", "chips": true,
+         "keys": ["Transaction", "Command", "Program", "Table", "Job", "RFC", "Component", "User", "Role", "Filesystem"]},
+        {"name": "Organisation", "keys": ["Author", "Team", "Project", "Milestone", "Company"]},
+        {"name": "Lifecycle", "keys": ["Status", "Priority", "Date", "Periodicity", "Public"]}
+    ],
+    "info_tabs": {
+        "details": {"print": true},
+        "history": {"print": false}
     }
 }
