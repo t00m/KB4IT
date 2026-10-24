@@ -327,8 +327,9 @@ One card between the banners and the body, built with `data-uk-tab` and `data-uk
 
 Behaviour:
 
-- **Closed by default.** The card is one line high: the tab names and a chevron. Clicking a tab opens the card on that tab. Clicking the open tab, or the chevron, closes it.
-- **Remembered.** The open or closed state and the last tab are kept in `localStorage` (key `kb-info-card`), with `try`/`catch` so private windows still work.
+- **Default state.** A document with a `Summary` starts with the card closed: one line with the tab names and a chevron. A document without a `Summary` starts with the card open on Details, so the reader still gets context before the text. The template sets this state in the HTML, so it is right without JavaScript and before any script runs.
+- **Opening and closing.** Clicking a tab opens the card on that tab. Clicking the open tab, or the chevron, closes it.
+- **Remembered.** The last tab the reader chose is kept across pages in `localStorage` (key `kb-info-card-tab`); a document without a `Summary` still opens on Details. When the reader closes or opens the card, that choice is kept for that page only (key `kb-info-card:<page>`). Every access is wrapped in `try`/`catch` so private windows still work.
 - **Entry points.** The quality emblem opens the card on Quality. The "Document properties" action in the title menu opens it on Details. A URL ending in `#details`, `#quality`, `#related` or `#history` opens that tab.
 - **Without JavaScript.** UIkit's CSS hides inactive switcher panels even with no script. A one-line script in the head adds the class `kb-js` to `<html>`. The theme hides inactive panels only under `.kb-js`. Without it, every panel shows in order, each under its own heading.
 - **Headings.** Each panel starts with an `<h2>` (Details, Quality, Related, History). On screen, with JavaScript, the heading is visually hidden because the tab already names it (`uk-hidden-visually`). It stays visible in print and without JavaScript. This keeps the outline valid for the W3C checker.
@@ -479,7 +480,7 @@ Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user
 
 - `tests/themes/test_techdoc_quality.py`: one test per check with a small Markdown fixture; target cap; stub cap; Retired statuses; freshness half-life; tier thresholds; `peer_stats` rank and median.
 - Build tests: an Exemplary fixture shows the note and the gold emblem; a Stub fixture shows no note; `quality-index.js` exists and parses; the Quality column sorts by `data-order`; `"quality": false` removes every `.kb-q-*` element and the index file.
-- Info card: each tab panel exists only when it has content; panels carry the `kb-noprint` class according to `info_tabs.*.print`; every panel has its `<h2>`.
+- Info card: a document with a `Summary` renders the card closed; one without renders it open on Details; each tab panel exists only when it has content; panels carry the `kb-noprint` class according to `info_tabs.*.print`; every panel has its `<h2>`.
 - Images: width and height match the file; a descriptive alt gives a numbered `<figcaption>`, a file-name alt gives none; images in links get no lightbox; three images in a row make a gallery; a missing file gives the placeholder and the `IMAGE_MISSING` log line.
 - Code and tables: copy button and language label present; tables are wrapped in `.uk-overflow-auto`.
 - Print CSS: a test reads `print.css` and checks that `.kb-noprint` is hidden and printable switcher panels are forced visible.
@@ -499,4 +500,3 @@ Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user
 3. **Records.** Should the categories in the `events` list (Change, Incident, Meeting, Task) use a lighter profile, or no score at all, with the score kept for knowledge documents?
 4. **Visibility.** Show the emblem on Basic and Stub pages (current design) or only on Complete and Exemplary pages?
 5. **Category and DocType overlap.** Category mixes document form (Report, Template) with work type (Change, Incident). Split it before this lands, or after?
-6. **Info card default.** Closed by default (current design), or open on Details for documents that have no Summary?
