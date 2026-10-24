@@ -35,6 +35,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ED-11: help pages for the editor: the new how-to "Write a document in the editor" and an editor section in the techdoc reference, with the list of checks and the browser support for saving. `AGENTS.md` describes `kb4it/resources/editor/`, `scripts/devel/editor/build.sh`, `deploy_editor_assets()` and the browser test command.
 - ED-12: tests for the editor: asset and deploy tests in Python, the frontmatter logic run with `node` (skipped when node is missing) and browser tests with Playwright and Chromium (skipped when Playwright is missing; required in the CI browser job).
 
+- techdoc skeletons meet the quality standard: every core key plus `Summary` and `Product`, a first section that gives context, the shape of their type (steps and a command for a procedure, a table for a report, three sections for notes and posts) and a References section. A filled-in skeleton scores Exemplary. A References section in a skeleton is scored only under Connected, not again as a skeleton section.
+
 ### Fixed
 
 - The help pages of techdoc and blog lost every heading: Mako reads a line starting with `##` as a comment. The templates now escape it, and a test keeps every template free of such lines.

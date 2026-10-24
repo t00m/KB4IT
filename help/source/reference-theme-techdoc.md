@@ -107,6 +107,18 @@ The score gives a tier: **Exemplary** (75 and up, gold ring and a note under the
 
 Records (documents with a `WorkType`) are short by nature and are scored on a lighter scale: the sections of their WorkType skeleton instead of a DocType shape, a 60-word target, and a final status instead of freshness. A record is compared with records of the same WorkType.
 
+The skeletons of the Add page are written to this standard. Each one has every core key (empty keys to fill: Author, Summary, Tag, Topic, Scope, Product), a first section that gives context, the shape of its type (numbered steps and a command for a procedure, a table for a report, three sections for a note or a post) and a References section with an example source. A document that keeps that structure, replaces the example text and reaches the word target scores Exemplary. Each example line says what to write; one left unchanged costs points as skeleton text.
+
+| Skeleton | Sections |
+|---|---|
+| Procedure | Introduction, Prerequisites, Steps, Verification, References |
+| Note, Post | Overview, Details, References |
+| Report | Executive Summary, Findings, Recommendations, References |
+| Change | Overview, Impact, Rollback, References |
+| Incident | Summary, Timeline, Root Cause, Resolution, References |
+| Task | Objective, Acceptance Criteria, Notes, References |
+| Meeting | Objective, Attendees, Agenda, Notes, Action Items, References |
+
 Ranks and medians are in `quality-index.js`, written at every build. The score does not check that the content is correct.
 
 Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known.

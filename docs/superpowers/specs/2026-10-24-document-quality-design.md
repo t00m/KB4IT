@@ -55,7 +55,7 @@ These numbers come from the profile of sapbasis-docs. They drive the design.
 - 273 how-to guides have neither numbered steps nor a code block.
 - 271 documents have at least one empty section.
 - The most common first sections are Description (420) and Introduction (342). A document that opens with context is common and easy to detect.
-- techdoc ships skeletons with the expected sections per Category: Procedure (Prerequisites, Steps, Verification), Incident (Summary, Timeline, Root Cause, Resolution), Change (Overview, Impact, Rollback), Meeting, Task, Report and Note. They are the natural reference for "is this document complete for its kind".
+- techdoc ships skeletons with the expected sections per Category: Procedure (Prerequisites, Steps, Verification), Incident (Summary, Timeline, Root Cause, Resolution), Change (Overview, Impact, Rollback), Meeting, Task, Report and Note. They are the natural reference for "is this document complete for its kind". (Updated on 2026-10-24 to meet this score themselves: every skeleton now opens with context, has the shape of its type and ends with References; see the techdoc reference help.)
 
 ### Links between documents
 

@@ -51,7 +51,18 @@ SYNONYMS = {
     'objective': 'objective|overview|description|introduction',
     'verification': 'verif|validation|check',
     'resolution': 'resolution|solution|fix',
+    'introduction': 'introduction|description|overview|context|purpose|background',
+    'details': 'details|discussion|explanation|background|description',
+    'timeline': 'timeline|chronology|events',
+    'executive summary': 'summary|overview',
+    'findings': 'findings|results|analysis',
+    'recommendations': 'recommendation|next steps|actions',
+    'acceptance criteria': 'acceptance|criteria|definition of done',
+    'attendees': 'attendees|participants',
+    'action items': 'action|follow-?up|todo',
 }
+# Skeleton sections scored under Connected (References section), not again as skeleton sections.
+CONNECTED_SECTIONS = re.compile(r'^(references|documentation|related)$')
 FRONTMATTER = re.compile(r'\A---\n.*?\n---[ \t]*\n?', re.DOTALL)
 FENCED = re.compile(r'^(```|~~~).*?^\1[^\n]*$', re.MULTILINE | re.DOTALL)
 H2 = re.compile(r'^## +(.+?)\s*$', re.MULTILINE)
@@ -128,7 +139,7 @@ def load_skeletons(folder):
         name = os.path.basename(path).rsplit('-SKELETON', 1)[0].upper()
         with open(path, encoding='utf-8') as fh:
             body = FRONTMATTER.sub('', fh.read().replace('\r\n', '\n'))
-        headings = [h.strip().lower() for h in H2.findall(body)]
+        headings = [h.strip().lower() for h in H2.findall(body) if not CONNECTED_SECTIONS.match(h.strip().lower())]
         placeholders = []
         for line in body.splitlines():
             if not line.strip() or line.lstrip().startswith(('#', '|', '```', '~~~')):

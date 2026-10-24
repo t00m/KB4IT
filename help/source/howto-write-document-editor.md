@@ -122,6 +122,8 @@ To choose the names, the order and the look of the cards, add a `skeletons.json`
 
 An error in the file stops the build and names the file. A skeleton file that is not listed is ignored, and the build logs `[BUILDER] SKELETON_UNLISTED`. Without a `skeletons.json`, the id comes from the file name, the name is the id capitalised and the cards are sorted by id.
 
+In techdoc, a skeleton is also the standard the [quality score](reference-theme-techdoc.md#quality) checks: a document is expected to have the `##` sections of the skeleton of its Category (records: of their WorkType), and an example line left unchanged costs points. A References, Documentation or Related section counts once, under Connected. Give your own skeletons a first section that gives context (Introduction, Description or Overview) and a References section.
+
 In apphelp, completion also offers the values of the `vocabulary` lists in `repo.json`, the `DocType` names and the `Layout` names, even before a document uses them.
 
 To change the page itself, see [Change one template of a theme](howto-customize-templates.md#editor).

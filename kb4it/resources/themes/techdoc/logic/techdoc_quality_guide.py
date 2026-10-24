@@ -69,6 +69,7 @@ CHECKS = {
         'how': 'Add each missing section as a `##` heading, with its content. Similar names count: Overview also matches '
                'Description, Introduction or Information; Impact matches Scope, Risk or Justification; Rollback matches '
                'Fallback or Backout; Verification matches Validation or Check; Resolution matches Solution or Fix. '
+               'A References section in a skeleton is scored once, under Connected. '
                'The skeletons are listed at the end of this page.',
         'example': '## Timeline\n\n- 09:10 Alert received.\n- 09:25 Service restarted.',
     },

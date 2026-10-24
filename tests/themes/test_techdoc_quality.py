@@ -1,6 +1,7 @@
 """techdoc techdoc_quality.py: the score of one document and the peer statistics."""
 
 import importlib.util
+import re
 import sys
 from datetime import date
 
@@ -54,9 +55,10 @@ def test_structured_record_uses_worktype_skeleton_times_16(prof, skeletons, doc)
 
 
 def test_empty_sections_and_placeholders_cost_points(prof, skeletons, doc):
-    body = "# T\n\n## Introduction\n\n## Steps\n\n1. Step one\n2. Step two\n3. Step three\n"
+    body = "# T\n\n## Introduction\n\n## Steps\n\n1. Describe the first step.\n2. b\n3. c\n"
     total = sum(c.points for c in quality.structured(doc(body, DocType="How-to guide", Category="Procedure"), prof, skeletons))
-    assert total == pytest.approx(max(0, 5 + 4 + 8 + 8 * 1 / 3 - 3 - 6))
+    # Procedure skeleton: Introduction, Prerequisites, Steps, Verification (2 of 4 found); one empty section; skeleton text.
+    assert total == pytest.approx(max(0, 5 + 4 + 8 + 8 * 2 / 4 - 3 - 6))
 
 
 def test_almost_empty_document_does_not_raise(prof, skeletons, doc):
@@ -127,3 +129,46 @@ def test_skeleton_section_tip_shows_the_markdown(prof, skeletons, doc):
     checks = quality.structured(doc("# T\n\n## Summary\n\nX.\n", work_type="Incident"), prof, skeletons)
     timeline = next(c for c in checks if c.name == "Timeline section")
     assert timeline.key == "check-skeleton-section" and "## Timeline" in timeline.tip and "incident" in timeline.tip.lower()
+
+
+def _filled(name, text, skeleton):
+    # The skeleton as an author would finish it: keys set, example lines replaced, a final status.
+    sentence = " ".join(["The service account renews the certificate and the team checks the log afterwards."] * 6)
+    for line in skeleton.placeholders:
+        text = text.replace(line, sentence)
+    record = "\nWorkType:" in text
+    keys = {"Author": "Ana", "Date": "2026-10-20", "Tag": "renewal", "Topic": "Security", "Scope": "Infrastructure",
+            "Product": "ADS", "Summary": "Renew the certificate.", "Status": "Completed" if record else "Released"}
+    for key, value in keys.items():
+        text = re.sub(rf"^{key}:.*$", f"{key}: {value}", text, count=1, flags=re.MULTILINE)
+    meta = {}
+    for line in text.split("\n---", 1)[0].splitlines()[1:]:
+        key, _, value = line.partition(":")
+        if value.strip():
+            meta[key.strip()] = [v.strip() for v in value.split(",")]
+    work = (meta.get("WorkType") or [""])[0]
+    return quality.DocInput(text=text, meta=meta, backlinks=0, known_docs=set(), source_dir="/nonexistent", work_type=work)
+
+
+@pytest.mark.parametrize("name", ["CHANGE", "INCIDENT", "MEETING", "NOTE", "POST", "PROCEDURE", "REPORT", "TASK"])
+def test_a_filled_skeleton_meets_the_quality_standard(prof, skeletons, name):
+    text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
+    a = quality.assess(_filled(name, text, skeletons[name]), prof, skeletons, date(2026, 10, 24))
+    missing = [c.todo for c in a.checks if not c.passed and c.dim in ("findable", "structured")]
+    assert a.dims["findable"] == 15 and a.dims["structured"] == 25, missing
+    assert a.tier == "exemplary", (a.score, a.dims)
+
+
+@pytest.mark.parametrize("name", ["CHANGE", "INCIDENT", "MEETING", "NOTE", "POST", "PROCEDURE", "REPORT", "TASK"])
+def test_an_untouched_skeleton_is_flagged(prof, skeletons, name, doc):
+    text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
+    checks = quality.structured(doc(text, work_type="Incident" if name == "INCIDENT" else "", Category=name.capitalize()),
+                                prof, skeletons)
+    assert any(c.key == "check-skeleton-text" for c in checks)
+
+
+def test_a_references_heading_in_a_skeleton_is_scored_under_connected_only(prof, doc, tmp_path):
+    (tmp_path / "X-SKELETON.md").write_text("---\nCategory: X\n---\n\n# T\n\n## Overview\n\nA b c d.\n\n## References\n\n- link\n",
+                                            encoding="utf-8")
+    checks = quality.structured(doc("# T\n\n## Overview\n\nText.\n", Category="X"), prof, quality.load_skeletons(str(tmp_path)))
+    assert not any(c.name == "References section" for c in checks)
