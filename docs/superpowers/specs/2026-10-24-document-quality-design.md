@@ -1,6 +1,6 @@
 # Document quality, page organisation and images in techdoc
 
-Status: draft, for review.
+Status: decisions taken, ready for an implementation plan.
 Date: 2026-10-24
 Theme: techdoc
 Mockup: [`2026-10-24-document-quality-mockup.html`](2026-10-24-document-quality-mockup.html) (open it from this folder; it loads the real techdoc CSS and UIkit, so the tabs and the lightbox work)
@@ -14,6 +14,7 @@ Two related changes to techdoc:
 2. **Measure the quality of each document and show it.** Quality is shown in absolute terms (a score and a tier) and relative to the other documents of the same type (a rank). A good document must look good: the reader sees at a glance that it is one of the best in the repository.
 3. **Organise the page.** UIkit tabs and accordions hold what surrounds the text (metadata, quality, related documents, history), with a print rule for each block.
 4. **Improve images and content blocks.** Lightbox, captions, galleries, copy buttons on code, scrolling tables.
+5. **Split Category** into the form of the document (`Category`) and the type of work it records (`WorkType`), before the rest (Part F).
 
 The design rewards good documents in plain sight and keeps weak ones quiet. Weak documents are listed for maintainers on a separate page. They are not marked in red on the page a reader opens.
 
@@ -72,7 +73,7 @@ Median document age: 4.4 years. How-to guides: median 5.0 years, 90th percentile
 The 0.9.1 spec (`2026-10-21-404-favicon-diagrams-math-design.md`) set two non-goals:
 
 - **`Updated` key:** `Date` is the only date property. This design uses `Date` for freshness and adds no new date key.
-- **Drafts:** "a draft is built and published like any other document, with no label." A Draft banner (Part A) reopens this. It is listed under open questions, not decided here.
+- **Drafts:** "a draft is built and published like any other document, with no label." This design changes that for techdoc only: a document with `Status: Draft` shows a Draft banner (decided 2026-10-24). The core behaviour does not change.
 
 ## Background: what makes a document good
 
@@ -118,7 +119,7 @@ Order from the top of a document page, below the top bar:
 4. **Banners.** One line each, in this order:
    - `Environment` contains Production: red, "This document changes production systems: <SID values>."
    - `Status` is Obsolete, Deprecated, Withdrawn or Rejected: grey, "Do not follow this document." The quality tier is Retired.
-   - `Status` is Draft, Planned or Open: amber. Open question 1.
+   - `Status` is Draft: amber, "Draft: not final. Check with the author before you follow it." Planned and Open get no banner: on records they describe the work, not the document.
 5. **Technical objects** (shown in the Details tab of the info card, Part D). Chips for `SID`, `Transaction`, `Command`, `Program`, `Table`, `Component`, `Server`, `User`, `Database` and the SAP notes. Each chip links to its key-value page. The keys are the Technical objects group of `info_groups` in `theme.json`. SAP note numbers found in the body (pattern `note 123456`) link to `https://me.sap.com/notes/<n>`.
 6. Info card (Part D), then the table of contents and the document body, as today.
 7. **Linked from** (backlinks, exists) and **Related documents**, shown in the Related tab of the info card (Part D): up to five documents sharing values of `SID`, `Product`, `Transaction`, `Component` or `Tag`, weighted by how rare the shared value is. Each line shows the tier chip of the related document and the shared values.
@@ -133,7 +134,7 @@ Print: see the print table in Part D (D6).
 
 - **Per document, absolute.** The score of a document depends only on that document and its backlinks. When another document changes, this page doesn't need rebuilding. Backlinks already trigger a rebuild when they change (`processor.py`, `backlinks_changed`).
 - **Relative at view time.** Rank, percentile and peer medians change whenever any document changes. They are written to `quality-index.js` on every build and read by the page in the browser. This follows the `search-index.js` pattern, which works from `file://`.
-- **Judged against its type.** Targets and expected shapes depend on DocType and Category.
+- **Judged against its type.** Knowledge documents are judged by DocType and their Category skeleton; records by their WorkType (see "Records" below).
 - **Explainable.** Every point comes from a named check. The panel lists all checks.
 - **Capped.** No check rewards length beyond its target, so padding a document gains nothing.
 
@@ -156,7 +157,7 @@ Total 100. Words are counted outside code blocks.
 | Two or more `##` sections (one section: 3) | 5 |
 | The first section gives context: Description, Introduction, Overview, Summary, Objective, Context or Problem | 4 |
 | Fits its DocType: how-to has 3+ numbered steps or a code block; tutorial has both; reference has a table or 5+ list items; explanation has 3+ sections | 8 |
-| Has the sections of its Category skeleton (fraction found × 8). No skeleton: 8 with 3+ sections, else 4 | 8 |
+| Has the sections of its skeleton (fraction found × 8). No skeleton: 8 with 3+ sections, else 4. Section names match by synonyms: Overview also matches Description, Introduction or Information; Impact matches Scope, Risk or Justification; Rollback matches Fallback or Backout; Verification matches Validation or Check; Resolution matches Solution or Fix | 8 |
 | Each empty section (max 2) | −3 |
 | Skeleton placeholder text left in (for example "Step one") | −6 |
 
@@ -207,20 +208,44 @@ Total 100. Words are counted outside code blocks.
 
 Thresholds are absolute, so a repository moves up as its documents improve. They live in `theme.json` (`quality.tiers`).
 
+### Records
+
+Change, incident, task and meeting records are short by nature, and their age does not make them wrong: they describe something that happened. They are scored on a lighter scale with the same five dimensions, the same 100 points and the same tiers:
+
+| Dimension | Knowledge document | Record |
+|---|---|---|
+| Findable | as above | as above |
+| Structured | sections, context first, DocType fit 8, skeleton 8 | sections, context first, WorkType skeleton 16 (no DocType fit) |
+| Complete | target by DocType (150 to 800 words); under 50 words: max 3 | target 60 words; under 20 words: max 3 |
+| Connected | as above | as above |
+| Current | final status 8, freshness 12 | final status (Released, Completed, Finished, Successful) 20; any other live status 10; no freshness |
+
+Peers for rank and medians are records of the same WorkType: a change is compared with changes, not with how-to guides.
+
 ### Calibration on sapbasis-docs
+
+With the split of Part F applied (529 records, 505 knowledge documents) and section synonyms:
 
 | | Exemplary | Complete | Basic | Stub | Retired | Median score |
 |---|---|---|---|---|---|---|
-| How-to guide (510) | 14 | 124 | 111 | 246 | 15 | 40 |
-| Reference (499) | 19 | 132 | 219 | 124 | 5 | 48 |
-| Explanation (21) | 4 | 10 | 7 | 0 | 0 | 61 |
-| Tutorial (4) | 0 | 1 | 2 | 1 | 0 | 53 |
-| All (1034) | 37 | 267 | 339 | 371 | 20 | 47 |
+| How-to guide (234) | 13 | 106 | 76 | 35 | 4 | 60 |
+| Reference (251) | 25 | 84 | 99 | 41 | 2 | 55 |
+| Explanation (16) | 2 | 7 | 7 | 0 | 0 | 61 |
+| Tutorial (4) | 0 | 2 | 1 | 1 | 0 | 61 |
+| Change records (307) | 1 | 51 | 243 | 0 | 12 | 49 |
+| Incident records (169) | 6 | 145 | 15 | 1 | 2 | 68 |
+| Task records (44) | 2 | 26 | 16 | 0 | 0 | 64 |
+| Meeting minutes (9) | 0 | 3 | 6 | 0 | 0 | 55 |
+| All (1034) | 49 | 424 | 463 | 78 | 20 | 58 |
 
-- Exemplary is 3.6% of the corpus: rare, but reachable.
-- Spot check: the highest scores go to self-contained documents with context, steps, sources and references. The ReaderRights how-to (75) has Introduction, Solution, a note, SAP and Help Portal links and screenshots. A typical Stub is a change record with a title and one line.
+The first draft, with one scale for all, gave 37 Exemplary and 371 Stubs: most Stubs were short records judged as how-to guides.
+
+
+- Exemplary is 4.7% of the corpus: rare, but reachable.
+- Spot check: the highest scores go to self-contained documents with context, steps, sources and references. The ReaderRights how-to (78, rank 2 of 230) has Introduction, Solution, a check section, SAP and Help Portal links and screenshots. The best records are recent incidents that follow their skeleton (Overview, Impact, Root Cause, Resolution).
+- 289 of the 307 change records have one section, Description, and no Impact or Rollback. Their Basic tier is accurate.
 - Connected scores low (median 0) because no internal link works in this corpus. After the link fix, up to 7 more points become reachable.
-- A `Summary` key alone (+3) would lift 129 documents to the next tier. 227 documents are within 5 points of the next tier.
+- A `Summary` key alone (+3) would lift 163 documents to the next tier. 294 documents are within 5 points of the next tier.
 
 ### Relative comparison
 
@@ -228,12 +253,13 @@ Thresholds are absolute, so a repository moves up as its documents improve. They
 
 ```js
 window.KB_QUALITY = {
-  "peers": {"How-to guide": {"count": 495, "median": {"findable": 11, "structured": 9, "complete": 3, "connected": 0, "current": 11.3}}},
-  "docs": {"SAP-BC-ADS-READERRIGHTS.html": {"score": 75, "tier": "exemplary", "type": "How-to guide", "rank": 10}}
+  "peers": {"How-to guide": {"count": 230, "median": {"findable": 12, "structured": 15.7, "complete": 23.5, "connected": 2, "current": 10.6}},
+            "Change": {"count": 295, "median": {}}},
+  "docs": {"SAP-BC-ADS-READERRIGHTS.html": {"score": 78, "tier": "exemplary", "peer": "How-to guide", "rank": 2}}
 };
 ```
 
-- Peers are the live documents (Retired excluded) with the same DocType.
+- Peers are the live documents (Retired excluded) of the same DocType for knowledge documents, or of the same WorkType for records.
 - Percentile: `1 - (rank - 1) / count`, shown as "Better than 98% of how-to guides".
 - The page script fills the rank and draws the median ticks in the panel. Without the script (an old copy, or no JavaScript), the panel still shows the score, the dimensions and the checklist from the static HTML.
 
@@ -255,7 +281,7 @@ No tier uses red. Red stays for production and incidents, as today. The tier is 
 ### 1. Document page
 
 - **Quality emblem** in the header strip: a 40px ring filled to the score, in the tier colour, with the number inside. Click or Enter opens the Quality panel. `title` and `aria-label`: "Quality 75 of 100, Exemplary".
-- **Exemplary documents** get a 3px gold line under the top bar and a gold note: "★ Exemplary how-to guide: rank 10 of 495 how-to guides". This is the main way a reader recognises a good document.
+- **Exemplary documents** get a 3px gold line under the top bar and a gold note: "★ Exemplary how-to guide: rank 2 of 230 how-to guides". This is the main way a reader recognises a good document.
 - **Complete documents:** green emblem, no note.
 - **Basic and Stub documents:** grey emblem, no note, no warning. The reader sees the number but nothing on the page is alarming.
 - **Retired documents:** no emblem; the grey banner says why.
@@ -272,8 +298,8 @@ Missing checks are worded as next steps, not as faults.
 
 ### 3. Dashboard
 
-- **Hero bar:** a new stat "★ 37 Exemplary", linking to the Quality page.
-- **Diátaxis cards:** a 6px stacked bar under each card with the tier mix of that type, and a caption ("14 exemplary, 124 complete").
+- **Hero bar:** a new stat "★ 49 Exemplary", linking to the Quality page.
+- **Diátaxis cards:** a 6px stacked bar under each card with the tier mix of the knowledge documents of that type, and a caption ("13 exemplary, 106 complete of 234"). Records are scored apart; their tier mix shows on the Quality page.
 - **Best documents:** a new collapsible section right after the Diátaxis grid. Cards with a gold top border, the small ring, the title, the type and the year. Top three per Diátaxis type, best first. This shelf is where good work gets seen.
 
 ### 4. Document lists (datatables)
@@ -341,7 +367,7 @@ A grid of definition lists, one per group. The groups and their keys are set in 
 
 | Group | Keys |
 |---|---|
-| Classification | DocType, Category, Topic, Scope, Handover |
+| Classification | DocType, Category, WorkType, Topic, Scope, Handover |
 | Systems | Product, SID, Environment, Database, OS, Stack, Server, Kernel |
 | Technical objects | Transaction, Command, Program, Table, Job, RFC, Component, User, Role, Filesystem, SAP notes found in the body |
 | Organisation | Author, Team, Project, Milestone, Company |
@@ -433,6 +459,49 @@ The lightbox reads images through plain `<img>` elements, so it works from `file
 - **Automatic tabs** built from sections. Readers would not know the content is there.
 - **Modal dialogs for content.** The lightbox is the only overlay, and only for images.
 
+## Part F: splitting Category (phase 0)
+
+Category mixes two things: the **form** of a document (Procedure, Note, Report, Template) and the **type of work** it records (Change, Incident, Task, Meeting). The quality model needs to know which documents are records, and the dashboard needs the type of work. The split comes before everything else.
+
+### F1. Keys
+
+| Key | Meaning | Values |
+|---|---|---|
+| `Category` | Form of the document | Procedure, Note, Report, Template, Record, Minutes |
+| `WorkType` (new) | Type of work the document records; only on records | Change, Incident, Task, Meeting |
+
+`Record` is the form of change, incident and task records. `Minutes` is the form of meeting notes. A document with a `WorkType` is a **record**; any other document is a **knowledge document**.
+
+### F2. Mapping for sapbasis-docs
+
+| Category today | Documents | Category after | WorkType after |
+|---|---|---|---|
+| Change | 307 | Record | Change |
+| Incident | 167 | Record | Incident |
+| Task | 44 | Record | Task |
+| Meeting | 9 | Minutes | Meeting |
+| Report, Incident | 2 | Report | Incident |
+| Procedure, Note, Report, Template and their combinations | 503 | unchanged | none |
+| no Category | 2 | unchanged | none |
+
+Scripted, with a backup in the scratchpad and no git in the repository. The script writes a CSV with every change, like `doctype-classification.csv`.
+
+### F3. Code and configuration
+
+| Place | Change |
+|---|---|
+| techdoc dashboard (`techdoc_dashboard.py`, `PAGE_INDEX.tpl`) | The alert bar and the open items read `WorkType` instead of `Category`. Links go to `WorkType_Change.html` and `WorkType_Incident.html`. |
+| techdoc events page (`theme.py`) | The event type of a document is its `WorkType` when set, otherwise its `Category`. The `events` list in `repo.json` keeps its values. |
+| techdoc skeletons | Change, Incident and Task skeletons get `Category: Record` and `WorkType: <type>`; Meeting gets `Category: Minutes` and `WorkType: Meeting`. |
+| techdoc `apps/*/config/repo.json` | `WorkType` added to the `datatable` columns and the menu, after `Category`. |
+| techdoc help (`PAGE_HELP.tpl`, `help/source/reference-theme-techdoc.md`) | Both keys described, with the value lists. |
+| core search facets (`builder.py`) | `WorkType` added next to `Category` and `Tag`. |
+| core feed filter (`builder.py`) | A feed category matches `Category` or `WorkType`, so existing feed settings keep working. |
+
+**Older repositories.** When a document has no `WorkType` and its `Category` is Change, Incident, Task or Meeting, techdoc reads that value as the `WorkType`. A repository that is not migrated keeps its dashboard, events and quality profiles.
+
+The core changes run the full test suite without browser tests; the rest is theme-only.
+
 ## Architecture
 
 | File | Change |
@@ -467,8 +536,9 @@ Scripted, with a backup in the scratchpad and no git in the repository, as for t
 
 ## Phases
 
+0. **Category split:** `WorkType` key, mapping script for sapbasis-docs, dashboard, events, skeletons, help, search facets and feed filter, fallback for older repositories (Part F).
 1. **Page organisation and images:** header strip, Summary, banners, info card with Details and History, print rules, and all of E1 (images). Images come first because they are broken today and need no quality engine.
-2. **Quality engine:** `techdoc_quality.py`, `quality-index.js`, emblem, Quality tab, Exemplary note.
+2. **Quality engine:** `techdoc_quality.py` with both scales, `quality-index.js`, emblem, Quality tab, Exemplary note.
 3. **Lists and dashboard:** Quality column, hero stat, tier mix on Diátaxis cards, Best documents shelf, Activity card.
 4. **Quality page and Related tab:** quick wins, broken links, missing Summary, missing images, duplicates; Related documents.
 5. **Content blocks:** code copy and folding, tables, back-to-top; author tabs and collapsible notes with their help page.
@@ -476,7 +546,11 @@ Scripted, with a backup in the scratchpad and no git in the repository, as for t
 
 ## Testing
 
-Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user rule).
+Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user rule). Phase 0 touches the core (search facets, feed filter), so it runs the full suite without browser tests.
+
+- Category split: the dashboard alert bar reads `WorkType`; a document with `Category: Change` and no `WorkType` still shows there (fallback); the events page groups by `WorkType` then `Category`; search facets list `WorkType`; a feed filter on `Change` matches `WorkType: Change`.
+- Records scale: a 60-word change with Overview, Impact and Rollback gets full Structured and Complete points; an old record keeps its Current points; records rank only against records of the same WorkType.
+- Draft banner: shown for `Status: Draft`, not for Planned or Open.
 
 - `tests/themes/test_techdoc_quality.py`: one test per check with a small Markdown fixture; target cap; stub cap; Retired statuses; freshness half-life; tier thresholds; `peer_stats` rank and median.
 - Build tests: an Exemplary fixture shows the note and the gold emblem; a Stub fixture shows no note; `quality-index.js` exists and parses; the Quality column sorts by `data-order`; `"quality": false` removes every `.kb-q-*` element and the index file.
@@ -489,14 +563,17 @@ Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user
 ## Risks
 
 - **Gaming the score.** Authors may add sections or words for points. Caps limit this, and the checklist shows what each point means. The score is a guide for maintainers, not a target for authors.
-- **Records are not documents.** Change and incident records are short by nature, and many will be Stubs. That is accurate, but it may annoy. Open question 3.
+- **Records are not documents.** Handled by the lighter scale for records. Change records still score lower than incidents, because most lack Impact and Rollback sections; that is accurate.
 - **False confidence.** A high score does not mean the content is right. The panel says "Quality measures structure, metadata, links and age. It does not check that the content is correct."
 - **Discouragement.** Low tiers stay neutral grey and appear only in lists and on the Quality page.
 
-## Open questions
+## Decisions
 
-1. **Draft banner.** It reopens the 0.9.1 non-goal "a draft is published with no label". Keep the banner, or rely on the Draft badge in the strip only?
-2. **Freshness source.** `Date` is the only date property. When `git` is set in `repo.json`, should freshness use the last commit date of the file instead? That would read git history at build time.
-3. **Records.** Should the categories in the `events` list (Change, Incident, Meeting, Task) use a lighter profile, or no score at all, with the score kept for knowledge documents?
-4. **Visibility.** Show the emblem on Basic and Stub pages (current design) or only on Complete and Exemplary pages?
-5. **Category and DocType overlap.** Category mixes document form (Report, Template) with work type (Change, Incident). Split it before this lands, or after?
+Taken on 2026-10-24:
+
+1. **Draft banner:** yes, for `Status: Draft` only (Part A).
+2. **Freshness:** from `Date` only. No git dates, no `Updated` key.
+3. **Records:** scored on a lighter scale (Part B, "Records").
+4. **Score ring on Basic and Stub pages:** shown, in neutral grey.
+5. **Category:** split into `Category` (form) and `WorkType` (type of work) before the rest (Part F, phase 0).
+6. **Info card:** closed when the document has a `Summary`; open on Details when it has none (Part D).
