@@ -58,7 +58,8 @@ Built-in properties recognised by KB4IT:
 |---|---|
 | `Title`     | Document title (set by the first `#` heading in the body) |
 | `Author`    | Author name(s), comma-separated |
-| `Category`  | Document category |
+| `Category`  | Form of the document (Procedure, Note, Report, Record, Minutes, ...) |
+| `WorkType`  | Type of work a record holds (Change, Incident, Task, Meeting) |
 | `Status`    | Document status |
 | `Scope`     | Scope or domain |
 | `Team`      | Owning team |

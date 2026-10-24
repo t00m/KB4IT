@@ -5,7 +5,8 @@ Version: 1.0
 DocType: Reference
 Tag:
 Topic:
-Category: Meeting
+Category: Minutes
+WorkType: Meeting
 Scope:
 ---
 

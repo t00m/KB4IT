@@ -19,7 +19,8 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 
 | Property | Values | Effect |
 |---|---|---|
-| `Category` | `Change`, `Incident`, `Meeting`, `Note`, `Post`, `Procedure`, `Report`, `Task` | Groups documents; dated documents of the categories in `events` appear in the calendar |
+| `Category` | The form of the document: `Procedure`, `Note`, `Report`, `Template`, `Post`, `Record`, `Minutes` | Groups documents |
+| `WorkType` | The type of work a record holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
 | `DocType` | `Tutorial`, `How-to guide`, `Reference`, `Explanation` | Counted in the four cards of the dashboard |
 | `Priority` | `Critical`, `Very high`, `High`, `Medium`, `Normal`, `Low`, `Unknown` | Coloured label; open items are sorted by it |
 | `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Closed: `Completed`, `Finished`, `Released`, `Successful`. Faded: `Deprecated`, `Obsolete` | Coloured label; open values put incidents, changes and tasks under **Open items** |
@@ -28,6 +29,26 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 | `Date` | any [date](reference-document-format.md#dates) | Sorting, calendar, upcoming and recent events |
 
 Any other property gets its own pages, as in every theme.
+
+A change, incident or task record has `Category: Record`; meeting notes have `Category: Minutes`. Both carry a `WorkType`. A document with a `WorkType` is a record; any other document is a knowledge document.
+
+### Upgrading an older repository {#upgrade}
+
+Older repositories put the type of work in `Category` (`Category: Change`). They keep working: when a document has no `WorkType` and its `Category` is `Change`, `Incident`, `Task` or `Meeting`, techdoc reads that value as the work type.
+
+To move them to the new keys, run `scripts/conv/split_category.py` from a copy of the KB4IT source. First check what it would change:
+
+```bash
+python scripts/conv/split_category.py source --csv split.csv --dry-run
+```
+
+`split.csv` lists every document it would change. Then run it for real:
+
+```bash
+python scripts/conv/split_category.py source --csv split.csv
+```
+
+It only rewrites the `Category` line of the frontmatter and adds `WorkType` below it. `Category: Change` becomes `Category: Record` with `WorkType: Change`; `Category: Meeting` becomes `Category: Minutes` with `WorkType: Meeting`; in `Category: Report, Incident` the `Report` stays. Running it twice changes nothing. Back up the `source` folder first if it is not under version control.
 
 ## Dashboard {#dashboard}
 

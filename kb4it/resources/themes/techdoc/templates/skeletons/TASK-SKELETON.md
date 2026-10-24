@@ -5,7 +5,8 @@ Version: 1.0
 DocType: Reference
 Tag:
 Topic:
-Category: Task
+Category: Record
+WorkType: Task
 Priority: Normal
 Status: New
 Scope:

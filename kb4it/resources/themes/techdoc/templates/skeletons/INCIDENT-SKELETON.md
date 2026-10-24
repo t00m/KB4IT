@@ -5,7 +5,8 @@ Version: 1.0
 DocType: Reference
 Tag:
 Topic:
-Category: Incident
+Category: Record
+WorkType: Incident
 Priority: Normal
 Status: New
 Scope:

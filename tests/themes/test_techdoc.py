@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from tests.helpers import page, run_kb4it
+from tests.helpers import ROOT, page, run_kb4it
 from tests.themes.test_techdoc_add import build_techdoc
 
 TODAY = datetime.now()
@@ -192,3 +192,20 @@ def test_admin_backups_follow_changes(site, tmp_path):
     result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
     assert result.returncode == 0, result.stdout
     assert sorted(p.name for p in admin.glob("*.zip")) == ["ops-notes_site.zip", "ops-notes_sources.zip"]
+
+
+SKELETONS = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "templates" / "skeletons"
+
+
+@pytest.mark.parametrize("name,category,worktype", [("CHANGE", "Record", "Change"), ("INCIDENT", "Record", "Incident"),
+                                                     ("TASK", "Record", "Task"), ("MEETING", "Minutes", "Meeting")])
+def test_record_skeletons_use_worktype(name, category, worktype):
+    text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
+    assert f"\nCategory: {category}\nWorkType: {worktype}\n" in text
+
+
+def test_apps_list_worktype_after_category():
+    for app in ("default", "sapbasis"):
+        conf = json.loads((ROOT / "kb4it/resources/themes/techdoc/apps" / app / "config/repo.json").read_text(encoding="utf-8"))
+        for key in ("datatable", "menu"):
+            assert conf[key].index("WorkType") == conf[key].index("Category") + 1

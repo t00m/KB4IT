@@ -4,6 +4,7 @@
         "Date",
         "Title",
         "Category",
+        "WorkType",
         "Priority",
         "Status",
         "Scope",
@@ -28,6 +29,7 @@
     "menu": [
         "Author",
         "Category",
+        "WorkType",
         "Periodicity",
         "Priority",
         "Product",
