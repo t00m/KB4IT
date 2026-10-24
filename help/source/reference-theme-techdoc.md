@@ -199,7 +199,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 
 | Key | Default | Meaning |
 |---|---|---|
-| `datatable` | `["Date", "Title"]` | Columns of the document tables |
+| `datatable` | `["Date", "Title"]` | Columns of the document tables; a column that is empty in every row of a table is left out of it |
 | `events` | `[]` | Categories that count as events |
 | `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
 | `admin` | `false` | Builds the backup page, see below |

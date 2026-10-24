@@ -37,6 +37,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - techdoc skeletons meet the quality standard: every core key plus `Summary` and `Product`, a first section that gives context, the shape of their type (steps and a command for a procedure, a table for a report, three sections for notes and posts) and a References section. A filled-in skeleton scores Exemplary. A References section in a skeleton is scored only under Connected, not again as a skeleton section.
 
+- techdoc document tables leave out a column that is empty in every row, such as WorkType on a page that lists only procedures. Date and Title always stay.
+
 ### Fixed
 
 - The help pages of techdoc and blog lost every heading: Mako reads a line starting with `##` as a comment. The templates now escape it, and a test keeps every template free of such lines.

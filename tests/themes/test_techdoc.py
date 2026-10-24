@@ -224,3 +224,13 @@ def test_datatable_title_cell_can_shrink_to_fit(site):
     assert '<td class="uk-text-small kb-dt-title">' in html
     assert '<td class="uk-text-left kb-dt-date">' in html
     assert ".kb-dt-title" in (site["target"] / "resources/themes/techdoc/framework/kb4it/css/screen.css").read_text(encoding="utf-8")
+
+
+def _headers(html):
+    return re.findall(r'<span class="uk-text-secondary">([^<]+)</span>', html[html.index("<thead>"):html.index("</thead>")])
+
+
+def test_document_tables_hide_columns_empty_in_every_row(site):
+    # Category_Note lists only undated.md: no WorkType, Priority, Status or Scope; Date and Title always stay.
+    assert _headers(read(site, "Category_Note.html")) == ["Date", "Title", "Category"]
+    assert "WorkType" in _headers(read(site, "Category_Record.html"))

@@ -44,6 +44,16 @@ class Theme(DashboardMixin, DocumentTheme):
     reserved_pages = ('404.md', 'quality-guide.md')  # build() writes 404.html and quality-guide.html
     add_page = True   # create_page_add() runs in build()
 
+    def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
+        """Document tables leave out the columns that are empty in every row; Date and Title always stay."""
+        if not headers:
+            headers = (self.srvbes.get_dict('repo') or {}).get('datatable', list(self.datatable_default_headers))
+        docs = [d for d in doclist or [] if not self.srvdtb.is_system(d)]
+        if docs:
+            headers = [key for key in headers if key in ('Date', 'Title')
+                       or any(v for d in docs for v in self.srvdtb.get_values(d, key))]
+        return super().build_datatable(headers, doclist, table_id)
+
     def datatable_date_cell(self, timestamp):
         """The date cell gets a class, so the date stays on one line and the time wraps below it."""
         return super().datatable_date_cell(timestamp).replace('<td class="uk-text-left">', '<td class="uk-text-left kb-dt-date">', 1)
