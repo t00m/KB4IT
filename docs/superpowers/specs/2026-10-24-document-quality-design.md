@@ -1,9 +1,9 @@
-# Document quality and frontmatter display in techdoc
+# Document quality, page organisation and images in techdoc
 
 Status: draft, for review.
 Date: 2026-10-24
 Theme: techdoc
-Mockup: [`2026-10-24-document-quality-mockup.html`](2026-10-24-document-quality-mockup.html) (open it from this folder; it loads the real techdoc CSS)
+Mockup: [`2026-10-24-document-quality-mockup.html`](2026-10-24-document-quality-mockup.html) (open it from this folder; it loads the real techdoc CSS and UIkit, so the tabs and the lightbox work)
 Data: sapbasis-docs, 1034 documents, profiled on 2026-10-24 with the draft model in this spec.
 
 ## Intent
@@ -12,6 +12,8 @@ Two related changes to techdoc:
 
 1. **Use the frontmatter on the document page.** Today a document page shows no metadata at all. The Document Properties section was removed in 0.10.0, and nothing replaced it.
 2. **Measure the quality of each document and show it.** Quality is shown in absolute terms (a score and a tier) and relative to the other documents of the same type (a rank). A good document must look good: the reader sees at a glance that it is one of the best in the repository.
+3. **Organise the page.** UIkit tabs and accordions hold what surrounds the text (metadata, quality, related documents, history), with a print rule for each block.
+4. **Improve images and content blocks.** Lightbox, captions, galleries, copy buttons on code, scrolling tables.
 
 The design rewards good documents in plain sight and keeps weak ones quiet. Weak documents are listed for maintainers on a separate page. They are not marked in red on the page a reader opens.
 
@@ -93,6 +95,9 @@ The model takes ideas from five known sources:
 7. Maintainers get a Quality page with quick wins: documents one change away from the next tier.
 8. All of it works from disk (`file://`) and in incremental builds.
 9. A repository can turn quality off with one setting.
+10. The page keeps the body in reading order. Metadata, quality, related documents and history sit in one tabbed info card, closed by default.
+11. Every block has a print rule: what helps on paper prints, screen-only panels do not.
+12. Images open full size in a lightbox, have captions and stable sizes, and missing images are reported.
 
 ## Non-goals
 
@@ -114,13 +119,13 @@ Order from the top of a document page, below the top bar:
    - `Environment` contains Production: red, "This document changes production systems: <SID values>."
    - `Status` is Obsolete, Deprecated, Withdrawn or Rejected: grey, "Do not follow this document." The quality tier is Retired.
    - `Status` is Draft, Planned or Open: amber. Open question 1.
-5. **Objects box.** Chips for `SID`, `Transaction`, `Command`, `Program`, `Table`, `Component`, `Server`, `User`, `Database` and the SAP notes. Each chip links to its key-value page. The list of keys is in `theme.json` (`object_keys`). SAP note numbers found in the body (pattern `note 123456`) link to `https://me.sap.com/notes/<n>`.
-6. Table of contents and document body, as today.
-7. **Linked from** (backlinks, exists) and **Related documents**: up to five documents sharing values of `SID`, `Product`, `Transaction`, `Component` or `Tag`, weighted by how rare the shared value is. Each line shows the tier chip of the related document and the shared values.
+5. **Technical objects** (shown in the Details tab of the info card, Part D). Chips for `SID`, `Transaction`, `Command`, `Program`, `Table`, `Component`, `Server`, `User`, `Database` and the SAP notes. Each chip links to its key-value page. The keys are the Technical objects group of `info_groups` in `theme.json`. SAP note numbers found in the body (pattern `note 123456`) link to `https://me.sap.com/notes/<n>`.
+6. Info card (Part D), then the table of contents and the document body, as today.
+7. **Linked from** (backlinks, exists) and **Related documents**, shown in the Related tab of the info card (Part D): up to five documents sharing values of `SID`, `Product`, `Transaction`, `Component` or `Tag`, weighted by how rare the shared value is. Each line shows the tier chip of the related document and the shared values.
 
 Head: `<meta name="author">` from `Author`. The description already comes from `Summary` (`headmeta.py`).
 
-Print: the strip prints as plain text. Banners print. The emblem, objects box chips and the related list print as text without colour. The Exemplary note does not print.
+Print: see the print table in Part D (D6).
 
 ## Part B: the quality model
 
@@ -257,7 +262,7 @@ No tier uses red. Red stays for production and incidents, as today. The tier is 
 
 ### 2. Quality panel
 
-A `uk-drop` from the emblem and an entry in the title menu actions row (icon `star`). It contains:
+The Quality tab of the info card (Part D). The emblem and an entry in the title menu actions row (icon `star`) open the card on this tab. It contains:
 
 - the large ring, the tier chip, and the rank sentence from `quality-index.js`;
 - five bars (Findable, Structured, Complete, Connected, Current), each with points, maximum, and a tick at the peer median;
@@ -292,7 +297,140 @@ A system page linked from the logo menu, with collapsible sections:
 
 ### 7. Print
 
-Prints the strip and the banners as text. Does not print the emblem ring, the panel, the Exemplary note or the chip colours.
+See the print table in Part D (D6).
+
+## Part D: page organisation
+
+### Rule
+
+The document text stays visible and in reading order. Tabs and accordions organise what surrounds it: metadata, quality, related documents, history. Browser find (Ctrl+F) skips text in a hidden panel, and readers skim the body, so the body never goes into tabs. The only exception is tabs the author writes on purpose (D4).
+
+### D1. Page order
+
+1. Top bar (as today).
+2. Exemplary note (Part C).
+3. Header strip, Summary and banners (Part A). Always visible.
+4. **Info card** (D2).
+5. Inline table of contents and the body with its folding sections (as today).
+6. Footer.
+
+### D2. Info card
+
+One card between the banners and the body, built with `data-uk-tab` and `data-uk-switcher`:
+
+| Tab | Content | Shown when |
+|---|---|---|
+| Details | Frontmatter keys in groups (D3) | always |
+| Quality | The quality panel (Part C, section 2) | quality is on and the document is not Retired |
+| Related | Linked from (backlinks) and Related documents | at least one entry |
+| History | Date, source file name, "View source" and "Edit" links (edit only when git is set), build time | always |
+
+Behaviour:
+
+- **Closed by default.** The card is one line high: the tab names and a chevron. Clicking a tab opens the card on that tab. Clicking the open tab, or the chevron, closes it.
+- **Remembered.** The open or closed state and the last tab are kept in `localStorage` (key `kb-info-card`), with `try`/`catch` so private windows still work.
+- **Entry points.** The quality emblem opens the card on Quality. The "Document properties" action in the title menu opens it on Details. A URL ending in `#details`, `#quality`, `#related` or `#history` opens that tab.
+- **Without JavaScript.** UIkit's CSS hides inactive switcher panels even with no script. A one-line script in the head adds the class `kb-js` to `<html>`. The theme hides inactive panels only under `.kb-js`. Without it, every panel shows in order, each under its own heading.
+- **Headings.** Each panel starts with an `<h2>` (Details, Quality, Related, History). On screen, with JavaScript, the heading is visually hidden because the tab already names it (`uk-hidden-visually`). It stays visible in print and without JavaScript. This keeps the outline valid for the W3C checker.
+- **Accessibility.** UIkit sets `role="tablist"`, `role="tab"` and `aria-selected`. The chevron is a `<button>` with `aria-expanded`.
+
+### D3. Details tab: keys in groups
+
+A grid of definition lists, one per group. The groups and their keys are set in `theme.json` (`info_groups`), in order:
+
+| Group | Keys |
+|---|---|
+| Classification | DocType, Category, Topic, Scope, Handover |
+| Systems | Product, SID, Environment, Database, OS, Stack, Server, Kernel |
+| Technical objects | Transaction, Command, Program, Table, Job, RFC, Component, User, Role, Filesystem, SAP notes found in the body |
+| Organisation | Author, Team, Project, Milestone, Company |
+| Lifecycle | Status, Priority, Date, Periodicity, Public |
+| Other | every key not listed above |
+
+- Values link to their key-value pages, as in the old Document Properties section.
+- Technical object values are monospace chips. This replaces the separate Objects box of Part A.
+- Empty groups are hidden. `Title`, `Summary`, `Bookmark` and `SystemPage` are never listed.
+- On phones the grid is one column.
+
+### D4. Inside the body
+
+- **Folding sections** stay as they are: the first section and the inline table of contents start open, the rest closed.
+- **Author tabs** for real variants of the same content (Linux or Windows, Oracle or DB2). They use `pymdownx.tabbed` with `alternate_style: true`. `pymdown-extensions` is already the optional extra `kb4it[extras]`; a repository turns it on in the `markdown` block of `repo.json`. The theme styles `.tabbed-set` like `uk-tab`. The extension builds tabs from radio buttons and CSS, so they work without JavaScript.
+- **Collapsible notes** (`??? note "Title"`) use `pymdownx.details`. They render as `<details>` and look like the existing admonitions with a chevron.
+- The help gains a short page on both, with examples.
+
+### D5. Dashboard
+
+The Changes, Incidents, Events and Monitoring sections become one **Activity** card with four tabs. Tabs with no entries are hidden. The last tab is remembered. The card is collapsible like the other dashboard sections.
+
+### D6. Print
+
+Some panels belong only on screen. Every block has a fixed print rule; the four info card tabs can be changed in `theme.json` (`info_tabs.<name>.print`).
+
+| Block | Printed | How |
+|---|---|---|
+| Header strip | yes | one line of plain text, no ring, no badge colours |
+| Summary | yes | as on screen |
+| Banners | yes | border and bold label, no background fill |
+| Exemplary note | no | |
+| Info card: Details | yes | after the title, under the heading "Document details", groups in two columns |
+| Info card: Quality | no | |
+| Info card: Related | no | links do not work on paper |
+| Info card: History | no | |
+| Info card tab bar and chevron | no | |
+| Inline table of contents | yes | as today |
+| Folding sections | yes | all open, as today |
+| Author tabs | yes | every panel, with its label as a bold line above it |
+| Collapsible notes | yes | open |
+| Images | yes | figure and caption (Part E), no zoom icon, kept on one page |
+| Image gallery grid | yes | thumbnails become full-width figures |
+| Code copy button, language label, "Show all" button | no | |
+| Folded long code | yes | printed in full |
+| Sticky table of contents, back-to-top | no | |
+| Dashboard Activity card | active tab only | the dashboard is a screen page |
+
+`print.css` implements this with one class, `kb-noprint` (`display: none` in print), set by the templates from these rules, and with `.uk-switcher > *` forced visible for printable panels.
+
+## Part E: images and content components
+
+### E1. Images
+
+The theme rewrites each `<img>` inside the document body while `build_page` already holds the page as an lxml tree:
+
+1. **Size.** Width and height attributes come from the image file: PNG, JPEG and GIF headers, SVG `viewBox`. A small reader in the theme, no new dependency. With the size known, the page does not jump while images load.
+2. **Lazy loading.** `loading="lazy"` and `decoding="async"`. The first image of the page loads normally.
+3. **Figure.** The image is wrapped in `<figure class="kb-figure">`. When the alt text is descriptive, it becomes the `<figcaption>`, numbered "Figure 3." A file-name-like alt text (`SAP-BC-SC-DMS-00`, `image12`) gets no caption. sapbasis-docs: 407 descriptive, 176 file-name-like.
+4. **Lightbox.** The body gets `data-uk-lightbox="animation: fade"`. Each figure image is a link to the full file with `data-caption`. One gallery per document, with previous and next. The cursor shows a zoom icon. 96 of the 259 PNG screenshots are wider than 900px and unreadable at page width.
+5. **Screenshot frame.** `.kb-shot`: 1px border, 4px radius, a light shadow. White SAP screens no longer merge into the page.
+6. **Galleries.** Three or more images in a row, with no text between them, become a grid of thumbnails (`uk-child-width-1-2 uk-child-width-1-3@m`). The lightbox still shows them one by one. One document has 58 screenshots.
+7. **Left alone.** Images inside a link keep the link and get no lightbox. Images smaller than 64px wide and images inside a paragraph of text stay inline, without figure or frame.
+8. **Missing files.** A missing image becomes a grey placeholder box with the file name: "Image missing: resources/images/x.png". The build logs `[THEME] IMAGE_MISSING doc=<doc> src=<src>`. The Quality page lists them. In the quality model, each missing image takes 3 points from Connected, like a broken link. The calibration above ran without this check; with today's sapbasis-docs, where every image file is missing, it would lower 158 documents.
+
+The lightbox reads images through plain `<img>` elements, so it works from `file://`.
+
+### E2. Code blocks
+
+1,312 code blocks in sapbasis-docs.
+
+- **Copy button** in the top right corner (`data-uk-icon="copy"`), showing "Copied" for two seconds. It uses `navigator.clipboard` and falls back to a hidden textarea with `document.execCommand("copy")`.
+- **Language label** from the `language-*` class, top left, small caps.
+- **Long blocks** of more than 30 lines show the first 20 and a "Show all N lines" button. Print shows them in full.
+
+### E3. Tables
+
+- Wide tables are wrapped in `.uk-overflow-auto`, so they scroll sideways instead of widening the page.
+- Tables with more than 15 rows get a sticky header (`position: sticky` on `th`).
+
+### E4. Long documents
+
+- **Back to top:** a `data-uk-totop` button bottom right, shown after one screen of scroll.
+- **Sticky table of contents (optional):** on screens 1400px or wider, for documents with four or more sections, the table of contents also sits in a right column with `data-uk-scrollspy-nav`, which highlights the current section. Off by default (`theme.json`: `toc_sidebar`), because the title menu and the inline table of contents already cover it.
+
+### E5. What is not used
+
+- **Slider and slideshow.** They hide content from readers, from search and from print.
+- **Automatic tabs** built from sections. Readers would not know the content is there.
+- **Modal dialogs for content.** The lightbox is the only overlay, and only for images.
 
 ## Architecture
 
@@ -301,10 +439,12 @@ Prints the strip and the banners as text. Does not print the emblem ring, the pa
 | `techdoc/logic/techdoc_quality.py` (new) | Pure functions: `assess(text, meta, backlinks, profile) -> Assessment` (score, tier, dimensions, checks) and `peer_stats(assessments) -> dict`. No I/O except reading skeleton headings once. |
 | `techdoc/logic/theme.py` | `build()` assesses every document once per build (keyed by docId, kept in memory), writes `quality-index.js`, builds `quality.html`. `build_page()` reads the cached assessment and passes it to the templates. `datatable_value_link` adds the Quality cell. |
 | `techdoc/logic/techdoc_dashboard.py` | Hero stat, tier mix per Diátaxis card, Best documents section. |
-| `techdoc/theme.json` | `quality` block: `enabled`, `tiers`, `targets`, `half_life`, `final_status`, `retired_status`, `known_values`; plus `header_keys` and `object_keys`. |
-| `techdoc/templates/` | New `DOC_HEADER.tpl` (strip, Summary, banners, objects box), `QUALITY_PANEL.tpl`, `PAGE_QUALITY.tpl`; `HTML_BODY.tpl` includes the header; `PAGE_INDEX.tpl` gets the shelf. All with `NAME :: START/END` comment pairs. |
+| `techdoc/theme.json` | `quality` block: `enabled`, `tiers`, `targets`, `half_life`, `final_status`, `retired_status`, `known_values`; plus `header_keys`, `info_groups`, `info_tabs` (with `print`) and `toc_sidebar`. |
+| `techdoc/templates/` | New `DOC_HEADER.tpl` (strip, Summary, banners), `INFO_CARD.tpl` (tabs and the four panels), `QUALITY_PANEL.tpl`, `PAGE_QUALITY.tpl`; `HTML_BODY.tpl` includes the header and the card; `PAGE_INDEX.tpl` gets the shelf and the Activity card. All with `NAME :: START/END` comment pairs. |
 | `techdoc/framework/kb4it/css/screen.css`, `print.css` | Tokens and the `.kb-q-*` classes from the mockup. |
 | `techdoc/framework/kb4it/js/quality.js` (new) | Fills the rank and the median ticks from `window.KB_QUALITY`. |
+| `techdoc/framework/kb4it/js/page.js` (new) | Info card state and URL tabs, code copy and "Show all", Activity tab memory. |
+| `techdoc/logic/techdoc_media.py` (new) | Image size reader, figure and caption, lightbox links, galleries, missing-image placeholder; code block and table wrappers. Works on the lxml tree in `build_page`. |
 | `repo.json` | `"quality": false` turns everything off. Default: on. |
 
 Cost: the profile script scans 1034 documents in under 1 second. The assessment reads the source Markdown that `build_page` already reads.
@@ -322,13 +462,16 @@ Scripted, with a backup in the scratchpad and no git in the repository, as for t
 1. Rewrite the 271 extensionless links to existing documents as `.md` links, and the 4 `.adoc` links whose `.md` exists. List the other 75 for review.
 2. Normalize `Date` to one format, and `Status` and `Priority` to fixed sets.
 3. Add a `Summary` key, starting with the quick wins.
+4. Copy the image files into `source/resources/images`. The documents reference 390 files and none is in the repository. 267 are in `~/Downloads/sap-basis-doc-img/resources/images`; 123 are missing everywhere.
 
 ## Phases
 
-1. **Engine and document page:** `techdoc_quality.py`, header strip, Summary, banners, emblem, panel, Exemplary note, `quality-index.js`.
-2. **Lists and dashboard:** Quality column, hero stat, tier mix on Diátaxis cards, Best documents shelf.
-3. **Quality page:** quick wins, broken links, missing Summary, duplicates. Objects box and Related documents.
-4. **Later, optional:** search results show the tier chip; score as a tie-breaker in search ranking.
+1. **Page organisation and images:** header strip, Summary, banners, info card with Details and History, print rules, and all of E1 (images). Images come first because they are broken today and need no quality engine.
+2. **Quality engine:** `techdoc_quality.py`, `quality-index.js`, emblem, Quality tab, Exemplary note.
+3. **Lists and dashboard:** Quality column, hero stat, tier mix on Diátaxis cards, Best documents shelf, Activity card.
+4. **Quality page and Related tab:** quick wins, broken links, missing Summary, missing images, duplicates; Related documents.
+5. **Content blocks:** code copy and folding, tables, back-to-top; author tabs and collapsible notes with their help page.
+6. **Later, optional:** sticky table of contents; tier chip in search results; score as a tie-breaker in search ranking.
 
 ## Testing
 
@@ -336,6 +479,10 @@ Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user
 
 - `tests/themes/test_techdoc_quality.py`: one test per check with a small Markdown fixture; target cap; stub cap; Retired statuses; freshness half-life; tier thresholds; `peer_stats` rank and median.
 - Build tests: an Exemplary fixture shows the note and the gold emblem; a Stub fixture shows no note; `quality-index.js` exists and parses; the Quality column sorts by `data-order`; `"quality": false` removes every `.kb-q-*` element and the index file.
+- Info card: each tab panel exists only when it has content; panels carry the `kb-noprint` class according to `info_tabs.*.print`; every panel has its `<h2>`.
+- Images: width and height match the file; a descriptive alt gives a numbered `<figcaption>`, a file-name alt gives none; images in links get no lightbox; three images in a row make a gallery; a missing file gives the placeholder and the `IMAGE_MISSING` log line.
+- Code and tables: copy button and language label present; tables are wrapped in `.uk-overflow-auto`.
+- Print CSS: a test reads `print.css` and checks that `.kb-noprint` is hidden and printable switcher panels are forced visible.
 - HTML: the W3C check (`scripts/devel/validate_html.py`) stays at 0 errors and 0 warnings; block comments stay paired.
 
 ## Risks
@@ -352,3 +499,4 @@ Theme-only changes: `tests/themes` and `check_themes.sh`, no browser tests (user
 3. **Records.** Should the categories in the `events` list (Change, Incident, Meeting, Task) use a lighter profile, or no score at all, with the score kept for knowledge documents?
 4. **Visibility.** Show the emblem on Basic and Stub pages (current design) or only on Complete and Exemplary pages?
 5. **Category and DocType overlap.** Category mixes document form (Report, Template) with work type (Change, Incident). Split it before this lands, or after?
+6. **Info card default.** Closed by default (current design), or open on Details for documents that have no Summary?

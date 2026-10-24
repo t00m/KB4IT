@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Document Quality Mockup</title>
+<script>document.documentElement.classList.add("kb-js");</script>
 <!-- PAGE METADATA :: END -->
 <!-- STYLESHEETS :: START -->
 <link rel="stylesheet" href="../../../kb4it/resources/themes/techdoc/framework/uikit/css/uikit.min.css">
@@ -101,28 +102,97 @@ table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
 .kb-wins .act { font-size: 0.75rem; color: var(--q-exemplary-ink); font-weight: 600; white-space: nowrap; }
 @media (max-width: 640px) { .kb-q-panel { grid-template-columns: 1fr; } .kb-q-checks { columns: 1; } }
 </style>
+<style>
+/* Proposed: info card with tabs. */
+.kb-info-card { background: #fff; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+.kb-info-bar { display: flex; align-items: center; padding: 0 22px; }
+.kb-info-bar .uk-tab { margin: 0; flex: 1; }
+.kb-info-bar .uk-tab > * > a { font-size: 0.74rem; padding: 9px 12px; }
+.kb-info-toggle { background: none; border: 0; cursor: pointer; color: #888; padding: 6px; }
+.kb-info-card:not(.kb-open) .kb-info-toggle svg { transform: rotate(-90deg); }
+.kb-info-card:not(.kb-open) .kb-info-panels { display: none; }
+.kb-info-card:not(.kb-open) .uk-tab > .uk-active > a { border-color: transparent; color: #999; }
+.kb-info-panels { padding: 14px 22px 18px; }
+.kb-js .kb-info-panels > :not(.uk-active) { display: none; }
+.kb-js .kb-info-panels h2 { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.kb-info-panels h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+.kb-groups { display: grid; gap: 14px 28px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.kb-group h3 { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 1px; color: #999; margin: 0 0 6px; font-weight: 700; }
+.kb-group dl { display: grid; grid-template-columns: 7rem 1fr; gap: 4px 10px; margin: 0; font-size: 0.8rem; }
+.kb-group dt { color: #888; font-weight: 400; }
+.kb-group dd { margin: 0; color: #333; }
+.kb-group dd a { color: #333; text-decoration: none; border-bottom: 1px dotted #bbb; }
+.kb-print-tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; padding: 0 5px; border-radius: 3px; margin-left: 4px; vertical-align: 1px; }
+.kb-print-tag.yes { background: #e6f6ee; color: #1b7a55; }
+.kb-print-tag.no { background: #f1f1f1; color: #777; }
+.kb-summary { font-size: 1.02rem; color: #555; padding: 10px 22px 0; margin: 0; }
+
+/* Proposed: figures, lightbox, galleries, missing images. */
+.kb-figure { margin: 16px 0; }
+.kb-figure a { display: block; cursor: zoom-in; position: relative; }
+.kb-shot { border: 1px solid #e3e7ec; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: block; max-width: 100%; height: auto; }
+.kb-figure a .kb-zoom { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.55); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+.kb-figure a:hover .kb-zoom, .kb-figure a:focus .kb-zoom { opacity: 1; }
+.kb-figure figcaption { font-size: 0.8rem; color: #666; margin-top: 6px; }
+.kb-figure figcaption b { color: #333; }
+.kb-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin: 16px 0; }
+.kb-gallery .kb-figure { margin: 0; }
+.kb-img-missing { border: 1px dashed #c3c9d2; border-radius: 4px; background: #f7f8fa; color: #6b7480; font-size: 0.8rem; padding: 22px; text-align: center; }
+.kb-img-missing code { color: #555; background: none; }
+
+/* Proposed: code blocks and tables. */
+.kb-code { position: relative; margin: 16px 0; }
+.kb-code pre { margin: 0; padding: 30px 14px 12px; background: #1e2329; color: #e6e6e6; border-radius: 6px; font-size: 0.8rem; overflow: auto; }
+.kb-code .lang { position: absolute; left: 14px; top: 8px; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; color: #8b97a3; }
+.kb-code .copy { position: absolute; right: 8px; top: 6px; background: rgba(255,255,255,0.08); border: 0; color: #cfd6dd; border-radius: 4px; font-size: 0.7rem; padding: 3px 8px; cursor: pointer; }
+.kb-code .more { display: block; width: 100%; margin-top: -6px; padding: 6px; border: 0; border-radius: 0 0 6px 6px; background: #2a3038; color: #cfd6dd; font-size: 0.74rem; cursor: pointer; }
+.kb-table-wrap { max-height: 220px; overflow: auto; border: 1px solid #eee; border-radius: 4px; }
+.kb-table-wrap th { position: sticky; top: 0; background: #fafafa; }
+
+/* Proposed: print preview. */
+.kb-paper { box-sizing: border-box; background: #fff; width: 100%; max-width: 560px; margin: 0 auto; padding: 34px 40px 26px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); font-size: 0.74rem; color: #222; }
+.kb-paper h1 { font-size: 1.25rem; margin: 0 0 4px; }
+.kb-paper .line { color: #555; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 8px; }
+.kb-paper .ban { border: 1px solid #b3263f; color: #b3263f; padding: 3px 6px; margin: 6px 0; font-weight: 700; }
+.kb-paper table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
+.kb-paper td { padding: 1px 4px; vertical-align: top; } .kb-paper td:nth-child(odd) { color: #888; width: 18%; }
+.kb-paper h2 { font-size: 0.86rem; margin: 10px 0 4px; }
+.kb-paper .fig { border: 1px solid #ddd; height: 70px; background: #f6f7f9; margin: 4px 0 2px; }
+.kb-paper .foot { display: flex; justify-content: space-between; color: #888; border-top: 1px solid #eee; margin-top: 14px; padding-top: 4px; font-size: 0.64rem; }
+
+/* Proposed: dashboard activity card. */
+.kb-activity { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
+.kb-activity .uk-tab > * > a { font-size: 0.72rem; }
+
+@media (max-width: 640px) { .kb-paper { padding: 20px 16px; } }
+@media print {
+  .kb-noprint { display: none !important; }
+  .kb-info-panels > .kb-print { display: block !important; }
+  .kb-info-panels h2 { position: static !important; width: auto; height: auto; clip: auto; }
+  .kb-info-card .kb-info-panels { display: block !important; }
+}
+</style>
 <!-- STYLESHEETS :: END -->
+<!-- LIBRARIES :: START -->
+<script src="../../../kb4it/resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
+<script src="../../../kb4it/resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
+<!-- LIBRARIES :: END -->
 </head>
 <body>
 <!-- PAGE :: START -->
 <div class="mk-wrap">
-<h1 class="uk-h2">Document quality and frontmatter in techdoc: mockup</h1>
-<p class="mk-note">Static mockup for the spec <code>2026-10-24-document-quality-design.md</code>. Scores and counts come from the draft model run on the sapbasis-docs repository (1034 documents) on 2026-10-24. Titles are real, except in the banners and the related documents, which are examples. New elements are marked "Proposed" in the source.</p>
+<h1 class="uk-h2">Document quality, page organisation and images in techdoc: mockup</h1>
+<p class="mk-note">Static mockup for the spec <code>2026-10-24-document-quality-design.md</code>. Scores and counts come from the draft model run on sapbasis-docs (1034 documents) on 2026-10-24. Titles are real, except in the banners, the Related tab and the history values, which are examples. Screenshots are drawn placeholders. The tabs, the chevron and the lightbox work: click them. Green and grey tags show what prints.</p>
 
-<!-- 1. DOCUMENT PAGE :: START -->
-<div class="mk-step">1. Document page, Exemplary how-to guide</div>
+<!-- DOCUMENT PAGE :: START -->
+<div class="mk-step">1. Document page: header, Summary, info card (click the tabs and the chevron)</div>
 <div class="mk-card" style="padding:0;overflow:hidden">
   <div class="mk-topbar"><span>&#9776;</span><span class="t">ADS BJP ReaderRights request</span><span>&#128269;</span></div>
   <div class="kb-exemplary-ribbon"></div>
-  <div class="kb-exemplary-note">
-    <svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path fill="#f5b301" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>
-    Exemplary how-to guide: rank 10 of 495 how-to guides
-  </div>
+  <div class="kb-exemplary-note"><svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path fill="#f5b301" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg> Exemplary how-to guide: rank 10 of 495 how-to guides<span class="kb-print-tag no">not printed</span></div>
+  <!-- HEADER STRIP :: START -->
   <div class="kb-doc-strip">
-    <span class="kb-q-emblem" title="Quality 75 of 100, Exemplary. Click for details.">
-      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3.5"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="3.5" stroke-dasharray="75 100" stroke-linecap="round"/></svg>
-      <span class="num">75</span>
-    </span>
+    <a href="#" data-mk-open="quality" title="Quality 75 of 100, Exemplary. Open the quality details." aria-label="Quality 75 of 100, Exemplary"><span class="kb-q-emblem"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3.5"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="3.5" stroke-dasharray="75 100" stroke-linecap="round"/></svg><span class="num">75</span></span></a>
     <span class="uk-label kb-badge" style="background:#1e87f0">How-to guide</span>
     <span class="uk-label kb-badge" style="background:#32d296">Released</span>
     <span class="uk-label kb-badge" style="background:#faa05a">High</span>
@@ -130,23 +200,117 @@ table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
       <span><span class="k">Date</span><a href="#">2022-12-27</a></span>
       <span><span class="k">Author</span><a href="#">Tomás Vírseda</a></span>
       <span><span class="k">Product</span><a href="#">ADS</a>, <a href="#">Adobe</a>, <a href="#">Portal</a></span>
-      <span><span class="k">Handover</span><a href="#">10 Applications and business requests</a></span>
     </span>
+    <span class="kb-print-tag yes">printed as text</span>
   </div>
-  <div style="padding:14px 22px">
-    <div class="kb-objects">
-      <span class="grp"><span>SID</span><a class="kb-obj" href="#">BJT</a><a class="kb-obj" href="#">BJA</a><a class="kb-obj" href="#">BJP</a></span>
-      <span class="grp"><span>Transaction</span><a class="kb-obj" href="#">SU01</a><a class="kb-obj" href="#">SICF</a></span>
-      <span class="grp"><span>Command</span><a class="kb-obj" href="#">openssl</a></span>
-      <span class="grp"><span>Component</span><a class="kb-obj" href="#">BC-SRV-FP-ICF</a></span>
-      <span class="grp"><span>SAP note</span><a class="kb-obj" href="#">736902</a></span>
+  <p class="kb-summary">Request a new Adobe ReaderRights credential from SAP before the current one expires, and register it in Adobe Document Services. <span class="kb-print-tag yes">printed</span></p>
+  <p class="mk-note" style="padding:0 22px">Example Summary: no document has one today.</p>
+  <!-- HEADER STRIP :: END -->
+  <!-- INFO CARD :: START -->
+  <section class="kb-info-card kb-open" id="mk-card" aria-label="Document information">
+    <div class="kb-info-bar">
+      <ul class="uk-tab" data-uk-tab="connect: #mk-panels; animation: uk-animation-fade">
+        <li class="uk-active"><a href="#">Details <span class="kb-print-tag yes">print</span></a></li>
+        <li><a href="#">Quality <span class="kb-print-tag no">no</span></a></li>
+        <li><a href="#">Related <span class="kb-print-tag no">no</span></a></li>
+        <li><a href="#">History <span class="kb-print-tag no">no</span></a></li>
+      </ul>
+      <button class="kb-info-toggle kb-noprint" type="button" aria-expanded="true" aria-controls="mk-panels" title="Show or hide the document information"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M4 7l6 6 6-6"/></svg></button>
     </div>
-    <p class="mk-note">Header strip: the emblem (score ring) first, then the DocType, Status and Priority badges, then the main values as links. The Objects box lists the technical keys as chips; each chip opens its key page. SAP note numbers found in the body link to the SAP support site.</p>
+    <div class="kb-info-panels uk-switcher" id="mk-panels">
+      <!-- DETAILS PANEL :: START -->
+      <div class="kb-print">
+        <h2>Document details</h2>
+        <div class="kb-groups">
+          <div class="kb-group"><h3>Classification</h3><dl>
+            <dt>DocType</dt><dd><a href="#">How-to guide</a></dd><dt>Category</dt><dd><a href="#">Procedure</a></dd>
+            <dt>Topic</dt><dd><a href="#">Programming</a></dd><dt>Scope</dt><dd><a href="#">SAP Administration</a></dd>
+            <dt>Handover</dt><dd><a href="#">10 Applications and business requests</a></dd></dl></div>
+          <div class="kb-group"><h3>Systems</h3><dl>
+            <dt>Product</dt><dd><a href="#">ADS</a>, <a href="#">Adobe</a>, <a href="#">Portal</a></dd>
+            <dt>SID</dt><dd><a class="kb-obj" href="#">BJT</a> <a class="kb-obj" href="#">BJA</a> <a class="kb-obj" href="#">BJP</a></dd></dl></div>
+          <div class="kb-group"><h3>Technical objects</h3><dl>
+            <dt>Transaction</dt><dd><a class="kb-obj" href="#">SU01</a> <a class="kb-obj" href="#">SICF</a></dd>
+            <dt>Command</dt><dd><a class="kb-obj" href="#">openssl</a></dd>
+            <dt>Component</dt><dd><a class="kb-obj" href="#">BC-SRV-FP-ICF</a></dd>
+            <dt>SAP note</dt><dd><a class="kb-obj" href="#">736902</a></dd></dl></div>
+          <div class="kb-group"><h3>Organisation and lifecycle</h3><dl>
+            <dt>Author</dt><dd><a href="#">Tomás Vírseda</a></dd><dt>Team</dt><dd><a href="#">SAP</a></dd>
+            <dt>Status</dt><dd><a href="#">Released</a></dd><dt>Priority</dt><dd><a href="#">High</a></dd><dt>Public</dt><dd><a href="#">No</a></dd></dl></div>
+        </div>
+      </div>
+      <!-- DETAILS PANEL :: END -->
+      <!-- QUALITY PANEL :: START -->
+      <div class="kb-noprint">
+        <h2>Quality</h2>
+        <div class="kb-q-panel">
+          <div>
+            <span class="kb-q-emblem big"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="3" stroke-dasharray="75 100" stroke-linecap="round"/></svg><span class="num">75</span></span>
+            <div style="margin-top:8px"><span class="kb-q-chip exemplary"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>Exemplary</span></div>
+            <div class="kb-q-rank">Rank 10 of 495 how-to guides.<br>Better than 98% of them.</div>
+          </div>
+          <div>
+            <div class="kb-q-dim"><span>Findable</span><span class="kb-q-bar"><span class="fill" style="width:80%"></span><span class="peer" style="left:73%"></span></span><span>12 / 15</span></div>
+            <div class="kb-q-dim"><span>Structured</span><span class="kb-q-bar"><span class="fill" style="width:68%"></span><span class="peer" style="left:36%"></span></span><span>17 / 25</span></div>
+            <div class="kb-q-dim"><span>Complete</span><span class="kb-q-bar"><span class="fill" style="width:100%"></span><span class="peer" style="left:12%"></span></span><span>25 / 25</span></div>
+            <div class="kb-q-dim"><span>Connected</span><span class="kb-q-bar"><span class="fill" style="width:53%"></span><span class="peer" style="left:0%"></span></span><span>8 / 15</span></div>
+            <div class="kb-q-dim"><span>Current</span><span class="kb-q-bar"><span class="fill" style="width:65%"></span><span class="peer" style="left:57%"></span></span><span>13 / 20</span></div>
+            <p class="mk-note">Bar: this document. Black tick: median of the 495 how-to guides.</p>
+            <ul class="kb-q-checks">
+              <li class="ok">All core keys set</li>
+              <li class="ok">Opens with an Introduction section</li>
+              <li class="ok">Steps or commands for a how-to guide</li>
+              <li class="ok">Longer than the 150-word target</li>
+              <li class="ok">Cites external sources, has a References section and an image</li>
+              <li class="ok">Status Released, dated 2022</li>
+              <li class="todo">Add a Summary key<span class="gain">+3</span></li>
+              <li class="todo">Link to another document<span class="gain">+3</span></li>
+              <li class="todo">Get a link from another document<span class="gain">+4</span></li>
+              <li class="todo">Add the Prerequisites, Steps and Verification sections of a Procedure<span class="gain">+8</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- QUALITY PANEL :: END -->
+      <!-- RELATED PANEL :: START -->
+      <div class="kb-noprint">
+        <h2>Related</h2>
+        <h3 class="uk-h6" style="margin:0 0 4px">Linked from</h3>
+        <ul class="uk-list kb-related" style="margin:0 0 12px">
+          <li><span class="kb-q-chip complete">Complete</span><a href="#">ADS: annual credential checklist</a></li>
+        </ul>
+        <h3 class="uk-h6" style="margin:0 0 4px">Related documents</h3>
+        <ul class="uk-list kb-related" style="margin:0">
+          <li><span class="kb-q-chip complete">Complete</span><a href="#">ADS: configure the Adobe credential in NWA</a><span class="why">same Component, SID BJP</span></li>
+          <li><span class="kb-q-chip basic">Basic</span><a href="#">ADS: renew the SSL certificate</a><span class="why">same Product, Command openssl</span></li>
+          <li><span class="kb-q-chip stub">Stub</span><a href="#">ADS rights request 2020</a><span class="why">same Tag readerrights</span></li>
+        </ul>
+      </div>
+      <!-- RELATED PANEL :: END -->
+      <!-- HISTORY PANEL :: START -->
+      <div class="kb-noprint">
+        <h2>History</h2>
+        <div class="kb-group"><dl>
+          <dt>Date</dt><dd>2022-12-27 08:00</dd><dt>Source</dt><dd><code>SAP-BC-ADS-READERRIGHTS.md</code> · <a href="#">View source</a></dd>
+          <dt>Edit</dt><dd>Shown when git is set in repo.json</dd><dt>Built</dt><dd>2026-10-24 11:20</dd></dl></div>
+      </div>
+      <!-- HISTORY PANEL :: END -->
+    </div>
+  </section>
+  <!-- INFO CARD :: END -->
+  <div style="padding:14px 22px">
+    <div class="kb-toc-panel" style="font-size:0.85rem;color:#666">&#9662; Table of Contents <span class="kb-print-tag yes">printed</span></div>
+    <h2 class="uk-h4" style="margin:12px 0 4px">&#9662; Introduction</h2>
+    <p style="font-size:0.9rem">Current Adobe ReaderRights are about to expire (the old credential is valid only until January 9, 2023). The body keeps its folding sections and stays in reading order.</p>
+    <h2 class="uk-h4" style="margin:8px 0">&#9656; Solution</h2>
+    <h2 class="uk-h4" style="margin:8px 0">&#9656; References</h2>
   </div>
 </div>
+<p class="mk-note">Closed by default the card is one line: the tab names and the chevron. The ring opens it on Quality; the "Document properties" action in the title menu opens it on Details; <code>#quality</code> in the URL does too. The browser remembers the last state.</p>
+<!-- DOCUMENT PAGE :: END -->
 
 <!-- BANNERS :: START -->
-<div class="mk-step">2. Banners from frontmatter values (one line each, under the strip)</div>
+<div class="mk-step">2. Banners from frontmatter values (always visible, printed with a border)</div>
 <div class="mk-card" style="padding:0;overflow:hidden">
   <div class="kb-banner prod"><strong>Production</strong> This document changes production systems: PRD.</div>
   <div class="kb-banner draft"><strong>Draft</strong> Not final. Check with the author before you follow it.</div>
@@ -155,57 +319,69 @@ table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
 <p class="mk-note">The Draft banner reopens a non-goal of the 0.9.1 spec ("a draft is published with no label"). It is an open question in the spec.</p>
 <!-- BANNERS :: END -->
 
-<!-- QUALITY PANEL :: START -->
-<div class="mk-step">3. Quality panel (opens from the emblem or the title menu)</div>
-<div class="mk-card">
-  <div class="kb-q-panel">
-    <div>
-      <span class="kb-q-emblem big">
-        <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="3"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="3" stroke-dasharray="75 100" stroke-linecap="round"/></svg>
-        <span class="num">75</span>
-      </span>
-      <div style="margin-top:8px"><span class="kb-q-chip exemplary"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>Exemplary</span></div>
-      <div class="kb-q-rank">Rank 10 of 495 how-to guides.<br>Better than 98% of them.</div>
-    </div>
-    <div>
-      <div class="kb-q-dim"><span>Findable</span><span class="kb-q-bar"><span class="fill" style="width:80%"></span><span class="peer" style="left:73%"></span></span><span>12 / 15</span></div>
-      <div class="kb-q-dim"><span>Structured</span><span class="kb-q-bar"><span class="fill" style="width:68%"></span><span class="peer" style="left:36%"></span></span><span>17 / 25</span></div>
-      <div class="kb-q-dim"><span>Complete</span><span class="kb-q-bar"><span class="fill" style="width:100%"></span><span class="peer" style="left:12%"></span></span><span>25 / 25</span></div>
-      <div class="kb-q-dim"><span>Connected</span><span class="kb-q-bar"><span class="fill" style="width:53%"></span><span class="peer" style="left:0%"></span></span><span>8 / 15</span></div>
-      <div class="kb-q-dim"><span>Current</span><span class="kb-q-bar"><span class="fill" style="width:65%"></span><span class="peer" style="left:57%"></span></span><span>13 / 20</span></div>
-      <p class="mk-note">Bar: this document. Black tick: median of the 495 how-to guides.</p>
-      <ul class="kb-q-checks">
-        <li class="ok">All core keys set</li>
-        <li class="ok">Opens with an Introduction section</li>
-        <li class="ok">Steps or commands for a how-to guide</li>
-        <li class="ok">Longer than the 150-word target</li>
-        <li class="ok">Cites external sources, has a References section and an image</li>
-        <li class="ok">Status Released, dated 2022</li>
-        <li class="todo">Add a Summary key<span class="gain">+3</span></li>
-        <li class="todo">Link to another document<span class="gain">+3</span></li>
-        <li class="todo">Get a link from another document<span class="gain">+4</span></li>
-        <li class="todo">Add the Prerequisites, Steps and Verification sections of a Procedure<span class="gain">+8</span></li>
-      </ul>
-    </div>
-  </div>
+<!-- PRINT PREVIEW :: START -->
+<div class="mk-step">3. The same document on paper</div>
+<div class="kb-paper">
+  <h1>ADS BJP ReaderRights request</h1>
+  <div class="line">How-to guide · Released · High · 2022-12-27 · Tomás Vírseda · ADS, Adobe, Portal</div>
+  <p style="margin:0 0 6px">Request a new Adobe ReaderRights credential from SAP before the current one expires, and register it in Adobe Document Services.</p>
+  <div class="ban">PRODUCTION: this document changes production systems: BJP.</div>
+  <h2>Document details</h2>
+  <table>
+    <tr><td>Classification</td><td>How-to guide, Procedure, Programming, SAP Administration</td><td>Systems</td><td>ADS, Adobe, Portal · BJT, BJA, BJP</td></tr>
+    <tr><td>Objects</td><td>SU01, SICF · openssl · BC-SRV-FP-ICF · note 736902</td><td>Lifecycle</td><td>Released · High · Team SAP</td></tr>
+  </table>
+  <h2>Table of Contents</h2><div style="color:#555">1 Introduction · 2 Solution · 3 References</div>
+  <h2>Introduction</h2><div style="color:#555">Current Adobe ReaderRights are about to expire…</div>
+  <div class="fig"></div><div style="color:#666">Figure 1. SU01: user ADS_AGENT with the new credential</div>
+  <div class="foot"><span>ADS BJP ReaderRights request</span><span>1/3</span></div>
 </div>
-<!-- QUALITY PANEL :: END -->
+<p class="mk-note">Printed: the strip as one line, the Summary, banners with a border, the Details tab as "Document details", the table of contents, every section open, figures with captions. Not printed: the ring, the Exemplary note, the tab bar, the Quality, Related and History tabs, buttons.</p>
+<!-- PRINT PREVIEW :: END -->
 
-<!-- RELATED :: START -->
-<div class="mk-step">4. End of the page: linked from and related documents, with their tier</div>
-<div class="mk-card">
-  <ul class="uk-list kb-related" style="margin:0">
-    <li><span class="kb-q-chip complete">Complete</span><a href="#">ADS: configure the Adobe credential in NWA</a><span class="why">same Component, SID BJP</span></li>
-    <li><span class="kb-q-chip basic">Basic</span><a href="#">ADS: renew the SSL certificate</a><span class="why">same Product, Command openssl</span></li>
-    <li><span class="kb-q-chip stub">Stub</span><a href="#">ADS rights request 2020</a><span class="why">same Tag readerrights</span></li>
-  </ul>
-  <p class="mk-note">When two documents cover the same thing, the tier shows the reader which one to open first.</p>
+<!-- IMAGES :: START -->
+<div class="mk-step">4. Images: figure, caption, frame, lightbox (click an image)</div>
+<div class="mk-card" data-uk-lightbox="animation: fade">
+  <figure class="kb-figure">
+    <a href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjU2MCIgdmlld0JveD0iMCAwIDEyODAgNTYwIj48cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI1NjAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSIzNCIgZmlsbD0iIzM1NGE1ZiIvPjx0ZXh0IHg9IjE0IiB5PSIyMyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE1IiBmaWxsPSIjZmZmIj5UcmFuc2FjdGlvbiBTVTAxOiBVc2VyIE1haW50ZW5hbmNlPC90ZXh0PjxyZWN0IHk9IjM0IiB3aWR0aD0iMTI4MCIgaGVpZ2h0PSIzMCIgZmlsbD0iI2VlZjFmNCIvPjxyZWN0IHg9IjE0IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjQ4IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjgyIiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjExNiIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxNTAiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTg0IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE0IiB5PSI4NCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSI5MyIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iOTMiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxMTAiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTE5IiB3aWR0aD0iMTU3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIxMTkiIHdpZHRoPSIxMzMiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTM2IiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjE0NSIgd2lkdGg9IjE5NCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iMTQ1IiB3aWR0aD0iMTg2IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjE2MiIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNzEiIHdpZHRoPSIxNDEiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjE3MSIgd2lkdGg9Ijk5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjE4OCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxOTciIHdpZHRoPSIxNzgiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjE5NyIgd2lkdGg9IjE1MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyMTQiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMjIzIiB3aWR0aD0iMTI1IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIyMjMiIHdpZHRoPSIyMDUiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMjQwIiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjI0OSIgd2lkdGg9IjE2MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iMjQ5IiB3aWR0aD0iMTE4IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI2NiIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNzUiIHdpZHRoPSIxOTkiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjI3NSIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyOTIiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzAxIiB3aWR0aD0iMTQ2IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIzMDEiIHdpZHRoPSI4NCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIzMTgiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzI3IiB3aWR0aD0iMTgzIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIzMjciIHdpZHRoPSIxMzciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMzQ0IiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjM1MyIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iMzUzIiB3aWR0aD0iMTkwIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjM3MCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIzNzkiIHdpZHRoPSIxNjciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjM3OSIgd2lkdGg9IjEwMyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIzOTYiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iNDA1IiB3aWR0aD0iMjA0IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSI0MDUiIHdpZHRoPSIxNTYiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iNDIyIiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjQzMSIgd2lkdGg9IjE1MSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iNDMxIiB3aWR0aD0iMjA5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjQ0OCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSI0NTciIHdpZHRoPSIxODgiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjQ1NyIgd2lkdGg9IjEyMiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjExNTAiIHk9IjUxNCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIyOCIgcng9IjQiIGZpbGw9IiMwYTZlZDEiLz48dGV4dCB4PSIxMTc2IiB5PSI1MzMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMyIgZmlsbD0iI2ZmZiI+RXhlY3V0ZTwvdGV4dD48L3N2Zz4=" data-type="image" data-caption="Figure 1. SU01: user ADS_AGENT with the new credential"><img class="kb-shot" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjU2MCIgdmlld0JveD0iMCAwIDEyODAgNTYwIj48cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI1NjAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSIzNCIgZmlsbD0iIzM1NGE1ZiIvPjx0ZXh0IHg9IjE0IiB5PSIyMyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE1IiBmaWxsPSIjZmZmIj5UcmFuc2FjdGlvbiBTVTAxOiBVc2VyIE1haW50ZW5hbmNlPC90ZXh0PjxyZWN0IHk9IjM0IiB3aWR0aD0iMTI4MCIgaGVpZ2h0PSIzMCIgZmlsbD0iI2VlZjFmNCIvPjxyZWN0IHg9IjE0IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjQ4IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjgyIiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjExNiIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxNTAiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTg0IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE0IiB5PSI4NCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSI5MyIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iOTMiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxMTAiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTE5IiB3aWR0aD0iMTU3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIxMTkiIHdpZHRoPSIxMzMiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTM2IiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjE0NSIgd2lkdGg9IjE5NCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iMTQ1IiB3aWR0aD0iMTg2IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjE2MiIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNzEiIHdpZHRoPSIxNDEiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjE3MSIgd2lkdGg9Ijk5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjE4OCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxOTciIHdpZHRoPSIxNzgiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjE5NyIgd2lkdGg9IjE1MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyMTQiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMjIzIiB3aWR0aD0iMTI1IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIyMjMiIHdpZHRoPSIyMDUiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMjQwIiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjI0OSIgd2lkdGg9IjE2MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iMjQ5IiB3aWR0aD0iMTE4IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI2NiIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNzUiIHdpZHRoPSIxOTkiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjI3NSIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyOTIiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzAxIiB3aWR0aD0iMTQ2IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIzMDEiIHdpZHRoPSI4NCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIzMTgiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzI3IiB3aWR0aD0iMTgzIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSIzMjciIHdpZHRoPSIxMzciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMzQ0IiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjM1MyIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iMzUzIiB3aWR0aD0iMTkwIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjM3MCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIzNzkiIHdpZHRoPSIxNjciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjM3OSIgd2lkdGg9IjEwMyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIzOTYiIHdpZHRoPSIxMjUyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iNDA1IiB3aWR0aD0iMjA0IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNjQwIiB5PSI0MDUiIHdpZHRoPSIxNTYiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iNDIyIiB3aWR0aD0iMTI1MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjQzMSIgd2lkdGg9IjE1MSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjY0MCIgeT0iNDMxIiB3aWR0aD0iMjA5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjQ0OCIgd2lkdGg9IjEyNTIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSI0NTciIHdpZHRoPSIxODgiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI2NDAiIHk9IjQ1NyIgd2lkdGg9IjEyMiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjExNTAiIHk9IjUxNCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIyOCIgcng9IjQiIGZpbGw9IiMwYTZlZDEiLz48dGV4dCB4PSIxMTc2IiB5PSI1MzMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMyIgZmlsbD0iI2ZmZiI+RXhlY3V0ZTwvdGV4dD48L3N2Zz4=" width="1280" height="560" alt="SU01: user ADS_AGENT with the new credential" loading="lazy" decoding="async"><span class="kb-zoom" data-uk-icon="icon: search; ratio: 0.8"></span></a>
+    <figcaption><b>Figure 1.</b> SU01: user ADS_AGENT with the new credential</figcaption>
+  </figure>
+  <p class="mk-note">A 1280px screenshot shrinks to the page; the lightbox shows it full size, with previous and next across every image of the document.</p>
+  <div class="kb-gallery">
+    <figure class="kb-figure"><a href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMTAwIiBoZWlnaHQ9IjQ4MCIgdmlld0JveD0iMCAwIDExMDAgNDgwIj48cmVjdCB3aWR0aD0iMTEwMCIgaGVpZ2h0PSI0ODAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iMTEwMCIgaGVpZ2h0PSIzNCIgZmlsbD0iIzM1NGE1ZiIvPjx0ZXh0IHg9IjE0IiB5PSIyMyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE1IiBmaWxsPSIjZmZmIj5TSUNGOiBNYWludGFpbiBTZXJ2aWNlczwvdGV4dD48cmVjdCB5PSIzNCIgd2lkdGg9IjExMDAiIGhlaWdodD0iMzAiIGZpbGw9IiNlZWYxZjQiLz48cmVjdCB4PSIxNCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI0OCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI4MiIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxMTYiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTUwIiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE4NCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxNCIgeT0iODQiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iOTMiIHdpZHRoPSIxMjAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjkzIiB3aWR0aD0iODAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTEwIiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjExOSIgd2lkdGg9IjE1NyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMTE5IiB3aWR0aD0iMTMzIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjEzNiIgd2lkdGg9IjEwNzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNDUiIHdpZHRoPSIxOTQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjE0NSIgd2lkdGg9IjE4NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxNjIiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTcxIiB3aWR0aD0iMTQxIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIxNzEiIHdpZHRoPSI5OSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxODgiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTk3IiB3aWR0aD0iMTc4IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIxOTciIHdpZHRoPSIxNTIiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMjE0IiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjIyMyIgd2lkdGg9IjEyNSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMjIzIiB3aWR0aD0iMjA1IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI0MCIgd2lkdGg9IjEwNzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNDkiIHdpZHRoPSIxNjIiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjI0OSIgd2lkdGg9IjExOCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyNjYiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMjc1IiB3aWR0aD0iMTk5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIyNzUiIHdpZHRoPSIxNzEiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMjkyIiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMwMSIgd2lkdGg9IjE0NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMzAxIiB3aWR0aD0iODQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMzE4IiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMyNyIgd2lkdGg9IjE4MyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMzI3IiB3aWR0aD0iMTM3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjM0NCIgd2lkdGg9IjEwNzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIzNTMiIHdpZHRoPSIxMzAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjM1MyIgd2lkdGg9IjE5MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIzNzAiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzc5IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIzNzkiIHdpZHRoPSIxMDMiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSI5NzAiIHk9IjQzNCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIyOCIgcng9IjQiIGZpbGw9IiMwYTZlZDEiLz48dGV4dCB4PSI5OTYiIHk9IjQ1MyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEzIiBmaWxsPSIjZmZmIj5FeGVjdXRlPC90ZXh0Pjwvc3ZnPg==" data-type="image" data-caption="Figure 2. SICF: the ADS service"><img class="kb-shot" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMTAwIiBoZWlnaHQ9IjQ4MCIgdmlld0JveD0iMCAwIDExMDAgNDgwIj48cmVjdCB3aWR0aD0iMTEwMCIgaGVpZ2h0PSI0ODAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iMTEwMCIgaGVpZ2h0PSIzNCIgZmlsbD0iIzM1NGE1ZiIvPjx0ZXh0IHg9IjE0IiB5PSIyMyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE1IiBmaWxsPSIjZmZmIj5TSUNGOiBNYWludGFpbiBTZXJ2aWNlczwvdGV4dD48cmVjdCB5PSIzNCIgd2lkdGg9IjExMDAiIGhlaWdodD0iMzAiIGZpbGw9IiNlZWYxZjQiLz48cmVjdCB4PSIxNCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI0OCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI4MiIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxMTYiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTUwIiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE4NCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxNCIgeT0iODQiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iOTMiIHdpZHRoPSIxMjAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjkzIiB3aWR0aD0iODAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTEwIiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjExOSIgd2lkdGg9IjE1NyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMTE5IiB3aWR0aD0iMTMzIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjEzNiIgd2lkdGg9IjEwNzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNDUiIHdpZHRoPSIxOTQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjE0NSIgd2lkdGg9IjE4NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxNjIiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTcxIiB3aWR0aD0iMTQxIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIxNzEiIHdpZHRoPSI5OSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxODgiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTk3IiB3aWR0aD0iMTc4IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIxOTciIHdpZHRoPSIxNTIiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMjE0IiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjIyMyIgd2lkdGg9IjEyNSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMjIzIiB3aWR0aD0iMjA1IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI0MCIgd2lkdGg9IjEwNzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNDkiIHdpZHRoPSIxNjIiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjI0OSIgd2lkdGg9IjExOCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyNjYiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMjc1IiB3aWR0aD0iMTk5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIyNzUiIHdpZHRoPSIxNzEiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMjkyIiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMwMSIgd2lkdGg9IjE0NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMzAxIiB3aWR0aD0iODQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMzE4IiB3aWR0aD0iMTA3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMyNyIgd2lkdGg9IjE4MyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjU1MCIgeT0iMzI3IiB3aWR0aD0iMTM3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjM0NCIgd2lkdGg9IjEwNzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIzNTMiIHdpZHRoPSIxMzAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI1NTAiIHk9IjM1MyIgd2lkdGg9IjE5MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIzNzAiIHdpZHRoPSIxMDcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzc5IiB3aWR0aD0iMTY3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNTUwIiB5PSIzNzkiIHdpZHRoPSIxMDMiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSI5NzAiIHk9IjQzNCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIyOCIgcng9IjQiIGZpbGw9IiMwYTZlZDEiLz48dGV4dCB4PSI5OTYiIHk9IjQ1MyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEzIiBmaWxsPSIjZmZmIj5FeGVjdXRlPC90ZXh0Pjwvc3ZnPg==" width="1100" height="480" alt="SICF: the ADS service" loading="lazy"></a><figcaption><b>Figure 2.</b> SICF: the ADS service</figcaption></figure>
+    <figure class="kb-figure"><a href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iNDIwIiB2aWV3Qm94PSIwIDAgOTAwIDQyMCI+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSI0MjAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjMzU0YTVmIi8+PHRleHQgeD0iMTQiIHk9IjIzIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTUiIGZpbGw9IiNmZmYiPkFEUzogQ3JlZGVudGlhbCB1cGxvYWQ8L3RleHQ+PHJlY3QgeT0iMzQiIHdpZHRoPSI5MDAiIGhlaWdodD0iMzAiIGZpbGw9IiNlZWYxZjQiLz48cmVjdCB4PSIxNCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI0OCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI4MiIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxMTYiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTUwIiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE4NCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxNCIgeT0iODQiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSI5MyIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iOTMiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxMTAiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxMTkiIHdpZHRoPSIxNTciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjExOSIgd2lkdGg9IjEzMyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxMzYiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNDUiIHdpZHRoPSIxOTQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjE0NSIgd2lkdGg9IjE4NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxNjIiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNzEiIHdpZHRoPSIxNDEiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjE3MSIgd2lkdGg9Ijk5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjE4OCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjE5NyIgd2lkdGg9IjE3OCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMTk3IiB3aWR0aD0iMTUyIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjIxNCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjIyMyIgd2lkdGg9IjEyNSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMjIzIiB3aWR0aD0iMjA1IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI0MCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjI0OSIgd2lkdGg9IjE2MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMjQ5IiB3aWR0aD0iMTE4IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI2NiIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjI3NSIgd2lkdGg9IjE5OSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMjc1IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI5MiIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMwMSIgd2lkdGg9IjE0NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMzAxIiB3aWR0aD0iODQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMzE4IiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzI3IiB3aWR0aD0iMTgzIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIzMjciIHdpZHRoPSIxMzciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSI3NzAiIHk9IjM3NCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIyOCIgcng9IjQiIGZpbGw9IiMxZTg3ZjAiLz48dGV4dCB4PSI3OTYiIHk9IjM5MyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEzIiBmaWxsPSIjZmZmIj5FeGVjdXRlPC90ZXh0Pjwvc3ZnPg==" data-type="image" data-caption="Figure 3."><img class="kb-shot" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iNDIwIiB2aWV3Qm94PSIwIDAgOTAwIDQyMCI+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSI0MjAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjMzU0YTVmIi8+PHRleHQgeD0iMTQiIHk9IjIzIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTUiIGZpbGw9IiNmZmYiPkFEUzogQ3JlZGVudGlhbCB1cGxvYWQ8L3RleHQ+PHJlY3QgeT0iMzQiIHdpZHRoPSI5MDAiIGhlaWdodD0iMzAiIGZpbGw9IiNlZWYxZjQiLz48cmVjdCB4PSIxNCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI0OCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSI4MiIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxMTYiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTUwIiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE4NCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxNCIgeT0iODQiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSI5MyIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iOTMiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxMTAiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxMTkiIHdpZHRoPSIxNTciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjExOSIgd2lkdGg9IjEzMyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxMzYiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNDUiIHdpZHRoPSIxOTQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjE0NSIgd2lkdGg9IjE4NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxNjIiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxNzEiIHdpZHRoPSIxNDEiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjE3MSIgd2lkdGg9Ijk5IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjE4OCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjE5NyIgd2lkdGg9IjE3OCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMTk3IiB3aWR0aD0iMTUyIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjIxNCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjIyMyIgd2lkdGg9IjEyNSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMjIzIiB3aWR0aD0iMjA1IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI0MCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjI0OSIgd2lkdGg9IjE2MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMjQ5IiB3aWR0aD0iMTE4IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI2NiIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjI3NSIgd2lkdGg9IjE5OSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMjc1IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjI5MiIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMwMSIgd2lkdGg9IjE0NiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMzAxIiB3aWR0aD0iODQiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMzE4IiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMzI3IiB3aWR0aD0iMTgzIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIzMjciIHdpZHRoPSIxMzciIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSI3NzAiIHk9IjM3NCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIyOCIgcng9IjQiIGZpbGw9IiMxZTg3ZjAiLz48dGV4dCB4PSI3OTYiIHk9IjM5MyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEzIiBmaWxsPSIjZmZmIj5FeGVjdXRlPC90ZXh0Pjwvc3ZnPg==" width="900" height="420" alt="SAP-BC-ADS-03" loading="lazy"></a></figure>
+    <figure class="kb-figure"><a href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iNDIwIiB2aWV3Qm94PSIwIDAgOTAwIDQyMCI+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSI0MjAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjMzU0YTVmIi8+PHRleHQgeD0iMTQiIHk9IjIzIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTUiIGZpbGw9IiNmZmYiPk5XQTogRGVzdGluYXRpb25zPC90ZXh0PjxyZWN0IHk9IjM0IiB3aWR0aD0iOTAwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjZWVmMWY0Ii8+PHJlY3QgeD0iMTQiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iNDgiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iODIiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTE2IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE1MCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxODQiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTQiIHk9Ijg0IiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iOTMiIHdpZHRoPSIxMjAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjkzIiB3aWR0aD0iODAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTEwIiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTE5IiB3aWR0aD0iMTU3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIxMTkiIHdpZHRoPSIxMzMiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTM2IiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTQ1IiB3aWR0aD0iMTk0IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIxNDUiIHdpZHRoPSIxODYiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTYyIiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTcxIiB3aWR0aD0iMTQxIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIxNzEiIHdpZHRoPSI5OSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxODgiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxOTciIHdpZHRoPSIxNzgiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjE5NyIgd2lkdGg9IjE1MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyMTQiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyMjMiIHdpZHRoPSIxMjUiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjIyMyIgd2lkdGg9IjIwNSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyNDAiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNDkiIHdpZHRoPSIxNjIiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjI0OSIgd2lkdGg9IjExOCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyNjYiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNzUiIHdpZHRoPSIxOTkiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjI3NSIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyOTIiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIzMDEiIHdpZHRoPSIxNDYiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjMwMSIgd2lkdGg9Ijg0IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjMxOCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMyNyIgd2lkdGg9IjE4MyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMzI3IiB3aWR0aD0iMTM3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iNzcwIiB5PSIzNzQiIHdpZHRoPSIxMTAiIGhlaWdodD0iMjgiIHJ4PSI0IiBmaWxsPSIjMzJkMjk2Ii8+PHRleHQgeD0iNzk2IiB5PSIzOTMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMyIgZmlsbD0iI2ZmZiI+RXhlY3V0ZTwvdGV4dD48L3N2Zz4=" data-type="image" data-caption="Figure 4. NWA: the FP_ICF_DATA destination"><img class="kb-shot" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iNDIwIiB2aWV3Qm94PSIwIDAgOTAwIDQyMCI+PHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSI0MjAiIGZpbGw9IiNmZmYiLz48cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjMzU0YTVmIi8+PHRleHQgeD0iMTQiIHk9IjIzIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTUiIGZpbGw9IiNmZmYiPk5XQTogRGVzdGluYXRpb25zPC90ZXh0PjxyZWN0IHk9IjM0IiB3aWR0aD0iOTAwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjZWVmMWY0Ii8+PHJlY3QgeD0iMTQiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iNDgiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iODIiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTE2IiB5PSI0MSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2M5ZDJkYyIvPjxyZWN0IHg9IjE1MCIgeT0iNDEiIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjOWQyZGMiLz48cmVjdCB4PSIxODQiIHk9IjQxIiB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjYzlkMmRjIi8+PHJlY3QgeD0iMTQiIHk9Ijg0IiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iOTMiIHdpZHRoPSIxMjAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjkzIiB3aWR0aD0iODAiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTEwIiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTE5IiB3aWR0aD0iMTU3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIxMTkiIHdpZHRoPSIxMzMiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTM2IiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTQ1IiB3aWR0aD0iMTk0IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIxNDUiIHdpZHRoPSIxODYiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiNjM2NjZDYiLz48cmVjdCB4PSIxNCIgeT0iMTYyIiB3aWR0aD0iODcyIiBoZWlnaHQ9IjI2IiBmaWxsPSIjZjdmOWZiIiBzdHJva2U9IiNlM2U3ZWMiLz48cmVjdCB4PSIyNCIgeT0iMTcxIiB3aWR0aD0iMTQxIiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjOWFhN2I0Ii8+PHJlY3QgeD0iNDUwIiB5PSIxNzEiIHdpZHRoPSI5OSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIxODgiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIxOTciIHdpZHRoPSIxNzgiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjE5NyIgd2lkdGg9IjE1MiIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyMTQiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyMjMiIHdpZHRoPSIxMjUiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjIyMyIgd2lkdGg9IjIwNSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyNDAiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNDkiIHdpZHRoPSIxNjIiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjI0OSIgd2lkdGg9IjExOCIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyNjYiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmN2Y5ZmIiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIyNzUiIHdpZHRoPSIxOTkiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjI3NSIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iI2MzY2NkNiIvPjxyZWN0IHg9IjE0IiB5PSIyOTIiIHdpZHRoPSI4NzIiIGhlaWdodD0iMjYiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2UzZTdlYyIvPjxyZWN0IHg9IjI0IiB5PSIzMDEiIHdpZHRoPSIxNDYiIGhlaWdodD0iOCIgcng9IjIiIGZpbGw9IiM5YWE3YjQiLz48cmVjdCB4PSI0NTAiIHk9IjMwMSIgd2lkdGg9Ijg0IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iMTQiIHk9IjMxOCIgd2lkdGg9Ijg3MiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2Y3ZjlmYiIgc3Ryb2tlPSIjZTNlN2VjIi8+PHJlY3QgeD0iMjQiIHk9IjMyNyIgd2lkdGg9IjE4MyIgaGVpZ2h0PSI4IiByeD0iMiIgZmlsbD0iIzlhYTdiNCIvPjxyZWN0IHg9IjQ1MCIgeT0iMzI3IiB3aWR0aD0iMTM3IiBoZWlnaHQ9IjgiIHJ4PSIyIiBmaWxsPSIjYzNjY2Q2Ii8+PHJlY3QgeD0iNzcwIiB5PSIzNzQiIHdpZHRoPSIxMTAiIGhlaWdodD0iMjgiIHJ4PSI0IiBmaWxsPSIjMzJkMjk2Ii8+PHRleHQgeD0iNzk2IiB5PSIzOTMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMyIgZmlsbD0iI2ZmZiI+RXhlY3V0ZTwvdGV4dD48L3N2Zz4=" width="900" height="420" alt="NWA: the FP_ICF_DATA destination" loading="lazy"></a><figcaption><b>Figure 4.</b> NWA: the FP_ICF_DATA destination</figcaption></figure>
+  </div>
+  <p class="mk-note">Three images in a row become a gallery. Figure 3 has a file-name alt text (<code>SAP-BC-ADS-03</code>), so it gets no caption.</p>
+  <figure class="kb-figure kb-img-missing">Image missing: <code>resources/images/som_ocr/image42.png</code></figure>
+  <p class="mk-note">A missing file shows this box, logs <code>IMAGE_MISSING</code> at build time and appears on the Quality page.</p>
 </div>
-<!-- RELATED :: END -->
-<!-- 1. DOCUMENT PAGE :: END -->
+<!-- IMAGES :: END -->
+
+<!-- CODE AND TABLES :: START -->
+<div class="mk-step">5. Code blocks and long tables</div>
+<div class="mk-card">
+  <div class="kb-code">
+    <span class="lang">bash</span><button class="copy kb-noprint" type="button" onclick="this.textContent='Copied';setTimeout(()=>this.textContent='Copy',2000)">Copy</button>
+<pre>openssl pkcs12 -in ReaderRights.pfx -out ReaderRights.pem -nodes
+openssl x509 -in ReaderRights.pem -noout -enddate
+# notAfter=Jan  9 23:59:59 2023 GMT
+cp ReaderRights.pfx /usr/sap/BJP/SYS/global/security/data/
+ls -l /usr/sap/BJP/SYS/global/security/data/ReaderRights.pfx</pre>
+    <button class="more kb-noprint" type="button">Show all 42 lines</button>
+  </div>
+  <div class="kb-table-wrap">
+    <table class="uk-table uk-table-small uk-table-striped" style="margin:0;font-size:0.8rem">
+      <thead><tr><th>SID</th><th>Client</th><th>Service</th><th>Status</th></tr></thead>
+      <tbody><tr><td>BJT</td><td>100</td><td>FP_ICF_DATA_T</td><td>active</td></tr><tr><td>BJA</td><td>101</td><td>FP_ICF_DATA_A</td><td>active</td></tr><tr><td>BJP</td><td>102</td><td>FP_ICF_DATA_P</td><td>active</td></tr><tr><td>BJT</td><td>103</td><td>FP_ICF_DATA_T</td><td>active</td></tr><tr><td>BJA</td><td>104</td><td>FP_ICF_DATA_A</td><td>active</td></tr><tr><td>BJP</td><td>105</td><td>FP_ICF_DATA_P</td><td>active</td></tr><tr><td>BJT</td><td>106</td><td>FP_ICF_DATA_T</td><td>active</td></tr><tr><td>BJA</td><td>107</td><td>FP_ICF_DATA_A</td><td>active</td></tr><tr><td>BJP</td><td>108</td><td>FP_ICF_DATA_P</td><td>active</td></tr><tr><td>BJT</td><td>109</td><td>FP_ICF_DATA_T</td><td>active</td></tr><tr><td>BJA</td><td>110</td><td>FP_ICF_DATA_A</td><td>active</td></tr><tr><td>BJP</td><td>111</td><td>FP_ICF_DATA_P</td><td>active</td></tr><tr><td>BJT</td><td>112</td><td>FP_ICF_DATA_T</td><td>active</td></tr><tr><td>BJA</td><td>113</td><td>FP_ICF_DATA_A</td><td>active</td></tr><tr><td>BJP</td><td>114</td><td>FP_ICF_DATA_P</td><td>active</td></tr><tr><td>BJT</td><td>115</td><td>FP_ICF_DATA_T</td><td>active</td></tr><tr><td>BJA</td><td>116</td><td>FP_ICF_DATA_A</td><td>active</td></tr><tr><td>BJP</td><td>117</td><td>FP_ICF_DATA_P</td><td>active</td></tr></tbody>
+    </table>
+  </div>
+  <p class="mk-note">Copy button and language label on every code block; blocks over 30 lines fold to 20 with "Show all". Long tables scroll inside a frame with a sticky header; wide tables scroll sideways.</p>
+</div>
+<!-- CODE AND TABLES :: END -->
 
 <!-- DASHBOARD :: START -->
-<div class="mk-step">5. Dashboard: hero bar, Diátaxis grid with tier mix, best documents shelf</div>
+<div class="mk-step">6. Dashboard: hero bar, Diátaxis grid with tier mix, best documents, Activity card</div>
 <div class="kb-hero-bar">
   <a class="kb-hero-stat" href="#"><span class="num">1034</span><span class="label">Documents</span></a><span class="kb-hero-divider"></span>
   <a class="kb-hero-stat" href="#"><span class="num">&#9733; 37</span><span class="label">Exemplary</span></a><span class="kb-hero-divider"></span>
@@ -223,18 +399,27 @@ table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
 </div>
 <h3 class="uk-h5" style="margin:18px 0 8px">&#9733; Best documents</h3>
 <div class="kb-best">
-  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="83 100"/></svg><span class="num">83</span></span>
-    <div><div class="t">SAProuter Permission Table Reference</div><div class="s">Reference, 2026</div></div></div>
-  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="82 100"/></svg><span class="num">82</span></span>
-    <div><div class="t">SAP DRCCE Upgrade</div><div class="s">Explanation, 2026</div></div></div>
-  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="80 100"/></svg><span class="num">80</span></span>
-    <div><div class="t">BWP DB13 DBA Check Fails with ORA-01031 After Upgrade</div><div class="s">How-to guide, 2026</div></div></div>
+  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="83 100" stroke-linecap="round"/></svg><span class="num">83</span></span><div><div class="t">SAProuter Permission Table Reference</div><div class="s">Reference, 2026</div></div></div>
+  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="82 100" stroke-linecap="round"/></svg><span class="num">82</span></span><div><div class="t">SAP DRCCE Upgrade</div><div class="s">Explanation, 2026</div></div></div>
+  <div class="kb-best-card"><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#f5b301" stroke-width="4" stroke-dasharray="80 100" stroke-linecap="round"/></svg><span class="num">80</span></span><div><div class="t">BWP DB13 DBA Check Fails with ORA-01031 After Upgrade</div><div class="s">How-to guide, 2026</div></div></div>
 </div>
-<p class="mk-note">The shelf shows the best documents of each Diátaxis type, in a collapsible section like the others. It is the main place where good work is visible.</p>
+<h3 class="uk-h5" style="margin:18px 0 8px">Activity</h3>
+<div class="kb-activity">
+  <ul class="uk-tab" data-uk-tab="connect: #mk-activity">
+    <li class="uk-active"><a href="#">Changes</a></li><li><a href="#">Incidents</a></li><li><a href="#">Events</a></li><li><a href="#">Monitoring</a></li>
+  </ul>
+  <div class="uk-switcher" id="mk-activity" style="font-size:0.82rem">
+    <div>2026-08-17 · Change 79784: BWP Upgrade Phase 1 (Batch 1), SAP_UI Component Upgrade<br>2026-…  · CR #78389: SAP Cloud Connector Upgrade</div>
+    <div>Latest incidents, as in today's alert bar.</div>
+    <div>This month's events, as in today's events panel.</div>
+    <div>Monitoring documents grouped by Periodicity.</div>
+  </div>
+</div>
+<p class="mk-note">The four stacked dashboard panels become one card with tabs; empty tabs are hidden and the last tab is remembered.</p>
 <!-- DASHBOARD :: END -->
 
 <!-- DATATABLE :: START -->
-<div class="mk-step">6. Every document list gets a sortable Quality column</div>
+<div class="mk-step">7. Every document list gets a sortable Quality column</div>
 <div class="mk-card">
   <table class="mk-table">
     <thead><tr><th>Date</th><th>Title</th><th>Status</th><th>Quality</th></tr></thead>
@@ -250,20 +435,20 @@ table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
 <!-- DATATABLE :: END -->
 
 <!-- QUALITY PAGE :: START -->
-<div class="mk-step">7. Quality page (logo menu): quick wins for maintainers</div>
+<div class="mk-step">8. Quality page (logo menu): quick wins for maintainers</div>
 <div class="mk-card">
   <h3 class="uk-h5" style="margin-top:0">Quick wins: one change lifts these documents to the next tier</h3>
   <ul class="uk-list kb-wins" style="margin:0">
-    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#32d296" stroke-width="4" stroke-dasharray="74 100"/></svg><span class="num">74</span></span><a href="#">CR #78389: SAP Cloud Connector Upgrade</a><span class="act">Add a Summary key: Exemplary</span></li>
-    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#8592a6" stroke-width="4" stroke-dasharray="57 100"/></svg><span class="num">57</span></span><a href="#">Change 37486: upgrade Solaris 11.4 huy / hasselt</a><span class="act">Add a Summary key: Complete</span></li>
-    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#c3c9d2" stroke-width="4" stroke-dasharray="39 100"/></svg><span class="num">39</span></span><a href="#">SAP Basis notes on Monday, July 05, 2021</a><span class="act">Add a Summary key: Basic</span></li>
+    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#32d296" stroke-width="4" stroke-dasharray="74 100" stroke-linecap="round"/></svg><span class="num">74</span></span><a href="#">CR #78389: SAP Cloud Connector Upgrade</a><span class="act">Add a Summary key: Exemplary</span></li>
+    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#8592a6" stroke-width="4" stroke-dasharray="57 100" stroke-linecap="round"/></svg><span class="num">57</span></span><a href="#">Change 37486: upgrade Solaris 11.4 huy / hasselt</a><span class="act">Add a Summary key: Complete</span></li>
+    <li><span class="kb-q-emblem small"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#c3c9d2" stroke-width="4" stroke-dasharray="39 100" stroke-linecap="round"/></svg><span class="num">39</span></span><a href="#">SAP Basis notes on Monday, July 05, 2021</a><span class="act">Add a Summary key: Basic</span></li>
   </ul>
-  <p class="mk-note">The page also shows the tier mix per type, the Exemplary list, broken links, documents without a Summary, and possible duplicates side by side with their scores.</p>
+  <p class="mk-note">The page also shows the tier mix per type, the Exemplary list, broken links, missing images, documents without a Summary, and possible duplicates side by side with their scores.</p>
 </div>
 <!-- QUALITY PAGE :: END -->
 
 <!-- TIER LEGEND :: START -->
-<div class="mk-step">8. Tiers</div>
+<div class="mk-step">9. Tiers</div>
 <div class="mk-card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
   <span class="kb-q-chip exemplary"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L10 14.9 4.4 18l1.3-6.2L1 7.5l6.3-.7z"/></svg>Exemplary 75+</span>
   <span class="kb-q-chip complete">Complete 60 to 74</span>
@@ -274,5 +459,19 @@ table.mk-table td { padding: 6px; border-bottom: 1px solid #f2f2f2; }
 <!-- TIER LEGEND :: END -->
 </div>
 <!-- PAGE :: END -->
+<!-- PAGE SCRIPTS :: START -->
+<script>
+// Mockup only: the chevron and the ring open or close the info card.
+(function () {
+  var card = document.getElementById("mk-card"), toggle = card.querySelector(".kb-info-toggle");
+  function setOpen(open) { card.classList.toggle("kb-open", open); toggle.setAttribute("aria-expanded", open); }
+  toggle.addEventListener("click", function () { setOpen(!card.classList.contains("kb-open")); });
+  card.querySelectorAll(".uk-tab a").forEach(function (a) { a.addEventListener("click", function () { setOpen(true); }); });
+  document.querySelector("[data-mk-open=quality]").addEventListener("click", function (e) {
+    e.preventDefault(); setOpen(true); UIkit.tab(card.querySelector(".uk-tab")).show(1); card.scrollIntoView({behavior: "smooth"});
+  });
+})();
+</script>
+<!-- PAGE SCRIPTS :: END -->
 </body>
 </html>
