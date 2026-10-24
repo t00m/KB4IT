@@ -32,8 +32,8 @@ PRIORITY_CSS = {
 STATUS_CSS = {
     'New': 'uk-label-danger',
     'Open': 'uk-label-danger',
-    'Draft': 'uk-label-warning',
-    'Planned': 'uk-label-warning',
+    'Draft': 'kb-label-muted',
+    'Planned': 'kb-label-muted',
     'Completed': 'uk-label-success',
     'Finished': 'uk-label-success',
     'Released': 'uk-label-success',
