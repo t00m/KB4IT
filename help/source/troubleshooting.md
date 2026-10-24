@@ -40,6 +40,16 @@ The techdoc theme found an image in a document whose file is not in `source/`. T
 
 Copy the image file to that path under `source/`, usually `source/resources/images/`, or correct the path in the document. Paths are relative to `source/`. Images on other sites (`https://...`) are never reported.
 
+## The build warns LINK_NO_EXTENSION {#link-no-extension}
+
+### Cause
+
+A document links to another one without the `.md` extension, such as `[backups](BACKUP-POLICY)`, or to a `.adoc` file from an older repository. KB4IT only turns links that end in `.md` into links to the published page, so this one stays as written and fails on disk and on most web servers. The warning names the document it most likely means: `LINK_NO_EXTENSION from=<doc> to=<link> suggest=<file>.md`. When no such document exists, the build warns `LINK_BROKEN` instead.
+
+### Fix
+
+Add `.md` to the link, or write the suggested file name: `[backups](BACKUP-POLICY.md)`. `kb4it verify` lists every such link at once.
+
 ## The build stops with CONFIG_KEY_MISSING {#config-key}
 
 ### Cause

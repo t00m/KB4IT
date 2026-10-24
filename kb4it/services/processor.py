@@ -237,7 +237,7 @@ class Processor(Service):
                 links[doc_id] = links_cur[doc_id]
                 continue
             try:
-                found, _anchors = scan_document(entry["content"])
+                found, _anchors, _bare = scan_document(entry["content"])
             except Exception as err:
                 self.log.warning(f"[LINKS] SCAN_FAIL doc={doc_id} error={err}")
                 found = []

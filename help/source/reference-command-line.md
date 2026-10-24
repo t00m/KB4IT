@@ -20,7 +20,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it build --force CONFIG` | Rebuilds everything |
 | `kb4it build --trace CONFIG` | Builds and shows how long each part of the build took; see [Build timings](#trace) |
 | `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [Preview while you write](howto-preview.md) |
-| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `ANCHOR_MISSING`) and the theme's own rules without building |
+| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building |
 | `kb4it info CONFIG` | Shows the main settings |
 | `kb4it themes` | Lists the installed themes |
 | `kb4it apps THEME` | Lists the sample apps of a theme |

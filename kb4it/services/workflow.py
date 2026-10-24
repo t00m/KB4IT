@@ -20,7 +20,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError, ConfigError, KB4ITError, ThemeError
 from kb4it.core.lock import registry_lock
 from kb4it.core.mdconfig import load_settings
-from kb4it.core.mdlinks import scan_document
+from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.service import Service
 from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, fences_in_blocks,
                              get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
@@ -113,7 +113,7 @@ class Workflow(Service):
             self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
 
     def _verify_links(self, docs):
-        """LINK_BROKEN and ANCHOR_MISSING lines for links between source documents."""
+        """LINK_BROKEN, LINK_NO_EXTENSION and ANCHOR_MISSING lines for links between source documents."""
         scanned = {}
         for doc in docs:
             try:
@@ -122,7 +122,13 @@ class Workflow(Service):
                 self.log.warning(f"[LINKS] SCAN_FAIL doc={os.path.basename(doc)} error={e}")
         problems = []
         for name in sorted(scanned):
-            links, _anchors = scanned[name]
+            links, _anchors, bare = scanned[name]
+            for path in bare:
+                suggestion = suggest_md(path, set(scanned))
+                if suggestion:
+                    problems.append(f"LINK_NO_EXTENSION from={name} to={path} suggest={suggestion}")
+                else:
+                    problems.append(f"LINK_BROKEN from={name} to={path}")
             for path, fragment in links:
                 target = os.path.normpath(path).replace(os.sep, "/")
                 if target not in scanned:

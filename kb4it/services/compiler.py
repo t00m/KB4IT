@@ -21,6 +21,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
 from kb4it.core.mdconfig import load_settings, sanitize_html
+from kb4it.core.mdlinks import suggest_md
 from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
@@ -74,6 +75,8 @@ class Compiler(Service):
         self.srvthm = theme
         self.srvprc = processor
         self.links = {}
+        # Links written without an extension or to a .adoc file, per document.
+        self.bare_links = {}
         self._links_lock = threading.Lock()
         # Documents whose page could not be made, with the reason; the build fails at the end.
         self.failed = []
@@ -151,6 +154,13 @@ class Compiler(Service):
             for path, _fragment in links:
                 if os.path.normpath(path) not in known:
                     self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
+        for doc, paths in sorted(self.bare_links.items()):
+            for path in paths:
+                suggestion = suggest_md(path, known)
+                if suggestion:
+                    self.log.warning(f"[COMPILER] LINK_NO_EXTENSION from={doc} to={path} suggest={suggestion}")
+                else:
+                    self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
 
     def _compile_job(self, data):
         """Compile one document in a worker thread; the trace records each one as a compile span."""
@@ -201,6 +211,7 @@ class Compiler(Service):
                 html_fragment = sanitize_html(html_fragment)
             with self._links_lock:
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)
+                self.bare_links[os.path.basename(doc)] = list(md.kb4it_bare_links)
             # Sections for the full-text search index, cached per document for incremental builds.
             save_doc_sections(self.srvbes.get_path("root"), os.path.basename(doc), html_fragment)
             # Documents that link here, at the end of the article (not part of the search index).

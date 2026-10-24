@@ -1,7 +1,12 @@
 import markdown
 import pytest
 
-from kb4it.core.mdlinks import MdLinkExtension, rewrite_md_href
+from kb4it.core.mdlinks import (
+    MdLinkExtension,
+    bare_link_path,
+    rewrite_md_href,
+    suggest_md,
+)
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 
@@ -46,3 +51,28 @@ def test_build_rewrites_links_and_reports_broken(tmp_path, home):
     html = (repo / "target" / "a.html").read_text(encoding="utf-8")
     assert 'href="b.html#fields"' in html
     assert "LINK_BROKEN from=a.md to=missing.md" in result.stdout
+
+
+@pytest.mark.parametrize("href, expected", [
+    ("b", "b"), ("dir/b", "dir/b"), ("my%20page", "my page"), ("old.adoc", "old.adoc"), ("OLD.ADOC#x", "OLD.ADOC"),
+    ("b.md", None), ("folder/", None), ("#part", None), ("/abs/b", None), ("mailto:x@y.org", None),
+    ("https://x.org/page", None), ("resources/images/x.png", None), ("b.html", None), ("", None),
+])
+def test_bare_link_path(href, expected):
+    assert bare_link_path(href) == expected
+
+
+def test_suggest_md():
+    known = {"b.md", "dir/c.md", "old.md"}
+    assert suggest_md("b", known) == "b.md"
+    assert suggest_md("dir/c", known) == "dir/c.md"
+    assert suggest_md("old.adoc", known) == "old.md"
+    assert suggest_md("gone", known) is None
+
+
+def test_extension_records_bare_links_without_rewriting():
+    md = markdown.Markdown(extensions=["extra", MdLinkExtension()])
+    html = md.convert("[a](b) [c](d.md) [e](old.adoc) [f](https://x.org/g)\n")
+    assert 'href="b"' in html and 'href="old.adoc"' in html
+    assert md.kb4it_links == [("d.md", "")]
+    assert md.kb4it_bare_links == ["b", "old.adoc"]
