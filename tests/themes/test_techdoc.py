@@ -209,3 +209,10 @@ def test_apps_list_worktype_after_category():
         conf = json.loads((ROOT / "kb4it/resources/themes/techdoc/apps" / app / "config/repo.json").read_text(encoding="utf-8"))
         for key in ("datatable", "menu"):
             assert conf[key].index("WorkType") == conf[key].index("Category") + 1
+
+
+def test_datatable_header_scrolls_with_the_body(site):
+    # With scrollY the header is a separate table; only scrollX makes it follow a horizontal scroll.
+    html = read(site, "all.html")
+    setup = html[html.index("DATATABLES SETUP :: START"):html.index("DATATABLES SETUP :: END")]
+    assert re.search(r"scrollY:[^\n]*\n", setup) and re.search(r"scrollX:\s*true", setup)

@@ -40,6 +40,7 @@
                     deferRender:    true,
                     autoWidth:      false,
                     scrollY:        'calc(100vh - 200px)',
+                    scrollX:        true,
                     scrollCollapse: false,
                     scroller:       false,
                     stateSave: false,
