@@ -64,7 +64,7 @@ def test_build_python_makes_wheel_and_sdist(tmp_path):
     out.mkdir()
     (out / "kb4it-0.0.1-py3-none-any.whl").write_bytes(b"stale")
     env = dict(os.environ, KB4IT_DIST_OUT=str(out))
-    result = subprocess.run([BASH, str(DIST / "build" / "build_python.sh")], env=env, capture_output=True, text=True)
+    result = subprocess.run([BASH, str(DIST / "build" / "build_python.sh")], env=env, capture_output=True, encoding="utf-8")
     # The script's own output is the only record of why a build failed.
     assert result.returncode == 0, (f"build_python.sh exit {result.returncode}\n--- stdout\n{result.stdout}"
                                     f"\n--- stderr\n{result.stderr}")
