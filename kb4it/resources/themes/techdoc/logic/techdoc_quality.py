@@ -6,6 +6,7 @@ its backlink count. Every point comes from a named Check, so the page can explai
 
 import copy
 import glob
+import json
 import os
 import re
 from dataclasses import dataclass, field
@@ -15,6 +16,7 @@ from urllib.parse import unquote, urlsplit
 from techdoc_media import resolve_src
 
 from kb4it.core.mdlinks import bare_link_path, rewrite_md_href
+from kb4it.core.util import html_id_for
 
 DIMENSIONS = ('findable', 'structured', 'complete', 'connected', 'current')
 MAXIMA = {'findable': 15, 'structured': 25, 'complete': 25, 'connected': 15, 'current': 20}
@@ -317,3 +319,30 @@ def assess(doc, prof, skeletons, today):
     dims = {d: max(0, min(MAXIMA[d], sum(c.points for c in checks if c.dim == d))) for d in DIMENSIONS}
     score = round(sum(dims.values()))
     return Assessment(score, tier_of(score, values(doc, 'Status'), prof), dims, checks, peer_of(doc))
+
+
+def peer_stats(assessments):
+    """Ranks and medians per peer group, for quality-index.js; retired documents are left out."""
+    groups = {}
+    for doc_id, a in assessments.items():
+        if a.tier != 'retired':
+            groups.setdefault(a.peer, []).append((doc_id, a))
+    stats = {'peers': {}, 'docs': {}}
+    for peer, members in sorted(groups.items()):
+        median = {}
+        for dim in DIMENSIONS:
+            ordered = sorted(a.dims[dim] for _doc, a in members)
+            median[dim] = round(ordered[(len(ordered) - 1) // 2], 1)
+        stats['peers'][peer] = {'count': len(members), 'median': median}
+        scores = [a.score for _doc, a in members]
+        for doc_id, a in members:
+            stats['docs'][html_id_for(doc_id)] = {
+                'score': a.score, 'tier': a.tier, 'peer': peer,
+                'rank': 1 + sum(1 for other in scores if other > a.score),
+            }
+    return stats
+
+
+def index_js(stats):
+    """The content of quality-index.js."""
+    return 'window.KB_QUALITY = ' + json.dumps(stats, ensure_ascii=False, separators=(',', ':')) + ';\n'

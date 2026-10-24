@@ -1,6 +1,7 @@
 """techdoc document page: images, header strip, Summary, banners and the info card."""
 
 import importlib.util
+import json
 import re
 import sys
 
@@ -135,3 +136,28 @@ def test_strip_date_without_time_shows_only_the_date():
     assert docpage.date_parts("2026-10-01") == ("2026-10-01", "")
     assert docpage.date_parts("2026-10-01 08:15") == ("2026-10-01", "08:15")
     assert docpage.date_parts("2026-10-01 08:15:59") == ("2026-10-01", "08:15")
+
+
+def test_quality_index_is_written(page_site):
+    text = (page_site["target"] / "quality-index.js").read_text(encoding="utf-8")
+    assert text.startswith("window.KB_QUALITY = ")
+    data = json.loads(text[len("window.KB_QUALITY = "):].rstrip(";\n"))
+    assert isinstance(data["docs"]["full.html"]["score"], int)
+    assert "plain.html" not in data["docs"]          # Status: Obsolete is retired
+
+
+@pytest.fixture(scope="module")
+def off_site(tmp_path_factory):
+    base = tmp_path_factory.mktemp("techdoc-quality-off")
+    home = base / "home"
+    home.mkdir()
+    cfg = write_repo(base / "repo", "techdoc", {"full.md": DOCS["full.md"]}, quality=False)
+    result = run_kb4it("build", cfg, cwd=base, home=home)
+    assert result.returncode == 0, result.stdout
+    return {"target": base / "repo" / "target", "log": result.stdout}
+
+
+def test_quality_off_removes_the_index(off_site):
+    assert not (off_site["target"] / "quality-index.js").exists()
+    html = read(off_site, "full.html")
+    assert "kb-q-" not in html and "kb-info-quality" not in html

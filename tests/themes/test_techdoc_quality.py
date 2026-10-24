@@ -95,3 +95,17 @@ def test_assess_gives_tier_and_peer(prof, skeletons, doc):
     assert quality.assess(doc("# T\n", work_type="Change"), prof, skeletons, date(2026, 10, 24)).peer == "Change"
     assert quality.tier_of(75, [], prof) == "exemplary" and quality.tier_of(74, [], prof) == "complete"
     assert quality.tier_of(40, [], prof) == "basic" and quality.tier_of(39, [], prof) == "stub"
+
+
+def test_peer_stats_ranks_within_peers_and_skips_retired():
+    A = quality.Assessment
+    dims = lambda v: {k: v for k in ("findable", "structured", "complete", "connected", "current")}
+    stats = quality.peer_stats({"a.md": A(80, "exemplary", dims(16), [], "Reference"),
+                                "b.md": A(50, "basic", dims(10), [], "Reference"),
+                                "c.md": A(0, "retired", dims(0), [], "Reference"),
+                                "d.md": A(62, "complete", dims(12), [], "Change")})
+    assert stats["peers"]["Reference"]["count"] == 2 and stats["peers"]["Change"]["count"] == 1
+    assert stats["docs"]["a.html"]["rank"] == 1 and stats["docs"]["b.html"]["rank"] == 2
+    assert stats["docs"]["d.html"]["rank"] == 1 and stats["peers"]["Change"]["median"]["findable"] == 12
+    assert "c.html" not in stats["docs"]
+    assert quality.index_js(stats).startswith("window.KB_QUALITY = {")

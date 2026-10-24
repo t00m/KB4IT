@@ -20,7 +20,8 @@ from lxml import etree
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_media import enhance_images
-from techdoc_records import event_type
+from techdoc_quality import DocInput, assess, index_js, load_skeletons, peer_stats, profile
+from techdoc_records import event_type, work_type
 
 from kb4it.core.util import (
     get_human_datetime,
@@ -162,8 +163,43 @@ class Theme(DashboardMixin, DocumentTheme):
         self.srvdtb.add_document_key('events.md', 'Title', 'Events')
         self.srvdtb.add_document_key('events.md', 'SystemPage', 'Yes')
 
+    def quality_on(self):
+        """Quality scores are on unless repo.json sets "quality": false or theme.json turns them off."""
+        repo = self.srvbes.get_dict('repo') or {}
+        return repo.get('quality', True) is not False and profile(self.srvbes.get_dict('theme')).get('enabled', True)
+
+    def assess_documents(self):
+        """Score every document once per build; build_page and quality-index.js read the results."""
+        self.quality, self.quality_stats = {}, {}
+        if not self.quality_on():
+            return
+        prof = profile(self.srvbes.get_dict('theme'))
+        theme_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        skeletons = load_skeletons(os.path.join(theme_dir, 'templates', 'skeletons'))
+        source_dir = self.srvbes.get_path('source')
+        plan = self.srvbes.get_plan()
+        backlinks = (getattr(plan, 'backlinks', None) or {}) if plan is not None else {}
+        docs = [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)]
+        known = set(docs)
+        today = datetime.now().date()
+        for doc_id in docs:
+            path = os.path.join(source_dir, doc_id)
+            try:
+                with open(path, encoding='utf-8') as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            meta = {key: list(self.srvdtb.get_values(doc_id, key)) for key in self.srvdtb.get_doc_keys(doc_id)}
+            doc = DocInput(text, meta, len(backlinks.get(doc_id, [])), known, source_dir, work_type(self.srvdtb, doc_id))
+            self.quality[doc_id] = assess(doc, prof, skeletons, today)
+        self.quality_stats = peer_stats(self.quality)
+        tiers = [a.tier for a in self.quality.values()]
+        counts = ' '.join(f'{t}={tiers.count(t)}' for t in ('exemplary', 'complete', 'basic', 'stub', 'retired'))
+        self.log.info(f"[THEME] QUALITY docs={len(tiers)} {counts}")
+
     def build(self):
         """Create standard pages for default theme"""
+        self.assess_documents()
         var = self.get_theme_var()
         self.build_page_events()
         self.build_page_properties()
@@ -290,13 +326,19 @@ class Theme(DashboardMixin, DocumentTheme):
             # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
 
     def post_deploy_activities(self):
-        """Build the admin area once the site has been deployed.
+        """Write quality-index.js, then build the admin area once the site has been deployed.
 
         Only runs when repo.json sets "admin": true. It writes an admin
         subdirectory in the target with a backup page and two zip files:
         one holding the source Markdown documents, another holding the
         whole compiled site.
         """
+        index_path = os.path.join(self.srvbes.get_path('target'), 'quality-index.js')
+        if getattr(self, 'quality', None):
+            with open(index_path, 'w', encoding='utf-8') as fh:
+                fh.write(index_js(self.quality_stats))
+        elif os.path.exists(index_path):
+            os.unlink(index_path)
         repo = self.srvbes.get_dict('repo')
         if not repo.get('admin', False):
             self.log.debug("[ADMIN] DISABLED")

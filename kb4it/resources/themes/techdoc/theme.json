@@ -24,6 +24,20 @@
         {"name": "Organisation", "keys": ["Author", "Team", "Project", "Milestone", "Company"]},
         {"name": "Lifecycle", "keys": ["Status", "Priority", "Date", "Periodicity", "Public"]}
     ],
+    "quality": {
+        "tiers": {"exemplary": 75, "complete": 60, "basic": 40},
+        "targets": {"How-to guide": 150, "Reference": 200, "Explanation": 500, "Tutorial": 800},
+        "record_target": 60,
+        "half_life": {"How-to guide": 3, "Tutorial": 3, "Reference": 4, "Explanation": 8},
+        "final_status": ["Released", "Completed", "Finished", "Successful"],
+        "retired_status": ["Obsolete", "Deprecated", "Withdrawn", "Rejected"],
+        "known_values": {
+            "Status": ["New", "Open", "Draft", "Planned", "Completed", "Released", "Finished", "Successful",
+                       "Deprecated", "Obsolete", "Withdrawn", "Rejected"],
+            "Priority": ["Critical", "Very high", "High", "Medium", "Normal", "Low"],
+            "DocType": ["Tutorial", "How-to guide", "Reference", "Explanation"]
+        }
+    },
     "info_tabs": {
         "details": {"print": true},
         "history": {"print": false}
