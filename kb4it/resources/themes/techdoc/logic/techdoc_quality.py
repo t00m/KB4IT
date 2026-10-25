@@ -231,11 +231,14 @@ def structured(doc, prof, skeletons):
     weight = 16 if doc.work_type else 8
     if skeleton and skeleton.headings:
         share = weight / len(skeleton.headings)
-        for expected in skeleton.headings:
+        for index, expected in enumerate(skeleton.headings):
+            maximum = (MAXIMA['structured'] - sum(check.max for check in checks)
+                       if index == len(skeleton.headings) - 1 else share)
             pattern = SYNONYMS.get(expected, re.escape(expected[:6]))
             found = any(re.search(pattern, h) for h in lower)
             title = expected.capitalize()
-            checks.append(Check('structured', f'{title} section', f'Add the {title} section', share if found else 0, share,
+            checks.append(Check('structured', f'{title} section', f'Add the {title} section',
+                                maximum if found else 0, maximum,
                                 'check-skeleton-section',
                                 f'Add a "## {title}" section with its content: the {kind} skeleton expects it.'))
     else:
