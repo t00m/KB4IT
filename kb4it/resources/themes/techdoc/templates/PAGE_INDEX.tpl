@@ -81,7 +81,6 @@ def prop_url(key, value):
         </div>
     </section>
     <!-- DOCUMENT TYPES :: END -->
-% endif
 
 % if var['page']['open_items']:
     <!-- OPEN ITEMS :: START -->
