@@ -71,10 +71,10 @@ Measured before the change on `/tmp/kb4it-wp7-perf` (1,000 generated documents, 
   5. Log `[PROCESSOR] HEADER_CACHE doc=<name> action=reuse` or `[PROCESSOR] HEADER_CACHE doc=<name> action=parse reason=<missing|changed|warning>` at debug level.
 - The rest of the metadata index, sorting, `Date` conversion and signature logic is untouched.
 
-- [ ] RED: a build stores `file_hash` per document, a second build logs one `action=reuse` per document and no `action=parse`, and an edited document logs one `action=parse` with the others reused.
-- [ ] GREEN: implement. Check `kbdict.json` from the 1,000-document site still gives the same sorted metadata and the same compiled count on the second build.
-- [ ] Run the header cache test file and `tests/core/test_metadata_order.py tests/core/test_metadata_pages.py tests/core/test_build_state.py -q`.
-- [ ] Commit `perf(processor): reuse parsed headers when a document did not change`.
+- [x] RED: a build stores `file_hash` per document, a second build logs one `action=reuse` per document and no `action=parse`, and an edited document logs one `action=parse` with the others reused.
+- [x] GREEN: implement. Check `kbdict.json` from the 1,000-document site still gives the same sorted metadata and the same compiled count on the second build.
+- [x] Run the header cache test file and `tests/core/test_metadata_order.py tests/core/test_metadata_pages.py tests/core/test_build_state.py -q`.
+- [x] Commit `perf(processor): reuse parsed headers when a document did not change`.
 
 ### Task 3: PyYAML version invalidation
 

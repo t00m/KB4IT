@@ -56,3 +56,66 @@ def test_parser_reports_an_ignored_frontmatter_title(tmp_path):
     assert valid is True and reason == "Success" and warned is True
     assert keys["Title"] == ["Real"]
     assert get_markdown_attributes(str(path)) == (keys, True, "Success")
+
+
+def _header_actions(repo):
+    import re
+    text = (repo / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
+    return re.findall(r"\[PROCESSOR\] HEADER_CACHE doc=(\S+) action=(\w+)", text)
+
+
+def _build(cfg, tmp_path, home):
+    result = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    return result
+
+
+def test_second_build_reuses_every_header(tmp_path, home):
+    repo = tmp_path / "repo"
+    cfg = write_repo(repo, "techdoc", {
+        "a.md": page("A", Tag="x"),
+        "b.md": page("B", Tag="y"),
+        "c.md": page("C", Tag="z"),
+    })
+    _build(cfg, tmp_path, home)
+    cache = json.loads((repo / "var" / "db" / "kbdict.json").read_text(encoding="utf-8"))
+    assert all(len(entry["file_hash"]) == 128 for entry in cache["document"].values())
+
+    result = _build(cfg, tmp_path, home)
+    actions = _header_actions(repo)
+    assert sorted(name for name, action in actions if action == "reuse") == ["a.md", "b.md", "c.md"]
+    assert [name for name, action in actions if action == "parse"] == []
+    assert "compiled=0" in result.stdout
+
+
+def test_editing_one_document_parses_only_that_header(tmp_path, home):
+    repo = tmp_path / "repo"
+    cfg = write_repo(repo, "techdoc", {
+        "a.md": page("A", Tag="x"),
+        "b.md": page("B", Tag="y"),
+        "c.md": page("C", Tag="z"),
+    })
+    _build(cfg, tmp_path, home)
+    (repo / "source" / "b.md").write_text(page("B", Tag="y", body="Changed."), encoding="utf-8")
+
+    _build(cfg, tmp_path, home)
+    actions = _header_actions(repo)
+    assert [name for name, action in actions if action == "parse"] == ["b.md"]
+    assert sorted(name for name, action in actions if action == "reuse") == ["a.md", "c.md"]
+
+
+def test_a_frontmatter_title_warns_on_every_build(tmp_path, home):
+    repo = tmp_path / "repo"
+    cfg = write_repo(repo, "techdoc", {
+        "a.md": page("A", Tag="x"),
+        "warned.md": page("Real", Title="Wrong", Tag="x"),
+    })
+    _build(cfg, tmp_path, home)
+    cache = json.loads((repo / "var" / "db" / "kbdict.json").read_text(encoding="utf-8"))
+    assert cache["document"]["warned.md"]["warned"] is True
+
+    _build(cfg, tmp_path, home)
+    actions = dict(_header_actions(repo))
+    assert actions["warned.md"] == "parse" and actions["a.md"] == "reuse"
+    log = (repo / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
+    assert "DOC_WARN doc=warned.md reason=title_in_frontmatter_ignored" in log

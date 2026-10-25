@@ -19,8 +19,10 @@ from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
 from kb4it.core.service import Service
 from kb4it.services.addpage import ADD_DOC
+from kb4it.core.documents import parse_markdown_attributes
+from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
-from kb4it.core.util import (get_document_attributes, get_hash_from_body,
+from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
                              SOURCE_ENCODING, timeit, tree_hash)
@@ -115,18 +117,47 @@ class Processor(Service):
                 self.plan.invalid_docs.append((docId, "reserved_name"))
                 continue
 
-            # Get metadata
-            keys, valid, reason = get_document_attributes(filepath)
-            self.log.debug(f"[PROCESSOR] DOC_VALID doc={os.path.basename(filepath)} valid={valid} reason={reason}")
+            # Read the file once. The byte hash lets the next build reuse the parsed header.
+            try:
+                content, file_hash = read_document(filepath)
+            except Exception as err:
+                self.log.error(f"[UTIL] DOC_INVALID doc={docId} reason=error error={err}")
+                self.plan.invalid_docs.append((docId, str(err)))
+                continue
+
+            current = (self.kbdict_cur.get("document") or {}).get(docId) or {}
+            cached = bool(current.get("file_hash")) and current.get("file_hash") == file_hash \
+                and not current.get("warned", False)
+            if cached:
+                keys = current.get("keys") or {}
+                valid, reason, warned = True, "Success", False
+                b_hash = current.get("body_hash")
+                m_hash = current.get("metadata_hash")
+                cache_action, cache_reason = "reuse", "unchanged"
+            else:
+                keys, valid, reason, warned = parse_markdown_attributes(content, docId)
+                if current.get("warned"):
+                    cache_reason = "warning"
+                elif current.get("file_hash"):
+                    cache_reason = "changed"
+                else:
+                    cache_reason = "missing"
+                cache_action = "parse"
+                if valid:
+                    b_hash = get_hash_from_body(filepath, content=content)
+                    m_hash = get_hash_from_dict(keys)
+                else:
+                    b_hash = m_hash = None
+            self.log.debug(f"[PROCESSOR] HEADER_CACHE doc={docId} action={cache_action} reason={cache_reason}")
+            self.log.debug(f"[PROCESSOR] DOC_VALID doc={docId} valid={valid} reason={reason}")
 
             if not valid:
                 self.plan.invalid_docs.append((docId, reason))
                 continue
 
             # Add to cache
-            self.kbdict_new["document"][docId] = {}
-            self.kbdict_new["document"][docId]["content"] = filepath
-            self.kbdict_new["document"][docId]["keys"] = keys
+            entry = {"content": filepath, "keys": keys, "file_hash": file_hash, "warned": warned}
+            self.kbdict_new["document"][docId] = entry
 
             # Add to the in-memory database
             self.srvdtb.add_document(docId)
@@ -167,11 +198,9 @@ class Processor(Service):
             # cache, KB4IT determines if a document must be compiled
             # again. Very useful to reduce the compilation time.
 
-            # Get Document Body and Metadata Hashes
-            b_hash = get_hash_from_body(filepath)
-            m_hash = get_hash_from_dict(keys)
-            self.kbdict_new["document"][docId]["body_hash"] = b_hash
-            self.kbdict_new["document"][docId]["metadata_hash"] = m_hash
+            # Body and metadata hashes were computed while parsing, or taken from the cache.
+            entry["body_hash"] = b_hash
+            entry["metadata_hash"] = m_hash
             self.log.debug(f"[PROCESSOR] HASH doc={docId} body={b_hash} meta={m_hash}")
 
             # Add compiled page to the target list
