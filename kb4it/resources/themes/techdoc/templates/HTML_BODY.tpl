@@ -1,5 +1,6 @@
 <!-- MAIN CONTENT :: START -->
-<main class="kb-main">
+<main class="kb-main${' kb-main-sidebar' if var.get('toc_sidebar') else ''}">
+    <div class="kb-main-body">
 % if var['has_toc']:
     <!-- PRINT HEADER :: START -->
     <!-- Shown only on paper: the document title above the contents. -->
@@ -30,6 +31,16 @@ ${var['source_html'] | n}
 ${var['source_html'] | n}
     </div>
     <!-- PAGE BODY :: END -->
+% endif
+    </div>
+% if var.get('toc_sidebar'):
+    <!-- SIDE TABLE OF CONTENTS :: START -->
+    <aside class="kb-toc-sidebar kb-noprint" aria-label="Table of contents">
+        <nav class="kb-toc-nav kb-toc-sidebar-nav" data-uk-scrollspy-nav="closest: li; scroll: true; offset: 80">
+            ${var['toc'] | n}
+        </nav>
+    </aside>
+    <!-- SIDE TABLE OF CONTENTS :: END -->
 % endif
 </main>
 <!-- MAIN CONTENT :: END -->

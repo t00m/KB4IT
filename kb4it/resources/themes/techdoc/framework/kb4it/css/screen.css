@@ -341,6 +341,29 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 
 /* Its entries share the title menu rules (.kb4it-title-toc). */
 
+/* Optional table of contents in a right column: hidden until the screen is wide enough. */
+.kb-toc-sidebar { display: none; }
+.kb-toc-sidebar .kb-toc-nav { padding: 0; max-height: none; overflow: visible; }
+.kb-toc-sidebar .uk-active > a { background: #dbeafe; color: #1e87f0; font-weight: 600; }
+
+@media (min-width: 1400px) {
+    .kb-main-sidebar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 16rem;
+        gap: 2rem;
+        align-items: start;
+    }
+    .kb-main-sidebar .kb-toc-sidebar {
+        display: block;
+        position: sticky;
+        top: 84px;
+        max-height: calc(100vh - 104px);
+        overflow: auto;
+        padding-left: 12px;
+        border-left: 1px solid #e2e8f0;
+    }
+}
+
 /* ==========================================================================
    Landing page (PAGE_INDEX) — compact layout
    ========================================================================== */

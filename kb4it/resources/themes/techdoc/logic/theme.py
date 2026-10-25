@@ -12,6 +12,7 @@ Server module.
 
 import calendar as _calendar
 import os
+import re
 import shutil
 import zipfile
 from datetime import datetime
@@ -193,6 +194,11 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
         self.srvdtb.add_document('events.md')
         self.srvdtb.add_document_key('events.md', 'Title', 'Events')
         self.srvdtb.add_document_key('events.md', 'SystemPage', 'Yes')
+
+    def toc_sidebar(self, source_html):
+        """Show the sticky table of contents only when theme.json asks for it and the page has four or more sections."""
+        theme = self.srvbes.get_dict('theme') or {}
+        return theme.get('toc_sidebar') is True and len(re.findall(r'<h2\b', source_html)) >= 4
 
     def quality_on(self):
         """Quality scores are on unless repo.json sets "quality": false or theme.json turns them off."""
@@ -423,6 +429,7 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
 
             var['toc'] = self.extract_toc(source_html)
             var['has_toc'] = True
+            var['toc_sidebar'] = False
 
             # Do not show metadata for system pages
             if self.srvdtb.is_system(basename_md):
@@ -435,6 +442,7 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
                 TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
                 HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
                 theme_conf = self.srvbes.get_dict('theme') or {}
+                var['toc_sidebar'] = self.toc_sidebar(source_html)
                 doc_summary = summary(self.srvdtb, basename_md)
                 q = self.quality_view(basename_md)
                 var['has_quality'] = q is not None

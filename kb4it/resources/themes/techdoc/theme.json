@@ -12,6 +12,7 @@
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit",
+    "toc_sidebar": false,
     "header_keys": {
         "badges": ["DocType", "Status", "Priority"],
         "links": ["Date", "WorkType", "Topic", "Product"]
