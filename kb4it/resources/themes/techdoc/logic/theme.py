@@ -309,7 +309,6 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
         if not getattr(self, 'quality', None):
             return []
         from kb4it.core.util import html_id_for
-        from kb4it.services.themekit.tables import TablesMixin
         # get diataxis types
         diataxis = [
             {'name': 'Tutorial'},
