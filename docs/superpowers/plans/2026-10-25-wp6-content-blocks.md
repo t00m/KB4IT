@@ -1,6 +1,6 @@
 # Content blocks: code, tables, back-to-top, author tabs and collapsible notes (WP6) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make the document body comfortable to read: a copy button and language label on code, long code folded, wide tables scrolling and long tables with a sticky header, a back-to-top button after one screen, author tabs and collapsible notes styled like the rest of techdoc, and a help page that teaches both extensions.
 
@@ -46,8 +46,8 @@
 - Table, for every `<table>` not already inside `.kb-table`: `<div class="kb-table uk-overflow-auto">`, plus `kb-table-sticky` when the table has more than 15 body rows.
 - Author tabs, for every `.tabbed-set` from `pymdownx.tabbed`: read `.tabbed-labels > label` and prepend `<p class="kb-tab-print">Label</p>` to the matching `.tabbed-block`, so print can show every panel with its label.
 
-- [ ] Unit tests: code wrapper, language label, copy button; no label without a language; `pre.mermaid` untouched; 42-line block gets `kb-code-long` and `Show all 42 lines`, a 5-line block does not; table wrapper, `kb-table-sticky` at 16 rows and not at 15; tab labels inserted in order; text after a `pre` and after a `table` keeps its place; empty input returns unchanged.
-- [ ] RED, implement, GREEN; run the theme test file; commit `feat(techdoc): wrap code blocks and tables and label author tabs`.
+- [x] Unit tests: code wrapper, language label, copy button; no label without a language; `pre.mermaid` untouched; 42-line block gets `kb-code-long` and `Show all 42 lines`, a 5-line block does not; table wrapper, `kb-table-sticky` at 16 rows and not at 15; tab labels inserted in order; text after a `pre` and after a `table` keeps its place; empty input returns unchanged.
+- [x] RED, implement, GREEN; run the theme test file; commit `feat(techdoc): wrap code blocks and tables and label author tabs`.
 
 ### Task 2: Integration with the build
 
@@ -56,7 +56,7 @@
 - Build a repo with `markdown.extensions` set to `pymdownx.tabbed` and `pymdownx.details` and `alternate_style: true`; a document with a Python fence, a 2-row table, a 16-row table and one tabbed set with Linux and Windows.
 - Assert the built page has `kb-code`, `kb-code-lang`, `kb-code-copy`, `kb-table uk-overflow-auto`, `kb-table-sticky`, `tabbed-set`, the print labels and `<details class="note">`.
 - Assert a second build does not double-wrap (`html.count('class="kb-code"') == code_fences`).
-- [ ] RED, implement, GREEN; commit with Task 1 if the split is not clean.
+- [x] RED, implement, GREEN; commit with Task 1 if the split is not clean.
 
 ### Task 3: Screen styles, print rules, script and back-to-top link
 
@@ -67,7 +67,7 @@
 - `blocks.js`: copy (clipboard, fallback textarea, "Copied" for two seconds), fold toggle, back-to-top toggle after `window.innerHeight` and smooth scroll, `beforeprint` opens closed notes and `afterprint` restores them.
 - `HTML_BODY.tpl`: after `</main>`, a `BACK TO TOP :: START/END` pair with `<a class="kb-totop kb-noprint" href="#" data-uk-icon="icon: totop" aria-label="Back to top"></a>`.
 - Tests: the page has the link and the script tag; `blocks.js` exists, has no `http://`/`https://` and no `innerHTML`; CSS has the fold, sticky, tab and print selectors.
-- [ ] RED, implement, GREEN; commit `feat(techdoc): style code, tables, author tabs and back to top`.
+- [x] RED, implement, GREEN; commit `feat(techdoc): style code, tables, author tabs and back to top`.
 
 ### Task 4: Help and reference
 
@@ -76,12 +76,12 @@
 - Page frontmatter: `DocType: How-to guide`, `Feature: Writing`, `HelpId: content-blocks`, `Keyword: code, copy, language, fold, table, sticky, tabs, details, note, back to top`, `Level: basic`, `Order: 260`, `Related: howto-write-documents.md, reference-theme-techdoc.md`, `Section: Guides`, `Summary: ...`.
 - Content: code copy, language label and folded code; wide and long tables; author tabs (the `pymdownx.tabbed` Markdown, the `repo.json` block, the `alternate_style` requirement); collapsible notes (`pymdownx.details`); back to top. Examples as fenced Markdown so the help site does not need `pymdown-extensions`.
 - Reference: one paragraph under Document pages with the same facts.
-- [ ] `kb4it verify help/config/repo.json` with the working-tree KB4IT or, when unavailable, `python -m kb4it verify help/config/repo.json`; check the page builds in `pytest tests/help -q`.
-- [ ] Commit `docs(help): document code blocks, tables, author tabs and notes`.
+- [x] `kb4it verify help/config/repo.json` with the working-tree KB4IT or, when unavailable, `python -m kb4it verify help/config/repo.json`; check the page builds in `pytest tests/help -q`.
+- [x] Commit `docs(help): document code blocks, tables, author tabs and notes`.
 
 ### Task 5: Full check and changelog
 
-- [ ] `python3 -m pytest tests/themes tests/help tests/core -q` and `scripts/devel/check_themes.sh`.
-- [ ] `uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py` if Java is available; otherwise note it in the response.
-- [ ] `CHANGELOG.md` under `## [Unreleased] / ### Added`: copy button, language label, folded long code, table wrapper and sticky header, back-to-top, author tabs and collapsible note styles, help page.
-- [ ] Commit `feat(techdoc): improve code blocks, tables, back to top and author tabs` (or reuse Task 3's commit and add only the changelog).
+- [x] `python3 -m pytest tests/themes tests/help tests/core -q` and `scripts/devel/check_themes.sh`.
+- [x] `uv run --no-project --with-requirements requirements.txt --with html5validator python scripts/devel/validate_html.py` if Java is available; otherwise note it in the response.
+- [x] `CHANGELOG.md` under `## [Unreleased] / ### Added`: copy button, language label, folded long code, table wrapper and sticky header, back-to-top, author tabs and collapsible note styles, help page.
+- [x] Commit `feat(techdoc): improve code blocks, tables, back to top and author tabs` (or reuse Task 3's commit and add only the changelog).
