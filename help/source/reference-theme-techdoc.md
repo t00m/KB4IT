@@ -90,6 +90,14 @@ Images in a document:
 - Stay as they are when they are inside a link, narrower than 64 pixels, or part of a sentence.
 - Show a grey box with the path when the file is missing, and the build warns [IMAGE_MISSING](troubleshooting.md#image-missing).
 
+Content blocks:
+
+- Code blocks have a bar with a language label and a **Copy** button; a block over 30 lines shows the first 20 and a **Show all N lines** button. Both buttons are left out of print, and a long block prints in full.
+- Wide tables scroll sideways and a table over 15 rows keeps its header visible. Print shows the whole table.
+- With `pymdown-extensions` and `alternate_style`, `pymdownx.tabbed` sets show a tab bar that works without JavaScript; all panels print with their label. See [Make code, tables and notes easier to read](howto-content-blocks.md).
+- `pymdownx.details` notes fold; they print open.
+- After one screen of scrolling, a **Back to top** button appears at the bottom right. It is not printed.
+
 ## Quality score {#quality}
 
 Every document gets a score from 0 to 100. A ring in the header strip shows it; click it, or the star button in the title menu, to open the **Quality** tab of the info card. The tab shows five bars, a list of what the document has, and the next steps with the points each one adds. A black tick on each bar marks the median of the documents of the same kind. Hover over any item for a tip on what to do; click it to open the **Quality guide** (`quality-guide.html`), a system page that explains every check with the Markdown to write, and lists the skeleton of each Category and WorkType.
