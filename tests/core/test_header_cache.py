@@ -119,3 +119,23 @@ def test_a_frontmatter_title_warns_on_every_build(tmp_path, home):
     assert actions["warned.md"] == "parse" and actions["a.md"] == "reuse"
     log = (repo / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
     assert "DOC_WARN doc=warned.md reason=title_in_frontmatter_ignored" in log
+
+
+def test_a_yaml_upgrade_drops_the_cache(tmp_path, home):
+    repo = tmp_path / "repo"
+    cfg = write_repo(repo, "techdoc", {
+        "a.md": page("A", Tag="x"),
+        "b.md": page("B", Tag="y"),
+    })
+    _build(cfg, tmp_path, home)
+    cache_file = repo / "var" / "db" / "kbdict.json"
+    cache = json.loads(cache_file.read_text(encoding="utf-8"))
+    assert cache["pyyaml_version"] == yaml.__version__
+
+    cache["pyyaml_version"] = "an-old-yaml"
+    cache_file.write_text(json.dumps(cache), encoding="utf-8")
+    result = _build(cfg, tmp_path, home)
+    assert "KBDICT_PYYAML_MISMATCH stored=an-old-yaml" in result.stdout
+    assert f"current={yaml.__version__}" in result.stdout
+    assert "compiled=2" in result.stdout
+    assert json.loads(cache_file.read_text(encoding="utf-8"))["pyyaml_version"] == yaml.__version__

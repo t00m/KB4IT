@@ -13,6 +13,8 @@ import os
 import re
 import shutil
 from pathlib import Path
+
+import yaml
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -305,6 +307,15 @@ class Backend(Service):
                 )
                 self.runtime["force_all"] = True
                 return empty_kbdict
+            stored_yaml = kbdict.get("pyyaml_version")
+            current_yaml = yaml.__version__
+            if stored_yaml != current_yaml:
+                # A YAML upgrade can change what a header means, so no parsed header can be trusted.
+                self.log.warning(
+                    f"[BACKEND] KBDICT_PYYAML_MISMATCH stored={stored_yaml} current={current_yaml}"
+                )
+                self.runtime["force_all"] = True
+                return empty_kbdict
         except FileNotFoundError:
             kbdict = empty_kbdict
         except (ValueError, AttributeError) as error:
@@ -322,6 +333,7 @@ class Backend(Service):
         """Save kb4it dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         kbdict["kb4it_version"] = ENV["APP"]["version"]
+        kbdict["pyyaml_version"] = yaml.__version__
         json_save(kb4it_dbfile, kbdict)
         self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")
 

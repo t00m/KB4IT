@@ -84,10 +84,10 @@ Measured before the change on `/tmp/kb4it-wp7-perf` (1,000 generated documents, 
 - `load_kbdict()` compares the stored value with `yaml.__version__`. A mismatch logs `[BACKEND] KBDICT_PYYAML_MISMATCH stored=<old> current=<new>`, sets `runtime["force_all"]`, and returns the empty dictionary that keeps the deploy records, exactly like a KB4IT version mismatch.
 - A cache without the key counts as a mismatch (one full build after the upgrade).
 
-- [ ] RED: after a build, changing `pyyaml_version` in `kbdict.json` makes the next build log the mismatch and compile every document; the new cache holds the current version.
-- [ ] GREEN: implement.
-- [ ] Run `tests/core/test_header_cache.py tests/core/test_json_safety.py tests/core/test_version.py -q`.
-- [ ] Commit `perf(backend): drop the cache when the YAML version changes`.
+- [x] RED: after a build, changing `pyyaml_version` in `kbdict.json` makes the next build log the mismatch and compile every document; the new cache holds the current version.
+- [x] GREEN: implement.
+- [x] Run `tests/core/test_header_cache.py tests/core/test_json_safety.py tests/core/test_version.py -q`.
+- [x] Commit `perf(backend): drop the cache when the YAML version changes`.
 
 ### Task 4: Measurement, full check and changelog
 
