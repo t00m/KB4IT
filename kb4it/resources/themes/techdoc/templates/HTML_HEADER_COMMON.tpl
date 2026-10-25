@@ -98,6 +98,13 @@
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="add.html"><span data-uk-icon="plus-circle"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Add document</span></a>
                                 </li>
+                                % endif
+                                % if var.get('search_box'):
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="search.html"><span data-uk-icon="search"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Search</span></a>
+                                </li>
+                                % endif
+                                % if var['editor'] or var.get('search_box'):
                                 <li class="uk-nav-divider"></li>
                                 % endif
                                 <li class="uk-link-toggle">
