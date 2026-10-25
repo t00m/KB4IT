@@ -68,9 +68,9 @@ Every section except the counts and the four document types folds when you click
 
 The top bar holds the logo menu on the left, the page title in the middle and a search icon on the right:
 
-- The logo menu links to the dashboard (click the logo), the Add page, Events, Bookmarks, Properties, Stats, Quality, Reload page, Help, About this app and About KB4IT.
+- The logo menu links to the dashboard (click the logo), the Add page, Search, Events, Bookmarks, Properties, Stats, Quality, Reload page, Help, About this app and About KB4IT.
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
-- The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field. Each result shows the quality tier of the document, and the score breaks a tie between matches of the same relevance.
+- The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The Search entry of the logo menu opens `search.html`, the full page with filters. The keys do nothing while you type in a field. Each result shows the quality tier of the document, and the score breaks a tie between matches of the same relevance.
 
 Below the top bar, a document page shows:
 

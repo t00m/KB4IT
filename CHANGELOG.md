@@ -45,6 +45,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- techdoc: the logo menu links to the full search page (`search.html`), which was only reachable from the search icon before.
 - The help pages of techdoc and blog lost every heading: Mako reads a line starting with `##` as a comment. The templates now escape it, and a test keeps every template free of such lines.
 
 ### Changed
