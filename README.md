@@ -170,6 +170,15 @@ On Windows, KB4IT runs natively; the Windows Subsystem for Linux works too but i
 - Python 3.11 to 3.14
 - `Mako` (templating), `Markdown` (Markdown → HTML), `PyYAML` (frontmatter), `Pygments` (code highlighting), `lxml` (post-processing), `rich` and `textual` (terminal interface) - all installed automatically
 
+## Tech stack
+
+- **Language and packaging** - Python 3.11 to 3.14, packaged with Poetry. Distributed on PyPI, as the container image `ghcr.io/t00m/kb4it`, as a `.deb` and an `.rpm`, and as a GitHub Action.
+- **Build** - `python-markdown` with `extra`, `admonition`, `toc` and `sane_lists` always on, plus the optional `pymdown-extensions`; Mako templates; PyYAML frontmatter, parsed so every plain value stays the text you wrote; Pygments for build-time highlighting; lxml for post-processing; nh3 for sanitizing raw HTML.
+- **Output** - plain static HTML, CSS and JavaScript. No database, no server-side runtime, no JavaScript framework.
+- **Frontend** - UIKit for the bundled themes, Mermaid for diagrams, KaTeX for formulas, a vanilla JavaScript full-text search engine, and a CodeMirror 6 bundle for the Add page editor. Every asset ships with KB4IT and loads from disk, offline.
+- **Terminal** - Rich and Textual for the TUI.
+- **Development** - pytest, with Playwright and Chromium for the browser tests; mypy in strict mode on the annotated modules; the Nu HTML Checker; GitHub Actions for CI and releases.
+
 ## Usage
 
 ```bash
@@ -284,6 +293,7 @@ Open an issue before starting a large change so we can align on the approach.
 - [Mermaid](https://mermaid.js.org/) - diagrams.
 - [KaTeX](https://katex.org/) - math formulas.
 - [UIKit](https://getuikit.com) - the front-end framework used by the bundled themes.
+- [CodeMirror](https://codemirror.net/) - the Markdown editor of the Add page.
 - [Geany](https://www.geany.org/) - the editor used to build KB4IT.
 
 ## License
