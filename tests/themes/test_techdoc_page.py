@@ -296,14 +296,18 @@ def _block(html, name):
     return html[html.index(f"{name} :: START"):html.index(f"{name} :: END")]
 
 
-def test_dashboard_shows_exemplary_count_mix_and_best_documents(page_site):
+def test_dashboard_shows_exemplary_count_and_mix(page_site):
     index = read(page_site, "index.html")
     hero = _block(index, "SUMMARY COUNTS")
     assert re.search(r'<a class="kb-hero-stat" href="quality.html"><span class="num">(★|&#9733;) 1</span><span class="label">Exemplary</span></a>', hero)
     types = _block(index, "DOCUMENT TYPES")
     assert '<span class="kb-q-mixlabel">1 exemplary, 0 complete of 2</span>' in types
-    shelf = _block(index, "BEST DOCUMENTS")
-    assert 'data-kb-section="best-documents"' in shelf and 'href="exemplary.html"' in shelf and "kb-best-card" in shelf
+    assert "BEST DOCUMENTS" not in index
+
+
+def test_quality_page_shows_the_best_documents(page_site):
+    shelf = _block(read(page_site, "quality.html"), "BEST DOCUMENTS")
+    assert 'id="quality-best"' in shelf and 'href="exemplary.html"' in shelf and "kb-best-card" in shelf
 
 
 def test_dashboard_without_quality_has_no_stat_mix_or_shelf(off_site):
