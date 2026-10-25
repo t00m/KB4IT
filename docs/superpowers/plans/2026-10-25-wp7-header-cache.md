@@ -91,9 +91,9 @@ Measured before the change on `/tmp/kb4it-wp7-perf` (1,000 generated documents, 
 
 ### Task 4: Measurement, full check and changelog
 
-- [ ] On `/tmp/kb4it-wp7-perf`, run three unchanged builds with the new code and record the times next to the 2.22 s baseline in the response note. The first build after the code change parses every header once more because the old cache has no `file_hash`; only the following builds measure the cache.
-- [ ] `python3 -m pytest --ignore=tests/browser -q`.
-- [ ] `scripts/devel/check_themes.sh` (core change can affect every theme).
-- [ ] Build the help site with `python -m kb4it build help/config/repo.json` and run `python -m kb4it verify help/config/repo.json`; record the counts.
-- [ ] `CHANGELOG.md` under `## [Unreleased] / ### Changed`: documents are read once per build and unchanged headers are served from `kbdict.json`; a PyYAML upgrade invalidates the cache.
-- [ ] Save the report to `responses/<timestamp>_WP7-HEADER-CACHE.md` and commit `docs(changelog): note the header cache`.
+- [x] On `/tmp/kb4it-wp7-perf`, run three unchanged builds with the new code and record the times next to the 2.22 s baseline in the response note. The first build after the code change parses every header once more because the old cache has no `file_hash`; only the following builds measure the cache.
+- [x] `python3 -m pytest --ignore=tests/browser -q`.
+- [x] `scripts/devel/check_themes.sh` (core change can affect every theme).
+- [x] Build the help site with `python -m kb4it build help/config/repo.json` and run `python -m kb4it verify help/config/repo.json`; record the counts.
+- [x] `CHANGELOG.md` under `## [Unreleased] / ### Changed`: documents are read once per build and unchanged headers are served from `kbdict.json`; a PyYAML upgrade invalidates the cache.
+- [x] Save the report to `responses/<timestamp>_WP7-HEADER-CACHE.md` and commit `docs(changelog): note the header cache`.

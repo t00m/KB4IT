@@ -48,6 +48,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Faster builds without changes: each source document is read once, and when its bytes match the last
+  successful build its YAML header, body hash and metadata hash come from `kbdict.json` instead of being
+  parsed again. A document with a `Title` in the frontmatter still warns on every build, and a PyYAML
+  upgrade rebuilds everything. On the 1,000-document test site an unchanged build went from 2.22 s to
+  1.74 s (21%).
 - techdoc dashboard: Changes and incidents, Upcoming events, Monitoring and Recent events become one Activity card with tabs; the card remembers the last tab. The Linked from list moves from the end of the document into the Related tab.
 - HTML output of every bundled theme marks its blocks with comment pairs, `<!-- NAME :: START -->` and `<!-- NAME :: END -->` (PAGE METADATA, STYLESHEETS, TOP BAR or SIDEBAR, MAIN CONTENT, TABLE OF CONTENTS, DOCUMENT BODY, FOOTER, PAGE SCRIPTS and the blocks of each page), so a block is easy to find in the source. Old comments named after template files, unpaired comments and mismatched names are gone. Cleanup on the way: the viewport meta tag was declared twice (techdoc, blog); techdoc and blog lost a footer script for a filter box no page has, which threw an error on every page; techdoc lost a hidden duplicate title and a one-tab switcher around the document; techdoc and blog footers and the blog sidebar use `<footer>` and `<aside>`; the blog sidebar menu is a `<nav>`. The help page on creating a theme describes the rules.
 - HTML output passes the W3C Nu HTML Checker with no error and no warning on every bundled theme. UIkit components are written as `data-uk-*` attributes (`uk-*` is not HTML; UIkit reads both). Script tags lost the unneeded `type="text/javascript"`. techdoc dashboard: the counts and the Diátaxis cards have headings for screen readers. blog: each post card is one `<article>` holding its header, and index titles are `<h2>` instead of `<h5>`. apphelp: the home tagline is no longer an untitled `<section>`. `scripts/devel/validate_html.py` now fails on `uk-*` attributes and on warnings. Custom templates that still use `uk-*` keep working.
