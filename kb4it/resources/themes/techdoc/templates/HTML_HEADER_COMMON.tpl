@@ -37,6 +37,7 @@
     <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
     <!-- LIBRARIES :: END -->
     <script src="resources/themes/techdoc/framework/kb4it/js/page.js" defer></script>
+    <script src="resources/themes/techdoc/framework/kb4it/js/blocks.js" defer></script>
 % if var.get('has_quality'):
     <script defer src="quality-index.js"></script>
     <script defer src="resources/themes/techdoc/framework/kb4it/js/quality.js"></script>

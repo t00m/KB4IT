@@ -379,4 +379,19 @@
     /* Gallery thumbnails print as full-width figures. */
     .kb-gallery > * { width: 100% !important; }
 
+    /* -----------------------------------------------------------------------
+       Content blocks: no buttons, folded code and closed notes in full
+    ----------------------------------------------------------------------- */
+    .kb-code-bar, .kb-code-show, .kb-totop { display: none !important; }
+    .kb-code > pre { max-height: none !important; overflow: visible !important; border-radius: 0; }
+    .kb-table { overflow: visible !important; margin: 6pt 0; }
+    .kb-table thead th { position: static !important; }
+    .tabbed-set > input, .tabbed-labels { display: none !important; }
+    .tabbed-content { display: block !important; padding: 0 !important; }
+    .tabbed-block { display: block !important; }
+    .kb-tab-print { display: block !important; font-weight: 700; margin: 6pt 0 2pt; }
+    .kb-content details:not(.kb-toc-panel) > *:not(summary) { display: block !important; }
+    .kb-content details:not(.kb-toc-panel) > summary::before { content: none; }
+
+
 }

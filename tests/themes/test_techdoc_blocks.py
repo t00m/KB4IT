@@ -172,3 +172,38 @@ def test_built_page_has_author_tabs_and_collapsible_notes(blocks_site):
     assert html.count('class="kb-tab-print"') == 2
     assert '<p class="kb-tab-print">Linux</p>' in html
     assert '<details class="note">' in html
+
+
+THEME = ROOT / "kb4it" / "resources" / "themes" / "techdoc"
+
+
+def test_page_has_the_back_to_top_link_and_the_script(blocks_site):
+    html = (blocks_site / "blocks.html").read_text(encoding="utf-8")
+    assert 'class="kb-totop kb-noprint"' in html
+    assert 'aria-label="Back to top"' in html
+    assert "framework/kb4it/js/blocks.js" in html
+
+
+def test_blocks_script_is_offline_and_builds_no_html():
+    script = (THEME / "framework" / "kb4it" / "js" / "blocks.js").read_text(encoding="utf-8")
+    assert "http://" not in script and "https://" not in script
+    assert "innerHTML" not in script
+    assert "navigator.clipboard" in script and "execCommand" in script
+    assert "beforeprint" in script and "afterprint" in script
+
+
+def test_screen_styles_cover_code_tables_tabs_notes_and_totop():
+    css = (THEME / "framework" / "kb4it" / "css" / "screen.css").read_text(encoding="utf-8")
+    for selector in (".kb-code-show", ".kb-code-long:not(.kb-code-open) > pre",
+                     ".kb-table-sticky thead th", ".kb-content .tabbed-block",
+                     "details:not(.kb-toc-panel)", ".kb-totop"):
+        assert selector in css
+    assert "input:nth-of-type(1):checked ~ .tabbed-content > .tabbed-block:nth-of-type(1)" in css
+
+
+def test_print_styles_hide_the_buttons_and_unfold_the_blocks():
+    css = (THEME / "framework" / "kb4it" / "css" / "print.css").read_text(encoding="utf-8")
+    assert ".kb-code-bar, .kb-code-show, .kb-totop { display: none !important; }" in css
+    assert ".kb-code > pre { max-height: none !important;" in css
+    assert ".tabbed-block { display: block !important; }" in css
+    assert ".kb-tab-print { display: block !important;" in css
