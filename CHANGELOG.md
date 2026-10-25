@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- techdoc content blocks: a copy button and a language label on code blocks, long blocks folded to 20 lines with a "Show all N lines" button, wide tables scrolling and tables over 15 rows keeping their header, a back-to-top button after one screen of scrolling, `pymdownx.tabbed` author tabs and `pymdownx.details` notes styled like the rest of the theme, all with print rules. The help page "Make code, tables and notes easier to read" shows how to write the tabs and the notes.
 - techdoc Quality guide: every item of the Quality tab has a tooltip on what to do and links to `quality-guide.html`, a system page that explains each check, shows the Markdown to write and lists every skeleton.
 
 - techdoc quality score: every document gets a score from 0 to 100 in five dimensions (Findable, Structured, Complete, Connected, Current) and a tier (Exemplary, Complete, Basic, Stub, or Retired with no score). Records are scored on a lighter scale and compared with records of the same WorkType. A ring in the header strip opens the new Quality tab of the info card, with bars, the median of similar documents and the next steps with the points they add. Exemplary documents get a gold line and a note. `quality-index.js` holds ranks and medians; `"quality": false` in `repo.json` turns it all off; the `quality` block of `theme.json` holds the thresholds.
