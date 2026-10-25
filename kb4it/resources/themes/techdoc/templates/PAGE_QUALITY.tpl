@@ -25,6 +25,22 @@
     </details>
     <!-- TIER MIX :: END -->
 
+% if q.get('best'):
+    <!-- BEST DOCUMENTS :: START -->
+    <details class="kb-section kb-collapsible" id="quality-best" open>
+        <summary class="kb-section-title">Best documents</summary>
+        <div class="kb-best">
+%     for b in q['best']:
+            <a class="kb-best-card" href="${b['href']}">
+                <span class="kb-q-emblem small kb-q-${b['tier']}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#eee" stroke-width="4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="${b['score']} 100" stroke-linecap="round"/></svg><span class="num">${b['score']}</span></span>
+                <span><span class="t">${b['title']}</span><span class="s">${b['type']}${', ' + b['year'] if b['year'] else ''}</span></span>
+            </a>
+%     endfor
+        </div>
+    </details>
+    <!-- BEST DOCUMENTS :: END -->
+% endif
+
     <!-- EXEMPLARY :: START -->
     <details class="kb-section kb-collapsible" id="quality-exemplary" open>
         <summary class="kb-section-title">Exemplary documents (${len(q['exemplary'])})</summary>

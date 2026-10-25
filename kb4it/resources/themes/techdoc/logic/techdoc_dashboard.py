@@ -77,7 +77,6 @@ class DashboardMixin:
         var['page']['open_items'] = self._build_index_open_items()
         var['page']['alert_bar'] = self._build_index_alert_bar()
         var['page']['diataxis'] = self._build_index_diataxis()
-        var['page']['best'] = self._build_index_best(var['page']['diataxis'])
         var['page']['events_panel'] = self._build_index_events_panel(now)
         var['page']['recent_events'] = self._build_index_recent_events(now)
         var['page']['monitoring_panel'] = self._build_index_monitoring_panel()
@@ -130,21 +129,6 @@ class DashboardMixin:
         """The Exemplary count, linking to the Quality page; nothing when no document is Exemplary."""
         exemplary = sum(1 for a in (getattr(self, 'quality', None) or {}).values() if a.tier == 'exemplary')
         return [{'num': f'★ {exemplary}', 'label': 'Exemplary', 'url': 'quality.html'}] if exemplary else []
-
-    def _build_index_best(self, diataxis, per_type=3):
-        """Up to three Exemplary or Complete documents per DocType, best first, for the Best documents shelf."""
-        quality = getattr(self, 'quality', None) or {}
-        floor = profile(self.srvbes.get_dict('theme'))['tiers']['complete']
-        shelf = []
-        for item in diataxis:
-            docs = sorted((d for d, a in quality.items() if a.peer == item['name'] and a.tier != 'retired' and a.score >= floor),
-                          key=lambda d: (-quality[d].score, d))[:per_type]
-            for doc in docs:
-                a = quality[doc]
-                year = (self.srvdtb.get_values(doc, 'Date') or [''])[0][:4]
-                shelf.append({'title': (self.srvdtb.get_values(doc, 'Title') or [doc])[0], 'href': html_id_for(doc),
-                              'score': a.score, 'tier': a.tier, 'type': item['name'], 'year': year})
-        return shelf
 
     def _index_doc_row(self, docId):
         """Build one index row dict with badge data for a document."""
