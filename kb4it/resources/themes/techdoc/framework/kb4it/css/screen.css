@@ -1388,7 +1388,7 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-code-copy:focus { background: #3a3a3a; color: #fff; }
 .kb-code-copy .uk-icon { color: inherit; }
 .kb-code-long:not(.kb-code-open) > pre {
-    max-height: 31em;
+    max-height: calc(29em + 28px);
     overflow: hidden;
 }
 .kb-code-show {
