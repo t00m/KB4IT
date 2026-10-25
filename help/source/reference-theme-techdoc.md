@@ -70,7 +70,7 @@ The top bar holds the logo menu on the left, the page title in the middle and a 
 
 - The logo menu links to the dashboard (click the logo), the Add page, Events, Bookmarks, Properties, Stats, Quality, Reload page, Help, About this app and About KB4IT.
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
-- The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field.
+- The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The keys do nothing while you type in a field. Each result shows the quality tier of the document, and the score breaks a tie between matches of the same relevance.
 
 Below the top bar, a document page shows:
 
@@ -79,7 +79,7 @@ Below the top bar, a document page shows:
 - **Banners** for documents that need care: red when `Environment` is `Production` ("This document changes production systems", with the `SID` values), grey when `Status` is `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` ("Do not follow this document"), amber when `Status` is `Draft`.
 - **An info card** with two tabs. **Details** lists every property in groups (Classification, Systems, Technical objects, Organisation, Lifecycle, Other); technical objects such as transactions and commands show as chips, and SAP notes named in the text ("note 736902") link to the SAP support portal. **History** shows the date, the source file with a link to view it, an edit link with `"git": true`, and the build time. The card starts closed when the document has a Summary and open on Details when it does not. Click a tab to open it, click the open tab or the arrow to close it; the card remembers your last tab. The document properties button in the title menu, or `#kb-info-details` at the end of the address, opens Details. `#details` does too, unless the document has a section with that name, which keeps the link.
 
-Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. Every heading level folds. The table of contents and the first section start open, with its subsections; every other section starts folded, subsections too. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. The **Related** tab of the info card lists the documents that link to this one (**Linked from**) and up to five **Related documents**: documents that share a SID, Product, Transaction, Component or Tag, the rarest shared values first. Each line shows the quality tier of the document.
+Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. With `"toc_sidebar": true` in the theme's `theme.json`, a document with four or more sections gets a second table of contents in a right column on screens 1400 pixels or wider. It stays in view while you scroll and marks the section you are reading. It is left out of print; the inline table of contents and the title menu still hold it on narrower screens. Every heading level folds. The table of contents and the first section start open, with its subsections; every other section starts folded, subsections too. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. The **Related** tab of the info card lists the documents that link to this one (**Linked from**) and up to five **Related documents**: documents that share a SID, Product, Transaction, Component or Tag, the rarest shared values first. Each line shows the quality tier of the document.
 
 Images in a document:
 
@@ -196,7 +196,7 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
 | `help.html` | A short guide to writing documents |
-| `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search dialog in the top bar shows the best matches as you type. See [search](reference-repo-json.md#search) |
+| `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search dialog in the top bar shows the best matches as you type, with the quality tier of each document. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
 
 ## Icon, diagrams and formulas {#render}
@@ -214,7 +214,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | `events` | `[]` | Categories that count as events |
 | `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
 | `admin` | `false` | Builds the backup page, see below |
-| `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab and `quality-index.js` |
+| `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
 The `default` app sets `datatable` to Date, Title, Category, Priority, Status, Scope and Topic, and lists every category in `events`.
@@ -226,6 +226,7 @@ The document page reads three keys of the theme's `theme.json`. To change them, 
 | `header_keys` | `badges` and `links`: the keys shown in the header strip, in order |
 | `info_groups` | The groups of the Details tab: `name`, `keys`, and `"chips": true` for the group shown as chips. Keys in no group go to Other |
 | `info_tabs` | `details` and `history`, each with `print`: whether the tab is printed. By default Details is printed and History is not |
+| `toc_sidebar` | `false`: show a second table of contents in a right column on screens 1400 pixels or wider, for documents with four or more sections |
 
 On paper, the header strip is one line of text, banners have a border instead of a colour, Details follows the title under the heading "Document details" in two columns, and the tab bar is left out.
 

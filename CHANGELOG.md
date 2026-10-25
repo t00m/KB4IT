@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- techdoc quality phase 6: an optional sticky table of contents in a right column (`"toc_sidebar": true` in `theme.json`, off by default; documents with four or more sections, screens 1400 pixels or wider, current section highlighted) and the quality tier in the search dialog and page, where the score breaks a tie between matches of the same relevance.
 - techdoc content blocks: a copy button and a language label on code blocks, long blocks folded to 20 lines with a "Show all N lines" button, wide tables scrolling and tables over 15 rows keeping their header, a back-to-top button after one screen of scrolling, `pymdownx.tabbed` author tabs and `pymdownx.details` notes styled like the rest of the theme, all with print rules. The help page "Make code, tables and notes easier to read" shows how to write the tabs and the notes.
 - techdoc Quality guide: every item of the Quality tab has a tooltip on what to do and links to `quality-guide.html`, a system page that explains each check, shows the Markdown to write and lists every skeleton.
 

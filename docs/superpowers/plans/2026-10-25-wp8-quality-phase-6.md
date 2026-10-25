@@ -62,8 +62,8 @@
 
 **Files:** modify `help/source/reference-theme-techdoc.md`, `CHANGELOG.md`; update this plan; create `responses/<timestamp>_WP8-QUALITY-PHASE-6.md`.
 
-- [ ] Document the `toc_sidebar` option and the search chip in the techdoc reference page.
-- [ ] Run `python3 -m pytest --ignore=tests/browser -q` and `scripts/devel/check_themes.sh`.
-- [ ] Build and verify the help site; record the counts.
-- [ ] Add the `CHANGELOG.md` entries under `## [Unreleased]`.
-- [ ] Save the report and commit `docs(changelog): note the quality phase 6`.
+- [x] Document the `toc_sidebar` option and the search chip in the techdoc reference page.
+- [x] Run `python3 -m pytest --ignore=tests/browser -q` and `scripts/devel/check_themes.sh`.
+- [x] Build and verify the help site; record the counts.
+- [x] Add the `CHANGELOG.md` entries under `## [Unreleased]`.
+- [x] Save the report and commit `docs(changelog): note the quality phase 6`.
