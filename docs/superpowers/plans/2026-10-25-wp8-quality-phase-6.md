@@ -53,10 +53,10 @@
 - Engine sort: relevance first, then `record.q.score` (missing counts as 0), then title.
 - UI: a chip is added before the title in both the dropdown and the search page. It reuses `.kb-q-chip kb-q-<tier>` and carries `title="Quality <score> of 100, <label>"`. All text uses `textContent`.
 
-- [ ] RED: the techdoc index carries the tier and score for a scored document; `"quality": false` removes `q`; the engine puts the higher quality record first when relevance ties; the UI script names the chip class and reads `record.q`.
-- [ ] GREEN: implement the override, the sort and the chip.
-- [ ] Run `python3 -m pytest tests/themes/test_techdoc_quality_search.py tests/themes/test_search.py tests/core/test_search_core.py -q` (the node test skips when node is missing).
-- [ ] Commit `feat(techdoc): show the quality tier in search results`.
+- [x] RED: the techdoc index carries the tier and score for a scored document; `"quality": false` removes `q`; the engine puts the higher quality record first when relevance ties; the UI script names the chip class and reads `record.q`.
+- [x] GREEN: implement the override, the sort and the chip.
+- [x] Run `python3 -m pytest tests/themes/test_techdoc_quality_search.py tests/themes/test_search.py tests/core/test_search_core.py -q` (the node test skips when node is missing).
+- [x] Commit `feat(techdoc): show the quality tier in search results`.
 
 ### Task 3: Help, changelog, full check and report
 

@@ -205,6 +205,18 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
         repo = self.srvbes.get_dict('repo') or {}
         return repo.get('quality', True) is not False and profile(self.srvbes.get_dict('theme')).get('enabled', True)
 
+    def search_record(self, doc_id):
+        """Override: the shared search carries the quality tier, so readers can pick the better page."""
+        record = super().search_record(doc_id)
+        assessment = (self.ensure_quality() or {}).get(doc_id)
+        if assessment is not None:
+            record['q'] = {
+                'score': assessment.score,
+                'tier': assessment.tier,
+                'label': TIER_LABELS.get(assessment.tier, assessment.tier.title()),
+            }
+        return record
+
     def quality_view(self, doc_id):
         """What the header, the note and the Quality tab show for a document; None when there is no score."""
         assessment = (getattr(self, 'quality', None) or {}).get(doc_id)

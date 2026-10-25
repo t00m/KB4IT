@@ -1278,6 +1278,8 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
 .kb-q-chip.kb-q-complete { background: rgba(50,210,150,0.14); color: var(--q-complete-ink); }
 .kb-q-chip.kb-q-basic { background: #eef0f3; color: #59657a; }
 .kb-q-chip.kb-q-stub { background: transparent; color: #6b7480; border: 1px dashed var(--q-stub); }
+.kb4it-search-dropdown .kb-q-chip,
+.kb4it-search-results .kb-q-chip { margin-right: 0.4rem; vertical-align: 1px; }
 /* Exemplary documents: a gold line along the bottom of the top bar. */
 html.kb-exemplary #kb4it-menu > nav { position: relative; }
 html.kb-exemplary #kb4it-menu > nav::after {
