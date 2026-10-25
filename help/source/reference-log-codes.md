@@ -83,6 +83,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DEPLOY_DIR_MISSING` | warning | A folder listed in `deploy_dirs` of `theme.json` does not exist in the theme | Create the folder, or remove it from the list |
 | `FORCE_SKIP` | warning | With `--force`, a build folder in `var/` was kept because it holds `source` or `target` | Move `source` and `target` out of `var/` |
 | `KBDICT_VERSION_MISMATCH` | warning | The build cache was made by another KB4IT version. Every page is rebuilt | Nothing |
+| `KBDICT_PYYAML_MISMATCH` | warning | The build cache was made with another PyYAML version. Every page is rebuilt | Nothing |
 | `KBDICT_CORRUPT` | warning | The build cache cannot be read. Every page is rebuilt and the cache is replaced | Nothing |
 | `KBDICT_LOAD_FAIL` | error | The build cache cannot be opened at all. Stops | Delete `var/` in the knowledge base and build again |
 
