@@ -34,5 +34,5 @@ ${var['source_html'] | n}
 </main>
 <!-- MAIN CONTENT :: END -->
 <!-- BACK TO TOP :: START -->
-<a class="kb-totop kb-noprint" href="#" aria-label="Back to top"><span data-uk-icon="icon: totop" aria-hidden="true"></span><span class="uk-hidden-visually">Back to top</span></a>
+<a class="kb-totop kb-noprint" href="#" aria-label="Back to top"><span data-uk-icon="icon: arrow-up" aria-hidden="true"></span><span class="uk-hidden-visually">Back to top</span></a>
 <!-- BACK TO TOP :: END -->

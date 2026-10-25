@@ -181,6 +181,7 @@ def test_page_has_the_back_to_top_link_and_the_script(blocks_site):
     html = (blocks_site / "blocks.html").read_text(encoding="utf-8")
     assert 'class="kb-totop kb-noprint"' in html
     assert 'aria-label="Back to top"' in html
+    assert 'data-uk-icon="icon: arrow-up"' in html
     assert "framework/kb4it/js/blocks.js" in html
 
 
