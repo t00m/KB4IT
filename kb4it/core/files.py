@@ -266,6 +266,24 @@ def get_hash_from_content(content: str) -> str:
     return hashlib.blake2b(content.encode("utf-8")).hexdigest()
 
 
+def get_hash_from_bytes(content: bytes) -> str:
+    """Get the blake2b hash for the bytes of a file."""
+    return hashlib.blake2b(content).hexdigest()
+
+
+def read_document(path: str) -> tuple[str, str]:
+    """Open a document once and return its text and the hash of its bytes.
+
+    The text is decoded as SOURCE_ENCODING (dropping a byte order mark) and its
+    line endings are normalised, as text mode does, while the hash covers the
+    exact bytes on disk.
+    """
+    with open(path, "rb") as fin:
+        raw = fin.read()
+    text = raw.decode(SOURCE_ENCODING).replace("\r\n", "\n").replace("\r", "\n")
+    return text, get_hash_from_bytes(raw)
+
+
 def get_hash_from_file(path: str) -> str | None:
     """Get the blake2b hash for a given filename."""
     if os.path.exists(path):
