@@ -111,7 +111,7 @@ def resolve_src(src, source_dir):
     src = (src or '').strip()
     if not src or src.startswith(('/', 'data:')) or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*:', src):
         return None
-    return os.path.join(source_dir, unquote(src.split('#')[0].split('?')[0]))
+    return os.path.normpath(os.path.join(source_dir, unquote(src.split('#')[0].split('?')[0])))
 
 
 def _blank(text):

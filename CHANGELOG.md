@@ -53,6 +53,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Windows: the path of a local image in a techdoc document mixed `\` and `/` (`resources/images/...` was kept as written); it is now a normal Windows path, as the missing-image check and the image size reader expect.
+- Windows: a skeleton saved with CRLF line ends put `\r` characters into the Add page editor. Skeletons are now read with LF line ends.
+- macOS: `install_kb4it_from_source.sh` reported "kb4it on PATH is the new installation" for any other `kb4it` when no Python 3.11 or newer was on `PATH` (the default on macOS), because both paths resolved to nothing. It now compares the paths as given in that case and exits 2 as intended.
 - `install_kb4it_from_source.sh` installed the working tree directly, so the package had no offline help, and it reported success for whatever `kb4it` came first on `PATH`. It now builds the wheel with `build_python.sh` (offline help and build stamp included), checks it with `check_wheel_themes.py`, installs the wheel file, refuses uncommitted changes unless `--allow-dirty`, never picks a Python older than 3.11, and checks that the installed command reports the wheel's build, passes `kb4it doctor` and is the first `kb4it` on `PATH` (exit 2 otherwise).
 - Installing another commit of the same version reused every cached page, so changes such as the new logo menu entries did not show until `kb4it build --force`. `kbdict.json` now records the build (`kb4it_build`) and a different one rebuilds everything once (`KBDICT_BUILD_MISMATCH`).
 - A change to a theme's templates, logic or assets, its template base or the common templates did not rebuild the cached pages. The theme fingerprint is now part of the core signature, so the next build rebuilds every page (`CORE_SIGNATURE_CHANGED`).

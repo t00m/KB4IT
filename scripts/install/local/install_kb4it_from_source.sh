@@ -225,7 +225,12 @@ if [[ -n "$EXPECTED" && "$REPORTED" != "KB4IT $EXPECTED" ]]; then
 fi
 "$BIN" doctor || die "kb4it doctor found problems in the installation"
 
-resolve() { run_python -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$1"; }
+# Without a working Python, keep the path as given, so two different paths never compare equal.
+resolve() {
+    local real
+    real="$(run_python -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$1" 2>/dev/null || true)"
+    echo "${real:-$1}"
+}
 FIRST="$(command -v kb4it || true)"
 echo ""
 if [[ -z "$FIRST" ]]; then

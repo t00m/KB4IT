@@ -140,7 +140,8 @@ class AddPageMixin:
             if not os.path.isfile(path):
                 raise ThemeError(f"{listing}: id '{entry['id']}' has no file {entry['file']}")
             with open(path, "rb") as fin:
-                text = fin.read().decode("utf-8")
+                # LF newlines, as the editor writes them, also for a skeleton saved with CRLF on Windows.
+                text = fin.read().decode("utf-8").replace("\r\n", "\n")
             categories.append({
                 "id": entry["id"],
                 "name": entry.get("name") or entry["id"][:1].upper() + entry["id"][1:],
