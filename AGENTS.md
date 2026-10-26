@@ -51,7 +51,7 @@ CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows wit
 
 ## Architecture
 
-Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers the long-lived services (`DB`, `Backend`, `Frontend`, `Builder`, `Workflow`, and `Theme` once loaded) and routes `get_service(name)` lookups. The services of one build, Processor, Compiler and Deployer, are not registered: `Backend.start_pipeline()` makes them together as `backend.pipeline` (`kb4it/services/pipeline.py`) at the end of stage 1, once the theme is loaded, and passes each its collaborators (backend, database, theme, processor, callbacks, log file) in its constructor. `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` is deprecated: it still answers from the current pipeline and logs `[CONTROLLER] SERVICE_DEPRECATED name=... replacement=backend.pipeline` once per name (planned for removal in 0.10.0, still present). Services share state through the `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata. Nothing a build decides is written into `params` or `repo`: see `runtime["force_all"]` below.
+Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers the long-lived services (`DB`, `Backend`, `Frontend`, `Builder`, `Workflow`, and `Theme` once loaded) and routes `get_service(name)` lookups. The services of one build, Processor, Compiler and Deployer, are not registered: `Backend.start_pipeline()` makes them together as `backend.pipeline` (`kb4it/services/pipeline.py`) at the end of stage 1, once the theme is loaded, and passes each its collaborators (backend, database, theme, processor, callbacks, log file) in its constructor. `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` raises `KB4ITError`; use `backend.pipeline`. Services share state through the `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata. Nothing a build decides is written into `params` or `repo`: see `runtime["force_all"]` below.
 
 A per-repository lock (`<repo>/var/kb4it.lock`, `kb4it/core/lock.py`, `flock` on POSIX and `msvcrt.locking` on Windows) stops two builds of the same repository; `create` locks under `~/.kb4it/var/`, and `projects.json` writes take `~/.kb4it/var/projects.lock`. Other actions and the TUI itself take no lock. When `kb4it` is run with no arguments in an interactive terminal, the Textual-based TUI launches instead of showing help.
 
@@ -315,7 +315,7 @@ Because the page lives one level down, `Theme.relocate_links()` rewrites every r
 
 `Backend.get_value("runtime", "ncd"|"nck"|"K_PATH"|"KV_PATH")` redirects to the BuildPlan so the techdoc/blog themes' existing reads keep working. New code should use `backend.get_plan()` directly.
 
-Deprecated in 0.9.x, planned for removal in 0.10.0 but still present: `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` (use `backend.pipeline`), `compiler.set_progress_callback` and `set_compile_start_callback` (pass the callbacks to `KB4IT(params)`), and `var['repo']['updated']` (templates read `var['updated']`; `var['repo']` is a copy). `Builder.theme_var` is set per builder in `_initialize`; the shared class-level dict is gone.
+Removed in 0.10.0: `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` (use `backend.pipeline`), `compiler.set_progress_callback` and `set_compile_start_callback` (pass the callbacks to `KB4IT(params)`), and `var['repo']['updated']` (templates read `var['updated']`; `var['repo']` is a copy). `Builder.theme_var` is set per builder in `_initialize`; the shared class-level dict is gone.
 
 ### Services
 
@@ -383,8 +383,6 @@ KB4IT ships with a full-featured TUI built on [Textual](https://textual.textuali
 A build takes its callbacks as parameters: `KB4IT(argparse.Namespace(..., progress_callback=fn, compile_start_callback=fn))`. The controller moves them out of `params` into `KB4IT.callbacks` (`CALLBACK_PARAMS`), and the pipeline gives them to that build's Compiler:
 - `progress_callback(basename, rc)` -- called per compiled doc
 - `compile_start_callback(total)` -- called once with the number of documents
-
-`compiler.set_progress_callback` / `set_compile_start_callback` are deprecated (still present in 0.10.0): what they register is used by the next build only, which logs `[COMPILER] CALLBACK_DEPRECATED`.
 
 ### Clipboard
 

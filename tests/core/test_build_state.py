@@ -2,9 +2,15 @@
 
 import ast
 import json
+import logging
 import subprocess
 import sys
 
+import pytest
+
+from kb4it.core.exceptions import KB4ITError
+from kb4it.core.main import KB4IT
+from kb4it.services import compiler
 from kb4it.services.builder import Builder
 from tests.helpers import isolated_env, mini_theme, page, run_kb4it, write_repo
 
@@ -31,9 +37,8 @@ def test_builders_do_not_share_theme_variables():
 _CALLBACK_BUILDS = """
 import argparse, sys
 from kb4it.core.main import KB4IT
-from kb4it.services import compiler
 
-seen = {"first": [], "second": [], "deprecated": []}
+seen = {"first": [], "second": []}
 def build(config, **callbacks):
     params = argparse.Namespace(action="build", config=config, force=True, log_level="DEBUG", **callbacks)
     assert KB4IT(params).run()
@@ -41,10 +46,7 @@ def build(config, **callbacks):
 build(sys.argv[1], progress_callback=lambda name, rc: seen["first"].append(name),
       compile_start_callback=lambda total: seen["first"].append(total))
 build(sys.argv[1], progress_callback=lambda name, rc: seen["second"].append(name))
-compiler.set_progress_callback(lambda name, rc: seen["deprecated"].append(name))
-build(sys.argv[1])
-build(sys.argv[1])
-for name in ("first", "second", "deprecated"):
+for name in ("first", "second"):
     print(name.upper(), sorted(map(str, seen[name])))
 """
 
@@ -59,14 +61,11 @@ def test_each_build_calls_its_own_callbacks(tmp_path, home):
     out = result.stdout
     assert result.returncode == 0, out
     seen = {line.split(" ", 1)[0]: ast.literal_eval(line.split(" ", 1)[1])
-            for line in out.splitlines() if line.startswith(("FIRST ", "SECOND ", "DEPRECATED "))}
+            for line in out.splitlines() if line.startswith(("FIRST ", "SECOND "))}
     pages = seen["SECOND"]
     assert {"a.md", "b.md"} <= set(pages)
     # The first build also got the number of documents, from its own start callback.
     assert seen["FIRST"] == sorted([*pages, str(len(pages))])
-    # A callback set the deprecated way serves the next build only, once.
-    assert seen["DEPRECATED"] == pages
-    assert out.count("CALLBACK_DEPRECATED name=progress_callback") == 1
 
 
 _KEEP_SETTINGS = '''
@@ -94,7 +93,7 @@ def test_settings_stay_as_loaded(tmp_path, home):
     overrides = tmp_path / "repo" / "overrides" / "templates"
     overrides.mkdir(parents=True)
     (overrides / "PAGE_ABOUT_KB4IT.tpl").write_text(
-        "<p id='a'>${var['updated']}</p><p id='b'>${var['repo']['updated']}</p>", encoding="utf-8")
+        "<p id='a'>${var['updated']}</p><p id='b'>${'updated' in var['repo']}</p>", encoding="utf-8")
     result = run_kb4it("build", cfg, "--force", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     target = tmp_path / "repo" / "target"
@@ -102,36 +101,16 @@ def test_settings_stay_as_loaded(tmp_path, home):
     assert "updated" not in seen and seen["force"] is False
     about = (target / "about_kb4it.html").read_text(encoding="utf-8")
     first = about.split("<p id='a'>", 1)[1].split("</p>", 1)[0]
-    assert first and f"<p id='b'>{first}</p>" in about
+    assert first and "<p id='b'>False</p>" in about
 
 
-_OLD_LOOKUPS = """
-import argparse, sys
-from kb4it.core.main import KB4IT
-from kb4it.services import backend as backend_module
-
-compile_stage = backend_module.Backend.stage_05_compilation
-def stage_05(self):
-    for _ in range(2):
-        for name in ("Processor", "Compiler", "Deployer"):
-            assert self.app.get_service(name) is self.pipeline.service(name), name
-    print("SAME_OBJECTS")
-    return compile_stage(self)
-backend_module.Backend.stage_05_compilation = stage_05
-
-params = argparse.Namespace(action="build", config=sys.argv[1], force=False, log_level="DEBUG")
-print("RUN_RESULT", KB4IT(params).run())
-"""
-
-
-def test_old_service_lookups_answer_from_the_pipeline(tmp_path, home):
-    """get_service("Compiler") and the others still work for now, logged once per name (AR-03, D-G4)."""
-    theme = mini_theme(tmp_path / "mini")
-    cfg = write_repo(tmp_path / "repo", "mini", {"a.md": page("A", Tag="x")}, theme_path=str(theme))
-    result = subprocess.run([sys.executable, "-c", _OLD_LOOKUPS, str(cfg)], cwd=str(tmp_path),
-                            env=isolated_env(home, NO_COLOR="1", COLUMNS="1000"), stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, text=True, timeout=600, check=False, encoding="utf-8")
-    out = result.stdout
-    assert "SAME_OBJECTS" in out and "RUN_RESULT True" in out, out
+def test_pipeline_services_are_not_registered():
+    """The Processor, Compiler and Deployer of a build are reached through backend.pipeline only."""
+    assert not hasattr(compiler, "set_progress_callback")
+    assert not hasattr(compiler, "set_compile_start_callback")
+    app = KB4IT.__new__(KB4IT)
+    app.services = {}
+    app.log = logging.getLogger("test")
     for name in ("Processor", "Compiler", "Deployer"):
-        assert out.count(f"SERVICE_DEPRECATED name={name} replacement=backend.pipeline") == 1, name
+        with pytest.raises(KB4ITError):
+            app.get_service(name)

@@ -276,7 +276,6 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         theme_var["kb"]["keys"] = self.srvdtb.get_keys()
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
-        theme_var["repo"]["updated"] = theme_var["updated"]  # old templates read it here; removed in the next minor release
         theme_var["git_ok"] = git_ready(theme_var["repo"])
 
         # Only pass to theme those keys used by documents

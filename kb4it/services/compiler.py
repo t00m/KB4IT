@@ -29,36 +29,7 @@ from kb4it.core.util import (get_default_workers, get_source_docs,
 
 # Callbacks of a build come with it: KB4IT(params) takes "progress_callback", called per
 # document with (basename: str, rc: bool), and "compile_start_callback", called once with the
-# number of documents (total: int). The set_* functions below are deprecated (removed in
-# the next minor release): what they register is used by the next build only, then forgotten.
-_pending_callbacks = {}
-
-
-def set_progress_callback(callback) -> None:
-    """Deprecated: pass "progress_callback" to KB4IT(params) instead."""
-    _pending_callbacks["progress_callback"] = callback
-
-
-def clear_progress_callback() -> None:
-    """Deprecated: forget a progress callback registered with set_progress_callback."""
-    _pending_callbacks.pop("progress_callback", None)
-
-
-def set_compile_start_callback(callback) -> None:
-    """Deprecated: pass "compile_start_callback" to KB4IT(params) instead."""
-    _pending_callbacks["compile_start_callback"] = callback
-
-
-def clear_compile_start_callback() -> None:
-    """Deprecated: forget a callback registered with set_compile_start_callback."""
-    _pending_callbacks.pop("compile_start_callback", None)
-
-
-def take_pending_callbacks() -> dict:
-    """Return the callbacks registered with the deprecated set_* functions, and forget them."""
-    pending = dict(_pending_callbacks)
-    _pending_callbacks.clear()
-    return pending
+# number of documents (total: int).
 
 
 class Compiler(Service):
@@ -82,10 +53,7 @@ class Compiler(Service):
         self.failed = []
         self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
-        callbacks = dict(callbacks or {})
-        for name, callback in take_pending_callbacks().items():
-            self.log.debug(f"[COMPILER] CALLBACK_DEPRECATED name={name} replacement=params.{name}")
-            callbacks.setdefault(name, callback)
+        callbacks = callbacks or {}
         self.progress_callback = callbacks.get("progress_callback")
         self.compile_start_callback = callbacks.get("compile_start_callback")
 
