@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.10.0] - 2026-10-26
+
 ### Added
 
 - BI: every KB4IT build names the commit it came from. `kb4it --version` prints the build version (`X.Y.Z` for a release, `X.Y.Z-dev+<n>.g<sha7>` for any other commit, `.dirty` with uncommitted changes) and, on a second line, the commit and build date. Packages carry it in `kb4it/BUILD.json`, written by the new `scripts/devel/stamp_build.py` from `build_python.sh`, CI and the publish workflow, which refuses a release build that is not the clean commit of its tag. The log, `kb4it info`, the `[WORKFLOW] SUMMARY` line (`kb4it=`), the TUI title, the About page and the `generator` meta tag show it too.
