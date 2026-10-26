@@ -42,6 +42,8 @@ def site(tmp_path_factory):
     result = run_kb4it("create", "techdoc", "repo", cwd=base, home=home)
     assert result.returncode == 0, result.stdout
     repo = base / "repo"
+    for sample in (repo / "source").glob("*.md"):
+        sample.unlink()  # the site holds only PAGES; the samples are tested in test_create_samples.py
     cfg = repo / "config" / "repo.json"
     conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf["admin"] = True
