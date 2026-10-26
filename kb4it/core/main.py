@@ -235,6 +235,8 @@ class KB4IT:
                 workflow.verify_sources()
             elif action == "apps":
                 workflow.list_apps(self.params["theme"])
+            elif action == "doctor":
+                workflow.doctor()
         except LockBusyError as e:
             self.log.error(f"[LOCK] BUSY path={e.path} pid={e.pid}")
             holder = f" (PID {e.pid})" if e.pid else ""
@@ -334,6 +336,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
+
+    # Installation report
+    subparsers.add_parser("doctor", help="Show the build, Python, paths and themes; exit 1 when bundled files are missing")
 
     # Help center
     help_parser = subparsers.add_parser("help", help="Open the KB4IT help center")

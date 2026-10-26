@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Uninstall KB4IT from user space: removes it from uv, pipx and pip --user,
-# whichever has it. No root/admin privileges needed.
+# Uninstall KB4IT from user space: removes it from uv, pipx, pip --user and the
+# virtual environment of install_kb4it_from_source.sh --method venv, whichever has it. No root/admin privileges needed.
 #
 # Usage: uninstall.sh [--purge]
 #   --purge   also delete the per-user folder (~/.kb4it, or $KB4IT_HOME) after asking:
@@ -36,6 +36,19 @@ if command -v pipx &>/dev/null && pipx list --short 2>/dev/null | grep -qi '^kb4
     FOUND=1
 fi
 
+# The venv method of the source installer: the venv, and the link only when it points into it.
+VENV="${KB4IT_VENV:-$HOME/.local/share/kb4it/venv}"
+LINK="$HOME/.local/bin/kb4it"
+if [[ -d "$VENV" ]]; then
+    echo "Removing KB4IT installed in $VENV"
+    if [[ -L "$LINK" && "$(readlink "$LINK")" == "$VENV/"* ]]; then
+        rm -f "$LINK"
+        echo "Removed the link $LINK"
+    fi
+    rm -rf "$VENV"
+    FOUND=1
+fi
+
 if command -v python3 &>/dev/null && python3 -m pip show kb4it &>/dev/null; then
     echo "Removing KB4IT installed with pip"
     if ! python3 -m pip uninstall -y kb4it; then
@@ -49,7 +62,7 @@ if command -v python3 &>/dev/null && python3 -m pip show kb4it &>/dev/null; then
 fi
 
 if [[ "$FOUND" == 0 ]]; then
-    echo "KB4IT is not installed with uv, pipx or pip."
+    echo "KB4IT is not installed with uv, pipx, pip or the source installer's venv."
 fi
 
 if [[ "$PURGE" == 1 ]]; then

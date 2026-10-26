@@ -53,6 +53,20 @@ class Workflow(Service):
         frontend = self.get_service("Frontend")
         frontend.theme_list()
 
+    def doctor(self):
+        """Print the installation report; raise when a bundled file or theme is missing (SI-07)."""
+        from kb4it.core.doctor import report
+        self.log.debug("[WORKFLOW] ACTION name=doctor")
+        lines, problems = report()
+        for line in lines:
+            print(line)
+        for problem in problems:
+            print(f"PROBLEM    {problem}")
+            self.log.error(f"[WORKFLOW] DOCTOR_PROBLEM {problem}")
+        if problems:
+            raise KB4ITError(f"Installation incomplete: {len(problems)} problem(s)")
+        print("No problems found.")
+
     def list_apps(self, theme):
         """Print all apps available for a given theme to the log."""
         self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")

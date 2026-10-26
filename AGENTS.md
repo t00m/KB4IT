@@ -11,7 +11,7 @@ KB4IT is a static website generator for technical documentation. It reads Markdo
 **Install / build**
 
 ```bash
-scripts/install/local/install_kb4it_from_source.sh   # Install this checkout (uv tool or pipx)
+scripts/install/local/install_kb4it_from_source.sh   # Build, check and install this checkout's wheel (--method auto|uv|pipx|venv, --python, --allow-dirty, --extras, --wheel); verifies with kb4it --version and kb4it doctor, exits 2 when another kb4it comes first on PATH
 ./scripts/devel/test.sh                              # Run the tests
 ./scripts/devel/check_themes.sh                      # Check every tracked theme is releasable
 scripts/devel/editor/build.sh                        # Rebuild the CodeMirror bundle (needs node and npm; only to upgrade CodeMirror)
@@ -37,6 +37,7 @@ kb4it themes                              # List installed themes
 kb4it apps <theme>                        # List apps available for a theme
 kb4it projects                            # List all projects created by the user
 kb4it verify <config>                     # Verify sources are KB4IT conformant; exits 1 on any non-conformant file or theme problem
+kb4it doctor                              # Build version, commit, Python, paths, offline help and every theme; exits 1 when a bundled file or theme is missing
 ```
 
 **Global flags (before subcommand):**
@@ -89,6 +90,7 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 | `kb4it/core/dates.py`             | `DateCache`, `guess_datetime`, the `get_human_*` and timestamp helpers |
 | `kb4it/core/documents.py`         | Frontmatter and title: `get_document_attributes`, `load_frontmatter` (a SafeLoader without the bool, int, float and timestamp resolvers: every plain value is text, as written; `kb4it-frontmatter.js` mirrors it), `is_yes` (the Bookmark check), `first_heading` (title rule), `strip_first_heading`, `fences_in_blocks`, `raw_script_lines`, `extract_sections_from_md`, `get_hash_from_body` |
 | `kb4it/core/files.py`             | `valid_filename`, `SOURCE_ENCODING`, copy and delete (`sync_file`, `sync_tree`, `prune_tree` for incremental deploys), `json_load`, `json_save` (atomic: temp file, fsync, `os.replace`), `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`), blake2b hashes. `dates`, `documents` and `files` import nothing from `util` |
+| `kb4it/core/doctor.py`            | `report()` for `kb4it doctor` (`Workflow.doctor()`): the lines and the problems; `BUNDLED_THEMES` must equal the tracked themes |
 | `kb4it/core/version.py`           | `parse_version`, `requirement_satisfied` (theme `kb4it` field), build identity (`git_info`, `build_info`, `build_version`, `build_cache_key`, `read_build_file` of `BUILD.json`), `theme_fingerprint`, `theme_identity` |
 | `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
 | `kb4it/core/mdrich.py`            | `RichContentExtension` (python-markdown, always on; its math processors are off, `math=False`, when `pymdownx.arithmatex` or `markdown_katex` is configured): `mermaid` fences become `<pre class="mermaid">`; `$$` blocks, `$$...$$` and `$...$` become `kb4it-math` elements; `\$` is a literal dollar sign; code is never touched |

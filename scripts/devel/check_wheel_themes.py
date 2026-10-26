@@ -2,6 +2,7 @@
 """Fail when a theme tracked in git, or the offline help, is missing from the built wheel."""
 
 import glob
+import os
 import subprocess
 import sys
 import zipfile
@@ -24,10 +25,12 @@ def has_editor_bundle(paths):
 
 
 def main():
-    wheels = sorted(glob.glob("dist/*.whl"))
+    # A wheel named on the command line (the source installer builds into a temporary folder), else dist/.
+    wheels = sys.argv[1:] or sorted(glob.glob("dist/*.whl"))
     if not wheels:
         sys.exit("No wheel in dist/. Run: uv build --wheel")
-    tracked = themes(subprocess.run(["git", "ls-files", PREFIX], capture_output=True, text=True,
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    tracked = themes(subprocess.run(["git", "ls-files", PREFIX], cwd=root, capture_output=True, text=True,
                                     check=True).stdout.split())
     names = zipfile.ZipFile(wheels[-1]).namelist()
     if not has_offline_help(names):

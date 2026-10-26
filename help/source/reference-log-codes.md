@@ -32,6 +32,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_ERROR` | error | The theme cannot load, or its own checks failed. Stops |
 | `COMPILE_ERROR` | error | Pages could not be made, a hook failed, or documents cannot be read with `"fail_on_invalid": true`. Stops |
 | `KB4IT_ERROR` | error | Any other failure. Stops |
+| `DOCTOR_PROBLEM` | error | `kb4it doctor` found a bundled file or theme missing, one line each, before `KB4IT_ERROR`. Install KB4IT again; see [Check the installation](howto-install.md#check) |
 
 ## Settings {#settings}
 

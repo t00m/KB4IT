@@ -188,11 +188,12 @@ kb4it build <config.json>                 # build the site (incremental)
 kb4it build <config.json> --force         # force recompile everything
 kb4it verify <config.json>                # check documents and links without building
 kb4it info <config.json>                  # show repo stats
-kb4it themes                              # list available themes
+kb4it themes                              # list available themes, with version, fingerprint and folder
 kb4it apps <theme>                        # list theme apps
 kb4it projects                            # list your knowledge bases
 kb4it help                              # open the help center (--url, --dismiss)
-kb4it --version                           # show version
+kb4it doctor                              # show the build, Python, paths and themes; exit 1 if something bundled is missing
+kb4it --version                           # show the build version and the commit it was built from
 ```
 
 Run `kb4it` with no arguments in a terminal to open the terminal interface: create, build, explore and preview your projects from one screen.

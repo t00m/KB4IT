@@ -23,6 +23,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building |
 | `kb4it info CONFIG` | Shows the main settings |
 | `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
+| `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
 | `kb4it projects` | Lists the knowledge bases you created or imported |
 | `kb4it help` | Opens the offline copy of this help in your browser; see [Help center](#help) |
