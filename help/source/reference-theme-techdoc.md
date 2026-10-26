@@ -211,13 +211,13 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | Key | Default | Meaning |
 |---|---|---|
 | `datatable` | `["Date", "Title"]` | Columns of the document tables; a column that is empty in every row of a table is left out of it |
-| `events` | `[]` | Categories that count as events |
+| `events` | `[]` | Work types (or, for documents without one, categories) that count as events |
 | `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
 | `admin` | `false` | Builds the backup page, see below |
 | `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
-The `default` app sets `datatable` to Date, Title, Category, Priority, Status, Scope and Topic, and lists every category in `events`.
+The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status, Scope and Topic, and lists every work type and category in `events`.
 
 The document page reads three keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
 
@@ -245,5 +245,7 @@ The zips are rebuilt only when something changed. The page is not linked from th
 
 | App | Starts you with |
 |---|---|
-| `default` | An empty knowledge base with the settings above |
-| `sapbasis` | The same, prepared for SAP Basis documentation |
+| `default` | Seven sample documents: a backup check procedure, a disk full incident and the change that followed it, a weekly operations meeting, an open task, a note on RAID levels and a draft report |
+| `sapbasis` | The same settings with a menu of SAP properties (`SID`, `Transaction`, `Job`, `Dump`, ...) and five SAP Basis samples: two procedures (`SM37`, `ST22`), an incident, a planned kernel update and a note on the transport landscape |
+
+Each sample follows the sections of its skeleton and scores Exemplary. Names, hosts and system ids are made up. Copy a sample to start a document, or delete them.

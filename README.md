@@ -35,7 +35,7 @@ Every KB4IT document is a Markdown file beginning with a YAML frontmatter block.
 
 ```markdown
 ---
-Author: Tomás Vírseda
+Author: Ann Lopez
 Category: Procedure
 Date: 2026-05-19
 DocType: How-to guide

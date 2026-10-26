@@ -33,7 +33,7 @@ The blog reads these properties from each document:
 | `Date` | Orders the posts and places them in the archive |
 | `Category` | With `strict` on, only `Category: Post` documents are shown as posts |
 
-Every other property is optional.
+Every other property is optional. Write the text for the home page in an `## Excerpt` section and the rest in `## Body`; a post without an excerpt shows "Excerpt missing".
 
 ## Optional keys
 
@@ -45,5 +45,9 @@ These keys are optional. Add one to `repo.json` only to change it.
 | `strict` | `false` | `true` uses the post layout only for `Category: Post` documents |
 | `tagline` | Empty footer line | Text shown in the footer |
 | `editor` | `false` | `true` builds the Add page (`add.html`) with a Markdown editor and an "Add document" link in the footer |
+
+## Sample app
+
+The `default` app has four sample posts: a welcome post that explains the excerpt, a short note on backups, a Markdown primer and a review of the year. Each one uses `## Excerpt` and `## Body`. Copy one to start a new post, or delete them.
 
 See [reference-theme-blog.md](../../../../help/source/reference-theme-blog.md) for the full theme reference.

@@ -19,7 +19,7 @@ blog publishes your documents as posts, newest first, with an excerpt on the hom
 
 ```markdown
 ---
-Author: Tomás Vírseda
+Author: Ann Lopez
 Category: Post
 Date: 2026-09-28
 Tag: markdown, notes
@@ -69,5 +69,7 @@ The full text...
 | `editor` | `false` | `true` builds the Add page. The skeleton is `POST-SKELETON.md` (`Author`, `Category: Post`, `Date`, `Tag`, `Topic`, an `## Excerpt` and a `## Body`); put your own in `templates/skeletons/` of the repository overrides to replace it |
 | `datatable` | | Columns of the document tables; the `default` app uses Date, Title and Topic |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
+
+The `default` app has four sample posts, each with an `## Excerpt` and a `## Body`.
 
 See also the [common settings](reference-repo-json.md).

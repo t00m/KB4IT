@@ -74,10 +74,10 @@ The block between the two `---` lines holds the document's properties. The `#` l
 kb4it build ~/mykb/config/repo.json
 ```
 
-The last lines tell you what happened. The count is three: your document and the two samples.
+The last lines tell you what happened. The count is eight: your document and the seven samples.
 
 ```text
-[WORKFLOW] SUMMARY docs_total=3 compiled=3 skipped=0 invalid=0 ...
+[WORKFLOW] SUMMARY docs_total=8 compiled=8 skipped=0 invalid=0 ...
 [WORKFLOW] URL /home/ann/mykb/target/index.html
 ```
 

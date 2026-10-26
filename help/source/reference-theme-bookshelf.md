@@ -79,4 +79,6 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 | `datatable` | `["Date", "Title", "Chapter"]` | Columns of the document tables |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
+The `default` app has five sample chapters in two books, `Sample Book` and `Linux Basics`.
+
 See also the [common settings](reference-repo-json.md).
