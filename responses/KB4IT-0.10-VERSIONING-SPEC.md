@@ -6,7 +6,7 @@ DocType: Reference
 OS: Linux, macOS, Windows
 Product: KB4IT, RHEL, uv, pipx
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: specification, versioning, packaging, fingerprint, venv
 Topic: Installation, Upgrade
 ---
@@ -86,7 +86,7 @@ KB4IT keeps two strings:
 | BI-07 | `kb4it --version` prints `KB4IT <build_version>`, with the commit and build date on a second line, for example `KB4IT 0.10.0-dev+42.g0a71990` and `commit 0a71990c... built 2026-10-26T08:12:03Z`. `version_text()` stays the single place that formats it |
 | BI-08 | The build version replaces the bare version in: `kb4it info`, the `[CONTROLLER] START` and `END` log lines, the `<meta name="generator">` of every theme, `PAGE_ABOUT_KB4IT.tpl`, the bookshelf footer, the TUI title, and the `[WORKFLOW] SUMMARY` line as `kb4it=<build_version>` |
 | BI-09 | `kbdict.json` stores `kb4it_version` (release) and a new `kb4it_build` (build version). A change of either one forces a full rebuild and logs `[BACKEND] KBDICT_BUILD_MISMATCH stored=... current=...`. This fixes F3: the first build after installing another commit compiles everything once |
-| BI-10 | A dirty build compares as its commit plus a hash of `git diff HEAD` (kept in `BUILD.json` as `diff_hash`), so two different uncommitted states do not share a cache |
+| BI-10 | A dirty build compares as its commit plus a hash of `git diff HEAD -- kb4it` (kept in `BUILD.json` as `diff_hash`), so two different uncommitted states do not share a cache. Only the package counts: editing docs or tests does not make a build dirty |
 | BI-11 | `tests/core/test_version_sources.py` stays green: the build version is computed, never written by hand in a tracked file |
 
 ## TV: theme version and fingerprint
@@ -128,6 +128,17 @@ scripts/install/local/install_kb4it_from_source.sh [--method auto|uv|pipx|venv] 
 | SI-08 | `scripts/uninstall/local/uninstall.sh` removes the venv method too (the venv folder and the `~/.local/bin/kb4it` link, only when the link points into that venv) |
 | SI-09 | Tests in `tests/packaging/test_install_scripts.py`, with fake `uv`, `pipx` and Python executables as today: method selection, Python 3.6 refused, dirty tree refused, wheel installed instead of the directory, shadowed `kb4it` exits 2, venv method recreated on a different Python |
 | SI-10 | `help/source/howto-install.md`: the "Run the latest code" section uses the script, documents `--method venv` for RHEL 8, and shows how to read the commit with `kb4it --version` and `kb4it doctor` |
+
+## Implementation notes
+
+Approved on 2026-10-26 with the recommendations of D1 to D4. Implemented in two commits on `0.10.0`: build identity and theme versions (BI, TV), then the source installer and `kb4it doctor` (SI). Refinements found while implementing:
+
+- BI-10: the dirty check and its hash cover `kb4it/` only, so editing the help or the tests of a checkout does not rebuild every site.
+- The GitHub Action (`scripts/action/run.sh`) reads the first line of `kb4it --version` and keeps its `version` output as `X.Y.Z`; its summary table shows the build version.
+- `build_python.sh` honours `KB4IT_PYTHON` when uv is missing, so the installer's venv method can build with Python 3.11 on RHEL 8.
+- `check_wheel_themes.py` accepts the path of the wheel to check.
+- `theme_snapshot.py` normalises the build version and the theme identity of the `generator` tag.
+- SI-09: the venv method's "recreate on another Python" path was tested by hand, not by an automated test.
 
 ## Order of work
 
