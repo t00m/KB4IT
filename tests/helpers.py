@@ -54,7 +54,7 @@ def write_repo(base, theme, pages, **config):
 
 def mini_theme(dest, **theme_json):
     """Copy the mini test theme to dest, merge theme_json into its theme.json and return dest."""
-    shutil.copytree(FIXTURES / "themes" / "mini", dest)
+    shutil.copytree(FIXTURES / "themes" / "mini", dest, ignore=shutil.ignore_patterns("__pycache__"))
     conf_path = dest / "theme.json"
     conf = json.loads(conf_path.read_text(encoding="utf-8"))
     conf.update(theme_json)
