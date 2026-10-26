@@ -16,5 +16,7 @@ __pycache__/
 responses
 tmp/
 kb4it/resources/help/
+# Build stamp, written by scripts/devel/stamp_build.py before packaging
+kb4it/BUILD.json
 
 scripts/devel/editor/node_modules/

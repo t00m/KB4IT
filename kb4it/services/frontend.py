@@ -16,7 +16,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
-from kb4it.core.version import requirement_satisfied
+from kb4it.core.version import parse_version, requirement_satisfied, theme_fingerprint, theme_identity
 
 
 class Frontend(Service):
@@ -51,7 +51,8 @@ class Frontend(Service):
         for dirname in global_themes:
             try:
                 self.theme_load(dirname)
-                self.log.info(f"[FRONTEND] THEME scope=global n={n} id={self.runtime['theme']['id']} description={self.runtime['theme']['description']}")
+                self.log.info(f"[FRONTEND] THEME scope={self._scope(self.runtime['theme']['path'])} n={n} "
+                              f"{self._describe(self.runtime['theme'])}")
                 n += 1
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
@@ -64,7 +65,8 @@ class Frontend(Service):
                 self.log.debug(f"[FRONTEND] THEME_LOOKUP dir={dirname}")
                 try:
                     self.theme_load(dirname)
-                    self.log.info(f"[FRONTEND] THEME scope=local id={self.runtime['theme']['id']} name={self.runtime['theme']['name']} description={self.runtime['theme']['description']}")
+                    self.log.info(f"[FRONTEND] THEME scope={self._scope(self.runtime['theme']['path'])} n={n} "
+                                  f"{self._describe(self.runtime['theme'])}")
                     n += 1
                 except Exception as error:
                     self.log.error(f"[FRONTEND] ERROR {error}")
@@ -72,6 +74,20 @@ class Frontend(Service):
         if n == 0:
             self.log.info("[FRONTEND] NO_THEMES")
         self.app.stop()
+
+    def _scope(self, path):
+        """Where a theme was found: source, user, builtin or theme_path (TV-06)."""
+        real = os.path.realpath(path)
+        for scope, root in (("builtin", ENV["GPATH"]["THEMES"]), ("user", ENV["LPATH"]["THEMES"])):
+            if os.path.dirname(real) == os.path.realpath(root):
+                return scope
+        return "theme_path" if self._theme_path_override else "source"
+
+    @staticmethod
+    def _describe(theme):
+        """The fields of a theme listing line: identity first, the path last so a hidden copy is visible."""
+        return (f"id={theme['id']} version={theme.get('version') or 'unversioned'} "
+                f"fingerprint={theme.get('fingerprint')} description={theme.get('description')} path={theme['path']}")
 
     def apps_list(self, theme: str):
         """List available applications for a given theme."""
@@ -109,6 +125,29 @@ class Frontend(Service):
             self.log.error(f"[FRONTEND] THEME_REQUIREMENT_UNMET id={theme_id} requires={spec} current={current}")
             raise ThemeError(f"Theme {theme_id} requires KB4IT {spec}; this is {current}")
 
+    def _identify(self, theme):
+        """Check the theme's own version and add its fingerprint and identity (TV-01 to TV-04)."""
+        from kb4it.services.builder import template_base_dir
+        theme_id = theme.get("id", "?")
+        version = theme.get("version")
+        if version is None:
+            self.log.warning(f"[FRONTEND] THEME_VERSION_MISSING id={theme_id}")
+        else:
+            try:
+                parse_version(version)
+            except ValueError as error:
+                self.log.error(f"[FRONTEND] THEME_VERSION_INVALID id={theme_id} version={version}")
+                raise ThemeError(f"Theme {theme_id} has an invalid version {version!r}: {error}") from error
+            if "+" in str(version) or str(version).count(".") != 2:
+                raise ThemeError(f"Theme {theme_id} version must be X.Y.Z, not {version!r}")
+        try:
+            base = template_base_dir(theme)
+        except ThemeError:
+            base = None  # the build refuses it in _validate_required_templates; a listing still shows the theme
+        theme["version"] = version
+        theme["fingerprint"] = theme_fingerprint(theme["path"], base, ENV["GPATH"]["TEMPLATES"])
+        theme["identity"] = theme_identity(theme_id, version, theme["fingerprint"])
+
     def theme_load(self, theme_name=None):
         """Load custom user theme, global theme or default."""
         if theme_name is None:
@@ -129,10 +168,11 @@ class Frontend(Service):
             try:
                 with open(theme_conf, "r", encoding="utf-8") as fth:
                     theme = json.load(fth)
-                    theme["version"] = ENV["APP"]["version"]  # every theme deployed has KB4IT\'s version
+                    theme["kb4it_version"] = ENV["APP"]["version"]
                     for prop in theme:
                         self.runtime["theme"][prop] = theme[prop]
-                self.log.debug(f"[FRONTEND] THEME_CONF name={theme['name']} version={theme['version']}")
+                self.log.debug(f"[FRONTEND] THEME_CONF name={theme['name']} version={theme.get('version')} "
+                               f"kb4it={theme['kb4it_version']}")
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
                 self.log.error(f"[FRONTEND] THEME_CONF_INVALID path={theme_conf}")
@@ -140,6 +180,7 @@ class Frontend(Service):
 
             self._check_requirement(theme)
             check_theme_editor(theme)
+            self._identify(self.runtime["theme"])
 
             # Get theme directories
             self.runtime["theme"]["templates"] = os.path.join(
@@ -165,7 +206,9 @@ class Frontend(Service):
 
                 self.app.register_service("Theme", Theme())
                 self.get_service("Theme")
-                self.log.debug("[FRONTEND] THEME_LOADED id=%s", self.runtime["theme"]["id"])
+                loaded = self.runtime["theme"]
+                self.log.debug(f"[FRONTEND] THEME_LOADED id={loaded['id']} version={loaded['version'] or 'unversioned'} "
+                               f"fingerprint={loaded['fingerprint']} path={loaded['path']}")
             except AttributeError as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
                 return None

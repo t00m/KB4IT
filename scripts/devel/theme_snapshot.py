@@ -34,6 +34,9 @@ _VOLATILE = [
     (re.compile(r"\bat \d{1,2}:\d{2}\b"), "at <TIME>"),
     (re.compile(r"\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*,? \d{1,2} [A-Z][a-z]+ \d{4}\b"), "<DATE>"),
     (re.compile(r"\b[A-Z][a-z]+ \d{1,2},? \d{4}( \d{1,2}:\d{2})?\b"), "<DATE>"),
+    # The commit of the build and the theme fingerprint change with every run of different code.
+    (re.compile(r"<VERSION>-dev\+[\w.]+|<VERSION>\+unknown"), "<VERSION>"),
+    (re.compile(r"(<meta name=\"generator\" content=\"[^;\"]*); [^\"]*\""), r'\1; <THEME>"'),
 ]
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 

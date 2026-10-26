@@ -33,6 +33,7 @@ packages = [
 ]
 include = [
     { path = "kb4it/VERSION", format = ["sdist", "wheel"] },
+    { path = "kb4it/BUILD.json", format = ["sdist", "wheel"] },
     { path = "kb4it/resources/**/*", format = ["sdist", "wheel"] },
     { path = "README.md", format = ["sdist", "wheel"] },
     { path = "LICENSE", format = ["sdist", "wheel"] },

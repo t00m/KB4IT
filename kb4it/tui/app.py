@@ -16,6 +16,7 @@ from kb4it.tui.clipboard import (
     clipboard_commands,
 )
 from kb4it.tui.projects import (
+    BUILD_VERSION,
     PROJECTS_FILE,
     VERSION,
     _kbdict_path,
@@ -117,7 +118,7 @@ class KB4ITTUI(App):
     CSS = """
     Screen { background: $surface; }
     """
-    TITLE = f"KB4IT v{VERSION}"
+    TITLE = f"KB4IT {BUILD_VERSION}"
 
     BINDINGS = [
         Binding("ctrl+a", "screen.text_select_all", "Select All", show=True),

@@ -26,6 +26,7 @@ from kb4it.core.log import redirect_logs, release_log_file
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save
+from kb4it.core.version import build_cache_key
 from kb4it.services.pipeline import Pipeline
 
 # kbdict keys listing the files a build wrote into the target; a forced build keeps them so the deployer can sweep.
@@ -307,6 +308,13 @@ class Backend(Service):
                 )
                 self.runtime["force_all"] = True
                 return empty_kbdict
+            # Another commit of the same version may change any page: compile everything once (BI-09).
+            stored_build = kbdict.get("kb4it_build")
+            current_build = build_cache_key(ENV["APP"]["build"])
+            if stored_build != current_build:
+                self.log.warning(f"[BACKEND] KBDICT_BUILD_MISMATCH stored={stored_build} current={current_build}")
+                self.runtime["force_all"] = True
+                return empty_kbdict
             stored_yaml = kbdict.get("pyyaml_version")
             current_yaml = yaml.__version__
             if stored_yaml != current_yaml:
@@ -333,6 +341,7 @@ class Backend(Service):
         """Save kb4it dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         kbdict["kb4it_version"] = ENV["APP"]["version"]
+        kbdict["kb4it_build"] = build_cache_key(ENV["APP"]["build"])
         kbdict["pyyaml_version"] = yaml.__version__
         json_save(kb4it_dbfile, kbdict)
         self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")

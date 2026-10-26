@@ -27,12 +27,15 @@ Every theme's `theme.json` has a `kb4it` requirement, for example `">=0.7.9"` or
 
 `scripts/devel/check_themes.sh` checks every theme tracked in git:
 
-- `theme.json` has `id`, `name` and `kb4it` (KB4IT gives every theme its own version), and the `id` matches the folder
+- `theme.json` has `id`, `name`, `version` and `kb4it`, and the `id` matches the folder
+- a theme whose files (`apps/` aside) changed since the previous release tag has a new `version`: raise it in the theme's `theme.json` (semantic versioning: patch for fixes, minor for new features, major for changes that break overrides or custom templates)
 - the requirement is met by the version being released
 - the required templates and the `deploy_dirs` folders exist
 - every sample app under `apps/` is created and built with no error and no warning
 
 It builds from what git tracks, so a file that exists only in your working tree cannot make a theme look fine. The release script and CI both run it.
+
+The release build is stamped by `scripts/devel/stamp_build.py --require-release` in `publish.yml`: it fails unless the commit is the clean commit of tag `vX.Y.Z`, and writes `kb4it/BUILD.json` so `kb4it --version` names the commit.
 
 ## Before you start
 

@@ -328,12 +328,19 @@ class Workflow(Service):
                 metadata[os.path.basename(doc)] = keys
         return [str(line) for line in module.verify(repo, metadata)]
 
+    @staticmethod
+    def _theme_tag(backend):
+        """'techdoc/1.0.0+3f9a1c0b7e21': the theme identity as one log value."""
+        theme = backend.get_dict("runtime").get("theme") or {}
+        return f"{theme.get('id', '?')}/{theme.get('version') or 'unversioned'}+{theme.get('fingerprint', '?')}"
+
     def info_repository(self):
         """Print repository configuration fields to stdout."""
         backend = self.app.get_service("Backend")
         config_file = backend.get_value("app", "config")
         if config_file is not None and os.path.exists(config_file):
             repo = json_load(config_file)
+            print(f"                     KB4IT: {ENV['APP']['build_version']}")
             print(f"                     Title: {repo.get('title')}")
             print(f"                   Tagline: {repo.get('tagline')}")
             print(f"                Theme used: {repo.get('theme')}")
@@ -535,6 +542,8 @@ class Workflow(Service):
             f" keys_compiled={keys_compiled}"
             f" kv_pages_compiled={kv_compiled}"
             f" failed={len(failed)}"
+            f" kb4it={ENV['APP']['build_version']}"
+            f" theme={self._theme_tag(backend)}"
         )
         self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 

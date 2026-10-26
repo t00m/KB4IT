@@ -25,16 +25,16 @@ A theme is a folder with a description, some Python and some templates. Start fr
         mkdir -p ~/.kb4it/opt/resources/themes
         cp -r <path>/techdoc ~/.kb4it/opt/resources/themes/mytheme
 
-3. In `mytheme/theme.json`, set `"id": "mytheme"` and a new `name`.
+3. In `mytheme/theme.json`, set `"id": "mytheme"`, a new `name` and `"version": "1.0.0"`.
 4. Set `"theme": "mytheme"` in the `repo.json` of a knowledge base and build it with `--force`.
 
-`kb4it themes` now lists it with `scope=local`. Change the templates and CSS step by step and rebuild. After you change a template, the theme's Python code or `theme.json`, run `kb4it build --force`: a normal build only rebuilds the documents whose source changed, so the other pages keep the old theme. CSS and JavaScript files are copied at every build and need no `--force`.
+`kb4it themes` now lists it with `scope=user`, its version, its fingerprint and its folder. Change the templates and CSS step by step and rebuild. A normal build is enough: when any file of the theme changes, its fingerprint changes and the next build rebuilds every page (`CORE_SIGNATURE_CHANGED` in the log). See [Theme version and fingerprint](#version).
 
 ## What a theme contains {#layout}
 
 ```text
 mytheme/
-├── theme.json        # id, name, description, KB4IT it needs
+├── theme.json        # id, name, version, description, KB4IT it needs
 ├── logic/theme.py    # class Theme: builds the pages
 ├── templates/*.tpl   # Mako templates
 │   └── skeletons/    # optional: skeletons of the Add page
@@ -214,10 +214,9 @@ The bundled themes follow these rules, and a theme you share should too:
 
 ## Options in theme.json {#options}
 
-The theme version is not in `theme.json`. KB4IT gives every theme its own version, so a theme always shows the KB4IT it runs with.
-
 | Key | Meaning |
 |---|---|
+| `version` | The theme's own version, `X.Y.Z`. Raise it when you change the theme. Without it the theme loads and is shown as `unversioned` (`THEME_VERSION_MISSING`); another form stops the build (`THEME_VERSION_INVALID`) |
 | `favicon` | Path of the theme's icon inside the theme folder, such as `images/logo.svg`. Pages use it when `repo.json` has no `logo`. The folder must be in `deploy_dirs` if you set that list |
 | `kb4it` | The KB4IT versions the theme works with, such as `">=X.Y.Z"` or `">=X.Y.Z, <A.B.C"` |
 | `metadata_pages` | `false` skips the pages per property and per value |
@@ -225,6 +224,18 @@ The theme version is not in `theme.json`. KB4IT gives every theme its own versio
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |
 | `editor` | `true` or `false`: whether the Add page is on when `repo.json` has no `editor` key. Without it, the page is off. See [Add the editor page](#editor) |
 | `template_base` | Name of a set of templates bundled with KB4IT that the theme builds on, such as `"uikit"`, the UIkit layout techdoc and blog share. A template is looked up in the repository's overrides, then the theme, then its base, then KB4IT's shared templates, so the theme only holds the ones it changes |
+
+## Theme version and fingerprint {#version}
+
+A theme is identified by its `version` and by a fingerprint: 12 characters computed from every file of the theme folder (except `apps/`), its template base and KB4IT's shared templates. A file changed, added or renamed gives another fingerprint, even when you forget to raise the version.
+
+The pair shows as `mytheme 1.0.0+3f9a1c0b7e21`:
+
+- in `kb4it themes` and `kb4it doctor`, with the folder the theme is loaded from;
+- in the `[WORKFLOW] SUMMARY` line of every build, as `theme=mytheme/1.0.0+3f9a1c0b7e21`;
+- in the `generator` meta tag of the pages of the bundled themes.
+
+The fingerprint is part of the build cache. When it changes, the next build rebuilds every page, so you never need `--force` after editing a theme.
 
 ## Add the editor page {#editor}
 

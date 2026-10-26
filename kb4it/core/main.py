@@ -21,7 +21,6 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, repo_lock_path
 from kb4it.core.log import get_logger, setup_logging
-from kb4it.core.version import git_describe
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -85,7 +84,7 @@ class KB4IT:
             self.params["LOGLEVEL"] = "INFO"
         setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
-        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['build_version']}")
         self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")
         self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']} family={ENV['SYS']['PLATFORM']['FAMILY']}")
@@ -209,7 +208,7 @@ class KB4IT:
     def run(self):
         """Run the requested action. Returns True on success, False on error."""
         action = self.params["action"]
-        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['build_version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
         error = False
         lock = None
@@ -269,14 +268,17 @@ class KB4IT:
         except AttributeError as errmsg:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
-        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['build_version']}")
 
 
 def version_text():
-    """'KB4IT 1.2.3', plus the git describe of a source checkout so development builds are identifiable."""
-    text = f"{ENV['APP']['shortname']} {ENV['APP']['version']}"
-    described = git_describe(os.path.dirname(ENV["CONF"]["ROOT"]))
-    return f"{text} ({described})" if described else text
+    """'KB4IT <build version>', then the commit and build date, so every installed copy is identifiable (BI-07)."""
+    build = ENV["APP"]["build"]
+    text = f"{ENV['APP']['shortname']} {ENV['APP']['build_version']}"
+    if not build.get("commit"):
+        return f"{text}\ncommit unknown (no git checkout and no build stamp)"
+    origin = f"built {build['date']}" if build.get("date") else "from the source checkout"
+    return f"{text}\ncommit {build['commit']} {origin}"
 
 
 def _log_hint(params) -> str:

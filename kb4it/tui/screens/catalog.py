@@ -40,14 +40,16 @@ class ThemesScreen(Screen):
     def on_mount(self) -> None:
         self.title = "Installed Themes"
         table = self.query_one(DataTable)
-        table.add_columns("ID", "Name", "Version", "Description", "Scope")
+        table.add_columns("ID", "Name", "Version", "Fingerprint", "Description", "Scope", "Path")
         for t in get_themes():
             table.add_row(
                 t.get("id", "?"),
                 t.get("name", "?"),
                 t.get("version", "?"),
+                t.get("fingerprint", "?"),
                 t.get("description", ""),
                 t.get("_scope", "?"),
+                t.get("_path", ""),
             )
 
     @on(Button.Pressed, "#back")

@@ -8,7 +8,7 @@ from kb4it.core.util import valid_filename
     <meta charset="UTF-8">
     <title>${var['repo']['title']} - ${var['page']['title']}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
+    <meta name="generator" content="KB4IT ${var['env']['APP']['build_version']}; ${var['theme'].get('identity', '')}">
     <!-- PAGE METADATA :: END -->
     <!-- STYLESHEETS :: START -->
     <link rel="stylesheet" href="resources/themes/bookshelf/framework/bookshelf/css/theme.css">

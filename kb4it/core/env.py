@@ -15,6 +15,9 @@ import sys
 from os.path import abspath
 from pathlib import Path
 
+from kb4it.core.version import build_info
+
+
 class FrozenDict(dict):
     """A dict subclass that can be frozen to block further mutation.
 
@@ -128,6 +131,9 @@ ENV["APP"]["copyright"] = "Copyright \xa9 2019 Tomás Vírseda"
 ENV["APP"]["desc"] = ""
 FILE_VERSION = os.path.join(ENV["CONF"]["ROOT"], "VERSION")
 ENV["APP"]["version"] = Path(FILE_VERSION).read_text(encoding="utf-8").strip()
+# The release version names what is built; the build version also says which commit (BI-06).
+ENV["APP"]["build"] = build_info(ENV["CONF"]["ROOT"], ENV["APP"]["version"])
+ENV["APP"]["build_version"] = ENV["APP"]["build"]["build_version"]
 ENV["APP"]["author"] = "Tomás Vírseda"
 ENV["APP"]["author_email"] = "tomasvirseda@gmail.com"
 ENV["APP"]["documenters"] = ["Tomás Vírseda <tomasvirseda@gmail.com>"]

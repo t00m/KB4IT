@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- BI: every KB4IT build names the commit it came from. `kb4it --version` prints the build version (`X.Y.Z` for a release, `X.Y.Z-dev+<n>.g<sha7>` for any other commit, `.dirty` with uncommitted changes) and, on a second line, the commit and build date. Packages carry it in `kb4it/BUILD.json`, written by the new `scripts/devel/stamp_build.py` from `build_python.sh`, CI and the publish workflow, which refuses a release build that is not the clean commit of its tag. The log, `kb4it info`, the `[WORKFLOW] SUMMARY` line (`kb4it=`), the TUI title, the About page and the `generator` meta tag show it too.
+- TV: themes have their own `version` in `theme.json` (the four bundled themes start at `1.0.0`) and a fingerprint of their files, shown as `techdoc 1.0.0+3f9a1c0b7e21` by `kb4it themes` (with scope and folder, so a user copy that hides a bundled theme is visible), the TUI Themes screen, the summary line (`theme=`) and the `generator` meta tag. A theme without `version` logs `THEME_VERSION_MISSING`; one that is not `X.Y.Z` stops with `THEME_VERSION_INVALID`. `check_themes.sh` requires the key and fails a release when a theme changed since the previous release tag without a new version.
 - techdoc quality phase 6: an optional sticky table of contents in a right column (`"toc_sidebar": true` in `theme.json`, off by default; documents with four or more sections, screens 1400 pixels or wider, current section highlighted) and the quality tier in the search dialog and page, where the score breaks a tie between matches of the same relevance.
 - techdoc content blocks: a copy button and a language label on code blocks, long blocks folded to 20 lines with a "Show all N lines" button, wide tables scrolling and tables over 15 rows keeping their header, a back-to-top button after one screen of scrolling, `pymdownx.tabbed` author tabs and `pymdownx.details` notes styled like the rest of the theme, all with print rules. The help page "Make code, tables and notes easier to read" shows how to write the tabs and the notes.
 - techdoc Quality guide: every item of the Quality tab has a tooltip on what to do and links to `quality-guide.html`, a system page that explains each check, shows the Markdown to write and lists every skeleton.
@@ -45,6 +47,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Installing another commit of the same version reused every cached page, so changes such as the new logo menu entries did not show until `kb4it build --force`. `kbdict.json` now records the build (`kb4it_build`) and a different one rebuilds everything once (`KBDICT_BUILD_MISMATCH`).
+- A change to a theme's templates, logic or assets, its template base or the common templates did not rebuild the cached pages. The theme fingerprint is now part of the core signature, so the next build rebuilds every page (`CORE_SIGNATURE_CHANGED`).
 - techdoc: the logo menu links to the full search page (`search.html`), which was only reachable from the search icon before.
 - The help pages of techdoc and blog lost every heading: Mako reads a line starting with `##` as a comment. The templates now escape it, and a test keeps every template free of such lines.
 

@@ -3,8 +3,9 @@
 
 For each tracked theme: theme.json is complete, its id matches its folder, its
 kb4it requirement is met by kb4it/VERSION, the required templates and deploy
-folders exist, and every sample app under apps/ builds with no error and no
-warning. Builds run from an export of what git tracks (HEAD by default), so a
+folders exist, every sample app under apps/ builds with no error and no
+warning, and a theme whose files changed since the previous release tag has a
+new version (TV-07). Builds run from an export of what git tracks (HEAD by default), so a
 file that only exists in this working tree cannot make a theme look fine.
 
 Usage: check_themes.py [--ref REF | --worktree]
@@ -24,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 THEMES = "kb4it/resources/themes"
 COMMON_TEMPLATES = "kb4it/resources/common/templates"
 BASES = "kb4it/resources/bases"
-REQUIRED_KEYS = ("id", "name", "kb4it")
+REQUIRED_KEYS = ("id", "name", "version", "kb4it")
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 
 
@@ -43,6 +44,35 @@ def export(ref, dest):
     data = subprocess.run(["git", "archive", ref], cwd=ROOT, capture_output=True, check=True).stdout
     with tarfile.open(fileobj=BytesIO(data)) as tar:
         tar.extractall(dest, filter="data")
+
+
+def git(*args):
+    """stdout of a git command in the repository, or None when it fails."""
+    out = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+    return out.stdout.strip() if out.returncode == 0 else None
+
+
+def previous_release(ref, version):
+    """The newest vX.Y.Z tag reachable from ref, other than the tag of the version being released."""
+    return git("describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "--exclude", f"v{version}", ref or "HEAD")
+
+
+def check_version_bump(theme, version_now, ref, previous):
+    """A theme whose files changed since the previous release must carry a new version (TV-07)."""
+    folder = f"{THEMES}/{theme}"
+    old_json = git("show", f"{previous}:{folder}/theme.json")
+    if old_json is None:
+        return []  # new theme
+    old_version = json.loads(old_json).get("version")
+    if old_version is None or old_version != version_now:
+        return []  # first versioned release, or raised already
+    span = [previous, ref] if ref else [previous]
+    changed = git("diff", "--name-only", *span, "--", folder, f":(exclude){folder}/apps") or ""
+    changed = [line for line in changed.splitlines() if line]
+    if not changed:
+        return []
+    shown = ", ".join(c[len(folder) + 1:] for c in changed[:8]) + (", ..." if len(changed) > 8 else "")
+    return [f"files changed since {previous} but version is still {version_now}: {shown}"]
 
 
 def kb4it(code_root, args, cwd, home):
@@ -125,10 +155,15 @@ def main():
         export(None if args.worktree else args.ref, code_root)
         version = (code_root / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
         source = "working tree" if args.worktree else args.ref
-        print(f"Checking themes of {source} for KB4IT {version}")
+        previous = previous_release(None if args.worktree else args.ref, version)
+        print(f"Checking themes of {source} for KB4IT {version} (previous release: {previous or 'none'})")
         for theme_dir in sorted(p for p in (code_root / THEMES).iterdir() if (p / "theme.json").is_file()):
             theme = theme_dir.name
             problems = [f"{theme}: {p}" for p in check_static(code_root, theme_dir, version)]
+            if previous and not problems:
+                theme_version = json.loads((theme_dir / "theme.json").read_text(encoding="utf-8")).get("version")
+                problems += [f"{theme}: {p}" for p in check_version_bump(
+                    theme, theme_version, None if args.worktree else args.ref, previous)]
             apps = sorted(p.name for p in (theme_dir / "apps").iterdir() if p.is_dir()) if (theme_dir / "apps").is_dir() else []
             if not problems:
                 for app in apps:

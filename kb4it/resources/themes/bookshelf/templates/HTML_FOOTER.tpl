@@ -2,7 +2,7 @@
 <footer class="app-foot">
     <div class="app-foot-inner">
         <span>Last updated ${var['timestamp']}</span>
-        <span>Generated with KB4IT ${var['env']['APP']['version']}</span>
+        <span>Generated with KB4IT ${var['env']['APP']['build_version']}</span>
         <a href="#" class="foot-top">Back to top &uarr;</a>
     </div>
 </footer>

@@ -27,6 +27,7 @@ FLOOR = re.compile(r'"kb4it"\s*:\s*"[<>=!~]')
 # Files that keep a version on purpose. Each reason says why.
 ALLOWED = {
     "pyproject.toml": "release.sh writes it from kb4it/VERSION; test_pyproject_matches_version checks it",
+    "kb4it/BUILD.json": "git-ignored build stamp, written from kb4it/VERSION by scripts/devel/stamp_build.py",
     "scripts/devel/editor/package.json": "pinned versions of the npm packages of the editor bundle",
     "scripts/devel/editor/package-lock.json": "pinned versions of the npm packages of the editor bundle",
     "kb4it/resources/editor/THIRD-PARTY-NOTICES.txt": "generated list of bundled third-party packages and versions",
@@ -82,4 +83,4 @@ def test_every_theme_loads_with_the_kb4it_version(tmp_path, home, theme):
     result = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
     loaded = [line for line in result.stdout.splitlines() if "THEME_CONF" in line]
     assert loaded, result.stdout
-    assert all(f"version={VERSION}" in line for line in loaded), loaded
+    assert all(f"kb4it={VERSION}" in line for line in loaded), loaded

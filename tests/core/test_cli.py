@@ -190,7 +190,7 @@ def test_local_themes_are_listed_and_used(tmp_path, home):
     broken.mkdir()
     (broken / "theme.json").write_text("{not json", encoding="utf-8")
     result = run_kb4it("themes", cwd=tmp_path, home=home)
-    assert "THEME scope=local id=mini" in result.stdout
+    assert "THEME scope=user n=" in result.stdout and "id=mini" in result.stdout
     assert "THEME_CONF_INVALID" in result.stdout
     repo = tmp_path / "repo"
     cfg = write_repo(repo, "mini", {"a.md": page("A", Tag="x")})

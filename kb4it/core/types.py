@@ -61,6 +61,7 @@ class KBDict(TypedDict, total=False):
     document:       dict   # dict[str, DocumentMeta]
     metadata:       dict   # dict[str, dict[str, list[str]]]
     kb4it_version:  str
+    kb4it_build:    str   # build version of the KB4IT that wrote it, plus a diff hash when dirty (BI-09)
     site_signature: str
     core_signature: str   # hash of core settings that shape every page (markdown, overrides, hooks)
     events:         dict  # event page name -> sorted documents on it, after the last successful build

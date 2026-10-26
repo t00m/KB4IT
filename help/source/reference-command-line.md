@@ -22,12 +22,13 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [Preview while you write](howto-preview.md) |
 | `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building |
 | `kb4it info CONFIG` | Shows the main settings |
-| `kb4it themes` | Lists the installed themes |
+| `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
 | `kb4it projects` | Lists the knowledge bases you created or imported |
 | `kb4it help` | Opens the offline copy of this help in your browser; see [Help center](#help) |
 | `kb4it help --url` | Prints the address of the online help |
 | `kb4it help --dismiss` | Hides the help notice |
+| `kb4it --version` | Prints the KB4IT build, then the commit it was built from and when |
 
 `CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`.
 
