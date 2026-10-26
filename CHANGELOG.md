@@ -53,6 +53,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- techdoc: a document page opened without a `#` in the address made Firefox warn "Empty string passed to getElementById()".
 - Windows: the path of a local image in a techdoc document mixed `\` and `/` (`resources/images/...` was kept as written); it is now a normal Windows path, as the missing-image check and the image size reader expect.
 - Windows: a skeleton saved with CRLF line ends put `\r` characters into the Add page editor. Skeletons are now read with LF line ends.
 - macOS: `install_kb4it_from_source.sh` reported "kb4it on PATH is the new installation" for any other `kb4it` when no Python 3.11 or newer was on `PATH` (the default on macOS), because both paths resolved to nothing. It now compares the paths as given in that case and exits 2 as intended.

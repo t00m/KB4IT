@@ -48,7 +48,7 @@
         if (hash.indexOf('kb-info-') === 0) {
             return hash.slice('kb-info-'.length);
         }
-        return document.getElementById(hash) ? '' : hash;
+        return hash && !document.getElementById(hash) ? hash : '';
     }
 
     function fromHash() {
