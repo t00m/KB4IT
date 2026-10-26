@@ -6,7 +6,7 @@ DocType: Reference
 OS: Linux
 Product: KB4IT, GitHub Actions, PyPI
 Scope: Development
-Status: Draft
+Status: Approved
 Tag: specification, release, versioning, packaging, fingerprint
 Topic: Upgrade, Documentation
 ---
@@ -75,6 +75,13 @@ Each requirement has an ID (`RA-01`, `RA-02`, ...). The plan and the commits ref
 | RA-14 | `CHANGELOG.md` `[Unreleased]` gets `### Changed` entries for: the two-line `kb4it --version`; `scope=builtin`, `scope=user`, `scope=source`, `scope=theme_path` in `kb4it themes`; the `version` key of custom themes now read and checked; one full rebuild after the upgrade and after installing another commit (F10) |
 | RA-15 | `releases/0.10.0.md`, when drafted, keeps those four points under a "Before you upgrade" heading (F10, F11) |
 | RA-16 | Depending on D2: either `THEME_VERSION_INVALID` stays an error and RA-15 says so, or in 0.10.x it is a warning, the theme loads as `unversioned`, and it becomes an error in 0.11.0 (F11) |
+
+## Implementation notes
+
+Approved on 2026-10-26 with the recommendations of D1 to D3. Implemented in `058f2e6`. RA-15 is done when `releases/0.10.0.md` is drafted; `RELEASING.md` step 3 now asks for the "Before you upgrade" heading.
+
+- `scripts/devel/smoke_build.py` gained `--doctor` and `--all-apps`, used by `RELEASING.md` step 7 to prove that every theme loads and builds after installation.
+- Verified on 2026-10-26: with the release tags fetched (previous release `v0.9.1`), `check_themes.sh --worktree --changed` and `--release` pass (the bundled themes get their first version in this release). The wheel built by `build_python.sh` passes `check_wheel_themes.py --stamp 0.10.0` and is refused by `--release 0.10.0` (not a tagged commit). Installed in clean Python 3.11 and 3.13 virtual environments, it passes `kb4it doctor` and builds every sample app (apphelp, blog, bookshelf, techdoc default and sapbasis). In a throwaway clone tagged `v0.10.0`, `stamp_build.py --require-release`, `check_wheel_themes.py --release 0.10.0` and `check_themes.sh --release` pass.
 
 ## Order of work
 
