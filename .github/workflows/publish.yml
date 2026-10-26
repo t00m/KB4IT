@@ -52,7 +52,7 @@ jobs:
         run: ./scripts/devel/test.sh -q
 
       - name: Every tracked theme is compliant
-        run: ./scripts/devel/check_themes.sh
+        run: ./scripts/devel/check_themes.sh --release
 
       - name: Build the offline help
         run: uv run --no-project --with-requirements requirements.txt --with pymdown-extensions --with nh3 --with pygments python scripts/help/build_offline.py
@@ -64,7 +64,7 @@ jobs:
         run: uv build
 
       - name: The wheel holds every tracked theme
-        run: python3 scripts/devel/check_wheel_themes.py
+        run: python3 scripts/devel/check_wheel_themes.py --release "${GITHUB_REF_NAME#v}"
 
       - name: Check the distribution metadata
         run: uvx twine check dist/*
@@ -144,6 +144,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Smoke test (the version must equal the tag)
+        env:
+          KB4IT_RELEASE: "1"   # the first line of --version must be exactly "KB4IT X.Y.Z"
         run: ./scripts/distribution/docker/smoke.sh kb4it:smoke
 
       - uses: docker/login-action@v4.6.0

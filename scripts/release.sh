@@ -94,6 +94,9 @@ guard "tag $TAG does not exist locally" "! git rev-parse -q --verify refs/tags/$
 guard "tag $TAG does not exist on origin" "! git ls-remote --exit-code --tags origin refs/tags/$TAG >/dev/null 2>&1"
 guard "CHANGELOG.md has a [$VERSION] section or a non-empty [Unreleased]" \
     "grep -q '^## \[$VERSION\]' CHANGELOG.md || python3 scripts/devel/changelog.py has-unreleased"
+# Themes changed since the last release need a new version (RELEASING.md step 2c); the list shows which.
+guard "themes changed since the last release have a new version" \
+    "./scripts/devel/check_themes.sh --worktree --changed"
 
 if [[ $DRY_RUN -eq 1 ]]; then
     [[ -f "$NOTES" ]] && log "notes $NOTES exist" || log "notes $NOTES would be drafted"
@@ -125,9 +128,9 @@ guard "release notes have no TODO line" "! grep -q 'TODO' '$NOTES'"
 guard "CHANGELOG.md has a dated [$VERSION] section" "grep -q '^## \[$VERSION\] - $DATE' CHANGELOG.md || grep -q '^## \[$VERSION\] - ' CHANGELOG.md"
 guard "kb4it/VERSION and pyproject.toml agree" "grep -q '^version = \"$VERSION\"$' pyproject.toml && [[ \"\$(cat kb4it/VERSION)\" == '$VERSION' ]]"
 guard "tests pass" "./scripts/devel/test.sh -q >/tmp/kb4it-release-tests.log 2>&1"
-guard "every tracked theme is compliant" "./scripts/devel/check_themes.sh --worktree >/tmp/kb4it-release-themes.log 2>&1"
+guard "every tracked theme is compliant" "./scripts/devel/check_themes.sh --worktree --release >/tmp/kb4it-release-themes.log 2>&1"
 guard "the offline help builds" "uv run --no-project --with-requirements requirements.txt --with pymdown-extensions --with nh3 --with pygments python scripts/help/build_offline.py >/tmp/kb4it-release-help.log 2>&1"
-guard "the wheel holds every tracked theme and the offline help" "rm -rf dist && uv build --wheel >/dev/null 2>&1 && python3 scripts/devel/check_wheel_themes.py >/dev/null"
+guard "the wheel holds every tracked theme, the offline help and a build stamp" "rm -rf dist && uv run --no-project --python '>=3.11' python scripts/devel/stamp_build.py >/dev/null && uv build --wheel >/dev/null 2>&1 && python3 scripts/devel/check_wheel_themes.py --stamp $VERSION >/dev/null"
 [[ $FAILED -eq 0 ]] || die "checks failed, nothing committed (logs in /tmp/kb4it-release-*.log)"
 
 git add kb4it/VERSION pyproject.toml CHANGELOG.md "$NOTES"

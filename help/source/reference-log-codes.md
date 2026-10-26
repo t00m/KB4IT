@@ -104,7 +104,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_REQUIREMENT_MISSING` | warning | The theme does not say which KB4IT it needs | Add a `kb4it` field to its `theme.json` |
 | `THEME_REQUIREMENT_INVALID` | error | The `kb4it` field of `theme.json` is not a valid version rule. Stops | Write it like `">=0.9"` |
 | `THEME_VERSION_MISSING` | warning | The theme has no `version` in its `theme.json`. It loads and is shown as `unversioned` | Add `"version": "1.0.0"` to its `theme.json` |
-| `THEME_VERSION_INVALID` | error | The `version` of `theme.json` is not `X.Y.Z`. Stops | Write it like `"1.2.0"` |
+| `THEME_VERSION_INVALID` | warning | The `version` of `theme.json` is not `X.Y.Z`. The theme loads as `unversioned`; from the next minor release this stops the build | Write it like `"1.2.0"` |
 | `THEME_NOT_LOADED` | error | The site was about to be written without a loaded theme. Stops | Report it as a bug |
 | `THEME_AUTOESCAPE_OFF` | warning | Your own theme prints values without escaping them | Add `"autoescape": true` to `theme.json`; see [Escaping](howto-create-theme.md#escaping) |
 | `THEME_VERIFY_ERROR` | error | The theme's own check crashed during `kb4it verify`. Stops | Fix the theme's `verify.py` |

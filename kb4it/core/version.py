@@ -1,5 +1,7 @@
 """KB4IT version helpers: parse versions, check theme requirements, identify the build (BI)."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 import re

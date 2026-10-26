@@ -10,14 +10,18 @@ How to cut a release, and why the steps are what they are.
 
 The number names a **release**, not a change. Between releases it names the release being built: `0.8.0` in `kb4it/VERSION` while `CHANGELOG.md` has an `[Unreleased]` section means 0.8.0 is the target. It changes only through `scripts/release.sh`.
 
-Development builds need no counter. In a source checkout, `kb4it --version` adds `git describe`:
+Every build also has a **build version**, which says which commit it is:
 
-```
-$ kb4it --version
-KB4IT 0.8.0 (v0.7.10-12-g3a96611)
-```
+| Build | `kb4it --version`, first line |
+|---|---|
+| The clean commit of tag `vX.Y.Z` | `KB4IT X.Y.Z` |
+| Any other commit | `KB4IT X.Y.Z-dev+<n>.g<sha7>`: commits since the last tag, then the commit |
+| Uncommitted changes under `kb4it/` | the same, ending in `.dirty` |
+| No git facts at all | `KB4IT X.Y.Z+unknown` |
 
-That is the last tag, the commits since it and the commit itself, with nothing to edit and nothing to forget. The build cache compares only the plain version, so installing a development build does not force every site to recompile.
+The second line names the full commit and the build date. Nothing is edited by hand. A source checkout reads it from git. A package carries it in `kb4it/BUILD.json`, written by `scripts/devel/stamp_build.py` before the build: `build_python.sh`, CI and the publish workflow run it, and the publish workflow runs it with `--require-release`, which fails unless the commit is the clean commit of the tag.
+
+The build cache (`kbdict.json`) stores the build version. A site built by another build, even another commit of the same version, is rebuilt once on its next build (`KBDICT_BUILD_MISMATCH`). Theme requirements are checked against `X.Y.Z` only.
 
 KB4IT follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While the major version is 0, a change that breaks existing sites or themes moves the minor number.
 
@@ -35,13 +39,26 @@ Every theme's `theme.json` has a `kb4it` requirement, for example `">=0.7.9"` or
 
 It builds from what git tracks, so a file that exists only in your working tree cannot make a theme look fine. The release script and CI both run it.
 
-The release build is stamped by `scripts/devel/stamp_build.py --require-release` in `publish.yml`: it fails unless the commit is the clean commit of tag `vX.Y.Z`, and writes `kb4it/BUILD.json` so `kb4it --version` names the commit.
+The theme version check needs the release tags. CI fetches them and reports a forgotten version as a warning, so a pull request is not blocked. `release.sh --commit` and the publish workflow run the check with `--release`: there a forgotten version fails, and so does a clone without tags when `CHANGELOG.md` lists earlier releases. Run `git fetch --tags` before you start.
+
+## Theme versions
+
+A theme's `version` in `theme.json` is its own, independent of KB4IT's: the four bundled themes started at `1.0.0` in KB4IT 0.10.0. It is not the same field as `kb4it`, the KB4IT the theme needs.
+
+Raise a theme's version once per release in which its files changed (`apps/` aside), following semantic versioning:
+
+- patch (`1.0.1`): fixes that do not change what a site looks like on purpose;
+- minor (`1.1.0`): new features, new templates, new `theme.json` keys;
+- major (`2.0.0`): changes that break a site's overrides or a custom theme built on this one, such as a renamed template or a removed template variable.
+
+Every build shows the theme as `<id> <version>+<fingerprint>`; the fingerprint changes with every file, so it tells two builds apart even when the version was not raised. The version is what users read.
 
 ## Before you start
 
 - Every change for this release is committed and merged into your branch.
 - `CHANGELOG.md` has an `[Unreleased]` section holding everything since the last release, in `Added`, `Changed`, `Fixed` and `Removed`.
 - `./scripts/devel/test.sh` and `./scripts/devel/check_themes.sh` pass.
+- Release tags are in your clone (`git fetch --tags`): the theme version check needs them.
 
 ## The steps
 
@@ -85,11 +102,26 @@ git commit -m "chore(themes): require kb4it 0.9.0"
 
 Commit only the `theme.json` files: the `--commit` step expects every other change except `kb4it/VERSION`, `pyproject.toml` and `CHANGELOG.md` to be committed.
 
+### 2c. Raise theme versions
+
+`--dry-run` in step 1 already listed the themes whose files changed since the last release while their version did not. List them again and raise each one in its `theme.json`, as described in [Theme versions](#theme-versions):
+
+```bash
+git fetch --tags
+./scripts/devel/check_themes.sh --worktree --changed
+# edit kb4it/resources/themes/<theme>/theme.json: "version": "X.Y.Z"
+./scripts/devel/check_themes.sh --worktree --changed      # "No theme version to raise."
+git add kb4it/resources/themes/*/theme.json
+git commit -m "chore(themes): raise theme versions"
+```
+
+As in step 2b, commit only the `theme.json` files.
+
 ### 3. Write the release notes
 
 `releases/X.Y.Z.md` becomes the body of the GitHub release. Write it for someone deciding whether to update, not for someone reading a diff: one sentence, then the few changes a user would notice. Mention anything that breaks existing sites or themes.
 
-The draft has one line per changelog entry, which is usually too many. Cut it down, then delete the `TODO` line. The script and the workflow both refuse to go on while it is there.
+The draft has one line per changelog entry, which is usually too many. Cut it down, then delete the `TODO` line. Keep every `Changed` or `Removed` entry that can break a script, a site or a custom theme under a heading "Before you upgrade". The script and the workflow both refuse to go on while it is there.
 
 ### 4. Check and commit
 
@@ -104,8 +136,8 @@ This refuses to commit when:
 - the changelog has no dated section for the version
 - `kb4it/VERSION` and `pyproject.toml` disagree
 - the tests fail
-- a tracked theme is not compliant
-- the wheel does not hold every tracked theme
+- a tracked theme is not compliant, or changed since the last release without a new version
+- the wheel does not hold every tracked theme, the offline help and a build stamp of the version
 
 When everything passes it commits `chore(release): X.Y.Z`. It never tags and never pushes.
 
@@ -124,9 +156,9 @@ git push origin vX.Y.Z
 
 Pushing the tag runs `.github/workflows/publish.yml`:
 
-1. **Check:** it confirms the tag equals `kb4it/VERSION` and `pyproject.toml`, the changelog has the dated section, and the notes exist without `TODO`. Then it runs the tests and the theme check, builds, confirms the wheel holds every tracked theme, and runs `twine check`.
+1. **Check:** it confirms the tag equals `kb4it/VERSION` and `pyproject.toml`, the changelog has the dated section, and the notes exist without `TODO`. Then it runs the tests and the theme check (`--release`), stamps the build (`stamp_build.py --require-release`), builds, confirms the wheel holds every tracked theme and the release stamp (`check_wheel_themes.py --release X.Y.Z`), and runs `twine check`.
 2. **Publish:** it uploads to PyPI with trusted publishing (no stored token).
-3. **Image:** from the same wheel it builds the container image, smoke-tests the amd64 build (the version it prints must equal the tag), then pushes `ghcr.io/t00m/kb4it` for amd64 and arm64 as `X.Y.Z`, `X.Y` and `latest`, with an SBOM and a build provenance attestation. It logs in with the workflow token; nothing is stored.
+3. **Image:** from the same wheel it builds the container image, smoke-tests the amd64 build (the first line of `--version` must be exactly `KB4IT X.Y.Z`), then pushes `ghcr.io/t00m/kb4it` for amd64 and arm64 as `X.Y.Z`, `X.Y` and `latest`, with an SBOM and a build provenance attestation. It logs in with the workflow token; nothing is stored.
 4. **Packages:** from the same wheel it builds the `.deb` (amd64, arm64) and `.rpm` (x86_64, aarch64) and installs them offline in Debian, Ubuntu, Fedora and Rocky Linux containers.
 5. **Release:** once PyPI, the image and the packages succeeded, it creates the GitHub release `vX.Y.Z` with `releases/X.Y.Z.md` as the body, a line with the image and its digest, and the wheel, the sdist and the four packages attached.
 
@@ -137,10 +169,15 @@ Only plain `vX.Y.Z` tags trigger it. A tag such as `v0.7.39-fix1` is not a PyPI 
 ### 7. Check it and open the next cycle
 
 ```bash
-pip install --no-cache-dir KB4IT==X.Y.Z && kb4it themes
+python3.11 -m venv /tmp/kb4it-check && /tmp/kb4it-check/bin/pip install --no-cache-dir KB4IT==X.Y.Z
+/tmp/kb4it-check/bin/kb4it --version    # first line exactly "KB4IT X.Y.Z", second the tagged commit
+PATH=/tmp/kb4it-check/bin:$PATH python3 scripts/devel/smoke_build.py --doctor --all-apps
 docker run --rm ghcr.io/t00m/kb4it:X.Y.Z --version
+docker run --rm ghcr.io/t00m/kb4it:X.Y.Z doctor
 scripts/release.sh --open 0.8.0         # commits "chore: target version 0.8.0"
 ```
+
+`smoke_build.py --doctor --all-apps` runs `kb4it doctor` and then creates and builds every sample app of every theme from the installed package, so a theme that does not load after installation shows here.
 
 ### 8. GitHub Marketplace (optional, each release)
 
@@ -156,8 +193,8 @@ The workflow needs a few things it cannot set up itself:
 - On GitHub: Settings, Environments, an environment named `pypi`; then enable the workflow with `gh workflow enable publish.yml`.
 - After the first release that pushes the image: on GitHub, your profile, **Packages**, `kb4it`, **Package settings**: under **Danger Zone** change the visibility to **Public**, so anyone can pull it. Check that the package is linked to the KB4IT repository (the image's `source` label normally links it; if not, use **Connect repository**). New packages start private, so until this is done `docker pull ghcr.io/t00m/kb4it` fails for everyone else.
 
-If the workflow cannot be used, `scripts/distribution/pypi/publish_pypi.sh` uploads by hand. Build from a clean export of the tag, never from a working tree, because a working tree may hold themes that are not tracked.
+If the workflow cannot be used, `scripts/distribution/pypi/publish_pypi.sh` uploads by hand. Run it in a clean clone of the tag (`git clone --branch vX.Y.Z https://github.com/t00m/KB4IT`): never in a working tree, which may hold themes that are not tracked, and never in an export, which has no git and so no build stamp. The script refuses to run outside a git clone and checks that the wheel carries the release stamp.
 
 ## Keeping this document current
 
-This describes real scripts. When `release.sh`, `changelog.py`, `check_themes.py` or the publish workflow change, change this file in the same commit. A release document that is wrong is worse than none: it gets followed.
+This describes real scripts. When `release.sh`, `changelog.py`, `check_themes.py`, `check_wheel_themes.py`, `stamp_build.py`, `smoke_build.py` or the publish workflow change, change this file in the same commit. A release document that is wrong is worse than none: it gets followed.

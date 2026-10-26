@@ -10,13 +10,17 @@ Frontend module.
 import glob
 import json
 import os
+import re
 import sys
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
-from kb4it.core.version import parse_version, requirement_satisfied, theme_fingerprint, theme_identity
+from kb4it.core.version import requirement_satisfied, theme_fingerprint, theme_identity
+
+# The form of a theme's own version in theme.json.
+VERSION_XYZ = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 class Frontend(Service):
@@ -132,14 +136,10 @@ class Frontend(Service):
         version = theme.get("version")
         if version is None:
             self.log.warning(f"[FRONTEND] THEME_VERSION_MISSING id={theme_id}")
-        else:
-            try:
-                parse_version(version)
-            except ValueError as error:
-                self.log.error(f"[FRONTEND] THEME_VERSION_INVALID id={theme_id} version={version}")
-                raise ThemeError(f"Theme {theme_id} has an invalid version {version!r}: {error}") from error
-            if "+" in str(version) or str(version).count(".") != 2:
-                raise ThemeError(f"Theme {theme_id} version must be X.Y.Z, not {version!r}")
+        elif not VERSION_XYZ.match(str(version)):
+            # A warning for now, so themes written before theme versions keep building; an error in the next minor release (RA-16).
+            self.log.warning(f"[FRONTEND] THEME_VERSION_INVALID id={theme_id} version={version} expected=X.Y.Z")
+            version = None
         try:
             base = template_base_dir(theme)
         except ThemeError:

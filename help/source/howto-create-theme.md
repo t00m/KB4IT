@@ -216,7 +216,7 @@ The bundled themes follow these rules, and a theme you share should too:
 
 | Key | Meaning |
 |---|---|
-| `version` | The theme's own version, `X.Y.Z`. Raise it when you change the theme. Without it the theme loads and is shown as `unversioned` (`THEME_VERSION_MISSING`); another form stops the build (`THEME_VERSION_INVALID`) |
+| `version` | The theme's own version, `X.Y.Z`. Raise it when you change the theme. Without it the theme loads and is shown as `unversioned` (`THEME_VERSION_MISSING`); another form, such as `1.0` or `2.1-beta`, logs `THEME_VERSION_INVALID` and the theme is shown as `unversioned`. From the next minor release that form stops the build |
 | `favicon` | Path of the theme's icon inside the theme folder, such as `images/logo.svg`. Pages use it when `repo.json` has no `logo`. The folder must be in `deploy_dirs` if you set that list |
 | `kb4it` | The KB4IT versions the theme works with, such as `">=X.Y.Z"` or `">=X.Y.Z, <A.B.C"` |
 | `metadata_pages` | `false` skips the pages per property and per value |

@@ -57,6 +57,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `kb4it --version` prints two lines: `KB4IT <build version>`, then `commit <sha> built <date>` (or `from the source checkout`). Scripts that read the version should take the first line.
+- `kb4it themes` names where each theme comes from as `scope=builtin`, `scope=user`, `scope=source` or `scope=theme_path` (before: `scope=global` and `scope=local`), and adds `version=`, `fingerprint=` and `path=`.
+- The `version` key of a custom theme's `theme.json` is now read: it is the theme's own version, shown in `kb4it themes` and the build summary. A value that is not `X.Y.Z` logs `THEME_VERSION_INVALID` and the theme loads as `unversioned`; from 0.11.0 it will stop the build.
+- Every site is rebuilt once on its first build with 0.10.0, and again whenever another build of KB4IT (another commit, other uncommitted changes) or a changed theme builds it.
+- Release process (RA-01 to RA-13): `check_themes.py` warns in CI about a theme changed since the last release without a new version (CI now fetches tags) and fails on it with `--release` (`release.sh --commit`, `publish.yml`), which also fails without release tags; `--changed` lists the themes to raise, shown by `release.sh --dry-run`. `check_wheel_themes.py --stamp X.Y.Z` and `--release X.Y.Z` check the wheel's build stamp, in `release.sh --commit` and `publish.yml`. The image smoke test of a release wants exactly `KB4IT X.Y.Z`. The manual PyPI scripts refuse to run outside a git clone and check the stamp. `smoke_build.py --doctor --all-apps` checks an installation: `kb4it doctor`, then every sample app of every theme. `RELEASING.md` has a "Theme versions" section and a step 2c, and both release guides describe the build version.
 - Faster builds without changes: each source document is read once, and when its bytes match the last
   successful build its YAML header, body hash and metadata hash come from `kbdict.json` instead of being
   parsed again. A document with a `Title` in the frontmatter still warns on every build, and a PyYAML
