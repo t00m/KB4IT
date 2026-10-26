@@ -1371,6 +1371,11 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-activity .uk-tab > * > a { font-size: 0.72rem; }
 .kb-activity .kb-alert-bar { box-shadow: none; padding: 10px 0; }
 .kb-activity-sub { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 12px 0 6px; }
+/* Open items and Activity share one card; Activity keeps its own tab bar inside it. */
+.kb-work { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
+.kb-work-tabs > * > a { font-size: 0.8rem; font-weight: 600; }
+.kb-work .kb-activity { background: transparent; border-radius: 0; box-shadow: none; padding: 0; }
+.kb-work .kb-open-items { padding-top: 6px; }
 
 /* ---------------------------------------------------------------------------
    Content blocks: code bars, folded code, tables, author tabs, notes, back to top

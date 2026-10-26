@@ -106,7 +106,7 @@ def test_landing_page_order(site):
 def test_landing_page_sections_fold_except_counts_and_doctypes(site):
     html = read(site, "index.html")
     folding = re.findall(r'<details class="kb-section kb-collapsible" data-kb-section="([\w-]+)" open>', html)
-    assert folding == ["open-items", "activity"]
+    assert folding == ["work"]
     assert html.count("<details") == html.count("</details>")
     head = html[:html.index("<details")]
     assert "kb-hero-bar" in head and "kb-diataxis-card" in head
@@ -236,6 +236,15 @@ def test_document_tables_hide_columns_empty_in_every_row(site):
     # Category_Note lists only undated.md: no WorkType, Priority, Status or Scope; Date and Title always stay.
     assert _headers(read(site, "Category_Note.html")) == ["Date", "Title", "Category"]
     assert "WorkType" in _headers(read(site, "Category_Record.html"))
+
+
+def test_open_items_and_activity_are_two_tabs_of_one_card(site):
+    html = read(site, "index.html")
+    card = html[html.index("WORK :: START"):html.index("WORK :: END")]
+    tabs = re.findall(r'<ul class="kb-work-tabs".*?</ul>', card, re.S)[0]
+    assert re.findall(r'<li data-kb-tab="([\w-]+)">', tabs) == ["open-items", "activity"]
+    assert card.index("OPEN ITEMS :: START") < card.index("ACTIVITY :: START")
+    assert 'data-kb-remember="kb-work-tab"' in card     # the last tab is remembered
 
 
 def test_activity_card_has_a_tab_per_kind_of_activity(site):

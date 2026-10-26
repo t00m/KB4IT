@@ -57,8 +57,11 @@ The home page shows, from top to bottom:
 - Counts of documents, authors, categories, events and bookmarks, and the number of Exemplary documents (a link to the Quality page).
 - The four types of document, with counts and, under each, a bar with the mix of quality tiers ("22 exemplary, 113 complete of 230").
 - **Best documents**: up to three Exemplary or Complete documents per type, best first.
-- **Open items**: incidents, changes and tasks with an open status, highest priority first.
-- **Activity**: one card with a tab each for the latest changes, the latest incidents, events (this month and the next, then the last month) and monitoring (recurring checks by periodicity). A tab without entries is not shown; the card opens on the tab you chose last.
+- **Open items and activity**: one card with two tabs.
+    - **Open items**: incidents, changes and tasks with an open status, highest priority first.
+    - **Activity**: a tab each for the latest changes, the latest incidents, events (this month and the next, then the last month) and monitoring (recurring checks by periodicity).
+
+  A tab without entries is not shown. Each tab bar opens on the tab you chose last.
 
 Every section except the counts and the four document types folds when you click its title. The browser remembers which sections you folded.
 

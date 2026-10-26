@@ -82,11 +82,24 @@ def prop_url(key, value):
     </section>
     <!-- DOCUMENT TYPES :: END -->
 
-% if var['page']['open_items']:
-    <!-- OPEN ITEMS :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="open-items" open>
-        <summary class="kb-section-title">Open items</summary>
-        <div class="kb-panel uk-card-hover uk-box-shadow-large">
+<% act = var['page']['activity'] %>
+% if var['page']['open_items'] or any(act.values()):
+    <!-- WORK :: START -->
+    <details class="kb-section kb-collapsible" data-kb-section="work" open>
+        <summary class="kb-section-title">Open items and activity</summary>
+        <div class="kb-work">
+            <ul class="kb-work-tabs" data-kb-remember="kb-work-tab" data-uk-tab="connect: #kb-work-panels; animation: uk-animation-fade">
+%     if var['page']['open_items']:
+                <li data-kb-tab="open-items"><a href="#">Open items</a></li>
+%     endif
+%     if any(act.values()):
+                <li data-kb-tab="activity"><a href="#">Activity</a></li>
+%     endif
+            </ul>
+            <div class="uk-switcher" id="kb-work-panels">
+%     if var['page']['open_items']:
+            <!-- OPEN ITEMS :: START -->
+            <div class="kb-open-items">
             <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
                 <tbody>
 %     for row in var['page']['open_items']:
@@ -108,18 +121,13 @@ def prop_url(key, value):
 %     endfor
                 </tbody>
             </table>
-        </div>
-    </details>
-    <!-- OPEN ITEMS :: END -->
-% endif
-
-<% act = var['page']['activity'] %>
-% if any(act.values()):
-    <!-- ACTIVITY :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="activity" open>
-        <summary class="kb-section-title">Activity</summary>
+            </div>
+            <!-- OPEN ITEMS :: END -->
+%     endif
+%     if any(act.values()):
+            <!-- ACTIVITY :: START -->
         <div class="kb-activity">
-            <ul class="kb-activity-tabs" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
+            <ul class="kb-activity-tabs" data-kb-remember="kb-activity-tab" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
 %     for name, label in (('changes', 'Changes'), ('incidents', 'Incidents'), ('events', 'Events'), ('monitoring', 'Monitoring')):
 %         if act[name]:
                 <li data-kb-tab="${name}"><a href="#">${label}</a></li>
@@ -281,27 +289,33 @@ def prop_url(key, value):
 %     endif
             </div>
         </div>
+            <!-- ACTIVITY :: END -->
+%     endif
+            </div>
+        </div>
     </details>
-    <!-- ACTIVITY :: END -->
-    <!-- ACTIVITY TAB MEMORY :: START -->
+    <!-- WORK :: END -->
+    <!-- TAB MEMORY :: START -->
     <script>
-    // The Activity card opens on the tab the reader chose last.
+    // Each tab bar of the card opens on the tab the reader chose last.
     (function () {
-        var tabs = document.querySelector('.kb-activity-tabs');
-        if (!tabs || typeof UIkit === 'undefined') { return; }
-        var names = Array.prototype.map.call(tabs.children, function (li) { return li.getAttribute('data-kb-tab'); });
-        try {
-            var i = names.indexOf(window.localStorage.getItem('kb-activity-tab'));
-            if (i > 0) { UIkit.tab(tabs).show(i); }
-        } catch (e) { /* private window: start on the first tab */ }
-        tabs.addEventListener('click', function (event) {
-            var li = event.target.closest('li');
-            if (!li) { return; }
-            try { window.localStorage.setItem('kb-activity-tab', li.getAttribute('data-kb-tab')); } catch (e) { /* not kept */ }
+        if (typeof UIkit === 'undefined') { return; }
+        document.querySelectorAll('[data-kb-remember]').forEach(function (tabs) {
+            var key = tabs.getAttribute('data-kb-remember');
+            var names = Array.prototype.map.call(tabs.children, function (li) { return li.getAttribute('data-kb-tab'); });
+            try {
+                var i = names.indexOf(window.localStorage.getItem(key));
+                if (i > 0) { UIkit.tab(tabs).show(i); }
+            } catch (e) { /* private window: start on the first tab */ }
+            tabs.addEventListener('click', function (event) {
+                var li = event.target.closest('li');
+                if (!li || li.parentNode !== tabs) { return; }
+                try { window.localStorage.setItem(key, li.getAttribute('data-kb-tab')); } catch (e) { /* not kept */ }
+            });
         });
     })();
     </script>
-    <!-- ACTIVITY TAB MEMORY :: END -->
+    <!-- TAB MEMORY :: END -->
 % endif
 
 </div>
