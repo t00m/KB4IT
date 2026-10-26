@@ -51,7 +51,7 @@ CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows wit
 
 ## Architecture
 
-Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers the long-lived services (`DB`, `Backend`, `Frontend`, `Builder`, `Workflow`, and `Theme` once loaded) and routes `get_service(name)` lookups. The services of one build, Processor, Compiler and Deployer, are not registered: `Backend.start_pipeline()` makes them together as `backend.pipeline` (`kb4it/services/pipeline.py`) at the end of stage 1, once the theme is loaded, and passes each its collaborators (backend, database, theme, processor, callbacks, log file) in its constructor. `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` still answers from the current pipeline in 0.9.x and logs `[CONTROLLER] SERVICE_DEPRECATED name=... replacement=backend.pipeline` once per name; it goes in 0.10.0. Services share state through the `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata. Nothing a build decides is written into `params` or `repo`: see `runtime["force_all"]` below.
+Service-based: a central `KB4IT` controller in `kb4it/core/main.py` registers the long-lived services (`DB`, `Backend`, `Frontend`, `Builder`, `Workflow`, and `Theme` once loaded) and routes `get_service(name)` lookups. The services of one build, Processor, Compiler and Deployer, are not registered: `Backend.start_pipeline()` makes them together as `backend.pipeline` (`kb4it/services/pipeline.py`) at the end of stage 1, once the theme is loaded, and passes each its collaborators (backend, database, theme, processor, callbacks, log file) in its constructor. `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` is deprecated: it still answers from the current pipeline and logs `[CONTROLLER] SERVICE_DEPRECATED name=... replacement=backend.pipeline` once per name (planned for removal in 0.10.0, still present). Services share state through the `runtime` dict (held on `Backend`) and through explicitly-passed dataclasses; the global `ENV` (frozen after init) holds paths and immutable environment metadata. Nothing a build decides is written into `params` or `repo`: see `runtime["force_all"]` below.
 
 A per-repository lock (`<repo>/var/kb4it.lock`, `kb4it/core/lock.py`, `flock` on POSIX and `msvcrt.locking` on Windows) stops two builds of the same repository; `create` locks under `~/.kb4it/var/`, and `projects.json` writes take `~/.kb4it/var/projects.lock`. Other actions and the TUI itself take no lock. When `kb4it` is run with no arguments in an interactive terminal, the Textual-based TUI launches instead of showing help.
 
@@ -96,7 +96,7 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 | `kb4it/core/mdrich.py`            | `RichContentExtension` (python-markdown, always on; its math processors are off, `math=False`, when `pymdownx.arithmatex` or `markdown_katex` is configured): `mermaid` fences become `<pre class="mermaid">`; `$$` blocks, `$$...$$` and `$...$` become `kb4it-math` elements; `\$` is a literal dollar sign; code is never touched |
 | `kb4it/core/log.py`               | Logging setup, file redirection |
 | `kb4it/core/trace.py`             | Performance traces apart from the log: `start()`, `span(name, **args)` (does nothing when no trace runs), `stop(folder)` writes `trace.json`, `summary(events)` |
-| `kb4it/services/workflow.py`      | Orchestrates build / create / info / list / verify actions |
+| `kb4it/services/workflow.py`      | One method per CLI action: `build_website`, `create_repository`, `info_repository`, `verify_sources`, `doctor`, `list_themes`, `list_apps`, `list_projects` |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |
 | `kb4it/services/database.py`      | In-memory document index keyed by docId, metadata caches |
 | `kb4it/services/pipeline.py`      | `Pipeline`: the Processor, Compiler and Deployer of one build, made by `Backend.start_pipeline()` |
@@ -155,10 +155,32 @@ Template lookup (`_template_candidates`) resolves a name `<NAME>` to the first e
 | `techdoc` | Full-featured technical documentation site with data tables, metadata navigation, event timeline, built-in web server |
 | `blog` | Personal or team blog with post listings, tag/category navigation, and RSS-style layout |
 | `bookshelf` | Study companion organised as Book, Part and Chapter for certification prep |
-| `basico` | SAP-notes-style troubleshooting knowledge base with symptom/cause/resolution structure |
-| `manual` | Chapter-based user manual with sequential prev/next navigation across documents |
 | `apphelp` | Help site for an application: works from `file://`, from a GitHub Pages subpath and embedded; strict metadata, offline full-text search, help ids |
-| `kb4miaz` | Browser for documents organised with the MiAZ seven-field scheme (`{date}-{country}-{group}-{sentby}-{purpose}-{concept}-{sentto}`); landing page with per-field facet cards, breakdown bars, and a recent-documents list |
+
+**Theme discovery** (`Frontend.theme_search`), first match wins: `theme_path` from `repo.json` (skips the rest), `<source>/resources/themes/<name>/`, `~/.kb4it/opt/resources/themes/<name>/`, then `kb4it/resources/themes/<name>/`.
+
+**Theme class skeleton** (a theme that extends `Builder`; every hook is optional):
+
+```python
+from kb4it.services.builder import Builder
+
+class Theme(Builder):
+    def _initialize(self): ...               # call super()._initialize() first
+    def generate_sources(self): ...          # before stage 2
+    def build(self): ...                     # stage 4: render the theme's own pages
+    def build_page(self, path_md): ...       # wrap a compiled document
+    def build_page_key(self, key, values): ...
+    def build_page_key_value(self, kvpath): ...
+    def post_activities(self): ...           # stage 6, on the build tree
+    def post_deploy_activities(self): ...    # stage 8, on the deployed target
+
+    def build_page_overview(self):           # a page rendered from a template
+        var = self.get_theme_var()
+        var["page"]["title"] = "Overview"
+        self.distribute_md("overview", self.template("PAGE_OVERVIEW").render(var=var))
+```
+
+`distribute_md(name, content)` writes `var/tmp/<name>.md` and registers the page; with the default `as_html=True` the content is ready-made HTML and the compiler skips python-markdown, with `as_html=False` it is compiled like a document. `get_theme_var()` returns the base `var` of every template: `theme`, `repo` (a copy), `env`, `conf` (CLI params), `page` (`{"title": ""}`), `kb["keys"]` (with `menu`), `count_docs`, `updated`, `git_ok`, `search_box`, `editor`.
 
 ### Builder hooks and core behaviour
 
@@ -281,16 +303,23 @@ Because the page lives one level down, `Theme.relocate_links()` rewrites every r
 ### Key data structures
 
 - **`runtime`** -- the live build state, accessed via `backend.get_dict("runtime")` or `backend.get_value("runtime", key)`. Holds `theme`, `dir` (`DirPaths`, including `root`, the repository root), `docs` (`DocsInfo`), `logfile`, and `force_all`: the build rebuilds everything because `--force` or `repo.json` `force` asked for it, or because the cache was unreadable or from another version (`params` and `repo` stay as given; the processor reads `params["force"] or runtime["force_all"]`, techdoc's backups read `force_all`). **Does NOT hold** `ncd`, `nck`, `K_PATH`, `KV_PATH` anymore -- these moved to `BuildPlan`.
-- **`BuildPlan`** (in `kb4it/services/processor.py`) -- dataclass produced by `Processor.step_01_analysis()`. Fields: `docs_to_compile`, `K_PATH` (`[(key, values, compile_flag), ...]`), `KV_PATH` (`[(key, value, compile_flag), ...]`), `force_kv_pairs`. Exposes `doc_count`, `key_count`, `kv_count` properties. Access via `backend.get_plan()`.
+- **docId** -- a document's file name with its extension (`backup.md`); `util.html_id_for()` gives its page name.
+- **Processor steps** (stage 3): `step_00_extraction` reads every frontmatter, fills the database and computes the hashes; `step_01_analysis` compares with the previous `kbdict.json` and produces the `BuildPlan`; `step_02_transformation` prepares the documents and key pages to compile in `var/tmp`.
+- **`BuildPlan`** (in `kb4it/services/processor.py`) -- dataclass produced by `Processor.step_01_analysis()`. Fields: `docs_to_compile`, `K_PATH` (`[(key, values, compile_flag), ...]`), `KV_PATH` (`[(key, value, compile_flag), ...]`), `force_kv_pairs`, `force_all`, `invalid_docs` (`[(docId, reason), ...]`), `name_clashes` (pages differing only by case), `backlinks`. Exposes `doc_count`, `key_count`, `kv_count`, `invalid_count` properties. Access via `backend.get_plan()`.
 - **`AnalysisResult`** (in `kb4it/services/processor.py`) -- dataclass passed explicitly between `step_01_analysis` and `step_01_01_decide_keys_compilation`. Carries the `force_kv_pairs` set.
 - **`kbdict`** (`KBDict` TypedDict) -- the persisted compilation cache at `<repo>/var/db/kbdict.json`. Maps docs to body/metadata hashes and metadata key/value indices for incremental compilation.
-- **`Database` (`srvdtb`)** -- in-memory per-docId map of `{key: [values]}` plus `keys` (all / blocked / theme / ignored) and several lookup caches. `Title` is always ignored; `SystemPage`, `Date` are blocked.
+- **`Database` (`srvdtb`)** -- in-memory per-docId map of `{key: [values]}` plus `keys` (all / blocked / theme / ignored) and several lookup caches. `Title`, `SystemPage` and `Date` are blocked; `Title` is also always ignored.
+- **`ENV`** (`kb4it/core/env.py`) -- `APP` (name, version, build version, author, ...), `SYS` (Python, platform, process), `CONF` (root, user dir, max workers), `LPATH` (per-user paths under `~/.kb4it` or `$KB4IT_HOME`), `GPATH` (package resources, common, templates, themes, bases), `FILE` (log file).
 
 ### Backward-compat shim
 
 `Backend.get_value("runtime", "ncd"|"nck"|"K_PATH"|"KV_PATH")` redirects to the BuildPlan so the techdoc/blog themes' existing reads keep working. New code should use `backend.get_plan()` directly.
 
-Kept in 0.9.x, removed in 0.10.0: `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` (use `backend.pipeline`), `compiler.set_progress_callback` and `set_compile_start_callback` (pass the callbacks to `KB4IT(params)`), and `var['repo']['updated']` (templates read `var['updated']`; `var['repo']` is a copy). `Builder.theme_var` is set per builder in `_initialize`; the shared class-level dict is gone.
+Deprecated in 0.9.x, planned for removal in 0.10.0 but still present: `KB4IT.get_service("Processor"|"Compiler"|"Deployer")` (use `backend.pipeline`), `compiler.set_progress_callback` and `set_compile_start_callback` (pass the callbacks to `KB4IT(params)`), and `var['repo']['updated']` (templates read `var['updated']`; `var['repo']` is a copy). `Builder.theme_var` is set per builder in `_initialize`; the shared class-level dict is gone.
+
+### Services
+
+Long-lived services extend `kb4it.core.service.Service`: `start(app)` sets `self.app` and `self.log`, then calls `_initialize()` (override it for setup and sibling lookups with `self.get_service("Backend")`); `end()` calls `_finalize()`. To add one, create `kb4it/services/<name>.py` and register it in the services dict of `KB4IT` in `core/main.py` (or `app.register_service(name, instance)`). A service that lives for one build belongs in `Pipeline`, with its collaborators passed in. Outside a service, get a logger with `kb4it.core.log.get_logger(name)`.
 
 ### Error handling
 
@@ -355,7 +384,7 @@ A build takes its callbacks as parameters: `KB4IT(argparse.Namespace(..., progre
 - `progress_callback(basename, rc)` -- called per compiled doc
 - `compile_start_callback(total)` -- called once with the number of documents
 
-`compiler.set_progress_callback` / `set_compile_start_callback` are deprecated: what they register is used by the next build only, which logs `[COMPILER] CALLBACK_DEPRECATED`.
+`compiler.set_progress_callback` / `set_compile_start_callback` are deprecated (still present in 0.10.0): what they register is used by the next build only, which logs `[COMPILER] CALLBACK_DEPRECATED`.
 
 ### Clipboard
 
@@ -395,7 +424,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 
 `Date` is optional. Undated documents are kept and sorted after the dated ones; the datatables list them with an empty date cell.
 
-`Date` values are parsed by `guess_datetime` in `core/util.py`, which accepts the common separated forms (`YYYY-MM-DD`, `DD/MM/YYYY`, `YYYY.MM.DD`, ISO `T` variants, with optional time) plus the compact `YYYYMMDD` and `YYYYMMDDHHMMSS` forms used by the `kb4miaz` theme's MiAZ filenames. A `Date` that no pattern matches yields `None` and is treated as missing.
+`Date` values are parsed by `guess_datetime` in `core/dates.py` (re-exported by `core/util.py`), which accepts the common separated forms (`YYYY-MM-DD`, `DD/MM/YYYY`, `YYYY.MM.DD`, ISO `T` variants, with optional time) plus the compact `YYYYMMDD` and `YYYYMMDDHHMMSS` forms used in MiAZ filenames. A `Date` that no pattern matches yields `None` and is treated as missing.
 
 ## Dependencies
 
@@ -411,7 +440,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 
 ## Conventions for contributions by AI assistants
 
-- **Never use the em dash (`--`).** Use a comma, semicolon, colon, or rewrite the sentence.
+- **Never use the em dash (U+2014).** Use a comma, semicolon, colon, or rewrite the sentence.
 - **Git workflow.**
   - Commit when a piece of work is done; do not wait to be asked.
   - One-line Conventional Commits message: `type(scope): description`, types `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`; omit the scope for project-wide changes; description in lower case, imperative, no full stop, describing the change.
@@ -422,7 +451,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
   - After a fix or a feature, add an entry to `CHANGELOG.md` under `## [Unreleased]`, in Keep a Changelog format (`### Added`, `### Changed`, `### Fixed`, `### Removed`).
   - Never change anything on GitHub (settings, Pages, releases, issues, pull requests, comments) without asking first; explain the change and give the command.
   - If a hook or guard blocks a git command, do not work around it; use another way that respects the rule, or tell the user.
-- **Save analysis responses and plans** under `/home/t00m/Documents/devel/github/KB4IT/responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format).
+- **Save analysis responses and plans** under `responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format). `responses/`, `docs/` (specs and plans) and `claude/` (agent skills) are local working folders: git-ignored, never tracked, never referenced from tracked files.
 - **Match KB4IT's existing log style** (`[<COMPONENT>] EVENT key=value`).
 - **Prefer dataclasses + typed exceptions over runtime side-channels** when adding new cross-service communication. A service that belongs to one build takes its collaborators in its constructor (see `Pipeline`) instead of `get_service`; a build's decisions go into `runtime` or the build's objects, never into `params` or `repo`.
 - **Module size.** No module under `kb4it/` is over 600 lines (theme `framework/` folders aside); `tests/test_module_size.py` enforces it. Split by concern, and when a name moves, keep the old import path working (`tests/test_public_names.py` lists the names of `kb4it.core.util` and `kb4it.tui.app`).
