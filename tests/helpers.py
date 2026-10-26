@@ -19,7 +19,8 @@ def isolated_env(home, **extra):
     """Environment for a kb4it subprocess whose per-user files live under home/.kb4it on every OS."""
     # A fake HOME hides ~/.local, so keep the user base: optional packages stay visible.
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
-               PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000")
+               PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000",
+               PYTHONIOENCODING="utf-8")  # run_kb4it reads the output as UTF-8, also on Windows
     env.update(extra)
     return env
 

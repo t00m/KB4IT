@@ -53,11 +53,16 @@ def installed_kb4it(folder, reports="1.2.3-dev+4.gabcdef0"):
 
 
 def fake_uv(bindir, log, tools_bin):
-    """A uv that logs its calls and answers 'uv tool dir --bin'."""
+    """A uv that logs its calls, answers 'uv tool dir --bin' and runs 'uv run ... python' with this Python."""
     bindir.mkdir(exist_ok=True)
     tool = bindir / "uv"
     tool.write_text(f'#!/bin/sh\necho "uv $*" >> "{log}"\n'
-                    f'case "$*" in "tool dir --bin") echo "{tools_bin}" ;; esac\n', encoding="utf-8")
+                    f'case "$*" in "tool dir --bin") echo "{tools_bin}" ;; esac\n'
+                    f'if [ "$1" = run ]; then\n'
+                    f'    while [ "$#" -gt 0 ] && [ "$1" != python ]; do shift; done\n'
+                    f'    shift\n'
+                    f'    exec "{sys.executable}" "$@"\n'
+                    f'fi\n', encoding="utf-8")
     tool.chmod(0o755)
 
 

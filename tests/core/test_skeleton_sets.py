@@ -119,6 +119,14 @@ def test_skeleton_text_utf8(make, tmp_path):
     assert cats[0]["text"] == text
 
 
+def test_skeleton_text_has_lf_newlines(make, tmp_path):
+    folder = tmp_path / "tpl" / "skeletons"
+    folder.mkdir(parents=True)
+    (folder / "A-SKELETON.md").write_bytes(b"---\r\nTag: x\r\n---\r\n\r\n# A\r\n")
+    _, cats = make(templates=tmp_path / "tpl").skeleton_set()
+    assert cats[0]["text"] == "---\nTag: x\n---\n\n# A\n"
+
+
 @pytest.mark.parametrize("listing", ['{"id": "a"}', '["a"]', '[{"name": "A"}]', '[{"id": 3}]',
                                      [{"id": "a"}, {"id": "a"}], [{"id": "a", "color": 5}],
                                      [{"id": "a", "name": None}]])

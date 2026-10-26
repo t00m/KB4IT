@@ -1,6 +1,5 @@
 """The kb4it help command: --url, --dismiss and opening the offline index."""
 
-import stat
 import sys
 from pathlib import Path
 
@@ -39,11 +38,11 @@ def test_help_opens_the_offline_index(tmp_path, home):
     index.write_text("<html></html>", encoding="utf-8")
     out = tmp_path / "opened.txt"
     browser = tmp_path / "fakebrowser.py"
-    browser.write_text(
-        f"#!{sys.executable}\nimport sys\nopen({str(out)!r}, 'w').write(sys.argv[1])\n", encoding="utf-8")
-    browser.chmod(browser.stat().st_mode | stat.S_IEXEC)
+    browser.write_text(f"import sys\nopen({str(out)!r}, 'w').write(sys.argv[1])\n", encoding="utf-8")
+    # webbrowser splits BROWSER like a POSIX shell: quoted forward-slash paths work on every OS.
+    command = f'"{Path(sys.executable).as_posix()}" "{browser.as_posix()}" %s'
     result = run_kb4it("help", cwd=tmp_path, home=home,
-                       env={"KB4IT_HELP_INDEX": str(index), "BROWSER": f"{browser} %s"})
+                       env={"KB4IT_HELP_INDEX": str(index), "BROWSER": command})
     assert result.returncode == 0, result.stdout
     for _ in range(50):
         if out.exists() and out.read_text(encoding="utf-8"):

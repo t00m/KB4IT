@@ -1,5 +1,7 @@
 """Header values are text: yes, no, numbers and dates stay as written, where YAML would change them."""
 
+import os
+
 import pytest
 
 from kb4it.core.documents import get_markdown_attributes, is_yes, load_frontmatter
@@ -49,6 +51,7 @@ def test_bookmarks_page_lists_every_spelling_of_yes(tmp_path, home):
     assert all(f'href="{name}.html"' in bookmarks for name in ("a", "b", "c"))
     assert 'href="d.html"' not in bookmarks
     # Property pages are named after the value as written, not True or False.
-    assert (repo / "target" / "Bookmark_Yes.html").exists()
-    assert (repo / "target" / "Bookmark_No.html").exists()
-    assert not (repo / "target" / "Bookmark_True.html").exists()
+    # Exact names: macOS and Windows file systems ignore case, so exists() would find Bookmark_true.html.
+    names = set(os.listdir(repo / "target"))
+    assert "Bookmark_Yes.html" in names and "Bookmark_No.html" in names
+    assert "Bookmark_True.html" not in names
