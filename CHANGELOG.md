@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- techdoc dashboard: the first two panels showed the titles "Summary" and "Document types", meant only for screen readers. The build gave their headings its own class, which dropped the class that hides them.
 - techdoc: a document page opened without a `#` in the address made Firefox warn "Empty string passed to getElementById()".
 
 ---

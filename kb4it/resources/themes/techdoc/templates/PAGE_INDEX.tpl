@@ -28,7 +28,7 @@ def prop_url(key, value):
 
     <!-- SUMMARY COUNTS :: START -->
     <section class="kb-section" aria-labelledby="kb-hero-heading">
-        <h2 id="kb-hero-heading" class="uk-hidden-visually">Summary</h2>
+        <div class="uk-hidden-visually"><h2 id="kb-hero-heading">Summary</h2></div>
         <div class="kb-hero-bar">
 % for i, stat in enumerate(var['page']['stats']):
 %     if i > 0:
@@ -45,7 +45,7 @@ def prop_url(key, value):
 
     <!-- DOCUMENT TYPES :: START -->
     <section class="kb-section" aria-labelledby="kb-doctypes-heading">
-        <h2 id="kb-doctypes-heading" class="uk-hidden-visually">Document types</h2>
+        <div class="uk-hidden-visually"><h2 id="kb-doctypes-heading">Document types</h2></div>
         <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" data-uk-grid>
 % for item in var['page']['diataxis']:
             <div>
