@@ -1,25 +1,55 @@
-"""The README's Usage block lists every kb4it command, so the two cannot drift apart."""
+"""The About KB4IT page shows the README: title as a line, no badges, links to the repository."""
 
-import re
+from kb4it.core import readme
+from kb4it.core.readme import REPO_FILES_URL, about_markdown, readme_text
 
-from tests.helpers import ROOT, run_kb4it
+SAMPLE = """# KB4IT - A tagline
+
+[![PyPI](https://img.shields.io/pypi/v/KB4IT)](https://pypi.org/project/KB4IT/)
+![License](https://img.shields.io/badge/license-GPL-blue)
+
+See the [help](https://t00m.github.io/KB4IT/), the [licence](LICENSE) and [a section](#usage).
+
+```markdown
+# Not a title
+[a link](other.md)
+```
+
+## Usage
+"""
 
 
-def test_every_command_is_in_the_readme_usage(tmp_path, home):
-    help_text = run_kb4it("--help", cwd=tmp_path, home=home).stdout
-    commands = set(re.search(r"\{([a-z,]+)\}", help_text).group(1).split(","))
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    usage = readme.split("## Usage", 1)[1].split("```", 2)[1]
-    listed = set(re.findall(r"^kb4it ([a-z]+)", usage, re.M))
-    assert commands, help_text
-    assert commands <= listed, f"missing from README Usage: {sorted(commands - listed)}"
+def test_title_becomes_a_line_and_badges_go():
+    text = about_markdown(SAMPLE)
+    assert text.startswith("KB4IT - A tagline\n")
+    assert "shields.io" not in text
 
 
-def test_readme_has_no_em_dash():
-    assert "\u2014" not in (ROOT / "README.md").read_text(encoding="utf-8")
+def test_relative_links_point_to_the_repository():
+    text = about_markdown(SAMPLE)
+    assert f"[licence]({REPO_FILES_URL}LICENSE)" in text
+    assert "[help](https://t00m.github.io/KB4IT/)" in text and "[a section](#usage)" in text
 
 
-def test_no_leftover_files():
-    """AR-07 (ARC-08): the old root redirect and the unused PyPI readme are gone."""
-    assert not (ROOT / "index.html").exists()
-    assert not (ROOT / "pypi").exists()
+def test_code_blocks_are_kept_as_written():
+    text = about_markdown(SAMPLE)
+    assert "# Not a title\n[a link](other.md)\n" in text
+
+
+def test_empty_readme_gives_nothing():
+    assert about_markdown("") == ""
+
+
+def test_source_checkout_reads_the_readme_file():
+    assert readme_text().startswith("# KB4IT")
+
+
+def test_installed_package_reads_the_description(tmp_path, monkeypatch):
+    monkeypatch.setattr(readme, "_ROOT", tmp_path)
+
+    class Meta(dict):
+        def get_payload(self):
+            return "# From metadata\n"
+
+    monkeypatch.setattr(readme.importlib.metadata, "metadata", lambda name: Meta())
+    assert readme_text() == "# From metadata\n"

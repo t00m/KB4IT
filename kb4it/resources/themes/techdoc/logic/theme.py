@@ -401,7 +401,6 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
         self.build_page_index_all()
         self.create_page_about_kb4it()
         self.create_page_about_app()
-        self.create_page_help()
         self.create_page_search()
 
     def build_page(self, path_md):

@@ -2,6 +2,7 @@
 
 import pytest
 
+from kb4it.core.notice import HELP_ONLINE_URL
 from tests.browser.test_add_editor import open_cat
 from tests.helpers import page as md_page
 from tests.themes.test_techdoc_add import build_techdoc
@@ -92,8 +93,10 @@ def test_shortcuts_do_nothing_in_the_add_page_editor(add_page):
 
 def test_reload_help_and_about_are_in_the_logo_menu(nav_page):
     menu = "#kb4it-menu .uk-navbar-left .uk-navbar-dropdown"
-    for href in ("javascript:location.reload();", "help.html", "about_app.html", "about_kb4it.html"):
+    for href in ("javascript:location.reload();", "about_app.html", "about_kb4it.html"):
         assert nav_page.query_selector(f'{menu} a[href="{href}"]'), href
+    # Help is the KB4IT help site, opened in a new window.
+    assert nav_page.query_selector(f'{menu} a[href="{HELP_ONLINE_URL}"][target="_blank"][rel="noopener"]')
     assert not nav_page.query_selector('#kb4it-menu .uk-navbar-right a[href="help.html"]')
 
 

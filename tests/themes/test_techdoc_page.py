@@ -234,7 +234,7 @@ def test_quality_guide_page_explains_every_check(page_site):
 
 def test_markdown_system_pages_keep_their_headings(page_site):
     # Mako reads a line starting with ## as a comment, so the templates must escape it.
-    assert re.search(r'<h2 class="kb-h2" id="what-is-kb4it">', read(page_site, "help.html"))
+    assert re.search(r'<h2 class="kb-h2" id="quick-start">', read(page_site, "about_kb4it.html"))
     assert re.search(r'<h3 class="kb-h3" id="check-summary">', read(page_site, "quality-guide.html"))
 
 

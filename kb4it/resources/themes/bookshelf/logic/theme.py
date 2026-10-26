@@ -373,7 +373,6 @@ class Theme(DocumentTheme):
         self.build_page_index(var)
         self.create_page_about_kb4it()
         self.create_page_about_app()
-        self.create_page_help()
         self.create_page_search()
         self.create_page_add()
 

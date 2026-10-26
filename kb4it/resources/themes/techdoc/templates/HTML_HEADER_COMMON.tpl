@@ -139,7 +139,7 @@
                                     <a class="uk-link-heading" href="javascript:location.reload();"><span data-uk-icon="refresh"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Reload page</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html"><span data-uk-icon="question"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Help</span></a>
+                                    <a class="uk-link-heading" href="${var['help_url']}" target="_blank" rel="noopener"><span data-uk-icon="question"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Help</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="about_app.html"><span data-uk-icon="info"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">About this app</span></a>

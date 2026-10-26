@@ -17,8 +17,10 @@ from mako.template import Template
 from kb4it.core.documents import joined_value
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
+from kb4it.core.notice import HELP_ONLINE_URL
 from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, robots_txt, site_pages,
                                 sitemap_xml)
+from kb4it.core.readme import about_markdown, readme_text
 from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_html, load_doc_sections, prune_sections,
                                render_index_js)
 from kb4it.core.service import Service
@@ -277,6 +279,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
         theme_var["git_ok"] = git_ready(theme_var["repo"])
+        theme_var["help_url"] = HELP_ONLINE_URL  # the KB4IT help site; links open it in a new window
 
         # Only pass to theme those keys used by documents
         kbdict = self.srvbes.get_kb_dict()
@@ -513,6 +516,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         """About KB4IT page."""
         TPL_PAGE_ABOUT_KB4IT = self.template("PAGE_ABOUT_KB4IT")
         var = self.get_theme_var()
+        var["readme"] = about_markdown(readme_text())
         self.distribute_md(
             "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var),
             as_html=False)

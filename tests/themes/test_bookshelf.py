@@ -63,7 +63,7 @@ def test_chapter_navigation(site):
 
 def test_metadata_pages(site):
     assert "c1.html" in read(site, "Command_systemctl.html")
-    for name in ("properties.html", "stats.html", "all.html", "bookmarks.html", "help.html"):
+    for name in ("properties.html", "stats.html", "all.html", "bookmarks.html", "about_kb4it.html"):
         assert (site["target"] / name).exists(), name
 
 

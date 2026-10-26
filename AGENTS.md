@@ -223,7 +223,7 @@ Tests: `tests/core/test_editor_assets.py` and `tests/core/test_deployer_editor.p
 
 `Builder.apply_transformations()` (in `builder.py`) rewrites HTML from `python-markdown` using Mako template pairs. For each name in `Builder._XFORM_NAMES` (`HTML_TAG_TOC`, `HTML_TAG_SECT1` to `SECT4`, `HTML_TAG_SECTIONBODY`, `HTML_TAG_H2` to `H4`, `HTML_TAG_IMG`), a `_MD` template (source pattern, from common templates) and a `_NEW` template (replacement, from the active theme or its base) are loaded; `tests/core/test_transformations.py` checks that each `_MD` pattern occurs in python-markdown output. The theme supplies `_NEW` templates to override the default HTML wrappers. This system is used for element-level theming (e.g. wrapping tables, code blocks, or admonitions in theme-specific markup). It is plain string replacement on the page body, so a `_NEW` replacement must not add an attribute the matched element may already carry (the link transformation `HTML_TAG_A` was removed for that reason; style document links with CSS on the body container). Section wrappers use classes, never fixed ids, since they repeat on a page.
 
-Additional system templates (not in the required set): `PAGE_ABOUT_KB4IT`, `PAGE_ABOUT_APP`, `PAGE_HELP`.
+Additional system templates (not in the required set): `PAGE_ABOUT_KB4IT` (shows the README, from `kb4it/core/readme.py`: `README.md` of a source checkout, else the package description; badges left out, relative links pointed at the repository), `PAGE_ABOUT_APP`, and `PAGE_HELP` for a custom theme that calls `create_page_help()`. The bundled themes build no `help.html`: their Help link is `var['help_url']` (`notice.HELP_ONLINE_URL`, the KB4IT help site), opened in a new window.
 
 ### Escaping
 
