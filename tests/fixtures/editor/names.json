@@ -1,0 +1,230 @@
+{
+ "valid_filename": [
+  [
+   "plain",
+   "plain"
+  ],
+  [
+   "two words",
+   "two_words"
+  ],
+  [
+   "john's portrait in 2004.jpg",
+   "johns_portrait_in_2004.jpg"
+  ],
+  [
+   "...",
+   ""
+  ],
+  [
+   "???",
+   ""
+  ],
+  [
+   ".hidden",
+   "hidden"
+  ],
+  [
+   "..",
+   ""
+  ],
+  [
+   "Caf\u00e9",
+   "Caf\u00e9"
+  ],
+  [
+   "Cafe\u0301",
+   "Cafe"
+  ],
+  [
+   "\u65e5\u672c\u8a9e",
+   "\u65e5\u672c\u8a9e"
+  ],
+  [
+   "\u041f\u0440\u0438\u0432\u0435\u0442 \u043c\u0438\u0440",
+   "\u041f\u0440\u0438\u0432\u0435\u0442_\u043c\u0438\u0440"
+  ],
+  [
+   "12345",
+   "12345"
+  ],
+  [
+   "a_b",
+   "a_b"
+  ],
+  [
+   "a-b",
+   "a-b"
+  ],
+  [
+   "e\u0301",
+   "e"
+  ],
+  [
+   "\ud83d\ude00 smile",
+   "_smile"
+  ],
+  [
+   "a\tb",
+   "ab"
+  ],
+  [
+   "  lead and trail  ",
+   "lead_and_trail"
+  ],
+  [
+   "SAP Notes Knowledge Base",
+   "SAP_Notes_Knowledge_Base"
+  ],
+  [
+   "Disk full on SAP!",
+   "Disk_full_on_SAP"
+  ],
+  [
+   "a/b\\c",
+   "abc"
+  ],
+  [
+   "\u00bd cup",
+   "\u00bd_cup"
+  ],
+  [
+   "x\u00b2",
+   "x\u00b2"
+  ],
+  [
+   "",
+   ""
+  ],
+  [
+   "file.tar.gz",
+   "file.tar.gz"
+  ],
+  [
+   "\u00dfeta",
+   "\u00dfeta"
+  ],
+  [
+   "Stra\u00dfe 5",
+   "Stra\u00dfe_5"
+  ],
+  [
+   "\ufb01nal",
+   "\ufb01nal"
+  ]
+ ],
+ "slugify": [
+  [
+   "plain",
+   "plain"
+  ],
+  [
+   "two words",
+   "two-words"
+  ],
+  [
+   "john's portrait in 2004.jpg",
+   "john-s-portrait-in-2004-jpg"
+  ],
+  [
+   "...",
+   ""
+  ],
+  [
+   "???",
+   ""
+  ],
+  [
+   ".hidden",
+   "hidden"
+  ],
+  [
+   "..",
+   ""
+  ],
+  [
+   "Caf\u00e9",
+   "cafe"
+  ],
+  [
+   "Cafe\u0301",
+   "cafe"
+  ],
+  [
+   "\u65e5\u672c\u8a9e",
+   ""
+  ],
+  [
+   "\u041f\u0440\u0438\u0432\u0435\u0442 \u043c\u0438\u0440",
+   ""
+  ],
+  [
+   "12345",
+   "12345"
+  ],
+  [
+   "a_b",
+   "a-b"
+  ],
+  [
+   "a-b",
+   "a-b"
+  ],
+  [
+   "e\u0301",
+   "e"
+  ],
+  [
+   "\ud83d\ude00 smile",
+   "smile"
+  ],
+  [
+   "a\tb",
+   "a-b"
+  ],
+  [
+   "  lead and trail  ",
+   "lead-and-trail"
+  ],
+  [
+   "SAP Notes Knowledge Base",
+   "sap-notes-knowledge-base"
+  ],
+  [
+   "Disk full on SAP!",
+   "disk-full-on-sap"
+  ],
+  [
+   "a/b\\c",
+   "a-b-c"
+  ],
+  [
+   "\u00bd cup",
+   "12-cup"
+  ],
+  [
+   "x\u00b2",
+   "x2"
+  ],
+  [
+   "",
+   ""
+  ],
+  [
+   "file.tar.gz",
+   "file-tar-gz"
+  ],
+  [
+   "\u00dfeta",
+   "eta"
+  ],
+  [
+   "Stra\u00dfe 5",
+   "strae-5"
+  ],
+  [
+   "\ufb01nal",
+   "final"
+  ]
+ ]
+}

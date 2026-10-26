@@ -2,11 +2,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>${var['repo']['title']} - ${var['page']['title']}</title>
+  <!-- PAGE METADATA :: START -->
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="KB4IT ${var['env']['APP']['version']}">
+  <title>${var['repo']['title']} - ${var['page']['title']}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="KB4IT ${var['env']['APP']['build_version']}; ${var['theme'].get('identity', '')}">
+  <!-- PAGE METADATA :: END -->
+  <!-- STYLESHEETS :: START -->
 % if _hl == 'client':
   <link rel="stylesheet" href="resources/themes/blog/framework/Highlight/styles/github-dark.css">
 % elif _hl == 'pygments':
@@ -14,6 +16,8 @@
 % endif
   <link rel="stylesheet" href="resources/themes/blog/css/blog.css">
   <link rel="stylesheet" href="resources/themes/blog/framework/uikit/css/uikit.min.css">
+  <!-- STYLESHEETS :: END -->
+  <!-- LIBRARIES :: START -->
 % if _hl == 'client':
   <script src="resources/themes/blog/framework/Highlight/highlight.js"></script>
 % endif
@@ -22,7 +26,9 @@
   <script src="resources/themes/blog/framework/datatables/js/jquery-3.5.1.js"></script>
   <script src="resources/themes/blog/framework/datatables/js/jquery.dataTables.min.js"></script>
   <script src="resources/themes/blog/framework/datatables/js/dataTables.uikit.min.js"></script>
-  <script type="text/javascript" class="init">
+  <!-- LIBRARIES :: END -->
+  <!-- DATATABLES SETUP :: START -->
+  <script class="init">
         $(document).ready(function() {
             $('#kb4it-datatable').DataTable( {
                 dom: '<"kbfilter"Bifrt>',
@@ -42,11 +48,11 @@
             } );
         } );
   </script>
+  <!-- DATATABLES SETUP :: END -->
 </head>
 <body>
-    <!-- Blog container :: START -->
-    <div class="blog-container uk-container" uk-height-viewport="expand: true">
-        <!-- GRID :: START -->
-        <div class="uk-grid">
-            <!-- Main Content Column :: START-->
-            <div class="uk-width-3-4@m">
+<!-- PAGE :: START -->
+<div class="blog-container uk-container" data-uk-height-viewport="expand: true">
+    <div class="uk-grid">
+        <!-- CONTENT COLUMN :: START -->
+        <div class="uk-width-3-4@m">

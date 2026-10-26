@@ -3,28 +3,40 @@ Author:
 Date: YYYY-MM-DD
 Version: 1.0
 DocType: Reference
+Category: Minutes
+WorkType: Meeting
+Status: New
+Summary:
 Tag:
 Topic:
-Category: Meeting
 Scope:
+Product:
 ---
 
-# Title of the Meeting
+# Title of the meeting
+
+## Objective
+
+Say why the meeting took place and what it had to decide.
 
 ## Attendees
 
-List attendees here.
+- List each attendee with their role.
 
 ## Agenda
 
-- Item 1
-- Item 2
+- Describe the first agenda item.
+- Describe the next agenda item.
 
 ## Notes
 
-Meeting notes here.
+Record the discussion and the decisions taken.
 
 ## Action Items
 
-- [ ] Action 1
-- [ ] Action 2
+- [ ] Describe the action, with its owner and due date.
+
+## References
+
+- [SAP Note 0000000](https://me.sap.com/notes/0000000)
+- Link the documents this one builds on.

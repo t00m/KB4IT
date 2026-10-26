@@ -64,7 +64,7 @@ Link to the Markdown file; KB4IT rewrites the link to the published page:
 See [the restore procedure](restore-postgresql.md#steps).
 ```
 
-If the target does not exist, the build warns with `LINK_BROKEN` and names both documents.
+If the target does not exist, the build warns with `LINK_BROKEN` and names both documents. Always write the `.md` extension: a link such as `[restore](restore-postgresql)` stays broken on the site, and the build warns with [LINK_NO_EXTENSION](troubleshooting.md#link-no-extension).
 
 ## Add notes and warnings {#admonitions}
 

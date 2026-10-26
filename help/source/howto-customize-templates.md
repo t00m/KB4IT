@@ -34,6 +34,18 @@ Delete the copy to go back to the theme's template.
 !!! warning
     A template you copied does not change when the theme does. After upgrading KB4IT, compare your copy with the theme's new version.
 
+## Change the Add page {#editor}
+
+With the [editor](howto-write-document-editor.md) on, the Add page uses two shared templates.
+
+- `PAGE_ADD.tpl` makes the cards. You can replace it, like any other template, from `overrides/templates/`.
+- `EDITOR_DIALOGS.tpl` makes the dialogs and the data the editor reads. Do not replace it: the editor scripts depend on its markup. A card page prints it once with `${var['page']['editor_dialogs'] | n}`.
+
+To change the skeletons, put your own files in `overrides/templates/skeletons/`. They replace the skeletons of the theme completely; see [Use your own skeletons](howto-write-document-editor.md#skeletons).
+
+!!! warning
+    A `PAGE_ADD.tpl` override written before the editor came to every theme still renders, but it has no editor: its buttons do nothing. Delete it, or copy the current template and apply your changes again.
+
 ## Add your own files {#static}
 
 Everything in `overrides/static/` is copied, as it is, into the website root. Put stylesheets, scripts or images there, for example `overrides/static/css/site.css`, and link them from an overridden template.

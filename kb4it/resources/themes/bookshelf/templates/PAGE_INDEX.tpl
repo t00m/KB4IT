@@ -1,7 +1,8 @@
-<!-- PAGE_INDEX :: START -->
+<!-- LIBRARY :: START -->
 <% bk = var['bk'] %>\
 <% stats = bk['stats'] %>\
 <% cb = bk.get('current_book') %>\
+<!-- LIBRARY HEADER :: START -->
 <div class="pagehead">
     <div>
         <div class="eyebrow">Your study library</div>
@@ -9,7 +10,9 @@
     </div>
     <span class="sub">${stats['books']} certification book${'s' if stats['books'] != 1 else ''} &middot; pick one and keep reading.</span>
 </div>
+<!-- LIBRARY HEADER :: END -->
 
+<!-- BOOKSHELF :: START -->
 <div class="shelf-wrap">
     <div class="legend" style="margin-bottom:16px">
         <span class="eyebrow" style="letter-spacing:.08em">Spine height = length &middot; fill = progress</span>
@@ -31,8 +34,10 @@
     </div>
     <div class="shelf-board"></div>
 </div>
+<!-- BOOKSHELF :: END -->
 
 % if cb:
+<!-- CONTINUE READING :: START -->
 <div class="continue">
     <div class="mini-cover" style="background:${cb['gradient']}"></div>
     <div>
@@ -44,8 +49,10 @@
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10h11M11 5l5 5-5 5"></path></svg>
     </a>
 </div>
+<!-- CONTINUE READING :: END -->
 % endif
 
+<!-- AT A GLANCE :: START -->
 <div class="section-h"><h2>At a glance</h2><span class="rule"></span></div>
 <div class="stat-strip">
     <a class="stat" href="Book.html"><div class="n">${stats['books']}</div><div class="l">Books</div></a>
@@ -54,7 +61,9 @@
     <div class="stat"><div class="n">${stats['read']}</div><div class="l">Chapters read</div></div>
     <a class="stat" href="Command.html"><div class="n">${stats['commands']}</div><div class="l">Commands indexed</div></a>
 </div>
+<!-- AT A GLANCE :: END -->
 
+<!-- ALL BOOKS :: START -->
 <div class="section-h"><h2>All books</h2><span class="count">${stats['books']} in library</span><span class="rule"></span></div>
 <div class="cards">
 % for b in bk['books']:
@@ -83,4 +92,5 @@
     </a>
 % endfor
 </div>
-<!-- PAGE_INDEX :: END -->
+<!-- ALL BOOKS :: END -->
+<!-- LIBRARY :: END -->

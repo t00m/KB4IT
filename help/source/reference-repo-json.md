@@ -58,6 +58,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
 | `overrides` | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
 | `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
+| `editor` | techdoc: on; blog, bookshelf, apphelp: off | Add page (`add.html`) with a Markdown editor for new documents. `true` or `false`; any other value stops the build. `false` removes the page and the link to it |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format. They appear only with `"git": true` and `git_server`, `git_user`, `git_repo` and `git_branch` all set; `git_path` may stay empty |
 
 ## Markdown {#markdown}
@@ -92,7 +93,7 @@ The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (ta
 
 ## Search {#search}
 
-techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched.
+techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched. The search page offers filters by `Category`, `WorkType` and `Tag`, for the keys your documents use.
 
 The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
 
@@ -114,7 +115,7 @@ With `site_url` set, the blog theme writes an Atom feed, `feed.xml`, with the ne
 |---|---|---|
 | `enabled` | blog `true`, others `false` | Write the feed |
 | `limit` | `20` | Number of entries, newest first |
-| `categories` | all | Only documents with one of these `Category` values |
+| `categories` | all | Only documents with one of these `Category` or `WorkType` values |
 | `full_content` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |
 
 Documents without a `Date` are not in the feed.
@@ -123,7 +124,7 @@ Documents without a `Date` are not in the feed.
 
 Each theme reads its own keys as well:
 
-- [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`
+- [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`, `quality`
 - [blog](reference-theme-blog.md#settings): `index_posts`, `strict`, `datatable`
 - [bookshelf](reference-theme-bookshelf.md#settings): `datatable`
 - [apphelp](reference-theme-apphelp.md#settings): the `apphelp` block and `version`

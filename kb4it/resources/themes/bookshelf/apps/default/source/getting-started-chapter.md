@@ -4,6 +4,7 @@ Book: Sample Book
 Chapter: 1
 Date: 2026-10-01
 Part: I
+PartTitle: First steps
 Status: Reading
 ---
 

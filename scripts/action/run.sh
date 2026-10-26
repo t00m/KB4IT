@@ -28,10 +28,12 @@ install() {
     echo "Installing ${spec} with Python ${KB4IT_PYTHON}"
     # macOS bash 3.2 treats an empty "${with[@]}" as unbound under set -u.
     uv tool install --force --python "${KB4IT_PYTHON}" ${with[@]+"${with[@]}"} "${spec}"
-    local version
-    version="$(kb4it --version | awk '{print $2}')"
+    local build version
+    # First line "KB4IT <build version>"; the output keeps the release version X.Y.Z.
+    build="$(kb4it --version | head -n 1 | awk '{print $2}')"
+    version="${build%%[-+]*}"
     echo "version=${version}" >> "${GITHUB_OUTPUT}"
-    echo "KB4IT ${version} installed"
+    echo "KB4IT ${build} installed"
 }
 
 verify() {
@@ -70,7 +72,7 @@ build() {
         echo ""
         echo "| | |"
         echo "|---|---|"
-        echo "| KB4IT | $(kb4it --version | awk '{print $2}') |"
+        echo "| KB4IT | $(kb4it --version | head -n 1 | awk '{print $2}') |"
         for key in docs_total compiled skipped invalid failed; do
             echo "| ${key} | $(grep -o " ${key}=[0-9]*" <<<"${summary}" | cut -d= -f2) |"
         done

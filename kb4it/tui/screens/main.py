@@ -23,7 +23,7 @@ from textual.widgets import (
 
 from kb4it.core.notice import (HELP_ONLINE_URL, dismiss_help_notice, help_notice_lines,
                                help_notice_visible, offline_index)
-from kb4it.tui.projects import VERSION, load_projects, save_projects
+from kb4it.tui.projects import BUILD_VERSION, load_projects, save_projects
 from kb4it.tui.screens.catalog import AppsScreen, ThemesScreen
 from kb4it.tui.screens.confirm import ConfirmScreen
 from kb4it.tui.screens.create import CreateProjectScreen, ImportProjectScreen
@@ -69,7 +69,7 @@ class MainScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = f"KB4IT v{VERSION}"
+        self.title = f"KB4IT {BUILD_VERSION}"
         self.sub_title = "Static Website Generator"
         self._reload()
 

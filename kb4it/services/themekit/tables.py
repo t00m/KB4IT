@@ -32,12 +32,16 @@ class TableMixin(ThemeHost):
         try:
             title = properties['Title']
             # Built as HTML here, printed raw by the template: escape the document title.
-            item['title'] = f"<span uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
+            item['title'] = f"<span data-uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
             item['url'] = properties['Title_Url']
             return self.template('DATATABLE_BODY_ITEM').render(var=item)
         except (KeyError, AttributeError) as e:
             self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
             raise
+
+    def datatable_custom_cell(self, doc_id: str, key: str) -> str | None:
+        """Return the whole <td> of a column the theme draws itself, or None for a plain property cell."""
+        return None
 
     def datatable_value_link(self, properties: dict[str, Any], key: str, value: str) -> dict[str, str]:
         """Return the variables of the link to the page of a value; KeyError leaves the cell empty."""
@@ -77,6 +81,10 @@ class TableMixin(ThemeHost):
             for key in final_headers:
                 if key == 'Title':
                     row.append(self.datatable_title_cell(docId, properties))
+                    continue
+                custom = self.datatable_custom_cell(docId, key)
+                if custom is not None:
+                    row.append(custom)
                     continue
                 try:
                     field = [tpl_link.render(var=self.datatable_value_link(properties, key, value))

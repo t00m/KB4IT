@@ -107,5 +107,38 @@ def test_reserved_pages_only_where_a_404_page_is_written():
         cls = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
         values = [ast.literal_eval(n.value) for n in cls.body
                   if isinstance(n, ast.AnnAssign | ast.Assign) and "reserved_pages" in ast.unparse(n)]
-        assert values == [("404.md",)], theme
+        # Every theme reserves 404.md; techdoc also reserves the system pages it writes (quality-guide.md).
+        assert len(values) == 1 and "404.md" in values[0], theme
         assert "self.build_page_404()" in source, theme
+
+
+def test_document_named_add_is_reserved_while_editor_is_on(tmp_path, home):
+    pages = dict(PAGES, **{"add.md": page("Mine", "Own add.", Category="Post")})
+    cfg, target, result = _build(tmp_path, home, "techdoc", pages)
+    assert "DOC_NAME_RESERVED doc=add.md" in result.stdout
+    assert 'id="modal-add-' in (target / "add.html").read_text(encoding="utf-8")
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert "add.md" in verify.stdout and "reserved_name" in verify.stdout
+
+
+def test_document_named_add_is_normal_while_editor_is_off(tmp_path, home):
+    pages = dict(PAGES, **{"add.md": page("Mine", "Own add.", Category="Post", Date="2026-10-01")})
+    cfg, target, result = _build(tmp_path, home, "blog", pages)
+    assert "DOC_NAME_RESERVED doc=add.md" not in result.stdout
+    assert "Own add." in (target / "add.html").read_text(encoding="utf-8")
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert "add.md" not in verify.stdout
+
+
+def test_verify_loads_theme_py_once(tmp_path, home):
+    import shutil
+
+    theme_dir = tmp_path / "counted"
+    shutil.copytree(ROOT / "kb4it" / "resources" / "themes" / "techdoc", theme_dir)
+    logic = theme_dir / "logic" / "theme.py"
+    logic.write_text(logic.read_text(encoding="utf-8")
+                     + '\nwith open(__file__ + ".loads", "a", encoding="utf-8") as _fout:\n    _fout.write("x")\n', encoding="utf-8")
+    cfg = write_repo(tmp_path / "repo", "techdoc", PAGES, theme_path=str(theme_dir))
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert verify.returncode == 0, verify.stdout
+    assert (theme_dir / "logic" / "theme.py.loads").read_text(encoding="utf-8") == "x"

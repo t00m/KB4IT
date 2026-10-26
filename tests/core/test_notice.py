@@ -16,10 +16,11 @@ def home(tmp_path, monkeypatch):
 
 
 def test_notice_names_the_command_and_the_urls():
-    text = "\n".join(help_notice_lines(Path("/x/index.html"), HELP_ONLINE_URL))
+    index = Path("/x/index.html")
+    text = "\n".join(help_notice_lines(index, HELP_ONLINE_URL))
     assert "kb4it help" in text
     assert "kb4it help --dismiss" in text
-    assert "/x/index.html" in text
+    assert str(index) in text
     assert HELP_ONLINE_URL in text
 
 

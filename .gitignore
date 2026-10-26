@@ -13,6 +13,15 @@ __pycache__/
 
 # Claude Code local tooling (hooks, settings)
 .claude/
-responses
 tmp/
+# Local working files, never tracked: agent skills, specs and plans, saved responses, uv lock file
+/claude/
+/docs/
+/responses/
+/skills/
+/uv.lock
 kb4it/resources/help/
+# Build stamp, written by scripts/devel/stamp_build.py before packaging
+kb4it/BUILD.json
+
+scripts/devel/editor/node_modules/

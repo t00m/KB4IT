@@ -1,3 +1,4 @@
+<!-- VALUE HEADER :: START -->
 <div class="kb-kv-banner">
     <nav class="kb-kv-breadcrumb">
         <a href="properties.html">Properties</a>
@@ -13,6 +14,9 @@
         <span class="kb-kv-count">${len(var['doclist'])} doc${'s' if len(var['doclist']) != 1 else ''}</span>
     </div>
 </div>
+<!-- VALUE HEADER :: END -->
+<!-- DOCUMENTS TABLE :: START -->
 <div class="uk-container uk-overflow-auto">
 ${var['page']['dt_documents'] | n}
 </div>
+<!-- DOCUMENTS TABLE :: END -->

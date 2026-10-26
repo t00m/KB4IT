@@ -14,6 +14,7 @@ from datetime import datetime
 
 from mako.template import Template
 
+from kb4it.core.documents import joined_value
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, robots_txt, site_pages,
@@ -21,6 +22,7 @@ from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, rob
 from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_html, load_doc_sections, prune_sections,
                                render_index_js)
 from kb4it.core.service import Service
+from kb4it.services.addpage import AddPageMixin
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 from kb4it.services.headmeta import META_END, META_START, HeadMetaMixin, short_text  # noqa: F401
 
@@ -86,7 +88,7 @@ def _written_by_kb4it(path) -> bool:
         return False
 
 
-class Builder(HeadMetaMixin, Service):
+class Builder(AddPageMixin, HeadMetaMixin, Service):
     """Build HTML blocks."""
 
     _templates_lock = threading.Lock()
@@ -274,7 +276,6 @@ class Builder(HeadMetaMixin, Service):
         theme_var["kb"]["keys"] = self.srvdtb.get_keys()
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
-        theme_var["repo"]["updated"] = theme_var["updated"]  # old templates read it here; removed in the next minor release
         theme_var["git_ok"] = git_ready(theme_var["repo"])
 
         # Only pass to theme those keys used by documents
@@ -289,6 +290,7 @@ class Builder(HeadMetaMixin, Service):
         )
 
         theme_var["search_box"] = self.search_box()
+        theme_var["editor"] = self.editor_enabled()
         return theme_var
 
     def target_subdir(self):
@@ -319,8 +321,8 @@ class Builder(HeadMetaMixin, Service):
         """Index record of one document; themes may override to add facets or a summary."""
         values = lambda key: [v for v in (self.srvdtb.get_values(doc_id, key) or []) if v]
         title = (values("Title") or [doc_id])[0]
-        summary = (values("Summary") or [""])[0]
-        facets = {key: values(key) for key in ("Category", "Tag") if values(key)}
+        summary = joined_value(values("Summary"))
+        facets = {key: values(key) for key in ("Category", "WorkType", "Tag") if values(key)}
         return {"u": html_id_for(doc_id), "t": title, "s": summary, "k": "", "c": "", "f": facets,
                 "w": [], "g": [], "x": []}
 
@@ -356,7 +358,7 @@ class Builder(HeadMetaMixin, Service):
 
     def sitemap_exclude(self) -> set:
         """Pages left out of sitemap.xml; themes may add their own."""
-        return {"404.html", "search.html"}
+        return {"404.html", "search.html", "add.html"}
 
     def page_dates(self) -> dict:
         """'page.html' -> 'YYYY-MM-DD' for documents with a Date."""
@@ -434,7 +436,8 @@ class Builder(HeadMetaMixin, Service):
             if doc_id not in known or self.srvdtb.is_system(doc_id):
                 continue
             date = (self.srvdtb.get_values(doc_id, "Date") or [None])[0]
-            categories = set(self.srvdtb.get_values(doc_id, "Category") or [])
+            # A feed category matches Category or WorkType, so settings written before WorkType keep working.
+            categories = set(self.srvdtb.get_values(doc_id, "Category") or []) | set(self.srvdtb.get_values(doc_id, "WorkType") or [])
             if not date or (wanted and not categories & wanted):
                 continue
             dated.append((str(date), doc_id))
@@ -444,7 +447,7 @@ class Builder(HeadMetaMixin, Service):
                 content = load_doc_html(root, doc_id)
             else:
                 sections = load_doc_sections(root, doc_id)
-                summary = (self.srvdtb.get_values(doc_id, "Summary") or [""])[0]
+                summary = joined_value(self.srvdtb.get_values(doc_id, "Summary"))
                 content = summary or (sections[0]["text"][:300] if sections else "")
             entries.append({"title": (self.srvdtb.get_values(doc_id, "Title") or [doc_id])[0],
                             "url": absolute(base, html_id_for(doc_id)), "updated": atom_date(date),

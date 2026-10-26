@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --log-level, exit status, KB4IT_HOME
+Keyword: cli, kb4it, create, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME
 Level: basic
 Order: 610
 Section: Reference
@@ -18,15 +18,18 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it create THEME [APP] PATH` | Creates a knowledge base in `PATH` from a theme and one of its apps (`default` if you leave it out) |
 | `kb4it build CONFIG` | Builds the website of the knowledge base whose settings are in `CONFIG` |
 | `kb4it build --force CONFIG` | Rebuilds everything |
+| `kb4it build --trace CONFIG` | Builds and shows how long each part of the build took; see [Build timings](#trace) |
 | `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [Preview while you write](howto-preview.md) |
-| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `ANCHOR_MISSING`) and the theme's own rules without building |
+| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building |
 | `kb4it info CONFIG` | Shows the main settings |
-| `kb4it themes` | Lists the installed themes |
+| `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
+| `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
 | `kb4it projects` | Lists the knowledge bases you created or imported |
 | `kb4it help` | Opens the offline copy of this help in your browser; see [Help center](#help) |
 | `kb4it help --url` | Prints the address of the online help |
 | `kb4it help --dismiss` | Hides the help notice |
+| `kb4it --version` | Prints the KB4IT build, then the commit it was built from and when |
 
 `CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`.
 
@@ -49,6 +52,14 @@ Put them before the command.
 | `-h`, `--help` | Prints help; `kb4it build --help` prints help for one command |
 
 `-f` is short for `--force`.
+
+## Build timings {#trace}
+
+`kb4it build --trace CONFIG` (also `kb4it serve --trace CONFIG`) times each stage and step of the build and the compilation of each document. It works with any `-L` level and adds nothing to the log.
+
+At the end of the build it prints a table: time in milliseconds, share of the build, and the step, indented under its stage. Steps under 1% are left out. Documents compiled in parallel are summed in one line.
+
+It also writes `<knowledge base>/var/log/trace.json`, replaced at each build. Open it in https://ui.perfetto.dev or `chrome://tracing` to see the build as a timeline, with one row per worker thread.
 
 ## Exit status {#exit}
 

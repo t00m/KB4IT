@@ -3,6 +3,7 @@
 import re
 from dataclasses import dataclass, field
 
+from kb4it.core.documents import joined_value
 from kb4it.core.util import html_id_for, slugify
 
 # Type of document: the frontmatter value and the short name used in CSS classes, URLs and labels.
@@ -63,7 +64,7 @@ def _has_value(keys, name):
 
 def _joined(keys, name):
     # The frontmatter parser splits strings on commas; free text is joined back.
-    return ", ".join(keys.get(name) or [])
+    return joined_value(keys.get(name))
 
 
 def parse_helpid(value: str) -> tuple:

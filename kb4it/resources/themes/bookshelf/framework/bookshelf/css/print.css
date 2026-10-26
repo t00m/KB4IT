@@ -65,7 +65,7 @@
 
     /* breadcrumb becomes a quiet running context line + rule */
     .crumb {
-        font-family: "Red Hat Text", Arial, sans-serif;
+        font-family: var(--f-text);
         font-size: 8.5pt;
         color: #444 !important;
         letter-spacing: 0.02em;
@@ -99,7 +99,7 @@
 
     /* headings: sans, black, kept with following text */
     .article h1 {
-        font-family: "Red Hat Display", Arial, sans-serif;
+        font-family: var(--f-display);
         font-size: 21pt;
         margin: 0 0 6pt;
         page-break-after: avoid;
@@ -112,7 +112,7 @@
         margin: 0 0 12pt;
     }
     .article h2 {
-        font-family: "Red Hat Display", Arial, sans-serif;
+        font-family: var(--f-display);
         font-size: 13.5pt;
         color: #000 !important;
         margin: 16pt 0 6pt;
@@ -122,7 +122,7 @@
     }
     .article h2 .n { color: #000 !important; font-weight: 700; }
     .article h3 {
-        font-family: "Red Hat Display", Arial, sans-serif;
+        font-family: var(--f-display);
         font-size: 11.5pt;
         margin: 10pt 0 4pt;
         page-break-after: avoid;
@@ -140,7 +140,7 @@
 
     /* inline code */
     .article code {
-        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-family: var(--f-mono);
         background: #f0f0f0 !important;
         border: 0.5pt solid #ccc !important;
         color: #000 !important;
@@ -163,7 +163,7 @@
     }
     .code .code-bar .lang {
         color: #555 !important;
-        font-family: "IBM Plex Mono", monospace;
+        font-family: var(--f-mono);
         font-size: 7pt;
     }
     .code pre { padding: 7pt 9pt; white-space: pre-wrap; word-break: break-word; }
@@ -172,7 +172,7 @@
     .code .cmd,
     .code .flag {
         color: #000 !important;
-        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-family: var(--f-mono);
         font-size: 8.25pt;
         line-height: 1.5;
     }
@@ -186,7 +186,7 @@
         margin-top: 14pt;
         page-break-inside: avoid;
     }
-    .print-appendix h2 .n { font-family: "IBM Plex Mono", monospace; }
+    .print-appendix h2 .n { font-family: var(--f-mono); }
     .print-appendix .appendix-cmds {
         list-style: none;
         margin: 4pt 0 0 0 !important;
@@ -204,11 +204,11 @@
     }
     .print-appendix .appendix-cmds li b,
     .print-appendix .appendix-tags b {
-        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-family: var(--f-mono);
         font-weight: 700;
     }
     .print-appendix .appendix-tags {
-        font-family: "IBM Plex Mono", monospace;
+        font-family: var(--f-mono);
         font-size: 8.5pt;
         color: #444 !important;
         margin: 7pt 0 0 0;
@@ -228,7 +228,7 @@
     }
     .docmeta .row { padding: 1.5pt 0; }
     .docmeta .k {
-        font-family: "IBM Plex Mono", monospace;
+        font-family: var(--f-mono);
         color: #555 !important;
         font-size: 7.5pt;
         min-width: 78pt;

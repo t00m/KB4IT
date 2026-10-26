@@ -1,3 +1,4 @@
+<!-- SEARCH :: START -->
 <div id="kb4it-search-page" class="kb4it-search-page">
     <form id="kb4it-search-form" class="kb4it-search-page-form" action="search.html" method="get" role="search">
         <input id="kb4it-search-page-input" type="search" name="q" placeholder="Search" autocomplete="off" aria-label="Search the site">
@@ -9,3 +10,4 @@
     </div>
     <noscript><p>Search needs JavaScript.</p></noscript>
 </div>
+<!-- SEARCH :: END -->

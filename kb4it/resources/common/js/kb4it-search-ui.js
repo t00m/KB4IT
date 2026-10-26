@@ -1,7 +1,7 @@
 /* KB4IT search box (results as you type) and search page (full results and filters). */
 (function () {
   "use strict";
-  var FACETS = ["Category", "Tag"];
+  var FACETS = ["Category", "WorkType", "Tag"];
   var engine = null;
 
   function getEngine() {
@@ -20,6 +20,16 @@
     return hit.section && hit.section.heading ? hit.section.heading : (hit.record.c || "");
   }
 
+  function qualityChip(record) {
+    var q = record.q;
+    if (!q || !q.tier) { return null; }
+    var tier = String(q.tier).replace(/[^a-z]/g, "");
+    return el("span", {
+      "class": "kb-q-chip kb-q-" + tier,
+      "title": "Quality " + q.score + " of 100, " + q.label
+    }, q.label || tier);
+  }
+
   function setupBox() {
     var input = document.getElementById("kb4it-search-input");
     var box = document.getElementById("kb4it-search-dropdown");
@@ -33,7 +43,10 @@
       box.textContent = "";
       if (!hits.length) { box.appendChild(el("a", {href: "search.html?q=" + encodeURIComponent(query)}, "No results; open search")); }
       hits.forEach(function (hit) {
-        var link = el("a", {href: hit.url}, hit.record.t);
+        var link = el("a", {href: hit.url});
+        var chip = qualityChip(hit.record);
+        if (chip) { link.appendChild(chip); }
+        link.appendChild(document.createTextNode(hit.record.t));
         if (label(hit)) { link.appendChild(el("small", {}, label(hit))); }
         box.appendChild(link);
       });
@@ -102,7 +115,11 @@
       if (!query) { return; }
       hits.forEach(function (hit) {
         var item = el("li");
-        item.appendChild(el("a", {href: hit.url}, hit.record.t));
+        var link = el("a", {href: hit.url});
+        var chip = qualityChip(hit.record);
+        if (chip) { link.appendChild(chip); }
+        link.appendChild(document.createTextNode(hit.record.t));
+        item.appendChild(link);
         if (label(hit)) { item.appendChild(el("div", {"class": "where"}, label(hit))); }
         if (hit.record.s) { item.appendChild(el("div", {}, hit.record.s)); }
         list.appendChild(item);

@@ -4,6 +4,7 @@
         "Date",
         "Title",
         "Category",
+        "WorkType",
         "Priority",
         "Status",
         "Scope",
@@ -28,6 +29,7 @@
     "menu": [
         "Author",
         "Category",
+        "WorkType",
         "Command",
         "Component",
         "Database",
@@ -57,6 +59,6 @@
     "source": "{source_directory}",
     "target": "{target_directory}",
     "theme": "techdoc",
-    "title": "KB4IT",
+    "title": "SAP Basis Knowledge Base",
     "webserver": false
 }

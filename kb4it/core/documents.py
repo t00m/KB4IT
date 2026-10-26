@@ -19,6 +19,41 @@ from kb4it.core.log import get_logger
 
 log = get_logger("Util")
 
+
+class _FrontmatterLoader(yaml.SafeLoader):
+    """SafeLoader that reads every plain value as written; only an empty value, null or ~ means none.
+
+    YAML 1.1 reads yes and no as booleans, 0.10 as 0.1, 010 as 8, 12:30 as 750 and dates as dates,
+    and str() then wrote something else than the author did ("Bookmark: Yes" made Bookmark_True.html).
+    A header value is text, so the author's text is kept.
+    """
+
+
+_TYPED = {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:int", "tag:yaml.org,2002:float",
+          "tag:yaml.org,2002:timestamp"}
+_FrontmatterLoader.yaml_implicit_resolvers = {
+    first: [(tag, regexp) for tag, regexp in resolvers if tag not in _TYPED]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+YES_VALUES = ("yes", "true", "on")
+
+
+def load_frontmatter(text: str) -> Any:
+    """Read a frontmatter block as the build does: safe YAML, every plain value kept as text."""
+    return yaml.load(text, Loader=_FrontmatterLoader)  # a SafeLoader subclass: safe
+
+
+def joined_value(values: list[str] | None) -> str:
+    """Join the values of a free-text key, such as Summary, that the frontmatter parser split on commas."""
+    return ", ".join(v for v in values or [] if v)
+
+
+def is_yes(value: Any) -> bool:
+    """True for a header value that means yes (Yes, true, On, in any case), as Bookmark uses it."""
+    return str(value).strip().lower() in YES_VALUES
+
+
 def extract_sections_from_md(file_path: str) -> dict[str, dict[str, int]]:
     """Extract H2 sections from a Markdown file.
 
@@ -161,16 +196,18 @@ def strip_first_heading(body: str) -> str:
     return "".join(lines)
 
 
-def get_hash_from_body(path: str) -> str | None:
+def get_hash_from_body(path: str, content: str | None = None) -> str | None:
     """Get blake2b hash for the document body.
 
     Body is the content after the closing YAML frontmatter delimiter, with the
     leading H1 heading stripped so title renames don't invalidate the cache.
+    Pass the already-read text as content to avoid opening the file again.
     """
-    if not os.path.exists(path):
-        return None
-    with open(path, "r", encoding=SOURCE_ENCODING) as fin:
-        content = fin.read()
+    if content is None:
+        if not os.path.exists(path):
+            return None
+        with open(path, "r", encoding=SOURCE_ENCODING) as fin:
+            content = fin.read()
     end = content.find("\n---", 3)
     if end >= 0:
         body = strip_first_heading(content[end + 4:].lstrip("\n"))
@@ -179,42 +216,45 @@ def get_hash_from_body(path: str) -> str | None:
     return hashlib.blake2b(body.encode("utf-8")).hexdigest()
 
 
-def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, str]:
-    """Get metadata from a Markdown document's YAML frontmatter."""
-    basename = os.path.basename(docpath)
-    keys = {}
+def parse_markdown_attributes(content: str, basename: str) -> tuple[dict[str, list[str]], bool, str, bool]:
+    """Parse a Markdown header from text that is already in memory.
+
+    Returns keys, valid, reason and warned. warned is true when the frontmatter
+    carried a Title key that was ignored, so a caller that caches the result can
+    parse the document again and log the warning on every build.
+    """
+    keys: dict[str, list[str]] = {}
+    warned = False
 
     try:
-        with open(docpath, "r", encoding=SOURCE_ENCODING) as fh:
-            content = fh.read()
-
         if not content.startswith("---"):
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter")
-            return {}, False, "missing_frontmatter"
+            return {}, False, "missing_frontmatter", False
 
         end = content.find("\n---", 3)
         if end < 0:
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter_close")
-            return {}, False, "missing_frontmatter_close"
+            return {}, False, "missing_frontmatter_close", False
 
         fm_text = content[3:end].strip()
         body = content[end + 4:].lstrip("\n")
 
-        fm = yaml.safe_load(fm_text) if fm_text else {}
+        fm = load_frontmatter(fm_text) if fm_text else {}
         if not isinstance(fm, dict):
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=invalid_frontmatter")
-            return {}, False, "invalid_frontmatter"
+            return {}, False, "invalid_frontmatter", False
 
         # Title comes from the first # heading in the body
         title, _index = first_heading(body)
         if title is None:
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_h1_title")
-            return {}, False, "missing_h1_title"
+            return {}, False, "missing_h1_title", False
 
         keys["Title"] = [title.strip()]
 
         if "title" in fm or "Title" in fm:
             log.warning(f"[UTIL] DOC_WARN doc={basename} reason=title_in_frontmatter_ignored")
+            warned = True
             fm.pop("title", None)
             fm.pop("Title", None)
 
@@ -227,6 +267,8 @@ def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, s
                 keys[k] = [i.strip() for i in v.split(",")]
             else:
                 keys[k] = [str(v).strip()]
+            # A value repeated in one key is kept once, in its first place.
+            keys[k] = list(dict.fromkeys(keys[k]))
 
         # Every property name and value becomes part of a page name; one that cleans to nothing
         # (such as "..." or "???") cannot, so the document is reported instead of breaking the site.
@@ -240,7 +282,7 @@ def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, s
             else:
                 continue
             log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
-            return {}, False, reason
+            return {}, False, reason, False
 
     except yaml.YAMLError as err:
         reason = "yaml_error"
@@ -254,12 +296,25 @@ def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, s
         if problem:
             reason += f" {problem}"
         log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
-        return {}, False, reason
+        return {}, False, reason, False
+    except Exception as err:
+        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
+        return {}, False, str(err), False
+
+    return keys, True, "Success", warned
+
+
+def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, str]:
+    """Get metadata from a Markdown document's YAML frontmatter."""
+    basename = os.path.basename(docpath)
+    try:
+        with open(docpath, "r", encoding=SOURCE_ENCODING) as fh:
+            content = fh.read()
     except Exception as err:
         log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
         return {}, False, str(err)
-
-    return keys, True, "Success"
+    keys, valid, reason, _warned = parse_markdown_attributes(content, basename)
+    return keys, valid, reason
 
 
 def get_document_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, str]:

@@ -190,6 +190,15 @@ def test_datatable_rows_and_hooks():
     assert html.count("<LINK_DATATABLE") == 2 and "Tag_x.html" in html
 
 
+def test_datatable_custom_cell_hook():
+    theme = _Theme()
+    theme.srvdtb, theme.srvbes = _TableDb(), _Backend()
+    assert theme.datatable_custom_cell("a.html", "Tag") is None
+    theme.datatable_custom_cell = lambda doc, key: '<td data-order="7">Q</td>' if key == "Quality" else None
+    html = theme.build_datatable(["Quality", "Tag"], ["a.html"])
+    assert '<td data-order="7">Q</td>' in html and '<td class=""></td>' in html
+
+
 class _EventsDb:
     def get_doc_timestamp(self, doc):
         return {"a.md": "2026-10-15", "b.md": "2026-10-16"}.get(doc)

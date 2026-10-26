@@ -54,6 +54,13 @@ def test_index_page_and_box(tmp_path, home, theme):
         assert (target / "resources" / "common" / asset).is_file(), asset
 
 
+def test_techdoc_menu_links_to_the_search_page(tmp_path, home):
+    _cfg, target, _ = _build(tmp_path, home, "techdoc", {"a.md": _page("Alpha")})
+    html = (target / "a.html").read_text(encoding="utf-8")
+    assert '<a class="uk-link-heading" href="search.html">' in html
+    assert '<span data-uk-icon="search"></span>' in html
+
+
 def test_search_false_removes_everything(tmp_path, home):
     cfg, target, _ = _build(tmp_path, home, "techdoc", {"a.md": _page("Alpha")})
     assert (target / "search-index.js").exists()
@@ -64,7 +71,9 @@ def test_search_false_removes_everything(tmp_path, home):
     assert result.returncode == 0, result.stdout
     assert not (target / "search-index.js").exists()
     assert not (target / "search.html").exists()
-    assert "kb4it-search-input" not in (target / "a.html").read_text(encoding="utf-8")
+    html = (target / "a.html").read_text(encoding="utf-8")
+    assert "kb4it-search-input" not in html
+    assert '<a class="uk-link-heading" href="search.html">' not in html
 
 
 def test_incremental_build_keeps_unchanged_pages_in_the_index(tmp_path, home):
@@ -96,3 +105,13 @@ def test_engine_finds_a_section_in_the_built_index(tmp_path, home):
                ENGINE=str(target / "resources" / "common" / "js" / "kb4it-search.js"))
     out = subprocess.run([node, "-e", script], env=env, capture_output=True, text=True, encoding="utf-8", check=True)
     assert json.loads(out.stdout) == ["a.html#restore-steps"]
+
+
+def test_worktype_is_a_facet(tmp_path, home):
+    _cfg, target, _ = _build(tmp_path, home, "techdoc", {"c.md": page("Change one", Category="Record", WorkType="Change", Date="2026-10-08")})
+    assert _index(target)["c.html"]["f"] == {"Category": ["Record"], "WorkType": ["Change"]}
+
+
+def test_summary_with_commas_is_whole_in_the_index(tmp_path, home):
+    _cfg, target, _ = _build(tmp_path, home, "techdoc", {"a.md": page("Alpha", Summary="One, two, three", Date="2026-10-08")})
+    assert _index(target)["a.html"]["s"] == "One, two, three"

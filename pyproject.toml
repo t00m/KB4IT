@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "KB4IT"
-version = "0.9.1"
+version = "0.10.0"
 description = "A static website generator based on Markdown sources."
 authors = ["Tomás Vírseda <tomasvirseda@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -33,6 +33,7 @@ packages = [
 ]
 include = [
     { path = "kb4it/VERSION", format = ["sdist", "wheel"] },
+    { path = "kb4it/BUILD.json", format = ["sdist", "wheel"] },
     { path = "kb4it/resources/**/*", format = ["sdist", "wheel"] },
     { path = "README.md", format = ["sdist", "wheel"] },
     { path = "LICENSE", format = ["sdist", "wheel"] },
@@ -65,3 +66,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["browser: needs Playwright and Chromium"]

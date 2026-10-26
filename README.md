@@ -15,6 +15,7 @@
 - **Smart incremental builds** - only changed documents and their key/value index pages are recompiled, driven by per-document body and metadata hashes (blake2b).
 - **Ready to publish** - a favicon from your logo, a 404 page, and `sitemap.xml`, `robots.txt`, an Atom feed, Open Graph tags and canonical links once you set `site_url`.
 - **Links you can trust** - every document lists the documents that link to it, and `kb4it verify` reports broken links and anchors.
+- **Write in the browser** - the Add page, with `"editor": true` in `repo.json` (on by default in techdoc), is a Markdown editor that completes your properties, checks the frontmatter and saves the file, offline.
 - **Yours to adjust** - replace a single template per site, add your own CSS or scripts, or run Python hooks during the build.
 - **Four themes out of the box** - `techdoc`, `blog`, `bookshelf` and `apphelp` - plus a custom-theme directory under `~/.kb4it/opt/resources/themes/`.
 - **Runs everywhere** - GNU/Linux, macOS and Windows.
@@ -34,7 +35,7 @@ Every KB4IT document is a Markdown file beginning with a YAML frontmatter block.
 
 ```markdown
 ---
-Author: Tomás Vírseda
+Author: Ann Lopez
 Category: Procedure
 Date: 2026-05-19
 DocType: How-to guide
@@ -169,6 +170,15 @@ On Windows, KB4IT runs natively; the Windows Subsystem for Linux works too but i
 - Python 3.11 to 3.14
 - `Mako` (templating), `Markdown` (Markdown → HTML), `PyYAML` (frontmatter), `Pygments` (code highlighting), `lxml` (post-processing), `rich` and `textual` (terminal interface) - all installed automatically
 
+## Tech stack
+
+- **Language and packaging** - Python 3.11 to 3.14, packaged with Poetry. Distributed on PyPI, as the container image `ghcr.io/t00m/kb4it`, as a `.deb` and an `.rpm`, and as a GitHub Action.
+- **Build** - `python-markdown` with `extra`, `admonition`, `toc` and `sane_lists` always on, plus the optional `pymdown-extensions`; Mako templates; PyYAML frontmatter, parsed so every plain value stays the text you wrote; Pygments for build-time highlighting; lxml for post-processing; nh3 for sanitizing raw HTML.
+- **Output** - plain static HTML, CSS and JavaScript. No database, no server-side runtime, no JavaScript framework.
+- **Frontend** - UIKit for the bundled themes, Mermaid for diagrams, KaTeX for formulas, a vanilla JavaScript full-text search engine, and a CodeMirror 6 bundle for the Add page editor. Every asset ships with KB4IT and loads from disk, offline.
+- **Terminal** - Rich and Textual for the TUI.
+- **Development** - pytest, with Playwright and Chromium for the browser tests; mypy in strict mode on the annotated modules; the Nu HTML Checker; GitHub Actions for CI and releases.
+
 ## Usage
 
 ```bash
@@ -178,11 +188,12 @@ kb4it build <config.json>                 # build the site (incremental)
 kb4it build <config.json> --force         # force recompile everything
 kb4it verify <config.json>                # check documents and links without building
 kb4it info <config.json>                  # show repo stats
-kb4it themes                              # list available themes
+kb4it themes                              # list available themes, with version, fingerprint and folder
 kb4it apps <theme>                        # list theme apps
 kb4it projects                            # list your knowledge bases
 kb4it help                              # open the help center (--url, --dismiss)
-kb4it --version                           # show version
+kb4it doctor                              # show the build, Python, paths and themes; exit 1 if something bundled is missing
+kb4it --version                           # show the build version and the commit it was built from
 ```
 
 Run `kb4it` with no arguments in a terminal to open the terminal interface: create, build, explore and preview your projects from one screen.
@@ -283,6 +294,7 @@ Open an issue before starting a large change so we can align on the approach.
 - [Mermaid](https://mermaid.js.org/) - diagrams.
 - [KaTeX](https://katex.org/) - math formulas.
 - [UIKit](https://getuikit.com) - the front-end framework used by the bundled themes.
+- [CodeMirror](https://codemirror.net/) - the Markdown editor of the Add page.
 - [Geany](https://www.geany.org/) - the editor used to build KB4IT.
 
 ## License

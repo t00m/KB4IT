@@ -71,15 +71,6 @@ def test_theme_with_a_bad_requirement_is_refused(tmp_path, home):
     assert "THEME_REQUIREMENT_INVALID id=mini requires=newest" in result.stdout
 
 
-def test_version_flag_shows_git_describe_in_a_checkout(home):
-    result = run_kb4it("--version", cwd=home, home=home)
-    assert result.returncode == 0
-    version = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
-    assert result.stdout.startswith(f"KB4IT {version}")
-    if (ROOT / ".git").exists():
-        assert "(v" in result.stdout or "(" in result.stdout
-
-
 def test_every_tracked_theme_declares_a_requirement_this_version_meets():
     version = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
     import json

@@ -80,6 +80,11 @@
     this.items = prepare(records || []);
   }
 
+  function qualityScore(hit) {
+    var q = hit.record.q;
+    return q && typeof q.score === "number" ? q.score : 0;
+  }
+
   Engine.prototype.search = function (query, filters) {
     var words = tokenize(query), out = [];
     for (var i = 0; i < this.items.length; i++) {
@@ -95,7 +100,9 @@
         out.push({ record: p.rec, score: hit.score, section: hit.section, url: p.rec.u + anchor });
       }
     }
-    out.sort(function (a, b) { return b.score - a.score || a.record.t.localeCompare(b.record.t); });
+    out.sort(function (a, b) {
+      return b.score - a.score || qualityScore(b) - qualityScore(a) || a.record.t.localeCompare(b.record.t);
+    });
     return out;
   };
 

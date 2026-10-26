@@ -90,3 +90,7 @@ Tutorials number their `##` steps automatically.
 ## Settings
 
 The `apphelp` block of `repo.json` holds `strict`, `lang`, `accent`, `about`, `contract`, `vocabulary` and `labels`. See `AGENTS.md` in the repository root.
+
+## Add page
+
+Set `"editor": true` in `repo.json` (off by default) to build `add.html`, a Markdown editor for new pages, with a Tutorial, How-to guide, Reference and Explanation skeleton. The sidebar links to it with the `add` label ("Add a page"). Completion offers the `vocabulary` values.

@@ -49,6 +49,8 @@ class DocumentMeta(TypedDict, total=False):
     """Per-document entry inside kbdict["document"]."""
     content:       str
     keys:          dict
+    file_hash:     str   # blake2b of the source bytes, so an unchanged header is not parsed again
+    warned:        bool  # parsed with a warning (title in frontmatter): never served from the header cache
     body_hash:     str
     metadata_hash: str
     compile:       bool
@@ -59,6 +61,7 @@ class KBDict(TypedDict, total=False):
     document:       dict   # dict[str, DocumentMeta]
     metadata:       dict   # dict[str, dict[str, list[str]]]
     kb4it_version:  str
+    kb4it_build:    str   # build version of the KB4IT that wrote it, plus a diff hash when dirty (BI-09)
     site_signature: str
     core_signature: str   # hash of core settings that shape every page (markdown, overrides, hooks)
     events:         dict  # event page name -> sorted documents on it, after the last successful build

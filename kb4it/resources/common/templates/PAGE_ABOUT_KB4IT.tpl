@@ -9,7 +9,7 @@ ${'##'} Description
 
 It is based on [Markdown](https://commonmark.org/) sources and uses the [python-markdown](https://python-markdown.github.io/) library to convert them to HTML.
 
-This website was built using KB4IT ${var['env']['APP']['version']}
+This website was built using KB4IT ${var['env']['APP']['build_version']}
 
 For more information, visit the Git [repository](https://github.com/t00m/KB4IT).
 

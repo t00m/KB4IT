@@ -7,6 +7,5 @@ This file only adds Claude-specific notes that do not belong in the generic agen
 ## Claude-specific notes
 
 - When asked to save analysis output, follow the `kb4itdoc_md` skill conventions and write to `responses/`.
-- The user's auto-memory lives under `/home/t00m/.claude/projects/-home-t00m-Documents-devel-github-KB4IT/memory/`. Honor every entry in `MEMORY.md` and update it as feedback accumulates.
-- Never use the em dash (`—`); use a comma, semicolon, colon, or rewrite the sentence.
+- The user's Claude Code auto-memory for this project lives under `~/.claude/projects/<project>/memory/`. Honor every entry in `MEMORY.md` and update it as feedback accumulates.
 - Follow the git workflow in AGENTS.md: commit finished work with a one-line Conventional Commits message and no trailers; never push, never create a branch.

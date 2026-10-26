@@ -1,13 +1,14 @@
 {
     "id": "bookshelf",
     "name": "Bookshelf",
+    "version": "1.0.0",
     "author": "Tomas Virseda",
     "email": "tomasvirseda@gmail.com",
     "website": "https://github.com/t00m/KB4IT",
     "description": "Study companion theme organized as Book, Part and Chapter for certification prep",
     "search": true,
     "feed": false,
-    "kb4it": ">=0.9.1",
+    "kb4it": ">=0.10.0",
     "favicon": "images/logo.svg",
     "autoescape": true
 }

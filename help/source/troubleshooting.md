@@ -30,6 +30,36 @@ A document links to a `.md` file that is not in `source/`.
 
 The warning names both documents. Correct the file name in the link, or create the missing document. `kb4it verify` lists every broken link at once, and also links to a section that does not exist (`ANCHOR_MISSING`); it ends with exit status 1 when it finds any, so it can stop a publishing workflow.
 
+## The build warns IMAGE_MISSING {#image-missing}
+
+### Cause
+
+The techdoc theme found an image in a document whose file is not in `source/`. The warning names the document and the image path, as written in the document: `IMAGE_MISSING doc=<file> src=<path>`. The page shows a grey box with the path instead of the image.
+
+### Fix
+
+Copy the image file to that path under `source/`, usually `source/resources/images/`, or correct the path in the document. Paths are relative to `source/`. Images on other sites (`https://...`) are never reported.
+
+## The build warns LINK_NO_EXTENSION {#link-no-extension}
+
+### Cause
+
+A document links to another one without the `.md` extension, such as `[backups](BACKUP-POLICY)`, or to a `.adoc` file from an older repository. KB4IT only turns links that end in `.md` into links to the published page, so this one stays as written and fails on disk and on most web servers. The warning names the document it most likely means: `LINK_NO_EXTENSION from=<doc> to=<link> suggest=<file>.md`. When no such document exists, the build warns `LINK_BROKEN` instead.
+
+### Fix
+
+Add `.md` to the link, or write the suggested file name: `[backups](BACKUP-POLICY.md)`. `kb4it verify` lists every such link at once.
+
+## Pages do not change after a theme edit {#theme-edit}
+
+### Cause
+
+A normal build only rebuilds the documents whose source changed. After you edit a template, the theme's Python code or `theme.json`, the other pages still have the old theme.
+
+### Fix
+
+Run `kb4it build --force` once. CSS and JavaScript files are copied at every build, so a change to them shows without `--force`.
+
 ## The build stops with CONFIG_KEY_MISSING {#config-key}
 
 ### Cause

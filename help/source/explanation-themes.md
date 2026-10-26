@@ -42,6 +42,8 @@ A theme decides what the website looks like and which pages it has. Your documen
   </section>
 </div>
 
+Each theme can also have the [Add page](howto-write-document-editor.md), a Markdown editor in the browser. It is on by default in techdoc. In blog, bookshelf and apphelp it is off until you set `"editor": true` in `repo.json`. Any theme can turn it off with `"editor": false`.
+
 ## Sample apps {#apps}
 
 A theme can ship sample knowledge bases, called apps. `kb4it create` copies one to start you off:
@@ -68,5 +70,7 @@ To change only one template of a theme, put your version in the knowledge base's
 ## Themes and KB4IT versions {#versions}
 
 Each theme says which KB4IT it needs, in the `kb4it` field of its `theme.json`, for example `">=X.Y.Z"`. A theme that needs a newer KB4IT is refused with `THEME_REQUIREMENT_UNMET`, so you learn it before the build, not halfway through.
+
+Each theme also has its own version, in the `version` field of its `theme.json`, and a fingerprint of its files. `kb4it themes` shows both, with the folder the theme comes from, so a copy in `~/.kb4it/opt/resources/themes/` that hides a bundled theme is easy to spot. A change to any theme file rebuilds every page on the next build; see [Theme version and fingerprint](howto-create-theme.md#version).
 
 Want something different? [Create your own theme](howto-create-theme.md).

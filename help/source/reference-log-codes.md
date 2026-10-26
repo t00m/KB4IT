@@ -32,6 +32,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_ERROR` | error | The theme cannot load, or its own checks failed. Stops |
 | `COMPILE_ERROR` | error | Pages could not be made, a hook failed, or documents cannot be read with `"fail_on_invalid": true`. Stops |
 | `KB4IT_ERROR` | error | Any other failure. Stops |
+| `DOCTOR_PROBLEM` | error | `kb4it doctor` found a bundled file or theme missing, one line each, before `KB4IT_ERROR`. Install KB4IT again; see [Check the installation](howto-install.md#check) |
 
 ## Settings {#settings}
 
@@ -55,7 +56,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DOC_INVALID` | error | A document cannot be read. It is left out of the site; with `"fail_on_invalid": true` the build stops | See [why a document is rejected](reference-document-format.md#invalid) |
 | `DOC_WARN` | warning | The document sets `title` in its front matter. KB4IT ignores it and uses the first `#` heading | Remove `title` from the front matter |
 | `DOC_NAME_CLASH` | warning | Two documents differ only by letter case or extension | See [file names](troubleshooting.md#names) |
-| `DOC_NAME_RESERVED` | error | The file name is reserved: a Windows device name, or a page the theme writes (`404.md` in techdoc, blog and bookshelf). The document is left out | See [file names](troubleshooting.md#names) |
+| `DOC_NAME_RESERVED` | error | The file name is reserved: a Windows device name, or a page the theme writes (`404.md` in techdoc, blog and bookshelf; `add.md` while the editor is on in a theme that supports the Add page). The document is left out | See [file names](troubleshooting.md#names) |
 | `DATE_INVALID` | warning, error | A date value cannot be read as a date. The document is sorted with the undated ones | Use a [date form KB4IT reads](reference-document-format.md#dates) |
 | `DOC_UNDATED` | warning | The blog theme found a post without a `Date` | Add a `Date` property |
 | `LINK_BROKEN` | warning | A link points to a `.md` file that is not in `source/` | See [LINK_BROKEN](troubleshooting.md#link-broken) |
@@ -78,9 +79,13 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DATATABLE_FAIL` | error | The theme cannot add a document to a table | Check the properties of the document the line names |
 | `INDEX_SKIP` | warning | The blog theme left a post out of its home page | Check the post the line names; the line has the error |
 | `INDEX_LARGE` | warning | The search index is larger than 5 MB, or 2 MB for apphelp sites | See [search](reference-repo-json.md#search). The build goes on |
+| `ADD_PAGE` | info | Written as `[BUILDER] ADD_PAGE enabled=<True or False> skeletons=<overrides, theme or common> categories=<n>`: whether this build makes the Add page, and the skeleton set and number of cards it uses (the last two only when enabled). See the `editor` key in [repo.json](reference-repo-json.md) | Nothing |
+| `SKELETON_UNLISTED` | warning | Written as `[BUILDER] SKELETON_UNLISTED file=<name>`: a `*-SKELETON.md` file is not listed in `skeletons.json`, so the Add page ignores it | List the file in `skeletons.json`, or delete it |
 | `DEPLOY_DIR_MISSING` | warning | A folder listed in `deploy_dirs` of `theme.json` does not exist in the theme | Create the folder, or remove it from the list |
 | `FORCE_SKIP` | warning | With `--force`, a build folder in `var/` was kept because it holds `source` or `target` | Move `source` and `target` out of `var/` |
 | `KBDICT_VERSION_MISMATCH` | warning | The build cache was made by another KB4IT version. Every page is rebuilt | Nothing |
+| `KBDICT_BUILD_MISMATCH` | warning | The build cache was made by another build of KB4IT: another commit, or other uncommitted changes. Every page is rebuilt once | Nothing |
+| `KBDICT_PYYAML_MISMATCH` | warning | The build cache was made with another PyYAML version. Every page is rebuilt | Nothing |
 | `KBDICT_CORRUPT` | warning | The build cache cannot be read. Every page is rebuilt and the cache is replaced | Nothing |
 | `KBDICT_LOAD_FAIL` | error | The build cache cannot be opened at all. Stops | Delete `var/` in the knowledge base and build again |
 
@@ -98,6 +103,8 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_REQUIREMENT_UNMET` | error | The theme needs a newer KB4IT. Stops | See [THEME_REQUIREMENT_UNMET](troubleshooting.md#requirement) |
 | `THEME_REQUIREMENT_MISSING` | warning | The theme does not say which KB4IT it needs | Add a `kb4it` field to its `theme.json` |
 | `THEME_REQUIREMENT_INVALID` | error | The `kb4it` field of `theme.json` is not a valid version rule. Stops | Write it like `">=0.9"` |
+| `THEME_VERSION_MISSING` | warning | The theme has no `version` in its `theme.json`. It loads and is shown as `unversioned` | Add `"version": "1.0.0"` to its `theme.json` |
+| `THEME_VERSION_INVALID` | warning | The `version` of `theme.json` is not `X.Y.Z`. The theme loads as `unversioned`; from the next minor release this stops the build | Write it like `"1.2.0"` |
 | `THEME_NOT_LOADED` | error | The site was about to be written without a loaded theme. Stops | Report it as a bug |
 | `THEME_AUTOESCAPE_OFF` | warning | Your own theme prints values without escaping them | Add `"autoescape": true` to `theme.json`; see [Escaping](howto-create-theme.md#escaping) |
 | `THEME_VERIFY_ERROR` | error | The theme's own check crashed during `kb4it verify`. Stops | Fix the theme's `verify.py` |

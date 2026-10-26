@@ -1,16 +1,19 @@
+<!-- TOTALS :: START -->
 <div class="kb-stats-hero">
     <a class="kb-stat-card" href="all.html">
-        <span class="kb-stat-icon" uk-icon="icon: file-text; ratio: 1.4"></span>
+        <span class="kb-stat-icon" data-uk-icon="icon: file-text; ratio: 1.4"></span>
         <span class="kb-stat-num">${var['count_docs']}</span>
         <span class="kb-stat-label">Documents</span>
     </a>
     <a class="kb-stat-card" href="properties.html">
-        <span class="kb-stat-icon" uk-icon="icon: tag; ratio: 1.4"></span>
+        <span class="kb-stat-icon" data-uk-icon="icon: tag; ratio: 1.4"></span>
         <span class="kb-stat-num">${var['count_keys']}</span>
         <span class="kb-stat-label">Properties</span>
     </a>
 </div>
+<!-- TOTALS :: END -->
 <% _max = max((i['count_values'] for i in var['leader_items']), default=1) %>
+<!-- PROPERTY COUNTS :: START -->
 <div class="kb-stats-list">
 % for item in var['leader_items']:
 <%  pct = max(4, int(item['count_values'] * 100 / _max)) %>
@@ -23,3 +26,4 @@
     </div>
 % endfor
 </div>
+<!-- PROPERTY COUNTS :: END -->

@@ -24,6 +24,7 @@ from kb4it.services.themekit import DocumentTheme
 class Theme(DocumentTheme):
     properties_title = 'Metadata'
     reserved_pages = ('404.md',)  # build() writes 404.html
+    add_page = True   # create_page_add() runs in build()
     reuse_unchanged_pages = True
     datatable_link_template = 'LINK'
 
@@ -185,6 +186,7 @@ class Theme(DocumentTheme):
         self.create_page_about_kb4it()
         self.create_page_about_app()
         self.create_page_search()
+        self.create_page_add()
 
     def page_hook_pre(self, var):
         var['related'] = ''

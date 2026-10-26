@@ -3,25 +3,33 @@ Author:
 Date: YYYY-MM-DD
 Version: 1.0
 DocType: Reference
-Tag:
-Topic:
-Category: Task
+Category: Record
+WorkType: Task
 Priority: Normal
 Status: New
+Summary:
+Tag:
+Topic:
 Scope:
+Product:
 ---
 
-# Title of the Task
+# Title of the task
 
 ## Objective
 
-Describe the objective.
+Describe what this task must achieve and why.
 
 ## Acceptance Criteria
 
-- Criterion 1
-- Criterion 2
+- [ ] Describe the first condition for done.
+- [ ] Describe the second condition for done.
 
 ## Notes
 
-Additional notes.
+Record decisions, findings and links gathered while working.
+
+## References
+
+- [SAP Note 0000000](https://me.sap.com/notes/0000000)
+- Link the documents this one builds on.

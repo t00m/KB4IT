@@ -64,7 +64,10 @@ def test_build_python_makes_wheel_and_sdist(tmp_path):
     out.mkdir()
     (out / "kb4it-0.0.1-py3-none-any.whl").write_bytes(b"stale")
     env = dict(os.environ, KB4IT_DIST_OUT=str(out))
-    subprocess.run([BASH, str(DIST / "build" / "build_python.sh")], check=True, env=env, capture_output=True)
+    result = subprocess.run([BASH, str(DIST / "build" / "build_python.sh")], env=env, capture_output=True, encoding="utf-8")
+    # The script's own output is the only record of why a build failed.
+    assert result.returncode == 0, (f"build_python.sh exit {result.returncode}\n--- stdout\n{result.stdout}"
+                                    f"\n--- stderr\n{result.stderr}")
     version = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
     built = sorted(p.name for p in out.iterdir() if not p.name.startswith("."))  # uv adds a .gitignore
     assert built == [f"kb4it-{version}-py3-none-any.whl", f"kb4it-{version}.tar.gz"]
@@ -185,3 +188,40 @@ def test_wheel_check_wants_the_offline_help_index():
     assert module.has_offline_help([theme, "kb4it/resources/help/index.html"])
     assert not module.has_offline_help([theme])
     assert not module.has_offline_help([theme, "kb4it/resources/help/search.html"])
+
+
+def _stamped_wheel(tmp_path, **stamp):
+    """A wheel with every tracked theme, the offline help, the editor bundle and the given BUILD.json."""
+    import json
+    import zipfile
+    listed = subprocess.run(["git", "ls-files", "kb4it/resources/themes/*/theme.json"], cwd=ROOT,
+                            capture_output=True, text=True, encoding="utf-8").stdout.split()
+    wheel = tmp_path / "kb4it-1.2.3-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as zf:
+        for rel in listed:
+            zf.writestr(rel, "{}")
+        zf.writestr("kb4it/resources/help/index.html", "")
+        zf.writestr("kb4it/resources/editor/codemirror.min.js", "")
+        if stamp:
+            zf.writestr("kb4it/BUILD.json", json.dumps(stamp))
+    return wheel
+
+
+@pytest.mark.parametrize("args, stamp, ok", [
+    (["--stamp", "1.2.3"], {"version": "1.2.3", "build_version": "1.2.3-dev+4.gabcdef0", "source": "dev"}, True),
+    (["--stamp", "1.2.3"], {}, False),
+    (["--stamp", "1.2.3"], {"version": "1.2.2", "build_version": "1.2.2"}, False),
+    (["--release", "1.2.3"], {"version": "1.2.3", "build_version": "1.2.3", "source": "release", "dirty": False}, True),
+    (["--release", "1.2.3"], {"version": "1.2.3", "build_version": "1.2.3-dev+4.gabcdef0", "source": "dev"}, False),
+    (["--release", "1.2.3"], {"version": "1.2.3", "build_version": "1.2.3+unknown", "source": "unknown"}, False),
+])
+def test_wheel_check_wants_the_right_build_stamp(tmp_path, args, stamp, ok):
+    if not subprocess.run(["git", "ls-files", "kb4it/resources/themes"], cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8").stdout:
+        pytest.skip("not a git checkout")
+    wheel = _stamped_wheel(tmp_path, **stamp)
+    result = subprocess.run([sys.executable, str(ROOT / "scripts" / "devel" / "check_wheel_themes.py"), *args, str(wheel)],
+                            capture_output=True, text=True, encoding="utf-8")
+    assert (result.returncode == 0) is ok, result.stdout + result.stderr
+    if not ok:
+        assert "Build stamp:" in result.stderr

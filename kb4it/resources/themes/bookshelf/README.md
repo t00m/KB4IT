@@ -33,6 +33,9 @@ Bookshelf places each document with these properties:
 | `Book` | The book the note belongs to |
 | `Part` | The part of the book |
 | `Chapter` | The chapter of the part |
+| `PartTitle` | Name of the part, shown in the book overview |
+| `Status` | Reading progress: `Done`, `Reading` or nothing for to do |
+| `Command` | Commands the chapter teaches; each one gets its own page |
 
 Documents without these properties still build, but they may show up in the wrong place or not at all. Set them for every note you want on the shelf.
 
@@ -43,7 +46,10 @@ These keys are optional. Add one to `repo.json` only to change it.
 | Key | Without it | Effect of setting it |
 | --- | --- | --- |
 | `tagline` | No tagline | Short site description |
+| `editor` | `false` | `true` builds the Add page (`add.html`) with a Markdown editor and a plus button in the top bar |
 
-The bundled `default` app has no sample documents. Your first `kb4it build` produces an empty library until you add documents.
+## Sample app
+
+The `default` app has five sample chapters in two books. `Sample Book` explains the properties in two parts. `Linux Basics` shows a study book with `Command` values. Copy a chapter to start your own, or delete them.
 
 See [reference-theme-bookshelf.md](../../../../help/source/reference-theme-bookshelf.md) for the full theme reference.

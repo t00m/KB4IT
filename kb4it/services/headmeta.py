@@ -10,6 +10,7 @@ Head meta service: description, Open Graph and canonical link of each page.
 import html as htmllib
 import re
 
+from kb4it.core.documents import joined_value
 from kb4it.core.mdrich import MATH_MARKS, MERMAID_MARK
 from kb4it.core.publish import absolute
 from kb4it.core.search import load_doc_sections
@@ -44,7 +45,7 @@ class HeadMetaMixin:
         values = (lambda key: [v for v in (self.srvdtb.get_values(doc_id, key) or []) if v]) if doc_id else (lambda key: [])
         if doc_id:
             sections = load_doc_sections(self.srvbes.get_path("root"), doc_id)
-            text = (values("Summary") or [sections[0]["text"] if sections else ""])[0]
+            text = joined_value(values("Summary")) or (sections[0]["text"] if sections else "")
             title = (values("Title") or [doc_id])[0]
         else:
             text, title = repo.get("tagline", ""), repo.get("title", "")

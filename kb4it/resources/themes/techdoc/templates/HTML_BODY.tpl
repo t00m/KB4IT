@@ -1,43 +1,49 @@
-<!-- Template HTML_BODY_DOC.tpl :: START -->
-<main class="kb-main">
+<!-- MAIN CONTENT :: START -->
+<main class="kb-main${' kb-main-sidebar' if var.get('toc_sidebar') else ''}">
+    <div class="kb-main-body">
 % if var['has_toc']:
-
-<!-- Print-only document header (hidden on screen) -->
-<div class="kb-print-header">
-    <h1 class="kb-print-doc-title">${var['page']['title']}</h1>
-</div>
-
-% if len(var['toc']) > 0:
-<!-- Inline collapsible TOC -->
-<details id="kb-toc-inline" open class="kb-toc-panel">
-    <summary class="kb-toc-summary">Table of Contents</summary>
-    <nav class="kb-toc-nav">
-        ${var['toc'] | n}
-    </nav>
-</details>
-% endif
-
-    <!-- This is the nav containing the toggling elements -->
-    <ul class="uk-flex uk-flex-center uk-tab noprint uk-hidden" uk-switcher>
-        <li><a href="#">Document</a></li>
-    </ul>
-    <!-- This is the container of the content items -->
-    <ul class="uk-switcher uk-margin">
-        <li class="uk-active"><div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div></li>
-    </ul>
-
-% if var['metadata']:
-<!-- Document properties section at bottom (collapsed by default on screen) -->
-<div class="kb-sect1 kb-sect1-collapsed uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded">
-    <h2 class="kb-h2">Document Properties</h2>
-    <div class="kb-section-body uk-container">
-        ${var['metadata'] | n}
+    <!-- PRINT HEADER :: START -->
+    <!-- Shown only on paper: the document title above the contents. -->
+    <div class="kb-print-header">
+        <h1 class="kb-print-doc-title">${var['page']['title']}</h1>
     </div>
-</div>
-% endif
-
+    <!-- PRINT HEADER :: END -->
+${var.get('doc_header', '') | n}
+${var.get('info_card', '') | n}
+    % if len(var['toc']) > 0:
+    <!-- TABLE OF CONTENTS :: START -->
+    <details id="kb-toc-inline" open class="kb-toc-panel">
+        <summary class="kb-toc-summary">Table of Contents</summary>
+        <nav class="kb-toc-nav">
+            ${var['toc'] | n}
+        </nav>
+    </details>
+    <!-- TABLE OF CONTENTS :: END -->
+    % endif
+    <!-- DOCUMENT BODY :: START -->
+    <div class="kb-content kb-content-${var.get('fmt', 'md')} uk-margin" data-uk-lightbox="toggle: a.kb-zoom; animation: fade">
+${var['source_html'] | n}
+    </div>
+    <!-- DOCUMENT BODY :: END -->
 % else:
-    <div class="kb-content kb-content-${var.get('fmt', 'md')}">${var['source_html'] | n}</div>
+    <!-- PAGE BODY :: START -->
+    <div class="kb-content kb-content-${var.get('fmt', 'md')}">
+${var['source_html'] | n}
+    </div>
+    <!-- PAGE BODY :: END -->
+% endif
+    </div>
+% if var.get('toc_sidebar'):
+    <!-- SIDE TABLE OF CONTENTS :: START -->
+    <aside class="kb-toc-sidebar kb-noprint" aria-label="Table of contents">
+        <nav class="kb-toc-nav kb-toc-sidebar-nav" data-uk-scrollspy-nav="closest: li; scroll: true; offset: 80">
+            ${var['toc'] | n}
+        </nav>
+    </aside>
+    <!-- SIDE TABLE OF CONTENTS :: END -->
 % endif
 </main>
-<!-- Template HTML_BODY_DOC.tpl :: END -->
+<!-- MAIN CONTENT :: END -->
+<!-- BACK TO TOP :: START -->
+<a class="kb-totop kb-noprint" href="#" aria-label="Back to top"><span data-uk-icon="icon: arrow-up" aria-hidden="true"></span><span class="uk-hidden-visually">Back to top</span></a>
+<!-- BACK TO TOP :: END -->

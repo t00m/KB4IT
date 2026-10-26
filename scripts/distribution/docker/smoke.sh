@@ -10,7 +10,8 @@
 #
 # Env: RUNTIME (docker or podman, default: whichever is installed),
 #      KB4IT_SMOKE_USER (UID:GID to run as, default: the calling user),
-#      KB4IT_SMOKE_PORT (host port for the serve check, default: 18642).
+#      KB4IT_SMOKE_PORT (host port for the serve check, default: 18642),
+#      KB4IT_RELEASE=1 (the first line of --version must be exactly "KB4IT <kb4it/VERSION>").
 set -euo pipefail
 
 # shellcheck source=../lib/common.sh
@@ -47,7 +48,12 @@ run() {
 echo ">>> Version"
 VERSION_OUT="$("${RUNTIME}" run --rm "${IMAGE}" --version)"
 echo "${VERSION_OUT}"
-if [[ "${VERSION_OUT}" != *"${KB4IT_VERSION}"* ]]; then
+if [[ "${KB4IT_RELEASE:-0}" == "1" ]]; then
+    if [[ "$(head -n 1 <<< "${VERSION_OUT}")" != "KB4IT ${KB4IT_VERSION}" ]]; then
+        echo "Expected the release build 'KB4IT ${KB4IT_VERSION}' on the first line" >&2
+        exit 1
+    fi
+elif [[ "$(head -n 1 <<< "${VERSION_OUT}")" != "KB4IT ${KB4IT_VERSION}"* ]]; then
     echo "Expected version ${KB4IT_VERSION}" >&2
     exit 1
 fi

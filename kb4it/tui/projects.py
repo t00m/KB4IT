@@ -9,11 +9,13 @@ from pathlib import Path
 
 from kb4it.core.env import ENV
 from kb4it.core.util import json_load, json_save, quarantine
+from kb4it.core.version import theme_fingerprint
 
 PROJECTS_FILE = Path(ENV["LPATH"]["ROOT"]) / "projects.json"
 
 
 VERSION = ENV["APP"]["version"]
+BUILD_VERSION = ENV["APP"]["build_version"]  # shown in titles, so a development build is identifiable (BI-08)
 
 
 def load_projects() -> list[dict]:
@@ -64,12 +66,21 @@ def get_themes() -> list[dict]:
                     continue
                 seen_ids.add(tid)
                 data["_scope"] = scope
-                data["version"] = VERSION  # every theme listed has KB4IT\'s version
+                data["version"] = data.get("version") or "unversioned"  # the theme's own version (TV-01)
+                data["fingerprint"] = _fingerprint(entry, data)
                 data["_path"] = str(entry)
                 themes.append(data)
             except Exception:
                 pass
     return themes
+
+
+def _fingerprint(theme_dir: Path, data: dict) -> str:
+    """The theme fingerprint, as the build computes it (TV-03)."""
+    base = data.get("template_base")
+    base_dir = Path(ENV["GPATH"]["BASES"]) / base / "templates" if isinstance(base, str) and base else None
+    return theme_fingerprint(theme_dir, base_dir if base_dir and base_dir.is_dir() else None,
+                             ENV["GPATH"]["TEMPLATES"])
 
 
 def get_apps(theme_name: str) -> list[str]:

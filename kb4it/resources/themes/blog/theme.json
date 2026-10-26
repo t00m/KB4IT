@@ -1,13 +1,14 @@
 {
     "id": "blog",
     "name": "Blog",
+    "version": "1.0.0",
     "author": "[Tomás Vírseda]",
     "email": "[tomasvirseda@gmail.com]",
     "website": "https://github.com/t00m/KB4IT",
     "description": "Theme for creating simple blogs",
     "search": true,
     "feed": true,
-    "kb4it": ">=0.9.1",
+    "kb4it": ">=0.10.0",
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit"

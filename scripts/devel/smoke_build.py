@@ -3,10 +3,15 @@
 
 Runs the same on Linux, macOS and Windows. Uses the `kb4it` command on PATH, or
 `python -m kb4it.core.main` from this checkout with --from-source.
+
+After an installation, --doctor --all-apps proves it is complete: `kb4it doctor`
+must pass, and every sample app of every theme is created and built from the
+installed package.
 """
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -32,6 +37,8 @@ def run(cmd, env, cwd):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--from-source", action="store_true", help="run this checkout instead of the installed kb4it")
+    parser.add_argument("--all-apps", action="store_true", help="build every sample app of each theme, not only default")
+    parser.add_argument("--doctor", action="store_true", help="run kb4it doctor first; it must pass")
     parser.add_argument("themes", nargs="*", default=THEMES)
     args = parser.parse_args()
 
@@ -41,21 +48,32 @@ def main():
         env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
     kb4it = kb4it_command(args.from_source)
     failed = []
+    if args.doctor:
+        code, out = run([*kb4it, "doctor"], env, str(base))
+        print(out)
+        print(f"[SMOKE] doctor result={'ok' if code == 0 else 'failed'}")
+        if code != 0:
+            failed.append(f"doctor exited {code}")
     for theme in args.themes:
-        repo = base / theme
-        problem = None
-        for name, cmd in (("create", [*kb4it, "create", theme, str(repo)]),
-                          ("build", [*kb4it, "build", str(repo / "config" / "repo.json")])):
-            code, out = run(cmd, env, str(base))
-            if code != 0:
-                problem = f"{name} exited {code}"
-                print(out)
-                break
-        if problem is None and not (repo / "target" / "index.html").is_file():
-            problem = "target/index.html missing"
-        if problem:
-            failed.append(f"{theme}: {problem}")
-        print(f"[SMOKE] theme={theme} result={'failed' if problem else 'ok'}")
+        apps = ["default"]
+        if args.all_apps:
+            code, out = run([*kb4it, "apps", theme], env, str(base))
+            apps = re.findall(r"APP name=(\S+)", out) or apps
+        for app in apps:
+            repo = base / f"{theme}-{app}"
+            problem = None
+            for name, cmd in (("create", [*kb4it, "create", theme, app, str(repo)]),
+                              ("build", [*kb4it, "build", str(repo / "config" / "repo.json")])):
+                code, out = run(cmd, env, str(base))
+                if code != 0:
+                    problem = f"{name} exited {code}"
+                    print(out)
+                    break
+            if problem is None and not (repo / "target" / "index.html").is_file():
+                problem = "target/index.html missing"
+            if problem:
+                failed.append(f"{theme}/{app}: {problem}")
+            print(f"[SMOKE] theme={theme} app={app} result={'failed' if problem else 'ok'}")
     shutil.rmtree(base, ignore_errors=True)
     for line in failed:
         print(f"[SMOKE] FAIL {line}")

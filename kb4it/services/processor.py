@@ -18,11 +18,14 @@ if TYPE_CHECKING:
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
 from kb4it.core.service import Service
+from kb4it.services.addpage import ADD_DOC
+from kb4it.core.documents import parse_markdown_attributes
+from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
-from kb4it.core.util import (get_document_attributes, get_hash_from_body,
+from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
-                             SOURCE_ENCODING, tree_hash)
+                             SOURCE_ENCODING, timeit, tree_hash)
 
 # repo.json keys that never reach a page: changing them must not rebuild the site.
 NON_PAGE_KEYS = frozenset({"workers", "force", "fail_on_invalid", "source", "target"})
@@ -95,6 +98,7 @@ class Processor(Service):
         """Return the current BuildPlan."""
         return self.plan
 
+    @timeit
     def step_00_extraction(self):
         """Extract metadata."""
         runtime = self.srvbes.get_dict("runtime")
@@ -107,23 +111,53 @@ class Processor(Service):
             docId = os.path.basename(filepath)
 
             # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
-            if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()):
+            if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()) \
+                    or (docId == ADD_DOC and getattr(self.srvthm, "editor_enabled", lambda: False)()):
                 self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
                 self.plan.invalid_docs.append((docId, "reserved_name"))
                 continue
 
-            # Get metadata
-            keys, valid, reason = get_document_attributes(filepath)
-            self.log.debug(f"[PROCESSOR] DOC_VALID doc={os.path.basename(filepath)} valid={valid} reason={reason}")
+            # Read the file once. The byte hash lets the next build reuse the parsed header.
+            try:
+                content, file_hash = read_document(filepath)
+            except Exception as err:
+                self.log.error(f"[UTIL] DOC_INVALID doc={docId} reason=error error={err}")
+                self.plan.invalid_docs.append((docId, str(err)))
+                continue
+
+            current = (self.kbdict_cur.get("document") or {}).get(docId) or {}
+            cached = bool(current.get("file_hash")) and current.get("file_hash") == file_hash \
+                and not current.get("warned", False)
+            if cached:
+                keys = current.get("keys") or {}
+                valid, reason, warned = True, "Success", False
+                b_hash = current.get("body_hash")
+                m_hash = current.get("metadata_hash")
+                cache_action, cache_reason = "reuse", "unchanged"
+            else:
+                keys, valid, reason, warned = parse_markdown_attributes(content, docId)
+                if current.get("warned"):
+                    cache_reason = "warning"
+                elif current.get("file_hash"):
+                    cache_reason = "changed"
+                else:
+                    cache_reason = "missing"
+                cache_action = "parse"
+                if valid:
+                    b_hash = get_hash_from_body(filepath, content=content)
+                    m_hash = get_hash_from_dict(keys)
+                else:
+                    b_hash = m_hash = None
+            self.log.debug(f"[PROCESSOR] HEADER_CACHE doc={docId} action={cache_action} reason={cache_reason}")
+            self.log.debug(f"[PROCESSOR] DOC_VALID doc={docId} valid={valid} reason={reason}")
 
             if not valid:
                 self.plan.invalid_docs.append((docId, reason))
                 continue
 
             # Add to cache
-            self.kbdict_new["document"][docId] = {}
-            self.kbdict_new["document"][docId]["content"] = filepath
-            self.kbdict_new["document"][docId]["keys"] = keys
+            entry = {"content": filepath, "keys": keys, "file_hash": file_hash, "warned": warned}
+            self.kbdict_new["document"][docId] = entry
 
             # Add to the in-memory database
             self.srvdtb.add_document(docId)
@@ -141,39 +175,43 @@ class Processor(Service):
                         values = self.kbdict_new["document"][docId][key]
                         if value not in values:
                             values.append(value)
-                        self.kbdict_new["document"][docId][key] = sorted(
-                            values)
                     except KeyError:
                         self.kbdict_new["document"][docId][key] = [value]
 
                     # And viceversa, for each key/value add to kbdict['metadata'] all documents linked
                     try:
-                        documents = self.kbdict_new["metadata"][key][value]
-                        documents.append(docId)
-                        self.kbdict_new["metadata"][key][value] = sorted(
-                            documents, key=lambda y: y.lower()
-                        )
+                        self.kbdict_new["metadata"][key][value].append(docId)
                     except KeyError:
                         if key not in self.kbdict_new["metadata"]:
                             self.kbdict_new["metadata"][key] = {}
                         if value not in self.kbdict_new["metadata"][key]:
                             self.kbdict_new["metadata"][key][value] = [docId]
 
+            # Sorted once per document, not after each value.
+            for key in keys:
+                values = self.kbdict_new["document"][docId].get(key)
+                if isinstance(values, list):
+                    values.sort()
+
             # To track changes in a document, hashes for metadata and
             # content are created. Comparing them with those in the
             # cache, KB4IT determines if a document must be compiled
             # again. Very useful to reduce the compilation time.
 
-            # Get Document Body and Metadata Hashes
-            b_hash = get_hash_from_body(filepath)
-            m_hash = get_hash_from_dict(keys)
-            self.kbdict_new["document"][docId]["body_hash"] = b_hash
-            self.kbdict_new["document"][docId]["metadata_hash"] = m_hash
+            # Body and metadata hashes were computed while parsing, or taken from the cache.
+            entry["body_hash"] = b_hash
+            entry["metadata_hash"] = m_hash
             self.log.debug(f"[PROCESSOR] HASH doc={docId} body={b_hash} meta={m_hash}")
 
             # Add compiled page to the target list
             htmlId = html_id_for(docId)
             self.srvbes.add_target(docId, htmlId)
+
+        # Sorted once, after every document: sorting after each append grew with the square of the documents.
+        # The sort is stable, so documents read in the same order give the same list as before.
+        for values in self.kbdict_new["metadata"].values():
+            for documents in values.values():
+                documents.sort(key=str.lower)
 
         # A repo can ask that any unreadable document fails the build instead of vanishing.
         problems = self.plan.invalid_docs + [(b, f"name_clash_with={a}") for a, b in self.plan.name_clashes]
@@ -207,6 +245,8 @@ class Processor(Service):
                 "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
                 "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else "",
                 "backlinks": repo.get("backlinks", True),
+                # Theme templates, logic and assets, its template base and the common templates (TV-05).
+                "theme": (self.srvbes.get_dict("runtime").get("theme") or {}).get("fingerprint", ""),
                 # Any other setting may be printed by the theme (title, tagline, menus): rebuild on change.
                 "repo": get_hash_from_dict({k: v for k, v in repo.items() if k not in NON_PAGE_KEYS})}
 
@@ -228,7 +268,7 @@ class Processor(Service):
                 links[doc_id] = links_cur[doc_id]
                 continue
             try:
-                found, _anchors = scan_document(entry["content"])
+                found, _anchors, _bare = scan_document(entry["content"])
             except Exception as err:
                 self.log.warning(f"[LINKS] SCAN_FAIL doc={doc_id} error={err}")
                 found = []
@@ -246,6 +286,7 @@ class Processor(Service):
                     back.setdefault(path, set()).add((titles.get(source, source), source))
         return {doc: [list(item) for item in sorted(items)] for doc, items in back.items()}
 
+    @timeit
     def step_01_analysis(self):
         """Compilation strategy."""
         analysis = AnalysisResult()
@@ -425,7 +466,7 @@ class Processor(Service):
         """
         K_PATH = []
         KV_PATH = []
-        FORCE_COMPILATION = self._forced()
+        FORCE_COMPILATION = self._forced() or self.plan.force_all
 
         for key in sorted(available_keys):
             values = self.srvdtb.get_all_values_for_key(key)
@@ -457,6 +498,7 @@ class Processor(Service):
 
         return K_PATH, KV_PATH
 
+    @timeit
     def step_02_transformation(self):
         """Process all keys/values got from documents.
 

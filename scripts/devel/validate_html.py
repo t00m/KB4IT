@@ -5,9 +5,11 @@ Usage: validate_html.py [TARGET_DIR ...]
 
 With folders, checks the pages (*.html) at the top of each. Without, builds the
 sample site of every bundled theme, with the documents of tests/fixtures/audit
-and two documents with code blocks, and checks those. Fails on any error except
-the UIkit attributes (uk-icon, uk-grid, ...), which browsers ignore and HTML
-does not know. Needs Java, and html5validator (pip install html5validator).
+and two documents with code blocks, and checks those. Fails on any error or
+warning. UIkit attributes must be written data-uk-* (uk-* is not HTML); the
+only message ignored is the notice that <dialog> may need a polyfill, which
+every current browser supports. Needs Java, and html5validator
+(pip install html5validator).
 Run it with the dependencies of KB4IT, for example:
 
     uv run --no-project --with-requirements requirements.txt --with html5validator \\
@@ -26,7 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 THEMES = ROOT / "kb4it" / "resources" / "themes"
 FIXTURES = ROOT / "tests" / "fixtures" / "audit"
-IGNORED = re.compile(r"^Attribute [\"'“](uk-[a-z-]+)[\"'”] not allowed")
+IGNORED = re.compile(r"^The .dialog. element is not supported in all browsers")
 
 # A code comment before the title (COR-07) and a fence inside an admonition (MD-01).
 EXTRA_DOCS = {
@@ -82,15 +84,15 @@ def _messages(text):
 
 
 def validate(pages):
-    """Errors reported by vnu for pages, without the ignored ones: [(page, line, message)]."""
-    result = subprocess.run(["html5validator", "--format", "json", *map(str, pages)],
+    """Errors and warnings reported by vnu for pages, without the ignored one: [(page, line, message)]."""
+    result = subprocess.run(["html5validator", "--show-warnings", "--format", "json", *map(str, pages)],
                             capture_output=True, check=False, text=True, encoding="utf-8")
     messages = _messages(result.stdout)
     if messages is None:
         sys.exit(f"html5validator gave no JSON:\n{result.stdout[:2000]}\n{result.stderr[:2000]}")
     errors = []
     for msg in messages:
-        if msg.get("type") not in ("error", "non-document-error") or IGNORED.match(msg.get("message", "")):
+        if msg.get("type") not in ("error", "non-document-error", "info") or IGNORED.match(msg.get("message", "")):
             continue
         page = msg.get("url", "").removeprefix("file:")
         errors.append((page, msg.get("lastLine", 0), msg.get("message", "")))
@@ -110,7 +112,7 @@ def main(argv):
         errors = validate(pages)
         for page, line, message in errors:
             print(f"{page}:{line}: {message}")
-        print(f"{len(pages)} pages in {len(targets)} sites, {len(errors)} errors (UIkit attributes ignored)")
+        print(f"{len(pages)} pages in {len(targets)} sites, {len(errors)} errors and warnings")
     return 1 if errors else 0
 
 

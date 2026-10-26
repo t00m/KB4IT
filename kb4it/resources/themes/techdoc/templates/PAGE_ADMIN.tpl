@@ -1,4 +1,4 @@
-<!-- Template PAGE_ADMIN.tpl :: START -->
+<!-- BACKUPS :: START -->
 <div class="kb-sect1 uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded">
     <h2 class="kb-h2">Backup</h2>
     <div class="kb-section-body uk-container">
@@ -6,7 +6,7 @@
         <div class="kb-admin-list">
 % for item in var['backups']:
             <a class="kb-admin-card" href="${item['href']}" download>
-                <span class="kb-admin-icon" uk-icon="icon: download; ratio: 1.4"></span>
+                <span class="kb-admin-icon" data-uk-icon="icon: download; ratio: 1.4"></span>
                 <span class="kb-admin-info">
                     <span class="kb-admin-name">${item['name']}</span>
                     <span class="kb-admin-desc">${item['description']}</span>
@@ -17,4 +17,4 @@
         </div>
     </div>
 </div>
-<!-- Template PAGE_ADMIN.tpl :: END -->
+<!-- BACKUPS :: END -->

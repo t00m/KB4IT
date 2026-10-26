@@ -11,7 +11,7 @@ VERSION = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
 
 SCANNED = ("kb4it", "scripts", "help", ".github", "tests", "action.yml", "pyproject.toml")
 TEXT_SUFFIXES = {".py", ".sh", ".cmd", ".ps1", ".tpl", ".json", ".yml", ".yaml", ".md", ".toml", ".cfg", ".csv", ".txt"}
-SKIPPED_PARTS = {"framework", "images", "__pycache__", "var"}  # var: generated build state
+SKIPPED_PARTS = {"framework", "images", "__pycache__", "var", "node_modules"}  # var: generated build state
 
 # A hand-written 0.x version: KB4IT next to it, a version key, or a release named after "in", "since", "until" or "from".
 PATTERNS = [
@@ -27,6 +27,10 @@ FLOOR = re.compile(r'"kb4it"\s*:\s*"[<>=!~]')
 # Files that keep a version on purpose. Each reason says why.
 ALLOWED = {
     "pyproject.toml": "release.sh writes it from kb4it/VERSION; test_pyproject_matches_version checks it",
+    "kb4it/BUILD.json": "git-ignored build stamp, written from kb4it/VERSION by scripts/devel/stamp_build.py",
+    "scripts/devel/editor/package.json": "pinned versions of the npm packages of the editor bundle",
+    "scripts/devel/editor/package-lock.json": "pinned versions of the npm packages of the editor bundle",
+    "kb4it/resources/editor/THIRD-PARTY-NOTICES.txt": "generated list of bundled third-party packages and versions",
     "tests/apphelp/test_versions.py": "fixtures for the apphelp version folders, not KB4IT's version",
     "tests/apphelp/test_config.py": "an apphelp repo.json fixture with its own version",
     "tests/core/test_version.py": "parser cases for version strings",
@@ -79,4 +83,4 @@ def test_every_theme_loads_with_the_kb4it_version(tmp_path, home, theme):
     result = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
     loaded = [line for line in result.stdout.splitlines() if "THEME_CONF" in line]
     assert loaded, result.stdout
-    assert all(f"version={VERSION}" in line for line in loaded), loaded
+    assert all(f"kb4it={VERSION}" in line for line in loaded), loaded

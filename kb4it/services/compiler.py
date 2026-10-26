@@ -16,47 +16,20 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor as Executor
 from typing import Any
 
+from kb4it.core import trace
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
 from kb4it.core.mdconfig import load_settings, sanitize_html
+from kb4it.core.mdlinks import suggest_md
 from kb4it.core.search import save_doc_sections
 from kb4it.core.service import Service
 from kb4it.core.util import (get_default_workers, get_source_docs,
-                              html_id_for, source_ext, strip_first_heading)
+                              html_id_for, source_ext, strip_first_heading, timeit)
 
 # Callbacks of a build come with it: KB4IT(params) takes "progress_callback", called per
 # document with (basename: str, rc: bool), and "compile_start_callback", called once with the
-# number of documents (total: int). The set_* functions below are deprecated (removed in
-# the next minor release): what they register is used by the next build only, then forgotten.
-_pending_callbacks = {}
-
-
-def set_progress_callback(callback) -> None:
-    """Deprecated: pass "progress_callback" to KB4IT(params) instead."""
-    _pending_callbacks["progress_callback"] = callback
-
-
-def clear_progress_callback() -> None:
-    """Deprecated: forget a progress callback registered with set_progress_callback."""
-    _pending_callbacks.pop("progress_callback", None)
-
-
-def set_compile_start_callback(callback) -> None:
-    """Deprecated: pass "compile_start_callback" to KB4IT(params) instead."""
-    _pending_callbacks["compile_start_callback"] = callback
-
-
-def clear_compile_start_callback() -> None:
-    """Deprecated: forget a callback registered with set_compile_start_callback."""
-    _pending_callbacks.pop("compile_start_callback", None)
-
-
-def take_pending_callbacks() -> dict:
-    """Return the callbacks registered with the deprecated set_* functions, and forget them."""
-    pending = dict(_pending_callbacks)
-    _pending_callbacks.clear()
-    return pending
+# number of documents (total: int).
 
 
 class Compiler(Service):
@@ -73,15 +46,14 @@ class Compiler(Service):
         self.srvthm = theme
         self.srvprc = processor
         self.links = {}
+        # Links written without an extension or to a .adoc file, per document.
+        self.bare_links = {}
         self._links_lock = threading.Lock()
         # Documents whose page could not be made, with the reason; the build fails at the end.
         self.failed = []
         self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
-        callbacks = dict(callbacks or {})
-        for name, callback in take_pending_callbacks().items():
-            self.log.debug(f"[COMPILER] CALLBACK_DEPRECATED name={name} replacement=params.{name}")
-            callbacks.setdefault(name, callback)
+        callbacks = callbacks or {}
         self.progress_callback = callbacks.get("progress_callback")
         self.compile_start_callback = callbacks.get("compile_start_callback")
 
@@ -126,7 +98,7 @@ class Compiler(Service):
                     "num": num,
                 }
                 self.log.debug(f"[COMPILER] QUEUE doc={basename} format={fmt}")
-                job = exe.submit(self._compile_md, data)
+                job = exe.submit(self._compile_job, data)
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
                 num += 1
@@ -141,6 +113,7 @@ class Compiler(Service):
                 self.log.debug("[COMPILER] NOTHING_TO_COMPILE")
             self.log.debug("[COMPILER] END")
 
+    @timeit
     def check_links(self):
         """Warn about links to Markdown documents that do not exist."""
         known = set(self.srvbes.get_value("docs", "filenames") or [])
@@ -149,6 +122,18 @@ class Compiler(Service):
             for path, _fragment in links:
                 if os.path.normpath(path) not in known:
                     self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
+        for doc, paths in sorted(self.bare_links.items()):
+            for path in paths:
+                suggestion = suggest_md(path, known)
+                if suggestion:
+                    self.log.warning(f"[COMPILER] LINK_NO_EXTENSION from={doc} to={path} suggest={suggestion}")
+                else:
+                    self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
+
+    def _compile_job(self, data):
+        """Compile one document in a worker thread; the trace records each one as a compile span."""
+        with trace.span("compile", doc=os.path.basename(data["doc"])):
+            return self._compile_md(data)
 
     def _compile_md(self, data):
         """Compile a Markdown file in-process via python-markdown.
@@ -194,6 +179,7 @@ class Compiler(Service):
                 html_fragment = sanitize_html(html_fragment)
             with self._links_lock:
                 self.links[os.path.basename(doc)] = list(md.kb4it_links)
+                self.bare_links[os.path.basename(doc)] = list(md.kb4it_bare_links)
             # Sections for the full-text search index, cached per document for incremental builds.
             save_doc_sections(self.srvbes.get_path("root"), os.path.basename(doc), html_fragment)
             # Documents that link here, at the end of the article (not part of the search index).

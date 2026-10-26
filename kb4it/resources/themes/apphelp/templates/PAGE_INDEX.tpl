@@ -2,7 +2,7 @@
     ah = var['ah']
     L = ah['labels']
 %>
-<section class="ah-hero">
+<div class="ah-hero">
 % if ah['tagline']:
   <p class="ah-tagline">${ah['tagline']}</p>
 % endif
@@ -10,7 +10,7 @@
     <input name="q" type="search" placeholder="${L['search_placeholder']}" aria-label="${L['search']}">
     <button type="submit">${L['search']}</button>
   </form>
-</section>
+</div>
 % if var['new']:
 <section class="ah-new">
   <h2 id="new">${L['new_in']} ${ah['version']}</h2>

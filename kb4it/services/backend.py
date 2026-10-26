@@ -13,6 +13,8 @@ import os
 import re
 import shutil
 from pathlib import Path
+
+import yaml
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -23,8 +25,12 @@ from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import redirect_logs, release_log_file
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
-from kb4it.core.util import get_source_docs, json_load, json_save, timeit
+from kb4it.core.util import get_source_docs, json_load, json_save
+from kb4it.core.version import build_cache_key
 from kb4it.services.pipeline import Pipeline
+
+# kbdict keys listing the files a build wrote into the target; a forced build keeps them so the deployer can sweep.
+DEPLOY_RECORDS = ("deployed", "deployed_static")
 
 
 def _dir_contains(parent, child) -> bool:
@@ -109,7 +115,7 @@ class Backend(Service):
                 # may share var/db (e.g. an embedding app's own database).
                 kbdict_file = Path.joinpath(dir_db, "kbdict.json")
                 if os.path.exists(kbdict_file):
-                    # Keep the list of pages KB4IT wrote, so the deployer can still sweep them.
+                    # Keep the lists of files KB4IT wrote, so the deployer can still sweep them.
                     self.deployed_kept = self._read_deployed(kbdict_file)
                     os.unlink(kbdict_file)
                 self.log.debug("[BACKEND] VAR_CLEARED scope=build_artifacts reason=force")
@@ -155,6 +161,8 @@ class Backend(Service):
             raise ConfigError(f"Missing required config keys: {missing}")
         # Fail early on a bad markdown block or a missing extension package.
         from kb4it.core.mdconfig import load_settings
+        from kb4it.services.addpage import check_editor_setting
+        check_editor_setting(self.repo)
         self.markdown = load_settings(self.repo)
         from kb4it.core.publish import site_url
         self.site_url = site_url(self.repo)
@@ -273,23 +281,22 @@ class Backend(Service):
 
     @staticmethod
     def _read_deployed(path):
-        """Return the list of deployed pages stored in a kbdict.json, or None."""
+        """Return the deploy records stored in a kbdict.json ("deployed", "deployed_static"), each a list."""
         try:
-            deployed = json_load(path).get("deployed")
+            kbdict = json_load(path)
         except Exception:
-            return None
-        return deployed if isinstance(deployed, list) else None
+            return {}
+        return {key: kbdict[key] for key in DEPLOY_RECORDS if isinstance(kbdict.get(key), list)}
 
     def load_kbdict(self):
         """Load KB4IT dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         empty_kbdict = {"document": {}, "metadata": {}}
-        # A forced or upgraded build starts from an empty dictionary but still knows its pages.
-        deployed = getattr(self, "deployed_kept", None)
-        if deployed is None and os.path.exists(kb4it_dbfile):
-            deployed = self._read_deployed(kb4it_dbfile)
-        if deployed is not None:
-            empty_kbdict["deployed"] = deployed
+        # A forced or upgraded build starts from an empty dictionary but still knows the files it wrote.
+        records = getattr(self, "deployed_kept", None)
+        if records is None and os.path.exists(kb4it_dbfile):
+            records = self._read_deployed(kb4it_dbfile)
+        empty_kbdict.update(records or {})
         try:
             kbdict = json_load(kb4it_dbfile)
             self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
@@ -298,6 +305,22 @@ class Backend(Service):
             if stored_version != current_version:
                 self.log.warning(
                     f"[BACKEND] KBDICT_VERSION_MISMATCH stored={stored_version} current={current_version}"
+                )
+                self.runtime["force_all"] = True
+                return empty_kbdict
+            # Another commit of the same version may change any page: compile everything once (BI-09).
+            stored_build = kbdict.get("kb4it_build")
+            current_build = build_cache_key(ENV["APP"]["build"])
+            if stored_build != current_build:
+                self.log.warning(f"[BACKEND] KBDICT_BUILD_MISMATCH stored={stored_build} current={current_build}")
+                self.runtime["force_all"] = True
+                return empty_kbdict
+            stored_yaml = kbdict.get("pyyaml_version")
+            current_yaml = yaml.__version__
+            if stored_yaml != current_yaml:
+                # A YAML upgrade can change what a header means, so no parsed header can be trusted.
+                self.log.warning(
+                    f"[BACKEND] KBDICT_PYYAML_MISMATCH stored={stored_yaml} current={current_yaml}"
                 )
                 self.runtime["force_all"] = True
                 return empty_kbdict
@@ -318,6 +341,8 @@ class Backend(Service):
         """Save kb4it dictionary."""
         kb4it_dbfile = os.path.join(self.get_path("db"), "kbdict.json")
         kbdict["kb4it_version"] = ENV["APP"]["version"]
+        kbdict["kb4it_build"] = build_cache_key(ENV["APP"]["build"])
+        kbdict["pyyaml_version"] = yaml.__version__
         json_save(kb4it_dbfile, kbdict)
         self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")
 
@@ -363,6 +388,15 @@ class Backend(Service):
         """Record the pages this build wrote into the target; saved with the kbdict."""
         self.srvprc.get_kb_dict()["deployed"] = sorted(pages)
 
+    def get_static_before(self):
+        """Target paths (relative) the previous build copied from source/resources and overrides/static, or None."""
+        static = self.srvprc.kbdict_cur.get("deployed_static")
+        return static if isinstance(static, list) else None
+
+    def set_static(self, paths):
+        """Record the target paths (relative) this build copied from source/resources and overrides/static."""
+        self.srvprc.get_kb_dict()["deployed_static"] = sorted(paths)
+
     def get_events_before(self):
         """Documents of each event page after the last successful build, or None if it did not record them."""
         events = self.srvprc.kbdict_cur.get("events")
@@ -380,7 +414,6 @@ class Backend(Service):
         """Shortcut to Processor method."""
         return self.srvprc.get_kbdict_value(key, value, new)
 
-    @timeit
     def stage_01_check_environment(self):
         """Check environment."""
         frontend = self.get_service("Frontend")
@@ -439,7 +472,6 @@ class Backend(Service):
             self.site_url = f"{self.site_url}{sub}/"
         self.log.info(f"[BACKEND] TARGET_SUBDIR name={sub} path={self.runtime['dir']['target']}")
 
-    @timeit
     def stage_02_get_source_documents(self):
         """Get source documents from source directory."""
         self.log.debug("[BACKEND] SOURCES_START")
@@ -475,7 +507,6 @@ class Backend(Service):
         self.log.debug(f"[BACKEND] DOCS_FOUND n={self.runtime['docs']['count']}")
         self.log.debug("[BACKEND] SOURCES_END")
 
-    @timeit
     def stage_03_process_sources(self):
         """Extract, Analyze and Transform."""
         self.log.debug("[BACKEND] EXTRACTION_START")
@@ -488,19 +519,16 @@ class Backend(Service):
         self.srvprc.step_02_transformation()
         self.log.debug("[BACKEND] TRANSFORMATION_END")
 
-    @timeit
     def stage_04_process_theme(self):
         """Run theme logic."""
         self.log.debug("[BACKEND] THEME_START")
         self.srvthm.build()
         self.log.debug("[BACKEND] THEME_END")
 
-    @timeit
     def stage_05_compilation(self):
         """Compile Markdown documents to HTML."""
         self.pipeline.compiler.execute()
 
-    @timeit
     def stage_06_deploy(self):
         """Recreate target."""
         self.pipeline.deployer.execute()

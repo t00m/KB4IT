@@ -21,7 +21,6 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, repo_lock_path
 from kb4it.core.log import get_logger, setup_logging
-from kb4it.core.version import git_describe
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -30,16 +29,11 @@ from kb4it.services.workflow import Workflow
 
 if TYPE_CHECKING:
     from kb4it.core.service import Service
-    from kb4it.services.compiler import Compiler
-    from kb4it.services.deployer import Deployer
-    from kb4it.services.processor import Processor
 
 # Actions that write into a repository take its lock: <root>/var/kb4it.lock.
 LOCKED_ACTIONS = ("build", "create")
 # Parameters that carry code for the build to call, not settings (see services/compiler.py).
 CALLBACK_PARAMS = ("progress_callback", "compile_start_callback")
-# Services of one build that live in backend.pipeline; get_service still answers them for now.
-PIPELINE_SERVICES = ("Processor", "Compiler", "Deployer")
 
 
 def lock_path_for(params: dict):
@@ -85,7 +79,7 @@ class KB4IT:
             self.params["LOGLEVEL"] = "INFO"
         setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
-        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['build_version']}")
         self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
         self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")
         self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']} family={ENV['SYS']['PLATFORM']['FAMILY']}")
@@ -123,7 +117,6 @@ class KB4IT:
     def __setup_services(self):
         """Declare and register services."""
         self.services = {}
-        self._deprecated_logged = set()
         services = {
             "DB": Database(),
             "Backend": Backend(),
@@ -151,18 +144,10 @@ class KB4IT:
     @overload
     def get_service(self, name: Literal["Theme"]) -> Builder: ...
     @overload
-    def get_service(self, name: Literal["Processor"]) -> Processor: ...
-    @overload
-    def get_service(self, name: Literal["Compiler"]) -> Compiler: ...
-    @overload
-    def get_service(self, name: Literal["Deployer"]) -> Deployer: ...
-    @overload
     def get_service(self, name: str) -> Service: ...
 
     def get_service(self, name: str) -> Any:
         """Get or start a registered service."""
-        if name in PIPELINE_SERVICES:
-            return self._pipeline_service(name)
         service = self.services.get(name) or None
         if service is None:
             self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
@@ -170,21 +155,6 @@ class KB4IT:
         if not service.is_started():
             service.start(self)
         return service
-
-    def _pipeline_service(self, name: str):
-        """Deprecated: the Processor, Compiler and Deployer of this build belong to backend.pipeline.
-
-        Answered from the current pipeline for now, with a debug line once per name; removed in the next minor release.
-        """
-        backend = self.services.get("Backend")
-        pipeline = getattr(backend, "pipeline", None)
-        if pipeline is None:
-            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
-            raise KB4ITError(f"Service not registered: {name}")
-        if name not in self._deprecated_logged:
-            self._deprecated_logged.add(name)
-            self.log.debug(f"[CONTROLLER] SERVICE_DEPRECATED name={name} replacement=backend.pipeline")
-        return pipeline.service(name)
 
     def register_service(self, name, service):
         """Register a new service."""
@@ -209,7 +179,7 @@ class KB4IT:
     def run(self):
         """Run the requested action. Returns True on success, False on error."""
         action = self.params["action"]
-        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['build_version']}")
         self.log.debug(f"[CONTROLLER] ACTION name={action}")
         error = False
         lock = None
@@ -236,6 +206,8 @@ class KB4IT:
                 workflow.verify_sources()
             elif action == "apps":
                 workflow.list_apps(self.params["theme"])
+            elif action == "doctor":
+                workflow.doctor()
         except LockBusyError as e:
             self.log.error(f"[LOCK] BUSY path={e.path} pid={e.pid}")
             holder = f" (PID {e.pid})" if e.pid else ""
@@ -269,14 +241,17 @@ class KB4IT:
         except AttributeError as errmsg:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
-        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['version']}")
+        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['build_version']}")
 
 
 def version_text():
-    """'KB4IT 1.2.3', plus the git describe of a source checkout so development builds are identifiable."""
-    text = f"{ENV['APP']['shortname']} {ENV['APP']['version']}"
-    described = git_describe(os.path.dirname(ENV["CONF"]["ROOT"]))
-    return f"{text} ({described})" if described else text
+    """'KB4IT <build version>', then the commit and build date, so every installed copy is identifiable (BI-07)."""
+    build = ENV["APP"]["build"]
+    text = f"{ENV['APP']['shortname']} {ENV['APP']['build_version']}"
+    if not build.get("commit"):
+        return f"{text}\ncommit unknown (no git checkout and no build stamp)"
+    origin = f"built {build['date']}" if build.get("date") else "from the source checkout"
+    return f"{text}\ncommit {build['commit']} {origin}"
 
 
 def _log_hint(params) -> str:
@@ -333,6 +308,9 @@ def build_parser() -> argparse.ArgumentParser:
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
 
+    # Installation report
+    subparsers.add_parser("doctor", help="Show the build, Python, paths and themes; exit 1 when bundled files are missing")
+
     # Help center
     help_parser = subparsers.add_parser("help", help="Open the KB4IT help center")
     help_group = help_parser.add_mutually_exclusive_group()
@@ -366,6 +344,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Force recompilation of all documents, ignoring content hashes",
     )
+    repo_build.add_argument(
+        "--trace", action="store_true", default=False,
+        help="Time each part of the build and write var/log/trace.json (open it in https://ui.perfetto.dev)",
+    )
 
     # Build, serve and rebuild on change
     repo_serve = subparsers.add_parser(
@@ -388,6 +370,8 @@ def build_parser() -> argparse.ArgumentParser:
                             help="Seconds between checks for changes (default 1.0)")
     repo_serve.add_argument("-f", "--force", action="store_true", default=False,
                             help="Force recompilation of all documents in the first build")
+    repo_serve.add_argument("--trace", action="store_true", default=False,
+                            help="Write var/log/trace.json with the timings of each build")
 
     # Get repository info
     repo_info = subparsers.add_parser(

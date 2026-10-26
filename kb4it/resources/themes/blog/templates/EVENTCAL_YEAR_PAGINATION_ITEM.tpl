@@ -1,5 +1,5 @@
 
-            <!-- EVENTCAL_YEAR_PAGINATION_ITEM.tpl :: START -->
+            <!-- YEAR LINK :: START -->
             <div>
                 <div class="uk-card uk-card-default uk-card-body uk-card-hover">
                     <h3>
@@ -12,4 +12,4 @@
                     </p>
                 </div>
             </div>
-            <!-- EVENTCAL_YEAR_PAGINATION_ITEM.tpl :: END -->
+            <!-- YEAR LINK :: END -->

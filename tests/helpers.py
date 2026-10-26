@@ -19,7 +19,8 @@ def isolated_env(home, **extra):
     """Environment for a kb4it subprocess whose per-user files live under home/.kb4it on every OS."""
     # A fake HOME hides ~/.local, so keep the user base: optional packages stay visible.
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
-               PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000")
+               PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000",
+               PYTHONIOENCODING="utf-8")  # run_kb4it reads the output as UTF-8, also on Windows
     env.update(extra)
     return env
 
@@ -54,7 +55,7 @@ def write_repo(base, theme, pages, **config):
 
 def mini_theme(dest, **theme_json):
     """Copy the mini test theme to dest, merge theme_json into its theme.json and return dest."""
-    shutil.copytree(FIXTURES / "themes" / "mini", dest)
+    shutil.copytree(FIXTURES / "themes" / "mini", dest, ignore=shutil.ignore_patterns("__pycache__"))
     conf_path = dest / "theme.json"
     conf = json.loads(conf_path.read_text(encoding="utf-8"))
     conf.update(theme_json)

@@ -91,6 +91,97 @@ def copydir(source: str, dest: str, keep_existing: bool = False) -> None:
                 log.warning(f"Check permissions for file {file}")
 
 
+def sync_file(source: str, dest: str) -> bool:
+    """Copy source to dest unless dest has the same size and modification time; return True when copied.
+
+    The copy keeps the modification time (shutil.copy2), so the next build sees an unchanged file and skips it.
+    Raise FileNotFoundError when source does not exist.
+    """
+    src = os.stat(source)
+    try:
+        dst = os.stat(dest)
+    except FileNotFoundError:
+        pass
+    else:
+        if src.st_size == dst.st_size and src.st_mtime_ns == dst.st_mtime_ns:
+            return False
+    shutil.copy2(source, dest)
+    return True
+
+
+def prune_tree(dest: str, keep: Iterable[str]) -> int:
+    """Delete every file and folder under dest whose absolute path is not in keep; return the files deleted.
+
+    A folder survives while it holds something kept. Symbolic links are removed, never followed.
+    """
+    deleted = 0
+    dest = os.path.normpath(os.fspath(dest))
+    keep = {os.path.normpath(k) for k in keep}
+    if not os.path.isdir(dest) or os.path.islink(dest):
+        return deleted
+    for root, dirs, files in os.walk(dest, topdown=False):
+        for name in files:
+            path = os.path.join(root, name)
+            if path not in keep:
+                os.unlink(path)
+                deleted += 1
+        for name in dirs:
+            path = os.path.join(root, name)
+            if os.path.islink(path):
+                if path not in keep:
+                    os.unlink(path)
+                    deleted += 1
+            elif path not in keep:
+                try:
+                    os.rmdir(path)
+                except OSError:
+                    pass  # it still holds a kept file
+    return deleted
+
+
+def sync_tree(source: str, dest: str, mirror: bool = True, keep: Iterable[str] = ()) -> tuple[int, int, set[str]]:
+    """Copy the new and changed files of source into dest; with mirror, delete what source does not have.
+
+    keep lists absolute paths another owner fills: they are never deleted nor overwritten. A missing source
+    counts as an empty folder. Return (files copied, files deleted, absolute paths of the files source provides).
+    """
+    source = os.path.normpath(os.fspath(source))
+    dest = os.path.normpath(os.fspath(dest))
+    wanted = {}
+    folders = set()
+    if os.path.isdir(source):
+        for root, _dirs, files in os.walk(source):
+            rel = os.path.relpath(root, source)
+            folder = dest if rel == os.curdir else os.path.join(dest, rel)
+            folders.add(folder)
+            for name in files:
+                wanted[os.path.join(folder, name)] = os.path.join(root, name)
+    keep = {os.path.normpath(k) for k in keep}
+    deleted = 0
+    if mirror:
+        # Delete first, so a file that became a folder (or the reverse) does not block the copy.
+        deleted = prune_tree(dest, set(wanted) | folders | keep)
+        for folder in folders:
+            if os.path.lexists(folder) and (os.path.islink(folder) or not os.path.isdir(folder)):
+                os.unlink(folder)
+                deleted += 1
+        for path in wanted:
+            if os.path.isdir(path) and not os.path.islink(path):
+                deleted += prune_tree(path, ())
+                os.rmdir(path)
+    copied = 0
+    for folder in sorted(folders):
+        os.makedirs(folder, exist_ok=True)
+    for target, origin in wanted.items():
+        if target in keep:
+            continue
+        try:
+            copied += sync_file(origin, target)
+        except PermissionError:
+            log.warning(f"Check permissions for file {target}")
+    return copied, deleted, set(wanted)
+
+
 def delete_target_contents(target_path: str) -> bool:
     """Delete contents from target directory."""
     error = False
@@ -173,6 +264,24 @@ def quarantine(filepath: str) -> str:
 def get_hash_from_content(content: str) -> str:
     """Get the blake2b hash for any string."""
     return hashlib.blake2b(content.encode("utf-8")).hexdigest()
+
+
+def get_hash_from_bytes(content: bytes) -> str:
+    """Get the blake2b hash for the bytes of a file."""
+    return hashlib.blake2b(content).hexdigest()
+
+
+def read_document(path: str) -> tuple[str, str]:
+    """Open a document once and return its text and the hash of its bytes.
+
+    The text is decoded as SOURCE_ENCODING (dropping a byte order mark) and its
+    line endings are normalised, as text mode does, while the hash covers the
+    exact bytes on disk.
+    """
+    with open(path, "rb") as fin:
+        raw = fin.read()
+    text = raw.decode(SOURCE_ENCODING).replace("\r\n", "\n").replace("\r", "\n")
+    return text, get_hash_from_bytes(raw)
 
 
 def get_hash_from_file(path: str) -> str | None:

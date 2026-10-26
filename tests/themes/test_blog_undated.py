@@ -24,8 +24,8 @@ def test_undated_post_builds_and_is_listed_last(tmp_path, home):
     index = (target / "index.html").read_text(encoding="utf-8")
     assert 0 <= index.find("Dated post") < index.find("Undated post")
     post = (target / "aa-undated.html").read_text(encoding="utf-8")
-    assert "events_.html" not in post and 'uk-icon="calendar"' not in post
-    assert 'uk-icon="calendar"' in (target / "zz-dated.html").read_text(encoding="utf-8")
+    assert "events_.html" not in post and 'data-uk-icon="calendar"' not in post
+    assert 'data-uk-icon="calendar"' in (target / "zz-dated.html").read_text(encoding="utf-8")
 
 
 def test_unexpected_error_names_type_and_log(tmp_path, monkeypatch, capsys):
