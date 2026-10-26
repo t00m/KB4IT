@@ -59,6 +59,6 @@
     "source": "{source_directory}",
     "target": "{target_directory}",
     "theme": "techdoc",
-    "title": "KB4IT",
+    "title": "SAP Basis Knowledge Base",
     "webserver": false
 }

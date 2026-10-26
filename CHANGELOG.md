@@ -57,6 +57,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Sample apps: every theme now starts you with a set of samples. techdoc `default` has seven (a procedure, an incident, a change, meeting minutes, an open task, a note and a draft report) and the `sapbasis` app, empty until now, has five SAP Basis samples. blog has four posts and bookshelf five chapters in two books. The techdoc samples follow their skeletons and score Exemplary; the blog posts have an `## Excerpt` and a `## Body`, so the home page no longer shows "Excerpt missing"; the chapters carry `PartTitle`. Authors, hosts and system ids are made up.
+- Theme READMEs and the theme reference pages describe the sample apps, the techdoc `Category` and `WorkType` split and the bookshelf chapter properties.
 - `kb4it --version` prints two lines: `KB4IT <build version>`, then `commit <sha> built <date>` (or `from the source checkout`). Scripts that read the version should take the first line.
 - `kb4it themes` names where each theme comes from as `scope=builtin`, `scope=user`, `scope=source` or `scope=theme_path` (before: `scope=global` and `scope=local`), and adds `version=`, `fingerprint=` and `path=`.
 - The `version` key of a custom theme's `theme.json` is now read: it is the theme's own version, shown in `kb4it themes` and the build summary. A value that is not `X.Y.Z` logs `THEME_VERSION_INVALID` and the theme loads as `unversioned`; from 0.11.0 it will stop the build.
