@@ -1,4 +1,4 @@
-/* techdoc content blocks: copy code, fold long code, back to top and notes for print. */
+/* techdoc content blocks: copy code, fold long code, search long tables, back to top and notes for print. */
 (function () {
     'use strict';
 
@@ -72,15 +72,60 @@
         });
     }
 
-    // A closed note prints as if it were open; the screen state comes back after printing.
+    // Long tables of a document (marked kb-table-filter by the build) get a search box and sortable columns.
+    var searched = [];
+    var $ = window.jQuery;
+    if ($ && $.fn && $.fn.dataTable) {
+        // A column of numbers with an optional unit ("10 GB", "1,5 %") sorts by the number.
+        var NUMBER = /^\s*[-+]?\d[\d.,]*\s*[^\d\s]{0,5}\s*$/;
+        var order = $.fn.dataTable.ext.type.order;
+        order['kb-number-pre'] = order['kb-number-pre'] || function (value) {
+            var text = $('<div>').html(value).text().replace(/,(?=\d{1,2}\b)/, '.').replace(/,/g, '');
+            var number = parseFloat(text);
+            return isNaN(number) ? -Infinity : number;
+        };
+        var numberColumns = function (table) {
+            var columns = [];
+            $(table).find('thead tr:first > *').each(function (index) {
+                var cells = $(table).find('tbody tr').map(function () {
+                    return $.trim($(this).children().eq(index).text());
+                }).get().filter(Boolean);
+                if (cells.length && cells.every(function (text) { return NUMBER.test(text); })) {
+                    columns.push(index);
+                }
+            });
+            return columns;
+        };
+        $('.kb-table-filter > table').each(function () {
+            searched.push($(this).DataTable({
+                dom: '<"kb-table-tools"fi>t',
+                paging: false,
+                info: true,
+                ordering: true,
+                order: [],
+                autoWidth: false,
+                columnDefs: [{ type: 'kb-number', targets: numberColumns(this) }],
+                language: { search: '', searchPlaceholder: 'Filter rows', info: '_TOTAL_ rows',
+                            infoFiltered: 'of _MAX_', infoEmpty: '0 rows' }
+            }));
+        });
+    }
+
+    // A closed note prints as if it were open, and a searched table prints whole; the screen state comes back
+    // after printing.
     var closed = [];
+    var searches = [];
     window.addEventListener('beforeprint', function () {
         closed = Array.prototype.filter.call(
             document.querySelectorAll('.kb-content details'), function (note) { return !note.open; });
         closed.forEach(function (note) { note.open = true; });
+        searches = searched.map(function (table) { return table.search(); });
+        searched.forEach(function (table) { table.search('').draw(); });
     });
     window.addEventListener('afterprint', function () {
         closed.forEach(function (note) { note.open = false; });
         closed = [];
+        searched.forEach(function (table, i) { table.search(searches[i] || '').draw(); });
+        searches = [];
     });
 })();

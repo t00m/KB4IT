@@ -96,7 +96,7 @@ Images in a document:
 Content blocks:
 
 - Code blocks have a bar with a language label and a **Copy** button; a block over 30 lines shows the first 20 and a **Show all N lines** button. Both buttons are left out of print, and a long block prints in full.
-- Wide tables scroll sideways and a table over 15 rows keeps its header visible. Print shows the whole table.
+- Tables get the UIkit table style. Wide tables scroll sideways; a table over 15 rows keeps its header visible and gets a search box and sortable columns (see [content blocks](howto-content-blocks.md)). Print shows the whole table.
 - With `pymdown-extensions` and `alternate_style`, `pymdownx.tabbed` sets show a tab bar that works without JavaScript; all panels print with their label. See [Make code, tables and notes easier to read](howto-content-blocks.md).
 - `pymdownx.details` notes fold; they print open.
 - After one screen of scrolling, a **Back to top** button appears at the bottom right. It is not printed.
@@ -222,13 +222,14 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 
 The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status, Scope and Topic, and lists every work type and category in `events`.
 
-The document page reads three keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
+The document page reads these keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
 
 | Key | Meaning |
 |---|---|
 | `header_keys` | `badges` and `links`: the keys shown in the header strip, in order |
 | `info_groups` | The groups of the Details tab: `name`, `keys`, and `"chips": true` for the group shown as chips. Keys in no group go to Other |
 | `info_tabs` | `details` and `history`, each with `print`: whether the tab is printed. By default Details is printed and History is not |
+| `table_filter` | `true`: tables with more than 15 rows and a plain grid get a search box and sortable columns; `false` keeps only the style and the scrolling |
 | `toc_sidebar` | `false`: show a second table of contents in a right column on screens 1400 pixels or wider, for documents with four or more sections |
 
 On paper, the header strip is one line of text, banners have a border instead of a colour, Details follows the title under the heading "Document details" in two columns, and the tab bar is left out.
