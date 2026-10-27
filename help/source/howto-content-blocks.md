@@ -2,12 +2,12 @@
 DocType: How-to guide
 Feature: Writing
 HelpId: content-blocks
-Keyword: code, copy, language, fold, table, sticky, tabs, details, note, back to top
+Keyword: code, copy, language, fold, table, sticky, search, sort, tabs, details, note, back to top
 Level: basic
 Order: 260
 Related: howto-write-documents.md, reference-theme-techdoc.md
 Section: Guides
-Summary: Copy code, fold long blocks, scroll wide tables, write author tabs and collapsible notes.
+Summary: Copy code, fold long blocks, search, sort and scroll tables, write author tabs and collapsible notes.
 ---
 
 # Make code, tables and notes easier to read
@@ -33,7 +33,11 @@ Mermaid diagrams are not code blocks and get no copy button.
 
 ## Tables
 
-A wide table scrolls sideways inside its own box, so it never widens the page. A table with more than 15 rows keeps its header visible while the reader scrolls. On paper the table prints in full, without the scrolling box.
+Every table gets the theme's table style: padded cells, a line between rows, a light band on every other row and a highlight under the pointer. A wide table scrolls sideways inside its own box, so it never widens the page. A table with more than 15 rows keeps its header visible while the reader scrolls.
+
+A table with more than 15 rows also gets a **Filter rows** box and the number of rows above it, and a click on a column heading sorts by that column (click again to reverse). A column of numbers, with or without a unit such as `10 GB` or `1,5 %`, sorts by the number. This needs a plain grid: one header row, no merged cells and the same number of cells in every row; any other table keeps only the style and the scrolling. `"table_filter": false` in the theme's `theme.json` turns the search and sort off.
+
+On paper the table prints in full, every row even after a search, without the scrolling box or the search box.
 
 Write an ordinary Markdown table; the theme does the rest:
 

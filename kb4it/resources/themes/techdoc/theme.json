@@ -1,7 +1,7 @@
 {
     "id": "techdoc",
     "name": "Techdoc",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "author": "[Tomás Vírseda]",
     "email": "[tomasvirseda@gmail.com]",
     "website": "https://github.com/t00m/KB4IT",
@@ -14,6 +14,7 @@
     "autoescape": true,
     "template_base": "uikit",
     "toc_sidebar": false,
+    "table_filter": true,
     "header_keys": {
         "badges": ["DocType", "Status", "Priority"],
         "links": ["Date", "WorkType", "Topic", "Product"]

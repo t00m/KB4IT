@@ -201,6 +201,10 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
         theme = self.srvbes.get_dict('theme') or {}
         return theme.get('toc_sidebar') is True and len(re.findall(r'<h2\b', source_html)) >= 4
 
+    def table_filter_on(self):
+        """Long tables of a document get search and sort unless theme.json sets "table_filter": false."""
+        return (self.srvbes.get_dict('theme') or {}).get('table_filter', True) is not False
+
     def quality_on(self):
         """Quality scores are on unless repo.json sets "quality": false or theme.json turns them off."""
         repo = self.srvbes.get_dict('repo') or {}
@@ -505,7 +509,7 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
                 var['source_html'], missing = enhance_images(var['source_html'], self.srvbes.get_path('source'))
                 for src in missing:
                     self.log.warning(f"[THEME] IMAGE_MISSING doc={basename_md} src={src}")
-            var['source_html'] = enhance_blocks(var['source_html'])
+            var['source_html'] = enhance_blocks(var['source_html'], self.table_filter_on())
             actions = self.get_page_actions(var)
             var['actions'] = actions
             var['timestamp'] = timestamp

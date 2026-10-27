@@ -2,13 +2,16 @@
 
 Code blocks get a bar with a language label and a copy button; a block over
 LONG_CODE_LINES lines is folded to FOLDED_CODE_LINES and gets a "Show all"
-button. Tables are wrapped so wide ones scroll sideways and long ones keep
-their header. Author tabs from pymdownx.tabbed get a print-only label inside
-each panel, because the tab bar is not printed.
+button. Tables get the UIkit table style and are wrapped so wide ones
+scroll sideways and long ones keep their header; a long table with a plain
+grid (one header row, no merged cells) is also marked for search and sort.
+Author tabs from pymdownx.tabbed get a print-only label inside each panel,
+because the tab bar is not printed.
 
 The function runs on the HTML produced by the compiler, so the markup it
 creates is plain HTML that the browser can use without JavaScript: the copy
-and fold buttons and the back-to-top link are switched on by blocks.js.
+and fold buttons, the back-to-top link and the table search are switched on
+by blocks.js.
 """
 
 from html import escape
@@ -20,9 +23,15 @@ LONG_CODE_LINES = 30
 FOLDED_CODE_LINES = 20
 STICKY_TABLE_ROWS = 15
 
+# UIkit classes every table of a body gets.
+TABLE_CLASSES = "uk-table uk-table-small uk-table-divider uk-table-hover uk-table-striped"
 
-def enhance_blocks(html):
-    """Wrap the code blocks and tables of a body and label the panels of author tabs."""
+
+def enhance_blocks(html, table_filter=True):
+    """Wrap the code blocks and tables of a body and label the panels of author tabs.
+
+    With table_filter, tables over STICKY_TABLE_ROWS rows that DataTables can read get search and sort.
+    """
     if "<pre" not in html and "<table" not in html and "tabbed-set" not in html:
         return html
     root = lhtml.fragment_fromstring(html, create_parent="div")
@@ -30,7 +39,7 @@ def enhance_blocks(html):
     for pre in list(root.iter("pre")):
         changed = _code_block(pre) or changed
     for table in list(root.iter("table")):
-        changed = _table(table) or changed
+        changed = _table(table, table_filter) or changed
     changed = _tab_labels(root) or changed
     if not changed:
         return html
@@ -72,14 +81,31 @@ def _code_block(pre):
     return True
 
 
-def _table(table):
+def _table(table, table_filter=True):
     if _has_ancestor_class(table, "kb-table"):
         return False
     rows = len(table.xpath("./tbody/tr")) or max(len(table.xpath("./tr")) - 1, 0)
+    names = (table.get("class") or "").split()
+    table.set("class", " ".join(names + [n for n in TABLE_CLASSES.split() if n not in names]))
+    classes = ["kb-table", "uk-overflow-auto"]
+    if rows > STICKY_TABLE_ROWS:
+        classes.append("kb-table-sticky")
+        if table_filter and _plain_grid(table):
+            classes.append("kb-table-filter")
     wrapper = etree.Element("div")
-    wrapper.set("class", "kb-table uk-overflow-auto" + (" kb-table-sticky" if rows > STICKY_TABLE_ROWS else ""))
+    wrapper.set("class", " ".join(classes))
     _wrap(table, wrapper)
     return True
+
+
+def _plain_grid(table):
+    """True when DataTables can read the table: one header row, no merged cells, no nested table, full rows."""
+    head = table.xpath("./thead/tr")
+    body = table.xpath("./tbody/tr")
+    if len(head) != 1 or not body or table.xpath(".//table") or table.xpath(".//*[@rowspan or @colspan]"):
+        return False
+    width = len(head[0].xpath("./th|./td"))
+    return width > 0 and all(len(row.xpath("./th|./td")) == width for row in body)
 
 
 def _tab_labels(root):
