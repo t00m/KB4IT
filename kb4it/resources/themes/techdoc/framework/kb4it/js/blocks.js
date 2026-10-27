@@ -97,6 +97,10 @@
             return columns;
         };
         $('.kb-table-filter > table').each(function () {
+            // A table some other script made a DataTable is left to it.
+            if ($.fn.dataTable.isDataTable(this) || this.classList.contains('kb4it-datatable')) {
+                return;
+            }
             searched.push($(this).DataTable({
                 dom: '<"kb-table-tools"fi>t',
                 paging: false,
