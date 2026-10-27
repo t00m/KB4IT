@@ -26,6 +26,9 @@ STICKY_TABLE_ROWS = 15
 # UIkit classes every table of a body gets.
 TABLE_CLASSES = "uk-table uk-table-small uk-table-divider uk-table-hover uk-table-striped"
 
+# The class of the theme's document lists (all documents, bookmarks, property pages), set up by the page header.
+DATATABLE_CLASS = "kb4it-datatable"
+
 
 def enhance_blocks(html, table_filter=True):
     """Wrap the code blocks and tables of a body and label the panels of author tabs.
@@ -85,12 +88,15 @@ def _table(table, table_filter=True):
     if _has_ancestor_class(table, "kb-table"):
         return False
     rows = len(table.xpath("./tbody/tr")) or max(len(table.xpath("./tr")) - 1, 0)
+    # A document list of the theme is a DataTable already, started by the page header; it keeps its classes.
+    listing = _has_class(table, DATATABLE_CLASS)
     names = (table.get("class") or "").split()
-    table.set("class", " ".join(names + [n for n in TABLE_CLASSES.split() if n not in names]))
+    if not listing:
+        table.set("class", " ".join(names + [n for n in TABLE_CLASSES.split() if n not in names]))
     classes = ["kb-table", "uk-overflow-auto"]
     if rows > STICKY_TABLE_ROWS:
         classes.append("kb-table-sticky")
-        if table_filter and _plain_grid(table):
+        if table_filter and not listing and _plain_grid(table):
             classes.append("kb-table-filter")
     wrapper = etree.Element("div")
     wrapper.set("class", " ".join(classes))
