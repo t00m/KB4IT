@@ -16,7 +16,7 @@ Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx, pip, a Linux pa
 - GNU/Linux, macOS 13 or newer, or Windows 10 or 11.
 - Python 3.11 or newer: check with `python3 --version` (on Windows: `py --version`). uv can install Python for you.
 
-Everything else KB4IT needs (Mako, Markdown, PyYAML, lxml, Rich and Textual) is installed with it.
+Everything else KB4IT needs (Mako, Markdown, PyYAML, lxml, Pillow, Rich and Textual) is installed with it.
 
 ## Install with uv {#uv}
 

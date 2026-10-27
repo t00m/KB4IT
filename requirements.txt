@@ -3,5 +3,6 @@ Markdown>=3.5
 PyYAML>=6.0
 Pygments>=2.15
 lxml
+Pillow>=10.0
 rich>=13.0
 textual>=0.47.0

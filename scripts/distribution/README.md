@@ -47,7 +47,7 @@ push and pull request, so they cannot break silently.
 ### .deb / .rpm
 
 Both packages carry the KB4IT wheel and the wheels of its dependencies for Python
-3.11 to 3.14 (lxml, PyYAML and MarkupSafe have compiled code, so the packages are
+3.11 to 3.14 (lxml, Pillow, PyYAML and MarkupSafe have compiled code, so the packages are
 per architecture). The post-install script creates `/opt/kb4it/venv` from those
 wheels without network access and links `/usr/bin/kb4it`. Removing the package
 removes `/opt/kb4it` completely.

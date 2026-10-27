@@ -1,12 +1,15 @@
-"""techdoc gallery: the images of every document on one page, filtered by the properties of their documents."""
+"""techdoc gallery: thumbnails of the images of every document, shown by the properties chosen in a filter panel."""
 
 import json
 import os
 import re
 from html import unescape
 
-from techdoc_media import is_filename_alt, resolve_src
+from techdoc_media import image_size, is_filename_alt, resolve_src
+from techdoc_thumbs import SITE_FOLDER, make_thumbnail
 
+from kb4it.core import trace
+from kb4it.core.files import prune_tree, sync_file
 from kb4it.core.util import html_id_for
 
 FRONTMATTER = re.compile(r'\A---\n.*?\n---[ \t]*\n?', re.DOTALL)
@@ -64,15 +67,36 @@ def filter_keys(present, menu):
 
 
 class GalleryMixin:
-    """The Gallery page: a thumbnail of every image of every document, a filter panel, a lightbox."""
+    """The Gallery page: property buttons, a value chooser, a masonry grid of thumbnails, a lightbox."""
 
-    def gallery_items(self):
-        """Return the images of every document, newest document first, and the filters they can be narrowed by."""
+    def gallery_thumb_dir(self):
+        """Thumbnails made by earlier builds: <repo>/var/thumbs."""
+        return os.path.join(os.path.dirname(self.srvbes.get_path('db')), 'thumbs')
+
+    def gallery_image(self, src, local):
+        """The entry of one image: what the grid shows (a thumbnail or the original) and its size."""
+        entry = {'src': src, 'thumb': src, 'w': 0, 'h': 0}
+        if local is None:
+            return entry  # a remote image: shown as it is, sized by the browser
+        made = make_thumbnail(local, self.gallery_thumb_dir())
+        if made:
+            name, width, height = made
+            self._gallery_thumbs.add(name)
+            entry.update(thumb=f'{SITE_FOLDER}/{name}'.replace(os.sep, '/'), w=width, h=height)
+        else:
+            size = image_size(local)
+            if size:
+                entry.update(w=size[0], h=size[1])
+        return entry
+
+    def gallery_data(self):
+        """Return the documents with images, newest first, their images and the filters they can be narrowed by."""
         source_dir = self.srvbes.get_path('source')
         skip = set(SKIP_KEYS) | set(self.srvdtb.get_blocked_keys()) | set(self.srvdtb.get_ignored_keys())
-        docs = [d for d in self.srvdtb.sort_by_date(list(self.srvdtb.get_documents())) if not self.srvdtb.is_system(d)]
-        items, values = [], {}
-        for doc_id in docs:
+        docs_sorted = [d for d in self.srvdtb.sort_by_date(list(self.srvdtb.get_documents())) if not self.srvdtb.is_system(d)]
+        self._gallery_thumbs = set()
+        docs, items, values = [], [], {}
+        for doc_id in docs_sorted:
             try:
                 with open(os.path.join(source_dir, doc_id), encoding='utf-8') as fh:
                     text = fh.read()
@@ -83,7 +107,7 @@ class GalleryMixin:
                 local = resolve_src(src, source_dir)
                 if local is not None and not os.path.isfile(local):
                     continue  # the document page shows the placeholder and logs IMAGE_MISSING
-                images.append((src, '' if is_filename_alt(alt, src) else alt))
+                images.append(dict(self.gallery_image(src, local), caption='' if is_filename_alt(alt, src) else alt))
             if not images:
                 continue
             props = {}
@@ -97,33 +121,50 @@ class GalleryMixin:
             if year.isdigit():
                 props[YEAR] = [year]
             title = (self.srvdtb.get_values(doc_id, 'Title') or [doc_id])[0]
-            for src, caption in images:
-                items.append({'src': src, 'caption': caption, 'title': title, 'href': html_id_for(doc_id), 'props': props})
-                for key, vals in props.items():
-                    for value in vals:
-                        values.setdefault(key, {}).setdefault(value, 0)
-                        values[key][value] += 1
+            for image in images:
+                items.append(dict(image, d=len(docs)))
+            docs.append({'title': title, 'href': html_id_for(doc_id), 'props': props})
+            for key, vals in props.items():
+                for value in vals:
+                    values.setdefault(key, {}).setdefault(value, 0)
+                    values[key][value] += len(images)
         menu = (self.srvbes.get_dict('repo') or {}).get('menu') or []
         filters = []
         for key in filter_keys(set(values) - {YEAR}, menu) + ([YEAR] if YEAR in values else []):
             order = sorted(values[key], reverse=True) if key == YEAR else sorted(values[key], key=str.lower)
-            filters.append({'key': key, 'values': [{'value': v, 'count': values[key][v]} for v in order]})
-        return items, filters
+            filters.append({'key': key, 'values': [[v, values[key][v]] for v in order]})
+        return docs, items, filters
 
     def build_page_gallery(self):
-        """The Gallery page: every image of every document, filtered in the right panel by document properties."""
-        items, filters = self.gallery_items()
-        docs = len({item['href'] for item in items})
-        data = {'items': items}
+        """The Gallery page: no image at first; the property buttons on the right choose which ones to show."""
+        with trace.span('gallery'):
+            docs, items, filters = self.gallery_data()
         page = self.template('PAGE_GALLERY').render(var={
-            'items': items,
+            'images': len(items),
+            'docs': len(docs),
             'filters': filters,
-            'docs': docs,
             # JSON inside <script>: "<" escaped so a value cannot close the element.
-            'json': json.dumps(data, ensure_ascii=False, sort_keys=True).replace('<', '\\u003c'),
+            'json': json.dumps({'docs': docs, 'items': items, 'filters': filters},
+                               ensure_ascii=False, sort_keys=True, separators=(',', ':')).replace('<', '\\u003c'),
         })
         self.distribute_md('gallery', page)
         self.srvdtb.add_document('gallery.md')
         self.srvdtb.add_document_key('gallery.md', 'Title', 'Gallery')
         self.srvdtb.add_document_key('gallery.md', 'SystemPage', 'Yes')
-        self.log.info(f"[THEME] GALLERY images={len(items)} docs={docs}")
+        self.log.info(f"[THEME] GALLERY images={len(items)} docs={len(docs)} thumbs={len(self._gallery_thumbs)}")
+
+    def deploy_gallery_thumbs(self):
+        """Copy the thumbnails the Gallery uses into the site and drop the others, there and in var/thumbs."""
+        used = getattr(self, '_gallery_thumbs', None)
+        if used is None:
+            return
+        cache = self.gallery_thumb_dir()
+        dest = os.path.join(self.srvbes.get_path('target'), SITE_FOLDER)
+        with trace.span('gallery_thumbs'):
+            copied = 0
+            for name in sorted(used):
+                os.makedirs(dest, exist_ok=True)
+                copied += sync_file(os.path.join(cache, name), os.path.join(dest, name))
+            deleted = prune_tree(dest, {os.path.join(dest, name) for name in used})
+            prune_tree(cache, {os.path.join(cache, name) for name in used})
+        self.log.info(f"[THEME] GALLERY_THUMBS used={len(used)} copied={copied} deleted={deleted}")
