@@ -194,7 +194,7 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 |---|---|
 | `all.html` | Every document in a sortable, searchable table |
 | `events.html` | A calendar per year and a table of events |
-| `properties.html` | Every property and its values |
+| `properties.html` | Every property, one per line, with its number of values and of documents; each links to the property's page. A property's page (such as `Author.html`) shows its values as a cloud or as a table |
 | `stats.html` | Counts and a word cloud of the values |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `gallery.html` | The images of every document. See [Gallery](#gallery) |

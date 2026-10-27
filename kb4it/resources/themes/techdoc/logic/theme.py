@@ -49,6 +49,7 @@ parser = etree.HTMLParser()
 class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
     reserved_pages = ('404.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
+    properties_cloud = False  # properties.html is a leader list of the properties
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
         """Override: document tables leave out the columns that are empty in every row; Date and Title always stay."""

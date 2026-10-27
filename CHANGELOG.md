@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- techdoc: the Properties page lists every property on one line, with a dotted leader to its number of values and of documents, instead of a word cloud of buttons. Each line links to the property's page. Property pages (such as `Author.html`) drop their Leader tab and keep Cloud and Table. Shared theme code has a new class attribute, `properties_cloud` (default `True`), that techdoc turns off.
 - About KB4IT, in every theme: the page shows the KB4IT README (from the source checkout, or from the installed package), without the badges, which load from the network, and with relative links pointing to the repository.
 - techdoc and bookshelf: Help opens the KB4IT help site (https://t00m.github.io/KB4IT/) in a new window. The old built-in `help.html` page, a short and outdated guide, is no longer built.
 - techdoc dashboard: Open items and Activity are two tabs of one card, "Open items and activity". Activity keeps its tabs for changes, incidents, events and monitoring, and each tab bar opens on the tab chosen last.
