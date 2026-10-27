@@ -46,6 +46,7 @@ include = [
 python = ">=3.11,<4.0"
 Mako = "1.4.2"
 lxml = "*"
+Pillow = ">=10.0"
 rich = ">=13.0"
 textual = ">=0.47.0"
 PyYAML = ">=6.0"

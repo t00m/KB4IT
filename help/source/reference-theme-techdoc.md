@@ -197,10 +197,23 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 | `properties.html` | Every property and its values |
 | `stats.html` | Counts and a word cloud of the values |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
-| `gallery.html` | A thumbnail of every image of every document, newest document first. A panel on the right filters them by the properties of their documents (values of one property widen the choice, properties narrow it; each value shows how many images it would leave) and by words of the document title or the image caption. Click a thumbnail to enlarge it; previous and next follow the filters, and the caption links to the document. Missing images and images in code blocks are left out. A document named `gallery.md` is left out with `DOC_NAME_RESERVED` |
+| `gallery.html` | The images of every document. See [Gallery](#gallery) |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search dialog in the top bar shows the best matches as you type, with the quality tier of each document. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
+
+## Gallery {#gallery}
+
+`gallery.html`, in the logo menu, shows the images of your documents. It opens empty, so a large knowledge base loads nothing until you ask:
+
+1. The filter panel on the right has one button per document property, plus **Year** (from `Date`). The button shows how many values the property has.
+2. Click a button to open its values in a dialog and tick the ones you want. Each value shows how many images it adds to the filters already chosen; a value that would add none is greyed out. A property with many values gets a search box. **None** clears the property; **Show images** closes the dialog.
+3. The images appear as thumbnails in a masonry grid, newest document first, each with its document title (a link) and its caption. Values of one property widen the choice; values of two properties narrow it (`Product` Linux or SAP, and `Tag` backup).
+4. Click a thumbnail to enlarge the original. Previous and next follow the filters, and the caption links to the document.
+
+The text box above the buttons matches words of the document title or the image caption. Each chosen value shows as a chip under the buttons; click it to remove it, or **Clear all**. The choice is kept in the address, such as `gallery.html#Product=SAP&Tag=backup`, so you can bookmark or link a view.
+
+The build makes a thumbnail of each image 480 pixels wide, in WebP, keeps it in `var/thumbs/` and makes it again only when the image changes. The site gets the ones in use in `resources/kb4it-thumbs/`. SVG images, images no wider than a thumbnail and files the build cannot read are shown as they are; remote images too. Missing images and images inside code are left out. `Summary`, `Bookmark` and the keys of `ignored_keys` are not offered as filters. A document named `gallery.md` is left out with `DOC_NAME_RESERVED`.
 
 ## Icon, diagrams and formulas {#render}
 

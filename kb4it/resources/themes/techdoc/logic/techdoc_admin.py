@@ -21,7 +21,7 @@ from kb4it.core.util import (
 
 class AdminMixin:
     def post_deploy_activities(self):
-        """Write quality-index.js, then build the admin area once the site has been deployed.
+        """Copy the gallery thumbnails, write quality-index.js, then build the admin area once the site has been deployed.
 
         Only runs when repo.json sets "admin": true. It writes an admin
         subdirectory in the target with a backup page and two zip files:
@@ -30,6 +30,7 @@ class AdminMixin:
         """
         from techdoc_quality import index_js
 
+        self.deploy_gallery_thumbs()
         index_path = os.path.join(self.srvbes.get_path('target'), 'quality-index.js')
         if getattr(self, 'quality', None):
             with open(index_path, 'w', encoding='utf-8') as fh:

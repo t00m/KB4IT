@@ -121,7 +121,7 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 Each theme lives under `kb4it/resources/themes/<name>/`:
 
 - `logic/theme.py` -- `Theme` class that extends `Builder` and overrides `build_page`, `build_page_key`, `build_page_key_value`, etc. techdoc, blog and bookshelf extend `DocumentTheme` instead (`kb4it/services/themekit/`), which holds the code they share: the property, value, properties, stats, bookmarks and all-documents pages, the datatable, the day/month/year event pages, the TOC, the metadata section and the 404 page. Where they differ, the theme sets a class attribute or overrides a small hook (`properties_title`, `reuse_unchanged_pages`, `tagcloud_scale_skips_empty`, `reserved_pages`, `cloud_measure`, `frequency_keys`, `stats_keys`, `datatable_link_template`, `datatable_default_headers`, `datatable_date_cell`, `datatable_title_cell`, `datatable_value_link`). A theme that overrides a shared method starts its docstring with `Override:` and says why; `tests/core/test_themekit.py` checks it. apphelp and custom themes keep extending `Builder`, which does not grow.
-- Helper modules next to `theme.py` in `logic/` are imported by name, so they carry the theme's prefix: `apphelp_*.py`, `techdoc_dashboard.py` (home page) and `techdoc_gallery.py` (the Gallery page, `gallery.html`: every document image, filtered by document properties) hold mixins or functions of their theme.
+- Helper modules next to `theme.py` in `logic/` are imported by name, so they carry the theme's prefix: `apphelp_*.py`, `techdoc_dashboard.py` (home page) and `techdoc_gallery.py` (the Gallery page, `gallery.html`: property buttons and a values dialog choose which document images show, as thumbnails in a masonry grid) with `techdoc_thumbs.py` (WebP thumbnails made with Pillow into `<repo>/var/thumbs/`, copied to `target/resources/kb4it-thumbs/` in stage 8) hold mixins or functions of their theme.
 - Mako `.tpl` files directly in `templates/` (flat, no subdirectories). Shared fallbacks live in `kb4it/resources/common/templates/`; templates shared by a family of themes live in a template base, `kb4it/resources/bases/<name>/templates/` (see `template_base`). No bundled template is byte-identical in two themes of the same base (`tests/themes/test_templates_used.py`).
 - Optional `templates/skeletons/` -- `*-SKELETON.md` files and an optional `skeletons.json`: the skeleton set of the Add page (see the Editor section).
 - Optional `logic/verify.py` -- hook `verify(repo, docs) -> list[str]`, run by `kb4it verify` (`Workflow.verify_sources`); `docs` is `{file name: {key: [values]}}`; every returned string is reported as a problem.
@@ -352,6 +352,7 @@ Timings are not logged. `kb4it build --trace` writes them to `var/log/trace.json
 | `<repo>/var/db/kbdict.json` | Per-repo compilation cache |
 | `<repo>/var/tmp/` | Compiler scratch (Markdown -> HTML fragments) |
 | `<repo>/var/cache/` | Hashed HTML cache for incremental builds |
+| `<repo>/var/thumbs/` | techdoc Gallery thumbnails, kept between builds |
 | `kb4it/resources/` | Built-in assets relative to the installed package |
 | `kb4it/resources/common/` | Common assets (templates, images, appdata) |
 | `kb4it/resources/common/templates/` | Global template fallbacks |
@@ -432,6 +433,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, seman
 - `PyYAML>=6.0` -- frontmatter parsing.
 - `Pygments>=2.15` -- build-time code highlighting (`markdown.highlight: pygments`).
 - `lxml` -- XML parsing for post-processing.
+- `Pillow>=10.0` -- image thumbnails of the techdoc Gallery page.
 - `rich>=13.0` -- terminal formatting (used by TUI and log output).
 - `textual>=0.47.0` -- TUI framework.
 - Mermaid and KaTeX are bundled browser files in `kb4it/resources/render/`, not Python dependencies. `scripts/devel/fetch_render_assets.sh` downloads the versions pinned in `kb4it/resources/render/VERSIONS` (needs network; run it only to update them).

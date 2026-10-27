@@ -10,7 +10,7 @@
 # Packaging style: same as the .deb. The package carries the KB4IT wheel and the
 # wheels of its dependencies; %post installs them into a private virtualenv under
 # /opt/kb4it/venv without network access and links /usr/bin/kb4it. The wheels hold
-# compiled code (lxml, PyYAML, MarkupSafe), so the package is per architecture.
+# compiled code (lxml, Pillow, PyYAML, MarkupSafe), so the package is per architecture.
 
 %global debug_package %{nil}
 # The payload is wheel files: nothing to strip, byte-compile or scan for dependencies.
