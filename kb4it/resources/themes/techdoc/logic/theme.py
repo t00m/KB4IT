@@ -22,6 +22,7 @@ from techdoc_admin import AdminMixin
 from techdoc_blocks import enhance_blocks
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_docpage import banners, header_strip, info_groups, summary
+from techdoc_gallery import GalleryMixin
 from techdoc_media import enhance_images
 from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInput, assess, checklist, index_js,
                              load_skeletons, peer_stats, profile)
@@ -45,8 +46,8 @@ from kb4it.services.themekit import DocumentTheme
 parser = etree.HTMLParser()
 
 
-class Theme(AdminMixin, DashboardMixin, DocumentTheme):
-    reserved_pages = ('404.md', 'quality-guide.md', 'quality.md')  # pages build() writes
+class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
+    reserved_pages = ('404.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
@@ -395,6 +396,7 @@ class Theme(AdminMixin, DashboardMixin, DocumentTheme):
         self.build_page_properties()
         self.build_page_stats()
         self.build_page_bookmarks()
+        self.build_page_gallery()
         self.build_page_404()
         self.create_page_add()
         self.build_page_index(var)

@@ -1553,3 +1553,64 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-totop.kb-totop-visible { opacity: 1; visibility: visible; transform: none; }
 .kb-totop:hover,
 .kb-totop:focus { color: #1e87f0; }
+
+/* Gallery page: thumbnails of every document image, a filter panel on the right, click to enlarge. */
+.kb-gal-intro { color: #666; font-size: 0.9rem; }
+.kb-gal { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+.kb-content .kb-gal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.kb-gal-cell[hidden] { display: none; }
+.kb-gal-figure { margin: 0; }
+.kb-gal-zoom {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    cursor: zoom-in;
+}
+.kb-gal-zoom img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.15s ease-in-out; }
+.kb-gal-zoom:hover img,
+.kb-gal-zoom:focus img { transform: scale(1.05); }
+.kb-gal-figure figcaption {
+    margin-top: 4px;
+    overflow: hidden;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.kb-gal-none,
+.kb-gal-empty { color: #666; }
+.kb-gal-panel {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 0.85rem;
+}
+.kb-gal-panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.kb-gal-text { margin-bottom: 8px; }
+/* The filter groups keep the arrow of the content notes, without their frame. */
+.kb-content .kb-gal-panel details.kb-gal-group { margin: 0; border: 0; border-top: 1px solid #eee; border-radius: 0; background: none; }
+.kb-content .kb-gal-panel details.kb-gal-group > summary { padding: 6px 0; font-weight: 600; }
+.kb-content .kb-gal-panel details.kb-gal-group > .kb-gal-values { margin: 0 0 6px; padding: 0; list-style: none; }
+.kb-gal-values li { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.kb-gal-values label { flex: 1; overflow-wrap: anywhere; cursor: pointer; }
+.kb-gal-n { color: #999; font-size: 0.75rem; }
+.kb-gal-zero { opacity: 0.45; }
+@media (max-width: 800px) {
+    .kb-gal { grid-template-columns: 1fr; }
+    .kb-gal-panel { position: static; max-height: none; order: -1; }
+}

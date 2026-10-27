@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- techdoc Gallery: a new Gallery entry in the logo menu opens `gallery.html`, a thumbnail of every image of every document. A panel on the right filters the images by the properties of their documents (and by year, title or caption) and shows how many images each value leaves. Clicking a thumbnail enlarges it in a lightbox whose previous and next follow the filters. `gallery.md` is a reserved page name. The techdoc theme is now version 1.1.0.
+
 ### Changed
 
 - About KB4IT, in every theme: the page shows the KB4IT README (from the source checkout, or from the installed package), without the badges, which load from the network, and with relative links pointing to the repository.
