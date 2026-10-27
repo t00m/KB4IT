@@ -485,6 +485,7 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
                         'source': basename_md,
                         'built': timestamp,
                         'edit_url': edit_url,
+                        'editor': bool(var.get('editor')),
                     },
                     'print': {name: info_tabs.get(name, {}).get('print', name == 'details')
                               for name in ('details', 'quality', 'related', 'history')},

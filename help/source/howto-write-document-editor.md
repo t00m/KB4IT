@@ -2,12 +2,12 @@
 DocType: How-to guide
 Feature: Writing
 HelpId: editor
-Keyword: editor, add page, skeletons, skeletons.json, repo.json, markdown, frontmatter, properties, toolbar, save, completion
+Keyword: editor, add page, edit document, skeletons, skeletons.json, repo.json, markdown, frontmatter, properties, toolbar, save, completion
 Level: basic
 Order: 215
 Related: howto-write-documents.md, reference-repo-json.md, reference-theme-techdoc.md, howto-customize-templates.md
 Section: Guides
-Summary: Turn on the Add page, write a new document in its editor, use your own skeletons and save the file into the source folder.
+Summary: Turn on the Add page, write a new document or edit an existing one in its editor, use your own skeletons and save the file into the source folder.
 ---
 
 # Write a document in the editor
@@ -92,6 +92,16 @@ The file is UTF-8 with LF line endings and one final newline. Nothing else is ch
 **Copy** puts the same text on the clipboard.
 
 Put the file in the `source/` folder of your repository, then run `kb4it build`. The file name becomes the page name, so use short names without spaces.
+
+## Edit an existing document {#edit}
+
+In techdoc, every document page has an **Edit in the editor** button in the title menu (hover over the title), and an **Edit in the editor** link in the History tab of the info card. Both open the Add page with the document's Markdown in an **Edit** dialog, with the same toolbar, checks and properties pane. The cursor starts below the title.
+
+**Save** suggests the document's own file name, such as `backup-check.md`: save it over the file in the `source/` folder (in Firefox and Safari, move the download there), then run `kb4it build`. Closing with unsaved changes asks first, as for a new document.
+
+The text travels in the address of the Add page, so it works from `file://`, from `kb4it serve` and from any web server, with no network and nothing stored in the browser. The address is cleared as soon as the dialog opens, so reloading the page does not open the document again. The editor shows the source the site was built from: if you changed the file since the last build, rebuild first or edit the file itself.
+
+The button needs the editor (`"editor": true`, the default in techdoc). With `"git": true`, the **Edit** button that opens the file on your git server stays next to it.
 
 ## Use your own skeletons {#skeletons}
 

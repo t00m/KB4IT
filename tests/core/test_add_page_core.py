@@ -36,7 +36,7 @@ def test_hostile_category_text_escaped(tmp_path, home):
     assert "&lt;b&gt;x&lt;/b&gt;" in html
     assert "&lt;/script&gt;" in html
     assert "<b>x</b>" not in html
-    assert html.count("<dialog") == 1
+    assert html.count("<dialog") == 2  # the card's dialog and the Edit dialog
 
 
 def test_system_page_and_keys(tmp_path, home):

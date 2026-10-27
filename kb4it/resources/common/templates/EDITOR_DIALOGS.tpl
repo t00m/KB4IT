@@ -53,6 +53,53 @@
 <!-- EDITOR DIALOG :: END -->
 % endfor
 
+<!-- EDIT DIALOG :: START -->
+<!-- Full-screen dialog to edit an existing document; a document page opens it with add.html#edit=... -->
+<dialog id="modal-add-_edit" class="kb-dialog-modal">
+    <div class="kb-dialog">
+
+        <!-- DIALOG HEADER :: START -->
+        <div class="kb-dialog-header" tabindex="-1" style="border-bottom: 3px solid #1e87f0;">
+            <span class="kb-dialog-title" style="color: #1e87f0;">Edit <span id="kb-edit-name"></span></span>
+            <span class="kb-dialog-desc">Save it over the file in the source folder, then build again.</span>
+            <div class="kb-dialog-actions">
+                <button id="kb-save-_edit" class="kb-btn kb-btn-primary kb-btn-small" type="button"
+                        data-kb-save="_edit"><svg class="kb-btn-icon" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><polyline points="14,10 9.5,14.5 5,10"/><rect width="13" height="1" x="3" y="17" fill="currentColor" stroke="none"/><line x1="9.5" y1="13.91" x2="9.5" y2="3"/></svg><span class="kb-save-label">Save</span></button>
+                <button class="kb-btn kb-btn-small" type="button"
+                        data-kb-copy="_edit"><svg class="kb-btn-icon" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><rect width="12" height="16" x="3.5" y="2.5"/><polyline points="5 0.5 17.5 0.5 17.5 17"/></svg>Copy</button>
+                <button class="kb-btn kb-btn-small" type="button"
+                        data-kb-close="_edit">Close</button>
+            </div>
+        </div>
+        <!-- DIALOG HEADER :: END -->
+
+        <!-- DIALOG BODY :: START -->
+        <div class="kb-dialog-body">
+
+            <!-- DOCUMENT EDITOR :: START -->
+            <div class="kb-pane-left">
+                <div class="kb-pane-label">Document</div>
+                <div id="kb-toolbar-_edit" class="kb-toolbar"></div>
+                <div id="kb-editor-_edit" class="kb-editor-host"></div>
+            </div>
+            <!-- DOCUMENT EDITOR :: END -->
+
+            <!-- PROPERTIES PANE :: START -->
+            <div class="kb-pane-right">
+                <div class="kb-pane-label">Properties</div>
+                <div class="kb-props-wrap">
+                    <div id="kb-props-_edit"></div>
+                </div>
+            </div>
+            <!-- PROPERTIES PANE :: END -->
+
+        </div>
+        <!-- DIALOG BODY :: END -->
+
+    </div>
+</dialog>
+<!-- EDIT DIALOG :: END -->
+
 <!-- EDITOR SCRIPTS :: START -->
 <script src="resources/editor/codemirror.min.js"></script>
 <script src="resources/editor/kb4it-frontmatter.js"></script>

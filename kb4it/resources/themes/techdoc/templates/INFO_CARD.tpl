@@ -97,6 +97,9 @@ ${card['quality_html'] | n}
 % if history['edit_url']:
                     , <a href="${history['edit_url']}" target="_blank" rel="noopener">Edit</a>
 % endif
+% if history.get('editor'):
+                    , <a href="add.html" data-kb-edit="${history['source']}">Edit in the editor</a>
+% endif
                 </dd>
                 <dt>Built</dt>
                 <dd>${history['built']}</dd>
