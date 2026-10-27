@@ -127,6 +127,21 @@ def test_metadata_pages(site):
         assert (site["target"] / name).exists(), name
 
 
+def test_properties_page_is_a_leader_list_of_the_properties(site):
+    html = read(site, "properties.html")
+    assert 'class="kb-props"' in html and "kb-cloud" not in html and "data-uk-modal" not in html.split("PROPERTIES :: START")[1]
+    row = re.search(r'<a class="kb-props-key" href="Priority.html">Priority</a>\s*</div>\s*'
+                    r'<div class="kb-props-count">([^<]*)<span class="kb-meta-sep">', html)
+    assert row and row.group(1).split() == ["3", "values"]
+
+
+def test_property_page_has_cloud_and_table_but_no_leader(site):
+    html = read(site, "Priority.html")
+    tabs = re.findall(r'<li><a href="#">([^<]+)</a></li>', html)
+    assert tabs == ["Cloud", "Table"]
+    assert "data-uk-leader" not in html
+
+
 def test_document_page_has_toc_and_properties(site):
     html = read(site, "monitor.html")
     assert "Steps" in html and "Detail" in html

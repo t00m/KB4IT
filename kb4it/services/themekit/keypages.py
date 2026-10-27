@@ -17,6 +17,9 @@ class KeyPagesMixin(ThemeHost):
 
     #: Title of the properties page.
     properties_title = 'Properties'
+    #: The properties page shows a cloud of property buttons, each opening its values; with False the page
+    #: template gets only the list of properties (var['keys']) and shows it another way.
+    properties_cloud = True
     #: Reuse the cached properties, stats, bookmarks and all-documents pages when no
     #: property (properties, stats) or no document (bookmarks, all) changed.
     reuse_unchanged_pages = False
@@ -85,19 +88,26 @@ class KeyPagesMixin(ThemeHost):
         return self.template('WORDCLOUD').render(var=var)
 
     def build_page_properties(self) -> None:
-        """Create the properties page: one button per property, with its tag cloud."""
+        """Create the properties page: every property with its numbers of values and documents, and with
+        properties_cloud, one button per property opening its tag cloud."""
         if self._reuse_cached_page('properties', 'nck', 'no_key_changes', 'build_page_properties'):
             return
-        tpl_button = self.template('KEY_MODAL_BUTTON')
-        max_frequency = self.get_maxkv_freq()
+        tpl_button = self.template('KEY_MODAL_BUTTON') if self.properties_cloud else None
+        max_frequency = self.get_maxkv_freq() if self.properties_cloud else 0
         var = self.get_theme_var()
         var['buttons'] = []
+        var['keys'] = []
         ignored_keys = self.srvdtb.get_ignored_keys()
         for key in self.srvdtb.get_all_keys():
             if key in ignored_keys:
                 continue
+            values = self.srvdtb.get_all_values_for_key(key)
+            docs = {doc for value in values for doc in self.srvdtb.get_docs_by_key_value(key, value)}
+            var['keys'].append({'key': key, 'vfkey': valid_filename(key), 'values': len(values), 'docs': len(docs)})
+            if not self.properties_cloud:
+                continue
             content = self.build_tagcloud_from_key(key)
-            frequency = len(self.srvdtb.get_all_values_for_key(key))
+            frequency = len(values)
             self.log.debug(f"[THEME] KEY key={key} frequency={frequency}")
             vbtn = {'content': content, 'key': key, 'vfkey': valid_filename(key)}
             vbtn.update(self.cloud_measure(frequency, max_frequency))

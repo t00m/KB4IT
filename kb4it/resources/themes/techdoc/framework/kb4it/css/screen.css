@@ -657,7 +657,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 }
 
 /* ==========================================================================
-   Word cloud (properties.html and key value pages)
+   Word cloud (property pages)
    --kb-weight is a 0..1 value emitted per item from the theme.
    ========================================================================== */
 .kb-cloud {
@@ -668,13 +668,6 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     gap: 6px 18px;
     padding: 22px 12px;
     line-height: 1.65;
-}
-.kb-cloud-properties {
-    background: #fff;
-    border-radius: 6px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    padding: 28px 18px;
-    gap: 8px 22px;
 }
 .kb-cloud-item {
     --kb-weight: 0;
@@ -703,7 +696,6 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     letter-spacing: 0;
 }
 .kb-cloud-item:hover .kb-cloud-count { color: #6aa9e0; }
-.kb-cloud-key { cursor: pointer; }
 
 /* ==========================================================================
    Events page — full-year calendar grid (kb-evcal-*)
@@ -1636,3 +1628,17 @@ html.kb-exemplary #kb4it-menu > nav::after {
     .kb-gal { grid-template-columns: 1fr; }
     .kb-gal-panel { position: static; max-height: none; order: -1; }
 }
+
+/* Properties page: one line per property, a leader to its numbers of values and documents. */
+.kb-props {
+    max-width: 760px;
+    margin: 12px auto;
+    padding: 16px 24px;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.kb-props-row { margin-top: 0; }
+.kb-props-row + .kb-props-row { margin-top: 6px; }
+.kb-props-key { font-weight: 600; }
+.kb-props-count { color: #777; font-size: 0.85rem; }
