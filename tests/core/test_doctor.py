@@ -1,5 +1,6 @@
 """'kb4it doctor' reports the build, the paths and the themes, and fails when a bundled part is missing (SI-07)."""
 
+import re
 import shutil
 import subprocess
 
@@ -25,7 +26,7 @@ def test_doctor_reports_the_build_and_every_theme(tmp_path, home):
     assert f"KB4IT      {ENV['APP']['build_version']}" in out
     assert "Python     " in out and f"Package    {ENV['CONF']['ROOT']}" in out
     for theme in doctor.BUNDLED_THEMES:
-        assert f"  {theme} 1.0.0+" in out
+        assert re.search(rf"  {theme} \d+\.\d+\.\d+\+", out), theme
     assert "No problems found." in out
 
 

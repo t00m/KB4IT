@@ -114,6 +114,9 @@
                                     <a class="uk-link-heading" href="bookmarks.html"><span data-uk-icon="bookmark"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Bookmarks</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="gallery.html"><span data-uk-icon="image"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Gallery</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="properties.html"><span data-uk-icon="database"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Properties</span></a>
                                     <div class="uk-navbar-dropdown" data-uk-dropdown="pos: right-top">
                                         <ul class="uk-nav uk-navbar-dropdown-nav uk-padding-small uk-column-1-2">
