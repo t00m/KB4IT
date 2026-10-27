@@ -4,6 +4,11 @@
         <a class="kb4it-page-action" data-uk-tooltip="title: Edit document" aria-label="Edit document" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span data-uk-icon="pencil"></span></a>
         <!-- EDIT BUTTON :: END -->
   % endif
+  % if var.get('editor'):
+        <!-- EDITOR BUTTON :: START -->
+        <a class="kb4it-page-action" href="add.html" data-kb-edit="${var['basename_md']}" data-uk-tooltip="title: Edit in the editor" aria-label="Edit in the editor"><span data-uk-icon="file-edit"></span></a>
+        <!-- EDITOR BUTTON :: END -->
+  % endif
         <!-- PROPERTIES BUTTON :: START -->
         <a class="kb4it-page-action" href="#kb-info-details" data-uk-tooltip="title: Document properties" aria-label="Document properties"><span data-uk-icon="icon: hashtag; ratio: 1.0;"></span></a>
         <!-- PROPERTIES BUTTON :: END -->

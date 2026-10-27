@@ -91,3 +91,20 @@
 
     window.addEventListener('hashchange', fromHash);
 })();
+
+/* techdoc document page: "Edit in the editor" opens add.html with the source of the document. */
+(function () {
+    'use strict';
+
+    document.addEventListener('click', function (event) {
+        var link = event.target.closest ? event.target.closest('[data-kb-edit]') : null;
+        var source = document.getElementById('source-code');
+        if (!link || !source || event.ctrlKey || event.metaKey || event.shiftKey) {
+            return;
+        }
+        event.preventDefault();
+        // The text travels in the address: it works from file:// and from a web server, with no storage.
+        window.location.href = link.getAttribute('href') + '#edit=' + encodeURIComponent(link.getAttribute('data-kb-edit'))
+            + '&text=' + encodeURIComponent(source.value);
+    });
+}());

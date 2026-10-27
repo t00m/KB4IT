@@ -75,5 +75,5 @@ def test_editor_js_never_uses_innerhtml():
 
 
 def test_dialogs_from_shared_template(add_html):
-    assert add_html.count("<dialog") == 8
+    assert add_html.count("<dialog") == 9  # one per card and the Edit dialog
     assert add_html.count('id="kb-add-keys"') == 1

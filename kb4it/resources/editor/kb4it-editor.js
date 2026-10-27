@@ -10,8 +10,13 @@
   var UNSAVED = "You have unsaved changes. Close and lose them?";
   var OFFER_DOWNLOAD = "The file was not saved. Download it instead?";
 
+  // The dialog that edits an existing document; add.html#edit=<file>&text=<text> opens it.
+  var EDIT = "_edit";
+  E.EDIT = EDIT;
+
   E.views = {};
   var base = {};      // text at creation or at the last save, per category
+  var editing = { name: "", text: "" };   // the document the edit dialog holds
   var handles = {};   // file handle of the last save, per category
   var look = {};      // Compartment of the light or dark look, per category
   var data = null;
@@ -530,11 +535,59 @@
   };
 
   function freshState(cat) {
-    var doc = E.skeleton(cat);
+    var doc = cat === EDIT ? editing.text : E.skeleton(cat);
     base[cat] = doc;
     forgetHandle(cat);
-    return cm.EditorState.create({ doc: doc, selection: titleSelection(doc), extensions: E.extensions(cat) });
+    // A new document selects its title placeholder; an edited one keeps its title and starts on its body.
+    var selection = cat === EDIT ? bodyStart(doc) : titleSelection(doc);
+    return cm.EditorState.create({ doc: doc, selection: selection, extensions: E.extensions(cat) });
   }
+
+  // The start of the line after the first "# " heading below the frontmatter, else the start of the text.
+  function bodyStart(doc) {
+    var title = titleSelection(doc);
+    if (title.empty) { return title; }
+    var nl = doc.indexOf("\n", title.to);
+    return cm.EditorSelection.cursor(nl < 0 ? doc.length : nl + 1);
+  }
+
+  // The file a save writes: the edited document keeps its name, a new one is named after its title.
+  function fileNameOf(cat, text) {
+    return cat === EDIT && editing.name ? editing.name : KB4ITFrontmatter.fileName(text, cat);
+  }
+
+  // Opens the edit dialog on the text of an existing document.
+  E.edit = function (name, text) {
+    if (E.views[EDIT] && E.dirty(EDIT) && !window.confirm(DISCARD)) { return; }
+    editing = { name: name, text: text.replace(/\r\n?/g, "\n") };
+    var label = document.getElementById("kb-edit-name");
+    if (label) { label.textContent = name; }
+    if (E.views[EDIT]) { E.markClean(EDIT); }
+    E.open(EDIT);
+  };
+
+  // add.html#edit=<file>&text=<text>, as a document page writes it: the file name, then the Markdown.
+  E.editFromHash = function () {
+    var hash = window.location.hash || "";
+    if (hash.indexOf("#edit=") !== 0 || !document.getElementById("modal-add-" + EDIT)) { return false; }
+    var params = {};
+    hash.slice(1).split("&").forEach(function (part) {
+      var eq = part.indexOf("=");
+      if (eq > 0) {
+        try { params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1)); } catch (e) { /* not text */ }
+      }
+    });
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    var name = (params.edit || "").split(/[\\/]/).pop();
+    if (!/\.(md|markdown)$/i.test(name) || typeof params.text !== "string") {
+      E.notify("The document to edit could not be read", "danger");
+      return false;
+    }
+    E.edit(name, params.text);
+    return true;
+  };
 
   // The text of the first "# " heading below the frontmatter, so typing replaces the placeholder and
   // the toolbar is enabled on open; else the start of the line after the closing "---".
@@ -1023,7 +1076,7 @@
   }
 
   function downloadText(cat, text) {
-    var name = KB4ITFrontmatter.fileName(text, cat);
+    var name = fileNameOf(cat, text);
     var url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
     var link = document.createElement("a");
     link.href = url;
@@ -1088,7 +1141,7 @@
     };
     var ask = function () {
       return window.showSaveFilePicker({
-        suggestedName: KB4ITFrontmatter.fileName(text, cat),
+        suggestedName: fileNameOf(cat, text),
         id: "kb4it-source",
         types: [{ description: "Markdown", accept: { "text/markdown": [".md"] } }]
       }).then(write);
@@ -1153,6 +1206,7 @@
       else if ((cat = button.getAttribute("data-kb-copy")) !== null) { E.copy(cat); }
       else if ((cat = button.getAttribute("data-kb-close")) !== null) { E.close(cat); }
     });
+    E.editFromHash();
   };
 
   if (document.readyState === "loading") {

@@ -110,8 +110,8 @@ def test_page_actions_are_one_row_at_the_top_of_the_title_menu(nav_page):
     assert not nav_page.query_selector("#kb4it-menu .uk-navbar-left .kb4it-page-action")
     _open_title_menu(nav_page, "toc.html")
     tops = nav_page.eval_on_selector_all(".kb4it-page-action", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
-    # Properties, quality, source and print; edit only shows with git settings.
-    assert len(tops) == 4 and len(set(tops)) == 1, tops
+    # Edit in the editor (on by default), properties, quality, source and print; edit in git only with git settings.
+    assert len(tops) == 5 and len(set(tops)) == 1, tops
     first_toc = nav_page.eval_on_selector(".kb4it-title-toc a", "e => e.getBoundingClientRect().top")
     assert tops[0] < first_toc
 
