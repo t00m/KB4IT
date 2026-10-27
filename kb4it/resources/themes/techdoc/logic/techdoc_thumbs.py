@@ -55,4 +55,3 @@ def make_thumbnail(path, cache_dir, width=THUMB_WIDTH):
             return name, width, height
     except (OSError, UnidentifiedImageError, ValueError, Image.DecompressionBombError):
         return None
-
