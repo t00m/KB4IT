@@ -152,6 +152,7 @@ class KeyPagesMixin(ThemeHost):
         var['compile'] = compile_value
         var['has_toc'] = False
         var['page']['dt_documents'] = self.build_datatable([], sorted_docs)
+        var['profile_card'] = self.profile_card(key, value) if compile_value else ''
         if var['compile']:
             self.distribute_md(var['pagename'], self.template('PAGE_KEY_VALUE').render(var=var), listing=True)
             self._add_system_page(var['pagename'], var['title'])
