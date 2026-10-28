@@ -79,6 +79,21 @@ def test_create_writes_relative_paths_and_compile_script(tmp_path, home):
         assert script.stat().st_mode & 0o100
 
 
+def test_create_index_option(tmp_path, home):
+    result = run_kb4it("create", "techdoc", "private", "--index", "no", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    conf = json.loads((tmp_path / "private" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["seo"]["index"] is False
+    assert run_kb4it("create", "blog", "public", "--index", "yes", cwd=tmp_path, home=home).returncode == 0
+    conf = json.loads((tmp_path / "public" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["seo"]["index"] is True
+    assert run_kb4it("create", "techdoc", "later", cwd=tmp_path, home=home).returncode == 0
+    conf = json.loads((tmp_path / "later" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert "index" not in (conf.get("seo") or {}), "without --index nothing is decided"
+    result = run_kb4it("create", "techdoc", "bad", "--index", "maybe", cwd=tmp_path, home=home)
+    assert result.returncode != 0 and not (tmp_path / "bad").exists()
+
+
 @pytest.mark.parametrize("platform, name, line", [
     ("linux", "compile.sh", "kb4it -L INFO build '/home/me/My KB/config/repo.json'"),
     ("darwin", "compile.sh", "kb4it -L INFO build '/home/me/My KB/config/repo.json'"),

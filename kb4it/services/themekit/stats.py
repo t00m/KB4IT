@@ -290,5 +290,5 @@ class StatsMixin(ThemeHost):
         backlinks = (plan.backlinks if plan else None) or {}
         var = self.get_theme_var()
         var['stats'] = collect_stats(self.srvdtb, keys, backlinks, getattr(self, 'events_docs', None))
-        self.distribute_md('stats', self.template('PAGE_STATS').render(var=var))
+        self.distribute_md('stats', self.template('PAGE_STATS').render(var=var), listing=True)
         self._add_system_page('stats', 'Stats')

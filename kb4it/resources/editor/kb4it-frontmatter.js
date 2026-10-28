@@ -524,7 +524,7 @@ var KB4ITFrontmatter = (function () {
 
   // Keys the build never offers as values (self.keys["blocked"] in kb4it/services/database.py),
   // so they are never in the known keys and must not be reported as new.
-  var BLOCKED_KEYS = ["Title", "SystemPage", "Date"];
+  var BLOCKED_KEYS = ["Title", "SystemPage", "Date", "Modified"];
 
   function count(n, one, many) { return n + " " + (n === 1 ? one : many); }
 

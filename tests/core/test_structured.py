@@ -6,7 +6,7 @@ import pytest
 
 from kb4it.core.exceptions import ConfigError
 from kb4it.core.structured import (DEFAULT_MAP, SeoSettings, document_node, graph, iso_date, load_seo, merged_map,
-                                   render_jsonld, website_node)
+                                   og_locale, render_jsonld, website_node)
 
 SAMPLE = {
     "Author": ["Tomás Vírseda"], "Date": ["2026-10-23"], "DocType": ["How-to guide"],
@@ -27,8 +27,23 @@ def test_seo_block():
                               map={"Team": "contributor:Organization", "Scope": None})
 
 
+def test_index_settings():
+    assert load_seo({}).index is None and load_seo({}).noindex_keys is True
+    seo = load_seo({"seo": {"index": False, "noindex_keys": False}})
+    assert seo.index is False and seo.noindex_keys is False
+    assert load_seo({"seo": {"index": True}}).index is True
+
+
+@pytest.mark.parametrize("lang, locale", [("es-ES", "es_ES"), ("es", ""), ("en-us", "en_US"), ("zh-Hant-TW", "zh_TW"),
+                                          ("es-419", "es_419"), ("", "")])
+def test_og_locale(lang, locale):
+    assert og_locale(lang) == locale
+
+
 @pytest.mark.parametrize("block, word", [
-    ([], "object"), ({"index": True}, "unknown key 'index'"), ({"structured_data": "yes"}, "true or false"),
+    ([], "object"), ({"robots": True}, "unknown key 'robots'"), ({"index": "yes"}, "seo.index"),
+    ({"index": 1}, "seo.index"), ({"noindex_keys": None}, "seo.noindex_keys"), ({"noindex_keys": "no"}, "seo.noindex_keys"),
+    ({"map": {"Modified": "dateCreated"}}, "mapped by KB4IT"), ({"structured_data": "yes"}, "true or false"),
     ({"lang": "english language"}, "language tag"), ({"lang": 3}, "language tag"), ({"map": []}, "seo.map"),
     ({"map": {"Team": 3}}, "seo.map.Team"), ({"map": {"Team": "Contributor"}}, "property:Type"),
     ({"map": {"Team": "contributor:organization"}}, "property:Type"), ({"map": {"Title": "name"}}, "mapped by KB4IT"),
@@ -69,6 +84,12 @@ def test_document_node_of_the_sample():
     assert node["creativeWorkStatus"] == "Completed"
 
 
+def test_document_node_date_modified():
+    node = document_node(title="T", description="", values={"Date": ["2026-10-23"]}, mapping={},
+                         default_type="TechArticle", lang="", modified="2026-10-25T09:00:00+02:00")
+    assert node["datePublished"] == "2026-10-23" and node["dateModified"] == "2026-10-25T09:00:00+02:00"
+
+
 def test_document_node_without_site_url_or_doctype():
     node = document_node(title="T", description="", values={"Tag": ["x"]}, mapping={"Tag": "keywords"},
                          default_type="BlogPosting", lang="")
@@ -85,3 +106,24 @@ def test_render_jsonld_cannot_close_the_script():
     text = render_jsonld(graph([{"name": "</script><!-- & -->"}]))
     assert "<" not in text and ">" not in text and "&" not in text
     assert json.loads(text)["@graph"][0]["name"] == "</script><!-- & -->"
+
+
+def test_verify_reports_a_bad_modified_date_and_the_open_index_question(tmp_path, home):
+    from tests.helpers import page, run_kb4it, write_repo
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("A", Tag="x", Modified="someday"),
+                                                    "b.md": page("B", Tag="y", Modified="2026-10-25")})
+    result = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 1
+    assert "bad_modified_date value=someday" in result.stdout and "b.md (Reason" not in result.stdout
+    assert "INDEX_UNSET" in result.stdout
+
+
+def test_verify_index_decided(tmp_path, home):
+    from tests.helpers import page, run_kb4it, write_repo
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("A", Tag="x")}, seo={"index": True})
+    result = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "INDEX_UNSET" not in result.stdout
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": page("A", Tag="x")}, seo={"index": "yes"})
+    result = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 1 and "seo.index" in result.stdout

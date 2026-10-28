@@ -407,7 +407,7 @@ class Theme(DocumentTheme):
             var['page']['title'] = value
             var['book'] = self._book_view(value)
             content = self.template('PAGE_BOOK').render(var=var)
-            self.distribute_md(pagename, content)
+            self.distribute_md(pagename, content, listing=True)
             self.srvdtb.add_document(f"{pagename}.md")
             self.srvdtb.add_document_key(f"{pagename}.md", 'Title', value)
             self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')

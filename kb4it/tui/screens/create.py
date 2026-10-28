@@ -22,6 +22,8 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
+    RadioButton,
+    RadioSet,
 )
 
 from kb4it.core.util import json_load
@@ -36,6 +38,7 @@ class CreateProjectScreen(Screen):
     #themes-list { height: 6; margin: 0 1; border: solid $primary; }
     #apps-list   { height: 4; margin: 0 1; border: solid $secondary; }
     Input { margin: 0 1 1 1; }
+    #index-choice { margin: 0 1; height: auto; layout: horizontal; }
     #help-banner {
         margin: 1 1 0 1;
         padding: 0 1;
@@ -67,7 +70,8 @@ class CreateProjectScreen(Screen):
             "  App    ,  template to initialise the repository from\n"
             "  Name   ,  label shown in the project list (any text)\n"
             "  Path   ,  full path where the repository will be created;\n"
-            "            its parent directory must already exist",
+            "            its parent directory must already exist\n"
+            "  Search ,  whether search engines may index the published site",
             id="help-banner",
         )
         yield Label("Select theme:", classes="field-label")
@@ -81,6 +85,10 @@ class CreateProjectScreen(Screen):
             placeholder=str(Path.home() / "Documents" / "my_project"),
             id="inp-path",
         )
+        yield Label("Allow search engines:", classes="field-label")
+        with RadioSet(id="index-choice"):
+            yield RadioButton("Yes", id="index-yes")
+            yield RadioButton("No", id="index-no")
         yield Label("", id="error-banner", classes="")
         with Horizontal(id="footer-bar"):
             yield Button("Create", id="create", variant="success")
@@ -133,6 +141,13 @@ class CreateProjectScreen(Screen):
         if idx is not None:
             self._app_idx = idx
 
+    def _index_choice(self) -> str | None:
+        """'yes' or 'no' for kb4it create --index, or None while nothing is chosen."""
+        pressed = self.query_one("#index-choice", RadioSet).pressed_button
+        if pressed is None:
+            return None
+        return "yes" if pressed.id == "index-yes" else "no"
+
     @on(Button.Pressed, "#cancel")
     def _cancel(self) -> None:
         self.dismiss(None)
@@ -160,6 +175,10 @@ class CreateProjectScreen(Screen):
                 "Create it first or choose a different path."
             )
             return
+        index = self._index_choice()
+        if index is None:
+            self._show_error("Choose whether search engines may index the site (Yes or No).")
+            return
         try:
             from kb4it.core.main import KB4IT
             _reset_logging()
@@ -168,6 +187,7 @@ class CreateProjectScreen(Screen):
                 theme=theme_id,
                 app=app_name,
                 repo_path=path,
+                index=index,
                 log_level="WARNING",
             )
             inst = KB4IT(params)

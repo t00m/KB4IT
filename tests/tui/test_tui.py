@@ -7,7 +7,7 @@ import time
 import urllib.request
 
 import pytest
-from textual.widgets import Button, DataTable, Input, Label, ListView, RichLog
+from textual.widgets import Button, DataTable, Input, Label, ListView, RadioButton, RichLog
 
 from kb4it.tui import app as tui
 from kb4it.tui import clipboard, projects
@@ -285,9 +285,17 @@ def test_create_project(registry, tmp_path):
         create.query_one("#inp-path", Input).value = str(path)
         create.query_one("#create", Button).press()
         await pilot.pause()
+        assert "search engines" in str(create.query_one("#error-banner", Label).render())   # no choice yet
+        assert not path.exists()
+        create.query_one("#index-no", RadioButton).value = True
+        await pilot.pause()
+        create.query_one("#create", Button).press()
+        await pilot.pause()
         assert isinstance(app.screen, tui.MainScreen), create.query_one("#error-banner", Label).render()
     run(scenario)
-    assert json.loads((path / "config" / "repo.json").read_text(encoding="utf-8"))["theme"] == "blog"
+    conf = json.loads((path / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["theme"] == "blog"
+    assert conf["seo"]["index"] is False, "the same path as kb4it create --index no"
     assert tui.load_projects() == [{"name": "New blog", "config": str(path / "config" / "repo.json")}]
 
 
@@ -304,6 +312,8 @@ def test_create_project_shows_next_steps(registry, tmp_path):
         create.query_one("#themes-list", ListView).index = ids.index("blog")
         await pilot.pause()
         create.query_one("#inp-name", Input).value = "Steps"
+        create.query_one("#index-yes", RadioButton).value = True
+        await pilot.pause()
         create.query_one("#inp-path", Input).value = str(path)
         create.query_one("#create", Button).press()
         await pilot.pause()
@@ -327,6 +337,8 @@ def test_create_failure_shows_no_next_steps(registry, tmp_path):
         create.query_one("#themes-list", ListView).index = ids.index("blog")
         await pilot.pause()
         create.query_one("#inp-name", Input).value = "Blocked"
+        create.query_one("#index-yes", RadioButton).value = True
+        await pilot.pause()
         create.query_one("#inp-path", Input).value = str(blocked)
         create.query_one("#create", Button).press()
         await pilot.pause()
