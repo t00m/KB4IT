@@ -534,3 +534,20 @@ def test_flow_list_rewrite_keeps_items_after_the_cursor():
         assert _doc_values(out) == want, out
         if "# note" in after:
             assert "# note" in out
+
+
+def test_with_values():
+    text = "---\nPerson: Full name\nRole: x\n---\n\n# T\n"
+    assert call("withValues", text, {"Person": "Jane Doe"}) == "---\nPerson: Jane Doe\nRole: x\n---\n\n# T\n"
+    assert call("withValues", text, {"Team": "Basis"}) == "---\nPerson: Full name\nRole: x\nTeam: Basis\n---\n\n# T\n"
+
+
+def test_with_title():
+    text = "---\nPerson: Full name\n---\n\n# Full name\n\nBody.\n"
+    assert call("withTitle", text, "Jane Doe") == "---\nPerson: Full name\n---\n\n# Jane Doe\n\nBody.\n"
+    assert call("withTitle", "---\nA: b\n---\n\nNo title.\n", "X") == "---\nA: b\n---\n\nNo title.\n"
+
+
+def test_hash_params():
+    assert call("hashParams", "#new=person&Person=Jane%20Doe") == {"new": "person", "Person": "Jane Doe"}
+    assert call("hashParams", "#new=person&Bad=%E0%A4%A") == {"new": "person"}
