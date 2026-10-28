@@ -541,6 +541,7 @@ class Processor(PeopleMixin, Service):
             K_PATH.append((key, values, COMPILE_KEY))
             self.log.debug(f"[PROCESSOR] KEY key={key} compile={COMPILE_KEY}")
 
+        KV_PATH += self.profile_kv_paths({(k, v) for k, v, _ in KV_PATH}, FORCE_COMPILATION, force_kv_pairs)
         return K_PATH, KV_PATH
 
     @timeit
