@@ -66,6 +66,7 @@ class KBDict(TypedDict, total=False):
     core_signature: str   # hash of core settings that shape every page (markdown, overrides, hooks)
     events:         dict  # event page name -> sorted documents on it, after the last successful build
     modified:       dict  # docId -> dateModified (Modified, last git commit or file time), see moddates.py
+    profiles:       dict  # profile docId -> {person, aliases, hash, status}, see core/people.py
 
 
 class DBRecord(TypedDict, total=False):

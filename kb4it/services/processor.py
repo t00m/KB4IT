@@ -23,6 +23,7 @@ from kb4it.core.documents import parse_markdown_attributes
 from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.moddates import GIT_CACHE, file_time, git_dates, modified_date
+from kb4it.core.people import PeopleSettings, build_people, is_profile, person_page, person_status, profile_hash
 from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
@@ -55,6 +56,8 @@ class BuildPlan:
     name_clashes: list = field(default_factory=list)  # [(docId, docId), ...] pages differing only by case
     backlinks: dict = field(default_factory=dict)  # {docId: [[title, source docId], ...]}
     modified: dict = field(default_factory=dict)  # {docId: dateModified}, see Processor.modified_dates()
+    profile_count: int = 0  # valid profiles; a bad one counts as an invalid document
+    profile_pages: dict = field(default_factory=dict)  # {profile docId: person page}, for links to a profile
 
     @property
     def invalid_count(self) -> int:
@@ -108,6 +111,7 @@ class Processor(Service):
         for first, second in page_name_clashes(os.path.basename(f) for f in sources):
             self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={first} b={second}")
             self.plan.name_clashes.append((first, second))
+        profiles = []
         for filepath in sources:
             # Get Id
             docId = os.path.basename(filepath)
@@ -155,6 +159,11 @@ class Processor(Service):
 
             if not valid:
                 self.plan.invalid_docs.append((docId, reason))
+                continue
+
+            # A profile describes a person; it is not a document and never gets a page of its own.
+            if is_profile(keys):
+                profiles.append((docId, keys, content))
                 continue
 
             # Add to cache
@@ -215,6 +224,8 @@ class Processor(Service):
             for documents in values.values():
                 documents.sort(key=str.lower)
 
+        self.load_people(profiles)
+
         # A repo can ask that any unreadable document fails the build instead of vanishing.
         problems = self.plan.invalid_docs + [(b, f"name_clash_with={a}") for a, b in self.plan.name_clashes]
         if problems and self.srvbes.get_value("repo", "fail_on_invalid") is True:
@@ -240,6 +251,22 @@ class Processor(Service):
 
         # The new kbdict stays in memory; Backend.commit_kbdict() writes it once the build succeeded.
 
+
+    def load_people(self, profiles) -> None:
+        """Profiles into srvdtb.people and kbdict["profiles"]; a bad one is left out like an invalid document."""
+        settings = getattr(self.srvbes, "people", None) or PeopleSettings()
+        people, problems = build_people(profiles, settings)
+        for problem in problems:
+            self.log.error(f"[PEOPLE] {problem.code} doc={problem.doc_id} detail={problem.detail}")
+            self.plan.invalid_docs.append((problem.doc_id, problem.code))
+        self.srvdtb.people = people
+        self.plan.profile_count = len(people)
+        self.plan.profile_pages = {p.doc_id: person_page(p.person, settings) for p in people.profiles.values()}
+        self.kbdict_new["profiles"] = {
+            p.doc_id: {"person": p.person, "aliases": list(p.aliases), "hash": profile_hash(p),
+                       "status": person_status(p, settings)}
+            for p in people.profiles.values()}
+        self.log.info(f"[PEOPLE] LOADED profiles={len(people)} aliases={people.alias_count()}")
 
     def modified_dates(self, sources) -> dict:
         """{docId: dateModified} of the content documents: Modified, else the last git commit, else the file time."""
