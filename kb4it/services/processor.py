@@ -19,11 +19,12 @@ from kb4it.core.exceptions import CompilationError
 from kb4it.core.log import get_logger
 from kb4it.core.service import Service
 from kb4it.services.addpage import ADD_DOC
+from kb4it.services.people import PeopleMixin
 from kb4it.core.documents import parse_markdown_attributes
 from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.moddates import GIT_CACHE, file_time, git_dates, modified_date
-from kb4it.core.people import PeopleSettings, build_people, is_profile, person_page, person_status, profile_hash
+from kb4it.core.people import is_profile
 from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
@@ -76,7 +77,7 @@ class BuildPlan:
         return sum(1 for _, _, flag in self.KV_PATH if flag)
 
 
-class Processor(Service):
+class Processor(PeopleMixin, Service):
     """KB4IT Processor Service."""
 
     def __init__(self, backend: Any, db: Any, theme: Any) -> None:
@@ -251,57 +252,6 @@ class Processor(Service):
 
         # The new kbdict stays in memory; Backend.commit_kbdict() writes it once the build succeeded.
 
-
-    def load_people(self, profiles) -> None:
-        """Profiles into srvdtb.people and kbdict["profiles"]; a bad one is left out like an invalid document."""
-        settings = getattr(self.srvbes, "people", None) or PeopleSettings()
-        people, problems = build_people(profiles, settings)
-        for problem in problems:
-            self.log.error(f"[PEOPLE] {problem.code} doc={problem.doc_id} detail={problem.detail}")
-            self.plan.invalid_docs.append((problem.doc_id, problem.code))
-        self.srvdtb.people = people
-        self.plan.profile_count = len(people)
-        self.plan.profile_pages = {p.doc_id: person_page(p.person, settings) for p in people.profiles.values()}
-        self.kbdict_new["profiles"] = {
-            p.doc_id: {"person": p.person, "aliases": list(p.aliases), "hash": profile_hash(p),
-                       "status": person_status(p, settings)}
-            for p in people.profiles.values()}
-        self.log.info(f"[PEOPLE] LOADED profiles={len(people)} aliases={people.alias_count()}")
-
-    def people_changes(self) -> tuple[set, set]:
-        """(key, value) pages to force and documents to rebuild because a profile changed since the last build.
-
-        A changed, new or removed profile forces the pages of all its names. A document is rebuilt when a
-        person it names changed status (no profile, no contact, ok), and every document that names
-        anyone is rebuilt when the first profile appears or the last one goes.
-        """
-        settings = getattr(self.srvbes, "people", None) or PeopleSettings()
-        old = self.kbdict_cur.get("profiles") or {}
-        new = self.kbdict_new.get("profiles") or {}
-        pairs = set()
-        for doc_id in set(old) | set(new):
-            before, after = old.get(doc_id), new.get(doc_id)
-            if (before or {}).get("hash") == (after or {}).get("hash"):
-                continue
-            for entry in (before, after):
-                if entry:
-                    names = [entry["person"], *entry.get("aliases", [])]
-                    pairs.update((key, name) for key in settings.keys for name in names)
-
-        def statuses(profiles):
-            return {name: entry.get("status", "missing")
-                    for entry in profiles.values() for name in [entry["person"], *entry.get("aliases", [])]}
-
-        status_old, status_new = statuses(old), statuses(new)
-        flipped = bool(old) != bool(new)
-        docs = set()
-        for doc_id, entry in self.kbdict_new["document"].items():
-            keys = entry.get("keys") or {}
-            names = [v for key in settings.keys for v in keys.get(key) or [] if str(v).strip()]
-            if names and (flipped or any(status_old.get(n, "missing") != status_new.get(n, "missing") for n in names)):
-                docs.add(doc_id)
-        self.log.debug(f"[PEOPLE] REBUILD docs={len(docs)} pairs={len(pairs)}")
-        return pairs, docs
 
     def modified_dates(self, sources) -> dict:
         """{docId: dateModified} of the content documents: Modified, else the last git commit, else the file time."""
