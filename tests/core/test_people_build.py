@@ -57,3 +57,69 @@ def test_invalid_frontmatter_stays_doc_invalid(tmp_path, home):
     assert result.returncode == 0, result.stdout
     assert "DOC_INVALID doc=PERSON-JANE-DOE.md" in result.stdout
     assert "[PEOPLE] PROFILE_" not in result.stdout
+
+
+def rebuild(tmp_path, home, cfg, changes):
+    """Write or delete (None) source files, then build again with debug lines."""
+    source = tmp_path / "repo" / "source"
+    for name, text in changes.items():
+        if text is None:
+            (source / name).unlink()
+        else:
+            (source / name).write_text(text, encoding="utf-8")
+    result = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    return result.stdout
+
+
+def kv(key, value):
+    return f"[PROCESSOR] KV key={key} value={value} compile=True"
+
+
+def test_unchanged_profile_rebuilds_nothing(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {})
+    assert kv("Author", "Jane Doe") not in out
+    assert "COMPILED doc=a.md" not in out
+
+
+def test_profile_edit_forces_author_and_alias_pages(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "b.md": doc("Beta", Author="J. Doe"),
+             "PERSON-JANE-DOE.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE.replace("Bio.", "New bio.")})
+    assert kv("Author", "Jane Doe") in out and kv("Author", "J. Doe") in out
+    assert "COMPILED doc=a.md" not in out and "COMPILED doc=b.md" not in out
+
+
+def test_profile_change_forces_every_people_key(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Owner="Jane Doe"), "PERSON-JANE-DOE.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages, people={"keys": ["Author", "Owner"]})
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE.replace("Bio.", "New bio.")})
+    assert kv("Owner", "Jane Doe") in out
+
+
+def test_status_change_rebuilds_named_docs(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "b.md": doc("Beta"), "PERSON-JANE-DOE.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE.replace("Email: j@x.org\n", "")})
+    assert "COMPILED doc=a.md" in out
+    assert "COMPILED doc=b.md" not in out
+
+
+def test_first_profile_rebuilds_named_docs(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "c.md": doc("Gamma", Author="Bob"), "d.md": doc("Delta")}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE})
+    assert "COMPILED doc=c.md" in out and "COMPILED doc=a.md" in out
+    assert "COMPILED doc=d.md" not in out
+
+
+def test_last_profile_removed_rebuilds_named_docs(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "c.md": doc("Gamma", Author="Bob"), "d.md": doc("Delta"),
+             "PERSON-JANE-DOE.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": None})
+    assert "COMPILED doc=c.md" in out and "COMPILED doc=a.md" in out
+    assert "COMPILED doc=d.md" not in out
