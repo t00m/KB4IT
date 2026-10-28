@@ -73,7 +73,7 @@ class MdLinkExtension(Extension):
         md.treeprocessors.register(_MdLinkProcessor(md), "kb4it_mdlinks", 5)
 
 
-def _body(text: str) -> str:
+def document_body(text: str) -> str:
     """Markdown after the frontmatter and the H1 title line."""
     if text.startswith("---"):
         end = text.find("\n---", 3)
@@ -94,7 +94,7 @@ def scan_document(path):
     import markdown
     from kb4it.core.util import SOURCE_ENCODING
     with open(path, encoding=SOURCE_ENCODING) as fh:
-        text = _body(fh.read())
+        text = document_body(fh.read())
     md = markdown.Markdown(extensions=["extra", "admonition", "toc", "sane_lists", MdLinkExtension()])
     html = md.convert(text)
     anchors = set(_anchor_ids(md.toc_tokens)) | set(re.findall(r'\sid="([^"]+)"', html))
