@@ -27,6 +27,7 @@ from kb4it.services.addpage import AddPageMixin
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 from kb4it.services.headmeta import META_END, META_START, HeadMetaMixin, short_text  # noqa: F401
 from kb4it.services.indexing import IndexingMixin
+from kb4it.services.profilecard import ProfileCardMixin
 
 
 REQUIRED_TEMPLATES = [
@@ -82,7 +83,7 @@ def git_ready(repo) -> bool:
         not any("{" in v for v in values)
 
 
-class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, Service):
+class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Service):
     """Build HTML blocks."""
 
     _templates_lock = threading.Lock()
