@@ -178,6 +178,9 @@ class Backend(Service):
             if not isinstance(repo, dict):
                 raise ConfigError("Hook on_config must return the settings dictionary")
             self.repo = repo
+        # After the hook, so a setting it adds is checked too.
+        from kb4it.core.structured import load_seo
+        self.seo = load_seo(self.repo)
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""

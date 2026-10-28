@@ -279,6 +279,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
         theme_var["git_ok"] = git_ready(theme_var["repo"])
+        theme_var["lang"] = self.page_lang()
         theme_var["help_url"] = HELP_ONLINE_URL  # the KB4IT help site; links open it in a new window
 
         # Only pass to theme those keys used by documents

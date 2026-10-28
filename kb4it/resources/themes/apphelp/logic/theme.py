@@ -16,6 +16,7 @@ from kb4it.core.search import copy_engine
 from apphelp_versions import publish as publish_versions
 
 from kb4it.core.exceptions import ThemeError
+from kb4it.core.structured import DEFAULT_MAP
 from kb4it.core.util import get_hash_from_content, html_id_for
 from kb4it.services.builder import Builder
 
@@ -23,6 +24,14 @@ ASSETS = "resources/themes/apphelp/framework/apphelp"
 INDEX_WARN_BYTES = 2 * 1024 * 1024
 SIGNATURE_REPO_KEYS = ("title", "tagline", "version", "logo", "logo_alt", "git", "git_server",
                        "git_user", "git_repo", "git_branch", "git_path", "apphelp")
+
+
+# apphelp page properties in the structured data; None leaves a key out.
+STRUCTURED_MAP = {
+    "Feature": "about:Thing", "Level": "educationalLevel", "Platform": "audience:Audience",
+    "Since": "version", "Keyword": "keywords", "Plugin": "mentions:SoftwareApplication",
+    "Section": "articleSection", "HelpId": None, "Order": None, "Layout": None, "Related": None,
+}
 
 
 class Theme(Builder):
@@ -35,6 +44,18 @@ class Theme(Builder):
         self.sections = []
         self.flat = []
         self.theme_pages = set()
+
+    def page_lang(self) -> str:
+        """Override: apphelp.lang wins over seo.lang (apphelp had its own setting first)."""
+        return load_config(self.srvbes.get_dict("repo") or {}).lang
+
+    def structured_defaults(self) -> dict:
+        """Override: the apphelp vocabulary (Feature, Level, Platform, Since...) in the structured data."""
+        return {"type": "TechArticle", "map": {**DEFAULT_MAP, **STRUCTURED_MAP}}
+
+    def search_page(self) -> str:
+        """Override: apphelp always builds search.html, which reads ?q=."""
+        return "search.html"
 
     def _source_metadata(self) -> dict:
         documents = self.srvbes.get_kb_dict()["document"]

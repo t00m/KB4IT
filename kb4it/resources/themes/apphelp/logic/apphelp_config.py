@@ -96,7 +96,7 @@ def load_config(repo: dict) -> HelpConfig:
     accent = str(block.get("accent", DEFAULT_ACCENT))
     return HelpConfig(
         strict=bool(block.get("strict", True)),
-        lang=str(block.get("lang", "en")),
+        lang=str(block.get("lang") or (repo.get("seo") or {}).get("lang") or "en"),
         # The accent goes into a <style> tag, so only a plain hex colour is accepted.
         accent=accent if ACCENT_RE.fullmatch(accent) else DEFAULT_ACCENT,
         about=bool(block.get("about", False)),

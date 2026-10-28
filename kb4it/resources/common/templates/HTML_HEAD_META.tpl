@@ -26,6 +26,9 @@
 % if m['feed']:
 <link rel="alternate" type="application/atom+xml" title="${m['site_name']}" href="${m['feed']}">
 % endif
+% if m['jsonld']:
+<script type="application/ld+json">${m['jsonld'] | n}</script>
+% endif
 % if m['favicon']:
 <link rel="icon" href="${m['favicon']}">
 % endif
