@@ -268,6 +268,41 @@ class Processor(Service):
             for p in people.profiles.values()}
         self.log.info(f"[PEOPLE] LOADED profiles={len(people)} aliases={people.alias_count()}")
 
+    def people_changes(self) -> tuple[set, set]:
+        """(key, value) pages to force and documents to rebuild because a profile changed since the last build.
+
+        A changed, new or removed profile forces the pages of all its names. A document is rebuilt when a
+        person it names changed status (no profile, no contact, ok), and every document that names
+        anyone is rebuilt when the first profile appears or the last one goes.
+        """
+        settings = getattr(self.srvbes, "people", None) or PeopleSettings()
+        old = self.kbdict_cur.get("profiles") or {}
+        new = self.kbdict_new.get("profiles") or {}
+        pairs = set()
+        for doc_id in set(old) | set(new):
+            before, after = old.get(doc_id), new.get(doc_id)
+            if (before or {}).get("hash") == (after or {}).get("hash"):
+                continue
+            for entry in (before, after):
+                if entry:
+                    names = [entry["person"], *entry.get("aliases", [])]
+                    pairs.update((key, name) for key in settings.keys for name in names)
+
+        def statuses(profiles):
+            return {name: entry.get("status", "missing")
+                    for entry in profiles.values() for name in [entry["person"], *entry.get("aliases", [])]}
+
+        status_old, status_new = statuses(old), statuses(new)
+        flipped = bool(old) != bool(new)
+        docs = set()
+        for doc_id, entry in self.kbdict_new["document"].items():
+            keys = entry.get("keys") or {}
+            names = [v for key in settings.keys for v in keys.get(key) or [] if str(v).strip()]
+            if names and (flipped or any(status_old.get(n, "missing") != status_new.get(n, "missing") for n in names)):
+                docs.add(doc_id)
+        self.log.debug(f"[PEOPLE] REBUILD docs={len(docs)} pairs={len(pairs)}")
+        return pairs, docs
+
     def modified_dates(self, sources) -> dict:
         """{docId: dateModified} of the content documents: Modified, else the last git commit, else the file time."""
         docs = self.kbdict_new["document"]
@@ -358,6 +393,8 @@ class Processor(Service):
         backlinks_changed = {d for d in titles_new if self.plan.backlinks.get(d) != backlinks_cur.get(d)}
         for doc in sorted(backlinks_changed):
             self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={doc}")
+        people_pairs, people_docs = self.people_changes()
+        analysis.force_kv_pairs.update(people_pairs)
 
         for filepath in sources:
             docId = os.path.basename(filepath)
@@ -367,7 +404,7 @@ class Processor(Service):
                 continue
 
             result = self.step_01_00_analyze_document(docId)
-            if docId in backlinks_changed and not result['compile']:
+            if (docId in backlinks_changed or docId in people_docs) and not result['compile']:
                 result['compile'] = True
             if result['compile']:
                 # Write new source file to temporary dir for the compiler
