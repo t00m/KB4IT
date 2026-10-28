@@ -32,6 +32,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The About KB4IT page shows the README's diagram and formulas as their source. Live, they made every site deploy Mermaid and KaTeX (`resources/render/`), even a site with no diagram or formula of its own. A four-backtick example in the README that holds a three-backtick fence now stays one code block.
 - Stats page: blog and bookshelf kept the cached page when only documents changed; it is now rebuilt when a document or a property changes. System pages are never counted as documents.
 - techdoc dashboard: the first two panels showed the titles "Summary" and "Document types", meant only for screen readers. The build gave their headings its own class, which dropped the class that hides them.
 - techdoc: a document page opened without a `#` in the address made Firefox warn "Empty string passed to getElementById()".

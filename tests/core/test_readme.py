@@ -36,6 +36,35 @@ def test_code_blocks_are_kept_as_written():
     assert "# Not a title\n[a link](other.md)\n" in text
 
 
+RICH = """Intro
+
+````markdown
+```mermaid
+graph LR
+```
+Area $A = r^2$.
+````
+
+```mermaid
+graph LR
+```
+
+The area is $A = \\pi r^2$, it costs \\$5 and `$x$` stays.
+
+$$
+x = 1
+$$
+"""
+
+
+def test_diagrams_and_formulas_show_as_source():
+    text = about_markdown(RICH)
+    assert "````markdown\n```mermaid\ngraph LR\n```\nArea $A = r^2$.\n````" in text, "a nested example stays whole"
+    assert "\n```text\ngraph LR\n```\n" in text
+    assert "is \\$A = \\pi r^2\\$, it costs \\$5 and `$x$` stays." in text
+    assert "\n\\$\\$\nx = 1\n\\$\\$" in text
+
+
 def test_empty_readme_gives_nothing():
     assert about_markdown("") == ""
 

@@ -1,3 +1,5 @@
+import re
+
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 GENERATED = "---\nSystemPage: Yes\n---\n# About KB4IT\n\nold build\n"
@@ -41,4 +43,5 @@ def test_about_headings_are_rendered(tmp_path, home):
     app = (repo / "target" / "about_app.html").read_text(encoding="utf-8")
     assert "Page not found" in app
     assert "How to replace it" in app
-    assert "Description" in (repo / "target" / "about_kb4it.html").read_text(encoding="utf-8")
+    about = (repo / "target" / "about_kb4it.html").read_text(encoding="utf-8")
+    assert re.search(r"<h2[^>]*>\s*Quick start\s*</h2>", about), "README headings are headings"
