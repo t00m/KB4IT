@@ -149,3 +149,23 @@ def test_card_name_is_not_a_section_heading(tmp_path, home):
     text = html(target, "Author_Jane_Doe.html")
     assert 'class="kb-profile-name' in text
     assert "<h2" not in text.split('class="kb-profile', 1)[1].split("PROFILE CARD :: END", 1)[0]
+
+
+def test_private_keys_stay_out_of_the_edit_link(tmp_path, home):
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": JANE},
+                  people={"private": ["Phone"]}, editor=True)
+    text = html(target, "Author_Jane_Doe.html")
+    assert "Phone%3A" not in text and "600%20000" not in text
+    assert "Edit profile" not in text
+
+
+def test_card_links_follow_a_renamed_profile(tmp_path, home):
+    jane = page("Jane Doe", "Works with [Ann](PERSON-ANN.md).", Person="Jane Doe", Email="j@x.org")
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": jane,
+             "PERSON-ANN.md": page("Ann", Person="Ann", Email="a@x.org")}
+    target = site(tmp_path, home, pages)
+    (tmp_path / "repo" / "source" / "PERSON-ANN.md").write_text(page("Annie", Person="Annie", Email="a@x.org"),
+                                                                 encoding="utf-8")
+    result = run_kb4it("build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert '<a href="Author_Annie.html">Ann</a>' in html(target, "Author_Jane_Doe.html")

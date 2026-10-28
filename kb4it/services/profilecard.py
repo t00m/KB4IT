@@ -56,6 +56,10 @@ class ProfileCardMixin:
             return {"create": "", "edit": ""}
         if profile is None:
             return {"create": f"add.html#new=person&Person={quote(value, safe='')}", "edit": ""}
+        # The edit link carries the whole source: a profile with a private value gets none.
+        private = set(self.people_settings().private)
+        if any(profile.values.get(key) for key in private):
+            return {"create": "", "edit": ""}
         path = os.path.join(self.srvbes.get_path("source"), profile.doc_id)
         try:
             with open(path, encoding=SOURCE_ENCODING) as fh:

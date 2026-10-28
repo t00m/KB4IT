@@ -71,6 +71,10 @@ class PeopleMixin:
             for doc_id, targets in (self.kbdict_new.get("links") or {}).items():
                 if doc_id in self.kbdict_new["document"] and any(path in moved for path, _frag in targets):
                     docs.add(doc_id)
+            # A profile card may link to the moved profile too: rebuild every person page.
+            for entry in new.values():
+                names = [entry["person"], *entry.get("aliases", [])]
+                pairs.update((key, name) for key in settings.keys for name in names)
         self.log.debug(f"[PEOPLE] REBUILD docs={len(docs)} pairs={len(pairs)}")
         return pairs, docs
 
