@@ -49,7 +49,7 @@ The full text...
 | `all.html` | Every document in a table |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `properties.html` | Every property and its values |
-| `stats.html` | A tag cloud of the values |
+| `stats.html` | Totals, documents per year and per month, property coverage with the most used values, metadata health (similar values, properties used once, documents with little metadata) and links (most linked documents, documents nothing links to) |
 | `feed.xml` | Atom feed of the newest posts, when `site_url` is set; see [feed](reference-repo-json.md#feed) |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search box in the sidebar shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `add.html` | Markdown editor for a new post; only when `"editor": true` is set in `repo.json`. The footer then shows an "Add document" link. See [the editor](howto-write-document-editor.md) |

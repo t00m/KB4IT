@@ -954,6 +954,31 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     flex-shrink: 0;
 }
 .kb-stats-count:hover { color: #1e87f0; }
+.kb-stats-section { margin-top: 32px; }
+.kb-stats-section h3 { font-size: 0.9rem; font-weight: 600; color: #555; margin: 0 0 8px; }
+.kb-stats-note { font-size: 0.84rem; color: #888; margin: 0 0 12px; }
+.kb-stats-table { margin: 0; }
+.kb-stats-table th { font-size: 0.7rem; }
+.kb-stats-table .kb-stats-key { width: auto; display: inline-block; max-width: 180px; vertical-align: middle; }
+.kb-stats-cover { min-width: 180px; }
+.kb-stats-cover .kb-stats-bar-wrap { display: inline-block; width: 50%; vertical-align: middle; margin-right: 8px; }
+.kb-stats-cover .kb-stats-count { width: auto; }
+.kb-stats-value {
+    display: inline-block;
+    font-size: 0.78rem;
+    background: #f0f6ff;
+    color: #1e6fd0;
+    border-radius: 10px;
+    padding: 1px 8px;
+    margin: 2px 4px 2px 0;
+    text-decoration: none !important;
+}
+.kb-stats-value span { color: #888; margin-left: 2px; }
+.kb-stats-docs { list-style: none; margin: 0; padding: 4px 16px; background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.kb-stats-docs li { padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.84rem; }
+.kb-stats-docs li:last-child { border-bottom: none; }
+.kb-stats-docs .kb-stats-count { display: inline; float: right; }
+.kb-stats-more { color: #999; font-style: italic; }
 
 /* ==========================================================================
    Document metadata section (end of document)
