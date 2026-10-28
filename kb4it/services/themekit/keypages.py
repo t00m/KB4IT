@@ -104,7 +104,7 @@ class KeyPagesMixin(ThemeHost):
             values = self.srvdtb.get_all_values_for_key(key)
             docs = {doc for value in values for doc in self.srvdtb.get_docs_by_key_value(key, value)}
             var['keys'].append({'key': key, 'vfkey': valid_filename(key), 'values': len(values), 'docs': len(docs)})
-            if not self.properties_cloud:
+            if tpl_button is None:  # properties_cloud is off
                 continue
             content = self.build_tagcloud_from_key(key)
             frequency = len(values)
