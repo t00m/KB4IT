@@ -145,8 +145,9 @@ def test_property_page_has_cloud_and_table_but_no_leader(site):
 def test_stats_page(site):
     """Totals, activity and property coverage; Summary is not counted."""
     html = read(site, "stats.html")
-    for anchor in ("stats-activity", "stats-coverage"):
-        assert f'id="{anchor}"' in html, anchor
+    for anchor in ("stats-activity", "stats-coverage", "stats-health", "stats-links"):
+        assert f'id="{anchor}"' in html, anchor  # every section is a card
+    assert 'id="stats-coverage-details"' in html  # its details open in a modal
     assert 'href="Periodicity.html"' in html and 'href="Summary.html"' not in html
 
 
