@@ -1,5 +1,5 @@
 <!-- PROFILE CARD :: START -->
-<section class="kb-profile uk-card uk-card-default uk-card-body uk-margin">
+<div class="kb-profile uk-card uk-card-default uk-card-body uk-margin">
     <p class="kb-profile-name uk-text-lead">${var['person']}</p>
 % if var['alias_of']:
     <p class="kb-profile-alias">Profile of <a href="${var['alias_of']['href']}">${var['alias_of']['name']}</a></p>
@@ -29,5 +29,5 @@
 % endif
     </div>
 % endif
-</section>
+</div>
 <!-- PROFILE CARD :: END -->
