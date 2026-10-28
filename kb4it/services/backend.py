@@ -181,6 +181,8 @@ class Backend(Service):
         # After the hook, so a setting it adds is checked too.
         from kb4it.core.structured import load_seo
         self.seo = load_seo(self.repo)
+        from kb4it.core.people import load_people
+        self.people = load_people(self.repo)
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""
