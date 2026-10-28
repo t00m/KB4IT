@@ -270,6 +270,8 @@ class Processor(Service):
                 "backlinks": repo.get("backlinks", True),
                 # Language and structured data of every page head.
                 "seo": repo.get("seo"),
+                # Which keys name people, and what of their profiles the pages show.
+                "people": repo.get("people"),
                 # Theme templates, logic and assets, its template base and the common templates (TV-05).
                 "theme": (self.srvbes.get_dict("runtime").get("theme") or {}).get("fingerprint", ""),
                 # Any other setting may be printed by the theme (title, tagline, menus): rebuild on change.
