@@ -16,13 +16,13 @@ from typing import Any, Mapping, Sequence
 from kb4it.core.dates import guess_datetime
 from kb4it.core.exceptions import ConfigError
 
-SEO_KEYS = ("structured_data", "lang", "map")
+SEO_KEYS = ("structured_data", "lang", "map", "index", "noindex_keys")
 LANG_RE = re.compile(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*")
 PROPERTY_RE = re.compile(r"[a-z][A-Za-z]*")
 TYPE_RE = re.compile(r"[A-Z][A-Za-z]*")
 
 # Keys KB4IT itself turns into the page node; a mapping may not name them.
-CORE_KEYS = frozenset({"Title", "Summary", "Date", "DocType", "SystemPage", "Bookmark"})
+CORE_KEYS = frozenset({"Title", "Summary", "Date", "Modified", "DocType", "SystemPage", "Bookmark"})
 # Properties KB4IT fills; a mapping may not write them.
 CORE_PROPERTIES = frozenset({"headline", "name", "description", "url", "inLanguage", "datePublished",
                              "dateModified", "mainEntityOfPage"})
@@ -59,6 +59,10 @@ class SeoSettings:
     structured_data: bool = True
     lang: str = ""
     map: dict[str, str | None] = field(default_factory=dict)
+    # True or False: the site may or may not be indexed; None: the owner has not decided yet.
+    index: bool | None = None
+    # Listing pages (property, value, event, stats pages) carry "noindex, follow".
+    noindex_keys: bool = True
 
 
 def load_seo(repo: Mapping[str, Any]) -> SeoSettings:
@@ -87,7 +91,22 @@ def load_seo(repo: Mapping[str, Any]) -> SeoSettings:
         if spec is not None:
             check_target(f"seo.map.{key}", spec)
         mapping[str(key)] = spec
-    return SeoSettings(structured_data=enabled, lang=lang, map=mapping)
+    index = block.get("index")
+    if index is not None and not isinstance(index, bool):
+        raise ConfigError("repo.json 'seo.index' must be true or false")
+    noindex_keys = block.get("noindex_keys", True)
+    if not isinstance(noindex_keys, bool):
+        raise ConfigError("repo.json 'seo.noindex_keys' must be true or false")
+    return SeoSettings(structured_data=enabled, lang=lang, map=mapping, index=index, noindex_keys=noindex_keys)
+
+
+def og_locale(lang: str) -> str:
+    """Open Graph locale of a language tag with a region ('es-ES' -> 'es_ES'); empty without a region."""
+    language, *subtags = lang.split("-")
+    for subtag in subtags:
+        if re.fullmatch(r"[A-Za-z]{2}|[0-9]{3}", subtag):
+            return f"{language.lower()}_{subtag.upper()}"
+    return ""
 
 
 def check_target(where: str, spec: Any) -> tuple[str, str]:
@@ -139,7 +158,7 @@ def page_type(doctype: str, default: str | list[str]) -> str | list[str]:
 
 def document_node(*, title: str, description: str, values: Mapping[str, Sequence[str]],
                   mapping: Mapping[str, str], default_type: str | list[str], lang: str,
-                  url: str = "", website_id: str = "") -> dict[str, Any]:
+                  url: str = "", website_id: str = "", modified: str = "") -> dict[str, Any]:
     """The page node of a document: core properties, then every mapped frontmatter key."""
     doctype = next(iter(values.get("DocType") or []), "")
     node: dict[str, Any] = {"@type": page_type(doctype, default_type)}
@@ -156,6 +175,8 @@ def document_node(*, title: str, description: str, values: Mapping[str, Sequence
     published = iso_date(next(iter(values.get("Date") or []), ""))
     if published:
         node["datePublished"] = published
+    if modified:
+        node["dateModified"] = modified
     if doctype:
         node["learningResourceType"] = doctype
     props: dict[str, list[Any]] = {}

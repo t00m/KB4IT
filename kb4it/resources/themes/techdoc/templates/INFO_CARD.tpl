@@ -30,7 +30,9 @@
                         <dt>${item['key']}</dt>
                         <dd>
 %         for value in item['values']:
-%             if group['chips']:
+%             if not value['url']:
+                            <span>${value['text']}</span>${'' if loop.last else ','}
+%             elif group['chips']:
                             <a class="kb-obj" href="${value['url']}">${value['text']}</a>
 %             else:
                             <a href="${value['url']}">${value['text']}</a>${'' if loop.last else ','}

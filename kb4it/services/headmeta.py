@@ -14,8 +14,8 @@ from kb4it.core.documents import joined_value
 from kb4it.core.mdrich import MATH_MARKS, MERMAID_MARK
 from kb4it.core.publish import absolute
 from kb4it.core.search import load_doc_sections
-from kb4it.core.structured import (DEFAULT_MAP, SeoSettings, document_node, graph, merged_map, render_jsonld,
-                                   website_node)
+from kb4it.core.structured import (DEFAULT_MAP, SeoSettings, document_node, graph, iso_date, merged_map,
+                                   og_locale, render_jsonld, website_node)
 from kb4it.core.util import html_id_for
 
 META_START = "<!-- kb4it:meta -->"
@@ -74,7 +74,8 @@ class HeadMetaMixin:
                       for key in [*mapping, "Date", "DocType"]}
             nodes.append(document_node(title=title, description=description, values=values, mapping=mapping,
                                        default_type=defaults["type"], lang=lang,
-                                       url=absolute(base, page_name) if base else "", website_id=website_id))
+                                       url=absolute(base, page_name) if base else "", website_id=website_id,
+                                       modified=self.modified_date(doc_id)))
         return render_jsonld(graph(nodes)) if nodes else ""
 
     def page_meta(self, page_name, html) -> dict:
@@ -96,6 +97,7 @@ class HeadMetaMixin:
         image = repo.get("og_image")
         theme = self.srvbes.get_dict("theme") or {}
         theme_icon = f"resources/themes/{theme['id']}/{theme['favicon']}" if theme.get("id") and theme.get("favicon") else ""
+        article = bool(doc_id) and not self.srvdtb.is_system(doc_id)
         return {
             "title": title, "site_name": repo.get("title", ""), "type": "article" if doc_id else "website",
             "description": short_text(text, 160), "author": ", ".join(values("Author")),
@@ -104,6 +106,12 @@ class HeadMetaMixin:
             "favicon": repo.get("logo") or theme_icon, "mermaid": MERMAID_MARK in html, "math": any(mark in html for mark in MATH_MARKS),
             "feed": "feed.xml" if self.feed_enabled() else "",
             "has_description": '<meta name="description"' in head, "has_author": '<meta name="author"' in head,
+            "robots": self.page_robots(page_name), "has_robots": '<meta name="robots"' in head,
+            "locale": og_locale(self.page_lang()),
+            "published": iso_date((values("Date") or [""])[0]) if article else "",
+            "modified": self.modified_date(doc_id) if article else "",
+            "authors": values("Author") if article else [], "section": (values("Category") or [""])[0] if article else "",
+            "tags": values("Tag") if article else [],
             "jsonld": "" if "application/ld+json" in head else self.structured_data(page_name, doc_id, title, short_text(text, 160)),
         }
 

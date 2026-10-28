@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, index, noindex, noindex_keys, robots, search engines, Modified, dateModified, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -53,7 +53,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
 | `seo` | | Language of the pages and structured data for search engines; see [structured data](#seo) |
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
-| `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
+| `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one. See [Search engines](#indexing) for `seo.index` |
 | `backlinks` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
 | `feed` | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
 | `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
@@ -111,6 +111,8 @@ Every page also carries structured data: a [schema.org](https://schema.org/) des
 ```json
 "seo": {
   "lang": "es",
+  "index": true,
+  "noindex_keys": true,
   "structured_data": true,
   "map": {"Team": "contributor:Organization", "Scope": null}
 }
@@ -118,7 +120,9 @@ Every page also carries structured data: a [schema.org](https://schema.org/) des
 
 | Key | Default | Meaning |
 |---|---|---|
-| `lang` | `en` | Language of the pages: `<html lang>` and the structured data. A language tag such as `en`, `es` or `pt-BR`. apphelp's own `apphelp.lang` wins when both are set |
+| `lang` | `en` | Language of the pages: `<html lang>` and the structured data. A language tag such as `en`, `es` or `pt-BR`. apphelp's own `apphelp.lang` wins when both are set. A tag with a region (`es-ES`) also gives the Open Graph locale (`es_ES`) |
+| `index` | not set | `true`: search engines may index the site. `false`: they may not. Not set: as `true`, and the build reminds you to decide. See [Search engines](#indexing) |
+| `noindex_keys` | `true` | Asks search engines not to list the pages that only list documents: property, value, event, stats, bookmarks and all-documents pages |
 | `structured_data` | `true` | `false` leaves the JSON-LD out of every page |
 | `map` | | Changes which properties go into the structured data: `"Property": "schemaProperty"`, `"Property": "schemaProperty:Type"` for a typed value, or `null` to leave a property out |
 
@@ -139,7 +143,35 @@ Properties KB4IT maps by default:
 | `Book`, `Chapter`, `Command` | `isPartOf` (Book), `position`, `mentions` (DefinedTerm) | bookshelf |
 | `Feature`, `Level`, `Platform`, `Since`, `Keyword`, `Plugin`, `Section` | `about`, `educationalLevel`, `audience`, `version`, `keywords`, `mentions`, `articleSection` | apphelp |
 
-A document with no known `DocType` is a technical article in techdoc and apphelp, a blog post in blog and a chapter in bookshelf. `Title`, `Summary`, `Date` and `DocType` are always used and cannot be mapped; properties in `ignored_keys` are never written. A malformed `seo` block stops the build with a message naming the entry. Changing `seo` rebuilds every page.
+A document with no known `DocType` is a technical article in techdoc and apphelp, a blog post in blog and a chapter in bookshelf. `Title`, `Summary`, `Date`, `Modified` and `DocType` are always used and cannot be mapped; properties in `ignored_keys` are never written. A malformed `seo` block stops the build with a message naming the entry. Changing `seo` rebuilds every page.
+
+The date a document last changed (`dateModified` in the structured data, `article:modified_time` in the Open Graph tags and `<lastmod>` in `sitemap.xml`) is, in this order:
+
+1. The document's [`Modified`](reference-document-format.md#dates) property.
+2. The date of the last commit that changed the file, when the knowledge base is in a git repository. KB4IT reads all dates with one `git log` per build and keeps them in `var/db/gitdates.json` until the next commit. Without git, it goes on to the next step.
+3. The time the file was last saved.
+
+The value is never older than `Date`; when it would be, `Date` is used. A page is rebuilt when this date changes, for example after a commit, so the page and the sitemap always agree.
+
+Document pages also get the Open Graph article tags: `article:published_time` from `Date`, `article:modified_time`, one `article:author` per `Author`, `article:section` from the first `Category` and one `article:tag` per `Tag`.
+
+### Search engines {#indexing}
+
+`seo.index` decides, for the whole site, whether search engines may index it. There is no setting per document.
+
+| `seo.index` | Pages | `robots.txt` | `sitemap.xml` |
+|---|---|---|---|
+| `false` | Every page has `<meta name="robots" content="noindex, nofollow">` | `Disallow: /` for every crawler, even without `site_url` | Not written; an old one is removed |
+| `true` | Indexable | With `site_url`, allows everything and names the sitemap | With `site_url` |
+| not set | As `true` | As `true` | As `true` |
+
+While `seo.index` is not set, every build logs `[SEO] INDEX_UNSET` and `kb4it verify` shows a notice asking you to decide. It is not an error. `kb4it create --index yes|no` and the **Allow search engines** choice of the [terminal interface](howto-use-tui.md#add) write it for you.
+
+With `noindex_keys` on (the default), the pages that only list documents carry `noindex, follow`: search engines follow their links to the documents but do not list the pages themselves, and the pages leave `sitemap.xml`. These are the property, value, properties, event (day, month and year), stats, bookmarks and all-documents pages of techdoc, blog and bookshelf. apphelp has none; its `topics.html` stays indexable.
+
+The `404.html` page, the Add page (`add.html`) and the techdoc `admin/` page always carry `noindex`. A template or an override that writes its own `<meta name="robots">` tag wins over the one KB4IT adds.
+
+A `robots.txt` in `source/` is always used instead of the generated one. KB4IT never replaces or deletes a `robots.txt` in `target/` that it did not write; the build logs `ROBOTS_KEPT` instead.
 
 ## Feed {#feed}
 

@@ -18,7 +18,9 @@ RETIRED_STATUSES = ('Obsolete', 'Deprecated', 'Withdrawn', 'Rejected')
 
 
 def value_url(props, key, value):
-    """Return the page of one value: the day's events page for Date, else the key-value page."""
+    """Return the page of one value: the day's events page for Date, none for Modified, else the key-value page."""
+    if key == 'Modified':
+        return ''
     if key == 'Date':
         day = value[:10]
         if len(day) == 10 and day.replace('-', '').isdigit():

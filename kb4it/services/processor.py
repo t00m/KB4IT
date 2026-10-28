@@ -22,6 +22,7 @@ from kb4it.services.addpage import ADD_DOC
 from kb4it.core.documents import parse_markdown_attributes
 from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
+from kb4it.core.moddates import GIT_CACHE, file_time, git_dates, modified_date
 from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
                              page_name_clashes, string_timestamp, valid_filename,
@@ -53,6 +54,7 @@ class BuildPlan:
     invalid_docs: list = field(default_factory=list)  # [(docId, reason), ...]
     name_clashes: list = field(default_factory=list)  # [(docId, docId), ...] pages differing only by case
     backlinks: dict = field(default_factory=dict)  # {docId: [[title, source docId], ...]}
+    modified: dict = field(default_factory=dict)  # {docId: dateModified}, see Processor.modified_dates()
 
     @property
     def invalid_count(self) -> int:
@@ -219,6 +221,9 @@ class Processor(Service):
             names = ", ".join(f"{doc} ({reason})" for doc, reason in problems)
             raise CompilationError(f"{len(problems)} invalid document(s): {names}")
 
+        self.plan.modified = self.modified_dates(sources)
+        self.kbdict_new["modified"] = self.plan.modified
+
         # Rebuild every page when the theme says the site as a whole changed.
         signature = self.srvthm.site_signature()
         self.kbdict_new["site_signature"] = signature
@@ -235,6 +240,24 @@ class Processor(Service):
 
         # The new kbdict stays in memory; Backend.commit_kbdict() writes it once the build succeeded.
 
+
+    def modified_dates(self, sources) -> dict:
+        """{docId: dateModified} of the content documents: Modified, else the last git commit, else the file time."""
+        docs = self.kbdict_new["document"]
+        paths = {os.path.basename(f): f for f in sources}
+        wanted = [d for d, entry in docs.items() if d in paths and "SystemPage" not in (entry.get("keys") or {})]
+        if not wanted:
+            return {}
+        git = git_dates(self.srvbes.get_path("source"), os.path.join(self.srvbes.get_path("db"), GIT_CACHE))
+        result = {}
+        for docId in wanted:
+            keys = docs[docId].get("keys") or {}
+            modified = next(iter(keys.get("Modified") or []), "")
+            published = next(iter(keys.get("Date") or []), "")
+            git_date = git.get(docId, "")
+            mtime = "" if git_date else file_time(paths[docId])
+            result[docId] = modified_date(str(modified), str(published), git_date, mtime)
+        return result
 
     def signature_parts(self) -> dict:
         """Core settings whose change must rebuild every page; each feature adds its own entry."""
@@ -447,10 +470,14 @@ class Processor(Service):
         NOT_CACHED = not os.path.exists(cached_document)
         result['not_cached'] = NOT_CACHED
 
-        DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
+        # dateModified is printed in the page head: a new value (a commit, a touched file) rebuilds the page.
+        MODIFIED_DIFFERS = self.plan.modified.get(docId) != (self.kbdict_cur.get("modified") or {}).get(docId)
+        result['modified_differs'] = MODIFIED_DIFFERS
+
+        DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or MODIFIED_DIFFERS or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
-        self.log.debug(f"[PROCESSOR] ANALYZE doc={docId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
+        self.log.debug(f"[PROCESSOR] ANALYZE doc={docId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} modified={MODIFIED_DIFFERS} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
 
         return result
 

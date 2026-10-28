@@ -113,7 +113,7 @@ class KeyPagesMixin(ThemeHost):
             vbtn.update(self.cloud_measure(frequency, max_frequency))
             vbtn['tooltip'] = f"{frequency} values"
             var['buttons'].append(tpl_button.render(var=vbtn))
-        self.distribute_md('properties', self.template('PAGE_PROPERTIES').render(var=var))
+        self.distribute_md('properties', self.template('PAGE_PROPERTIES').render(var=var), listing=True)
         self._add_system_page('properties', self.properties_title)
 
     def build_page_key(self, key: str, values: list[str]) -> None:
@@ -133,7 +133,7 @@ class KeyPagesMixin(ThemeHost):
             })
         content = self.template('PAGE_KEY').render(var=var)
         var['pagename'] = valid_filename(key)
-        self.distribute_md(var['pagename'], content)
+        self.distribute_md(var['pagename'], content, listing=True)
         self._add_system_page(var['pagename'], key)
         self.log.debug(f"[THEME] KEY_TARGET key={key} resource={var['pagename']}")
 
@@ -153,7 +153,7 @@ class KeyPagesMixin(ThemeHost):
         var['has_toc'] = False
         var['page']['dt_documents'] = self.build_datatable([], sorted_docs)
         if var['compile']:
-            self.distribute_md(var['pagename'], self.template('PAGE_KEY_VALUE').render(var=var))
+            self.distribute_md(var['pagename'], self.template('PAGE_KEY_VALUE').render(var=var), listing=True)
             self._add_system_page(var['pagename'], var['title'])
             self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
 
@@ -175,7 +175,7 @@ class KeyPagesMixin(ThemeHost):
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable
         page = self.template('PAGE_BOOKMARKS').render(var=var)
-        self.distribute_md('bookmarks', page)
+        self.distribute_md('bookmarks', page, listing=True)
         self.log.debug("[THEME] BOOKMARKS_PAGE_CREATED")
         return page
 
@@ -186,6 +186,6 @@ class KeyPagesMixin(ThemeHost):
         var = self.get_theme_var()
         var['content'] = self.build_datatable([], list(self.srvdtb.get_documents()))
         page = self.template('PAGE_ALL').render(var=var)
-        self.distribute_md('all', page)
+        self.distribute_md('all', page, listing=True)
         self._add_system_page('all', 'All documents')
         return page

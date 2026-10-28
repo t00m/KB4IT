@@ -247,7 +247,7 @@ class _EventsTheme(_Theme):
     def build_datatable(self, headers=None, doclist=None, table_id="kb4it-datatable"):
         return "table"
 
-    def distribute_md(self, name, content):
+    def distribute_md(self, name, content, listing=False):
         self.built.append(name)
 
     def distribute_html(self, name, path):

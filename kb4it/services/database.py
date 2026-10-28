@@ -37,7 +37,7 @@ class Database(Service):
         self.db: dict[str, DBRecord] = {}
         self.keys = {
             "all": [],
-            "blocked": ["Title", "SystemPage", "Date"],
+            "blocked": ["Title", "SystemPage", "Date", "Modified"],
             "custom": [],
             "theme": [],
             "ignored": repo.get("ignored_keys") or [],

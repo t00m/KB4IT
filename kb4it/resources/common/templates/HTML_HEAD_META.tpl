@@ -1,6 +1,9 @@
 <%
     m = var['meta']
 %><!-- kb4it:meta -->
+% if m['robots'] and not m['has_robots']:
+<meta name="robots" content="${m['robots']}">
+% endif
 % if m['description'] and not m['has_description']:
 <meta name="description" content="${m['description']}">
 % endif
@@ -14,6 +17,24 @@
 <meta property="og:title" content="${m['title']}">
 <meta property="og:type" content="${m['type']}">
 <meta property="og:site_name" content="${m['site_name']}">
+% if m['locale']:
+<meta property="og:locale" content="${m['locale']}">
+% endif
+% if m['published']:
+<meta property="article:published_time" content="${m['published']}">
+% endif
+% if m['modified']:
+<meta property="article:modified_time" content="${m['modified']}">
+% endif
+% for author in m['authors']:
+<meta property="article:author" content="${author}">
+% endfor
+% if m['section']:
+<meta property="article:section" content="${m['section']}">
+% endif
+% for tag in m['tags']:
+<meta property="article:tag" content="${tag}">
+% endfor
 % if m['description']:
 <meta property="og:description" content="${m['description']}">
 % endif

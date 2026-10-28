@@ -98,7 +98,7 @@ class EventsMixin(ThemeHost):
                         edt = _parse_date(f"{year:4d}.{month:02d}.{day:02d}")
                         var['page'] = {'datatable': self.build_datatable([], day_docs)}
                         var['page']['title'] = edt.strftime("Events on %A, %B %d %Y")
-                        self.distribute_md(name, tpl_days.render(var=var))
+                        self.distribute_md(name, tpl_days.render(var=var), listing=True)
                         self._add_event_page(name, f"Events on {get_human_datetime_day(edt)}")
                     else:
                         self.distribute_html(name, self._cached_page(name))
@@ -113,7 +113,7 @@ class EventsMixin(ThemeHost):
                     edt = _parse_date(f"{year:4d}.{month:02d}.01")
                     var['page'] = {'datatable': self.build_datatable([], month_docs)}
                     var['page']['title'] = edt.strftime("Events on %B, %Y")
-                    self.distribute_md(name, tpl_months.render(var=var))
+                    self.distribute_md(name, tpl_months.render(var=var), listing=True)
                     self._add_event_page(name, f"Events on {get_human_datetime_month(edt)}")
                 else:
                     self.distribute_html(name, self._cached_page(name))
@@ -127,7 +127,7 @@ class EventsMixin(ThemeHost):
                 built_years.add(f"{year:4d}")
                 var['page'] = {'title': f"Archive / {year}"}
                 var['page']['datatable'] = self.build_datatable([], year_docs)
-                self.distribute_md(name, tpl_years.render(var=var))
+                self.distribute_md(name, tpl_years.render(var=var), listing=True)
                 self._add_event_page(name, f"Archive / {year}")
             else:
                 self.distribute_html(name, self._cached_page(name))

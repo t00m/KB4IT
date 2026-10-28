@@ -7,6 +7,7 @@ Files and tags for publishing a site: site URL, sitemap.xml, robots.txt, Atom fe
 # License: GPLv3
 """
 
+import re
 from urllib.parse import urlsplit
 
 from kb4it.core.exceptions import ConfigError
@@ -48,6 +49,30 @@ def sitemap_xml(entries) -> str:
 
 def robots_txt(base) -> str:
     return f"{ROBOTS_MARK}\nUser-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n"
+
+
+def robots_block_txt() -> str:
+    """robots.txt of a site no search engine may crawl (repo.json seo.index false)."""
+    return f"{ROBOTS_MARK}\nUser-agent: *\nDisallow: /\n"
+
+
+ROBOTS_NOINDEX = re.compile(r"""<meta\s+name=["']robots["']\s+content=["'][^"']*\bnoindex\b""", re.IGNORECASE)
+
+
+def page_noindex(path) -> bool:
+    """True when the head of an HTML page holds a robots meta tag with noindex; reads only up to </head>."""
+    head = ""
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        while True:
+            chunk = fh.read(16384)
+            head += chunk
+            end = head.lower().find("</head>")
+            if end >= 0:
+                head = head[:end]
+                break
+            if not chunk:
+                break
+    return bool(ROBOTS_NOINDEX.search(head))
 
 
 def site_pages(target, exclude=()):

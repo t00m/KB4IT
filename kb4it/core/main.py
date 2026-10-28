@@ -304,6 +304,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="App template to use (default: 'default')",
     )
     init_parser.add_argument("repo_path", help="Path to the repository")
+    init_parser.add_argument(
+        "--index", choices=("yes", "no"),
+        help="Allow search engines to index the site: writes seo.index into repo.json (default: decide later)")
 
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")

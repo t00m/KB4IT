@@ -19,7 +19,7 @@ Run `kb4it` without any command in a terminal and it opens a full-screen interfa
 
 The main screen lists your projects. Knowledge bases made with `kb4it create`, here or on the command line, are added automatically.
 
-- **New Project** creates a knowledge base: choose a theme and a sample app, type a display name and the folder to create. The parent folder must exist.
+- **New Project** creates a knowledge base: choose a theme and a sample app, type a display name and the folder to create, and answer **Allow search engines** with Yes or No. The parent folder must exist, and nothing is created until you answer. The answer goes into `repo.json` as `seo.index`, like `kb4it create --index`; see [Search engines](reference-repo-json.md#indexing).
 - **Import Project** adds one you already have: type the path of its `config/repo.json` and press <kbd>Enter</kbd> to preview it, then **Import**.
 - **Delete Project** removes the selected project from the list. The files on disk stay.
 
