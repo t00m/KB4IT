@@ -18,6 +18,7 @@ from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              get_font_size, get_human_datetime,
                              get_human_datetime_year, guess_datetime,
                              html_id_for, valid_filename)
+from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
 
 
@@ -32,6 +33,10 @@ class Theme(DocumentTheme):
         super()._initialize()
         self._undated = set()
         self._undated_lock = threading.Lock()
+
+    def structured_defaults(self):
+        """Override: a post is a BlogPosting and its Category is the section of the blog."""
+        return {'type': 'BlogPosting', 'map': {**DEFAULT_MAP, 'Category': 'articleSection'}}
 
     def note_undated(self, doc, dates):
         """Log once a post without a usable Date: it is listed after the dated ones, without a calendar line."""

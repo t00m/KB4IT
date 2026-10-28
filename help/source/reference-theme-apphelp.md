@@ -80,7 +80,7 @@ The `apphelp` block of `repo.json`:
 | Key | Meaning |
 |---|---|
 | `strict` | `true` by default: metadata problems and help ids pointing nowhere fail the build |
-| `lang` | Language of the pages |
+| `lang` | Language of the pages; without it, `seo.lang` of [repo.json](reference-repo-json.md#seo), else `en` |
 | `accent` | Accent colour |
 | `about` | `true` adds an about page |
 | `contract` | A file listing, one per line, the help ids and anchors the application opens; a missing one fails the build |

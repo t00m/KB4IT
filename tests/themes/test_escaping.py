@@ -50,7 +50,7 @@ def _offences(page):
     for element in tree.iter():
         if not isinstance(element.tag, str):
             continue
-        if element.tag == "script" and element.get("type") == "application/json":
+        if element.tag == "script" and element.get("type") in ("application/json", "application/ld+json"):
             continue  # data, never run; a value that closed it would show up as a script of its own
         if element.tag in ("script", "svg", "img") and "alert(" in (element.text or "") + str(dict(element.attrib)):
             found.append(f"<{element.tag}> {dict(element.attrib)} {element.text!r:.60}")

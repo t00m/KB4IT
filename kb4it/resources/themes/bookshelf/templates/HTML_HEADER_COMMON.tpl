@@ -2,7 +2,7 @@
 from kb4it.core.util import valid_filename
 %>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${var['lang']}">
 <head>
     <!-- PAGE METADATA :: START -->
     <meta charset="UTF-8">

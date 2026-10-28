@@ -245,6 +245,8 @@ class Processor(Service):
                 "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
                 "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else "",
                 "backlinks": repo.get("backlinks", True),
+                # Language and structured data of every page head.
+                "seo": repo.get("seo"),
                 # Theme templates, logic and assets, its template base and the common templates (TV-05).
                 "theme": (self.srvbes.get_dict("runtime").get("theme") or {}).get("fingerprint", ""),
                 # Any other setting may be printed by the theme (title, tagline, menus): rebuild on change.

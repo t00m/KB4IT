@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -51,6 +51,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `fail_on_invalid` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
+| `seo` | | Language of the pages and structured data for search engines; see [structured data](#seo) |
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one |
 | `backlinks` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
@@ -102,6 +103,43 @@ The index grows with your documents; above 5 MB the build warns with `[SEARCH] I
 Every page gets a short description and [Open Graph](https://ogp.me/) tags, so links shared in chats and social networks show a title and a summary. The description is the document's `Summary` property, or its first lines cut to 160 characters; pages that are not documents use `tagline`. With `site_url` set, each page also gets a canonical link and its full address, and `og_image` adds a preview image.
 
 The tags come from the template `HTML_HEAD_META.tpl`, which a theme can replace.
+
+## Language and structured data {#seo}
+
+Every page also carries structured data: a [schema.org](https://schema.org/) description in JSON-LD that search engines, enterprise search tools and link previews read. A document becomes an article whose type follows its `DocType` (`How-to guide` is a how-to, `Reference` a technical article, `Explanation` an article), with its title, `Summary`, `Date`, author and the properties listed below. The home page describes the website and, when the site has a search page, how to search it. Absolute addresses need `site_url`; without it the data is still written, without them.
+
+```json
+"seo": {
+  "lang": "es",
+  "structured_data": true,
+  "map": {"Team": "contributor:Organization", "Scope": null}
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `lang` | `en` | Language of the pages: `<html lang>` and the structured data. A language tag such as `en`, `es` or `pt-BR`. apphelp's own `apphelp.lang` wins when both are set |
+| `structured_data` | `true` | `false` leaves the JSON-LD out of every page |
+| `map` | | Changes which properties go into the structured data: `"Property": "schemaProperty"`, `"Property": "schemaProperty:Type"` for a typed value, or `null` to leave a property out |
+
+Properties KB4IT maps by default:
+
+| Property | schema.org | Themes |
+|---|---|---|
+| `Author` | `author` (Person) | all |
+| `Tag` | `keywords` | all |
+| `Topic` | `about` | all |
+| `Category` | `genre`; in blog, `articleSection` | all |
+| `WorkType` | `genre` | all |
+| `Scope` | `audience` | all |
+| `Product`, `OS`, `Database` | `mentions` (SoftwareApplication) | all |
+| `Protocol` | `mentions` (DefinedTerm) | all |
+| `Project` | `isPartOf` (CreativeWorkSeries) | all |
+| `Status` | `creativeWorkStatus`; not in bookshelf, where it is reading progress | all |
+| `Book`, `Chapter`, `Command` | `isPartOf` (Book), `position`, `mentions` (DefinedTerm) | bookshelf |
+| `Feature`, `Level`, `Platform`, `Since`, `Keyword`, `Plugin`, `Section` | `about`, `educationalLevel`, `audience`, `version`, `keywords`, `mentions`, `articleSection` | apphelp |
+
+A document with no known `DocType` is a technical article in techdoc and apphelp, a blog post in blog and a chapter in bookshelf. `Title`, `Summary`, `Date` and `DocType` are always used and cannot be mapped; properties in `ignored_keys` are never written. A malformed `seo` block stops the build with a message naming the entry. Changing `seo` rebuilds every page.
 
 ## Feed {#feed}
 

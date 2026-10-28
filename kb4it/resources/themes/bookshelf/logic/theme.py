@@ -19,6 +19,7 @@ from html import escape
 
 from kb4it.core.util import (ellipsize_text, get_human_datetime,
                              guess_datetime, html_id_for, valid_filename)
+from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
 
 
@@ -97,6 +98,11 @@ class Theme(DocumentTheme):
         self._context_ready = False
 
     # ------------------------------------------------------------------ data
+    def structured_defaults(self):
+        """Override: a note is a Chapter of its Book; Status is reading progress, not the state of the text."""
+        return {'type': 'Chapter', 'map': {**DEFAULT_MAP, 'Book': 'isPartOf:Book', 'Chapter': 'position',
+                                          'Command': 'mentions:DefinedTerm', 'Status': None}}
+
     def _first(self, docId, key, default=''):
         values = self.srvdtb.get_values(docId, key)
         if values and values[0]:
