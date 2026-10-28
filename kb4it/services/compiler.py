@@ -62,7 +62,8 @@ class Compiler(Service):
     def execute(self):
         """Compile Markdown documents to HTML."""
         self.log.debug("[COMPILER] START")
-        self.redirects = dict(getattr(self.srvbes.get_plan(), "profile_pages", None) or {})
+        plan = self.srvbes.get_plan() if hasattr(self.srvbes, "get_plan") else None
+        self.redirects = dict(getattr(plan, "profile_pages", None) or {})
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(self.srvbes.get_path("tmp"), "resources")
