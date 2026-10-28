@@ -17,6 +17,7 @@
   E.views = {};
   var base = {};      // text at creation or at the last save, per category
   var editing = { name: "", text: "" };   // the document the edit dialog holds
+  var prefill = {};   // one-shot frontmatter values per category, from add.html#new=...
   var handles = {};   // file handle of the last save, per category
   var look = {};      // Compartment of the light or dark look, per category
   var data = null;
@@ -536,6 +537,12 @@
 
   function freshState(cat) {
     var doc = cat === EDIT ? editing.text : E.skeleton(cat);
+    if (prefill[cat]) {
+      // One-shot values from add.html#new=..., see E.newFromHash.
+      doc = KB4ITFrontmatter.withValues(doc, prefill[cat]);
+      if (prefill[cat].Person) { doc = KB4ITFrontmatter.withTitle(doc, prefill[cat].Person); }
+      delete prefill[cat];
+    }
     base[cat] = doc;
     forgetHandle(cat);
     // A new document selects its title placeholder; an edited one keeps its title and starts on its body.
@@ -570,13 +577,7 @@
   E.editFromHash = function () {
     var hash = window.location.hash || "";
     if (hash.indexOf("#edit=") !== 0 || !document.getElementById("modal-add-" + EDIT)) { return false; }
-    var params = {};
-    hash.slice(1).split("&").forEach(function (part) {
-      var eq = part.indexOf("=");
-      if (eq > 0) {
-        try { params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1)); } catch (e) { /* not text */ }
-      }
-    });
+    var params = KB4ITFrontmatter.hashParams(hash);
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
@@ -586,6 +587,23 @@
       return false;
     }
     E.edit(name, params.text);
+    return true;
+  };
+
+  // add.html#new=<category>&<Key>=<value>..., as the Create profile button writes it: the category opens
+  // with its skeleton, those keys set, and the title set to the Person value when one is given.
+  E.newFromHash = function () {
+    var hash = window.location.hash || "";
+    if (hash.indexOf("#new=") !== 0) { return false; }
+    var params = KB4ITFrontmatter.hashParams(hash);
+    var cat = params["new"];
+    if (!cat || cat === EDIT || !document.getElementById("modal-add-" + cat)) { return false; }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    delete params["new"];
+    prefill[cat] = params;
+    E.open(cat);
     return true;
   };
 
@@ -1206,7 +1224,7 @@
       else if ((cat = button.getAttribute("data-kb-copy")) !== null) { E.copy(cat); }
       else if ((cat = button.getAttribute("data-kb-close")) !== null) { E.close(cat); }
     });
-    E.editFromHash();
+    E.editFromHash() || E.newFromHash();
   };
 
   if (document.readyState === "loading") {

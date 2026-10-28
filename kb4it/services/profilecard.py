@@ -7,8 +7,12 @@ Profile card service: the profile of a person on the page of a people key value 
 # License: GPL v3
 """
 
+import os
+from urllib.parse import quote
+
 from kb4it.core.mdconfig import load_settings, sanitize_html
 from kb4it.core.people import PeopleSettings, Profile, person_page
+from kb4it.core.util import SOURCE_ENCODING
 
 # Keys shown first on the card, in this order; the others follow in alphabetical order.
 CARD_ORDER = ("Role", "Team", "Email", "Phone", "Chat", "Url", "Location")
@@ -46,16 +50,39 @@ class ProfileCardMixin:
         body = md.convert(profile.body)
         return sanitize_html(body) if settings.sanitize else body
 
+    def profile_actions(self, value: str, profile: Profile | None) -> dict:
+        """Create and Edit links to the Add page, while the editor is on; the texts travel in the address."""
+        if not self.editor_enabled():
+            return {"create": "", "edit": ""}
+        if profile is None:
+            return {"create": f"add.html#new=person&Person={quote(value, safe='')}", "edit": ""}
+        path = os.path.join(self.srvbes.get_path("source"), profile.doc_id)
+        try:
+            with open(path, encoding=SOURCE_ENCODING) as fh:
+                text = fh.read()
+        except OSError:
+            return {"create": "", "edit": ""}
+        return {"create": "", "edit": f"add.html#edit={quote(profile.doc_id, safe='')}&text={quote(text, safe='')}"}
+
     def profile_card(self, key: str, value: str) -> str:
-        """HTML of the profile card for a value page, or an empty string."""
+        """HTML of the profile card for a value page, or an empty string.
+
+        A person without a profile gets a card only while the editor is on, to offer Create profile.
+        """
         settings = self.people_settings()
         people = getattr(self.srvdtb, "people", None)
-        profile = people.lookup(value) if key in settings.keys and people is not None else None
-        if profile is None:
+        if key not in settings.keys or people is None:
             return ""
+        profile = people.lookup(value)
+        actions = self.profile_actions(value, profile)
+        if profile is None:
+            if not actions["create"]:
+                return ""
+            var = {"person": value, "rows": [], "body": "", "alias_of": None, "actions": actions}
+            return self.render_template("HTML_PROFILE_CARD", var)
         # An alias page points to the page of the Person name.
         alias_of = None if value == profile.person else {"href": person_page(profile.person, settings),
                                                           "name": profile.person}
         var = {"person": profile.person, "rows": self.profile_rows(profile), "body": self._profile_body(profile),
-               "alias_of": alias_of}
+               "alias_of": alias_of, "actions": actions}
         return self.render_template("HTML_PROFILE_CARD", var)

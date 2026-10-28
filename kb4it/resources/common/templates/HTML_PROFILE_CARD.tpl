@@ -1,6 +1,6 @@
 <!-- PROFILE CARD :: START -->
 <section class="kb-profile uk-card uk-card-default uk-card-body uk-margin">
-    <h2 class="kb-profile-name">${var['person']}</h2>
+    <p class="kb-profile-name uk-text-lead">${var['person']}</p>
 % if var['alias_of']:
     <p class="kb-profile-alias">Profile of <a href="${var['alias_of']['href']}">${var['alias_of']['name']}</a></p>
 % endif
@@ -19,6 +19,15 @@
 % if var['body']:
     <div class="kb-profile-body">${var['body'] | n}</div>
 % endif
-    <div class="kb-profile-actions"></div>
+% if var['actions']['create'] or var['actions']['edit']:
+    <div class="kb-profile-actions">
+% if var['actions']['create']:
+        <a class="uk-button uk-button-default uk-button-small" href="${var['actions']['create']}">Create profile</a>
+% endif
+% if var['actions']['edit']:
+        <a class="uk-button uk-button-default uk-button-small" href="${var['actions']['edit']}">Edit profile</a>
+% endif
+    </div>
+% endif
 </section>
 <!-- PROFILE CARD :: END -->

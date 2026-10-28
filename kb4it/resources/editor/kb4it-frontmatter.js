@@ -669,10 +669,44 @@ var KB4ITFrontmatter = (function () {
     };
   }
 
+  // The text with each key set to one value, in key order (a missing key is added before the closing "---").
+  function withValues(text, values) {
+    Object.keys(values).forEach(function (key) {
+      var change = setValues(text, key, [String(values[key])]);
+      text = text.slice(0, change.from) + change.insert + text.slice(change.to);
+    });
+    return text;
+  }
+
+  // The text with its first "# " heading below the frontmatter replaced; unchanged when it has none.
+  function withTitle(text, title) {
+    var b = bounds(text);
+    var from = b.open && b.close !== null ? b.end : 0;
+    var m = /^#[ \t]+(.*)$/m.exec(text.slice(from));
+    if (!m) { return text; }
+    var start = from + m.index + m[0].length - m[1].length;
+    return text.slice(0, start) + title + text.slice(start + m[1].length);
+  }
+
+  // "#a=1&b=x%20y" as {a: "1", b: "x y"}; a part that does not decode is skipped.
+  function hashParams(hash) {
+    var params = {};
+    String(hash || "").replace(/^#/, "").split("&").forEach(function (part) {
+      var eq = part.indexOf("=");
+      if (eq > 0) {
+        try { params[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1)); } catch (e) { /* not text */ }
+      }
+    });
+    return params;
+  }
+
   return {
     bounds: bounds,
     parse: parse,
     setValues: setValues,
+    withValues: withValues,
+    withTitle: withTitle,
+    hashParams: hashParams,
     quote: quote,
     validFilename: validFilename,
     slugify: slugify,

@@ -1,5 +1,7 @@
 """Author profiles on the pages: the profile card, alias pages, pages for profiles nobody names, buttons."""
 
+from urllib.parse import quote
+
 import pytest
 
 from tests.helpers import page, run_kb4it, write_repo
@@ -117,3 +119,33 @@ def test_unnamed_profile_page_survives_an_unchanged_build(tmp_path, home):
     assert result.returncode == 0, result.stdout
     assert "[PEOPLE] KV key=Author value=Ann compile=False" in result.stdout
     assert "kb-profile" in html(target, "Author_Ann.html")
+
+
+def test_edit_button_with_profile(tmp_path, home):
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": JANE}, editor=True)
+    text = html(target, "Author_Jane_Doe.html")
+    assert "Edit profile" in text and "Create profile" not in text
+    source = quote(JANE, safe="")
+    assert f'href="add.html#edit=PERSON-JANE-DOE.md&amp;text={source}"' in text
+
+
+def test_create_button_without_profile(tmp_path, home):
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Bob Smith"), "PERSON-JANE-DOE.md": JANE}, editor=True)
+    text = html(target, "Author_Bob_Smith.html")
+    assert "Create profile" in text
+    assert 'href="add.html#new=person&amp;Person=Bob%20Smith"' in text
+
+
+def test_no_buttons_when_editor_off(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "b.md": doc("Beta", Author="Bob"), "PERSON-JANE-DOE.md": JANE}
+    target = site(tmp_path, home, pages, editor=False)
+    assert "Edit profile" not in html(target, "Author_Jane_Doe.html")
+    assert "kb-profile" not in html(target, "Author_Bob.html")
+
+
+def test_card_name_is_not_a_section_heading(tmp_path, home):
+    # techdoc turns every <h2> of a page body into an accordion section; the card must stay one block.
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": JANE})
+    text = html(target, "Author_Jane_Doe.html")
+    assert 'class="kb-profile-name' in text
+    assert "<h2" not in text.split('class="kb-profile', 1)[1].split("PROFILE CARD :: END", 1)[0]
