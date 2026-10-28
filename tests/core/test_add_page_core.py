@@ -36,7 +36,7 @@ def test_hostile_category_text_escaped(tmp_path, home):
     assert "&lt;b&gt;x&lt;/b&gt;" in html
     assert "&lt;/script&gt;" in html
     assert "<b>x</b>" not in html
-    assert html.count("<dialog") == 2  # the card's dialog and the Edit dialog
+    assert html.count("<dialog") == 3  # the card's dialog, the Person profile and the Edit dialog
 
 
 def test_system_page_and_keys(tmp_path, home):
@@ -47,7 +47,7 @@ def test_system_page_and_keys(tmp_path, home):
     keys = re.search(r'id="kb-add-keys" type="application/json">(.*?)</script>', html, re.S)
     assert {"v": "Note", "c": 2} in json.loads(keys.group(1))["Category"]
     log = (tmp_path / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
-    assert "[BUILDER] ADD_PAGE enabled=True skeletons=theme categories=8" in log
+    assert "[BUILDER] ADD_PAGE enabled=True skeletons=theme categories=9" in log
 
 
 def test_editor_keys_counts_and_system_page():
