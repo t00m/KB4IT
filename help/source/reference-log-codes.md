@@ -64,6 +64,17 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `SCAN_FAIL` | warning | The links of a document cannot be checked. The build goes on | Run `kb4it verify` and look at the document the line names |
 | `MD_FENCE_IN_BLOCK` | warning | A fenced code block sits inside a list or a quote, where plain Markdown does not see it | See [code inside a note or a list](reference-document-format.md#code-in-blocks) |
 
+## People {#people}
+
+A profile is a document with a `Person` key: it describes one person named in `Author`. A profile with an error is left out of the site; with `"fail_on_invalid": true` the build stops.
+
+| Code | Level | Meaning | What to do |
+|---|---|---|---|
+| `LOADED` | information | The number of profiles and aliases read | Nothing |
+| `PROFILE_INVALID` | error | The `Person` key is empty or holds more than one name. A comma splits a value, so `Person: Doe, Jane` is two names | Write one name without a comma: `Person: Jane Doe` |
+| `PROFILE_DUPLICATE` | error | Two profiles claim the same name or alias. The first file in name order is kept | Keep one profile per person; move the extra spellings to its `Alias` key |
+| `PROFILE_ALIAS_IS_PERSON` | error | An `Alias` of one profile is the `Person` of another. The profile with the alias is left out | Remove the alias, or merge the two profiles |
+
 ## Build {#build}
 
 | Code | Level | Meaning | What to do |

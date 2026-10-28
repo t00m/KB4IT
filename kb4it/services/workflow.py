@@ -320,7 +320,8 @@ class Workflow(VerifyMixin, Service):
         docs_total = runtime["docs"].get("count", 0)
         compiled   = plan.doc_count if plan is not None else 0
         invalid    = plan.invalid_count if plan is not None else 0
-        skipped    = docs_total - compiled - invalid
+        profiles   = plan.profile_count if plan is not None else 0
+        skipped    = docs_total - compiled - invalid - profiles
         keys_compiled = plan.key_count if plan is not None else 0
         kv_compiled   = plan.kv_count if plan is not None else 0
         failed = self._failed_pages()

@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, index, noindex, noindex_keys, robots, search engines, Modified, dateModified, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, index, noindex, noindex_keys, robots, search engines, people, person, profile, Alias, Modified, dateModified, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -52,6 +52,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
 | `seo` | | Language of the pages and structured data for search engines; see [structured data](#seo) |
+| `people` | | Which properties name people, and which profile properties count as contact details; see [people](#people) |
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one. See [Search engines](#indexing) for `seo.index` |
 | `backlinks` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
@@ -97,6 +98,26 @@ The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (ta
 techdoc, blog and bookshelf build `search-index.js` with the text of every document, split by section, and a `search.html` page. Search runs in the browser, so it also works when you open the site from disk. Results link to the section that matched. The search page offers filters by `Category`, `WorkType` and `Tag`, for the keys your documents use.
 
 The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
+
+## People {#people}
+
+A profile is a document with a `Person` property. It describes one person that documents name in `Author`: `Person` holds the name exactly as documents write it, `Alias` the other spellings, and any other property (`Team`, `Role`, `Email`, `Phone`) says more about the person. A profile is not a document: it gets no page of its own, and a link to its file leads to the person's page, such as `Author_Jane_Doe.html`.
+
+```json
+"people": {
+  "keys": ["Author"],
+  "contact_keys": ["Email", "Phone", "Chat", "Url"],
+  "private": []
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `keys` | `["Author"]` | Properties whose values are people. The first one names the person's page |
+| `contact_keys` | `["Email", "Phone", "Chat", "Url"]` | Profile properties that tell readers how to reach the person |
+| `private` | `[]` | Profile properties kept out of the pages. A private property does not count as a contact detail |
+
+`Person` and `Alias` are reserved for profiles and cannot be listed here. A malformed `people` block stops the build with a message naming the entry. Changing `people` rebuilds every page.
 
 ## Page metadata {#metadata}
 

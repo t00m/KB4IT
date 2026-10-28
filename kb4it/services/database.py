@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from kb4it.core.types import DBRecord
 
+from kb4it.core.people import People
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
                              sort_dictionary, valid_filename)
@@ -49,6 +50,8 @@ class Database(Service):
         self.cache_keys_by_doc = {}
         self.cache_docs_sorted_by_date = {}
         self.cache_all_values_for_key = {}
+        # Author profiles: kept apart from the documents (see core/people.py).
+        self.people = People()
         self.ignore_key("Title")
 
     def del_document(self, docId):
