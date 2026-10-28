@@ -17,6 +17,7 @@ from kb4it.core.exceptions import ConfigError, KB4ITError
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.paths import resolve_repo_path
+from kb4it.core.people import build_people, is_profile, load_people, named_people, notices
 from kb4it.core.structured import iso_date, load_seo
 from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
@@ -83,6 +84,7 @@ class VerifyMixin:
 
         print(f"Verifying {len(docs)} source documents in {source_dir}...")
         non_conformant = []
+        attributes = {}
         theme_class = self._theme_class(repo, config_file)
         reserved = tuple(getattr(theme_class, "reserved_pages", ()))
         if self._editor_on(repo, config_file, theme_class):
@@ -95,6 +97,7 @@ class VerifyMixin:
             if not success:
                 non_conformant.append((doc, reason))
                 continue
+            attributes[doc] = keys
             for value in keys.get("Modified") or []:
                 if value and not iso_date(value):
                     non_conformant.append((doc, f"bad_modified_date value={value}"))
@@ -130,6 +133,13 @@ class VerifyMixin:
             seo = load_seo(repo)
         except ConfigError as e:
             problems = [str(e), *problems]
+        people_notices = {}
+        try:
+            people_problems, people_notices = self._verify_people(attributes, load_people(repo),
+                                                                  seo is not None and seo.index is True)
+            problems = [*people_problems, *problems]
+        except ConfigError as e:
+            problems = [str(e), *problems]
         if problems:
             print("\nTheme checks:")
             for line in problems:
@@ -154,6 +164,12 @@ class VerifyMixin:
             print("  INDEX_UNSET: decide whether search engines may index this site; set \"seo\": {\"index\": true} "
                   "or {\"index\": false} in repo.json")
 
+        for level, title in (("warning", "People (warnings):"), ("information", "People (information):")):
+            if people_notices.get(level):
+                print(f"\n{title}")
+                for line in people_notices[level]:
+                    print(f"  {line}")
+
         link_problems = self._verify_links(docs)
         if link_problems:
             print("\nLinks:")
@@ -164,6 +180,21 @@ class VerifyMixin:
         if non_conformant or problems or link_problems:
             raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
                              f"{len(problems)} theme problems, {len(link_problems)} broken links")
+
+    def _verify_people(self, attributes, settings, indexed):
+        """(errors, notices) of the profiles: errors fail verify, notices are warnings and information."""
+        entries, named = [], {}
+        for doc, keys in attributes.items():
+            if is_profile(keys):
+                with open(doc, encoding=SOURCE_ENCODING) as fh:
+                    entries.append((os.path.basename(doc), keys, fh.read()))
+        people, problems = build_people(entries, settings)
+        for doc, keys in attributes.items():
+            if not is_profile(keys):
+                for name in named_people(keys, people, settings):
+                    named[name] = named.get(name, 0) + 1
+        errors = [f"{p.code} doc={p.doc_id} detail={p.detail}" for p in problems]
+        return errors, notices(people, named, settings, indexed)
 
     def _verify_fences(self, docs, settings):
         """MD_FENCE_IN_BLOCK lines for fences that python-markdown cannot see without superfences."""

@@ -21,7 +21,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it build --force CONFIG` | Rebuilds everything |
 | `kb4it build --trace CONFIG` | Builds and shows how long each part of the build took; see [Build timings](#trace) |
 | `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [Preview while you write](howto-preview.md) |
-| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building. It also shows `INDEX_UNSET` while `seo.index` is not set, as information |
+| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building. It also shows `INDEX_UNSET` while `seo.index` is not set, as information, and checks the [profiles](reference-log-codes.md#people): an error such as `PROFILE_INVALID` fails it, `PROFILE_NO_CONTACT` and `AUTHOR_NO_PROFILE` do not |
 | `kb4it info CONFIG` | Shows the main settings |
 | `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
 | `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |

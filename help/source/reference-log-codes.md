@@ -74,6 +74,10 @@ A profile is a document with a `Person` key: it describes one person named in `A
 | `PROFILE_INVALID` | error | The `Person` key is empty or holds more than one name. A comma splits a value, so `Person: Doe, Jane` is two names | Write one name without a comma: `Person: Jane Doe` |
 | `PROFILE_DUPLICATE` | error | Two profiles claim the same name or alias. The first file in name order is kept | Keep one profile per person; move the extra spellings to its `Alias` key |
 | `PROFILE_ALIAS_IS_PERSON` | error | An `Alias` of one profile is the `Person` of another. The profile with the alias is left out | Remove the alias, or merge the two profiles |
+| `PROFILE_NO_CONTACT` | warning | Shown by `kb4it verify`: a profile has none of the contact properties (`people.contact_keys`), or only private ones | Add `Email`, `Phone`, `Chat` or `Url` to the profile |
+| `PROFILE_UNUSED` | information | Shown by `kb4it verify`: no document names the person | Nothing, if the person has not written anything yet |
+| `AUTHOR_NO_PROFILE` | information | Shown by `kb4it verify` once the knowledge base has one profile: a person named by documents has no profile, with the number of documents | Add a profile, or fix the spelling of the name in the documents |
+| `PROFILE_CONTACT_PUBLIC` | information | Shown by `kb4it verify` while `seo.index` is `true`: a profile shows an email address or a phone number to search engines | Keep it, or list the property in `people.private` |
 
 ## Build {#build}
 
