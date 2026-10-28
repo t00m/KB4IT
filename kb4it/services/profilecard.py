@@ -8,7 +8,7 @@ Profile card service: the profile of a person on the page of a people key value 
 """
 
 from kb4it.core.mdconfig import load_settings, sanitize_html
-from kb4it.core.people import PeopleSettings, Profile
+from kb4it.core.people import PeopleSettings, Profile, person_page
 
 # Keys shown first on the card, in this order; the others follow in alphabetical order.
 CARD_ORDER = ("Role", "Team", "Email", "Phone", "Chat", "Url", "Location")
@@ -53,6 +53,9 @@ class ProfileCardMixin:
         profile = people.lookup(value) if key in settings.keys and people is not None else None
         if profile is None:
             return ""
+        # An alias page points to the page of the Person name.
+        alias_of = None if value == profile.person else {"href": person_page(profile.person, settings),
+                                                          "name": profile.person}
         var = {"person": profile.person, "rows": self.profile_rows(profile), "body": self._profile_body(profile),
-               "alias_of": None}
+               "alias_of": alias_of}
         return self.render_template("HTML_PROFILE_CARD", var)

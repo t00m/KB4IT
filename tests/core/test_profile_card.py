@@ -74,3 +74,46 @@ def test_url_without_scheme_is_text(tmp_path, home):
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": profile})
     text = html(target, "Author_Jane_Doe.html")
     assert "x.org/jane" in text and 'href="x.org/jane"' not in text
+
+
+JANE_ALIAS = page("Jane Doe", "Bio.", Person="Jane Doe", Alias="J. Doe", Email="j@x.org")
+
+
+def test_alias_page_links_to_person_page(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "b.md": doc("Beta", Author="J. Doe"),
+             "PERSON-JANE-DOE.md": JANE_ALIAS}
+    target = site(tmp_path, home, pages)
+    alias = html(target, "Author_J._Doe.html")
+    assert "kb-profile" in alias
+    assert 'Profile of <a href="Author_Jane_Doe.html">Jane Doe</a>' in alias
+    assert "kb-profile-alias" not in html(target, "Author_Jane_Doe.html")
+
+
+def test_alias_only_person_has_both_pages(tmp_path, home):
+    target = site(tmp_path, home, {"b.md": doc("Beta", Author="J. Doe"), "PERSON-JANE-DOE.md": JANE_ALIAS})
+    assert "kb-profile" in html(target, "Author_J._Doe.html")
+    assert "kb-profile" in html(target, "Author_Jane_Doe.html")
+
+
+def test_profile_without_documents_gets_a_page(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-ANN.md": page("Ann", "Bio.", Person="Ann")}
+    target = site(tmp_path, home, pages)
+    assert "kb-profile" in html(target, "Author_Ann.html")
+    (tmp_path / "repo" / "source" / "PERSON-ANN.md").unlink()
+    result = run_kb4it("build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert not (target / "Author_Ann.html").exists()
+
+
+def test_profile_page_without_any_author_key(tmp_path, home):
+    target = site(tmp_path, home, {"a.md": doc("Alpha"), "PERSON-ANN.md": page("Ann", "Bio.", Person="Ann")})
+    assert "kb-profile" in html(target, "Author_Ann.html")
+
+
+def test_unnamed_profile_page_survives_an_unchanged_build(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-ANN.md": page("Ann", "Bio.", Person="Ann")}
+    target = site(tmp_path, home, pages)
+    result = run_kb4it("-L", "DEBUG", "build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "[PEOPLE] KV key=Author value=Ann compile=False" in result.stdout
+    assert "kb-profile" in html(target, "Author_Ann.html")

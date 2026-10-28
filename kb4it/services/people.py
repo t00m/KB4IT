@@ -73,3 +73,20 @@ class PeopleMixin:
                     docs.add(doc_id)
         self.log.debug(f"[PEOPLE] REBUILD docs={len(docs)} pairs={len(pairs)}")
         return pairs, docs
+
+    def profile_kv_paths(self, kv_values: set, forced: bool, force_kv_pairs: set) -> list:
+        """(first people key, Person, compile) for each profile no document names under that key yet.
+
+        Its page is compiled when the build is forced, the profile changed (force_kv_pairs), or
+        documents named the person in the previous build (the page held a list then).
+        """
+        settings = getattr(self.srvbes, "people", None) or PeopleSettings()
+        key = settings.keys[0]
+        paths = []
+        for person in sorted(self.srvdtb.people.profiles):
+            if (key, person) in kv_values:
+                continue
+            compile_value = forced or (key, person) in force_kv_pairs or bool(self.get_kbdict_value(key, person, new=False))
+            paths.append((key, person, compile_value))
+            self.log.debug(f"[PEOPLE] KV key={key} value={person} compile={compile_value}")
+        return paths
