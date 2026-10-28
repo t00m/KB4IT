@@ -119,6 +119,8 @@ class DocInput:
     known_docs: set = field(default_factory=set)
     source_dir: str = ''
     work_type: str = ''
+    # Profile documents: a link to one leads to the person's page, so it is neither broken nor a related document.
+    profile_docs: set = field(default_factory=set)
 
 
 def profile(theme_conf):
@@ -283,6 +285,8 @@ def connected(doc, prof):
     for href in LINK.findall(body):
         if rewrite_md_href(href) is not None:
             path = os.path.normpath(unquote(urlsplit(href).path)).replace(os.sep, '/')
+            if path in doc.profile_docs:
+                continue
             if path in doc.known_docs:
                 linked = True
             else:

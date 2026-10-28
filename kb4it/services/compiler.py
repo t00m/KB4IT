@@ -53,6 +53,8 @@ class Compiler(Service):
         self.failed = []
         self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
+        # Links to a profile document lead to the person's page; filled by execute(), after extraction.
+        self.redirects = {}
         callbacks = callbacks or {}
         self.progress_callback = callbacks.get("progress_callback")
         self.compile_start_callback = callbacks.get("compile_start_callback")
@@ -60,6 +62,7 @@ class Compiler(Service):
     def execute(self):
         """Compile Markdown documents to HTML."""
         self.log.debug("[COMPILER] START")
+        self.redirects = dict(getattr(self.srvbes.get_plan(), "profile_pages", None) or {})
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(self.srvbes.get_path("tmp"), "resources")
@@ -173,6 +176,7 @@ class Compiler(Service):
                 if not isinstance(text, str):
                     raise CompilationError("Hook on_document must return the Markdown text")
             md = self.markdown.new_markdown()
+            md.kb4it_redirects = self.redirects
             html_fragment = md.convert(text)
             if self.markdown.sanitize:
                 # Before KB4IT adds its own markup (backlinks, TOC, sections): only the document is cleaned.

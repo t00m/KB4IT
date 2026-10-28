@@ -123,3 +123,16 @@ def test_last_profile_removed_rebuilds_named_docs(tmp_path, home):
     out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": None})
     assert "COMPILED doc=c.md" in out and "COMPILED doc=a.md" in out
     assert "COMPILED doc=d.md" not in out
+
+
+def test_link_to_profile_points_to_author_page(tmp_path, home):
+    pages = {"a.md": doc("Alpha", "Ask [Jane](PERSON-JANE-DOE.md).", Author="Jane Doe"),
+             "PERSON-JANE-DOE.md": PROFILE}
+    _cfg, result = build(tmp_path, home, pages)
+    assert result.returncode == 0, result.stdout
+    html = (tmp_path / "repo" / "target" / "a.html").read_text(encoding="utf-8")
+    # The Author chip links there too, so check the body link itself.
+    assert '<a href="Author_Jane_Doe.html">Jane</a>' in html
+    assert "PERSON-JANE-DOE.html" not in html
+    assert "broken link to PERSON-JANE-DOE.md" not in html  # techdoc Quality tab
+    assert "LINK_BROKEN" not in result.stdout

@@ -289,6 +289,7 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
         backlinks = (getattr(plan, 'backlinks', None) or {}) if plan is not None else {}
         docs = [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)]
         known = set(docs)
+        profile_docs = {p.doc_id for p in self.srvdtb.people.profiles.values()}
         today = datetime.now().date()
         for doc_id in docs:
             path = os.path.join(source_dir, doc_id)
@@ -298,7 +299,8 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
             except OSError:
                 continue
             meta = {key: list(self.srvdtb.get_values(doc_id, key)) for key in self.srvdtb.get_doc_keys(doc_id)}
-            doc = DocInput(text, meta, len(backlinks.get(doc_id, [])), known, source_dir, work_type(self.srvdtb, doc_id))
+            doc = DocInput(text, meta, len(backlinks.get(doc_id, [])), known, source_dir, work_type(self.srvdtb, doc_id),
+                           profile_docs)
             self.quality[doc_id] = assess(doc, prof, skeletons, today)
         self.quality_stats = peer_stats(self.quality)
         tiers = [a.tier for a in self.quality.values()]
