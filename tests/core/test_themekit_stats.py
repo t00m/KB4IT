@@ -86,3 +86,18 @@ def test_long_lists_are_capped():
     assert len(s.rare_keys.items) == LIST_LIMIT and s.rare_keys.more == 3
     assert len(s.sparse_docs.items) == LIST_LIMIT and s.sparse_docs.more == 3
     assert s.years == [] and s.months == [] and s.undated == LIST_LIMIT + 3
+
+
+def test_summary_facts():
+    s = collect_stats(make_db(), ["OS", "Tag", "Team"], {"a.md": [["Beta", "b.md"]]})
+    assert s.dated == 3
+    assert (s.busiest_year.label, s.busiest_year.count) == ("2025", 2)
+    assert s.full_coverage == 1 and s.least_covered.key == "Team"  # only Tag is in every document
+    assert s.health_issues == s.duplicates.total + s.rare_keys.total + s.sparse_docs.total == 2 + 1 + 1
+    assert s.orphans.total == 3
+
+
+def test_summary_facts_of_an_empty_repository():
+    s = collect_stats(FakeDB({}), [], {})
+    assert s.busiest_year is None and s.least_covered is None
+    assert (s.dated, s.full_coverage, s.health_issues, s.orphans.total) == (0, 0, 0, 0)

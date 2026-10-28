@@ -429,10 +429,22 @@ table.bk-table tr:last-child td { border-bottom: none; }
 .bk-col-count { text-align: right; font-family: var(--f-mono); }
 
 /* stats */
-.bk-stats-summary { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
+.bk-stats-summary-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
 .bk-stat-card { flex: 1; min-width: 120px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--sh-1); padding: 18px 22px; color: var(--ink); text-decoration: none; }
 a.bk-stat-card:hover { border-color: var(--accent); }
-.bk-stats-section { margin-top: 32px; }
+.bk-stats-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+@media (max-width: 760px) { .bk-stats-cards { grid-template-columns: 1fr; } }
+.bk-stats-card { display: flex; flex-direction: column; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--sh-1); padding: 18px 22px; }
+.bk-stats-card h2 { margin-top: 0; }
+.bk-stats-summary { flex: 1; color: var(--ink-2); font-size: 0.9rem; margin: 0 0 14px; }
+.bk-stats-details { font: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 5px 14px; border-radius: 99px; }
+.bk-stats-details:hover { border-color: var(--accent); color: var(--accent-ink); }
+.bk-stats-dialog { width: min(1100px, 94vw); max-height: 88vh; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-3); background: var(--surface); color: var(--ink); }
+.bk-stats-dialog::backdrop { background: rgba(28,27,24,0.45); }
+.bk-stats-dialog-body { padding: 24px 28px; }
+.bk-stats-dialog-body h3 { margin-top: 0; }
+.bk-stats-dialog-close { float: right; margin: -8px -12px 0 0; font-size: 1.5rem; line-height: 1; cursor: pointer; border: none; background: transparent; color: var(--ink-3); padding: 4px 8px; }
+.bk-stats-dialog-close:hover { color: var(--ink); }
 .bk-stats-note { color: var(--ink-3); font-size: 0.86rem; }
 .bk-stats-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
 .bk-stats-bar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line-2); }

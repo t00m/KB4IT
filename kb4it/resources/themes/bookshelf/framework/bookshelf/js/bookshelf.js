@@ -6,6 +6,7 @@
    - numbers the article sections and feeds the right rail "On this page" TOC
    - fills the left chapter-nav sub-anchors under the current chapter
    - scroll-spy that keeps TOC and sub-anchors in sync with the viewport
+   - buttons that open a <dialog> (the cards of the stats page)
    - the prototype page switcher is intentionally NOT shipped here
    ============================================================================ */
 (function () {
@@ -157,12 +158,32 @@
         spy();
     }
 
+    /* Buttons with data-bk-dialog="<id>" open that <dialog>; its data-bk-close button, Escape
+       or a click on the backdrop close it. */
+    function wireDialogs(root) {
+        Array.prototype.forEach.call(root.querySelectorAll("[data-bk-dialog]"), function (button) {
+            var dialog = document.getElementById(button.getAttribute("data-bk-dialog"));
+            if (!dialog || typeof dialog.showModal !== "function") {
+                return;
+            }
+            button.addEventListener("click", function () {
+                dialog.showModal();
+            });
+            dialog.addEventListener("click", function (e) {
+                if (e.target === dialog || e.target.closest("[data-bk-close]")) {
+                    dialog.close();
+                }
+            });
+        });
+    }
+
     function init() {
         var article = document.querySelector(".article");
         var scope = article || document.querySelector(".wrap") || document.body;
 
         decorateCodeBlocks(scope);
         wireCopyButtons(scope);
+        wireDialogs(document);
 
         if (article) {
             var sections = numberSections(article);

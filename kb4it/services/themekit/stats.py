@@ -55,6 +55,11 @@ class Capped:
     items: list[Any]
     more: int = 0
 
+    @property
+    def total(self) -> int:
+        """Entries before the cut."""
+        return len(self.items) + self.more
+
 
 @dataclass
 class Bar:
@@ -117,6 +122,29 @@ class StatsData:
     most_linked: list[DocRef] = field(default_factory=list)
     orphans: Capped = field(default_factory=lambda: Capped([]))
     no_outgoing: int = 0
+
+    # Short facts for the summary line of each section's card.
+    @property
+    def dated(self) -> int:
+        return self.documents - self.undated
+
+    @property
+    def busiest_year(self) -> Bar | None:
+        """The year with the most documents; the newest one on a tie."""
+        return max(self.years, key=lambda bar: bar.count) if self.years else None
+
+    @property
+    def full_coverage(self) -> int:
+        """Properties set by every document."""
+        return sum(1 for row in self.coverage if row.docs == self.documents)
+
+    @property
+    def least_covered(self) -> CoverageRow | None:
+        return self.coverage[-1] if self.coverage else None
+
+    @property
+    def health_issues(self) -> int:
+        return self.duplicates.total + self.rare_keys.total + self.sparse_docs.total
 
 
 def _cap(items: list[Any]) -> Capped:
