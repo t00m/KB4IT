@@ -183,3 +183,9 @@ kbd { display: inline-block; padding: 1px 6px; border: 1px solid var(--ah-border
 [id] { scroll-margin-top: 72px; }
 .ah-hero-search button { flex: none; white-space: nowrap; }
 .ah-copy[hidden] { display: none !important; }
+
+/* Task lists (pymdownx.tasklist): the checkbox takes the place of the bullet. */
+li.task-list-item { list-style-type: none; }
+li.task-list-item > input[type="checkbox"],
+li.task-list-item > p:first-child > input[type="checkbox"]:first-child,
+li.task-list-item > .task-list-control { margin: 0 0.45em 0 -1.4em; vertical-align: -0.1em; accent-color: var(--ah-accent); }

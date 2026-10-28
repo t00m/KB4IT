@@ -26,6 +26,11 @@
     ],
     "logo": "resources/themes/techdoc/images/logo.svg",
     "logo_alt": "",
+    "markdown": {
+        "extensions": [
+            "pymdownx.tasklist"
+        ]
+    },
     "menu": [
         "Author",
         "Category",

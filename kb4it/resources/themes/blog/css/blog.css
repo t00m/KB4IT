@@ -68,3 +68,9 @@ tr.month-row th {
 
 /* Post titles on the index: a bare h2 (see POST_MD_INDEX.tpl) sized like uk-card-title. */
 .post-card header h2 { margin: 0; font-size: 1.5rem; line-height: 1.4; }
+
+/* Task lists (pymdownx.tasklist): the checkbox takes the place of the bullet. */
+li.task-list-item { list-style-type: none; }
+li.task-list-item > input[type="checkbox"],
+li.task-list-item > p:first-child > input[type="checkbox"]:first-child,
+li.task-list-item > .task-list-control { margin: 0 0.45em 0 -1.4em; vertical-align: -0.1em; accent-color: #1e87f0; }

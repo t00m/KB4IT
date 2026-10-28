@@ -130,7 +130,7 @@ If no KB4IT is running, the lock was left by a process that no longer exists and
 
 ### Fix
 
-Install the package the message names, in the same environment as KB4IT. For PyMdown Extensions: `uv tool install --force "KB4IT[extras]"`. Or remove the extension from `markdown.extensions`.
+Install the package the message names, in the same environment as KB4IT. PyMdown Extensions install with KB4IT: if it is missing, reinstall KB4IT (`uv tool install --force KB4IT`). Or remove the extension from `markdown.extensions`.
 
 ## The build warns DOC_NAME_CLASH or leaves out a document with DOC_NAME_RESERVED {#names}
 

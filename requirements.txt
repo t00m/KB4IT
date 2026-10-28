@@ -1,5 +1,6 @@
 Mako==1.4.2
 Markdown>=3.5
+pymdown-extensions>=10.0
 PyYAML>=6.0
 Pygments>=2.15
 lxml

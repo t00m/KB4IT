@@ -89,7 +89,7 @@ With `pymdownx.superfences` (or `pymdownx.highlight`), code blocks follow `highl
 
 Changing the block rebuilds every page. An extension that is not installed stops the build with `MD_EXTENSION_MISSING name=... hint=pip install ...`; `kb4it verify` reports it too.
 
-The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT when you ask for its extras: `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`. The extras also bring [nh3](https://nh3.readthedocs.io/), which `sanitize` needs.
+The [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) (task lists, tabs, details, keys and more) install with KB4IT. The sample repositories of every theme turn on `pymdownx.tasklist`, so `kb4it create` makes a repository with task lists. The extras, `uv tool install "KB4IT[extras]"` or `pipx install "KB4IT[extras]"`, bring [nh3](https://nh3.readthedocs.io/), which `sanitize` needs.
 
 ## Search {#search}
 

@@ -9,7 +9,7 @@
 #   --method auto|uv|pipx|venv  how to install (default auto: uv, then pipx, then venv)
 #   --python PATH               Python 3.11 or newer to use (default: newest python3.X on PATH)
 #   --allow-dirty               build even with uncommitted changes or untracked files under kb4it/
-#   --extras                    also install the optional extras (PyMdown Extensions, nh3)
+#   --extras                    also install the optional extras (nh3)
 #   --wheel FILE                install this wheel instead of building one
 #
 # venv method: the virtual environment is ${KB4IT_VENV:-~/.local/share/kb4it/venv}

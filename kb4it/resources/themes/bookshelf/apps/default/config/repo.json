@@ -30,5 +30,10 @@
     "theme": "bookshelf",
     "title": "Study Library",
     "tagline": "A focused study companion for certification prep",
-    "webserver": false
+    "webserver": false,
+    "markdown": {
+        "extensions": [
+            "pymdownx.tasklist"
+        ]
+    }
 }
