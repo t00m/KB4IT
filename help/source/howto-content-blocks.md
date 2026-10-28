@@ -52,7 +52,7 @@ Write an ordinary Markdown table; the theme does the rest:
 
 Tabs are for variants of the same content, such as Linux and Windows or Oracle and DB2. Do not use them to hide sections a reader may need: browser search does not find text in a hidden tab.
 
-Tabs need the optional `pymdown-extensions` package, which `pip install "kb4it[extras]"` installs. Turn the two extensions on in `repo.json`:
+Tabs come from the `pymdown-extensions` package, which installs with KB4IT. Turn the two extensions on in `repo.json`:
 
 ```json
 "markdown": {

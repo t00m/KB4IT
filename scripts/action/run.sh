@@ -23,7 +23,7 @@ install() {
     fi
     local with=()
     if [[ "${KB4IT_EXTRAS:-false}" == "true" ]]; then
-        with=(--with "pymdown-extensions>=10.0" --with "nh3>=0.3.0")
+        with=(--with "nh3>=0.3.0")
     fi
     echo "Installing ${spec} with Python ${KB4IT_PYTHON}"
     # macOS bash 3.2 treats an empty "${with[@]}" as unbound under set -u.

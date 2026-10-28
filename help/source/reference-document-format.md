@@ -68,6 +68,32 @@ KB4IT uses [Python-Markdown](https://python-markdown.github.io/) with these exte
 
 Add more extensions with the [`markdown` setting](reference-repo-json.md#markdown).
 
+### Lists {#lists}
+
+A nested item is indented by two, three or four spaces more than its parent; all three nest:
+
+```markdown
+- Linux
+  - RHEL
+    - RHEL 9
+- Windows
+
+1. Prepare
+   1. Back up
+2. Upgrade
+```
+
+Python-Markdown on its own nests only by four spaces. When a list nests an item by two or three, KB4IT moves each level to four spaces before the conversion, and the text, code and notes under an item move with it: indent them from the start of the item's text, as GitHub does. A list nested by four spaces is never changed.
+
+A task list needs `pymdownx.tasklist`, which the sample repositories of every theme turn on. Add it to the [`markdown` setting](reference-repo-json.md#markdown) of an older repository:
+
+```markdown
+- [x] Kernel downloaded
+- [ ] Kernel installed
+```
+
+Each item shows a checkbox in place of the bullet. The checkboxes are read-only.
+
 ### Code inside a note or a list {#code-in-blocks}
 
 With these extensions a fenced block (```` ``` ````) only works at the start of a line. Inside an admonition or a list item, indent the code by four more spaces instead of fencing it:
@@ -79,7 +105,7 @@ With these extensions a fenced block (```` ``` ````) only works at the start of 
         kb4it build config/repo.json
 ```
 
-To fence code there, enable `pymdownx.superfences` (from `KB4IT[extras]`) in the [`markdown` setting](reference-repo-json.md#markdown). Without it, `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...`.
+To fence code there, enable `pymdownx.superfences` (installed with KB4IT) in the [`markdown` setting](reference-repo-json.md#markdown). Without it, `kb4it verify` warns with `MD_FENCE_IN_BLOCK doc=... lines=...`.
 
 ### Diagrams {#diagrams}
 

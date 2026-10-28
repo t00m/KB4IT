@@ -62,7 +62,7 @@ Test both offline in containers with `test/test_packages.sh`;
 
 ### Container image
 
-`python:3.13-slim` with the release wheel and its extras (PyMdown Extensions),
+`python:3.13-slim` with the release wheel and its extras (nh3),
 running as the non-root user `kb4it` (UID 1000) in `/work`:
 
 ```bash

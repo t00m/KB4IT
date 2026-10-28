@@ -129,6 +129,24 @@ $$
 
 The [gallery](reference-diagrams-formulas.md) shows matrices, aligned equations and more. A formula KaTeX cannot read shows its source in red, and the build goes on. To write a dollar sign as text, use `\$`. Rules and limits: [formulas](reference-document-format.md#formulas).
 
+## Make lists and checklists {#lists}
+
+Indent a nested item by two or four spaces, as your editor does:
+
+```markdown
+- Linux
+  - RHEL
+  - Debian
+- Windows
+```
+
+A checklist uses `[ ]` and `[x]`. A repository made with `kb4it create` shows them as checkboxes; for an older one, see [lists](reference-document-format.md#lists).
+
+```markdown
+- [x] Back up the database
+- [ ] Apply the kernel update
+```
+
 ## Add tables {#tables}
 
 ```markdown

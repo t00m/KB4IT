@@ -46,8 +46,9 @@ def test_setup_uv_pinned_like_the_workflows():
 
 
 def test_extras_match_pyproject():
-    deps = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["poetry"]["dependencies"]
-    for name in ("pymdown-extensions", "nh3"):
+    poetry = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["poetry"]
+    deps = poetry["dependencies"]
+    for name in poetry["extras"]["extras"]:
         assert f'"{name}{deps[name]["version"]}"' in RUN, name
 
 

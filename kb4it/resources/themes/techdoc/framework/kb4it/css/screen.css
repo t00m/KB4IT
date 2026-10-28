@@ -1667,3 +1667,9 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-props-row + .kb-props-row { margin-top: 6px; }
 .kb-props-key { font-weight: 600; }
 .kb-props-count { color: #777; font-size: 0.85rem; }
+
+/* Task lists (pymdownx.tasklist): the checkbox takes the place of the bullet. */
+li.task-list-item { list-style-type: none; }
+li.task-list-item > input[type="checkbox"],
+li.task-list-item > p:first-child > input[type="checkbox"]:first-child,
+li.task-list-item > .task-list-control { margin: 0 0.45em 0 -1.4em; vertical-align: -0.1em; accent-color: #1e87f0; }

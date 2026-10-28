@@ -13,6 +13,11 @@
     ],
     "logo": "resources/themes/blog/images/logo.svg",
     "logo_alt": "",
+    "markdown": {
+        "extensions": [
+            "pymdownx.tasklist"
+        ]
+    },
     "menu": [
         "Author",
         "Category",

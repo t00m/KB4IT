@@ -150,7 +150,7 @@ It uses uv, else pipx, else a virtual environment. Choose with `--method uv`, `-
 | `--method venv` | Needs only Python 3.11 or newer: creates `~/.local/share/kb4it/venv` (or `KB4IT_VENV`) and links `~/.local/bin/kb4it` to it |
 | `--python PATH` | The Python to use. Without it the newest `python3.14` to `python3.11` on `PATH` is used, never an older `python3` |
 | `--allow-dirty` | Builds even with uncommitted changes; the build is marked `.dirty`. Without it the installer stops and lists them |
-| `--extras` | Also installs the optional extras (PyMdown Extensions, nh3) |
+| `--extras` | Also installs the optional extras (nh3) |
 | `--wheel FILE` | Installs a wheel you already have, such as one from a release, instead of building one |
 
 At the end it runs the new `kb4it --version` and `kb4it doctor`. It ends with `2` when another `kb4it` comes first on `PATH`, and lists them all; remove the old one or reorder `PATH`.

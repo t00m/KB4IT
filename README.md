@@ -141,7 +141,7 @@ pipx install KB4IT
 pip install --user KB4IT
 ```
 
-**Extras** - [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/) for task lists, tabs, details and more, and [nh3](https://nh3.readthedocs.io/) to clean raw HTML from documents:
+**Extras** - [nh3](https://nh3.readthedocs.io/) to clean raw HTML from documents. [PyMdown Extensions](https://facelessuser.github.io/pymdown-extensions/), for task lists, tabs, details and more, install with KB4IT itself:
 
 ```bash
 uv tool install "KB4IT[extras]"
@@ -173,7 +173,7 @@ On Windows, KB4IT runs natively; the Windows Subsystem for Linux works too but i
 ## Tech stack
 
 - **Language and packaging** - Python 3.11 to 3.14, packaged with Poetry. Distributed on PyPI, as the container image `ghcr.io/t00m/kb4it`, as a `.deb` and an `.rpm`, and as a GitHub Action.
-- **Build** - `python-markdown` with `extra`, `admonition`, `toc` and `sane_lists` always on, plus the optional `pymdown-extensions`; Mako templates; PyYAML frontmatter, parsed so every plain value stays the text you wrote; Pygments for build-time highlighting; lxml for post-processing; Pillow for the techdoc gallery thumbnails; nh3 for sanitizing raw HTML.
+- **Build** - `python-markdown` with `extra`, `admonition`, `toc` and `sane_lists` always on, lists nested by two, three or four spaces, plus `pymdown-extensions`; Mako templates; PyYAML frontmatter, parsed so every plain value stays the text you wrote; Pygments for build-time highlighting; lxml for post-processing; Pillow for the techdoc gallery thumbnails; nh3 for sanitizing raw HTML.
 - **Output** - plain static HTML, CSS and JavaScript. No database, no server-side runtime, no JavaScript framework.
 - **Frontend** - UIKit for the bundled themes, Mermaid for diagrams, KaTeX for formulas, a vanilla JavaScript full-text search engine, and a CodeMirror 6 bundle for the Add page editor. Every asset ships with KB4IT and loads from disk, offline.
 - **Terminal** - Rich and Textual for the TUI.
