@@ -429,8 +429,25 @@ table.bk-table tr:last-child td { border-bottom: none; }
 .bk-col-count { text-align: right; font-family: var(--f-mono); }
 
 /* stats */
-.bk-stats-summary { display: flex; gap: 16px; margin: 16px 0; }
-.bk-stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--sh-1); padding: 18px 22px; }
+.bk-stats-summary { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
+.bk-stat-card { flex: 1; min-width: 120px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--sh-1); padding: 18px 22px; color: var(--ink); text-decoration: none; }
+a.bk-stat-card:hover { border-color: var(--accent); }
+.bk-stats-section { margin-top: 32px; }
+.bk-stats-note { color: var(--ink-3); font-size: 0.86rem; }
+.bk-stats-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+.bk-stats-bar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line-2); }
+.bk-stats-bar-label { width: 70px; font-family: var(--f-mono); font-size: 0.8rem; color: var(--ink-2); }
+.bk-stats-bar-track { flex: 1; display: inline-block; height: 6px; background: var(--line-2); border-radius: 3px; overflow: hidden; vertical-align: middle; }
+.bk-stats-bar { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.bk-stats-bar-count { font-family: var(--f-mono); font-size: 0.8rem; color: var(--ink-3); }
+.bk-stats-cover { min-width: 200px; }
+.bk-stats-cover .bk-stats-bar-track { width: 50%; margin-right: 8px; }
+.bk-stats-value { display: inline-block; font-size: 0.78rem; background: var(--accent-tint); color: var(--accent-ink); border-radius: 99px; padding: 1px 8px; margin: 2px 4px 2px 0; }
+.bk-stats-value span { color: var(--ink-3); }
+.bk-stats-list { list-style: none; margin: 0; padding: 0; }
+.bk-stats-list li { padding: 6px 0; border-bottom: 1px solid var(--line-2); font-size: 0.88rem; }
+.bk-stats-list .bk-stats-bar-count { float: right; }
+.bk-stats-more { color: var(--ink-3); font-style: italic; }
 .bk-stat-value { font-family: var(--f-display); font-weight: 700; font-size: 1.6rem; display: block; }
 .bk-stat-label { font-size: 0.74rem; color: var(--ink-3); }
 

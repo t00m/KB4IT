@@ -16,7 +16,8 @@ DOCUMENT_THEMES = ("techdoc", "blog", "bookshelf")
 SHARED = {
     "metadata": ["get_labels", "get_html_values_from_key", "build_metadata_section", "get_page_actions"],
     "keypages": ["build_page_key", "build_page_key_value", "build_page_properties", "build_tagcloud_from_key",
-                 "get_maxkv_freq", "build_page_stats", "build_page_bookmarks", "build_page_index_all"],
+                 "get_maxkv_freq", "build_page_bookmarks", "build_page_index_all"],
+    "stats": ["build_page_stats"],
     "tables": ["build_datatable"],
     "events": ["build_events"],
     "toc": ["extract_toc"],

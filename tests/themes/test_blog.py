@@ -71,6 +71,14 @@ def test_metadata_pages(site):
         assert (site["target"] / name).exists(), name
 
 
+def test_stats_page(site):
+    """Totals, activity and property coverage; Summary is not counted."""
+    html = read(site, "stats.html")
+    for anchor in ("stats-activity", "stats-coverage"):
+        assert f'id="{anchor}"' in html, anchor
+    assert 'href="Tag.html"' in html and 'href="Summary.html"' not in html
+
+
 def test_post_and_note_pages(site):
     assert "Fresh excerpt." in read(site, "second.html")
     assert "Document last update" in read(site, "second.html")   # post layout, without an Author

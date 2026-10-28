@@ -197,7 +197,7 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 | `all.html` | Every document in a sortable, searchable table |
 | `events.html` | A calendar per year and a table of events |
 | `properties.html` | Every property, one per line, with its number of values and of documents; each links to the property's page. A property's page (such as `Author.html`) shows its values as a cloud or as a table |
-| `stats.html` | Counts and a word cloud of the values |
+| `stats.html` | Totals, documents per year and per month, property coverage with the most used values, metadata health (similar values, properties used once, documents with little metadata) and links (most linked documents, documents nothing links to) |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
 | `gallery.html` | The images of every document. See [Gallery](#gallery) |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |

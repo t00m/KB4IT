@@ -67,6 +67,14 @@ def test_metadata_pages(site):
         assert (site["target"] / name).exists(), name
 
 
+def test_stats_page(site):
+    """Totals, activity and property coverage; Summary is not counted."""
+    html = read(site, "stats.html")
+    for anchor in ("stats-activity", "stats-coverage"):
+        assert f'id="{anchor}"' in html, anchor
+    assert 'href="Command.html"' in html and 'href="Summary.html"' not in html
+
+
 def test_user_index_page_wins(site, tmp_path):
     # Own copy: a user index.md would replace the shelf for the other tests.
     repo = tmp_path / "repo"

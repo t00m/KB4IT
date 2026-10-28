@@ -142,6 +142,14 @@ def test_property_page_has_cloud_and_table_but_no_leader(site):
     assert "data-uk-leader" not in html
 
 
+def test_stats_page(site):
+    """Totals, activity and property coverage; Summary is not counted."""
+    html = read(site, "stats.html")
+    for anchor in ("stats-activity", "stats-coverage"):
+        assert f'id="{anchor}"' in html, anchor
+    assert 'href="Periodicity.html"' in html and 'href="Summary.html"' not in html
+
+
 def test_document_page_has_toc_and_properties(site):
     html = read(site, "monitor.html")
     assert "Steps" in html and "Detail" in html

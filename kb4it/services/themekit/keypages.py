@@ -1,5 +1,5 @@
-"""System pages built from the metadata: properties, property and value pages, stats,
-bookmarks and the list of every document."""
+"""System pages built from the metadata: properties, property and value pages,
+bookmarks and the list of every document. The stats page lives in `stats.py`."""
 
 from __future__ import annotations
 
@@ -156,24 +156,6 @@ class KeyPagesMixin(ThemeHost):
             self.distribute_md(var['pagename'], self.template('PAGE_KEY_VALUE').render(var=var))
             self._add_system_page(var['pagename'], var['title'])
             self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
-
-    def build_page_stats(self) -> None:
-        """Create the stats page: documents, properties and values of each."""
-        if self._reuse_cached_page('stats', 'nck', 'no_key_changes', 'build_page_stats'):
-            return
-        var = self.get_theme_var()
-        var['count_docs'] = self.srvdtb.get_documents_count()
-        keys = self.stats_keys()
-        var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            var['leader_items'].append({
-                'key': key,
-                'vfkey': valid_filename(key),
-                'count_values': len(self.srvdtb.get_all_values_for_key(key)),
-            })
-        self.distribute_md('stats', self.template('PAGE_STATS').render(var=var))
-        self._add_system_page('stats', 'Stats')
 
     def build_page_bookmarks(self) -> str | None:
         """Create the bookmarks page: documents with Bookmark set to Yes, True or On, in any case."""

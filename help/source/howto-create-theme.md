@@ -176,9 +176,12 @@ It brings the pages per property and per value, the properties, stats, bookmarks
 | `tagcloud_scale_skips_empty` | `False` | Leave documents without the property out of a tag cloud's scale |
 | `cloud_measure(frequency, max_frequency)` | `count` and `weight` | The size fields of a property button or a tag cloud word |
 | `frequency_keys()`, `stats_keys()` | Every property not ignored | The properties that size the buttons, and those the stats page lists |
+| `stats_skip_keys` | `('Summary',)` | Properties left out of the stats page, such as free text |
 | `datatable_link_template` | `'LINK_DATATABLE'` | Template of a value link in the document table |
 | `datatable_default_headers` | `('Date', 'Title')` | Columns when neither the page nor `repo.json` `"datatable"` names them |
 | `datatable_date_cell(timestamp)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table |
+
+The stats page template, `PAGE_STATS`, gets `var['stats']`, built by `collect_stats()` in `kb4it/services/themekit/stats.py`: the totals (`documents`, `properties`, `values`, `dated_pct`, `bookmarks`, `links`), the activity (`oldest`, `newest`, `undated`, and `years` and `months`, lists of bars with `label`, `count`, `pct` and `url`), `coverage` (one row per property with `key`, `url`, `docs`, `pct`, `values` and `top`), the health lists (`duplicates`, `rare_keys`, `sparse_docs`) and the links (`most_linked`, `orphans`, `no_outgoing`). The health lists and `orphans` hold at most ten `items` and say how many more there are in `more`. Content documents only: system pages never count. The page is kept from the cache only when no document and no property changed.
 
 A document theme writes a `404.html` page at the end of its build: call `self.build_page_404()` from `build()` and give the theme a `PAGE_404` template. To keep a source file name for itself, a theme lists it in `reserved_pages`, a tuple that is empty by default. A theme that writes the 404 page sets `reserved_pages = ("404.md",)`; a document with that name is then reported with `DOC_NAME_RESERVED` and left out.
 
