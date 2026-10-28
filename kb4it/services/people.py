@@ -33,8 +33,9 @@ class PeopleMixin:
         """(key, value) pages to force and documents to rebuild because a profile changed since the last build.
 
         A changed, new or removed profile forces the pages of all its names. A document is rebuilt when a
-        person it names changed status (no profile, no contact, ok), and every document that names
-        anyone is rebuilt when the first profile appears or the last one goes.
+        person it names changed status (no profile, no contact, ok), when it links to a source whose person
+        page changed, and every document that names anyone is rebuilt when the first profile appears or
+        the last one goes.
         """
         settings = getattr(self.srvbes, "people", None) or PeopleSettings()
         old = self.kbdict_cur.get("profiles") or {}
@@ -61,5 +62,14 @@ class PeopleMixin:
             names = [v for key in settings.keys for v in keys.get(key) or [] if str(v).strip()]
             if names and (flipped or any(status_old.get(n, "missing") != status_new.get(n, "missing") for n in names)):
                 docs.add(doc_id)
+        # A link to a source leads to the person's page while the source is a profile: rebuild the documents
+        # linking to a source that became a profile, stopped being one, or now names another person.
+        page_old = {doc_id: person_page(entry["person"], settings) for doc_id, entry in old.items()}
+        page_new = {doc_id: person_page(entry["person"], settings) for doc_id, entry in new.items()}
+        moved = {doc_id for doc_id in set(page_old) | set(page_new) if page_old.get(doc_id) != page_new.get(doc_id)}
+        if moved:
+            for doc_id, targets in (self.kbdict_new.get("links") or {}).items():
+                if doc_id in self.kbdict_new["document"] and any(path in moved for path, _frag in targets):
+                    docs.add(doc_id)
         self.log.debug(f"[PEOPLE] REBUILD docs={len(docs)} pairs={len(pairs)}")
         return pairs, docs

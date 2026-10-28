@@ -136,3 +136,35 @@ def test_link_to_profile_points_to_author_page(tmp_path, home):
     assert "PERSON-JANE-DOE.html" not in html
     assert "broken link to PERSON-JANE-DOE.md" not in html  # techdoc Quality tab
     assert "LINK_BROKEN" not in result.stdout
+
+
+# A second profile that stays, so the "profiles in use" switch never flips in these tests.
+ANN = page("Ann", Person="Ann", Email="ann@x.org")
+
+
+def _y(tmp_path):
+    return (tmp_path / "repo" / "target" / "y.html").read_text(encoding="utf-8")
+
+
+def test_document_turned_profile_rebuilds_linking_pages(tmp_path, home):
+    pages = {"y.md": doc("Why", "Ask [Jane](x.md)."), "PERSON-ANN.md": ANN, "x.md": doc("Jane Doe")}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"x.md": PROFILE})
+    assert "COMPILED doc=y.md" in out
+    assert '<a href="Author_Jane_Doe.html">Jane</a>' in _y(tmp_path)
+
+
+def test_renamed_person_rebuilds_linking_pages(tmp_path, home):
+    pages = {"y.md": doc("Why", "Ask [Jane](x.md)."), "PERSON-ANN.md": ANN, "x.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"x.md": PROFILE.replace("Person: Jane Doe", "Person: Jane Smith")})
+    assert "COMPILED doc=y.md" in out
+    assert '<a href="Author_Jane_Smith.html">Jane</a>' in _y(tmp_path)
+
+
+def test_profile_turned_document_rebuilds_linking_pages(tmp_path, home):
+    pages = {"y.md": doc("Why", "Ask [Jane](x.md)."), "PERSON-ANN.md": ANN, "x.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"x.md": doc("Jane Doe")})
+    assert "COMPILED doc=y.md" in out
+    assert '<a href="x.html">Jane</a>' in _y(tmp_path)
