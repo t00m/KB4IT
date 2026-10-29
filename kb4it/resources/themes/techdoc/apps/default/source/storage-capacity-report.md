@@ -8,6 +8,7 @@ Status: Draft
 Summary: Disk usage of the file servers in the third quarter, and what to buy next.
 Tag: capacity, disk
 Topic: Storage
+WorkType: Knowledge
 ---
 
 # Storage capacity report, third quarter

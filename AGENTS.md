@@ -430,7 +430,7 @@ Tag: tag1, tag2
 ...
 ```
 
-Frontmatter rules and the controlled vocabulary for `Category`, `DocType`, semantic properties (`OS`, `Product`, `Database`, ...) live in the `kb4itdoc_md` skill. Multi-value strings are comma-separated. `Title` must come from the `# H1`, not the frontmatter -- a warning logs and ignores any `Title:` key in frontmatter.
+Frontmatter rules and the controlled vocabulary for `Category`, `WorkType`, `DocType`, semantic properties (`OS`, `Product`, `Database`, ...) live in the `kb4itdoc_md` skill. In techdoc every document has a `WorkType`: `Knowledge` (with Category Procedure, Note, Post, Report or Template) or a record type (`Change`, `Incident`, `Task` with `Record`; `Meeting` with `Minutes`); `techdoc_records.work_type()` returns `''` for `Knowledge`. Multi-value strings are comma-separated. `Title` must come from the `# H1`, not the frontmatter -- a warning logs and ignores any `Title:` key in frontmatter.
 
 `Date` is optional. Undated documents are kept and sorted after the dated ones; the datatables list them with an empty date cell. `Modified` (optional, same forms) is the explicit last-modified date, see `core/moddates.py`.
 

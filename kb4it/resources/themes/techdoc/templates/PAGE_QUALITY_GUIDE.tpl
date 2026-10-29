@@ -14,7 +14,7 @@ ${'##'} Tiers {#tiers}
 | Stub | under ${var['tiers']['basic']} | grey ring |
 | Retired | Status ${', '.join(var['retired'])} | no score |
 
-Records (documents with a `WorkType`: changes, incidents, tasks, meetings) are short by nature. They are judged by the sections of their WorkType skeleton instead of the shape of a DocType, need 60 words instead of 150 to 800, and get points for a final status instead of a recent date. A record is compared with records of the same WorkType.
+Records (documents whose `WorkType` is Change, Incident, Task or Meeting) are short by nature. They are judged by the sections of their WorkType skeleton instead of the shape of a DocType, need 60 words instead of 150 to 800, and get points for a final status instead of a recent date. A record is compared with records of the same WorkType.
 
 % for dim in var['dims']:
 ${'##'} ${dim['title']} (${dim['max']} points) {#dim-${dim['key']}}
@@ -38,7 +38,7 @@ ${check['example'] | n}
 % endfor
 ${'##'} Skeletons {#skeletons}
 
-A skeleton is the template the Add page starts a document from. The quality score checks that a document has the `##` sections of its skeleton: records use the skeleton of their `WorkType`, other documents the skeleton of their first `Category`.
+A skeleton is the template the Add page starts a document from. The quality score checks that a document has the `##` sections of its skeleton: records use the skeleton of their `WorkType`, knowledge documents (`WorkType: Knowledge`) the skeleton of their first `Category`.
 
 % for skel in var['skeletons']:
 ${'##'}# ${skel['title']} {#skeleton-${skel['key']}}

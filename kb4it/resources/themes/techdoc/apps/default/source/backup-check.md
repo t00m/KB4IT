@@ -8,6 +8,7 @@ Status: Finished
 Summary: Daily check that every backup job of last night ended well.
 Tag: nightly
 Topic: Backup
+WorkType: Knowledge
 ---
 
 # Check last night's backups

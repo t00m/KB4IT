@@ -20,7 +20,7 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 | Property | Values | Effect |
 |---|---|---|
 | `Category` | The form of the document: `Procedure`, `Note`, `Report`, `Template`, `Post`, `Record`, `Minutes` | Groups documents |
-| `WorkType` | The type of work a record holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
+| `WorkType` | `Knowledge` for a knowledge document; for a record, the type of work it holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
 | `DocType` | `Tutorial`, `How-to guide`, `Reference`, `Explanation` | Counted in the four cards of the dashboard |
 | `Priority` | `Critical`, `Very high`, `High`, `Medium`, `Normal`, `Low`, `Unknown` | Coloured label; open items are sorted by it |
 | `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Closed: `Completed`, `Finished`, `Released`, `Successful`. Faded: `Deprecated`, `Obsolete` | Coloured label; open values put incidents, changes and tasks under **Open items** |
@@ -30,7 +30,15 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 
 Any other property gets its own pages, as in every theme.
 
-A change, incident or task record has `Category: Record`; meeting notes have `Category: Minutes`. Both carry a `WorkType`. A document with a `WorkType` is a record; any other document is a knowledge document.
+Every document carries a `WorkType`, and its `Category` must go with it:
+
+| WorkType | Category |
+|---|---|
+| `Knowledge` | `Procedure`, `Note`, `Post`, `Report`, `Template` |
+| `Change`, `Incident`, `Task` | `Record` |
+| `Meeting` | `Minutes` |
+
+A document whose `WorkType` is `Change`, `Incident`, `Task` or `Meeting` is a record; a document with `WorkType: Knowledge` is a knowledge document. The quality score takes a point when `WorkType` is missing and three when the `Category` does not go with it. A document with no `WorkType` is still read as a knowledge document, unless its `Category` holds an older type of work (see [Upgrading](#upgrade)).
 
 ### Upgrading an older repository {#upgrade}
 
@@ -48,7 +56,7 @@ python scripts/conv/split_category.py source --csv split.csv --dry-run
 python scripts/conv/split_category.py source --csv split.csv
 ```
 
-It only rewrites the `Category` line of the frontmatter and adds `WorkType` below it. `Category: Change` becomes `Category: Record` with `WorkType: Change`; `Category: Meeting` becomes `Category: Minutes` with `WorkType: Meeting`; in `Category: Report, Incident` the `Report` stays. Running it twice changes nothing. Back up the `source` folder first if it is not under version control.
+It only rewrites the `Category` line of the frontmatter and adds `WorkType` below it. `Category: Change` becomes `Category: Record` with `WorkType: Change`; `Category: Meeting` becomes `Category: Minutes` with `WorkType: Meeting`; in `Category: Report, Incident` the `Report` stays, so check those documents by hand. A document whose `Category` is only `Procedure`, `Note`, `Post`, `Report` or `Template` gets `WorkType: Knowledge`; any other `Category` is left alone. Running it twice changes nothing. Back up the `source` folder first if it is not under version control.
 
 ## Dashboard {#dashboard}
 
@@ -107,7 +115,7 @@ Every document gets a score from 0 to 100. A ring in the header strip shows it; 
 
 | Dimension | Points | What counts |
 |---|---|---|
-| Findable | 15 | Author, Date, DocType, Category, Status, Tag, Topic, Scope and Product (1 each); known values for Status, Priority and DocType (3); a `Summary` (3) |
+| Findable | 15 | Author, Date, DocType, Category, WorkType, Status, Tag, Topic, Scope and Product (1 each); known values for Status, Priority, DocType, Category and WorkType (2); a `Summary` (3). A Category that does not go with the WorkType costs 3 |
 | Structured | 25 | Two or more sections; a first section that gives context (Description, Introduction, Overview); the shape of its DocType (steps for a how-to guide, a table or list for a reference); the sections of its skeleton. Empty sections and skeleton text left in cost points |
 | Complete | 25 | Words against a target: how-to guide 150, reference 200, explanation 500, tutorial 800 |
 | Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3 |
@@ -115,9 +123,9 @@ Every document gets a score from 0 to 100. A ring in the header strip shows it; 
 
 The score gives a tier: **Exemplary** (75 and up, gold ring and a note under the top bar), **Complete** (60 to 74, green), **Basic** (40 to 59) and **Stub** (under 40), both grey. Documents with the Status `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` are **Retired** and get no score.
 
-Records (documents with a `WorkType`) are short by nature and are scored on a lighter scale: the sections of their WorkType skeleton instead of a DocType shape, a 60-word target, and a final status instead of freshness. A record is compared with records of the same WorkType.
+Records (documents whose `WorkType` is Change, Incident, Task or Meeting) are short by nature and are scored on a lighter scale: the sections of their WorkType skeleton instead of a DocType shape, a 60-word target, and a final status instead of freshness. A record is compared with records of the same WorkType.
 
-The skeletons of the Add page are written to this standard. Each one has every core key (empty keys to fill: Author, Summary, Tag, Topic, Scope, Product), a first section that gives context, the shape of its type (numbered steps and a command for a procedure, a table for a report, three sections for a note or a post) and a References section with an example source. A document that keeps that structure, replaces the example text and reaches the word target scores Exemplary. Each example line says what to write; one left unchanged costs points as skeleton text.
+The skeletons of the Add page are written to this standard. Each one has every core key in alphabetical order, with its Category and WorkType already set (empty keys to fill: Author, Summary, Tag, Topic, Scope, Product), a first section that gives context, the shape of its type (numbered steps and a command for a procedure, a table for a report, three sections for a note or a post) and a References section with an example source. A document that keeps that structure, replaces the example text and reaches the word target scores Exemplary. Each example line says what to write; one left unchanged costs points as skeleton text.
 
 | Skeleton | Sections |
 |---|---|

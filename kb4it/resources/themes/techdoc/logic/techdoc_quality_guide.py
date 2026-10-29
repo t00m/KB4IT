@@ -17,19 +17,32 @@ CHECKS = {
     'check-core-keys': {
         'title': 'Core keys',
         'dim': 'findable',
-        'what': 'The frontmatter has the core keys: Author, Date, DocType, Category, Status, Tag, Topic, Scope and Product.',
-        'how': 'Add each missing key to the frontmatter, between the two `---` lines at the top of the file. One point per key.',
-        'example': '---\nAuthor: Ana Pérez\nDate: 2026-10-24\nDocType: How-to guide\nCategory: Procedure\nStatus: Released\n'
-                   'Tag: certificate, renewal\nTopic: Security\nScope: SAP Administration\nProduct: ADS\n---',
+        'what': 'The frontmatter has the core keys: Author, Date, DocType, Category, WorkType, Status, Tag, Topic, Scope and Product.',
+        'how': 'Add each missing key to the frontmatter, between the two `---` lines at the top of the file. One point per key. '
+               'WorkType is `Knowledge` for a procedure, note, post or report, and Change, Incident, Task or Meeting for a record.',
+        'example': '---\nAuthor: Ana Pérez\nCategory: Procedure\nDate: 2026-10-24\nDocType: How-to guide\nProduct: ADS\n'
+                   'Scope: SAP Administration\nStatus: Released\nTag: certificate, renewal\nTopic: Security\nWorkType: Knowledge\n---',
     },
     'check-known-values': {
         'title': 'Known values',
         'dim': 'findable',
-        'what': 'Status, Priority and DocType use values the theme knows, so lists, colours and filters work.',
+        'what': 'Status, Priority, DocType, Category and WorkType use values the theme knows, so lists, colours and filters work.',
         'how': 'Use one of these values. Status: New, Open, Draft, Planned, Completed, Released, Finished, Successful, '
                'Deprecated, Obsolete, Withdrawn, Rejected. Priority: Critical, Very high, High, Medium, Normal, Low. '
-               'DocType: Tutorial, How-to guide, Reference, Explanation. The list is in the `quality` block of `theme.json`.',
-        'example': 'Status: Released\nPriority: Normal\nDocType: How-to guide',
+               'DocType: Tutorial, How-to guide, Reference, Explanation. Category: Procedure, Note, Post, Report, Template, '
+               'Record, Minutes. WorkType: Knowledge, Change, Incident, Task, Meeting. An older `Category: Change` '
+               '(or Incident, Task, Meeting) is not a known Category: move the type of work to WorkType. '
+               'The list is in the `quality` block of `theme.json`.',
+        'example': 'Category: Procedure\nDocType: How-to guide\nPriority: Normal\nStatus: Released\nWorkType: Knowledge',
+    },
+    'check-work-category': {
+        'title': 'Category goes with WorkType',
+        'dim': 'findable',
+        'what': 'Category (the form of the document) goes with WorkType (the type of work). A wrong pair costs 3 points.',
+        'how': 'WorkType: Knowledge goes with Category: Procedure, Note, Post, Report or Template. Change, Incident and Task '
+               'go with Category: Record. Meeting goes with Category: Minutes. The pairs are in `work_categories`, in the '
+               '`quality` block of `theme.json`.',
+        'example': 'Category: Record\nWorkType: Incident',
     },
     'check-summary': {
         'title': 'Summary',

@@ -1,16 +1,15 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Reference
 Category: Minutes
-WorkType: Meeting
+Date: YYYY-MM-DD
+DocType: Reference
+Product:
+Scope:
 Status: New
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Meeting
 ---
 
 # Title of the meeting

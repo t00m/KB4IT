@@ -1,15 +1,15 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Reference
 Category: Report
+Date: YYYY-MM-DD
+DocType: Reference
+Product:
+Scope:
 Status: Draft
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Knowledge
 ---
 
 # Title of the report

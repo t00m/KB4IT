@@ -38,7 +38,16 @@
             "Status": ["New", "Open", "Draft", "Planned", "Completed", "Released", "Finished", "Successful",
                        "Deprecated", "Obsolete", "Withdrawn", "Rejected"],
             "Priority": ["Critical", "Very high", "High", "Medium", "Normal", "Low"],
-            "DocType": ["Tutorial", "How-to guide", "Reference", "Explanation"]
+            "DocType": ["Tutorial", "How-to guide", "Reference", "Explanation"],
+            "Category": ["Procedure", "Note", "Post", "Report", "Template", "Record", "Minutes"],
+            "WorkType": ["Knowledge", "Change", "Incident", "Task", "Meeting"]
+        },
+        "work_categories": {
+            "Knowledge": ["Procedure", "Note", "Post", "Report", "Template"],
+            "Change": ["Record"],
+            "Incident": ["Record"],
+            "Task": ["Record"],
+            "Meeting": ["Minutes"]
         }
     },
     "info_tabs": {

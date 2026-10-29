@@ -1,17 +1,16 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Reference
 Category: Record
-WorkType: Incident
+Date: YYYY-MM-DD
+DocType: Reference
 Priority: Normal
+Product:
+Scope:
 Status: New
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Incident
 ---
 
 # Title of the incident

@@ -1,16 +1,16 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: How-to guide
 Category: Procedure
+Date: YYYY-MM-DD
+DocType: How-to guide
 Priority: Normal
+Product:
+Scope:
 Status: Draft
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Knowledge
 ---
 
 # Title of the procedure

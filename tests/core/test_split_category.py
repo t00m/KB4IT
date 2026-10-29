@@ -27,9 +27,16 @@ def test_list_keeps_the_forms():
     assert change["category_after"] == "Report"
 
 
-def test_forms_and_migrated_documents_are_untouched():
-    for text in ("---\nCategory: Procedure, Note\n---\n\n# T\n",
-                 "---\nCategory: Record\nWorkType: Change\n---\n\n# T\n",
+def test_knowledge_forms_get_worktype_knowledge():
+    new, change = split.split_text("---\nCategory: Procedure, Note\nStatus: Draft\n---\n\n# T\n")
+    assert new == "---\nCategory: Procedure, Note\nWorkType: Knowledge\nStatus: Draft\n---\n\n# T\n"
+    assert change == {"category_before": "Procedure, Note", "category_after": "Procedure, Note", "worktype": "Knowledge"}
+
+
+def test_migrated_and_unknown_documents_are_untouched():
+    for text in ("---\nCategory: Record\nWorkType: Change\n---\n\n# T\n",
+                 "---\nCategory: Note\nWorkType: Knowledge\n---\n\n# T\n",
+                 "---\nCategory: Recipe\n---\n\n# T\n",
                  "---\nAuthor: A\n---\n\n# T\n", "# No frontmatter\n"):
         assert split.split_text(text) == (text, None)
 
@@ -44,8 +51,9 @@ def test_crlf_and_idempotence():
 def test_split_dir_writes_csv_and_respects_dry_run(tmp_path):
     (tmp_path / "a.md").write_text("---\nCategory: Change\n---\n\n# A\n", encoding="utf-8")
     (tmp_path / "b.md").write_text("---\nCategory: Note\n---\n\n# B\n", encoding="utf-8")
+    (tmp_path / "c.md").write_text("---\nCategory: Recipe\n---\n\n# C\n", encoding="utf-8")
     changes = split.split_dir(tmp_path, tmp_path / "out.csv", dry_run=True)
-    assert [c["file"] for c in changes] == ["a.md"]
+    assert [c["file"] for c in changes] == ["a.md", "b.md"]
     assert "Category: Change" in (tmp_path / "a.md").read_text(encoding="utf-8")
     split.split_dir(tmp_path, tmp_path / "out.csv", dry_run=False)
     assert "WorkType: Change" in (tmp_path / "a.md").read_text(encoding="utf-8")

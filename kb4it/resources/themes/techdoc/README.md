@@ -31,13 +31,13 @@ Techdoc uses these properties from each document:
 | Property | Used for |
 | --- | --- |
 | `Category` | The form of the document: `Procedure`, `Note`, `Report`, `Template`, `Post`, `Record` or `Minutes` |
-| `WorkType` | The type of work a record holds: `Change`, `Incident`, `Task` or `Meeting`. Drives the latest changes and incidents, **Open items** and the calendar |
+| `WorkType` | `Knowledge` for a knowledge document, or the type of work a record holds: `Change`, `Incident`, `Task` or `Meeting`. Drives the latest changes and incidents, **Open items** and the calendar |
 | `Date` | Dates the document; it appears in the calendar when its `WorkType` (or, without one, its `Category`) is listed in `events` |
 | `DocType` | `Tutorial`, `How-to guide`, `Reference` or `Explanation`; fills the dashboard cards and the quality score |
 | `Status` | `Draft` shows a draft banner; `Obsolete`, `Deprecated`, `Withdrawn` and `Rejected` mark the document as retired |
 | `Summary` | One line shown under the title |
 
-A change, incident or task record has `Category: Record`; meeting notes have `Category: Minutes`. Every other property is optional. Add `Tag`, `Topic`, `Scope`, `Priority` and the rest when you need them.
+`WorkType: Knowledge` goes with `Category: Procedure`, `Note`, `Post`, `Report` or `Template`; a change, incident or task record has `Category: Record`; meeting notes have `Category: Minutes`. The quality score checks the pair (`work_categories` in the `quality` block of `theme.json`). Every other property is optional. Add `Tag`, `Topic`, `Scope`, `Priority` and the rest when you need them.
 
 ## Optional keys
 
