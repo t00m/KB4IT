@@ -4,13 +4,15 @@ from kb4it.core.util import valid_filename
 
 # Category values that older repositories use for the type of work.
 RECORD_TYPES = ('Change', 'Incident', 'Task', 'Meeting')
+# The WorkType of a knowledge document: procedures, notes, posts and reports are not records.
+KNOWLEDGE = 'Knowledge'
 
 
 def work_type(srvdtb, doc_id):
     """Return the type of work of a document, or '' when it is not a record."""
     worktypes = [v for v in srvdtb.get_values(doc_id, 'WorkType') if v]
     if worktypes:
-        return worktypes[0]
+        return '' if worktypes[0] == KNOWLEDGE else worktypes[0]
     for value in srvdtb.get_values(doc_id, 'Category'):
         if value in RECORD_TYPES:
             return value

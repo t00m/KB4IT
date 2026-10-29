@@ -13,6 +13,7 @@ Summary: Daily check of the background jobs that were cancelled since the last w
 Tag: monitoring
 Topic: Background jobs
 Transaction: SM37
+WorkType: Knowledge
 ---
 
 # Check failed background jobs

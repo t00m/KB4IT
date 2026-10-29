@@ -6,8 +6,10 @@ Usage: split_category.py SOURCE [--csv FILE] [--dry-run]
 Reads every *.md file at the top of SOURCE. When the frontmatter Category holds
 Change, Incident or Task, the document becomes Category: Record with
 WorkType: <type>; Meeting becomes Category: Minutes with WorkType: Meeting.
-Other values in a list (Report, Incident) stay in Category. Only the Category
-line changes: the body, the key order and the line endings are kept. Documents
+Other values in a list (Report, Incident) stay in Category. A document whose
+Category is only a form of knowledge (Procedure, Note, Post, Report, Template)
+gets WorkType: Knowledge. Only the Category line changes: the body, the key
+order and the line endings are kept. Documents
 that already have a WorkType are left alone, so running it twice is safe.
 With --csv, writes one row per changed document. With --dry-run, writes no
 document.
@@ -20,6 +22,7 @@ import sys
 from pathlib import Path
 
 RECORD_TYPES = ("Change", "Incident", "Task", "Meeting")
+KNOWLEDGE_FORMS = ("Procedure", "Note", "Post", "Report", "Template")
 CATEGORY = re.compile(r"^Category:\s*(.*?)\s*$")
 WORKTYPE = re.compile(r"^WorkType:")
 FIELDS = ["file", "category_before", "category_after", "worktype"]
@@ -50,11 +53,14 @@ def split_text(text):
     before = match.group(1)
     values = [v.strip() for v in before.split(",") if v.strip()]
     kinds = [v for v in values if v in RECORD_TYPES]
-    if not kinds:
+    if kinds:
+        worktype = kinds[0]
+        forms = [v for v in values if v not in RECORD_TYPES]
+        after = ", ".join(forms) or ("Minutes" if worktype == "Meeting" else "Record")
+    elif values and all(v in KNOWLEDGE_FORMS for v in values):
+        worktype, after = "Knowledge", before
+    else:
         return text, None
-    worktype = kinds[0]
-    forms = [v for v in values if v not in RECORD_TYPES]
-    after = ", ".join(forms) or ("Minutes" if worktype == "Meeting" else "Record")
     # The closing --- follows, so the Category line always has an ending.
     eol = _ending(lines[i])
     lines[i] = f"Category: {after}{eol}WorkType: {worktype}{eol}"
@@ -81,7 +87,7 @@ def split_dir(source, csv_path=None, dry_run=False):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Move record types from Category to WorkType.")
+    parser = argparse.ArgumentParser(description="Move record types from Category to WorkType, and mark knowledge documents.")
     parser.add_argument("source", type=Path, help="folder with the Markdown documents")
     parser.add_argument("--csv", type=Path, help="write the changes to this CSV file")
     parser.add_argument("--dry-run", action="store_true", help="report the changes without writing documents")

@@ -1,15 +1,15 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Explanation
 Category: Note
+Date: YYYY-MM-DD
+DocType: Explanation
+Product:
+Scope:
 Status: Draft
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Knowledge
 ---
 
 # Title of the note

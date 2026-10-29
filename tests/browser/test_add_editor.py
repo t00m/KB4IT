@@ -451,12 +451,12 @@ def test_form_action_is_not_redrawn_again(add_page):
     assert add_page.input_value(row("note", "Owner") + " .kb-value-input") == "zed"
 
 
-def test_fresh_document_version_row_is_editable(add_page):
+def test_fresh_document_worktype_row_is_editable(add_page):
     open_cat(add_page, "note")
-    assert "Version: 1.0" in editor_text(add_page, "note")
-    add_page.wait_for_selector(row("note", "Version"))
-    assert add_page.locator(row("note", "Version") + " .kb-prop-complex").count() == 0
-    assert add_page.locator(row("note", "Version") + " input").count() >= 1
+    assert "WorkType: Knowledge" in editor_text(add_page, "note")
+    add_page.wait_for_selector(row("note", "WorkType"))
+    assert add_page.locator(row("note", "WorkType") + " .kb-prop-complex").count() == 0
+    assert add_page.locator(row("note", "WorkType") + " input").count() >= 1
 
 
 # ---- ET-01 and ET-02: native dialog, toasts, icons ----

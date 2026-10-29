@@ -5,6 +5,7 @@
 import json
 import re
 import shutil
+import sys
 import zipfile
 from datetime import datetime, timedelta
 
@@ -228,7 +229,36 @@ SKELETONS = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "templates" / 
                                                      ("TASK", "Record", "Task"), ("MEETING", "Minutes", "Meeting")])
 def test_record_skeletons_use_worktype(name, category, worktype):
     text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
-    assert f"\nCategory: {category}\nWorkType: {worktype}\n" in text
+    assert f"\nCategory: {category}\n" in text and f"\nWorkType: {worktype}\n" in text
+
+
+@pytest.mark.parametrize("name", ["NOTE", "POST", "PROCEDURE", "REPORT"])
+def test_knowledge_skeletons_use_worktype_knowledge(name):
+    text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
+    assert "\nWorkType: Knowledge\n" in text
+
+
+@pytest.mark.parametrize("path", sorted(SKELETONS.glob("*-SKELETON.md")), ids=lambda p: p.name)
+def test_skeleton_keys_are_alphabetical_without_version(path):
+    keys = [line.split(":")[0] for line in path.read_text(encoding="utf-8").split("---")[1].splitlines() if line]
+    assert keys == sorted(keys) and "Version" not in keys
+
+
+def test_worktype_knowledge_is_not_a_record():
+    sys.path.insert(0, str(ROOT / "kb4it/resources/themes/techdoc/logic"))
+    import techdoc_records as records
+
+    class Db:
+        def __init__(self, meta):
+            self.meta = meta
+
+        def get_values(self, doc_id, key):
+            return self.meta.get(key, [''])
+
+    assert records.work_type(Db({"WorkType": ["Knowledge"], "Category": ["Procedure"]}), "a.md") == ""
+    assert records.event_type(Db({"WorkType": ["Knowledge"], "Category": ["Procedure"]}), "a.md") == "Procedure"
+    assert records.work_type(Db({"WorkType": ["Incident"], "Category": ["Record"]}), "a.md") == "Incident"
+    assert records.work_type(Db({"Category": ["Change"]}), "a.md") == "Change"
 
 
 def test_apps_list_worktype_after_category():

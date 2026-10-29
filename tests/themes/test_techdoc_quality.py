@@ -37,9 +37,30 @@ def doc(tmp_path):
 
 def test_findable_counts_core_keys_known_values_and_summary(prof, doc):
     full = doc("# T\n", Author="A", Date="2026-01-01", DocType="How-to guide", Category="Procedure", Status="Released",
-               Tag="x", Topic="y", Scope="z", Product="p", Summary="S")
+               Tag="x", Topic="y", Scope="z", Product="p", Summary="S", WorkType="Knowledge")
     assert sum(c.points for c in quality.findable(full, prof)) == 15
     assert sum(c.points for c in quality.findable(doc("# T\n", Status="Whatever"), prof)) == 1
+
+
+def test_a_missing_worktype_costs_a_point_and_says_knowledge(prof, doc):
+    checks = quality.findable(doc("# T\n", Category="Procedure"), prof)
+    worktype = next(c for c in checks if c.name == "WorkType key")
+    assert not worktype.passed and "WorkType: Knowledge" in worktype.tip
+
+
+def test_an_old_category_is_not_a_known_value(prof, doc):
+    checks = quality.findable(doc("# T\n", Category="Change", Status="Open"), prof)
+    known = next(c for c in checks if c.key == "check-known-values")
+    assert known.points == 0 and "Category: Change" in known.tip
+
+
+def test_a_category_that_does_not_go_with_the_worktype_costs_points(prof, doc):
+    for category, work in (("Procedure", "Incident"), ("Record", "Knowledge"), ("Minutes", "Change")):
+        checks = quality.findable(doc("# T\n", Category=category, WorkType=work), prof)
+        assert [c.points for c in checks if c.key == "check-work-category"] == [-3], (category, work)
+    for category, work in (("Procedure", "Knowledge"), ("Record", "Incident"), ("Minutes", "Meeting"), ("Recipe", "Other")):
+        checks = quality.findable(doc("# T\n", Category=category, WorkType=work), prof)
+        assert not any(c.key == "check-work-category" for c in checks), (category, work)
 
 
 def test_structured_how_to_with_skeleton_sections(prof, skeletons, doc):
@@ -117,7 +138,8 @@ def test_every_check_has_a_guide_entry_and_a_tip(prof, skeletons, doc):
     sys.path.insert(0, str(LOGIC))
     import techdoc_quality_guide as guide
     body = "# T\n\n## Summary\n\nX.\n\n## Empty\n\n## Root Cause\n\nY [gone](gone.md) ![i](resources/images/none.png)\n"
-    docs = [doc(body, work_type="Incident", Status="Open"), doc(body, DocType="Tutorial", Category="Note", Date="soon"),
+    docs = [doc(body, work_type="Incident", Status="Open", Category="Note", WorkType="Incident"),
+            doc(body, DocType="Tutorial", Category="Note", Date="soon"),
             doc("# T\n", DocType="Reference", Category="Procedure", Status="Released", Date="2010-01-01")]
     for d in docs:
         for check in quality.assess(d, prof, skeletons, date(2026, 10, 24)).checks:
@@ -136,7 +158,7 @@ def _filled(name, text, skeleton):
     sentence = " ".join(["The service account renews the certificate and the team checks the log afterwards."] * 6)
     for line in skeleton.placeholders:
         text = text.replace(line, sentence)
-    record = "\nWorkType:" in text
+    record = "\nWorkType: Knowledge" not in text
     keys = {"Author": "Ana", "Date": "2026-10-20", "Tag": "renewal", "Topic": "Security", "Scope": "Infrastructure",
             "Product": "ADS", "Summary": "Renew the certificate.", "Status": "Completed" if record else "Released"}
     for key, value in keys.items():
@@ -146,7 +168,8 @@ def _filled(name, text, skeleton):
         key, _, value = line.partition(":")
         if value.strip():
             meta[key.strip()] = [v.strip() for v in value.split(",")]
-    work = (meta.get("WorkType") or [""])[0]
+    # The theme passes the type of work of a record; a knowledge document has none.
+    work = (meta.get("WorkType") or [""])[0].replace("Knowledge", "")
     return quality.DocInput(text=text, meta=meta, backlinks=0, known_docs=set(), source_dir="/nonexistent", work_type=work)
 
 

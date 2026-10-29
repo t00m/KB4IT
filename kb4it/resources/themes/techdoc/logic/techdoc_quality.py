@@ -35,10 +35,25 @@ DEFAULTS = {
                    'Deprecated', 'Obsolete', 'Withdrawn', 'Rejected'],
         'Priority': ['Critical', 'Very high', 'High', 'Medium', 'Normal', 'Low'],
         'DocType': ['Tutorial', 'How-to guide', 'Reference', 'Explanation'],
+        'Category': ['Procedure', 'Note', 'Post', 'Report', 'Template', 'Record', 'Minutes'],
+        'WorkType': ['Knowledge', 'Change', 'Incident', 'Task', 'Meeting'],
+    },
+    # The Category values each WorkType goes with.
+    'work_categories': {
+        'Knowledge': ['Procedure', 'Note', 'Post', 'Report', 'Template'],
+        'Change': ['Record'],
+        'Incident': ['Record'],
+        'Task': ['Record'],
+        'Meeting': ['Minutes'],
     },
 }
 
-CORE_KEYS = ('Author', 'Date', 'DocType', 'Category', 'Status', 'Tag', 'Topic', 'Scope', 'Product')
+CORE_KEYS = ('Author', 'Date', 'DocType', 'Category', 'WorkType', 'Status', 'Tag', 'Topic', 'Scope', 'Product')
+# What to write for a missing core key, when the generic tip is not enough.
+CORE_TIPS = {
+    'WorkType': 'Add "WorkType: Knowledge" for a procedure, note, post or report; '
+                'Change, Incident, Task or Meeting for a record.',
+}
 CONTEXT = re.compile(r'description|introduction|overview|summary|objective|context|problem', re.IGNORECASE)
 # Skeleton section names and the headings that count as the same section.
 SYNONYMS = {
@@ -179,17 +194,28 @@ def skeleton_for(doc, skeletons):
 
 
 def findable(doc, prof):
-    """Core keys (1 each), known values (3) and a Summary (3)."""
-    checks = [Check('findable', f'{key} key', f'Add the {key} key', 1 if values(doc, key) else 0, 1,
-                    'check-core-keys', f'Add "{key}: ..." to the frontmatter, between the --- lines.') for key in CORE_KEYS]
+    """Core keys (1 each), known values (2) and a Summary (3); a Category that does not go with the WorkType costs 3."""
+    checks = [Check('findable', f'{key} key', f'Add the {key} key', 1 if values(doc, key) else 0, 1, 'check-core-keys',
+                    CORE_TIPS.get(key, f'Add "{key}: ..." to the frontmatter, between the --- lines.')) for key in CORE_KEYS]
     known = prof['known_values']
     present = [key for key in known if values(doc, key)]
-    ok = bool(present) and all(v in known[key] for key in present for v in values(doc, key))
-    checks.append(Check('findable', 'Known values for Status, Priority and DocType',
-                        'Use a known value for Status, Priority and DocType', 3 if ok else 0, 3, 'check-known-values',
-                        'Use values such as Status: Released, Priority: Normal, DocType: How-to guide.'))
+    unknown = [f'{key}: {v}' for key in present for v in values(doc, key) if v not in known[key]]
+    ok = bool(present) and not unknown
+    tip = 'Use values such as Status: Released, Priority: Normal, DocType: How-to guide, Category: Procedure, WorkType: Knowledge.'
+    if unknown:
+        tip = f'Not a known value: {", ".join(unknown)}. {tip}'
+    checks.append(Check('findable', 'Known values for Status, Priority, DocType, Category and WorkType',
+                        'Use known values for Status, Priority, DocType, Category and WorkType', 2 if ok else 0, 2,
+                        'check-known-values', tip))
     checks.append(Check('findable', 'Summary key', 'Add a Summary key', 3 if values(doc, 'Summary') else 0, 3,
                         'check-summary', 'Add "Summary: one sentence on what the document is for" to the frontmatter.'))
+    work = first(doc, 'WorkType')
+    allowed = prof['work_categories'].get(work)
+    wrong = [v for v in values(doc, 'Category') if allowed is not None and v not in allowed]
+    if wrong:
+        checks.append(Check('findable', 'Category goes with WorkType', f'Use a Category that goes with WorkType: {work}',
+                            -3, 0, 'check-work-category',
+                            f'WorkType: {work} goes with Category: {" or ".join(allowed)}, not {", ".join(wrong)}.'))
     return checks
 
 
