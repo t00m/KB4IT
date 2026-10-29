@@ -180,6 +180,26 @@ The browser shows a cached page, or the change was in a theme template, which KB
 
 Reload the page without the cache (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>). After editing a theme, build with `--force`.
 
+## A profile is left out with PROFILE_INVALID, PROFILE_DUPLICATE or PROFILE_ALIAS_IS_PERSON {#profile-left-out}
+
+### Cause
+
+The profile names a person in a way KB4IT cannot use. `PROFILE_INVALID`: `Person` is empty or holds two names (a comma splits values). `PROFILE_DUPLICATE`: two profiles claim the same name or alias; the first file in name order is kept. `PROFILE_ALIAS_IS_PERSON`: an `Alias` of one profile is the `Person` of another.
+
+### Fix
+
+Write one name in `Person`, keep one profile per person, and move other spellings to `Alias`. With `"fail_on_invalid": true` these errors stop the build. See [Describe a person with a profile](howto-describe-person.md).
+
+## kb4it verify lists PROFILE_NO_CONTACT, PROFILE_UNUSED, AUTHOR_NO_PROFILE or PROFILE_CONTACT_PUBLIC {#profile-notices}
+
+### Cause
+
+These are notices; the build goes on. `PROFILE_NO_CONTACT`: the profile has no contact property, or only private ones. `PROFILE_UNUSED`: no document names the person. `AUTHOR_NO_PROFILE`: documents name a person who has no profile; shown once the knowledge base has one profile. `PROFILE_CONTACT_PUBLIC`: the site is indexed by search engines and a profile shows an email address or a phone number.
+
+### Fix
+
+Add `Email`, `Phone`, `Chat` or `Url` to the profile, or a profile for the person. On a public site, list the properties to hide in `people.private` in `repo.json`. In techdoc, the first two also cost quality points; see the [quality score](reference-theme-techdoc.md#quality).
+
 ## Still stuck? {#still-stuck}
 
 Ask on [GitHub issues](https://github.com/t00m/KB4IT/issues). Say what you ran, what you expected, and paste the log or the message you got.

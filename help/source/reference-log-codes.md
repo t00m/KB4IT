@@ -122,6 +122,7 @@ A profile is a document with a `Person` key: it describes one person named in `A
 | `THEME_REQUIREMENT_INVALID` | error | The `kb4it` field of `theme.json` is not a valid version rule. Stops | Write it like `">=0.9"` |
 | `THEME_VERSION_MISSING` | warning | The theme has no `version` in its `theme.json`. It loads and is shown as `unversioned` | Add `"version": "1.0.0"` to its `theme.json` |
 | `THEME_VERSION_INVALID` | warning | The `version` of `theme.json` is not `X.Y.Z`. The theme loads as `unversioned`; from the next minor release this stops the build | Write it like `"1.2.0"` |
+| `QUALITY_SETTING` | warning | techdoc: `author_profiles` in the `quality` block of `theme.json` is not `"auto"`, `true` or `false`. The build uses `"auto"` | Set one of the three values |
 | `THEME_NOT_LOADED` | error | The site was about to be written without a loaded theme. Stops | Report it as a bug |
 | `THEME_AUTOESCAPE_OFF` | warning | Your own theme prints values without escaping them | Add `"autoescape": true` to `theme.json`; see [Escaping](howto-create-theme.md#escaping) |
 | `THEME_VERIFY_ERROR` | error | The theme's own check crashed during `kb4it verify`. Stops | Fix the theme's `verify.py` |
