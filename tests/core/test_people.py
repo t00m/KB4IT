@@ -25,7 +25,7 @@ def test_values_are_read():
 
 @pytest.mark.parametrize("block, words", [
     ([], "must be an object"),
-    ({"map": {}}, "unknown key 'map'"),
+    ({"maps": {}}, "unknown key 'maps'"),
     ({"keys": "Author"}, "'people.keys' must be a list"),
     ({"keys": []}, "'people.keys' must name at least one key"),
     ({"keys": ["Title"]}, "Title is a KB4IT key"),
