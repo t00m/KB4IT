@@ -34,6 +34,8 @@
                             <span>${value['text']}</span>${'' if loop.last else ','}
 %             elif group['chips']:
                             <a class="kb-obj" href="${value['url']}">${value['text']}</a>
+%             elif value.get('tip'):
+                            <a href="${value['url']}" title="${value['tip']}" data-uk-tooltip>${value['text']}</a>${'' if loop.last else ','}
 %             else:
                             <a href="${value['url']}">${value['text']}</a>${'' if loop.last else ','}
 %             endif

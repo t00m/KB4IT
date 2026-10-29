@@ -91,13 +91,18 @@ def sap_notes(text):
     return found
 
 
-def info_groups(srvdtb, doc_id, groups, body_md):
-    """Return the non-empty groups of the Details tab, then Other with every key not in a group."""
+def info_groups(srvdtb, doc_id, groups, body_md, tip=None):
+    """Return the non-empty groups of the Details tab, then Other with every key not in a group.
+
+    tip(key, value) gives the tooltip of a value, such as the role and team of an author.
+    """
     props = srvdtb.get_doc_properties(doc_id)
     present = [k for k in srvdtb.get_custom_keys(doc_id) if k not in HIDDEN_KEYS]
+    tip = tip or (lambda _key, _value: '')
 
     def item(key):
-        return {'key': key, 'values': [{'text': v, 'url': value_url(props, key, v)} for v in values(srvdtb, doc_id, key)]}
+        return {'key': key, 'values': [{'text': v, 'url': value_url(props, key, v), 'tip': tip(key, v)}
+                                       for v in values(srvdtb, doc_id, key)]}
 
     result = []
     listed = set()

@@ -1684,3 +1684,14 @@ li.task-list-item { list-style-type: none; }
 li.task-list-item > input[type="checkbox"],
 li.task-list-item > p:first-child > input[type="checkbox"]:first-child,
 li.task-list-item > .task-list-control { margin: 0 0.45em 0 -1.4em; vertical-align: -0.1em; accent-color: #1e87f0; }
+
+/* Profile card on a person's page (common HTML_PROFILE_CARD.tpl) */
+.kb-profile { border-left: 4px solid #1e87f0; }
+.kb-profile-name { margin: 0 0 4px; font-weight: 500; }
+.kb-profile-alias { margin: 0 0 10px; font-size: 0.85rem; color: #777; }
+.kb-profile-keys { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 10px 0 0; font-size: 0.9rem; }
+.kb-profile-keys dt { color: #777; font-weight: normal; margin: 0; }
+.kb-profile-keys dd { margin: 0; overflow-wrap: anywhere; }
+.kb-profile-body { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e5e5e5; }
+.kb-profile-body > :last-child { margin-bottom: 0; }
+.kb-profile-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }

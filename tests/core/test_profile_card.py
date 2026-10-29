@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 import pytest
 
+from tests.core.test_highlight import _app_conf
 from tests.helpers import page, run_kb4it, write_repo
 
 JANE = page("Jane Doe", "Bio with **bold**.", Person="Jane Doe", Role="Basis admin", Team="SAP Basis",
@@ -169,3 +170,26 @@ def test_card_links_follow_a_renamed_profile(tmp_path, home):
     result = run_kb4it("build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert '<a href="Author_Annie.html">Ann</a>' in html(target, "Author_Jane_Doe.html")
+
+
+DOC_KEYS = {
+    "techdoc": {},
+    "blog": {"Category": "Post", "Date": "2026-10-01"},
+    "bookshelf": {"Book": "Ops", "Part": "I", "Chapter": "1", "Date": "2026-10-01"},
+}
+
+
+@pytest.mark.parametrize("theme", ["techdoc", "blog", "bookshelf"])
+def test_author_tooltip_shows_role_and_team(tmp_path, home, theme):
+    # The blog post template reads repo.json settings of the blog app, such as sort.
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe", **DOC_KEYS[theme]),
+                                   "b.md": doc("Beta", Author="Bob", **DOC_KEYS[theme]), "PERSON-JANE-DOE.md": JANE}, theme,
+                  **(_app_conf(theme) if theme == "blog" else {}))
+    assert 'title="Basis admin, SAP Basis"' in html(target, "a.html")
+    assert 'title="Basis admin' not in html(target, "b.html")
+
+
+def test_author_tooltip_leaves_private_keys_out(tmp_path, home):
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": JANE},
+                  people={"private": ["Role"]})
+    assert 'title="SAP Basis"' in html(target, "a.html")

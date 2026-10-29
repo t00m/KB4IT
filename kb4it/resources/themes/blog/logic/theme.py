@@ -29,6 +29,13 @@ class Theme(DocumentTheme):
     reuse_unchanged_pages = True
     datatable_link_template = 'LINK'
 
+    def _post_author(self, post, metadata):
+        """The first Author of a post, with the link to its page and the tooltip of its profile, for the post header."""
+        author = next((v for v in metadata.get('Author') or [] if v), '')
+        if author:
+            post['Author_0_Url'] = metadata.get(f'Author_{author}_Url') or f"Author_{valid_filename(author)}.html"
+            post['Author_0_Tip'] = self.person_tip('Author', author)
+
     def _initialize(self):
         super()._initialize()
         self._undated = set()
@@ -92,6 +99,7 @@ class Theme(DocumentTheme):
             metadata = self.srvdtb.get_doc_properties(post)
             for prop in metadata:
                 var['post'][prop] = metadata[prop]
+            self._post_author(var['post'], metadata)
             md_filepath = os.path.join(self.srvbes.get_path('source'), post)
             with open(md_filepath, 'r', encoding='utf-8') as fmd:
                 md_content = fmd.read()
@@ -259,6 +267,7 @@ class Theme(DocumentTheme):
         metadata = self.srvdtb.get_doc_properties(basename_md)
         for prop in metadata:
             var['post'][prop] = metadata[prop]
+        self._post_author(var['post'], metadata)
         if not self.srvdtb.is_system(basename_md):
             self.note_undated(basename_md, var['post'].get('Date'))
         var['topics'] = self.srvdtb.get_all_values_for_key('Topic')

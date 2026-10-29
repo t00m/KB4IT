@@ -11,7 +11,7 @@ import os
 from urllib.parse import quote
 
 from kb4it.core.mdconfig import load_settings, sanitize_html
-from kb4it.core.people import PeopleSettings, Profile, person_page
+from kb4it.core.people import PeopleSettings, Profile, person_page, person_tip
 from kb4it.core.util import SOURCE_ENCODING
 
 # Keys shown first on the card, in this order; the others follow in alphabetical order.
@@ -34,6 +34,14 @@ class ProfileCardMixin:
     def people_settings(self) -> PeopleSettings:
         """The checked repo.json "people" block (Backend loads it with the configuration)."""
         return getattr(self.srvbes, "people", None) or PeopleSettings()
+
+    def person_tip(self, key: str, value: str) -> str:
+        """Role and team of the person a people key value names, for the tooltip of the name on document pages."""
+        settings = self.people_settings()
+        people = getattr(self.srvdtb, "people", None)
+        if key not in settings.keys or people is None or not value:
+            return ""
+        return person_tip(people.lookup(value), settings)
 
     def profile_rows(self, profile: Profile) -> list[dict]:
         """{key, value, href} of each visible profile key, in card order."""

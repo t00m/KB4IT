@@ -396,3 +396,7 @@
 
 
 }
+
+@media print {
+    .kb-profile-actions { display: none !important; }
+}

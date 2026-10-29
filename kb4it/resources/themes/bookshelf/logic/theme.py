@@ -152,6 +152,7 @@ class Theme(DocumentTheme):
                 'bucket': status_bucket(status),
                 'doctype': self._first(docId, 'DocType', ''),
                 'author': self._first(docId, 'Author', ''),
+                'author_tip': self.person_tip('Author', self._first(docId, 'Author', '')),
                 'date': self.srvdtb.get_doc_timestamp(docId) or '',
                 'commands': self._list(docId, 'Command'),
                 'tags': self._list(docId, 'Tag'),
