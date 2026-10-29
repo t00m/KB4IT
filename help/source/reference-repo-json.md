@@ -103,13 +103,16 @@ The index grows with your documents; above 5 MB the build warns with `[SEARCH] I
 
 A profile is a document with a `Person` property. It describes one person that documents name in `Author`: `Person` holds the name exactly as documents write it, `Alias` the other spellings, and any other property (`Team`, `Role`, `Email`, `Phone`) says more about the person. A profile is not a document: it gets no page of its own, and a link to its file leads to the person's page, such as `Author_Jane_Doe.html`. That page shows the profile above the person's documents: the name, the properties (`Email` and `Phone` as links), and the text of the profile. A page for another spelling in `Alias` shows the same profile and links to the main page. A person with a profile and no document yet still gets a page.
 
-The Add page offers a **Person profile** skeleton in every theme but apphelp. While the editor is on, the person's page shows **Edit profile**, or **Create profile** when the person has none. Edit profile carries the whole profile in its link, so a profile with a `private` property gets no Edit profile: edit its file instead. Create profile opens the skeleton with `Person` and the title already filled in, and proposes the file name `person-<name>.md` (`person-jane-doe.md`) in the dialog title and on **Save**: save it in the `source/` folder and rebuild. The techdoc, blog and bookshelf themes show the profile; a theme of your own shows it when its `PAGE_KEY_VALUE.tpl` prints `var['profile_card']`.
+The Add page offers a **Person profile** skeleton in every theme but apphelp. While the editor is on, the person's page shows **Edit profile**, or **Create profile** when the person has none. Edit profile carries the whole profile in its link, so a profile with a `private` property gets no Edit profile: edit its file instead. Create profile opens the skeleton with `Person` and the title already filled in, and proposes the file name `person-<name>.md` (`person-jane-doe.md`) in the dialog title and on **Save**: save it in the `source/` folder and rebuild. The techdoc, blog and bookshelf themes show the profile; a theme of your own shows it when its `PAGE_KEY_VALUE.tpl` prints `var['profile_card']`. On document pages, the name of a person with a profile shows the profile's `Role` and `Team` as a tooltip. See [Describe a person with a profile](howto-describe-person.md).
+
+In the structured data, each person is one schema.org `Person`: documents point to it by `@id` (`<site_url>Author_Jane_Doe.html#person`, with aliases resolved to the `Person` name), and the person's page describes it as a `ProfilePage`, with `name`, `alternateName` (from `Alias`), `description` (the first paragraph of the profile text) and the mapped properties. apphelp has no person pages: the people go into the structured data of its home page, with the `@id` `<site_url>#person-Jane_Doe`.
 
 ```json
 "people": {
   "keys": ["Author"],
   "contact_keys": ["Email", "Phone", "Chat", "Url"],
-  "private": []
+  "private": [],
+  "map": {"Badge": "identifier"}
 }
 ```
 
@@ -117,7 +120,8 @@ The Add page offers a **Person profile** skeleton in every theme but apphelp. Wh
 |---|---|---|
 | `keys` | `["Author"]` | Properties whose values are people. The first one names the person's page |
 | `contact_keys` | `["Email", "Phone", "Chat", "Url"]` | Profile properties that tell readers how to reach the person |
-| `private` | `[]` | Profile properties kept out of the pages. A private property does not count as a contact detail |
+| `private` | `[]` | Profile properties kept out of the pages, the tooltips and the structured data. A private property does not count as a contact detail |
+| `map` | | Adds or changes the schema.org property of a profile property, with the syntax of `seo.map`: `"Property": "schemaProperty"`, `"Property": "schemaProperty:Type"`, or `null` to leave a property out. KB4IT maps `Role` to `jobTitle`, `Team` to `memberOf` (Organization), `Email` to `email`, `Phone` to `telephone`, `Location` to `workLocation` (Place) and `Url` to `url`; `name`, `alternateName` and `description` cannot be mapped |
 
 `Person` and `Alias` are reserved for profiles and cannot be listed here. A malformed `people` block stops the build with a message naming the entry. Changing `people` rebuilds every page.
 
@@ -153,7 +157,7 @@ Properties KB4IT maps by default:
 
 | Property | schema.org | Themes |
 |---|---|---|
-| `Author` | `author` (Person) | all |
+| `Author` | `author` (Person, with the `@id` of the person, see [people](#people)) | all |
 | `Tag` | `keywords` | all |
 | `Topic` | `about` | all |
 | `Category` | `genre`; in blog, `articleSection` | all |

@@ -118,7 +118,7 @@ Every document gets a score from 0 to 100. A ring in the header strip shows it; 
 | Findable | 15 | Author, Date, DocType, Category, WorkType, Status, Tag, Topic, Scope and Product (1 each); known values for Status, Priority, DocType, Category and WorkType (2); a `Summary` (3). A Category that does not go with the WorkType costs 3 |
 | Structured | 25 | Two or more sections; a first section that gives context (Description, Introduction, Overview); the shape of its DocType (steps for a how-to guide, a table or list for a reference); the sections of its skeleton. Empty sections and skeleton text left in cost points |
 | Complete | 25 | Words against a target: how-to guide 150, reference 200, explanation 500, tutorial 800 |
-| Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3 |
+| Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3. Once the knowledge base has a [profile](howto-describe-person.md), each person named without a profile costs 2 and each person whose profile has no contact details costs 1, at most 4 per document |
 | Current | 20 | A final status (Released, Completed, Finished, Successful); a recent `Date` (the points halve every 3 years for how-to guides and tutorials, 4 for references, 8 for explanations) |
 
 The score gives a tier: **Exemplary** (75 and up, gold ring and a note under the top bar), **Complete** (60 to 74, green), **Basic** (40 to 59) and **Stub** (under 40), both grey. Documents with the Status `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` are **Retired** and get no score.
@@ -143,7 +143,7 @@ Add `"Quality"` to the `datatable` list of `repo.json` to get a Quality column i
 
 The **Quality page** (`quality.html`, in the logo menu) is for maintainers: the tier mix per type, the Exemplary documents, quick wins (documents within 5 points of the next tier, with the one change that gets them there), broken links, missing images, documents without a Summary and possible duplicates (titles that share most words; journal titles that differ only by a date are left out). The score does not check that the content is correct.
 
-Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known.
+Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known. Its `author_profiles` sets when the profile checks apply: `"auto"` (the default) once the knowledge base has one profile, `true` always, `false` never. While the editor is on, the Quality tab links "Create a profile for ..." to the Add page with the Person profile skeleton, and "Add contact details to the profile of ..." to the editor on the profile.
 
 ## Add page and editor {#editor}
 

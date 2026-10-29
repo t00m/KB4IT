@@ -31,6 +31,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
       <li><a href="howto-write-documents.html">Write a document</a><br><span class="ah-muted">Properties, title, sections, links, notes, diagrams, formulas and images.</span></li>
       <li><a href="howto-content-blocks.html">Make code, tables and notes easier to read</a><br><span class="ah-muted">Copy code, fold long blocks, scroll tables, write tabs and collapsible notes.</span></li>
       <li><a href="howto-write-document-editor.html">Write in the editor</a><br><span class="ah-muted">The Add page, in every theme: completion, checks, properties, toolbar and saving.</span></li>
+      <li><a href="howto-describe-person.html">Describe a person with a profile</a><br><span class="ah-muted">Role, team and contact details behind every author name.</span></li>
       <li><a href="howto-write-with-ai-assistant.html">Write with an AI assistant</a><br><span class="ah-muted">The kb4itdoc skill: techdoc documents with the right properties, sections and quality.</span></li>
       <li><a href="explanation-properties.html">How properties become navigation</a><br><span class="ah-muted">Every property you use gets its own pages.</span></li>
       <li><a href="reference-document-format.html">Document format</a><br><span class="ah-muted">The exact rules a document must follow.</span></li>
