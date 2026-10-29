@@ -481,7 +481,8 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
                                 f"{repo['git_branch']}/{repo['git_path']}/{basename_md}")
                 var['info_card'] = self.template('INFO_CARD').render(var={'card': {
                     'open': not doc_summary,
-                    'groups': info_groups(self.srvdtb, basename_md, theme_conf.get('info_groups', []), source_md),
+                    'groups': info_groups(self.srvdtb, basename_md, theme_conf.get('info_groups', []), source_md,
+                                          self.person_tip),
                     'history': {
                         'date': (self.srvdtb.get_values(basename_md, 'Date') or [''])[0],
                         'source': basename_md,

@@ -20,6 +20,8 @@ from kb4it.core.structured import CORE_KEYS
 # A source with a Person key is a profile; Alias names the other spellings documents use.
 RESERVED_KEYS = ("Person", "Alias")
 PEOPLE_KEYS = ("keys", "contact_keys", "private")
+# Profile keys whose values make the tooltip of a person's name on document pages.
+TIP_KEYS = ("Role", "Team")
 EMAIL_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 PHONE_RE = re.compile(r"\+?[\d\s().-]{7,}")
 
@@ -168,6 +170,13 @@ def person_status(profile: Profile | None, settings: PeopleSettings) -> str:
         return "missing"
     visible = [key for key in settings.contact_keys if key not in settings.private]
     return "ok" if any(profile.values.get(key) for key in visible) else "no_contact"
+
+
+def person_tip(profile: Profile | None, settings: PeopleSettings) -> str:
+    """Role and team of a person, for the tooltip of their name; empty without a profile or with both private."""
+    if profile is None:
+        return ""
+    return ", ".join(value for key in TIP_KEYS if key not in settings.private for value in profile.values.get(key) or [])
 
 
 def person_page(name: str, settings: PeopleSettings) -> str:

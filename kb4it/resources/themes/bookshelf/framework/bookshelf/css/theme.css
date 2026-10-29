@@ -502,3 +502,16 @@ li.task-list-item { list-style-type: none; }
 li.task-list-item > input[type="checkbox"],
 li.task-list-item > p:first-child > input[type="checkbox"]:first-child,
 li.task-list-item > .task-list-control { margin: 0 0.45em 0 -1.4em; vertical-align: -0.1em; accent-color: var(--accent); }
+
+/* Profile card on a person's page (common HTML_PROFILE_CARD.tpl); bookshelf has no UIkit, so the card gets its own box */
+.kb-profile { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r-md); box-shadow: var(--sh-1); padding: 16px 18px; margin: 0 0 18px; }
+.kb-profile-name { font-family: var(--f-display); font-size: 1.25rem; margin: 0 0 4px; }
+.kb-profile-alias { margin: 0 0 10px; font-size: 0.85rem; color: var(--ink-2); }
+.kb-profile-keys { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 10px 0 0; font-size: 0.9rem; }
+.kb-profile-keys dt { color: var(--ink-2); margin: 0; }
+.kb-profile-keys dd { margin: 0; overflow-wrap: anywhere; }
+.kb-profile-body { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.kb-profile-body > :last-child { margin-bottom: 0; }
+.kb-profile-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.kb-profile-actions a { display: inline-block; padding: 4px 12px; border: 1px solid var(--line); border-radius: var(--r-md); color: var(--ink); text-decoration: none; font-size: 0.85rem; }
+.kb-profile-actions a:hover { border-color: var(--accent); color: var(--accent-ink); }

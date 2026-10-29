@@ -36,7 +36,11 @@
 % if 'Author_0_Url' in var['post']:
                             <li>
                                 <span data-uk-icon="user"></span>
+% if var['post'].get('Author_0_Tip'):
+                                <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}" title="${var['post']['Author_0_Tip']}" data-uk-tooltip>${var['post']['Author'][0]}</a></span>
+% else:
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
+% endif
                             </li>
 % endif
 % if var['post']['dated']:

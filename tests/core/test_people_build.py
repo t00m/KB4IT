@@ -33,7 +33,7 @@ def test_profile_is_not_a_document(tmp_path, home):
     data = kbdict(repo)
     assert "PERSON-JANE-DOE.md" not in data["document"]
     assert data["profiles"]["PERSON-JANE-DOE.md"] == {"person": "Jane Doe", "aliases": ["J. Doe"], "hash": ANY,
-                                                      "status": "ok"}
+                                                      "status": "ok", "tip": ""}
     assert "Bio." not in (repo / "target" / "search-index.js").read_text(encoding="utf-8")
 
 
@@ -168,3 +168,12 @@ def test_profile_turned_document_rebuilds_linking_pages(tmp_path, home):
     out = rebuild(tmp_path, home, cfg, {"x.md": doc("Jane Doe")})
     assert "COMPILED doc=y.md" in out
     assert '<a href="x.html">Jane</a>' in _y(tmp_path)
+
+
+def test_role_change_rebuilds_named_docs(tmp_path, home):
+    # The role and team are the tooltip of the name on document pages.
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "b.md": doc("Beta"), "PERSON-JANE-DOE.md": PROFILE}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE.replace("Email: j@x.org\n", "Email: j@x.org\nRole: DBA\n")})
+    assert "COMPILED doc=a.md" in out
+    assert "COMPILED doc=b.md" not in out
