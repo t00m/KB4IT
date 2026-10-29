@@ -296,7 +296,21 @@ var KB4ITFrontmatter = (function () {
     return null;
   }
 
+  // The one Person value of a profile (core/people.py), else null.
+  function personName(text) {
+    var result = parse(text);
+    var prop = result.props.filter(function (p) { return p.key === "Person"; })[0];
+    return prop && !prop.complex && prop.values.length === 1 && prop.values[0] ? prop.values[0] : null;
+  }
+
+  // A profile is named after its Person value (person-jane-doe.md), so profiles sort together;
+  // any other document after its title.
   function fileName(text, category) {
+    var person = personName(text);
+    if (person !== null) {
+      var name = slugify(person);
+      return name ? "person-" + name + ".md" : "person.md";
+    }
     var b = bounds(text);
     var body = text;
     if (b.open && b.close !== null) { body = text.slice(b.close + 4).replace(/^\n+/, ""); }
@@ -711,6 +725,7 @@ var KB4ITFrontmatter = (function () {
     validFilename: validFilename,
     slugify: slugify,
     firstHeading: firstHeading,
+    personName: personName,
     fileName: fileName,
     lint: lint,
     complete: complete

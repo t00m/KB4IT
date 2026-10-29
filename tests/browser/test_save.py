@@ -114,6 +114,30 @@ def test_save_picker_stub(make_page):
     assert page.evaluate("window.__calls.length") == 1
 
 
+def test_profile_shows_its_file_name(make_page):
+    page = make_page(PICKER_STUB)
+    page.evaluate("location.hash = '#new=person&Person=Tom%C3%A1s%20V%C3%ADrseda'; KB4ITEditor.newFromHash()")
+    page.wait_for_function("document.getElementById('modal-add-person').open")
+    assert page.text_content("#kb-file-person") == ": person-tomas-virseda.md"
+    assert page.text_content("#kb-save-person").strip() == "Save (person-tomas-virseda.md)"
+    # The name follows the Person value.
+    set_text(page, "person", "---\nPerson: Jane Doe\n---\n\n# Jane Doe\n")
+    page.wait_for_function("document.getElementById('kb-file-person').textContent === ': person-jane-doe.md'")
+    page.click("#kb-save-person")
+    page.wait_for_function("window.__written.length === 1")
+    assert page.evaluate("window.__calls[0].suggestedName") == "person-jane-doe.md"
+    assert page.text_content("#kb-save-person").strip() == "Save (person-jane-doe.md)"
+
+
+def test_document_shows_no_file_name_before_save(make_page):
+    page = make_page(PICKER_STUB)
+    open_cat(page, "note")
+    assert page.text_content("#kb-file-note") == ""
+    page.click("#kb-save-note")
+    page.wait_for_function("window.__written.length === 1")
+    assert page.text_content("#kb-file-note").startswith(": ")
+
+
 def test_discard_drops_handle(make_page):
     page = make_page(PICKER_STUB)
     open_cat(page, "note")
