@@ -43,6 +43,18 @@ DEFAULT_MAP: dict[str, str | None] = {
     "Status": "creativeWorkStatus",
 }
 
+# Profile key -> property of the schema.org Person a profile describes.
+PERSON_MAP: dict[str, str | None] = {
+    "Role": "jobTitle",
+    "Team": "memberOf:Organization",
+    "Email": "email",
+    "Phone": "telephone",
+    "Location": "workLocation:Place",
+    "Url": "url",
+}
+# Properties of a person KB4IT fills from Person, Alias and the profile text; people.map may not write them.
+PERSON_PROPERTIES = frozenset({"name", "alternateName", "description"})
+
 # DocType (Diátaxis) -> schema.org type of the page.
 DOCTYPE_TYPES: dict[str, str | list[str]] = {
     "How-to guide": ["TechArticle", "HowTo"],
@@ -121,6 +133,18 @@ def check_target(where: str, spec: Any) -> tuple[str, str]:
     return prop, kind
 
 
+def check_person_target(where: str, spec: Any) -> tuple[str, str]:
+    """(property, type) of a people.map entry; ConfigError when malformed or a property KB4IT sets."""
+    if not isinstance(spec, str):
+        raise ConfigError(f"repo.json '{where}' must be a schema.org property such as \"jobTitle\" or null")
+    prop, _, kind = spec.partition(":")
+    if not PROPERTY_RE.fullmatch(prop) or (kind and not TYPE_RE.fullmatch(kind)):
+        raise ConfigError(f"repo.json '{where}' must look like \"property\" or \"property:Type\", not {spec!r}")
+    if prop in PERSON_PROPERTIES:
+        raise ConfigError(f"repo.json '{where}': {prop} is set by KB4IT")
+    return prop, kind
+
+
 def merged_map(*maps: Mapping[str, str | None]) -> dict[str, str | None]:
     """Later maps win; a None entry removes the key."""
     result: dict[str, str | None] = {}
@@ -194,6 +218,51 @@ def document_node(*, title: str, description: str, values: Mapping[str, Sequence
             node[prop] = ", ".join(str(item) for item in items)
         else:
             node[prop] = _single(items)
+    return node
+
+
+def person_ref(name: str, iri: str = "") -> dict[str, str]:
+    """A person a document names: its @id when the site has an address, and the name."""
+    node = {"@type": "Person"}
+    if iri:
+        node["@id"] = iri
+    node["name"] = name
+    return node
+
+
+def person_node(*, name: str, iri: str = "", aliases: Sequence[str] = (), values: Mapping[str, Sequence[str]],
+                mapping: Mapping[str, str], description: str = "") -> dict[str, Any]:
+    """The Person a profile describes: name, other spellings, the text, then every mapped profile key."""
+    node: dict[str, Any] = person_ref(name, iri)
+    if aliases:
+        node["alternateName"] = _single(list(aliases))
+    if description:
+        node["description"] = description
+    props: dict[str, list[Any]] = {}
+    for key, spec in mapping.items():
+        prop, _, kind = spec.partition(":")
+        for value in values.get(key) or []:
+            item = _value_node(value, kind)
+            bucket = props.setdefault(prop, [])
+            if item not in bucket:
+                bucket.append(item)
+    for prop, items in props.items():
+        node[prop] = _single(items)
+    return node
+
+
+def profile_page_node(*, person: Mapping[str, Any], lang: str, url: str = "", website_id: str = "") -> dict[str, Any]:
+    """The ProfilePage node of a person's page, with the person as its main entity."""
+    node: dict[str, Any] = {"@type": "ProfilePage"}
+    if url:
+        node["@id"] = f"{url}#page"
+        node["url"] = url
+    node["name"] = person["name"]
+    if lang:
+        node["inLanguage"] = lang
+    if website_id:
+        node["isPartOf"] = {"@id": website_id}
+    node["mainEntity"] = dict(person)
     return node
 
 

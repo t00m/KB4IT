@@ -53,7 +53,9 @@ def test_document_jsonld(tmp_path, home, theme, page_type):
     assert node["inLanguage"] == "es"
     assert node["datePublished"] == "2026-10-23"
     assert node["description"] == "Keep Peppol certificates up to date."
-    assert node["author"] == {"@type": "Person", "name": "Tomás Vírseda"}
+    # One Person per author: its page in the themes with person pages, the home page in apphelp.
+    person = "#person-Tomás_Vírseda" if theme == "apphelp" else "Author_Tomás_Vírseda.html#person"
+    assert node["author"] == {"@type": "Person", "@id": f"https://kb.example.org/{person}", "name": "Tomás Vírseda"}
     assert "</script>" not in JSONLD.findall(html)[0]
     home_page = _jsonld((target / "index.html").read_text(encoding="utf-8"))
     website = [n for n in home_page["@graph"] if n["@type"] == "WebSite"][0]

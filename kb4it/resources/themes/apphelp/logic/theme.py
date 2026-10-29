@@ -37,6 +37,8 @@ STRUCTURED_MAP = {
 class Theme(Builder):
     # Help sites have no person pages, so the Add page offers no Person profile.
     profile_skeleton = False
+    # No person pages either: the schema.org Person of each profile goes into the home page.
+    person_pages = False
     add_page = True   # create_page_add() runs in build()
 
     def _initialize(self):

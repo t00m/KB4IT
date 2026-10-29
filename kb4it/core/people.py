@@ -9,17 +9,17 @@ People: the repo.json "people" block and the author profiles of a knowledge base
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any, Iterable, Mapping
 
 from kb4it.core.exceptions import ConfigError
 from kb4it.core.files import get_hash_from_dict, valid_filename
 from kb4it.core.mdlinks import document_body
-from kb4it.core.structured import CORE_KEYS
+from kb4it.core.structured import CORE_KEYS, check_person_target
 
 # A source with a Person key is a profile; Alias names the other spellings documents use.
 RESERVED_KEYS = ("Person", "Alias")
-PEOPLE_KEYS = ("keys", "contact_keys", "private")
+PEOPLE_KEYS = ("keys", "contact_keys", "private", "map")
 # Profile keys whose values make the tooltip of a person's name on document pages.
 TIP_KEYS = ("Role", "Team")
 EMAIL_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
@@ -36,6 +36,8 @@ class PeopleSettings:
     contact_keys: tuple[str, ...] = ("Email", "Phone", "Chat", "Url")
     # Profile keys kept out of the pages and the structured data.
     private: tuple[str, ...] = ()
+    # Profile key -> schema.org property of the person ("property" or "property:Type"); None leaves the key out.
+    map: dict[str, str | None] = field(default_factory=dict)
 
 
 def _key_list(block: Mapping[str, Any], name: str, default: tuple[str, ...], core_ok: bool) -> tuple[str, ...]:
@@ -68,7 +70,21 @@ def load_people(repo: Mapping[str, Any]) -> PeopleSettings:
         raise ConfigError("repo.json 'people.keys' must name at least one key")
     return PeopleSettings(keys=keys,
                           contact_keys=_key_list(block, "contact_keys", defaults.contact_keys, core_ok=True),
-                          private=_key_list(block, "private", defaults.private, core_ok=True))
+                          private=_key_list(block, "private", defaults.private, core_ok=True),
+                          map=_person_map(block.get("map", {})))
+
+
+def _person_map(raw: Any) -> dict[str, str | None]:
+    if not isinstance(raw, dict):
+        raise ConfigError("repo.json 'people.map' must be an object of profile key -> schema.org property")
+    mapping: dict[str, str | None] = {}
+    for key, spec in raw.items():
+        if key in RESERVED_KEYS:
+            raise ConfigError(f"repo.json 'people.map.{key}': {key} is mapped by KB4IT and cannot be changed")
+        if spec is not None:
+            check_person_target(f"people.map.{key}", spec)
+        mapping[str(key)] = spec
+    return mapping
 
 
 @dataclass(frozen=True)
@@ -177,6 +193,16 @@ def person_tip(profile: Profile | None, settings: PeopleSettings) -> str:
     if profile is None:
         return ""
     return ", ".join(value for key in TIP_KEYS if key not in settings.private for value in profile.values.get(key) or [])
+
+
+def first_paragraph(body: str) -> str:
+    """The first paragraph of a profile text as plain text, for the description of the person."""
+    for block in re.split(r"\n\s*\n", body):
+        text = block.strip()
+        if text and not text.startswith(("#", "```", "~~~", "|", "!!!", "<", "-", "*", ">")):
+            text = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", text)
+            return " ".join(re.sub(r"[*_`]+", "", text).split())
+    return ""
 
 
 def person_page(name: str, settings: PeopleSettings) -> str:
