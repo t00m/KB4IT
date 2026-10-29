@@ -31,6 +31,7 @@
         "tiers": {"exemplary": 75, "complete": 60, "basic": 40},
         "targets": {"How-to guide": 150, "Reference": 200, "Explanation": 500, "Tutorial": 800},
         "record_target": 60,
+        "author_profiles": "auto",
         "half_life": {"How-to guide": 3, "Tutorial": 3, "Reference": 4, "Explanation": 8},
         "final_status": ["Released", "Completed", "Finished", "Successful"],
         "retired_status": ["Obsolete", "Deprecated", "Withdrawn", "Rejected"],

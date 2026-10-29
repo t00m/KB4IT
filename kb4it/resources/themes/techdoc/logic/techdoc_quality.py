@@ -27,6 +27,8 @@ DEFAULTS = {
     'tiers': {'exemplary': 75, 'complete': 60, 'basic': 40},
     'targets': {'How-to guide': 150, 'Reference': 200, 'Explanation': 500, 'Tutorial': 800},
     'record_target': 60,
+    # Penalties for people named without a profile: "auto" turns them on once the knowledge base has a profile.
+    'author_profiles': 'auto',
     'half_life': {'How-to guide': 3, 'Tutorial': 3, 'Reference': 4, 'Explanation': 8},
     'final_status': ['Released', 'Completed', 'Finished', 'Successful'],
     'retired_status': ['Obsolete', 'Deprecated', 'Withdrawn', 'Rejected'],
@@ -93,6 +95,9 @@ IMAGE = re.compile(r'!\[[^\]]*\]\(([^)\s]+)')
 EXTERNAL = re.compile(r'\]\(https?://|<https?://')
 SOURCES = re.compile(r'^## +(references|documentation|related)', re.IGNORECASE | re.MULTILINE)
 MERMAID = re.compile(r'^(```|~~~)\s*mermaid', re.MULTILINE)
+# Points a person named without a profile, or with a profile readers cannot reach them from, costs; at most PROFILE_CAP.
+PROFILE_COST = {'missing': 2, 'no_contact': 1}
+PROFILE_CAP = 4
 
 
 @dataclass
@@ -111,6 +116,8 @@ class Check:
     # The guide entry (quality-guide.html#<key>) and a tip on what to do, for the Quality tab.
     key: str = ''
     tip: str = ''
+    # Where the Quality tab sends the reader instead of the guide, such as the Add page for a new profile.
+    href: str = ''
 
     @property
     def passed(self):
@@ -136,6 +143,10 @@ class DocInput:
     work_type: str = ''
     # Profile documents: a link to one leads to the person's page, so it is neither broken nor a related document.
     profile_docs: set = field(default_factory=set)
+    # The people the document names, with their status: 'ok', 'no_contact' or 'missing'. Empty: no profile checks.
+    people: dict = field(default_factory=dict)
+    # Where to create or edit the profile of each person, when the editor is on.
+    people_links: dict = field(default_factory=dict)
 
 
 def profile(theme_conf):
@@ -339,6 +350,26 @@ def connected(doc, prof):
                      f'No document is named {path}. Check the file name and the .md extension.') for path in broken]
     checks += [Check('connected', f'Image {src} is there', f'Add the missing image {src}', -3, 0, 'check-missing-image',
                      f'Copy the image to source/{src}, or correct the path.') for src in missing]
+    return checks + people_checks(doc)
+
+
+def people_checks(doc):
+    """A penalty for each person named without a profile (2) or without contact details (1), at most PROFILE_CAP."""
+    checks, budget = [], PROFILE_CAP
+    for name, status in sorted(doc.people.items()):
+        cost = min(PROFILE_COST.get(status, 0), budget)
+        if not cost:
+            continue
+        budget -= cost
+        href = doc.people_links.get(name, '')
+        if status == 'missing':
+            checks.append(Check('connected', f'Profile for {name}', f'Create a profile for {name}', -cost, 0,
+                                'check-author-profile',
+                                f'Add a document with "Person: {name}" and a contact key such as Email.', href))
+        else:
+            checks.append(Check('connected', f'Contact details for {name}', f'Add contact details to the profile of {name}',
+                                -cost, 0, 'check-author-contact',
+                                f'Add Email, Phone, Chat or Url to the profile of {name}.', href))
     return checks
 
 
@@ -445,8 +476,9 @@ def checklist(assessment):
         if check.passed:
             done.append((check.name, check.key))
         elif round(check.max - check.points) > 0:
-            todo.append((round(check.max - check.points), check.todo, check.key, check.tip))
+            todo.append((round(check.max - check.points), check.todo, check.key, check.tip, check.href))
     todo.sort(key=lambda item: -item[0])
-    return ([{'kind': 'ok', 'text': text, 'gain': 0, 'key': key, 'tip': GUIDE.get(key, {}).get('what', '')}
+    return ([{'kind': 'ok', 'text': text, 'gain': 0, 'key': key, 'tip': GUIDE.get(key, {}).get('what', ''), 'href': ''}
              for text, key in done]
-            + [{'kind': 'todo', 'text': text, 'gain': gain, 'key': key, 'tip': tip} for gain, text, key, tip in todo])
+            + [{'kind': 'todo', 'text': text, 'gain': gain, 'key': key, 'tip': tip, 'href': href}
+               for gain, text, key, tip, href in todo])

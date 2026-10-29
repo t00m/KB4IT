@@ -41,6 +41,7 @@ from kb4it.core.util import (
     source_ext,
     valid_filename,
 )
+from kb4it.core.people import named_people, person_status
 from kb4it.services.themekit import DocumentTheme
 
 parser = etree.HTMLParser()
@@ -290,6 +291,8 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
         docs = [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)]
         known = set(docs)
         profile_docs = {p.doc_id for p in self.srvdtb.people.profiles.values()}
+        profiles_on = self.author_profiles_on(prof)
+        links = {}  # person -> Add page link, once per build: an Edit link reads the profile file
         today = datetime.now().date()
         for doc_id in docs:
             path = os.path.join(source_dir, doc_id)
@@ -300,12 +303,32 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
                 continue
             meta = {key: list(self.srvdtb.get_values(doc_id, key)) for key in self.srvdtb.get_doc_keys(doc_id)}
             doc = DocInput(text, meta, len(backlinks.get(doc_id, [])), known, source_dir, work_type(self.srvdtb, doc_id),
-                           profile_docs)
+                           profile_docs, *(self.people_input(meta, links) if profiles_on else ({}, {})))
             self.quality[doc_id] = assess(doc, prof, skeletons, today)
         self.quality_stats = peer_stats(self.quality)
         tiers = [a.tier for a in self.quality.values()]
         counts = ' '.join(f'{t}={tiers.count(t)}' for t in ('exemplary', 'complete', 'basic', 'stub', 'retired'))
         self.log.info(f"[THEME] QUALITY docs={len(tiers)} {counts}")
+
+    def author_profiles_on(self, prof):
+        """Profile checks: theme.json quality.author_profiles true, false, or "auto" (on once there is a profile)."""
+        mode = prof.get('author_profiles', 'auto')
+        if mode not in (True, False, 'auto'):
+            self.log.warning(f"[THEME] QUALITY_SETTING key=author_profiles value={mode!r} using=auto")
+            mode = 'auto'
+        return mode is True or (mode == 'auto' and len(self.srvdtb.people) > 0)
+
+    def people_input(self, meta, links):
+        """({person: status}, {person: Add page link}) of the people a document names, for the profile checks."""
+        settings, people = self.people_settings(), self.srvdtb.people
+        statuses = {}
+        for name in named_people(meta, people, settings):
+            profile = people.lookup(name)
+            statuses[name] = person_status(profile, settings)
+            if statuses[name] != 'ok' and name not in links:
+                actions = self.profile_actions(name, profile)
+                links[name] = actions['create'] or actions['edit']
+        return statuses, {name: links[name] for name in statuses if name in links}
 
     def build_page_quality_guide(self):
         """The system page every Quality tab item links to: tiers, every check with an example, the skeletons."""
