@@ -530,7 +530,10 @@
       cm.keymap.of([].concat(cm.closeBracketsKeymap, cm.defaultKeymap, cm.searchKeymap, cm.historyKeymap)),
       cm.yamlFrontmatter({ content: cm.markdown() }),
       look[cat].of(lookFor(pageIsDark())),
-      cm.EditorView.updateListener.of(function (update) { syncPane(cat, update); }),
+      cm.EditorView.updateListener.of(function (update) {
+        syncPane(cat, update);
+        if (update.docChanged) { showFileName(cat); }
+      }),
       toolbarListener(cat)
     ];
   };
@@ -1005,6 +1008,7 @@
     document.getElementById("kb-toolbar-" + cat).classList.toggle("kb-tb-dark", pageIsDark());
     refreshToolbar(cat);
     E.renderPane(cat);
+    showFileName(cat);
     var dialog = document.getElementById("modal-add-" + cat);
     dialog.classList.toggle("kb-dialog-dark", pageIsDark());
     if (!dialog.open) { dialog.showModal(); }
@@ -1084,6 +1088,19 @@
     setLabel(cat, null);
   }
 
+  // A new profile shows the file it will be saved as in the dialog title and on Save: the person's page
+  // shows the profile once a file with that Person is in the source folder. Other documents show it once saved.
+  function showFileName(cat) {
+    var view = E.views[cat];
+    if (cat === EDIT || !view) { return; }
+    var text = view.state.doc.toString();
+    var proposed = KB4ITFrontmatter.personName(text) !== null ? KB4ITFrontmatter.fileName(text, cat) : "";
+    var name = handles[cat] ? handles[cat].name : proposed;
+    var node = document.getElementById("kb-file-" + cat);
+    if (node) { node.textContent = name ? ": " + name : ""; }
+    if (!handles[cat]) { setLabel(cat, proposed || null); }
+  }
+
   function errorCount(cat) {
     return E.diagnostics(cat).filter(function (d) { return d.severity === "error"; }).length;
   }
@@ -1153,6 +1170,7 @@
       }).then(function () {
         handles[cat] = handle;
         setLabel(cat, handle.name);
+        showFileName(cat);
         markCleanIf(cat, text);
         return "saved";
       });

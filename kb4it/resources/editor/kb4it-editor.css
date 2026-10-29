@@ -254,6 +254,7 @@
     font-weight: 700;
     flex-shrink: 0;
 }
+.kb-dialog-file { font-weight: 400; }
 .kb-dialog-desc {
     flex: 1;
     min-width: 0;

@@ -242,6 +242,16 @@ def test_file_name_fallback():
     assert call("fileName", "# In a fence-less doc\n", "note") == "in-a-fence-less-doc.md"
 
 
+def test_file_name_of_profile():
+    assert call("fileName", "---\nPerson: Tomás Vírseda\n---\n\n# Anything\n", "person") == "person-tomas-virseda.md"
+    assert call("fileName", "---\nPerson: 日本語\n---\n\n# Title\n", "note") == "person.md"
+    # Without one Person value it is a document: named after its title.
+    assert call("fileName", "---\nPerson: [A, B]\n---\n\n# Two People\n", "person") == "two-people.md"
+    assert call("fileName", "---\nPerson:\n---\n\n# Empty\n", "person") == "empty.md"
+    assert call("personName", "---\nPerson: Jane Doe\nAlias: JD\n---\n") == "Jane Doe"
+    assert call("personName", "---\nAuthor: Jane Doe\n---\n") is None
+
+
 def _build_values(raw):
     """What the build makes of `K: <raw>`, or None when the property must be complex."""
     from kb4it.core.documents import load_frontmatter

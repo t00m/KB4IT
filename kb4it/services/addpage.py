@@ -92,7 +92,8 @@ class AddPageMixin:
         with open(path, "rb") as fin:
             text = fin.read().decode("utf-8").replace("\r\n", "\n")
         return {"id": "person", "name": "Person profile",
-                "description": "A person named in the documents: role, team and how to reach them.",
+                "description": ("A person named in the documents: role, team and how to reach them. "
+                                "Save it in the source folder and rebuild to show it on the person's page."),
                 "color": "#6d28d9", "icon": "user", "text": text}
 
     def editor_keys(self) -> dict:

@@ -12,7 +12,7 @@
 
         <!-- DIALOG HEADER :: START -->
         <div class="kb-dialog-header" tabindex="-1" style="border-bottom: 3px solid ${cat['color']};">
-            <span class="kb-dialog-title" style="color: ${cat['color']};">Add ${cat['name']}</span>
+            <span class="kb-dialog-title" style="color: ${cat['color']};">Add ${cat['name']}<span id="kb-file-${cat['id']}" class="kb-dialog-file"></span></span>
             <span class="kb-dialog-desc">${cat['description']}</span>
             <div class="kb-dialog-actions">
                 <button id="kb-save-${cat['id']}" class="kb-btn kb-btn-primary kb-btn-small" type="button"
