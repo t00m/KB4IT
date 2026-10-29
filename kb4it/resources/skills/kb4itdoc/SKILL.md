@@ -6,7 +6,7 @@ description: "Use this skill whenever the user asks to create, draft, convert, m
 # KB4IT Document Authoring Skill
 
 This skill governs the creation, conversion and review of KB4IT source documents in
-**Markdown** (`.md`) format, as defined by **KB4IT 0.11.0** and its **techdoc** theme.
+**Markdown** (`.md`) format, as defined by the KB4IT release it ships with and its **techdoc** theme.
 KB4IT reads the YAML frontmatter of each file and turns every property into navigation,
 dashboard panels, a calendar and a quality score.
 
@@ -16,7 +16,7 @@ rules techdoc checks when it scores a document, so a document written with it re
 
 **Standard source format: Markdown (`.md`)**, the only supported format.
 
-What changed in 0.11.0, in short:
+What changed from older releases, in short:
 
 - `Category` is now the **form** of the document. The **type of work** moved to the new `WorkType` property,
   which **every** document carries: `Knowledge` for knowledge documents, `Change`, `Incident`, `Task` or `Meeting` for records.
@@ -171,7 +171,7 @@ It tells the reader in one line **what the document is for**.
 - `Template` exists in techdoc but is **not used** by this skill. If a document looks like a
   template, ask the user how to classify it. If the user decides to use it, it takes `WorkType: Knowledge`.
 - If the document fits none of these values, ask the user before proceeding.
-- **Old values are invalid.** Before 0.10.0, `Category` held the type of work
+- **Old values are invalid.** In older releases, `Category` held the type of work
   (`Change`, `Incident`, `Task`, `Meeting`). See Section 14 for the migration.
 
 ---
@@ -532,7 +532,7 @@ Example: `Server: app.svr.acme, router-1p, 192.168.1.5, app01.example.com`
 
 ## 14. Converting and Reviewing Older Documents
 
-When you convert or review an existing KB4IT document, bring it to the 0.11.0 model:
+When you convert or review an existing KB4IT document, bring it to the current model:
 
 1. **Split `Category`** into form and type of work:
 
