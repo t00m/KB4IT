@@ -24,7 +24,7 @@
 %     if item['kind'] == 'ok':
             <li class="ok" title="${item['tip']}" data-uk-tooltip="pos: top-left"><a href="quality-guide.html#${item['key']}">${item['text']}</a></li>
 %     else:
-            <li class="todo" title="${item['tip']}" data-uk-tooltip="pos: top-left"><a href="quality-guide.html#${item['key']}">${item['text']}</a><span class="gain">+${item['gain']}</span></li>
+            <li class="todo" title="${item['tip']}" data-uk-tooltip="pos: top-left"><a href="${item['href'] or 'quality-guide.html#' + item['key']}">${item['text']}</a><span class="gain">+${item['gain']}</span></li>
 %     endif
 % endfor
         </ul>

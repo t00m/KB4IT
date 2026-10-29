@@ -141,6 +141,7 @@ def test_every_check_has_a_guide_entry_and_a_tip(prof, skeletons, doc):
     docs = [doc(body, work_type="Incident", Status="Open", Category="Note", WorkType="Incident"),
             doc(body, DocType="Tutorial", Category="Note", Date="soon"),
             doc("# T\n", DocType="Reference", Category="Procedure", Status="Released", Date="2010-01-01")]
+    docs[0].people = {"Ana": "missing", "Bob": "no_contact"}
     for d in docs:
         for check in quality.assess(d, prof, skeletons, date(2026, 10, 24)).checks:
             assert check.key in guide.CHECKS, check.name
@@ -204,3 +205,29 @@ def test_a_link_to_a_profile_is_neither_broken_nor_a_related_document(prof, tmp_
     checks = quality.connected(profile_link, prof)
     assert not [c for c in checks if c.key == "check-broken-link"]
     assert next(c for c in checks if c.key == "check-internal-link").points == 0
+
+
+def test_people_without_profile_or_contact_cost_points(prof, doc):
+    d = doc("# T\n")
+    d.people = {"Ana": "missing", "Bob": "no_contact", "Eve": "ok"}
+    d.people_links = {"Ana": "add.html#new=person&Person=Ana"}
+    checks = [c for c in quality.connected(d, prof) if c.key in ("check-author-profile", "check-author-contact")]
+    assert [(c.key, c.points) for c in checks] == [("check-author-profile", -2), ("check-author-contact", -1)]
+    assert checks[0].href == "add.html#new=person&Person=Ana" and checks[1].href == ""
+
+
+def test_profile_checks_are_capped(prof, doc):
+    d = doc("# T\n")
+    d.people = {name: "missing" for name in ("A", "B", "C")}
+    assert sum(c.points for c in quality.people_checks(d)) == -quality.PROFILE_CAP
+    d.people = {}
+    assert quality.people_checks(d) == []
+
+
+def test_checklist_links_a_profile_check_to_the_add_page(prof, skeletons, doc):
+    d = doc("# T\n")
+    d.people = {"Ana": "missing"}
+    d.people_links = {"Ana": "add.html#new=person&Person=Ana"}
+    items = quality.checklist(quality.assess(d, prof, skeletons, date(2026, 10, 24)))
+    item = next(i for i in items if i["text"] == "Create a profile for Ana")
+    assert item["href"] == "add.html#new=person&Person=Ana" and item["gain"] == 2

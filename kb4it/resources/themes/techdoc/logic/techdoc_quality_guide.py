@@ -170,6 +170,27 @@ CHECKS = {
                '3 points; the page shows a grey box instead.',
         'example': '![Transport log](resources/images/stms-log.png)',
     },
+    'check-author-profile': {
+        'title': 'Profiles for the people it names',
+        'dim': 'connected',
+        'what': 'A document names a person readers can look up: role, team, how to reach them.',
+        'how': 'Add a file such as `person-jane-doe.md` with `Person: Jane Doe` and at least one contact key. The '
+               "person's page then shows the profile. Each person without a profile costs 2 points, and the profile "
+               'checks cost at most 4 points per document. They apply once the knowledge base has a profile '
+               '(`author_profiles` in the `quality` block of `theme.json`: `auto`, `true` or `false`). While the '
+               'editor is on, the Quality tab links to the Add page with the Person profile skeleton.',
+        'example': '---\nEmail: jane.doe@example.org\nPerson: Jane Doe\nRole: Basis administrator\nTeam: SAP Basis\n---\n\n'
+                   '# Jane Doe\n\nRuns the SAP Basis on-call rota.',
+    },
+    'check-author-contact': {
+        'title': 'Contact details in profiles',
+        'dim': 'connected',
+        'what': 'The profile tells readers how to reach the person.',
+        'how': 'Add one of the contact keys to the profile: Email, Phone, Chat or Url (`people.contact_keys` in '
+               '`repo.json` may list others). A private key (`people.private`) does not count, because readers cannot '
+               'see it. Each person without contact details costs 1 point.',
+        'example': 'Email: jane.doe@example.org',
+    },
     'check-final-status': {
         'title': 'Final status',
         'dim': 'current',
