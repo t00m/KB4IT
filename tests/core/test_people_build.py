@@ -5,7 +5,7 @@ from unittest.mock import ANY
 
 from tests.helpers import page, run_kb4it, write_repo
 
-PROFILE = page("Jane Doe", "Bio.", Person="Jane Doe", Alias="J. Doe", Email="j@x.org")
+PROFILE = page("Jane Doe", "Bio.", Alias="J. Doe", Email="j@x.org")
 
 
 def doc(title, body="Text.", **keys):
@@ -38,7 +38,7 @@ def test_profile_is_not_a_document(tmp_path, home):
 
 
 def test_invalid_profile_is_left_out(tmp_path, home):
-    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": page("Jane", Person="Doe, Jane")}
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": page("Doe, Jane")}
     _cfg, result = build(tmp_path, home, pages)
     assert result.returncode == 0, result.stdout
     assert "[PEOPLE] PROFILE_INVALID doc=PERSON-JANE-DOE.md" in result.stdout
@@ -46,13 +46,13 @@ def test_invalid_profile_is_left_out(tmp_path, home):
 
 
 def test_invalid_profile_fails_with_fail_on_invalid(tmp_path, home):
-    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": page("Jane", Person="Doe, Jane")}
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": page("Doe, Jane")}
     _cfg, result = build(tmp_path, home, pages, fail_on_invalid=True)
     assert result.returncode != 0, result.stdout
 
 
 def test_invalid_frontmatter_stays_doc_invalid(tmp_path, home):
-    broken = "---\nPerson: [Jane\n---\n\n# Jane\n\nBio.\n"
+    broken = "---\nAlias: [Jane\n---\n\n# Jane\n\nBio.\n"
     _cfg, result = build(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": broken})
     assert result.returncode == 0, result.stdout
     assert "DOC_INVALID doc=PERSON-JANE-DOE.md" in result.stdout
@@ -139,35 +139,36 @@ def test_link_to_profile_points_to_author_page(tmp_path, home):
 
 
 # A second profile that stays, so the "profiles in use" switch never flips in these tests.
-ANN = page("Ann", Person="Ann", Email="ann@x.org")
+ANN = page("Ann", Email="ann@x.org")
 
 
 def _y(tmp_path):
     return (tmp_path / "repo" / "target" / "y.html").read_text(encoding="utf-8")
 
 
-def test_document_turned_profile_rebuilds_linking_pages(tmp_path, home):
-    pages = {"y.md": doc("Why", "Ask [Jane](x.md)."), "PERSON-ANN.md": ANN, "x.md": doc("Jane Doe")}
+def test_new_profile_rebuilds_linking_pages(tmp_path, home):
+    pages = {"y.md": doc("Why", "Ask [Jane](PERSON-X.md)."), "PERSON-ANN.md": ANN}
     cfg, _ = build(tmp_path, home, pages)
-    out = rebuild(tmp_path, home, cfg, {"x.md": PROFILE})
+    out = rebuild(tmp_path, home, cfg, {"PERSON-X.md": PROFILE})
     assert "COMPILED doc=y.md" in out
     assert '<a href="Author_Jane_Doe.html">Jane</a>' in _y(tmp_path)
 
 
 def test_renamed_person_rebuilds_linking_pages(tmp_path, home):
-    pages = {"y.md": doc("Why", "Ask [Jane](x.md)."), "PERSON-ANN.md": ANN, "x.md": PROFILE}
+    pages = {"y.md": doc("Why", "Ask [Jane](PERSON-X.md)."), "PERSON-ANN.md": ANN, "PERSON-X.md": PROFILE}
     cfg, _ = build(tmp_path, home, pages)
-    out = rebuild(tmp_path, home, cfg, {"x.md": PROFILE.replace("Person: Jane Doe", "Person: Jane Smith")})
+    out = rebuild(tmp_path, home, cfg, {"PERSON-X.md": PROFILE.replace("# Jane Doe", "# Jane Smith")})
     assert "COMPILED doc=y.md" in out
     assert '<a href="Author_Jane_Smith.html">Jane</a>' in _y(tmp_path)
 
 
-def test_profile_turned_document_rebuilds_linking_pages(tmp_path, home):
-    pages = {"y.md": doc("Why", "Ask [Jane](x.md)."), "PERSON-ANN.md": ANN, "x.md": PROFILE}
-    cfg, _ = build(tmp_path, home, pages)
-    out = rebuild(tmp_path, home, cfg, {"x.md": doc("Jane Doe")})
-    assert "COMPILED doc=y.md" in out
-    assert '<a href="x.html">Jane</a>' in _y(tmp_path)
+def test_person_key_does_not_make_a_profile(tmp_path, home):
+    # Only the PERSON- prefix makes a profile; Person is an ordinary key in a document.
+    pages = {"CHANGE-1.md": doc("Change one", Person="Ann, Bob, Carl"), "PERSON-ANN.md": ANN}
+    _cfg, result = build(tmp_path, home, pages)
+    assert result.returncode == 0, result.stdout
+    assert (tmp_path / "repo" / "target" / "CHANGE-1.html").exists()
+    assert "PROFILE_INVALID" not in result.stdout
 
 
 def test_role_change_rebuilds_named_docs(tmp_path, home):

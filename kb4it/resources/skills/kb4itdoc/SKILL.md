@@ -49,6 +49,30 @@ After writing, scan the finished document for the em dash (U+2014) and remove ev
 
 Always suggest a filename when producing a document.
 
+### Person profiles
+
+A file whose name starts with `PERSON-` is a profile, not a document. It describes one person that documents name in `Author`, and it gets no page of its own: KB4IT shows it on the person's page.
+
+- Name the file `PERSON-<NAME>.md`, such as `PERSON-JANE-DOE.md`. Never give a document this prefix.
+- The `#` title is the person's name, exactly as documents write it in `Author`, with no comma.
+- `Alias` lists other spellings documents use. Add `Role`, `Team` and at least one contact key: `Email`, `Phone`, `Chat` or `Url`.
+- A profile needs none of the mandatory properties of Section 4 and has no skeleton sections: a few lines on what the person works on and when to ask them.
+
+```markdown
+---
+Alias: J. Doe, jdoe
+Email: jane.doe@example.org
+Role: Basis administrator
+Team: SAP Basis
+---
+
+# Jane Doe
+
+Runs the SAP Basis on-call rota. Ask her about system copies and kernel upgrades.
+```
+
+In a document, `Person` is an ordinary property, for example the people a change involves.
+
 ---
 
 ## 2. Document Structure
@@ -760,6 +784,8 @@ lists come from the `quality` block of the theme's `theme.json`.
 | A link to a document that does not exist | 3 points each |
 | An image file that is missing | 3 points each |
 | Fewer than 20 words (records) or 50 words (knowledge) | Complete capped at 3 |
+| A person in `Author` without a profile, once the knowledge base has one | 2 points each |
+| A profile without a contact key | 1 point each; people cost at most 4 points |
 
 ### Quality advice
 

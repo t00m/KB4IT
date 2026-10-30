@@ -184,11 +184,11 @@ Reload the page without the cache (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>
 
 ### Cause
 
-The profile names a person in a way KB4IT cannot use. `PROFILE_INVALID`: `Person` is empty or holds two names (a comma splits values). `PROFILE_DUPLICATE`: two profiles claim the same name or alias; the first file in name order is kept. `PROFILE_ALIAS_IS_PERSON`: an `Alias` of one profile is the `Person` of another.
+The profile names a person in a way KB4IT cannot use. `PROFILE_INVALID`: the title of the profile has a comma (a comma splits `Author` values). `PROFILE_DUPLICATE`: two profiles claim the same name or alias; the first file in name order is kept. `PROFILE_ALIAS_IS_PERSON`: an `Alias` of one profile is the name of another.
 
 ### Fix
 
-Write one name in `Person`, keep one profile per person, and move other spellings to `Alias`. With `"fail_on_invalid": true` these errors stop the build. See [Describe a person with a profile](howto-describe-person.md).
+Write one name as the title of the profile, keep one profile per person, and move other spellings to `Alias`. With `"fail_on_invalid": true` these errors stop the build. See [Describe a person with a profile](howto-describe-person.md).
 
 ## kb4it verify lists PROFILE_NO_CONTACT, PROFILE_UNUSED, AUTHOR_NO_PROFILE or PROFILE_CONTACT_PUBLIC {#profile-notices}
 

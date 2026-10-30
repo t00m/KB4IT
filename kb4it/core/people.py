@@ -8,6 +8,7 @@ People: the repo.json "people" block and the author profiles of a knowledge base
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from typing import Any, Iterable, Mapping
@@ -17,8 +18,10 @@ from kb4it.core.files import get_hash_from_dict, valid_filename
 from kb4it.core.mdlinks import document_body
 from kb4it.core.structured import CORE_KEYS, check_person_target
 
-# A source with a Person key is a profile; Alias names the other spellings documents use.
-RESERVED_KEYS = ("Person", "Alias")
+# A source whose file name starts with PERSON- (any case) is a profile. Its title is the person's
+# name; Alias names the other spellings documents use.
+PROFILE_PREFIX = "PERSON-"
+RESERVED_KEYS = ("Alias",)
 PEOPLE_KEYS = ("keys", "contact_keys", "private", "map")
 # Profile keys whose values make the tooltip of a person's name on document pages.
 TIP_KEYS = ("Role", "Team")
@@ -108,7 +111,7 @@ class ProfileProblem:
 
 
 class People:
-    """The profiles of a knowledge base, found by Person or by Alias."""
+    """The profiles of a knowledge base, found by name (the profile title) or by Alias."""
 
     def __init__(self, profiles: Iterable[Profile] = ()):
         self.profiles: dict[str, Profile] = {}
@@ -119,7 +122,7 @@ class People:
                 self._names[name] = profile
 
     def lookup(self, name: str) -> Profile | None:
-        """The profile of a Person or Alias name; names match exactly."""
+        """The profile of a name or an alias; names match exactly."""
         return self._names.get(name)
 
     @staticmethod
@@ -133,9 +136,9 @@ class People:
         return len(self.profiles)
 
 
-def is_profile(keys: Mapping[str, list[str]]) -> bool:
-    """True for the keys of a profile document: it has a Person key, even an empty one."""
-    return "Person" in keys
+def is_profile(doc_id: str) -> bool:
+    """True for a profile: its file name starts with PERSON-, in any case."""
+    return os.path.basename(doc_id).upper().startswith(PROFILE_PREFIX)
 
 
 def _clean(values) -> list[str]:
@@ -146,19 +149,20 @@ def build_people(entries: Iterable[tuple[str, dict[str, list[str]], str]],
                  settings: PeopleSettings) -> tuple[People, list[ProfileProblem]]:
     """The profiles of (doc_id, keys, Markdown text) entries, and the ones left out with the reason.
 
-    A profile whose alias is another profile's Person is left out, wherever it comes; then a name
-    already taken leaves out the later profile in doc_id order.
+    The title of a profile is the person's name. A profile whose alias is another profile's name is
+    left out, wherever it comes; then a name already taken leaves out the later profile in doc_id order.
     """
     problems: list[ProfileProblem] = []
     candidates: list[Profile] = []
     for doc_id, keys, text in sorted(entries, key=lambda item: item[0]):
-        persons = _clean(keys.get("Person"))
-        if len(persons) != 1:
-            problems.append(ProfileProblem("PROFILE_INVALID", doc_id, f"Person must hold one name, found {len(persons)}"))
+        person = next(iter(_clean(keys.get("Title"))), "")
+        # A comma splits people values, so a name with one could never match.
+        if "," in person or not valid_filename(person):
+            problems.append(ProfileProblem("PROFILE_INVALID", doc_id, "the title must be one person's name, without a comma"))
             continue
         values = {key: _clean(vals) for key, vals in keys.items() if key not in (*RESERVED_KEYS, "Title")}
-        aliases = tuple(dict.fromkeys(a for a in _clean(keys.get("Alias")) if a != persons[0]))
-        candidates.append(Profile(doc_id, persons[0], aliases, values, document_body(text)))
+        aliases = tuple(dict.fromkeys(a for a in _clean(keys.get("Alias")) if a != person))
+        candidates.append(Profile(doc_id, person, aliases, values, document_body(text)))
     owners = {profile.person: profile.doc_id for profile in candidates}
     kept: list[Profile] = []
     for profile in candidates:
@@ -211,7 +215,7 @@ def person_page(name: str, settings: PeopleSettings) -> str:
 
 
 def named_people(values_by_key: Mapping[str, list[str]], people: People, settings: PeopleSettings) -> list[str]:
-    """The people a document names in the people keys: Person names where a profile exists, else the value."""
+    """The people a document names in the people keys: the profile name where a profile exists, else the value."""
     found: list[str] = []
     for key in settings.keys:
         for value in _clean(values_by_key.get(key)):

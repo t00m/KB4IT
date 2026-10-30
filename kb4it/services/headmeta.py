@@ -75,7 +75,7 @@ class HeadMetaMixin:
                            values=profile.values, mapping=mapping, description=short_text(first_paragraph(profile.body), 300))
 
     def _people_props(self, node, mapping, values) -> None:
-        """Point the people a document names to their Person resource, with aliases resolved to the Person name."""
+        """Point the people a document names to their Person resource, with aliases resolved to the profile name."""
         settings = getattr(self.srvbes, "people", None) or PeopleSettings()
         people = getattr(self.srvdtb, "people", None)
         refs: dict = {}

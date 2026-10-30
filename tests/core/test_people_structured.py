@@ -35,7 +35,7 @@ def test_first_paragraph_skips_headings_and_markup():
 
 @pytest.mark.parametrize("block, words", [
     ({"map": []}, "'people.map' must be an object"),
-    ({"map": {"Person": "name"}}, "Person is mapped by KB4IT"),
+    ({"map": {"Alias": "name"}}, "Alias is mapped by KB4IT"),
     ({"map": {"Badge": "name"}}, "name is set by KB4IT"),
     ({"map": {"Badge": "Bad"}}, "must look like"),
 ])
@@ -49,7 +49,7 @@ def test_people_map_is_read():
 
 
 def test_documents_point_to_the_person_with_aliases_resolved(tmp_path, home):
-    jane = JANE.replace("Person: Jane Doe", "Person: Jane Doe\nAlias: J. Doe")
+    jane = JANE.replace("---\n", "---\nAlias: J. Doe\n", 1)
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="J. Doe"), "b.md": doc("Beta", Author="Bob"),
                                    "PERSON-JANE-DOE.md": jane}, site_url=SITE)
     article = jsonld(html(target, "a.html"))[0]

@@ -1,6 +1,5 @@
 ---
 Email: name@example.org
-Person: Full name
 Role: Role in the team
 Team: Team name
 ---

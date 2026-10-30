@@ -17,7 +17,7 @@ def verify(tmp_path, home, pages, **config):
 
 def test_verify_profile_errors_fail(tmp_path, home):
     result = verify(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"),
-                                     "PERSON-JANE-DOE.md": page("Jane", Person="Doe, Jane")})
+                                     "PERSON-JANE-DOE.md": page("Doe, Jane")})
     assert result.returncode != 0
     assert "Theme checks:" in result.stdout
     assert "PROFILE_INVALID doc=PERSON-JANE-DOE.md" in result.stdout
@@ -31,7 +31,7 @@ def test_verify_bad_people_setting_fails(tmp_path, home):
 
 def test_verify_notices_do_not_fail(tmp_path, home):
     result = verify(tmp_path, home, {"a.md": doc("Alpha", Author="Bob"),
-                                     "PERSON-JANE-DOE.md": page("Jane", Person="Jane Doe")})
+                                     "PERSON-JANE-DOE.md": page("Jane Doe")})
     assert result.returncode == 0, result.stdout
     warnings = result.stdout.split("People (warnings):", 1)[1]
     assert "PROFILE_NO_CONTACT person=Jane Doe" in warnings
@@ -41,7 +41,7 @@ def test_verify_notices_do_not_fail(tmp_path, home):
 
 
 def test_verify_contact_public_only_when_indexed(tmp_path, home):
-    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": page("Jane", Person="Jane Doe",
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": page("Jane Doe",
                                                                                  Email="j@x.org")}
     public = verify(tmp_path / "public", home, pages, seo={"index": True})
     assert "PROFILE_CONTACT_PUBLIC person=Jane Doe key=Email" in public.stdout
@@ -49,8 +49,16 @@ def test_verify_contact_public_only_when_indexed(tmp_path, home):
     assert "PROFILE_CONTACT_PUBLIC" not in hidden.stdout
 
 
+def test_verify_names_a_profile_without_the_prefix(tmp_path, home):
+    # A document titled like a person without a profile may be a renamed profile.
+    result = verify(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe, Bob"), "jane.md": doc("Jane Doe", Email="j@x.org"),
+                                     "PERSON-BOB.md": page("Bob", Email="b@x.org")})
+    assert result.returncode == 0, result.stdout
+    assert "PROFILE_NO_PREFIX doc=jane.md person=Jane Doe" in result.stdout.split("People (information):", 1)[1]
+
+
 def test_profile_is_not_non_conformant(tmp_path, home):
     result = verify(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"),
-                                     "PERSON-JANE-DOE.md": page("Jane", Person="Jane Doe", Email="j@x.org")})
+                                     "PERSON-JANE-DOE.md": page("Jane Doe", Email="j@x.org")})
     assert result.returncode == 0, result.stdout
     assert "Non-conformant" not in result.stdout

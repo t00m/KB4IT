@@ -365,7 +365,7 @@ def people_checks(doc):
         if status == 'missing':
             checks.append(Check('connected', f'Profile for {name}', f'Create a profile for {name}', -cost, 0,
                                 'check-author-profile',
-                                f'Add a document with "Person: {name}" and a contact key such as Email.', href))
+                                f'Add a file PERSON-<name>.md titled "# {name}" with a contact key such as Email.', href))
         else:
             checks.append(Check('connected', f'Contact details for {name}', f'Add contact details to the profile of {name}',
                                 -cost, 0, 'check-author-contact',

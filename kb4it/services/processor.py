@@ -163,7 +163,7 @@ class Processor(PeopleMixin, Service):
                 continue
 
             # A profile describes a person; it is not a document and never gets a page of its own.
-            if is_profile(keys):
+            if is_profile(docId):
                 profiles.append((docId, keys, content))
                 continue
 

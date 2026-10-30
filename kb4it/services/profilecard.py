@@ -63,7 +63,7 @@ class ProfileCardMixin:
         if not self.editor_enabled():
             return {"create": "", "edit": ""}
         if profile is None:
-            return {"create": f"add.html#new=person&Person={quote(value, safe='')}", "edit": ""}
+            return {"create": f"add.html#new=person&title={quote(value, safe='')}", "edit": ""}
         # The edit link carries the whole source: a profile with a private value gets none.
         private = set(self.people_settings().private)
         if any(profile.values.get(key) for key in private):
@@ -92,7 +92,7 @@ class ProfileCardMixin:
                 return ""
             var = {"person": value, "rows": [], "body": "", "alias_of": None, "actions": actions}
             return self.render_template("HTML_PROFILE_CARD", var)
-        # An alias page points to the page of the Person name.
+        # An alias page points to the page of the profile name.
         alias_of = None if value == profile.person else {"href": person_page(profile.person, settings),
                                                           "name": profile.person}
         var = {"person": profile.person, "rows": self.profile_rows(profile), "body": self._profile_body(profile),
