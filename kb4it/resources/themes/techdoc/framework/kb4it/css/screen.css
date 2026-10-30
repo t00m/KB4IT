@@ -570,6 +570,8 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     vertical-align: middle;
 }
 .kb-badge:hover { color: #fff; opacity: 0.85; text-decoration: none; }
+/* Keeps the slot of a missing value so the other badges stay in their column. */
+.kb-badge-empty { visibility: hidden; }
 .kb-label-muted { background: #999; }
 .kb-dt-label { color: #fff !important; }  /* size and width come from .kb-badge */
 .kb-alert-item .kb-alert-title { flex: 1; min-width: 0; }

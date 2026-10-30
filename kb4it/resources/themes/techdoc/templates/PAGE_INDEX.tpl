@@ -109,12 +109,18 @@ def prop_url(key, value):
                         <td class="kb-open-badges">
 %         if row['priority']:
                             <a class="uk-label kb-badge ${row['priority_css']}" href="${prop_url('Priority', row['priority'])}" title="${row['priority']}">${row['priority']}</a>
+%         else:
+                            <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if row['status']:
                             <a class="uk-label kb-badge ${row['status_css']}" href="${prop_url('Status', row['status'])}" title="${row['status']}">${row['status']}</a>
+%         else:
+                            <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if row['category']:
                             <a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a>
+%         else:
+                            <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
                         </td>
                     </tr>
@@ -151,9 +157,13 @@ def prop_url(key, value):
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
 %         if item['status']:
                         <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}" title="${item['status']}">${item['status']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if item['priority']:
                         <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}" title="${item['priority']}">${item['priority']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
                     </li>
 %     endfor
@@ -181,9 +191,13 @@ def prop_url(key, value):
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
 %         if item['status']:
                         <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}" title="${item['status']}">${item['status']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if item['priority']:
                         <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}" title="${item['priority']}">${item['priority']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
                     </li>
 %     endfor

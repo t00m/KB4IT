@@ -26,6 +26,7 @@ PAGES = {
                       Scope="Infrastructure"),
     "change2.md": page("Migrated change", Date=day(2), Category="Record", WorkType="Change", Status="Open",
                        Priority="Low"),
+    "change3.md": page("Unranked change", Date=day(1), Category="Record", WorkType="Change", Status="Open"),
     "incident.md": page("Recent incident", Date=day(-5), Category="Incident", Priority="Critical",
                         Status="Open"),
     "meeting.md": page("Old meeting", Date="2025-01-15", Category="Meeting", Team="Linux"),
@@ -84,6 +85,26 @@ def test_alert_bar_and_open_items_read_worktype_with_legacy_fallback(site):
     assert bar.index('href="change.html"') < bar.index('href="change2.html"')  # newest Date first: day(3) before day(2)
     assert 'href="WorkType_Change.html">Changes</a>' in html
     assert 'href="Category_Incident.html">Incidents</a>' in html   # only legacy incidents in this site
+
+
+def slots(html):
+    """Badge slots in a dashboard row: the badges plus the empty placeholders."""
+    return html.count('class="uk-label kb-badge') + html.count('class="kb-badge kb-badge-empty"')
+
+
+def test_dashboard_rows_keep_a_slot_for_a_missing_badge(site):
+    """A missing Priority or Status leaves an empty slot, so each badge stays in its column."""
+    html = read(site, "index.html")
+    bar = html[html.index("CHANGES PANEL :: START"):html.index("CHANGES PANEL :: END")]
+    items = re.findall(r'<li class="kb-alert-item">(.*?)</li>', bar, re.S)
+    assert len(items) == 3
+    assert all(slots(item) == 2 for item in items), items
+    unranked = next(item for item in items if 'href="change3.html"' in item)
+    assert 'kb-badge-empty' in unranked
+    assert unranked.index('Status_Open.html') < unranked.index('kb-badge-empty')  # Status keeps the first slot
+    open_items = html[html.index("OPEN ITEMS :: START"):html.index("OPEN ITEMS :: END")]
+    cells = re.findall(r'<td class="kb-open-badges">(.*?)</td>', open_items, re.S)
+    assert cells and all(slots(cell) == 3 for cell in cells), cells
 
 
 def test_events_page_uses_worktype(site):
