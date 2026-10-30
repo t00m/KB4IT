@@ -199,9 +199,11 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
         self.srvdtb.add_document_key('events.md', 'SystemPage', 'Yes')
 
     def toc_sidebar(self, source_html):
-        """Show the sticky table of contents only when theme.json asks for it and the page has four or more sections."""
+        """Show the sticky table of contents when repo.json (else theme.json) asks for it and the page has four or more sections."""
+        repo = self.srvbes.get_dict('repo') or {}
         theme = self.srvbes.get_dict('theme') or {}
-        return theme.get('toc_sidebar') is True and len(re.findall(r'<h2\b', source_html)) >= 4
+        wanted = repo['toc_sidebar'] if isinstance(repo.get('toc_sidebar'), bool) else theme.get('toc_sidebar') is True
+        return wanted and len(re.findall(r'<h2\b', source_html)) >= 4
 
     def table_filter_on(self):
         """Long tables of a document get search and sort unless theme.json sets "table_filter": false."""

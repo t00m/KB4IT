@@ -60,6 +60,31 @@ def test_sidebar_is_off_by_default(tmp_path, home):
     assert "kb-toc-sidebar" not in html
 
 
+def test_repo_json_turns_the_sidebar_on(tmp_path, home):
+    cfg = write_repo(tmp_path / "repo", "techdoc", DOCS, toc_sidebar=True, **_app_conf("techdoc"))
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    html = (tmp_path / "repo" / "target" / "four.html").read_text(encoding="utf-8")
+    assert 'class="kb-main kb-main-sidebar"' in html
+
+
+def test_repo_json_wins_over_theme_json(tmp_path, home):
+    theme = theme_copy(tmp_path, True)
+    cfg = write_repo(tmp_path / "repo", "techdoc", DOCS, theme_path=str(theme), toc_sidebar=False,
+                     **_app_conf("techdoc"))
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "kb-toc-sidebar" not in (tmp_path / "repo" / "target" / "four.html").read_text(encoding="utf-8")
+
+
+def test_sidebar_has_expand_and_collapse_all(tmp_path, home):
+    html = (build(tmp_path, home) / "four.html").read_text(encoding="utf-8")
+    sidebar = html[html.index("SIDE TABLE OF CONTENTS :: START"):html.index("SIDE TABLE OF CONTENTS :: END")]
+    assert 'data-kb-fold-all="open" title="Expand all sections"' in sidebar
+    assert 'data-kb-fold-all="close" title="Collapse all sections"' in sidebar
+    assert "querySelectorAll('[data-kb-fold-all]')" in html
+
+
 def test_styles_show_the_sidebar_only_on_wide_screens():
     css = (THEME / "framework" / "kb4it" / "css" / "screen.css").read_text(encoding="utf-8")
     assert ".kb-toc-sidebar { display: none; }" in css

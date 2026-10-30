@@ -345,6 +345,8 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-toc-sidebar { display: none; }
 .kb-toc-sidebar .kb-toc-nav { padding: 0; max-height: none; overflow: visible; }
 .kb-toc-sidebar .uk-active > a { background: #dbeafe; color: #1e87f0; font-weight: 600; }
+.kb-toc-sidebar-actions { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 8px; }
+.kb-toc-sidebar-actions .uk-icon-button { width: 28px; height: 28px; }
 
 @media (min-width: 1400px) {
     .kb-main-sidebar {
