@@ -116,11 +116,20 @@ def test_card_is_closed_with_summary_and_open_without(page_site):
 def test_details_groups_and_chips(page_site):
     c = card(page_site, "full.html")
     assert c.index("<h3>Classification</h3>") < c.index("<h3>Systems</h3>") < c.index("<h3>Technical objects</h3>") < c.index("<h3>Other</h3>")
-    assert '<a class="kb-obj" href="Transaction_SU01.html">SU01</a>' in c
-    assert '<a class="kb-obj" href="https://me.sap.com/notes/736902">736902</a>' in c
+    assert '<a class="kb-obj kb-val" href="Transaction_SU01.html" title="SU01">SU01</a>' in c
+    assert '<a class="kb-obj kb-val" href="https://me.sap.com/notes/736902" title="736902">736902</a>' in c
     details = c[c.index("DETAILS PANEL :: START"):c.index("DETAILS PANEL :: END")]
-    assert "Color" in details and "Summary" not in details and "<dt>Title</dt>" not in details
+    assert "Color" in details and "Summary" not in details and '>Title</dt>' not in details
     assert "<h3>Systems</h3>" not in card(page_site, "plain.html")   # empty groups are hidden
+
+
+def test_long_values_end_in_an_ellipsis(page_site):
+    details = card(page_site, "full.html")
+    assert '<span class="kb-item"><a class="kb-val" href=' in details
+    css = (ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "css" / "screen.css").read_text(encoding="utf-8")
+    assert ".kb-val { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;" in css
+    assert ".kb-group { min-width: 0; }" in css
+    assert "grid-template-columns: max-content minmax(0, 1fr)" in css
 
 
 def test_panels_have_headings_and_print_classes(page_site):
