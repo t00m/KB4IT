@@ -210,10 +210,10 @@ def test_a_link_to_a_profile_is_neither_broken_nor_a_related_document(prof, tmp_
 def test_people_without_profile_or_contact_cost_points(prof, doc):
     d = doc("# T\n")
     d.people = {"Ana": "missing", "Bob": "no_contact", "Eve": "ok"}
-    d.people_links = {"Ana": "add.html#new=person&Person=Ana"}
+    d.people_links = {"Ana": "add.html#new=person&title=Ana"}
     checks = [c for c in quality.connected(d, prof) if c.key in ("check-author-profile", "check-author-contact")]
     assert [(c.key, c.points) for c in checks] == [("check-author-profile", -2), ("check-author-contact", -1)]
-    assert checks[0].href == "add.html#new=person&Person=Ana" and checks[1].href == ""
+    assert checks[0].href == "add.html#new=person&title=Ana" and checks[1].href == ""
 
 
 def test_profile_checks_are_capped(prof, doc):
@@ -227,7 +227,7 @@ def test_profile_checks_are_capped(prof, doc):
 def test_checklist_links_a_profile_check_to_the_add_page(prof, skeletons, doc):
     d = doc("# T\n")
     d.people = {"Ana": "missing"}
-    d.people_links = {"Ana": "add.html#new=person&Person=Ana"}
+    d.people_links = {"Ana": "add.html#new=person&title=Ana"}
     items = quality.checklist(quality.assess(d, prof, skeletons, date(2026, 10, 24)))
     item = next(i for i in items if i["text"] == "Create a profile for Ana")
-    assert item["href"] == "add.html#new=person&Person=Ana" and item["gain"] == 2
+    assert item["href"] == "add.html#new=person&title=Ana" and item["gain"] == 2

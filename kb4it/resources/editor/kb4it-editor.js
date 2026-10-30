@@ -542,8 +542,10 @@
     var doc = cat === EDIT ? editing.text : E.skeleton(cat);
     if (prefill[cat]) {
       // One-shot values from add.html#new=..., see E.newFromHash.
+      var title = prefill[cat].title;
+      delete prefill[cat].title;
       doc = KB4ITFrontmatter.withValues(doc, prefill[cat]);
-      if (prefill[cat].Person) { doc = KB4ITFrontmatter.withTitle(doc, prefill[cat].Person); }
+      if (title) { doc = KB4ITFrontmatter.withTitle(doc, title); }
       delete prefill[cat];
     }
     base[cat] = doc;
@@ -594,7 +596,7 @@
   };
 
   // add.html#new=<category>&<Key>=<value>..., as the Create profile button writes it: the category opens
-  // with its skeleton, those keys set, and the title set to the Person value when one is given.
+  // with its skeleton, those keys set, and the title set to the title value when one is given.
   E.newFromHash = function () {
     var hash = window.location.hash || "";
     if (hash.indexOf("#new=") !== 0) { return false; }
@@ -1089,12 +1091,12 @@
   }
 
   // A new profile shows the file it will be saved as in the dialog title and on Save: the person's page
-  // shows the profile once a file with that Person is in the source folder. Other documents show it once saved.
+  // shows the profile once that person-<name>.md file is in the source folder. Other documents show it once saved.
   function showFileName(cat) {
     var view = E.views[cat];
     if (cat === EDIT || !view) { return; }
     var text = view.state.doc.toString();
-    var proposed = KB4ITFrontmatter.personName(text) !== null ? KB4ITFrontmatter.fileName(text, cat) : "";
+    var proposed = cat === "person" ? KB4ITFrontmatter.fileName(text, cat) : "";
     var name = handles[cat] ? handles[cat].name : proposed;
     var node = document.getElementById("kb-file-" + cat);
     if (node) { node.textContent = name ? ": " + name : ""; }

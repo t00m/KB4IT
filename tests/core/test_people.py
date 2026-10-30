@@ -29,9 +29,9 @@ def test_values_are_read():
     ({"keys": "Author"}, "'people.keys' must be a list"),
     ({"keys": []}, "'people.keys' must name at least one key"),
     ({"keys": ["Title"]}, "Title is a KB4IT key"),
-    ({"keys": ["Person"]}, "Person is reserved"),
+    ({"keys": ["Alias"]}, "Alias is reserved"),
     ({"contact_keys": [""]}, "'people.contact_keys' must be a list of key names"),
-    ({"private": ["Person"]}, "Person is reserved"),
+    ({"private": ["Alias"]}, "Alias is reserved"),
 ])
 def test_bad_values(block, words):
     with pytest.raises(ConfigError, match=re.escape(words)):
@@ -52,11 +52,12 @@ def test_people_setting_rebuilds_every_page(tmp_path, home):
 S = PeopleSettings()
 
 
-def entry(doc_id, **keys):
-    """(doc_id, keys, text) as the processor hands a source to build_people."""
+def entry(doc_id, Person, **keys):
+    """(doc_id, keys, text) as the processor hands a profile to build_people; Person is its title."""
     parsed = {key: [v.strip() for v in value.split(",") if v.strip()] for key, value in keys.items()}
+    parsed["Title"] = [Person.strip()]
     front = "".join(f"{key}: {value}\n" for key, value in keys.items())
-    return doc_id, parsed, f"---\n{front}---\n\n# Title\n\nBio.\n"
+    return doc_id, parsed, f"---\n{front}---\n\n# {Person}\n\nBio.\n"
 
 
 def test_profile_and_alias_lookup():
@@ -120,6 +121,12 @@ def test_notices():
     assert "PROFILE_CONTACT_PUBLIC person=Max key=Phone" in indexed
     private = notices(people, {"Ann": 1}, PeopleSettings(private=("Email",)), indexed=True)["information"]
     assert not any("person=Ann key=Email" in line for line in private)
+
+
+def test_profiles_are_found_by_file_name():
+    from kb4it.core.people import is_profile
+    assert is_profile("PERSON-JANE-DOE.md") and is_profile("person-jane-doe.md") and is_profile("/src/Person-x.md")
+    assert not is_profile("CHANGE-80995.md") and not is_profile("my-person-notes.md") and not is_profile("PERSON.md")
 
 
 def test_no_profiles_no_author_notice():

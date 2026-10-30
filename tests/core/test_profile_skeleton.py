@@ -10,7 +10,7 @@ from kb4it.core.env import ENV
 from tests.helpers import page, run_kb4it, write_repo
 
 SKELETON = (
-    "---\nEmail: name@example.org\nPerson: Full name\nRole: Role in the team\nTeam: Team name\n---\n\n"
+    "---\nEmail: name@example.org\nRole: Role in the team\nTeam: Team name\n---\n\n"
     "# Full name\n\nWhat this person works on, and when to ask them.\n"
 )
 
@@ -43,10 +43,10 @@ def test_apphelp_has_no_person_profile(tmp_path, home):
 def test_own_person_skeleton_wins(tmp_path, home):
     own = tmp_path / "repo" / "overrides" / "templates" / "skeletons"
     own.mkdir(parents=True)
-    (own / "PERSON-SKELETON.md").write_text("---\nPerson: Mine\n---\n\n# Mine\n", encoding="utf-8")
+    (own / "PERSON-SKELETON.md").write_text("---\nRole: Mine\n---\n\n# Mine\n", encoding="utf-8")
     (own / "NOTE-SKELETON.md").write_text("---\nTag: x\n---\n\n# Note\n", encoding="utf-8")
     data, _html = skeletons(tmp_path, home, "techdoc")
-    assert data["person"]["text"] == "---\nPerson: Mine\n---\n\n# Mine\n"
+    assert data["person"]["text"] == "---\nRole: Mine\n---\n\n# Mine\n"
     assert list(data).count("person") == 1
 
 

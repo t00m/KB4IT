@@ -80,7 +80,7 @@ class PeopleMixin:
         return pairs, docs
 
     def profile_kv_paths(self, kv_values: set, forced: bool, force_kv_pairs: set) -> list:
-        """(first people key, Person, compile) for each profile no document names under that key yet.
+        """(first people key, profile name, compile) for each profile no document names under that key yet.
 
         Its page is compiled when the build is forced, the profile changed (force_kv_pairs), or
         documents named the person in the previous build (the page held a list then).

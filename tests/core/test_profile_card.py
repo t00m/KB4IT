@@ -7,7 +7,7 @@ import pytest
 from tests.core.test_highlight import _app_conf
 from tests.helpers import page, run_kb4it, write_repo
 
-JANE = page("Jane Doe", "Bio with **bold**.", Person="Jane Doe", Role="Basis admin", Team="SAP Basis",
+JANE = page("Jane Doe", "Bio with **bold**.", Role="Basis admin", Team="SAP Basis",
             Email="j@x.org", Phone="+34 600 000 000", Url="https://x.org/jane", Chat="jane.doe", Badge="42")
 
 
@@ -59,27 +59,27 @@ def test_private_keys_left_out(tmp_path, home):
 
 
 def test_card_escapes_values(tmp_path, home):
-    profile = page("Jane Doe", "Bio.", Person="Jane Doe", Role="R&D <lead>")
+    profile = page("Jane Doe", "Bio.", Role="R&D <lead>")
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": profile})
     assert "R&amp;D &lt;lead&gt;" in html(target, "Author_Jane_Doe.html")
 
 
 def test_card_body_links_are_redirected(tmp_path, home):
-    profile = page("Jane Doe", "Works with [Ann](PERSON-ANN.md).", Person="Jane Doe")
+    profile = page("Jane Doe", "Works with [Ann](PERSON-ANN.md).")
     pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": profile,
-             "PERSON-ANN.md": page("Ann", Person="Ann")}
+             "PERSON-ANN.md": page("Ann")}
     target = site(tmp_path, home, pages)
     assert '<a href="Author_Ann.html">Ann</a>' in html(target, "Author_Jane_Doe.html")
 
 
 def test_url_without_scheme_is_text(tmp_path, home):
-    profile = page("Jane Doe", "Bio.", Person="Jane Doe", Url="x.org/jane")
+    profile = page("Jane Doe", "Bio.", Url="x.org/jane")
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": profile})
     text = html(target, "Author_Jane_Doe.html")
     assert "x.org/jane" in text and 'href="x.org/jane"' not in text
 
 
-JANE_ALIAS = page("Jane Doe", "Bio.", Person="Jane Doe", Alias="J. Doe", Email="j@x.org")
+JANE_ALIAS = page("Jane Doe", "Bio.", Alias="J. Doe", Email="j@x.org")
 
 
 def test_alias_page_links_to_person_page(tmp_path, home):
@@ -99,7 +99,7 @@ def test_alias_only_person_has_both_pages(tmp_path, home):
 
 
 def test_profile_without_documents_gets_a_page(tmp_path, home):
-    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-ANN.md": page("Ann", "Bio.", Person="Ann")}
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-ANN.md": page("Ann", "Bio.")}
     target = site(tmp_path, home, pages)
     assert "kb-profile" in html(target, "Author_Ann.html")
     (tmp_path / "repo" / "source" / "PERSON-ANN.md").unlink()
@@ -109,12 +109,12 @@ def test_profile_without_documents_gets_a_page(tmp_path, home):
 
 
 def test_profile_page_without_any_author_key(tmp_path, home):
-    target = site(tmp_path, home, {"a.md": doc("Alpha"), "PERSON-ANN.md": page("Ann", "Bio.", Person="Ann")})
+    target = site(tmp_path, home, {"a.md": doc("Alpha"), "PERSON-ANN.md": page("Ann", "Bio.")})
     assert "kb-profile" in html(target, "Author_Ann.html")
 
 
 def test_unnamed_profile_page_survives_an_unchanged_build(tmp_path, home):
-    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-ANN.md": page("Ann", "Bio.", Person="Ann")}
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-ANN.md": page("Ann", "Bio.")}
     target = site(tmp_path, home, pages)
     result = run_kb4it("-L", "DEBUG", "build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
@@ -134,7 +134,7 @@ def test_create_button_without_profile(tmp_path, home):
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Bob Smith"), "PERSON-JANE-DOE.md": JANE}, editor=True)
     text = html(target, "Author_Bob_Smith.html")
     assert "Create profile" in text
-    assert 'href="add.html#new=person&amp;Person=Bob%20Smith"' in text
+    assert 'href="add.html#new=person&amp;title=Bob%20Smith"' in text
 
 
 def test_no_buttons_when_editor_off(tmp_path, home):
@@ -161,11 +161,11 @@ def test_private_keys_stay_out_of_the_edit_link(tmp_path, home):
 
 
 def test_card_links_follow_a_renamed_profile(tmp_path, home):
-    jane = page("Jane Doe", "Works with [Ann](PERSON-ANN.md).", Person="Jane Doe", Email="j@x.org")
+    jane = page("Jane Doe", "Works with [Ann](PERSON-ANN.md).", Email="j@x.org")
     pages = {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": jane,
-             "PERSON-ANN.md": page("Ann", Person="Ann", Email="a@x.org")}
+             "PERSON-ANN.md": page("Ann", Email="a@x.org")}
     target = site(tmp_path, home, pages)
-    (tmp_path / "repo" / "source" / "PERSON-ANN.md").write_text(page("Annie", Person="Annie", Email="a@x.org"),
+    (tmp_path / "repo" / "source" / "PERSON-ANN.md").write_text(page("Annie", Email="a@x.org"),
                                                                  encoding="utf-8")
     result = run_kb4it("build", tmp_path / "repo" / "config" / "repo.json", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout

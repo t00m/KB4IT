@@ -1,6 +1,5 @@
 ---
 Email: name@example.org
-Person: Your name
 Role: System administrator
 Team: Operations
 ---

@@ -174,12 +174,13 @@ CHECKS = {
         'title': 'Profiles for the people it names',
         'dim': 'connected',
         'what': 'A document names a person readers can look up: role, team, how to reach them.',
-        'how': 'Add a file such as `person-jane-doe.md` with `Person: Jane Doe` and at least one contact key. The '
+        'how': 'Add a file whose name starts with `PERSON-`, such as `PERSON-JANE-DOE.md`, with the title `# Jane Doe` '
+               'and at least one contact key. The '
                "person's page then shows the profile. Each person without a profile costs 2 points, and the profile "
                'checks cost at most 4 points per document. They apply once the knowledge base has a profile '
                '(`author_profiles` in the `quality` block of `theme.json`: `auto`, `true` or `false`). While the '
                'editor is on, the Quality tab links to the Add page with the Person profile skeleton.',
-        'example': '---\nEmail: jane.doe@example.org\nPerson: Jane Doe\nRole: Basis administrator\nTeam: SAP Basis\n---\n\n'
+        'example': '---\nEmail: jane.doe@example.org\nRole: Basis administrator\nTeam: SAP Basis\n---\n\n'
                    '# Jane Doe\n\nRuns the SAP Basis on-call rota.',
     },
     'check-author-contact': {

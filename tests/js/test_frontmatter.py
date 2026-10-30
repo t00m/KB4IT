@@ -243,13 +243,11 @@ def test_file_name_fallback():
 
 
 def test_file_name_of_profile():
-    assert call("fileName", "---\nPerson: Tomás Vírseda\n---\n\n# Anything\n", "person") == "person-tomas-virseda.md"
-    assert call("fileName", "---\nPerson: 日本語\n---\n\n# Title\n", "note") == "person.md"
-    # Without one Person value it is a document: named after its title.
-    assert call("fileName", "---\nPerson: [A, B]\n---\n\n# Two People\n", "person") == "two-people.md"
-    assert call("fileName", "---\nPerson:\n---\n\n# Empty\n", "person") == "empty.md"
-    assert call("personName", "---\nPerson: Jane Doe\nAlias: JD\n---\n") == "Jane Doe"
-    assert call("personName", "---\nAuthor: Jane Doe\n---\n") is None
+    # A profile is named after its title, with the person- prefix that makes it a profile.
+    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# Tomás Vírseda\n", "person") == "person-tomas-virseda.md"
+    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# 日本語\n", "person") == "person.md"
+    # The Person key no longer makes a profile: other categories are named after the title.
+    assert call("fileName", "---\nPerson: Jane Doe\n---\n\n# Two People\n", "note") == "two-people.md"
 
 
 def _build_values(raw):

@@ -17,11 +17,11 @@ def test_checks_are_off_without_any_profile(tmp_path, home):
 
 
 def test_checks_apply_once_there_is_a_profile(tmp_path, home):
-    quiet = page("Joe", "Bio.", Person="Joe", Role="DBA")
+    quiet = page("Joe", "Bio.", Role="DBA")
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Bob, Joe, Jane Doe"), "PERSON-JANE-DOE.md": JANE,
                                    "PERSON-JOE.md": quiet})
     text = html(target, "a.html")
-    assert 'href="add.html#new=person&amp;Person=Bob">Create a profile for Bob</a>' in text
+    assert 'href="add.html#new=person&amp;title=Bob">Create a profile for Bob</a>' in text
     assert 'Add contact details to the profile of Joe</a>' in text and 'href="add.html#edit=PERSON-JOE.md' in text
     assert "profile of Jane Doe" not in text and "profile for Jane Doe" not in text
 
