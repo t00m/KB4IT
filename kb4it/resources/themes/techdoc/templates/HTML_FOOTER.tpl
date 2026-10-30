@@ -56,6 +56,17 @@ function copyToClipboard() {
         });
         sync();
     });
+    // The Expand all and Collapse all buttons of the side table of contents.
+    document.querySelectorAll('[data-kb-fold-all]').forEach(function(button) {
+        button.addEventListener('click', function() {
+            var open = button.getAttribute('data-kb-fold-all') === 'open';
+            sects.forEach(function(s) {
+                s.classList.toggle('kb-closed', !open);
+                var h = s.firstElementChild;
+                if (h && h.classList.contains('kb-fold-toggle')) h.setAttribute('aria-expanded', String(open));
+            });
+        });
+    });
     function reveal(id) {
         var target = id && document.getElementById(id);
         if (!target || !content.contains(target)) return;

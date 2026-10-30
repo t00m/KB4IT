@@ -36,6 +36,10 @@ ${var['source_html'] | n}
 % if var.get('toc_sidebar'):
     <!-- SIDE TABLE OF CONTENTS :: START -->
     <aside class="kb-toc-sidebar kb-noprint" aria-label="Table of contents">
+        <div class="kb-toc-sidebar-actions">
+            <button class="uk-icon-button" type="button" data-kb-fold-all="open" title="Expand all sections" aria-label="Expand all sections" data-uk-icon="icon: plus"></button>
+            <button class="uk-icon-button" type="button" data-kb-fold-all="close" title="Collapse all sections" aria-label="Collapse all sections" data-uk-icon="icon: minus"></button>
+        </div>
         <nav class="kb-toc-nav kb-toc-sidebar-nav" data-uk-scrollspy-nav="closest: li; scroll: true; offset: 80">
             ${var['toc'] | n}
         </nav>
