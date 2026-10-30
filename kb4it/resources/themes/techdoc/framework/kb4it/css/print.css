@@ -366,6 +366,9 @@
     .kb-groups { display: block !important; column-count: 2; column-gap: 16pt; }
     .kb-group { break-inside: avoid; margin-bottom: 6pt; }
     .kb-obj { border: none; background: none; padding: 0; }
+    /* On paper every value is printed whole. */
+    .kb-group dt, .kb-val { max-width: none; overflow: visible; white-space: normal; }
+    .kb-item { display: inline; }
     /* Header strip: one line of plain text. */
     .kb-doc-strip { display: block; padding: 0 0 4pt; border-bottom: 0.5pt solid #999; font-size: 9pt; }
     .kb-doc-strip .kb-badge { background: none !important; color: #000 !important; width: auto; padding: 0; margin-right: 8pt; font-size: 9pt; font-weight: 600; }

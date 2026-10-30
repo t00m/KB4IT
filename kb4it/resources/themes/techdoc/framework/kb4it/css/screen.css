@@ -1254,9 +1254,16 @@ figure.kb-img-missing { display: block; padding: 24px 12px; }
 }
 .kb-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 12px 24px; }
 .kb-group h3 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 0 0 6px; }
-.kb-group dl, .kb-history { display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; margin: 0; font-size: 0.82rem; }
+.kb-group { min-width: 0; }
+.kb-group dl, .kb-history { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin: 0; font-size: 0.82rem; }
 .kb-group dt, .kb-history dt { color: #777; font-weight: normal; margin: 0; }
-.kb-group dd, .kb-history dd { margin: 0; }
+.kb-group dd, .kb-history dd { margin: 0; min-width: 0; }
+/* A value too long for its column ends in an ellipsis; its title shows the whole text. */
+.kb-group dt { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-val { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+/* A value and its comma stay on one line. */
+.kb-item { display: inline-flex; max-width: 100%; vertical-align: bottom; }
+.kb-item > .kb-val { min-width: 0; }
 .kb-obj {
     display: inline-block;
     margin: 0 4px 2px 0;

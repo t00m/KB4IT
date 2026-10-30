@@ -27,17 +27,17 @@
                     <h3>${group['name']}</h3>
                     <dl>
 %     for item in group['items']:
-                        <dt>${item['key']}</dt>
+                        <dt title="${item['key']}">${item['key']}</dt>
                         <dd>
 %         for value in item['values']:
 %             if not value['url']:
-                            <span>${value['text']}</span>${'' if loop.last else ','}
+                            <span class="kb-item"><span class="kb-val" title="${value['text']}">${value['text']}</span>${'' if loop.last else ','}</span>
 %             elif group['chips']:
-                            <a class="kb-obj" href="${value['url']}">${value['text']}</a>
+                            <a class="kb-obj kb-val" href="${value['url']}" title="${value['text']}">${value['text']}</a>
 %             elif value.get('tip'):
-                            <a href="${value['url']}" title="${value['tip']}" data-uk-tooltip>${value['text']}</a>${'' if loop.last else ','}
+                            <span class="kb-item"><a class="kb-val" href="${value['url']}" title="${value['tip']}" data-uk-tooltip>${value['text']}</a>${'' if loop.last else ','}</span>
 %             else:
-                            <a href="${value['url']}">${value['text']}</a>${'' if loop.last else ','}
+                            <span class="kb-item"><a class="kb-val" href="${value['url']}" title="${value['text']}">${value['text']}</a>${'' if loop.last else ','}</span>
 %             endif
 %         endfor
                         </dd>
