@@ -66,18 +66,21 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 
 ## People {#people}
 
-A profile is a source whose file name starts with `PERSON-`: it describes one person named in `Author`, and its title is the person's name. A profile with an error is left out of the site; with `"fail_on_invalid": true` the build stops.
+A profile is a source whose file name starts with `PROFILE-`: it describes one value of the property that `ProfileOf` names, such as a person in `Author` or a team in `Team`, and its title is that value. The old `PERSON-` prefix still works as a profile of `Author`. A profile with an error is left out of the site; with `"fail_on_invalid": true` the build stops.
 
 | Code | Level | Meaning | What to do |
 |---|---|---|---|
 | `LOADED` | information | The number of profiles and aliases read | Nothing |
-| `PROFILE_INVALID` | error | The title of the profile is not one name: it has a comma, which splits `Author` values, so `# Doe, Jane` could never match | Write one name without a comma: `# Jane Doe` |
-| `PROFILE_DUPLICATE` | error | Two profiles claim the same name or alias. The first file in name order is kept | Keep one profile per person; move the extra spellings to its `Alias` key |
-| `PROFILE_ALIAS_IS_PERSON` | error | An `Alias` of one profile is the name of another. The profile with the alias is left out | Remove the alias, or merge the two profiles |
+| `PROFILE_INVALID` | error | The title of the profile is not one name (it has a comma, which splits values, so `# Doe, Jane` could never match); a `PROFILE-` file has no `ProfileOf`; or `ProfileOf` names a property that cannot have profiles (a date, `Title`, an ignored property, `Alias`, `ProfileOf`) | Write one name without a comma, and add `ProfileOf` with the property the profile describes |
+| `PROFILE_DUPLICATE` | error | Two profiles claim the same name or alias for the same property. The first file in name order is kept | Keep one profile per person; move the extra spellings to its `Alias` key |
+| `PROFILE_ALIAS_IS_NAME` | error | An `Alias` of one profile is the name of another profile of the same property. The profile with the alias is left out | Remove the alias, or merge the two profiles |
+| `PROFILE_PERSON_PREFIX` | warning | A profile file starts with the old `PERSON-` prefix. It still works as a profile of `Author` | Rename it to `PROFILE-<name>.md` and add `ProfileOf: Author` |
+| `PEOPLE_BLOCK_DEPRECATED` | warning | `repo.json` has the old `people` block. It is read as the `Author` entries of `profiles` | Move it to `profiles`, see [Profiles](reference-repo-json.md#people) |
+| `VALUE_NO_PROFILE` | information | Shown by `kb4it verify` for properties with `"missing": "notice"`: a value has no profile, with the number of documents | Add a profile, or fix the spelling of the value |
 | `PROFILE_NO_CONTACT` | warning | Shown by `kb4it verify`: a profile has none of the contact properties (`people.contact_keys`), or only private ones | Add `Email`, `Phone`, `Chat` or `Url` to the profile |
-| `PROFILE_UNUSED` | information | Shown by `kb4it verify`: no document names the person | Nothing, if the person has not written anything yet |
+| `PROFILE_UNUSED` | information | Shown by `kb4it verify`: no document uses the value the profile describes | Nothing, if the person has not written anything yet |
 | `AUTHOR_NO_PROFILE` | information | Shown by `kb4it verify` once the knowledge base has one profile: a person named by documents has no profile, with the number of documents | Add a profile, or fix the spelling of the name in the documents |
-| `PROFILE_NO_PREFIX` | information | Shown by `kb4it verify`: a document has the title of a person who is named by documents and has no profile. It may be a profile whose file lost the `PERSON-` prefix | Rename the file to `PERSON-<name>.md` if it is a profile |
+| `PROFILE_NO_PREFIX` | information | Shown by `kb4it verify`: a document has the title of a person who is named by documents and has no profile. It may be a profile whose file lost the `PROFILE-` prefix | Rename the file to `PROFILE-<name>.md` and add `ProfileOf` if it is a profile |
 | `PROFILE_CONTACT_PUBLIC` | information | Shown by `kb4it verify` while `seo.index` is `true`: a profile shows an email address or a phone number to search engines | Keep it, or list the property in `people.private` |
 
 ## Build {#build}
