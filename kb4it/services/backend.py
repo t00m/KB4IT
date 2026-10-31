@@ -183,9 +183,8 @@ class Backend(Service):
         self.seo = load_seo(self.repo)
         from kb4it.core.people import load_people
         self.people = load_people(self.repo)
-        from kb4it.core.dateclass import load_dates
-        from kb4it.core.structured import CORE_KEYS
-        self.dates, notices = load_dates(self.repo, reserved_names=CORE_KEYS | {"Alias"})
+        from kb4it.core.dateclass import date_reserved_names, load_dates
+        self.dates, notices = load_dates(self.repo, reserved_names=date_reserved_names(self.repo))
         for line in notices:
             (self.log.info if line == "TIMEZONE_UNSET" else self.log.warning)(f"[DATES] {line}")
 

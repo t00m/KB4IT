@@ -18,9 +18,9 @@ from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.paths import resolve_repo_path
 from kb4it.core.people import build_people, is_profile, load_people, named_people, notices
-from kb4it.core.dateclass import load_dates
+from kb4it.core.dateclass import date_reserved_names, load_dates
 from kb4it.core.daterules import resolve_dates
-from kb4it.core.structured import CORE_KEYS, iso_date, load_seo
+from kb4it.core.structured import iso_date, load_seo
 from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
 from kb4it.services.addpage import ADD_DOC, check_editor_setting, check_theme_editor, editor_on
@@ -214,7 +214,7 @@ class VerifyMixin:
 
     def _verify_dates(self, attributes, repo):
         """{"warning": [...], "information": [...]} of the date keys; they never fail verify (spec D17)."""
-        settings, config = load_dates(repo, reserved_names=CORE_KEYS | {"Alias"})
+        settings, config = load_dates(repo, reserved_names=date_reserved_names(repo))
         first = {"warning": [], "information": []}
         for line in config:
             first["information" if line == "TIMEZONE_UNSET" else "warning"].append(line)

@@ -98,3 +98,20 @@ def test_generic_metadata_links_no_date_key_pages():
     theme.srvdtb = FakeDB()
     assert theme.get_html_values_from_key("p.md", "DueDate") == [("", "2026-11-09")]
     assert theme.get_html_values_from_key("p.md", "Tag") == [("Tag_x.html", "x")]
+
+
+def test_bad_dates_entry_for_a_people_key_does_not_stop_the_build(tmp_path, home):
+    repo, cfg = _repo(tmp_path, {"a.md": page("A", Date="2026-11-02", Owner="Jane Doe")},
+                      people={"keys": ["Owner"]}, dates={"Owner": "oops"})
+    result = run_kb4it("build", cfg, cwd=repo, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "DATES_BLOCK_INVALID key=Owner reason=reserved" in _log(repo)
+
+
+def test_declaring_author_as_a_date_keeps_the_authors(tmp_path, home):
+    repo, cfg = _repo(tmp_path, {"a.md": page("A", Date="2026-11-02", Author="Jane Doe")},
+                      dates={"Author": {"group": "start"}})
+    assert run_kb4it("build", cfg, cwd=repo, home=home).returncode == 0
+    kbdict = json.loads((repo / "var" / "db" / "kbdict.json").read_text(encoding="utf-8"))
+    assert kbdict["metadata"]["Author"] == {"Jane Doe": ["a.md"]}
+    assert "DATES_BLOCK_INVALID key=Author reason=reserved" in _log(repo)

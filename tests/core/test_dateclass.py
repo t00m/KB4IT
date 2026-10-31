@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from kb4it.core.dateclass import date_key_names, end_moment, load_dates, parse_date, stored
+from kb4it.core.dateclass import date_key_names, date_reserved_names, end_moment, load_dates, parse_date, stored
 
 
 def test_defaults_without_settings():
@@ -121,3 +121,17 @@ def test_date_key_names_include_declared_keys():
     names = date_key_names({"dates": {"WarrantyEnd": {"group": "end"}}})
     assert {"Date", "Modified", "DueDate", "WarrantyEnd"} <= names
     assert date_key_names({"dates": ["bad"]}) == frozenset(load_dates({})[0].keys)
+
+
+def test_date_key_names_leave_out_rejected_entries():
+    names = date_key_names({"dates": {"Owner": "oops", "WarrantyStart": {"group": "Start"},
+                                      "Summary": {"group": "end"}}})
+    assert not names & {"Owner", "WarrantyStart", "Summary"}
+
+
+def test_people_keys_cannot_be_date_keys():
+    assert "Author" not in date_key_names({"dates": {"Author": {"group": "start"}}})
+    repo = {"people": {"keys": ["Owner"]}, "dates": {"Owner": {"group": "end"}}}
+    assert "Owner" not in date_key_names(repo)
+    settings, notices = load_dates(repo, date_reserved_names(repo))
+    assert notices == ["TIMEZONE_UNSET", "DATES_BLOCK_INVALID key=Owner reason=reserved"]
