@@ -1,10 +1,13 @@
 """Date class: the reserved and declared date keys, the time zone, and how values are parsed."""
 
+import sys
+import time
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
 
-from kb4it.core.dateclass import load_dates
+from kb4it.core.dateclass import end_moment, load_dates, parse_date, stored
 
 
 def test_defaults_without_settings():
@@ -71,3 +74,44 @@ def test_reserved_names_from_other_features_are_refused():
                                    reserved_names=["AuthorDate"])
     assert not settings.is_date("AuthorDate")
     assert notices == ["DATES_BLOCK_INVALID key=AuthorDate reason=reserved"]
+
+
+UTC = load_dates({"timezone": "UTC"})[0]
+MADRID = load_dates({"timezone": "Europe/Madrid"})[0]
+
+
+@pytest.mark.parametrize("value, whole_day", [
+    ("2026-11-02", True), ("2026-11-02 22:00", False), ("2026-11-02 22:00:30", False)])
+def test_standard_forms(value, whole_day):
+    parsed = parse_date(value, MADRID)
+    assert parsed.standard is True and parsed.whole_day is whole_day
+
+
+def test_explicit_offset_is_converted_to_the_kb_zone():
+    parsed = parse_date("2026-11-02T22:00:00+00:00", MADRID)
+    assert stored(parsed) == "2026-11-02 23:00:00"
+    assert parsed.standard is True
+
+
+def test_other_forms_parse_but_are_not_standard():
+    parsed = parse_date("02/11/2026", MADRID)
+    assert stored(parsed) == "2026-11-02 00:00:00" and parsed.standard is False
+
+
+@pytest.mark.parametrize("value", ["YYYY-MM-DD", "Thu, 26 Jan 2023 09:26:54 GMT", "next week", ""])
+def test_unparsable_values(value):
+    assert parse_date(value, UTC) is None
+
+
+def test_whole_day_end_covers_the_day():
+    assert end_moment(parse_date("2026-11-02", UTC)) == datetime(2026, 11, 2, 23, 59, 59)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="time.tzset does not exist on Windows")
+def test_same_result_whatever_the_machine_zone(monkeypatch):
+    for tz in ("UTC", "Europe/Madrid", "America/New_York"):
+        monkeypatch.setenv("TZ", tz)
+        time.tzset()
+        assert stored(parse_date("2026-11-02T22:00:00+00:00", MADRID)) == "2026-11-02 23:00:00"
+    monkeypatch.undo()
+    time.tzset()
