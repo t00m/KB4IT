@@ -29,6 +29,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Author profiles in the structured data: each person is one schema.org `Person`. Documents point to it by `@id` (`<site_url>Author_Jane_Doe.html#person`), with aliases resolved to the `Person` name, and the person's page describes it in a `ProfilePage` with `name`, `alternateName`, `description` (the first paragraph of the profile) and the mapped profile properties (`Role` as `jobTitle`, `Team` as `memberOf`, `Email`, `Phone`, `Location`, `Url`). The new `people.map` in `repo.json` changes or adds mappings, with the syntax of `seo.map`. Private properties are left out. apphelp has no person pages, so it puts the people in the structured data of its home page. The FOAF triples of the knowledge graph export wait for the export itself (semantic web spec).
 - Help: a new page, "Describe a person with a profile", and troubleshooting entries for the profile codes.
 - The `kb4itdoc` skill ships with KB4IT, in `kb4it/resources/skills/kb4itdoc/SKILL.md`: instructions for an AI assistant to write, convert and review techdoc documents, with the mandatory properties, the Category and WorkType pairs, the skeletons, the writing style and what the quality score checks, plus advice to reach the Exemplary tier. The new help page "Write with an AI assistant" says how to install it in Claude Code or give it to another assistant. A test keeps the skill in line with the techdoc skeletons and quality rules.
+- Date keys: `Start`/`End`, `ScheduledStart`/`ScheduledEnd`, `DowntimeStart`/`DowntimeEnd`, `DetectedDate`, `ResolvedDate`, `DueDate`, `ExpiryDate` and `ReviewDate` join `Date` and `Modified` as reserved keys, read as dates with an optional time. `Date` always equals the document's start (`ScheduledStart`, else `Start`), and KB4IT fills it from the start when it is missing; a missing end takes its start's value. `Downtime: Yes` expects the downtime window. `repo.json` `timezone` (an IANA name such as `Europe/Madrid`) sets the zone of every value without an offset; `dates` declares more date keys. Date keys get no value pages. Every date problem is a warning in the build log (`[DATES] ...`) and in `kb4it verify`, never an error.
 
 ### Changed
 
@@ -40,6 +41,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - techdoc dashboard: Open items and Activity are two tabs of one card, "Open items and activity". Activity keeps its tabs for changes, incidents, events and monitoring, and each tab bar opens on the tab chosen last.
 
 ### Fixed
+
+- A `Date` that cannot be read no longer stops the build: the value is left out with `[DATES] DATE_INVALID` and the document is built without a date.
 
 - techdoc dashboard: in Open items and in the Changes and Incidents panels, a document without Priority or Status no longer moves its other badge into the wrong column. A missing value keeps an empty slot of the same width.
 - techdoc: a long value in the Details tab of the info card, such as a host name, no longer runs into the next column. A value too long for its column ends in an ellipsis and shows the whole text when you point at it; printing shows every value whole.
