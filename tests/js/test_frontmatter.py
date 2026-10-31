@@ -243,9 +243,9 @@ def test_file_name_fallback():
 
 
 def test_file_name_of_profile():
-    # A profile is named after its title, with the person- prefix that makes it a profile.
-    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# Tomás Vírseda\n", "person") == "person-tomas-virseda.md"
-    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# 日本語\n", "person") == "person.md"
+    # A profile is named after its title, with the profile- prefix that makes it a profile.
+    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# Tomás Vírseda\n", "person") == "profile-tomas-virseda.md"
+    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# 日本語\n", "person") == "profile.md"
     # The Person key no longer makes a profile: other categories are named after the title.
     assert call("fileName", "---\nPerson: Jane Doe\n---\n\n# Two People\n", "note") == "two-people.md"
 

@@ -296,15 +296,15 @@ var KB4ITFrontmatter = (function () {
     return null;
   }
 
-  // A document is named after its title. A profile (the "person" category) gets the person- prefix
-  // that makes it a profile (core/people.py): person-jane-doe.md.
+  // A document is named after its title. A profile (the "person" category) gets the profile- prefix
+  // that makes it a profile (core/people.py): profile-jane-doe.md.
   function fileName(text, category) {
     var b = bounds(text);
     var body = text;
     if (b.open && b.close !== null) { body = text.slice(b.close + 4).replace(/^\n+/, ""); }
     var heading = firstHeading(body);
     var slug = heading ? slugify(heading.title) : "";
-    if (category === "person") { return slug ? "person-" + slug + ".md" : "person.md"; }
+    if (category === "person") { return slug ? "profile-" + slug + ".md" : "profile.md"; }
     return (slug || category) + ".md";
   }
 

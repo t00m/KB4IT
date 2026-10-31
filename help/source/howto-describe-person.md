@@ -16,10 +16,11 @@ Summary: Write a profile so the name in Author leads readers to the person's rol
 
 ## Write the profile {#write}
 
-1. Create a file in `source/` whose name starts with `PERSON-`, such as `PERSON-JANE-DOE.md`. The prefix makes it a profile; upper or lower case does not matter.
-2. Write the name as the title (`# Jane Doe`), exactly as documents write it in `Author`, and the other spellings in `Alias`.
-3. Add what readers need: `Role`, `Team`, and at least one way to reach the person, such as `Email`.
-4. Under the title, say in a few lines what the person works on and when to ask them.
+1. Create a file in `source/` whose name starts with `PROFILE-`, such as `PROFILE-JANE-DOE.md`. The prefix makes it a profile; upper or lower case does not matter.
+2. Add `ProfileOf: Author`. `ProfileOf` names the property, not the person: `ProfileOf: Jane Doe` makes a profile of a property called `Jane Doe`, which no document uses, and the build warns with `PROFILE_KEY_UNUSED`.
+3. Write the name as the title (`# Jane Doe`), exactly as documents write it in `Author`, and the other spellings in `Alias`.
+4. Add what readers need: `Role`, `Team`, and at least one way to reach the person, such as `Email`.
+5. Under the title, say in a few lines what the person works on and when to ask them.
 
 ```markdown
 ---
@@ -27,6 +28,7 @@ Alias: J. Doe, jdoe
 Email: jane.doe@example.org
 Location: Madrid
 Phone: +34 600 000 000
+ProfileOf: Author
 Role: Basis administrator
 Team: SAP Basis
 ---
@@ -38,15 +40,15 @@ Runs the SAP Basis on-call rota. Ask her about system copies and kernel upgrades
 
 The title holds one name without a comma. A comma splits `Author` values, so a profile titled `# Doe, Jane` could never match and is left out with `PROFILE_INVALID`.
 
-A file without the `PERSON-` prefix is always a document, whatever its properties. `Person` is an ordinary property there, such as the people a change involves.
+Files named with the old `PERSON-` prefix still work as profiles of `Author`, with a `PROFILE_PERSON_PREFIX` warning. A file without either prefix is always a document, whatever its properties. `Person` is an ordinary property there, such as the people a change involves.
 
-With the editor on, the person's page has a **Create profile** button that opens this skeleton with the name filled in and proposes the file name `person-jane-doe.md`, or **Edit profile** when the profile exists.
+With the editor on, the person's page has a **Create profile** button that opens this skeleton with the name filled in and proposes the file name `profile-jane-doe.md`, or **Edit profile** when the profile exists.
 
 ## What readers see {#result}
 
 - **The person's page** shows the profile above the list of their documents: name, role, team, contact rows (email and phone as links) and the text. A page for an alias shows the same profile and links to the main page.
 - **Document pages** show the role and team as a tooltip on the name: in the techdoc Details tab, the blog post header and the bookshelf chapter details.
-- **Links** to the profile file, such as `[Jane](PERSON-JANE-DOE.md)`, lead to the person's page.
+- **Links** to the profile file, such as `[Jane](PROFILE-JANE-DOE.md)`, lead to the person's page.
 - **Structured data**: every document points to one schema.org `Person` per person, with aliases resolved, and the person's page describes that person as a `ProfilePage`. With `site_url` set, the person gets the address `Author_Jane_Doe.html#person`.
 
 ## Keep details private {#private}
