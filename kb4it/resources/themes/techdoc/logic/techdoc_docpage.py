@@ -4,6 +4,7 @@ import re
 
 from techdoc_dashboard import priority_css, status_css
 
+from kb4it.core.dateclass import display_date
 from kb4it.core.documents import joined_value
 from kb4it.core.util import valid_filename
 
@@ -17,14 +18,14 @@ SAP_NOTE_URL = 'https://me.sap.com/notes/'
 RETIRED_STATUSES = ('Obsolete', 'Deprecated', 'Withdrawn', 'Rejected')
 
 
-def value_url(props, key, value):
-    """Return the page of one value: the day's events page for Date, none for Modified, else the key-value page."""
-    if key == 'Modified':
-        return ''
+def value_url(props, key, value, blocked=()):
+    """Return the page of one value: the day's events page for Date, none for another date key, else the key-value page."""
     if key == 'Date':
         day = value[:10]
         if len(day) == 10 and day.replace('-', '').isdigit():
             return f"events_{day.replace('-', '')}.html"
+    if key == 'Modified' or key in blocked:
+        return ''
     return props.get(f'{key}_{value}_Url') or f'{valid_filename(key)}_{valid_filename(value)}.html'
 
 
@@ -47,16 +48,17 @@ def summary(srvdtb, doc_id):
 def header_strip(srvdtb, doc_id, conf):
     """Return the badges and links of the header strip, as set in theme.json header_keys."""
     props = srvdtb.get_doc_properties(doc_id)
+    blocked = srvdtb.get_blocked_keys()
     badges = []
     for key in conf.get('badges', []):
         for value in values(srvdtb, doc_id, key):
             css = {'Priority': priority_css, 'Status': status_css}.get(key, lambda _v: 'kb-label-doctype')(value)
-            badges.append({'key': key, 'text': value, 'css': css, 'url': value_url(props, key, value)})
+            badges.append({'key': key, 'text': value, 'css': css, 'url': value_url(props, key, value, blocked)})
     links = []
     for key in conf.get('links', []):
         items = []
         for v in values(srvdtb, doc_id, key):
-            item = {'text': v, 'url': value_url(props, key, v), 'time': '', 'full': v}
+            item = {'text': v, 'url': value_url(props, key, v, blocked), 'time': '', 'full': v}
             if key == 'Date':
                 item['text'], item['time'] = date_parts(v)
             items.append(item)
@@ -100,8 +102,12 @@ def info_groups(srvdtb, doc_id, groups, body_md, tip=None):
     present = [k for k in srvdtb.get_custom_keys(doc_id) if k not in HIDDEN_KEYS]
     tip = tip or (lambda _key, _value: '')
 
+    blocked = srvdtb.get_blocked_keys()
+
     def item(key):
-        return {'key': key, 'values': [{'text': v, 'url': value_url(props, key, v), 'tip': tip(key, v)}
+        def text(v):
+            return display_date(v) if key in blocked else v
+        return {'key': key, 'values': [{'text': text(v), 'url': value_url(props, key, v, blocked), 'tip': tip(key, v)}
                                        for v in values(srvdtb, doc_id, key)]}
 
     result = []

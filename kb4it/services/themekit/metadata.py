@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from kb4it.core.dateclass import display_date
 from kb4it.core.util import valid_filename
 from kb4it.services.themekit.host import ThemeHost
 
@@ -22,11 +23,14 @@ class MetadataMixin(ThemeHost):
         tpl_value_link = self.template('METADATA_VALUE_LINK')
         for page, text in values:
             if text:
-                label_links += tpl_value_link.render(var={'link_url': valid_filename(page), 'link_name': text})
+                url = valid_filename(page) if page else '#'
+                label_links += tpl_value_link.render(var={'link_url': url, 'link_name': text})
         return label_links
 
     def get_html_values_from_key(self, docId: str, key: str) -> list[tuple[str, str]]:
-        """Return (page, value) pairs for the values of a property of a document."""
+        """Return (page, value) pairs for the values of a property of a document; a date key has no page."""
+        if key in self.srvdtb.get_blocked_keys():
+            return [("", display_date(value)) for value in self.srvdtb.get_values(docId, key)]
         return [(f"{key}_{value}.html", value) for value in self.srvdtb.get_values(docId, key)]
 
     def build_metadata_section(self, docId: str) -> str:
