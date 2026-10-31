@@ -156,3 +156,10 @@ def end_moment(parsed: ParsedDate) -> datetime:
     if parsed.whole_day:
         return parsed.moment + timedelta(days=1, seconds=-1)
     return parsed.moment
+
+
+def display_date(value: str) -> str:
+    """A stored date for readers: YYYY-MM-DD, with HH:MM when the time is not midnight."""
+    day, _, clock = str(value).strip().partition(" ")
+    clock = clock[:5]
+    return f"{day} {clock}" if clock and clock != "00:00" else day
