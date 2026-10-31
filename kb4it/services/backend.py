@@ -181,8 +181,11 @@ class Backend(Service):
         # After the hook, so a setting it adds is checked too.
         from kb4it.core.structured import load_seo
         self.seo = load_seo(self.repo)
-        from kb4it.core.people import load_people
-        self.people = load_people(self.repo)
+        from kb4it.core.profiles import load_profiles, people_settings
+        self.profiles, notices = load_profiles(self.repo)
+        self.people = people_settings(self.profiles)
+        for line in notices:
+            self.log.warning(f"[PEOPLE] {line}")
         from kb4it.core.dateclass import date_reserved_names, load_dates
         self.dates, notices = load_dates(self.repo, reserved_names=date_reserved_names(self.repo))
         for line in notices:

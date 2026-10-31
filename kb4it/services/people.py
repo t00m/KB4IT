@@ -7,7 +7,33 @@ People service: the author profiles of a build and the pages they rebuild (see c
 # License: GPL v3
 """
 
-from kb4it.core.people import PeopleSettings, build_people, person_page, person_status, person_tip, profile_hash
+from kb4it.core.dateclass import date_key_names
+from kb4it.core.people import (RESERVED_KEYS, PeopleSettings, build_people, is_legacy_profile, person_page,
+                               person_status, person_tip, profile_hash)
+from kb4it.core.util import valid_filename
+
+
+def profile_page(name: str, keys, settings: PeopleSettings) -> str:
+    """The page a link to a profile leads to: the person's page, else the value page of its first key."""
+    keys = list(keys or [settings.keys[0]])
+    if any(key in settings.keys for key in keys):
+        return person_page(name, settings)
+    return f"{valid_filename(keys[0])}_{valid_filename(name)}.html"
+
+
+def expand_keys(keys, settings: PeopleSettings) -> list[str]:
+    """The keys whose value pages show a profile: a people key stands for every people key."""
+    found: list[str] = []
+    for key in keys or [settings.keys[0]]:
+        for one in (settings.keys if key in settings.keys else (key,)):
+            if one not in found:
+                found.append(one)
+    return found
+
+
+def refused_keys(repo) -> frozenset[str]:
+    """Keys ProfileOf may not name: date keys, blocked and ignored keys, and the reserved profile keys."""
+    return date_key_names(repo) | {"Title", "SystemPage"} | set(repo.get("ignored_keys") or []) | set(RESERVED_KEYS)
 
 
 class PeopleMixin:
@@ -16,17 +42,22 @@ class PeopleMixin:
     def load_people(self, profiles) -> None:
         """Profiles into srvdtb.people and kbdict["profiles"]; a bad one is left out like an invalid document."""
         settings = getattr(self.srvbes, "people", None) or PeopleSettings()
-        people, problems = build_people(profiles, settings)
+        for doc_id, _keys, _text in profiles:
+            if is_legacy_profile(doc_id):
+                self.log.warning(f"[PEOPLE] PROFILE_PERSON_PREFIX doc={doc_id} hint=rename to PROFILE- and add ProfileOf")
+        people, problems = build_people(profiles, settings, refused_keys(self.srvbes.get_dict("repo") or {}))
         for problem in problems:
             self.log.error(f"[PEOPLE] {problem.code} doc={problem.doc_id} detail={problem.detail}")
             self.plan.invalid_docs.append((problem.doc_id, problem.code))
         self.srvdtb.people = people
-        self.plan.profile_count = len(people)
-        self.plan.profile_pages = {p.doc_id: person_page(p.person, settings) for p in people.profiles.values()}
+        self.plan.profile_count = len(people.all_profiles())
+        self.plan.profile_pages = {p.doc_id: profile_page(p.person, p.keys, settings) for p in people.all_profiles()}
+        persons = {p.doc_id for p in people.profiles.values()}
         self.kbdict_new["profiles"] = {
-            p.doc_id: {"person": p.person, "aliases": list(p.aliases), "hash": profile_hash(p),
-                       "status": person_status(p, settings), "tip": person_tip(p, settings)}
-            for p in people.profiles.values()}
+            p.doc_id: {"person": p.person, "aliases": list(p.aliases), "keys": list(p.keys), "hash": profile_hash(p),
+                       "status": person_status(p, settings) if p.doc_id in persons else "",
+                       "tip": person_tip(p, settings) if p.doc_id in persons else ""}
+            for p in people.all_profiles()}
         self.log.info(f"[PEOPLE] LOADED profiles={len(people)} aliases={people.alias_count()}")
 
     def people_changes(self) -> tuple[set, set]:
@@ -48,11 +79,15 @@ class PeopleMixin:
             for entry in (before, after):
                 if entry:
                     names = [entry["person"], *entry.get("aliases", [])]
-                    pairs.update((key, name) for key in settings.keys for name in names)
+                    pairs.update((key, name) for key in expand_keys(entry.get("keys"), settings) for name in names)
+
+        def is_person(entry):
+            return any(key in settings.keys for key in entry.get("keys") or [settings.keys[0]])
 
         def statuses(profiles):
             return {name: (entry.get("status", "missing"), entry.get("tip", ""))
-                    for entry in profiles.values() for name in [entry["person"], *entry.get("aliases", [])]}
+                    for entry in profiles.values() if is_person(entry)
+                    for name in [entry["person"], *entry.get("aliases", [])]}
 
         status_old, status_new = statuses(old), statuses(new)
         missing = ("missing", "")
@@ -65,17 +100,17 @@ class PeopleMixin:
                 docs.add(doc_id)
         # A link to a source leads to the person's page while the source is a profile: rebuild the documents
         # linking to a source that became a profile, stopped being one, or now names another person.
-        page_old = {doc_id: person_page(entry["person"], settings) for doc_id, entry in old.items()}
-        page_new = {doc_id: person_page(entry["person"], settings) for doc_id, entry in new.items()}
+        page_old = {doc_id: profile_page(entry["person"], entry.get("keys"), settings) for doc_id, entry in old.items()}
+        page_new = {doc_id: profile_page(entry["person"], entry.get("keys"), settings) for doc_id, entry in new.items()}
         moved = {doc_id for doc_id in set(page_old) | set(page_new) if page_old.get(doc_id) != page_new.get(doc_id)}
         if moved:
             for doc_id, targets in (self.kbdict_new.get("links") or {}).items():
                 if doc_id in self.kbdict_new["document"] and any(path in moved for path, _frag in targets):
                     docs.add(doc_id)
-            # A profile card may link to the moved profile too: rebuild every person page.
+            # A profile card may link to the moved profile too: rebuild every profiled value page.
             for entry in new.values():
                 names = [entry["person"], *entry.get("aliases", [])]
-                pairs.update((key, name) for key in settings.keys for name in names)
+                pairs.update((key, name) for key in expand_keys(entry.get("keys"), settings) for name in names)
         self.log.debug(f"[PEOPLE] REBUILD docs={len(docs)} pairs={len(pairs)}")
         return pairs, docs
 
