@@ -91,7 +91,8 @@ class PeopleMixin:
 
         status_old, status_new = statuses(old), statuses(new)
         missing = ("missing", "")
-        flipped = bool(old) != bool(new)
+        # The author checks turn on with the first person profile and off with the last one.
+        flipped = any(map(is_person, old.values())) != any(map(is_person, new.values()))
         docs = set()
         for doc_id, entry in self.kbdict_new["document"].items():
             keys = entry.get("keys") or {}

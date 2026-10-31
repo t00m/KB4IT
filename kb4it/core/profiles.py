@@ -88,8 +88,9 @@ def _entry(key: str, spec: Any) -> KeyProfile:
 
 def load_profiles(repo: Mapping[str, Any]) -> tuple[ProfilesSettings, list[str]]:
     """The profiles settings of repo.json and its notice lines; ConfigError names the first bad entry."""
-    notices = ["PEOPLE_BLOCK_DEPRECATED"] if "people" in repo else []
     block = repo.get("profiles")
+    # With both blocks, profiles decides and people is not read at all.
+    notices = ["PEOPLE_BLOCK_IGNORED" if block is not None else "PEOPLE_BLOCK_DEPRECATED"] if "people" in repo else []
     if block is None:
         people = load_people(repo)
         return ProfilesSettings({key: _person(people) for key in people.keys}, tuple(people.private)), notices

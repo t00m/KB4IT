@@ -76,6 +76,7 @@ A profile is a source whose file name starts with `PROFILE-`: it describes one v
 | `PROFILE_ALIAS_IS_NAME` | error | An `Alias` of one profile is the name of another profile of the same property. The profile with the alias is left out | Remove the alias, or merge the two profiles |
 | `PROFILE_PERSON_PREFIX` | warning | A profile file starts with the old `PERSON-` prefix. It still works as a profile of `Author` | Rename it to `PROFILE-<name>.md` and add `ProfileOf: Author` |
 | `PEOPLE_BLOCK_DEPRECATED` | warning | `repo.json` has the old `people` block. It is read as the `Author` entries of `profiles` | Move it to `profiles`, see [Profiles](reference-repo-json.md#people) |
+| `PEOPLE_BLOCK_IGNORED` | warning | `repo.json` has both `profiles` and the old `people` block. `people` is not read | Move what `people` says into `profiles` and remove it |
 | `VALUE_NO_PROFILE` | information | Shown by `kb4it verify` for properties with `"missing": "notice"`: a value has no profile, with the number of documents | Add a profile, or fix the spelling of the value |
 | `PROFILE_NO_CONTACT` | warning | Shown by `kb4it verify`: a profile has none of the contact properties (`people.contact_keys`), or only private ones | Add `Email`, `Phone`, `Chat` or `Url` to the profile |
 | `PROFILE_UNUSED` | information | Shown by `kb4it verify`: no document uses the value the profile describes | Nothing, if the person has not written anything yet |
