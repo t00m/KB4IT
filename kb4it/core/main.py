@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 
 """
 KB4IT module. Entry point.
@@ -17,6 +18,7 @@ import sys
 import uuid
 from typing import TYPE_CHECKING, Any, Literal, overload
 
+from kb4it.core.completion import app_completer, enable as enable_completion, theme_completer
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, repo_lock_path
@@ -296,13 +298,13 @@ def build_parser() -> argparse.ArgumentParser:
     # Initialize repository
     init_parser = subparsers.add_parser(
         "create", help="Initialize a new repository")
-    init_parser.add_argument("theme", help="Theme to use for initialization")
+    init_parser.add_argument("theme", help="Theme to use for initialization").completer = theme_completer
     init_parser.add_argument(
         "app",
         nargs="?",
         default="default",
         help="App template to use (default: 'default')",
-    )
+    ).completer = app_completer
     init_parser.add_argument("repo_path", help="Path to the repository")
     init_parser.add_argument(
         "--index", choices=("yes", "no"),
@@ -327,7 +329,7 @@ def build_parser() -> argparse.ArgumentParser:
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
     )
-    theme_apps.add_argument("theme", help="Theme to query")
+    theme_apps.add_argument("theme", help="Theme to query").completer = theme_completer
 
     # Run repository workflow
     repo_build = subparsers.add_parser(
@@ -420,6 +422,7 @@ def main():
         return
 
     parser = build_parser()
+    enable_completion(parser)
 
     # Dispatch to the appropriate action handler
     params = None
