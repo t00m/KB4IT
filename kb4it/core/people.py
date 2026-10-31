@@ -13,6 +13,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Any, Iterable, Mapping
 
+from kb4it.core.dateclass import date_key_names
 from kb4it.core.exceptions import ConfigError
 from kb4it.core.files import get_hash_from_dict, valid_filename
 from kb4it.core.mdlinks import document_body
@@ -71,6 +72,9 @@ def load_people(repo: Mapping[str, Any]) -> PeopleSettings:
     keys = _key_list(block, "keys", defaults.keys, core_ok=False)
     if not keys:
         raise ConfigError("repo.json 'people.keys' must name at least one key")
+    dated = next((key for key in keys if key in date_key_names(repo)), None)
+    if dated:
+        raise ConfigError(f"repo.json 'people.keys': {dated} is a date key")
     return PeopleSettings(keys=keys,
                           contact_keys=_key_list(block, "contact_keys", defaults.contact_keys, core_ok=True),
                           private=_key_list(block, "private", defaults.private, core_ok=True),

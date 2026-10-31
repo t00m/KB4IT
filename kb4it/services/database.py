@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from kb4it.core.types import DBRecord
 
+from kb4it.core.dateclass import date_key_names
 from kb4it.core.people import People
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
@@ -38,7 +39,7 @@ class Database(Service):
         self.db: dict[str, DBRecord] = {}
         self.keys = {
             "all": [],
-            "blocked": ["Title", "SystemPage", "Date", "Modified"],
+            "blocked": ["Title", "SystemPage", *sorted(date_key_names(repo))],
             "custom": [],
             "theme": [],
             "ignored": repo.get("ignored_keys") or [],

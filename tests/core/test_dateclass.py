@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from kb4it.core.dateclass import end_moment, load_dates, parse_date, stored
+from kb4it.core.dateclass import date_key_names, end_moment, load_dates, parse_date, stored
 
 
 def test_defaults_without_settings():
@@ -115,3 +115,9 @@ def test_same_result_whatever_the_machine_zone(monkeypatch):
         assert stored(parse_date("2026-11-02T22:00:00+00:00", MADRID)) == "2026-11-02 23:00:00"
     monkeypatch.undo()
     time.tzset()
+
+
+def test_date_key_names_include_declared_keys():
+    names = date_key_names({"dates": {"WarrantyEnd": {"group": "end"}}})
+    assert {"Date", "Modified", "DueDate", "WarrantyEnd"} <= names
+    assert date_key_names({"dates": ["bad"]}) == frozenset(load_dates({})[0].keys)
