@@ -292,7 +292,7 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
         backlinks = (getattr(plan, 'backlinks', None) or {}) if plan is not None else {}
         docs = [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)]
         known = set(docs)
-        profile_docs = {p.doc_id for p in self.srvdtb.people.profiles.values()}
+        profile_docs = {p.doc_id for p in self.srvdtb.people.all_profiles()}
         profiles_on = self.author_profiles_on(prof)
         links = {}  # person -> Add page link, once per build: an Edit link reads the profile file
         today = datetime.now().date()

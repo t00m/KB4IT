@@ -178,3 +178,27 @@ def test_role_change_rebuilds_named_docs(tmp_path, home):
     out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE.replace("Email: j@x.org\n", "Email: j@x.org\nRole: DBA\n")})
     assert "COMPILED doc=a.md" in out
     assert "COMPILED doc=b.md" not in out
+
+
+TEAM = page("SAP Basis", "Team.", ProfileOf="Team")
+
+
+def test_first_person_profile_rebuilds_named_docs_when_a_team_profile_exists(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "c.md": doc("Gamma", Author="Bob"), "PROFILE-TEAM.md": TEAM}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PERSON-JANE-DOE.md": PROFILE})
+    assert "COMPILED doc=c.md" in out
+
+
+def test_first_team_profile_does_not_rebuild_docs_naming_authors(tmp_path, home):
+    pages = {"a.md": doc("Alpha", Author="Jane Doe"), "c.md": doc("Gamma", Author="Bob")}
+    cfg, _ = build(tmp_path, home, pages)
+    out = rebuild(tmp_path, home, cfg, {"PROFILE-TEAM.md": TEAM})
+    assert "COMPILED doc=c.md" not in out and "COMPILED doc=a.md" not in out
+
+
+def test_link_to_a_team_profile_is_not_a_broken_link(tmp_path, home):
+    pages = {"a.md": doc("Alpha", body="See [team](PROFILE-TEAM.md).", Team="SAP Basis"), "PROFILE-TEAM.md": TEAM}
+    _cfg, result = build(tmp_path, home, pages)
+    assert result.returncode == 0, result.stdout
+    assert "Fix the broken link to PROFILE-TEAM.md" not in (tmp_path / "repo" / "target" / "a.html").read_text(encoding="utf-8")

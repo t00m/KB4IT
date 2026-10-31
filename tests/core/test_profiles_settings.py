@@ -34,7 +34,7 @@ def test_people_block_is_read_as_people_entries_and_reported():
 
 def test_profiles_wins_over_people():
     s, notices = load_profiles({"people": {"keys": ["Owner"]}, "profiles": {"Author": {"type": "Person"}}})
-    assert s.people_keys() == ("Author",) and notices == ["PEOPLE_BLOCK_DEPRECATED"]
+    assert s.people_keys() == ("Author",) and notices == ["PEOPLE_BLOCK_IGNORED"]
 
 
 @pytest.mark.parametrize("block, fragment", [

@@ -133,13 +133,13 @@ The `profiles` block says what the profiles of each property do:
 |---|---|---|
 | `type` | `Thing` | schema.org type of the described thing. Properties of type `Person` name people and share person profiles |
 | `contact_keys` | none | Profile properties that tell readers how to reach it |
-| `missing` | `none` | A value without a profile: `penalty` (quality points, for people), `notice` (`VALUE_NO_PROFILE` in `kb4it verify`), `none` |
-| `tip` | none | Profile properties shown as the tooltip of the value on document pages |
+| `missing` | `none` | A value without a profile: `penalty` (quality points), `notice` (`VALUE_NO_PROFILE` in `kb4it verify`), `none`. For now only `notice` acts; people keep the techdoc `author_profiles` setting |
+| `tip` | none | Profile properties shown as the tooltip of the value on document pages. Not used yet: people show `Role` and `Team` |
 | `map` | none | Profile property -> schema.org property, with the syntax of `seo.map` |
 
 Without `profiles`, `Author` is a person with the defaults shown above. The cards of profiles of other properties, such as `Team`, come in a later release; their profiles already load and are checked.
 
-The old form follows: a file starting with `PERSON-` is a profile of `Author` (`PROFILE_PERSON_PREFIX`), and a `people` block is read as the `Author` entries of `profiles` (`PEOPLE_BLOCK_DEPRECATED`). A person profile is described below.
+The old form follows: a file starting with `PERSON-` is a profile of `Author` (`PROFILE_PERSON_PREFIX`), and a `people` block is read as the `Author` entries of `profiles` (`PEOPLE_BLOCK_DEPRECATED`). When `repo.json` has both blocks, `profiles` decides and `people` is not read (`PEOPLE_BLOCK_IGNORED`). A person profile is described below.
 
 A person profile is a source such as `PROFILE-JANE-DOE.md` with `ProfileOf: Author`, or the older `PERSON-JANE-DOE.md`. It describes one person that documents name in `Author`: its title holds the name exactly as documents write it, `Alias` the other spellings, and any other property (`Team`, `Role`, `Email`, `Phone`) says more about the person. A profile is not a document: it gets no page of its own, and a link to its file leads to the person's page, such as `Author_Jane_Doe.html`. That page shows the profile above the person's documents: the name, the properties (`Email` and `Phone` as links), and the text of the profile. A page for another spelling in `Alias` shows the same profile and links to the main page. A person with a profile and no document yet still gets a page.
 
