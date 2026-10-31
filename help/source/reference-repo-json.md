@@ -52,7 +52,9 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `theme_path` | | Use the theme in this folder instead of searching by name |
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
 | `seo` | | Language of the pages and structured data for search engines; see [structured data](#seo) |
-| `people` | | Which properties name people, and which profile properties count as contact details; see [people](#people) |
+| `profiles` | `Author` as a person | Which properties have profiles and what their profiles do; see [profiles](#people) |
+| `profiles_private` | `[]` | Profile properties kept out of the pages and the structured data; see [profiles](#people) |
+| `people` | | Old form of `profiles`, still read for this release; see [profiles](#people) |
 | `timezone` | the computer's zone | Time zone of every date written without an offset, an IANA name such as `Europe/Madrid`; see [dates](#dates) |
 | `dates` | | More properties to read as dates; see [dates](#dates) |
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
@@ -101,9 +103,45 @@ techdoc, blog and bookshelf build `search-index.js` with the text of every docum
 
 The index grows with your documents; above 5 MB the build warns with `[SEARCH] INDEX_LARGE`. Turn it off with `"search": false`. apphelp has its own search, configured in its `apphelp` block.
 
-## People {#people}
+## Profiles {#people}
 
-A profile is a source whose file name starts with `PERSON-` (any case), such as `PERSON-JANE-DOE.md`. It describes one person that documents name in `Author`: its title holds the name exactly as documents write it, `Alias` the other spellings, and any other property (`Team`, `Role`, `Email`, `Phone`) says more about the person. A profile is not a document: it gets no page of its own, and a link to its file leads to the person's page, such as `Author_Jane_Doe.html`. That page shows the profile above the person's documents: the name, the properties (`Email` and `Phone` as links), and the text of the profile. A page for another spelling in `Alias` shows the same profile and links to the main page. A person with a profile and no document yet still gets a page.
+A profile is a source whose file name starts with `PROFILE-` (any case), such as `PROFILE-SAP-BASIS.md`. `ProfileOf` names the property whose value it describes, and its title is that value, exactly as documents write it. A `PROFILE-` file without `ProfileOf` is left out with `PROFILE_INVALID`. A date property, `Title`, an ignored property, `Alias` and `ProfileOf` cannot have profiles.
+
+```markdown
+---
+Email: sap-basis@example.org
+Lead: Jane Doe
+ProfileOf: Team
+---
+
+# SAP Basis
+
+Runs the SAP landscape.
+```
+
+The `profiles` block says what the profiles of each property do:
+
+```json
+"profiles": {
+  "Author": {"type": "Person", "contact_keys": ["Email", "Phone", "Chat", "Url"], "missing": "penalty", "tip": ["Role", "Team"]},
+  "Team": {"type": "Organization", "missing": "notice"}
+},
+"profiles_private": ["Phone"]
+```
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `type` | `Thing` | schema.org type of the described thing. Properties of type `Person` name people and share person profiles |
+| `contact_keys` | none | Profile properties that tell readers how to reach it |
+| `missing` | `none` | A value without a profile: `penalty` (quality points, for people), `notice` (`VALUE_NO_PROFILE` in `kb4it verify`), `none` |
+| `tip` | none | Profile properties shown as the tooltip of the value on document pages |
+| `map` | none | Profile property -> schema.org property, with the syntax of `seo.map` |
+
+Without `profiles`, `Author` is a person with the defaults shown above. The cards of profiles of other properties, such as `Team`, come in a later release; their profiles already load and are checked.
+
+The old form follows: a file starting with `PERSON-` is a profile of `Author` (`PROFILE_PERSON_PREFIX`), and a `people` block is read as the `Author` entries of `profiles` (`PEOPLE_BLOCK_DEPRECATED`). A person profile is described below.
+
+A person profile is a source such as `PROFILE-JANE-DOE.md` with `ProfileOf: Author`, or the older `PERSON-JANE-DOE.md`. It describes one person that documents name in `Author`: its title holds the name exactly as documents write it, `Alias` the other spellings, and any other property (`Team`, `Role`, `Email`, `Phone`) says more about the person. A profile is not a document: it gets no page of its own, and a link to its file leads to the person's page, such as `Author_Jane_Doe.html`. That page shows the profile above the person's documents: the name, the properties (`Email` and `Phone` as links), and the text of the profile. A page for another spelling in `Alias` shows the same profile and links to the main page. A person with a profile and no document yet still gets a page.
 
 The Add page offers a **Person profile** skeleton in every theme but apphelp. While the editor is on, the person's page shows **Edit profile**, or **Create profile** when the person has none. Edit profile carries the whole profile in its link, so a profile with a `private` property gets no Edit profile: edit its file instead. Create profile opens the skeleton with the name as its title, and proposes the file name `person-<name>.md` (`person-jane-doe.md`) in the dialog title and on **Save**: save it in the `source/` folder and rebuild. The techdoc, blog and bookshelf themes show the profile; a theme of your own shows it when its `PAGE_KEY_VALUE.tpl` prints `var['profile_card']`. On document pages, the name of a person with a profile shows the profile's `Role` and `Team` as a tooltip. See [Describe a person with a profile](howto-describe-person.md).
 

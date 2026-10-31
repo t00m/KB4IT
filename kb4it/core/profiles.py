@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from kb4it.core.dateclass import date_key_names
 from kb4it.core.exceptions import ConfigError
@@ -113,3 +113,32 @@ def people_settings(settings: ProfilesSettings) -> PeopleSettings:
     first = settings.entry(keys[0]) if keys else KeyProfile()
     contact = first.contact_keys if keys else PeopleSettings().contact_keys
     return PeopleSettings(keys=keys or ("Author",), contact_keys=contact, private=settings.private, map=dict(first.map))
+
+
+def key_notices(people, documents: Iterable[Mapping[str, list[str]]], settings: ProfilesSettings) -> list[str]:
+    """Information about profiles of keys other than the people keys.
+
+    PROFILE_UNUSED for a profile whose value no document uses under its keys, and VALUE_NO_PROFILE
+    for each value of a key with missing "notice" that has no profile (the people keys have their own).
+    """
+    person_keys = set(people.people_keys)
+    used: dict[str, set[str]] = {}
+    for keys in documents:
+        for key, values in keys.items():
+            used.setdefault(key, set()).update(str(v).strip() for v in values or [] if str(v).strip())
+    lines = []
+    for profile in people.all_profiles():
+        if set(profile.keys) & person_keys:
+            continue
+        if not any(name in used.get(key, ()) for key in profile.keys for name in people.names(profile)):
+            lines.append(f"PROFILE_UNUSED person={profile.person} doc={profile.doc_id}")
+    for key, entry in settings.keys.items():
+        if entry.missing != "notice" or key in person_keys:
+            continue
+        counts: dict[str, int] = {}
+        for keys in documents:
+            for value in {str(v).strip() for v in keys.get(key) or [] if str(v).strip()}:
+                if people.lookup(value, key) is None:
+                    counts[value] = counts.get(value, 0) + 1
+        lines += [f"VALUE_NO_PROFILE key={key} value={value} docs={n}" for value, n in sorted(counts.items())]
+    return sorted(lines)

@@ -17,12 +17,14 @@ from kb4it.core.exceptions import ConfigError, KB4ITError
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.paths import resolve_repo_path
-from kb4it.core.people import build_people, is_profile, load_people, named_people, notices
+from kb4it.core.people import build_people, is_legacy_profile, is_profile, named_people, notices
+from kb4it.core.profiles import key_notices, load_profiles, people_settings
 from kb4it.core.dateclass import date_reserved_names, load_dates
 from kb4it.core.daterules import resolve_dates
 from kb4it.core.structured import iso_date, load_seo
 from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
+from kb4it.services.people import refused_keys
 from kb4it.services.addpage import ADD_DOC, check_editor_setting, check_theme_editor, editor_on
 
 
@@ -137,7 +139,7 @@ class VerifyMixin:
             problems = [str(e), *problems]
         people_notices = {}
         try:
-            people_problems, people_notices = self._verify_people(attributes, load_people(repo),
+            people_problems, people_notices = self._verify_people(attributes, repo,
                                                                   seo is not None and seo.index is True)
             problems = [*people_problems, *problems]
         except ConfigError as e:
@@ -190,25 +192,31 @@ class VerifyMixin:
             raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
                              f"{len(problems)} theme problems, {len(link_problems)} broken links")
 
-    def _verify_people(self, attributes, settings, indexed):
+    def _verify_people(self, attributes, repo, indexed):
         """(errors, notices) of the profiles: errors fail verify, notices are warnings and information."""
+        profiles, config = load_profiles(repo)
+        settings = people_settings(profiles)
         entries, named = [], {}
         for doc, keys in attributes.items():
             if is_profile(doc):
                 with open(doc, encoding=SOURCE_ENCODING) as fh:
                     entries.append((os.path.basename(doc), keys, fh.read()))
-        people, problems = build_people(entries, settings)
-        for doc, keys in attributes.items():
-            if not is_profile(doc):
-                for name in named_people(keys, people, settings):
-                    named[name] = named.get(name, 0) + 1
+        people, problems = build_people(entries, settings, refused_keys(repo))
+        documents = [keys for doc, keys in attributes.items() if not is_profile(doc)]
+        for keys in documents:
+            for name in named_people(keys, people, settings):
+                named[name] = named.get(name, 0) + 1
         errors = [f"{p.code} doc={p.doc_id} detail={p.detail}" for p in problems]
         found = notices(people, named, settings, indexed)
-        # A document titled like a person without a profile may be a profile that lost its PERSON- prefix.
+        found["warning"] += config + [f"PROFILE_PERSON_PREFIX doc={name}" for name, _k, _t in entries
+                                      if is_legacy_profile(name)]
+        found["information"] += key_notices(people, documents, profiles)
+        # A document titled like a person without a profile may be a profile that lost its PROFILE- prefix.
         for doc, keys in attributes.items():
             title = next(iter(keys.get("Title") or []), "")
             if not is_profile(doc) and title in named and people.lookup(title) is None:
                 found["information"].append(f"PROFILE_NO_PREFIX doc={os.path.basename(doc)} person={title}")
+        found["warning"].sort()
         found["information"].sort()
         return errors, found
 
