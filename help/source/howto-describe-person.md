@@ -67,6 +67,6 @@ A private property does not count as a contact detail, because readers cannot se
 kb4it verify config/repo.json
 ```
 
-`verify` reports profiles that are left out (`PROFILE_INVALID`, `PROFILE_DUPLICATE`, `PROFILE_ALIAS_IS_PERSON`), profiles without contact details (`PROFILE_NO_CONTACT`), profiles nobody names (`PROFILE_UNUSED`), documents titled like a person who has no profile, which may be profiles that lost their prefix (`PROFILE_NO_PREFIX`), and, once you have one profile, the people documents name who have none (`AUTHOR_NO_PROFILE`). See the [log codes](reference-log-codes.md#people).
+`verify` reports profiles that are left out (`PROFILE_INVALID`, `PROFILE_DUPLICATE`, `PROFILE_ALIAS_IS_NAME`), profiles without contact details (`PROFILE_NO_CONTACT`), profiles nobody names (`PROFILE_UNUSED`), documents titled like a person who has no profile, which may be profiles that lost their prefix (`PROFILE_NO_PREFIX`), and, once you have one profile, the people documents name who have none (`AUTHOR_NO_PROFILE`). See the [log codes](reference-log-codes.md#people).
 
 In techdoc, the first profile also turns on two quality checks: a document loses 2 points for each person it names without a profile and 1 point for each person whose profile has no contact details, at most 4 points. See the [quality score](reference-theme-techdoc.md#quality).
