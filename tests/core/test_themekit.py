@@ -89,6 +89,9 @@ class _Db:
             raise KeyError(doc)
         return ["Tag"]
 
+    def get_blocked_keys(self):
+        return ["Title", "SystemPage", "Date", "Modified"]
+
 
 class _Log:
     def __init__(self):
