@@ -53,6 +53,8 @@ PyYAML = ">=6.0"
 Markdown = ">=3.5"
 Pygments = ">=2.15"
 pymdown-extensions = ">=10.0"
+# zoneinfo needs the IANA database, which Windows does not ship.
+tzdata = { version = "*", markers = "sys_platform == 'win32'" }
 nh3 = { version = ">=0.3.0", optional = true }
 
 [tool.poetry.extras]

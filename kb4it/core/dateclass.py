@@ -8,14 +8,20 @@ Date class: the date keys of a knowledge base, its time zone, and how a date val
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from datetime import datetime, time, timedelta
 from typing import Any, Iterable, Mapping
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from kb4it.core.dates import guess_datetime
 
 GROUPS = ("start", "end")
 NAME_SUFFIXES = ("Date", "Start", "End")
 DOWNTIME_KEY = "Downtime"
 DOWNTIME_VALUES = ("Yes", "No")
+# YYYY-MM-DD, optionally followed by HH:MM or HH:MM:SS (D14).
+STANDARD_RE = re.compile(r"^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?$")
 
 
 @dataclass(frozen=True)
@@ -101,3 +107,46 @@ def load_dates(repo: Mapping[str, Any], reserved_names: Iterable[str] = ()) -> t
     reserved = set(RESERVED_DATES) | {DOWNTIME_KEY} | set(reserved_names)
     keys = {**RESERVED_DATES, **_declared(repo.get("dates"), reserved, notices)}
     return DateSettings(timezone, keys), notices
+
+
+@dataclass(frozen=True)
+class ParsedDate:
+    """A date value read in the knowledge base zone: a naive moment, whether it is a whole day, and its form."""
+
+    moment: datetime
+    whole_day: bool
+    standard: bool
+
+
+def _iso(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def parse_date(value: str, settings: DateSettings) -> ParsedDate | None:
+    """The ParsedDate of a value, or None when it is not a date."""
+    value = str(value).strip()
+    moment = _iso(value) if value else None
+    offset = moment is not None and moment.tzinfo is not None
+    if moment is None:
+        moment = guess_datetime(value) if value else None
+        if moment is None:
+            return None
+    if offset:
+        moment = moment.astimezone(settings.timezone).replace(tzinfo=None)
+    whole_day = not offset and len(value) <= 10 and moment.time() == time(0)
+    return ParsedDate(moment, whole_day, bool(STANDARD_RE.match(value)) or offset)
+
+
+def stored(parsed: ParsedDate) -> str:
+    """The form the database keeps: YYYY-MM-DD HH:MM:SS, naive, in the knowledge base zone."""
+    return parsed.moment.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def end_moment(parsed: ParsedDate) -> datetime:
+    """The last moment an end covers: the value itself, or the end of the day for a whole day."""
+    if parsed.whole_day:
+        return parsed.moment + timedelta(days=1, seconds=-1)
+    return parsed.moment
