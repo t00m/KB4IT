@@ -44,6 +44,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
+argcomplete = ">=3.0"
 Mako = "1.4.2"
 lxml = "*"
 Pillow = ">=10.0"

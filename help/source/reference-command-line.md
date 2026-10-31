@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, --index, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME
+Keyword: cli, kb4it, create, --index, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -53,6 +53,25 @@ Put them before the command.
 | `-h`, `--help` | Prints help; `kb4it build --help` prints help for one command |
 
 `-f` is short for `--force`.
+
+## Shell completion {#completion}
+
+KB4IT completes commands, options, the installed themes, the apps of a theme and file paths with <kbd>Tab</kbd>. It uses [argcomplete](https://kislyuk.github.io/argcomplete/), which is installed with KB4IT. Register the command once per shell:
+
+```bash
+# bash
+eval "$(register-python-argcomplete kb4it)"
+# zsh, after compinit
+eval "$(register-python-argcomplete kb4it)"
+# fish
+register-python-argcomplete --shell fish kb4it | source
+```
+
+Put the line in `~/.bashrc`, `~/.zshrc` or `~/.config/fish/config.fish` to keep it. `activate-global-python-argcomplete` enables completion for `kb4it` and every other argcomplete-aware command at once.
+
+`kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes; after a theme, the next word lists its sample apps. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
+
+Without argcomplete the command line works as before; only <kbd>Tab</kbd> completion is missing.
 
 ## Build timings {#trace}
 
