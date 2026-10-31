@@ -4,6 +4,7 @@ Category: Note
 Date: YYYY-MM-DD
 DocType: Explanation
 Product:
+ReviewDate:
 Scope:
 Status: Draft
 Summary:
@@ -21,6 +22,7 @@ Say what this note is about and why it matters.
 ## Details
 
 Explain the topic: background, how it works, what to keep in mind.
+Name the environment and the versions you tested it on.
 
 ## References
 

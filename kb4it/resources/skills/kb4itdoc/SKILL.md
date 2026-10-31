@@ -313,52 +313,84 @@ Each skeleton fixes the frontmatter defaults and the `##` sections of the body.
 | Note | `Note` | `Knowledge` | `Explanation` | `Draft` | none | Overview, Details, References |
 | Post | `Post` | `Knowledge` | `Explanation` | `Draft` | none | Overview, Details, References |
 | Report | `Report` | `Knowledge` | `Reference` | `Draft` | none | Executive Summary, Findings, Recommendations, References |
-| Change | `Record` | `Change` | `Reference` | `New` | `Normal` | Overview, Impact, Rollback, References |
-| Incident | `Record` | `Incident` | `Reference` | `New` | `Normal` | Summary, Timeline, Root Cause, Resolution, References |
-| Task | `Record` | `Task` | `Reference` | `New` | `Normal` | Objective, Acceptance Criteria, Notes, References |
-| Meeting | `Minutes` | `Meeting` | `Reference` | `New` | none | Objective, Attendees, Agenda, Notes, Action Items, References |
+| Change | `Record` | `Change` | `Reference` | `New` | `Normal` | Overview, Impact, Implementation Plan, Verification, Rollback, Result, References |
+| Incident | `Record` | `Incident` | `Reference` | `New` | `Normal` | Summary, Timeline, Investigation, Root Cause, Resolution, Follow-up Actions, References |
+| Task | `Record` | `Task` | `Reference` | `New` | `Normal` | Objective, Acceptance Criteria, Subtasks, Notes, References |
+| Meeting | `Minutes` | `Meeting` | `Reference` | `New` | none | Objective, Attendees, Agenda, Notes, Decisions, Action Items, References |
 
 ### What each section holds
 
 **Procedure**
-- `## Introduction`: what the procedure achieves and when to use it.
-- `## Prerequisites`: bullet list of access, roles, authorisations, systems, tools or files needed.
-- `## Steps`: numbered list of steps, with the commands in fenced code blocks.
-- `## Verification`: how to check that the procedure worked.
+- `## Introduction`: what the procedure achieves and when to use it; the systems it applies to,
+  how long it takes and the risk of running it.
+- `## Prerequisites`: bullet list of access, roles, authorisations, systems, tools or files needed,
+  and the backup or maintenance window when the procedure changes data.
+- `## Steps`: numbered list of steps, with the commands in fenced code blocks and the expected
+  output in a `text` block. A conditional step says when it applies and which step comes next.
+  Put a `!!! warning` after a risky step.
+- `## Verification`: how to check that the procedure worked, and what to do if a check fails.
 
 **Note** and **Post**
 - `## Overview`: what it is about and why it matters (for a Post: who should read it).
 - `## Details`: the body: background, how it works, what to keep in mind. Use `###` subsections.
   An Explanation needs three or more `##` sections in total, so the default
   Overview, Details, References already meets the shape; add sections after Details when the topic needs them.
+  A technical note names the environment and the versions it was tested on.
 
 **Report**
-- `## Executive Summary`: main findings and the decision needed, in a few lines.
+- `## Executive Summary`: main findings and the decision needed, in a few lines; the period the
+  report covers and where the data comes from.
 - `## Findings`: a table, typically `| Area | Finding | Impact |`, Impact being High, Medium or Low.
-- `## Recommendations`: bullet list of actions, each with an owner and a date.
+- `## Recommendations`: bullet list of actions, each with an owner and a due date (`YYYY-MM-DD`).
 
 **Change** (record)
-- `## Overview`: what changes, where, when and why.
-- `## Impact`: systems and users affected, downtime.
-- `## Rollback`: how to undo the change if it fails.
+- `## Overview`: what changes, where, when and why; the type (Standard, Normal or Emergency), the
+  requester and ticket, the affected systems and services, and links to the records behind it.
+  A `### Approvals` table: approval, name, date, decision.
+- `## Impact`: business and technical impact, users affected, downtime. A `### Risks` table
+  (risk, probability, impact, mitigation) and the dependencies.
+- `## Implementation Plan`: prerequisites and pre-checks, then numbered steps, each with its
+  owner and expected result, and the commands in fenced code blocks.
+- `## Verification`: the checks after the change: services, logs, user confirmation.
+- `## Rollback`: when to roll back (decision criteria, latest time to decide), the numbered
+  rollback steps, and how long a full rollback takes.
+- `## Result`: the outcome (Successful, Failed or Rolled back) with the actual start and end
+  times, deviations and unexpected issues, follow-up actions (`- [ ]`) and lessons learned.
+- Set `ScheduledStart` and `ScheduledEnd` to the planned window. When a service stops, set
+  `Downtime: Yes` with `DowntimeStart` and `DowntimeEnd` inside that window.
 
 **Incident** (record)
-- `## Summary`: what failed, for whom and for how long.
-- `## Timeline`: bullet list `- HH:MM Event`, from the first alert to recovery.
-- `## Root Cause`: why it failed.
-- `## Resolution`: what fixed it and what prevents it from happening again.
+- `## Summary`: what failed, for whom and for how long; affected systems, services and users,
+  the business impact and how it was detected.
+- `## Timeline`: bullet list `- HH:MM Event`, from the first alert to recovery
+  (`- YYYY-MM-DD HH:MM Event` when it spans more than one day): detected, investigation started,
+  workaround applied or service restored, root cause identified, permanent fix in place.
+- `## Investigation`: symptoms and error messages (log lines in a `text` block), the diagnostic
+  commands, what was tested and found, and the vendor support case, if any.
+- `## Root Cause`: why it failed, with a link to the change or problem record behind it.
+- `## Resolution`: the workaround and the permanent fix, with the commands and configuration
+  changes, how the fix was checked and who confirmed the service works again.
+- `## Follow-up Actions`: task list (`- [ ]`) of preventive actions, each with owner and due date,
+  and the knowledge article or procedure to write or update.
+- Set `DetectedDate` and `ResolvedDate` when they are known.
 
 **Task** (record)
-- `## Objective`: what the task must achieve and why.
+- `## Objective`: what the task must achieve and why; the incident, change or meeting it comes
+  from, and what it depends on.
 - `## Acceptance Criteria`: task list (`- [ ]` / `- [x]`) of the conditions for done.
-- `## Notes`: decisions, findings and links gathered while working.
+- `## Subtasks`: task list of the work items, each with its owner.
+- `## Notes`: decisions, findings and links gathered while working, one dated line each
+  (`- YYYY-MM-DD What you did or found`).
+- Set `DueDate` to the deadline.
 
 **Meeting** (minutes)
-- `## Objective`: why the meeting took place and what it had to decide.
-- `## Attendees`: bullet list, each attendee with their role.
+- `## Objective`: why the meeting took place and what it had to decide; the room or call link,
+  and a link to the minutes of the previous meeting.
+- `## Attendees`: bullet list, each attendee with their role; mark the organiser and who was absent.
 - `## Agenda`: bullet list of agenda items.
-- `## Notes`: discussion and decisions taken.
-- `## Action Items`: task list (`- [ ]`), each with owner and due date.
+- `## Notes`: discussion of each agenda item: technical details, risks found, open questions.
+- `## Decisions`: bullet list, each decision with who took it and the record it leads to.
+- `## Action Items`: task list (`- [ ]`), each with owner and due date (`YYYY-MM-DD`).
 
 ### Length guidance
 
@@ -386,19 +418,23 @@ Author: <Author>
 Category: Procedure
 Date: <YYYY-MM-DD>
 DocType: How-to guide
+Environment: <Environment>
+Periodicity: <Periodicity>
 Priority: Normal
 Product: <Product>
+ReviewDate: <YYYY-MM-DD>
+SID: <SID>
 Scope: <Scope>
 Status: Draft
 Summary: <One line describing the purpose>
 Tag: <tag1>, <tag2>
+Team: <Team>
 Topic: <Topic>
 WorkType: Knowledge
 ---
 ```
 
-Record (Change shown; Incident and Task change only `WorkType`; Meeting uses `Category: Minutes`,
-`WorkType: Meeting` and has no `Priority`):
+Record (Change shown; Meeting uses `Category: Minutes`, `WorkType: Meeting` and has no `Priority`):
 
 ```yaml
 ---
@@ -406,16 +442,39 @@ Author: <Author>
 Category: Record
 Date: <YYYY-MM-DD HH:MM>
 DocType: Reference
+Downtime: <Yes or No>
+DowntimeEnd: <YYYY-MM-DD HH:MM>
+DowntimeStart: <YYYY-MM-DD HH:MM>
+Environment: <Environment>
 Priority: Normal
 Product: <Product>
+SID: <SID>
+ScheduledEnd: <YYYY-MM-DD HH:MM>
+ScheduledStart: <YYYY-MM-DD HH:MM>
 Scope: <Scope>
 Status: New
 Summary: <One line describing what happened or must happen>
 Tag: <tag1>, <tag2>
+Team: <Team>
 Topic: <Topic>
 WorkType: Change
 ---
 ```
+
+Besides the mandatory properties, each skeleton carries the optional keys that fit its kind:
+
+| Skeleton | Optional keys |
+|---|---|
+| Procedure | `Environment`, `Periodicity`, `ReviewDate`, `SID`, `Team` |
+| Note | `ReviewDate` |
+| Change | `Downtime`, `DowntimeEnd`, `DowntimeStart`, `Environment`, `SID`, `ScheduledEnd`, `ScheduledStart`, `Team` |
+| Incident | `DetectedDate`, `Environment`, `ResolvedDate`, `SID`, `Team` |
+| Task | `DueDate`, `Team` |
+| Meeting | `Team` |
+
+Dates take `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`. `ScheduledStart` sets the `Date` of a change.
+`ReviewDate` is when the next review of a knowledge document is due; `DueDate` is the deadline
+of a task. Leave out an optional key that has no value.
 
 ---
 

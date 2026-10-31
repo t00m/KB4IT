@@ -81,7 +81,10 @@ CHECKS = {
         'what': 'The document has the sections of its skeleton, the template for its Category or WorkType.',
         'how': 'Add each missing section as a `##` heading, with its content. Similar names count: Overview also matches '
                'Description, Introduction or Information; Impact matches Scope, Risk or Justification; Rollback matches '
-               'Fallback or Backout; Verification matches Validation or Check; Resolution matches Solution or Fix. '
+               'Fallback or Backout; Verification matches Validation or Check; Resolution matches Solution or Fix; '
+               'Implementation Plan matches Plan, Steps or Procedure; Result matches Outcome, Review or Closure; '
+               'Investigation matches Analysis, Diagnosis or Symptoms; Follow-up Actions matches Actions, Prevention or '
+               'Lessons learned; Subtasks matches Steps, Checklist or Plan; Decisions matches Conclusions or Agreed. '
                'A References section in a skeleton is scored once, under Connected. '
                'The skeletons are listed at the end of this page.',
         'example': '## Timeline\n\n- 09:10 Alert received.\n- 09:25 Service restarted.',

@@ -132,10 +132,12 @@ The skeletons of the Add page are written to this standard. Each one has every c
 | Procedure | Introduction, Prerequisites, Steps, Verification, References |
 | Note, Post | Overview, Details, References |
 | Report | Executive Summary, Findings, Recommendations, References |
-| Change | Overview, Impact, Rollback, References |
-| Incident | Summary, Timeline, Root Cause, Resolution, References |
-| Task | Objective, Acceptance Criteria, Notes, References |
-| Meeting | Objective, Attendees, Agenda, Notes, Action Items, References |
+| Change | Overview, Impact, Implementation Plan, Verification, Rollback, Result, References |
+| Incident | Summary, Timeline, Investigation, Root Cause, Resolution, Follow-up Actions, References |
+| Task | Objective, Acceptance Criteria, Subtasks, Notes, References |
+| Meeting | Objective, Attendees, Agenda, Notes, Decisions, Action Items, References |
+
+Some skeletons also carry optional keys for their kind, left empty: the planned window and downtime of a change (`ScheduledStart`, `ScheduledEnd`, `Downtime`, `DowntimeStart`, `DowntimeEnd`), when an incident was detected and resolved (`DetectedDate`, `ResolvedDate`), the deadline of a task (`DueDate`), the next review of a procedure or a note (`ReviewDate`), and `Team`, `Environment`, `SID` and `Periodicity` where they apply. Dates take `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`, see [dates](reference-repo-json.md#dates). An optional key you do not need can be removed. Optional `###` subsections, such as Approvals and Risks in a change, are not scored.
 
 Ranks and medians are in `quality-index.js`, written at every build.
 
