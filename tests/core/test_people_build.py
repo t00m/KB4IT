@@ -32,7 +32,7 @@ def test_profile_is_not_a_document(tmp_path, home):
     assert not (repo / "target" / "PERSON-JANE-DOE.html").exists()
     data = kbdict(repo)
     assert "PERSON-JANE-DOE.md" not in data["document"]
-    assert data["profiles"]["PERSON-JANE-DOE.md"] == {"person": "Jane Doe", "aliases": ["J. Doe"], "hash": ANY,
+    assert data["profiles"]["PERSON-JANE-DOE.md"] == {"person": "Jane Doe", "aliases": ["J. Doe"], "keys": ["Author"], "hash": ANY,
                                                       "status": "ok", "tip": ""}
     assert "Bio." not in (repo / "target" / "search-index.js").read_text(encoding="utf-8")
 
