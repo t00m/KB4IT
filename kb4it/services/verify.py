@@ -18,7 +18,9 @@ from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.paths import resolve_repo_path
 from kb4it.core.people import build_people, is_profile, load_people, named_people, notices
-from kb4it.core.structured import iso_date, load_seo
+from kb4it.core.dateclass import load_dates
+from kb4it.core.daterules import resolve_dates
+from kb4it.core.structured import CORE_KEYS, iso_date, load_seo
 from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
 from kb4it.services.addpage import ADD_DOC, check_editor_setting, check_theme_editor, editor_on
@@ -170,6 +172,13 @@ class VerifyMixin:
                 for line in people_notices[level]:
                     print(f"  {line}")
 
+        date_notices = self._verify_dates(attributes, repo)
+        for level, title in (("warning", "Dates (warnings):"), ("information", "Dates (information):")):
+            if date_notices.get(level):
+                print(f"\n{title}")
+                for line in date_notices[level]:
+                    print(f"  {line}")
+
         link_problems = self._verify_links(docs)
         if link_problems:
             print("\nLinks:")
@@ -202,6 +211,22 @@ class VerifyMixin:
                 found["information"].append(f"PROFILE_NO_PREFIX doc={os.path.basename(doc)} person={title}")
         found["information"].sort()
         return errors, found
+
+    def _verify_dates(self, attributes, repo):
+        """{"warning": [...], "information": [...]} of the date keys; they never fail verify (spec D17)."""
+        settings, config = load_dates(repo, reserved_names=CORE_KEYS | {"Alias"})
+        first = {"warning": [], "information": []}
+        for line in config:
+            first["information" if line == "TIMEZONE_UNSET" else "warning"].append(line)
+        per_doc = {"warning": [], "information": []}
+        for doc, keys in attributes.items():
+            if is_profile(doc):
+                continue
+            for level, line in resolve_dates(keys, settings)[1]:
+                code, _, rest = line.partition(" ")
+                per_doc[level].append(f"{code} doc={os.path.basename(doc)} {rest}".rstrip())
+        # Settings first, then the documents in a stable order.
+        return {level: first[level] + sorted(per_doc[level]) for level in first}
 
     def _verify_fences(self, docs, settings):
         """MD_FENCE_IN_BLOCK lines for fences that python-markdown cannot see without superfences."""
