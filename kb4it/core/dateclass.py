@@ -109,6 +109,12 @@ def load_dates(repo: Mapping[str, Any], reserved_names: Iterable[str] = ()) -> t
     return DateSettings(timezone, keys), notices
 
 
+def date_key_names(repo: Mapping[str, Any]) -> frozenset[str]:
+    """Every name of the date class: the reserved keys and the ones repo.json declares."""
+    block = repo.get("dates")
+    return frozenset(RESERVED_DATES) | frozenset(block if isinstance(block, dict) else ())
+
+
 @dataclass(frozen=True)
 class ParsedDate:
     """A date value read in the knowledge base zone: a naive moment, whether it is a whole day, and its form."""

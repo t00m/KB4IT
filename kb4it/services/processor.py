@@ -24,10 +24,11 @@ from kb4it.core.documents import parse_markdown_attributes
 from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
 from kb4it.core.moddates import GIT_CACHE, file_time, git_dates, modified_date
+from kb4it.core.daterules import resolve_and_log
 from kb4it.core.people import is_profile
 from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
-                             page_name_clashes, string_timestamp, valid_filename,
+                             page_name_clashes, valid_filename,
                              SOURCE_ENCODING, timeit, tree_hash)
 
 # repo.json keys that never reach a page: changing them must not rebuild the site.
@@ -173,13 +174,12 @@ class Processor(PeopleMixin, Service):
 
             # Add to the in-memory database
             self.srvdtb.add_document(docId)
+            keys = resolve_and_log(keys, getattr(self.srvbes, "dates", None), self.log, docId)
             for key in keys:
                 alist = keys[key]
                 for value in alist:
                     if len(value.strip()) == 0:
                         continue
-                    if key == "Date":
-                        value = string_timestamp(value)
                     self.srvdtb.add_document_key(docId, key, value)
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']

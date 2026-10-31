@@ -95,3 +95,14 @@ def resolve_dates(keys: dict[str, list[str]], settings: DateSettings) -> tuple[d
             notices.append(("warning", f"DATE_END_BEFORE_START key={end} start={closes}"))
     _downtime(keys, parsed, had, notices)
     return {**others, **{key: [stored(value)] for key, value in parsed.items()}}, notices
+
+
+def resolve_and_log(keys: dict[str, list[str]], settings: DateSettings | None, log, doc_id: str) -> dict[str, list[str]]:
+    """resolve_dates for one document of a build; its notices go to the log with the document name."""
+    if settings is None:
+        from kb4it.core.dateclass import load_dates
+        settings = load_dates({})[0]
+    keys, notices = resolve_dates(keys, settings)
+    for level, line in notices:
+        (log.warning if level == "warning" else log.info)(f"[DATES] {line} doc={doc_id}")
+    return keys

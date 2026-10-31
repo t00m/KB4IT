@@ -13,6 +13,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
+from kb4it.core.dateclass import date_key_names
 from kb4it.core.dates import guess_datetime
 from kb4it.core.exceptions import ConfigError
 
@@ -100,6 +101,8 @@ def load_seo(repo: Mapping[str, Any]) -> SeoSettings:
     for key, spec in raw_map.items():
         if key in CORE_KEYS:
             raise ConfigError(f"repo.json 'seo.map.{key}': {key} is mapped by KB4IT and cannot be changed")
+        if key in date_key_names(repo):
+            raise ConfigError(f"repo.json 'seo.map.{key}': {key} is a date key")
         if spec is not None:
             check_target(f"seo.map.{key}", spec)
         mapping[str(key)] = spec

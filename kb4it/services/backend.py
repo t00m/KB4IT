@@ -183,6 +183,11 @@ class Backend(Service):
         self.seo = load_seo(self.repo)
         from kb4it.core.people import load_people
         self.people = load_people(self.repo)
+        from kb4it.core.dateclass import load_dates
+        from kb4it.core.structured import CORE_KEYS
+        self.dates, notices = load_dates(self.repo, reserved_names=CORE_KEYS | {"Alias"})
+        for line in notices:
+            (self.log.info if line == "TIMEZONE_UNSET" else self.log.warning)(f"[DATES] {line}")
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""
