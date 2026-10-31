@@ -109,10 +109,18 @@ def load_dates(repo: Mapping[str, Any], reserved_names: Iterable[str] = ()) -> t
     return DateSettings(timezone, keys), notices
 
 
+def date_reserved_names(repo: Mapping[str, Any]) -> frozenset[str]:
+    """Names a declared date key cannot take: the KB4IT core keys, Alias and the people keys."""
+    from kb4it.core.structured import CORE_KEYS  # structured imports this module
+    block = repo.get("people")
+    people = block.get("keys", ["Author"]) if isinstance(block, dict) else ["Author"]
+    names = [name for name in people if isinstance(name, str)] if isinstance(people, list) else []
+    return CORE_KEYS | {"Alias"} | frozenset(names)
+
+
 def date_key_names(repo: Mapping[str, Any]) -> frozenset[str]:
-    """Every name of the date class: the reserved keys and the ones repo.json declares."""
-    block = repo.get("dates")
-    return frozenset(RESERVED_DATES) | frozenset(block if isinstance(block, dict) else ())
+    """Every name of the date class: the reserved keys and the declared ones load_dates accepts."""
+    return frozenset(load_dates(repo, date_reserved_names(repo))[0].keys)
 
 
 @dataclass(frozen=True)
