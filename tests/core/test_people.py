@@ -80,7 +80,7 @@ def test_lookup_is_exact():
     ([entry("P.md", Person="")], "PROFILE_INVALID", "P.md"),
     ([entry("A.md", Person="Jane"), entry("B.md", Person="Jane")], "PROFILE_DUPLICATE", "B.md"),
     ([entry("A.md", Person="Jane", Alias="JD"), entry("B.md", Person="John", Alias="JD")], "PROFILE_DUPLICATE", "B.md"),
-    ([entry("A.md", Person="Jane", Alias="John"), entry("B.md", Person="John")], "PROFILE_ALIAS_IS_PERSON", "A.md"),
+    ([entry("A.md", Person="Jane", Alias="John"), entry("B.md", Person="John")], "PROFILE_ALIAS_IS_NAME", "A.md"),
 ])
 def test_problems(entries, code, left_out):
     people, problems = build_people(entries, S)
