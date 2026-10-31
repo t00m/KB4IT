@@ -1,5 +1,6 @@
 ---
 Email: name@example.org
+ProfileOf: Author
 Role: System administrator
 Team: Operations
 ---

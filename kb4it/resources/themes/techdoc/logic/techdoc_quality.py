@@ -77,6 +77,12 @@ SYNONYMS = {
     'acceptance criteria': 'acceptance|criteria|definition of done',
     'attendees': 'attendees|participants',
     'action items': 'action|follow-?up|todo',
+    'implementation plan': 'implementation|plan|steps|procedure',
+    'result': 'result|outcome|review|closure',
+    'investigation': 'investigation|analysis|diagnos|troubleshoot|symptom',
+    'follow-up actions': 'follow-?up|action|prevent|lessons',
+    'subtasks': 'subtask|steps|checklist|procedure|plan',
+    'decisions': 'decision|conclusion|agreed',
 }
 # Skeleton sections scored under Connected (References section), not again as skeleton sections.
 CONNECTED_SECTIONS = re.compile(r'^(references|documentation|related)$')

@@ -70,9 +70,24 @@ def test_structured_how_to_with_skeleton_sections(prof, skeletons, doc):
 
 
 def test_structured_record_uses_worktype_skeleton_times_16(prof, skeletons, doc):
-    body = "# T\n\n## Overview\n\nX.\n\n## Impact\n\nY.\n\n## Rollback\n\nZ.\n"
+    body = ("# T\n\n## Overview\n\nX.\n\n## Impact\n\nY.\n\n## Implementation Plan\n\n1. a\n\n"
+            "## Verification\n\nV.\n\n## Rollback\n\nZ.\n\n## Result\n\nR.\n")
     checks = quality.structured(doc(body, work_type="Change", Category="Record"), prof, skeletons)
     assert sum(c.points for c in checks) == 25 and not any(c.name.startswith("Fits") for c in checks)
+
+
+def test_record_sections_accept_their_synonyms(prof, skeletons, doc):
+    # Older records name the new skeleton sections in their own words.
+    cases = {"Change": "## Plan\n\nA.\n\n## Checks\n\nB.\n\n## Outcome\n\nC.\n",
+             "Incident": "## Analysis\n\nA.\n\n## Lessons learned\n\nB.\n",
+             "Task": "## Checklist\n\n- [ ] a\n",
+             "Meeting": "## Agreed\n\nA.\n"}
+    expected = {"Change": ["Implementation plan", "Verification", "Result"], "Incident": ["Investigation", "Follow-up actions"],
+                "Task": ["Subtasks"], "Meeting": ["Decisions"]}
+    for work, body in cases.items():
+        checks = quality.structured(doc("# T\n\n" + body, work_type=work, Category="Record"), prof, skeletons)
+        passed = {c.name.removesuffix(" section") for c in checks if c.key == "check-skeleton-section" and c.passed}
+        assert set(expected[work]) <= passed, (work, passed)
 
 
 def test_empty_sections_and_placeholders_cost_points(prof, skeletons, doc):
