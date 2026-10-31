@@ -1,4 +1,5 @@
 ---
+ProfileOf: Author
 Email: name@example.org
 Role: Role in the team
 Team: Team name

@@ -93,7 +93,7 @@ The file is UTF-8 with LF line endings and one final newline. Nothing else is ch
 
 Put the file in the `source/` folder of your repository, then run `kb4it build`. The file name becomes the page name, so use short names without spaces.
 
-A **Person profile** names its file from the start: the dialog title and the button read `person-<name>.md`, such as **Save (person-jane-doe.md)**, and follow the `Person` value as you edit it. Save it in `source/` and rebuild: the person's page then shows the profile. Any file name works, as long as the file has the `Person` property.
+A **Person profile** names its file from the start: the dialog title and the button read `profile-<name>.md`, such as **Save (profile-jane-doe.md)**, and follow the `#` title as you edit it. The skeleton holds `ProfileOf: Author`. Save it in `source/` and rebuild: the person's page then shows the profile. Keep the `profile-` prefix: it is what makes the file a profile.
 
 ## Edit an existing document {#edit}
 

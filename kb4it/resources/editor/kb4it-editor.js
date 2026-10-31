@@ -1091,7 +1091,7 @@
   }
 
   // A new profile shows the file it will be saved as in the dialog title and on Save: the person's page
-  // shows the profile once that person-<name>.md file is in the source folder. Other documents show it once saved.
+  // shows the profile once that profile-<name>.md file is in the source folder. Other documents show it once saved.
   function showFileName(cat) {
     var view = E.views[cat];
     if (cat === EDIT || !view) { return; }

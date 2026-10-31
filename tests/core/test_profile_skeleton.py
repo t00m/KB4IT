@@ -10,7 +10,7 @@ from kb4it.core.env import ENV
 from tests.helpers import page, run_kb4it, write_repo
 
 SKELETON = (
-    "---\nEmail: name@example.org\nRole: Role in the team\nTeam: Team name\n---\n\n"
+    "---\nProfileOf: Author\nEmail: name@example.org\nRole: Role in the team\nTeam: Team name\n---\n\n"
     "# Full name\n\nWhat this person works on, and when to ask them.\n"
 )
 
@@ -53,7 +53,7 @@ def test_own_person_skeleton_wins(tmp_path, home):
 def test_person_skeleton_is_a_valid_profile(tmp_path, home):
     text = (Path(ENV["GPATH"]["TEMPLATES"]) / "profile" / "PERSON-SKELETON.md").read_text(encoding="utf-8")
     assert text == SKELETON
-    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": doc("Alpha"), "PERSON-X.md": text})
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"a.md": doc("Alpha"), "PROFILE-X.md": text})
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert "[PEOPLE] LOADED profiles=1" in result.stdout

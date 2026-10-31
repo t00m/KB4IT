@@ -49,6 +49,15 @@ class PeopleMixin:
         for problem in problems:
             self.log.error(f"[PEOPLE] {problem.code} doc={problem.doc_id} detail={problem.detail}")
             self.plan.invalid_docs.append((problem.doc_id, problem.code))
+        # A ProfileOf that names a key no document uses and repo.json does not profile is most likely a
+        # value written where the key belongs (ProfileOf: Jane Doe instead of ProfileOf: Author).
+        profiled = set(getattr(getattr(self.srvbes, "profiles", None), "keys", None) or ())
+        known = set(self.kbdict_new.get("metadata") or {}) | set(settings.keys) | profiled
+        for profile in people.all_profiles():
+            for key in profile.keys:
+                if key not in known:
+                    self.log.warning(f"[PEOPLE] PROFILE_KEY_UNUSED doc={profile.doc_id} key={key} "
+                                     f"hint=ProfileOf names the property, such as ProfileOf: {settings.keys[0]}")
         self.srvdtb.people = people
         self.plan.profile_count = len(people.all_profiles())
         self.plan.profile_pages = {p.doc_id: profile_page(p.person, p.keys, settings) for p in people.all_profiles()}

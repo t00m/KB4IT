@@ -66,3 +66,21 @@ def test_profiles_block_drives_the_people_keys(tmp_path, home):
     repo, _, result = _build(tmp_path, home, pages, profiles={"Owner": {"type": "Person", "contact_keys": ["Email"]}})
     assert result.returncode == 0, result.stdout
     assert "j@example.org" in (repo / "target" / "Owner_Jane_Doe.html").read_text(encoding="utf-8")
+
+
+def test_profileof_naming_an_unused_key_warns(tmp_path, home):
+    # ProfileOf holds the person's name instead of the key: the profile would describe a key nobody uses.
+    pages = {"a.md": page("A", Author="Jane Doe", Tag="x"),
+             "PROFILE-JANE.md": page("Jane Doe", ProfileOf="Jane Doe", Email="j@example.org")}
+    _, _, result = _build(tmp_path, home, pages)
+    assert result.returncode == 0, result.stdout
+    assert "PROFILE_KEY_UNUSED doc=PROFILE-JANE.md key=Jane Doe" in result.stdout
+
+
+def test_profileof_naming_a_used_or_configured_key_does_not_warn(tmp_path, home):
+    pages = {"a.md": page("A", Team="SAP Basis", Tag="x"),
+             "PROFILE-SAP-BASIS.md": page("SAP Basis", ProfileOf="Team"),
+             "PROFILE-JANE.md": page("Jane Doe", ProfileOf="Author", Email="j@example.org")}
+    _, _, result = _build(tmp_path, home, pages)
+    assert result.returncode == 0, result.stdout
+    assert "PROFILE_KEY_UNUSED" not in result.stdout

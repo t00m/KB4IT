@@ -174,8 +174,8 @@ CHECKS = {
         'title': 'Profiles for the people it names',
         'dim': 'connected',
         'what': 'A document names a person readers can look up: role, team, how to reach them.',
-        'how': 'Add a file whose name starts with `PERSON-`, such as `PERSON-JANE-DOE.md`, with the title `# Jane Doe` '
-               'and at least one contact key. The '
+        'how': 'Add a file whose name starts with `PROFILE-`, such as `PROFILE-JANE-DOE.md`, with the title `# Jane Doe`, '
+               '`ProfileOf: Author` and at least one contact key. The '
                "person's page then shows the profile. Each person without a profile costs 2 points, and the profile "
                'checks cost at most 4 points per document. They apply once the knowledge base has a profile '
                '(`author_profiles` in the `quality` block of `theme.json`: `auto`, `true` or `false`). While the '

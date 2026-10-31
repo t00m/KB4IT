@@ -51,9 +51,10 @@ Always suggest a filename when producing a document.
 
 ### Person profiles
 
-A file whose name starts with `PERSON-` is a profile, not a document. It describes one person that documents name in `Author`, and it gets no page of its own: KB4IT shows it on the person's page.
+A file whose name starts with `PROFILE-` is a profile, not a document. It describes one person that documents name in `Author`, and it gets no page of its own: KB4IT shows it on the person's page.
 
-- Name the file `PERSON-<NAME>.md`, such as `PERSON-JANE-DOE.md`. Never give a document this prefix.
+- Name the file `PROFILE-<NAME>.md`, such as `PROFILE-JANE-DOE.md`. Never give a document this prefix. The old `PERSON-` prefix still works, with a warning.
+- Add `ProfileOf: Author`. `ProfileOf` names the property the profile describes, never the person.
 - The `#` title is the person's name, exactly as documents write it in `Author`, with no comma.
 - `Alias` lists other spellings documents use. Add `Role`, `Team` and at least one contact key: `Email`, `Phone`, `Chat` or `Url`.
 - A profile needs none of the mandatory properties of Section 4 and has no skeleton sections: a few lines on what the person works on and when to ask them.
@@ -62,6 +63,7 @@ A file whose name starts with `PERSON-` is a profile, not a document. It describ
 ---
 Alias: J. Doe, jdoe
 Email: jane.doe@example.org
+ProfileOf: Author
 Role: Basis administrator
 Team: SAP Basis
 ---
