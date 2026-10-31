@@ -53,6 +53,8 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
 | `seo` | | Language of the pages and structured data for search engines; see [structured data](#seo) |
 | `people` | | Which properties name people, and which profile properties count as contact details; see [people](#people) |
+| `timezone` | the computer's zone | Time zone of every date written without an offset, an IANA name such as `Europe/Madrid`; see [dates](#dates) |
+| `dates` | | More properties to read as dates; see [dates](#dates) |
 | `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one. See [Search engines](#indexing) for `seo.index` |
 | `backlinks` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
@@ -124,6 +126,30 @@ In the structured data, each person is one schema.org `Person`: documents point 
 | `map` | | Adds or changes the schema.org property of a profile property, with the syntax of `seo.map`: `"Property": "schemaProperty"`, `"Property": "schemaProperty:Type"`, or `null` to leave a property out. KB4IT maps `Role` to `jobTitle`, `Team` to `memberOf` (Organization), `Email` to `email`, `Phone` to `telephone`, `Location` to `workLocation` (Place) and `Url` to `url`; `name`, `alternateName` and `description` cannot be mapped |
 
 `Alias` is reserved for profiles and cannot be listed here. A malformed `people` block stops the build with a message naming the entry. Changing `people` rebuilds every page.
+
+## Dates {#dates}
+
+These properties are dates: `Date`, `Modified`, `Start`, `End`, `ScheduledStart`, `ScheduledEnd`, `DowntimeStart`, `DowntimeEnd`, `DetectedDate`, `ResolvedDate`, `DueDate`, `ExpiryDate` and `ReviewDate`. Each takes a date (`2026-11-02`, a whole day) or a date and time (`2026-11-02 22:00`). Seconds and an offset (`2026-11-02T22:00:00+01:00`) are accepted. A date property gets no property page.
+
+- `Date` is the start of the document. A document with `ScheduledStart`, or else `Start`, takes its `Date` from it; a `Date` that differs is replaced and reported.
+- `ScheduledStart` and `ScheduledEnd` override `Start` and `End` when a document has both.
+- A start without its end (`Start` without `End`, for example) ends at the start.
+- `Downtime: Yes` expects `DowntimeStart` and `DowntimeEnd`, inside the scheduled window.
+
+```json
+"timezone": "Europe/Madrid",
+"dates": {
+  "WarrantyStart": {"group": "start"},
+  "WarrantyEnd": {"group": "end", "closes": "WarrantyStart"},
+  "RenewalDate": {"group": "end"}
+}
+```
+
+`timezone` is the zone of every date without an offset. Without it, KB4IT uses the zone of the computer that builds the site, so a build on a server in UTC can place an event on another day.
+
+`dates` declares more date properties. `group` is `start` or `end`. `closes` names the start an end belongs to; without it, an end belongs to `Date`. `"supersedes": true` makes a pair override `Start` and `End`, like `ScheduledStart`. A name should end in `Date`, `Start` or `End`.
+
+No date problem stops the build or fails `kb4it verify`: a value KB4IT cannot read is left out, a bad entry in `dates` is ignored, and an unknown `timezone` falls back to the computer's zone. The build log shows each one as `[DATES] <code>`, and `kb4it verify` lists them under "Dates". The codes are `DATE_INVALID`, `DATE_NOT_STANDARD`, `DATE_NOT_START`, `DATE_SUPERSEDED`, `DATE_SUPERSEDE_CONFLICT`, `DATE_END_MISSING`, `DATE_END_BEFORE_START`, `DATE_DOWNTIME_VALUE`, `DATE_DOWNTIME_MISSING`, `DATE_DOWNTIME_UNEXPECTED`, `DATE_DOWNTIME_OUTSIDE`, `DATE_KEY_NAME`, `DATES_BLOCK_INVALID`, `TIMEZONE_INVALID` and `TIMEZONE_UNSET`.
 
 ## Page metadata {#metadata}
 
