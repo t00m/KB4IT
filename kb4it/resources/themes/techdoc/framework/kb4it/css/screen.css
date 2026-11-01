@@ -820,13 +820,13 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     background: #e8f2ff;
 }
 .kb-evcal-event a:hover { background: #ffe0e6; }
-.kb-evcal-today {
+.kb-evcal-month td.kb-evcal-today {
     background: #1e87f0;
     color: #fff !important;
     border-radius: 3px;
     font-weight: 600;
 }
-.kb-evcal-today-event { background: #1e87f0; border-radius: 3px; }
+.kb-evcal-month td.kb-evcal-today-event { background: #1e87f0; border-radius: 3px; }
 .kb-evcal-today-event a {
     color: #fff !important;
     font-weight: 700;
