@@ -29,7 +29,8 @@ DOCS = {
                         f"## Overview\n\nText.\n\n## Logical `topology`\n\n{FLOW}\n## Steps\n\n"
                         f"~~~~text\n{FLOW}~~~~\n\n{FENCE}mermaid\nsequenceDiagram\n  A->>B: Hi\n{FENCE}\n",
                         Category="Note", Date="2026-03-01", Product="SAP", Tag="landscape"),
-    "restart.md": page("Restart procedure", f"Intro.\n\n{FLOW}", Category="Procedure", Date="2025-10-01", Product="Linux"),
+    "restart.md": page("Restart procedure", f"Intro.\n\n{FLOW}", Category="Procedure", Date="2025-10-01", Product="Linux",
+                       Author="Tomás Vírseda"),
     "plain.md": page("No diagrams", "Text.", Category="Note"),
 }
 
@@ -103,3 +104,12 @@ def test_diagrams_without_diagrams_says_so(tmp_path):
     html = (tmp_path / "target" / "diagrams.html").read_text(encoding="utf-8")
     assert "No document has a diagram yet" in html and "kb-gal-data" not in html
     assert "mermaid.min.js" not in html
+
+
+def test_filter_values_keep_their_accents(site):
+    # JSON inside <script> is not decoded by the browser: "&#225;" would show as typed.
+    html = read(site, "diagrams.html")
+    raw = re.search(r'id="kb-gal-data">(.*?)</script>', html, re.DOTALL).group(1)
+    assert "&#" not in raw
+    author = next(f for f in data(site)["filters"] if f["key"] == "Author")
+    assert author["values"] == [["Tomás Vírseda", 1]]
