@@ -48,6 +48,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- techdoc: property values with accents or other non-ASCII characters showed as character codes (`Tom&#225;s`) in the filter dialogs of the Gallery and Diagrams pages. techdoc wrote every page in ASCII, turning each such character into an HTML entity, which the browser does not decode inside a `<script>` block. Pages are now written as UTF-8 text.
 - techdoc events calendar: today's day was invisible, white text on a white cell. The generic day-cell rule set the background to transparent and won over the blue background of today.
 - Mermaid diagrams in a folded techdoc section, or in any other hidden container, showed "Syntax error in text" for valid sources (flowcharts with subgraphs and labelled dotted edges). Mermaid needs a layout box to measure text; a hidden diagram is now rendered the first time it is shown.
 - Profiles: the editor saves a new profile as `profile-<name>.md`, the Person profile skeleton holds `ProfileOf: Author`, and the techdoc quality hints and the kb4itdoc skill name the `PROFILE-` prefix; all still taught the old `PERSON-` convention. A `ProfileOf` that names a property no document uses and `profiles` does not list (such as the person's name) now logs `PROFILE_KEY_UNUSED`, instead of building a profile no page shows.

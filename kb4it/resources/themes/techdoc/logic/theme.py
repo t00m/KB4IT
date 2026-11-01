@@ -557,7 +557,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, DocumentThe
 
             with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
                 tree = etree.fromstring(HTML, parser)
-                pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+                pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
                 fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
 
             # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")

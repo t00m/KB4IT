@@ -183,7 +183,7 @@ class AdminMixin:
         parser = etree.HTMLParser()
         tree = etree.fromstring(HTML, parser)
         self.relocate_links(tree)
-        pretty_html = etree.tostring(tree, pretty_print=True, method="html").decode()
+        pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
         with open(page_path, 'w', encoding='utf-8') as fhtml:
             fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
         self.log.info(f"[ADMIN] PAGE_BUILT path={page_path}")
