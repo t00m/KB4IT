@@ -21,6 +21,7 @@ from lxml import etree
 from techdoc_admin import AdminMixin
 from techdoc_blocks import enhance_blocks
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
+from techdoc_diagrams import DiagramsMixin
 from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_gallery import GalleryMixin
 from techdoc_media import enhance_images
@@ -47,8 +48,8 @@ from kb4it.services.themekit import DocumentTheme
 parser = etree.HTMLParser()
 
 
-class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
-    reserved_pages = ('404.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
+class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, DocumentTheme):
+    reserved_pages = ('404.md', 'diagrams.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
     properties_cloud = False  # properties.html is a leader list of the properties
 
@@ -429,6 +430,7 @@ class Theme(AdminMixin, DashboardMixin, GalleryMixin, DocumentTheme):
         self.build_page_stats()
         self.build_page_bookmarks()
         self.build_page_gallery()
+        self.build_page_diagrams()
         self.build_page_404()
         self.create_page_add()
         self.build_page_index(var)

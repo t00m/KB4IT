@@ -1611,6 +1611,11 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-gal-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
 .kb-gal-zoom { display: block; background: #f0f0f0; cursor: zoom-in; }
 .kb-gal-zoom img { display: block; width: 100%; height: auto; }
+/* A tall diagram shrinks into the card instead of stretching the grid. */
+.kb-gal-dia img { max-height: 360px; object-fit: contain; }
+.kb-gal-dia-wait,
+.kb-gal-dia-error { display: block; padding: 32px 10px; font-size: 0.8rem; text-align: center; color: #888; }
+.kb-gal-dia-error { color: #c0392b; cursor: default; overflow-wrap: anywhere; }
 .kb-gal-cap { padding: 6px 8px 8px; font-size: 0.75rem; line-height: 1.35; }
 .kb-gal-cap a { display: block; font-weight: 600; }
 .kb-gal-alt { display: block; color: #777; }

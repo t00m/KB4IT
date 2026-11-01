@@ -89,26 +89,33 @@ class GalleryMixin:
                 entry.update(w=size[0], h=size[1])
         return entry
 
-    def gallery_data(self):
-        """Return the documents with images, newest first, their images and the filters they can be narrowed by."""
+    def gallery_items(self, doc_id):
+        """The images one document shows, each with its thumbnail, size and caption."""
         source_dir = self.srvbes.get_path('source')
+        try:
+            with open(os.path.join(source_dir, doc_id), encoding='utf-8') as fh:
+                text = fh.read()
+        except OSError:
+            return []
+        images = []
+        for src, alt in document_images(text):
+            local = resolve_src(src, source_dir)
+            if local is not None and not os.path.isfile(local):
+                continue  # the document page shows the placeholder and logs IMAGE_MISSING
+            images.append(dict(self.gallery_image(src, local), caption='' if is_filename_alt(alt, src) else alt))
+        return images
+
+    def media_data(self, items_of):
+        """Return the documents with items, newest first, their items and the filters they can be narrowed by.
+
+        items_of(doc_id) gives the items of one document (images, diagrams); a document without any is left out.
+        """
         skip = set(SKIP_KEYS) | set(self.srvdtb.get_blocked_keys()) | set(self.srvdtb.get_ignored_keys())
         docs_sorted = [d for d in self.srvdtb.sort_by_date(list(self.srvdtb.get_documents())) if not self.srvdtb.is_system(d)]
-        self._gallery_thumbs = set()
         docs, items, values = [], [], {}
         for doc_id in docs_sorted:
-            try:
-                with open(os.path.join(source_dir, doc_id), encoding='utf-8') as fh:
-                    text = fh.read()
-            except OSError:
-                continue
-            images = []
-            for src, alt in document_images(text):
-                local = resolve_src(src, source_dir)
-                if local is not None and not os.path.isfile(local):
-                    continue  # the document page shows the placeholder and logs IMAGE_MISSING
-                images.append(dict(self.gallery_image(src, local), caption='' if is_filename_alt(alt, src) else alt))
-            if not images:
+            found = items_of(doc_id)
+            if not found:
                 continue
             props = {}
             for key in self.srvdtb.get_doc_keys(doc_id):
@@ -121,13 +128,13 @@ class GalleryMixin:
             if year.isdigit():
                 props[YEAR] = [year]
             title = (self.srvdtb.get_values(doc_id, 'Title') or [doc_id])[0]
-            for image in images:
-                items.append(dict(image, d=len(docs)))
+            for item in found:
+                items.append(dict(item, d=len(docs)))
             docs.append({'title': title, 'href': html_id_for(doc_id), 'props': props})
             for key, vals in props.items():
                 for value in vals:
                     values.setdefault(key, {}).setdefault(value, 0)
-                    values[key][value] += len(images)
+                    values[key][value] += len(found)
         menu = (self.srvbes.get_dict('repo') or {}).get('menu') or []
         filters = []
         for key in filter_keys(set(values) - {YEAR}, menu) + ([YEAR] if YEAR in values else []):
@@ -135,22 +142,34 @@ class GalleryMixin:
             filters.append({'key': key, 'values': [[v, values[key][v]] for v in order]})
         return docs, items, filters
 
-    def build_page_gallery(self):
-        """The Gallery page: no image at first; the property buttons on the right choose which ones to show."""
-        with trace.span('gallery'):
-            docs, items, filters = self.gallery_data()
+    def gallery_data(self):
+        """Return the documents with images, newest first, their images and the filters they can be narrowed by."""
+        self._gallery_thumbs = set()
+        return self.media_data(self.gallery_items)
+
+    def build_media_page(self, name, title, kind, data):
+        """Write a page of the Gallery kind: kind is 'image' or 'diagram', data comes from media_data."""
+        docs, items, filters = data
         page = self.template('PAGE_GALLERY').render(var={
-            'images': len(items),
+            'kind': kind,
+            'items': len(items),
             'docs': len(docs),
             'filters': filters,
             # JSON inside <script>: "<" escaped so a value cannot close the element.
-            'json': json.dumps({'docs': docs, 'items': items, 'filters': filters},
+            'json': json.dumps({'kind': kind, 'docs': docs, 'items': items, 'filters': filters},
                                ensure_ascii=False, sort_keys=True, separators=(',', ':')).replace('<', '\\u003c'),
         })
-        self.distribute_md('gallery', page)
-        self.srvdtb.add_document('gallery.md')
-        self.srvdtb.add_document_key('gallery.md', 'Title', 'Gallery')
-        self.srvdtb.add_document_key('gallery.md', 'SystemPage', 'Yes')
+        self.distribute_md(name, page)
+        self.srvdtb.add_document(f'{name}.md')
+        self.srvdtb.add_document_key(f'{name}.md', 'Title', title)
+        self.srvdtb.add_document_key(f'{name}.md', 'SystemPage', 'Yes')
+
+    def build_page_gallery(self):
+        """The Gallery page: no image at first; the property buttons on the right choose which ones to show."""
+        with trace.span('gallery'):
+            data = self.gallery_data()
+        self.build_media_page('gallery', 'Gallery', 'image', data)
+        docs, items, _filters = data
         self.log.info(f"[THEME] GALLERY images={len(items)} docs={len(docs)} thumbs={len(self._gallery_thumbs)}")
 
     def deploy_gallery_thumbs(self):
