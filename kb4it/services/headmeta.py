@@ -11,7 +11,7 @@ import html as htmllib
 import re
 
 from kb4it.core.documents import joined_value
-from kb4it.core.mdrich import MATH_MARKS, MERMAID_MARK
+from kb4it.core.mdrich import MATH_MARKS, MERMAID_MARKS
 from kb4it.core.publish import absolute
 from kb4it.core.search import load_doc_sections
 from kb4it.core.people import PeopleSettings, first_paragraph, person_page
@@ -161,7 +161,7 @@ class HeadMetaMixin:
             "description": short_text(text, 160), "author": ", ".join(values("Author")),
             "url": absolute(base, page_name) if base else "",
             "image": absolute(base, image) if base and image else "",
-            "favicon": repo.get("logo") or theme_icon, "mermaid": MERMAID_MARK in html, "math": any(mark in html for mark in MATH_MARKS),
+            "favicon": repo.get("logo") or theme_icon, "mermaid": any(mark in html for mark in MERMAID_MARKS), "math": any(mark in html for mark in MATH_MARKS),
             "feed": "feed.xml" if self.feed_enabled() else "",
             "has_description": '<meta name="description"' in head, "has_author": '<meta name="author"' in head,
             "robots": self.page_robots(page_name), "has_robots": '<meta name="robots"' in head,

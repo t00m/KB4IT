@@ -11,6 +11,9 @@ from markdown.preprocessors import Preprocessor
 
 # Pages whose HTML contains these need the Mermaid or KaTeX scripts; inline code escapes the "<", so it never matches.
 MERMAID_MARK = '<pre class="mermaid">'
+# A page that draws diagrams with its own script (the techdoc Diagrams page) carries this attribute instead.
+MERMAID_PAGE_MARK = 'data-kb4it-mermaid="page"'
+MERMAID_MARKS = (MERMAID_MARK, MERMAID_PAGE_MARK)
 MATH_MARKS = ('<span class="kb4it-math', '<div class="kb4it-math')
 # User extensions that render formulas themselves; the core math processors then stay off.
 MATH_EXTENSIONS = ("pymdownx.arithmatex", "markdown_katex")

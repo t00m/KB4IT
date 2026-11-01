@@ -1,4 +1,5 @@
-/* techdoc gallery: choose property values in a dialog, show the matching thumbnails in a masonry grid, enlarge them. */
+/* techdoc Gallery and Diagrams pages: choose property values in a dialog, show the matching thumbnails in a
+   masonry grid, enlarge them. On the Diagrams page each item is a Mermaid source, drawn when it is first shown. */
 (function () {
     'use strict';
 
@@ -10,6 +11,9 @@
     data = JSON.parse(data.textContent);
     var docs = data.docs;
     var items = data.items;
+    var diagrams = data.kind === 'diagram';
+    var noun = diagrams ? 'diagram' : 'image';
+    var nouns = diagrams ? 'diagrams' : 'images';
     var values = {};  // key -> [[value, images], ...]
     data.filters.forEach(function (group) { values[group.key] = group.values; });
 
@@ -50,7 +54,7 @@
                 return false;
             }
         }
-        var hay = (docs[item.d].title + ' ' + item.caption).toLowerCase();
+        var hay = (docs[item.d].title + ' ' + item.caption + ' ' + (item.code || '')).toLowerCase();
         return words().every(function (w) { return hay.indexOf(w) >= 0; });
     }
 
@@ -63,21 +67,100 @@
         return node;
     }
 
+    // The background of the page: a drawn diagram gets it, so it stays readable in the dark lightbox.
+    function pageBackground() {
+        for (var node = document.body; node; node = node.parentElement) {
+            var color = getComputedStyle(node).backgroundColor;
+            if (color && color !== 'transparent' && !/^rgba\(.*,\s*0\)$/.test(color)) {
+                return color;
+            }
+        }
+        return '#fff';
+    }
+
+    // Draw one diagram as an SVG file in memory; item.url is its address, item.error tells it failed.
+    function draw(item, index) {
+        if (item.url || item.error) {
+            return Promise.resolve();
+        }
+        var id = 'kb-dia-' + index;
+        return window.mermaid.render(id, item.code).then(function (result) {
+            var svg = new DOMParser().parseFromString(result.svg, 'image/svg+xml').documentElement;
+            var box = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+            if (box.length === 4 && box[2] > 0 && box[3] > 0) {
+                item.w = Math.ceil(box[2]);
+                item.h = Math.ceil(box[3]);
+                svg.setAttribute('width', item.w);
+                svg.setAttribute('height', item.h);
+                var back = svg.ownerDocument.createElementNS(svg.namespaceURI, 'rect');
+                back.setAttribute('x', box[0]);
+                back.setAttribute('y', box[1]);
+                back.setAttribute('width', box[2]);
+                back.setAttribute('height', box[3]);
+                back.setAttribute('fill', pageBackground());
+                svg.insertBefore(back, svg.firstChild);
+            }
+            svg.removeAttribute('style');  // max-width: the thumbnail and the lightbox size it
+            var text = new XMLSerializer().serializeToString(svg);
+            item.url = URL.createObjectURL(new Blob([text], {type: 'image/svg+xml'}));
+        }).catch(function (error) {
+            item.error = String((error && error.message) || error || 'error').split('\n')[0];
+            var left = document.getElementById('d' + id);  // the element Mermaid draws in, left behind on an error
+            if (left) {
+                left.parentNode.removeChild(left);
+            }
+        });
+    }
+
+    // Draw the shown diagrams one after the other, filling each thumbnail as it is ready.
+    var drawing = Promise.resolve();
+    function drawShown() {
+        var list = shown.slice();
+        drawing = list.reduce(function (chain, item) {
+            return chain.then(function () {
+                return draw(item, items.indexOf(item)).then(function () { fill(item); });
+            });
+        }, drawing);
+        return drawing;
+    }
+
+    function fill(item) {
+        var zoom = grid.querySelector('a.kb-gal-zoom[data-i="' + items.indexOf(item) + '"]');
+        if (!zoom) {
+            return;
+        }
+        while (zoom.firstChild) {
+            zoom.removeChild(zoom.firstChild);
+        }
+        if (item.error) {
+            zoom.appendChild(el('span', {'class': 'kb-gal-dia-error'}, 'Mermaid could not draw this diagram: ' + item.error));
+        } else {
+            var img = el('img', {src: item.url, alt: item.caption || docs[item.d].title, width: item.w, height: item.h});
+            img.addEventListener('load', function () { UIkit.update(grid); });
+            zoom.appendChild(img);
+        }
+        UIkit.update(grid);
+    }
+
     function cell(item, index) {
         var doc = docs[item.d];
         var box = el('div', {'class': 'kb-gal-cell'});
         var card = el('div', {'class': 'kb-gal-card'});
-        var zoom = el('a', {'class': 'kb-gal-zoom', href: item.src, 'data-n': String(index),
-                            title: item.caption || doc.title});
-        var img = el('img', {src: item.thumb, alt: item.caption, loading: 'lazy', decoding: 'async'});
-        if (item.w && item.h) {
-            img.setAttribute('width', item.w);
-            img.setAttribute('height', item.h);
+        var zoom = el('a', {'class': diagrams ? 'kb-gal-zoom kb-gal-dia' : 'kb-gal-zoom', href: item.href || item.src, 'data-n': String(index),
+                            'data-i': String(items.indexOf(item)), title: item.caption || doc.title});
+        if (diagrams) {
+            zoom.appendChild(el('span', {'class': 'kb-gal-dia-wait'}, 'Drawing the diagram…'));
+        } else {
+            var img = el('img', {src: item.thumb, alt: item.caption, loading: 'lazy', decoding: 'async'});
+            if (item.w && item.h) {
+                img.setAttribute('width', item.w);
+                img.setAttribute('height', item.h);
+            }
+            zoom.appendChild(img);
         }
-        zoom.appendChild(img);
         card.appendChild(zoom);
         var caption = el('div', {'class': 'kb-gal-cap'});
-        caption.appendChild(el('a', {href: doc.href}, doc.title));
+        caption.appendChild(el('a', {href: item.href || doc.href}, doc.title));
         if (item.caption) {
             caption.appendChild(el('span', {'class': 'kb-gal-alt'}, item.caption));
         }
@@ -102,9 +185,17 @@
         grid.hidden = shown.length === 0;
         var docCount = shown.reduce(function (seen, item) { seen[item.d] = 1; return seen; }, {});
         status.textContent = shown.length
-            ? plural(shown.length, 'image', 'images') + ' in ' + plural(Object.keys(docCount).length, 'document', 'documents') + '.'
-            : 'No image matches these filters.';
+            ? plural(shown.length, noun, nouns) + ' in ' + plural(Object.keys(docCount).length, 'document', 'documents') + '.'
+            : 'No ' + noun + ' matches these filters.';
         UIkit.update(grid);
+        if (diagrams) {
+            shown.forEach(function (item) {
+                if (item.url || item.error) {
+                    fill(item);
+                }
+            });
+            drawShown();
+        }
     }
 
     function renderPanel() {
@@ -241,28 +332,57 @@
     });
 
     // A click opens the lightbox on the shown images, so previous and next follow the filters.
+    // Diagrams Mermaid could not draw are left out of it.
+    function openLightbox(index) {
+        var list = shown.filter(function (item) { return !diagrams || item.url; });
+        var start = list.indexOf(shown[index]);
+        if (start < 0) {
+            return;
+        }
+        var panel = UIkit.lightboxPanel({
+            animation: 'fade',
+            items: list.map(function (item) {
+                var doc = docs[item.d];
+                var caption = el('span');
+                if (item.caption) {
+                    caption.appendChild(document.createTextNode(item.caption + ' · '));
+                }
+                caption.appendChild(el('a', {href: item.href || doc.href}, doc.title));
+                return {source: diagrams ? item.url : item.src, type: 'image', caption: caption.outerHTML,
+                        alt: item.caption || doc.title};
+            })
+        });
+        UIkit.util.on(panel.$el, 'hidden', function () { panel.$destroy(true); });
+        panel.show(start);
+    }
+
     grid.addEventListener('click', function (event) {
         var link = event.target.closest('a.kb-gal-zoom');
         if (!link || event.ctrlKey || event.metaKey || event.shiftKey) {
             return;
         }
         event.preventDefault();
-        var panel = UIkit.lightboxPanel({
-            animation: 'fade',
-            items: shown.map(function (item) {
-                var doc = docs[item.d];
-                var caption = el('span');
-                if (item.caption) {
-                    caption.appendChild(document.createTextNode(item.caption + ' · '));
-                }
-                caption.appendChild(el('a', {href: doc.href}, doc.title));
-                return {source: item.src, type: 'image', caption: caption.outerHTML, alt: item.caption};
-            })
-        });
-        UIkit.util.on(panel.$el, 'hidden', function () { panel.$destroy(true); });
-        panel.show(+link.getAttribute('data-n'));
+        var index = +link.getAttribute('data-n');
+        if (diagrams) {
+            drawing.then(function () { openLightbox(index); });
+        } else {
+            openLightbox(index);
+        }
     });
 
-    loadHash();
-    update();
+    function start() {
+        if (diagrams && !window.mermaid) {
+            status.textContent = 'The Mermaid script did not load, so the diagrams cannot be drawn.';
+            return;
+        }
+        loadHash();
+        update();
+    }
+
+    // kb4it-render.js sets up Mermaid (theme, no start on load) when the page has loaded; draw after it.
+    if (diagrams && document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
 }());
