@@ -47,6 +47,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Mermaid diagrams in a folded techdoc section, or in any other hidden container, showed "Syntax error in text" for valid sources (flowcharts with subgraphs and labelled dotted edges). Mermaid needs a layout box to measure text; a hidden diagram is now rendered the first time it is shown.
 - Profiles: the editor saves a new profile as `profile-<name>.md`, the Person profile skeleton holds `ProfileOf: Author`, and the techdoc quality hints and the kb4itdoc skill name the `PROFILE-` prefix; all still taught the old `PERSON-` convention. A `ProfileOf` that names a property no document uses and `profiles` does not list (such as the person's name) now logs `PROFILE_KEY_UNUSED`, instead of building a profile no page shows.
 - A `Date` that cannot be read no longer stops the build: the value is left out with `[DATES] DATE_INVALID` and the document is built without a date.
 

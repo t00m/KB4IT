@@ -18,10 +18,36 @@
         return false;
     }
 
+    function renderDiagrams(nodes) {
+        mermaid.run({nodes: nodes, suppressErrors: true}).catch(function () {});
+    }
+
+    // Mermaid needs a layout box to measure text. A diagram inside a collapsed section or
+    // an inactive tab (display: none) fails with "Syntax error in text", so it waits until
+    // it is shown.
+    function renderMermaid() {
+        var shown = [], hidden = [];
+        document.querySelectorAll('pre.mermaid').forEach(function (el) {
+            (el.getClientRects().length ? shown : hidden).push(el);
+        });
+        if (shown.length) { renderDiagrams(shown); }
+        if (!hidden.length) { return; }
+        if (!window.ResizeObserver) { renderDiagrams(hidden); return; }
+        var observer = new ResizeObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.target.getClientRects().length) {
+                    observer.unobserve(entry.target);
+                    renderDiagrams([entry.target]);
+                }
+            });
+        });
+        hidden.forEach(function (el) { observer.observe(el); });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         if (window.mermaid) {
             mermaid.initialize({startOnLoad: false, theme: pageIsDark() ? 'dark' : 'default'});
-            mermaid.run({querySelector: 'pre.mermaid', suppressErrors: true}).catch(function () {});
+            renderMermaid();
         }
         if (window.katex) {
             document.querySelectorAll('.kb4it-math').forEach(function (el) {
