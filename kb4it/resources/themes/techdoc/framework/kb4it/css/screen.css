@@ -1412,9 +1412,11 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-activity .uk-tab > * > a { font-size: 0.72rem; }
 .kb-activity .kb-alert-bar { box-shadow: none; padding: 10px 0; }
 .kb-activity-sub { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 12px 0 6px; }
-/* Open items (left) and Activity (right): two blocks side by side, stacked on small screens. */
-.kb-work-block { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; min-width: 0; }
-.kb-work-title { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #555; margin: 10px 0 6px; }
+/* Open items and Activity: two dashboard sections, each a white card. */
+.kb-work-block { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
+/* The date and badge columns take only the width they need; the title takes the rest. */
+.kb-open-items .kb-event-date, .kb-open-items .kb-open-badges { width: 1%; }
+.kb-open-items .kb-open-badges { white-space: nowrap; }
 
 /* ---------------------------------------------------------------------------
    Content blocks: code bars, folded code, tables, author tabs, notes, back to top

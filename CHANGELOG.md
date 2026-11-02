@@ -37,7 +37,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - techdoc Properties page: the properties are now a table (DataTables) with Property, Values and Documents columns, sorted by name, with the filter box and sortable columns of the other document lists, instead of a list with leader dots. A table of the theme can set its first sort order with `data-kb-order`.
-- techdoc dashboard: Open items and Activity are now two blocks side by side, Open items on the left and Activity on the right, instead of two tabs of one card. On small screens they stack. In the Activity block the two event months stack and the monitoring groups wrap in pairs, to fit the half width.
 - techdoc skeletons, based on common IT operations practice: Change adds Implementation Plan, Verification and Result, with Approvals and Risks tables; Incident adds Investigation and Follow-up Actions; Task adds Subtasks and dated notes; Meeting adds Decisions; Procedure, Note and Report ask for the systems, duration, risk, expected output, tested versions, report period and due dates. The skeletons carry the optional date keys of their kind (`ScheduledStart`, `ScheduledEnd`, `Downtime`, `DowntimeStart`, `DowntimeEnd`, `DetectedDate`, `ResolvedDate`, `DueDate`, `ReviewDate`) and `Team`, `Environment`, `SID` and `Periodicity` where they fit. Similar headings count for the new sections (Plan, Outcome, Analysis, Lessons learned, Checklist, Agreed...). A record written to the old skeleton scores a few Structured points less. The samples follow the new skeletons, and the default sample profile is now `PROFILE-YOUR-NAME.md` with `ProfileOf: Author`.
 - `PERSON-` files and the `repo.json` `people` block still work, as a profile of `Author` and as the `Author` entries of `profiles`; the build and `kb4it verify` report them as `PROFILE_PERSON_PREFIX` and `PEOPLE_BLOCK_DEPRECATED`. `PROFILE_ALIAS_IS_PERSON` is now `PROFILE_ALIAS_IS_NAME`.
 
@@ -46,7 +45,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - techdoc: the Properties page lists every property on one line, with a dotted leader to its number of values and of documents, instead of a word cloud of buttons. Each line links to the property's page. Property pages (such as `Author.html`) drop their Leader tab and keep Cloud and Table. Shared theme code has a new class attribute, `properties_cloud` (default `True`), that techdoc turns off.
 - About KB4IT, in every theme: the page shows the KB4IT README (from the source checkout, or from the installed package), without the badges, which load from the network, and with relative links pointing to the repository.
 - techdoc and bookshelf: Help opens the KB4IT help site (https://t00m.github.io/KB4IT/) in a new window. The old built-in `help.html` page, a short and outdated guide, is no longer built.
-- techdoc dashboard: Open items and Activity are two tabs of one card, "Open items and activity". Activity keeps its tabs for changes, incidents, events and monitoring, and each tab bar opens on the tab chosen last.
+- techdoc dashboard: Open items and Activity are two sections, Open items above Activity, each folding on its own. Activity keeps its tabs for changes, incidents, events and monitoring, and its tab bar opens on the tab chosen last.
 
 ### Fixed
 
