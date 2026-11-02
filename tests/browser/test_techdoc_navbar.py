@@ -91,9 +91,9 @@ def test_shortcuts_do_nothing_in_the_add_page_editor(add_page):
     assert not add_page.is_visible("#kb4it-search-input")
 
 
-def test_reload_help_and_about_are_in_the_logo_menu(nav_page):
+def test_help_and_about_are_in_the_logo_menu(nav_page):
     menu = "#kb4it-menu .uk-navbar-left .uk-navbar-dropdown"
-    for href in ("javascript:location.reload();", "about_app.html", "about_kb4it.html"):
+    for href in ("about_app.html", "about_kb4it.html"):
         assert nav_page.query_selector(f'{menu} a[href="{href}"]'), href
     # Help is the KB4IT help site, opened in a new window.
     assert nav_page.query_selector(f'{menu} a[href="{HELP_ONLINE_URL}"][target="_blank"][rel="noopener"]')
@@ -146,3 +146,9 @@ def test_title_menu_is_wide_and_nests_the_contents(nav_page):
     sub = nav_page.eval_on_selector('.kb4it-title-toc a[href="#detail-1"]', "e => e.getBoundingClientRect().left")
     assert sub > top
     assert nav_page.eval_on_selector(".kb4it-title-toc a", "e => e.scrollWidth <= e.clientWidth"), "an entry runs over"
+
+
+def test_reload_is_a_top_bar_button_left_of_search(nav_page):
+    assert not nav_page.query_selector('#kb4it-menu .uk-navbar-left a[href="javascript:location.reload();"]')
+    hrefs = [a.get_attribute("href") for a in nav_page.query_selector_all("#kb4it-menu .uk-navbar-right a")]
+    assert hrefs == ["javascript:location.reload();", "#kb4it-search-modal"]
