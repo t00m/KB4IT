@@ -111,7 +111,11 @@ table.month tbody tr th {
 /* Top bar: the left and right blocks keep their size, the title gets the rest. */
 #kb4it-menu .uk-navbar-left,
 #kb4it-menu .uk-navbar-right { flex: none; }
-.kb4it-navbar-title { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
+/* The title keeps a margin on both sides, so it never runs into the logo or the buttons. */
+.kb4it-navbar-title { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; margin: 0 32px; }
+/* Reload and Search sit next to each other: no UIkit gap between the items, a small padding each. */
+#kb4it-menu .uk-navbar-right .uk-navbar-nav { gap: 0; }
+#kb4it-menu .uk-navbar-right .uk-navbar-nav > li { padding-left: 10px; padding-right: 10px; }
 .kb4it-navbar-title .uk-navbar-nav { min-width: 0; max-width: 100%; }
 .kb4it-navbar-title .uk-navbar-nav > li { min-width: 0; }
 .kb4it-navbar-title .uk-navbar-nav > li > a { min-width: 0; text-transform: none; }
