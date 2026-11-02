@@ -128,7 +128,7 @@ def test_landing_page_order(site):
 def test_landing_page_sections_fold_except_counts_and_doctypes(site):
     html = read(site, "index.html")
     folding = re.findall(r'<details class="kb-section kb-collapsible" data-kb-section="([\w-]+)" open>', html)
-    assert folding == ["work"]
+    assert folding == ["open-items", "activity"]
     assert html.count("<details") == html.count("</details>")
     head = html[:html.index("<details")]
     assert "kb-hero-bar" in head and "kb-diataxis-card" in head
@@ -318,13 +318,13 @@ def test_document_tables_hide_columns_empty_in_every_row(site):
     assert "WorkType" in _headers(read(site, "Category_Record.html"))
 
 
-def test_open_items_and_activity_are_two_blocks_side_by_side(site):
+def test_open_items_and_activity_are_two_sections_one_above_the_other(site):
     html = read(site, "index.html")
-    card = html[html.index("WORK :: START"):html.index("WORK :: END")]
-    assert re.search(r'<div class="kb-work [^"]*uk-child-width-expand@m" data-uk-grid>', card)
-    assert re.findall(r'<div class="kb-work-title">([^<]+)</div>', card) == ["Open items", "Activity"]
-    assert card.index("OPEN ITEMS :: START") < card.index("ACTIVITY :: START")   # Open items on the left
-    for gone in ("kb-work-tabs", "kb-work-panels", "kb-work-tab"):
+    sections = re.findall(r'<details class="kb-section kb-collapsible" data-kb-section="([\w-]+)" open>\s*'
+                          r'<summary class="kb-section-title">([^<]+)</summary>', html)
+    assert ("open-items", "Open items") in sections and ("activity", "Activity") in sections
+    assert html.index("OPEN ITEMS :: START") < html.index("OPEN ITEMS :: END") < html.index("ACTIVITY :: START")
+    for gone in ("WORK :: START", 'data-kb-section="work"', "kb-work-tabs", "kb-work-title", "uk-child-width-expand@m"):
         assert gone not in html
 
 

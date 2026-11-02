@@ -84,15 +84,11 @@ def prop_url(key, value):
 
 <% act = var['page']['activity'] %>
 % if var['page']['open_items'] or any(act.values()):
-    <!-- WORK :: START -->
-    <details class="kb-section kb-collapsible" data-kb-section="work" open>
-        <summary class="kb-section-title">Open items and activity</summary>
-        <div class="kb-work uk-grid-small uk-grid-match uk-child-width-1-1 uk-child-width-expand@m" data-uk-grid>
 %     if var['page']['open_items']:
-            <!-- OPEN ITEMS :: START -->
-            <div>
+    <!-- OPEN ITEMS :: START -->
+    <details class="kb-section kb-collapsible" data-kb-section="open-items" open>
+        <summary class="kb-section-title">Open items</summary>
             <div class="kb-work-block kb-open-items">
-            <div class="kb-work-title">Open items</div>
             <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
                 <tbody>
 %     for row in var['page']['open_items']:
@@ -121,14 +117,14 @@ def prop_url(key, value):
                 </tbody>
             </table>
             </div>
-            </div>
-            <!-- OPEN ITEMS :: END -->
+    </details>
+    <!-- OPEN ITEMS :: END -->
 %     endif
 %     if any(act.values()):
-            <!-- ACTIVITY :: START -->
-            <div>
+    <!-- ACTIVITY :: START -->
+    <details class="kb-section kb-collapsible" data-kb-section="activity" open>
+        <summary class="kb-section-title">Activity</summary>
         <div class="kb-work-block kb-activity">
-            <div class="kb-work-title">Activity</div>
             <ul class="kb-activity-tabs" data-kb-remember="kb-activity-tab" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
 %     for name, label in (('changes', 'Changes'), ('incidents', 'Incidents'), ('events', 'Events'), ('monitoring', 'Monitoring')):
 %         if act[name]:
@@ -213,7 +209,7 @@ def prop_url(key, value):
             <div class="uk-grid-small" data-uk-grid>
 % for side in ('current', 'next'):
 <%  panel = var['page']['events_panel'][side] %>
-                <div class="uk-width-1-1">
+                <div class="uk-width-1-2@m">
                     <div class="kb-events-month-header"><a href="${panel['url']}">${panel['label']}</a></div>
 %     if len(panel['rows']) == 0:
                     <div class="kb-events-empty">No events scheduled.</div>
@@ -272,7 +268,7 @@ def prop_url(key, value):
 % else:
             <div class="uk-grid-small" data-uk-grid>
 % for group in var['page']['monitoring_panel']:
-                <div class="uk-width-1-2@s">
+                <div class="uk-width-1-${ len(var['page']['monitoring_panel']) }@m">
                     <div class="kb-events-month-header">
                         <a href="${group['url']}">${group['periodicity']}</a>
                     </div>
@@ -299,12 +295,9 @@ def prop_url(key, value):
 %     endif
             </div>
         </div>
-            </div>
-            <!-- ACTIVITY :: END -->
-%     endif
-        </div>
     </details>
-    <!-- WORK :: END -->
+    <!-- ACTIVITY :: END -->
+%     endif
     <!-- TAB MEMORY :: START -->
     <script>
     // Each tab bar of the card opens on the tab the reader chose last.
