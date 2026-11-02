@@ -52,6 +52,9 @@ table.month tbody tr th {
 .dataTables_scrollHead table.uk-table,
 .dataTables_scrollBody table.uk-table { margin-top: 0; margin-bottom: 0; }
 .dataTables_wrapper .dataTables_filter { margin-bottom: 12px; }
+/* "Search:" and its box on one line; uk-input alone makes the box 100% wide, under the label. */
+.dataTables_wrapper .dataTables_filter label { display: flex; align-items: center; gap: 8px; }
+.dataTables_wrapper .dataTables_filter input.uk-input { flex: 1; width: auto; }
 
 /* The title column takes the width the other columns leave; a long title ends in an ellipsis and shows whole in its tooltip. */
 .kb4it-datatable td.kb-dt-title {
@@ -1483,7 +1486,8 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-table-sticky thead th { position: sticky; top: 0; z-index: 2; }
 /* Long tables: search box and row count above the table (DataTables, started by blocks.js). */
 .kb-table-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-.kb-table-tools .dataTables_filter input { width: 220px; margin: 0; }
+.kb-table-tools .dataTables_filter input,
+.dataTables_wrapper .kb-table-tools .dataTables_filter input.uk-input { flex: none; width: 220px; margin: 0; }
 .kb-table-tools .dataTables_info { padding: 0; color: #999; font-size: 0.8rem; }
 .kb-table-filter table.dataTable thead th { cursor: pointer; white-space: nowrap; }
 .kb-table-filter table.dataTable thead th.sorting::after { content: " \2195"; color: #ccc; }
@@ -1688,15 +1692,7 @@ html.kb-exemplary #kb4it-menu > nav::after {
     .kb-gal-panel { position: static; max-height: none; order: -1; }
 }
 
-/* Properties page: a table of the properties with their numbers of values and documents. */
-.kb-props {
-    max-width: 760px;
-    margin: 12px auto;
-    padding: 16px 24px;
-    border-radius: 6px;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
+/* Properties page: a full-width table of the properties with their numbers of values and documents. */
 .kb-props-key { font-weight: 600; }
 .kb4it-datatable th.kb-props-num, .kb4it-datatable td.kb-props-num { width: 7rem; text-align: right; }
 
