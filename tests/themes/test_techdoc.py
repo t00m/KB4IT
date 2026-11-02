@@ -313,13 +313,14 @@ def test_document_tables_hide_columns_empty_in_every_row(site):
     assert "WorkType" in _headers(read(site, "Category_Record.html"))
 
 
-def test_open_items_and_activity_are_two_tabs_of_one_card(site):
+def test_open_items_and_activity_are_two_blocks_side_by_side(site):
     html = read(site, "index.html")
     card = html[html.index("WORK :: START"):html.index("WORK :: END")]
-    tabs = re.findall(r'<ul class="kb-work-tabs".*?</ul>', card, re.S)[0]
-    assert re.findall(r'<li data-kb-tab="([\w-]+)">', tabs) == ["open-items", "activity"]
-    assert card.index("OPEN ITEMS :: START") < card.index("ACTIVITY :: START")
-    assert 'data-kb-remember="kb-work-tab"' in card     # the last tab is remembered
+    assert re.search(r'<div class="kb-work [^"]*uk-child-width-expand@m" data-uk-grid>', card)
+    assert re.findall(r'<div class="kb-work-title">([^<]+)</div>', card) == ["Open items", "Activity"]
+    assert card.index("OPEN ITEMS :: START") < card.index("ACTIVITY :: START")   # Open items on the left
+    for gone in ("kb-work-tabs", "kb-work-panels", "kb-work-tab"):
+        assert gone not in html
 
 
 def test_activity_card_has_a_tab_per_kind_of_activity(site):

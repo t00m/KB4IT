@@ -1402,16 +1402,13 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-q-emblem.small { width: 26px; height: 26px; }
 .kb-q-emblem.small .num { font-size: 0.62rem; }
 
-/* Dashboard Activity card: Changes, Incidents, Events and Monitoring as tabs. */
-.kb-activity { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
+/* Dashboard Activity block: Changes, Incidents, Events and Monitoring as tabs. */
 .kb-activity .uk-tab > * > a { font-size: 0.72rem; }
 .kb-activity .kb-alert-bar { box-shadow: none; padding: 10px 0; }
 .kb-activity-sub { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin: 12px 0 6px; }
-/* Open items and Activity share one card; Activity keeps its own tab bar inside it. */
-.kb-work { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; }
-.kb-work-tabs > * > a { font-size: 0.8rem; font-weight: 600; }
-.kb-work .kb-activity { background: transparent; border-radius: 0; box-shadow: none; padding: 0; }
-.kb-work .kb-open-items { padding-top: 6px; }
+/* Open items (left) and Activity (right): two blocks side by side, stacked on small screens. */
+.kb-work-block { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 4px 18px 12px; min-width: 0; }
+.kb-work-title { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #555; margin: 10px 0 6px; }
 
 /* ---------------------------------------------------------------------------
    Content blocks: code bars, folded code, tables, author tabs, notes, back to top
