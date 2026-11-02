@@ -1,4 +1,4 @@
-/*! UIkit 3.21.13 | https://www.getuikit.com | (c) 2014 - 2024 YOOtheme | MIT License */
+/*! UIkit 3.25.28 | https://www.getuikit.com | (c) 2014 - 2026 YOOtheme | MIT License */
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -131,10 +131,14 @@
     }
     function uniqueBy(array, prop) {
       const seen = /* @__PURE__ */ new Set();
-      return array.filter(({ [prop]: check }) => seen.has(check) ? false : seen.add(check));
+      return array.filter(({ [prop]: check }) => !seen.has(check) && seen.add(check));
     }
     function pick(obj, props) {
-      return props.reduce((res, prop) => ({ ...res, [prop]: obj[prop] }), {});
+      const result = {};
+      for (const prop of props) {
+        result[prop] = obj[prop];
+      }
+      return result;
     }
     function clamp(number, min = 0, max = 1) {
       return Math.min(Math.max(toNumber(number) || 0, min), max);
@@ -230,7 +234,7 @@
       }
     }
     function toClasses(str) {
-      return str ? isArray(str) ? str.map(toClasses).flat() : String(str).split(" ").filter(Boolean) : [];
+      return str ? isArray(str) ? str.flatMap(toClasses) : String(str).split(" ").filter(Boolean) : [];
     }
 
     function attr(element, name, value) {
@@ -245,9 +249,6 @@
         return (_a = toNode(element)) == null ? void 0 : _a.getAttribute(name);
       } else {
         for (const el of toNodes(element)) {
-          if (isFunction(value)) {
-            value = value.call(el, attr(el, name));
-          }
           if (value === null) {
             removeAttr(el, name);
           } else {
@@ -350,7 +351,7 @@
       if (isSameSiteAnchor(el)) {
         const { hash, ownerDocument } = toNode(el);
         const id = decodeURIComponent(hash).slice(1);
-        return ownerDocument.getElementById(id) || ownerDocument.getElementsByName(id)[0];
+        return id ? ownerDocument.getElementById(id) || ownerDocument.getElementsByName(id)[0] : ownerDocument.documentElement;
       }
     }
 
@@ -395,6 +396,7 @@
       return [position, selector.slice(position.length + 1)];
     });
     function _query(selector, context = document, queryFn) {
+      var _a;
       const parsed = parseSelector(selector);
       if (!parsed.isContextSelector) {
         return parsed.selector ? _doQuery(context, queryFn, parsed.selector) : selector;
@@ -406,7 +408,7 @@
         let ctx = context;
         if (sel[0] === "!") {
           [positionSel, sel] = parsePositionSelector(sel);
-          ctx = context.parentElement.closest(positionSel);
+          ctx = (_a = context.parentElement) == null ? void 0 : _a.closest(positionSel);
           if (!sel && isSingle) {
             return ctx;
           }
@@ -441,7 +443,7 @@
     function _doQuery(context, queryFn, selector) {
       try {
         return context[queryFn](selector);
-      } catch (e) {
+      } catch {
         return null;
       }
     }
@@ -511,15 +513,10 @@
       return off2;
     }
     function trigger(targets, event, detail2) {
-      return toEventTargets(targets).every(
-        (target) => target.dispatchEvent(createEvent(event, true, true, detail2))
-      );
+      return toEventTargets(targets).map((target) => target.dispatchEvent(createEvent(event, true, true, detail2))).every((result) => result);
     }
     function createEvent(e, bubbles = true, cancelable = false, detail2) {
-      if (isString(e)) {
-        e = new CustomEvent(e, { bubbles, cancelable, detail: detail2 });
-      }
-      return e;
+      return isString(e) ? new CustomEvent(e, { bubbles, cancelable, detail: detail2 }) : e;
     }
     function getArgs(args) {
       args[0] = toEventTargets(args[0]);
@@ -571,6 +568,7 @@
 
     const cssNumber = {
       "animation-iteration-count": true,
+      "aspect-ratio": true,
       "column-count": true,
       "fill-opacity": true,
       "flex-grow": true,
@@ -596,7 +594,7 @@
           } else {
             element2.style.setProperty(
               property,
-              isNumeric(value) && !cssNumber[property] ? `${value}px` : value || isNumber(value) ? value : "",
+              isNumeric(value) && !cssNumber[property] && !isCustomProperty(property) ? `${value}px` : value || isNumber(value) ? value : "",
               priority
             );
           }
@@ -614,8 +612,13 @@
       }
       return elements[0];
     }
+    function resetProps(element, props) {
+      for (const prop in props) {
+        css(element, prop, "");
+      }
+    }
     const propName = memoize((name) => {
-      if (startsWith(name, "--")) {
+      if (isCustomProperty(name)) {
         return name;
       }
       name = hyphenate(name);
@@ -630,17 +633,20 @@
         }
       }
     });
+    function isCustomProperty(name) {
+      return startsWith(name, "--");
+    }
 
     const clsTransition = "uk-transition";
     const transitionEnd = "transitionend";
     const transitionCanceled = "transitioncanceled";
-    function transition$1(element, props, duration = 400, timing = "linear") {
+    function transition$1(element, props, duration = 400, timing = "linear", skipReflow) {
       duration = Math.round(duration);
       return Promise.all(
         toNodes(element).map(
           (element2) => new Promise((resolve, reject) => {
-            for (const name in props) {
-              css(element2, name);
+            if (!skipReflow) {
+              element2.offsetHeight;
             }
             const timer = setTimeout(() => trigger(element2, transitionEnd), duration);
             once(
@@ -649,22 +655,18 @@
               ({ type }) => {
                 clearTimeout(timer);
                 removeClass(element2, clsTransition);
-                css(element2, {
-                  transitionProperty: "",
-                  transitionDuration: "",
-                  transitionTimingFunction: ""
-                });
+                resetProps(element2, transitionProps);
                 type === transitionCanceled ? reject() : resolve(element2);
               },
               { self: true }
             );
             addClass(element2, clsTransition);
-            css(element2, {
+            const transitionProps = {
               transitionProperty: Object.keys(props).map(propName).join(","),
               transitionDuration: `${duration}ms`,
-              transitionTimingFunction: timing,
-              ...props
-            });
+              transitionTimingFunction: timing
+            };
+            css(element2, { ...transitionProps, ...props });
           })
         )
       );
@@ -684,39 +686,52 @@
       }
     };
     const clsAnimation = "uk-animation";
-    const animationEnd = "animationend";
-    const animationCanceled = "animationcanceled";
+    const activeAnimations = /* @__PURE__ */ new WeakMap();
     function animate$2(element, animation, duration = 200, origin, out) {
-      return Promise.all(
-        toNodes(element).map(
-          (element2) => new Promise((resolve, reject) => {
-            if (hasClass(element2, clsAnimation)) {
-              trigger(element2, animationCanceled);
-            }
-            const classes = [
-              animation,
-              clsAnimation,
-              `${clsAnimation}-${out ? "leave" : "enter"}`,
-              origin && `uk-transform-origin-${origin}`,
-              out && `${clsAnimation}-reverse`
-            ];
-            const timer = setTimeout(() => trigger(element2, animationEnd), duration);
-            once(
-              element2,
-              [animationEnd, animationCanceled],
-              ({ type }) => {
-                clearTimeout(timer);
-                type === animationCanceled ? reject() : resolve(element2);
-                css(element2, "animationDuration", "");
-                removeClass(element2, classes);
-              },
-              { self: true }
-            );
-            css(element2, "animationDuration", `${duration}ms`);
-            addClass(element2, classes);
-          })
-        )
-      );
+      const animateFn = async (element2) => {
+        if (!Element.prototype.getAnimations) {
+          return element2;
+        }
+        cancel(element2);
+        const existingAnimations = element2.getAnimations();
+        const classes = [
+          animation,
+          clsAnimation,
+          `${clsAnimation}-${out ? "leave" : "enter"}`,
+          origin && `uk-transform-origin-${origin}`,
+          out && `${clsAnimation}-reverse`
+        ];
+        css(element2, "animationDuration", `${duration}ms`);
+        addClass(element2, classes);
+        const animations = element2.getAnimations().filter((animation2) => !existingAnimations.includes(animation2));
+        const data = { animations, classes };
+        activeAnimations.set(element2, data);
+        try {
+          await Promise.all(animations.map(({ finished }) => finished));
+          return element2;
+        } finally {
+          cleanup(element2, data);
+        }
+      };
+      return Promise.all(toNodes(element).map(animateFn));
+    }
+    function cleanup(element, data) {
+      if (activeAnimations.get(element) === data) {
+        activeAnimations.delete(element);
+        css(element, "animationDuration", "");
+        removeClass(element, data.classes);
+      }
+    }
+    function cancel(elements) {
+      for (const element of toNodes(elements)) {
+        const data = activeAnimations.get(element);
+        if (data) {
+          for (const animation of data.animations) {
+            animation.cancel();
+          }
+          cleanup(element, data);
+        }
+      }
     }
     const Animation = {
       in: animate$2,
@@ -724,11 +739,9 @@
         return animate$2(element, animation, duration, origin, true);
       },
       inProgress(element) {
-        return hasClass(element, clsAnimation);
+        return activeAnimations.has(element);
       },
-      cancel(element) {
-        trigger(element, animationCanceled);
-      }
+      cancel
     };
 
     function ready(fn) {
@@ -746,7 +759,9 @@
     }
     function empty(element) {
       element = $(element);
-      element.innerHTML = "";
+      if (element) {
+        element.innerHTML = "";
+      }
       return element;
     }
     function html(parent2, html2) {
@@ -824,7 +839,7 @@
       height: ["top", "bottom"]
     };
     function dimensions$1(element) {
-      const rect = isElement(element) ? toNode(element).getBoundingClientRect() : { height: height(element), width: width(element), top: 0, left: 0 };
+      const rect = isElement(element) ? toNode(element).getBoundingClientRect() : { height: height$1(element), width: width(element), top: 0, left: 0 };
       return {
         height: rect.height,
         width: rect.width,
@@ -879,8 +894,8 @@
       element = toNode(element);
       const offset2 = [element.offsetTop, element.offsetLeft];
       while (element = element.offsetParent) {
-        offset2[0] += element.offsetTop + toFloat(css(element, `borderTopWidth`));
-        offset2[1] += element.offsetLeft + toFloat(css(element, `borderLeftWidth`));
+        offset2[0] += element.offsetTop + toFloat(css(element, "borderTopWidth"));
+        offset2[1] += element.offsetLeft + toFloat(css(element, "borderLeftWidth"));
         if (css(element, "position") === "fixed") {
           const win = toWindow(element);
           offset2[0] += win.scrollY;
@@ -890,7 +905,7 @@
       }
       return offset2;
     }
-    const height = dimension("height");
+    const height$1 = dimension("height");
     const width = dimension("width");
     function dimension(prop) {
       const propName = ucfirst(prop);
@@ -1098,7 +1113,7 @@
         return observe$1(ResizeObserver, targets, cb, options);
       }
       const off = [on(window, "load resize", cb), on(document, "loadedmetadata load", cb, true)];
-      return { disconnect: () => off.map((cb2) => cb2()) };
+      return { disconnect: () => off.forEach((cb2) => cb2()) };
     }
     function observeViewportResize(cb) {
       return { disconnect: on([window, window.visualViewport], "resize", cb) };
@@ -1124,7 +1139,7 @@
     }
     function pause(el) {
       if (isIFrame(el)) {
-        call(el, { func: "pauseVideo", method: "pause" });
+        el[stateKey] && call(el, { func: "pauseVideo", method: "pause" });
       }
       if (isHTML5(el)) {
         el.pause();
@@ -1138,9 +1153,6 @@
         el.muted = true;
       }
     }
-    function isVideo(el) {
-      return isHTML5(el) || isIFrame(el);
-    }
     function isHTML5(el) {
       return isTag(el, "video");
     }
@@ -1148,12 +1160,10 @@
       return isTag(el, "iframe") && (isYoutube(el) || isVimeo(el));
     }
     function isYoutube(el) {
-      return !!el.src.match(
-        /\/\/.*?youtube(-nocookie)?\.[a-z]+\/(watch\?v=[^&\s]+|embed)|youtu\.be\/.*/
-      );
+      return /\/\/.*?youtube(-nocookie)?\.[a-z]+\/(watch\?v=[^&\s]+|embed)|youtu\.be\//.test(el.src);
     }
     function isVimeo(el) {
-      return !!el.src.match(/vimeo\.com\/video\/.*/);
+      return /vimeo\.com\/video\/.*/.test(el.src);
     }
     async function call(el, cmd) {
       await enableApi(el);
@@ -1182,7 +1192,7 @@
           try {
             data = JSON.parse(data);
             return youtube && (data == null ? void 0 : data.id) === id && data.event === "onReady" || vimeo && Number(data == null ? void 0 : data.player_id) === id;
-          } catch (e) {
+          } catch {
           }
         });
         el.src = `${el.src}${includes(el.src, "?") ? "&" : "?"}${youtube ? "enablejsapi=1" : `api=1&player_id=${id}`}`;
@@ -1283,7 +1293,7 @@
       const scrollEl = scrollingElement(element);
       let ancestors = parents(element).reverse();
       ancestors = ancestors.slice(ancestors.indexOf(scrollEl) + 1);
-      const fixedIndex = findIndex(ancestors, (el) => css(el, "position") === "fixed");
+      const fixedIndex = findIndex(ancestors, (el) => hasPosition(el, "fixed"));
       if (~fixedIndex) {
         ancestors = ancestors.slice(fixedIndex);
       }
@@ -1328,16 +1338,18 @@
       return rect;
     }
     function getCoveringElement(target) {
+      const { document } = toWindow(target);
+      target = target || document.body;
       const { left, width, top } = dimensions$1(target);
       for (const position of top ? [0, top] : [0]) {
         let coverEl;
-        for (const el of toWindow(target).document.elementsFromPoint(left + width / 2, position)) {
+        for (const el of document.elementsFromPoint(left + width / 2, position)) {
           if (!el.contains(target) && // If e.g. Offcanvas is not yet closed
           !hasClass(el, "uk-togglable-leave") && (hasPosition(el, "fixed") && zIndex(
             parents(target).reverse().find(
               (parent2) => !parent2.contains(el) && !hasPosition(parent2, "static")
             )
-          ) < zIndex(el) || hasPosition(el, "sticky") && parent(el).contains(target)) && (!coverEl || dimensions$1(coverEl).height < dimensions$1(el).height)) {
+          ) < zIndex(el) || hasPosition(el, "sticky") && (!target || parent(el).contains(target))) && (!coverEl || dimensions$1(coverEl).height < dimensions$1(el).height)) {
             coverEl = el;
           }
         }
@@ -1484,7 +1496,7 @@
       for (const rect of rects) {
         for (const [, , start, end] of dirs) {
           area[start] = Math.max(area[start] || 0, rect[start]);
-          area[end] = Math.min(...[area[end], rect[end]].filter(Boolean));
+          area[end] = Math.min(...[area[end], rect[end]].filter(isNumber));
         }
       }
       return area;
@@ -1509,8 +1521,8 @@
           element: options.attach.element.map(flipAttachAxis).reverse(),
           target: options.attach.target.map(flipAttachAxis).reverse()
         },
-        offset: options.offset.reverse(),
-        placement: options.placement.reverse(),
+        offset: [...options.offset].reverse(),
+        placement: [...options.placement].reverse(),
         recursion: true
       });
     }
@@ -1578,7 +1590,7 @@
         hasClass: hasClass,
         hasOwn: hasOwn,
         hasTouch: hasTouch,
-        height: height,
+        height: height$1,
         html: html,
         hyphenate: hyphenate,
         inBrowser: inBrowser,
@@ -1606,7 +1618,6 @@
         isTag: isTag,
         isTouch: isTouch,
         isUndefined: isUndefined,
-        isVideo: isVideo,
         isVisible: isVisible,
         isVoidElement: isVoidElement,
         isWindow: isWindow,
@@ -1649,6 +1660,7 @@
         removeAttr: removeAttr,
         removeClass: removeClass,
         replaceClass: replaceClass,
+        resetProps: resetProps,
         scrollIntoView: scrollIntoView,
         scrollParent: scrollParent,
         scrollParents: scrollParents,
@@ -1680,7 +1692,13 @@
 
     var Class = {
       connected() {
+        this._cmpCls = hasClass(this.$el, this.$options.id);
         addClass(this.$el, this.$options.id);
+      },
+      disconnected() {
+        if (!this._cmpCls) {
+          removeClass(this.$el, this.$options.id);
+        }
       }
     };
 
@@ -1690,17 +1708,19 @@
       props: {
         date: String,
         clsWrapper: String,
-        role: String
+        role: String,
+        reload: Boolean
       },
       data: {
         date: "",
         clsWrapper: ".uk-countdown-%unit%",
-        role: "timer"
+        role: "timer",
+        reload: false
       },
       connected() {
-        attr(this.$el, "role", this.role);
+        this.$el.role = this.role;
         this.date = toFloat(Date.parse(this.$props.date));
-        this.end = false;
+        this.started = this.end = false;
         this.start();
       },
       disconnected() {
@@ -1721,16 +1741,12 @@
         start() {
           this.stop();
           this.update();
-          if (!this.timer) {
-            trigger(this.$el, "countdownstart");
-            this.timer = setInterval(this.update, 1e3);
-          }
         },
         stop() {
           if (this.timer) {
             clearInterval(this.timer);
-            trigger(this.$el, "countdownstop");
             this.timer = null;
+            trigger(this.$el, "countdownstop");
           }
         },
         update() {
@@ -1738,9 +1754,16 @@
           if (!timespan.total) {
             this.stop();
             if (!this.end) {
-              trigger(this.$el, "countdownend");
               this.end = true;
+              trigger(this.$el, "countdownend");
+              if (this.reload && this.started) {
+                window.location.reload();
+              }
             }
+          } else if (!this.timer) {
+            this.started = true;
+            this.timer = setInterval(this.update, 1e3);
+            trigger(this.$el, "countdownstart");
           }
           for (const unit of units) {
             const el = $(this.clsWrapper.replace("%unit%", unit), this.$el);
@@ -1751,7 +1774,7 @@
             if (el.textContent !== digits) {
               digits = digits.split("");
               if (digits.length !== el.children.length) {
-                html(el, digits.map(() => "<span></span>").join(""));
+                html(el, "<span></span>".repeat(digits.length));
               }
               digits.forEach((digit, i) => el.children[i].textContent = digit);
             }
@@ -1776,10 +1799,7 @@
       return childVal !== false && concatStrat(childVal || parentVal);
     };
     strats.update = function(parentVal, childVal) {
-      return sortBy(
-        concatStrat(parentVal, isFunction(childVal) ? { read: childVal } : childVal),
-        "order"
-      );
+      return concatStrat(parentVal, isFunction(childVal) ? { read: childVal } : childVal);
     };
     strats.props = function(parentVal, childVal) {
       if (isArray(childVal)) {
@@ -1856,7 +1876,7 @@
           }
           return options2;
         }, {}) : {};
-      } catch (e) {
+      } catch {
         return {};
       }
     }
@@ -1892,6 +1912,10 @@
       if (!instance._updates.length) {
         return;
       }
+      if (!instance._updateCount) {
+        instance._updateCount = 0;
+        requestAnimationFrame(() => instance._updateCount = 0);
+      }
       if (!instance._queued) {
         instance._queued = /* @__PURE__ */ new Set();
         fastdom.read(() => {
@@ -1901,7 +1925,9 @@
           instance._queued = null;
         });
       }
-      instance._queued.add(e.type || e);
+      if (instance._updateCount++ < 20) {
+        instance._queued.add(e.type || e);
+      }
     }
     function runUpdates(instance, types) {
       for (const { read, write, events = [] } of instance._updates) {
@@ -1941,8 +1967,8 @@
           for (const el of toNodes(isFunction(targets) ? targets(this) : targets)) {
             $$('[loading="lazy"]', el).slice(0, preload - 1).forEach((el2) => removeAttr(el2, "loading"));
           }
-          for (const el of entries.filter(({ isIntersecting }) => isIntersecting).map(({ target }) => target)) {
-            observer.unobserve(el);
+          for (const { isIntersecting, target } of entries) {
+            isIntersecting && observer.unobserve(target);
           }
         },
         ...options
@@ -2027,10 +2053,20 @@
           options: {
             attributes: true,
             attributeFilter: ["style"]
-          },
-          target: ({ $el }) => [$el, ...children($el)]
+          }
         }),
         resize({
+          handler(mutations) {
+            for (const {
+              target,
+              borderBoxSize: [{ inlineSize, blockSize }]
+            } of mutations) {
+              if (target === this.$el && !inlineSize && !blockSize) {
+                return;
+              }
+            }
+            this.$emit("resize");
+          },
           target: ({ $el }) => [$el, ...children($el)]
         })
       ],
@@ -2092,16 +2128,110 @@
       return sorted;
     }
     function getOffset(element, offset = false) {
-      let { offsetTop, offsetLeft, offsetHeight, offsetWidth } = element;
+      let { offsetTop, offsetLeft, offsetHeight } = element;
       if (offset) {
         [offsetTop, offsetLeft] = offsetPosition(element);
       }
       return {
         top: offsetTop,
         left: offsetLeft,
-        bottom: offsetTop + offsetHeight,
-        right: offsetLeft + offsetWidth
+        bottom: offsetTop + offsetHeight
       };
+    }
+
+    function awaitFrame() {
+      return new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    function awaitTimeout(timeout) {
+      return new Promise((resolve) => setTimeout(resolve, timeout));
+    }
+
+    const clsLeave = "uk-transition-leave";
+    const clsEnter = "uk-transition-enter";
+    function fade(action, target, duration, stagger = 0) {
+      const index = transitionIndex(target, true);
+      const propsIn = { opacity: 1 };
+      const propsOut = { opacity: 0 };
+      const isCurrentIndex = () => index === transitionIndex(target);
+      const wrapIndexFn = (fn) => () => isCurrentIndex() ? fn() : Promise.reject();
+      const leaveFn = wrapIndexFn(async () => {
+        addClass(target, clsLeave);
+        await (stagger ? getTransitionNodes(target).reduce(async (promise, child, i, array) => {
+          await promise;
+          if (!isInView(child) || !isCurrentIndex()) {
+            css(child, propsOut);
+            return;
+          }
+          await awaitTimeout(stagger);
+          const transition = Transition.start(child, propsOut, duration / 2, "ease");
+          if (array.length - 1 === i) {
+            await transition;
+          }
+        }, Promise.resolve()) : Transition.start(target, propsOut, duration / 2, "ease"));
+        removeClass(target, clsLeave);
+      });
+      const enterFn = wrapIndexFn(async () => {
+        const oldHeight = height$1(target);
+        addClass(target, clsEnter);
+        action();
+        css(stagger ? children(target) : target, propsOut);
+        height$1(target, oldHeight);
+        await awaitTimeout();
+        height$1(target, "");
+        const newHeight = height$1(target);
+        css(target, "alignContent", "flex-start");
+        height$1(target, oldHeight);
+        const transitions = [];
+        let targetDuration = duration / 2;
+        if (stagger) {
+          const nodes = getTransitionNodes(target);
+          css(children(target), propsOut);
+          transitions.push(
+            nodes.reduce(async (promise, child, i, array) => {
+              await promise;
+              if (!isInView(child) || !isCurrentIndex()) {
+                resetProps(child, propsIn);
+                return;
+              }
+              await awaitTimeout(stagger);
+              const transition = Transition.start(child, propsIn, duration / 2, "ease").then(
+                () => isCurrentIndex() && resetProps(child, propsIn)
+              );
+              if (array.length - 1 === i) {
+                await transition;
+              }
+            }, Promise.resolve())
+          );
+          targetDuration += nodes.length * stagger;
+        }
+        if (!stagger || oldHeight !== newHeight) {
+          const targetProps = { height: newHeight, ...stagger ? {} : propsIn };
+          transitions.push(Transition.start(target, targetProps, targetDuration, "ease"));
+        }
+        await Promise.all(transitions);
+        removeClass(target, clsEnter);
+        if (isCurrentIndex()) {
+          resetProps(target, { height: "", alignContent: "", ...propsIn });
+          delete target.dataset.transition;
+        }
+      });
+      return hasClass(target, clsLeave) ? waitTransitionend(target).then(enterFn) : hasClass(target, clsEnter) ? waitTransitionend(target).then(leaveFn).then(enterFn) : leaveFn().then(enterFn);
+    }
+    function transitionIndex(target, next) {
+      if (next) {
+        target.dataset.transition = 1 + transitionIndex(target);
+      }
+      return toNumber(target.dataset.transition) || 0;
+    }
+    function waitTransitionend(target) {
+      return Promise.all(
+        children(target).filter(Transition.inProgress).map(
+          (el) => new Promise((resolve) => once(el, "transitionend transitioncanceled", resolve))
+        )
+      );
+    }
+    function getTransitionNodes(target) {
+      return getRows(children(target)).flat().filter(isVisible);
     }
 
     async function slide(action, target, duration) {
@@ -2109,22 +2239,29 @@
       let nodes = children(target);
       const currentProps = nodes.map((el) => getProps$1(el, true));
       const targetProps = { ...css(target, ["height", "padding"]), display: "block" };
+      const transitionNodes = nodes.filter((node) => isInView(node));
       const targets = nodes.concat(target);
       await Promise.all(targets.map(Transition.cancel));
       css(targets, "transitionProperty", "none");
       await action();
-      nodes = nodes.concat(children(target).filter((el) => !includes(nodes, el)));
+      const newNodes = children(target).filter((el) => !includes(nodes, el));
+      nodes = nodes.concat(newNodes);
       await Promise.resolve();
       css(targets, "transitionProperty", "");
       const targetStyle = attr(target, "style");
       const targetPropsTo = css(target, ["height", "padding"]);
       const [propsTo, propsFrom] = getTransitionProps(target, nodes, currentProps);
       const attrsTo = nodes.map((el) => ({ style: attr(el, "style") }));
+      transitionNodes.push(...nodes.filter((node) => isInView(node)));
       nodes.forEach((el, i) => propsFrom[i] && css(el, propsFrom[i]));
       css(target, targetProps);
       trigger(target, "scroll");
       await awaitFrame();
-      const transitions = nodes.map((el, i) => parent(el) === target && Transition.start(el, propsTo[i], duration, "ease")).concat(Transition.start(target, targetPropsTo, duration, "ease"));
+      const transitions = nodes.map((el, i) => {
+        if (parent(el) === target && transitionNodes.includes(el)) {
+          return Transition.start(el, propsTo[i], duration, "ease", !newNodes.includes(el));
+        }
+      }).concat(Transition.start(target, targetPropsTo, duration, "ease", true));
       try {
         await Promise.all(transitions);
         nodes.forEach((el, i) => {
@@ -2134,7 +2271,7 @@
           }
         });
         attr(target, "style", targetStyle);
-      } catch (e) {
+      } catch {
         attr(nodes, "style", "");
         resetProps(target, targetProps);
       }
@@ -2173,11 +2310,6 @@
       });
       return [propsTo, propsFrom];
     }
-    function resetProps(el, props) {
-      for (const prop in props) {
-        css(el, prop, "");
-      }
-    }
     function getPositionWithMargin(el) {
       const { height, width } = dimensions$1(el);
       return {
@@ -2187,89 +2319,6 @@
         ...position(el),
         ...css(el, ["marginTop", "marginLeft"])
       };
-    }
-    function awaitFrame() {
-      return new Promise((resolve) => requestAnimationFrame(resolve));
-    }
-
-    const clsLeave = "uk-transition-leave";
-    const clsEnter = "uk-transition-enter";
-    function fade(action, target, duration, stagger = 0) {
-      const index = transitionIndex(target, true);
-      const propsIn = { opacity: 1 };
-      const propsOut = { opacity: 0 };
-      const wrapIndexFn = (fn) => () => index === transitionIndex(target) ? fn() : Promise.reject();
-      const leaveFn = wrapIndexFn(async () => {
-        addClass(target, clsLeave);
-        await Promise.all(
-          getTransitionNodes(target).map(
-            (child, i) => new Promise(
-              (resolve) => setTimeout(
-                () => Transition.start(child, propsOut, duration / 2, "ease").then(
-                  resolve
-                ),
-                i * stagger
-              )
-            )
-          )
-        );
-        removeClass(target, clsLeave);
-      });
-      const enterFn = wrapIndexFn(async () => {
-        const oldHeight = height(target);
-        addClass(target, clsEnter);
-        action();
-        css(children(target), { opacity: 0 });
-        await awaitFrame();
-        const nodes = children(target);
-        const newHeight = height(target);
-        css(target, "alignContent", "flex-start");
-        height(target, oldHeight);
-        const transitionNodes = getTransitionNodes(target);
-        css(nodes, propsOut);
-        const transitions = transitionNodes.map(async (child, i) => {
-          await awaitTimeout(i * stagger);
-          await Transition.start(child, propsIn, duration / 2, "ease");
-        });
-        if (oldHeight !== newHeight) {
-          transitions.push(
-            Transition.start(
-              target,
-              { height: newHeight },
-              duration / 2 + transitionNodes.length * stagger,
-              "ease"
-            )
-          );
-        }
-        await Promise.all(transitions).then(() => {
-          removeClass(target, clsEnter);
-          if (index === transitionIndex(target)) {
-            css(target, { height: "", alignContent: "" });
-            css(nodes, { opacity: "" });
-            delete target.dataset.transition;
-          }
-        });
-      });
-      return hasClass(target, clsLeave) ? waitTransitionend(target).then(enterFn) : hasClass(target, clsEnter) ? waitTransitionend(target).then(leaveFn).then(enterFn) : leaveFn().then(enterFn);
-    }
-    function transitionIndex(target, next) {
-      if (next) {
-        target.dataset.transition = 1 + transitionIndex(target);
-      }
-      return toNumber(target.dataset.transition) || 0;
-    }
-    function waitTransitionend(target) {
-      return Promise.all(
-        children(target).filter(Transition.inProgress).map(
-          (el) => new Promise((resolve) => once(el, "transitionend transitioncanceled", resolve))
-        )
-      );
-    }
-    function getTransitionNodes(target) {
-      return getRows(children(target)).flat().filter(isVisible);
-    }
-    function awaitTimeout(timeout) {
-      return new Promise((resolve) => setTimeout(resolve, timeout));
     }
 
     var Animate = {
@@ -2295,6 +2344,7 @@
 
     const keyMap = {
       TAB: 9,
+      ENTER: 13,
       ESC: 27,
       SPACE: 32,
       END: 35,
@@ -2304,6 +2354,49 @@
       RIGHT: 39,
       DOWN: 40
     };
+    function getNavigationIndex(keyCode, previousKey = keyMap.LEFT, nextKey = keyMap.RIGHT) {
+      switch (keyCode) {
+        case keyMap.HOME:
+          return 0;
+        case keyMap.END:
+          return "last";
+        case previousKey:
+          return "previous";
+        case nextKey:
+          return "next";
+      }
+      return -1;
+    }
+
+    function maybeDefaultPreventClick(e) {
+      if (e.target.closest('a[href="#"],a[href=""]')) {
+        e.preventDefault();
+      }
+    }
+    function onEscape(handler, isEligible = () => true) {
+      return on(document, "keydown", (e) => {
+        if (e.keyCode === keyMap.ESC && isEligible()) {
+          handler(e);
+        }
+      });
+    }
+    function onOutsidePointer(handler, isOutside, isEligible) {
+      return on(document, pointerDown$1, ({ target }) => {
+        if (!isOutside(target) || isEligible && !isEligible()) {
+          return;
+        }
+        once(
+          document,
+          `${pointerUp$1} ${pointerCancel} scroll`,
+          ({ defaultPrevented, type, target: newTarget }) => {
+            if (!defaultPrevented && type === pointerUp$1 && target === newTarget) {
+              handler(target);
+            }
+          },
+          true
+        );
+      });
+    }
 
     var filter = {
       mixins: [Animate],
@@ -2333,7 +2426,7 @@
             }
             const button = findButton(toggle);
             if (isTag(button, "a")) {
-              attr(button, "role", "button");
+              button.role = "button";
             }
           }
         },
@@ -2351,7 +2444,7 @@
             return;
           }
           if (e.target.closest("a,button")) {
-            e.preventDefault();
+            maybeDefaultPreventClick(e);
             this.apply(e.current);
           }
         }
@@ -2389,8 +2482,8 @@
         }
       }
     };
-    function getFilter(el, attr2) {
-      return parseOptions(data(el, attr2), ["filter"]);
+    function getFilter(el, attr) {
+      return parseOptions(data(el, attr), ["filter"]);
     }
     function isEqualState(stateA, stateB) {
       return ["filter", "sort"].every((prop) => isEqual(stateA[prop], stateB[prop]));
@@ -2411,8 +2504,8 @@
         }
       }
     }
-    function mergeState(el, attr2, state) {
-      const { filter, group, sort, order = "asc" } = getFilter(el, attr2);
+    function mergeState(el, attr, state) {
+      const { filter, group, sort, order = "asc" } = getFilter(el, attr);
       if (filter || isUndefined(sort)) {
         if (group) {
           if (filter) {
@@ -2433,17 +2526,140 @@
       }
       return state;
     }
-    function matchFilter(el, attr2, { filter: stateFilter = { "": "" }, sort: [stateSort, stateOrder] }) {
-      const { filter = "", group = "", sort, order = "asc" } = getFilter(el, attr2);
-      return isUndefined(sort) ? group in stateFilter && filter === stateFilter[group] || !filter && group && !(group in stateFilter) && !stateFilter[""] : stateSort === sort && stateOrder === order;
+    function matchFilter(el, attr, { filter: stateFilter = { "": "" }, sort: [stateSort, stateOrder] }) {
+      const { filter = "", group = "", sort, order = "asc" } = getFilter(el, attr);
+      const defaultFilterMatches = !group && filter === stateFilter[""];
+      const groupFilterMatches = group in stateFilter && filter === stateFilter[group];
+      const groupResetMatches = !filter && group && !(group in stateFilter) && !stateFilter[""];
+      const filterMatches = defaultFilterMatches || groupFilterMatches || groupResetMatches;
+      if (isUndefined(sort)) {
+        return filterMatches;
+      }
+      const sortMatches = stateSort === sort && stateOrder === order;
+      const hasFilter = filter || group;
+      return sortMatches && (!hasFilter || filterMatches);
     }
     function sortItems(nodes, sort, order) {
-      return [...nodes].sort(
-        (a, b) => data(a, sort).localeCompare(data(b, sort), void 0, { numeric: true }) * (order === "asc" || -1)
-      );
+      return [...nodes].sort((a, b) => {
+        const valA = data(a, sort) || "";
+        const valB = data(b, sort) || "";
+        const cmp = isNumeric(valA) && isNumeric(valB) ? valA - valB : valA.localeCompare(valB, void 0, { numeric: true });
+        return cmp * (order === "asc" || -1);
+      });
     }
     function findButton(el) {
       return $("a,button", el) || el;
+    }
+
+    var img = {
+      args: "dataSrc",
+      props: {
+        dataSrc: String,
+        sources: String,
+        margin: String,
+        target: String,
+        loading: String
+      },
+      data: {
+        dataSrc: "",
+        sources: false,
+        margin: "50%",
+        target: false,
+        loading: "lazy"
+      },
+      connected() {
+        if (this.loading !== "lazy") {
+          this.load();
+        } else if (isImg(this.$el)) {
+          this.$el.loading = "lazy";
+          setSrcAttrs(this.$el);
+        }
+      },
+      disconnected() {
+        if (this.img) {
+          this.img.onload = "";
+        }
+        delete this.img;
+      },
+      observe: intersection({
+        handler(entries, observer) {
+          this.load();
+          observer.disconnect();
+        },
+        options: ({ margin }) => ({ rootMargin: margin }),
+        filter: ({ loading }) => loading === "lazy",
+        target: ({ $el, $props }) => $props.target ? [$el, ...queryAll($props.target, $el)] : $el
+      }),
+      methods: {
+        load() {
+          if (this.img) {
+            return this.img;
+          }
+          const image = isImg(this.$el) ? this.$el : getImageFromElement(this.$el, this.dataSrc, this.sources);
+          removeAttr(image, "loading");
+          setSrcAttrs(this.$el, image.currentSrc);
+          return this.img = image;
+        }
+      }
+    };
+    function setSrcAttrs(el, src) {
+      if (isImg(el)) {
+        const parentNode = parent(el);
+        const elements = isTag(parentNode, "picture") ? children(parentNode) : [el];
+        elements.forEach((el2) => setSourceProps(el2, el2));
+      } else if (src) {
+        if (!includes(el.style.backgroundImage, src)) {
+          css(el, "backgroundImage", `url(${escape(src)})`);
+          trigger(el, createEvent("load", false));
+        }
+      }
+    }
+    const srcProps = ["data-src", "data-srcset", "sizes"];
+    function setSourceProps(sourceEl, targetEl) {
+      for (const prop of srcProps) {
+        const value = data(sourceEl, prop);
+        if (value) {
+          attr(targetEl, prop.replace(/data-/g, ""), value);
+        }
+      }
+    }
+    function getImageFromElement(el, src, sources) {
+      const img = new Image();
+      wrapInPicture(img, sources);
+      setSourceProps(el, img);
+      img.onload = () => setSrcAttrs(el, img.currentSrc);
+      img.src = src;
+      return img;
+    }
+    function wrapInPicture(img, sources) {
+      sources = parseSources(sources);
+      if (sources.length) {
+        const picture = fragment("<picture>");
+        for (const attrs of sources) {
+          const source = fragment("<source>");
+          attr(source, attrs);
+          append(picture, source);
+        }
+        append(picture, img);
+      }
+    }
+    function parseSources(sources) {
+      if (!sources) {
+        return [];
+      }
+      if (startsWith(sources, "[")) {
+        try {
+          sources = JSON.parse(sources);
+        } catch {
+          sources = [];
+        }
+      } else {
+        sources = parseOptions(sources);
+      }
+      return (isArray(sources) ? sources : [sources]).filter((source) => !isEmpty(source));
+    }
+    function isImg(el) {
+      return isTag(el, "img");
     }
 
     let prevented;
@@ -2452,7 +2668,7 @@
         el,
         "touchstart",
         (e) => {
-          if (e.targetTouches.length !== 1 || matches(e.target, 'input[type="range"')) {
+          if (e.targetTouches.length !== 1 || matches(e.target, 'input[type="range"]')) {
             return;
           }
           let prev = getEventPos(e).y;
@@ -2477,7 +2693,7 @@
             },
             { passive: false }
           );
-          once(el, "scroll touchend touchcanel", offMove, { capture: true });
+          once(el, "scroll touchend touchcancel", offMove, { capture: true });
         },
         { passive: true }
       );
@@ -2486,15 +2702,16 @@
       }
       prevented = true;
       const { scrollingElement } = document;
-      css(scrollingElement, {
+      const props = {
         overflowY: CSS.supports("overflow", "clip") ? "clip" : "hidden",
         touchAction: "none",
-        paddingRight: width(window) - scrollingElement.clientWidth || ""
-      });
+        scrollbarGutter: width(window) - scrollingElement.clientWidth ? "stable" : ""
+      };
+      css(scrollingElement, props);
       return () => {
         prevented = false;
         off();
-        css(scrollingElement, { overflowY: "", touchAction: "", paddingRight: "" });
+        resetProps(scrollingElement, props);
       };
     }
 
@@ -2537,31 +2754,31 @@
       },
       methods: {
         async toggleElement(targets, toggle, animate) {
-          try {
-            await Promise.all(
-              toNodes(targets).map((el) => {
-                const show = isBoolean(toggle) ? toggle : !this.isToggled(el);
-                if (!trigger(el, `before${show ? "show" : "hide"}`, [this])) {
-                  return Promise.reject();
+          const CANCELLED = {};
+          return (await Promise.all(
+            toNodes(targets).map((el) => {
+              const show = isBoolean(toggle) ? toggle : !this.isToggled(el);
+              if (!trigger(el, `before${show ? "show" : "hide"}`, [this])) {
+                return CANCELLED;
+              }
+              const promise = (isFunction(animate) ? animate : animate === false || !this.hasAnimation ? toggleInstant : this.hasTransition ? toggleTransition : toggleAnimation)(el, show, this);
+              const cls = show ? this.clsEnter : this.clsLeave;
+              addClass(el, cls);
+              trigger(el, show ? "show" : "hide", [this]);
+              const done = () => {
+                var _a;
+                removeClass(el, cls);
+                trigger(el, show ? "shown" : "hidden", [this]);
+                if (show) {
+                  (_a = $$("[autofocus]", el).find(isVisible)) == null ? void 0 : _a.focus({ preventScroll: true });
                 }
-                const promise = (isFunction(animate) ? animate : animate === false || !this.hasAnimation ? toggleInstant : this.hasTransition ? toggleTransition : toggleAnimation)(el, show, this);
-                const cls = show ? this.clsEnter : this.clsLeave;
-                addClass(el, cls);
-                trigger(el, show ? "show" : "hide", [this]);
-                const done = () => {
-                  removeClass(el, cls);
-                  trigger(el, show ? "shown" : "hidden", [this]);
-                };
-                return promise ? promise.then(done, () => {
-                  removeClass(el, cls);
-                  return Promise.reject();
-                }) : done();
-              })
-            );
-            return true;
-          } catch (e) {
-            return false;
-          }
+              };
+              return promise ? promise.then(done, () => {
+                removeClass(el, cls);
+                return CANCELLED;
+              }) : done();
+            })
+          )).every((r) => r !== CANCELLED);
         },
         isToggled(el = this.$el) {
           el = toNode(el);
@@ -2583,7 +2800,6 @@
           if (changed) {
             trigger(el, "toggled", [toggled, this]);
           }
-          $$("[autofocus]", el).some((el2) => isVisible(el2) ? el2.focus() || true : el2.blur());
         }
       }
     };
@@ -2680,18 +2896,18 @@
         }
       }
     }
-    function toggleAnimation(el, show, cmp) {
+    async function toggleAnimation(el, show, cmp) {
       const { animation, duration, _toggle } = cmp;
       if (show) {
         _toggle(el, true);
         return Animation.in(el, animation[0], duration, cmp.origin);
       }
-      return Animation.out(el, animation[1] || animation[0], duration, cmp.origin).then(
-        () => _toggle(el, false)
-      );
+      await Animation.out(el, animation[1] || animation[0], duration, cmp.origin);
+      _toggle(el, false);
     }
 
     const active$1 = [];
+    const pendingReject = /* @__PURE__ */ new WeakMap();
     var Modal = {
       mixins: [Class, Container, Togglable],
       props: {
@@ -2714,15 +2930,13 @@
         panel: ({ selPanel }, $el) => $(selPanel, $el),
         transitionElement() {
           return this.panel;
-        },
-        bgClose({ bgClose }) {
-          return bgClose && this.panel;
         }
       },
       connected() {
-        attr(this.panel || this.$el, "role", this.role);
+        const el = this.panel || this.$el;
+        el.role = this.role;
         if (this.overlay) {
-          attr(this.panel || this.$el, "aria-modal", true);
+          el.ariaModal = true;
         }
       },
       beforeDisconnect() {
@@ -2740,7 +2954,7 @@
             if (!defaultPrevented && hash && isSameSiteAnchor(current) && !this.$el.contains($(hash))) {
               this.hide();
             } else if (matches(current, this.selClose)) {
-              e.preventDefault();
+              maybeDefaultPreventClick(e);
               this.hide();
             }
           }
@@ -2748,11 +2962,12 @@
         {
           name: "toggle",
           self: true,
-          handler(e) {
+          handler(e, toggle) {
             if (e.defaultPrevented) {
               return;
             }
             e.preventDefault();
+            this.target = toggle == null ? void 0 : toggle.$el;
             if (this.isToggled() === includes(active$1, this)) {
               this.toggle();
             }
@@ -2793,6 +3008,7 @@
               { self: true }
             );
             addClass(document.documentElement, this.clsPage);
+            setAriaExpanded(this.target, true);
           }
         },
         {
@@ -2800,7 +3016,7 @@
           self: true,
           handler() {
             if (!isFocusable(this.$el)) {
-              attr(this.$el, "tabindex", "-1");
+              this.$el.tabIndex = -1;
             }
             if (!matches(this.$el, ":focus-within")) {
               this.$el.focus();
@@ -2815,9 +3031,17 @@
               active$1.splice(active$1.indexOf(this), 1);
             }
             css(this.$el, "zIndex", "");
+            const { target } = this;
             if (!active$1.some((modal) => modal.clsPage === this.clsPage)) {
               removeClass(document.documentElement, this.clsPage);
+              queueMicrotask(() => {
+                if (isFocusable(target)) {
+                  target.focus({ preventScroll: true });
+                }
+              });
             }
+            setAriaExpanded(target, false);
+            this.target = null;
           }
         }
       ],
@@ -2825,12 +3049,10 @@
         toggle() {
           return this.isToggled() ? this.hide() : this.show();
         },
-        show() {
+        async show() {
           if (this.container && parent(this.$el) !== this.container) {
             append(this.container, this.$el);
-            return new Promise(
-              (resolve) => requestAnimationFrame(() => this.show().then(resolve))
-            );
+            await awaitFrame();
           }
           return this.toggleElement(this.$el, true, animate$1);
         },
@@ -2840,66 +3062,54 @@
       }
     };
     function animate$1(el, show, { transitionElement, _toggle }) {
+      let rejectAnimation;
       return new Promise(
         (resolve, reject) => once(el, "show hide", () => {
-          var _a;
-          (_a = el._reject) == null ? void 0 : _a.call(el);
-          el._reject = reject;
+          var _a, _b, _c;
+          (_a = pendingReject.get(el)) == null ? void 0 : _a();
+          rejectAnimation = reject;
+          pendingReject.set(el, reject);
           _toggle(el, show);
-          const off = once(
-            transitionElement,
-            "transitionstart",
-            () => {
-              once(transitionElement, "transitionend transitioncancel", resolve, {
-                self: true
-              });
-              clearTimeout(timer);
-            },
-            { self: true }
-          );
-          const timer = setTimeout(
-            () => {
-              off();
-              resolve();
-            },
-            toMs(css(transitionElement, "transitionDuration"))
-          );
+          Promise.all(
+            ((_c = (_b = transitionElement == null ? void 0 : transitionElement.getAnimations) == null ? void 0 : _b.call(transitionElement)) != null ? _c : []).map(({ finished }) => finished)
+          ).then(resolve, reject);
         })
-      ).then(() => delete el._reject);
-    }
-    function toMs(time) {
-      return time ? endsWith(time, "ms") ? toFloat(time) : toFloat(time) * 1e3 : 0;
+      ).then(() => {
+        if (pendingReject.get(el) === rejectAnimation) {
+          pendingReject.delete(el);
+        }
+      });
     }
     function preventBackgroundFocus(modal) {
       return on(document, "focusin", (e) => {
-        if (last(active$1) === modal && !modal.$el.contains(e.target)) {
-          modal.$el.focus();
+        if (last(active$1) !== modal || modal.$el.contains(e.target)) {
+          return;
         }
+        const { left, top, width, height } = dimensions$1(e.target);
+        const topEl = document.elementFromPoint(left + width / 2, top + height / 2);
+        if (topEl && (e.target.contains(topEl) || topEl.contains(e.target))) {
+          return;
+        }
+        modal.$el.focus();
       });
     }
     function listenForBackgroundClose$1(modal) {
-      return on(document, pointerDown$1, ({ target }) => {
-        if (last(active$1) !== modal || modal.overlay && !modal.$el.contains(target) || modal.panel.contains(target)) {
-          return;
-        }
-        once(
-          document,
-          `${pointerUp$1} ${pointerCancel} scroll`,
-          ({ defaultPrevented, type, target: newTarget }) => {
-            if (!defaultPrevented && type === pointerUp$1 && target === newTarget) {
-              modal.hide();
-            }
-          },
-          true
-        );
-      });
+      return onOutsidePointer(
+        () => modal.hide(),
+        (target) => (!modal.overlay || modal.$el.contains(target)) && Boolean(modal.panel) && !modal.panel.contains(target),
+        () => last(active$1) === modal
+      );
     }
     function listenForEscClose$1(modal) {
-      return on(document, "keydown", (e) => {
-        if (e.keyCode === 27 && last(active$1) === modal) {
-          modal.hide();
-        }
-      });
+      return onEscape(
+        () => modal.hide(),
+        () => last(active$1) === modal
+      );
+    }
+    function setAriaExpanded(el, toggled) {
+      if (el == null ? void 0 : el.ariaExpanded) {
+        el.ariaExpanded = toggled;
+      }
     }
 
     var Animations$2 = {
@@ -2922,11 +3132,7 @@
       return Math.abs(new DOMMatrix(css(el, "transform")).m41 / el.offsetWidth);
     }
     function translate(value = 0, unit = "%") {
-      value += value ? unit : "";
-      return `translate3d(${value}, 0, 0)`;
-    }
-    function scale3d(value) {
-      return `scale3d(${value}, ${value}, 1)`;
+      return value ? `translate3d(${value + unit}, 0, 0)` : "";
     }
 
     function Transitioner$1(prev, next, dir, { animation, easing }) {
@@ -2954,9 +3160,7 @@
           return Transition.cancel([next, prev]);
         },
         reset() {
-          for (const prop in props[0]) {
-            css([next, prev], prop, "");
-          }
+          resetProps([next, prev], props[0]);
         },
         async forward(duration, percent2 = this.percent()) {
           await this.cancel();
@@ -3044,7 +3248,7 @@
         startAutoplay() {
           this.stopAutoplay();
           this.interval = setInterval(() => {
-            if (!(this.stack.length || this.draggable && matches(this.$el, ":focus-within") && !matches(this.$el, ":focus") || this.pauseOnHover && matches(this.$el, ":hover"))) {
+            if (!(this.stack.length || !isVisible(this.$el) || this.draggable && matches(this.$el, ":focus-within") && !matches(this.$el, ":focus") || this.pauseOnHover && matches(this.$el, ":hover"))) {
               this.show("next");
             }
           }, this.autoplayInterval);
@@ -3056,25 +3260,27 @@
     };
 
     const pointerOptions = { passive: false, capture: true };
-    const pointerUpOptions = { passive: true, capture: true };
     const pointerDown = "touchstart mousedown";
     const pointerMove = "touchmove mousemove";
     const pointerUp = "touchend touchcancel mouseup click input scroll";
-    const preventClick = (e) => e.preventDefault();
     var SliderDrag = {
       props: {
         draggable: Boolean
       },
       data: {
         draggable: true,
-        threshold: 10
+        threshold: 10,
+        angleThreshold: 45
       },
       created() {
         for (const key of ["start", "move", "end"]) {
           const fn = this[key];
           this[key] = (e) => {
-            const pos = getEventPos(e).x * (isRtl ? -1 : 1);
-            this.prevPos = pos === this.pos ? this.prevPos : this.pos;
+            const pos = getEventPos(e);
+            if (isRtl) {
+              pos.x = -pos.x;
+            }
+            this.prevPos = isEqual(pos, this.pos) ? this.prevPos : this.pos;
             this.pos = pos;
             fn(e);
           };
@@ -3100,6 +3306,7 @@
         },
         {
           // iOS workaround for slider stopping if swiping fast
+          // https://bugs.webkit.org/show_bug.cgi?id=184251
           name: pointerMove,
           el: ({ list }) => list,
           handler: noop,
@@ -3111,7 +3318,7 @@
           this.drag = this.pos;
           if (this._transitioner) {
             this.percent = this._transitioner.percent();
-            this.drag += this._transitioner.getDistance() * this.percent * this.dir;
+            this.drag.x += this._transitioner.getDistance() * this.percent * this.dir;
             this._transitioner.cancel();
             this._transitioner.translate(this.percent);
             this.dragging = true;
@@ -3120,16 +3327,13 @@
             this.prevIndex = this.index;
           }
           on(document, pointerMove, this.move, pointerOptions);
-          on(document, pointerUp, this.end, pointerUpOptions);
+          on(document, pointerUp, this.end, { passive: true, capture: true, once: true });
           css(this.list, "userSelect", "none");
         },
         move(e) {
-          const distance = this.pos - this.drag;
-          if (distance === 0 || this.prevPos === this.pos || !this.dragging && Math.abs(distance) < this.threshold) {
+          const distance = this.pos.x - this.drag.x;
+          if (distance === 0 || !this.dragging && getAngle(this.pos, this.drag) > this.angleThreshold || this.prevPos.x === this.pos.x || !this.dragging && Math.abs(distance) < this.threshold) {
             return;
-          }
-          if (!this.dragging) {
-            on(this.list, "click", preventClick, pointerOptions);
           }
           e.cancelable && e.preventDefault();
           this.dragging = true;
@@ -3139,7 +3343,7 @@
           let nextIndex = this.getIndex(prevIndex + this.dir);
           let width = getDistance.call(this, prevIndex, nextIndex);
           while (nextIndex !== prevIndex && dis > width) {
-            this.drag -= width * this.dir;
+            this.drag.x -= width * this.dir;
             prevIndex = nextIndex;
             dis -= width;
             nextIndex = this.getIndex(prevIndex + this.dir);
@@ -3152,7 +3356,7 @@
           const edge = prevIndex === nextIndex;
           let itemShown;
           for (const i of [this.index, this.prevIndex]) {
-            if (!includes([nextIndex, prevIndex], i)) {
+            if (i !== nextIndex && i !== prevIndex) {
               trigger(slides[i], "itemhidden", [this]);
               if (edge) {
                 itemShown = true;
@@ -3177,8 +3381,8 @@
         },
         end() {
           off(document, pointerMove, this.move, pointerOptions);
-          off(document, pointerUp, this.end, pointerUpOptions);
           if (this.dragging) {
+            setTimeout(on(this.list, "click", (e) => e.preventDefault(), pointerOptions));
             this.dragging = null;
             if (this.index === this.prevIndex) {
               this.percent = 1 - this.percent;
@@ -3186,10 +3390,13 @@
               this._show(false, this.index, true);
               this._transitioner = null;
             } else {
-              const dirChange = (isRtl ? this.dir * (isRtl ? 1 : -1) : this.dir) < 0 === this.prevPos > this.pos;
-              this.index = dirChange ? this.index : this.prevIndex;
+              const dirChange = this.dir < 0 === this.prevPos.x > this.pos.x;
               if (dirChange) {
+                trigger(this.slides[this.prevIndex], "itemhidden", [this]);
+                trigger(this.slides[this.index], "itemshown", [this]);
                 this.percent = 1 - this.percent;
+              } else {
+                this.index = this.prevIndex;
               }
               this.show(
                 this.dir > 0 && !dirChange || this.dir < 0 && dirChange ? "next" : "previous",
@@ -3197,7 +3404,6 @@
               );
             }
           }
-          setTimeout(() => off(this.list, "click", preventClick, pointerOptions));
           css(this.list, { userSelect: "" });
           this.drag = this.percent = null;
         }
@@ -3209,6 +3415,11 @@
     function hasSelectableText(el) {
       return css(el, "userSelect") !== "none" && toArray(el.childNodes).some((el2) => el2.nodeType === 3 && el2.textContent.trim());
     }
+    function getAngle(pos1, pos2) {
+      return Math.atan2(Math.abs(pos2.y - pos1.y), Math.abs(pos2.x - pos1.x)) * 180 / Math.PI;
+    }
+
+    var VERSION = '3.25.28';
 
     function initWatches(instance) {
       instance._watches = [];
@@ -3302,24 +3513,26 @@
           registerEvent(instance, event);
         } else {
           for (const key in event) {
-            registerEvent(instance, event[key], key);
+            registerEvent(instance, { name: key, handler: event[key] });
           }
         }
       }
     }
-    function registerEvent(instance, event, key) {
-      let { name, el, handler, capture, passive, delegate, filter, self } = isPlainObject(event) ? event : { name: key, handler: event };
-      el = isFunction(el) ? el.call(instance, instance) : el || instance.$el;
-      if (!el || isArray(el) && !el.length || filter && !filter.call(instance, instance)) {
+    function registerEvent(instance, { name, el, handler, capture, passive, delegate, filter, self }) {
+      if (filter && !filter.call(instance, instance)) {
         return;
       }
       instance._disconnect.push(
         on(
-          el,
+          el ? el.call(instance, instance) : instance.$el,
           name,
-          delegate ? isString(delegate) ? delegate : delegate.call(instance, instance) : null,
-          isString(handler) ? instance[handler] : handler.bind(instance),
-          { passive, capture, self }
+          delegate == null ? void 0 : delegate.call(instance, instance),
+          handler.bind(instance),
+          {
+            passive,
+            capture,
+            self
+          }
         )
       );
     }
@@ -3415,7 +3628,7 @@
     }
     const getAttributes = memoize((id, props) => {
       const attributes = Object.keys(props);
-      const filter = attributes.concat(id).map((key) => [hyphenate(key), `data-${hyphenate(key)}`]).flat();
+      const filter = attributes.concat(id).flatMap((key) => [hyphenate(key), `data-${hyphenate(key)}`]);
       return { attributes, filter };
     });
     function initPropsObserver(instance) {
@@ -3524,15 +3737,15 @@
       return data;
     }
 
-    const App = function(options) {
+    function App(options) {
       init$1(this, options);
-    };
+    }
     App.util = util;
     App.options = {};
-    App.version = "3.21.13";
+    App.version = VERSION;
 
     const PREFIX = "uk-";
-    const DATA = "__uikit__";
+    const elementComponents = /* @__PURE__ */ new WeakMap();
     const components$2 = {};
     function component(name, options) {
       var _a, _b;
@@ -3570,22 +3783,24 @@
       }
     }
     function getComponents(element) {
-      return (element == null ? void 0 : element[DATA]) || {};
+      return elementComponents.get(element) || {};
     }
     function getComponent(element, name) {
       return getComponents(element)[name];
     }
     function attachToElement(element, instance) {
-      if (!element[DATA]) {
-        element[DATA] = {};
+      let components2 = elementComponents.get(element);
+      if (!components2) {
+        components2 = {};
+        elementComponents.set(element, components2);
       }
-      element[DATA][instance.$options.name] = instance;
+      components2[instance.$options.name] = instance;
     }
     function detachFromElement(element, instance) {
-      var _a;
-      (_a = element[DATA]) == null ? true : delete _a[instance.$options.name];
-      if (isEmpty(element[DATA])) {
-        delete element[DATA];
+      const components2 = elementComponents.get(element);
+      components2 == null ? true : delete components2[instance.$options.name];
+      if (isEmpty(components2)) {
+        elementComponents.delete(element);
       }
     }
 
@@ -3648,7 +3863,7 @@
         const instance = this;
         attachToElement(el, instance);
         instance.$options.el = el;
-        if (document.contains(el)) {
+        if (el.isConnected) {
           callConnected(instance);
         }
       };
@@ -3659,9 +3874,11 @@
           callDisconnected(instance);
         }
         callHook(instance, "destroy");
-        detachFromElement(el, instance);
-        if (removeEl) {
-          remove$1(instance.$el);
+        if (el) {
+          detachFromElement(el, instance);
+          if (removeEl) {
+            remove$1(el);
+          }
         }
       };
       App.prototype.$create = createComponent;
@@ -3695,17 +3912,16 @@
         next: "Next slide",
         previous: "Previous slide",
         slideX: "Slide %s",
-        slideLabel: "%s of %s",
-        role: "String"
+        slideLabel: "%s of %s"
       },
       data: {
         selNav: false,
         role: "region"
       },
       computed: {
-        nav: ({ selNav }, $el) => $(selNav, $el),
+        nav: ({ selNav }, $el) => $$(selNav, $el),
         navChildren() {
-          return children(this.nav);
+          return this.nav.flatMap((nav) => children(nav));
         },
         selNavItem: ({ attrItem }) => `[${attrItem}],[data-${attrItem}]`,
         navItems(_, $el) {
@@ -3746,7 +3962,7 @@
                 ariaControls = slide.id;
               }
               ariaLabel = this.t("slideX", toFloat(cmd) + 1);
-              attr(button, "role", "tab");
+              button.role = "tab";
             } else {
               if (this.list) {
                 if (!this.list.id) {
@@ -3756,33 +3972,29 @@
               }
               ariaLabel = this.t(cmd);
             }
-            attr(button, {
-              "aria-controls": ariaControls,
-              "aria-label": attr(button, "aria-label") || ariaLabel
-            });
+            attr(button, "aria-controls", ariaControls);
+            button.ariaLabel = button.ariaLabel || ariaLabel;
           }
         },
         slides(slides) {
           slides.forEach(
             (slide, i) => attr(slide, {
-              role: this.nav ? "tabpanel" : "group",
+              role: this.nav.length ? "tabpanel" : "group",
               "aria-label": this.t("slideLabel", i + 1, this.length),
-              "aria-roledescription": this.nav ? null : "slide"
+              "aria-roledescription": this.nav.length ? null : "slide"
             })
           );
           this.padNavitems();
         }
       },
       connected() {
-        attr(this.$el, {
-          role: this.role,
-          "aria-roledescription": "carousel"
-        });
+        this.$el.role = this.role;
+        this.$el.ariaRoleDescription = "carousel";
       },
       update: [
         {
           write() {
-            this.navItems.concat(this.nav).forEach((el) => el && (el.hidden = !this.maxIndex));
+            this.navItems.concat(this.nav).forEach((el) => el && (el.hidden = this.maxIndex < 1));
             this.updateNav();
           },
           events: ["resize"]
@@ -3795,14 +4007,16 @@
           filter: ({ parallax }) => !parallax,
           handler(e) {
             if (e.target.closest("a,button") && (e.type === "click" || e.keyCode === keyMap.SPACE)) {
-              e.preventDefault();
+              maybeDefaultPreventClick(e);
               this.show(data(e.current, this.attrItem));
             }
           }
         },
         {
           name: "itemshow",
-          handler: "updateNav"
+          handler() {
+            this.updateNav();
+          }
         },
         {
           name: "keydown",
@@ -3814,7 +4028,7 @@
             if (!isNumeric(cmd)) {
               return;
             }
-            let i = keyCode === keyMap.HOME ? 0 : keyCode === keyMap.END ? "last" : keyCode === keyMap.LEFT ? "previous" : keyCode === keyMap.RIGHT ? "next" : -1;
+            const i = getNavigationIndex(keyCode);
             if (~i) {
               e.preventDefault();
               this.show(i);
@@ -3832,11 +4046,9 @@
               const item = toNumber(cmd);
               const active = item === index;
               toggleClass(el, this.clsActive, active);
-              toggleClass(button, "uk-disabled", this.parallax);
-              attr(button, {
-                "aria-selected": active,
-                tabindex: active && !this.parallax ? null : -1
-              });
+              toggleClass(button, "uk-disabled", !!this.parallax);
+              button.ariaSelected = active;
+              button.tabIndex = active && !this.parallax ? null : -1;
               if (active && button && matches(parent(el), ":focus-within")) {
                 button.focus();
               }
@@ -3850,16 +4062,16 @@
           }
         },
         padNavitems() {
-          if (!this.nav) {
-            return;
-          }
-          const children2 = [];
-          for (let i = 0; i < this.length; i++) {
-            const attr2 = `${this.attrItem}="${i}"`;
-            children2[i] = this.navChildren.findLast((el) => el.matches(`[${attr2}]`)) || $(`<li ${attr2}><a href></a></li>`);
-          }
-          if (!isEqual(children2, this.navChildren)) {
-            html(this.nav, children2);
+          for (const nav of this.nav) {
+            const navChildren = children(nav);
+            const navItems = [];
+            for (let i = 0; i < this.length; i++) {
+              const attr2 = `${this.attrItem}="${i}"`;
+              navItems[i] = navChildren.findLast((el) => el.matches(`[${attr2}]`)) || $(`<li ${attr2}><a href></a></li>`);
+            }
+            if (!isEqual(navItems, navChildren)) {
+              html(nav, navItems);
+            }
           }
         }
       }
@@ -3935,7 +4147,7 @@
         }
       },
       methods: {
-        show(index, force = false) {
+        async show(index, force = false) {
           var _a;
           if (this.dragging || !this.length || this.parallax) {
             return;
@@ -3971,18 +4183,17 @@
             reset();
             return;
           }
-          const promise = this._show(prev, next, force).then(() => {
-            prev && trigger(prev, "itemhidden", [this]);
-            trigger(next, "itemshown", [this]);
-            stack.shift();
-            this._transitioner = null;
-            if (stack.length) {
-              requestAnimationFrame(() => stack.length && this.show(stack.shift(), true));
-            }
-          });
           prev && trigger(prev, "itemhide", [this]);
           trigger(next, "itemshow", [this]);
-          return promise;
+          await this._show(prev, next, force);
+          prev && trigger(prev, "itemhidden", [this]);
+          trigger(next, "itemshown", [this]);
+          this._transitioner = null;
+          await awaitFrame();
+          stack.shift();
+          if (stack.length) {
+            this.show(stack.shift(), true);
+          }
         },
         getIndex(index = this.index, prev = this.index) {
           return clamp(
@@ -4052,7 +4263,7 @@
       },
       observe: resize(),
       events: {
-        beforeitemshow({ target }) {
+        itemshow({ target }) {
           addClass(target, this.clsActive);
         },
         itemshown({ target }) {
@@ -4065,6 +4276,84 @@
     };
 
     var Animations$1 = {
+      ...Animations$2,
+      fade: {
+        show() {
+          return [{ opacity: 0, zIndex: 0 }, { zIndex: -1 }];
+        },
+        percent(current) {
+          return 1 - css(current, "opacity");
+        },
+        translate(percent) {
+          return [{ opacity: 1 - percent, zIndex: 0 }, { zIndex: -1 }];
+        }
+      },
+      scale: {
+        show() {
+          return [{ opacity: 0, transform: scale3d(1 + 0.5), zIndex: 0 }, { zIndex: -1 }];
+        },
+        percent(current) {
+          return 1 - css(current, "opacity");
+        },
+        translate(percent) {
+          return [
+            { opacity: 1 - percent, transform: scale3d(1 + 0.5 * percent), zIndex: 0 },
+            { zIndex: -1 }
+          ];
+        }
+      },
+      pull: {
+        show(dir) {
+          return dir < 0 ? [
+            { transform: translate(30), zIndex: -1 },
+            { transform: translate(), zIndex: 0 }
+          ] : [
+            { transform: translate(-100), zIndex: 0 },
+            { transform: translate(), zIndex: -1 }
+          ];
+        },
+        percent(current, next, dir) {
+          return dir < 0 ? 1 - translated(next) : translated(current);
+        },
+        translate(percent, dir) {
+          return dir < 0 ? [
+            { transform: translate(30 * percent), zIndex: -1 },
+            { transform: translate(-100 * (1 - percent)), zIndex: 0 }
+          ] : [
+            { transform: translate(-percent * 100), zIndex: 0 },
+            { transform: translate(30 * (1 - percent)), zIndex: -1 }
+          ];
+        }
+      },
+      push: {
+        show(dir) {
+          return dir < 0 ? [
+            { transform: translate(100), zIndex: 0 },
+            { transform: translate(), zIndex: -1 }
+          ] : [
+            { transform: translate(-30), zIndex: -1 },
+            { transform: translate(), zIndex: 0 }
+          ];
+        },
+        percent(current, next, dir) {
+          return dir > 0 ? 1 - translated(next) : translated(current);
+        },
+        translate(percent, dir) {
+          return dir < 0 ? [
+            { transform: translate(percent * 100), zIndex: 0 },
+            { transform: translate(-30 * (1 - percent)), zIndex: -1 }
+          ] : [
+            { transform: translate(-30 * percent), zIndex: -1 },
+            { transform: translate(100 * (1 - percent)), zIndex: 0 }
+          ];
+        }
+      }
+    };
+    function scale3d(value) {
+      return `scale3d(${value}, ${value}, 1)`;
+    }
+
+    var Animations = {
       ...Animations$2,
       fade: {
         show() {
@@ -4097,34 +4386,67 @@
     };
 
     var LightboxPanel = {
+      i18n: {
+        counter: "%s / %s"
+      },
       mixins: [Modal, Slideshow],
       functional: true,
       props: {
-        delayControls: Number,
+        counter: Boolean,
         preload: Number,
+        nav: Boolean,
+        slidenav: Boolean,
+        delayControls: Number,
         videoAutoplay: Boolean,
         template: String
       },
       data: () => ({
+        counter: false,
         preload: 1,
-        videoAutoplay: false,
+        nav: false,
+        slidenav: true,
         delayControls: 3e3,
+        videoAutoplay: false,
         items: [],
         cls: "uk-open",
         clsPage: "uk-lightbox-page",
-        selList: ".uk-lightbox-items",
+        clsFit: "uk-lightbox-items-fit",
+        clsZoom: "uk-lightbox-zoom",
         attrItem: "uk-lightbox-item",
+        selList: ".uk-lightbox-items",
         selClose: ".uk-close-large",
+        selNav: ".uk-lightbox-thumbnav, .uk-lightbox-dotnav",
         selCaption: ".uk-lightbox-caption",
+        selCounter: ".uk-lightbox-counter",
         pauseOnHover: false,
         velocity: 2,
-        Animations: Animations$1,
-        template: `<div class="uk-lightbox uk-overflow-hidden"> <div class="uk-lightbox-items"></div> <div class="uk-lightbox-toolbar uk-position-top uk-text-right uk-transition-slide-top uk-transition-opaque"> <button class="uk-lightbox-toolbar-icon uk-close-large" type="button" uk-close></button> </div> <a class="uk-lightbox-button uk-position-center-left uk-position-medium uk-transition-fade" href uk-slidenav-previous uk-lightbox-item="previous"></a> <a class="uk-lightbox-button uk-position-center-right uk-position-medium uk-transition-fade" href uk-slidenav-next uk-lightbox-item="next"></a> <div class="uk-lightbox-toolbar uk-lightbox-caption uk-position-bottom uk-text-center uk-transition-slide-bottom uk-transition-opaque"></div> </div>`
+        Animations,
+        template: `<div class="uk-lightbox uk-overflow-hidden">  <div class="uk-lightbox-items"></div>  <div class="uk-position-top-right uk-position-small uk-transition-fade" uk-inverse>  <button class="uk-lightbox-close uk-close-large" type="button" uk-close></button>  </div>  <div class="uk-lightbox-slidenav uk-position-center-left uk-position-medium uk-transition-fade" uk-inverse>  <a href uk-slidenav-previous uk-lightbox-item="previous"></a>  </div>  <div class="uk-lightbox-slidenav uk-position-center-right uk-position-medium uk-transition-fade" uk-inverse>  <a href uk-slidenav-next uk-lightbox-item="next"></a>  </div>  <div class="uk-position-center-right uk-position-medium uk-transition-fade" uk-inverse style="max-height: 90vh; overflow: auto;">  <ul class="uk-lightbox-thumbnav uk-lightbox-thumbnav-vertical uk-thumbnav uk-thumbnav-vertical"></ul>  <ul class="uk-lightbox-dotnav uk-dotnav uk-dotnav-vertical"></ul>  </div>  <div class="uk-lightbox-counter uk-text-large uk-position-top-left uk-position-small uk-transition-fade" uk-inverse></div>  <div class="uk-lightbox-caption uk-position-bottom uk-text-center uk-transition-slide-bottom uk-transition-opaque"></div>  </div>`
       }),
       created() {
-        const $el = $(this.template);
+        let $el = $(this.template);
+        if (isTag($el, "template")) {
+          $el = fragment(html($el));
+        }
         const list = $(this.selList, $el);
-        this.items.forEach(() => append(list, "<div>"));
+        const navType = this.$props.nav;
+        remove$1($$(this.selNav, $el).filter((el) => !matches(el, `.uk-${navType}`)));
+        for (const [i, item] of this.items.entries()) {
+          append(list, "<div>");
+          if (navType === "thumbnav") {
+            wrapAll(
+              toThumbnavItem(item, this.videoAutoplay),
+              append($(this.selNav, $el), `<li uk-lightbox-item="${i}"><a href></a></li>`)
+            );
+          }
+        }
+        if (!this.slidenav) {
+          remove$1($$(".uk-lightbox-slidenav", $el));
+        }
+        if (!this.counter) {
+          remove$1($(this.selCounter, $el));
+        }
+        addClass(list, this.clsFit);
         const close = $("[uk-close]", $el);
         const closeLabel = this.t("close");
         if (close && closeLabel) {
@@ -4134,12 +4456,9 @@
       },
       events: [
         {
-          name: `${pointerMove$1} ${pointerDown$1} keydown`,
-          handler: "showControls"
-        },
-        {
           name: "click",
           self: true,
+          filter: ({ bgClose }) => bgClose,
           delegate: ({ selList }) => `${selList} > *`,
           handler(e) {
             if (!e.defaultPrevented) {
@@ -4148,9 +4467,28 @@
           }
         },
         {
+          name: "click",
+          self: true,
+          delegate: ({ clsZoom }) => `.${clsZoom}`,
+          handler(e) {
+            if (!e.defaultPrevented) {
+              toggleClass(this.list, this.clsFit);
+            }
+          }
+        },
+        {
+          name: `${pointerMove$1} ${pointerDown$1} keydown`,
+          filter: ({ delayControls }) => delayControls,
+          handler() {
+            this.showControls();
+          }
+        },
+        {
           name: "shown",
           self: true,
-          handler: "showControls"
+          handler() {
+            this.showControls();
+          }
         },
         {
           name: "hide",
@@ -4172,19 +4510,10 @@
           name: "keyup",
           el: () => document,
           handler({ keyCode }) {
-            if (!this.isToggled(this.$el) || !this.draggable) {
+            if (!this.isToggled() || !this.draggable) {
               return;
             }
-            let i = -1;
-            if (keyCode === keyMap.LEFT) {
-              i = "previous";
-            } else if (keyCode === keyMap.RIGHT) {
-              i = "next";
-            } else if (keyCode === keyMap.HOME) {
-              i = 0;
-            } else if (keyCode === keyMap.END) {
-              i = "last";
-            }
+            const i = getNavigationIndex(keyCode);
             if (~i) {
               this.show(i);
             }
@@ -4193,24 +4522,23 @@
         {
           name: "beforeitemshow",
           handler(e) {
+            html($(this.selCaption, this.$el), this.getItem().caption || "");
+            html(
+              $(this.selCounter, this.$el),
+              this.t("counter", this.index + 1, this.slides.length)
+            );
+            for (let j = -this.preload; j <= this.preload; j++) {
+              this.loadItem(this.index + j);
+            }
             if (this.isToggled()) {
               return;
             }
             this.draggable = false;
             e.preventDefault();
             this.toggleElement(this.$el, true, false);
-            this.animation = Animations$1["scale"];
+            this.animation = Animations.scale;
             removeClass(e.target, this.clsActive);
             this.stack.splice(1, 0, this.index);
-          }
-        },
-        {
-          name: "itemshow",
-          handler() {
-            html($(this.selCaption, this.$el), this.getItem().caption || "");
-            for (let j = -this.preload; j <= this.preload; j++) {
-              this.loadItem(this.index + j);
-            }
           }
         },
         {
@@ -4222,29 +4550,38 @@
         {
           name: "itemload",
           async handler(_, item) {
-            const { source: src, type, alt = "", poster, attrs = {} } = item;
-            this.setItem(item, "<span uk-spinner></span>");
+            const { source: src, type, attrs = {} } = item;
+            this.setItem(item, "<span uk-spinner uk-inverse></span>");
             if (!src) {
               return;
             }
-            let matches;
+            let matches2;
             const iframeAttrs = {
               allowfullscreen: "",
               style: "max-width: 100%; box-sizing: border-box;",
               "uk-responsive": "",
-              "uk-video": `${this.videoAutoplay}`
+              "uk-video": Boolean(this.videoAutoplay)
             };
-            if (type === "image" || src.match(/\.(avif|jpe?g|jfif|a?png|gif|svg|webp)($|\?)/i)) {
-              const img = createEl("img", { src, alt, ...attrs });
-              on(img, "load", () => this.setItem(item, img));
+            if (type === "image" || isImage(src)) {
+              const img = createEl("img");
+              wrapInPicture(img, item.sources);
+              attr(img, {
+                src,
+                ...pick(item, ["alt", "srcset", "sizes"]),
+                ...attrs
+              });
+              on(img, "load", () => this.setItem(item, parent(img) || img));
               on(img, "error", () => this.setError(item));
-            } else if (type === "video" || src.match(/\.(mp4|webm|ogv)($|\?)/i)) {
+            } else if (type === "video" || isVideo(src)) {
+              const inline = this.videoAutoplay === "inline";
               const video = createEl("video", {
                 src,
-                poster,
-                controls: "",
                 playsinline: "",
-                "uk-video": `${this.videoAutoplay}`,
+                controls: inline ? null : "",
+                loop: inline ? "" : null,
+                muted: inline ? "" : null,
+                poster: this.videoAutoplay ? null : item.poster,
+                "uk-video": Boolean(this.videoAutoplay),
                 ...attrs
               });
               on(video, "loadedmetadata", () => this.setItem(item, video));
@@ -4259,20 +4596,20 @@
                   ...attrs
                 })
               );
-            } else if (matches = src.match(
+            } else if (matches2 = src.match(
               /\/\/(?:.*?youtube(-nocookie)?\..*?(?:[?&]v=|\/shorts\/)|youtu\.be\/)([\w-]{11})[&?]?(.*)?/
             )) {
               this.setItem(
                 item,
                 createEl("iframe", {
-                  src: `https://www.youtube${matches[1] || ""}.com/embed/${matches[2]}${matches[3] ? `?${matches[3]}` : ""}`,
+                  src: `https://www.youtube${matches2[1] || ""}.com/embed/${matches2[2]}${matches2[3] ? `?${matches2[3]}` : ""}`,
                   width: 1920,
                   height: 1080,
                   ...iframeAttrs,
                   ...attrs
                 })
               );
-            } else if (matches = src.match(/\/\/.*?vimeo\.[a-z]+\/(\d+)[&?]?(.*)?/)) {
+            } else if (matches2 = src.match(/\/\/.*?vimeo\.[a-z]+\/(\d+)[&?]?(.*)?/)) {
               try {
                 const { height, width } = await (await fetch(
                   `https://vimeo.com/api/oembed.json?maxwidth=1920&url=${encodeURI(
@@ -4283,20 +4620,41 @@
                 this.setItem(
                   item,
                   createEl("iframe", {
-                    src: `https://player.vimeo.com/video/${matches[1]}${matches[2] ? `?${matches[2]}` : ""}`,
+                    src: `https://player.vimeo.com/video/${matches2[1]}${matches2[2] ? `?${matches2[2]}` : ""}`,
                     width,
                     height,
                     ...iframeAttrs,
                     ...attrs
                   })
                 );
-              } catch (e) {
+              } catch {
                 this.setError(item);
               }
             }
           }
+        },
+        {
+          name: "itemloaded",
+          handler() {
+            this.$emit("resize");
+          }
         }
       ],
+      update: {
+        read() {
+          for (const media of $$(`${this.selList} :not([controls]):is(img,video)`, this.$el)) {
+            toggleClass(
+              media,
+              this.clsZoom,
+              (media.naturalHeight || media.videoHeight) - this.$el.offsetHeight > Math.max(
+                0,
+                (media.naturalWidth || media.videoWidth) - this.$el.offsetWidth
+              )
+            );
+          }
+        },
+        events: ["resize"]
+      },
       methods: {
         loadItem(index = this.index) {
           const item = this.getItem(index);
@@ -4314,11 +4672,11 @@
           return this.slides[this.items.indexOf(item)];
         },
         setError(item) {
-          this.setItem(item, '<span uk-icon="icon: bolt; ratio: 2"></span>');
+          this.setItem(item, '<span uk-icon="icon: bolt; ratio: 2" uk-inverse></span>');
         },
         showControls() {
           clearTimeout(this.controlsTimer);
-          this.controlsTimer = setTimeout(this.hideControls, this.delayControls);
+          this.controlsTimer = this.delayControls && setTimeout(this.hideControls, this.delayControls);
           addClass(this.$el, "uk-active", "uk-transition-active");
         },
         hideControls() {
@@ -4331,7 +4689,27 @@
       attr(el, attrs);
       return el;
     }
+    function toThumbnavItem(item, videoAutoplay) {
+      const el = item.poster || item.thumb && (item.type === "image" || isImage(item.thumb)) ? createEl("img", { src: item.poster || item.thumb, alt: "" }) : item.thumb && (item.type === "video" || isVideo(item.thumb)) ? createEl("video", {
+        src: item.thumb,
+        loop: "",
+        playsinline: "",
+        muted: "",
+        "uk-video": videoAutoplay === "inline"
+      }) : createEl("canvas");
+      if (item.thumbRatio) {
+        el.style.aspectRatio = item.thumbRatio;
+      }
+      return el;
+    }
+    function isImage(src) {
+      return src == null ? void 0 : src.match(/\.(avif|jpe?g|jfif|a?png|gif|svg|webp)($|\?)/i);
+    }
+    function isVideo(src) {
+      return src == null ? void 0 : src.match(/\.(mp4|webm|ogv)($|\?)/i);
+    }
 
+    const selDisabled$1 = ".uk-disabled *, .uk-disabled, [disabled]";
     var lightbox = {
       install: install$3,
       props: { toggle: String },
@@ -4344,7 +4722,7 @@
           this.hide();
           for (const toggle of toggles) {
             if (isTag(toggle, "a")) {
-              attr(toggle, "role", "button");
+              toggle.role = "button";
             }
           }
         }
@@ -4354,17 +4732,23 @@
       },
       events: {
         name: "click",
-        delegate: ({ toggle }) => `${toggle}:not(.uk-disabled)`,
+        delegate: ({ toggle }) => toggle,
         handler(e) {
           if (!e.defaultPrevented) {
             e.preventDefault();
-            this.show(e.current);
+            if (!matches(e.current, selDisabled$1)) {
+              this.show(e.current);
+            }
           }
         }
       },
       methods: {
         show(index) {
-          const items = uniqueBy(this.toggles.map(toItem), "source");
+          let items = this.toggles.map(toItem);
+          if (this.nav === "thumbnav") {
+            ensureThumb.call(this, this.toggles, items);
+          }
+          items = uniqueBy(items, "source");
           if (isElement(index)) {
             const { source } = toItem(index);
             index = findIndex(items, ({ source: src }) => source === src);
@@ -4385,10 +4769,29 @@
       }
       assign(Lightbox.props, UIkit.component("lightboxPanel").options.props);
     }
+    function ensureThumb(toggles, items) {
+      for (const [i, toggle] of Object.entries(toggles)) {
+        if (items[i].thumb) {
+          continue;
+        }
+        const parent = parents(toggle).reverse().concat(toggle).find(
+          (parent2) => this.$el.contains(parent2) && (parent2 === toggle || $$(this.toggle, parent2).length === 1)
+        );
+        if (!parent) {
+          continue;
+        }
+        const media = $("img,video", parent);
+        if (media) {
+          items[i].thumb = media.currentSrc || media.poster || media.src;
+          items[i].thumbRatio = (media.naturalWidth || media.videoWidth) / (media.naturalHeight || media.videoHeight);
+        }
+      }
+    }
     function toItem(el) {
       const item = {};
-      for (const attr2 of ["href", "caption", "type", "poster", "alt", "attrs"]) {
-        item[attr2 === "href" ? "source" : attr2] = data(el, attr2);
+      for (const attribute of el.getAttributeNames()) {
+        const key = attribute.replace(/^data-/, "");
+        item[key === "href" ? "source" : key] = el.getAttribute(attribute);
       }
       item.attrs = parseOptions(item.attrs);
       return item;
@@ -4425,7 +4828,7 @@
         this.$mount(
           append(
             container,
-            `<div class="${this.clsMsg}${this.status ? ` ${this.clsMsg}-${this.status}` : ""}" role="alert"> <a href class="${this.clsClose}" data-uk-close></a> <div>${this.message}</div> </div>`
+            `<div class="${this.clsMsg}${this.status ? ` ${this.clsMsg}-${this.status}` : ""}" role="alert">  <a href class="${this.clsClose}" data-uk-close></a>  <div>${this.message}</div>  </div>`
           )
         );
       },
@@ -4441,9 +4844,7 @@
       },
       events: {
         click(e) {
-          if (e.target.closest('a[href="#"],a[href=""]')) {
-            e.preventDefault();
-          }
+          maybeDefaultPreventClick(e);
           this.close();
         },
         [pointerEnter]() {
@@ -4583,9 +4984,7 @@
       },
       methods: {
         reset() {
-          for (const prop in this.getCss(0)) {
-            css(this.$el, prop, "");
-          }
+          resetProps(this.$el, this.getCss(0));
         },
         getCss(percent) {
           const css2 = {};
@@ -4810,7 +5209,7 @@
     }
     function getValue(stops, percent) {
       const [start, end, p] = getStop(stops, percent);
-      return start + Math.abs(start - end) * p * (start < end ? 1 : -1);
+      return start + (end - start) * p;
     }
     const unitRe = /^-?\d+(?:\.\d+)?(\S+)?/;
     function getUnit(stops, defaultUnit) {
@@ -4877,7 +5276,7 @@
       ],
       update: {
         read({ percent }, types) {
-          if (!types.has("scroll")) {
+          if (!types.has("scroll") || types.has("resize")) {
             percent = false;
           }
           if (!isVisible(this.$el)) {
@@ -5089,22 +5488,21 @@
           return this.show(duration, percent, true);
         },
         translate(percent) {
-          if (percent === this.percent()) {
-            return;
+          if (percent !== this.percent()) {
+            const distance = this.getDistance() * dir * (isRtl ? -1 : 1);
+            css(
+              list,
+              "transform",
+              translate(
+                clamp(
+                  -to + (distance - distance * percent),
+                  -getWidth(list),
+                  dimensions$1(list).width
+                ) * (isRtl ? -1 : 1),
+                "px"
+              )
+            );
           }
-          const distance = this.getDistance() * dir * (isRtl ? -1 : 1);
-          css(
-            list,
-            "transform",
-            translate(
-              clamp(
-                -to + (distance - distance * percent),
-                -getWidth(list),
-                dimensions$1(list).width
-              ) * (isRtl ? -1 : 1),
-              "px"
-            )
-          );
           const actives = this.getActives();
           const itemIn = this.getItemIn();
           const itemOut = this.getItemIn(true);
@@ -5154,7 +5552,7 @@
       return sumBy(children(list).slice(0, index), (el) => dimensions$1(el).width);
     }
     function centerEl(el, list) {
-      return dimensions$1(list).width / 2 - dimensions$1(el).width / 2;
+      return (dimensions$1(list).width - dimensions$1(el).width) / 2;
     }
     function getElLeft(el, list) {
       return el && (position(el).left + (isRtl ? dimensions$1(el).width - dimensions$1(list).width : 0)) * (isRtl ? -1 : 1) || 0;
@@ -5223,7 +5621,7 @@
             if (this.center) {
               if (left < width / 2 && left + slideWidth + dimensions$1(this.slides[getIndex(i + 1, this.slides)]).width / 2 > width / 2) {
                 sets.push(i);
-                left = width / 2 - slideWidth / 2;
+                left = (width - slideWidth) / 2;
               }
             } else if (left === 0) {
               sets.push(Math.min(i, this.maxIndex));
@@ -5247,9 +5645,21 @@
       connected() {
         toggleClass(this.$el, this.clsContainer, !$(`.${this.clsContainer}`, this.$el));
       },
-      observe: resize({
-        target: ({ slides, $el }) => [$el, ...slides]
-      }),
+      observe: [
+        resize({
+          target: ({ list, $el }) => [$el, ...children(list)]
+        }),
+        intersection({
+          handler(entries) {
+            for (const { target, isIntersecting } of entries) {
+              target.ariaHidden = target.inert = !isIntersecting;
+            }
+          },
+          target: ({ list }) => children(list),
+          args: { intersecting: false },
+          options: ({ $el }) => ({ root: $el, rootMargin: "0px -10px" })
+        })
+      ],
       update: {
         write() {
           for (const el of this.navItems) {
@@ -5314,7 +5724,7 @@
             return;
           }
           const next = this.slides[index];
-          let width = dimensions$1(this.list).width / 2 - dimensions$1(next).width / 2;
+          let width = (dimensions$1(this.list).width - dimensions$1(next).width) / 2;
           let j = 0;
           while (width > 0) {
             const slideIndex = this.getIndex(--j + index, index);
@@ -5333,15 +5743,7 @@
             !this.sets || includes(this.sets, toFloat(this.index)) ? this.clsActivated : ""
           ];
           for (const slide of this.slides) {
-            const active = includes(actives, slide);
-            toggleClass(slide, activeClasses, active);
-            attr(slide, "aria-hidden", !active);
-            for (const focusable of $$(selFocusable, slide)) {
-              if (!hasOwn(focusable, "_tabindex")) {
-                focusable._tabindex = attr(focusable, "tabindex");
-              }
-              attr(focusable, "tabindex", active ? focusable._tabindex : -1);
-            }
+            toggleClass(slide, activeClasses, includes(actives, slide));
           }
         },
         getValidIndex(index = this.index, prevIndex = this.prevIndex) {
@@ -5364,7 +5766,7 @@
           const left = -width;
           const right = width * 2;
           const slideWidth = dimensions$1(this.slides[this.index]).width;
-          const slideLeft = this.center ? width / 2 - slideWidth / 2 : 0;
+          const slideLeft = this.center ? (width - slideWidth) / 2 : 0;
           const slides = /* @__PURE__ */ new Set();
           for (const i of [-1, 1]) {
             let currentLeft = slideLeft + (i > 0 ? slideWidth : 0);
@@ -5375,16 +5777,16 @@
               slides.add(slide);
             } while (this.length > j && currentLeft > left && currentLeft < right);
           }
-          return Array.from(slides);
+          return [...slides];
         },
         getIndexAt(percent) {
           let index = -1;
-          const scrollDist = this.center ? getWidth(this.list) - (dimensions$1(this.slides[0]).width / 2 + dimensions$1(last(this.slides)).width / 2) : getWidth(this.list, this.maxIndex);
+          const scrollDist = this.center ? getWidth(this.list) - (dimensions$1(this.slides[0]).width + dimensions$1(last(this.slides)).width) / 2 : getWidth(this.list, this.maxIndex);
           let dist = percent * scrollDist;
-          let slidePercent = 0;
+          let slidePercent;
           do {
             const slideWidth = dimensions$1(this.slides[++index]).width;
-            const slideDist = this.center ? slideWidth / 2 + dimensions$1(this.slides[index + 1]).width / 2 : slideWidth;
+            const slideDist = this.center ? (slideWidth + dimensions$1(this.slides[index + 1]).width) / 2 : slideWidth;
             slidePercent = dist / slideDist % 1;
             dist -= slideDist;
           } while (dist >= 0 && index < this.maxIndex);
@@ -5420,7 +5822,7 @@
           }
           diff = Math.max(
             diff,
-            slideWidth / 2 + dimensions$1(slides[getIndex(+index + i, slides)]).width / 2 - (left - listHalf)
+            (slideWidth + dimensions$1(slides[getIndex(+index + i, slides)]).width) / 2 - (left - listHalf)
           );
         }
         if (Math.trunc(diff) > sumBy(
@@ -5496,81 +5898,6 @@
       return isIn(type) ^ dir < 0 ? percent : 1 - percent;
     }
 
-    var Animations = {
-      ...Animations$2,
-      fade: {
-        show() {
-          return [{ opacity: 0, zIndex: 0 }, { zIndex: -1 }];
-        },
-        percent(current) {
-          return 1 - css(current, "opacity");
-        },
-        translate(percent) {
-          return [{ opacity: 1 - percent, zIndex: 0 }, { zIndex: -1 }];
-        }
-      },
-      scale: {
-        show() {
-          return [{ opacity: 0, transform: scale3d(1 + 0.5), zIndex: 0 }, { zIndex: -1 }];
-        },
-        percent(current) {
-          return 1 - css(current, "opacity");
-        },
-        translate(percent) {
-          return [
-            { opacity: 1 - percent, transform: scale3d(1 + 0.5 * percent), zIndex: 0 },
-            { zIndex: -1 }
-          ];
-        }
-      },
-      pull: {
-        show(dir) {
-          return dir < 0 ? [
-            { transform: translate(30), zIndex: -1 },
-            { transform: translate(), zIndex: 0 }
-          ] : [
-            { transform: translate(-100), zIndex: 0 },
-            { transform: translate(), zIndex: -1 }
-          ];
-        },
-        percent(current, next, dir) {
-          return dir < 0 ? 1 - translated(next) : translated(current);
-        },
-        translate(percent, dir) {
-          return dir < 0 ? [
-            { transform: translate(30 * percent), zIndex: -1 },
-            { transform: translate(-100 * (1 - percent)), zIndex: 0 }
-          ] : [
-            { transform: translate(-percent * 100), zIndex: 0 },
-            { transform: translate(30 * (1 - percent)), zIndex: -1 }
-          ];
-        }
-      },
-      push: {
-        show(dir) {
-          return dir < 0 ? [
-            { transform: translate(100), zIndex: 0 },
-            { transform: translate(), zIndex: -1 }
-          ] : [
-            { transform: translate(-30), zIndex: -1 },
-            { transform: translate(), zIndex: 0 }
-          ];
-        },
-        percent(current, next, dir) {
-          return dir > 0 ? 1 - translated(next) : translated(current);
-        },
-        translate(percent, dir) {
-          return dir < 0 ? [
-            { transform: translate(percent * 100), zIndex: 0 },
-            { transform: translate(-30 * (1 - percent)), zIndex: -1 }
-          ] : [
-            { transform: translate(-30 * percent), zIndex: -1 },
-            { transform: translate(100 * (1 - percent)), zIndex: 0 }
-          ];
-        }
-      }
-    };
-
     var slideshow = {
       mixins: [Class, Slideshow, SliderReactive, SliderParallax, SliderPreload],
       props: {
@@ -5585,26 +5912,21 @@
         selList: ".uk-slideshow-items",
         attrItem: "uk-slideshow-item",
         selNav: ".uk-slideshow-nav",
-        Animations
+        Animations: Animations$1
       },
       watch: {
         list(list) {
           css(list, {
-            aspectRatio: this.ratio ? this.ratio.replace(":", "/") : void 0,
+            aspectRatio: this.ratio && this.ratio !== "false" ? this.ratio.replace(":", "/") : "",
             minHeight: this.minHeight,
             maxHeight: this.maxHeight,
-            minWidth: "100%",
-            maxWidth: "100%"
+            width: "100%"
           });
-        }
-      },
-      methods: {
-        getAdjacentSlides() {
-          return [1, -1].map((i) => this.slides[this.getIndex(this.index + i)]);
         }
       }
     };
 
+    const pointerEnd = [pointerUp$1, pointerCancel];
     var sortable = {
       mixins: [Class, Animate],
       props: {
@@ -5637,7 +5959,9 @@
       events: {
         name: pointerDown$1,
         passive: false,
-        handler: "init"
+        handler(e) {
+          this.init(e);
+        }
       },
       computed: {
         target: (_, $el) => ($el.tBodies || [$el])[0],
@@ -5656,8 +5980,9 @@
           toggleClass(this.target, this.clsEmpty, empty);
         },
         handles(handles, prev) {
-          css(prev, { touchAction: "", userSelect: "" });
-          css(handles, { touchAction: "none", userSelect: "none" });
+          const props = { touchAction: "none", userSelect: "none" };
+          resetProps(prev, props);
+          css(handles, props);
         }
       },
       update: {
@@ -5691,8 +6016,7 @@
             sortable.target,
             target,
             placeholder,
-            x,
-            y,
+            { x, y },
             sortable === previous && data.moved !== target
           );
           if (insertTarget === false) {
@@ -5725,7 +6049,7 @@
           this.placeholder = placeholder;
           this.origin = { target, index: index(placeholder), ...this.pos };
           on(document, pointerMove$1, this.move);
-          on(document, pointerUp$1, this.end);
+          on(document, pointerEnd, this.end);
           if (!this.threshold) {
             this.start(e);
           }
@@ -5751,7 +6075,7 @@
         }),
         end() {
           off(document, pointerMove$1, this.move);
-          off(document, pointerUp$1, this.end);
+          off(document, pointerEnd, this.end);
           if (!this.drag) {
             return;
           }
@@ -5846,20 +6170,20 @@
         height: element.offsetHeight,
         padding: css(element, "padding")
       });
-      height(clone.firstElementChild, height(element.firstElementChild));
+      height$1(clone.firstElementChild, height$1(element.firstElementChild));
       return clone;
     }
     function findTarget(items, point) {
       return items[findIndex(items, (item) => pointInRect(point, dimensions$1(item)))];
     }
-    function findInsertTarget(list, target, placeholder, x, y, sameList) {
+    function findInsertTarget(list, target, placeholder, point, sameList) {
       if (!children(list).length) {
         return;
       }
       const rect = dimensions$1(target);
       if (!sameList) {
         if (!isHorizontal(list, placeholder)) {
-          return y < rect.top + rect.height / 2 ? target : target.nextElementSibling;
+          return point.y < rect.top + rect.height / 2 ? target : target.nextElementSibling;
         }
         return target;
       }
@@ -5868,7 +6192,7 @@
         [rect.top, rect.bottom],
         [placeholderRect.top, placeholderRect.bottom]
       );
-      const [pointerPos, lengthProp, startProp, endProp] = sameRow ? [x, "width", "left", "right"] : [y, "height", "top", "bottom"];
+      const [pointerPos, lengthProp, startProp, endProp] = sameRow ? [point.x, "width", "left", "right"] : [point.y, "height", "top", "bottom"];
       const diff = placeholderRect[lengthProp] < rect[lengthProp] ? rect[lengthProp] - placeholderRect[lengthProp] : 0;
       if (placeholderRect[startProp] < rect[startProp]) {
         if (diff && pointerPos < rect[startProp] + diff) {
@@ -6039,7 +6363,7 @@
         async _show(title, id) {
           this.tooltip = append(
             this.container,
-            `<div id="${id}" class="uk-${this.$options.name}" role="tooltip"> <div class="uk-${this.$options.name}-inner">${title}</div> </div>`
+            `<div id="${id}" class="uk-${this.$options.name}" role="tooltip">  <div class="uk-${this.$options.name}-inner">${title}</div>  </div>`
           );
           on(this.tooltip, "toggled", (e, toggled) => {
             if (!toggled) {
@@ -6074,7 +6398,7 @@
         // Clicking a button does not give it focus on all browsers and platforms
         // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#clicking_and_focus
         [`focus ${pointerEnter} ${pointerDown$1}`](e) {
-          if (!isTouch(e) || e.type === pointerDown$1) {
+          if ((!isTouch(e) || e.type === pointerDown$1) && document.readyState !== "loading") {
             this.show();
           }
         }
@@ -6082,7 +6406,7 @@
     };
     function makeFocusable(el) {
       if (!isFocusable(el)) {
-        attr(el, "tabindex", "0");
+        el.tabIndex = 0;
       }
     }
     function getAlignment(el, target, [dir, align]) {
@@ -6108,10 +6432,12 @@
     }
     function parseProps(options) {
       const { el, id, data: data$1 } = options;
-      return ["delay", "title"].reduce((obj, key) => ({ [key]: data(el, key), ...obj }), {
+      return {
+        title: data(el, "title"),
+        delay: data(el, "delay"),
         ...parseOptions(data(el, id), ["title"]),
         ...data$1
-      });
+      };
     }
 
     var upload = {
@@ -6192,37 +6518,37 @@
       },
       methods: {
         async upload(files) {
-          files = toArray(files);
-          if (!files.length) {
-            return;
-          }
-          trigger(this.$el, "upload", [files]);
-          for (const file of files) {
-            if (this.maxSize && this.maxSize * 1e3 < file.size) {
-              this.fail(this.t("invalidSize", this.maxSize));
+          try {
+            files = toArray(files);
+            if (!files.length) {
               return;
             }
-            if (this.allow && !match$1(this.allow, file.name)) {
-              this.fail(this.t("invalidName", this.allow));
-              return;
+            if (!this.multiple) {
+              files = files.slice(0, 1);
             }
-            if (this.mime && !match$1(this.mime, file.type)) {
-              this.fail(this.t("invalidMime", this.mime));
-              return;
+            trigger(this.$el, "upload", [files]);
+            for (const file of files) {
+              if (this.maxSize && this.maxSize * 1e3 < file.size) {
+                this.fail(this.t("invalidSize", this.maxSize));
+                return;
+              }
+              if (this.allow && !match$1(this.allow, file.name)) {
+                this.fail(this.t("invalidName", this.allow));
+                return;
+              }
+              if (this.mime && !match$1(this.mime, file.type)) {
+                this.fail(this.t("invalidMime", this.mime));
+                return;
+              }
             }
-          }
-          if (!this.multiple) {
-            files = files.slice(0, 1);
-          }
-          this.beforeAll(this, files);
-          const chunks = chunk(files, this.concurrent);
-          const upload = async (files2) => {
-            const data = new FormData();
-            files2.forEach((file) => data.append(this.name, file));
-            for (const key in this.params) {
-              data.append(key, this.params[key]);
-            }
-            try {
+            await this.beforeAll(this, files);
+            const size = this.concurrent;
+            for (let i = 0; i < files.length; i += size) {
+              const data = new FormData();
+              files.slice(i, i + size).forEach((file) => data.append(this.name, file));
+              for (const key in this.params) {
+                data.append(key, this.params[key]);
+              }
               const xhr = await ajax(this.url, {
                 data,
                 method: this.method,
@@ -6237,33 +6563,27 @@
                 }
               });
               this.complete(xhr);
-              if (chunks.length) {
-                await upload(chunks.shift());
-              } else {
+              if (i + size >= files.length) {
                 this.completeAll(xhr);
               }
-            } catch (e) {
+            }
+          } catch (e) {
+            if ((e == null ? void 0 : e.name) !== "AbortError") {
               this.error(e);
             }
-          };
-          await upload(chunks.shift());
+          }
         }
       }
     };
     function match$1(pattern, path) {
-      return path.match(
-        new RegExp(
-          `^${pattern.replace(/\//g, "\\/").replace(/\*\*/g, "(\\/[^\\/]+)*").replace(/\*/g, "[^\\/]+").replace(/((?!\\))\?/g, "$1.")}$`,
-          "i"
-        )
+      const expression = pattern.replace(
+        /\*\*|[.*+?^${}()|[\]\\]/g,
+        (s) => {
+          var _a;
+          return (_a = { "**": ".*", "*": "[^/]+", "?": "[^/]", "|": "|" }[s]) != null ? _a : `\\${s}`;
+        }
       );
-    }
-    function chunk(files, size) {
-      const chunks = [];
-      for (let i = 0; i < files.length; i += size) {
-        chunks.push(files.slice(i, i + size));
-      }
-      return chunks;
+      return new RegExp(`^(?:${expression})$`, "i").test(path);
     }
     function stop(e) {
       e.preventDefault();
@@ -6271,6 +6591,7 @@
     }
     async function ajax(url, options) {
       const env = {
+        url,
         data: null,
         method: "GET",
         headers: {},
@@ -6279,8 +6600,10 @@
         responseType: "",
         ...options
       };
-      await env.beforeSend(env);
-      return send(url, env);
+      if (await env.beforeSend(env) === false) {
+        throw abortError(env.xhr);
+      }
+      return send(env.url, env);
     }
     function send(url, env) {
       return new Promise((resolve, reject) => {
@@ -6289,7 +6612,7 @@
           if (prop in xhr) {
             try {
               xhr[prop] = env[prop];
-            } catch (e) {
+            } catch {
             }
           }
         }
@@ -6311,8 +6634,12 @@
         });
         on(xhr, "error", () => reject(assign(Error("Network Error"), { xhr })));
         on(xhr, "timeout", () => reject(assign(Error("Network Timeout"), { xhr })));
+        on(xhr, "abort", () => reject(abortError(xhr)));
         xhr.send(env.data);
       });
+    }
+    function abortError(xhr) {
+      return assign(Error("Network Abort"), { xhr, name: "AbortError" });
     }
 
     var components$1 = /*#__PURE__*/Object.freeze({
@@ -6351,32 +6678,29 @@
       if (document.body) {
         apply(document.body, connect);
       }
-      new MutationObserver((records) => records.forEach(applyChildListMutation)).observe(document, {
+      new MutationObserver(handleMutation).observe(document, {
         subtree: true,
-        childList: true
-      });
-      new MutationObserver((records) => records.forEach(applyAttributeMutation)).observe(document, {
-        subtree: true,
+        childList: true,
         attributes: true
       });
       App._initialized = true;
     }
-    function applyChildListMutation({ addedNodes, removedNodes }) {
-      for (const node of addedNodes) {
-        apply(node, connect);
-      }
-      for (const node of removedNodes) {
-        apply(node, disconnect);
-      }
-    }
-    function applyAttributeMutation({ target, attributeName }) {
+    function handleMutation(records) {
       var _a;
-      const name = getComponentName(attributeName);
-      if (name) {
-        if (hasAttr(target, attributeName)) {
-          createComponent(name, target);
-        } else {
-          (_a = getComponent(target, name)) == null ? void 0 : _a.$destroy();
+      for (const { addedNodes, removedNodes, target, attributeName } of records) {
+        for (const node of addedNodes) {
+          apply(node, connect);
+        }
+        for (const node of removedNodes) {
+          apply(node, disconnect);
+        }
+        const name = attributeName && getComponentName(attributeName);
+        if (name) {
+          if (hasAttr(target, attributeName)) {
+            createComponent(name, target);
+          } else {
+            (_a = getComponent(target, name)) == null ? void 0 : _a.$destroy();
+          }
         }
       }
     }
@@ -6407,6 +6731,7 @@
     globalApi(App);
     instanceApi(App);
 
+    const wrappers = /* @__PURE__ */ new WeakMap();
     var Accordion = {
       mixins: [Class, Togglable],
       props: {
@@ -6426,8 +6751,8 @@
         collapsible: true,
         multiple: false,
         clsOpen: "uk-open",
-        toggle: "> .uk-accordion-title",
-        content: "> .uk-accordion-content",
+        toggle: ".uk-accordion-title",
+        content: ".uk-accordion-content",
         offset: 0
       },
       computed: {
@@ -6436,10 +6761,12 @@
           return this.items.map((item) => $(toggle, item));
         },
         contents({ content }) {
-          return this.items.map((item) => {
-            var _a;
-            return ((_a = item._wrapper) == null ? void 0 : _a.firstElementChild) || $(content, item);
-          });
+          return this.items.map(
+            (item) => {
+              var _a;
+              return ((_a = wrappers.get(item)) == null ? void 0 : _a.firstElementChild) || $(content, item);
+            }
+          );
         }
       },
       watch: {
@@ -6471,20 +6798,21 @@
         {
           name: "click keydown",
           delegate: ({ targets, $props }) => `${targets} ${$props.toggle}`,
-          async handler(e) {
-            var _a;
+          handler(e) {
             if (e.type === "keydown" && e.keyCode !== keyMap.SPACE) {
               return;
             }
-            e.preventDefault();
-            (_a = this._off) == null ? void 0 : _a.call(this);
-            this._off = keepScrollPosition(e.target);
-            await this.toggle(index(this.toggles, e.current));
-            this._off();
+            const item = index(this.toggles, e.current);
+            if (item === -1) {
+              return;
+            }
+            maybeDefaultPreventClick(e);
+            const off = keepScrollPosition(e.target);
+            this.toggle(item).finally(off);
           }
         },
         {
-          name: "shown hidden",
+          name: "show hide shown hidden",
           self: true,
           delegate: ({ targets }) => targets,
           handler() {
@@ -6524,7 +6852,7 @@
             items = items.concat(activeItems);
           }
           if (!this.collapsible && activeItems.length < 2 && includes(activeItems, item)) {
-            return;
+            items = [];
           }
           return Promise.all(
             items.map(
@@ -6545,23 +6873,23 @@
       el && (el.hidden = hide2);
     }
     async function transition(el, show, { content, duration, velocity, transition: transition2 }) {
-      var _a;
-      content = ((_a = el._wrapper) == null ? void 0 : _a.firstElementChild) || $(content, el);
-      if (!el._wrapper) {
-        el._wrapper = wrapAll(content, "<div>");
+      let wrapper = wrappers.get(el);
+      content = (wrapper == null ? void 0 : wrapper.firstElementChild) || $(content, el);
+      if (!wrapper) {
+        wrapper = wrapAll(content, "<div>");
+        wrappers.set(el, wrapper);
       }
-      const wrapper = el._wrapper;
       css(wrapper, "overflow", "hidden");
       const currentHeight = toFloat(css(wrapper, "height"));
       await Transition.cancel(wrapper);
       hide(content, false);
       const endHeight = sumBy(["marginTop", "marginBottom"], (prop) => css(content, prop)) + dimensions$1(content).height;
       const percent = currentHeight / endHeight;
-      duration = (velocity * endHeight + duration) * (show ? 1 - percent : percent);
+      duration = endHeight ? (velocity * endHeight + duration) * (show ? 1 - percent : percent) : 0;
       css(wrapper, "height", currentHeight);
       await Transition.start(wrapper, { height: show ? endHeight : 0 }, duration, transition2);
       unwrap(content);
-      delete el._wrapper;
+      wrappers.delete(el);
       if (!show) {
         hide(content, true);
       }
@@ -6597,13 +6925,13 @@
         name: "click",
         delegate: ({ selClose }) => selClose,
         handler(e) {
-          e.preventDefault();
+          maybeDefaultPreventClick(e);
           this.close();
         }
       },
       methods: {
         async close() {
-          await this.toggleElement(this.$el, false, animate);
+          await this.toggleElement(this.$el, false, this.animation ? animate : false);
           this.$destroy(true);
         }
       }
@@ -6632,73 +6960,95 @@
       args: "autoplay",
       props: {
         automute: Boolean,
-        autoplay: Boolean
+        autoplay: Boolean,
+        restart: Boolean,
+        hoverTarget: Boolean
       },
       data: {
         automute: false,
-        autoplay: true
+        autoplay: true,
+        restart: false,
+        hoverTarget: false
       },
       beforeConnect() {
-        if (this.autoplay === "inview" && !hasAttr(this.$el, "preload")) {
+        const isVideo = isTag(this.$el, "video");
+        if (this.autoplay === "inview" && isVideo && !hasAttr(this.$el, "preload")) {
           this.$el.preload = "none";
         }
-        if (isTag(this.$el, "iframe") && !hasAttr(this.$el, "allow")) {
+        if (!isVideo && !hasAttr(this.$el, "allow")) {
           this.$el.allow = "autoplay";
         }
         if (this.autoplay === "hover") {
-          if (isTag(this.$el, "video")) {
-            this.$el.tabindex = 0;
+          if (isVideo) {
+            this.$el.tabIndex = 0;
           } else {
             this.autoplay = true;
           }
         }
-        if (this.automute) {
+        if (this.automute || hasAttr(this.$el, "muted")) {
           mute(this.$el);
         }
       },
       events: [
         {
           name: `${pointerEnter} focusin`,
-          filter: ({ autoplay }) => includes(autoplay, "hover"),
+          el: ({ hoverTarget, $el }) => query(hoverTarget, $el) || $el,
+          filter: ({ autoplay }) => autoplay === "hover",
           handler(e) {
             if (!isTouch(e) || !isPlaying(this.$el)) {
               play(this.$el);
             } else {
-              pause(this.$el);
+              pauseHover(this.$el, this.restart);
             }
           }
         },
         {
           name: `${pointerLeave} focusout`,
-          filter: ({ autoplay }) => includes(autoplay, "hover"),
+          el: ({ hoverTarget, $el }) => query(hoverTarget, $el) || $el,
+          filter: ({ autoplay }) => autoplay === "hover",
           handler(e) {
             if (!isTouch(e)) {
-              pause(this.$el);
+              pauseHover(this.$el, this.restart);
             }
           }
         }
       ],
       observe: [
         intersection({
-          filter: ({ $el, autoplay }) => autoplay !== "hover" && isVideo($el),
-          handler([{ isIntersecting }]) {
+          filter: ({ $el }) => $el.preload === "none",
+          handler([{ target }]) {
+            target.preload = "";
+            this.$reset();
+          }
+        }),
+        intersection({
+          filter: ({ $el, autoplay }) => autoplay !== "hover" && $el.preload !== "none",
+          handler([{ isIntersecting, target }]) {
             if (!document.fullscreenElement) {
               if (isIntersecting) {
                 if (this.autoplay) {
-                  play(this.$el);
+                  play(target);
                 }
               } else {
-                pause(this.$el);
+                pauseHover(target, this.restart);
               }
             }
           },
           args: { intersecting: false },
-          options: ({ $el, autoplay }) => ({ root: autoplay === "inview" ? null : parent($el) })
+          options: ({ $el, autoplay }) => ({
+            root: autoplay === "inview" ? null : parent($el).closest(":not(a)")
+          })
         })
       ]
     };
     function isPlaying(videoEl) {
       return !videoEl.paused && !videoEl.ended;
+    }
+    function pauseHover(el, restart) {
+      pause(el);
+      if (restart && isTag(el, "video")) {
+        el.currentTime = 0;
+      }
     }
 
     var cover = {
@@ -6722,28 +7072,13 @@
           if (this.useObjectFit) {
             return false;
           }
-          const { ratio, cover } = Dimensions;
-          const { $el, width, height } = this;
-          let dim = { width, height };
-          if (!width || !height) {
-            const intrinsic = {
-              width: $el.naturalWidth || $el.videoWidth || $el.clientWidth,
-              height: $el.naturalHeight || $el.videoHeight || $el.clientHeight
-            };
-            if (width) {
-              dim = ratio(intrinsic, "width", width);
-            } else if (height) {
-              dim = ratio(intrinsic, "height", height);
-            } else {
-              dim = intrinsic;
-            }
-          }
-          const { offsetHeight: coverHeight, offsetWidth: coverWidth } = getPositionedParent($el) || parent($el);
-          const coverDim = cover(dim, { width: coverWidth, height: coverHeight });
-          if (!coverDim.width || !coverDim.height) {
-            return false;
-          }
-          return coverDim;
+          const { $el, width = $el.clientWidth, height = $el.clientHeight } = this;
+          const el = getPositionedParent($el) || parent($el);
+          const dim = Dimensions.cover(
+            { width, height },
+            { width: el.offsetWidth, height: el.offsetHeight }
+          );
+          return dim.width && dim.height ? dim : false;
         },
         write({ height, width }) {
           css(this.$el, { height, width });
@@ -6761,7 +7096,7 @@
 
     let active;
     var drop = {
-      mixins: [Container, Position, Togglable],
+      mixins: [Class, Container, Position, Togglable],
       args: "pos",
       props: {
         mode: "list",
@@ -6776,7 +7111,6 @@
         delayShow: Number,
         delayHide: Number,
         autoUpdate: Boolean,
-        clsDrop: String,
         animateOut: Boolean,
         bgScroll: Boolean,
         closeOnScroll: Boolean
@@ -6794,13 +7128,13 @@
         delayShow: 0,
         delayHide: 800,
         autoUpdate: true,
-        clsDrop: false,
         animateOut: false,
         bgScroll: true,
         animation: ["uk-animation-fade"],
         cls: "uk-open",
         container: false,
-        closeOnScroll: false
+        closeOnScroll: false,
+        selClose: ".uk-drop-close"
       },
       computed: {
         boundary({ boundary, boundaryX, boundaryY }, $el) {
@@ -6821,14 +7155,12 @@
       created() {
         this.tracker = new MouseTracker();
       },
-      beforeConnect() {
-        this.clsDrop = this.$props.clsDrop || this.$options.id;
-      },
       connected() {
-        addClass(this.$el, "uk-drop", this.clsDrop);
+        addClass(this.$el, "uk-drop");
         if (this.toggle && !this.targetEl) {
           this.targetEl = createToggleComponent(this);
         }
+        attr(this.targetEl, "aria-expanded", false);
         this._style = pick(this.$el.style, ["width", "height"]);
       },
       disconnected() {
@@ -6841,9 +7173,9 @@
       events: [
         {
           name: "click",
-          delegate: () => ".uk-drop-close",
+          delegate: ({ selClose }) => selClose,
           handler(e) {
-            e.preventDefault();
+            maybeDefaultPreventClick(e);
             this.hide(false);
           }
         },
@@ -6928,6 +7260,7 @@
             active = this;
             this.tracker.init();
             attr(this.targetEl, "aria-expanded", true);
+            setAriaOwns(this);
             const handlers = [
               listenForResize(this),
               listenForEscClose(this),
@@ -6946,7 +7279,9 @@
         {
           name: "beforehide",
           self: true,
-          handler: "clearTimers"
+          handler() {
+            this.clearTimers();
+          }
         },
         {
           name: "hide",
@@ -6957,7 +7292,8 @@
             }
             active = this.isActive() ? null : active;
             this.tracker.cancel();
-            attr(this.targetEl, "aria-expanded", null);
+            attr(this.targetEl, "aria-expanded", false);
+            attr(parent(this.targetEl), "aria-owns", null);
           }
         }
       ],
@@ -6988,17 +7324,22 @@
               prev = active;
               active.hide(false, false);
             }
+            delay = false;
           }
           if (this.container && parent(this.$el) !== this.container) {
             append(this.container, this.$el);
           }
+          addClass(this.$el, this.clsEnter);
           this.showTimer = setTimeout(
             () => this.toggleElement(this.$el, true),
             delay && this.delayShow || 0
           );
         },
         hide(delay = true, animate = true) {
-          const hide = () => this.toggleElement(this.$el, false, this.animateOut && animate);
+          const hide = () => {
+            removeClass(this.$el, this.clsEnter);
+            this.toggleElement(this.$el, false, this.animateOut && animate);
+          };
           this.clearTimers();
           this.isDelayedHide = delay;
           if (delay && this.isDelaying()) {
@@ -7077,12 +7418,20 @@
       return offsetViewport(overflowParents(target).find((parent2) => parent2.contains(el)));
     }
     function createToggleComponent(drop) {
-      const { $el } = drop.$create("toggle", query(drop.toggle, drop.$el), {
-        target: drop.$el,
-        mode: drop.mode
-      });
-      attr($el, "aria-haspopup", true);
-      return $el;
+      const target = drop.$el;
+      const el = query(drop.toggle, target);
+      if (el) {
+        drop.$create("toggle", el, { target, mode: drop.mode });
+        target.id = generateId(drop, target);
+        attr(el, "aria-controls", target.id);
+      }
+      return el;
+    }
+    function setAriaOwns({ targetEl, $el }) {
+      const owner = parent(targetEl);
+      if (owner && !owner.contains($el)) {
+        attr(owner, "aria-owns", $el.id);
+      }
     }
     function listenForResize(drop) {
       const update = () => drop.$emit();
@@ -7090,7 +7439,7 @@
         observeViewportResize(update),
         observeResize(overflowParents(drop.$el).concat(drop.target), update)
       ];
-      return () => off.map((observer) => observer.disconnect());
+      return () => off.forEach((observer) => observer.disconnect());
     }
     function listenForScroll(drop, fn = () => drop.$emit()) {
       return on([document, ...overflowParents(drop.$el)], "scroll", fn, {
@@ -7098,39 +7447,27 @@
       });
     }
     function listenForEscClose(drop) {
-      return on(document, "keydown", (e) => {
-        if (e.keyCode === keyMap.ESC) {
-          drop.hide(false);
-        }
-      });
+      return onEscape(() => drop.hide(false));
     }
     function listenForScrollClose(drop) {
       return listenForScroll(drop, () => drop.hide(false));
     }
     function listenForBackgroundClose(drop) {
-      return on(document, pointerDown$1, ({ target }) => {
-        if (drop.$el.contains(target)) {
-          return;
-        }
-        once(
-          document,
-          `${pointerUp$1} ${pointerCancel} scroll`,
-          ({ defaultPrevented, type, target: newTarget }) => {
-            var _a;
-            if (!defaultPrevented && type === pointerUp$1 && target === newTarget && !((_a = drop.targetEl) == null ? void 0 : _a.contains(target))) {
-              drop.hide(false);
-            }
-          },
-          true
-        );
-      });
+      return onOutsidePointer(
+        (target) => {
+          var _a;
+          if (!((_a = drop.targetEl) == null ? void 0 : _a.contains(target))) {
+            drop.hide(false);
+          }
+        },
+        (target) => !drop.$el.contains(target)
+      );
     }
 
     var Dropnav = {
       mixins: [Class, Container],
       props: {
         align: String,
-        clsDrop: String,
         boundary: Boolean,
         dropbar: Boolean,
         dropbarAnchor: Boolean,
@@ -7154,6 +7491,8 @@
         boundary: true,
         dropbar: false,
         dropbarAnchor: false,
+        flip: true,
+        delayShow: 160,
         duration: 200,
         container: false,
         selNavItem: "> li > a, > ul > li > a"
@@ -7165,7 +7504,7 @@
             return null;
           }
           dropbar = this._dropbar || query(dropbar, this.$el) || $(`+ .${this.clsDropbar}`, this.$el);
-          return dropbar ? dropbar : this._dropbar = $("<div></div>");
+          return dropbar || (this._dropbar = $("<div>"));
         },
         dropContainer(_, $el) {
           return this.container || $el;
@@ -7203,6 +7542,7 @@
       },
       connected() {
         this.initializeDropdowns();
+        preventInitialPointerEnter(this.$el);
       },
       disconnected() {
         remove$1(this._dropbar);
@@ -7227,9 +7567,26 @@
             var _a;
             const { current, keyCode } = e;
             const active2 = this.getActive();
-            if (keyCode === keyMap.DOWN && (active2 == null ? void 0 : active2.targetEl) === current) {
-              e.preventDefault();
-              (_a = $(selFocusable, active2.$el)) == null ? void 0 : _a.focus();
+            if (keyCode === keyMap.DOWN) {
+              if ((active2 == null ? void 0 : active2.targetEl) === current) {
+                e.preventDefault();
+                (_a = $(selFocusable, active2.$el)) == null ? void 0 : _a.focus();
+              } else {
+                const dropdown = this.dropdowns.find(
+                  (el) => {
+                    var _a2;
+                    return ((_a2 = this.getDropdown(el)) == null ? void 0 : _a2.targetEl) === current;
+                  }
+                );
+                if (dropdown) {
+                  e.preventDefault();
+                  current.click();
+                  once(dropdown, "show", (e2) => {
+                    var _a2;
+                    return (_a2 = $(selFocusable, e2.target)) == null ? void 0 : _a2.focus();
+                  });
+                }
+              }
             }
             handleNavItemNavigation(e, this.items, active2);
           }
@@ -7245,18 +7602,7 @@
               return;
             }
             const active2 = this.getActive();
-            let next = -1;
-            if (keyCode === keyMap.HOME) {
-              next = 0;
-            } else if (keyCode === keyMap.END) {
-              next = "last";
-            } else if (keyCode === keyMap.UP) {
-              next = "previous";
-            } else if (keyCode === keyMap.DOWN) {
-              next = "next";
-            } else if (keyCode === keyMap.ESC) {
-              (_a = active2.targetEl) == null ? void 0 : _a.focus();
-            }
+            const next = getNavigationIndex(keyCode, keyMap.UP, keyMap.DOWN);
             if (~next) {
               e.preventDefault();
               const elements = $$(selFocusable, current);
@@ -7265,6 +7611,10 @@
                 elements,
                 findIndex(elements, (el) => matches(el, ":focus"))
               )].focus();
+              return;
+            }
+            if (keyCode === keyMap.ESC) {
+              (_a = active2.targetEl) == null ? void 0 : _a.focus();
             }
             handleNavItemNavigation(e, this.items, active2);
           }
@@ -7355,7 +7705,7 @@
         },
         async transitionTo(newHeight, el) {
           const { dropbar } = this;
-          const oldHeight = height(dropbar);
+          const oldHeight = height$1(dropbar);
           el = oldHeight < newHeight && el;
           await Transition.cancel([el, dropbar]);
           if (el) {
@@ -7365,7 +7715,7 @@
             }
           }
           css(el, "clipPath", `polygon(0 0,100% 0,100% ${oldHeight}px,0 ${oldHeight}px)`);
-          height(dropbar, oldHeight);
+          height$1(dropbar, oldHeight);
           await Promise.all([
             Transition.start(dropbar, { height: newHeight }, this.duration),
             Transition.start(
@@ -7392,10 +7742,11 @@
             this.dropdowns.filter((el) => !this.getDropdown(el)),
             {
               ...this.$props,
-              flip: false,
+              flip: this.flip && !this.$props.dropbar,
               shift: true,
               pos: `bottom-${this.align}`,
-              boundary: this.boundary === true ? this.$el : this.boundary
+              boundary: false,
+              boundaryX: this.boundary === true ? this.$el : this.boundary
             }
           );
         }
@@ -7404,24 +7755,23 @@
     function handleNavItemNavigation(e, toggles, active2) {
       var _a, _b, _c;
       const { current, keyCode } = e;
-      let next = -1;
-      if (keyCode === keyMap.HOME) {
-        next = 0;
-      } else if (keyCode === keyMap.END) {
-        next = "last";
-      } else if (keyCode === keyMap.LEFT) {
-        next = "previous";
-      } else if (keyCode === keyMap.RIGHT) {
-        next = "next";
-      } else if (keyCode === keyMap.TAB) {
-        (_a = active2.targetEl) == null ? void 0 : _a.focus();
-        (_b = active2.hide) == null ? void 0 : _b.call(active2, false);
-      }
+      const next = getNavigationIndex(keyCode);
       if (~next) {
         e.preventDefault();
-        (_c = active2.hide) == null ? void 0 : _c.call(active2, false);
+        (_a = active2.hide) == null ? void 0 : _a.call(active2, false);
         toggles[getIndex(next, toggles, toggles.indexOf(active2.targetEl || current))].focus();
+      } else if (keyCode === keyMap.TAB) {
+        (_b = active2.targetEl) == null ? void 0 : _b.focus();
+        (_c = active2.hide) == null ? void 0 : _c.call(active2, false);
       }
+    }
+    function preventInitialPointerEnter(el) {
+      const off = () => handlers.forEach((handler) => handler());
+      const handlers = [
+        once(el.ownerDocument, pointerMove$1, (e) => el.contains(e.target) || off()),
+        on(el, `mouseenter ${pointerEnter}`, (e) => e.stopPropagation(), { capture: true }),
+        on(el, `mouseleave ${pointerLeave}`, off, { capture: true })
+      ];
     }
 
     var formCustom = {
@@ -7451,7 +7801,7 @@
         let option;
         const prop = isInput(target) ? "value" : "textContent";
         const prev = target[prop];
-        const value = ((_a = input.files) == null ? void 0 : _a[0]) ? input.files[0].name : matches(input, "select") && (option = $$("option", input).filter((el) => el.selected)[0]) ? option.textContent : input.value;
+        const value = ((_a = input.files) == null ? void 0 : _a[0]) ? input.files[0].name : matches(input, "select") && (option = $$("option", input).find((el) => el.selected)) ? option.textContent : input.value;
         if (prev !== value) {
           target[prop] = value;
         }
@@ -7590,14 +7940,12 @@
       const columnHeights = Array(rows[0].length).fill(0);
       let rowHeights = 0;
       for (let row of rows) {
-        if (isRtl) {
-          row = row.reverse();
-        }
+        const cells = isRtl ? row.slice().reverse() : row;
         let height = 0;
-        for (const j in row) {
-          const { offsetWidth, offsetHeight } = row[j];
+        for (const j in cells) {
+          const { offsetWidth, offsetHeight } = cells[j];
           const index = next ? j : columnHeights.indexOf(Math.min(...columnHeights));
-          push(columns, index, row[j]);
+          push(columns, index, cells[j]);
           push(translates, index, [
             (index - j) * offsetWidth * (isRtl ? -1 : 1),
             columnHeights[index] - rowHeights
@@ -7643,7 +7991,7 @@
         elements: ({ target }, $el) => $$(target, $el)
       },
       observe: resize({
-        target: ({ $el, elements }) => elements.reduce((elements2, el) => elements2.concat(el, ...el.children), [$el])
+        target: ({ $el, elements }) => [$el, ...elements.flatMap((el) => [el, ...el.children])]
       }),
       events: {
         // Hidden elements may change height when fonts load
@@ -7709,24 +8057,27 @@
           return this.target ? { height: this.target.offsetHeight } : false;
         },
         write({ height }) {
-          css(this.$el, { minHeight: height });
+          css(this.$el, "minHeight", height);
         },
         events: ["resize"]
       }
     };
 
     var heightViewport = {
+      mixins: [Media],
       props: {
         expand: Boolean,
         offsetTop: Boolean,
         offsetBottom: Boolean,
-        minHeight: Number
+        min: Number,
+        property: String
       },
       data: {
         expand: false,
         offsetTop: false,
         offsetBottom: false,
-        minHeight: 0
+        min: 0,
+        property: "min-height"
       },
       // check for offsetTop change
       observe: [
@@ -7738,7 +8089,9 @@
           if (!isVisible(this.$el)) {
             return false;
           }
-          let minHeight = "";
+          if (!this.matchMedia) {
+            return { minHeight: false };
+          }
           const box = boxModelAdjust(this.$el, "height", "content-box");
           const { body, scrollingElement } = document;
           const scrollElement = scrollParent(this.$el);
@@ -7746,7 +8099,7 @@
             scrollElement === body ? scrollingElement : scrollElement
           );
           const isScrollingElement = scrollingElement === scrollElement || body === scrollElement;
-          minHeight = `calc(${isScrollingElement ? "100vh" : `${viewportHeight}px`}`;
+          let minHeight = `calc(${isScrollingElement ? "100vh" : `${viewportHeight}px`}`;
           if (this.expand) {
             const diff = dimensions$1(scrollElement).height - dimensions$1(this.$el).height;
             minHeight += ` - ${diff}px`;
@@ -7774,11 +8127,17 @@
           return { minHeight };
         },
         write({ minHeight }) {
-          css(this.$el, "minHeight", `max(${this.minHeight || 0}px, ${minHeight})`);
+          css(
+            this.$el,
+            this.property,
+            minHeight === false ? "" : `max(${this.min || 0}px, ${minHeight})`
+          );
         },
         events: ["resize"]
       }
     };
+
+    var accordionIcon = "<svg width=\"13\" height=\"13\" viewBox=\"0 0 13 13\"><style>.uk-accordion-icon svg&gt;[class*=&quot;line-&quot;]{transition:0.2s ease-out;transition-property:transform, opacity;transform-origin:center}[aria-expanded=&quot;true&quot;] .uk-accordion-icon svg&gt;.line-1{transform:rotate(-45deg);opacity:0}[aria-expanded=&quot;true&quot;] .uk-accordion-icon svg&gt;.line-2{transform:rotate(90deg)}</style><rect width=\"13\" height=\"1\" fill=\"#000\" x=\"0\" y=\"6\" class=\"line-1\"/><rect width=\"1\" height=\"13\" fill=\"#000\" x=\"6\" y=\"0\" class=\"line-2\"/></svg>";
 
     var closeIcon = "<svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\"><line fill=\"none\" stroke=\"#000\" stroke-width=\"1.1\" x1=\"1\" y1=\"1\" x2=\"13\" y2=\"13\"/><line fill=\"none\" stroke=\"#000\" stroke-width=\"1.1\" x1=\"13\" y1=\"1\" x2=\"1\" y2=\"13\"/></svg>";
 
@@ -7794,7 +8153,7 @@
 
     var navbarParentIcon = "<svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\"><polyline fill=\"none\" stroke=\"#000\" stroke-width=\"1.1\" points=\"1 3.5 6 8.5 11 3.5\"/></svg>";
 
-    var navbarToggleIcon = "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\"><style>.uk-navbar-toggle-icon svg&gt;[class*=&quot;line-&quot;]{transition:0.2s ease-in-out;transition-property:transform, opacity;transform-origin:center;opacity:1}.uk-navbar-toggle-icon svg&gt;.line-3{opacity:0}.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-3{opacity:1}.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-2{transform:rotate(45deg)}.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-3{transform:rotate(-45deg)}.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-1,.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-4{opacity:0}.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-1{transform:translateY(6px) scaleX(0)}.uk-navbar-toggle-animate[aria-expanded=&quot;true&quot;] svg&gt;.line-4{transform:translateY(-6px) scaleX(0)}</style><rect width=\"20\" height=\"2\" y=\"3\" class=\"line-1\"/><rect width=\"20\" height=\"2\" y=\"9\" class=\"line-2\"/><rect width=\"20\" height=\"2\" y=\"9\" class=\"line-3\"/><rect width=\"20\" height=\"2\" y=\"15\" class=\"line-4\"/></svg>";
+    var navbarToggleIcon = "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\"><style>.uk-navbar-toggle-icon svg&gt;[class*=&quot;line-&quot;]{transition:0.2s ease-in-out;transition-property:transform, opacity;transform-origin:center;opacity:1}.uk-navbar-toggle-icon svg&gt;.line-3{opacity:0}[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-3,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-3{opacity:1}[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-2,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-2{transform:rotate(45deg)}[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-3,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-3{transform:rotate(-45deg)}[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-1,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-1,[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-4,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-4{opacity:0}[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-1,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-1{transform:translateY(6px) scaleX(0)}[aria-expanded=&quot;true&quot;].uk-navbar-toggle-icon svg&gt;.line-4,[aria-expanded=&quot;true&quot;]&gt;.uk-navbar-toggle-icon svg&gt;.line-4{transform:translateY(-6px) scaleX(0)}</style><rect width=\"20\" height=\"2\" y=\"3\" class=\"line-1\"/><rect width=\"20\" height=\"2\" y=\"9\" class=\"line-2\"/><rect width=\"20\" height=\"2\" y=\"9\" class=\"line-3\"/><rect width=\"20\" height=\"2\" y=\"15\" class=\"line-4\"/></svg>";
 
     var overlayIcon = "<svg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\"><rect width=\"1\" height=\"40\" x=\"19\" y=\"0\"/><rect width=\"40\" height=\"1\" x=\"0\" y=\"19\"/></svg>";
 
@@ -7885,112 +8244,27 @@
       }
       dimensions.forEach((val, i) => attr(el, props[i], toFloat(val) * this.ratio || null));
     }
-
-    var svg = {
-      mixins: [Svg],
-      args: "src",
-      props: {
-        src: String,
-        icon: String,
-        attributes: "list",
-        strokeAnimation: Boolean
-      },
-      data: {
-        strokeAnimation: false
-      },
-      observe: [
-        mutation({
-          async handler() {
-            const svg = await this.svg;
-            if (svg) {
-              applyAttributes.call(this, svg);
-            }
-          },
-          options: {
-            attributes: true,
-            attributeFilter: ["id", "class", "style"]
-          }
-        })
-      ],
-      async connected() {
-        if (includes(this.src, "#")) {
-          [this.src, this.icon] = this.src.split("#");
-        }
-        const svg = await this.svg;
-        if (svg) {
-          applyAttributes.call(this, svg);
-          if (this.strokeAnimation) {
-            applyAnimation(svg);
-          }
-        }
-      },
-      methods: {
-        async getSvg() {
-          if (isTag(this.$el, "img") && !this.$el.complete && this.$el.loading === "lazy") {
-            await new Promise((resolve) => once(this.$el, "load", resolve));
-          }
-          return parseSVG(await loadSVG(this.src), this.icon) || Promise.reject("SVG not found.");
-        }
-      }
-    };
-    function applyAttributes(el) {
-      const { $el } = this;
-      addClass(el, attr($el, "class"), "uk-svg");
-      for (let i = 0; i < $el.style.length; i++) {
-        const prop = $el.style[i];
-        css(el, prop, css($el, prop));
-      }
-      for (const attribute in this.attributes) {
-        const [prop, value] = this.attributes[attribute].split(":", 2);
-        attr(el, prop, value);
-      }
-      if (!this.$el.id) {
-        removeAttr(el, "id");
-      }
-    }
-    const loadSVG = memoize(async (src) => {
-      if (src) {
-        if (startsWith(src, "data:")) {
-          return decodeURIComponent(src.split(",")[1]);
-        } else {
-          return (await fetch(src)).text();
-        }
-      } else {
-        return Promise.reject();
-      }
-    });
     function parseSVG(svg, icon) {
       if (icon && includes(svg, "<symbol")) {
         svg = parseSymbols(svg)[icon] || svg;
       }
-      return stringToSvg(svg);
+      return toNodes(fragment(svg)).find(isElement);
     }
     const symbolRe = /<symbol([^]*?id=(['"])(.+?)\2[^]*?<\/)symbol>/g;
     const parseSymbols = memoize(function(svg) {
       const symbols = {};
-      symbolRe.lastIndex = 0;
       let match;
       while (match = symbolRe.exec(svg)) {
         symbols[match[3]] = `<svg ${match[1]}svg>`;
       }
       return symbols;
     });
-    function applyAnimation(el) {
-      const length = getMaxPathLength(el);
-      if (length) {
-        css(el, "--uk-animation-stroke", length);
-      }
-    }
-    function stringToSvg(string) {
-      const container = document.createElement("template");
-      container.innerHTML = string;
-      return container.content.firstElementChild;
-    }
 
     const icons = {
       spinner,
       totop,
       marker,
+      "accordion-icon": accordionIcon,
       "close-icon": closeIcon,
       "close-large": closeLarge,
       "drop-parent-icon": dropParentIcon,
@@ -8018,6 +8292,12 @@
       isIcon: true,
       beforeConnect() {
         addClass(this.$el, "uk-icon");
+      },
+      async connected() {
+        const svg = await this.svg;
+        if (svg) {
+          svg.ariaHidden = true;
+        }
       },
       methods: {
         async getSvg() {
@@ -8057,13 +8337,11 @@
           return;
         }
         if (isToggle) {
-          const label = this.t("toggle");
-          attr(this.$el, "aria-label", label);
+          this.$el.ariaLabel = this.t("toggle");
         } else {
           const button = this.$el.closest("a,button");
           if (button) {
-            const label = this.t("submit");
-            attr(button, "aria-label", label);
+            button.ariaLabel = this.t("submit");
           }
         }
       }
@@ -8071,7 +8349,7 @@
     const Spinner = {
       extends: IconComponent,
       beforeConnect() {
-        attr(this.$el, "role", "status");
+        this.$el.role = "status";
       },
       methods: {
         async getSvg() {
@@ -8105,7 +8383,13 @@
     };
     const NavbarToggleIcon = {
       extends: ButtonComponent,
-      i18n: { label: "Open menu" }
+      i18n: { label: "Open menu" },
+      beforeConnect() {
+        const button = this.$el.closest("a,button");
+        if (button) {
+          button.ariaExpanded = false;
+        }
+      }
     };
     const Close = {
       extends: ButtonComponent,
@@ -8157,129 +8441,12 @@
         return null;
       }
       if (!parsed[icon]) {
-        parsed[icon] = stringToSvg(icons[applyRtl(icon)] || icons[icon]);
+        parsed[icon] = parseSVG(icons[applyRtl(icon)] || icons[icon]);
       }
       return parsed[icon].cloneNode(true);
     }
     function applyRtl(icon) {
       return isRtl ? swap(swap(icon, "left", "right"), "previous", "next") : icon;
-    }
-
-    var img = {
-      args: "dataSrc",
-      props: {
-        dataSrc: String,
-        sources: String,
-        margin: String,
-        target: String,
-        loading: String
-      },
-      data: {
-        dataSrc: "",
-        sources: false,
-        margin: "50%",
-        target: false,
-        loading: "lazy"
-      },
-      connected() {
-        if (this.loading !== "lazy") {
-          this.load();
-        } else if (isImg(this.$el)) {
-          this.$el.loading = "lazy";
-          setSrcAttrs(this.$el);
-        }
-      },
-      disconnected() {
-        if (this.img) {
-          this.img.onload = "";
-        }
-        delete this.img;
-      },
-      observe: intersection({
-        handler(entries, observer) {
-          this.load();
-          observer.disconnect();
-        },
-        options: ({ margin }) => ({ rootMargin: margin }),
-        filter: ({ loading }) => loading === "lazy",
-        target: ({ $el, $props }) => $props.target ? [$el, ...queryAll($props.target, $el)] : $el
-      }),
-      methods: {
-        load() {
-          if (this.img) {
-            return this.img;
-          }
-          const image = isImg(this.$el) ? this.$el : getImageFromElement(this.$el, this.dataSrc, this.sources);
-          removeAttr(image, "loading");
-          setSrcAttrs(this.$el, image.currentSrc);
-          return this.img = image;
-        }
-      }
-    };
-    function setSrcAttrs(el, src) {
-      if (isImg(el)) {
-        const parentNode = parent(el);
-        const elements = isTag(parentNode, "picture") ? children(parentNode) : [el];
-        elements.forEach((el2) => setSourceProps(el2, el2));
-      } else if (src) {
-        const change = !includes(el.style.backgroundImage, src);
-        if (change) {
-          css(el, "backgroundImage", `url(${escape(src)})`);
-          trigger(el, createEvent("load", false));
-        }
-      }
-    }
-    const srcProps = ["data-src", "data-srcset", "sizes"];
-    function setSourceProps(sourceEl, targetEl) {
-      for (const prop of srcProps) {
-        const value = data(sourceEl, prop);
-        if (value) {
-          attr(targetEl, prop.replace(/^(data-)+/, ""), value);
-        }
-      }
-    }
-    function getImageFromElement(el, src, sources) {
-      const img = new Image();
-      wrapInPicture(img, sources);
-      setSourceProps(el, img);
-      img.onload = () => {
-        setSrcAttrs(el, img.currentSrc);
-      };
-      attr(img, "src", src);
-      return img;
-    }
-    function wrapInPicture(img, sources) {
-      sources = parseSources(sources);
-      if (sources.length) {
-        const picture = fragment("<picture>");
-        for (const attrs of sources) {
-          const source = fragment("<source>");
-          attr(source, attrs);
-          append(picture, source);
-        }
-        append(picture, img);
-      }
-    }
-    function parseSources(sources) {
-      if (!sources) {
-        return [];
-      }
-      if (startsWith(sources, "[")) {
-        try {
-          sources = JSON.parse(sources);
-        } catch (e) {
-          sources = [];
-        }
-      } else {
-        sources = parseOptions(sources);
-      }
-      if (!isArray(sources)) {
-        sources = [sources];
-      }
-      return sources.filter((source) => !isEmpty(source));
-    }
-    function isImg(el) {
-      return isTag(el, "img");
     }
 
     var inverse = {
@@ -8291,13 +8458,27 @@
         target: false,
         selActive: false
       },
+      connected() {
+        this.isIntersecting = 0;
+      },
       computed: {
         target: ({ target }, $el) => target ? $$(target, $el) : $el
+      },
+      watch: {
+        target: {
+          handler() {
+            queueMicrotask(() => this.$reset());
+          },
+          immediate: false
+        }
       },
       observe: [
         intersection({
           handler(entries) {
-            this.isIntersecting = entries.some(({ isIntersecting }) => isIntersecting);
+            this.isIntersecting = entries.reduce(
+              (sum, { isIntersecting }) => sum + (isIntersecting ? 1 : this.isIntersecting ? -1 : 0),
+              this.isIntersecting
+            );
             this.$emit();
           },
           target: ({ target }) => target,
@@ -8305,7 +8486,7 @@
         }),
         mutation({
           target: ({ target }) => target,
-          options: { attributes: true, attributeFilter: ["class"], attributeOldValue: true }
+          options: { attributes: true, attributeFilter: ["class"] }
         }),
         {
           target: ({ target }) => target,
@@ -8333,7 +8514,7 @@
               unobserve: observer.unobserve.bind(observer),
               disconnect() {
                 observer.disconnect();
-                listener.map((off) => off());
+                listener.forEach((off) => off());
               }
             };
           },
@@ -8363,7 +8544,7 @@
         return false;
       }
       const { left, top, height, width } = dim;
-      let last;
+      let last = "";
       for (const percent of [0.25, 0.5, 0.75]) {
         const elements = target.ownerDocument.elementsFromPoint(
           Math.max(0, Math.min(left + width * percent, viewport.width - 1)),
@@ -8463,7 +8644,7 @@
             } else {
               css(this.$el, "display", "block");
             }
-            height(this.$el);
+            height$1(this.$el);
           }
         },
         {
@@ -8497,20 +8678,20 @@
       };
       modal.alert = function(message, options) {
         return openDialog(
-          ({ i18n }) => `<div class="uk-modal-body">${isString(message) ? message : html(message)}</div> <div class="uk-modal-footer uk-text-right"> <button class="uk-button uk-button-primary uk-modal-close" autofocus>${i18n.ok}</button> </div>`,
+          ({ i18n }) => `<div class="uk-modal-body">${isString(message) ? message : html(message)}</div>  <div class="uk-modal-footer uk-text-right">  <button class="uk-button uk-button-primary uk-modal-close" type="button" autofocus>${i18n.ok}</button>  </div>`,
           options
         );
       };
       modal.confirm = function(message, options) {
         return openDialog(
-          ({ i18n }) => `<form> <div class="uk-modal-body">${isString(message) ? message : html(message)}</div> <div class="uk-modal-footer uk-text-right"> <button class="uk-button uk-button-default uk-modal-close" type="button">${i18n.cancel}</button> <button class="uk-button uk-button-primary" autofocus>${i18n.ok}</button> </div> </form>`,
+          ({ i18n }) => `<form>  <div class="uk-modal-body">${isString(message) ? message : html(message)}</div>  <div class="uk-modal-footer uk-text-right">  <button class="uk-button uk-button-default uk-modal-close" type="button">${i18n.cancel}</button>  <button class="uk-button uk-button-primary" autofocus>${i18n.ok}</button>  </div>  </form>`,
           options,
           () => Promise.reject()
         );
       };
       modal.prompt = function(message, value, options) {
         const promise = openDialog(
-          ({ i18n }) => `<form class="uk-form-stacked"> <div class="uk-modal-body"> <label>${isString(message) ? message : html(message)}</label> <input class="uk-input" autofocus> </div> <div class="uk-modal-footer uk-text-right"> <button class="uk-button uk-button-default uk-modal-close" type="button">${i18n.cancel}</button> <button class="uk-button uk-button-primary">${i18n.ok}</button> </div> </form>`,
+          ({ i18n }) => `<form class="uk-form-stacked">  <div class="uk-modal-body">  <label>${isString(message) ? message : html(message)}</label>  <input class="uk-input" autofocus>  </div>  <div class="uk-modal-footer uk-text-right">  <button class="uk-button uk-button-default uk-modal-close" type="button">${i18n.cancel}</button>  <button class="uk-button uk-button-primary">${i18n.ok}</button>  </div>  </form>`,
           options,
           () => null,
           () => input.value
@@ -8564,6 +8745,9 @@
         dropbarTransparentMode: Boolean
       },
       data: {
+        flip: false,
+        autoUpdate: false,
+        delayShow: 200,
         clsDrop: "uk-navbar-dropdown",
         selNavItem: ".uk-navbar-nav > li > a,a.uk-navbar-item,button.uk-navbar-item,.uk-navbar-item a,.uk-navbar-item button,.uk-navbar-toggle",
         // Simplify with :where() selector once browser target is Safari 14+
@@ -8597,8 +8781,8 @@
           name: "hide",
           el: ({ dropContainer }) => dropContainer,
           async handler() {
-            await awaitMacroTask();
-            if (!this.getActive() && this._transparent) {
+            await awaitTimeout();
+            if (this._transparent && (!active || !this.dropContainer.contains(active.$el))) {
               addClass(this.navbarContainer, clsNavbarTransparent);
               this._transparent = null;
             }
@@ -8624,9 +8808,6 @@
         }
       }
     };
-    function awaitMacroTask() {
-      return new Promise((resolve) => setTimeout(resolve));
-    }
 
     var offcanvas = {
       mixins: [Modal],
@@ -8700,7 +8881,7 @@
               this.clsSidebarAnimation,
               this.mode === "reveal" ? "" : this.clsMode
             );
-            height(body);
+            height$1(body);
             addClass(body, this.clsContainerAnimation);
             this.clsContainerAnimation && suppressUserScale();
           }
@@ -8786,6 +8967,104 @@
         events: ["resize"]
       }
     };
+    function height(el) {
+      return dimensions$1(el).height - boxModelAdjust(el, "height", css(el, "boxSizing"));
+    }
+
+    var overflowFade = {
+      data: {
+        threshold: 5,
+        fadeDuration: 0.05
+      },
+      events: [
+        {
+          name: "scroll",
+          self: true,
+          passive: true,
+          handler() {
+            this.$emit();
+          }
+        },
+        {
+          name: pointerDown$1,
+          handler: handleMouseDrag
+        }
+      ],
+      observe: [
+        mutation({
+          options: {
+            subtree: true,
+            childList: true
+          }
+        }),
+        resize({
+          target: ({ $el }) => [$el, ...children($el)]
+        })
+      ],
+      update: {
+        read() {
+          return {
+            overflow: [
+              this.$el.scrollWidth - this.$el.clientWidth,
+              this.$el.scrollHeight - this.$el.clientHeight
+            ]
+          };
+        },
+        write({ overflow }) {
+          for (let i = 0; i < 2; i++) {
+            toggleClass(
+              this.$el,
+              `${this.$options.id}-${i ? "vertical" : "horizontal"}`,
+              overflow[i] && !overflow[i - 1]
+            );
+            if (!overflow[i - 1]) {
+              const dir = i ? "Top" : "Left";
+              const percent = overflow[i] ? this.$el[`scroll${dir}`] / overflow[i] : 0;
+              const toValue = (value) => overflow[i] ? clamp((this.fadeDuration - value) / this.fadeDuration) : 1;
+              css(this.$el, {
+                "--uk-overflow-fade-start-opacity": toValue(percent),
+                "--uk-overflow-fade-end-opacity": toValue(1 - percent)
+              });
+            }
+          }
+        },
+        events: ["resize"]
+      }
+    };
+    function handleMouseDrag(e) {
+      const { target, button, defaultPrevented } = e;
+      if (defaultPrevented || button > 0 || isTouch(e) || target.closest(selInput) || isInput(target)) {
+        return;
+      }
+      e.preventDefault();
+      const pointerOptions = { passive: false, capture: true };
+      const { $el: el, threshold, $options } = this;
+      let started;
+      const off = on(document, pointerMove$1, move(e), pointerOptions);
+      on(document, [pointerUp$1, pointerCancel], end, { capture: true, once: true });
+      function move(e2) {
+        let origin = getEventPos(e2);
+        let pos = origin;
+        let lastPos = pos;
+        return function(e3) {
+          lastPos = pos;
+          pos = getEventPos(e3);
+          const isVertical = hasClass(el, `${$options.id}-vertical`);
+          const prop = isVertical ? "y" : "x";
+          started || (started = Math.abs(pos[prop] - origin[prop]) > threshold);
+          if (started) {
+            const delta = lastPos[prop] - pos[prop];
+            el[isVertical ? "scrollTop" : "scrollLeft"] += delta;
+          }
+        };
+      }
+      function end() {
+        off();
+        if (started) {
+          setTimeout(on(el, "click", (e2) => e2.preventDefault(), pointerOptions));
+        }
+      }
+    }
 
     var responsive = {
       props: ["width", "height"],
@@ -8813,6 +9092,11 @@
           el = el && $(el) || document.body;
           if (trigger(this.$el, "beforescroll", [this, el])) {
             await scrollIntoView(el, { offset: this.offset });
+            if (!isFocusable(el)) {
+              attr(el, "tabindex", "-1");
+              once(el, "blur", () => attr(el, "tabindex", null));
+            }
+            el.focus({ preventScroll: true });
             trigger(this.$el, "scrolled", [this, el]);
           }
         }
@@ -8880,7 +9164,7 @@
       },
       disconnected() {
         for (const [el, state] of this.elementData.entries()) {
-          removeClass(el, clsInView, (state == null ? void 0 : state.cls) || "");
+          removeClass(el, clsInView, state.cls || "");
         }
         delete this.elementData;
       },
@@ -8911,7 +9195,8 @@
             for (const [el, state] of this.elementData.entries()) {
               if (state.show && !state.inview && !state.queued) {
                 state.queued = true;
-                data.promise = (data.promise || Promise.resolve()).then(() => new Promise((resolve) => setTimeout(resolve, this.delay))).then(() => {
+                data.promise = (data.promise || Promise.resolve()).then(async () => {
+                  await awaitTimeout(state.show ? this.delay : 0);
                   this.toggle(el, true);
                   setTimeout(() => {
                     state.queued = false;
@@ -8927,7 +9212,7 @@
       ],
       methods: {
         toggle(el, inview) {
-          var _a, _b;
+          var _a, _b, _c;
           const state = (_a = this.elementData) == null ? void 0 : _a.get(el);
           if (!state) {
             return;
@@ -8936,16 +9221,13 @@
           css(el, "opacity", !inview && this.hidden ? 0 : "");
           toggleClass(el, clsInView, inview);
           toggleClass(el, state.cls);
-          let match;
-          if (match = state.cls.match(/\buk-animation-[\w-]+/g)) {
-            const removeAnimationClasses = () => removeClass(el, match);
-            if (inview) {
-              state.off = once(el, "animationcancel animationend", removeAnimationClasses, {
-                self: true
-              });
-            } else {
-              removeAnimationClasses();
-            }
+          const match = state.cls.match(/\buk-animation-[\w-]+/g);
+          if (match) {
+            const animations = inview && ((_c = el.getAnimations) == null ? void 0 : _c.call(el)) || [];
+            let active = true;
+            state.off = () => active = false;
+            const cleanup = () => active && removeClass(el, match);
+            Promise.all(animations.map(({ finished }) => finished)).then(cleanup, cleanup);
           }
           trigger(el, inview ? "inview" : "outview");
           state.inview = inview;
@@ -8969,7 +9251,15 @@
         offset: 0
       },
       computed: {
-        links: ({ target }, $el) => $$(target, $el).filter((el) => isSameSiteAnchor(el)),
+        links: {
+          get({ target }, $el) {
+            return $$(target, $el).filter(getTargetedElement);
+          },
+          observe: () => "*"
+        },
+        targets() {
+          return this.links.map((el) => getTargetedElement(el));
+        },
         elements({ closest }) {
           return this.links.map((el) => el.closest(closest || "*"));
         }
@@ -8985,7 +9275,7 @@
       update: [
         {
           read() {
-            const targets = this.links.map((el) => getTargetedElement(el) || el.ownerDocument);
+            const { targets } = this;
             const { length } = targets;
             if (!length || !isVisible(this.$el)) {
               return false;
@@ -9009,13 +9299,13 @@
             return { active };
           },
           write({ active }) {
-            const changed = active !== false && !hasClass(this.elements[active], this.cls);
-            this.links.forEach((el) => el.blur());
-            for (let i = 0; i < this.elements.length; i++) {
-              toggleClass(this.elements[i], this.cls, +i === active);
+            const { elements } = this;
+            const changed = active !== false && !hasClass(elements[active], this.cls);
+            for (let i = 0; i < elements.length; i++) {
+              toggleClass(elements[i], this.cls, +i === active);
             }
             if (changed) {
-              trigger(this.$el, "active", [active, this.elements[active]]);
+              trigger(this.$el, "active", [active, elements[active]]);
             }
           },
           events: ["scroll", "resize"]
@@ -9032,6 +9322,7 @@
         start: null,
         end: null,
         offset: String,
+        offsetEnd: String,
         overflowFlip: Boolean,
         animation: String,
         clsActive: String,
@@ -9049,6 +9340,7 @@
         start: false,
         end: false,
         offset: 0,
+        offsetEnd: 0,
         overflowFlip: false,
         animation: "",
         clsActive: "uk-active",
@@ -9096,31 +9388,30 @@
           name: "load hashchange popstate",
           el: () => window,
           filter: ({ targetOffset }) => targetOffset !== false,
-          handler() {
+          async handler() {
             const { scrollingElement } = document;
             if (!location.hash || scrollingElement.scrollTop === 0) {
               return;
             }
-            setTimeout(() => {
-              const targetOffset = offset($(location.hash));
-              const elOffset = offset(this.$el);
-              if (this.isFixed && intersectRect(targetOffset, elOffset)) {
-                scrollingElement.scrollTop = Math.ceil(
-                  targetOffset.top - elOffset.height - toPx(this.targetOffset, "height", this.placeholder) - toPx(this.offset, "height", this.placeholder)
-                );
-              }
-            });
+            await awaitTimeout();
+            const targetOffset = offset($(location.hash));
+            const elOffset = offset(this.$el);
+            if (this.isFixed && intersectRect(targetOffset, elOffset)) {
+              scrollingElement.scrollTop = Math.ceil(
+                targetOffset.top - elOffset.height - toPx(this.targetOffset, "height", this.placeholder) - toPx(this.offset, "height", this.placeholder)
+              );
+            }
           }
         }
       ],
       update: [
         {
-          read({ height: height$1, width, margin, sticky }, types) {
+          read({ height, width, margin, sticky }, types) {
             this.inactive = !this.matchMedia || !isVisible(this.$el) || !this.$el.offsetHeight;
             if (this.inactive) {
               return;
             }
-            const dynamicViewport = height(window);
+            const dynamicViewport = height$1(window);
             const maxScrollHeight = Math.max(
               0,
               document.scrollingElement.scrollHeight - dynamicViewport
@@ -9135,7 +9426,7 @@
               this.hide();
             }
             if (!this.active) {
-              ({ height: height$1, width } = dimensions$1(this.$el));
+              ({ height, width } = dimensions$1(this.$el));
               margin = css(this.$el, "margin");
             }
             if (hide) {
@@ -9143,22 +9434,25 @@
             }
             const viewport2 = toPx("100vh", "height");
             let position = this.position;
-            if (this.overflowFlip && height$1 > viewport2) {
+            if (this.overflowFlip && height > viewport2) {
               position = position === "top" ? "bottom" : "top";
             }
             const referenceElement = this.isFixed ? this.placeholder : this.$el;
-            let offset$1 = toPx(this.offset, "height", sticky ? this.$el : referenceElement);
-            if (position === "bottom" && (height$1 < dynamicViewport || this.overflowFlip)) {
-              offset$1 += dynamicViewport - height$1;
+            let [offset$1, offsetEnd] = [this.offset, this.offsetEnd].map(
+              (value) => toPx(value, "height", sticky ? this.$el : referenceElement)
+            );
+            if (position === "bottom" && (height < dynamicViewport || this.overflowFlip)) {
+              offset$1 += dynamicViewport - height;
             }
-            const overflow = this.overflowFlip ? 0 : Math.max(0, height$1 + offset$1 - viewport2);
+            const elementBox = height + offset$1 + offsetEnd;
+            const overflow = this.overflowFlip ? 0 : Math.max(0, elementBox - viewport2);
             const topOffset = offset(referenceElement).top - // offset possible `transform: translateY` animation 'uk-animation-slide-top' while hiding
             new DOMMatrix(css(referenceElement, "transform")).m42;
             const elHeight = dimensions$1(this.$el).height;
             const start = (this.start === false ? topOffset : parseProp(this.start, this.$el, topOffset)) - offset$1;
             const end = this.end === false ? maxScrollHeight : Math.min(
               maxScrollHeight,
-              parseProp(this.end, this.$el, topOffset + height$1, true) - elHeight - offset$1 + overflow
+              parseProp(this.end, this.$el, topOffset + height, true) - elHeight - offset$1 + overflow
             );
             sticky = !this.showOnUp && start + offset$1 === topOffset && end === Math.min(
               maxScrollHeight,
@@ -9169,7 +9463,7 @@
               end,
               offset: offset$1,
               overflow,
-              height: height$1,
+              height,
               elHeight,
               width,
               margin,
@@ -9294,12 +9588,7 @@
           if (sticky) {
             css(this.$el, "top", offset);
           } else {
-            css(this.$el, {
-              position: "",
-              top: "",
-              width: "",
-              marginTop: ""
-            });
+            reset(this.$el);
           }
           this.placeholder.hidden = true;
           this.isFixed = false;
@@ -9370,10 +9659,11 @@
       css(el, { position: "", top: "", marginTop: "", width: "" });
     }
     const clsTransitionDisable = "uk-transition-disable";
-    function preventTransition(element) {
+    async function preventTransition(element) {
       if (!hasClass(element, clsTransitionDisable)) {
         addClass(element, clsTransitionDisable);
-        requestAnimationFrame(() => removeClass(element, clsTransitionDisable));
+        await awaitFrame();
+        removeClass(element, clsTransitionDisable);
       }
     }
     function getVisibleParent(element) {
@@ -9381,6 +9671,85 @@
         if (isVisible(element)) {
           return element;
         }
+      }
+    }
+
+    var svg = {
+      mixins: [Svg],
+      args: "src",
+      props: {
+        src: String,
+        icon: String,
+        attributes: "list",
+        strokeAnimation: Boolean
+      },
+      data: {
+        strokeAnimation: false
+      },
+      observe: [
+        mutation({
+          async handler() {
+            const svg = await this.svg;
+            if (svg) {
+              applyAttributes.call(this, svg);
+            }
+          },
+          options: {
+            attributes: true,
+            attributeFilter: ["id", "class", "style"]
+          }
+        })
+      ],
+      async connected() {
+        if (includes(this.src, "#")) {
+          [this.src, this.icon] = this.src.split("#", 2);
+        }
+        const svg = await this.svg;
+        if (svg) {
+          applyAttributes.call(this, svg);
+          if (this.strokeAnimation) {
+            applyAnimation(svg);
+          }
+        }
+      },
+      methods: {
+        async getSvg() {
+          if (isTag(this.$el, "img") && !this.$el.complete && this.$el.loading === "lazy") {
+            await new Promise((resolve) => once(this.$el, "load", resolve));
+          }
+          return parseSVG(await loadSVG(this.src), this.icon) || Promise.reject("SVG not found.");
+        }
+      }
+    };
+    function applyAttributes(el) {
+      const { $el } = this;
+      addClass(el, attr($el, "class"), "uk-svg");
+      for (let i = 0; i < $el.style.length; i++) {
+        const prop = $el.style[i];
+        css(el, prop, css($el, prop));
+      }
+      for (const attribute in this.attributes) {
+        const [prop, value] = this.attributes[attribute].split(":", 2);
+        attr(el, prop, value);
+      }
+      el.ariaHidden = this.$el.ariaHidden;
+      if (!this.$el.id) {
+        removeAttr(el, "id");
+      }
+    }
+    const loadSVG = memoize(async (src) => {
+      if (src) {
+        const response = await fetch(src);
+        if (/^image\/svg\+xml\s*(;|$)/i.test(response.headers.get("Content-Type"))) {
+          return response.text();
+        }
+      }
+      return Promise.reject();
+    });
+    function applyAnimation(el) {
+      const length = getMaxPathLength(el);
+      if (length) {
+        css(el, "--uk-animation-stroke", length);
       }
     }
 
@@ -9413,7 +9782,7 @@
           observe: ({ connect }) => connect
         },
         connectChildren() {
-          return this.connects.map((el) => children(el)).flat();
+          return this.connects.flatMap((el) => children(el));
         },
         toggles: ({ toggle }, $el) => $$(toggle, $el),
         children(_, $el) {
@@ -9436,14 +9805,14 @@
           }
           this.$emit();
         },
-        toggles(toggles) {
+        toggles() {
           this.$emit();
           const active = this.index();
-          this.show(~active ? active : toggles[this.active] || toggles[0]);
+          this.show(~active ? active : this.next(this.active));
         }
       },
       connected() {
-        attr(this.$el, "role", "tablist");
+        this.$el.role = "tablist";
       },
       observe: [
         lazyload({ targets: ({ connectChildren }) => connectChildren }),
@@ -9455,7 +9824,7 @@
           delegate: ({ toggle }) => toggle,
           handler(e) {
             if (!matches(e.current, selDisabled) && (e.type === "click" || e.keyCode === keyMap.SPACE)) {
-              e.preventDefault();
+              maybeDefaultPreventClick(e);
               this.show(e.current);
             }
           }
@@ -9466,11 +9835,14 @@
           handler(e) {
             const { current, keyCode } = e;
             const isVertical = matches(this.$el, this.selVertical);
-            let i = keyCode === keyMap.HOME ? 0 : keyCode === keyMap.END ? "last" : keyCode === keyMap.LEFT && !isVertical || keyCode === keyMap.UP && isVertical ? "previous" : keyCode === keyMap.RIGHT && !isVertical || keyCode === keyMap.DOWN && isVertical ? "next" : -1;
+            const i = getNavigationIndex(
+              keyCode,
+              isVertical ? keyMap.UP : keyMap.LEFT,
+              isVertical ? keyMap.DOWN : keyMap.RIGHT
+            );
             if (~i) {
               e.preventDefault();
-              const toggles = this.toggles.filter((el) => !matches(el, selDisabled));
-              const next = toggles[getIndex(i, toggles, toggles.indexOf(current))];
+              const next = this.toggles[this.next(i, this.toggles.indexOf(current))];
               next.focus();
               if (this.followFocus) {
                 this.show(next);
@@ -9484,7 +9856,7 @@
           delegate: ({ attrItem }) => `[${attrItem}],[data-${attrItem}]`,
           handler(e) {
             if (e.target.closest("a,button")) {
-              e.preventDefault();
+              maybeDefaultPreventClick(e);
               this.show(data(e.current, this.attrItem));
             }
           }
@@ -9502,14 +9874,14 @@
         var _a;
         for (const el of this.connects) {
           if (isTag(el, "ul")) {
-            attr(el, "role", "presentation");
+            el.role = "presentation";
           }
         }
         attr(children(this.$el), "role", "presentation");
         for (const index in this.toggles) {
           const toggle = this.toggles[index];
           const item = (_a = this.connects[0]) == null ? void 0 : _a.children[index];
-          attr(toggle, "role", "tab");
+          toggle.role = "tab";
           if (!item) {
             continue;
           }
@@ -9524,29 +9896,38 @@
         index() {
           return findIndex(this.children, (el) => hasClass(el, this.cls));
         },
-        show(item) {
+        next(item, prev = this.index()) {
+          if (isNumeric(item)) {
+            for (let i = 0; i < this.toggles.length; i++) {
+              let index = getIndex(i + +item, this.toggles);
+              if (!matches(this.toggles[index], selDisabled)) {
+                return index;
+              }
+            }
+          }
           const toggles = this.toggles.filter((el) => !matches(el, selDisabled));
-          const prev = this.index();
-          const next = getIndex(
-            !isNode(item) || includes(toggles, item) ? item : 0,
-            toggles,
-            getIndex(this.toggles[prev], toggles)
+          return getIndex(
+            toggles[getIndex(item, toggles, toggles.indexOf(this.toggles[prev]))],
+            this.toggles
           );
-          const active = getIndex(toggles[next], this.toggles);
+        },
+        show(item) {
+          const prev = this.index();
+          const next = this.next(item);
           this.children.forEach((child, i) => {
-            toggleClass(child, this.cls, active === i);
+            toggleClass(child, this.cls, next === i);
             attr(this.toggles[i], {
-              "aria-selected": active === i,
-              tabindex: active === i ? null : -1
+              "aria-selected": next === i,
+              tabindex: next === i ? null : -1
             });
           });
           const animate = prev >= 0 && prev !== next;
           this.connects.forEach(async ({ children: children2 }) => {
             const actives = toArray(children2).filter(
-              (child, i) => i !== active && hasClass(child, this.cls)
+              (child, i) => i !== next && hasClass(child, this.cls)
             );
             if (await this.toggleElement(actives, false, animate)) {
-              await this.toggleElement(children2[active], true, animate);
+              await this.toggleElement(children2[next], true, animate);
             }
           });
         }
@@ -9572,7 +9953,6 @@
       }
     };
 
-    const KEY_SPACE = 32;
     var toggle = {
       mixins: [Media, Togglable],
       args: "target",
@@ -9600,10 +9980,10 @@
       connected() {
         if (!includes(this.mode, "media")) {
           if (!isFocusable(this.$el)) {
-            attr(this.$el, "tabindex", "0");
+            this.$el.tabIndex = 0;
           }
           if (!this.cls && isTag(this.$el, "a")) {
-            attr(this.$el, "role", "button");
+            this.$el.role = "button";
           }
         }
       },
@@ -9631,17 +10011,15 @@
           }
         },
         {
-          // mouseenter mouseleave are added because of Firefox bug,
-          // where pointerleave is triggered immediately after pointerenter on scroll
-          name: `mouseenter mouseleave ${pointerEnter} ${pointerLeave} focus blur`,
+          name: `${pointerEnter} ${pointerLeave} focus blur`,
           filter: ({ mode }) => includes(mode, "hover"),
           handler(e) {
-            if (isTouch(e) || this.$el.disabled) {
+            if (isTouch(e) || this.$el.disabled || document.readyState === "loading") {
               return;
             }
-            const show = includes(["mouseenter", pointerEnter, "focus"], e.type);
+            const show = includes([pointerEnter, "focus"], e.type);
             const expanded = this.isToggled(this.target);
-            if (!show && (!isBoolean(this._showState) || e.type !== "blur" && matches(this.$el, ":focus") || e.type === "blur" && matches(this.$el, ":hover"))) {
+            if (!show && (!isBoolean(this._showState) || e.type === pointerLeave && matches(this.$el, ":focus") || e.type === "blur" && matches(this.$el, ":hover"))) {
               if (expanded === this._showState) {
                 this._showState = null;
               }
@@ -9658,7 +10036,7 @@
           name: "keydown",
           filter: ({ $el, mode }) => includes(mode, "click") && !isTag($el, "input"),
           handler(e) {
-            if (e.keyCode === KEY_SPACE) {
+            if (e.keyCode === keyMap.SPACE || e.keyCode === keyMap.ENTER) {
               e.preventDefault();
               this.$el.click();
             }
@@ -9668,11 +10046,15 @@
           name: "click",
           filter: ({ mode }) => ["click", "hover"].some((m) => includes(mode, m)),
           handler(e) {
-            let link;
-            if (this._preventClick || e.target.closest('a[href="#"], a[href=""]') || (link = e.target.closest("a[href]")) && (!this.isToggled(this.target) || link.hash && matches(this.target, link.hash))) {
+            if (e.defaultPrevented) {
+              return;
+            }
+            const link = e.target.closest("a[href]");
+            const isButtonLike = isSameSiteAnchor(link) && (!link.hash || matches(this.target, link.hash));
+            if (this._preventClick || isButtonLike || link && !this.isToggled(this.target)) {
               e.preventDefault();
             }
-            if (!this._preventClick && includes(this.mode, "click")) {
+            if (!this._preventClick && includes(this.mode, "click") && (!link || isButtonLike || e.defaultPrevented)) {
               this.toggle();
             }
           }
@@ -9694,7 +10076,7 @@
             return;
           }
           if (hasAttr(this.$el, "aria-expanded")) {
-            attr(this.$el, "aria-expanded", !this.isToggled(this.target));
+            this.$el.ariaExpanded = !this.isToggled(this.target);
           }
           if (!this.queued) {
             return this.toggleElement(this.target);
@@ -9721,6 +10103,7 @@
     var components = /*#__PURE__*/Object.freeze({
         __proto__: null,
         Accordion: Accordion,
+        AccordionIcon: IconComponent,
         Alert: alert,
         Close: Close,
         Cover: cover,
@@ -9747,6 +10130,7 @@
         NavbarToggleIcon: NavbarToggleIcon,
         Offcanvas: offcanvas,
         OverflowAuto: overflowAuto,
+        OverflowFade: overflowFade,
         OverlayIcon: IconComponent,
         PaginationNext: PaginationNext,
         PaginationPrevious: PaginationPrevious,
