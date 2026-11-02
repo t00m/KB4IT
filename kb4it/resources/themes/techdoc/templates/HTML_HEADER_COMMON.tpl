@@ -143,9 +143,6 @@
 % endif
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="javascript:location.reload();"><span data-uk-icon="refresh"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Reload page</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="${var['help_url']}" target="_blank" rel="noopener"><span data-uk-icon="question"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Help</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
@@ -192,17 +189,24 @@ ${var['actions'] | n}
 % endif
             </div>
             <!-- PAGE TITLE :: END -->
-% if var.get('search_box'):
-            <!-- SEARCH BUTTON :: START -->
+            <!-- TOP BAR BUTTONS :: START -->
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
+                    <!-- RELOAD BUTTON :: START -->
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-link-heading" href="javascript:location.reload();" title="Reload page" aria-label="Reload page"><span data-uk-icon="refresh"></span></a>
+                    </li>
+                    <!-- RELOAD BUTTON :: END -->
+% if var.get('search_box'):
+                    <!-- SEARCH BUTTON :: START -->
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-link-heading" href="#kb4it-search-modal" title="Search (/ or Ctrl+K)" aria-label="Search" data-uk-toggle><span data-uk-icon="search"></span></a>
                     </li>
+                    <!-- SEARCH BUTTON :: END -->
+% endif
                 </ul>
             </div>
-            <!-- SEARCH BUTTON :: END -->
-% endif
+            <!-- TOP BAR BUTTONS :: END -->
         </nav>
     </div>
 % if var.get('search_box'):
