@@ -87,19 +87,12 @@ def prop_url(key, value):
     <!-- WORK :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="work" open>
         <summary class="kb-section-title">Open items and activity</summary>
-        <div class="kb-work">
-            <ul class="kb-work-tabs" data-kb-remember="kb-work-tab" data-uk-tab="connect: #kb-work-panels; animation: uk-animation-fade">
-%     if var['page']['open_items']:
-                <li data-kb-tab="open-items"><a href="#">Open items</a></li>
-%     endif
-%     if any(act.values()):
-                <li data-kb-tab="activity"><a href="#">Activity</a></li>
-%     endif
-            </ul>
-            <div class="uk-switcher" id="kb-work-panels">
+        <div class="kb-work uk-grid-small uk-grid-match uk-child-width-1-1 uk-child-width-expand@m" data-uk-grid>
 %     if var['page']['open_items']:
             <!-- OPEN ITEMS :: START -->
-            <div class="kb-open-items">
+            <div>
+            <div class="kb-work-block kb-open-items">
+            <div class="kb-work-title">Open items</div>
             <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
                 <tbody>
 %     for row in var['page']['open_items']:
@@ -128,11 +121,14 @@ def prop_url(key, value):
                 </tbody>
             </table>
             </div>
+            </div>
             <!-- OPEN ITEMS :: END -->
 %     endif
 %     if any(act.values()):
             <!-- ACTIVITY :: START -->
-        <div class="kb-activity">
+            <div>
+        <div class="kb-work-block kb-activity">
+            <div class="kb-work-title">Activity</div>
             <ul class="kb-activity-tabs" data-kb-remember="kb-activity-tab" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
 %     for name, label in (('changes', 'Changes'), ('incidents', 'Incidents'), ('events', 'Events'), ('monitoring', 'Monitoring')):
 %         if act[name]:
@@ -217,7 +213,7 @@ def prop_url(key, value):
             <div class="uk-grid-small" data-uk-grid>
 % for side in ('current', 'next'):
 <%  panel = var['page']['events_panel'][side] %>
-                <div class="uk-width-1-2@m">
+                <div class="uk-width-1-1">
                     <div class="kb-events-month-header"><a href="${panel['url']}">${panel['label']}</a></div>
 %     if len(panel['rows']) == 0:
                     <div class="kb-events-empty">No events scheduled.</div>
@@ -276,7 +272,7 @@ def prop_url(key, value):
 % else:
             <div class="uk-grid-small" data-uk-grid>
 % for group in var['page']['monitoring_panel']:
-                <div class="uk-width-1-${ len(var['page']['monitoring_panel']) }@m">
+                <div class="uk-width-1-2@s">
                     <div class="kb-events-month-header">
                         <a href="${group['url']}">${group['periodicity']}</a>
                     </div>
@@ -303,9 +299,9 @@ def prop_url(key, value):
 %     endif
             </div>
         </div>
+            </div>
             <!-- ACTIVITY :: END -->
 %     endif
-            </div>
         </div>
     </details>
     <!-- WORK :: END -->
