@@ -55,12 +55,13 @@
                     autoWidth:      false,
                     scrollY:        'calc(100vh - 200px)',
                     scrollX:        true,
-                    scrollCollapse: false,
+                    scrollCollapse: true,
                     scroller:       false,
                     stateSave: false,
                     paging:   false,
                     info:     true,
-                    order: [[ 0, "desc" ]]
+                    // A table may set its own first order: data-kb-order='[[0, "asc"]]'.
+                    order: $(this).data('kbOrder') || [[ 0, "desc" ]]
                 });
             });
         });

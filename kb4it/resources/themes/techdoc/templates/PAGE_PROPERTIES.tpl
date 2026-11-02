@@ -1,12 +1,22 @@
 <!-- PROPERTIES :: START -->
 <div class="kb-props">
+<table id="kb-props-table" class="kb4it-datatable uk-table uk-table-small uk-table-divider uk-table-hover uk-table-striped uk-text-small" style="width: 100%" data-kb-order='[[0, "asc"]]'>
+    <thead>
+        <tr>
+            <th><span class="uk-text-secondary">Property</span></th>
+            <th class="kb-props-num"><span class="uk-text-secondary">Values</span></th>
+            <th class="kb-props-num"><span class="uk-text-secondary">Documents</span></th>
+        </tr>
+    </thead>
+    <tbody>
 % for item in var['keys']:
-    <div class="uk-grid-small kb-props-row" data-uk-grid>
-        <div class="uk-width-expand" data-uk-leader>
-            <a class="kb-props-key" href="${item['vfkey']}.html">${item['key']}</a>
-        </div>
-        <div class="kb-props-count">${item['values']} ${'value' if item['values'] == 1 else 'values'} <span class="kb-meta-sep">·</span> ${item['docs']} ${'document' if item['docs'] == 1 else 'documents'}</div>
-    </div>
+        <tr>
+            <td><a class="kb-props-key" href="${item['vfkey']}.html">${item['key']}</a></td>
+            <td class="kb-props-num">${item['values']}</td>
+            <td class="kb-props-num">${item['docs']}</td>
+        </tr>
 % endfor
+    </tbody>
+</table>
 </div>
 <!-- PROPERTIES :: END -->
