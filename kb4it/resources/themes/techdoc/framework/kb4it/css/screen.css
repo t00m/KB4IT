@@ -107,31 +107,33 @@ table.month tbody tr th {
 .kb4it-navbar-title .uk-navbar-nav > li { min-width: 0; }
 .kb4it-navbar-title .uk-navbar-nav > li > a { min-width: 0; text-transform: none; }
 
-/* Title menu: page actions in one row at the top, then the table of contents. */
+/* Page actions: one row of icons under the title, inside the top bar. */
+.kb4it-navbar-title.kb4it-has-actions { flex-direction: column; align-items: center; justify-content: center; }
+.kb4it-navbar-title.kb4it-has-actions .uk-navbar-nav > li > a { min-height: 48px; }
+.kb4it-page-actions {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    padding-bottom: 4px;
+}
+.kb4it-page-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: #4a5568;
+}
+.kb4it-page-action:hover { background: #dbeafe; color: #1e87f0; }
+
+/* Title menu: the table of contents, shown on hover over the title. */
 .kb4it-title-menu {
     width: min(40rem, calc(100vw - 32px));
     max-height: calc(100vh - 120px);
     overflow-y: auto;
     padding: 0;
 }
-.kb4it-page-actions {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    padding: 8px 12px;
-    border-bottom: 1px solid #e2e8f0;
-    background: #f8fafc;
-}
-.kb4it-page-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    color: #4a5568;
-}
-.kb4it-page-action:hover { background: #dbeafe; color: #1e87f0; }
 .kb4it-title-toc { padding: 10px 12px 14px; }
 /* Table of contents entries: the title menu and the panel at the top of a document. */
 .kb4it-title-toc ul, .kb-toc-nav ul { list-style: none; margin: 0; padding: 0; }
