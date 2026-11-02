@@ -461,7 +461,8 @@ Frontmatter rules and the controlled vocabulary for `Category`, `WorkType`, `Doc
   - Commit when a piece of work is done; do not wait to be asked.
   - One-line Conventional Commits message: `type(scope): description`, types `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`; omit the scope for project-wide changes; description in lower case, imperative, no full stop, describing the change.
   - No trailer lines (no `Co-Authored-By`, no `Claude-Session`).
-  - Never push and never create a branch (no `git branch <name>`, `checkout -b`, `switch -c`, `worktree add`); work on the checked-out branch. A PreToolUse hook (`.claude/hooks/git-guard.py`) enforces this.
+  - Creating branches and merging are allowed.
+  - Never push. A PreToolUse hook (`.claude/hooks/git-guard.py`) enforces this.
   - Stage files by name, never `git add .` or a whole directory. Never commit `.claude/` (it is in `.gitignore`).
   - One commit per kind of change; a mixed commit takes the type of the main change, or is split if the split is clean.
   - After a fix or a feature, add an entry to `CHANGELOG.md` under `## [Unreleased]`, in Keep a Changelog format (`### Added`, `### Changed`, `### Fixed`, `### Removed`).
