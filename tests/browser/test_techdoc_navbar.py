@@ -106,6 +106,9 @@ def _goto(page, doc):
 
 def _open_title_menu(page, doc):
     _goto(page, doc)
+    # UIkit 3.22+ ignores the first hover of a navbar when the pointer already sits on it
+    # at load, and Playwright starts the pointer at (0, 0). Come in from the page instead.
+    page.mouse.move(600, 600)
     page.hover(".kb4it-navbar-title a")
     page.wait_for_selector(".kb4it-title-menu", state="visible")
 
