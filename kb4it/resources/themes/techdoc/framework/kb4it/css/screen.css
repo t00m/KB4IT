@@ -47,6 +47,12 @@ table.month tbody tr th {
     text-align: left;
 }
 
+/* With scrolling DataTables splits a table into a header table and a body table; the UIkit table
+   margins left an empty band between the two. */
+.dataTables_scrollHead table.uk-table,
+.dataTables_scrollBody table.uk-table { margin-top: 0; margin-bottom: 0; }
+.dataTables_wrapper .dataTables_filter { margin-bottom: 12px; }
+
 /* The title column takes the width the other columns leave; a long title ends in an ellipsis and shows whole in its tooltip. */
 .kb4it-datatable td.kb-dt-title {
     width: 100%;
@@ -1680,7 +1686,7 @@ html.kb-exemplary #kb4it-menu > nav::after {
     .kb-gal-panel { position: static; max-height: none; order: -1; }
 }
 
-/* Properties page: one line per property, a leader to its numbers of values and documents. */
+/* Properties page: a table of the properties with their numbers of values and documents. */
 .kb-props {
     max-width: 760px;
     margin: 12px auto;
@@ -1689,10 +1695,8 @@ html.kb-exemplary #kb4it-menu > nav::after {
     background: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.kb-props-row { margin-top: 0; }
-.kb-props-row + .kb-props-row { margin-top: 6px; }
 .kb-props-key { font-weight: 600; }
-.kb-props-count { color: #777; font-size: 0.85rem; }
+.kb4it-datatable th.kb-props-num, .kb4it-datatable td.kb-props-num { width: 7rem; text-align: right; }
 
 /* Task lists (pymdownx.tasklist): the checkbox takes the place of the bullet. */
 li.task-list-item { list-style-type: none; }

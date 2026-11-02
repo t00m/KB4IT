@@ -36,6 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- techdoc Properties page: the properties are now a table (DataTables) with Property, Values and Documents columns, sorted by name, with the filter box and sortable columns of the other document lists, instead of a list with leader dots. A table of the theme can set its first sort order with `data-kb-order`.
 - techdoc dashboard: Open items and Activity are now two blocks side by side, Open items on the left and Activity on the right, instead of two tabs of one card. On small screens they stack. In the Activity block the two event months stack and the monitoring groups wrap in pairs, to fit the half width.
 - techdoc skeletons, based on common IT operations practice: Change adds Implementation Plan, Verification and Result, with Approvals and Risks tables; Incident adds Investigation and Follow-up Actions; Task adds Subtasks and dated notes; Meeting adds Decisions; Procedure, Note and Report ask for the systems, duration, risk, expected output, tested versions, report period and due dates. The skeletons carry the optional date keys of their kind (`ScheduledStart`, `ScheduledEnd`, `Downtime`, `DowntimeStart`, `DowntimeEnd`, `DetectedDate`, `ResolvedDate`, `DueDate`, `ReviewDate`) and `Team`, `Environment`, `SID` and `Periodicity` where they fit. Similar headings count for the new sections (Plan, Outcome, Analysis, Lessons learned, Checklist, Agreed...). A record written to the old skeleton scores a few Structured points less. The samples follow the new skeletons, and the default sample profile is now `PROFILE-YOUR-NAME.md` with `ProfileOf: Author`.
 - `PERSON-` files and the `repo.json` `people` block still work, as a profile of `Author` and as the `Author` entries of `profiles`; the build and `kb4it verify` report them as `PROFILE_PERSON_PREFIX` and `PEOPLE_BLOCK_DEPRECATED`. `PROFILE_ALIAS_IS_PERSON` is now `PROFILE_ALIAS_IS_NAME`.
@@ -49,6 +50,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- techdoc tables: the empty band between the header and the first row of every document table is gone (the UIkit table margins, doubled when DataTables splits a scrolling table in two), and a short table no longer keeps a full screen of empty space below its rows.
 - techdoc: property values with accents or other non-ASCII characters showed as character codes (`Tom&#225;s`) in the filter dialogs of the Gallery and Diagrams pages. techdoc wrote every page in ASCII, turning each such character into an HTML entity, which the browser does not decode inside a `<script>` block. Pages are now written as UTF-8 text.
 - techdoc events calendar: today's day was invisible, white text on a white cell. The generic day-cell rule set the background to transparent and won over the blue background of today.
 - Mermaid diagrams in a folded techdoc section, or in any other hidden container, showed "Syntax error in text" for valid sources (flowcharts with subgraphs and labelled dotted edges). Mermaid needs a layout box to measure text; a hidden diagram is now rendered the first time it is shown.

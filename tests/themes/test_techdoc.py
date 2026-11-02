@@ -149,12 +149,17 @@ def test_metadata_pages(site):
         assert (site["target"] / name).exists(), name
 
 
-def test_properties_page_is_a_leader_list_of_the_properties(site):
+def test_properties_page_is_a_datatable_of_the_properties(site):
     html = read(site, "properties.html")
-    assert 'class="kb-props"' in html and "kb-cloud" not in html and "data-uk-modal" not in html.split("PROPERTIES :: START")[1]
-    row = re.search(r'<a class="kb-props-key" href="Priority.html">Priority</a>\s*</div>\s*'
-                    r'<div class="kb-props-count">([^<]*)<span class="kb-meta-sep">', html)
-    assert row and row.group(1).split() == ["3", "values"]
+    block = html.split("PROPERTIES :: START")[1]
+    assert 'class="kb-props"' in html and "kb-cloud" not in html and "data-uk-modal" not in block
+    assert re.search(r'<table id="kb-props-table" class="kb4it-datatable[^"]*"[^>]*data-kb-order=\'\[\[0, "asc"\]\]\'', block)
+    assert "data-uk-leader" not in block
+    row = re.search(r'<a class="kb-props-key" href="Priority.html">Priority</a></td>\s*'
+                    r'<td class="kb-props-num">(\d+)</td>\s*<td class="kb-props-num">(\d+)</td>', block)
+    assert row and row.group(1) == "3"
+    setup = html[html.index("DATATABLES SETUP :: START"):html.index("DATATABLES SETUP :: END")]
+    assert "data('kbOrder')" in setup       # the table sorts by property name first
 
 
 def test_property_page_has_cloud_and_table_but_no_leader(site):
