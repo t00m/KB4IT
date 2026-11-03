@@ -1,5 +1,9 @@
 <!-- DOCUMENT FILTER :: START -->
+% if var.get('list'):
+<div id="${var['list']}-filter" class="kb-dt-facets noprint" data-kb-list="${var['list']}" hidden>
+% else:
 <div id="${var['table_id']}-filter" class="kb-dt-facets noprint" data-kb-table="${var['table_id']}" hidden>
+% endif
 % for group in var['groups']:
     <div class="kb-dt-facet" data-kb-key="${group['slug']}">
         <span class="kb-dt-facet-key">${group['key']}</span>

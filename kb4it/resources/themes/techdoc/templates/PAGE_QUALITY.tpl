@@ -41,15 +41,26 @@
     <!-- BEST DOCUMENTS :: END -->
 % endif
 
+    <!-- QUALITY FILTER :: START -->
+% if q.get('filter'):
+    <div class="kb-q-filter">
+        <p class="kb-q-intro">Filter the lists below by property. The tier mix and the best documents cover every document.</p>
+        ${q['filter'] | n}
+    </div>
+% endif
+    <!-- QUALITY FILTER :: END -->
+
+    <div id="kb-quality-lists">
     <!-- EXEMPLARY :: START -->
-    <details class="kb-section kb-collapsible" id="quality-exemplary" open>
-        <summary class="kb-section-title">Exemplary documents (${len(q['exemplary'])})</summary>
+    <details class="kb-section kb-collapsible" id="quality-exemplary" data-kb-list-section open>
+        <summary class="kb-section-title">Exemplary documents <span>(<span class="kb-dt-list-count">${len(q['exemplary'])}</span>)</span></summary>
 % if q['exemplary']:
         <ol class="kb-q-list">
 %     for d in q['exemplary']:
-            <li><a href="${d['href']}">${d['title']}</a> <span class="kb-q-list-meta">${d['score']}, ${d['peer']}</span></li>
+            <li data-kb-item ${d['facets'] | n}><a href="${d['href']}">${d['title']}</a> <span class="kb-q-list-meta">${d['score']}, ${d['peer']}</span></li>
 %     endfor
         </ol>
+        <p class="kb-q-empty kb-dt-list-none" hidden>None for these filters.</p>
 % else:
         <p class="kb-q-empty">No Exemplary document yet. The quick wins below are the shortest way there.</p>
 % endif
@@ -57,15 +68,16 @@
     <!-- EXEMPLARY :: END -->
 
     <!-- QUICK WINS :: START -->
-    <details class="kb-section kb-collapsible" id="quality-wins" open>
-        <summary class="kb-section-title">Quick wins (${len(q['wins'])})</summary>
+    <details class="kb-section kb-collapsible" id="quality-wins" data-kb-list-section open>
+        <summary class="kb-section-title">Quick wins <span>(<span class="kb-dt-list-count">${len(q['wins'])}</span>)</span></summary>
         <p class="kb-q-intro">Documents one change away from the next tier, closest first.</p>
 % if q['wins']:
         <ul class="kb-wins">
 %     for w in q['wins']:
-            <li><span class="kb-q-chip kb-q-${w['tier']}">${w['score']}</span><a href="${w['href']}">${w['title']}</a><a class="act" href="quality-guide.html#${w['key']}">${w['check']} +${w['gain']}: ${labels[w['next']]}</a></li>
+            <li data-kb-item ${w['facets'] | n}><span class="kb-q-chip kb-q-${w['tier']}">${w['score']}</span><a href="${w['href']}">${w['title']}</a><a class="act" href="quality-guide.html#${w['key']}">${w['check']} +${w['gain']}: ${labels[w['next']]}</a></li>
 %     endfor
         </ul>
+        <p class="kb-q-empty kb-dt-list-none" hidden>None for these filters.</p>
 % else:
         <p class="kb-q-empty">None.</p>
 % endif
@@ -73,14 +85,15 @@
     <!-- QUICK WINS :: END -->
 
     <!-- BROKEN LINKS :: START -->
-    <details class="kb-section kb-collapsible" id="quality-broken" open>
-        <summary class="kb-section-title">Broken links (${len(q['broken'])})</summary>
+    <details class="kb-section kb-collapsible" id="quality-broken" data-kb-list-section open>
+        <summary class="kb-section-title">Broken links <span>(<span class="kb-dt-list-count">${len(q['broken'])}</span>)</span></summary>
 % if q['broken']:
         <ul class="kb-q-list">
 %     for b in q['broken']:
-            <li><a href="${b['href']}">${b['title']}</a> <span class="kb-q-list-meta">links to <code>${b['target']}</code></span></li>
+            <li data-kb-item ${b['facets'] | n}><a href="${b['href']}">${b['title']}</a> <span class="kb-q-list-meta">links to <code>${b['target']}</code></span></li>
 %     endfor
         </ul>
+        <p class="kb-q-empty kb-dt-list-none" hidden>None for these filters.</p>
 % else:
         <p class="kb-q-empty">None.</p>
 % endif
@@ -88,14 +101,15 @@
     <!-- BROKEN LINKS :: END -->
 
     <!-- MISSING IMAGES :: START -->
-    <details class="kb-section kb-collapsible" id="quality-images">
-        <summary class="kb-section-title">Missing images (${len(q['images'])})</summary>
+    <details class="kb-section kb-collapsible" id="quality-images" data-kb-list-section>
+        <summary class="kb-section-title">Missing images <span>(<span class="kb-dt-list-count">${len(q['images'])}</span>)</span></summary>
 % if q['images']:
         <ul class="kb-q-list">
 %     for i in q['images']:
-            <li><a href="${i['href']}">${i['title']}</a> <span class="kb-q-list-meta"><code>${i['target']}</code></span></li>
+            <li data-kb-item ${i['facets'] | n}><a href="${i['href']}">${i['title']}</a> <span class="kb-q-list-meta"><code>${i['target']}</code></span></li>
 %     endfor
         </ul>
+        <p class="kb-q-empty kb-dt-list-none" hidden>None for these filters.</p>
 % else:
         <p class="kb-q-empty">None.</p>
 % endif
@@ -103,14 +117,15 @@
     <!-- MISSING IMAGES :: END -->
 
     <!-- NO SUMMARY :: START -->
-    <details class="kb-section kb-collapsible" id="quality-summary">
-        <summary class="kb-section-title">Documents without a Summary (${len(q['no_summary'])})</summary>
+    <details class="kb-section kb-collapsible" id="quality-summary" data-kb-list-section>
+        <summary class="kb-section-title">Documents without a Summary <span>(<span class="kb-dt-list-count">${len(q['no_summary'])}</span>)</span></summary>
 % if q['no_summary']:
         <ul class="kb-q-list kb-q-columns">
 %     for d in q['no_summary']:
-            <li><a href="${d['href']}">${d['title']}</a></li>
+            <li data-kb-item ${d['facets'] | n}><a href="${d['href']}">${d['title']}</a></li>
 %     endfor
         </ul>
+        <p class="kb-q-empty kb-dt-list-none" hidden>None for these filters.</p>
 % else:
         <p class="kb-q-empty">None.</p>
 % endif
@@ -118,19 +133,21 @@
     <!-- NO SUMMARY :: END -->
 
     <!-- DUPLICATES :: START -->
-    <details class="kb-section kb-collapsible" id="quality-duplicates" open>
-        <summary class="kb-section-title">Possible duplicates (${len(q['duplicates'])})</summary>
+    <details class="kb-section kb-collapsible" id="quality-duplicates" data-kb-list-section open>
+        <summary class="kb-section-title">Possible duplicates <span>(<span class="kb-dt-list-count">${len(q['duplicates'])}</span>)</span></summary>
         <p class="kb-q-intro">Titles that share most of their words. Titles that differ only by a date are left out.</p>
 % if q['duplicates']:
         <ul class="kb-q-list">
-%     for a, b, score in q['duplicates']:
-            <li><a href="${a['href']}">${a['title']}</a> <span class="kb-q-list-meta">${a['score']}</span> and <a href="${b['href']}">${b['title']}</a> <span class="kb-q-list-meta">${b['score']}</span></li>
+%     for a, b, both in q['duplicates']:
+            <li data-kb-item ${both | n}><a href="${a['href']}">${a['title']}</a> <span class="kb-q-list-meta">${a['score']}</span> and <a href="${b['href']}">${b['title']}</a> <span class="kb-q-list-meta">${b['score']}</span></li>
 %     endfor
         </ul>
+        <p class="kb-q-empty kb-dt-list-none" hidden>None for these filters.</p>
 % else:
         <p class="kb-q-empty">None.</p>
 % endif
     </details>
     <!-- DUPLICATES :: END -->
+    </div>
 </div>
 <!-- QUALITY PAGE :: END -->

@@ -305,10 +305,12 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         def title(doc):
             return (self.srvdtb.get_values(doc, 'Title') or [doc])[0]
 
-        def ref(doc, **extra):
-            return dict({'title': title(doc), 'href': html_id_for(doc)}, **extra)
-
         live = {d: a for d, a in self.quality.items() if a.tier != 'retired'}
+        bar, facets = self.list_filter(sorted(live), 'kb-quality-lists')
+
+        def ref(doc, **extra):
+            return dict({'title': title(doc), 'href': html_id_for(doc), 'facets': facets(doc)}, **extra)
+
         broken, images = [], []
         for doc, a in sorted(live.items()):
             for c in a.checks:
@@ -326,7 +328,9 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             'broken': broken,
             'images': images,
             'no_summary': [ref(d) for d in sorted(live) if not any(c.key == 'check-summary' and c.passed for c in live[d].checks)],
-            'duplicates': [(ref(a, score=live[a].score), ref(b, score=live[b].score), s) for a, b, s in pairs],
+            'duplicates': [(ref(a, score=live[a].score), ref(b, score=live[b].score), facets([a, b]))
+                           for a, b, _ in pairs],
+            'filter': bar,
         }
         self.distribute_md('quality', self.template('PAGE_QUALITY').render(var={'q': q}))
         self.srvdtb.add_document('quality.md')
