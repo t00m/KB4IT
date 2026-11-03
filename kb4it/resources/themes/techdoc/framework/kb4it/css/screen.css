@@ -736,142 +736,134 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-cloud-item:hover .kb-cloud-count { color: #6aa9e0; }
 
 /* ==========================================================================
-   Events page — full-year calendar grid (kb-evcal-*)
+   Events page: calendar panel beside the events table (events.js)
    ========================================================================== */
-.kb-evcal-grid {
+.kb-ev-layout {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
 }
-@media (max-width: 1100px) {
-    .kb-evcal-grid { grid-template-columns: repeat(4, 1fr); }
+.kb-ev-panel {
+    position: sticky;
+    top: 100px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 0.85rem;
 }
-@media (max-width: 800px) {
-    .kb-evcal-grid { grid-template-columns: repeat(3, 1fr); }
+.kb-ev-list { min-width: 0; }
+@media (max-width: 959px) {
+    .kb-ev-layout { grid-template-columns: minmax(0, 1fr); }
+    .kb-ev-panel { position: static; }
 }
-@media (max-width: 640px) {
-    .kb-evcal-grid { grid-template-columns: repeat(2, 1fr); }
+
+/* Year stepper and the list of years */
+.kb-ev-year { position: relative; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.kb-ev-step {
+    flex: none; width: 28px; height: 28px; padding: 0;
+    border: 1px solid #e5e5e5; border-radius: 4px; background: #fff;
+    color: #666; font-size: 1.1rem; line-height: 1; cursor: pointer;
 }
-@media (max-width: 480px) {
-    .kb-evcal-grid { grid-template-columns: 1fr; }
+.kb-ev-step:hover:not(:disabled) { border-color: #1e87f0; color: #1e87f0; }
+.kb-ev-step:disabled { opacity: 0.35; cursor: default; }
+.kb-ev-year-label {
+    flex: 1; min-width: 0; display: flex; align-items: baseline; justify-content: center; gap: 8px;
+    padding: 4px 6px; border: 0; border-radius: 4px; background: transparent; cursor: pointer;
+    white-space: nowrap;
 }
-.kb-evcal-month {
-    border: 1px solid #eee;
-    border-radius: 4px;
-    padding: 4px 6px 6px;
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 0.68rem;
+.kb-ev-year-label:hover { background: #f3f7fc; }
+.kb-ev-year-label::after { content: "\25BE"; color: #999; font-size: 0.75rem; }
+.kb-ev-year-name { font-size: 1.3rem; font-weight: 600; color: #333; }
+.kb-ev-year-label[data-kb-all] .kb-ev-year-name { font-size: 1.1rem; }
+.kb-ev-year-count { color: #999; font-size: 0.8rem; }
+.kb-ev-years {
+    position: absolute; top: 100%; left: 34px; right: 34px; z-index: 10;
+    margin: 4px 0 0; padding: 4px; list-style: none;
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    max-height: 320px; overflow-y: auto;
 }
-.kb-evcal-mname {
-    text-align: center;
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #555;
-    padding-bottom: 2px;
+.kb-ev-years-item {
+    display: flex; justify-content: space-between; width: 100%;
+    padding: 5px 8px; border: 0; border-radius: 3px; background: transparent;
+    color: #333; text-align: left; cursor: pointer;
 }
-.kb-evcal-qlabel {
-    display: inline-block;
-    font-size: 0.55rem;
-    font-weight: 700;
-    background: rgba(0,0,0,0.06);
-    border-radius: 3px;
-    padding: 0 4px;
-    margin-right: 2px;
-    vertical-align: middle;
+.kb-ev-years-item:hover { background: #f3f7fc; }
+.kb-ev-years-item.kb-ev-on { background: #1e87f0; color: #fff; }
+.kb-ev-n { color: #999; font-size: 0.8rem; }
+.kb-ev-years-item.kb-ev-on .kb-ev-n { color: rgba(255, 255, 255, 0.8); }
+
+/* Strip of bars: events per month (or per year, for all years) */
+.kb-ev-strip { display: flex; gap: 3px; height: 92px; margin-bottom: 14px; }
+.kb-ev-bar {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
+    padding: 0; border: 0; background: transparent; cursor: pointer;
 }
-.kb-evcal-mname a { color: #1e87f0; text-decoration: none; }
-.kb-evcal-mname a:hover { text-decoration: underline; }
-.kb-evcal-q1 {
-    border-color: #b8d4f0;
+.kb-ev-bar:disabled { cursor: default; }
+.kb-ev-bar-n { height: 14px; font-size: 0.62rem; color: #999; }
+.kb-ev-bar-track {
+    flex: 1; width: 100%; display: flex; align-items: flex-end;
+    border-radius: 3px; background: #f5f5f5;
 }
-.kb-evcal-q1 .kb-evcal-mname {
-    background: #dce8f5;
-    border-radius: 3px 3px 0 0;
-    margin: -4px -6px 2px;
-    padding: 4px 6px;
+.kb-ev-bar-fill { display: block; width: 100%; border-radius: 3px; background: #9ec5ef; transition: height 0.2s; }
+.kb-ev-bar-label { height: 16px; font-size: 0.68rem; color: #666; line-height: 16px; }
+.kb-ev-q1 .kb-ev-bar-fill { background: #9cc2e8; }
+.kb-ev-q2 .kb-ev-bar-fill { background: #9fd0aa; }
+.kb-ev-q3 .kb-ev-bar-fill { background: #d6c48f; }
+.kb-ev-q4 .kb-ev-bar-fill { background: #d2a9c6; }
+.kb-ev-bar:hover:not(:disabled) .kb-ev-bar-track { background: #eaf2fb; }
+.kb-ev-bar.kb-ev-on .kb-ev-bar-fill { background: #1e87f0; }
+.kb-ev-bar.kb-ev-on .kb-ev-bar-label { color: #1e87f0; font-weight: 700; }
+
+/* Month calendar */
+.kb-ev-cal-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.kb-ev-cal-title {
+    flex: 1; padding: 4px; border: 0; border-radius: 4px; background: transparent;
+    font-weight: 600; color: #333; cursor: pointer;
 }
-.kb-evcal-q2 {
-    border-color: #b8dcc0;
+.kb-ev-cal-title:hover:not(:disabled) { background: #f3f7fc; color: #1e87f0; }
+.kb-ev-cal-title:disabled { cursor: default; }
+.kb-ev-cal-title.kb-ev-on { background: #1e87f0; color: #fff; }
+.kb-ev-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.75rem; text-align: center;
 }
-.kb-evcal-q2 .kb-evcal-mname {
-    background: #dceee0;
-    border-radius: 3px 3px 0 0;
-    margin: -4px -6px 2px;
-    padding: 4px 6px;
+.kb-ev-wd { font-size: 0.62rem; color: #aaa; line-height: 22px; }
+.kb-ev-day {
+    display: flex; align-items: center; justify-content: center; height: 30px;
+    padding: 0; border: 0; border-radius: 4px; background: transparent; color: #555;
+    font: inherit;
 }
-.kb-evcal-q3 {
-    border-color: #d8ccb0;
+.kb-ev-day.kb-ev-has { background: #e8f2ff; color: #1e87f0; font-weight: 700; cursor: pointer; }
+.kb-ev-day.kb-ev-has:hover { background: #cfe3fb; }
+.kb-ev-day.kb-ev-today { box-shadow: inset 0 0 0 2px #f0506e; }
+.kb-ev-day.kb-ev-on { background: #1e87f0; color: #fff; }
+.kb-ev-legend { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 0.72rem; color: #999; }
+.kb-ev-key::before {
+    content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 4px;
+    border-radius: 2px; vertical-align: -1px;
 }
-.kb-evcal-q3 .kb-evcal-mname {
-    background: #f0ead4;
-    border-radius: 3px 3px 0 0;
-    margin: -4px -6px 2px;
-    padding: 4px 6px;
+.kb-ev-key-event::before { background: #e8f2ff; box-shadow: inset 0 0 0 1px #9ec5ef; }
+.kb-ev-key-today::before { box-shadow: inset 0 0 0 2px #f0506e; }
+.kb-ev-today-link { margin-left: auto; font-size: 0.72rem; text-transform: none; }
+.kb-ev-foot:not(:empty) { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+.kb-ev-archive { font-size: 0.8rem; }
+
+/* Chips of the active filters, below the search box of a document table (datatable-filter.js) */
+.kb-dt-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }
+.kb-dt-chips[hidden] { display: none; }
+.kb-dt-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 6px 2px 10px; border: 1px solid #b9d7f7; border-radius: 500px;
+    background: #eef5fe; color: #1e87f0; font-size: 0.78rem; cursor: pointer;
 }
-.kb-evcal-q4 {
-    border-color: #d8c6d4;
-}
-.kb-evcal-q4 .kb-evcal-mname {
-    background: #eedee8;
-    border-radius: 3px 3px 0 0;
-    margin: -4px -6px 2px;
-    padding: 4px 6px;
-}
-.kb-evcal-month table { width: 100%; border-collapse: collapse; }
-.kb-evcal-month th {
-    font-size: 0.58rem;
-    font-weight: 500;
-    color: #aaa;
-    padding: 0;
-    text-align: center;
-    vertical-align: middle;
-    width: 14.28%;
-    height: 22px;
-}
-.kb-evcal-month td {
-    padding: 0;
-    text-align: center;
-    vertical-align: middle;
-    color: #555;
-    width: 14.28%;
-    height: 26px;
-    background: transparent;
-    border: 0;
-}
-.kb-evcal-event a {
-    color: #1e87f0;
-    font-weight: 600;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    border-radius: 3px;
-    background: #e8f2ff;
-}
-.kb-evcal-event a:hover { background: #ffe0e6; }
-.kb-evcal-month td.kb-evcal-today {
-    background: #1e87f0;
-    color: #fff !important;
-    border-radius: 3px;
-    font-weight: 600;
-}
-.kb-evcal-month td.kb-evcal-today-event { background: #1e87f0; border-radius: 3px; }
-.kb-evcal-today-event a {
-    color: #fff !important;
-    font-weight: 700;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    border-radius: 3px;
-}
+.kb-dt-chip:hover { background: #dcebfd; }
+.kb-dt-chip span { font-size: 1rem; line-height: 1; }
+.kb-dt-chips-clear { font-size: 0.78rem; text-transform: none; }
+.kb-dt-facet .kb-dt-more > a { color: #1e87f0; font-style: italic; }
+.kb-dt-facet[hidden] { display: none; }
 
 /* ==========================================================================
    Key-value page banner (PAGE_KEY_VALUE)
