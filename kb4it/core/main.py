@@ -22,7 +22,7 @@ from kb4it.core.completion import app_completer, enable as enable_completion, th
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, repo_lock_path
-from kb4it.core.log import get_logger, setup_logging
+from kb4it.core.log import discard_log_file, get_logger, prune_temp_logs, setup_logging
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -87,13 +87,16 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']} family={ENV['SYS']['PLATFORM']['FAMILY']}")
         self.log.debug(f"[CONTROLLER] GPATH_ROOT path={ENV['GPATH']['ROOT']}")
         self.log.debug(f"[CONTROLLER] LPATH_ROOT path={ENV['LPATH']['ROOT']}")
+        if self.pruned_logs:
+            self.log.debug(f"[CONTROLLER] TEMP_LOGS_PRUNED n={self.pruned_logs}")
 
         # Start up
         self.__check_params()
         self.__setup_services()
 
     def set_log_file(self):
-        """Generate a temporary log file."""
+        """Name this run's temporary log file and sweep the old ones other runs left behind."""
+        self.pruned_logs = prune_temp_logs(ENV["LPATH"]["LOG"])
         suffix = str(uuid.uuid1().time)
         self.log_file = f"{ENV['FILE']['LOG']}.{suffix}"
 
@@ -244,6 +247,10 @@ class KB4IT:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
         self.log.debug(f"[CONTROLLER] END version={ENV['APP']['build_version']}")
+        # A build has already moved this log into <repo>/var/log; the other actions have no
+        # repository to keep it in. Keep it after an error, for the user to read.
+        if not error:
+            discard_log_file(self.log_file)
 
 
 def version_text():

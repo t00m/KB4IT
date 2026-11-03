@@ -68,7 +68,7 @@ It reads every document and lists those KB4IT cannot use, with the reason. Some 
 kb4it -L DEBUG build ~/mykb/config/repo.json
 ```
 
-`-L` takes `DEBUG`, `INFO` (the default), `WARNING` or `ERROR`. Whatever you choose on screen, the full log of the last build is in `var/log/kb4it.log` inside the knowledge base, and the one before it in `kb4it.log.old`.
+`-L` takes `DEBUG`, `INFO` (the default), `WARNING` or `ERROR`. Whatever you choose on screen, the full log of the last build is in `var/log/kb4it.log` inside the knowledge base, and the one before it in `kb4it.log.old`. When a command fails before it reaches the knowledge base, for example because `repo.json` cannot be read, its log stays in `~/.kb4it/var/log/` as `kb4it.log.<number>`; KB4IT removes those files after 7 days.
 
 ## Make large builds faster {#workers}
 

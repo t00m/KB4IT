@@ -26,12 +26,12 @@ class Pipeline:
     """
 
     def __init__(self, backend: Any, db: Any, theme: Any, settings: dict[str, Any],
-                 callbacks: dict[str, Callable[..., Any]] | None = None, log_file: str | None = None) -> None:
+                 callbacks: dict[str, Callable[..., Any]] | None = None) -> None:
         self.log = get_logger("Pipeline")
         self.settings = settings
         self.processor = Processor(backend, db, theme)
         self.compiler = Compiler(backend, db, theme, self.processor, callbacks)
-        self.deployer = Deployer(backend, theme, log_file)
+        self.deployer = Deployer(backend, theme)
         self.log.debug("[PIPELINE] READY services=Processor,Compiler,Deployer")
 
     def service(self, name: str) -> PipelineService | None:
