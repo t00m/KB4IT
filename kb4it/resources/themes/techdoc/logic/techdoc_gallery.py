@@ -11,6 +11,7 @@ from techdoc_thumbs import SITE_FOLDER, make_thumbnail
 from kb4it.core import trace
 from kb4it.core.files import prune_tree, sync_file
 from kb4it.core.util import html_id_for
+from kb4it.core.log import q
 
 FRONTMATTER = re.compile(r'\A---\n.*?\n---[ \t]*\n?', re.DOTALL)
 FENCED = re.compile(r'^ {0,3}(```|~~~).*?^ {0,3}\1[^\n]*$', re.MULTILINE | re.DOTALL)
@@ -186,4 +187,4 @@ class GalleryMixin:
                 copied += sync_file(os.path.join(cache, name), os.path.join(dest, name))
             deleted = prune_tree(dest, {os.path.join(dest, name) for name in used})
             prune_tree(cache, {os.path.join(cache, name) for name in used})
-        self.log.info(f"[THEME] GALLERY_THUMBS used={len(used)} copied={copied} deleted={deleted}")
+        self.log.info(f"[THEME] GALLERY_THUMBS used={len(used)} copied={q(copied)} deleted={q(deleted)}")

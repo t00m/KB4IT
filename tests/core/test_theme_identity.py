@@ -105,7 +105,7 @@ def test_themes_listing_shows_version_fingerprint_and_where_a_theme_comes_from(t
     assert result.returncode == 0, result.stdout
     lines = [line for line in result.stdout.splitlines() if "[FRONTEND] THEME " in line]
     blog = next(line for line in lines if "id=blog" in line)
-    assert "scope=builtin" in blog and "version=1.0.0" in blog and "fingerprint=" in blog
+    assert "scope=builtin" in blog and "version=1.0.1" in blog and "fingerprint=" in blog
     assert f"path={THEMES / 'blog'}" in blog
     techdoc = [line for line in lines if "id=techdoc" in line]
     assert any("scope=user" in line and f"path={user_copy}" in line for line in techdoc), techdoc

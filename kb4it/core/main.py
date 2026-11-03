@@ -21,8 +21,8 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 from kb4it.core.completion import app_completer, enable as enable_completion, theme_completer
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
-from kb4it.core.lock import FileLock, repo_lock_path
-from kb4it.core.log import discard_log_file, get_logger, kb4it_logger, prune_temp_logs, q, setup_logging
+from kb4it.core.lock import FileLock, prune_create_locks, repo_lock_path
+from kb4it.core.log import current_log_file, discard_log_file, get_logger, kb4it_logger, prune_temp_logs, q, setup_logging
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -87,16 +87,17 @@ class KB4IT:
         self.log.debug(f"[CONTROLLER] SYS platform={q(ENV['SYS']['PLATFORM']['OS'])} family={q(ENV['SYS']['PLATFORM']['FAMILY'])}")
         self.log.debug(f"[CONTROLLER] GPATH_ROOT path={q(ENV['GPATH']['ROOT'])}")
         self.log.debug(f"[CONTROLLER] LPATH_ROOT path={q(ENV['LPATH']['ROOT'])}")
-        if self.pruned_logs:
-            self.log.debug(f"[CONTROLLER] TEMP_LOGS_PRUNED n={q(self.pruned_logs)}")
+        if self.pruned_logs or self.pruned_locks:
+            self.log.debug(f"[CONTROLLER] VAR_PRUNED logs={self.pruned_logs} create_locks={self.pruned_locks}")
 
         # Start up
         self.__check_params()
         self.__setup_services()
 
     def set_log_file(self):
-        """Name this run's temporary log file and sweep the old ones other runs left behind."""
+        """Name this run's temporary log file and sweep the old logs and create locks other runs left behind."""
         self.pruned_logs = prune_temp_logs(ENV["LPATH"]["LOG"])
+        self.pruned_locks = prune_create_locks(ENV["LPATH"]["VAR"])
         suffix = str(uuid.uuid1().time)
         self.log_file = f"{ENV['FILE']['LOG']}.{suffix}"
 
@@ -263,13 +264,26 @@ def version_text():
     return f"{text}\ncommit {build['commit']} {origin}"
 
 
-def _log_hint(params) -> str:
-    """' (see <repo>/var/log/kb4it.log)' when the action has a repository whose log exists, else ''."""
+def _log_of_run(params, app=None) -> str | None:
+    """The log of this run: the one KB4IT writes now when it is this run's, else its temporary log, else its repository log."""
+    candidates = []
     config = getattr(params, "config", None)
-    if not isinstance(config, str):
-        return ""
-    log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(config))), "var", "log", "kb4it.log")
-    return f" (see {log_file})" if os.path.exists(log_file) else ""
+    if isinstance(config, str):
+        candidates.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(config))), "var", "log", "kb4it.log"))
+    temporary = getattr(app, "get_log_file", None)  # the error path must not fail on a half-made app
+    if callable(temporary):
+        candidates.insert(0, temporary())
+    # Another KB4IT in this process (the TUI, kb4it serve, a test) may still hold a handler on its own log.
+    current = current_log_file()
+    if current and any(os.path.abspath(current) == os.path.abspath(c) for c in candidates):
+        return current
+    return next((c for c in candidates if os.path.exists(c)), None)
+
+
+def _log_hint(params, app=None) -> str:
+    """' (see <log file>)' when the run has a log file, else ''."""
+    log_file = _log_of_run(params, app)
+    return f" (see {log_file})" if log_file else ""
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -433,6 +447,7 @@ def main():
 
     # Dispatch to the appropriate action handler
     params = None
+    app = None
     try:
         params = parser.parse_args()
         if params.action != "help" and not os.environ.get("CI"):
@@ -452,6 +467,9 @@ def main():
             sys.exit(run_help(url=params.url, dismiss=params.dismiss))
         app = KB4IT(params)
         success = app.run()
+        log_file = None if success else _log_of_run(params, app)
+        if log_file:
+            print(f"Log: {log_file}", file=sys.stderr)
         sys.exit(0 if success else 1)
     except SystemExit:
         raise
@@ -460,7 +478,7 @@ def main():
             # The screen gets one line below; the log file gets the traceback to find the cause.
             get_logger("KB4IT").error(f"[CONTROLLER] UNEXPECTED_ERROR type={type(error).__name__} reason={q(error)}",
                                       exc_info=True, extra={"file_only": True})
-        print(f"Error: {type(error).__name__}: {error}{_log_hint(params)}")
+        print(f"Error: {type(error).__name__}: {error}{_log_hint(params, app)}")
         print("Run 'kb4it <action name> --help' to get help for a specific command.")
         sys.exit(1)
 

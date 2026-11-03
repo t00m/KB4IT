@@ -20,6 +20,7 @@ from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              html_id_for, valid_filename)
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
+from kb4it.core.log import q
 
 
 class Theme(DocumentTheme):
@@ -54,7 +55,7 @@ class Theme(DocumentTheme):
             if doc in self._undated:
                 return
             self._undated.add(doc)
-        self.log.warning(f"[THEME] DOC_UNDATED doc={doc}")
+        self.log.warning(f"[THEME] DOC_UNDATED doc={q(doc)}")
 
     # ~ @timeit
     def datatable_date_cell(self, timestamp):
@@ -76,7 +77,7 @@ class Theme(DocumentTheme):
             func_name = sys._getframe().f_code.co_name
             cached = os.path.join(self.srvbes.get_path('cache'), 'index.html')
             if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
+                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={q(func_name)}")
                 self.srvbes.add_target('index.md', 'index.html')
                 return
 
@@ -121,9 +122,9 @@ class Theme(DocumentTheme):
             var['source_md'] = md_content
             try:
                 html_parts.append(TPL_POST.render(var=var))
-                self.log.debug(f"[THEME] INDEX_ADD doc={post}")
+                self.log.debug(f"[THEME] INDEX_ADD doc={q(post)}")
             except Exception as error:
-                self.log.warning(f"[THEME] INDEX_SKIP doc={post} error={error}")
+                self.log.warning(f"[THEME] INDEX_SKIP doc={q(post)} error={q(error)}")
 
         html = ''.join(html_parts)
         self.distribute_md('index', html)
@@ -168,7 +169,7 @@ class Theme(DocumentTheme):
             func_name = sys._getframe().f_code.co_name
             cached = os.path.join(self.srvbes.get_path('cache'), 'events.html')
             if os.path.exists(cached):
-                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={func_name}")
+                self.log.debug(f"[THEME] SKIP reason=no_doc_changes func={q(func_name)}")
                 self.srvbes.add_target('events.md', 'events.html')
                 return
 
@@ -237,8 +238,8 @@ class Theme(DocumentTheme):
 
         if not exists_hdoc:
             self.log.error("[THEME] HTML_MISSING doc=%s", basename_md)
-            self.log.error(f"[THEME] PATH doc={basename_md} path={path_md}")
-            self.log.error(f"[THEME] PATH doc={basename_hdoc} path={path_hdoc}")
+            self.log.error(f"[THEME] PATH doc={q(basename_md)} path={q(path_md)}")
+            self.log.error(f"[THEME] PATH doc={q(basename_hdoc)} path={q(path_hdoc)}")
             return
 
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
@@ -368,7 +369,7 @@ class Theme(DocumentTheme):
                     doclist.add(rel_docId)
 
         doclist.discard(docId)
-        self.log.debug(f"[THEME] RELATED_FOUND doc={docId} n={len(doclist)}")
+        self.log.debug(f"[THEME] RELATED_FOUND doc={q(docId)} n={len(doclist)}")
 
         headers = []
         var = self.get_theme_var()
@@ -420,20 +421,20 @@ class Theme(DocumentTheme):
             self.log.error("[THEME] CONFIG_FAIL key=events reason=empty")
             go = False
 
-        self.log.info(f"[THEME] CONFIG key=git value={repo.get('git')}")
+        self.log.info(f"[THEME] CONFIG key=git value={q(repo.get('git'))}")
         if repo.get('git'):
             git_props = ['git_branch', 'git_path', 'git_repo', 'git_server', 'git_user']
             for git_prop in sorted(git_props):
                 if len(repo[git_prop]) == 0:
-                    self.log.warning(f"[THEME] CONFIG_FAIL key={git_prop} reason=empty")
+                    self.log.warning(f"[THEME] CONFIG_FAIL key={q(git_prop)} reason=empty")
 
         self.log.info(f"[THEME] CONFIG key=ignored_keys n={len(repo['ignored_keys'])}")
         if len(repo['ignored_keys']) == 0:
             self.log.warning("[THEME] CONFIG_WARN key=ignored_keys reason=empty")
 
-        self.log.info(f"[THEME] CONFIG key=logo value={repo['logo']}")
+        self.log.info(f"[THEME] CONFIG key=logo value={q(repo['logo'])}")
         if not os.path.exists(repo['logo']):
-            self.log.warning(f"[THEME] CONFIG_WARN key=logo reason=missing path={repo['logo']}")
+            self.log.warning(f"[THEME] CONFIG_WARN key=logo reason=missing path={q(repo['logo'])}")
 
         self.log.info(f"[THEME] CONFIG key=logo_alt value='{repo['logo_alt']}'")
         if not os.path.exists(repo['logo_alt']):
@@ -448,15 +449,15 @@ class Theme(DocumentTheme):
         # Use the paths resolved against the repository root, not the raw repo.json values.
         for key in ('source', 'target'):
             path = self.srvbes.get_path(key) or ''
-            self.log.info(f"[THEME] CONFIG key={key} value='{path}'")
+            self.log.info(f"[THEME] CONFIG key={q(key)} value='{path}'")
             if len(path) == 0:
-                self.log.error(f"[THEME] CONFIG_FAIL key={key} reason=empty")
+                self.log.error(f"[THEME] CONFIG_FAIL key={q(key)} reason=empty")
                 go = False
             elif not os.path.exists(path):
-                self.log.error(f"[THEME] CONFIG_FAIL key={key} reason=missing path={path}")
+                self.log.error(f"[THEME] CONFIG_FAIL key={q(key)} reason=missing path={q(path)}")
                 go = False
 
-        self.log.info(f"[THEME] CONFIG key=webserver value={repo['webserver']}")
+        self.log.info(f"[THEME] CONFIG key=webserver value={q(repo['webserver'])}")
         if repo['webserver']:
             self.log.info(f"[THEME] CONFIG key=timeline n={len(repo['timeline'])}")
             if len(repo['timeline']) == 0:
@@ -465,7 +466,7 @@ class Theme(DocumentTheme):
 
         if not go:
             example = os.path.join(ENV['GPATH']['THEMES'], 'techdoc', 'apps', 'default', 'config', 'repo.json')
-            self.log.info(f"[THEME] CONFIG_EXAMPLE path={example}")
+            self.log.info(f"[THEME] CONFIG_EXAMPLE path={q(example)}")
 
         self.log.debug("[THEME] CONFIG_CHECK_END")
         return go

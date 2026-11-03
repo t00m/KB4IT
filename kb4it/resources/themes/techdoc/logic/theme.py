@@ -45,6 +45,7 @@ from kb4it.core.util import (
 )
 from kb4it.core.people import named_people, person_status
 from kb4it.services.themekit import DocumentTheme
+from kb4it.core.log import q
 
 parser = etree.HTMLParser()
 
@@ -320,7 +321,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                     images.append(ref(doc, target=c.todo.rsplit(' image ', 1)[-1]))
         best = sorted((d for d, a in live.items() if a.tier == 'exemplary'), key=lambda d: (-live[d].score, d))
         pairs = duplicates({d: title(d) for d in live})
-        q = {
+        quality_page = {
             'mix': tier_mix(self.quality),
             'best': self._quality_best(),
             'exemplary': [ref(d, score=live[d].score, peer=live[d].peer) for d in best],
@@ -332,7 +333,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                            for a, b, _ in pairs],
             'filter': bar,
         }
-        self.distribute_md('quality', self.template('PAGE_QUALITY').render(var={'q': q}))
+        self.distribute_md('quality', self.template('PAGE_QUALITY').render(var={'q': quality_page}))
         self.srvdtb.add_document('quality.md')
         self.srvdtb.add_document_key('quality.md', 'Title', 'Quality')
         self.srvdtb.add_document_key('quality.md', 'SystemPage', 'Yes')
@@ -376,7 +377,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         exists_hdoc = os.path.exists(path_hdoc)  # it should be true
 
         if not exists_hdoc:
-            self.log.error(f"[THEME] HTML_MISSING doc={basename_md}")
+            self.log.error(f"[THEME] HTML_MISSING doc={q(basename_md)}")
         else:
             HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
             HTML_BODY = self.template('HTML_BODY')
@@ -409,11 +410,11 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                 theme_conf = self.srvbes.get_dict('theme') or {}
                 var['toc_sidebar'] = self.toc_sidebar(source_html)
                 doc_summary = summary(self.srvdtb, basename_md)
-                q = self.quality_view(basename_md)
-                var['has_quality'] = q is not None
-                var['page']['exemplary'] = bool(q) and q['tier'] == 'exemplary'
+                quality_doc = self.quality_view(basename_md)
+                var['has_quality'] = quality_doc is not None
+                var['page']['exemplary'] = bool(quality_doc) and quality_doc['tier'] == 'exemplary'
                 var['doc_header'] = self.template('DOC_HEADER').render(var={
-                    'quality': q,
+                    'quality': quality_doc,
                     'strip': header_strip(self.srvdtb, basename_md, theme_conf.get('header_keys', {})),
                     'summary': doc_summary,
                     'banners': banners(self.srvdtb, basename_md),
@@ -438,7 +439,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                     'print': {name: info_tabs.get(name, {}).get('print', name == 'details')
                               for name in ('details', 'quality', 'related', 'history')},
                     'related': self.related_view(basename_md),
-                    'quality_html': self.template('QUALITY_PANEL').render(var={'q': q}) if q else '',
+                    'quality_html': self.template('QUALITY_PANEL').render(var={'q': quality_doc}) if quality_doc else '',
                 }})
 
             var['menu_contents'] = HTML_TOC
@@ -458,7 +459,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             if not var['SystemPage']:
                 var['source_html'], missing = enhance_images(var['source_html'], self.srvbes.get_path('source'))
                 for src in missing:
-                    self.log.warning(f"[THEME] IMAGE_MISSING doc={basename_md} src={src}")
+                    self.log.warning(f"[THEME] IMAGE_MISSING doc={q(basename_md)} src={q(src)}")
             var['source_html'] = enhance_blocks(var['source_html'], self.table_filter_on())
             actions = self.get_page_actions(var)
             var['actions'] = actions

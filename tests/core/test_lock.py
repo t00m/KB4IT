@@ -99,3 +99,22 @@ def test_lock_paths_per_action(tmp_path):
     assert lock_path_for({"action": "verify", "config": str(cfg)}) is None
     create = lock_path_for({"action": "create", "repo_path": str(tmp_path / "new")})
     assert not create.startswith(str(tmp_path / "new"))
+
+
+def test_prune_create_locks_removes_old_free_ones_only(tmp_path):
+    from kb4it.core.lock import prune_create_locks
+    now = 1_800_000_000
+    old_free = tmp_path / "create-0123456789abcdef.lock"
+    old_held = tmp_path / "create-fedcba9876543210.lock"
+    fresh = tmp_path / "create-00112233445566aa.lock"
+    other = tmp_path / "kb4it.lock"
+    for path, days in ((old_free, 30), (old_held, 30), (fresh, 1), (other, 30)):
+        path.write_text("1", encoding="utf-8")
+        os.utime(path, (now - days * 86400, now - days * 86400))
+    holder = FileLock(old_held).acquire()
+    try:
+        assert prune_create_locks(str(tmp_path), now=now) == 1
+    finally:
+        holder.release()
+    assert not old_free.exists()
+    assert old_held.exists() and fresh.exists() and other.exists()

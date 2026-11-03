@@ -31,10 +31,11 @@ _LOG_STYLE: dict[str, str] = {
 
 
 def _parse_level(line: str) -> str:
-    prefix = line[:15].upper()
-    for lvl in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"):
-        if lvl in prefix:
-            return lvl
+    """Level of a log line: its first field, or its second when the line starts with the time."""
+    for field in line.split("|", 2)[:2]:
+        word = field.strip().upper()
+        if word in _LOG_STYLE:
+            return word
     return "INFO"
 
 
@@ -81,7 +82,12 @@ class LogViewerScreen(Screen):
         except Exception as exc:
             log.write(f"Cannot read log: {exc}")
             return
-        self._lines = [(line, _parse_level(line)) for line in text.splitlines()]
+        self._lines = []
+        level = "INFO"
+        for line in text.splitlines():
+            # A traceback line has no fields; it belongs to the error above it.
+            level = _parse_level(line) if " | " in line else level
+            self._lines.append((line, level))
         self._apply_filter()
 
     def _apply_filter(self) -> None:
