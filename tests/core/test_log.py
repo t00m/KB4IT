@@ -2,12 +2,13 @@
 
 import logging
 import os
+import re
 import threading
 
 import pytest
 
-from kb4it.core.log import (discard_log_file, get_logger, kb4it_logger, prune_temp_logs, q, release_log_file,
-                            reset_logging, setup_logging)
+from kb4it.core.log import (current_log_file, discard_log_file, get_logger, kb4it_logger, prune_temp_logs, q,
+                            release_log_file, reset_logging, rotate_log, setup_logging)
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 DAY = 86400
@@ -254,3 +255,121 @@ def test_unexpected_error_keeps_one_screen_line_and_logs_the_traceback(monkeypat
     assert '[CONTROLLER] UNEXPECTED_ERROR type=RuntimeError reason="boom in run"' in text
     assert "Traceback (most recent call last)" in text
     log.unlink()
+
+
+def test_file_lines_start_with_the_time_and_the_console_lines_do_not(configured):
+    read = configured()
+    get_logger("Backend").info("[BACKEND] TIMED")
+    text, console = read()
+    file_line = next(line for line in text.splitlines() if "TIMED" in line)
+    console_line = next(line for line in console.splitlines() if "TIMED" in line)
+    assert re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \|       INFO \| ", file_line)
+    assert console_line.startswith("      INFO | ")
+
+
+def test_the_file_gets_debug_lines_at_any_console_level(tmp_path, capsys):
+    logfile = tmp_path / "kb4it.log"
+    reset_logging()
+    try:
+        setup_logging("WARNING", str(logfile))
+        get_logger("Backend").debug("[BACKEND] QUIET_STEP")
+        get_logger("Backend").warning("[BACKEND] LOUD_STEP")
+        for handler in kb4it_logger().handlers:
+            handler.flush()
+    finally:
+        reset_logging()
+    text = logfile.read_text(encoding="utf-8")
+    console = capsys.readouterr().err
+    assert "QUIET_STEP" in text and "LOUD_STEP" in text
+    assert "QUIET_STEP" not in console and "LOUD_STEP" in console
+
+
+def test_an_unknown_level_warns_and_uses_info(tmp_path, capsys):
+    logfile = tmp_path / "kb4it.log"
+    reset_logging()
+    try:
+        setup_logging("VERBOSE", str(logfile))
+        get_logger("Backend").debug("[BACKEND] HIDDEN_ON_CONSOLE")
+        for handler in kb4it_logger().handlers:
+            handler.flush()
+    finally:
+        reset_logging()
+    console = capsys.readouterr().err
+    assert "[LOG] LEVEL_UNKNOWN level=VERBOSE used=INFO" in console
+    assert "HIDDEN_ON_CONSOLE" not in console
+    assert "HIDDEN_ON_CONSOLE" in logfile.read_text(encoding="utf-8")
+
+
+def test_current_log_file_names_the_file_in_use(configured):
+    configured()
+    (handler,) = [h for h in kb4it_logger().handlers if isinstance(h, logging.FileHandler)]
+    assert current_log_file() == handler.baseFilename
+    reset_logging()
+    assert current_log_file() is None
+
+
+def test_rotate_keeps_the_last_builds(tmp_path):
+    log = tmp_path / "kb4it.log"
+    for build in range(1, 6):
+        rotate_log(str(log), keep=3)
+        log.write_text(f"build {build}", encoding="utf-8")
+    assert log.read_text(encoding="utf-8") == "build 5"
+    assert (tmp_path / "kb4it.log.old").read_text(encoding="utf-8") == "build 4"
+    assert (tmp_path / "kb4it.log.old.2").read_text(encoding="utf-8") == "build 3"
+    assert (tmp_path / "kb4it.log.old.3").read_text(encoding="utf-8") == "build 2"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["kb4it.log", "kb4it.log.old", "kb4it.log.old.2",
+                                                          "kb4it.log.old.3"]
+
+
+def test_rotate_without_a_log_does_nothing(tmp_path):
+    rotate_log(str(tmp_path / "kb4it.log"))
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_a_failed_build_names_its_log(tmp_path, home):
+    theme = mini_theme(tmp_path / "mini")
+    repo = tmp_path / "repo"
+    cfg = write_repo(repo, "mini", {"a.md": page("A", Tag="x")}, theme_path=str(theme))
+    assert run_kb4it("build", cfg, cwd=repo, home=home).returncode == 0
+    (repo / "source").rename(repo / "gone")
+    result = run_kb4it("build", cfg, cwd=repo, home=home)
+    assert result.returncode == 1
+    assert f"Log: {repo / 'var' / 'log' / 'kb4it.log'}" in result.stdout
+
+
+def test_a_command_failing_before_the_repository_names_its_temporary_log(tmp_path, home):
+    result = run_kb4it("build", tmp_path / "nope" / "repo.json", cwd=tmp_path, home=home)
+    assert result.returncode == 1
+    (log,) = _temp_logs(home)
+    assert f"Log: {home / '.kb4it' / 'var' / 'log' / log}" in result.stdout
+
+
+def test_builds_keep_their_earlier_logs_and_one_line_per_document(tmp_path, home):
+    theme = mini_theme(tmp_path / "mini")
+    repo = tmp_path / "repo"
+    cfg = write_repo(repo, "mini", {"a.md": page("A", Tag="x, y", Team="SAP Basis")}, theme_path=str(theme))
+    for _ in range(3):
+        assert run_kb4it("build", cfg, cwd=repo, home=home).returncode == 0
+    logs = repo / "var" / "log"
+    assert (logs / "kb4it.log.old").exists() and (logs / "kb4it.log.old.2").exists()
+    text = (logs / "kb4it.log").read_text(encoding="utf-8")
+    assert "KV_ADD" not in text
+    assert re.search(r"\[DATABASE\] DOC_KEYS doc=a\.md keys=\d+ values=\d+", text)
+
+
+def test_the_hint_ignores_a_log_another_run_still_holds(tmp_path):
+    import argparse
+
+    from kb4it.core.main import _log_of_run
+    own = tmp_path / "repo" / "var" / "log" / "kb4it.log"
+    own.parent.mkdir(parents=True)
+    own.write_text("", encoding="utf-8")
+    other = tmp_path / "other.log"
+    stale = logging.FileHandler(other, encoding="utf-8")
+    kb4it_logger().addHandler(stale)
+    try:
+        params = argparse.Namespace(config=str(tmp_path / "repo" / "config" / "repo.json"))
+        assert _log_of_run(params) == str(own)
+    finally:
+        kb4it_logger().removeHandler(stale)
+        stale.close()

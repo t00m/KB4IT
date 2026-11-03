@@ -19,7 +19,18 @@ import re
 import time
 
 _PATTERN = "%(levelname)10s | %(threadName)-12s | %(shortname)-15s | %(module)s:%(lineno)d | %(message)s"
-_DATEFMT = "%d/%m/%Y %H:%M:%S"
+# The file has the time of each line in front; the console, read as it happens, does not.
+_FILE_PATTERN = "%(asctime)s | " + _PATTERN
+_DATEFMT = "%Y-%m-%d %H:%M:%S"
+LEVELS = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
+}
+# Logs of earlier builds kept beside <repo>/var/log/kb4it.log: kb4it.log.old, kb4it.log.old.2...
+LOG_KEEP = 3
 
 # Parent of every KB4IT logger; get_logger("Backend") is "kb4it.Backend".
 KB4IT_LOGGER = "kb4it"
@@ -47,8 +58,8 @@ def q(value) -> str:
 class _Formatter(logging.Formatter):
     """The KB4IT line format; with tracebacks=False, an error stays on one line."""
 
-    def __init__(self, tracebacks: bool = True):
-        super().__init__(_PATTERN, datefmt=_DATEFMT)
+    def __init__(self, tracebacks: bool = True, timestamps: bool = False):
+        super().__init__(_FILE_PATTERN if timestamps else _PATTERN, datefmt=_DATEFMT)
         self.tracebacks = tracebacks
 
     def format(self, record: logging.LogRecord) -> str:
@@ -101,27 +112,19 @@ def _detach(handler: logging.Handler) -> None:
 
 def _file_handler(logfile: str, mode: str) -> logging.FileHandler:
     handler = logging.FileHandler(logfile, mode=mode, encoding="utf-8")
-    handler.setFormatter(_Formatter(tracebacks=True))
+    handler.setFormatter(_Formatter(tracebacks=True, timestamps=True))
     handler.setLevel(logging.DEBUG)
     return handler
 
 
 def setup_logging(level: str = "INFO", logfile: str | None = None):
-    """Configure the kb4it logger once: the console at level, and the file when logfile is given."""
-    if level is not None:
-        level_dict = {
-            "DEBUG": logging.DEBUG,
-            "INFO": logging.INFO,
-            "WARNING": logging.WARNING,
-            "ERROR": logging.ERROR,
-            "CRITICAL": logging.CRITICAL,
-        }
-        severity = level_dict.get(level, logging.DEBUG)
-    else:
-        severity = logging.INFO
+    """Configure the kb4it logger once: the console at level, the file at DEBUG when logfile is given."""
+    unknown = level is not None and str(level).upper() not in LEVELS
+    severity = LEVELS.get(str(level).upper(), logging.INFO) if level is not None else logging.INFO
 
     logger = kb4it_logger()
-    logger.setLevel(severity)
+    # The file always gets every line; the console shows the level asked for.
+    logger.setLevel(logging.DEBUG if logfile else severity)
     # KB4IT's records go to its own handlers only; the root logger belongs to the caller.
     logger.propagate = False
 
@@ -137,6 +140,32 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
 
     if logfile:
         _attach(_file_handler(logfile, "w"))
+    if unknown:
+        get_logger("Log").warning(f"[LOG] LEVEL_UNKNOWN level={q(level)} used=INFO")
+
+
+def current_log_file() -> str | None:
+    """Path of the file KB4IT logs to now, or None when it logs to no file."""
+    for handler in kb4it_logger().handlers:
+        if isinstance(handler, logging.FileHandler):
+            return handler.baseFilename
+    return None
+
+
+def rotate_log(logfile: str, keep: int = LOG_KEEP) -> None:
+    """Move logfile to logfile.old, and the older ones up to logfile.old.<keep>; the oldest goes."""
+    names = [f"{logfile}.old"] + [f"{logfile}.old.{n}" for n in range(2, keep + 1)]
+    if not names or not os.path.exists(logfile):
+        return
+    try:
+        if os.path.exists(names[-1]):
+            os.remove(names[-1])
+        for newer, older in reversed(list(zip(names, names[1:]))):
+            if os.path.exists(newer):
+                os.replace(newer, older)
+        os.replace(logfile, names[0])
+    except OSError as error:
+        get_logger("Log").warning(f"[LOG] ROTATE_FAIL path={q(logfile)} reason={q(error)}")
 
 
 def reset_logging():

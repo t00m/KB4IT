@@ -20,13 +20,13 @@ Each warning or error line in the log has a component in brackets, a code, and d
 
 The code tells you what happened. The details name the file, key or page. A value with spaces, quotes or `=` is written in double quotes: `reason="boom in run"`.
 
-In `var/log/kb4it.log` each line starts with the level, the thread, the part of KB4IT and the place in its code:
+In `var/log/kb4it.log` each line starts with the time, the level, the thread, the part of KB4IT and the place in its code; the terminal shows the same line without the time:
 
 ```
-     ERROR | compile_2    | Compiler        | compiler:239 | [COMPILER] ERROR doc=NOTE.md error='Date'
+2026-11-03 21:40:12 |      ERROR | compile_2    | Compiler        | compiler:239 | [COMPILER] ERROR doc=NOTE.md error='Date'
 ```
 
-When an error comes from an exception, the file also holds its traceback; the terminal shows one line. Warnings and errors of the Markdown and Pillow libraries appear under their own names, `MARKDOWN` and `PIL`. KB4IT prints these lines in the terminal and keeps them in `var/log/kb4it.log` inside the knowledge base. Run with `-L DEBUG` to see every step around them.
+When an error comes from an exception, the file also holds its traceback; the terminal shows one line. Warnings and errors of the Markdown and Pillow libraries appear under their own names, `MARKDOWN` and `PIL`. KB4IT prints these lines in the terminal and keeps them in `var/log/kb4it.log` inside the knowledge base, with every debug line around them at any `-L` level. Run with `-L DEBUG` to see those steps in the terminal too.
 
 The tables list each code once. **Stops** means the command ends with exit status `1`. The common problems have a longer answer in [Troubleshooting](troubleshooting.md).
 
@@ -184,3 +184,5 @@ These point to a bug in KB4IT or in a theme, not to your documents. Please [repo
 | `SERVICE_NOT_REGISTERED` | error | A part of KB4IT asked for a service that does not exist. Stops |
 | `DOMAIN_UNKNOWN` | error | A theme wrote a value into an unknown place |
 | `DOC_NOT_IN_DB` | warning | A theme asked for a document that is not in the build |
+| `LEVEL_UNKNOWN` | warning | A program that runs KB4IT asked for a log level KB4IT does not know. The terminal uses `INFO`; the file still gets every line |
+| `ROTATE_FAIL` | warning | The log of the previous build could not be moved to `kb4it.log.old`, usually because another program has it open. The build goes on |

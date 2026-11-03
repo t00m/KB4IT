@@ -13,6 +13,7 @@ mechanisms release the lock when the process ends, even after a crash.
 """
 
 import os
+import re
 import sys
 import time
 
@@ -54,6 +55,47 @@ def repo_lock_path(config):
     """Lock file of the repository whose repo.json is config: <root>/var/kb4it.lock."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(str(config))))
     return os.path.join(root, "var", "kb4it.lock")
+
+
+# kb4it create locks <KB4IT_HOME>/var/create-<digest>.lock, one file per new repository path.
+CREATE_LOCK_MAX_AGE_DAYS = 7
+_CREATE_LOCK_NAME = re.compile(r"^create-[0-9a-f]{16}\.lock$")
+
+
+def prune_create_locks(folder, max_age_days=CREATE_LOCK_MAX_AGE_DAYS, now=None):
+    """Remove the create locks in folder older than max_age_days that no process holds; return how many went.
+
+    Each file is removed while this process holds its lock, so a running create keeps its own.
+    """
+    limit = (time.time() if now is None else now) - max_age_days * 86400
+    removed = 0
+    try:
+        entries = list(os.scandir(folder))
+    except OSError:
+        return 0
+    for entry in entries:
+        if not _CREATE_LOCK_NAME.match(entry.name):
+            continue
+        try:
+            if not entry.is_file(follow_symlinks=False) or entry.stat().st_mtime >= limit:
+                continue
+        except OSError:
+            continue
+        lock = FileLock(entry.path)
+        try:
+            lock.acquire()
+        except (LockBusyError, OSError):
+            continue
+        try:
+            if sys.platform == "win32":
+                lock.release()  # Windows does not remove an open file.
+            os.remove(entry.path)
+            removed += 1
+        except OSError:
+            pass
+        finally:
+            lock.release()
+    return removed
 
 
 def registry_lock(timeout=5.0):
