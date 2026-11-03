@@ -92,6 +92,7 @@ def test_helpers(tmp_path):
     assert tui._log_path(cfg) is None and tui._kbdict_path(cfg) is None
     assert tui._parse_level("   ERROR | x") == "ERROR"
     assert tui._parse_level("plain line") == "INFO"
+    assert tui._parse_level("2026-11-03 21:00:00 |    WARNING | MainThread | Backend | backend:1 | x") == "WARNING"
 
 
 def test_copy_to_clipboard_falls_back_to_osc52(monkeypatch):
@@ -421,3 +422,27 @@ def test_tui_hides_the_help_banner_in_ci(registry, tmp_path, monkeypatch):
     async def scenario(app, pilot):
         assert not app.screen.query_one("#help-banner").display
     run(scenario)
+
+
+def test_log_viewer_keeps_a_traceback_with_its_error(registry, tmp_path):
+    log = tmp_path / "repo" / "var" / "log" / "kb4it.log"
+    log.parent.mkdir(parents=True)
+    log.write_text(
+        "2026-11-03 21:00:00 |       INFO | MainThread | Backend | backend:1 | [BACKEND] START\n"
+        "2026-11-03 21:00:01 |      ERROR | compile_0 | Compiler | compiler:2 | [COMPILER] ERROR doc=a.md\n"
+        "Traceback (most recent call last):\n"
+        "KeyError: 'Date'\n"
+        "2026-11-03 21:00:02 |       INFO | MainThread | Workflow | workflow:3 | [WORKFLOW] END\n",
+        encoding="utf-8")
+    screen = tui.LogViewerScreen(str(tmp_path / "repo" / "config" / "repo.json"))
+
+    class _Log:
+        def write(self, _):
+            pass
+
+        def clear(self):
+            pass
+    screen.query_one = lambda *_: _Log()
+    screen._load()
+    levels = [level for _, level in screen._lines]
+    assert levels == ["INFO", "ERROR", "ERROR", "ERROR", "INFO"]

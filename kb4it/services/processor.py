@@ -175,12 +175,14 @@ class Processor(PeopleMixin, Service):
             # Add to the in-memory database
             self.srvdtb.add_document(docId)
             keys = resolve_and_log(keys, getattr(self.srvbes, "dates", None), self.log, docId)
+            n_values = 0
             for key in keys:
                 alist = keys[key]
                 for value in alist:
                     if len(value.strip()) == 0:
                         continue
                     self.srvdtb.add_document_key(docId, key, value)
+                    n_values += 1
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
                     try:
@@ -198,6 +200,8 @@ class Processor(PeopleMixin, Service):
                             self.kbdict_new["metadata"][key] = {}
                         if value not in self.kbdict_new["metadata"][key]:
                             self.kbdict_new["metadata"][key][value] = [docId]
+
+            self.log.debug(f"[DATABASE] DOC_KEYS doc={q(docId)} keys={len(keys)} values={n_values}")
 
             # Sorted once per document, not after each value.
             for key in keys:
