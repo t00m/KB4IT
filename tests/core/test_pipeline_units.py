@@ -90,20 +90,18 @@ def test_deployer_adds_head_meta_and_publishes_sources(tmp_path):
     page.write_text("<html><head></head><body>A</body></html>", encoding="utf-8")
     source = tmp_path / "source" / "a.md"
     source.write_text("# A\n", encoding="utf-8")
-    log_file = tmp_path / "kb4it.log.1"
-    log_file.write_text("log", encoding="utf-8")
-    deployer = Deployer(backend, theme, log_file=str(log_file))
+    deployer = Deployer(backend, theme)
     deployer.step_04_copy_sources_to_target([str(source)])
     deployer.step_05_add_head_meta([str(page)])
     assert (tmp_path / "target" / "sources" / "a.md").is_file()
     assert '<meta name="page" content="a.html">' in page.read_text(encoding="utf-8")
     deployer.step_11_cleanup()
-    assert not log_file.exists() and not page.exists()
+    assert not page.exists()
 
 
 def test_pipeline_wires_one_set_of_services(tmp_path):
     backend, theme = _Backend(tmp_path), _Theme()
-    pipeline = Pipeline(backend, db=None, theme=theme, settings={}, callbacks=None, log_file=None)
+    pipeline = Pipeline(backend, db=None, theme=theme, settings={}, callbacks=None)
     assert pipeline.compiler.srvprc is pipeline.processor
     assert pipeline.service("Deployer") is pipeline.deployer and pipeline.service("Theme") is None
     assert pipeline.processor.srvthm is theme is pipeline.compiler.srvthm is pipeline.deployer.srvthm

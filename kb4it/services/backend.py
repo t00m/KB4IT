@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
-from kb4it.core.log import redirect_logs, release_log_file
+from kb4it.core.log import discard_log_file, redirect_logs, release_log_file
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save
@@ -140,6 +140,8 @@ class Backend(Service):
             if os.path.exists(kb4it_temp_log):
                 shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
+            # The project log now holds its lines; the temporary one under KB4IT_HOME would pile up.
+            discard_log_file(kb4it_temp_log)
 
             # Initialize docs structure
             self.runtime["docs"] = {}
@@ -375,8 +377,7 @@ class Backend(Service):
     def start_pipeline(self):
         """Make the Processor, Compiler and Deployer of this build; the theme must be loaded."""
         self.pipeline = Pipeline(self, self.get_service("DB"), self.get_service("Theme"), self.params,
-                                 callbacks=getattr(self.app, "callbacks", None),
-                                 log_file=self.app.get_log_file())
+                                 callbacks=getattr(self.app, "callbacks", None))
 
     def get_kb_dict(self):
         """Shortcut to Processor method."""

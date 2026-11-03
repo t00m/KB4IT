@@ -10,9 +10,17 @@ License: GPL v3
 
 import logging
 import os
+import re
+import time
 
 _PATTERN = ("%(levelname)10s | %(lineno)4d | %(name)-15s | %(message)s")
 _DATEFMT = "%d/%m/%Y %H:%M:%S"
+
+# Each run logs to <KB4IT_HOME>/var/log/kb4it.log.<uuid1 time> until it knows its repository.
+# A run that ends normally removes its own file; this age limit sweeps the ones crashes and
+# failed runs leave behind. Files written recently may belong to a run still going on.
+TEMP_LOG_MAX_AGE_DAYS = 7
+_TEMP_LOG_NAME = re.compile(r"^kb4it\.log\.\d+$")
 
 
 def setup_logging(level: str = "INFO", logfile: str | None = None):
@@ -83,6 +91,38 @@ def release_log_file(logfile: str):
             handler.flush()
             handler.close()
             root.removeHandler(handler)
+
+
+def discard_log_file(logfile: str) -> bool:
+    """Close the handlers writing to logfile and remove it; True when it was removed."""
+    release_log_file(logfile)
+    try:
+        os.remove(logfile)
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return False  # Still open in another process on Windows; prune_temp_logs takes it later.
+    return True
+
+
+def prune_temp_logs(folder: str, max_age_days: float = TEMP_LOG_MAX_AGE_DAYS, now: float | None = None) -> int:
+    """Remove the temporary run logs in folder not written for max_age_days; return how many went."""
+    limit = (time.time() if now is None else now) - max_age_days * 86400
+    removed = 0
+    try:
+        entries = list(os.scandir(folder))
+    except OSError:
+        return 0
+    for entry in entries:
+        if not _TEMP_LOG_NAME.match(entry.name):
+            continue
+        try:
+            if entry.is_file(follow_symlinks=False) and entry.stat().st_mtime < limit:
+                os.remove(entry.path)
+                removed += 1
+        except OSError:
+            continue
+    return removed
 
 
 def redirect_logs(logfile: str):

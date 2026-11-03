@@ -357,7 +357,7 @@ Timings are not logged. `kb4it build --trace` writes them to `var/log/trace.json
 |---|---|
 | `~/.kb4it/` | Root of all per-user KB4IT data |
 | `~/.kb4it/var/` | Var directory (lock, work, logs) |
-| `~/.kb4it/var/log/` | Logs (rotated `kb4it.log.old` per run) |
+| `~/.kb4it/var/log/` | Temporary log of each run, `kb4it.log.<uuid1 time>`, until the backend copies it into `<repo>/var/log/kb4it.log` (rotated to `kb4it.log.old`) and removes it; a run without a repository removes it at `stop()`, a failed one keeps it, and every start removes those older than `TEMP_LOG_MAX_AGE_DAYS` (7, `core/log.py`) |
 | `~/.kb4it/var/projects.lock` | Registry lock, held while `projects.json` is written |
 | `<repo>/var/kb4it.lock` | Build lock of one repository |
 | `~/.kb4it/opt/` | Opt directory |

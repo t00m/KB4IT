@@ -32,14 +32,13 @@ ASSET_REFS = {"render": RENDER_REF, "editor": EDITOR_REF}
 class Deployer(Service):
     """KB4IT Deployer Service."""
 
-    def __init__(self, backend: Any, theme: Any, log_file: str | None = None) -> None:
-        """Deployer of one build; log_file is the temporary log removed at the end."""
+    def __init__(self, backend: Any, theme: Any) -> None:
+        """Deployer of one build."""
         super().__init__()
         self.log = get_logger(self.modname)
         self.started = True
         self.srvbes = backend
         self.srvthm = theme
-        self.log_file = log_file
         self.missing = []
 
     def execute(self):
@@ -399,7 +398,4 @@ class Deployer(Service):
         target_path = os.path.realpath(self.srvbes.get_path("target"))
         if www_path != target_path:
             delete_target_contents(self.srvbes.get_path("www"))
-        log_file = self.log_file
-        if log_file and os.path.exists(log_file):
-            os.unlink(log_file)
         self.log.debug("[DEPLOYER] CLEANUP")
