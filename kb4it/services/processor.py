@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from kb4it.core.types import KBDict
 
 from kb4it.core.exceptions import CompilationError
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 from kb4it.core.service import Service
 from kb4it.services.addpage import ADD_DOC
 from kb4it.services.people import PeopleMixin
@@ -111,7 +111,7 @@ class Processor(PeopleMixin, Service):
         runtime = self.srvbes.get_dict("runtime")
         sources = self.srvbes.get_value("docs", "bag")
         for first, second in page_name_clashes(os.path.basename(f) for f in sources):
-            self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={first} b={second}")
+            self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={q(first)} b={q(second)}")
             self.plan.name_clashes.append((first, second))
         profiles = []
         for filepath in sources:
@@ -121,7 +121,7 @@ class Processor(PeopleMixin, Service):
             # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
             if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()) \
                     or (docId == ADD_DOC and getattr(self.srvthm, "editor_enabled", lambda: False)()):
-                self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
+                self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={q(docId)}")
                 self.plan.invalid_docs.append((docId, "reserved_name"))
                 continue
 
@@ -129,7 +129,7 @@ class Processor(PeopleMixin, Service):
             try:
                 content, file_hash = read_document(filepath)
             except Exception as err:
-                self.log.error(f"[UTIL] DOC_INVALID doc={docId} reason=error error={err}")
+                self.log.error(f"[UTIL] DOC_INVALID doc={q(docId)} reason=error error={q(err)}", exc_info=True)
                 self.plan.invalid_docs.append((docId, str(err)))
                 continue
 
@@ -156,8 +156,8 @@ class Processor(PeopleMixin, Service):
                     m_hash = get_hash_from_dict(keys)
                 else:
                     b_hash = m_hash = None
-            self.log.debug(f"[PROCESSOR] HEADER_CACHE doc={docId} action={cache_action} reason={cache_reason}")
-            self.log.debug(f"[PROCESSOR] DOC_VALID doc={docId} valid={valid} reason={reason}")
+            self.log.debug(f"[PROCESSOR] HEADER_CACHE doc={q(docId)} action={q(cache_action)} reason={q(cache_reason)}")
+            self.log.debug(f"[PROCESSOR] DOC_VALID doc={q(docId)} valid={valid} reason={reason}")
 
             if not valid:
                 self.plan.invalid_docs.append((docId, reason))
@@ -213,7 +213,7 @@ class Processor(PeopleMixin, Service):
             # Body and metadata hashes were computed while parsing, or taken from the cache.
             entry["body_hash"] = b_hash
             entry["metadata_hash"] = m_hash
-            self.log.debug(f"[PROCESSOR] HASH doc={docId} body={b_hash} meta={m_hash}")
+            self.log.debug(f"[PROCESSOR] HASH doc={q(docId)} body={q(b_hash)} meta={q(m_hash)}")
 
             # Add compiled page to the target list
             htmlId = html_id_for(docId)
@@ -309,7 +309,7 @@ class Processor(PeopleMixin, Service):
             try:
                 found, _anchors, _bare = scan_document(entry["content"])
             except Exception as err:
-                self.log.warning(f"[LINKS] SCAN_FAIL doc={doc_id} error={err}")
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={q(doc_id)} error={q(err)}")
                 found = []
             pairs = sorted({(os.path.normpath(path).replace(os.sep, "/"), frag) for path, frag in found})
             links[doc_id] = [[path, frag] for path, frag in pairs]
@@ -342,7 +342,7 @@ class Processor(PeopleMixin, Service):
         backlinks_cur = self.backlinks_from(self.kbdict_cur.get("links", {}) or {}, titles_cur)
         backlinks_changed = {d for d in titles_new if self.plan.backlinks.get(d) != backlinks_cur.get(d)}
         for doc in sorted(backlinks_changed):
-            self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={doc}")
+            self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={q(doc)}")
         people_pairs, people_docs = self.people_changes()
         analysis.force_kv_pairs.update(people_pairs)
 
@@ -493,7 +493,7 @@ class Processor(PeopleMixin, Service):
         DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or MODIFIED_DIFFERS or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
-        self.log.debug(f"[PROCESSOR] ANALYZE doc={docId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} modified={MODIFIED_DIFFERS} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
+        self.log.debug(f"[PROCESSOR] ANALYZE doc={q(docId)} body={q(BODY_DIFFERS)} meta={q(METADATA_DIFFERS)} title={q(TITLES_DIFFER)} modified={q(MODIFIED_DIFFERS)} not_cached={q(NOT_CACHED)} compile={q(DOC_COMPILATION)}")
 
         return result
 
@@ -520,7 +520,7 @@ class Processor(PeopleMixin, Service):
                 K_PATH.append((key, values, True))
                 for value in values:
                     KV_PATH.append((key, value, True))
-                self.log.debug(f"[PROCESSOR] KEY key={key} compile=True forced=True")
+                self.log.debug(f"[PROCESSOR] KEY key={q(key)} compile=True forced=True")
                 continue
 
             # Key value-set changed?
@@ -536,10 +536,10 @@ class Processor(PeopleMixin, Service):
                 KV_PATH.append((key, value, COMPILE_VALUE))
                 if COMPILE_VALUE:
                     COMPILE_KEY = True
-                self.log.debug(f"[PROCESSOR] KV key={key} value={value} compile={COMPILE_VALUE}")
+                self.log.debug(f"[PROCESSOR] KV key={q(key)} value={q(value)} compile={q(COMPILE_VALUE)}")
 
             K_PATH.append((key, values, COMPILE_KEY))
-            self.log.debug(f"[PROCESSOR] KEY key={key} compile={COMPILE_KEY}")
+            self.log.debug(f"[PROCESSOR] KEY key={q(key)} compile={q(COMPILE_KEY)}")
 
         KV_PATH += self.profile_kv_paths({(k, v) for k, v, _ in KV_PATH}, FORCE_COMPILATION, force_kv_pairs)
         return K_PATH, KV_PATH
@@ -585,7 +585,7 @@ class Processor(PeopleMixin, Service):
             self.srvbes.add_target(docId, htmlId)
 
         targets = self.srvbes.get_value("docs", "targets")
-        self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={keys_with_compile_true}")
-        self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={pairs_with_compile_true}")
+        self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={q(keys_with_compile_true)}")
+        self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={q(pairs_with_compile_true)}")
         self.log.debug(f"[PROCESSOR] TARGET_DOCS n={len(targets)}")
         self.log.debug("[PROCESSOR] TRANSFORM_END")

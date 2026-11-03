@@ -7,6 +7,7 @@ from collections import Counter
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, ThemeError
+from kb4it.core.log import q
 
 ADD_DOC = "add.md"   # source name reserved while the editor is on
 SUFFIX = "-SKELETON.md"
@@ -61,7 +62,7 @@ class AddPageMixin:
             self.log.info("[BUILDER] ADD_PAGE enabled=False")
             return
         html, source, count = self._render_add_page()
-        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={source} categories={count}")
+        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={q(source)} categories={q(count)}")
         self.register_add_page(html)
 
     def register_add_page(self, html: str) -> None:
@@ -169,7 +170,7 @@ class AddPageMixin:
             listed = {e["file"] for e in entries}
             for name in files:
                 if name not in listed:
-                    self.log.warning(f"[BUILDER] SKELETON_UNLISTED file={name}")
+                    self.log.warning(f"[BUILDER] SKELETON_UNLISTED file={q(name)}")
         return categories
 
     def _read_skeleton_listing(self, listing: str) -> list[dict]:

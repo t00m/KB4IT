@@ -3,6 +3,11 @@
 """
 Log module.
 
+KB4IT logs through its own logger tree, "kb4it", and never configures the root logger:
+a program that runs KB4IT in its own process (the TUI, kb4it serve, a Python caller)
+keeps its logging as it set it up. The libraries KB4IT drives log under their own
+names; their warnings and errors reach the KB4IT log, their debug lines do not.
+
 File: log.py
 Author: Tomás Vírseda
 License: GPL v3
@@ -13,8 +18,15 @@ import os
 import re
 import time
 
-_PATTERN = ("%(levelname)10s | %(lineno)4d | %(name)-15s | %(message)s")
+_PATTERN = "%(levelname)10s | %(threadName)-12s | %(shortname)-15s | %(module)s:%(lineno)d | %(message)s"
 _DATEFMT = "%d/%m/%Y %H:%M:%S"
+
+# Parent of every KB4IT logger; get_logger("Backend") is "kb4it.Backend".
+KB4IT_LOGGER = "kb4it"
+# Libraries whose own loggers are noisy at DEBUG: Python-Markdown logs every extension it
+# loads, three lines per page, and Pillow logs the chunks of every PNG.
+LIBRARY_LOGGERS = ("MARKDOWN", "PIL")
+LIBRARY_LEVEL = logging.WARNING
 
 # Each run logs to <KB4IT_HOME>/var/log/kb4it.log.<uuid1 time> until it knows its repository.
 # A run that ends normally removes its own file; this age limit sweeps the ones crashes and
@@ -23,8 +35,79 @@ TEMP_LOG_MAX_AGE_DAYS = 7
 _TEMP_LOG_NAME = re.compile(r"^kb4it\.log\.\d+$")
 
 
+def q(value) -> str:
+    """value as text for a key=value detail, in double quotes when it has spaces, quotes or '='."""
+    text = str(value)
+    if text and not any(char.isspace() or char in '"=' for char in text):
+        return text
+    escaped = text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
+    return f'"{escaped}"'
+
+
+class _Formatter(logging.Formatter):
+    """The KB4IT line format; with tracebacks=False, an error stays on one line."""
+
+    def __init__(self, tracebacks: bool = True):
+        super().__init__(_PATTERN, datefmt=_DATEFMT)
+        self.tracebacks = tracebacks
+
+    def format(self, record: logging.LogRecord) -> str:
+        name = record.name
+        record.shortname = name[len(KB4IT_LOGGER) + 1:] if name.startswith(KB4IT_LOGGER + ".") else name
+        if self.tracebacks:
+            return super().format(record)
+        # Another handler may already have cached the traceback text on the record.
+        saved = record.exc_info, record.exc_text, record.stack_info
+        record.exc_info = record.exc_text = record.stack_info = None
+        try:
+            return super().format(record)
+        finally:
+            record.exc_info, record.exc_text, record.stack_info = saved
+
+
+def _not_file_only(record: logging.LogRecord) -> bool:
+    """Keep off the console the records logged with extra={"file_only": True}."""
+    return not getattr(record, "file_only", False)
+
+
+class _LibraryFilter(logging.Filter):
+    """Let KB4IT's own records through, and only warnings and errors of the libraries."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        name = record.name
+        return name == KB4IT_LOGGER or name.startswith(KB4IT_LOGGER + ".") or record.levelno >= LIBRARY_LEVEL
+
+
+def kb4it_logger() -> logging.Logger:
+    """The parent of every KB4IT logger; add a handler here to see all of KB4IT's records."""
+    return logging.getLogger(KB4IT_LOGGER)
+
+
+def _loggers() -> list[logging.Logger]:
+    """The loggers that carry KB4IT's handlers: its own tree and the libraries it drives."""
+    return [kb4it_logger()] + [logging.getLogger(name) for name in LIBRARY_LOGGERS]
+
+
+def _attach(handler: logging.Handler) -> None:
+    handler.addFilter(_LibraryFilter())
+    for logger in _loggers():
+        logger.addHandler(handler)
+
+
+def _detach(handler: logging.Handler) -> None:
+    for logger in _loggers():
+        logger.removeHandler(handler)
+
+
+def _file_handler(logfile: str, mode: str) -> logging.FileHandler:
+    handler = logging.FileHandler(logfile, mode=mode, encoding="utf-8")
+    handler.setFormatter(_Formatter(tracebacks=True))
+    handler.setLevel(logging.DEBUG)
+    return handler
+
+
 def setup_logging(level: str = "INFO", logfile: str | None = None):
-    """Configure root logger once."""
+    """Configure the kb4it logger once: the console at level, and the file when logfile is given."""
     if level is not None:
         level_dict = {
             "DEBUG": logging.DEBUG,
@@ -37,45 +120,46 @@ def setup_logging(level: str = "INFO", logfile: str | None = None):
     else:
         severity = logging.INFO
 
-    root = logging.getLogger()
-    root.setLevel(severity)
+    logger = kb4it_logger()
+    logger.setLevel(severity)
+    # KB4IT's records go to its own handlers only; the root logger belongs to the caller.
+    logger.propagate = False
 
-    if any(isinstance(h, logging.FileHandler) for h in root.handlers):
+    if any(isinstance(h, logging.FileHandler) for h in logger.handlers):
         return  # File handler already configured
 
-    formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
-
-    # Console handler
+    # The console keeps an error on one line; the file holds its traceback.
     console = logging.StreamHandler()
-    console.setFormatter(formatter)
+    console.setFormatter(_Formatter(tracebacks=False))
     console.setLevel(severity)
-    root.addHandler(console)
+    console.addFilter(_not_file_only)
+    _attach(console)
 
-    # File handler
-    file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
-    file_handler.setFormatter(formatter)
-    root.addHandler(file_handler)
+    if logfile:
+        _attach(_file_handler(logfile, "w"))
 
 
 def reset_logging():
-    """Remove every root handler, so the next KB4IT instance in this process sets up logging from scratch.
+    """Remove KB4IT's handlers, so the next KB4IT instance in this process sets up logging from scratch.
 
     setup_logging() returns early while a file handler exists; the TUI and kb4it serve
     build several times in one process and call this before each build.
     """
-    root = logging.getLogger()
-    for handler in list(root.handlers):
+    for handler in list(kb4it_logger().handlers):
         try:
             handler.flush()
             handler.close()
         except Exception:
             pass
-        root.removeHandler(handler)
+        _detach(handler)
+    kb4it_logger().propagate = True
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a named logger."""
-    return logging.getLogger(name)
+    """Return the KB4IT logger called name, under the kb4it logger."""
+    if name == KB4IT_LOGGER or name.startswith(KB4IT_LOGGER + "."):
+        return logging.getLogger(name)
+    return logging.getLogger(f"{KB4IT_LOGGER}.{name}")
 
 
 def release_log_file(logfile: str):
@@ -85,12 +169,11 @@ def release_log_file(logfile: str):
     var/log/kb4it.log, and Windows does not remove an open file.
     """
     target = os.path.abspath(logfile)
-    root = logging.getLogger()
-    for handler in root.handlers[:]:
+    for handler in kb4it_logger().handlers[:]:
         if isinstance(handler, logging.FileHandler) and os.path.abspath(handler.baseFilename) == target:
             handler.flush()
             handler.close()
-            root.removeHandler(handler)
+            _detach(handler)
 
 
 def discard_log_file(logfile: str) -> bool:
@@ -126,19 +209,10 @@ def prune_temp_logs(folder: str, max_age_days: float = TEMP_LOG_MAX_AGE_DAYS, no
 
 
 def redirect_logs(logfile: str):
-    """Redirect logging to a new file at runtime."""
-    root = logging.getLogger()
-    formatter = logging.Formatter(_PATTERN, datefmt=_DATEFMT)
-
-    # Remove only existing FileHandlers
-    for handler in root.handlers[:]:
+    """Send the file log to logfile from now on, appending to it."""
+    for handler in kb4it_logger().handlers[:]:
         if isinstance(handler, logging.FileHandler):
             handler.flush()
             handler.close()
-            root.removeHandler(handler)
-
-    # Add new file handler
-    file_handler = logging.FileHandler(logfile, mode="a", encoding="utf-8")
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)
-    root.addHandler(file_handler)
+            _detach(handler)
+    _attach(_file_handler(logfile, "a"))

@@ -19,7 +19,7 @@ import re
 import socket
 import threading
 
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 
 DEFAULT_PORT = 8642
 PORT_SCAN_LIMIT = 50
@@ -190,7 +190,7 @@ class SiteServer:
         self.httpd.daemon_threads = True
         self.port = port
         threading.Thread(target=self.httpd.serve_forever, name="kb4it-serve", daemon=True).start()
-        log.debug(f"[SERVE] LISTEN url={self.url} dir={self.directory} reload={self.reload}")
+        log.debug(f"[SERVE] LISTEN url={q(self.url)} dir={q(self.directory)} reload={q(self.reload)}")
         return self
 
     def shutdown(self):

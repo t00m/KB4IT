@@ -11,6 +11,7 @@ from kb4it.core.util import (
     guess_datetime,
 )
 from kb4it.services.themekit.host import ThemeHost
+from kb4it.core.log import q
 
 
 def _parse_date(text: str) -> datetime:
@@ -43,7 +44,7 @@ class EventsMixin(ThemeHost):
                 self.dey.setdefault(y, []).append((m, d))
                 self.events_docs.setdefault(y, {}).setdefault(m, {}).setdefault(d, []).append(docId)
             except Exception as error:
-                self.log.error(f"[THEME] DATE_INVALID doc={os.path.basename(docId)} timestamp={timestamp}")
+                self.log.error(f"[THEME] DATE_INVALID doc={q(os.path.basename(docId))} timestamp={q(timestamp)}", exc_info=True)
                 self.log.error(f"[THEME] ERROR {error}")
                 raise
 
@@ -134,5 +135,5 @@ class EventsMixin(ThemeHost):
             self.srvbes.add_target(f"{name}.md", f"{name}.html")
 
         self.srvbes.set_events(pages)
-        self.log.debug(f"[THEME] EVENT_PAGES built={counts['built']} reused={counts['reused']}")
+        self.log.debug(f"[THEME] EVENT_PAGES built={q(counts['built'])} reused={q(counts['reused'])}")
         return built_years

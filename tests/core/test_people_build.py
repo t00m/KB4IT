@@ -3,6 +3,7 @@
 import json
 from unittest.mock import ANY
 
+from kb4it.core.log import q
 from tests.helpers import page, run_kb4it, write_repo
 
 PROFILE = page("Jane Doe", "Bio.", Alias="J. Doe", Email="j@x.org")
@@ -73,7 +74,7 @@ def rebuild(tmp_path, home, cfg, changes):
 
 
 def kv(key, value):
-    return f"[PROCESSOR] KV key={key} value={value} compile=True"
+    return f"[PROCESSOR] KV key={q(key)} value={q(value)} compile=True"
 
 
 def test_unchanged_profile_rebuilds_nothing(tmp_path, home):

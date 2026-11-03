@@ -18,7 +18,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import Any
 
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 
 log = get_logger("Util")
 
@@ -78,7 +78,7 @@ def copydir(source: str, dest: str, keep_existing: bool = False) -> None:
             dest_path = os.path.join(dest, rel_path)
 
             if keep_existing and os.path.exists(os.path.join(dest_path, file)):
-                log.info(f"[FILES] KEEP_EXISTING path={os.path.join(dest_path, file)}")
+                log.info(f"[FILES] KEEP_EXISTING path={q(os.path.join(dest_path, file))}")
                 continue
 
             if not os.path.isdir(dest_path):

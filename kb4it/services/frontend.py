@@ -18,6 +18,7 @@ from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
 from kb4it.core.version import requirement_satisfied, theme_fingerprint, theme_identity
+from kb4it.core.log import q
 
 # The form of a theme's own version in theme.json.
 VERSION_XYZ = re.compile(r"^\d+\.\d+\.\d+$")
@@ -49,32 +50,32 @@ class Frontend(Service):
         """List available themes."""
         self.log.debug("[FRONTEND] THEME_LIST_START")
 
-        self.log.debug(f"[FRONTEND] THEME_SEARCH_GLOBAL path={ENV['GPATH']['THEMES']}")
+        self.log.debug(f"[FRONTEND] THEME_SEARCH_GLOBAL path={q(ENV['GPATH']['THEMES'])}")
         global_themes = sorted(os.listdir(ENV["GPATH"]["THEMES"]))
         n = 1
         for dirname in global_themes:
             try:
                 self.theme_load(dirname)
-                self.log.info(f"[FRONTEND] THEME scope={self._scope(self.runtime['theme']['path'])} n={n} "
+                self.log.info(f"[FRONTEND] THEME scope={q(self._scope(self.runtime['theme']['path']))} n={q(n)} "
                               f"{self._describe(self.runtime['theme'])}")
                 n += 1
             except Exception as error:
-                self.log.error(f"[FRONTEND] ERROR {error}")
-                self.log.error(f"[FRONTEND] THEME_INVALID id={dirname}")
+                self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
+                self.log.error(f"[FRONTEND] THEME_INVALID id={q(dirname)}")
 
-        self.log.debug(f"[FRONTEND] THEME_SEARCH_LOCAL path={ENV['LPATH']['THEMES']}")
+        self.log.debug(f"[FRONTEND] THEME_SEARCH_LOCAL path={q(ENV['LPATH']['THEMES'])}")
         local_themes = sorted(os.listdir(ENV["LPATH"]["THEMES"]))
         if len(local_themes) > 0:
             for dirname in local_themes:
-                self.log.debug(f"[FRONTEND] THEME_LOOKUP dir={dirname}")
+                self.log.debug(f"[FRONTEND] THEME_LOOKUP dir={q(dirname)}")
                 try:
                     self.theme_load(dirname)
-                    self.log.info(f"[FRONTEND] THEME scope={self._scope(self.runtime['theme']['path'])} n={n} "
+                    self.log.info(f"[FRONTEND] THEME scope={q(self._scope(self.runtime['theme']['path']))} n={q(n)} "
                                   f"{self._describe(self.runtime['theme'])}")
                     n += 1
                 except Exception as error:
-                    self.log.error(f"[FRONTEND] ERROR {error}")
-                    self.log.error("[FRONTEND] THEME_INVALID id=%s", dirname)
+                    self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
+                    self.log.error("[FRONTEND] THEME_INVALID id=%s", q(dirname))
         if n == 0:
             self.log.info("[FRONTEND] NO_THEMES")
         self.app.stop()
@@ -97,8 +98,8 @@ class Frontend(Service):
         """List available applications for a given theme."""
         theme_path = self.theme_search(theme)
         if theme_path is not None:
-            self.log.info(f"[FRONTEND] APPS_LIST theme={theme}")
-            self.log.debug(f"[FRONTEND] THEME_PATH theme={theme} path={theme_path}")
+            self.log.info(f"[FRONTEND] APPS_LIST theme={q(theme)}")
+            self.log.debug(f"[FRONTEND] THEME_PATH theme={q(theme)} path={q(theme_path)}")
             apps_path = os.path.join(theme_path, "apps")
             if os.path.isdir(apps_path):
                 apps = sorted(
@@ -106,9 +107,9 @@ class Frontend(Service):
                     if os.path.isdir(os.path.join(apps_path, d))
                 )
                 for app_name in apps:
-                    self.log.info(f"[FRONTEND] APP name={app_name}")
+                    self.log.info(f"[FRONTEND] APP name={q(app_name)}")
         else:
-            self.log.error(f"[FRONTEND] THEME_NOT_FOUND name={theme}")
+            self.log.error(f"[FRONTEND] THEME_NOT_FOUND name={q(theme)}")
 
         self.app.stop()
 
@@ -118,15 +119,15 @@ class Frontend(Service):
         spec = theme.get("kb4it")
         current = ENV["APP"]["version"]
         if not spec:
-            self.log.warning(f"[FRONTEND] THEME_REQUIREMENT_MISSING id={theme_id}")
+            self.log.warning(f"[FRONTEND] THEME_REQUIREMENT_MISSING id={q(theme_id)}")
             return
         try:
             met = requirement_satisfied(spec, current)
         except ValueError as error:
-            self.log.error(f"[FRONTEND] THEME_REQUIREMENT_INVALID id={theme_id} requires={spec}")
+            self.log.error(f"[FRONTEND] THEME_REQUIREMENT_INVALID id={q(theme_id)} requires={q(spec)}")
             raise ThemeError(f"Theme {theme_id} has an invalid kb4it requirement {spec!r}: {error}") from error
         if not met:
-            self.log.error(f"[FRONTEND] THEME_REQUIREMENT_UNMET id={theme_id} requires={spec} current={current}")
+            self.log.error(f"[FRONTEND] THEME_REQUIREMENT_UNMET id={q(theme_id)} requires={q(spec)} current={q(current)}")
             raise ThemeError(f"Theme {theme_id} requires KB4IT {spec}; this is {current}")
 
     def _identify(self, theme):
@@ -135,10 +136,10 @@ class Frontend(Service):
         theme_id = theme.get("id", "?")
         version = theme.get("version")
         if version is None:
-            self.log.warning(f"[FRONTEND] THEME_VERSION_MISSING id={theme_id}")
+            self.log.warning(f"[FRONTEND] THEME_VERSION_MISSING id={q(theme_id)}")
         elif not VERSION_XYZ.match(str(version)):
             # A warning for now, so themes written before theme versions keep building; an error in the next minor release (RA-16).
-            self.log.warning(f"[FRONTEND] THEME_VERSION_INVALID id={theme_id} version={version} expected=X.Y.Z")
+            self.log.warning(f"[FRONTEND] THEME_VERSION_INVALID id={q(theme_id)} version={q(version)} expected=X.Y.Z")
             version = None
         try:
             base = template_base_dir(theme)
@@ -162,7 +163,7 @@ class Frontend(Service):
 
         theme_conf = os.path.join(self.runtime["theme"]["path"], "theme.json")
         if not os.path.exists(theme_conf):
-            self.log.warning(f"[FRONTEND] THEME_CONF_MISSING path={theme_conf}")
+            self.log.warning(f"[FRONTEND] THEME_CONF_MISSING path={q(theme_conf)}")
         else:
             # load theme configuration
             try:
@@ -171,11 +172,11 @@ class Frontend(Service):
                     theme["kb4it_version"] = ENV["APP"]["version"]
                     for prop in theme:
                         self.runtime["theme"][prop] = theme[prop]
-                self.log.debug(f"[FRONTEND] THEME_CONF name={theme['name']} version={theme.get('version')} "
-                               f"kb4it={theme['kb4it_version']}")
+                self.log.debug(f"[FRONTEND] THEME_CONF name={q(theme['name'])} version={q(theme.get('version'))} "
+                               f"kb4it={q(theme['kb4it_version'])}")
             except Exception as error:
-                self.log.error(f"[FRONTEND] ERROR {error}")
-                self.log.error(f"[FRONTEND] THEME_CONF_INVALID path={theme_conf}")
+                self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
+                self.log.error(f"[FRONTEND] THEME_CONF_INVALID path={q(theme_conf)}")
                 return None
 
             self._check_requirement(theme)
@@ -197,7 +198,7 @@ class Frontend(Service):
             )
 
             # Register theme service
-            self.log.debug(f"[FRONTEND] THEME_REGISTER path={self.runtime['theme']['logic']}")
+            self.log.debug(f"[FRONTEND] THEME_REGISTER path={q(self.runtime['theme']['logic'])}")
             sys.path.insert(0, self.runtime["theme"]["logic"])
             # Every theme names its logic module "theme"; drop the one an earlier load cached.
             sys.modules.pop("theme", None)
@@ -207,13 +208,13 @@ class Frontend(Service):
                 self.app.register_service("Theme", Theme())
                 self.get_service("Theme")
                 loaded = self.runtime["theme"]
-                self.log.debug(f"[FRONTEND] THEME_LOADED id={loaded['id']} version={loaded['version'] or 'unversioned'} "
-                               f"fingerprint={loaded['fingerprint']} path={loaded['path']}")
+                self.log.debug(f"[FRONTEND] THEME_LOADED id={q(loaded['id'])} version={loaded['version'] or 'unversioned'} "
+                               f"fingerprint={q(loaded['fingerprint'])} path={q(loaded['path'])}")
             except AttributeError as error:
                 self.log.error(f"[FRONTEND] ERROR {error}")
                 return None
             except Exception as error:
-                self.log.error(f"[FRONTEND] ERROR {error}")
+                self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
                 raise ThemeError(f"Theme load failed: {error}") from error
 
     def _validate_required_templates(self, theme):
@@ -232,7 +233,7 @@ class Frontend(Service):
         ]
         if missing:
             for name in missing:
-                self.log.error(f"[FRONTEND] TEMPLATE_MISSING name={name} theme={theme.get('name', '?')}")
+                self.log.error(f"[FRONTEND] TEMPLATE_MISSING name={q(name)} theme={q(theme.get('name', '?'))}")
             raise ThemeError(f"Required templates missing: {missing}")
 
     def theme_search(self, theme=None):
@@ -241,12 +242,12 @@ class Frontend(Service):
         if override is not None:
             theme_config = os.path.join(override, "theme.json")
             if not os.path.isdir(override):
-                self.log.error(f"[FRONTEND] THEME_PATH_INVALID path={override} reason=not_a_directory")
+                self.log.error(f"[FRONTEND] THEME_PATH_INVALID path={q(override)} reason=not_a_directory")
                 raise ThemeError(f"theme_path is not a directory: {override}")
             if not os.path.exists(theme_config):
-                self.log.error(f"[FRONTEND] THEME_PATH_INVALID path={override} reason=missing_theme_json")
+                self.log.error(f"[FRONTEND] THEME_PATH_INVALID path={q(override)} reason=missing_theme_json")
                 raise ThemeError(f"theme_path does not contain theme.json: {override}")
-            self.log.debug(f"[FRONTEND] THEME_PATH_OVERRIDE path={override}")
+            self.log.debug(f"[FRONTEND] THEME_PATH_OVERRIDE path={q(override)}")
             return override
 
         if theme is None:
@@ -256,7 +257,7 @@ class Frontend(Service):
             source_resources_path = os.path.join(source_path, "resources")
             source_themes_path = os.path.join(source_resources_path, "themes")
             all_themes = os.path.join(source_themes_path, "*")
-            self.log.debug(f"[FRONTEND] THEME_LOOKUP_GLOB path={all_themes}")
+            self.log.debug(f"[FRONTEND] THEME_LOOKUP_GLOB path={q(all_themes)}")
             try:
                 theme_path = glob.glob(all_themes)[0]
             except IndexError:
@@ -272,9 +273,9 @@ class Frontend(Service):
                 theme_path_source = ""
             theme_path_opt = os.path.join(ENV["LPATH"]["THEMES"], theme)
             theme_path_global = os.path.join(ENV["GPATH"]["THEMES"], theme)
-            self.log.debug(f"[FRONTEND] THEME_CANDIDATE scope=source path={theme_path_source}")
-            self.log.debug(f"[FRONTEND] THEME_CANDIDATE scope=optional path={theme_path_opt}")  # DEPRECATE
-            self.log.debug(f"[FRONTEND] THEME_CANDIDATE scope=global path={theme_path_global}")
+            self.log.debug(f"[FRONTEND] THEME_CANDIDATE scope=source path={q(theme_path_source)}")
+            self.log.debug(f"[FRONTEND] THEME_CANDIDATE scope=optional path={q(theme_path_opt)}")  # DEPRECATE
+            self.log.debug(f"[FRONTEND] THEME_CANDIDATE scope=global path={q(theme_path_global)}")
             for path in [theme_path_source, theme_path_opt, theme_path_global]:
                 theme_config = os.path.join(path, "theme.json")
                 if not os.path.exists(theme_config):

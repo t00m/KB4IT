@@ -16,7 +16,7 @@ from typing import Any
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError, ThemeError
 from kb4it.core.files import prune_tree, sync_file, sync_tree
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, delete_target_contents, timeit
@@ -76,8 +76,8 @@ class Deployer(Service):
             if filename not in expected:
                 os.unlink(os.path.join(docsdir, filename))
                 n_deleted += 1
-                self.log.debug(f"[DEPLOYER] STALE_SOURCE_DELETED file={filename}")
-        self.log.debug(f"[DEPLOYER] SOURCES_TO_TARGET copied={n_copied} deleted={n_deleted}")
+                self.log.debug(f"[DEPLOYER] STALE_SOURCE_DELETED file={q(filename)}")
+        self.log.debug(f"[DEPLOYER] SOURCES_TO_TARGET copied={q(n_copied)} deleted={q(n_deleted)}")
 
     @timeit
     def step_04b_remove_sources_from_target(self):
@@ -85,7 +85,7 @@ class Deployer(Service):
         docsdir = os.path.join(self.srvbes.get_path("target"), "sources")
         if os.path.isdir(docsdir):
             shutil.rmtree(docsdir)
-            self.log.debug(f"[DEPLOYER] SOURCES_REMOVED path={docsdir}")
+            self.log.debug(f"[DEPLOYER] SOURCES_REMOVED path={q(docsdir)}")
 
     @timeit
     def step_05_add_head_meta(self, files):
@@ -107,7 +107,7 @@ class Deployer(Service):
                 with open(path, "w", encoding="utf-8") as fh:
                     fh.write(new)
                 n += 1
-        self.log.debug(f"[DEPLOYER] HEAD_META pages={n}")
+        self.log.debug(f"[DEPLOYER] HEAD_META pages={q(n)}")
 
     @timeit
     def step_06_copy_all_to_cache(self, files):
@@ -139,7 +139,7 @@ class Deployer(Service):
             try:
                 n_copied += sync_file(source, target)
             except FileNotFoundError:
-                self.log.error(f"[DEPLOYER] PAGE_MISSING page={filename}")
+                self.log.error(f"[DEPLOYER] PAGE_MISSING page={q(filename)}")
                 self.missing.append(filename)
         if self.missing:
             self.log.error("[DEPLOYER] HINT rebuild with --force")
@@ -156,11 +156,11 @@ class Deployer(Service):
             if os.path.isfile(stale):
                 os.unlink(stale)
                 n_deleted += 1
-                self.log.debug(f"[DEPLOYER] STALE_HTML_DELETED file={filename}")
+                self.log.debug(f"[DEPLOYER] STALE_HTML_DELETED file={q(filename)}")
         self.srvbes.set_deployed(expected)
 
         n_unchanged = len(expected) - n_copied - len(self.missing)
-        self.log.debug(f"[DEPLOYER] HTML_TO_TARGET copied={n_copied} unchanged={n_unchanged} deleted={n_deleted}")
+        self.log.debug(f"[DEPLOYER] HTML_TO_TARGET copied={q(n_copied)} unchanged={q(n_unchanged)} deleted={q(n_deleted)}")
 
     @timeit
     def step_08_copy_global_resources_to_target(self):
@@ -204,7 +204,7 @@ class Deployer(Service):
                 n_copied += copied
                 n_deleted += deleted
                 provided |= files
-            self.log.debug(f"[DEPLOYER] COPIED_GLOBAL_RESOURCES copied={n_copied} deleted={n_deleted}")
+            self.log.debug(f"[DEPLOYER] COPIED_GLOBAL_RESOURCES copied={q(n_copied)} deleted={q(n_deleted)}")
         else:
             msg = "theme.json 'deploy_dirs' must be a list of folder names"
             if not isinstance(deploy_dirs, list) or not all(isinstance(d, str) for d in deploy_dirs):
@@ -227,7 +227,7 @@ class Deployer(Service):
                       if os.path.isdir(os.path.join(CUSTOM_THEME_PATH, name))}
             for name in deploy_dirs:
                 if os.path.join(theme_dest, name) not in wanted:
-                    self.log.warning(f"[DEPLOYER] DEPLOY_DIR_MISSING name={name}")
+                    self.log.warning(f"[DEPLOYER] DEPLOY_DIR_MISSING name={q(name)}")
             n_deleted += self._prune_except(theme_dest, wanted, keep)
             for stale in stale_dirs[1:]:
                 n_deleted += prune_tree(stale, keep)
@@ -239,8 +239,8 @@ class Deployer(Service):
                     n_copied += copied
                     n_deleted += deleted
                     provided |= files
-            self.log.debug(f"[DEPLOYER] COPIED_THEME_DIRS dirs={','.join(deploy_dirs)} "
-                           f"copied={n_copied} deleted={n_deleted}")
+            self.log.debug(f"[DEPLOYER] COPIED_THEME_DIRS dirs={q(','.join(deploy_dirs))} "
+                           f"copied={q(n_copied)} deleted={q(n_deleted)}")
 
         # Stylesheet for build-time code highlighting; outside resources/common, which some themes do not deploy.
         settings = getattr(self.srvbes, "markdown", None)
@@ -248,7 +248,7 @@ class Deployer(Service):
             css_path = os.path.join(resources_dir_target, "pygments.css")
             os.makedirs(os.path.dirname(css_path), exist_ok=True)
             self._write_if_changed(css_path, pygments_css(settings))
-            self.log.debug(f"[DEPLOYER] PYGMENTS_CSS path={css_path}")
+            self.log.debug(f"[DEPLOYER] PYGMENTS_CSS path={q(css_path)}")
 
         provided |= self.deploy_page_assets(keep)
 
@@ -258,7 +258,7 @@ class Deployer(Service):
         for name, origin, dest in local:
             copied, _deleted, files = sync_tree(origin, dest, mirror=False)
             deployed |= {os.path.relpath(path, target).replace(os.sep, "/") for path in files}
-            self.log.debug(f"[DEPLOYER] COPIED_{name} path={origin} copied={copied}")
+            self.log.debug(f"[DEPLOYER] COPIED_{name} path={q(origin)} copied={q(copied)}")
         self._delete_stale_static(target, deployed, provided)
         self.srvbes.set_static(deployed)
 
@@ -332,8 +332,8 @@ class Deployer(Service):
             if os.path.isfile(path) and not os.path.islink(path):
                 os.unlink(path)
                 n_deleted += 1
-                self.log.debug(f"[DEPLOYER] STALE_STATIC_DELETED file={rel}")
-        self.log.debug(f"[DEPLOYER] STATIC_TO_TARGET files={len(deployed)} deleted={n_deleted}")
+                self.log.debug(f"[DEPLOYER] STALE_STATIC_DELETED file={q(rel)}")
+        self.log.debug(f"[DEPLOYER] STATIC_TO_TARGET files={len(deployed)} deleted={q(n_deleted)}")
 
     @timeit
     def deploy_page_assets(self, keep=()):
@@ -361,7 +361,7 @@ class Deployer(Service):
             elif os.path.isdir(dest):
                 prune_tree(dest, keep)
                 self._remove_if_empty(dest)
-            self.log.debug(f"[DEPLOYER] {name.upper()}_ASSETS deployed={used}")
+            self.log.debug(f"[DEPLOYER] {name.upper()}_ASSETS deployed={q(used)}")
         return provided
 
     @timeit
@@ -384,7 +384,7 @@ class Deployer(Service):
             else:
                 os.unlink(path)
             deleted += 1
-        self.log.debug(f"[DEPLOYER] COPIED_HTML_BACK_TO_CACHE copied={copied} deleted={deleted}")
+        self.log.debug(f"[DEPLOYER] COPIED_HTML_BACK_TO_CACHE copied={q(copied)} deleted={q(deleted)}")
 
     @timeit
     def step_10_copy_kbdict_to_target(self):
