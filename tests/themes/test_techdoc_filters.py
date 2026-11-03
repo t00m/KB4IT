@@ -122,9 +122,14 @@ def test_small_tables_have_no_bar(target):
     assert "data-kb-f-" not in read(target, "bookmarks.html")
 
 
-def test_archive_and_document_pages_have_no_bar(target):
-    assert "DOCUMENT FILTER" not in read(target, "events_2026.html")
-    assert "DOCUMENT FILTER" not in read(target, "events_202601.html")
+def test_year_and_month_archive_pages_have_the_bar(target):
+    for name in ("events_2026.html", "events_202601.html"):
+        keys = re.findall(r'data-kb-key="([a-z]+)"', bar(read(target, name)))
+        assert keys == ["status", "priority"], name
+
+
+def test_day_archive_and_document_pages_have_no_bar(target):
+    assert "DOCUMENT FILTER" not in read(target, "events_20260102.html")  # one row
     doc = read(target, "doc01.html")
     assert "DOCUMENT FILTER" not in doc and "data-kb-f-" not in doc
 

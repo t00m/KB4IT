@@ -219,14 +219,14 @@ A property value page, such as `Status_Open.html`, lists its documents in the sa
 
 ## Filter bar {#filter-bar}
 
-The document tables of `all.html`, `bookmarks.html`, the property value pages and `events.html` have a **Filter** button next to the search box. It opens one row of values per property: `WorkType`, `DocType`, `Category`, `Topic`, `Status` and `Priority`.
+The document tables of `all.html`, `bookmarks.html`, the property value pages, `events.html` and the archive pages of a year, month or day (`events_2026.html`, `events_202603.html`, `events_20260324.html`) have a **Filter** button next to the search box. It opens one row of values per property: `WorkType`, `DocType`, `Category`, `Topic`, `Status` and `Priority`.
 
 1. Click a value to keep only the documents that have it. Values of one property widen the choice (Status Open or Planned); values of two properties narrow it (Status Open and Priority High).
 2. Each value shows how many rows it would show, given the search box and the other filters, and the most used values come first. Values that would show nothing are hidden. A property with more than ten values shows the first ten and a **+N more** link.
 3. The active filters show as chips below the search box, also while the bar is closed. Click a chip to remove it. **All** clears one property; **Clear filters** clears everything.
 4. The row count under the table counts the filters too.
 
-The values come from the documents of that table. A property that would not split them is left out, such as `Status` on `Status_Open.html`. Tables with fewer than ten documents have no filter bar, except on `events.html`. Document pages, and the events pages of a day, month or year, have none.
+The values come from the documents of that table. A property that would not split them is left out, such as `Status` on `Status_Open.html`. Tables with fewer than ten documents have no filter bar, except on `events.html`. Document pages have none.
 
 ## Events {#events}
 
