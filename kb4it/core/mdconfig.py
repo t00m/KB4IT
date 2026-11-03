@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 import markdown
 
 from kb4it.core.exceptions import ConfigError
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 from kb4it.core.mdlinks import MdLinkExtension
 from kb4it.core.mdlists import ListIndentExtension
 from kb4it.core.mdrich import MATH_EXTENSIONS, RichContentExtension
@@ -159,10 +159,10 @@ def _check_loadable(settings):
                 k: v for k, v in settings.all_configs().items() if k == name})
         except ImportError as error:
             hint = "pygments" if name == "codehilite" else _package_hint(name)
-            log.error(f"[COMPILER] MD_EXTENSION_MISSING name={name} hint=pip install {hint}")
+            log.error(f"[COMPILER] MD_EXTENSION_MISSING name={q(name)} hint=pip install {hint}")
             raise ConfigError(f"Markdown extension '{name}' is not installed (pip install {hint}): {error}") from error
         except Exception as error:
-            log.error(f"[COMPILER] MD_EXTENSION_INVALID name={name} error={error}")
+            log.error(f"[COMPILER] MD_EXTENSION_INVALID name={q(name)} error={q(error)}", exc_info=True)
             raise ConfigError(f"Markdown extension '{name}' cannot load: {error}") from error
     if settings.sanitize:
         try:

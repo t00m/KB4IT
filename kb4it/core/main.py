@@ -22,7 +22,7 @@ from kb4it.core.completion import app_completer, enable as enable_completion, th
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, repo_lock_path
-from kb4it.core.log import discard_log_file, get_logger, prune_temp_logs, setup_logging
+from kb4it.core.log import discard_log_file, get_logger, kb4it_logger, prune_temp_logs, q, setup_logging
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -81,14 +81,14 @@ class KB4IT:
             self.params["LOGLEVEL"] = "INFO"
         setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
-        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['build_version']}")
-        self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
-        self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")
-        self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']} family={ENV['SYS']['PLATFORM']['FAMILY']}")
-        self.log.debug(f"[CONTROLLER] GPATH_ROOT path={ENV['GPATH']['ROOT']}")
-        self.log.debug(f"[CONTROLLER] LPATH_ROOT path={ENV['LPATH']['ROOT']}")
+        self.log.debug(f"[CONTROLLER] KB4IT version={q(ENV['APP']['build_version'])}")
+        self.log.debug(f"[CONTROLLER] SYS python={q(ENV['SYS']['PYTHON']['VERSION'])}")
+        self.log.debug(f"[CONTROLLER] SYS mako={q(ENV['SYS']['MAKO']['VERSION'])}")
+        self.log.debug(f"[CONTROLLER] SYS platform={q(ENV['SYS']['PLATFORM']['OS'])} family={q(ENV['SYS']['PLATFORM']['FAMILY'])}")
+        self.log.debug(f"[CONTROLLER] GPATH_ROOT path={q(ENV['GPATH']['ROOT'])}")
+        self.log.debug(f"[CONTROLLER] LPATH_ROOT path={q(ENV['LPATH']['ROOT'])}")
         if self.pruned_logs:
-            self.log.debug(f"[CONTROLLER] TEMP_LOGS_PRUNED n={self.pruned_logs}")
+            self.log.debug(f"[CONTROLLER] TEMP_LOGS_PRUNED n={q(self.pruned_logs)}")
 
         # Start up
         self.__check_params()
@@ -107,7 +107,7 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
         for key in sorted(self.params):
-            self.log.debug(f"[CONTROLLER] PARAM name={key} value={self.params[key]}")
+            self.log.debug(f"[CONTROLLER] PARAM name={q(key)} value={q(self.params[key])}")
 
     def get_params(self):
         """Return app configuration."""
@@ -155,7 +155,7 @@ class KB4IT:
         """Get or start a registered service."""
         service = self.services.get(name) or None
         if service is None:
-            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
+            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={q(name)}")
             raise KB4ITError(f"Service not registered: {name}")
         if not service.is_started():
             service.start(self)
@@ -165,7 +165,7 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug(f"[CONTROLLER] SERVICE_REGISTER name={name}")
+            self.log.debug(f"[CONTROLLER] SERVICE_REGISTER name={q(name)}")
             return service
         except KeyError as error:
             self.log.error(f"[CONTROLLER] ERROR {error}")
@@ -178,14 +178,14 @@ class KB4IT:
         started = service.is_started()
         if registered and started:
             service.end()
-            self.log.debug(f"[CONTROLLER] SERVICE_UNREGISTER name={name}")
+            self.log.debug(f"[CONTROLLER] SERVICE_UNREGISTER name={q(name)}")
         service = None
 
     def run(self):
         """Run the requested action. Returns True on success, False on error."""
         action = self.params["action"]
-        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['build_version']}")
-        self.log.debug(f"[CONTROLLER] ACTION name={action}")
+        self.log.debug(f"[CONTROLLER] START version={q(ENV['APP']['build_version'])}")
+        self.log.debug(f"[CONTROLLER] ACTION name={q(action)}")
         error = False
         lock = None
         try:
@@ -193,7 +193,7 @@ class KB4IT:
             if path is not None:
                 lock = FileLock(path)
                 lock.acquire()
-                self.log.debug(f"[LOCK] ACQUIRED path={path}")
+                self.log.debug(f"[LOCK] ACQUIRED path={q(path)}")
             workflow = self.get_service("Workflow")
             if action == "themes":
                 workflow.list_themes()
@@ -214,21 +214,21 @@ class KB4IT:
             elif action == "doctor":
                 workflow.doctor()
         except LockBusyError as e:
-            self.log.error(f"[LOCK] BUSY path={e.path} pid={e.pid}")
+            self.log.error(f"[LOCK] BUSY path={q(e.path)} pid={q(e.pid)}")
             holder = f" (PID {e.pid})" if e.pid else ""
             print(f"KB4IT is already working on this repository{holder}", file=sys.stderr)
             error = True
         except ConfigError as e:
-            self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={q(e)}")
             error = True
         except ThemeError as e:
-            self.log.error(f"[CONTROLLER] THEME_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] THEME_ERROR reason={q(e)}")
             error = True
         except CompilationError as e:
-            self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={q(e)}")
             error = True
         except KB4ITError as e:
-            self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={q(e)}")
             error = True
         finally:
             if lock is not None:
@@ -246,7 +246,7 @@ class KB4IT:
         except AttributeError as errmsg:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
-        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['build_version']}")
+        self.log.debug(f"[CONTROLLER] END version={q(ENV['APP']['build_version'])}")
         # A build has already moved this log into <repo>/var/log; the other actions have no
         # repository to keep it in. Keep it after an error, for the user to read.
         if not error:
@@ -456,6 +456,10 @@ def main():
     except SystemExit:
         raise
     except Exception as error:
+        if kb4it_logger().handlers:
+            # The screen gets one line below; the log file gets the traceback to find the cause.
+            get_logger("KB4IT").error(f"[CONTROLLER] UNEXPECTED_ERROR type={type(error).__name__} reason={q(error)}",
+                                      exc_info=True, extra={"file_only": True})
         print(f"Error: {type(error).__name__}: {error}{_log_hint(params)}")
         print("Run 'kb4it <action name> --help' to get help for a specific command.")
         sys.exit(1)

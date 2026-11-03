@@ -8,6 +8,7 @@ from typing import Any
 from kb4it.core.dateclass import display_date
 from kb4it.core.util import valid_filename
 from kb4it.services.themekit.host import ThemeHost
+from kb4it.core.log import q
 
 
 class MetadataMixin(ThemeHost):
@@ -48,9 +49,9 @@ class MetadataMixin(ThemeHost):
                         'labels': self.get_labels(values),
                     })
                 except Exception as error:
-                    self.log.error(f"[THEME] KEY_FAIL key={key} error={error}")
+                    self.log.error(f"[THEME] KEY_FAIL key={q(key)} error={q(error)}", exc_info=True)
                     raise
             return tpl_section.render(var=var)
         except Exception as error:
-            self.log.error(f"[THEME] METADATA_FAIL doc={docId} error={error}")
+            self.log.error(f"[THEME] METADATA_FAIL doc={q(docId)} error={q(error)}", exc_info=True)
             raise

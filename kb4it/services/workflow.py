@@ -20,6 +20,7 @@ from kb4it.core.lock import registry_lock
 from kb4it.core.service import Service
 from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, quarantine
 from kb4it.services.verify import VerifyMixin
+from kb4it.core.log import q
 
 
 def build_script(config_file, platform=None):
@@ -62,7 +63,7 @@ class Workflow(VerifyMixin, Service):
 
     def list_apps(self, theme):
         """Print all apps available for a given theme to the log."""
-        self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")
+        self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={q(theme)}")
         frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
 
@@ -86,7 +87,7 @@ class Workflow(VerifyMixin, Service):
             for proj in projects:
                 print(f"{proj['name']:<30} {proj['config']}")
         except Exception as e:
-            self.log.error(f"[WORKFLOW] PROJECTS_LOAD_ERROR reason={e}")
+            self.log.error(f"[WORKFLOW] PROJECTS_LOAD_ERROR reason={q(e)}", exc_info=True)
             print(f"Error loading projects: {e}")
 
     def _save_project(self, name, config_path):
@@ -105,7 +106,7 @@ class Workflow(VerifyMixin, Service):
                     raise TypeError("'projects' is not a list")
             except (ValueError, KeyError, TypeError) as error:
                 kept = quarantine(projects_file)
-                self.log.warning(f"[WORKFLOW] PROJECTS_CORRUPT path={projects_file} kept={kept} reason={error}")
+                self.log.warning(f"[WORKFLOW] PROJECTS_CORRUPT path={q(projects_file)} kept={q(kept)} reason={q(error)}")
                 projects = []
 
         # Avoid duplicates
@@ -115,9 +116,9 @@ class Workflow(VerifyMixin, Service):
         projects.append({"name": name, "config": config_path})
         try:
             json_save(projects_file, {"projects": projects})
-            self.log.info(f"[WORKFLOW] PROJECT_REGISTERED name={name}")
+            self.log.info(f"[WORKFLOW] PROJECT_REGISTERED name={q(name)}")
         except Exception as e:
-            self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
+            self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={q(e)}", exc_info=True)
 
     @staticmethod
     def _theme_tag(backend):
@@ -149,29 +150,29 @@ class Workflow(VerifyMixin, Service):
         self.log.debug(f"[WORKFLOW] PARAMS {params}")
         initialize = False
         theme, repo_path = params["theme"], params["repo_path"]
-        self.log.debug(f"[WORKFLOW] THEME name={theme}")
-        self.log.debug(f"[WORKFLOW] REPO_PATH path={repo_path}")
+        self.log.debug(f"[WORKFLOW] THEME name={q(theme)}")
+        self.log.debug(f"[WORKFLOW] REPO_PATH path={q(repo_path)}")
         theme_path = frontend.theme_search(theme=theme)
         if theme_path is None:
-            self.log.error(f"[WORKFLOW] THEME_NOT_FOUND name={theme}")
+            self.log.error(f"[WORKFLOW] THEME_NOT_FOUND name={q(theme)}")
             self.log.info("[WORKFLOW] LIST_AVAILABLE_THEMES")
             frontend.theme_list()
             raise ThemeError(f"Theme not found: {theme}")
         else:
             if not os.path.exists(repo_path):
-                self.log.warning(f"[WORKFLOW] REPO_PATH_MISSING path={repo_path}")
+                self.log.warning(f"[WORKFLOW] REPO_PATH_MISSING path={q(repo_path)}")
                 os.makedirs(repo_path, exist_ok=True)
-                self.log.warning(f"[WORKFLOW] REPO_PATH_CREATED path={repo_path}")
+                self.log.warning(f"[WORKFLOW] REPO_PATH_CREATED path={q(repo_path)}")
             initialize = True
 
         if initialize:
-            self.log.info(f"[WORKFLOW] REPO_PATH path={repo_path}")
-            self.log.info(f"[WORKFLOW] THEME_USE name={theme} path={theme_path}")
+            self.log.info(f"[WORKFLOW] REPO_PATH path={q(repo_path)}")
+            self.log.info(f"[WORKFLOW] THEME_USE name={q(theme)} path={q(theme_path)}")
             app_name = params.get("app", "default") or "default"
             repo_demo = os.path.join(theme_path, "apps", app_name)
             if not os.path.isdir(repo_demo):
                 repo_demo = os.path.join(theme_path, "example", "repo")
-            self.log.info(f"[WORKFLOW] APP_TEMPLATE name={app_name} path={repo_demo}")
+            self.log.info(f"[WORKFLOW] APP_TEMPLATE name={q(app_name)} path={q(repo_demo)}")
             copydir(repo_demo, repo_path, keep_existing=True)
             # The theme's own config always replaces an old one, so the theme matches the request.
             shutil.copyfile(os.path.join(repo_demo, "config", "repo.json"), os.path.join(repo_path, "config", "repo.json"))
@@ -239,7 +240,7 @@ class Workflow(VerifyMixin, Service):
             result = trace.stop(backend.get_path("log") or ENV["LPATH"]["LOG"])
             if result is not None:
                 path, events = result
-                self.log.info(f"[WORKFLOW] TRACE path={path}")
+                self.log.info(f"[WORKFLOW] TRACE path={q(path)}")
                 print("\n".join(trace.summary(events)))
                 print(f"Trace: {path} (open it in https://ui.perfetto.dev)")
 
@@ -260,7 +261,7 @@ class Workflow(VerifyMixin, Service):
         repo = backend.get_dict("repo")
         repo_title = repo["title"]
         repo_theme = repo["theme"]
-        self.log.info(f"[WORKFLOW] BUILD theme={repo_theme} repo={repo_title}")
+        self.log.info(f"[WORKFLOW] BUILD theme={q(repo_theme)} repo={q(repo_title)}")
 
         self.log.info("[WORKFLOW] STAGE n=1 name=check_environment")
         with trace.span("1 check_environment"):
@@ -282,9 +283,9 @@ class Workflow(VerifyMixin, Service):
         plan = backend.get_plan()
         if plan is not None:
             self.log.info(
-                f"[WORKFLOW] PLAN docs={plan.doc_count}"
-                f" keys={plan.key_count}"
-                f" kv={plan.kv_count}"
+                f"[WORKFLOW] PLAN docs={q(plan.doc_count)}"
+                f" keys={q(plan.key_count)}"
+                f" kv={q(plan.kv_count)}"
             )
 
         self.log.info("[WORKFLOW] STAGE n=4 name=process_theme")
@@ -332,15 +333,15 @@ class Workflow(VerifyMixin, Service):
 
         self.log.info(
             f"[WORKFLOW] SUMMARY"
-            f" docs_total={docs_total}"
-            f" compiled={compiled}"
-            f" skipped={skipped}"
-            f" invalid={invalid}"
-            f" keys_compiled={keys_compiled}"
-            f" kv_pages_compiled={kv_compiled}"
+            f" docs_total={q(docs_total)}"
+            f" compiled={q(compiled)}"
+            f" skipped={q(skipped)}"
+            f" invalid={q(invalid)}"
+            f" keys_compiled={q(keys_compiled)}"
+            f" kv_pages_compiled={q(kv_compiled)}"
             f" failed={len(failed)}"
-            f" kb4it={ENV['APP']['build_version']}"
-            f" theme={self._theme_tag(backend)}"
+            f" kb4it={q(ENV['APP']['build_version'])}"
+            f" theme={q(self._theme_tag(backend))}"
         )
         self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 
@@ -353,7 +354,7 @@ class Workflow(VerifyMixin, Service):
 
         if failed:
             names = ", ".join(sorted(failed))
-            self.log.error(f"[WORKFLOW] PAGES_FAILED n={len(failed)} pages={names}")
+            self.log.error(f"[WORKFLOW] PAGES_FAILED n={len(failed)} pages={q(names)}")
             raise CompilationError(f"{len(failed)} page(s) could not be built: {names}")
 
         # Report
@@ -362,5 +363,5 @@ class Workflow(VerifyMixin, Service):
         )
         self.log.info("[WORKFLOW] BUILD_COMPLETE")
         self.log.info(f"[WORKFLOW] URL {homepage}")
-        self.log.info(f"[WORKFLOW] LOG path={backend.get_value('runtime', 'logfile')}")
+        self.log.info(f"[WORKFLOW] LOG path={q(backend.get_value('runtime', 'logfile'))}")
         self.log.info("[WORKFLOW] END")

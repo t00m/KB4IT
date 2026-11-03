@@ -17,6 +17,7 @@ from kb4it.core.people import People
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
                              sort_dictionary, valid_filename)
+from kb4it.core.log import q
 
 
 class Database(Service):
@@ -62,15 +63,15 @@ class Database(Service):
             del self.db[key]
             self.sorted_docs = []
             self.cache_docs_sorted_by_date = {}
-            self.log.debug("[DATABASE] DOC_DELETE doc=%s", docId)
+            self.log.debug("[DATABASE] DOC_DELETE doc=%s", q(docId))
             self.sort_database()
         except KeyError:
-            self.log.debug("[DATABASE] DOC_NOT_FOUND doc=%s", docId)
+            self.log.debug("[DATABASE] DOC_NOT_FOUND doc=%s", q(docId))
 
     def add_document(self, docId: str):
         """Add a new document node to the database ('name.md')."""
         self.db[docId] = {}
-        self.log.debug("[DATABASE] DOC_ADD doc=%s", docId)
+        self.log.debug("[DATABASE] DOC_ADD doc=%s", q(docId))
 
     def add_document_key(self, docId, key, value):
         """Add a new key/value node for a given document."""
@@ -81,7 +82,7 @@ class Database(Service):
         except KeyError:
             self.db[docId][key] = [value]
 
-        self.log.debug("[DATABASE] KV_ADD doc=%s key=%s value=%s", docId, key, value)
+        self.log.debug("[DATABASE] KV_ADD doc=%s key=%s value=%s", q(docId), q(key), q(value))
 
     def get_blocked_keys(self):
         """Return blocked keys."""
@@ -118,7 +119,7 @@ class Database(Service):
                 dt = guess_datetime(sdate) if sdate else None
                 if dt is None:
                     if sdate:
-                        self.log.warning(f"[DATABASE] DATE_INVALID doc={docId} value={sdate}")
+                        self.log.warning(f"[DATABASE] DATE_INVALID doc={q(docId)} value={q(sdate)}")
                     undated.append(docId)
                     continue
                 adict[docId] = dt
@@ -140,7 +141,7 @@ class Database(Service):
         try:
             return self.db[docId]["Date"][0]
         except KeyError:
-            self.log.debug(f"[DATABASE] DATE_MISSING doc={docId}")
+            self.log.debug(f"[DATABASE] DATE_MISSING doc={q(docId)}")
             return None
 
     def is_system(self, docId):
@@ -273,7 +274,7 @@ class Database(Service):
                     if value in self.db[docId][key]:
                         docs.append(docId)
             self.cache_docs_by_kvpath[kvpath] = self.sort_by_date(docs) if docs else []
-            self.log.debug(f"[DATABASE] KV_SEARCH key={key} value={value} count={len(self.cache_docs_by_kvpath[kvpath])}")
+            self.log.debug(f"[DATABASE] KV_SEARCH key={q(key)} value={q(value)} count={len(self.cache_docs_by_kvpath[kvpath])}")
         return self.cache_docs_by_kvpath[kvpath]
 
     def get_docs_by_date_range(self, ds, de) -> list:
@@ -299,7 +300,7 @@ class Database(Service):
                     keys.append(key)
                 keys.sort(key=lambda y: y.lower())
             except KeyError:
-                self.log.warning("[DATABASE] DOC_NOT_IN_DB doc=%s", docId)
+                self.log.warning("[DATABASE] DOC_NOT_IN_DB doc=%s", q(docId))
             self.cache_keys_by_doc[docId] = keys
             return self.cache_keys_by_doc[docId]
 

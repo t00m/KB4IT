@@ -96,7 +96,7 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 | `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
 | `kb4it/core/mdlists.py`           | `ListIndentExtension` (python-markdown, always on, preprocessor at 15): a list that nests an item by two or three spaces is moved to four spaces per level before the block parser, with the content of each item (text, indented code, admonitions, fences); a list nested by four spaces is never changed (`normalize_lists`) |
 | `kb4it/core/mdrich.py`            | `RichContentExtension` (python-markdown, always on; its math processors are off, `math=False`, when `pymdownx.arithmatex` or `markdown_katex` is configured): `mermaid` fences become `<pre class="mermaid">`; `$$` blocks, `$$...$$` and `$...$` become `kb4it-math` elements; `\$` is a literal dollar sign; code is never touched |
-| `kb4it/core/log.py`               | Logging setup, file redirection |
+| `kb4it/core/log.py`               | Logging setup on the `kb4it` logger, file redirection, temporary log cleanup, `q()` |
 | `kb4it/core/trace.py`             | Performance traces apart from the log: `start()`, `span(name, **args)` (does nothing when no trace runs), `stop(folder)` writes `trace.json`, `summary(events)` |
 | `kb4it/services/workflow.py`      | One method per CLI action: `build_website`, `create_repository`, `info_repository`, `verify_sources` (from `VerifyMixin`), `doctor`, `list_themes`, `list_apps`, `list_projects` |
 | `kb4it/services/backend.py`       | Loads `repo.json`, owns `runtime` dict, exposes `get_plan()` proxy |
@@ -350,6 +350,10 @@ Stage names and structured events use `[<COMPONENT>] EVENT key=value` form, e.g.
 - `[BUILDER] TEMPLATE_NOT_FOUND name=PAGE_KEY`
 
 Timings are not logged. `kb4it build --trace` writes them to `var/log/trace.json` and logs only `[WORKFLOW] TRACE path=...`.
+
+Wrap every `key=value` detail in `kb4it.core.log.q()`: it puts a value in double quotes when it has spaces, quotes or `=` (`reason="boom in run"`), so each line splits on spaces. Numbers need no `q()`.
+
+Every KB4IT logger is under the `kb4it` logger: `get_logger("Backend")` is `kb4it.Backend`. `setup_logging()` puts the console and file handlers there and sets `propagate = False`, so the root logger stays the caller's (TUI, `kb4it serve`, a Python program); `reset_logging()` removes them and restores propagation. A handler that must see every KB4IT record goes on `kb4it_logger()`, not on the root. The same handlers sit on the loggers of the libraries in `LIBRARY_LOGGERS` (`MARKDOWN`, `PIL`) behind a filter that lets through only their warnings and errors. A line reads `LEVEL | thread | logger | module:line | message`: the logger without its `kb4it.` prefix, `compile_N` for the compiler workers, `kb4it-build` for the TUI build. An error logged with `exc_info=True` shows its traceback in the file and one line on the console; `extra={"file_only": True}` keeps a record off the console (`main()` logs `[CONTROLLER] UNEXPECTED_ERROR` that way). Use `exc_info=True` on the error line of every `except Exception`.
 
 ### Key runtime paths
 
