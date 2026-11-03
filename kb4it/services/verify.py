@@ -26,6 +26,7 @@ from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_att
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
 from kb4it.services.people import refused_keys
 from kb4it.services.addpage import ADD_DOC, check_editor_setting, check_theme_editor, editor_on
+from kb4it.core.log import q
 
 
 class VerifyMixin:
@@ -38,7 +39,7 @@ class VerifyMixin:
             try:
                 scanned[os.path.basename(doc)] = scan_document(doc)
             except Exception as e:
-                self.log.warning(f"[LINKS] SCAN_FAIL doc={os.path.basename(doc)} error={e}")
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={q(os.path.basename(doc))} error={q(e)}")
         problems = []
         for name in sorted(scanned):
             links, _anchors, bare = scanned[name]
@@ -69,7 +70,7 @@ class VerifyMixin:
         try:
             repo = json_load(config_file)
         except Exception as e:
-            self.log.error(f"[WORKFLOW] VERIFY_ERROR reason={e}")
+            self.log.error(f"[WORKFLOW] VERIFY_ERROR reason={q(e)}", exc_info=True)
             raise ConfigError(f"Config load failed: {e}") from e
 
         source_dir = repo.get("source")
@@ -121,7 +122,7 @@ class VerifyMixin:
         try:
             problems = self._theme_verify(repo, config_file, docs)
         except Exception as e:
-            self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={e}")
+            self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={q(e)}", exc_info=True)
             raise KB4ITError(f"Theme verify hook failed: {e}") from e
         settings = None
         try:
@@ -246,7 +247,7 @@ class VerifyMixin:
                 numbers = fences_in_blocks(fh.read())
             if numbers:
                 name = os.path.basename(doc)
-                self.log.warning(f"[WORKFLOW] MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}")
+                self.log.warning(f"[WORKFLOW] MD_FENCE_IN_BLOCK doc={q(name)} lines={q(','.join(map(str, numbers)))}")
                 lines.append(f"MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}: "
                              "indent the code instead of fencing it, or enable pymdownx.superfences")
         return lines

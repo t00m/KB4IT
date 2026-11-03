@@ -28,6 +28,7 @@ from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 from kb4it.services.headmeta import META_END, META_START, HeadMetaMixin, short_text  # noqa: F401
 from kb4it.services.indexing import IndexingMixin
 from kb4it.services.profilecard import ProfileCardMixin
+from kb4it.core.log import q
 
 
 REQUIRED_TEMPLATES = [
@@ -188,7 +189,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
                 else:
                     fpag.write(content)
             except Exception as error:
-                self.log.error(f"[BUILDER] WRITE_FAIL doc={MD_NAME} error={error}")
+                self.log.error(f"[BUILDER] WRITE_FAIL doc={q(MD_NAME)} error={q(error)}", exc_info=True)
         PAGE_NAME = html_id_for(MD_NAME)
         if listing:
             self.listing_pages.add(PAGE_NAME)
@@ -216,7 +217,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
             autoescape = self._theme_autoescape(theme)
             for template_path in candidates:
                 if not os.path.isfile(template_path):
-                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason=missing")
+                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={q(template_path)} reason=missing")
                     continue
                 # A template that exists but does not compile is an error, never a reason to fall back.
                 failed = self._template_errors.get(template)
@@ -230,17 +231,17 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
                     tpl = Template(filename=template_path, default_filters=filters)
                 except Exception as err:
                     reason = " ".join(str(err).split())  # Mako puts the line number on a line of its own
-                    self.log.error(f"[BUILDER] TEMPLATE_COMPILE_FAIL name={template} path={template_path} error={reason}")
+                    self.log.error(f"[BUILDER] TEMPLATE_COMPILE_FAIL name={q(template)} path={q(template_path)} error={q(reason)}", exc_info=True)
                     failed = ThemeError(f"Template {template} at {template_path}: {reason}")
                     self._template_errors[template] = failed
                     raise failed from err
                 self.templates[template] = tpl
-                self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
+                self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={q(template_path)}")
                 if override_dir and template_path == candidates[0]:
-                    self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={template} path={template_path}")
+                    self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={q(template)} path={q(template_path)}")
                 return tpl
 
-            self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
+            self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={q(template)}")
             raise ThemeError(f"Template not found: {template}")
 
     def _theme_autoescape(self, theme) -> bool:
@@ -251,7 +252,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
         custom = os.path.dirname(os.path.abspath(str(theme.get("path", "")))) != bundled
         if custom and not self._autoescape_warned:
             self._autoescape_warned = True
-            self.log.warning(f"[BUILDER] THEME_AUTOESCAPE_OFF theme={theme.get('id')}")
+            self.log.warning(f"[BUILDER] THEME_AUTOESCAPE_OFF theme={q(theme.get('id'))}")
             self.log.warning('[BUILDER] HINT add "autoescape": true to theme.json and mark HTML values with | n')
         return False
 
@@ -355,8 +356,8 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
             fh.write(content)
         size = len(content.encode("utf-8"))
         if size > INDEX_WARN_BYTES:
-            self.log.warning(f"[SEARCH] INDEX_LARGE size={size}")
-        self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={size}")
+            self.log.warning(f"[SEARCH] INDEX_LARGE size={q(size)}")
+        self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={q(size)}")
 
     def feed_settings(self):
         """Feed settings, or None when the theme has no feed. theme.json "feed": true turns it on by default."""

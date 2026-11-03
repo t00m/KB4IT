@@ -11,7 +11,7 @@ Server module.
 
 import traceback as tb
 
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 
 
 def get_traceback():
@@ -56,7 +56,7 @@ class Service:
         self.app = app
         self.log = get_logger(f"{self.modname}")
         self._initialize()
-        self.log.debug(f"[SERVICE] STARTED name={self.modname}")
+        self.log.debug(f"[SERVICE] STARTED name={q(self.modname)}")
 
     def end(self):
         """End service.

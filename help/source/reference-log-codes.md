@@ -18,7 +18,15 @@ Each warning or error line in the log has a component in brackets, a code, and d
 [BACKEND] CONFIG_KEY_MISSING key=title
 ```
 
-The code tells you what happened. The details name the file, key or page. KB4IT prints these lines in the terminal and keeps them in `var/log/kb4it.log` inside the knowledge base. Run with `-L DEBUG` to see every step around them.
+The code tells you what happened. The details name the file, key or page. A value with spaces, quotes or `=` is written in double quotes: `reason="boom in run"`.
+
+In `var/log/kb4it.log` each line starts with the level, the thread, the part of KB4IT and the place in its code:
+
+```
+     ERROR | compile_2    | Compiler        | compiler:239 | [COMPILER] ERROR doc=NOTE.md error='Date'
+```
+
+When an error comes from an exception, the file also holds its traceback; the terminal shows one line. Warnings and errors of the Markdown and Pillow libraries appear under their own names, `MARKDOWN` and `PIL`. KB4IT prints these lines in the terminal and keeps them in `var/log/kb4it.log` inside the knowledge base. Run with `-L DEBUG` to see every step around them.
 
 The tables list each code once. **Stops** means the command ends with exit status `1`. The common problems have a longer answer in [Troubleshooting](troubleshooting.md).
 
@@ -32,6 +40,8 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_ERROR` | error | The theme cannot load, or its own checks failed. Stops |
 | `COMPILE_ERROR` | error | Pages could not be made, a hook failed, or documents cannot be read with `"fail_on_invalid": true`. Stops |
 | `KB4IT_ERROR` | error | Any other failure. Stops |
+| `UNEXPECTED_ERROR` | error | A failure KB4IT did not expect, usually a bug. The terminal shows `Error:` and the message; the log file has the full traceback. Stops. Please report it with that traceback |
+| `BUILD_ERROR` | error | The same, in a build started by the terminal interface or `kb4it serve`. The build fails; the interface or the server keeps running |
 | `DOCTOR_PROBLEM` | error | `kb4it doctor` found a bundled file or theme missing, one line each, before `KB4IT_ERROR`. Install KB4IT again; see [Check the installation](howto-install.md#check) |
 
 ## Settings {#settings}

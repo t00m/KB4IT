@@ -10,6 +10,7 @@ from typing import Any
 from kb4it.core.documents import is_yes
 from kb4it.core.util import set_max_frequency, valid_filename
 from kb4it.services.themekit.host import ThemeHost
+from kb4it.core.log import q
 
 
 class KeyPagesMixin(ThemeHost):
@@ -46,7 +47,7 @@ class KeyPagesMixin(ThemeHost):
             return False
         if not os.path.exists(os.path.join(self.srvbes.get_path('cache'), f'{name}.html')):
             return False
-        self.log.debug(f"[THEME] SKIP reason={reason} func={func}")
+        self.log.debug(f"[THEME] SKIP reason={q(reason)} func={q(func)}")
         self.srvbes.add_target(f'{name}.md', f'{name}.html')
         return True
 
@@ -108,7 +109,7 @@ class KeyPagesMixin(ThemeHost):
                 continue
             content = self.build_tagcloud_from_key(key)
             frequency = len(values)
-            self.log.debug(f"[THEME] KEY key={key} frequency={frequency}")
+            self.log.debug(f"[THEME] KEY key={q(key)} frequency={q(frequency)}")
             vbtn = {'content': content, 'key': key, 'vfkey': valid_filename(key)}
             vbtn.update(self.cloud_measure(frequency, max_frequency))
             vbtn['tooltip'] = f"{frequency} values"
@@ -135,7 +136,7 @@ class KeyPagesMixin(ThemeHost):
         var['pagename'] = valid_filename(key)
         self.distribute_md(var['pagename'], content, listing=True)
         self._add_system_page(var['pagename'], key)
-        self.log.debug(f"[THEME] KEY_TARGET key={key} resource={var['pagename']}")
+        self.log.debug(f"[THEME] KEY_TARGET key={q(key)} resource={q(var['pagename'])}")
 
     def build_page_key_value(self, kvpath: tuple[str, str, bool]) -> None:
         """Create the page of a property value: the documents that have it."""
@@ -156,7 +157,7 @@ class KeyPagesMixin(ThemeHost):
         if var['compile']:
             self.distribute_md(var['pagename'], self.template('PAGE_KEY_VALUE').render(var=var), listing=True)
             self._add_system_page(var['pagename'], var['title'])
-            self.log.debug(f"[THEME] KV_TARGET key={key} value={value} resource={var['pagename']}")
+            self.log.debug(f"[THEME] KV_TARGET key={q(key)} value={q(value)} resource={q(var['pagename'])}")
 
     def build_page_bookmarks(self) -> str | None:
         """Create the bookmarks page: documents with Bookmark set to Yes, True or On, in any case."""
@@ -167,7 +168,7 @@ class KeyPagesMixin(ThemeHost):
         for docId in self.srvdtb.get_documents():
             bookmark = (self.srvdtb.get_values(docId, 'Bookmark') or [''])[0]
             doc_bookmarked = is_yes(bookmark)
-            self.log.debug(f"[THEME] BOOKMARK_CHECK doc={docId} bookmark={bookmark} is_bookmarked={doc_bookmarked}")
+            self.log.debug(f"[THEME] BOOKMARK_CHECK doc={q(docId)} bookmark={q(bookmark)} is_bookmarked={q(doc_bookmarked)}")
             if doc_bookmarked:
                 doclist.append(docId)
         self.log.debug(f"[THEME] BOOKMARKS_FOUND n={len(doclist)}")

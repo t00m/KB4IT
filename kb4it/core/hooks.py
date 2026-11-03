@@ -22,7 +22,7 @@ import importlib.util
 import os
 
 from kb4it.core.exceptions import CompilationError, ConfigError
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 
 log = get_logger(__name__)
 
@@ -38,7 +38,7 @@ class Hooks:
         if path is None:
             return
         if not os.path.isfile(path):
-            log.error(f"[HOOKS] MISSING path={path}")
+            log.error(f"[HOOKS] MISSING path={q(path)}")
             raise ConfigError(f"Hooks file not found: {path}")
         digest = hashlib.blake2b(os.path.abspath(path).encode("utf-8"), digest_size=8).hexdigest()
         spec = importlib.util.spec_from_file_location(f"kb4it_repo_hooks_{digest}", path)
@@ -46,11 +46,11 @@ class Hooks:
         try:
             spec.loader.exec_module(module)
         except Exception as error:
-            log.error(f"[HOOKS] LOAD_FAIL path={path} error={error}")
+            log.error(f"[HOOKS] LOAD_FAIL path={q(path)} error={q(error)}", exc_info=True)
             raise ConfigError(f"Hooks file {path} cannot load: {error}") from error
         self.module = module
         found = [name for name in HOOK_NAMES if callable(getattr(module, name, None))]
-        log.info(f"[HOOKS] LOADED path={path} hooks={','.join(found) or 'none'}")
+        log.info(f"[HOOKS] LOADED path={q(path)} hooks={','.join(found) or 'none'}")
 
     def has(self, name) -> bool:
         return self.module is not None and callable(getattr(self.module, name, None))
@@ -60,7 +60,7 @@ class Hooks:
         try:
             return getattr(self.module, name)(*args)
         except Exception as error:
-            log.error(f"[HOOKS] FAIL hook={name} doc={doc} error={error}")
+            log.error(f"[HOOKS] FAIL hook={q(name)} doc={q(doc)} error={q(error)}", exc_info=True)
             raise CompilationError(f"Hook {name} failed{' for ' + doc if doc else ''}: {error}") from error
 
     def signature(self) -> str:

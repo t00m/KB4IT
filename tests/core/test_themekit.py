@@ -97,7 +97,7 @@ class _Log:
     def __init__(self):
         self.errors = []
 
-    def error(self, message):
+    def error(self, message, **kwargs):
         self.errors.append(message)
 
     def debug(self, message):

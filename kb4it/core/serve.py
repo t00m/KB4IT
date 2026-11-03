@@ -18,7 +18,7 @@ import webbrowser
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import LockBusyError
 from kb4it.core.lock import FileLock, repo_lock_path
-from kb4it.core.log import get_logger, reset_logging
+from kb4it.core.log import get_logger, kb4it_logger, q, reset_logging
 from kb4it.core.util import json_load
 from kb4it.core.watch import PollingWatcher
 from kb4it.core.webserver import BuildStatus, SiteServer
@@ -100,17 +100,18 @@ class Server:
         error = ""
         try:
             app = KB4IT(build_params)
-            logging.getLogger().addHandler(collector)
+            kb4it_logger().addHandler(collector)
             ok = app.run()
         except Exception as exc:  # a broken theme must not stop the server
             ok, error = False, str(exc)
+            log.error(f"[SERVE] BUILD_ERROR reason={q(exc)}", exc_info=True)
         finally:
-            logging.getLogger().removeHandler(collector)
+            kb4it_logger().removeHandler(collector)
         if not ok and not error:
             error = collector.first or "Build failed; see the terminal for details."
         self.status.record(ok, error)
         elapsed = time.perf_counter() - started
-        log.info(f"[SERVE] REBUILD elapsed={elapsed:.2f}s result={'ok' if ok else 'failed'}")
+        log.info(f"[SERVE] REBUILD elapsed={elapsed:.2f}s result={q('ok' if ok else 'failed')}")
         if self.on_build is not None:
             self.on_build(ok, error)
         return ok
@@ -151,13 +152,13 @@ class Server:
             os.makedirs(target, exist_ok=True)
             host = self.params.get("host") or "127.0.0.1"
             if host not in ("127.0.0.1", "localhost", "::1"):
-                log.warning(f"[SERVE] WARNING_PUBLIC host={host}")
+                log.warning(f"[SERVE] WARNING_PUBLIC host={q(host)}")
             # Take the first snapshot before the server answers, so a file saved as soon as
             # the site is up is seen as a change.
             watcher = None if self.params.get("no_watch") else self.new_watcher()
             self.server = SiteServer(target, host=host, port=self.params.get("port"),
                                      reload=not self.params.get("no_reload"), status=self.status).start()
-            log.info(f"[SERVE] LISTEN url={self.server.url}")
+            log.info(f"[SERVE] LISTEN url={q(self.server.url)}")
             print(f"Serving {target} at {self.server.url} (Ctrl+C to stop)", flush=True)
             if self.params.get("open"):
                 webbrowser.open(self.server.url)

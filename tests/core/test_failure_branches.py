@@ -55,10 +55,10 @@ def test_compile_and_render_failures(tmp_path, home):
                             stderr=subprocess.STDOUT, text=True, timeout=600, check=False, encoding="utf-8")
     out = result.stdout
     assert "RUN_RESULT False" in out, out
-    assert "MD_COMPILE_FAIL doc=broken.md error=compile fault" in out
+    assert "MD_COMPILE_FAIL doc=broken.md error=\"compile fault\"" in out
     assert "COMPILE_FAILED doc=broken.md" in out
     assert "MEMORY_EXHAUSTED" in out
-    assert "PAGES_FAILED n=2 pages=broken.html, oom.html" in out
+    assert "PAGES_FAILED n=2 pages=\"broken.html, oom.html\"" in out
     target = tmp_path / "repo" / "target"
     assert (target / "good.html").is_file()
     assert not (target / "broken.html").exists() and not (target / "oom.html").exists()
