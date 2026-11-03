@@ -10,7 +10,6 @@ Server module.
 # Description: default theme script
 """
 
-import calendar as _calendar
 import os
 import re
 import shutil
@@ -22,6 +21,7 @@ from techdoc_admin import AdminMixin
 from techdoc_blocks import enhance_blocks
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_diagrams import DiagramsMixin
+from techdoc_events import EVENTS_TABLE, calendar_json, event_days
 from techdoc_filters import FilterMixin
 from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_gallery import GalleryMixin
@@ -91,108 +91,21 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             link['class'] = 'uk-label kb-badge kb-dt-label %s' % status_css(value)
         return link
 
-    def _build_year_calendar_html(self, year):
-        """Generate a 12-month HTML calendar grid for events.html."""
-        MONTH_NAMES = [
-            'January', 'February', 'March', 'April',
-            'May', 'June', 'July', 'August',
-            'September', 'October', 'November', 'December',
-        ]
-        WEEKDAY_ABBR = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
-        now = datetime.now()
-        cal = _calendar.Calendar(firstweekday=_calendar.MONDAY)
-
-        parts = ['<div class="kb-evcal-grid">']
-        for month in range(1, 13):
-            quarter = (month - 1) // 3 + 1
-            mname = MONTH_NAMES[month - 1]
-            has_month = (
-                year in self.events_docs
-                and month in self.events_docs[year]
-            )
-            qlabel = f'<span class="kb-evcal-qlabel">Q{quarter}</span>'
-            if has_month:
-                month_url = f'events_{year:04d}{month:02d}.html'
-                caption = f'<a href="{month_url}">{qlabel} {mname}</a>'
-            else:
-                caption = f'{qlabel} {mname}'
-
-            parts.append(f'<div class="kb-evcal-month kb-evcal-q{quarter}">')
-            parts.append(f'<div class="kb-evcal-mname">{caption}</div>')
-            parts.append('<table><thead><tr>')
-            for wd in WEEKDAY_ABBR:
-                parts.append(f'<th>{wd}</th>')
-            parts.append('</tr></thead><tbody>')
-
-            for week in cal.monthdayscalendar(year, month):
-                parts.append('<tr>')
-                for day in week:
-                    if day == 0:
-                        parts.append('<td></td>')
-                        continue
-                    has_event = (
-                        year in self.events_docs
-                        and month in self.events_docs[year]
-                        and day in self.events_docs[year][month]
-                    )
-                    is_today = (
-                        year == now.year
-                        and month == now.month
-                        and day == now.day
-                    )
-                    url = f'events_{year:04d}{month:02d}{day:02d}.html'
-                    if has_event and is_today:
-                        parts.append(f'<td class="kb-evcal-today-event"><a href="{url}">{day}</a></td>')
-                    elif has_event:
-                        parts.append(f'<td class="kb-evcal-event"><a href="{url}">{day}</a></td>')
-                    elif is_today:
-                        parts.append(f'<td class="kb-evcal-today">{day}</td>')
-                    else:
-                        parts.append(f'<td>{day}</td>')
-                parts.append('</tr>')
-
-            parts.append('</tbody></table></div>')
-        parts.append('</div>')
-        return ''.join(parts)
-
     def build_page_events(self):
-        doclist = []
-        ecats = {}
-        repo = self.srvbes.get_dict('repo')
-        event_types = repo.get('events', [])
-        # ~ self.log.debug(" - Event types: %s", ', '.join(event_types))
-
-        for docId in self.srvdtb.get_documents():
-            if self.srvdtb.is_system(docId):
-                continue
-            category = event_type(self.srvdtb, docId)
-            if category in event_types:
-                ecats.setdefault(category, set()).add(docId)
-
-                doclist.append(docId)
-                title = self.srvdtb.get_values(docId, 'Title')[0]
+        """events.html: a calendar panel beside one table of every event, which the calendar and the filter bar filter."""
+        event_types = (self.srvbes.get_dict('repo') or {}).get('events', [])
+        doclist = [doc for doc in self.srvdtb.get_documents()
+                   if not self.srvdtb.is_system(doc) and event_type(self.srvdtb, doc) in event_types]
         must_compile_year = self.build_events(doclist)
 
         events_pagename = os.path.join(self.srvbes.get_path('cache'), 'events.html')
         if must_compile_year or not os.path.exists(events_pagename):
-            years_data = []
-            for year in sorted(self.dey.keys(), reverse=True):
-                doclist_year = []
-                for month in self.events_docs[year]:
-                    for day in self.events_docs[year][month]:
-                        doclist_year.extend(self.events_docs[year][month][day])
-                total = len(doclist_year)
-                calendar_html = self._build_year_calendar_html(year)
-                datatable_html = self.build_datatable([], doclist_year, table_id=f'kb4it-datatable-{year}')
-                years_data.append({
-                    'year': year,
-                    'count': total,
-                    'calendar': calendar_html,
-                    'datatable': datatable_html,
-                })
-            events = {'years': years_data}
-            page = self.template('PAGE_EVENTS')
-            self.distribute_md('events', page.render(var=events))
+            days = event_days(self.events_docs)
+            docs = sorted(days, key=days.get, reverse=True)
+            with self._filtered_tables(dates=days):
+                datatable = self.build_datatable([], docs, table_id=EVENTS_TABLE)
+            var = {'table_id': EVENTS_TABLE, 'datatable': datatable, 'data': calendar_json(days)}
+            self.distribute_md('events', self.template('PAGE_EVENTS').render(var=var))
         else:
             self.distribute_html('events', events_pagename)
 
