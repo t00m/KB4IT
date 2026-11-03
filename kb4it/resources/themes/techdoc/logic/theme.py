@@ -22,6 +22,7 @@ from techdoc_admin import AdminMixin
 from techdoc_blocks import enhance_blocks
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_diagrams import DiagramsMixin
+from techdoc_filters import FilterMixin
 from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_gallery import GalleryMixin
 from techdoc_media import enhance_images
@@ -48,7 +49,7 @@ from kb4it.services.themekit import DocumentTheme
 parser = etree.HTMLParser()
 
 
-class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, DocumentTheme):
+class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin, DocumentTheme):
     reserved_pages = ('404.md', 'diagrams.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
     properties_cloud = False  # properties.html is a table of the properties
