@@ -1,6 +1,7 @@
 """Filter bar of the document tables: pills per property value, behind a Filter button next to the search box.
 
-Only the tables of all.html, bookmarks.html, the property value pages and events.html get it. Each row
+Only the tables of all.html, bookmarks.html, the property value pages, events.html and the archive
+pages of a year, month or day (events_YYYY*.html) get it. Each row
 carries its values as slugs in data-kb-f-<key> attributes of the Title cell; datatable-filter.js reads
 them and filters through DataTables, so the row count and the search box stay right. On events.html
 the cell also carries the event day (data-kb-date), which the calendar panel filters on.
@@ -80,6 +81,11 @@ class FilterMixin:
         """Property value pages: their table gets the filter bar."""
         with self._filtered_tables():
             return super().build_page_key_value(kvpath)
+
+    def build_events(self, doclist):
+        """Archive pages of a year, month or day (events_YYYY*.html): their tables get the filter bar."""
+        with self._filtered_tables():
+            return super().build_events(doclist)
 
     def _values_of(self, doc, key):
         return self.srvdtb.get_values(doc, key) or []
