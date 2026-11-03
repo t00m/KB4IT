@@ -204,16 +204,41 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 
 | Page | Shows |
 |---|---|
-| `all.html` | Every document in a sortable, searchable table |
-| `events.html` | A calendar per year and a table of events |
+| `all.html` | Every document in a sortable, searchable table, with the [filter bar](#filter-bar) |
+| `events.html` | A calendar panel beside the table of every event. See [Events](#events) |
 | `properties.html` | A table of every property with its number of values and of documents, sorted by name, with a filter box and sortable columns; each property links to its page. A property's page (such as `Author.html`) shows its values as a cloud or as a table |
 | `stats.html` | Totals, then one card per section with a summary line; its Details button opens the section in a modal: activity (documents per year and per month), property coverage with the most used values, metadata health (similar values, properties used once, documents with little metadata) and links (most linked documents, documents nothing links to) |
-| `bookmarks.html` | Documents with `Bookmark: Yes` |
+| `bookmarks.html` | Documents with `Bookmark: Yes`, with the [filter bar](#filter-bar) |
 | `gallery.html` | The images of every document. See [Gallery](#gallery) |
 | `diagrams.html` | The Mermaid diagrams of every document. See [Diagrams](#diagrams) |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search dialog in the top bar shows the best matches as you type, with the quality tier of each document. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
+
+A property value page, such as `Status_Open.html`, lists its documents in the same table, with the filter bar.
+
+## Filter bar {#filter-bar}
+
+The document tables of `all.html`, `bookmarks.html`, the property value pages and `events.html` have a **Filter** button next to the search box. It opens one row of values per property: `WorkType`, `DocType`, `Category`, `Topic`, `Status` and `Priority`.
+
+1. Click a value to keep only the documents that have it. Values of one property widen the choice (Status Open or Planned); values of two properties narrow it (Status Open and Priority High).
+2. Each value shows how many rows it would show, given the search box and the other filters, and the most used values come first. Values that would show nothing are hidden. A property with more than ten values shows the first ten and a **+N more** link.
+3. The active filters show as chips below the search box, also while the bar is closed. Click a chip to remove it. **All** clears one property; **Clear filters** clears everything.
+4. The row count under the table counts the filters too.
+
+The values come from the documents of that table. A property that would not split them is left out, such as `Status` on `Status_Open.html`. Tables with fewer than ten documents have no filter bar, except on `events.html`. Document pages, and the events pages of a day, month or year, have none.
+
+## Events {#events}
+
+`events.html` lists every event in one table, with a calendar panel on its left. Events are the dated documents whose work type (or category) is in the `events` key of `repo.json`.
+
+- **Year**: the arrows go to the previous and next year with events. Click the year to choose any year, or **All years**. The page opens on the current year, or on the last year with events.
+- **Bars**: the events of each month of the year. Click a bar to show that month; click it again to go back to the whole year. With **All years**, the bars are the years.
+- **Calendar**: one month. Days with events are blue and today has a red frame. Click a day to show its events, the month name to show the month. While a month is chosen, the arrows move to the next or previous month.
+- The choice shows as a chip next to the other filters, and in the address: `events.html#2026`, `#2026-03`, `#2026-03-24` or `#all`. A link with that address opens the same view, and the browser's back button returns to the previous one.
+- **Page of ...**, under the calendar, opens the archive page of the chosen year, month or day (`events_2026.html`, `events_202603.html`, `events_20260324.html`).
+
+The table has the [filter bar](#filter-bar), so you can show, for example, the open changes of March. On a narrow screen the panel moves above the table. Print leaves the panel out.
 
 ## Gallery {#gallery}
 

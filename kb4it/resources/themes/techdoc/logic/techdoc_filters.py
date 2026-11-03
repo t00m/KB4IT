@@ -1,8 +1,9 @@
 """Filter bar of the document tables: pills per property value, behind a Filter button next to the search box.
 
-Only the tables of all.html, bookmarks.html and the property value pages get it. Each row carries its
-values as slugs in data-kb-f-<key> attributes of the Title cell; datatable-filter.js reads them and
-filters through DataTables, so the row count and the search box stay right.
+Only the tables of all.html, bookmarks.html, the property value pages and events.html get it. Each row
+carries its values as slugs in data-kb-f-<key> attributes of the Title cell; datatable-filter.js reads
+them and filters through DataTables, so the row count and the search box stay right. On events.html
+the cell also carries the event day (data-kb-date), which the calendar panel filters on.
 """
 
 from collections import Counter
@@ -52,14 +53,18 @@ class FilterMixin:
     datatable_filter_min_rows = FILTER_MIN_ROWS
     _filter_tables = False  # on while a page that offers the filter builds its table
     _filter_rows = False  # on while the rows of a table that gets the bar are drawn
+    _filter_dates = None  # events.html: document -> event day (YYYY-MM-DD)
 
     @contextmanager
-    def _filtered_tables(self):
+    def _filtered_tables(self, dates=None):
+        """Turn the filter bar on for the tables built inside; dates also gives every row its event day."""
         self._filter_tables = True
+        self._filter_dates = dates
         try:
             yield
         finally:
             self._filter_tables = False
+            self._filter_dates = None
 
     def build_page_index_all(self):
         """all.html: its table gets the filter bar."""
@@ -85,13 +90,16 @@ class FilterMixin:
         if not self._filter_rows:
             return cell
         attrs = facet_attrs(self._values_of, docId, self.datatable_filter_keys)
+        day = (self._filter_dates or {}).get(docId)
+        if day:
+            attrs = f'{attrs} data-kb-date="{escape(day)}"'.strip()
         end = cell.find('>', cell.find('<td'))
         return f'{cell[:end]} {attrs}{cell[end:]}' if attrs and end != -1 else cell
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
         """Put the filter bar, hidden, before the table; datatable-filter.js moves it below the search box."""
         groups = self._filter_groups(headers, doclist)
-        if not groups:
+        if groups is None:
             return super().build_datatable(headers, doclist, table_id)
         self._filter_rows = True
         try:
@@ -103,10 +111,15 @@ class FilterMixin:
         return html.replace(marker, f'{marker}\n{bar}', 1)
 
     def _filter_groups(self, headers, doclist):
-        """The filter groups of a table, or [] when it gets no bar: wrong page, no Title column or few rows."""
+        """The filter groups of a table, or None when it gets no bar: wrong page, no Title column or few rows.
+
+        A table with event days always gets the bar, maybe with no groups: the calendar filters it.
+        """
         if not self._filter_tables or 'Title' not in (headers or []):
-            return []
+            return None
         docs = [doc for doc in dict.fromkeys(doclist or []) if not self.srvdtb.is_system(doc)]
+        if self._filter_dates is not None:
+            return facet_groups(docs, self._values_of, self.datatable_filter_keys) if docs else None
         if len(docs) < self.datatable_filter_min_rows:
-            return []
-        return facet_groups(docs, self._values_of, self.datatable_filter_keys)
+            return None
+        return facet_groups(docs, self._values_of, self.datatable_filter_keys) or None

@@ -1,6 +1,7 @@
 """techdoc techdoc_filters.py: the filter bar of the document tables on all, bookmarks and value pages."""
 
 import importlib.util
+import json
 import re
 
 import pytest
@@ -12,6 +13,21 @@ LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
 spec = importlib.util.spec_from_file_location("techdoc_filters", LOGIC / "techdoc_filters.py")
 filters = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(filters)
+
+
+espec = importlib.util.spec_from_file_location("techdoc_events", LOGIC / "techdoc_events.py")
+events = importlib.util.module_from_spec(espec)
+espec.loader.exec_module(events)
+
+
+def test_event_days_map_each_document_to_its_day():
+    assert events.event_days({2026: {3: {4: ["a.md", "b.md"]}, 11: {30: ["c.md"]}}}) == {
+        "a.md": "2026-03-04", "b.md": "2026-03-04", "c.md": "2026-11-30"}
+
+
+def test_calendar_json_counts_events_per_day_and_is_safe_in_a_script():
+    text = events.calendar_json({"a.md": "2026-03-04", "b.md": "2026-03-04", "c.md": "2025-01-01"})
+    assert json.loads(text) == {"days": {"2025-01-01": 1, "2026-03-04": 2}}
 
 
 def values_from(table):
@@ -106,13 +122,33 @@ def test_small_tables_have_no_bar(target):
     assert "data-kb-f-" not in read(target, "bookmarks.html")
 
 
-def test_events_and_document_pages_have_no_bar(target):
-    assert "DOCUMENT FILTER" not in read(target, "events.html")
+def test_archive_and_document_pages_have_no_bar(target):
     assert "DOCUMENT FILTER" not in read(target, "events_2026.html")
+    assert "DOCUMENT FILTER" not in read(target, "events_202601.html")
     doc = read(target, "doc01.html")
     assert "DOCUMENT FILTER" not in doc and "data-kb-f-" not in doc
 
 
-def test_script_is_deployed_and_loaded(target):
+def test_events_page_has_one_table_with_the_bar_and_event_days(target):
+    html = read(target, "events.html")
+    assert html.count('class="kb4it-datatable') == 1
+    assert 'data-kb-table="kb4it-events-table"' in bar(html)
+    assert html.count('data-kb-date="2026-01-') == len(DOCS)
+    assert 'data-kb-date="2026-01-02"' in html  # doc01 is dated 2026-01-02
+    assert 'data-kb-events data-kb-table="kb4it-events-table"' in html
+    assert "framework/kb4it/js/events.js" in html
+    assert "kb4it-events-year-select" not in html and "kb-evcal-grid" not in html
+
+
+def test_events_page_has_the_calendar_data(target):
+    html = read(target, "events.html")
+    start = html.index('<script type="application/json" id="kb-events-data">') + len(
+        '<script type="application/json" id="kb-events-data">')
+    data = json.loads(html[start:html.index("</script>", start)])
+    assert data == {"days": {f"2026-01-{i + 1:02d}": 1 for i in range(len(DOCS))}}
+
+
+def test_scripts_are_deployed_and_loaded(target):
     assert "framework/kb4it/js/datatable-filter.js" in read(target, "all.html")
-    assert (target / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "js" / "datatable-filter.js").exists()
+    js = target / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "js"
+    assert (js / "datatable-filter.js").exists() and (js / "events.js").exists()
