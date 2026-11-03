@@ -226,6 +226,8 @@ The document tables of `all.html`, `bookmarks.html`, the property value pages, `
 3. The active filters show as chips below the search box, also while the bar is closed. Click a chip to remove it. **All** clears one property; **Clear filters** clears everything.
 4. The row count under the table counts the filters too.
 
+The Quality page has the same bar above its document lists: Exemplary documents, Quick wins, Broken links, Missing images, Documents without a Summary and Possible duplicates. The count in each list title follows the filters, and a list with nothing left says so. A pair of possible duplicates matches the values of either document. The tier mix and the best documents always cover every document.
+
 The values come from the documents of that table. A property that would not split them is left out, such as `Status` on `Status_Open.html`. Tables with fewer than ten documents have no filter bar, except on `events.html`. Document pages have none.
 
 ## Events {#events}

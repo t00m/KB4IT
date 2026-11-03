@@ -1,7 +1,8 @@
 """Filter bar of the document tables: pills per property value, behind a Filter button next to the search box.
 
 Only the tables of all.html, bookmarks.html, the property value pages, events.html and the archive
-pages of a year, month or day (events_YYYY*.html) get it. Each row
+pages of a year, month or day (events_YYYY*.html) get it. The Quality page uses the same bar over
+its document lists (list_filter). Each row
 carries its values as slugs in data-kb-f-<key> attributes of the Title cell; datatable-filter.js reads
 them and filters through DataTables, so the row count and the search box stay right. On events.html
 the cell also carries the event day (data-kb-date), which the calendar panel filters on.
@@ -38,10 +39,14 @@ def facet_groups(docs, values_of, keys=FILTER_KEYS):
 
 
 def facet_attrs(values_of, doc, keys=FILTER_KEYS):
-    """Return the data-kb-f-<key> attributes of a row: its values as space separated slugs."""
+    """Return the data-kb-f-<key> attributes of a row: its values as space separated slugs.
+
+    doc may be a list of documents (a pair of duplicates): the row then has the values of all of them.
+    """
+    docs = doc if isinstance(doc, (list, tuple)) else [doc]
     attrs = []
     for key in keys:
-        slugs = sorted({slugify(value) for value in values_of(doc, key) if value} - {''})
+        slugs = sorted({slugify(value) for d in docs for value in values_of(d, key) if value} - {''})
         if slugs:
             attrs.append(f'data-kb-f-{key.lower()}="{escape(" ".join(slugs))}"')
     return ' '.join(attrs)
@@ -86,6 +91,19 @@ class FilterMixin:
         """Archive pages of a year, month or day (events_YYYY*.html): their tables get the filter bar."""
         with self._filtered_tables():
             return super().build_events(doclist)
+
+    def list_filter(self, docs, list_id):
+        """The filter bar of plain document lists (Quality page), and the attributes of each document.
+
+        Returns (bar HTML or '', attrs(doc or [docs]) -> str); without a property that splits docs, no bar.
+        """
+        def attrs(doc):
+            return facet_attrs(self._values_of, doc, self.datatable_filter_keys)
+        groups = facet_groups(list(docs), self._values_of, self.datatable_filter_keys)
+        if not groups:
+            return '', attrs
+        bar = self.template('DATATABLE_FILTER').render(var={'list': list_id, 'groups': groups})
+        return bar, attrs
 
     def _values_of(self, doc, key):
         return self.srvdtb.get_values(doc, key) or []

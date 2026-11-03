@@ -80,3 +80,20 @@ def test_search_box_works_together_with_the_filters(all_page):
     all_page.fill(".dataTables_filter input", "Document 3")
     all_page.wait_for_function("document.querySelectorAll('#kb4it-datatable tbody tr').length === 1")
     assert "Document 3" in all_page.inner_text("#kb4it-datatable tbody")
+
+
+def test_quality_lists_are_filtered(browser, filter_site):
+    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    context.route("**/*", lambda r: r.continue_() if r.request.url.startswith("file://") else r.abort())
+    page = context.new_page()
+    page.goto((filter_site / "quality.html").as_uri())
+    page.wait_for_selector(".kb-dt-list-tools .kb-dt-facets-toggle")
+    visible = "document.querySelectorAll('#kb-quality-lists [data-kb-item]:not([hidden])').length"
+    total = page.evaluate(visible)
+    page.click(".kb-dt-facets-toggle")
+    page.click(pill("status", "completed"))
+    assert 0 < page.evaluate(visible) < total
+    assert page.inner_text(".kb-dt-chips .kb-dt-chip").startswith("Status: Completed")
+    page.click(".kb-dt-facets-clear")
+    assert page.evaluate(visible) == total
+    context.close()
