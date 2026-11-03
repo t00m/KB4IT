@@ -19,6 +19,7 @@ from kb4it.core.exceptions import ThemeError
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.core.util import get_hash_from_content, html_id_for
 from kb4it.services.builder import Builder
+from kb4it.core.log import q
 
 ASSETS = "resources/themes/apphelp/framework/apphelp"
 INDEX_WARN_BYTES = 2 * 1024 * 1024
@@ -132,7 +133,7 @@ class Theme(Builder):
         staged = os.path.join(self.srvbes.get_path("tmp"), doc_id)
         if os.path.exists(staged):
             os.remove(staged)
-        self.log.warning(f"[APPHELP] DOC_LEFT_OUT doc={doc_id} reason=unclassified")
+        self.log.warning(f"[APPHELP] DOC_LEFT_OUT doc={q(doc_id)} reason=unclassified")
 
     def _report(self, problems):
         for problem in problems:
@@ -270,7 +271,7 @@ class Theme(Builder):
         path_html = html_id_for(path_md)
         doc_id = os.path.basename(path_md)
         if not os.path.exists(path_html):
-            self.log.error(f"[APPHELP] HTML_MISSING doc={doc_id}")
+            self.log.error(f"[APPHELP] HTML_MISSING doc={q(doc_id)}")
             return
         with open(path_html, encoding="utf-8") as fh:
             fragment = fh.read()
@@ -300,14 +301,14 @@ class Theme(Builder):
         if self.config.versions:
             site_root = self.srvbes.get_path("site_root")
             labels, latest = publish_versions(site_root, self.config.version, self.config.latest)
-            self.log.info(f"[VERSIONS] PUBLISHED current={self.config.version} latest={latest} all={','.join(labels)}")
+            self.log.info(f"[VERSIONS] PUBLISHED current={q(self.config.version)} latest={q(latest)} all={q(','.join(labels))}")
 
     def _write_search_index(self, target):
         records = []
         for page in self.flat:
             path = os.path.join(target, page.url)
             if not os.path.isfile(path):
-                self.log.warning(f"[APPHELP] INDEX_PAGE_MISSING page={page.url}")
+                self.log.warning(f"[APPHELP] INDEX_PAGE_MISSING page={q(page.url)}")
                 continue
             with open(path, encoding="utf-8") as fh:
                 records.append(page_record(page, extract_sections(fh.read())))
@@ -315,24 +316,24 @@ class Theme(Builder):
         self._write(target, "search-index.js", content)
         size = len(content.encode("utf-8"))
         if size > INDEX_WARN_BYTES:
-            self.log.warning(f"[APPHELP] INDEX_LARGE size={size}")
-        self.log.info(f"[APPHELP] INDEX_BUILT pages={len(records)} size={size}")
+            self.log.warning(f"[APPHELP] INDEX_LARGE size={q(size)}")
+        self.log.info(f"[APPHELP] INDEX_BUILT pages={len(records)} size={q(size)}")
 
     def _run_checks(self, target, mapping):
         pages = sorted(name for name in os.listdir(target) if name.endswith(".html"))
         for page, href in check_anchors(target, pages):
-            self.log.warning(f"[APPHELP] ANCHOR_MISSING from={page} to={href}")
+            self.log.warning(f"[APPHELP] ANCHOR_MISSING from={q(page)} to={q(href)}")
         missing_ids = check_helpids(target, mapping)
         for ident in missing_ids:
-            self.log.warning(f"[APPHELP] HELPID_TARGET_MISSING id={ident} url={mapping[ident]}")
+            self.log.warning(f"[APPHELP] HELPID_TARGET_MISSING id={q(ident)} url={q(mapping[ident])}")
         if missing_ids and self.config.strict:
             raise ThemeError(f"Help ids point to missing pages or anchors: {', '.join(missing_ids)}")
         contract = os.path.join(str(self.srvbes.get_path("root")), self.config.contract)
         if self.config.contract_explicit and not os.path.isfile(contract):
-            self.log.warning(f"[APPHELP] CONTRACT_FILE_MISSING path={contract}")
+            self.log.warning(f"[APPHELP] CONTRACT_FILE_MISSING path={q(contract)}")
         missing = check_contract(load_contract(contract), mapping, target)
         for entry in missing:
-            self.log.error(f"[APPHELP] CONTRACT_MISSING entry={entry}")
+            self.log.error(f"[APPHELP] CONTRACT_MISSING entry={q(entry)}")
         if missing:
             raise ThemeError(f"{len(missing)} contract entries missing: {', '.join(missing)}")
 

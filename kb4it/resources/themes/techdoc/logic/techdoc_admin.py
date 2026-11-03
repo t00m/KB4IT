@@ -17,6 +17,7 @@ from kb4it.core.util import (
     slugify,
     valid_filename,
 )
+from kb4it.core.log import q
 
 
 class AdminMixin:
@@ -69,7 +70,7 @@ class AdminMixin:
                 continue
             if filename.endswith(('_sources.zip', '_site.zip')):
                 os.unlink(os.path.join(admin_dir, filename))
-                self.log.debug(f"[ADMIN] STALE_BACKUP_DELETED file={filename}")
+                self.log.debug(f"[ADMIN] STALE_BACKUP_DELETED file={q(filename)}")
 
     def backups_needed(self, *paths):
         """Rebuild the backups on a forced build, when the build compiled
@@ -101,7 +102,7 @@ class AdminMixin:
             for doc in docs:
                 zfile.write(doc, os.path.basename(doc))
         shutil.move(tmp_path, zip_path)
-        self.log.info(f"[ADMIN] ZIP_BUILT file={os.path.basename(zip_path)} docs={len(docs)}")
+        self.log.info(f"[ADMIN] ZIP_BUILT file={q(os.path.basename(zip_path))} docs={len(docs)}")
 
     def build_zip_site(self, zip_path, admin_dir):
         """Pack the whole compiled site, excluding the admin directory."""
@@ -118,7 +119,7 @@ class AdminMixin:
                     zfile.write(filepath, os.path.relpath(filepath, target))
                     count += 1
         shutil.move(tmp_path, zip_path)
-        self.log.info(f"[ADMIN] ZIP_BUILT file={os.path.basename(zip_path)} files={count}")
+        self.log.info(f"[ADMIN] ZIP_BUILT file={q(os.path.basename(zip_path))} files={q(count)}")
 
     def get_backup_item(self, path, name, description):
         """Describe a backup file for the admin page."""
@@ -186,4 +187,4 @@ class AdminMixin:
         pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
         with open(page_path, 'w', encoding='utf-8') as fhtml:
             fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-        self.log.info(f"[ADMIN] PAGE_BUILT path={page_path}")
+        self.log.info(f"[ADMIN] PAGE_BUILT path={q(page_path)}")

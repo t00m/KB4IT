@@ -82,8 +82,6 @@ class Database(Service):
         except KeyError:
             self.db[docId][key] = [value]
 
-        self.log.debug("[DATABASE] KV_ADD doc=%s key=%s value=%s", q(docId), q(key), q(value))
-
     def get_blocked_keys(self):
         """Return blocked keys."""
         return self.keys["blocked"]

@@ -21,6 +21,7 @@ from kb4it.core.util import (ellipsize_text, get_human_datetime,
                              guess_datetime, html_id_for, valid_filename)
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
+from kb4it.core.log import q
 
 
 # Status -> study bucket. Anything not matched falls into 'todo'.
@@ -458,7 +459,7 @@ class Theme(DocumentTheme):
         basename_md = os.path.basename(path_md)
         basename_hdoc = os.path.basename(path_hdoc)
         if not os.path.exists(path_hdoc):
-            self.log.error(f"[BOOKSHELF] HTML_MISSING doc={basename_md}")
+            self.log.error(f"[BOOKSHELF] HTML_MISSING doc={q(basename_md)}")
             return
 
         HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
@@ -529,7 +530,7 @@ class Theme(DocumentTheme):
         try:
             return super().build_metadata_section(docId)
         except Exception as error:
-            self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={docId} error={error}")
+            self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={q(docId)} error={q(error)}", exc_info=True)
             return ''
 
     def post_activities(self):

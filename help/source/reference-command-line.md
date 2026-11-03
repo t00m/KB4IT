@@ -48,7 +48,7 @@ Put them before the command.
 
 | Option | Does |
 |---|---|
-| `-L LEVEL`, `--log-level LEVEL` | How much to print: `DEBUG`, `INFO` (default), `WARNING` or `ERROR` |
+| `-L LEVEL`, `--log-level LEVEL` | How much to print: `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The log file gets every line at any level |
 | `-v`, `--version` | Prints the version and exits |
 | `-h`, `--help` | Prints help; `kb4it build --help` prints help for one command |
 
