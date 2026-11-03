@@ -54,6 +54,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The temporary log each run writes to `~/.kb4it/var/log/` is removed once the build has copied it into the knowledge base's `var/log/kb4it.log`, and at the end of commands that have no knowledge base (`themes`, `apps`, `projects`, `doctor`, `create`). Before, only a build that reached the deploy step removed it, so the folder grew with every other run. A failed run keeps its log; every start removes those older than 7 days.
 - techdoc tables: the empty band between the header and the first row of every document table is gone (the UIkit table margins, doubled when DataTables splits a scrolling table in two), and a short table no longer keeps a full screen of empty space below its rows. The "Search:" label and its box share one line.
 - techdoc: property values with accents or other non-ASCII characters showed as character codes (`Tom&#225;s`) in the filter dialogs of the Gallery and Diagrams pages. techdoc wrote every page in ASCII, turning each such character into an HTML entity, which the browser does not decode inside a `<script>` block. Pages are now written as UTF-8 text.
 - techdoc events calendar: today's day was invisible, white text on a white cell. The generic day-cell rule set the background to transparent and won over the blue background of today.
