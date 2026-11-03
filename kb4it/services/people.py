@@ -11,6 +11,7 @@ from kb4it.core.dateclass import date_key_names
 from kb4it.core.people import (RESERVED_KEYS, PeopleSettings, build_people, is_legacy_profile, person_page,
                                person_status, person_tip, profile_hash)
 from kb4it.core.util import valid_filename
+from kb4it.core.log import q
 
 
 def profile_page(name: str, keys, settings: PeopleSettings) -> str:
@@ -44,10 +45,10 @@ class PeopleMixin:
         settings = getattr(self.srvbes, "people", None) or PeopleSettings()
         for doc_id, _keys, _text in profiles:
             if is_legacy_profile(doc_id):
-                self.log.warning(f"[PEOPLE] PROFILE_PERSON_PREFIX doc={doc_id} hint=rename to PROFILE- and add ProfileOf")
+                self.log.warning(f"[PEOPLE] PROFILE_PERSON_PREFIX doc={q(doc_id)} hint=rename to PROFILE- and add ProfileOf")
         people, problems = build_people(profiles, settings, refused_keys(self.srvbes.get_dict("repo") or {}))
         for problem in problems:
-            self.log.error(f"[PEOPLE] {problem.code} doc={problem.doc_id} detail={problem.detail}")
+            self.log.error(f"[PEOPLE] {problem.code} doc={q(problem.doc_id)} detail={q(problem.detail)}")
             self.plan.invalid_docs.append((problem.doc_id, problem.code))
         # A ProfileOf that names a key no document uses and repo.json does not profile is most likely a
         # value written where the key belongs (ProfileOf: Jane Doe instead of ProfileOf: Author).
@@ -56,7 +57,7 @@ class PeopleMixin:
         for profile in people.all_profiles():
             for key in profile.keys:
                 if key not in known:
-                    self.log.warning(f"[PEOPLE] PROFILE_KEY_UNUSED doc={profile.doc_id} key={key} "
+                    self.log.warning(f"[PEOPLE] PROFILE_KEY_UNUSED doc={q(profile.doc_id)} key={q(key)} "
                                      f"hint=ProfileOf names the property, such as ProfileOf: {settings.keys[0]}")
         self.srvdtb.people = people
         self.plan.profile_count = len(people.all_profiles())
@@ -67,7 +68,7 @@ class PeopleMixin:
                        "status": person_status(p, settings) if p.doc_id in persons else "",
                        "tip": person_tip(p, settings) if p.doc_id in persons else ""}
             for p in people.all_profiles()}
-        self.log.info(f"[PEOPLE] LOADED profiles={len(people)} aliases={people.alias_count()}")
+        self.log.info(f"[PEOPLE] LOADED profiles={len(people)} aliases={q(people.alias_count())}")
 
     def people_changes(self) -> tuple[set, set]:
         """(key, value) pages to force and documents to rebuild because a profile changed since the last build.
@@ -138,5 +139,5 @@ class PeopleMixin:
                 continue
             compile_value = forced or (key, person) in force_kv_pairs or bool(self.get_kbdict_value(key, person, new=False))
             paths.append((key, person, compile_value))
-            self.log.debug(f"[PEOPLE] KV key={key} value={person} compile={compile_value}")
+            self.log.debug(f"[PEOPLE] KV key={q(key)} value={q(person)} compile={q(compile_value)}")
         return paths

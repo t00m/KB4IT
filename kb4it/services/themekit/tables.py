@@ -7,6 +7,7 @@ from typing import Any
 
 from kb4it.core.util import ellipsize_text
 from kb4it.services.themekit.host import ThemeHost
+from kb4it.core.log import q
 
 
 class TableMixin(ThemeHost):
@@ -36,7 +37,7 @@ class TableMixin(ThemeHost):
             item['url'] = properties['Title_Url']
             return self.template('DATATABLE_BODY_ITEM').render(var=item)
         except (KeyError, AttributeError) as e:
-            self.log.error(f"[THEME] DATATABLE_FAIL doc={docId} item={item} reason={e}")
+            self.log.error(f"[THEME] DATATABLE_FAIL doc={q(docId)} item={q(item)} reason={q(e)}")
             raise
 
     def datatable_custom_cell(self, doc_id: str, key: str) -> str | None:

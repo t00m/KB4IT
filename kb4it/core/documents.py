@@ -15,7 +15,7 @@ from typing import Any
 import yaml
 
 from kb4it.core.files import SOURCE_ENCODING, valid_filename
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 
 log = get_logger("Util")
 
@@ -228,12 +228,12 @@ def parse_markdown_attributes(content: str, basename: str) -> tuple[dict[str, li
 
     try:
         if not content.startswith("---"):
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter")
+            log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason=missing_frontmatter")
             return {}, False, "missing_frontmatter", False
 
         end = content.find("\n---", 3)
         if end < 0:
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_frontmatter_close")
+            log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason=missing_frontmatter_close")
             return {}, False, "missing_frontmatter_close", False
 
         fm_text = content[3:end].strip()
@@ -241,19 +241,19 @@ def parse_markdown_attributes(content: str, basename: str) -> tuple[dict[str, li
 
         fm = load_frontmatter(fm_text) if fm_text else {}
         if not isinstance(fm, dict):
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=invalid_frontmatter")
+            log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason=invalid_frontmatter")
             return {}, False, "invalid_frontmatter", False
 
         # Title comes from the first # heading in the body
         title, _index = first_heading(body)
         if title is None:
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason=missing_h1_title")
+            log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason=missing_h1_title")
             return {}, False, "missing_h1_title", False
 
         keys["Title"] = [title.strip()]
 
         if "title" in fm or "Title" in fm:
-            log.warning(f"[UTIL] DOC_WARN doc={basename} reason=title_in_frontmatter_ignored")
+            log.warning(f"[UTIL] DOC_WARN doc={q(basename)} reason=title_in_frontmatter_ignored")
             warned = True
             fm.pop("title", None)
             fm.pop("Title", None)
@@ -281,7 +281,7 @@ def parse_markdown_attributes(content: str, basename: str) -> tuple[dict[str, li
                 reason = f"bad_property_value key={k}"
             else:
                 continue
-            log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
+            log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason={reason}")  # reason is a code and its own key=value details
             return {}, False, reason, False
 
     except yaml.YAMLError as err:
@@ -295,10 +295,10 @@ def parse_markdown_attributes(content: str, basename: str) -> tuple[dict[str, li
         problem = getattr(err, "problem", None)
         if problem:
             reason += f" {problem}"
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason={reason}")
+        log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason={reason}")  # reason is a code and its own key=value details
         return {}, False, reason, False
     except Exception as err:
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
+        log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason=error error={q(err)}", exc_info=True)
         return {}, False, str(err), False
 
     return keys, True, "Success", warned
@@ -311,7 +311,7 @@ def get_markdown_attributes(docpath: str) -> tuple[dict[str, list[str]], bool, s
         with open(docpath, "r", encoding=SOURCE_ENCODING) as fh:
             content = fh.read()
     except Exception as err:
-        log.error(f"[UTIL] DOC_INVALID doc={basename} reason=error error={err}")
+        log.error(f"[UTIL] DOC_INVALID doc={q(basename)} reason=error error={q(err)}", exc_info=True)
         return {}, False, str(err)
     keys, valid, reason, _warned = parse_markdown_attributes(content, basename)
     return keys, valid, reason

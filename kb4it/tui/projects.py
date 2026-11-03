@@ -4,10 +4,10 @@ Project registry and the themes and apps KB4IT ships.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 from kb4it.core.env import ENV
+from kb4it.core.log import get_logger
 from kb4it.core.util import json_load, json_save, quarantine
 from kb4it.core.version import theme_fingerprint
 
@@ -30,7 +30,7 @@ def load_projects() -> list[dict]:
     except (ValueError, KeyError, TypeError) as error:
         # Keep the unreadable file: the next save would otherwise replace the whole list.
         kept = quarantine(str(PROJECTS_FILE))
-        logging.getLogger(__name__).warning(f"[TUI] PROJECTS_CORRUPT path={PROJECTS_FILE} kept={kept} reason={error}")
+        get_logger(__name__).warning(f"[TUI] PROJECTS_CORRUPT path={PROJECTS_FILE} kept={kept} reason={error}")
         return []
     except OSError:
         return []

@@ -25,7 +25,7 @@ def test_team_profile_builds_and_is_recorded(tmp_path, home):
 
 def test_profile_without_profileof_is_left_out(tmp_path, home):
     _, _, result = _build(tmp_path, home, {"a.md": page("A", Tag="x"), "PROFILE-X.md": page("X", Role="r")})
-    assert "PROFILE_INVALID doc=PROFILE-X.md detail=ProfileOf is missing" in result.stdout
+    assert "PROFILE_INVALID doc=PROFILE-X.md detail=\"ProfileOf is missing\"" in result.stdout
 
 
 def test_person_prefix_warns_and_still_works(tmp_path, home):
@@ -52,7 +52,7 @@ def test_changed_team_profile_rebuilds_the_team_page(tmp_path, home):
     (repo / "source" / "PROFILE-SAP-BASIS.md").write_text(
         page("SAP Basis", body="New text.", ProfileOf="Team", Alias="Basis"), encoding="utf-8")
     out = run_kb4it("-L", "DEBUG", "build", cfg, cwd=tmp_path, home=home).stdout
-    assert "[PROCESSOR] KV key=Team value=SAP Basis compile=True" in out
+    assert "[PROCESSOR] KV key=Team value=\"SAP Basis\" compile=True" in out
 
 
 def test_people_block_is_reported(tmp_path, home):
@@ -74,7 +74,7 @@ def test_profileof_naming_an_unused_key_warns(tmp_path, home):
              "PROFILE-JANE.md": page("Jane Doe", ProfileOf="Jane Doe", Email="j@example.org")}
     _, _, result = _build(tmp_path, home, pages)
     assert result.returncode == 0, result.stdout
-    assert "PROFILE_KEY_UNUSED doc=PROFILE-JANE.md key=Jane Doe" in result.stdout
+    assert "PROFILE_KEY_UNUSED doc=PROFILE-JANE.md key=\"Jane Doe\"" in result.stdout
 
 
 def test_profileof_naming_a_used_or_configured_key_does_not_warn(tmp_path, home):
