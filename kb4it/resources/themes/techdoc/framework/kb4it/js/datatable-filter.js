@@ -1,4 +1,5 @@
-/* Filter bar of the document tables (all documents, bookmarks, property value pages, events).
+/* Filter bar of the document tables (all documents, bookmarks, property value pages, events) and of
+ * the document lists of the Quality page.
  *
  * The theme writes the bar, hidden, before the table, and the values of each row as slugs in
  * data-kb-f-<key> attributes of its Title cell. Once DataTables has set up the table, this script
@@ -10,6 +11,10 @@
  * The count on each pill is live: the rows it would show, given the search and the other filters.
  * Pills that would show nothing are hidden, and a long property shows its first values only, with a
  * "+N more" pill for the rest.
+ *
+ * Lists: a bar with data-kb-list="<id>" filters the elements marked data-kb-item inside the element
+ * with that id, which carry the same data-kb-f-<key> attributes. A [data-kb-list-section] around a
+ * list gets its .kb-dt-list-count updated and its .kb-dt-list-none shown when nothing is left.
  *
  * Other scripts add their own filters with KB4ITFilters.extend(tableId, filter), where filter has
  * test(titleCell) -> bool, chips() -> [{label, clear()}] and clear(). The events page adds the date.
@@ -77,7 +82,8 @@
         return terms.every(function (term) { return text.indexOf(term) !== -1; });
     }
 
-    function updateCounts(ctx) {
+    // Table rows (their Title cells) that pass the search box and the filters of other scripts.
+    function tableCandidates(ctx) {
         var settings = ctx.api.settings()[0];
         var terms = searchTerms(ctx.api);
         var cells = [];
@@ -87,6 +93,11 @@
                 cells.push(cell);
             }
         }
+        return cells;
+    }
+
+    function updateCounts(ctx) {
+        var cells = ctx.candidates();
         ctx.bar.querySelectorAll('.kb-dt-facet').forEach(function (group) {
             var key = group.getAttribute('data-kb-key');
             var counts = {};
@@ -231,7 +242,7 @@
         }
         ctx.bar.querySelector('.kb-dt-facets-clear').hidden = n === 0;
         renderChips(ctx);
-        ctx.api.draw();  // draw.dt updates the counts
+        ctx.apply();
     }
 
     function setUp(settings) {
@@ -243,27 +254,11 @@
         var api = new $.fn.dataTable.Api(settings);
         var wrapper = api.table().container();
         var search = wrapper.querySelector('.dataTables_filter');
-        var ctx = {id: id, api: api, bar: bar, state: {}, toggle: null};
-
-        var chips = document.createElement('div');
-        chips.className = 'kb-dt-chips noprint';
-        chips.hidden = true;
-        ctx.chips = chips;
-
-        if (bar.querySelector('.kb-dt-facet')) {
-            var toggle = document.createElement('button');
-            toggle.type = 'button';
-            toggle.className = 'uk-button uk-button-default uk-button-small kb-dt-facets-toggle noprint';
-            toggle.setAttribute('aria-expanded', 'false');
-            toggle.setAttribute('aria-controls', bar.id);
-            toggle.innerHTML = '<span data-uk-icon="icon: settings; ratio: 0.8"></span> Filter '
-                + '<span class="kb-dt-facets-count"></span>';
-            toggle.addEventListener('click', function () {
-                bar.hidden = !bar.hidden;
-                toggle.setAttribute('aria-expanded', bar.hidden ? 'false' : 'true');
-            });
-            ctx.toggle = toggle;
-        }
+        var ctx = makeContext(id, bar);
+        ctx.api = api;
+        ctx.candidates = function () { return tableCandidates(ctx); };
+        ctx.apply = function () { api.draw(); };  // draw.dt updates the counts
+        var chips = ctx.chips;
 
         if (search) {
             search.classList.add('kb-dt-has-facets');
@@ -278,8 +273,40 @@
             }
         }
         chips.parentNode.insertBefore(bar, chips.nextSibling);
+        listen(ctx);
 
-        bar.addEventListener('click', function (event) {
+        $(settings.nTable).on('draw.dt', function () { updateCounts(ctx); });
+        tables[id] = ctx;
+        refresh(ctx);
+    }
+
+    // The context of a bar: its state, the Filter button (when it has properties) and the chip row.
+    function makeContext(id, bar) {
+        var ctx = {id: id, bar: bar, state: {}, toggle: null};
+        var chips = document.createElement('div');
+        chips.className = 'kb-dt-chips noprint';
+        chips.hidden = true;
+        ctx.chips = chips;
+        if (bar.querySelector('.kb-dt-facet')) {
+            var toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'uk-button uk-button-default uk-button-small kb-dt-facets-toggle noprint';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-controls', bar.id);
+            toggle.innerHTML = '<span data-uk-icon="icon: settings; ratio: 0.8"></span> Filter '
+                + '<span class="kb-dt-facets-count"></span>';
+            toggle.addEventListener('click', function () {
+                bar.hidden = !bar.hidden;
+                toggle.setAttribute('aria-expanded', bar.hidden ? 'false' : 'true');
+            });
+            ctx.toggle = toggle;
+        }
+        return ctx;
+    }
+
+    // Clicks on the pills and on the Clear filters button of the bar.
+    function listen(ctx) {
+        ctx.bar.addEventListener('click', function (event) {
             var link = event.target.closest('a[data-kb-value]');
             if (link) {
                 event.preventDefault();
@@ -300,9 +327,42 @@
                 refresh(ctx);
             }
         });
+    }
 
-        $(settings.nTable).on('draw.dt', function () { updateCounts(ctx); });
-        tables[id] = ctx;
+    // A bar over plain lists (Quality page): it hides the items that do not match.
+    function setUpList(bar) {
+        var scope = document.getElementById(bar.getAttribute('data-kb-list'));
+        if (!scope || bar.hasAttribute('data-kb-ready')) {
+            return;
+        }
+        bar.setAttribute('data-kb-ready', '1');
+        var items = Array.prototype.slice.call(scope.querySelectorAll('[data-kb-item]'));
+        var ctx = makeContext(bar.getAttribute('data-kb-list'), bar);
+        ctx.candidates = function () { return items; };
+        ctx.apply = function () {
+            items.forEach(function (item) { item.hidden = !matchesGroups(item, ctx.state, null); });
+            scope.querySelectorAll('[data-kb-list-section]').forEach(function (section) {
+                var all = section.querySelectorAll('[data-kb-item]').length;
+                var visible = section.querySelectorAll('[data-kb-item]:not([hidden])').length;
+                var count = section.querySelector('.kb-dt-list-count');
+                var none = section.querySelector('.kb-dt-list-none');
+                if (count) {
+                    count.textContent = String(visible);
+                }
+                if (none) {
+                    none.hidden = !(all && !visible);
+                }
+            });
+            updateCounts(ctx);
+        };
+        var tools = document.createElement('div');
+        tools.className = 'kb-dt-list-tools noprint';
+        if (ctx.toggle) {
+            tools.appendChild(ctx.toggle);
+        }
+        tools.appendChild(ctx.chips);
+        bar.parentNode.insertBefore(tools, bar);
+        listen(ctx);
         refresh(ctx);
     }
 
@@ -319,6 +379,8 @@
             }
         }
     };
+
+    document.querySelectorAll('.kb-dt-facets[data-kb-list]').forEach(setUpList);
 
     $(document).on('init.dt', function (event, settings) {
         setUp(settings);
