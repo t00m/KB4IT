@@ -157,3 +157,23 @@ def test_scripts_are_deployed_and_loaded(target):
     assert "framework/kb4it/js/datatable-filter.js" in read(target, "all.html")
     js = target / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "js"
     assert (js / "datatable-filter.js").exists() and (js / "events.js").exists()
+
+
+def test_pair_attributes_have_the_values_of_both_documents():
+    docs = {"a": {"Status": ["Open"]}, "b": {"Status": ["Draft"], "Topic": ["Backup"]}}
+    attrs = filters.facet_attrs(values_from(docs), ["a", "b"], ("Status", "Topic"))
+    assert attrs == 'data-kb-f-status="draft open" data-kb-f-topic="backup"'
+
+
+def test_quality_page_filters_its_lists(target):
+    html = read(target, "quality.html")
+    facets = bar(html)
+    assert 'data-kb-list="kb-quality-lists"' in facets and "data-kb-table" not in facets
+    assert re.findall(r'data-kb-key="([a-z]+)"', facets) == ["status", "priority"]
+    lists = html[html.index('<div id="kb-quality-lists">'):]
+    items = re.findall(r"<li data-kb-item ([^>]*)>", lists)
+    assert items and all('data-kb-f-status="' in attrs for attrs in items)
+    assert lists.count("data-kb-list-section") == 6
+    assert lists.count('class="kb-dt-list-count"') == 6
+    # The tier mix and the best documents stay outside the filtered lists.
+    assert html.index("QUALITY FILTER :: START") > html.index("TIER MIX :: END")

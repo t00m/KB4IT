@@ -862,6 +862,11 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-dt-chip:hover { background: #dcebfd; }
 .kb-dt-chip span { font-size: 1rem; line-height: 1; }
 .kb-dt-chips-clear { font-size: 0.78rem; text-transform: none; }
+/* The same bar over plain lists: the Filter button and the chips on one line (Quality page). */
+.kb-dt-list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+.kb-dt-list-tools .kb-dt-chips { margin: 0; }
+.kb-q-filter { margin: 0 0 16px; }
+.kb-q-filter .kb-q-intro { margin: 0 0 8px; }
 .kb-dt-facet .kb-dt-more > a { color: #1e87f0; font-style: italic; }
 .kb-dt-facet[hidden] { display: none; }
 
