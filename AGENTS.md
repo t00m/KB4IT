@@ -455,8 +455,8 @@ Frontmatter rules and the controlled vocabulary for `Category`, `WorkType`, `Doc
 - `Pygments>=2.15` -- build-time code highlighting (`markdown.highlight: pygments`).
 - `lxml` -- XML parsing for post-processing.
 - `Pillow>=10.0` -- image thumbnails of the techdoc Gallery page.
-- `rich>=13.0` -- terminal formatting (used by TUI and log output).
-- `textual>=0.47.0` -- TUI framework.
+- `rich>=14.2.0` -- terminal formatting (used by TUI and log output).
+- `textual>=6.7.0` -- TUI framework (6.7.0 is the first release where mouse selection and Ctrl+A work as the TUI expects).
 - Mermaid and KaTeX are bundled browser files in `kb4it/resources/render/`, not Python dependencies. `scripts/devel/fetch_render_assets.sh` downloads the versions pinned in `kb4it/resources/render/VERSIONS` (needs network; run it only to update them).
 
 ## Conventions for contributions by AI assistants
