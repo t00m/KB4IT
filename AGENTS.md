@@ -390,7 +390,9 @@ KB4IT ships with a full-featured TUI built on [Textual](https://textual.textuali
 | **Main** | Project list with actions: New, Import, Delete, Themes, Apps, Quit |
 | **CreateProject** | Select theme, app template, enter name + path; runs `create` workflow |
 | **ImportProject** | Browse to existing `repo.json`, assign display name, add to registry |
-| **Project** | Per-project actions: Compile, Force Compile, Project Info, List Source Files, Explore Keys & Values, View Build Log, Browse Local, Browse via Web Server |
+| **Project** | Per-project actions: Compile, Force Compile, Project Info, List Source Files, Explore Keys & Values, View Build Log, Settings Reference, Edit repo.json, Browse Local, Browse via Web Server |
+| **SettingsReference** | Every `repo.json` key of the project's theme with its default, meaning and the project's value; read from the help (`kb4it/tui/repo_options.py`) |
+| **RepoEditor** | `TextArea` on `repo.json`; Save only after `kb4it/core/repocheck.py` `check_repo()` passes on the current text |
 | **Build** | Live progress bar + real-time log output, copy-to-clipboard |
 | **Explorer** | Three-pane metadata browser (Keys -> Values -> Documents) with document viewer |
 | **LogViewer** | Build log with level filters (All / Info / Warnings+ / Errors only) |
@@ -405,9 +407,13 @@ A build takes its callbacks as parameters: `KB4IT(argparse.Namespace(..., progre
 - `progress_callback(basename, rc)` -- called per compiled doc
 - `compile_start_callback(total)` -- called once with the number of documents
 
+### Settings screens
+
+`kb4it/tui/repo_options.py` reads the settings tables of the help: `reference-repo-json.md` (sections `required`, `optional`, `markdown`, `people`, `seo`, `feed`) and the `settings` section of `reference-theme-<theme>.md`. A table counts when its first column is `Key` or `Setting` and its last `Meaning`; a code sample right before it (`"seo": {`) names the block of its keys, and a paragraph before it naming `theme.json` excludes it. It reads the built pages in `kb4it/resources/help/` and falls back to `help/source/*.md` in a checkout without them (CI). So a new `repo.json` setting shows in the TUI once its row is in those tables. `kb4it/core/repocheck.py` `check_repo(text, config_path)` runs the build's own checks (`check_editor_setting`, `mdconfig.load_settings`, `site_url`, `load_seo`, `load_profiles`, `load_dates`, `check_target`, the theme lookup of `Frontend.theme_search`) and checks that the hooks file exists without running it; a new check in `Backend._validate_config` belongs there too.
+
 ### Clipboard
 
-`kb4it/tui/clipboard.py` uses the platform's tool found on `PATH` (`wl-copy`, `xclip`, `xsel` on Linux; `pbcopy` on macOS; `clip.exe` on Windows, fed UTF-16), falling back to the OSC 52 escape sequence. Screens call it as `clipboard._copy_to_clipboard`, so tests patch that one module.
+`kb4it/tui/clipboard.py` uses the platform's tool found on `PATH` (`wl-copy`, `xclip`, `xsel` on Linux; `pbcopy` on macOS; `clip.exe` on Windows, fed UTF-16), falling back to the OSC 52 escape sequence. Screens call it as `clipboard._copy_to_clipboard`, so tests patch that one module. `KB4ITTUI.copy_to_clipboard` (Ctrl+C on selected text, copies in an `Input`) uses the same tools through `clipboard._copy_with_tools`. Logs and tables are `SelectableRichLog` and `SelectableDataTable` (`kb4it/tui/widgets.py`), which add mouse selection to the Textual widgets.
 
 ### Project registry
 
