@@ -6,6 +6,6 @@ PyYAML>=6.0
 Pygments>=2.15
 lxml
 Pillow>=10.0
-rich>=13.0
-textual>=0.47.0
+rich>=14.2.0
+textual>=6.7.0
 tzdata; sys_platform == 'win32'
