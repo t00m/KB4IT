@@ -155,6 +155,22 @@ def test_tagcloud_scale_with_and_without_the_empty_value(skip_empty, weight):
     assert cloud.startswith("<WORDCLOUD") and f"'weight': {weight}" in cloud and "'word': 'a'" in cloud
 
 
+
+class _MdCloudDb(_Db):
+    def get_documents(self):
+        return ["note-a1.md", "note-a2.md", "sub/note-a1.md"]
+
+    def get_values(self, doc, key):
+        return ["a"]
+
+
+def test_tagcloud_counts_every_document():
+    """Document ids are Markdown paths; ids that share a prefix or a basename count apart."""
+    theme = _Theme()
+    theme.srvdtb = _MdCloudDb()
+    cloud = theme.build_tagcloud_from_key("Tag")
+    assert "'count': 3" in cloud and "'tooltip': '3 documents'" in cloud
+
 _TABLE_PROPS = {
     "a.html": {"Title": "A <b>", "Title_Url": "a.html", "Tag": ["x", "y"], "Tag_x_Url": "Tag_x.html"},
     "sys.html": {"Title": "System"},
