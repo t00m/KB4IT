@@ -26,6 +26,7 @@ from textual.widgets import (
 from kb4it.core.log import get_logger, kb4it_logger, reset_logging
 from kb4it.tui import clipboard
 from kb4it.tui.screens.logs import _LOG_STYLE
+from kb4it.tui.widgets import SelectableRichLog
 
 _reset_logging = reset_logging
 
@@ -67,7 +68,7 @@ class BuildScreen(Screen):
         yield Header(show_clock=True)
         yield Label("Preparing build…", id="status")
         yield ProgressBar(total=None, id="prog")
-        yield RichLog(highlight=True, markup=False, id="log")
+        yield SelectableRichLog(highlight=True, markup=False, id="log")
         with Horizontal(id="footer-bar"):
             yield Button("Copy Log", id="copy", variant="default")
             yield Button("Close", id="close", variant="primary", disabled=True)

@@ -29,6 +29,7 @@ from textual.widgets import (
 from kb4it.core.util import json_load
 from kb4it.tui.projects import get_apps, get_themes
 from kb4it.tui.screens.build import _reset_logging
+from kb4it.tui.widgets import SelectableDataTable
 
 
 class CreateProjectScreen(Screen):
@@ -248,7 +249,7 @@ class ImportProjectScreen(Screen):
         yield Input(placeholder="/path/to/config/repo.json", id="inp-path")
         yield Label("Display name:", classes="field-label")
         yield Input(placeholder="My Project", id="inp-name")
-        yield DataTable(id="preview", show_cursor=False)
+        yield SelectableDataTable(id="preview", show_cursor=False)
         with Horizontal(id="footer-bar"):
             yield Button("Import", id="import", variant="success")
             yield Button("Cancel", id="cancel", variant="default")

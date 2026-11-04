@@ -13,6 +13,7 @@ from textual.binding import Binding
 from kb4it.tui.clipboard import (
     _CLIPBOARD_TOOLS,
     _copy_to_clipboard,
+    _copy_with_tools,
     clipboard_commands,
 )
 from kb4it.tui.projects import (
@@ -121,9 +122,27 @@ class KB4ITTUI(App):
     TITLE = f"KB4IT {BUILD_VERSION}"
 
     BINDINGS = [
-        Binding("ctrl+a", "screen.text_select_all", "Select All", show=True),
+        Binding("ctrl+a", "select_all", "Select All", show=True),
         Binding("ctrl+c", "screen.copy_text", "Copy", show=True),
     ]
+
+    def action_select_all(self) -> None:
+        """Select the text of the focused widget, or of the whole screen when nothing selectable has focus."""
+        focused = self.screen.focused
+        target = focused if focused is not None and focused.allow_select else self.screen
+        target.text_select_all()
+
+    def copy_to_clipboard(self, text: str) -> None:
+        """Copy with the system clipboard tool when there is one; OSC 52 only works in some terminals.
+
+        Textual calls this for Ctrl+C on selected text and for copies inside an Input.
+        """
+        if tool := _copy_with_tools(text):
+            self._clipboard = text
+            self.notify(f"Copied {len(text)} chars to clipboard via {tool}.")
+            return
+        super().copy_to_clipboard(text)
+        self.notify(f"Copied {len(text)} chars to clipboard via OSC52.")
 
     def on_mount(self) -> None:
         self.push_screen(MainScreen())

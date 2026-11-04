@@ -20,6 +20,7 @@ from textual.widgets import (
 
 from kb4it.tui import clipboard
 from kb4it.tui.projects import _log_path
+from kb4it.tui.widgets import SelectableRichLog
 
 _LOG_STYLE: dict[str, str] = {
     "CRITICAL": "bold red",
@@ -61,7 +62,7 @@ class LogViewerScreen(Screen):
             yield Button("Info only", id="f-info", variant="default")
             yield Button("Warnings+", id="f-warn", variant="warning")
             yield Button("Errors only", id="f-err", variant="error")
-        yield RichLog(highlight=False, markup=False, id="log")
+        yield SelectableRichLog(highlight=False, markup=False, id="log")
         with Horizontal(id="footer-bar"):
             yield Button("Copy Log", id="copy", variant="default")
             yield Button("Back", id="back", variant="default")

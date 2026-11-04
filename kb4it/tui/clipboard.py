@@ -26,15 +26,22 @@ def clipboard_commands(family: str | None = None) -> list[tuple[list[str], str]]
             if shutil.which(cmd[0])]
 
 
-def _copy_to_clipboard(app: App, text: str) -> tuple[bool, str]:
-    """Copy text to the system clipboard with the platform's tool, falling back to OSC 52."""
+def _copy_with_tools(text: str) -> str | None:
+    """Copy text with the first clipboard tool that works; its name, or None when none did."""
     import subprocess
     for cmd, encoding in clipboard_commands():
         try:
             subprocess.run(cmd, input=text.encode(encoding), check=True, timeout=2)
-            return True, cmd[0]
+            return cmd[0]
         except Exception:
             continue
+    return None
+
+
+def _copy_to_clipboard(app: App, text: str) -> tuple[bool, str]:
+    """Copy text to the system clipboard with the platform's tool, falling back to OSC 52."""
+    if tool := _copy_with_tools(text):
+        return True, tool
     try:
         app.copy_to_clipboard(text)
         return True, "OSC52"
