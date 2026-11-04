@@ -220,16 +220,21 @@ def json_load(filepath: str | os.PathLike[str]) -> dict[str, Any]:
 
 
 def json_save(filepath: str, adict: dict[str, Any]) -> None:
-    """Save dictionary into a file in json format.
+    """Save dictionary into a file in json format, atomically (see text_save)."""
+    text_save(filepath, json.dumps(adict, sort_keys=True, indent=4))
+
+
+def text_save(filepath: str, text: str) -> None:
+    """Save text into a file in UTF-8.
 
     The data goes to a temporary file in the same folder, which then replaces the
     old file in one step: a crash or a full disk leaves the old file whole.
     """
     folder = os.path.dirname(os.path.abspath(filepath))
-    fd, tmp = tempfile.mkstemp(dir=folder, prefix=".tmp-", suffix=".json")
+    fd, tmp = tempfile.mkstemp(dir=folder, prefix=".tmp-", suffix=os.path.splitext(filepath)[1])
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fout:
-            json.dump(adict, fout, sort_keys=True, indent=4)
+            fout.write(text)
             fout.flush()
             os.fsync(fout.fileno())
         # mkstemp makes the file private; keep the mode a plain open() would give.

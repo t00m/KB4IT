@@ -26,6 +26,7 @@ from kb4it.tui.projects import _kbdict_path, _log_path, _resolve_repo_path
 from kb4it.tui.screens.build import BuildScreen
 from kb4it.tui.screens.documents import ExplorerScreen
 from kb4it.tui.screens.logs import LogViewerScreen
+from kb4it.tui.screens.settings import RepoEditorScreen, SettingsReferenceScreen
 from kb4it.tui.servers import _WEB_SERVERS, _start_live_server
 from kb4it.tui.widgets import SelectableDataTable
 
@@ -147,6 +148,8 @@ class ProjectScreen(Screen):
             yield Button("List Source Files", id="files", variant="default")
             yield Button("Explore Keys & Values", id="explore", variant="default")
             yield Button("View Build Log", id="log", variant="default")
+            yield Button("Settings Reference", id="settings-ref", variant="default")
+            yield Button("Edit repo.json", id="edit-repo", variant="default")
             yield Button("Browse Local (file://)", id="browse-local", variant="default")
             yield Button("Browse via Web Server (http)", id="browse-server", variant="default")
         with Horizontal(id="footer-bar"):
@@ -217,6 +220,14 @@ class ProjectScreen(Screen):
     @on(Button.Pressed, "#log")
     def _log(self) -> None:
         self.app.push_screen(LogViewerScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#settings-ref")
+    def _settings_ref(self) -> None:
+        self.app.push_screen(SettingsReferenceScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#edit-repo")
+    def _edit_repo(self) -> None:
+        self.app.push_screen(RepoEditorScreen(self._project["config"]), callback=lambda _: self._refresh())
 
     def _target_index(self) -> Path | None:
         try:
