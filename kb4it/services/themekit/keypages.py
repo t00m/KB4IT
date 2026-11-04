@@ -67,10 +67,9 @@ class KeyPagesMixin(ThemeHost):
         """Return a tag cloud of the values of a property, or '' when it has none."""
         dkeyurl: dict[str, set[str]] = {}
         for docId in self.srvdtb.get_documents():
-            url = os.path.basename(docId)[:-5]
             for tag in self.srvdtb.get_values(docId, key):
                 if tag or not self.tagcloud_scale_skips_empty:
-                    dkeyurl.setdefault(tag, set()).add(url)
+                    dkeyurl.setdefault(tag, set()).add(docId)
         lwords = sorted((word for word in dkeyurl if len(word) > 0), key=lambda y: y.lower())
         if not lwords:
             return ''

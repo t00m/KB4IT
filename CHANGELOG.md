@@ -56,6 +56,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The word cloud of a property page now counts the same documents as the table below it. It grouped documents by their file name with the last five characters cut off, a rule left from `.adoc` sources; with `.md` sources, documents such as `note-a1.md` and `note-a2.md` merged into one, and so did documents with the same name in different folders.
 - The lock file each `kb4it create` leaves in `~/.kb4it/var/` (`create-<digest>.lock`) no longer piles up: every start removes the ones older than 7 days that no command holds.
 - The temporary log each run writes to `~/.kb4it/var/log/` is removed once the build has copied it into the knowledge base's `var/log/kb4it.log`, and at the end of commands that have no knowledge base (`themes`, `apps`, `projects`, `doctor`, `create`). Before, only a build that reached the deploy step removed it, so the folder grew with every other run. A failed run keeps its log; every start removes those older than 7 days.
 - techdoc tables: the empty band between the header and the first row of every document table is gone (the UIkit table margins, doubled when DataTables splits a scrolling table in two), and a short table no longer keeps a full screen of empty space below its rows. The "Search:" label and its box share one line.
