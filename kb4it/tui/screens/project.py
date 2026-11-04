@@ -27,6 +27,7 @@ from kb4it.tui.screens.build import BuildScreen
 from kb4it.tui.screens.documents import ExplorerScreen
 from kb4it.tui.screens.logs import LogViewerScreen
 from kb4it.tui.servers import _WEB_SERVERS, _start_live_server
+from kb4it.tui.widgets import SelectableDataTable
 
 
 class ProjectInfoScreen(Screen):
@@ -43,7 +44,7 @@ class ProjectInfoScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield DataTable(id="tbl", show_cursor=False)
+        yield SelectableDataTable(id="tbl", show_cursor=False)
         with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="default")
         yield Footer()
@@ -83,7 +84,7 @@ class FileListScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield DataTable(id="tbl", show_cursor=True)
+        yield SelectableDataTable(id="tbl", show_cursor=True)
         with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="default")
         yield Footer()

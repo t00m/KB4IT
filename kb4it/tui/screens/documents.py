@@ -25,6 +25,7 @@ from textual.widgets import (
 from kb4it.core.util import json_load
 from kb4it.tui import clipboard
 from kb4it.tui.projects import _kbdict_path
+from kb4it.tui.widgets import SelectableDataTable
 
 
 class DocumentViewerScreen(Screen):
@@ -43,7 +44,7 @@ class DocumentViewerScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield DataTable(id="meta", show_cursor=False)
+        yield SelectableDataTable(id="meta", show_cursor=False)
         with ScrollableContainer(id="content"):
             yield Markdown("", id="md")
         with Horizontal(id="footer-bar"):

@@ -21,6 +21,7 @@ from textual.widgets import (
 )
 
 from kb4it.tui.projects import get_apps, get_themes
+from kb4it.tui.widgets import SelectableDataTable
 
 
 class ThemesScreen(Screen):
@@ -32,7 +33,7 @@ class ThemesScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield DataTable(id="tbl", show_cursor=True)
+        yield SelectableDataTable(id="tbl", show_cursor=True)
         with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="default")
         yield Footer()
@@ -76,7 +77,7 @@ class AppsScreen(Screen):
         yield Label("Select a theme:", id="theme-label")
         yield ListView(id="themes-list")
         yield Label("Apps:", id="apps-label")
-        yield DataTable(id="apps-tbl", show_cursor=True)
+        yield SelectableDataTable(id="apps-tbl", show_cursor=True)
         with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="default")
         yield Footer()
