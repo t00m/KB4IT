@@ -54,6 +54,7 @@ S = PeopleSettings()
 
 def entry(doc_id, Person, **keys):
     """(doc_id, keys, text) as the processor hands a profile to build_people; Person is its title."""
+    keys.setdefault("ProfileOf", "Author")
     parsed = {key: [v.strip() for v in value.split(",") if v.strip()] for key, value in keys.items()}
     parsed["Title"] = [Person.strip()]
     front = "".join(f"{key}: {value}\n" for key, value in keys.items())
@@ -61,7 +62,7 @@ def entry(doc_id, Person, **keys):
 
 
 def test_profile_and_alias_lookup():
-    people, problems = build_people([entry("PERSON-JANE.md", Person="Jane Doe", Alias="J. Doe, jdoe",
+    people, problems = build_people([entry("PROFILE-JANE.md", Person="Jane Doe", Alias="J. Doe, jdoe",
                                            Email="j@x.org")], S)
     assert not problems and len(people) == 1 and people.alias_count() == 2
     assert people.lookup("jdoe").person == "Jane Doe"
@@ -125,8 +126,10 @@ def test_notices():
 
 def test_profiles_are_found_by_file_name():
     from kb4it.core.people import is_profile
-    assert is_profile("PERSON-JANE-DOE.md") and is_profile("person-jane-doe.md") and is_profile("/src/Person-x.md")
-    assert not is_profile("CHANGE-80995.md") and not is_profile("my-person-notes.md") and not is_profile("PERSON.md")
+    assert is_profile("PROFILE-JANE-DOE.md") and is_profile("profile-jane-doe.md") and is_profile("/src/Profile-x.md")
+    assert not is_profile("CHANGE-80995.md") and not is_profile("my-profile-notes.md") and not is_profile("PROFILE.md")
+    # The old PERSON- prefix is gone: such a file is a document.
+    assert not is_profile("PERSON-JANE-DOE.md") and not is_profile("person-jane-doe.md")
 
 
 def test_no_profiles_no_author_notice():

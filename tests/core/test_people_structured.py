@@ -51,14 +51,14 @@ def test_people_map_is_read():
 def test_documents_point_to_the_person_with_aliases_resolved(tmp_path, home):
     jane = JANE.replace("---\n", "---\nAlias: J. Doe\n", 1)
     target = site(tmp_path, home, {"a.md": doc("Alpha", Author="J. Doe"), "b.md": doc("Beta", Author="Bob"),
-                                   "PERSON-JANE-DOE.md": jane}, site_url=SITE)
+                                   "PROFILE-JANE-DOE.md": jane}, site_url=SITE)
     article = jsonld(html(target, "a.html"))[0]
     assert article["author"] == {"@type": "Person", "@id": SITE + "Author_Jane_Doe.html#person", "name": "Jane Doe"}
     assert jsonld(html(target, "b.html"))[0]["author"]["@id"] == SITE + "Author_Bob.html#person"
 
 
 def test_person_page_has_a_profile_page(tmp_path, home):
-    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": JANE},
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PROFILE-JANE-DOE.md": JANE},
                   site_url=SITE, people={"private": ["Phone"], "map": {"Badge": "identifier"}})
     nodes = jsonld(html(target, "Author_Jane_Doe.html"))
     page = next(n for n in nodes if n["@type"] == "ProfilePage")
@@ -70,7 +70,7 @@ def test_person_page_has_a_profile_page(tmp_path, home):
 
 
 def test_without_site_url_the_person_has_no_id(tmp_path, home):
-    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PERSON-JANE-DOE.md": JANE})
+    target = site(tmp_path, home, {"a.md": doc("Alpha", Author="Jane Doe"), "PROFILE-JANE-DOE.md": JANE})
     assert jsonld(html(target, "a.html"))[0]["author"] == {"@type": "Person", "name": "Jane Doe"}
 
 

@@ -76,7 +76,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 
 ## People {#people}
 
-A profile is a source whose file name starts with `PROFILE-`: it describes one value of the property that `ProfileOf` names, such as a person in `Author` or a team in `Team`, and its title is that value. The old `PERSON-` prefix still works as a profile of `Author`. A profile with an error is left out of the site; with `"fail_on_invalid": true` the build stops.
+A profile is a source whose file name starts with `PROFILE-`: it describes one value of the property that `ProfileOf` names, such as a person in `Author` or a team in `Team`, and its title is that value. A file named with the old `PERSON-` prefix is an ordinary document. A profile with an error is left out of the site; with `"fail_on_invalid": true` the build stops.
 
 | Code | Level | Meaning | What to do |
 |---|---|---|---|
@@ -84,7 +84,6 @@ A profile is a source whose file name starts with `PROFILE-`: it describes one v
 | `PROFILE_INVALID` | error | The title of the profile is not one name (it has a comma, which splits values, so `# Doe, Jane` could never match); a `PROFILE-` file has no `ProfileOf`; or `ProfileOf` names a property that cannot have profiles (a date, `Title`, an ignored property, `Alias`, `ProfileOf`) | Write one name without a comma, and add `ProfileOf` with the property the profile describes |
 | `PROFILE_DUPLICATE` | error | Two profiles claim the same name or alias for the same property. The first file in name order is kept | Keep one profile per person; move the extra spellings to its `Alias` key |
 | `PROFILE_ALIAS_IS_NAME` | error | An `Alias` of one profile is the name of another profile of the same property. The profile with the alias is left out | Remove the alias, or merge the two profiles |
-| `PROFILE_PERSON_PREFIX` | warning | A profile file starts with the old `PERSON-` prefix. It still works as a profile of `Author` | Rename it to `PROFILE-<name>.md` and add `ProfileOf: Author` |
 | `PROFILE_KEY_UNUSED` | warning | `ProfileOf` names a property that no document uses and `profiles` in `repo.json` does not list, such as `ProfileOf: Jane Doe` written instead of `ProfileOf: Author`. The profile is built, but no page shows it | Write the property in `ProfileOf`, such as `ProfileOf: Author` |
 | `PEOPLE_BLOCK_DEPRECATED` | warning | `repo.json` has the old `people` block. It is read as the `Author` entries of `profiles` | Move it to `profiles`, see [Profiles](reference-repo-json.md#people) |
 | `PEOPLE_BLOCK_IGNORED` | warning | `repo.json` has both `profiles` and the old `people` block. `people` is not read | Move what `people` says into `profiles` and remove it |

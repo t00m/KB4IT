@@ -190,11 +190,11 @@ The profile describes a value in a way KB4IT cannot use. `PROFILE_INVALID`: the 
 
 Write one name as the title of the profile, keep one profile per person, and move other spellings to `Alias`. With `"fail_on_invalid": true` these errors stop the build. See [Describe a person with a profile](howto-describe-person.md).
 
-## kb4it verify lists PROFILE_NO_CONTACT, PROFILE_UNUSED, AUTHOR_NO_PROFILE, VALUE_NO_PROFILE, PROFILE_PERSON_PREFIX or PROFILE_CONTACT_PUBLIC {#profile-notices}
+## kb4it verify lists PROFILE_NO_CONTACT, PROFILE_UNUSED, AUTHOR_NO_PROFILE, VALUE_NO_PROFILE, PROFILE_NO_PREFIX or PROFILE_CONTACT_PUBLIC {#profile-notices}
 
 ### Cause
 
-These are notices; the build goes on. `PROFILE_NO_CONTACT`: the profile has no contact property, or only private ones. `PROFILE_UNUSED`: no document names the person. `AUTHOR_NO_PROFILE`: documents name a person who has no profile; shown once the knowledge base has one profile. `PROFILE_CONTACT_PUBLIC`: the site is indexed by search engines and a profile shows an email address or a phone number. `VALUE_NO_PROFILE`: a value of a property with `"missing": "notice"` has no profile. `PROFILE_PERSON_PREFIX` and `PEOPLE_BLOCK_DEPRECATED`: the old `PERSON-` prefix or `people` block; both still work for this release.
+These are notices; the build goes on. `PROFILE_NO_CONTACT`: the profile has no contact property, or only private ones. `PROFILE_UNUSED`: no document names the person. `AUTHOR_NO_PROFILE`: documents name a person who has no profile; shown once the knowledge base has one profile. `PROFILE_CONTACT_PUBLIC`: the site is indexed by search engines and a profile shows an email address or a phone number. `VALUE_NO_PROFILE`: a value of a property with `"missing": "notice"` has no profile. `PROFILE_NO_PREFIX`: a document is titled like a person that documents name and that has no profile; it may be a profile without the `PROFILE-` prefix, such as a file still named with the old `PERSON-` prefix, which is now an ordinary document. Rename it to `PROFILE-<name>.md` and add `ProfileOf: Author`. `PEOPLE_BLOCK_DEPRECATED`: the old `people` block; it still works for this release.
 
 ### Fix
 

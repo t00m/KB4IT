@@ -214,9 +214,9 @@ def test_a_references_heading_in_a_skeleton_is_scored_under_connected_only(prof,
 
 
 def test_a_link_to_a_profile_is_neither_broken_nor_a_related_document(prof, tmp_path):
-    body = "# T\n\nAsk [Jane](PERSON-JANE.md).\n"
+    body = "# T\n\nAsk [Jane](PROFILE-JANE.md).\n"
     profile_link = quality.DocInput(text=body, meta={}, backlinks=0, known_docs={"a.md"}, source_dir=str(tmp_path),
-                                    profile_docs={"PERSON-JANE.md"})
+                                    profile_docs={"PROFILE-JANE.md"})
     checks = quality.connected(profile_link, prof)
     assert not [c for c in checks if c.key == "check-broken-link"]
     assert next(c for c in checks if c.key == "check-internal-link").points == 0

@@ -53,7 +53,7 @@ Always suggest a filename when producing a document.
 
 A file whose name starts with `PROFILE-` is a profile, not a document. It describes one person that documents name in `Author`, and it gets no page of its own: KB4IT shows it on the person's page.
 
-- Name the file `PROFILE-<NAME>.md`, such as `PROFILE-JANE-DOE.md`. Never give a document this prefix. The old `PERSON-` prefix still works, with a warning.
+- Name the file `PROFILE-<NAME>.md`, such as `PROFILE-JANE-DOE.md`. Never give a document this prefix. The old `PERSON-` prefix no longer makes a profile: such a file is a document.
 - Add `ProfileOf: Author`. `ProfileOf` names the property the profile describes, never the person.
 - The `#` title is the person's name, exactly as documents write it in `Author`, with no comma.
 - `Alias` lists other spellings documents use. Add `Role`, `Team` and at least one contact key: `Email`, `Phone`, `Chat` or `Url`.

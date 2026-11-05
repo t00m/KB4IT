@@ -2,7 +2,7 @@
 
 import pytest
 
-from kb4it.core.people import PeopleSettings, build_people, is_legacy_profile, is_profile
+from kb4it.core.people import PeopleSettings, build_people, is_profile
 
 S = PeopleSettings()
 
@@ -12,9 +12,9 @@ def entry(doc_id, title, **keys):
             f"# {title}\n")
 
 
-def test_profile_prefix_and_legacy_prefix():
-    assert is_profile("PROFILE-SAP-BASIS.md") and is_profile("profile-x.md") and is_profile("PERSON-JANE.md")
-    assert is_legacy_profile("person-jane.md") and not is_legacy_profile("PROFILE-JANE.md")
+def test_profile_prefix_only():
+    assert is_profile("PROFILE-SAP-BASIS.md") and is_profile("profile-x.md")
+    assert not is_profile("PERSON-JANE.md") and not is_profile("person-jane.md")
 
 
 def test_profile_without_profileof_is_invalid():
@@ -23,8 +23,8 @@ def test_profile_without_profileof_is_invalid():
     assert [(p.code, p.detail) for p in problems] == [("PROFILE_INVALID", "ProfileOf is missing")]
 
 
-def test_legacy_profile_defaults_to_the_first_people_key():
-    people, problems = build_people([entry("PERSON-JANE.md", "Jane Doe")], S)
+def test_person_profile_names_its_key():
+    people, problems = build_people([entry("PROFILE-JANE.md", "Jane Doe", ProfileOf="Author")], S)
     assert problems == [] and people.lookup("Jane Doe").keys == ("Author",)
 
 
