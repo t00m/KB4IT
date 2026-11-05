@@ -292,4 +292,4 @@ Each theme reads its own keys as well:
 
 `version` is the version of the application the help describes. apphelp shows it on the home page, next to the pages new in that version, and uses it to name the folder of each version; see [versions](reference-theme-apphelp.md#versions). The value `"kb4it"` stands for the version of the installed KB4IT. The other themes ignore it.
 
-Sample apps from older versions also contain `menu`, `sort`, `timeline` and `webserver`. KB4IT no longer reads them; you can leave them or delete them.
+Sample apps from older versions also contain `menu`, `sort`, `timeline` and `webserver`. KB4IT no longer reads them, except techdoc, which uses `menu` to order the filters of the Gallery and Diagrams pages; you can leave them or delete them.

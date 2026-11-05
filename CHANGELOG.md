@@ -41,6 +41,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Theme READMEs: each one now lists every `config/repo.json` key the theme reads, with its values and default: the required keys, the common keys, the `markdown`, `seo`, `feed`, `profiles` and `dates` blocks, and the keys of the theme itself. The techdoc reference now documents `menu`, which orders the filters of the Gallery and Diagrams pages.
 - techdoc, blog and bookshelf: the browser tab title puts the page first and the site second (`Page title - Site title`), as apphelp already did. The home page shows the site title once. Rebuild with `--force` to update existing sites.
 - techdoc: document tables no longer show a Scope column, even when the `datatable` list of `repo.json` names it. The `default` and `sapbasis` apps drop Scope from `datatable`; Scope stays in the menu and the document page. Rebuild with `--force` to update existing tables.
 - Textual 6.7.0 or later and rich 14.2.0 or later are now required (they were 0.47.0 and 13.0). Mouse selection in the terminal interface needs Textual 2.0, and before 6.7.0 Ctrl+A selected the whole screen instead of the focused log or table. rich 14.2.0 is what Textual 6.7.0 requires.
