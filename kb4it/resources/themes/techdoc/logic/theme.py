@@ -54,11 +54,13 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
     reserved_pages = ('404.md', 'diagrams.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
     properties_cloud = False  # properties.html is a table of the properties
+    datatable_hidden = ('Scope',)  # never a column, even when repo.json lists it
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
-        """Override: document tables leave out the columns that are empty in every row; Date and Title always stay."""
+        """Override: document tables leave out the hidden columns and those empty in every row; Date and Title always stay."""
         if not headers:
             headers = (self.srvbes.get_dict('repo') or {}).get('datatable', list(self.datatable_default_headers))
+        headers = [key for key in headers if key not in self.datatable_hidden]
         docs = [d for d in doclist or [] if not self.srvdtb.is_system(d)]
         if docs:
             quality = bool(self.ensure_quality())
