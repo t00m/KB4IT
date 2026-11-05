@@ -4,7 +4,7 @@
 <head>
   <!-- PAGE METADATA :: START -->
   <meta charset="UTF-8">
-  <title>${var['repo']['title']} - ${var['page']['title']}</title>
+  <title>${var['repo']['title'] if var['page']['title'] in ('', var['repo']['title']) else var['page']['title'] + ' - ' + var['repo']['title']}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="KB4IT ${var['env']['APP']['build_version']}; ${var['theme'].get('identity', '')}">
   <!-- PAGE METADATA :: END -->
