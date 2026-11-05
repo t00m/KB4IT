@@ -49,6 +49,16 @@ def _start_tags(page):
         yield match.group(1).lower(), [m.group(1).lower() for m in ATTRIBUTE.finditer(match.group(2))], match.group(0)
 
 
+@pytest.mark.parametrize("theme", ["techdoc", "blog", "bookshelf"])
+def test_page_title_comes_before_the_site_title(sites, theme):
+    page = next(p for p in sites[theme] if p.stem == "cor07")
+    title = re.search(r"<title>([^<]*)</title>", page.read_text(encoding="utf-8")).group(1)
+    assert title.startswith("Real title - "), title
+    index = (sites[theme][0].parent / "index.html").read_text(encoding="utf-8")
+    site_title = title.removeprefix("Real title - ")
+    assert f"<title>{site_title} - " not in index  # the home page names the site once
+
+
 @pytest.mark.parametrize("theme", THEMES)
 def test_no_empty_target_and_no_duplicate_attribute(sites, theme):
     problems = []
