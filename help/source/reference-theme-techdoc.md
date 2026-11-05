@@ -285,7 +285,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | `toc_sidebar` | `false` | Second table of contents in a right column, with Expand all and Collapse all buttons, for documents with four or more sections on screens 1400 pixels or wider. It wins over `toc_sidebar` in `theme.json` |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
-The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status, Scope and Topic, and lists every work type and category in `events`.
+The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`. Document tables never show a Scope column, even when `datatable` lists it.
 
 The document page reads these keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
 

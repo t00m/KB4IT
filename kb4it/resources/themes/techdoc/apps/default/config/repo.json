@@ -7,7 +7,6 @@
         "WorkType",
         "Priority",
         "Status",
-        "Scope",
         "Topic"
     ],
     "events": [

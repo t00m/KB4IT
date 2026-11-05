@@ -49,6 +49,7 @@ def site(tmp_path_factory):
     cfg = repo / "config" / "repo.json"
     conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf["admin"] = True
+    conf["datatable"] = [k for k in conf["datatable"] if k != "Scope"] + ["Scope"]  # an older repo.json: techdoc must still hide the column
     cfg.write_text(json.dumps(conf), encoding="utf-8")
     for name, text in PAGES.items():
         (repo / "source" / name).write_text(text, encoding="utf-8")
@@ -316,6 +317,15 @@ def test_document_tables_hide_columns_empty_in_every_row(site):
     # Category_Note lists only undated.md: no WorkType, Priority, Status or Scope; Date and Title always stay.
     assert _headers(read(site, "Category_Note.html")) == ["Date", "Title", "Category"]
     assert "WorkType" in _headers(read(site, "Category_Record.html"))
+
+
+def test_document_tables_never_show_scope(site):
+    # change.md sets Scope and the fixture lists it in "datatable"; the shipped apps no longer list it.
+    for app in ("default", "sapbasis"):
+        conf = json.loads((ROOT / f"kb4it/resources/themes/techdoc/apps/{app}/config/repo.json").read_text(encoding="utf-8"))
+        assert "Scope" not in conf["datatable"], app
+    for name in ("all.html", "Category_Change.html", "Scope_Infrastructure.html"):
+        assert "Scope" not in _headers(read(site, name)), name
 
 
 def test_open_items_and_activity_are_two_sections_one_above_the_other(site):
