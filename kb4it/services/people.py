@@ -8,7 +8,7 @@ People service: the author profiles of a build and the pages they rebuild (see c
 """
 
 from kb4it.core.dateclass import date_key_names
-from kb4it.core.people import (RESERVED_KEYS, PeopleSettings, build_people, is_legacy_profile, person_page,
+from kb4it.core.people import (RESERVED_KEYS, PeopleSettings, build_people, person_page,
                                person_status, person_tip, profile_hash)
 from kb4it.core.util import valid_filename
 from kb4it.core.log import q
@@ -43,9 +43,6 @@ class PeopleMixin:
     def load_people(self, profiles) -> None:
         """Profiles into srvdtb.people and kbdict["profiles"]; a bad one is left out like an invalid document."""
         settings = getattr(self.srvbes, "people", None) or PeopleSettings()
-        for doc_id, _keys, _text in profiles:
-            if is_legacy_profile(doc_id):
-                self.log.warning(f"[PEOPLE] PROFILE_PERSON_PREFIX doc={q(doc_id)} hint=rename to PROFILE- and add ProfileOf")
         people, problems = build_people(profiles, settings, refused_keys(self.srvbes.get_dict("repo") or {}))
         for problem in problems:
             self.log.error(f"[PEOPLE] {problem.code} doc={q(problem.doc_id)} detail={q(problem.detail)}")

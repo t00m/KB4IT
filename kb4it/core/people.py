@@ -20,10 +20,8 @@ from kb4it.core.mdlinks import document_body
 from kb4it.core.structured import CORE_KEYS, check_person_target
 
 # A source whose file name starts with PROFILE- (any case) is a profile. Its title is the value it
-# describes, ProfileOf the key of that value, Alias the other spellings documents use. PERSON- is the
-# old prefix, read as a profile of the first people key for one release.
+# describes, ProfileOf the key of that value, Alias the other spellings documents use.
 PROFILE_PREFIX = "PROFILE-"
-LEGACY_PREFIX = "PERSON-"
 RESERVED_KEYS = ("Alias", "ProfileOf")
 PEOPLE_GROUP = "\x00people"  # the group of every people key: they share person profiles
 PEOPLE_KEYS = ("keys", "contact_keys", "private", "map")
@@ -165,27 +163,19 @@ class People:
 
 
 def is_profile(doc_id: str) -> bool:
-    """True for a profile: its file name starts with PROFILE- or the old PERSON-, in any case."""
-    return os.path.basename(doc_id).upper().startswith((PROFILE_PREFIX, LEGACY_PREFIX))
-
-
-def is_legacy_profile(doc_id: str) -> bool:
-    """True for a profile named with the old PERSON- prefix."""
-    return os.path.basename(doc_id).upper().startswith(LEGACY_PREFIX)
+    """True for a profile: its file name starts with PROFILE-, in any case."""
+    return os.path.basename(doc_id).upper().startswith(PROFILE_PREFIX)
 
 
 def _clean(values) -> list[str]:
     return [str(value).strip() for value in values or [] if str(value).strip()]
 
 
-def _profile_keys(doc_id: str, keys: dict[str, list[str]], settings: PeopleSettings,
-                  refused: frozenset[str]) -> tuple[tuple[str, ...], str]:
+def _profile_keys(keys: dict[str, list[str]], refused: frozenset[str]) -> tuple[tuple[str, ...], str]:
     """(ProfileOf keys, reason it is invalid or '')."""
     targets = tuple(dict.fromkeys(_clean(keys.get("ProfileOf"))))
     if not targets:
-        # Only a PROFILE- file must say its key; a PERSON- file is a person, as before.
-        new = os.path.basename(doc_id).upper().startswith(PROFILE_PREFIX)
-        return ((), "ProfileOf is missing") if new else ((settings.keys[0],), "")
+        return (), "ProfileOf is missing"
     bad = next((key for key in targets if key in refused or key in RESERVED_KEYS), None)
     return (targets, f"ProfileOf names {bad}, which cannot have profiles") if bad else (targets, "")
 
@@ -206,7 +196,7 @@ def build_people(entries: Iterable[tuple[str, dict[str, list[str]], str]], setti
         if "," in person or not valid_filename(person):
             problems.append(ProfileProblem("PROFILE_INVALID", doc_id, "the title must be one name, without a comma"))
             continue
-        targets, reason = _profile_keys(doc_id, keys, settings, refused)
+        targets, reason = _profile_keys(keys, refused)
         if reason:
             problems.append(ProfileProblem("PROFILE_INVALID", doc_id, reason))
             continue

@@ -80,7 +80,7 @@ def test_extension_records_bare_links_without_rewriting():
 
 def test_redirected_link():
     md = markdown.Markdown(extensions=[MdLinkExtension()])
-    md.kb4it_redirects = {"PERSON-JANE.md": "Author_Jane_Doe.html"}
-    html = md.convert("[Jane](PERSON-JANE.md#team) and [b](b.md)")
+    md.kb4it_redirects = {"PROFILE-JANE.md": "Author_Jane_Doe.html"}
+    html = md.convert("[Jane](PROFILE-JANE.md#team) and [b](b.md)")
     assert 'href="Author_Jane_Doe.html#team"' in html and 'href="b.html"' in html
-    assert md.kb4it_links == [("PERSON-JANE.md", "team"), ("b.md", "")]
+    assert md.kb4it_links == [("PROFILE-JANE.md", "team"), ("b.md", "")]

@@ -40,7 +40,7 @@ Runs the SAP Basis on-call rota. Ask her about system copies and kernel upgrades
 
 The title holds one name without a comma. A comma splits `Author` values, so a profile titled `# Doe, Jane` could never match and is left out with `PROFILE_INVALID`.
 
-Files named with the old `PERSON-` prefix still work as profiles of `Author`, with a `PROFILE_PERSON_PREFIX` warning. A file without either prefix is always a document, whatever its properties. `Person` is an ordinary property there, such as the people a change involves.
+A file without the `PROFILE-` prefix is always a document, whatever its properties. That includes files named with the old `PERSON-` prefix: rename them to `PROFILE-<name>.md` and add `ProfileOf: Author`. `kb4it verify` lists such a file as `PROFILE_NO_PREFIX` when documents name the person in its title. `Person` is an ordinary property there, such as the people a change involves.
 
 With the editor on, the person's page has a **Create profile** button that opens this skeleton with the name filled in and proposes the file name `profile-jane-doe.md`, or **Edit profile** when the profile exists.
 

@@ -1,4 +1,4 @@
-"""Profiles of any key in a build: Team profiles, the PERSON- and people fallbacks, links and rebuilds."""
+"""Profiles of any key in a build: Team profiles, the people fallback, the PERSON- prefix gone, links and rebuilds."""
 
 import json
 import re
@@ -28,11 +28,12 @@ def test_profile_without_profileof_is_left_out(tmp_path, home):
     assert "PROFILE_INVALID doc=PROFILE-X.md detail=\"ProfileOf is missing\"" in result.stdout
 
 
-def test_person_prefix_warns_and_still_works(tmp_path, home):
+def test_person_prefix_is_a_document(tmp_path, home):
     repo, _, result = _build(tmp_path, home, {"a.md": page("A", Author="Jane Doe", Tag="x"),
                                               "PERSON-JANE.md": page("Jane Doe", Email="j@example.org")})
-    assert result.returncode == 0 and "PROFILE_PERSON_PREFIX doc=PERSON-JANE.md" in result.stdout
-    assert "j@example.org" in (repo / "target" / "Author_Jane_Doe.html").read_text(encoding="utf-8")
+    assert result.returncode == 0, result.stdout
+    assert "PROFILE_PERSON_PREFIX" not in result.stdout and "[PEOPLE] LOADED profiles=0" in result.stdout
+    assert (repo / "target" / "PERSON-JANE.html").exists()
 
 
 def test_link_to_a_team_profile_leads_to_the_team_page(tmp_path, home):

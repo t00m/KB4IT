@@ -17,7 +17,7 @@ from kb4it.core.exceptions import ConfigError, KB4ITError
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.paths import resolve_repo_path
-from kb4it.core.people import build_people, is_legacy_profile, is_profile, named_people, notices
+from kb4it.core.people import build_people, is_profile, named_people, notices
 from kb4it.core.profiles import key_notices, load_profiles, people_settings
 from kb4it.core.dateclass import date_reserved_names, load_dates
 from kb4it.core.daterules import resolve_dates
@@ -209,8 +209,7 @@ class VerifyMixin:
                 named[name] = named.get(name, 0) + 1
         errors = [f"{p.code} doc={p.doc_id} detail={p.detail}" for p in problems]
         found = notices(people, named, settings, indexed)
-        found["warning"] += config + [f"PROFILE_PERSON_PREFIX doc={name}" for name, _k, _t in entries
-                                      if is_legacy_profile(name)]
+        found["warning"] += config
         found["information"] += key_notices(people, documents, profiles)
         # A document titled like a person without a profile may be a profile that lost its PROFILE- prefix.
         for doc, keys in attributes.items():
