@@ -283,6 +283,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | `admin` | `false` | Builds the backup page, see below |
 | `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
 | `toc_sidebar` | `false` | Second table of contents in a right column, with Expand all and Collapse all buttons, for documents with four or more sections on screens 1400 pixels or wider. It wins over `toc_sidebar` in `theme.json` |
+| `menu` | `[]` | Order of the property buttons on the Gallery and Diagrams pages: listed keys first, the rest by name. The navigation menu is built from the properties the documents use |
 | `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
 
 The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`. Document tables never show a Scope column, even when `datatable` lists it.
