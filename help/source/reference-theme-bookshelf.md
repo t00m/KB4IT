@@ -73,11 +73,16 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 
 ## Settings {#settings}
 
-| Key | Default | Meaning |
-|---|---|---|
-| `editor` | `false` | `true` builds the Add page. The skeleton is `CHAPTER-SKELETON.md` (`Author`, `Book`, `Part`, `Chapter`, `Date`, `Status`); put your own in `templates/skeletons/` of the repository overrides to replace it |
-| `datatable` | `["Date", "Title", "Chapter"]` | Columns of the document tables |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `editor` | `true`, `false` | `false` | `true` builds the Add page. The skeleton is `CHAPTER-SKELETON.md` (`Author`, `Book`, `Part`, `Chapter`, `Date`, `Status`); put your own in `templates/skeletons/` of the repository overrides to replace it |
+| `datatable` | List of property names | `["Date", "Title", "Chapter"]` | Columns of the document tables |
+| `git` | `true`, `false` | `false` | Edit links to your git server; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
+| `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links |
+| `git_user` | Text | | User or organisation on the git server |
+| `git_repo` | Text | | Repository name |
+| `git_branch` | Text | | Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Folder that holds the documents; empty for the repository root |
 
 The `default` app has five sample chapters in two books, `Sample Book` and `Linux Basics`.
 

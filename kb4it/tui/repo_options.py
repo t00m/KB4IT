@@ -15,7 +15,7 @@ from importlib import resources
 from pathlib import Path
 
 # Sections of reference-repo-json.html that describe repo.json keys.
-_COMMON_SECTIONS = ("required", "optional", "markdown", "people", "seo", "feed")
+_COMMON_SECTIONS = ("required", "optional", "markdown", "people", "dates", "seo", "feed")
 # A code sample right before a table names the block its keys live in: "seo": {...
 _BLOCK = re.compile(r'^\s*"([A-Za-z_]+)"\s*:\s*\{')
 
@@ -26,6 +26,7 @@ class RepoOption:
     default: str
     meaning: str
     group: str  # where it comes from: Common or the theme name
+    values: str = ""  # the values the key accepts, from the Values column
 
 
 def help_dir() -> Path:
@@ -92,17 +93,18 @@ def _read_tables(tree, sections: tuple[str, ...], group: str) -> list[RepoOption
         if previous is not None and "theme.json" in _text(previous):
             continue  # keys of the theme's theme.json, not of repo.json
         block = _block_of(element)
-        if block == "profiles":
-            block = "profiles.<Property>"
+        if block in ("profiles", "dates"):
+            block = f"{block}.<Property>"
         for row in element.iter("tr"):
             cells = [_text(td) for td in row.findall("td")]
             if not cells:
                 continue
-            default = cells[1] if len(heads) == 3 else ""
+            default = cells[heads.index("Default")] if "Default" in heads else ""
+            values = cells[heads.index("Values")] if "Values" in heads else ""
             # A row may say its key sits at the top level even inside a block's table (apphelp editor).
             prefix = "" if cells[-1].startswith("Top-level key") else block
             for key in _keys(cells[0]):
-                options.append(RepoOption(f"{prefix}.{key}" if prefix else key, default, cells[-1], group))
+                options.append(RepoOption(f"{prefix}.{key}" if prefix else key, default, cells[-1], group, values))
     return options
 
 
