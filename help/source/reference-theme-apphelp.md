@@ -77,19 +77,27 @@ The `apphelp` block of `repo.json`:
 }
 ```
 
-| Key | Meaning |
-|---|---|
-| `strict` | `true` by default: metadata problems and help ids pointing nowhere fail the build |
-| `lang` | Language of the pages; without it, `seo.lang` of [repo.json](reference-repo-json.md#seo), else `en` |
-| `accent` | Accent colour |
-| `about` | `true` adds an about page |
-| `contract` | A file listing, one per line, the help ids and anchors the application opens; a missing one fails the build |
-| `vocabulary` | Allowed values per property |
-| `labels` | Your own texts for the interface |
-| `editor` | Top-level key of `repo.json`, not of the `apphelp` block. `true` builds `add.html` and the **Add a page** link in the sidebar; `false` by default; see [Add page and editor](#editor) |
-| `versions` | `{"enabled": true}` keeps one folder per version of the help; see [versions](#versions) |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `strict` | `true`, `false` | `true` | Metadata problems and help ids pointing nowhere fail the build |
+| `lang` | Language tag, such as `en`, `es` or `pt-BR` | `seo.lang`, else `en` | Language of the pages; without it, `seo.lang` of [repo.json](reference-repo-json.md#seo), else `en` |
+| `accent` | Hex colour: `#rgb`, `#rgba`, `#rrggbb` or `#rrggbbaa` | `#3584e4` | Accent colour; any other value falls back to the default |
+| `about` | `true`, `false` | `false` | `true` adds an about page |
+| `contract` | File path | `config/contract.txt` | A file listing, one per line, the help ids and anchors the application opens; a missing one fails the build |
+| `vocabulary` | Object: property name to list of values | `{}` | Allowed values per property. `Feature` is required while `strict` is on; `Level` and `Platform` are checked only when listed |
+| `labels` | Object: label name to text | English texts | Your own texts for the interface, see below |
+| `versions.enabled` | `true`, `false` | `false` | Keeps one folder per version of the help; see [versions](#versions) |
+| `versions.latest` | A version | the highest version | Version the site root and `latest/` point to |
+| `version` | Text, or `"kb4it"` for the installed KB4IT version | | Top-level key of `repo.json`, not of the `apphelp` block. Version of the application the help describes; see [versions](#versions) |
+| `editor` | `true`, `false` | `false` | Top-level key of `repo.json`, not of the `apphelp` block. `true` builds `add.html` and the **Add a page** link in the sidebar; see [Add page and editor](#editor) |
+| `git` | `true`, `false` | `false` | Top-level key of `repo.json`, not of the `apphelp` block. Edit links; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
+| `git_server` | Host name without scheme, such as `github.com` | | Top-level key of `repo.json`, not of the `apphelp` block. Git server of the edit links; KB4IT adds `https://` |
+| `git_user` | Text | | Top-level key of `repo.json`, not of the `apphelp` block. User or organisation on the git server |
+| `git_repo` | Text | | Top-level key of `repo.json`, not of the `apphelp` block. Repository name |
+| `git_branch` | Text | | Top-level key of `repo.json`, not of the `apphelp` block. Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Top-level key of `repo.json`, not of the `apphelp` block. Folder that holds the pages; empty for the repository root |
 
-The `labels` object renames the texts of the interface. Besides the labels for the search, the sidebar and the types of document, `add` sets the sidebar link to the Add page (default "Add a page"). Unknown label names are ignored.
+The `labels` object renames the texts of the interface. Besides the labels for the search, the sidebar and the types of document, `add` sets the sidebar link to the Add page (default "Add a page"). Unknown label names are ignored. The label names are `home`, `menu`, `breadcrumb`, `search`, `search_placeholder`, `filters`, `results`, `no_results`, `topics`, `add`, `topics_intro`, `on_this_page`, `previous`, `next`, `related`, `edit`, `updated`, `built_with`, `theme_toggle`, `skip`, `new_in`, `plugin`, `copy`, `copied`, `go_title`, `go_unknown`, `not_found_title`, `not_found_text`, `ts_cause`, `ts_fix`, `doctypes`, `doctype_tutorial`, `doctype_howto`, `doctype_reference`, `doctype_explanation`, `doctype_tutorial_title`, `doctype_howto_title`, `doctype_reference_title`, `doctype_explanation_title`, `doctype_tutorial_desc`, `doctype_howto_desc`, `doctype_reference_desc`, `doctype_explanation_desc`, `facet_DocType`, `facet_Feature`, `facet_Level`, `facet_Platform`, `facet_Plugin` and `facet_Since`.
 
 ## Add page and editor {#editor}
 

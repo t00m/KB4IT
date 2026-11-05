@@ -92,6 +92,21 @@ def test_apphelp_block_and_its_top_level_key():
     assert "apphelp.editor" not in keys
 
 
+def test_every_setting_has_its_values_and_default():
+    """The help tables carry a Values column; the reference reads it next to the Default column."""
+    for theme in ("techdoc", "blog", "bookshelf", "apphelp"):
+        options = theme_options(theme)[0]
+        missing = [option.key for option in options if not option.values]
+        assert not missing, (theme, missing)
+    keys = {option.key: option for option in theme_options("techdoc")[0]}
+    assert keys["markdown.highlight"].values == "client, pygments, none"
+    assert keys["markdown.highlight"].default == "client"
+    assert keys["quality"].values == "true, false" and keys["quality"].default == "true"
+    apphelp = {option.key: option for option in theme_options("apphelp")[0]}
+    assert apphelp["apphelp.versions.enabled"].default == "false"
+    assert apphelp["apphelp.accent"].default == "#3584e4"
+
+
 def test_theme_without_a_help_page_gets_the_common_settings():
     options, has_page = theme_options("mytheme")
     assert not has_page

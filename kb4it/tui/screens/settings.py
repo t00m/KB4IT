@@ -97,6 +97,8 @@ class SettingsReferenceScreen(Screen):
         option = self._shown[row]
         value = current_value(self._repo, option.key)
         lines = [Text(option.key, style="bold"), Text(option.meaning)]
+        if option.values:
+            lines.append(Text(f"Values: {option.values}", style="dim"))
         lines.append(Text(f"Default: {option.default or 'none'}", style="dim"))
         lines.append(Text(f"This project: {value if value is not None else 'not set'}", style="dim"))
         detail.update(Text("\n").join(lines))

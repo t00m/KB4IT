@@ -25,12 +25,12 @@ Each knowledge base has its settings in `config/repo.json`. `kb4it create` write
 
 ## Required {#required}
 
-| Key | Meaning |
-|---|---|
-| `title` | Name of the site, shown in the header and the browser tab |
-| `theme` | Theme name, see [Themes](explanation-themes.md) |
-| `source` | Folder with the documents |
-| `target` | Folder where the website is written |
+| Key | Values | Meaning |
+|---|---|---|
+| `title` | Text | Name of the site, shown in the header and the browser tab |
+| `theme` | `techdoc`, `blog`, `bookshelf`, `apphelp`, or the name of a theme of your own | Theme name, see [Themes](explanation-themes.md) |
+| `source` | Folder path | Folder with the documents |
+| `target` | Folder path | Folder where the website is written |
 
 A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 
@@ -40,32 +40,38 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 
 ## Optional {#optional}
 
-| Key | Default | Meaning |
-|---|---|---|
-| `tagline` | | Short subtitle |
-| `logo`, `logo_alt` | theme logo | Logo image, relative to the website, and its text for screen readers; empty uses the site `title`. The logo is also the favicon of every page; without `logo`, the page uses the theme's own logo |
-| `workers` | half the processor cores | Documents converted at the same time |
-| `force` | `false` | Rebuild everything on every build, like `--force` |
-| `ignored_keys` | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
-| `publish_sources` | `true` | Copy the `.md` files to the website, in `target/sources/` |
-| `fail_on_invalid` | `false` | Stop the build when a document cannot be read |
-| `theme_path` | | Use the theme in this folder instead of searching by name |
-| `site_url` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
-| `seo` | | Language of the pages and structured data for search engines; see [structured data](#seo) |
-| `profiles` | `Author` as a person | Which properties have profiles and what their profiles do; see [profiles](#people) |
-| `profiles_private` | `[]` | Profile properties kept out of the pages and the structured data; see [profiles](#people) |
-| `people` | | Old form of `profiles`, still read for this release; see [profiles](#people) |
-| `timezone` | the computer's zone | Time zone of every date written without an offset, an IANA name such as `Europe/Madrid`; see [dates](#dates) |
-| `dates` | | More properties to read as dates; see [dates](#dates) |
-| `og_image` | | Image shown when a page is shared on social networks, a path inside the website such as `resources/share.png`; needs `site_url` |
-| `sitemap` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one. See [Search engines](#indexing) for `seo.index` |
-| `backlinks` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
-| `feed` | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
-| `hooks` | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
-| `overrides` | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
-| `search` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
-| `editor` | techdoc: on; blog, bookshelf, apphelp: off | Add page (`add.html`) with a Markdown editor for new documents. `true` or `false`; any other value stops the build. `false` removes the page and the link to it |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | `false` | Edit links to your git server; see each theme for the format. They appear only with `"git": true` and `git_server`, `git_user`, `git_repo` and `git_branch` all set; `git_path` may stay empty |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `tagline` | Text | | Short subtitle |
+| `logo` | Path inside the website | theme logo | Logo image, relative to the website. The logo is also the favicon of every page; without `logo`, the page uses the theme's own logo |
+| `logo_alt` | Text | | Text of the logo for screen readers; empty uses the site `title` |
+| `workers` | Integer, 1 or more | half the processor cores | Documents converted at the same time |
+| `force` | `true`, `false` | `false` | Rebuild everything on every build, like `--force` |
+| `ignored_keys` | List of property names | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
+| `publish_sources` | `true`, `false` | `true` | Copy the `.md` files to the website, in `target/sources/` |
+| `fail_on_invalid` | `true`, `false` | `false` | Stop the build when a document cannot be read |
+| `theme_path` | Folder path | | Use the theme in this folder instead of searching by name |
+| `site_url` | URL ending in `/` | | Public address of the site, such as `https://me.github.io/kb/`. Needed for `sitemap.xml`, the feed and canonical links; changing it rebuilds every page |
+| `seo` | Object | | Language of the pages and structured data for search engines; see [structured data](#seo) |
+| `profiles` | Object: property name to settings | `Author` as a person | Which properties have profiles and what their profiles do; see [profiles](#people) |
+| `profiles_private` | List of profile properties | `[]` | Profile properties kept out of the pages and the structured data; see [profiles](#people) |
+| `people` | Object | | Old form of `profiles`, still read for this release; see [profiles](#people) |
+| `timezone` | IANA zone name, such as `Europe/Madrid` | the computer's zone | Time zone of every date written without an offset; see [dates](#dates) |
+| `dates` | Object: property name to settings | | More properties to read as dates; see [dates](#dates) |
+| `og_image` | Path inside the website | | Image shown when a page is shared on social networks, such as `resources/share.png`; needs `site_url` |
+| `sitemap` | `true`, `false` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one. See [Search engines](#indexing) for `seo.index` |
+| `backlinks` | `true`, `false` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
+| `feed` | Object | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
+| `hooks` | Path to a Python file | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
+| `overrides` | Folder path | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
+| `search` | `true`, `false` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
+| `editor` | `true`, `false` | techdoc: on; blog, bookshelf, apphelp: off | Add page (`add.html`) with a Markdown editor for new documents. Any other value stops the build. `false` removes the page and the link to it |
+| `git` | `true`, `false` | `false` | Edit links to your git server. They appear only with `"git": true` and `git_server`, `git_user`, `git_repo` and `git_branch` all set |
+| `git_server` | Full URL such as `https://github.com`; a host name such as `github.com` in apphelp | | Git server of the edit links |
+| `git_user` | Text | | User or organisation on the git server |
+| `git_repo` | Text | | Repository name |
+| `git_branch` | Text | | Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Folder that holds the documents; may stay empty for the repository root |
 
 ## Markdown {#markdown}
 
@@ -80,14 +86,14 @@ The optional `markdown` block adds python-markdown extensions to the built-in on
 }
 ```
 
-| Key | Default | Meaning |
-|---|---|---|
-| `extensions` | `[]` | Extension names, as python-markdown expects them. Extensions that ship with python-markdown work right away; others must be installed where KB4IT runs |
-| `extension_configs` | `{}` | Settings per extension |
-| `highlight` | `client` | How code blocks are coloured: `client` (highlight.js in the browser, as before), `pygments` (at build time, no JavaScript), or `none` |
-| `pygments_style` | `default` | [Pygments style](https://pygments.org/styles/) for light colour schemes, with `pygments` |
-| `pygments_style_dark` | `monokai` | Pygments style for dark colour schemes, with `pygments` |
-| `sanitize` | `false` | `true` removes scripts, event handlers, `javascript:` links and any other markup Markdown does not make from each document. Needs nh3, part of the extras. See [Raw HTML](reference-document-format.md#raw-html) |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `extensions` | List of extension names | `[]` | Extension names, as python-markdown expects them. Extensions that ship with python-markdown work right away; others must be installed where KB4IT runs |
+| `extension_configs` | Object: extension name to settings | `{}` | Settings per extension |
+| `highlight` | `client`, `pygments`, `none` | `client` | How code blocks are coloured: `client` (highlight.js in the browser, as before), `pygments` (at build time, no JavaScript), or `none` |
+| `pygments_style` | [Pygments style](https://pygments.org/styles/) name | `default` | Style for light colour schemes, with `pygments` |
+| `pygments_style_dark` | Pygments style name | `monokai` | Style for dark colour schemes, with `pygments` |
+| `sanitize` | `true`, `false` | `false` | `true` removes scripts, event handlers, `javascript:` links and any other markup Markdown does not make from each document. Needs nh3, part of the extras. See [Raw HTML](reference-document-format.md#raw-html) |
 
 With `"highlight": "pygments"` the build writes `resources/pygments.css`, and the pages no longer load highlight.js. Code blocks without a language are left plain.
 
@@ -129,13 +135,13 @@ The `profiles` block says what the profiles of each property do:
 "profiles_private": ["Phone"]
 ```
 
-| Setting | Default | Meaning |
-|---|---|---|
-| `type` | `Thing` | schema.org type of the described thing. Properties of type `Person` name people and share person profiles |
-| `contact_keys` | none | Profile properties that tell readers how to reach it |
-| `missing` | `none` | A value without a profile: `penalty` (quality points), `notice` (`VALUE_NO_PROFILE` in `kb4it verify`), `none`. For now only `notice` acts; people keep the techdoc `author_profiles` setting |
-| `tip` | none | Profile properties shown as the tooltip of the value on document pages. Not used yet: people show `Role` and `Team` |
-| `map` | none | Profile property -> schema.org property, with the syntax of `seo.map` |
+| Setting | Values | Default | Meaning |
+|---|---|---|---|
+| `type` | schema.org type, such as `Person` or `Organization` | `Thing` | schema.org type of the described thing. Properties of type `Person` name people and share person profiles |
+| `contact_keys` | List of profile properties | none | Profile properties that tell readers how to reach it |
+| `missing` | `penalty`, `notice`, `none` | `none` | A value without a profile: `penalty` (quality points), `notice` (`VALUE_NO_PROFILE` in `kb4it verify`), `none`. For now only `notice` acts; people keep the techdoc `author_profiles` setting |
+| `tip` | List of profile properties | none | Profile properties shown as the tooltip of the value on document pages. Not used yet: people show `Role` and `Team` |
+| `map` | Object, with the syntax of `seo.map` | none | Profile property -> schema.org property |
 
 Without `profiles`, `Author` is a person with the defaults shown above. The cards of profiles of other properties, such as `Team`, come in a later release; their profiles already load and are checked.
 
@@ -156,12 +162,12 @@ In the structured data, each person is one schema.org `Person`: documents point 
 }
 ```
 
-| Key | Default | Meaning |
-|---|---|---|
-| `keys` | `["Author"]` | Properties whose values are people. The first one names the person's page |
-| `contact_keys` | `["Email", "Phone", "Chat", "Url"]` | Profile properties that tell readers how to reach the person |
-| `private` | `[]` | Profile properties kept out of the pages, the tooltips and the structured data. A private property does not count as a contact detail |
-| `map` | | Adds or changes the schema.org property of a profile property, with the syntax of `seo.map`: `"Property": "schemaProperty"`, `"Property": "schemaProperty:Type"`, or `null` to leave a property out. KB4IT maps `Role` to `jobTitle`, `Team` to `memberOf` (Organization), `Email` to `email`, `Phone` to `telephone`, `Location` to `workLocation` (Place) and `Url` to `url`; `name`, `alternateName` and `description` cannot be mapped |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `keys` | List of property names | `["Author"]` | Properties whose values are people. The first one names the person's page |
+| `contact_keys` | List of profile properties | `["Email", "Phone", "Chat", "Url"]` | Profile properties that tell readers how to reach the person |
+| `private` | List of profile properties | `[]` | Profile properties kept out of the pages, the tooltips and the structured data. A private property does not count as a contact detail |
+| `map` | Object: property to `"schemaProperty"`, `"schemaProperty:Type"` or `null` | | Adds or changes the schema.org property of a profile property, with the syntax of `seo.map`. KB4IT maps `Role` to `jobTitle`, `Team` to `memberOf` (Organization), `Email` to `email`, `Phone` to `telephone`, `Location` to `workLocation` (Place) and `Url` to `url`; `name`, `alternateName` and `description` cannot be mapped |
 
 `Alias` is reserved for profiles and cannot be listed here. A malformed `people` block stops the build with a message naming the entry. Changing `people` rebuilds every page.
 
@@ -175,17 +181,23 @@ These properties are dates: `Date`, `Modified`, `Start`, `End`, `ScheduledStart`
 - `Downtime: Yes` expects `DowntimeStart` and `DowntimeEnd`, inside the scheduled window.
 
 ```json
-"timezone": "Europe/Madrid",
 "dates": {
   "WarrantyStart": {"group": "start"},
   "WarrantyEnd": {"group": "end", "closes": "WarrantyStart"},
   "RenewalDate": {"group": "end"}
-}
+},
+"timezone": "Europe/Madrid"
 ```
+
+| Setting | Values | Default | Meaning |
+|---|---|---|---|
+| `group` | `start`, `end` | | Whether the property opens or closes a period; required |
+| `closes` | A start property | `Date` | The start an end belongs to |
+| `supersedes` | `true`, `false` | `false` | The pair overrides `Start` and `End`, like `ScheduledStart` |
 
 `timezone` is the zone of every date without an offset. Without it, KB4IT uses the zone of the computer that builds the site, so a build on a server in UTC can place an event on another day.
 
-`dates` declares more date properties. `group` is `start` or `end`. `closes` names the start an end belongs to; without it, an end belongs to `Date`. `"supersedes": true` makes a pair override `Start` and `End`, like `ScheduledStart`. A name should end in `Date`, `Start` or `End`.
+`dates` declares more date properties; the table above lists the settings of each entry. A name should end in `Date`, `Start` or `End`.
 
 No date problem stops the build or fails `kb4it verify`: a value KB4IT cannot read is left out, a bad entry in `dates` is ignored, and an unknown `timezone` falls back to the computer's zone. The build log shows each one as `[DATES] <code>`, and `kb4it verify` lists them under "Dates". The codes are `DATE_INVALID`, `DATE_NOT_STANDARD`, `DATE_NOT_START`, `DATE_SUPERSEDED`, `DATE_SUPERSEDE_CONFLICT`, `DATE_END_MISSING`, `DATE_END_BEFORE_START`, `DATE_DOWNTIME_VALUE`, `DATE_DOWNTIME_MISSING`, `DATE_DOWNTIME_UNEXPECTED`, `DATE_DOWNTIME_OUTSIDE`, `DATE_KEY_NAME`, `DATES_BLOCK_INVALID`, `TIMEZONE_INVALID` and `TIMEZONE_UNSET`.
 
@@ -209,13 +221,13 @@ Every page also carries structured data: a [schema.org](https://schema.org/) des
 }
 ```
 
-| Key | Default | Meaning |
-|---|---|---|
-| `lang` | `en` | Language of the pages: `<html lang>` and the structured data. A language tag such as `en`, `es` or `pt-BR`. apphelp's own `apphelp.lang` wins when both are set. A tag with a region (`es-ES`) also gives the Open Graph locale (`es_ES`) |
-| `index` | not set | `true`: search engines may index the site. `false`: they may not. Not set: as `true`, and the build reminds you to decide. See [Search engines](#indexing) |
-| `noindex_keys` | `true` | Asks search engines not to list the pages that only list documents: property, value, event, stats, bookmarks and all-documents pages |
-| `structured_data` | `true` | `false` leaves the JSON-LD out of every page |
-| `map` | | Changes which properties go into the structured data: `"Property": "schemaProperty"`, `"Property": "schemaProperty:Type"` for a typed value, or `null` to leave a property out |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `lang` | Language tag, such as `en`, `es` or `pt-BR` | `en` | Language of the pages: `<html lang>` and the structured data. apphelp's own `apphelp.lang` wins when both are set. A tag with a region (`es-ES`) also gives the Open Graph locale (`es_ES`) |
+| `index` | `true`, `false` | not set | `true`: search engines may index the site. `false`: they may not. Not set: as `true`, and the build reminds you to decide. See [Search engines](#indexing) |
+| `noindex_keys` | `true`, `false` | `true` | Asks search engines not to list the pages that only list documents: property, value, event, stats, bookmarks and all-documents pages |
+| `structured_data` | `true`, `false` | `true` | `false` leaves the JSON-LD out of every page |
+| `map` | Object: property to `"schemaProperty"`, `"schemaProperty:Type"` or `null` | | Changes which properties go into the structured data; `null` leaves a property out |
 
 Properties KB4IT maps by default:
 
@@ -272,12 +284,12 @@ With `site_url` set, the blog theme writes an Atom feed, `feed.xml`, with the ne
 "feed": {"enabled": true, "limit": 20, "categories": ["Post", "Note"], "full_content": true}
 ```
 
-| Key | Default | Meaning |
-|---|---|---|
-| `enabled` | blog `true`, others `false` | Write the feed |
-| `limit` | `20` | Number of entries, newest first |
-| `categories` | all | Only documents with one of these `Category` or `WorkType` values |
-| `full_content` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `enabled` | `true`, `false` | blog `true`, others `false` | Write the feed |
+| `limit` | Integer | `20` | Number of entries, newest first |
+| `categories` | List of `Category` or `WorkType` values | all | Only documents with one of these `Category` or `WorkType` values |
+| `full_content` | `true`, `false` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |
 
 Documents without a `Date` are not in the feed.
 
@@ -285,7 +297,7 @@ Documents without a `Date` are not in the feed.
 
 Each theme reads its own keys as well:
 
-- [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`, `quality`, `toc_sidebar`
+- [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`, `quality`, `toc_sidebar`, `menu`
 - [blog](reference-theme-blog.md#settings): `index_posts`, `strict`, `datatable`
 - [bookshelf](reference-theme-bookshelf.md#settings): `datatable`
 - [apphelp](reference-theme-apphelp.md#settings): the `apphelp` block and `version`

@@ -275,16 +275,21 @@ A diagram with an error shows "Mermaid could not draw this diagram" and the firs
 
 Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-repo-json.md):
 
-| Key | Default | Meaning |
-|---|---|---|
-| `datatable` | `["Date", "Title"]` | Columns of the document tables; a column that is empty in every row of a table is left out of it |
-| `events` | `[]` | Work types (or, for documents without one, categories) that count as events |
-| `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
-| `admin` | `false` | Builds the backup page, see below |
-| `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
-| `toc_sidebar` | `false` | Second table of contents in a right column, with Expand all and Collapse all buttons, for documents with four or more sections on screens 1400 pixels or wider. It wins over `toc_sidebar` in `theme.json` |
-| `menu` | `[]` | Order of the property buttons on the Gallery and Diagrams pages: listed keys first, the rest by name. The navigation menu is built from the properties the documents use |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `datatable` | List of property names, plus `Quality` | `["Date", "Title"]` | Columns of the document tables; a column that is empty in every row of a table is left out of it. `Scope` is never shown. `Quality` adds the quality column |
+| `events` | List of `WorkType` values, or `Category` values for documents without one | `[]` | Work types (or, for documents without one, categories) that count as events |
+| `editor` | `true`, `false` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
+| `admin` | `true`, `false` | `false` | Builds the backup page, see below |
+| `quality` | `true`, `false` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
+| `toc_sidebar` | `true`, `false` | `false` | Second table of contents in a right column, with Expand all and Collapse all buttons, for documents with four or more sections on screens 1400 pixels or wider. It wins over `toc_sidebar` in `theme.json` |
+| `menu` | List of property names | `[]` | Order of the property buttons on the Gallery and Diagrams pages: listed keys first, the rest by name. The navigation menu is built from the properties the documents use |
+| `git` | `true`, `false` | `false` | Edit links to your git server; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
+| `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links |
+| `git_user` | Text | | User or organisation on the git server |
+| `git_repo` | Text | | Repository name |
+| `git_branch` | Text | | Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Folder that holds the documents; empty for the repository root |
 
 The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`. Document tables never show a Scope column, even when `datatable` lists it.
 
