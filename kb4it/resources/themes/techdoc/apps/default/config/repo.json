@@ -46,6 +46,5 @@
     "source": "{source_directory}",
     "target": "{target_directory}",
     "theme": "techdoc",
-    "title": "KB4IT",
-    "webserver": false
+    "title": "KB4IT"
 }

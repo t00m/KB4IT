@@ -63,6 +63,5 @@
     "source": "{source_directory}",
     "target": "{target_directory}",
     "theme": "techdoc",
-    "title": "SAP Basis Knowledge Base",
-    "webserver": false
+    "title": "SAP Basis Knowledge Base"
 }

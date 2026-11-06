@@ -24,16 +24,10 @@
         "Tag",
         "Topic"
     ],
-    "sort": "Date",
     "source": "{source_directory}",
     "strict": false,
     "tagline": "My Public Notes",
     "target": "{target_directory}",
     "theme": "blog",
-    "timeline": [
-        "Post",
-        "Note"
-    ],
-    "title": "My Blog",
-    "webserver": false
+    "title": "My Blog"
 }
