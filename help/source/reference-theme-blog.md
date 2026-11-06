@@ -48,7 +48,7 @@ The full text...
 | `events.html` | The archive, by year and month |
 | `all.html` | Every document in a table |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
-| `properties.html` | Every property and its values |
+| `properties.html` | Every property and its values, except those in `hidden_properties` |
 | `stats.html` | Totals, then one card per section with a summary line; its Details button opens the section in a modal: activity (documents per year and per month), property coverage with the most used values, metadata health (similar values, properties used once, documents with little metadata) and links (most linked documents, documents nothing links to) |
 | `feed.xml` | Atom feed of the newest posts, when `site_url` is set; see [feed](reference-repo-json.md#feed) |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search box in the sidebar shows the best matches as you type. See [search](reference-repo-json.md#search) |

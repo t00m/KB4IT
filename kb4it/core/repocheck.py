@@ -85,6 +85,7 @@ def _loaders(repo: dict) -> list[str]:
     from kb4it.core.publish import site_url
     from kb4it.core.structured import load_seo
     from kb4it.services.addpage import check_editor_setting
+    from kb4it.services.database import hidden_properties
 
     def overrides(repo: dict) -> None:
         value = repo.get("overrides", "overrides")
@@ -97,6 +98,7 @@ def _loaders(repo: dict) -> list[str]:
         site_url,
         overrides,
         load_seo,
+        hidden_properties,
         load_profiles,
         lambda repo: load_dates(repo, reserved_names=date_reserved_names(repo)),
     )

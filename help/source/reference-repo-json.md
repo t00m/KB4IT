@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Configuration
 HelpId: repo-json
-Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, index, noindex, noindex_keys, robots, search engines, people, person, profile, Alias, Modified, dateModified, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
+Keyword: settings, config, repo.json, version, sanitize, nh3, title, theme, source, target, workers, ignored_keys, hidden_properties, publish_sources, fail_on_invalid, theme_path, force, search, site_url, sitemap, robots.txt, feed, atom, rss, overrides, hooks, backlinks, linked from, og_image, open graph, description, seo, json-ld, schema.org, structured data, lang, language, index, noindex, noindex_keys, robots, search engines, people, person, profile, Alias, Modified, dateModified, markdown, extensions, pymdownx, highlight, pygments, syntax highlighting
 Level: basic
 Order: 620
 Section: Reference
@@ -48,6 +48,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `workers` | Integer, 1 or more | half the processor cores | Documents converted at the same time |
 | `force` | `true`, `false` | `false` | Rebuild everything on every build, like `--force` |
 | `ignored_keys` | List of property names | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
+| `hidden_properties` | List of property names | `[]` | Properties left out of the properties page; they keep their pages and their menu entry. See [properties](explanation-properties.md#excluded) |
 | `publish_sources` | `true`, `false` | `true` | Copy the `.md` files to the website, in `target/sources/` |
 | `fail_on_invalid` | `true`, `false` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | Folder path | | Use the theme in this folder instead of searching by name |

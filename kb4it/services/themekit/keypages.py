@@ -97,9 +97,10 @@ class KeyPagesMixin(ThemeHost):
         var = self.get_theme_var()
         var['buttons'] = []
         var['keys'] = []
-        ignored_keys = self.srvdtb.get_ignored_keys()
+        # ignored_keys get no pages at all; hidden_properties keep their pages but are not listed here.
+        skipped = set(self.srvdtb.get_ignored_keys()) | set(self.srvdtb.get_hidden_keys())
         for key in self.srvdtb.get_all_keys():
-            if key in ignored_keys:
+            if key in skipped:
                 continue
             values = self.srvdtb.get_all_values_for_key(key)
             docs = {doc for value in values for doc in self.srvdtb.get_docs_by_key_value(key, value)}
