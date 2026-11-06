@@ -45,7 +45,7 @@ A few habits keep the navigation clean:
 - `Title` comes from the `#` heading and is never a property page.
 - `Date` sorts documents and feeds calendars; it has no value pages.
 - Properties listed in `ignored_keys` in `repo.json` stay in the documents but get no pages. Use it for values that are unique per document, such as a ticket number.
-- Properties listed in `hidden_properties` in `repo.json` keep their property and value pages, their menu entry and their links on the document pages; they are only left out of the properties page (`properties.html`). Use it for properties that readers reach from the documents and that would only crowd that page.
+- Properties listed in `hidden_properties` in `repo.json` keep their property and value pages and their links on the document pages; they are only left out of the properties page (`properties.html`) and of the Properties menu of the header. Use it for properties that readers reach from the documents and that would only crowd those lists.
 
 ## Rebuilds follow your properties {#rebuilds}
 
