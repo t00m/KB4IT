@@ -3,11 +3,12 @@ Author: Your name
 Category: Procedure
 Date: 2026-10-03
 DocType: How-to guide
+Periodicity: Daily
 Scope: Infrastructure
 Status: Finished
 Summary: Daily check that every backup job of last night ended well.
 Tag: nightly
-Topic: Backup
+Topic: Backup, Monitoring
 WorkType: Knowledge
 ---
 
