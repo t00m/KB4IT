@@ -125,6 +125,14 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
     color: var(--ink-3); font-size: 0.86rem; box-shadow: var(--sh-1);
 }
 .search:hover { border-color: #d8d3c8; }
+/* The shared search form fills the pill; the pill is the field, so the input has no frame of its own. */
+.search .kb4it-search { flex: 1; display: block; }
+.search .kb4it-search-input {
+    width: 100%; padding: 0; border: 0; border-radius: 0;
+    background: transparent; color: var(--ink); font-size: inherit; outline: none;
+}
+.search .kb4it-search-input::placeholder { color: var(--ink-3); }
+.search:focus-within { border-color: var(--accent); }
 .search .kbd {
     margin-left: auto; font-family: var(--f-mono); font-size: 0.68rem;
     background: var(--surface-2); border: 1px solid var(--line);

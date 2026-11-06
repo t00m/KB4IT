@@ -74,6 +74,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- bookshelf: the search box in the header showed a second, framed field inside the rounded box. The field now fills the box, without a frame of its own.
 - blog: a `repo.json` without `sort`, as the theme README allows, built every post with the plain page body instead of the post layout (header, date, author, tags). The error was caught and hidden. Posts are now always sorted by `Date`.
 - techdoc default sample: the backup check is a daily monitoring document (`Topic: Backup, Monitoring`, `Periodicity: Daily`), so the dashboard always shows it in the Monitoring panel. Before, it only showed in the recent events of the month after its date.
 - The word cloud of a property page now counts the same documents as the table below it. It grouped documents by their file name with the last five characters cut off, a rule left from `.adoc` sources; with `.md` sources, documents such as `note-a1.md` and `note-a2.md` merged into one, and so did documents with the same name in different folders.
