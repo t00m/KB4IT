@@ -215,7 +215,7 @@ A bad entry is ignored and logged under `[DATES]`; it never stops the build.
 `version` is a top-level key. Everything else lives in the `apphelp` block:
 
 ```json
-"version": "0.3",
+"version": "2.1",
 "apphelp": {
     "strict": true,
     "lang": "en",
@@ -228,7 +228,7 @@ A bad entry is ignored and logged under `[DATES]`; it never stops the build.
         "Platform": ["Linux", "Windows"]
     },
     "labels": {"add": "New page"},
-    "versions": {"enabled": true, "latest": "0.3"}
+    "versions": {"enabled": true, "latest": "2.1"}
 }
 ```
 
