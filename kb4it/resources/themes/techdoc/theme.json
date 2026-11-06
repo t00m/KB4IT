@@ -9,7 +9,7 @@
     "search": true,
     "editor": true,
     "feed": false,
-    "kb4it": ">=0.10.0",
+    "kb4it": ">=0.11.0",
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit",

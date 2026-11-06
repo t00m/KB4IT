@@ -50,9 +50,9 @@ def test_thanks_credits_codemirror():
     assert "* CodeMirror (https://codemirror.net, MIT): source editor of the techdoc Add page" in thanks
 
 
-def test_techdoc_requires_0_10():
+def test_techdoc_requires_0_11():
     theme = json.loads((ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "theme.json").read_text(encoding="utf-8"))
-    assert theme["kb4it"] == ">=0.10.0"
+    assert theme["kb4it"] == ">=0.11.0"
 
 
 def test_editor_js_has_no_uikit():
