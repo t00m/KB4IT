@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from tests.helpers import ROOT, page, run_kb4it
+from tests.helpers import ROOT, page, relative_paths, run_kb4it
 from tests.themes.test_techdoc_add import build_techdoc
 
 TODAY = datetime.now()
@@ -236,6 +236,7 @@ def test_admin_backups_follow_changes(site, tmp_path):
     repo = tmp_path / "repo"
     shutil.copytree(site["repo"], repo)
     cfg = repo / "config" / "repo.json"
+    relative_paths(cfg)
     admin = repo / "target" / "admin"
     before = (admin / "kb4it_site.zip").stat().st_mtime_ns
     result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])

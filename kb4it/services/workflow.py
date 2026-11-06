@@ -185,9 +185,10 @@ class Workflow(VerifyMixin, Service):
             config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
-            # Relative to the repository root, so the repository can move and work in CI.
-            repoconf["source"] = "source"
-            repoconf["target"] = "target"
+            # Absolute, so the config works from any folder. A knowledge base kept in git or built
+            # elsewhere (CI) can switch them to "source" and "target", which resolve against its root.
+            repoconf["source"] = os.path.abspath(source_dir)
+            repoconf["target"] = os.path.abspath(target_dir)
             # kb4it create --index yes|no (and the TUI choice): may search engines index the site?
             index = params.get("index")
             if index is not None:

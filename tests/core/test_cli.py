@@ -65,12 +65,12 @@ def test_projects_registry_unreadable(tmp_path, home):
     assert "Error loading projects" in result.stdout
 
 
-def test_create_writes_relative_paths_and_compile_script(tmp_path, home):
+def test_create_writes_absolute_paths_and_compile_script(tmp_path, home):
     result = run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     repo = tmp_path / "repo"
     conf = json.loads((repo / "config" / "repo.json").read_text(encoding="utf-8"))
-    assert (conf["source"], conf["target"]) == ("source", "target")
+    assert (conf["source"], conf["target"]) == (str((repo / "source").resolve()), str((repo / "target").resolve()))
     if sys.platform == "win32":
         assert (repo / "bin" / "compile.cmd").read_text(encoding="utf-8").startswith("@echo off")
     else:

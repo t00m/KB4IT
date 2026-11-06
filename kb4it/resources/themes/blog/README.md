@@ -48,7 +48,7 @@ Every setting lives in `config/repo.json`. `kb4it create` writes a complete one.
 | `source` | Folder path | Folder with your Markdown documents |
 | `target` | Folder path | Folder where the site is written; it must be a folder of its own |
 
-`source` and `target` are relative to the knowledge base folder, the one that holds `config/`. Absolute paths, `~` and `$VARIABLES` also work. A missing key stops the build with `CONFIG_KEY_MISSING`.
+`source` and `target` are relative to the knowledge base folder, the one that holds `config/`. Absolute paths, `~` and `$VARIABLES` also work. `kb4it create` writes absolute paths. When the knowledge base is kept in git or built on another computer, change them to `"source": "source"` and `"target": "target"`. A missing key stops the build with `CONFIG_KEY_MISSING`.
 
 ### Common keys
 

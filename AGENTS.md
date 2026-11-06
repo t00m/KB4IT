@@ -275,7 +275,7 @@ Edit links (`git`, `git_*`) appear only when `git_ready(repo)` is true: `"git": 
 
 `theme_path` (optional) overrides the name-based theme lookup with an explicit directory. When set, `Frontend.theme_search` skips the source-embedded, user-installed, and built-in lookup chain and uses this directory directly; it must contain a valid `theme.json`. Relative values are anchored to the repository root (the parent of the config file's parent), `~` and `$VARS` are expanded, and symlinks are resolved. Intended for applications that embed KB4IT as a library and ship their own theme without installing it under `~/.kb4it/`. The `theme` (name) field is still required and is used for identification and logging.
 
-`source` and `target` are resolved like `theme_path`: relative values are anchored to the repository root (the parent of the config file's parent). If that path does not exist, the old behaviour (relative to the current directory, `PATH_CWD_RELATIVE`) is used as a fallback. `kb4it create` writes `"source"` and `"target"` into `repo.json`.
+`source` and `target` are resolved like `theme_path`: relative values are anchored to the repository root (the parent of the config file's parent). If that path does not exist, the old behaviour (relative to the current directory, `PATH_CWD_RELATIVE`) is used as a fallback. `kb4it create` (CLI and TUI, `Workflow`) writes the absolute paths of `<repo>/source` and `<repo>/target` into `repo.json`; a knowledge base kept in git or built in CI changes them to `"source"` and `"target"` by hand.
 
 `publish_sources` (default `true`): when `false`, the Markdown sources are not copied to the target.
 
