@@ -29,15 +29,16 @@ scripts/release.sh --dry-run                         # See what a release would 
 **Run**
 
 ```bash
-kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app defaults to "default")
-kb4it build <config>                      # Build the site from repo.json (use -f/--force to force recompilation); exits 1 when any page fails
-kb4it serve <config>                      # Build, serve on 127.0.0.1:8642 with live reload, rebuild on change (kb4it/core/serve.py)
+kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app defaults to "default"; --index yes|no writes seo.index)
+kb4it build <config>                      # Build the site from repo.json (-f/--force recompiles everything, --trace writes var/log/trace.json); exits 1 when any page fails
+kb4it serve <config>                      # Build, serve on 127.0.0.1:8642 with live reload, rebuild on change (kb4it/core/serve.py); --host, --port, --open, --no-watch, --no-reload, --interval, -f/--force, --trace
 kb4it info <config>                       # Show repository info
 kb4it themes                              # List installed themes
 kb4it apps <theme>                        # List apps available for a theme
 kb4it projects                            # List all projects created by the user
 kb4it verify <config>                     # Verify sources are KB4IT conformant; exits 1 on any non-conformant file or theme problem
 kb4it doctor                              # Build version, commit, Python, paths, offline help and every theme; exits 1 when a bundled file or theme is missing
+kb4it help [--url | --dismiss]            # Open the offline help (kb4it/core/notice.py); --url prints the online address, --dismiss hides the first-run notice
 ```
 
 **Global flags (before subcommand):**
@@ -265,7 +266,7 @@ Do not confuse with f-string-like `{var}` placeholders -- those are not interpre
 
 Strictly required (validated in `Backend._validate_config`, raises `ConfigError` if missing): `source`, `target`, `theme`, `title`.
 
-Common optional fields used by themes: `tagline`, `sort`, `force`, `workers`, `ignored_keys`, `hidden_properties`, `events`, `logo`, `logo_alt`, `menu`, `datatable`, `webserver`, `admin`, `git`, `git_repo`, `git_server`, `git_user`, `git_branch`, `git_path`.
+Common optional fields used by themes: `tagline`, `force`, `workers`, `ignored_keys`, `hidden_properties`, `events`, `logo`, `logo_alt`, `menu`, `datatable`, `admin`, `git`, `git_repo`, `git_server`, `git_user`, `git_branch`, `git_path`. `sort`, `timeline` and `webserver`, found in old sample apps, are read by nothing.
 
 Core optional fields added in 0.9 (all part of `Processor.signature_parts()`, so changing them rebuilds every page): `markdown` (`extensions`, `extension_configs`, `highlight` = `client`|`pygments`|`none`, `pygments_style`, `pygments_style_dark`, `sanitize`), `search` (themes with `"search": true` in `theme.json`), `site_url`, `sitemap`, `feed` (`enabled`, `limit`, `categories`, `full_content`; themes declare `"feed": true|false` in `theme.json`), `og_image`, `overrides` (default `overrides`), `hooks`, `backlinks`; 0.11 adds `seo` (`lang`, `structured_data`, `map`, `index`, `noindex_keys`) and `people` (`keys`, `contact_keys`, `private`). `kb4it create --index yes|no` (and the TUI "Allow search engines" choice, which is required there) writes `seo.index` into the new `repo.json`, merged with the sample's `seo` block; without it nothing is written and the sample `repo.json` files carry no `seo.index`.
 
