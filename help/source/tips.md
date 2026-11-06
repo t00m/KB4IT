@@ -32,7 +32,7 @@ Add properties such as a ticket number to `ignored_keys`: they stay in the docum
 
 ## Tidy the properties page {#hidden-properties}
 
-Add properties to `hidden_properties` to leave them out of the properties page. Unlike `ignored_keys`, they keep their property and value pages, and the links on each document still lead there. [More](explanation-properties.md#excluded)
+Add properties to `hidden_properties` to leave them out of the properties page and the Properties menu. Unlike `ignored_keys`, they keep their property and value pages, and the links on each document still lead there. [More](explanation-properties.md#excluded)
 
 ## Preview over http {#preview}
 

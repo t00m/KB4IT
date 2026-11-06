@@ -286,9 +286,10 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
         metadata = kbdict["metadata"]
         ignored_keys = set(self.srvdtb.get_ignored_keys())
         blocked_keys = set(self.srvdtb.get_blocked_keys())
+        hidden_keys = set(self.srvdtb.get_hidden_keys())  # repo.json hidden_properties: off the menu too
         used_keys = set(metadata.keys())
         theme_var["kb"]["keys"]["menu"] = sorted(
-            [{"name": k, "href": valid_filename(k)} for k in (used_keys - blocked_keys - ignored_keys)],
+            [{"name": k, "href": valid_filename(k)} for k in (used_keys - blocked_keys - ignored_keys - hidden_keys)],
             key=lambda d: d["name"],
         )
 

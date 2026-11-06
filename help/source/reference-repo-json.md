@@ -48,7 +48,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `workers` | Integer, 1 or more | half the processor cores | Documents converted at the same time |
 | `force` | `true`, `false` | `false` | Rebuild everything on every build, like `--force` |
 | `ignored_keys` | List of property names | `[]` | Properties that get no pages; see [properties](explanation-properties.md#excluded) |
-| `hidden_properties` | List of property names | `[]` | Properties left out of the properties page; they keep their pages and their menu entry. See [properties](explanation-properties.md#excluded) |
+| `hidden_properties` | List of property names | `[]` | Properties left out of the properties page and the Properties menu; they keep their pages. See [properties](explanation-properties.md#excluded) |
 | `publish_sources` | `true`, `false` | `true` | Copy the `.md` files to the website, in `target/sources/` |
 | `fail_on_invalid` | `true`, `false` | `false` | Stop the build when a document cannot be read |
 | `theme_path` | Folder path | | Use the theme in this folder instead of searching by name |
