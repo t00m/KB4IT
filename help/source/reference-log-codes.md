@@ -70,6 +70,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DATE_INVALID` | warning, error | A date value cannot be read as a date. The document is sorted with the undated ones | Use a [date form KB4IT reads](reference-document-format.md#dates) |
 | `DOC_UNDATED` | warning | The blog theme found a post without a `Date` | Add a `Date` property |
 | `LINK_BROKEN` | warning | A link points to a `.md` file that is not in `source/` | See [LINK_BROKEN](troubleshooting.md#link-broken) |
+| `LINK_NO_EXTENSION` | warning | A link names a source document without its `.md` extension, so it stays broken on the site. The line suggests the right link | See [LINK_NO_EXTENSION](troubleshooting.md#link-no-extension) |
 | `ANCHOR_MISSING` | warning | A link points to a section that does not exist | Fix the `#anchor` part of the link |
 | `SCAN_FAIL` | warning | The links of a document cannot be checked. The build goes on | Run `kb4it verify` and look at the document the line names |
 | `MD_FENCE_IN_BLOCK` | warning | A fenced code block sits inside a list or a quote, where plain Markdown does not see it | See [code inside a note or a list](reference-document-format.md#code-in-blocks) |
@@ -137,6 +138,7 @@ A profile is a source whose file name starts with `PROFILE-`: it describes one v
 | `THEME_REQUIREMENT_INVALID` | error | The `kb4it` field of `theme.json` is not a valid version rule. Stops | Write it like `">=0.9"` |
 | `THEME_VERSION_MISSING` | warning | The theme has no `version` in its `theme.json`. It loads and is shown as `unversioned` | Add `"version": "1.0.0"` to its `theme.json` |
 | `THEME_VERSION_INVALID` | warning | The `version` of `theme.json` is not `X.Y.Z`. The theme loads as `unversioned`; from the next minor release this stops the build | Write it like `"1.2.0"` |
+| `IMAGE_MISSING` | warning | techdoc: a document shows an image whose file is not in `source/`. The page shows a grey box with the path | See [IMAGE_MISSING](troubleshooting.md#image-missing) |
 | `QUALITY_SETTING` | warning | techdoc: `author_profiles` in the `quality` block of `theme.json` is not `"auto"`, `true` or `false`. The build uses `"auto"` | Set one of the three values |
 | `THEME_NOT_LOADED` | error | The site was about to be written without a loaded theme. Stops | Report it as a bug |
 | `THEME_AUTOESCAPE_OFF` | warning | Your own theme prints values without escaping them | Add `"autoescape": true` to `theme.json`; see [Escaping](howto-create-theme.md#escaping) |

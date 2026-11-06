@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, --index, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
+Keyword: cli, kb4it, create, --index, build, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -20,7 +20,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it build CONFIG` | Builds the website of the knowledge base whose settings are in `CONFIG` |
 | `kb4it build --force CONFIG` | Rebuilds everything |
 | `kb4it build --trace CONFIG` | Builds and shows how long each part of the build took; see [Build timings](#trace) |
-| `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [Preview while you write](howto-preview.md) |
+| `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [its options](#serve) and [Preview while you write](howto-preview.md) |
 | `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building. It also shows `INDEX_UNSET` while `seo.index` is not set, as information, and checks the [profiles](reference-log-codes.md#people): an error such as `PROFILE_INVALID` fails it, `PROFILE_NO_CONTACT` and `AUTHOR_NO_PROFILE` do not |
 | `kb4it info CONFIG` | Shows the main settings |
 | `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
@@ -53,6 +53,21 @@ Put them before the command.
 | `-h`, `--help` | Prints help; `kb4it build --help` prints help for one command |
 
 `-f` is short for `--force`.
+
+## Options of serve {#serve}
+
+Put them after `serve`, before or after `CONFIG`.
+
+| Option | Does |
+|---|---|
+| `--host ADDRESS` | Address to listen on. Default `127.0.0.1`, this computer only; `0.0.0.0` lets other computers see the preview (`WARNING_PUBLIC`) |
+| `--port PORT` | First port to try. Default `8642`; when it is busy, the next free one is used |
+| `--open` | Opens the site in your browser |
+| `--no-watch` | Serves only; does not rebuild when a file changes |
+| `--no-reload` | Rebuilds, but does not reload pages in the browser |
+| `--interval SECONDS` | Seconds between checks for changes. Default `1.0` |
+| `-f`, `--force` | Rebuilds everything in the first build |
+| `--trace` | Writes `var/log/trace.json` with the timings of each build; see [Build timings](#trace) |
 
 ## Shell completion {#completion}
 

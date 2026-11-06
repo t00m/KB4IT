@@ -16,7 +16,7 @@ Summary: Install KB4IT on Linux, macOS or Windows with uv, pipx, pip, a Linux pa
 - GNU/Linux, macOS 13 or newer, or Windows 10 or 11.
 - Python 3.11 or newer: check with `python3 --version` (on Windows: `py --version`). uv can install Python for you.
 
-Everything else KB4IT needs (Mako, Markdown, PyYAML, lxml, Pillow, Rich and Textual) is installed with it.
+Everything else KB4IT needs (Mako, Markdown, PyMdown Extensions, PyYAML, Pygments, lxml, Pillow, Rich, Textual and argcomplete; tzdata on Windows) is installed with it.
 
 ## Install with uv {#uv}
 
@@ -60,7 +60,7 @@ Each [GitHub release](https://github.com/t00m/KB4IT/releases) has a `.deb` and a
 On Debian 12 or newer and Ubuntu 24.04 or newer:
 
 ```bash
-sudo apt install ./kb4it_0.9.0_amd64.deb
+sudo apt install ./kb4it_X.Y.Z_amd64.deb
 ```
 
 On Fedora, and on RHEL, Rocky Linux and AlmaLinux 9 or newer:
