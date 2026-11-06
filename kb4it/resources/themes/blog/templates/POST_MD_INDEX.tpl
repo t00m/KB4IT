@@ -2,7 +2,7 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    sort_by = 'Date' # var['repo']['sort']
+    sort_by = 'Date'
     # The index repeats this block per post: its ids carry the post name to stay unique.
     pid = valid_filename(var['basename_md']).replace('.', '-')
     timestamp = (var['post'].get(sort_by) or [None])[0]

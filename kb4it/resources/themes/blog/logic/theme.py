@@ -13,7 +13,6 @@ import threading
 from datetime import datetime
 from html import escape
 
-from kb4it.core.env import ENV
 from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
                              get_font_size, get_human_datetime,
                              get_human_datetime_year, guess_datetime,
@@ -401,72 +400,3 @@ class Theme(DocumentTheme):
         var['repo'].setdefault('tagline', '')
         return var
 
-    def check_config(self):
-        go = True
-        repo = self.app.get_repo_config_dict()
-        self.log.debug("[THEME] CONFIG_CHECK_START")
-
-        self.log.info(f"[THEME] CONFIG key=title value='{repo['title']}'")
-        if len(repo['title']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=title reason=empty")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=datatable n={len(repo['datatable'])}")
-        if len(repo['datatable']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=datatable reason=empty")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=events n={len(repo['events'])}")
-        if len(repo['events']) == 0:
-            self.log.error("[THEME] CONFIG_FAIL key=events reason=empty")
-            go = False
-
-        self.log.info(f"[THEME] CONFIG key=git value={q(repo.get('git'))}")
-        if repo.get('git'):
-            git_props = ['git_branch', 'git_path', 'git_repo', 'git_server', 'git_user']
-            for git_prop in sorted(git_props):
-                if len(repo[git_prop]) == 0:
-                    self.log.warning(f"[THEME] CONFIG_FAIL key={q(git_prop)} reason=empty")
-
-        self.log.info(f"[THEME] CONFIG key=ignored_keys n={len(repo['ignored_keys'])}")
-        if len(repo['ignored_keys']) == 0:
-            self.log.warning("[THEME] CONFIG_WARN key=ignored_keys reason=empty")
-
-        self.log.info(f"[THEME] CONFIG key=logo value={q(repo['logo'])}")
-        if not os.path.exists(repo['logo']):
-            self.log.warning(f"[THEME] CONFIG_WARN key=logo reason=missing path={q(repo['logo'])}")
-
-        self.log.info(f"[THEME] CONFIG key=logo_alt value='{repo['logo_alt']}'")
-        if not os.path.exists(repo['logo_alt']):
-            self.log.warning("[THEME] CONFIG_WARN key=logo_alt reason=missing")
-
-        self.log.info(f"[THEME] CONFIG key=menu n={len(repo['menu'])}")
-        if len(repo['menu']) == 0:
-            self.log.warning("[THEME] CONFIG_WARN key=menu reason=empty")
-
-        self.log.info("[THEME] CONFIG key=sort value=Date")
-
-        # Use the paths resolved against the repository root, not the raw repo.json values.
-        for key in ('source', 'target'):
-            path = self.srvbes.get_path(key) or ''
-            self.log.info(f"[THEME] CONFIG key={q(key)} value='{path}'")
-            if len(path) == 0:
-                self.log.error(f"[THEME] CONFIG_FAIL key={q(key)} reason=empty")
-                go = False
-            elif not os.path.exists(path):
-                self.log.error(f"[THEME] CONFIG_FAIL key={q(key)} reason=missing path={q(path)}")
-                go = False
-
-        self.log.info(f"[THEME] CONFIG key=webserver value={q(repo['webserver'])}")
-        if repo['webserver']:
-            self.log.info(f"[THEME] CONFIG key=timeline n={len(repo['timeline'])}")
-            if len(repo['timeline']) == 0:
-                self.log.error("[THEME] CONFIG_FAIL key=timeline reason=empty")
-                go = False
-
-        if not go:
-            example = os.path.join(ENV['GPATH']['THEMES'], 'techdoc', 'apps', 'default', 'config', 'repo.json')
-            self.log.info(f"[THEME] CONFIG_EXAMPLE path={q(example)}")
-
-        self.log.debug("[THEME] CONFIG_CHECK_END")
-        return go

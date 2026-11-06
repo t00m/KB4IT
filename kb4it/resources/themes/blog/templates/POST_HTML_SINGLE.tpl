@@ -2,7 +2,7 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    sort_by = var['repo']['sort']
+    sort_by = 'Date'
     timestamp = (var['post'].get(sort_by) or [None])[0]
     dt = guess_datetime(timestamp) if timestamp else None
     # An undated post has no calendar line (the theme logs DOC_UNDATED for it).
