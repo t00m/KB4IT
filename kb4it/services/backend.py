@@ -180,6 +180,8 @@ class Backend(Service):
         # After the hook, so a setting it adds is checked too.
         from kb4it.core.structured import load_seo
         self.seo = load_seo(self.repo)
+        from kb4it.services.database import hidden_properties
+        hidden_properties(self.repo)
         from kb4it.core.profiles import load_profiles, people_settings
         self.profiles, notices = load_profiles(self.repo)
         self.people = people_settings(self.profiles)

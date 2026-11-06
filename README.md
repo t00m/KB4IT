@@ -237,6 +237,7 @@ Common optional keys:
 - `force`         - force full rebuild on every run (overridden by `--force`)
 - `workers`       - parallel compiler workers (default: `CPU_COUNT / 2`)
 - `ignored_keys`  - frontmatter keys excluded from navigation
+- `hidden_properties` - properties left out of the properties page only; they keep their pages
 - `logo`, `logo_alt` - navbar logo and its text; the logo is also the favicon (without it, the theme's logo is used)
 
 New in 0.9, all optional:

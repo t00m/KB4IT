@@ -30,6 +30,10 @@ A `Product` or `Team` property gives readers a menu for free. Use it instead of 
 
 Add properties such as a ticket number to `ignored_keys`: they stay in the document but do not create one page per value. [More](reference-repo-json.md#optional)
 
+## Tidy the properties page {#hidden-properties}
+
+Add properties to `hidden_properties` to leave them out of the properties page. Unlike `ignored_keys`, they keep their property and value pages, and the links on each document still lead there. [More](explanation-properties.md#excluded)
+
 ## Preview over http {#preview}
 
 **Browse via Web Server** in the terminal interface serves the site on `127.0.0.1`, closer to how readers will see it. [More](howto-use-tui.md#project)

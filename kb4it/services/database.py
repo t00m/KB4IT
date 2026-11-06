@@ -13,11 +13,20 @@ if TYPE_CHECKING:
     from kb4it.core.types import DBRecord
 
 from kb4it.core.dateclass import date_key_names
+from kb4it.core.exceptions import ConfigError
 from kb4it.core.people import People
 from kb4it.core.service import Service
 from kb4it.core.util import (get_hash_from_list, guess_datetime, html_id_for,
                              sort_dictionary, valid_filename)
 from kb4it.core.log import q
+
+
+def hidden_properties(repo: dict) -> list[str]:
+    """Return repo.json 'hidden_properties': properties left out of the properties page only."""
+    value = repo.get("hidden_properties") or []
+    if not isinstance(value, list) or not all(isinstance(key, str) for key in value):
+        raise ConfigError("repo.json 'hidden_properties' must be a list of property names")
+    return list(value)
 
 
 class Database(Service):
@@ -44,6 +53,7 @@ class Database(Service):
             "custom": [],
             "theme": [],
             "ignored": repo.get("ignored_keys") or [],
+            "hidden": hidden_properties(repo),
         }
         self.keys_doc = {}
         self.sorted_docs = []
@@ -89,6 +99,10 @@ class Database(Service):
     def get_ignored_keys(self):
         """Return ignored keys."""
         return self.keys["ignored"]
+
+    def get_hidden_keys(self):
+        """Return the properties left out of the properties page (repo.json hidden_properties)."""
+        return self.keys["hidden"]
 
     def ignore_key(self, key):
         """Add given key to ignored keys list."""
