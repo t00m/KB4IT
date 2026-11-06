@@ -63,7 +63,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - techdoc and bookshelf: Help opens the KB4IT help site (https://t00m.github.io/KB4IT/) in a new window.
 - techdoc dashboard: Open items and Activity are two sections, Open items above Activity, each folding on its own. Activity keeps its tabs for changes, incidents, events and monitoring, and its tab bar opens on the tab chosen last.
 - Every bundled theme now requires KB4IT 0.11.0 (`"kb4it": ">=0.11.0"` in `theme.json`). Theme versions: techdoc 1.2.0, blog 1.1.0, bookshelf 1.1.0, apphelp 1.0.1.
-- Help: the command line reference lists the options of `kb4it serve`, and the log code reference lists `LINK_NO_EXTENSION` and `IMAGE_MISSING`. The help site sets `seo.index` and `timezone`.
+- Help: a new Screenshots page (`gallery.html`) shows the four themes and the terminal interface, and every screenshot was taken again from the sample apps of this release. The command line reference lists the options of `kb4it serve`, and the log code reference lists `LINK_NO_EXTENSION` and `IMAGE_MISSING`. The help site sets `seo.index` and `timezone`.
 
 ### Removed
 

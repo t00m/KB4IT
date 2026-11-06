@@ -42,6 +42,8 @@ A theme decides what the website looks like and which pages it has. Your documen
   </section>
 </div>
 
+More pages of each theme, and the terminal interface, are on [Screenshots](gallery.md).
+
 Each theme can also have the [Add page](howto-write-document-editor.md), a Markdown editor in the browser. It is on by default in techdoc. In blog, bookshelf and apphelp it is off until you set `"editor": true` in `repo.json`. Any theme can turn it off with `"editor": false`.
 
 ## Sample apps {#apps}
