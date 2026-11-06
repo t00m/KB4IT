@@ -42,6 +42,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `kb4it create`, from the command line and the terminal interface, writes absolute `source` and `target` paths into `repo.json`, so the configuration works from any folder. Relative paths still work: for a knowledge base kept in git or built on another computer, change them to `"source": "source"` and `"target": "target"`.
 - Help: every settings table of the repository settings page and of the four theme reference pages has a **Values** column with the values each key accepts. The `dates` block has its own table, the git keys have one row each (apphelp takes a host name, the other themes a full URL), and the apphelp page lists `version`, `versions.latest` and every label name. The **Settings Reference** of the terminal interface shows the values of the selected key and now also lists the `dates` settings.
 - Theme READMEs: each one now lists every `config/repo.json` key the theme reads, with its values and default: the required keys, the common keys, the `markdown`, `seo`, `feed`, `profiles` and `dates` blocks, and the keys of the theme itself. The techdoc reference now documents `menu`, which orders the filters of the Gallery and Diagrams pages.
 - techdoc, blog and bookshelf: the browser tab title puts the page first and the site second (`Page title - Site title`), as apphelp already did. The home page shows the site title once. Rebuild with `--force` to update existing sites.

@@ -30,7 +30,7 @@ var/
 target/
 ```
 
-Keep `"source": "source"` and `"target": "target"` in `repo.json`. They are relative to the knowledge base folder, so the build works on any computer. `kb4it create` writes them that way.
+Set `"source": "source"` and `"target": "target"` in `repo.json`. They are relative to the knowledge base folder, so the build works on any computer. `kb4it create` writes absolute paths, which only work on the computer that created the knowledge base.
 
 !!! warning "Sources are published by default"
     KB4IT copies your `.md` files to the website, so readers can see the source of each page. Set `"publish_sources": false` in `repo.json` if they should not.

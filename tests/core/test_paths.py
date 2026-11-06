@@ -26,14 +26,26 @@ def test_cwd_relative_paths_still_work_with_a_warning(tmp_path, home):
     assert (repo / "target" / "a.html").exists()
 
 
-def test_create_writes_root_relative_paths(tmp_path, home):
+def test_create_writes_absolute_paths(tmp_path, home):
     result = run_kb4it("create", "techdoc", "newrepo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
-    conf = json.loads((tmp_path / "newrepo" / "config" / "repo.json").read_text(encoding="utf-8"))
-    assert conf["source"] == "source"
-    assert conf["target"] == "target"
-    build = run_kb4it("build", tmp_path / "newrepo" / "config" / "repo.json", cwd=home, home=home)
+    cfg = tmp_path / "newrepo" / "config" / "repo.json"
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
+    assert conf["source"] == str((tmp_path / "newrepo" / "source").resolve())
+    assert conf["target"] == str((tmp_path / "newrepo" / "target").resolve())
+    build = run_kb4it("build", cfg, cwd=home, home=home)
     assert build.returncode == 0, build.stdout
+
+
+def test_relative_paths_written_by_hand_still_work(tmp_path, home):
+    # For a knowledge base kept in git: "source" and "target" resolve against the repository root.
+    assert run_kb4it("create", "techdoc", "newrepo", cwd=tmp_path, home=home).returncode == 0
+    cfg = tmp_path / "newrepo" / "config" / "repo.json"
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
+    cfg.write_text(json.dumps({**conf, "source": "source", "target": "target"}), encoding="utf-8")
+    build = run_kb4it("build", cfg, cwd=home, home=home)
+    assert build.returncode == 0, build.stdout
+    assert (tmp_path / "newrepo" / "target" / "index.html").exists()
 
 
 def test_blog_create_then_build_from_another_cwd(tmp_path, home):

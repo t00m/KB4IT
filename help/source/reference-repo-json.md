@@ -34,7 +34,7 @@ Each knowledge base has its settings in `config/repo.json`. `kb4it create` write
 
 A missing key stops the build with `CONFIG_KEY_MISSING key=...`.
 
-`source` and `target` are relative to the knowledge base folder, the one that holds `config/`. Absolute paths, `~` and `$VARIABLES` also work.
+`source` and `target` are relative to the knowledge base folder, the one that holds `config/`. Absolute paths, `~` and `$VARIABLES` also work. `kb4it create` writes absolute paths. When the knowledge base is kept in git or built on another computer, change them to `"source": "source"` and `"target": "target"`.
 
 KB4IT removes from `target` the pages of documents you deleted. It only removes pages it wrote itself, so other files you keep in `target` stay; still, `target` must be a folder of its own. The build stops with an error when `target` is the knowledge base folder, `source`, `config/`, `var/`, your home folder or a filesystem root, when it holds any of them, or when it lies inside `source`.
 

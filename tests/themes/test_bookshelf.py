@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from tests.helpers import page, run_kb4it
+from tests.helpers import page, relative_paths, run_kb4it
 
 BOOK = "Linux Admin"
 
@@ -81,6 +81,7 @@ def test_user_index_page_wins(site, tmp_path):
     repo = tmp_path / "repo"
     shutil.copytree(site["repo"], repo)
     cfg = repo / "config" / "repo.json"
+    relative_paths(cfg)
     (repo / "source" / "index.md").write_text(page("My own index", Tag="home"), encoding="utf-8")
     result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
     assert result.returncode == 0, result.stdout

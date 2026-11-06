@@ -63,6 +63,16 @@ def mini_theme(dest, **theme_json):
     return dest
 
 
+def relative_paths(cfg):
+    """Point repo.json source and target at the repository root, as a knowledge base kept in git does.
+
+    kb4it create writes absolute paths; a test that copies or moves a created repository needs this.
+    """
+    conf = json.loads(Path(cfg).read_text(encoding="utf-8"))
+    conf.update(source="source", target="target")
+    Path(cfg).write_text(json.dumps(conf), encoding="utf-8")
+
+
 def page(title, body="Text.", **keys):
     """Return a Markdown page; pass at least one key, an empty frontmatter is invalid."""
     front = "".join(f"{key}: {value}\n" for key, value in keys.items())
