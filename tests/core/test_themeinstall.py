@@ -258,3 +258,90 @@ def test_same_id_as_bundled(tmp_path, home):
     result = themeinstall.install_zip(mini_zip(tmp_path, top="techdoc", id="techdoc"))
     assert result.bundled == bundled["version"]
     assert themeinstall.bundled_version("nosuchtheme") is None
+
+
+# download and install(source)
+
+import io
+import urllib.error
+import urllib.request
+
+
+class FakeResponse(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
+
+
+def serve(monkeypatch, payload=None, error=None):
+    """Make themeinstall._open return payload, or raise error; return the list of opened URLs."""
+    calls = []
+
+    def fake_open(url, timeout):
+        calls.append(url)
+        if error is not None:
+            raise error
+        return FakeResponse(payload)
+
+    monkeypatch.setattr(themeinstall, "_open", fake_open)
+    return calls
+
+
+def test_install_from_url(tmp_path, home, monkeypatch):
+    calls = serve(monkeypatch, mini_zip(tmp_path).read_bytes())
+    result = themeinstall.install("https://example.org/mini.zip")
+    assert calls == ["https://example.org/mini.zip"]
+    assert result.id == "mini" and (themes_dir(home) / "mini" / "theme.json").is_file()
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+def test_http_refused(home, monkeypatch):
+    calls = serve(monkeypatch, b"")
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install("http://example.org/mini.zip")
+    assert caught.value.reason == "insecure_url"
+    assert calls == []
+
+
+def test_redirect_to_http_refused():
+    handler = themeinstall._HttpsOnlyRedirect()
+    request = urllib.request.Request("https://example.org/mini.zip")
+    with pytest.raises(ThemeInstallError) as caught:
+        handler.redirect_request(request, None, 302, "Found", {}, "http://example.org/mini.zip")
+    assert caught.value.reason == "insecure_url"
+    allowed = handler.redirect_request(request, None, 302, "Found", {}, "https://cdn.example.org/mini.zip")
+    assert allowed.full_url == "https://cdn.example.org/mini.zip"
+
+
+def test_download_too_large(home, monkeypatch):
+    monkeypatch.setattr(themeinstall, "MAX_DOWNLOAD", 100)
+    serve(monkeypatch, b"x" * 1000)
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install("https://example.org/mini.zip")
+    assert caught.value.reason == "too_large"
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+@pytest.mark.parametrize("error", [urllib.error.URLError("no route"), TimeoutError("timed out"),
+                                   OSError("reset")])
+def test_download_error(home, monkeypatch, error):
+    serve(monkeypatch, error=error)
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install("https://example.org/mini.zip")
+    assert caught.value.reason == "download"
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+def test_download_not_a_zip(home, monkeypatch):
+    serve(monkeypatch, b"<html>not found</html>")
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install("https://example.org/mini.zip")
+    assert caught.value.reason == "not_a_zip"
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+def test_install_from_a_path(tmp_path, home):
+    assert themeinstall.install(str(mini_zip(tmp_path))).id == "mini"

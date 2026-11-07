@@ -14,6 +14,7 @@ before anything changes there, so a refused zip leaves the folder as it was.
 from __future__ import annotations
 
 import errno
+import http.client
 import json
 import os
 import re
@@ -21,6 +22,8 @@ import secrets
 import shutil
 import stat
 import tempfile
+import urllib.error
+import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -37,6 +40,9 @@ THEME_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 MAX_ENTRIES = 10_000
 MAX_UNPACKED = 200 * 1024 * 1024
 LOCK_TIMEOUT = 10.0
+MAX_DOWNLOAD = 100 * 1024 * 1024
+DOWNLOAD_TIMEOUT = 60
+_CHUNK = 64 * 1024
 _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 
 
@@ -291,3 +297,65 @@ def install_zip(path: str | Path, source: str | None = None) -> InstallResult:
              f"replaced={q(replaced or '')} source={q(source)}")
     return InstallResult(id=theme_id, version=version, path=themes_dir() / theme_id,
                          replaced=replaced, bundled=bundled_version(theme_id))
+
+
+class _HttpsOnlyRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only when it leads to another https URL."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not newurl.lower().startswith("https://"):
+            raise ThemeInstallError("insecure_url", f"The download redirects to a URL that is not https: {newurl}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _open(url: str, timeout: int):
+    """Open url for reading, following https redirects only."""
+    opener = urllib.request.build_opener(_HttpsOnlyRedirect)
+    request = urllib.request.Request(url, headers={"User-Agent": f"KB4IT/{ENV['APP']['version']}"})
+    return opener.open(request, timeout=timeout)
+
+
+def _is_url(source: str) -> bool:
+    return source.lower().startswith(("http://", "https://"))
+
+
+def download(url: str) -> Path:
+    """Download the zip at an https URL into the temporary folder and return its path."""
+    if not url.lower().startswith("https://"):
+        raise ThemeInstallError(
+            "insecure_url", f"Only https:// URLs are accepted; a theme runs code at build time: {url}")
+    target = tmp_dir() / f"download-{secrets.token_hex(4)}.zip"
+    try:
+        with _open(url, DOWNLOAD_TIMEOUT) as response, open(target, "wb") as out:
+            size = 0
+            while True:
+                chunk = response.read(_CHUNK)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_DOWNLOAD:
+                    raise ThemeInstallError(
+                        "too_large", f"The download is larger than the limit of {MAX_DOWNLOAD} bytes")
+                out.write(chunk)
+    except ThemeInstallError:
+        target.unlink(missing_ok=True)
+        raise
+    except (OSError, ValueError, urllib.error.URLError, http.client.HTTPException) as error:
+        target.unlink(missing_ok=True)
+        raise ThemeInstallError("download", f"Cannot download {url}: {error}") from None
+    return target
+
+
+def install(source: str) -> InstallResult:
+    """Install a theme from a zip path or an https URL."""
+    if not _is_url(source):
+        return install_zip(source)
+    try:
+        path = download(source)
+    except ThemeInstallError as error:
+        log.warning(f"[THEMES] THEME_INSTALL_REFUSED reason={error.reason} source={q(source)}")
+        raise
+    try:
+        return install_zip(path, source=source)
+    finally:
+        path.unlink(missing_ok=True)
