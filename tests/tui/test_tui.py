@@ -67,7 +67,7 @@ async def wait_for(pilot, condition, timeout=60):
 
 
 async def open_first_project(app, pilot):
-    app.screen.query_one("#proj-list", ListView).index = 0
+    app.screen.query_one("#proj-list", DataTable).move_cursor(row=0)
     await pilot.pause()
     app.screen.action_open_project()
     await pilot.pause()
@@ -367,7 +367,7 @@ def test_import_and_delete_project(registry, mini_repo):
         await pilot.pause()
         assert tui.load_projects() == [{"name": "Test", "config": str(mini_repo)}]
 
-        app.screen.query_one("#proj-list", ListView).index = 0
+        app.screen.query_one("#proj-list", DataTable).move_cursor(row=0)
         await pilot.click("#delete")
         await pilot.pause()
         assert isinstance(app.screen, tui.ConfirmScreen)
@@ -512,8 +512,7 @@ def test_import_project_with_id(registry, mini_repo):
         screen.query_one("#import", Button).press()   # the error toast may cover the button
         await pilot.pause()
         assert isinstance(app.screen, tui.MainScreen)
-        label = str(app.screen.query_one("#proj-list", ListView).children[0].query_one(Label).render())
-        assert "mini" in label
+        assert app.screen.query_one("#proj-list", DataTable).get_row_at(0)[0] == "mini"
     run(scenario)
     assert tui.load_projects() == [{"id": "mini", "name": "Test", "config": str(mini_repo)}]
 
@@ -565,3 +564,41 @@ def test_edit_id_rejects_taken_id(registry, mini_repo, tmp_path):
         assert isinstance(app.screen, EditIdScreen)
     run(scenario)
     assert "id" not in core_projects.load()[0]
+
+
+def test_main_list_is_a_table_of_id_name_and_config(registry, mini_repo, tmp_path):
+    other = write_repo(tmp_path / "other", "mini", {"a.md": page("A", Tag="x")}, title="Other")
+    core_projects.register(str(mini_repo), pid="kb1")
+    core_projects.register(str(other))
+
+    async def scenario(app, pilot):
+        table = app.screen.query_one("#proj-list", DataTable)
+        assert [str(column.label) for column in table.columns.values()] == ["ID", "Name", "Config"]
+        assert table.get_row_at(0) == ["kb1", "Test", str(mini_repo)]
+        assert table.get_row_at(1) == ["-", "Other", str(other)]
+        table.move_cursor(row=1)
+        await pilot.pause()
+        app.screen.action_open_project()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.ProjectScreen)
+        assert app.screen.title.startswith("Other")
+    run(scenario)
+
+
+def test_project_screen_shows_the_id(registry, mini_repo):
+    core_projects.register(str(mini_repo), pid="kb1")
+
+    async def scenario(app, pilot):
+        await open_first_project(app, pilot)
+        screen = app.screen
+        assert screen.title == "Test (kb1)"
+        assert "Id: kb1" in str(screen.query_one("#info-panel").render())
+        screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#inp-id", Input).value = "kb7"
+        await pilot.pause()
+        app.screen.query_one("#save", Button).press()
+        await pilot.pause()
+        assert screen.title == "Test (kb7)"
+        assert "Id: kb7" in str(screen.query_one("#info-panel").render())
+    run(scenario)

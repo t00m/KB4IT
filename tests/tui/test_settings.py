@@ -4,7 +4,7 @@ import asyncio
 import json
 
 import pytest
-from textual.widgets import Button, DataTable, Input, ListView, TextArea
+from textual.widgets import Button, DataTable, Input, TextArea
 
 from kb4it.core.repocheck import check_repo
 from kb4it.tui import app as tui
@@ -154,7 +154,7 @@ def registry(tmp_path, monkeypatch):
 
 
 async def open_project_button(app, pilot, button):
-    app.screen.query_one("#proj-list", ListView).index = 0
+    app.screen.query_one("#proj-list", DataTable).move_cursor(row=0)
     await pilot.pause()
     app.screen.action_open_project()
     await pilot.pause()

@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Terminal interface
 HelpId: tui
-Keyword: tui, textual, menu, projects, explorer, web server, live reload, clipboard, settings, repo.json
+Keyword: project id, tui, textual, menu, projects, explorer, web server, live reload, clipboard, settings, repo.json
 Level: basic
 Order: 320
 Section: Guides
@@ -17,15 +17,17 @@ Run `kb4it` without any command in a terminal and it opens a full-screen interfa
 
 ## Add a project {#add}
 
-The main screen lists your projects. Knowledge bases made with `kb4it create`, here or on the command line, are added automatically.
+The main screen lists your projects in a table: the project id, the display name and the full path of its `config/repo.json`. A project without an id shows `-`. Knowledge bases made with `kb4it create`, here or on the command line, are added automatically.
 
-- **New Project** creates a knowledge base: choose a theme and a sample app, type a display name and the folder to create, and answer **Allow search engines** with Yes or No. The parent folder must exist, and nothing is created until you answer. The answer goes into `repo.json` as `seo.index`, like `kb4it create --index`; see [Search engines](reference-repo-json.md#indexing).
-- **Import Project** adds one you already have: type the path of its `config/repo.json` and press <kbd>Enter</kbd> to preview it, then **Import**.
+- **New Project** creates a knowledge base: choose a theme and a sample app, type a display name, an optional project id and the folder to create, and answer **Allow search engines** with Yes or No. The parent folder must exist, and nothing is created until you answer. The answer goes into `repo.json` as `seo.index`, like `kb4it create --index`; see [Search engines](reference-repo-json.md#indexing).
+- **Import Project** adds one you already have: type the path of its `config/repo.json` and press <kbd>Enter</kbd> to preview it, add an optional project id, then **Import**.
 - **Delete Project** removes the selected project from the list. The files on disk stay.
 
 ## Work on a project {#project}
 
-Select a project and press <kbd>Enter</kbd>.
+Select a project and press <kbd>Enter</kbd>. The title and the first line of the screen show its id.
+
+The project id is a short name, such as `sapblog`, that the command line takes instead of the `repo.json` path: `kb4it build sapblog`. It has lowercase letters, digits and dashes, and starts with a letter. The New and Import screens check it as you type; see [Project ids](reference-command-line.md#ids).
 
 ![The project screen](resources/images/tui-project.webp)
 
@@ -39,6 +41,7 @@ Select a project and press <kbd>Enter</kbd>.
 | **View Build Log** | Shows the last log, filtered by level |
 | **Settings Reference** | Lists every `repo.json` setting of the project's theme, see below |
 | **Edit repo.json** | Edits the project's `repo.json`, saving it only when the check passes, see below |
+| **Edit id** | Sets, changes or removes the project id; an empty field removes it |
 | **Browse Local** | Opens the site from disk in your browser |
 | **Browse via Web Server** | Serves the site on `http://127.0.0.1`, opens it, and rebuilds it when you save a document; open pages reload by themselves |
 

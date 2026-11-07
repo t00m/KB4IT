@@ -160,7 +160,6 @@ class ProjectScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = self._project["name"]
         self._refresh()
 
     def _refresh(self) -> None:
@@ -178,8 +177,11 @@ class ProjectScreen(Screen):
         log_ok = _log_path(config) is not None
         built = "[green]yes[/green]" if db_ok else "[dim]not yet[/dim]"
         log_lbl = "[green]yes[/green]" if log_ok else "[dim]none[/dim]"
+        pid = self._project.get("id")
+        self.title = f"{self._project['name']} ({pid})" if pid else self._project["name"]
         self.query_one("#info-panel", Static).update(
             f"[bold]{title}[/bold]\n"
+            f"Id: {pid or '[dim]none[/dim]'}\n"
             f"Theme: {theme}   Built: {built}   Log: {log_lbl}\n"
             f"Source: [dim]{source}[/dim]\n"
             f"Target: [dim]{target}[/dim]"
@@ -209,6 +211,7 @@ class ProjectScreen(Screen):
             self._project.update(entry)
             if not pid:
                 self._project.pop("id", None)
+            self._refresh()
             self.app.notify(f"Id set to {pid}" if pid else "Id removed")
 
         self.app.push_screen(EditIdScreen(self._project.get("id", ""), config), callback=_after)

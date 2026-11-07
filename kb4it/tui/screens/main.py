@@ -13,11 +13,10 @@ from textual.containers import Horizontal
 from textual.screen import Screen
 from textual.widgets import (
     Button,
+    DataTable,
     Footer,
     Header,
     Label,
-    ListItem,
-    ListView,
     Static,
 )
 
@@ -58,7 +57,7 @@ class MainScreen(Screen):
         banner.display = help_notice_visible()
         yield banner
         yield Label("Projects:", id="list-label")
-        yield ListView(id="proj-list")
+        yield DataTable(id="proj-list", cursor_type="row", zebra_stripes=True)
         with Horizontal(id="row1"):
             yield Button("New Project", id="new", variant="success")
             yield Button("Import Project", id="import", variant="primary")
@@ -72,23 +71,19 @@ class MainScreen(Screen):
     def on_mount(self) -> None:
         self.title = f"KB4IT {BUILD_VERSION}"
         self.sub_title = "Static Website Generator"
+        self.query_one("#proj-list", DataTable).add_columns("ID", "Name", "Config")
         self._reload()
 
     def _reload(self) -> None:
         self._projects = projects.load()
-        lv = self.query_one("#proj-list", ListView)
-        lv.clear()
-        if self._projects:
-            for p in self._projects:
-                pid = f"  [cyan]{p['id']}[/cyan]" if p.get("id") else ""
-                lv.append(
-                    ListItem(Label(f"[bold]{p['name']}[/bold]{pid}  [dim]{p.get('config', '')}[/dim]"))
-                )
-        else:
-            lv.append(ListItem(Label("[dim]No projects. Use New or Import to add one.[/dim]")))
+        table = self.query_one("#proj-list", DataTable)
+        table.clear()
+        for p in self._projects:
+            table.add_row(p.get("id") or "-", p.get("name", ""), p.get("config", ""))
         n = len(self._projects)
         self.query_one("#list-label", Label).update(
-            f"Projects: [dim]({n} configured)[/dim]" if n else "Projects: [dim](none)[/dim]"
+            f"Projects: [dim]({n} configured)[/dim]" if n
+            else "Projects: [dim](none)  Use New or Import to add one.[/dim]"
         )
 
     def _open_at(self, idx: int) -> None:
@@ -97,16 +92,12 @@ class MainScreen(Screen):
         project = self._projects[idx]
         self.app.push_screen(ProjectScreen(project), callback=lambda _: self._reload())
 
-    @on(ListView.Selected, "#proj-list")
-    def _proj_selected(self, event: ListView.Selected) -> None:
-        idx = event.list_view.index
-        if idx is not None:
-            self._open_at(idx)
+    @on(DataTable.RowSelected, "#proj-list")
+    def _proj_selected(self, event: DataTable.RowSelected) -> None:
+        self._open_at(event.cursor_row)
 
     def action_open_project(self) -> None:
-        idx = self.query_one("#proj-list", ListView).index
-        if idx is not None:
-            self._open_at(idx)
+        self._open_at(self.query_one("#proj-list", DataTable).cursor_row)
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         # Offer "d" only while the banner shows; afterwards it leaves the footer.
@@ -154,9 +145,8 @@ class MainScreen(Screen):
 
     @on(Button.Pressed, "#delete")
     def _delete(self) -> None:
-        lv = self.query_one("#proj-list", ListView)
-        idx = lv.index
-        if idx is None or idx >= len(self._projects):
+        idx = self.query_one("#proj-list", DataTable).cursor_row
+        if idx < 0 or idx >= len(self._projects):
             self.app.notify("Select a project to delete.", severity="warning")
             return
         project = self._projects[idx]
