@@ -36,6 +36,7 @@ STRUCTURED_MAP = {
 
 
 class Theme(Builder):
+    log_area = "APPHELP"
     # Help sites have no person pages, so the Add page offers no Person profile.
     profile_skeleton = False
     # No person pages either: the schema.org Person of each profile goes into the home page.
@@ -254,23 +255,24 @@ class Theme(Builder):
             return "ah-system"
         return f"ah-doctype-{page.doctype}" + (f" ah-layout-{page.layout}" if page.layout else "")
 
-    def build_page(self, path_md):
-        path_html = html_id_for(path_md)
-        doc_id = os.path.basename(path_md)
-        if not os.path.exists(path_html):
-            self.log.error(f"[APPHELP] HTML_MISSING doc={q(doc_id)}")
-            return
-        with open(path_html, encoding="utf-8") as fh:
-            fragment = fh.read()
-        page = self.pages.get(doc_id)
+    def body_transforms(self, doc_id, var):
+        """Override: theme pages stay as they are; a help page gets the apphelp rewrite and its own TOC."""
+        var["apphelp_toc"] = []
         if doc_id in self.theme_pages:
-            content, toc = fragment, []
-        else:
-            content, toc = transform(fragment, page.doctype if page else "", page.layout if page else "",
-                                     self.config.labels)
-        html = self.template("HTML_BODY").render(var={"ah": self._page_var(doc_id, page, content, toc)})
-        with open(path_html, "w", encoding="utf-8") as fh:
-            fh.write(html)
+            return []
+        page = self.pages.get(doc_id)
+
+        def rewrite(html):
+            content, var["apphelp_toc"] = transform(html, page.doctype if page else "", page.layout if page else "",
+                                                    self.config.labels)
+            return content
+        return [rewrite]
+
+    def render_page(self, doc_id, var):
+        """Override: one HTML_BODY template with the apphelp context."""
+        page = self.pages.get(doc_id)
+        return self.template("HTML_BODY").render(
+            var={"ah": self._page_var(doc_id, page, var["source_html"], var["apphelp_toc"])})
 
     def _write(self, target, name, content):
         with open(os.path.join(target, name), "w", encoding="utf-8") as fh:
