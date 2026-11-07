@@ -382,6 +382,24 @@ def build_parser() -> argparse.ArgumentParser:
     repo_keys.add_argument("key", nargs="?", help="Property name, such as Tag")
     repo_keys.add_argument("value", nargs="?", help="Property value, such as backup")
 
+    # Find text in the sources
+    repo_search = subparsers.add_parser(
+        "search", help="Find text in the Markdown sources of every project, or of the ones given with -p",
+        description="Print path:line: text for each matching line. Exit status: 0 found, 1 not found, 2 error.",
+        epilog="Examples:\n\n   kb4it search restore\n   kb4it search restore -p sapblog --where Status=Open\n"
+        "   vim -q <(kb4it search restore)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_search.add_argument("pattern", help="Text to find (plain text unless -r)")
+    repo_search.add_argument("-p", "--project", dest="projects", action="append",
+                             help="Project id or config path; repeat for several (default: every project)")
+    repo_search.add_argument("--where", action="append", metavar="KEY=VALUE",
+                             help="Only documents with this property value; repeat to combine")
+    repo_search.add_argument("-r", "--regex", action="store_true", help="PATTERN is a regular expression")
+    repo_search.add_argument("-s", "--case-sensitive", action="store_true", help="Match upper and lower case exactly")
+    repo_search.add_argument("-l", "--files-with-matches", action="store_true",
+                             help="Print only the paths of matching files")
+
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
@@ -501,6 +519,9 @@ def main():
                         print(line, file=sys.stderr)
             except OSError:
                 pass  # The notice is optional; an unreadable KB4IT_HOME must not stop the command.
+        if params.action == "search":
+            from kb4it.core.grep import run_search
+            sys.exit(run_search(vars(params)))
         if params.action == "keys":
             from kb4it.core.explore import run_keys
             sys.exit(run_keys(vars(params)))
