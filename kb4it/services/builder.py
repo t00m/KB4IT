@@ -27,6 +27,7 @@ from kb4it.services.addpage import AddPageMixin
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 from kb4it.services.headmeta import META_END, META_START, HeadMetaMixin, short_text  # noqa: F401
 from kb4it.services.indexing import IndexingMixin
+from kb4it.services.pagepipeline import GIT_KEYS, PagePipelineMixin, git_ready  # noqa: F401
 from kb4it.services.profilecard import ProfileCardMixin
 from kb4it.core.log import q
 
@@ -68,23 +69,7 @@ def template_base_dir(theme):
     return folder
 
 
-GIT_KEYS = ("git_server", "git_user", "git_repo", "git_branch")
-
-
-def git_ready(repo) -> bool:
-    """True when repo.json turns git links on and names server, user, repository and branch.
-
-    git_path may stay empty (documents at the repository root). A "{placeholder}" counts as unset,
-    so a sample configuration never produces edit links that lead nowhere.
-    """
-    if repo.get("git") is not True:
-        return False
-    values = [repo.get(key) for key in GIT_KEYS] + [repo.get("git_path") or ""]
-    return all(isinstance(v, str) for v in values) and all(v.strip() for v in values[:4]) and \
-        not any("{" in v for v in values)
-
-
-class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Service):
+class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, ProfileCardMixin, Service):
     """Build HTML blocks."""
 
     _templates_lock = threading.Lock()
@@ -278,6 +263,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, ProfileCardMixin, Serv
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
         theme_var["git_ok"] = git_ready(theme_var["repo"])
+        theme_var["edit_root_url"] = self.edit_url()
         theme_var["lang"] = self.page_lang()
         theme_var["help_url"] = HELP_ONLINE_URL  # the KB4IT help site; links open it in a new window
 

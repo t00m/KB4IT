@@ -385,6 +385,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             HTML_BODY = self.template('HTML_BODY')
             HTML_FOOTER = self.template('HTML_FOOTER')
             var = self.get_theme_var()
+            var['edit_url'] = self.edit_url(basename_md)
             now = datetime.now()
             timestamp = get_human_datetime(now)
             keys = self.srvdtb.get_doc_properties(basename_md)
@@ -422,11 +423,6 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                     'banners': banners(self.srvdtb, basename_md),
                 })
                 info_tabs = theme_conf.get('info_tabs', {})
-                repo = var['repo']
-                edit_url = ''
-                if var.get('git_ok'):
-                    edit_url = (f"{repo['git_server']}/{repo['git_user']}/{repo['git_repo']}/edit/"
-                                f"{repo['git_branch']}/{repo['git_path']}/{basename_md}")
                 var['info_card'] = self.template('INFO_CARD').render(var={'card': {
                     'open': not doc_summary,
                     'groups': info_groups(self.srvdtb, basename_md, theme_conf.get('info_groups', []), source_md,
@@ -435,7 +431,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                         'date': (self.srvdtb.get_values(basename_md, 'Date') or [''])[0],
                         'source': basename_md,
                         'built': timestamp,
-                        'edit_url': edit_url,
+                        'edit_url': var['edit_url'],
                         'editor': bool(var.get('editor')),
                     },
                     'print': {name: info_tabs.get(name, {}).get('print', name == 'details')

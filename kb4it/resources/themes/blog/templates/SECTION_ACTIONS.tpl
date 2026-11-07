@@ -1,8 +1,8 @@
 % if not var['SystemPage']:
-  % if var.get('git_ok'):
+  % if var.get('edit_url'):
         <!-- EDIT BUTTON :: START -->
         <li class="uk-link-toggle uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical" data-uk-tooltip="title: Edit document">
-            <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span data-uk-icon="pencil"></span></a>
+            <a class="uk-link-heading" href="${var['edit_url']}" target="_blank"><span data-uk-icon="pencil"></span></a>
         </li>
         <!-- EDIT BUTTON :: END -->
   % endif

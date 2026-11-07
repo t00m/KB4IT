@@ -227,15 +227,6 @@ class Theme(Builder):
             "level": page.level, "platforms": page.platforms, "since": page.since, "plugin": page.plugin,
         }
 
-    def _edit_url(self, doc_id) -> str:
-        repo = self.srvbes.get_dict("repo")
-        parts = [repo.get(k) for k in ("git_server", "git_user", "git_repo", "git_branch")]
-        if not repo.get("git") or not all(parts):
-            return ""
-        server, user, name, branch = (str(p).strip("/") for p in parts)
-        path = "/".join(x for x in (str(repo.get("git_path") or "").strip("/"), doc_id) if x)
-        return f"https://{server}/{user}/{name}/edit/{branch}/{path}"
-
     def _page_var(self, doc_id, page, content, toc) -> dict:
         var = self._common()
         var.update({
@@ -258,7 +249,7 @@ class Theme(Builder):
             var["prev"] = {"title": prev.title, "url": prev.url} if prev else None
             var["next"] = {"title": nxt.title, "url": nxt.url} if nxt else None
             var["related"] = [self._card_item(p) for p in related_pages(page, self.flat)]
-            var["edit_url"] = self._edit_url(doc_id)
+            var["edit_url"] = self.edit_url(doc_id)
             var["updated"] = page.date[:10]
         return var
 

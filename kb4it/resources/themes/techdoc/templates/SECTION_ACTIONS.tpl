@@ -1,7 +1,7 @@
 % if not var['SystemPage']:
-  % if var.get('git_ok'):
+  % if var.get('edit_url'):
         <!-- EDIT BUTTON :: START -->
-        <a class="kb4it-page-action" data-uk-tooltip="title: Edit document" aria-label="Edit document" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank"><span data-uk-icon="pencil"></span></a>
+        <a class="kb4it-page-action" data-uk-tooltip="title: Edit document" aria-label="Edit document" href="${var['edit_url']}" target="_blank"><span data-uk-icon="pencil"></span></a>
         <!-- EDIT BUTTON :: END -->
   % endif
   % if var.get('editor'):

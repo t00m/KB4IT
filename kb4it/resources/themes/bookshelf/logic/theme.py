@@ -466,6 +466,7 @@ class Theme(DocumentTheme):
         HTML_BODY = self.template('HTML_BODY')
         HTML_FOOTER = self.template('HTML_FOOTER')
         var = self.get_theme_var()
+        var['edit_url'] = self.edit_url(basename_md)
         var['timestamp'] = get_human_datetime(datetime.now())
         var['keys'] = self.srvdtb.get_doc_properties(basename_md)
 

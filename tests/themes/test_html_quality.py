@@ -192,3 +192,18 @@ def test_edit_link_when_git_is_set(tmp_path, home, theme):
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert "https://github.com/me/kb/edit/main/source/rich.md" in (repo / "target" / "rich.html").read_text(encoding="utf-8")
+
+
+def test_edit_link_accepts_a_host_name(tmp_path, home):
+    """techdoc takes git_server as a host too, like apphelp; the Add page links the source folder."""
+    repo = tmp_path / "techdoc"
+    assert run_kb4it("create", "techdoc", repo, cwd=tmp_path, home=home).returncode == 0
+    shutil.copy(FIXTURES / "audit" / "rich.md", repo / "source" / "rich.md")
+    cfg = repo / "config" / "repo.json"
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
+    conf.update(git=True, git_server="github.com", git_user="me", git_repo="kb", git_branch="main", git_path="")
+    cfg.write_text(json.dumps(conf), encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert 'href="https://github.com/me/kb/edit/main/rich.md"' in (repo / "target" / "rich.html").read_text(encoding="utf-8")
+    assert 'href="https://github.com/me/kb/edit/main"' in (repo / "target" / "add.html").read_text(encoding="utf-8")

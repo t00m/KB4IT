@@ -90,11 +90,11 @@
                                 </div>
                             </li>
                             <!-- SOURCE BUTTON AND DIALOG :: END -->
-% if var.get('git_ok'):
+% if var.get('edit_url'):
                             <li data-uk-tooltip="title: Edit document">
                                 <span data-uk-icon="pencil"></span>
                                 <span class="uk-margin-small-left">
-                                    <a class="" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank" data-uk-toggle>Edit</a>
+                                    <a class="" href="${var['edit_url']}" target="_blank" data-uk-toggle>Edit</a>
                                 </span>
                             </li>
 % endif

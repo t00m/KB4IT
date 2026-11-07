@@ -248,6 +248,7 @@ class Theme(DocumentTheme):
 
         if len(var) == 0:
             var = self.get_theme_var()
+        var['edit_url'] = self.edit_url(basename_md)
 
         var['count_docs'] = self.srvdtb.get_documents_count()
         keys = self.srvdtb.get_all_keys()
