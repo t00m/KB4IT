@@ -12,6 +12,7 @@ from textual.widgets import Button, DataTable, Input, Label, ListView, RadioButt
 from kb4it.tui import app as tui
 from kb4it.core import projects as core_projects
 from kb4it.tui import clipboard
+from kb4it.tui import projects as tui_projects
 from kb4it.tui.screens import project as project_screens
 from kb4it.tui.screens.edit_id import EditIdScreen
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
@@ -95,6 +96,102 @@ def test_helpers(tmp_path):
     assert tui._parse_level("   ERROR | x") == "ERROR"
     assert tui._parse_level("plain line") == "INFO"
     assert tui._parse_level("2026-11-03 21:00:00 |    WARNING | MainThread | Backend | backend:1 | x") == "WARNING"
+
+
+@pytest.fixture
+def user_themes(tmp_path, monkeypatch):
+    """Point the user's themes folder and var folder at fresh ones; return the themes folder."""
+    from kb4it.core.env import ENV
+    root = tmp_path / "kbhome"
+    monkeypatch.setitem(ENV["LPATH"], "VAR", str(root / "var"))
+    monkeypatch.setitem(ENV["LPATH"], "THEMES", str(root / "themes"))
+    return root / "themes"
+
+
+def test_get_themes_lists_every_copy_and_marks_the_active_one(tmp_path, user_themes):
+    from kb4it.core import themeinstall
+    from tests.core.test_themeinstall import mini_zip
+    themeinstall.install_zip(mini_zip(tmp_path, top="techdoc", id="techdoc"))
+    techdoc = [t for t in tui.get_themes() if t["id"] == "techdoc"]
+    assert len(techdoc) == 2
+    assert [t["_scope"] for t in techdoc if t["_active"]] == ["local"]
+    active = [t for t in tui_projects.active_themes() if t["id"] == "techdoc"]
+    assert len(active) == 1 and active[0]["_scope"] == "local"
+    assert all(t["_active"] for t in tui_projects.active_themes())
+
+
+def theme_rows(table):
+    return [table.get_row_at(index) for index in range(table.row_count)]
+
+
+def test_themes_screen_shows_active_column(tmp_path, registry, user_themes):
+    from kb4it.core import themeinstall
+    from tests.core.test_themeinstall import mini_zip
+    themeinstall.install_zip(mini_zip(tmp_path, top="techdoc", id="techdoc"))
+
+    async def scenario(app, pilot):
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        table = app.screen.query_one("#tbl", DataTable)
+        columns = [str(column.label) for column in table.columns.values()]
+        assert columns[:5] == ["ID", "Name", "Version", "Active", "Scope"]
+        techdoc = sorted((row[3], row[4]) for row in theme_rows(table) if row[0] == "techdoc")
+        assert techdoc == [("no", "global"), ("yes", "local")]
+    run(scenario)
+
+
+def test_themes_screen_installs_from_a_path(tmp_path, registry, user_themes):
+    from tests.core.test_themeinstall import mini_zip
+    zip_path = mini_zip(tmp_path)
+
+    async def scenario(app, pilot):
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        app.screen.query_one("#install", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#inp-source", Input).value = str(zip_path)
+        app.screen.query_one("#do-install", Button).press()
+        table = None
+
+        def installed():
+            nonlocal table
+            if not isinstance(app.screen, tui.ThemesScreen):
+                return False
+            table = app.screen.query_one("#tbl", DataTable)
+            return any(row[0] == "mini" for row in theme_rows(table))
+        await wait_for(pilot, installed, timeout=20)
+        assert (user_themes / "mini" / "theme.json").is_file()
+    run(scenario)
+
+
+def test_uninstall_enabled_only_for_local_rows(tmp_path, registry, user_themes):
+    from kb4it.core import themeinstall
+    from tests.core.test_themeinstall import mini_zip
+    themeinstall.install_zip(mini_zip(tmp_path))
+
+    async def scenario(app, pilot):
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        table = app.screen.query_one("#tbl", DataTable)
+        uninstall = app.screen.query_one("#uninstall", Button)
+        rows = theme_rows(table)
+        global_row = next(i for i, row in enumerate(rows) if row[4] == "global")
+        local_row = next(i for i, row in enumerate(rows) if row[0] == "mini")
+        table.move_cursor(row=global_row)
+        await pilot.pause()
+        assert uninstall.disabled
+        table.move_cursor(row=local_row)
+        await pilot.pause()
+        assert not uninstall.disabled
+        uninstall.press()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.ConfirmScreen)
+        app.screen.query_one("#yes", Button).press()
+        await pilot.pause()
+        await wait_for(pilot, lambda: not (user_themes / "mini").exists(), timeout=10)
+        assert isinstance(app.screen, tui.ThemesScreen)
+        assert not any(row[0] == "mini" for row in theme_rows(app.screen.query_one("#tbl", DataTable)))
+    run(scenario)
 
 
 def test_copy_to_clipboard_falls_back_to_osc52(monkeypatch):

@@ -18,8 +18,8 @@ BUILD_VERSION = ENV["APP"]["build_version"]  # shown in titles, so a development
 
 
 def get_themes() -> list[dict]:
+    """Every installed copy of every theme, bundled and local; _active marks the one builds use."""
     themes: list[dict] = []
-    seen_ids: set[str] = set()
     for scope, base in [
         ("global", ENV["GPATH"]["THEMES"]),
         ("local", ENV["LPATH"]["THEMES"]),
@@ -35,11 +35,10 @@ def get_themes() -> list[dict]:
                 continue
             try:
                 data = json_load(str(tfile))
-                tid = data.get("id", entry.name)
-                if tid in seen_ids:
-                    continue
-                seen_ids.add(tid)
+                data.setdefault("id", entry.name)
                 data["_scope"] = scope
+                # A build looks for a theme folder in the local themes first, then in the bundled ones.
+                data["_active"] = scope == "local" or not (Path(ENV["LPATH"]["THEMES"]) / entry.name / "theme.json").is_file()
                 data["version"] = data.get("version") or "unversioned"  # the theme's own version (TV-01)
                 data["fingerprint"] = _fingerprint(entry, data)
                 data["_path"] = str(entry)
@@ -47,6 +46,11 @@ def get_themes() -> list[dict]:
             except Exception:
                 pass
     return themes
+
+
+def active_themes() -> list[dict]:
+    """One entry per theme: the copy a build uses."""
+    return sorted((theme for theme in get_themes() if theme["_active"]), key=lambda theme: str(theme["id"]))
 
 
 def _fingerprint(theme_dir: Path, data: dict) -> str:

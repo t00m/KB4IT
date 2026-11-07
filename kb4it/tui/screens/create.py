@@ -27,7 +27,7 @@ from textual.widgets import (
 )
 
 from kb4it.core.util import json_load
-from kb4it.tui.projects import get_apps, get_themes
+from kb4it.tui.projects import active_themes, get_apps
 from kb4it.tui.screens.edit_id import id_error
 from kb4it.tui.screens.build import _reset_logging
 from kb4it.tui.widgets import SelectableDataTable
@@ -60,7 +60,7 @@ class CreateProjectScreen(Screen):
 
     def __init__(self, **kw: Any):
         super().__init__(**kw)
-        self._themes = get_themes()
+        self._themes = active_themes()
         self._theme_idx = 0
         self._apps: list[str] = []
         self._app_idx = 0
