@@ -2,7 +2,7 @@
 DocType: How-to guide
 Feature: Themes, Development
 HelpId: create-theme
-Keyword: custom theme, template, mako, theme.json, Builder, DocumentTheme, themekit, template_base, build_page, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
+Keyword: custom theme, template, mako, theme.json, Builder, DocumentTheme, themekit, template_base, build_page, page_pipeline, page_context, add_system_page, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
 Level: advanced
 Order: 560
 Related: explanation-themes.md, dev-architecture.md
@@ -69,13 +69,12 @@ This theme, `plain`, makes a home page that lists every document and wraps each 
 ```python
 """Plain theme: a home page listing every document, and one page per document."""
 
-import os
-
 from kb4it.core.util import html_id_for
 from kb4it.services.builder import Builder
 
 
 class Theme(Builder):
+    page_pipeline = True  # KB4IT wraps every page in HTML_BODY.tpl
 
     def build(self):
         """Build the pages that do not come from a document: here, the home page."""
@@ -85,22 +84,10 @@ class Theme(Builder):
             for doc in self.srvdtb.get_documents()
             if not self.srvdtb.is_system(doc)
         ]
-        self.distribute_md("index", self.template("PAGE_INDEX").render(var=var))
-        self.srvdtb.add_document("index.md")
-        self.srvdtb.add_document_key("index.md", "Title", var["repo"]["title"])
-        self.srvdtb.add_document_key("index.md", "SystemPage", "Yes")
-
-    def build_page(self, path_md):
-        """Wrap each compiled page in the layout of HTML_BODY.tpl."""
-        path_html = html_id_for(path_md)
-        with open(path_html, encoding="utf-8") as fh:
-            body = fh.read()
-        var = self.get_theme_var()
-        var["body"] = body
-        var["title"] = self.srvdtb.get_values(os.path.basename(path_md), "Title")[0]
-        with open(path_html, "w", encoding="utf-8") as fh:
-            fh.write(self.template("HTML_BODY").render(var=var))
+        self.add_system_page("index", var["repo"]["title"], self.template("PAGE_INDEX").render(var=var))
 ```
+
+`page_pipeline = True` lets KB4IT build each page: it reads the compiled document, fills `var` with the title (`var['page']['title']`), the body (`var['source_html']`), the properties (`var['keys']`) and more, and renders `HTML_BODY`. The home page goes through the same pipeline.
 
 `templates/HTML_BODY.tpl`, the layout of every page:
 
@@ -109,12 +96,12 @@ class Theme(Builder):
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>${var['title']} · ${var['repo']['title']}</title>
+  <title>${var['page']['title']} · ${var['repo']['title']}</title>
   <link rel="stylesheet" href="resources/themes/plain/framework/plain.css">
 </head>
 <body>
   <header><a href="index.html">${var['repo']['title']}</a></header>
-  <main>${var['body'] | n}</main>
+  <main>${var['source_html'] | n}</main>
 </body>
 </html>
 ```
@@ -144,12 +131,18 @@ KB4IT copies the theme folder to `target/resources/themes/plain/`; that is why t
 | Part | Role |
 |---|---|
 | `build()` | Builds the pages that do not come from a document: home, lists, calendars |
-| `build_page(path_md)` | Receives each compiled document and writes its final HTML |
+| `page_pipeline = True` | Lets KB4IT build every page: read the compiled document, fill `var`, rewrite the body, render, write |
+| `page_context(doc_id, var)` | Adds the theme's own data to `var` for one page; returns `var` |
+| `body_transforms(doc_id, var)` | Functions from HTML to HTML applied to the body in order; by default the heading templates `HTML_TAG_*_NEW` the theme has |
+| `page_body_template(doc_id, var)`, `render_page(doc_id, var)` | The body template (default `HTML_BODY`) and the whole page: `HTML_HEADER_COMMON`, body and `HTML_FOOTER`, the first and last only when the theme has them |
+| `finalize_html(html)` | A last change to the whole page, such as pretty printing |
+| `build_page(path_md)` | Override it only to build the page completely yourself; the hooks above then do not run |
 | `build_page_key(key, values)`, `build_page_key_value(kvpath)` | Build the pages per property and per value, unless `metadata_pages` is `false` |
 | `post_activities()`, `post_deploy_activities()` | Run after compilation and after the copy to `target/` |
 | `site_signature()` | Returns a value that changes when every page must be rebuilt, for example when the navigation changes |
 | `self.srvdtb` | The documents and their properties: `get_documents()`, `get_values(doc, key)` |
-| `self.distribute_md(name, html)` | Adds a page the theme rendered |
+| `self.add_system_page(name, title, html)` | Adds a page the theme rendered, with its title |
+| `self.edit_url(doc_id)` | The link to edit a document on the git server, or `''`; pages get it as `var['edit_url']` |
 | `self.template(name)` | Loads a template from `templates/`, then from the theme's `template_base`, then from KB4IT's shared ones |
 
 Templates use [Mako](https://www.makotemplates.org/): `${var['repo']['title']}` prints a value, and `% for` ... `% endfor` repeats a block. `var['repo']` holds every key of `repo.json`.
@@ -261,7 +254,7 @@ The [Add page](howto-write-document-editor.md) is built by KB4IT. `Builder` incl
         <a href="add.html">Add document</a>
         % endif
 
-4. Make `build_page()` wrap the page like it wraps `search.html`. The page starts with `<!-- kb4it:theme-html -->`, which marks HTML the theme made itself. A theme that wraps its own pages in another way can override `register_add_page(html)`; apphelp does.
+4. Let the page pipeline wrap the page like any other (`page_pipeline = True`), or make your own `build_page()` wrap it like it wraps `search.html`. The page starts with `<!-- kb4it:theme-html -->`, which marks HTML the theme made itself. A theme that wraps its own pages in another way can override `register_add_page(html)`; apphelp does.
 
 Optionally, ship skeletons in `templates/skeletons/`: `*-SKELETON.md` files and a `skeletons.json`, as described in [Use your own skeletons](howto-write-document-editor.md#skeletons). Without them the cards come from the common set. Set `"editor": true` in `theme.json` to have the page on by default, and require `"kb4it": ">=0.10.0"`.
 
