@@ -76,6 +76,7 @@ def test_system_page():
     import logging
 
     from kb4it.services.addpage import AddPageMixin
+    from kb4it.services.pagepipeline import PagePipelineMixin
 
     class _Dtb:
         def __init__(self):
@@ -87,7 +88,7 @@ def test_system_page():
         def add_document_key(self, name, key, value):
             self.keys[name][key] = value
 
-    class _B(AddPageMixin):
+    class _B(AddPageMixin, PagePipelineMixin):  # add_system_page() comes from Builder
         log = logging.getLogger("test")
         srvdtb = _Dtb()
         written = None
