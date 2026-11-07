@@ -13,12 +13,11 @@ import stat
 import sys
 import time
 
-from kb4it.core import trace
+from kb4it.core import projects, trace
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError, KB4ITError, ThemeError
-from kb4it.core.lock import registry_lock
 from kb4it.core.service import Service
-from kb4it.core.util import copydir, delete_target_contents, json_load, json_save, quarantine
+from kb4it.core.util import copydir, delete_target_contents, json_load
 from kb4it.services.verify import VerifyMixin
 from kb4it.core.log import q
 
@@ -70,53 +69,19 @@ class Workflow(VerifyMixin, Service):
     def list_projects(self):
         """Print all projects created by the user to stdout."""
         self.log.info("[WORKFLOW] ACTION name=list_projects")
-        projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
-        if not os.path.exists(projects_file):
+        def corrupt(kept, error):
+            print(f"Error loading projects: {error}. The file was kept as {kept}")
+        entries = projects.load(on_corrupt=corrupt)
+        if not entries:
             print("No projects found.")
             return
+        for line in projects.format_projects(entries, table=sys.stdout.isatty()):
+            print(line)
 
+    def _save_project(self, name, config_path, pid=None):
+        """Add the project to projects.json."""
         try:
-            data = json_load(projects_file)
-            projects = data.get("projects", [])
-            if not projects:
-                print("No projects found.")
-                return
-
-            print(f"{'Name':<30} {'Config Path'}")
-            print("-" * 80)
-            for proj in projects:
-                print(f"{proj['name']:<30} {proj['config']}")
-        except Exception as e:
-            self.log.error(f"[WORKFLOW] PROJECTS_LOAD_ERROR reason={q(e)}", exc_info=True)
-            print(f"Error loading projects: {e}")
-
-    def _save_project(self, name, config_path):
-        """Save project to projects.json registry."""
-        with registry_lock():
-            self._save_project_locked(name, config_path)
-
-    def _save_project_locked(self, name, config_path):
-        projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
-        projects = []
-        if os.path.exists(projects_file):
-            try:
-                data = json_load(projects_file)
-                projects = data["projects"]
-                if not isinstance(projects, list):
-                    raise TypeError("'projects' is not a list")
-            except (ValueError, KeyError, TypeError) as error:
-                kept = quarantine(projects_file)
-                self.log.warning(f"[WORKFLOW] PROJECTS_CORRUPT path={q(projects_file)} kept={q(kept)} reason={q(error)}")
-                projects = []
-
-        # Avoid duplicates
-        if any(p["config"] == config_path for p in projects):
-            return
-
-        projects.append({"name": name, "config": config_path})
-        try:
-            json_save(projects_file, {"projects": projects})
-            self.log.info(f"[WORKFLOW] PROJECT_REGISTERED name={q(name)}")
+            projects.register(config_path, name=name, pid=pid)
         except Exception as e:
             self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={q(e)}", exc_info=True)
 
@@ -205,15 +170,16 @@ class Workflow(VerifyMixin, Service):
                 os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info("[WORKFLOW] REPO_INITIALIZED")
             repo_abs = os.path.abspath(repo_path)
+            pid = params.get("id")
             self.app.next_steps = [
                 f"Your knowledge base is ready at {repo_abs}.",
                 f"Write documents in {os.path.join(repo_abs, 'source')}/ and copy or delete the samples there.",
-                f"Preview the site with: kb4it serve {config_file}",
+                f"Preview the site with: kb4it serve {pid or config_file}",
             ]
 
             # Register project in projects.json
             repo_title = repoconf.get("title") or os.path.basename(repo_path)
-            self._save_project(repo_title, config_file)
+            self._save_project(repo_title, config_file, pid)
 
     def _failed_pages(self) -> dict:
         """Pages the compiler could not make or the deployer could not find, with the reason."""

@@ -18,6 +18,7 @@ import sys
 import uuid
 from typing import TYPE_CHECKING, Any, Literal, overload
 
+from kb4it.core import projects
 from kb4it.core.completion import app_completer, enable as enable_completion, theme_completer
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
@@ -32,6 +33,8 @@ from kb4it.services.workflow import Workflow
 if TYPE_CHECKING:
     from kb4it.core.service import Service
 
+# Actions whose config argument may be a project id.
+REF_ACTIONS = ("build", "serve", "info", "verify")
 # Actions that write into a repository take its lock: <root>/var/kb4it.lock.
 LOCKED_ACTIONS = ("build", "create")
 # Parameters that carry code for the build to call, not settings (see services/compiler.py).
@@ -328,6 +331,8 @@ def build_parser() -> argparse.ArgumentParser:
     ).completer = app_completer
     init_parser.add_argument("repo_path", help="Path to the repository")
     init_parser.add_argument(
+        "--id", help="Short id for the new project, usable instead of its config path")
+    init_parser.add_argument(
         "--index", choices=("yes", "no"),
         help="Allow search engines to index the site: writes seo.index into repo.json (default: decide later)")
 
@@ -346,6 +351,27 @@ def build_parser() -> argparse.ArgumentParser:
     # List projects
     subparsers.add_parser("projects", help="List all projects created by the user")
 
+    # Add an existing knowledge base to the project list
+    repo_import = subparsers.add_parser(
+        "import", help="Add an existing knowledge base to the project list, or set its id and name",
+        epilog="Example:\n\n   kb4it import ~/kb/sap/config/repo.json --id sapblog",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_import.add_argument("config", help="Path to config/repo.json")
+    repo_import.add_argument("--id", help="Short id, usable instead of the config path")
+    repo_import.add_argument("--name", help="Display name (default: title in repo.json)")
+
+    # Remove a project from the list, and optionally its files
+    repo_delete = subparsers.add_parser(
+        "delete", help="Remove a project from the project list; --files also deletes its folder",
+        epilog="Examples:\n\n   kb4it delete sapblog\n   kb4it delete sapblog --files",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_delete.add_argument("project", help="Project id or path to config/repo.json")
+    repo_delete.add_argument("--files", action="store_true",
+                             help="Also delete the project folder (asks you to type the id to confirm)")
+    repo_delete.add_argument("--yes", action="store_true", help="Do not ask for confirmation")
+
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
@@ -362,7 +388,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     repo_build.add_argument(
-        "config", help="Path to the repository config file (mandatory)"
+        "config", help="Project id or path to config/repo.json"
     )
     repo_build.add_argument(
         "-f", "--force",
@@ -384,7 +410,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="Example:\n\n"
         "   kb4it serve /home/jsmith/Documents/myrepo/config/repo.json",
     )
-    repo_serve.add_argument("config", help="Path to the repository config file (mandatory)")
+    repo_serve.add_argument("config", help="Project id or path to config/repo.json")
     repo_serve.add_argument("--host", default="127.0.0.1",
                             help="Address to listen on (default 127.0.0.1, this computer only)")
     repo_serve.add_argument("--port", type=int, default=8642,
@@ -409,7 +435,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     repo_info.add_argument(
-        "config", help="Path to the repository config file (mandatory)"
+        "config", help="Project id or path to config/repo.json"
     )
 
     # Verify repository sources
@@ -422,7 +448,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     repo_verify.add_argument(
-        "config", help="Path to the repository config file (mandatory)"
+        "config", help="Project id or path to config/repo.json"
     )
 
     return parser
@@ -450,6 +476,12 @@ def main():
     app = None
     try:
         params = parser.parse_args()
+        if params.action in REF_ACTIONS:
+            params.config = projects.resolve(params.config)
+        if params.action == "create" and params.id:
+            problem = projects.id_problem(params.id, projects.load())
+            if problem:
+                raise projects.ProjectError(problem)
         if params.action != "help" and not os.environ.get("CI"):
             from kb4it.core.notice import (HELP_ONLINE_URL, help_notice_dismissed,
                                            help_notice_lines, offline_index)
@@ -459,6 +491,12 @@ def main():
                         print(line, file=sys.stderr)
             except OSError:
                 pass  # The notice is optional; an unreadable KB4IT_HOME must not stop the command.
+        if params.action == "delete":
+            from kb4it.core.projectcli import run_delete
+            sys.exit(run_delete(vars(params)))
+        if params.action == "import":
+            from kb4it.core.projectcli import run_import
+            sys.exit(run_import(vars(params)))
         if params.action == "serve":
             from kb4it.core.serve import run_serve
             sys.exit(run_serve(vars(params)))
@@ -473,6 +511,9 @@ def main():
         sys.exit(0 if success else 1)
     except SystemExit:
         raise
+    except projects.ProjectError as error:
+        print(f"Error: {error}")
+        sys.exit(1)
     except Exception as error:
         if kb4it_logger().handlers:
             # The screen gets one line below; the log file gets the traceback to find the cause.
