@@ -35,7 +35,6 @@ from techdoc_records import event_type, work_type
 from techdoc_related import RELATED_KEYS, related
 
 from kb4it.core.util import (
-    get_human_datetime,
     get_source_docs,
     html_id_for,
     human_size,
@@ -55,6 +54,8 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
     add_page = True   # create_page_add() runs in build()
     properties_cloud = False  # properties.html is a table of the properties
     datatable_hidden = ('Scope',)  # never a column, even when repo.json lists it
+    untitled_label = 'No title found...'
+    ellipsize_titles = False  # the top bar cuts the title with CSS
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
         """Override: document tables leave out the hidden columns and those empty in every row; Date and Title always stay."""
@@ -352,121 +353,61 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         self.create_page_about_app()
         self.create_page_search()
 
-    def build_page(self, path_md):
-        """Build the final HTML Page.
+    def page_context(self, doc_id, var):
+        """Override: the header menu, and for a document its header, info card, quality and TOC sidebar."""
+        var['toc_sidebar'] = False
+        var['menu_contents'] = self.menu_contents(var)
+        var['fmt'] = source_ext(doc_id) or "md"
+        if var['SystemPage']:
+            var['metadata'] = ""
+            return var
+        theme_conf = self.srvbes.get_dict('theme') or {}
+        var['toc_sidebar'] = self.toc_sidebar(var['source_html'])
+        doc_summary = summary(self.srvdtb, doc_id)
+        quality_doc = self.quality_view(doc_id)
+        var['has_quality'] = quality_doc is not None
+        var['page']['exemplary'] = bool(quality_doc) and quality_doc['tier'] == 'exemplary'
+        var['doc_header'] = self.template('DOC_HEADER').render(var={
+            'quality': quality_doc,
+            'strip': header_strip(self.srvdtb, doc_id, theme_conf.get('header_keys', {})),
+            'summary': doc_summary,
+            'banners': banners(self.srvdtb, doc_id),
+        })
+        info_tabs = theme_conf.get('info_tabs', {})
+        var['info_card'] = self.template('INFO_CARD').render(var={'card': {
+            'open': not doc_summary,
+            'groups': info_groups(self.srvdtb, doc_id, theme_conf.get('info_groups', []), var['source_md'],
+                                  self.person_tip),
+            'history': {
+                'date': (self.srvdtb.get_values(doc_id, 'Date') or [''])[0],
+                'source': doc_id,
+                'built': var['timestamp'],
+                'edit_url': var['edit_url'],
+                'editor': bool(var.get('editor')),
+            },
+            'print': {name: info_tabs.get(name, {}).get('print', name == 'details')
+                      for name in ('details', 'quality', 'related', 'history')},
+            'related': self.related_view(doc_id),
+            'quality_html': self.template('QUALITY_PANEL').render(var={'q': quality_doc}) if quality_doc else '',
+        }})
+        return var
 
-        At this point, the Markdown compilation has finished successfully and
-        the html page can be built. The Builder receives the source filepath;
-        another file with extension .html should also exist.
+    def body_transforms(self, doc_id, var):
+        """Override: after the heading transformations, the images of a document and the code and table blocks."""
+        steps = [self.apply_transformations]
+        if not var['SystemPage']:
+            steps.append(lambda html: self._enhance_images(doc_id, html))
+        steps.append(lambda html: enhance_blocks(html, self.table_filter_on()))
+        return steps
 
-        The html page is built by inserting the html header at the beginning,
-        appending the footer at the end, and applying the necessary
-        transformations in the body.
+    def _enhance_images(self, doc_id, html):
+        html, missing = enhance_images(html, self.srvbes.get_path('source'))
+        for src in missing:
+            self.log.warning(f"[THEME] IMAGE_MISSING doc={q(doc_id)} src={q(src)}")
+        return html
 
-        Finally, the html page produced by the compiler is overwritten.
-        """
-        path_hdoc = html_id_for(path_md)
-        basename_md = os.path.basename(path_md)
-        basename_hdoc = os.path.basename(path_hdoc)
-        exists_hdoc = os.path.exists(path_hdoc)  # it should be true
-
-        if not exists_hdoc:
-            self.log.error(f"[THEME] HTML_MISSING doc={q(basename_md)}")
-        else:
-            HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-            HTML_BODY = self.template('HTML_BODY')
-            HTML_FOOTER = self.template('HTML_FOOTER')
-            var = self.get_theme_var()
-            var['edit_url'] = self.edit_url(basename_md)
-            now = datetime.now()
-            timestamp = get_human_datetime(now)
-            keys = self.srvdtb.get_doc_properties(basename_md)
-
-            with open(path_md, 'r', encoding='utf-8') as fpa:
-                source_md = fpa.read()
-
-            with open(path_hdoc, 'r', encoding='utf-8') as fph:
-                source_html = fph.read()
-
-            var['toc'] = self.extract_toc(source_html)
-            var['has_toc'] = True
-            var['toc_sidebar'] = False
-
-            # Do not show metadata for system pages
-            if self.srvdtb.is_system(basename_md):
-                var['SystemPage'] = True
-                TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
-                var['metadata'] = ""
-            else:
-                var['SystemPage'] = False
-                TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-                HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-                theme_conf = self.srvbes.get_dict('theme') or {}
-                var['toc_sidebar'] = self.toc_sidebar(source_html)
-                doc_summary = summary(self.srvdtb, basename_md)
-                quality_doc = self.quality_view(basename_md)
-                var['has_quality'] = quality_doc is not None
-                var['page']['exemplary'] = bool(quality_doc) and quality_doc['tier'] == 'exemplary'
-                var['doc_header'] = self.template('DOC_HEADER').render(var={
-                    'quality': quality_doc,
-                    'strip': header_strip(self.srvdtb, basename_md, theme_conf.get('header_keys', {})),
-                    'summary': doc_summary,
-                    'banners': banners(self.srvdtb, basename_md),
-                })
-                info_tabs = theme_conf.get('info_tabs', {})
-                var['info_card'] = self.template('INFO_CARD').render(var={'card': {
-                    'open': not doc_summary,
-                    'groups': info_groups(self.srvdtb, basename_md, theme_conf.get('info_groups', []), source_md,
-                                          self.person_tip),
-                    'history': {
-                        'date': (self.srvdtb.get_values(basename_md, 'Date') or [''])[0],
-                        'source': basename_md,
-                        'built': timestamp,
-                        'edit_url': var['edit_url'],
-                        'editor': bool(var.get('editor')),
-                    },
-                    'print': {name: info_tabs.get(name, {}).get('print', name == 'details')
-                              for name in ('details', 'quality', 'related', 'history')},
-                    'related': self.related_view(basename_md),
-                    'quality_html': self.template('QUALITY_PANEL').render(var={'q': quality_doc}) if quality_doc else '',
-                }})
-
-            var['menu_contents'] = HTML_TOC
-            var['keys'] = keys
-            var['page']['title'] = 'No title found...'
-            var['page']['title-tooltip'] = 'No title found...'
-            try:
-                var['page']['title'] = keys['Title']  # the top bar cuts it with CSS
-                var['page']['title-tooltip'] = keys['Title']
-            except Exception:
-                pass
-            var['basename_md'] = basename_md
-            var['basename_hdoc'] = basename_hdoc
-            var['source_md'] = source_md
-            var['fmt'] = source_ext(basename_md) or "md"
-            var['source_html'] = self.apply_transformations(source_html)
-            if not var['SystemPage']:
-                var['source_html'], missing = enhance_images(var['source_html'], self.srvbes.get_path('source'))
-                for src in missing:
-                    self.log.warning(f"[THEME] IMAGE_MISSING doc={q(basename_md)} src={q(src)}")
-            var['source_html'] = enhance_blocks(var['source_html'], self.table_filter_on())
-            actions = self.get_page_actions(var)
-            var['actions'] = actions
-            var['timestamp'] = timestamp
-
-            HEADER = HTML_HEADER_COMMON.render(var=var)
-            BODY = HTML_BODY.render(var=var)
-            FOOTER = HTML_FOOTER.render(var=var)
-
-            HTML = ""
-            HTML += HEADER
-            HTML += BODY
-            HTML += FOOTER
-
-            with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
-                tree = etree.fromstring(HTML, parser)
-                pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
-                fhtml.write(f"<!DOCTYPE html>\n{pretty_html}")
-
-            # ~ self.log.debug(f"KEY[{key}] VALUE[{value}] targets to RESOURCE[{var['pagename']}]")
+    def finalize_html(self, html):
+        """Override: techdoc writes pretty-printed HTML with a doctype."""
+        tree = etree.fromstring(html, parser)
+        pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
+        return f"<!DOCTYPE html>\n{pretty_html}"

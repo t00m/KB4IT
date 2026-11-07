@@ -61,6 +61,7 @@ class PagePipelineMixin:
         cut = self.ellipsize_titles and title != self.untitled_label
         var["page"]["title"] = ellipsize_text(title) if cut else title
         var["page"]["title-tooltip"] = title
+        var["source_html"] = source_html  # the compiled body; replaced by the transformed one below
 
         var = self.page_context(doc_id, var)
         html = source_html

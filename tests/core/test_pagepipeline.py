@@ -99,6 +99,7 @@ class Recorder(Builder):
 
     def page_context(self, doc_id, var):
         self.calls.append("page_context")
+        self.body_in_context = var["source_html"]
         return var
 
     def body_transforms(self, doc_id, var):
@@ -155,6 +156,8 @@ def test_pipeline_fills_the_shared_page_keys(page_files):
     assert var["SystemPage"] is True and var["has_toc"] is True and var["edit_url"] == ""
     assert var["page"]["title"] == "A" and var["page"]["title-tooltip"] == "A"
     assert var["keys"] == {"Title": "A"} and var["timestamp"]
+    assert b.body_in_context == "<p>body</p>"  # the compiled body, before the transforms
+    assert var["source_html"] == "<P>BODY</P>"
 
 
 def test_pipeline_logs_missing_html_with_theme_area(page_files, caplog):
