@@ -13,16 +13,22 @@ before anything changes there, so a refused zip leaves the folder as it was.
 
 from __future__ import annotations
 
+import errno
 import json
+import os
 import re
+import secrets
+import shutil
 import stat
+import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError
-from kb4it.core.log import get_logger
+from kb4it.core.lock import _TimedLock
+from kb4it.core.log import get_logger, q
 from kb4it.core.version import requirement_satisfied
 
 log = get_logger("THEMES")
@@ -30,6 +36,7 @@ log = get_logger("THEMES")
 THEME_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 MAX_ENTRIES = 10_000
 MAX_UNPACKED = 200 * 1024 * 1024
+LOCK_TIMEOUT = 10.0
 _DRIVE_RE = re.compile(r"^[A-Za-z]:")
 
 
@@ -46,6 +53,15 @@ class ThemeZip:
     top: str
     theme: dict
     members: list[zipfile.ZipInfo] = field(default_factory=list)
+
+
+@dataclass
+class InstallResult:
+    id: str
+    version: str
+    path: Path
+    replaced: str | None
+    bundled: str | None
 
 
 def _name(info: zipfile.ZipInfo) -> str:
@@ -151,3 +167,127 @@ def inspect_zip(path: str | Path) -> ThemeZip:
         theme = _read_theme_json(archive, entries, top)
     _check_theme(theme, top)
     return ThemeZip(top=top, theme=theme, members=[info for info, _ in entries])
+
+
+def themes_dir() -> Path:
+    return Path(ENV["LPATH"]["THEMES"])
+
+
+def themes_lock() -> _TimedLock:
+    """Lock around every change in the local themes folder."""
+    return _TimedLock(os.path.join(ENV["LPATH"]["VAR"], "themes.lock"), LOCK_TIMEOUT)
+
+
+def tmp_dir() -> Path:
+    """Folder for downloads and unpacked zips, created when missing."""
+    path = Path(ENV["LPATH"]["VAR"]) / "tmp"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _version(theme: dict) -> str:
+    version = theme.get("version")
+    return str(version) if version not in (None, "") else "unversioned"
+
+
+def _version_in(folder: Path) -> str:
+    """Version in folder/theme.json, or 'unversioned' when it has none or cannot be read."""
+    try:
+        data = json.loads((folder / "theme.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "unversioned"
+    return _version(data) if isinstance(data, dict) else "unversioned"
+
+
+def bundled_version(theme_id: str) -> str | None:
+    """Version of the bundled theme with this id, or None when KB4IT bundles none."""
+    folder = Path(ENV["GPATH"]["THEMES"]) / theme_id
+    if not (folder / "theme.json").is_file():
+        return None
+    return _version_in(folder)
+
+
+def _move(src: Path, dst: Path) -> None:
+    """Rename src to dst; copy across disks when a rename cannot."""
+    try:
+        os.replace(src, dst)
+    except OSError as error:
+        if error.errno != errno.EXDEV:
+            raise
+        shutil.move(str(src), str(dst))
+
+
+def _remove(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink(missing_ok=True)
+    elif path.exists():
+        shutil.rmtree(path, ignore_errors=True)
+
+
+def _extract(path: Path, info: ThemeZip, work: Path) -> None:
+    """Unpack the checked members of the zip into work."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            for member in info.members:
+                parts = _check_entry(member, _name(member))
+                target = work.joinpath(*parts)
+                if member.is_dir():
+                    target.mkdir(parents=True, exist_ok=True)
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(member) as src, open(target, "wb") as dst:
+                    shutil.copyfileobj(src, dst)
+    except (zipfile.BadZipFile, EOFError) as error:
+        raise ThemeInstallError("not_a_zip", f"Cannot unpack {path}: {error}") from None
+    except OSError as error:
+        raise ThemeInstallError("install", f"Cannot unpack {path}: {error}") from None
+
+
+def _swap(new: Path, theme_id: str) -> str | None:
+    """Put new in place of the local theme theme_id; return the replaced version, if any."""
+    themes = themes_dir()
+    themes.mkdir(parents=True, exist_ok=True)
+    target = themes / theme_id
+    with themes_lock():
+        old = None
+        replaced = None
+        if target.exists() or target.is_symlink():
+            replaced = _version_in(target)
+            old = tmp_dir() / f"old-{theme_id}-{secrets.token_hex(4)}"
+            try:
+                _move(target, old)
+            except OSError as error:
+                raise ThemeInstallError("install", f"Cannot move the old {theme_id} away: {error}") from None
+        try:
+            _move(new, target)
+        except OSError as error:
+            if old is not None:
+                _move(old, target)
+            raise ThemeInstallError("install", f"Cannot put {theme_id} in {themes}: {error}") from None
+        if old is not None:
+            _remove(old)
+    return replaced
+
+
+def install_zip(path: str | Path, source: str | None = None) -> InstallResult:
+    """Install the theme in the zip at path into the local themes folder."""
+    path = Path(path)
+    source = source or str(path)
+    work = None
+    try:
+        info = inspect_zip(path)
+        theme_id = info.top
+        work = Path(tempfile.mkdtemp(prefix=f"install-{theme_id}-", dir=tmp_dir()))
+        _extract(path, info, work)
+        replaced = _swap(work / theme_id, theme_id)
+    except ThemeInstallError as error:
+        log.warning(f"[THEMES] THEME_INSTALL_REFUSED reason={error.reason} source={q(source)}")
+        raise
+    finally:
+        if work is not None:
+            shutil.rmtree(work, ignore_errors=True)
+    version = _version(info.theme)
+    log.info(f"[THEMES] THEME_INSTALLED id={theme_id} version={q(version)} "
+             f"replaced={q(replaced or '')} source={q(source)}")
+    return InstallResult(id=theme_id, version=version, path=themes_dir() / theme_id,
+                         replaced=replaced, bundled=bundled_version(theme_id))

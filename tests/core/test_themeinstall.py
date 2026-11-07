@@ -172,3 +172,89 @@ def test_missing_requirement_is_accepted(tmp_path):
     del data["kb4it"]
     files["mini/theme.json"] = json.dumps(data)
     assert inspect_zip(make_zip(tmp_path / "t.zip", files)).top == "mini"
+
+
+# install_zip
+
+@pytest.fixture
+def home(tmp_path, monkeypatch):
+    """A fresh KB4IT_HOME: none of its folders exist yet."""
+    from kb4it.core.env import ENV
+    root = tmp_path / "home"
+    monkeypatch.setitem(ENV["LPATH"], "ROOT", str(root))
+    monkeypatch.setitem(ENV["LPATH"], "VAR", str(root / "var"))
+    monkeypatch.setitem(ENV["LPATH"], "THEMES", str(root / "opt" / "resources" / "themes"))
+    return root
+
+
+def themes_dir(home):
+    return home / "opt" / "resources" / "themes"
+
+
+def listing(folder):
+    return sorted((p.relative_to(folder).as_posix(), p.read_bytes() if p.is_file() else None)
+                  for p in Path(folder).rglob("*"))
+
+
+def test_install_into_a_fresh_home(tmp_path, home):
+    result = themeinstall.install_zip(mini_zip(tmp_path))
+    assert (themes_dir(home) / "mini" / "theme.json").is_file()
+    assert result.id == "mini" and result.version == "0.1.0"
+    assert result.path == themes_dir(home) / "mini"
+    assert result.replaced is None and result.bundled is None
+
+
+def test_install_replaces_and_reports_old_version(tmp_path, home):
+    themeinstall.install_zip(mini_zip(tmp_path))
+    (themes_dir(home) / "mini" / "old-only.txt").write_text("x", encoding="utf-8")
+    files = mini_files(version="0.2.0")
+    files["mini/new.txt"] = "new"
+    result = themeinstall.install_zip(make_zip(tmp_path / "v2.zip", files))
+    assert result.replaced == "0.1.0" and result.version == "0.2.0"
+    assert (themes_dir(home) / "mini" / "new.txt").is_file()
+    assert not (themes_dir(home) / "mini" / "old-only.txt").exists()
+
+
+def test_refused_zip_leaves_themes_untouched(tmp_path, home):
+    themeinstall.install_zip(mini_zip(tmp_path))
+    before = listing(themes_dir(home))
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install_zip(mini_zip(tmp_path, name="bad.zip", id="other"))
+    assert caught.value.reason == "id_mismatch"
+    assert listing(themes_dir(home)) == before
+
+
+def test_swap_failure_restores_old_theme(tmp_path, home, monkeypatch):
+    themeinstall.install_zip(mini_zip(tmp_path))
+    before = listing(themes_dir(home))
+    real_move = themeinstall._move
+
+    def failing_move(src, dst):
+        if Path(dst) == themes_dir(home) / "mini" and "install-" in str(src):
+            raise OSError("disk full")
+        real_move(src, dst)
+
+    monkeypatch.setattr(themeinstall, "_move", failing_move)
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install_zip(mini_zip(tmp_path, name="v2.zip", version="0.2.0"))
+    assert caught.value.reason == "install"
+    assert listing(themes_dir(home)) == before
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+def test_temporary_files_are_removed(tmp_path, home):
+    themeinstall.install_zip(mini_zip(tmp_path))
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+    with pytest.raises(ThemeInstallError):
+        themeinstall.install_zip(mini_zip(tmp_path, name="bad.zip", id="other"))
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+    themeinstall.install_zip(mini_zip(tmp_path, name="v2.zip", version="0.2.0"))
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+def test_same_id_as_bundled(tmp_path, home):
+    from kb4it.core.env import ENV
+    bundled = json.loads((Path(ENV["GPATH"]["THEMES"]) / "techdoc" / "theme.json").read_text(encoding="utf-8"))
+    result = themeinstall.install_zip(mini_zip(tmp_path, top="techdoc", id="techdoc"))
+    assert result.bundled == bundled["version"]
+    assert themeinstall.bundled_version("nosuchtheme") is None
