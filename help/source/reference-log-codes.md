@@ -53,6 +53,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `CONFIG_KEY_MISSING` | error | A required key is missing. Stops | See [CONFIG_KEY_MISSING](troubleshooting.md#config-key) |
 | `VERIFY_ERROR` | error | `kb4it verify` cannot read `repo.json`. Stops | Fix the JSON or the path |
 | `PATH_CWD_RELATIVE` | warning | `source` was found relative to the current folder, not to the knowledge base folder. Older settings worked that way. The build goes on | Make `source` and `target` relative to the folder that holds `config/` |
+| `GIT_SERVER_NOT_URL` | warning | `"git": true`, but `git_server` is not a full URL, for example `github.com`. The build goes on without git links, and `kb4it verify` reports it | Write `git_server` as a full URL, such as `https://github.com`; see [Optional settings](reference-repo-json.md#optional) |
 | `SOURCE_MISSING` | error | The `source` folder does not exist. Stops | See [SOURCE_MISSING](troubleshooting.md#source-missing) |
 | `LOAD_FAIL` | error | The `hooks` file raised an error while loading. Stops | Fix the Python file; the message has the error |
 | `MD_EXTENSION_MISSING` | error | A Markdown extension, nh3 or Pygments is not installed. Stops | See [MD_EXTENSION_MISSING](troubleshooting.md#md-extension) |
@@ -108,6 +109,7 @@ A profile is a source whose file name starts with `PROFILE-`: it describes one v
 | `HTML_MISSING` | error | The theme cannot find the converted text of a document | Look for `MD_COMPILE_FAIL` for the same document |
 | `METADATA_FAIL`, `KEY_FAIL` | error | The theme cannot build the list of properties of a document | Check the properties of the document the line names |
 | `DATATABLE_FAIL` | error | The theme cannot add a document to a table | Check the properties of the document the line names |
+| `POST_TEMPLATE_FALLBACK` | warning | The blog theme could not render a document with its post layout and used the plain page layout. The line names the template and the error | Check the properties of the document, often `Date` or `Category`, or fix the template override |
 | `INDEX_SKIP` | warning | The blog theme left a post out of its home page | Check the post the line names; the line has the error |
 | `INDEX_UNSET` | info | Written as `[SEO] INDEX_UNSET`: `seo.index` is not set in `repo.json`, so the site is indexable by default | Set `"seo": {"index": true}` or `false`; see [Search engines](reference-repo-json.md#indexing) |
 | `ROBOTS_KEPT` | warning | `target/robots.txt` was not written by KB4IT, so the build leaves it as it is | Put your `robots.txt` in `source/`, or delete the one in `target/` |

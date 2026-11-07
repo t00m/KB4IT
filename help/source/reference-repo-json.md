@@ -68,7 +68,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `search` | `true`, `false` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
 | `editor` | `true`, `false` | techdoc: on; blog, bookshelf, apphelp: off | Add page (`add.html`) with a Markdown editor for new documents. Any other value stops the build. `false` removes the page and the link to it |
 | `git` | `true`, `false` | `false` | Edit links to your git server. They appear only with `"git": true` and `git_server`, `git_user`, `git_repo` and `git_branch` all set |
-| `git_server` | Full URL such as `https://github.com`, or a host name such as `github.com` (the link then starts with `https://`) | | Git server of the edit links |
+| `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links. A host name such as `github.com` gives no links: the build logs `GIT_SERVER_NOT_URL` and `kb4it verify` reports it |
 | `git_user` | Text | | User or organisation on the git server |
 | `git_repo` | Text | | Repository name |
 | `git_branch` | Text | | Branch the edit links open |

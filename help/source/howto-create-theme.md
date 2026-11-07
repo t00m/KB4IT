@@ -137,6 +137,7 @@ KB4IT copies the theme folder to `target/resources/themes/plain/`; that is why t
 | `page_body_template(doc_id, var)`, `render_page(doc_id, var)` | The body template (default `HTML_BODY`) and the whole page: `HTML_HEADER_COMMON`, body and `HTML_FOOTER`, the first and last only when the theme has them |
 | `finalize_html(html)` | A last change to the whole page, such as pretty printing |
 | `build_page(path_md)` | Override it only to build the page completely yourself; the hooks above then do not run |
+| `page_pipeline = False` | Leaves each compiled document as the compiler wrote it. A theme built on `DocumentTheme` has the pipeline on; set this to turn it off |
 | `build_page_key(key, values)`, `build_page_key_value(kvpath)` | Build the pages per property and per value, unless `metadata_pages` is `false` |
 | `post_activities()`, `post_deploy_activities()` | Run after compilation and after the copy to `target/` |
 | `site_signature()` | Returns a value that changes when every page must be rebuilt, for example when the navigation changes |

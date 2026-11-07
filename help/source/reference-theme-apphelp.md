@@ -91,7 +91,7 @@ The `apphelp` block of `repo.json`:
 | `version` | Text, or `"kb4it"` for the installed KB4IT version | | Top-level key of `repo.json`, not of the `apphelp` block. Version of the application the help describes; see [versions](#versions) |
 | `editor` | `true`, `false` | `false` | Top-level key of `repo.json`, not of the `apphelp` block. `true` builds `add.html` and the **Add a page** link in the sidebar; see [Add page and editor](#editor) |
 | `git` | `true`, `false` | `false` | Top-level key of `repo.json`, not of the `apphelp` block. Edit links; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
-| `git_server` | Host name without scheme, such as `github.com` | | Top-level key of `repo.json`, not of the `apphelp` block. Git server of the edit links; KB4IT adds `https://` |
+| `git_server` | Full URL, such as `https://github.com` | | Top-level key of `repo.json`, not of the `apphelp` block. Git server of the edit links |
 | `git_user` | Text | | Top-level key of `repo.json`, not of the `apphelp` block. User or organisation on the git server |
 | `git_repo` | Text | | Top-level key of `repo.json`, not of the `apphelp` block. Repository name |
 | `git_branch` | Text | | Top-level key of `repo.json`, not of the `apphelp` block. Branch the edit links open |
@@ -107,7 +107,7 @@ The page offers four skeletons, one per type of document: `TUTORIAL`, `HOWTO`, `
 
 Completion and the Properties form offer the values of the documents plus the allowed ones that no document uses yet: the `vocabulary` lists, the four `DocType` names and the `Layout` names. `Section`, `Order` and `Summary` are free text. The editor does not check apphelp's rules; `kb4it verify` and the build do.
 
-Edit links use `"git": true` and `git_server` without `https://`, for example `github.com`.
+Edit links use `"git": true` and `git_server` as a full URL, for example `https://github.com`.
 
 ## Versions {#versions}
 
