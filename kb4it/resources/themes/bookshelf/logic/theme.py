@@ -17,8 +17,7 @@ from collections import Counter, OrderedDict
 from datetime import datetime
 from html import escape
 
-from kb4it.core.util import (ellipsize_text, get_human_datetime,
-                             guess_datetime, html_id_for, valid_filename)
+from kb4it.core.util import ellipsize_text, guess_datetime, html_id_for, valid_filename
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
 from kb4it.core.log import q
@@ -88,9 +87,8 @@ class Theme(DocumentTheme):
     datatable_link_template = 'LINK'
     datatable_default_headers = ('Date', 'Title', 'Chapter')
 
-    books = OrderedDict()
-    doc_index = {}
-    _context_ready = False
+    log_area = 'BOOKSHELF'
+    untitled_label = 'Untitled'
 
     def _initialize(self):
         super()._initialize()
@@ -448,56 +446,17 @@ class Theme(DocumentTheme):
         }
 
     # ------------------------------------------------------------ doc pages
-    def build_page(self, path_md):
-        path_hdoc = html_id_for(path_md)
-        basename_md = os.path.basename(path_md)
-        basename_hdoc = os.path.basename(path_hdoc)
-        if not os.path.exists(path_hdoc):
-            self.log.error(f"[BOOKSHELF] HTML_MISSING doc={q(basename_md)}")
-            return
-
-        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-        HTML_BODY = self.template('HTML_BODY')
-        HTML_FOOTER = self.template('HTML_FOOTER')
-        var = self.get_theme_var()
-        var['edit_url'] = self.edit_url(basename_md)
-        var['timestamp'] = get_human_datetime(datetime.now())
-        var['keys'] = self.srvdtb.get_doc_properties(basename_md)
-
-        with open(path_md, 'r', encoding='utf-8') as fpa:
-            source_md = fpa.read()
-        with open(path_hdoc, 'r', encoding='utf-8') as fph:
-            source_html = fph.read()
-
-        var['toc'] = self.extract_toc(source_html)
+    def page_context(self, doc_id, var):
+        """Override: reading time, and the metadata and reading position of a chapter."""
         var['has_toc'] = len(var['toc']) > 0
-        var['read_min'] = max(1, round(len(source_md.split()) / 200))
-
-        if self.srvdtb.is_system(basename_md):
-            var['SystemPage'] = True
+        var['read_min'] = max(1, round(len(var['source_md'].split()) / 200))
+        if var['SystemPage']:
             var['metadata'] = ''
             var['reading'] = None
         else:
-            var['SystemPage'] = False
-            var['metadata'] = self.build_metadata_section(basename_md)
-            var['reading'] = self._reading_context(basename_md)
-
-        var['page']['title'] = 'Untitled'
-        try:
-            var['page']['title'] = ellipsize_text(var['keys']['Title'])
-        except Exception:
-            pass
-        var['basename_md'] = basename_md
-        var['basename_hdoc'] = basename_hdoc
-        var['source_md'] = source_md
-        var['source_html'] = self.apply_transformations(source_html)
-        var['actions'] = self.get_page_actions(var)
-
-        HTML = (HTML_HEADER_COMMON.render(var=var)
-                + HTML_BODY.render(var=var)
-                + HTML_FOOTER.render(var=var))
-        with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
-            fhtml.write(HTML)
+            var['metadata'] = self.build_metadata_section(doc_id)
+            var['reading'] = self._reading_context(doc_id)
+        return var
 
     # --------------------------------------------------------------- shared
     def datatable_date_cell(self, timestamp):

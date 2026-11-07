@@ -87,3 +87,14 @@ def test_user_index_page_wins(site, tmp_path):
     assert result.returncode == 0, result.stdout
     assert "INDEX_SKIP reason=user_generated" in result.stdout
     assert "My own index" in (repo / "target" / "index.html").read_text(encoding="utf-8")
+
+
+def test_book_model_is_not_class_state():
+    """books, doc_index and _context_ready are set per build in _initialize(), never shared on the class."""
+    import ast
+
+    from tests.helpers import ROOT
+    source = (ROOT / "kb4it" / "resources" / "themes" / "bookshelf" / "logic" / "theme.py").read_text(encoding="utf-8")
+    theme = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
+    names = {t.id for n in theme.body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
+    assert not names & {"books", "doc_index", "_context_ready"}
