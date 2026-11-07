@@ -372,6 +372,16 @@ def build_parser() -> argparse.ArgumentParser:
                              help="Also delete the project folder (asks you to type the id to confirm)")
     repo_delete.add_argument("--yes", action="store_true", help="Do not ask for confirmation")
 
+    # Explore properties and values read from the sources
+    repo_keys = subparsers.add_parser(
+        "keys", help="List the properties of a project, the values of one, or the documents with one value",
+        epilog="Examples:\n\n   kb4it keys sapblog\n   kb4it keys sapblog Tag\n   kb4it keys sapblog Tag backup",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_keys.add_argument("project", help="Project id or path to config/repo.json")
+    repo_keys.add_argument("key", nargs="?", help="Property name, such as Tag")
+    repo_keys.add_argument("value", nargs="?", help="Property value, such as backup")
+
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
@@ -491,6 +501,9 @@ def main():
                         print(line, file=sys.stderr)
             except OSError:
                 pass  # The notice is optional; an unreadable KB4IT_HOME must not stop the command.
+        if params.action == "keys":
+            from kb4it.core.explore import run_keys
+            sys.exit(run_keys(vars(params)))
         if params.action == "delete":
             from kb4it.core.projectcli import run_delete
             sys.exit(run_delete(vars(params)))
