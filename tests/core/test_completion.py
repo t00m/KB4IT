@@ -128,3 +128,25 @@ def test_completers_on_a_broken_project_return_nothing():
     assert completion.key_completer("", parsed_args=parsed) == []
     assert completion.value_completer("", parsed_args=parsed) == []
     assert completion.where_completer("", parsed_args=parsed) == []
+
+
+def test_completers_leave_a_corrupt_list_alone(tmp_path, monkeypatch, capsys):
+    from kb4it.core import projects
+    path = tmp_path / "projects.json"
+    path.write_text("{bad", encoding="utf-8")
+    monkeypatch.setattr(projects, "PROJECTS_FILE", path)
+    assert completion.id_completer("") == []
+    assert completion.where_completer("", parsed_args=argparse.Namespace(projects=None)) == []
+    assert path.exists()
+    assert not list(tmp_path.glob("projects.json.corrupt-*"))
+    assert capsys.readouterr().err == ""
+
+
+def test_where_completion_survives_one_broken_project(tmp_path, home, monkeypatch):
+    from kb4it.core import projects
+    from tests.helpers import page, write_repo
+    monkeypatch.setattr(projects, "PROJECTS_FILE", tmp_path / "projects.json")
+    good = write_repo(tmp_path / "good", "techdoc", {"a.md": page("A", Tag="x")})
+    projects.register(good, pid="good")
+    projects.save(projects.load() + [{"id": "gone", "name": "Gone", "config": str(tmp_path / "gone.json")}])
+    assert "Tag=" in completion.where_completer("T", parsed_args=argparse.Namespace(projects=None))

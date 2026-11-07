@@ -224,3 +224,48 @@ def test_delete_from_the_command_line(tmp_path, home):
     assert result.returncode == 0, result.stdout
     assert not config.exists()
     assert registry(home) == []
+
+
+def test_delete_refuses_a_symlinked_config(listing):
+    real = repo(listing, "elsewhere")
+    (listing / "other" / "config").mkdir(parents=True)
+    link = listing / "other" / "config" / "repo.json"
+    link.symlink_to(real)
+    projects.register(link, pid="sym")
+    assert delete("sym", files=True, yes=True) == 1
+    assert real.exists()
+    assert link.exists()
+
+
+def test_delete_stale_entry_by_path(listing):
+    config = repo(listing)
+    projects.register(config)
+    import shutil
+    shutil.rmtree(listing / "kb")
+    assert delete(str(config)) == 0
+    assert projects.load() == []
+
+
+def test_delete_refuses_when_a_build_starts_during_the_prompt(listing):
+    config = repo(listing)
+    projects.register(config, pid="kb1")
+    other = FileLock(repo_lock_path(config))
+
+    def answer_while_a_build_starts(_prompt):
+        other.acquire()
+        return "kb1"
+    try:
+        status = run_delete({"project": "kb1", "files": True, "yes": False},
+                            ask=answer_while_a_build_starts, interactive=True)
+    finally:
+        other.release()
+    assert status == 1
+    assert config.exists()
+    assert len(projects.load()) == 1
+
+
+def test_delete_cancelled_leaves_no_lock_file(listing):
+    config = repo(listing)
+    projects.register(config, pid="kb1")
+    assert delete("kb1", files=True, answer="no", interactive=True) == 1
+    assert not (listing / "kb" / "var").exists()

@@ -76,3 +76,10 @@ def test_keys_from_the_command_line_writes_no_log(kb, tmp_path):
     assert result.returncode == 0, result.stderr
     assert "    2  linux" in result.stdout.splitlines()
     assert not (kb.parent.parent / "var").exists()
+
+
+def test_missing_source_folder_exits_1(kb, capsys):
+    import shutil
+    shutil.rmtree(kb.parent.parent / "source")
+    assert keys(kb) == 1
+    assert "source" in capsys.readouterr().err

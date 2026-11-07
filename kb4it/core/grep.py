@@ -96,8 +96,10 @@ def run_search(params: dict, out: TextIO = sys.stdout, err: TextIO = sys.stderr)
     for label, config in targets:
         try:
             source = projects.source_dir(config)
+            if not source.is_dir():
+                raise FileNotFoundError(f"the source folder is missing: {source}")
             props = read_properties(config)[0] if where else {}
-        except (OSError, ValueError) as error:
+        except (OSError, ValueError, AttributeError) as error:
             print(f"Warning: skipped {label}: {error}", file=err)
             continue
         for path in sorted(get_source_docs(str(source))):

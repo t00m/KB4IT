@@ -178,3 +178,13 @@ def test_search_from_the_command_line(kb1, tmp_path):
                        cwd=tmp_path, home=home, split_streams=True)
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == [f"{src(kb1, 'c.md')}:8: restore and linux"]
+
+
+def test_missing_source_folder_is_skipped_with_a_warning(kb1, tmp_path):
+    import shutil
+    other = write_repo(tmp_path / "nosrc", "techdoc", {})
+    shutil.rmtree(other.parent.parent / "source")
+    projects.register(other, pid="nosrc")
+    status, _lines, err = search("restore")
+    assert status == 0
+    assert "nosrc" in err

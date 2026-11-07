@@ -34,7 +34,7 @@ class ProjectError(KB4ITError):
     """A project reference or id that cannot be used."""
 
 
-def _load(on_corrupt: Callable[[str, Exception], None] | None = None) -> list[dict]:
+def _load(on_corrupt: Callable[[str, Exception], None] | None = None, quarantine_bad: bool = True) -> list[dict]:
     path = Path(PROJECTS_FILE)
     if not path.exists():
         return []
@@ -45,6 +45,8 @@ def _load(on_corrupt: Callable[[str, Exception], None] | None = None) -> list[di
             raise TypeError("'projects' is not a list")
         return entries
     except (ValueError, KeyError, TypeError) as error:
+        if not quarantine_bad:
+            return []
         # Keep the unreadable file: the next save would otherwise replace the whole list.
         kept = quarantine(str(path))
         log.warning(f"[PROJECTS] PROJECTS_CORRUPT path={q(path)} kept={q(kept)} reason={q(error)}")
@@ -61,12 +63,13 @@ def _save(entries: list[dict]) -> None:
     json_save(str(path), {"projects": entries})
 
 
-def load(on_corrupt: Callable[[str, Exception], None] | None = None) -> list[dict]:
+def load(on_corrupt: Callable[[str, Exception], None] | None = None, quarantine_bad: bool = True) -> list[dict]:
     """Every entry of projects.json.
 
     An unreadable file is renamed aside and gives []; on_corrupt(kept_path, error) is told so.
+    With quarantine_bad=False it is left alone and nothing is logged, as shell completion needs.
     """
-    return _load(on_corrupt)
+    return _load(on_corrupt, quarantine_bad)
 
 
 def save(entries: list[dict]) -> None:
@@ -151,8 +154,15 @@ def _default_name(config: str) -> str:
     return str(title) if title else root_of(config).name
 
 
+def _abs(config: str) -> str:
+    return os.path.abspath(os.path.expanduser(str(config)))
+
+
 def register(config: str, name: str | None = None, pid: str | None = None) -> tuple[dict, list[str]]:
-    """Add config to the list, or update its name and id; return the entry and what changed."""
+    """Add config to the list, or update its name and id; return the entry and what changed.
+
+    The path is stored as given (made absolute), so delete sees a symlink; duplicates are found by real path.
+    """
     real = _real(config)
     with registry_lock():
         entries = _load()
@@ -167,7 +177,7 @@ def register(config: str, name: str | None = None, pid: str | None = None) -> tu
             if pid:
                 entry["id"] = pid
             entry["name"] = name or _default_name(real)
-            entry["config"] = real
+            entry["config"] = _abs(config)
             entries.append(entry)
             changes = ["added"] + (["id"] if pid else [])
         else:

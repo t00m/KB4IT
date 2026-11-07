@@ -60,27 +60,57 @@ def _protected() -> list[Path]:
     return [Path(os.path.realpath(p)) for p in (os.sep, str(Path.home()), ENV["LPATH"]["ROOT"])]
 
 
-def delete_refusal(root: Path, config: str) -> str | None:
-    """Why the project folder root must not be deleted, as a reason code, or None."""
-    real_config = Path(os.path.realpath(config))
-    if real_config.parent.name != "config" or not real_config.is_file():
-        return "no_config"
-    root = Path(os.path.realpath(root))
-    for folder in _protected():
-        if root == folder or root in folder.parents:
-            return "protected_folder"
+def _lock_problem(lock: FileLock) -> str | None:
+    """Take lock; the reason code when that fails, else None."""
     try:
-        FileLock(repo_lock_path(real_config)).acquire().release()
+        lock.acquire()
     except LockBusyError:
         return "locked"
+    except OSError:
+        return "no_access"
+    return None
+
+
+def delete_refusal(root: Path, config: str) -> str | None:
+    """Why the project folder root must not be deleted, as a reason code, or None."""
+    cfg = Path(os.path.abspath(config))
+    if cfg.parent.name != "config" or not cfg.is_file():
+        return "no_config"
+    # A link would make KB4IT delete the folder it points to, not the one the user sees.
+    if any(os.path.islink(path) for path in (cfg, cfg.parent, root)):
+        return "symlink"
+    real_root = Path(os.path.realpath(root))
+    for folder in _protected():
+        if real_root == folder or real_root in folder.parents:
+            return "protected_folder"
+    lock_file = repo_lock_path(cfg)
+    if os.path.exists(lock_file):  # no lock file means no build; do not create one just to look
+        lock = FileLock(lock_file)
+        problem = _lock_problem(lock)
+        lock.release()
+        if problem:
+            return problem
     return None
 
 
 REFUSALS = {
     "no_config": "it has no config/ folder holding the repo.json of this project",
+    "symlink": "its config/repo.json, config/ or the folder itself is a symbolic link",
     "protected_folder": "it is, or contains, /, your home folder or the KB4IT folder",
     "locked": "KB4IT is working on it",
+    "no_access": "its lock file cannot be opened",
 }
+
+
+def _refuse(entry: dict, root: Path, config: str, reason: str) -> int:
+    projects.log.warning(f"[PROJECTS] PROJECT_DELETE_REFUSED id={q(entry.get('id', ''))} "
+                         f"path={q(root)} reason={reason}")
+    extra = ""
+    if reason == "locked":
+        pid = read_holder(repo_lock_path(os.path.abspath(config)))
+        extra = f" (PID {pid})" if pid else ""
+    print(f"Error: will not delete {root}: {REFUSALS[reason]}{extra}", file=sys.stderr)
+    return 1
 
 
 def run_delete(params: dict, ask: Callable[[str], str] = input, interactive: bool | None = None) -> int:
@@ -92,6 +122,8 @@ def run_delete(params: dict, ask: Callable[[str], str] = input, interactive: boo
         entry = projects.find(os.path.realpath(ref), entries)
     else:
         entry = next((e for e in entries if e.get("id") == ref), None)
+        if entry is None:
+            entry = projects.find(ref, entries)  # a listed project whose files are already gone
     if entry is None:
         if os.path.isfile(ref):
             print(f"Error: Not in the list: {ref}", file=sys.stderr)
@@ -100,7 +132,7 @@ def run_delete(params: dict, ask: Callable[[str], str] = input, interactive: boo
                   "Run 'kb4it projects' to see the ids.", file=sys.stderr)
         return 1
     config = entry["config"]
-    root = projects.root_of(config)
+    root = Path(os.path.abspath(config)).parent.parent
     label = _label(entry)
     if not params.get("files"):
         projects.remove(config)
@@ -109,14 +141,7 @@ def run_delete(params: dict, ask: Callable[[str], str] = input, interactive: boo
 
     reason = delete_refusal(root, config)
     if reason:
-        projects.log.warning(f"[PROJECTS] PROJECT_DELETE_REFUSED id={q(entry.get('id', ''))} "
-                             f"path={q(root)} reason={reason}")
-        extra = ""
-        if reason == "locked":
-            pid = read_holder(repo_lock_path(os.path.realpath(config)))
-            extra = f" (PID {pid})" if pid else ""
-        print(f"Error: will not delete {root}: {REFUSALS[reason]}{extra}", file=sys.stderr)
-        return 1
+        return _refuse(entry, root, config, reason)
 
     count = sum(len(files) for _dir, _dirs, files in os.walk(root))
     expected = entry.get("id") or root.name
@@ -139,11 +164,20 @@ def run_delete(params: dict, ask: Callable[[str], str] = input, interactive: boo
         target = projects.target_dir(config).resolve()
     except Exception:
         target = None
+    # Hold the build lock from here on, so no build can start while the folder goes away.
+    lock = FileLock(repo_lock_path(os.path.abspath(config)))
+    problem = _lock_problem(lock)
+    if problem:
+        return _refuse(entry, root, config, problem)
     try:
+        if sys.platform == "win32":
+            lock.release()  # Windows cannot delete a file that is open
         shutil.rmtree(root)
     except OSError as error:
         print(f"Error: could not delete {root}: {error}. {label} stays in the list.", file=sys.stderr)
         return 1
+    finally:
+        lock.release()
     projects.remove(config)
     projects.log.info(f"[PROJECTS] PROJECT_FILES_DELETED id={q(entry.get('id', ''))} path={q(root)} files={count}")
     print(f"Deleted {root} ({count} files) and removed {label} from the list")

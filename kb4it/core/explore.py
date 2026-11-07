@@ -28,6 +28,8 @@ def read_properties(config: str) -> tuple[dict[str, dict[str, list[str]]], int]:
     props: dict[str, dict[str, list[str]]] = {}
     invalid = 0
     source = projects.source_dir(config)
+    if not source.is_dir():
+        raise FileNotFoundError(f"the source folder is missing: {source}")
     parser_log = get_logger("Util")  # parse_markdown_attributes reports through it
     was_disabled = parser_log.disabled
     parser_log.disabled = True

@@ -77,7 +77,7 @@ def enable(parser: Any) -> None:
 
 def _ids(prefix: str) -> list[str]:
     from kb4it.core import projects
-    return [e["id"] for e in projects.load() if e.get("id", "").startswith(prefix)]
+    return [e["id"] for e in projects.load(quarantine_bad=False) if e.get("id", "").startswith(prefix)]
 
 
 def id_completer(prefix: str, **kwargs: Any) -> list[str]:
@@ -103,7 +103,11 @@ def _index_of(refs: list[str]) -> dict:
     from kb4it.core.explore import index, read_properties
     merged: dict = {}
     for ref in refs:
-        for key, by_value in index(read_properties(projects.resolve(ref))[0]).items():
+        try:
+            data = index(read_properties(projects.resolve(ref))[0])
+        except Exception:
+            continue  # one moved or broken project must not stop completion for the others
+        for key, by_value in data.items():
             merged.setdefault(key, {}).update(by_value)
     return merged
 
@@ -134,7 +138,8 @@ def where_completer(prefix: str, **kwargs: Any) -> list[str]:
     try:
         from kb4it.core import projects
         from kb4it.core.explore import matching
-        refs = getattr(kwargs.get("parsed_args"), "projects", None) or [e["config"] for e in projects.load()]
+        refs = (getattr(kwargs.get("parsed_args"), "projects", None)
+                or [e["config"] for e in projects.load(quarantine_bad=False)])
         data = _index_of(refs)
         if "=" not in prefix:
             return sorted(f"{k}=" for k in data if k.startswith(prefix))
