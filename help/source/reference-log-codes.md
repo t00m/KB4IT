@@ -176,6 +176,9 @@ The apphelp theme checks the properties of each page. With `"strict": true`, the
 | `PROJECT_REMOVED` | info | A project was removed from the list. Its files stay unless the next line is `PROJECT_FILES_DELETED` | Nothing |
 | `PROJECT_FILES_DELETED` | info | `kb4it delete --files` deleted the project folder | Nothing |
 | `PROJECT_DELETE_REFUSED` | warning | `kb4it delete --files` would not delete the folder. `reason=no_config`: the folder has no `config/` holding this `repo.json`; `protected_folder`: the folder is, or contains, `/`, your home folder or `~/.kb4it`; `locked`: a build or `kb4it serve` is using it | Delete it by hand if you are sure, or stop the build first |
+| `THEME_INSTALLED` | info | `kb4it install-theme` or the Themes screen installed a theme. `replaced=` is the version it replaced, empty when there was none | Nothing |
+| `THEME_INSTALL_REFUSED` | info | A theme zip was not installed. `reason=` is one of `not_a_zip`, `layout` (not one top folder), `unsafe_entry` (a path leaving the folder, or a symbolic link), `too_large`, `no_theme_json`, `bad_theme_json`, `id_mismatch` (top folder and `theme.json` id differ), `bad_id`, `requirement` (needs another KB4IT), `download`, `insecure_url` (not `https://`), `install` (the folder could not be put in place; the old theme was kept) | Read the error line; for a theme you made, see [Pack a theme as a zip](howto-create-theme.md#zip) |
+| `THEME_UNINSTALLED` | info | `kb4it uninstall-theme` or the Themes screen removed one of your themes | Nothing |
 | `PROJECT_SAVE_ERROR` | error | A new knowledge base could not be added to the list | Check permissions of `~/.kb4it` |
 | `REPO_PATH_MISSING`, `REPO_PATH_CREATED` | warning | `kb4it create` was given a folder that did not exist, and created it | Nothing |
 | `WARNING_PUBLIC` | warning | `kb4it serve` listens on an address other computers can reach | Use the default `--host 127.0.0.1` unless you need it |

@@ -69,7 +69,9 @@ It works after the first build, because it reads the index the build writes.
 
 ## Other screens {#other}
 
-**Themes** lists the installed themes, and **Apps** the sample apps each theme can create.
+**Themes** lists every installed copy of each theme. The **Active** column says which copy builds use: yours, when you have a theme with the id of a bundled one. **Install** asks for a zip file or an `https://` address and installs it like [`kb4it install-theme`](reference-command-line.md#themes); the screen stays usable during a download, and a notification tells how it went. **Uninstall** is enabled on your own themes only; it names the projects that use the theme and asks before it deletes it.
+
+**Apps** lists the sample apps each theme can create.
 
 !!! tip
     The web server picks a free port from 8642 up and keeps running until you quit. It watches the knowledge base like [`kb4it serve`](howto-preview.md): after each save it rebuilds, shows a notification and reloads the page. **Compile** still works while it runs.

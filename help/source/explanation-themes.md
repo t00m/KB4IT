@@ -67,6 +67,8 @@ When you build, KB4IT looks for the theme named in `repo.json` in this order and
 
 `"theme_path"` in `repo.json` skips the search and names the theme folder directly.
 
+`kb4it install-theme` puts a theme in the second place, `~/.kb4it/opt/resources/themes/`. So a theme you install with the id of a bundled theme is the one your builds use. `kb4it themes` marks the copy builds use with `active=yes`, and the hidden bundled copy with `active=no shadowed_by=user`; `kb4it uninstall-theme` brings the bundled one back. See [Install a theme](reference-command-line.md#themes).
+
 To change only one template of a theme, put your version in the knowledge base's `overrides/templates/` folder; see [Change one template of a theme](howto-customize-templates.md).
 
 ## Themes and KB4IT versions {#versions}

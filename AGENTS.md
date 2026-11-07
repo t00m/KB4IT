@@ -33,7 +33,9 @@ kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app def
 kb4it build <config>                      # Build the site from repo.json (-f/--force recompiles everything, --trace writes var/log/trace.json); exits 1 when any page fails
 kb4it serve <config>                      # Build, serve on 127.0.0.1:8642 with live reload, rebuild on change (kb4it/core/serve.py); --host, --port, --open, --no-watch, --no-reload, --interval, -f/--force, --trace
 kb4it info <config>                       # Show repository info
-kb4it themes                              # List installed themes
+kb4it themes                              # List installed themes; each copy says active=yes|no (shadowed_by=user for a bundled theme hidden by a local one)
+kb4it install-theme SOURCE                # Install a theme zip (path or https:// URL) into ~/.kb4it/opt/resources/themes (kb4it/core/themeinstall.py, themecli.py)
+kb4it uninstall-theme ID [--yes]          # Remove a local theme; bundled themes stay
 kb4it apps <theme>                        # List apps available for a theme
 kb4it projects                            # List the projects with their ids (tab-separated when piped); registry in kb4it/core/projects.py
 kb4it import <config> [--id ID] [--name N] # Add a knowledge base to the list, or set its id and name (kb4it/core/projectcli.py)
@@ -98,7 +100,9 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 | `kb4it/core/documents.py`         | Frontmatter and title: `get_document_attributes`, `load_frontmatter` (a SafeLoader without the bool, int, float and timestamp resolvers: every plain value is text, as written; `kb4it-frontmatter.js` mirrors it), `is_yes` (the Bookmark check), `first_heading` (title rule), `strip_first_heading`, `fences_in_blocks`, `raw_script_lines`, `extract_sections_from_md`, `get_hash_from_body` |
 | `kb4it/core/files.py`             | `valid_filename`, `SOURCE_ENCODING`, copy and delete (`sync_file`, `sync_tree`, `prune_tree` for incremental deploys), `json_load`, `json_save` (atomic: temp file, fsync, `os.replace`), `quarantine` (keeps an unreadable file as `<name>.corrupt-<timestamp>`), blake2b hashes. `dates`, `documents` and `files` import nothing from `util` |
 | `kb4it/core/doctor.py`            | `report()` for `kb4it doctor` (`Workflow.doctor()`): the lines and the problems; `BUNDLED_THEMES` must equal the tracked themes |
-| `kb4it/core/completion.py`        | Shell completion: `installed_themes()`, `apps_of()`, `theme_completer`, `app_completer` and `enable(parser)` (argcomplete, called in `main()` before `parse_args()`; no-op without it) |
+| `kb4it/core/completion.py`        | Shell completion: `installed_themes()`, `apps_of()`, `theme_completer`, `app_completer`, `local_theme_completer` and `enable(parser)` (argcomplete, called in `main()` before `parse_args()`; no-op without it) |
+| `kb4it/core/themeinstall.py`      | Theme zips: `inspect_zip()`, `install_zip()`, `download()`, `install(source)`, `uninstall()`, `local_themes()`, `projects_using()`; one `ThemeInstallError(reason, message)` |
+| `kb4it/core/themecli.py`          | `kb4it install-theme` and `kb4it uninstall-theme` handlers, run from `main()` without services |
 | `kb4it/core/version.py`           | `parse_version`, `requirement_satisfied` (theme `kb4it` field), build identity (`git_info`, `build_info`, `build_version`, `build_cache_key`, `read_build_file` of `BUILD.json`), `theme_fingerprint`, `theme_identity` |
 | `kb4it/core/paths.py`             | `resolve_repo_path` and `check_target`: the target may not be, or hold, the repository root, `source`, `config/`, `var/`, home or a filesystem root, nor lie inside `source` (`ConfigError` before anything touches the disk) |
 | `kb4it/core/mdlists.py`           | `ListIndentExtension` (python-markdown, always on, preprocessor at 15): a list that nests an item by two or three spaces is moved to four spaces per level before the block parser, with the content of each item (text, indented code, admonitions, fences); a list nested by four spaces is never changed (`normalize_lists`) |
@@ -157,7 +161,7 @@ Optional `theme.json` keys:
 
 - `favicon` (no default): path of the theme's icon inside its folder, such as `images/logo.svg`; pages use `repo.json` `logo`, else `resources/themes/<id>/<favicon>`. All bundled themes set it.
 
-Custom themes installable to `~/.kb4it/opt/resources/themes/<name>/`.
+Custom themes installable to `~/.kb4it/opt/resources/themes/<name>/`, by hand or with `kb4it install-theme`. **A theme zip holds one top folder whose name equals `theme.json` `id`; otherwise it is refused (`id_mismatch`) and nothing is installed.** The id matches `^[a-z0-9][a-z0-9_-]{0,63}$`. `themeinstall.inspect_zip()` checks everything (one top folder, no `..`, absolute or symlink entries, at most 10,000 entries and 200 MB, `theme.json`, the `kb4it` requirement) before anything is unpacked into `~/.kb4it/var/tmp/`; the swap into the themes folder runs under `var/themes.lock` and puts the old copy back if it fails. Downloads are `https://` only, redirects too, 100 MB, 60 s. The TUI Themes screen lists every copy with an Active column; `kb4it.tui.projects.active_themes()` gives the copy builds use, for the create and Apps screens.
 
 **Custom themes and about pages.** The backend no longer writes `about_kb4it.md` or `about_app.md` into `source/`. A custom theme gets about pages only if its `build()` calls `create_page_about_kb4it()` and `create_page_about_app()`. An untouched generated `source/about_kb4it.md` left by older versions is removed at stage 2.
 

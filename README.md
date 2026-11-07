@@ -115,7 +115,9 @@ kb4it serve <config>                      # build, serve on 127.0.0.1:8642, rebu
 kb4it build <config>                      # build the site, incremental (-f/--force: everything; --trace: timings); <config> can be an id
 kb4it verify <config>                     # check documents, links and theme rules without building
 kb4it info <config>                       # show the main settings
-kb4it themes                              # list the installed themes, with version, fingerprint and folder
+kb4it themes                              # list the installed themes, with version, fingerprint, folder and active copy
+kb4it install-theme <zip or https URL>    # install a theme for yourself; replaces your copy with the same id
+kb4it uninstall-theme <id>                # remove a theme you installed
 kb4it apps <theme>                        # list the sample apps of a theme
 kb4it projects                            # list your knowledge bases and their ids
 kb4it import <config> --id <id>           # add a knowledge base you already have, with a short id

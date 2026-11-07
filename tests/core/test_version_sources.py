@@ -37,6 +37,8 @@ ALLOWED = {
     "tests/core/test_changelog_tool.py": "fixture releases for the changelog tool",
     "tests/core/test_owned_pages.py": "a file as written by an older KB4IT, read for compatibility",
     "tests/fixtures/themes/mini/theme.json": "a fixture theme with its own version",
+    "tests/core/test_themeinstall.py": "versions of the mini fixture theme, installed from zips",
+    "tests/core/test_themecli.py": "versions of the mini fixture theme, installed from zips",
     "tests/packaging/test_install_scripts.py": "fake output of pipx",
     "tests/packaging/test_scripts.py": "fake wheel name",
 }

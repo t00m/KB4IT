@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
+Keyword: cli, kb4it, install-theme, uninstall-theme, theme zip, active theme, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -24,7 +24,9 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [its options](#serve) and [Preview while you write](howto-preview.md) |
 | `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building. It also shows `INDEX_UNSET` while `seo.index` is not set, as information, and checks the [profiles](reference-log-codes.md#people): an error such as `PROFILE_INVALID` fails it, `PROFILE_NO_CONTACT` and `AUTHOR_NO_PROFILE` do not |
 | `kb4it info CONFIG` | Shows the main settings |
-| `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
+| `kb4it themes` | Lists the installed themes with their version, fingerprint, folder and whether builds use that copy (`active=yes` or `active=no`) |
+| `kb4it install-theme SOURCE` | Installs a theme from a zip file or an `https://` URL into your themes folder. See [Install a theme](#themes) |
+| `kb4it uninstall-theme ID [--yes]` | Removes a theme from your themes folder. See [Install a theme](#themes) |
 | `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
 | `kb4it projects` | Lists the knowledge bases you created or imported, with their ids. Piped, it prints `id`, name and config separated by tabs, with no header |
@@ -64,6 +66,27 @@ Every command that takes `CONFIG` (`build`, `serve`, `info`, `verify`, `keys`, `
 - a build or `kb4it serve` is using the knowledge base.
 
 When `target` in `repo.json` points outside the knowledge base folder, the website there is kept, and the command prints its path.
+
+## Install a theme {#themes}
+
+`kb4it install-theme SOURCE` installs a theme into `~/.kb4it/opt/resources/themes/`. `SOURCE` is the path of a zip file or an `https://` address of one. The zip holds one top folder named exactly as the `id` in its `theme.json`; see [Pack a theme as a zip](howto-create-theme.md#zip).
+
+- KB4IT checks the whole zip before it changes anything. A refused zip leaves your themes as they were; the message says what is wrong.
+- When you already have a theme with that id, it is deleted and the new one takes its place. The output names the version it replaced.
+- A theme of yours may have the id of a bundled theme. Yours is used in every build, and the output says so.
+- Downloads use `https://` only, also after a redirect, because a theme runs code at build time. The limit is 100 MB and 60 seconds.
+- The zip is unpacked in `~/.kb4it/var/tmp/`, and the temporary files are removed afterwards.
+
+```bash
+$ kb4it install-theme ~/Downloads/mytheme.zip
+Installed mytheme 1.2.0 in /home/me/.kb4it/opt/resources/themes/mytheme, replacing 1.1.0
+```
+
+`kb4it uninstall-theme ID` removes a theme from your themes folder. Bundled themes cannot be removed. Before it deletes anything, it lists the projects that use the theme: with a bundled theme of the same id they use it again, otherwise their builds fail until you install the theme again. In a terminal, type the id to confirm; in a script, add `--yes`. Without a terminal and without `--yes` it removes nothing and ends with `1`.
+
+`kb4it themes` lists every copy. The one builds use has `active=yes`; a bundled theme hidden by one of yours shows `active=no shadowed_by=user`. A theme shipped inside a knowledge base's `source/resources/themes/` wins over both, and is not listed.
+
+A build that runs while you reinstall the theme it uses may fail; build again.
 
 ## Properties and values {#keys}
 
@@ -152,7 +175,7 @@ Put the line in `~/.bashrc`, `~/.zshrc` or `~/.config/fish/config.fish` to keep 
 
 The `CONFIG` and `PROJECT` arguments complete the project ids and file paths; `search -p` completes the ids only. `kb4it keys sapblog <Tab>` lists the properties and, after one, its values; `kb4it search x --where <Tab>` completes `KEY=` and then `KEY=VALUE`.
 
-`kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes; after a theme, the next word lists its sample apps and folders. Once the app is typed, only folders are offered for the path. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
+`kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes, and `kb4it uninstall-theme <Tab>` only yours; after a theme, the next word lists its sample apps and folders. Once the app is typed, only folders are offered for the path. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
 
 Without argcomplete the command line works as before; only <kbd>Tab</kbd> completion is missing.
 
@@ -191,6 +214,8 @@ After a failed build the next build compiles again every document that changed s
 | `~/.kb4it/projects.json` | The list behind `kb4it projects` and the terminal interface |
 | `~/.kb4it/opt/resources/themes/` | Your own themes |
 | `~/.kb4it/var/projects.lock` | Held for a moment while `projects.json` is written |
+| `~/.kb4it/var/themes.lock` | Held while a theme is installed or removed |
+| `~/.kb4it/var/tmp/` | Downloads and unpacked zips of `kb4it install-theme`, removed when it ends |
 | `~/.kb4it/help-notice-dismissed` | Written by `kb4it help --dismiss`; hides the help notice |
 | `<knowledge base>/var/` | Build cache and logs; safe to delete |
 | `<knowledge base>/var/kb4it.lock` | Stops two builds of the same knowledge base at once |

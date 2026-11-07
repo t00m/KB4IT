@@ -277,3 +277,36 @@ A file `logic/verify.py` with a function `verify(repo, docs)` runs during `kb4it
 
 - Put the theme in `source/resources/themes/<name>/` of a knowledge base to ship it with the documents.
 - Or point `"theme_path"` in `repo.json` at its folder.
+- Or pack it as a zip that others install with `kb4it install-theme`.
+
+### Pack a theme as a zip {#zip}
+
+The zip holds one top folder, the theme folder itself, with `theme.json` and the theme's folders in it:
+
+```text
+mytheme.zip
+└── mytheme/
+    ├── theme.json        "id": "mytheme"
+    ├── templates/
+    ├── framework/
+    ├── logic/
+    └── apps/
+```
+
+**The top folder name must be exactly the `id` in `theme.json`.** A zip whose folder and id differ is refused, and nothing is installed. The id has 1 to 64 characters: lowercase letters, digits, `-` and `_`, starting with a letter or a digit.
+
+Pack it from the folder that holds the theme:
+
+```bash
+cd ~/work/themes
+zip -r mytheme.zip mytheme -x '*/__pycache__/*'
+```
+
+The users install it from the file or from an `https://` address:
+
+```bash
+kb4it install-theme mytheme.zip
+kb4it install-theme https://example.org/themes/mytheme.zip
+```
+
+`kb4it install-theme` also refuses a zip with more than one top folder, with files at its root, with paths that leave the folder or symbolic links, with no `theme.json` in the top folder, or with a `kb4it` requirement this KB4IT does not meet. Set a new `version` in `theme.json` for every zip you publish, so users see which one they have; see [Command line](reference-command-line.md#themes).
