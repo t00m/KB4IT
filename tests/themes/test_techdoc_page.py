@@ -323,3 +323,11 @@ def test_dashboard_without_quality_has_no_stat_mix_or_shelf(off_site):
     index = read(off_site, "index.html")
     assert "quality.html" not in _block(index, "SUMMARY COUNTS")
     assert "kb-q-mix" not in index and "BEST DOCUMENTS" not in index
+
+
+def test_no_parser_shared_between_compile_threads():
+    """finalize_html runs in the compiler threads; an lxml parser object must not be shared between them."""
+    import ast
+    tree = ast.parse((ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic" / "theme.py").read_text(encoding="utf-8"))
+    shared = [n for n in tree.body if isinstance(n, ast.Assign) and "HTMLParser" in ast.unparse(n.value)]
+    assert shared == []

@@ -35,3 +35,10 @@ def test_post_template_failure_falls_back_to_plain_body(tmp_path, home):
     target = _build(tmp_path, home, {"a.md": page("A", Category="Post", Date="2026-01-01")})
     html = _html(target, "a.html")
     assert POST_MARKER not in html and 'class="kb-main"' in html
+
+
+def test_new_post_link_accepts_a_host_name(tmp_path, home):
+    git = {"git": True, "git_server": "github.com", "git_user": "me", "git_repo": "kb", "git_branch": "main",
+           "git_path": "source"}
+    target = _build(tmp_path, home, {"a.md": page("A", Category="Post", Date="2026-01-01")}, **git)
+    assert 'href="https://github.com/me/kb/new/main/source"' in _html(target, "a.html")

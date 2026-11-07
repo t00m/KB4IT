@@ -208,3 +208,8 @@ def test_render_skips_missing_header_and_footer(page_files):
     b.has_template = lambda name: name == "HTML_BODY"
     b.build_page(str(page_files / "a.md"))
     assert (page_files / "a.html").read_text(encoding="utf-8") == "B"
+
+
+def test_git_url_builds_any_action():
+    assert builder({**GIT, "git_server": "github.com/"}).git_url("new") == "https://github.com/u/r/new/main/docs"
+    assert builder({**GIT, "git_server": "github.com", "git": False}).git_url("new") == ""

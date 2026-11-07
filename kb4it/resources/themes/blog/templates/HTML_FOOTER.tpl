@@ -25,10 +25,10 @@
                 <!-- SITE MENU :: START -->
                 <nav class="uk-card uk-card-body uk-card-small uk-flex uk-flex-top uk-flex-left" aria-label="Site">
                     <ul class="uk-list uk-text-left uk-margin-left">
-% if var.get('git_ok'):
+% if var.get('new_root_url'):
                         <li>
                             <span data-uk-icon="icon: plus" data-uk-tooltip="Create new post"></span>
-                            <a class="uk-link-heading" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/new/${var['repo']['git_branch']}/${var['repo']['git_path']}" target="_blank">
+                            <a class="uk-link-heading" href="${var['new_root_url']}" target="_blank">
                                 <span class="uk-link-toogle uk-margin-left">Create new post</span>
                             </a>
                         </li>

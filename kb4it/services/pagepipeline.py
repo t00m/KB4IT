@@ -126,7 +126,11 @@ class PagePipelineMixin:
         return html
 
     def edit_url(self, doc_id: str = "") -> str:
-        """Link to edit doc_id on the git server, or to the source folder without doc_id; '' when git is off.
+        """Link to edit doc_id on the git server, or to the source folder without doc_id; '' when git is off."""
+        return self.git_url("edit", doc_id)
+
+    def git_url(self, action: str, path: str = "") -> str:
+        """Link to <server>/<user>/<repo>/<action>/<branch>/<git_path>/<path>; '' when git is off.
 
         git_server may be a URL (https://github.com) or a host name (github.com); a host gets https://.
         """
@@ -138,8 +142,8 @@ class PagePipelineMixin:
             server = f"https://{server}"
         parts = [repo[key].strip().strip("/") for key in GIT_KEYS[1:3]]
         branch = repo["git_branch"].strip().strip("/")
-        tail = [p for p in ((repo.get("git_path") or "").strip().strip("/"), doc_id) if p]
-        return "/".join([server, *parts, "edit", branch, *tail])
+        tail = [p for p in ((repo.get("git_path") or "").strip().strip("/"), path) if p]
+        return "/".join([server, *parts, action, branch, *tail])
 
     def add_system_page(self, name: str, title: str, html: str | None = None, as_html: bool = True,
                         listing: bool = False) -> None:

@@ -45,8 +45,6 @@ from kb4it.core.people import named_people, person_status
 from kb4it.services.themekit import DocumentTheme
 from kb4it.core.log import q
 
-parser = etree.HTMLParser()
-
 
 class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin, DocumentTheme):
     reserved_pages = ('404.md', 'diagrams.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
@@ -407,6 +405,6 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
 
     def finalize_html(self, html):
         """Override: techdoc writes pretty-printed HTML with a doctype."""
-        tree = etree.fromstring(html, parser)
+        tree = etree.fromstring(html, etree.HTMLParser())  # one parser per page: lxml parsers are not thread-safe
         pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
         return f"<!DOCTYPE html>\n{pretty_html}"
