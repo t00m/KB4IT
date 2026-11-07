@@ -56,6 +56,10 @@ def theme_completer(prefix: str, **kwargs: Any) -> list[str]:
 def app_completer(prefix: str, **kwargs: Any) -> list[str]:
     """Complete `create`'s app from the theme already typed, else from every theme."""
     parsed = kwargs.get("parsed_args")
+    # argparse puts the word after the theme in repo_path while the path is still missing,
+    # so a repo_path here means the app is already typed and the cursor is on the path.
+    if getattr(parsed, "repo_path", None) is not None:
+        return []
     theme = getattr(parsed, "theme", None)
     themes = [theme] if theme else installed_themes()
     names = {name for item in themes for name in apps_of(item)}

@@ -72,3 +72,16 @@ def test_argcomplete_completes_an_app_of_the_typed_theme(tmp_path, home):
 
 def test_argcomplete_completes_a_command(tmp_path, home):
     assert "build" in _complete(tmp_path, home, "kb4it bu")
+
+
+def test_app_completer_stops_once_the_app_is_typed():
+    # While completing `kb4it create techdoc default <Tab>`, argparse binds the typed app to repo_path.
+    parsed = argparse.Namespace(theme="techdoc", app="default", repo_path="default")
+    assert completion.app_completer("", parsed_args=parsed) == []
+
+
+def test_argcomplete_completes_the_path_after_the_app(tmp_path, home):
+    (tmp_path / "mykb").mkdir()
+    words = _complete(tmp_path, home, "kb4it create techdoc default ")
+    assert "mykb/" in words
+    assert "sapbasis" not in words

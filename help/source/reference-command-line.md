@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, --index, build, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
+Keyword: cli, kb4it, create, --index, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -84,7 +84,7 @@ register-python-argcomplete --shell fish kb4it | source
 
 Put the line in `~/.bashrc`, `~/.zshrc` or `~/.config/fish/config.fish` to keep it. `activate-global-python-argcomplete` enables completion for `kb4it` and every other argcomplete-aware command at once.
 
-`kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes; after a theme, the next word lists its sample apps. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
+`kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes; after a theme, the next word lists its sample apps and folders. Once the app is typed, only folders are offered for the path. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
 
 Without argcomplete the command line works as before; only <kbd>Tab</kbd> completion is missing.
 
