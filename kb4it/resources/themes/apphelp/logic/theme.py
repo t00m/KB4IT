@@ -144,12 +144,8 @@ class Theme(Builder):
 
     def _emit(self, name, title, html):
         """Add a theme-made page; build_page wraps it like any other page."""
-        self.distribute_md(name, html)
-        doc_id = f"{name}.md"
-        self.srvdtb.add_document(doc_id)
-        self.srvdtb.add_document_key(doc_id, "Title", title)
-        self.srvdtb.add_document_key(doc_id, "SystemPage", "Yes")
-        self.theme_pages.add(doc_id)
+        self.add_system_page(name, title, html)
+        self.theme_pages.add(f"{name}.md")
 
     def _render(self, name, extra):
         var = {"ah": self._common()}

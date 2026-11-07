@@ -90,11 +90,7 @@ class DashboardMixin:
         }
 
         page = self.template('PAGE_INDEX').render(var=var)
-        self.distribute_md('index', page)
-
-        self.srvdtb.add_document('index.md')
-        self.srvdtb.add_document_key('index.md', 'Title', var['repo']['title'])
-        self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
+        self.add_system_page('index', var['repo']['title'], page)
 
     def _build_index_stats(self):
         """Counters shown in the hero stats bar."""

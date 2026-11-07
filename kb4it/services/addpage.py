@@ -67,10 +67,7 @@ class AddPageMixin:
 
     def register_add_page(self, html: str) -> None:
         """Write the Add page body and register it as a system page; a theme may override this only."""
-        self.distribute_md("add", html)
-        self.srvdtb.add_document(ADD_DOC)
-        self.srvdtb.add_document_key(ADD_DOC, "Title", "Add document")
-        self.srvdtb.add_document_key(ADD_DOC, "SystemPage", "Yes")
+        self.add_system_page("add", "Add document", html)
 
     def _render_add_page(self) -> tuple[str, str, int]:
         """Return (html, skeleton source, number of categories) of the Add page."""

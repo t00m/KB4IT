@@ -391,10 +391,7 @@ class Theme(DocumentTheme):
             return
         var['page']['title'] = var['repo']['title']
         page = self.template('PAGE_INDEX').render(var=var)
-        self.distribute_md('index', page)
-        self.srvdtb.add_document('index.md')
-        self.srvdtb.add_document_key('index.md', 'Title', var['repo']['title'])
-        self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
+        self.add_system_page('index', var['repo']['title'], page)
 
     def build_page_key_value(self, kvpath):
         """Override: the page of a Book value is the book overview (PAGE_BOOK), not a document list."""
@@ -409,10 +406,7 @@ class Theme(DocumentTheme):
             var['page']['title'] = value
             var['book'] = self._book_view(value)
             content = self.template('PAGE_BOOK').render(var=var)
-            self.distribute_md(pagename, content, listing=True)
-            self.srvdtb.add_document(f"{pagename}.md")
-            self.srvdtb.add_document_key(f"{pagename}.md", 'Title', value)
-            self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
+            self.add_system_page(pagename, value, content, listing=True)
             return
         super().build_page_key_value(kvpath)
 

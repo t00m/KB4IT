@@ -38,6 +38,16 @@ class PagePipelineMixin:
         tail = [p for p in ((repo.get("git_path") or "").strip().strip("/"), doc_id) if p]
         return "/".join([server, *parts, "edit", branch, *tail])
 
+    def add_system_page(self, name: str, title: str, html: str | None = None, as_html: bool = True,
+                        listing: bool = False) -> None:
+        """Add a page the theme generates: write it (unless html is None) and register it as a system page."""
+        if html is not None:
+            self.distribute_md(name, html, as_html=as_html, listing=listing)
+        doc_id = f"{name}.md"
+        self.srvdtb.add_document(doc_id)
+        self.srvdtb.add_document_key(doc_id, "Title", title)
+        self.srvdtb.add_document_key(doc_id, "SystemPage", "Yes")
+
     def page_title(self, doc_id: str) -> str:
         """Title of a document page, or untitled_label when the document has none."""
         return self.srvdtb.get_doc_properties(doc_id).get("Title") or self.untitled_label

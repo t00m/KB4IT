@@ -15,7 +15,4 @@ class NotFoundMixin(ThemeHost):
     def build_page_404(self) -> None:
         """Create the 404 page; as a system page it stays out of listings, search, feed and sitemap."""
         var = self.get_theme_var()
-        self.distribute_md("404", self.template("PAGE_404").render(var=var))
-        self.srvdtb.add_document("404.md")
-        self.srvdtb.add_document_key("404.md", "Title", "Page not found")
-        self.srvdtb.add_document_key("404.md", "SystemPage", "Yes")
+        self.add_system_page("404", "Page not found", self.template("PAGE_404").render(var=var))

@@ -47,3 +47,36 @@ def test_page_title_uses_title_or_untitled_label():
     b.untitled_label = "Untitled"
     assert b.page_title("a.md") == "Alpha"
     assert b.page_title("b.md") == "Untitled"
+
+
+@pytest.fixture
+def fake_builder():
+    """A Builder that records what it distributes and what it writes into the database."""
+    b = Builder.__new__(Builder)
+    b.distributed = []
+    b.db_calls = []
+    b.distribute_md = lambda name, content, as_html=True, listing=False: \
+        b.distributed.append((name, content, as_html, listing))
+    b.srvdtb = SimpleNamespace(
+        add_document=lambda doc: b.db_calls.append(("add_document", doc)),
+        add_document_key=lambda doc, key, value: b.db_calls.append(("add_document_key", doc, key, value)))
+    return b
+
+
+def test_add_system_page_distributes_and_registers(fake_builder):
+    fake_builder.add_system_page("stats", "Stats", "<p>x</p>", listing=True)
+    assert fake_builder.distributed == [("stats", "<p>x</p>", True, True)]
+    assert fake_builder.db_calls == [("add_document", "stats.md"),
+                                     ("add_document_key", "stats.md", "Title", "Stats"),
+                                     ("add_document_key", "stats.md", "SystemPage", "Yes")]
+
+
+def test_add_system_page_keeps_markdown_pages(fake_builder):
+    fake_builder.add_system_page("help", "Help", "# Help", as_html=False)
+    assert fake_builder.distributed == [("help", "# Help", False, False)]
+
+
+def test_add_system_page_without_html_only_registers(fake_builder):
+    fake_builder.add_system_page("all", "All documents")
+    assert fake_builder.distributed == []
+    assert ("add_document", "all.md") in fake_builder.db_calls

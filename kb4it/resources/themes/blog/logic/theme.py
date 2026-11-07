@@ -126,10 +126,7 @@ class Theme(DocumentTheme):
                 self.log.warning(f"[THEME] INDEX_SKIP doc={q(post)} error={q(error)}")
 
         html = ''.join(html_parts)
-        self.distribute_md('index', html)
-        self.srvdtb.add_document('index.md')
-        self.srvdtb.add_document_key('index.md', 'Title', 'Index')
-        self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
+        self.add_system_page('index', 'Index', html)
 
     def build_year_pagination(self, years):
         EVENTCAL_YEAR_PAGINATION = self.template('EVENTCAL_YEAR_PAGINATION')
@@ -175,11 +172,7 @@ class Theme(DocumentTheme):
         events = {}
         events['content'] = HTML
         page = self.template('PAGE_EVENTS')
-        self.distribute_md('events', page.render(var=events))
-
-        self.srvdtb.add_document('events.md')
-        self.srvdtb.add_document_key('events.md', 'Title', 'Archive')
-        self.srvdtb.add_document_key('events.md', 'SystemPage', 'Yes')
+        self.add_system_page('events', 'Archive', page.render(var=events))
 
     def post_activities(self):
         self.log.debug("[THEME] POST_START")

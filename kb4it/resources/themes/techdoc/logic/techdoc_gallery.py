@@ -160,10 +160,7 @@ class GalleryMixin:
             'json': json.dumps({'kind': kind, 'docs': docs, 'items': items, 'filters': filters},
                                ensure_ascii=False, sort_keys=True, separators=(',', ':')).replace('<', '\\u003c'),
         })
-        self.distribute_md(name, page)
-        self.srvdtb.add_document(f'{name}.md')
-        self.srvdtb.add_document_key(f'{name}.md', 'Title', title)
-        self.srvdtb.add_document_key(f'{name}.md', 'SystemPage', 'Yes')
+        self.add_system_page(name, title, page)
 
     def build_page_gallery(self):
         """The Gallery page: no image at first; the property buttons on the right choose which ones to show."""

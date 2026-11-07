@@ -112,9 +112,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         else:
             self.distribute_html('events', events_pagename)
 
-        self.srvdtb.add_document('events.md')
-        self.srvdtb.add_document_key('events.md', 'Title', 'Events')
-        self.srvdtb.add_document_key('events.md', 'SystemPage', 'Yes')
+        self.add_system_page('events', 'Events')
 
     def toc_sidebar(self, source_html):
         """Show the sticky table of contents when repo.json (else theme.json) asks for it and the page has four or more sections."""
@@ -269,10 +267,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                               'headings': [h.capitalize() for h in skeleton.headings], 'text': text})
         page = self.template('PAGE_QUALITY_GUIDE').render(var={
             'tiers': prof['tiers'], 'retired': prof['retired_status'], 'dims': dims, 'skeletons': skeletons})
-        self.distribute_md('quality-guide', page, as_html=False)
-        self.srvdtb.add_document('quality-guide.md')
-        self.srvdtb.add_document_key('quality-guide.md', 'Title', 'Quality guide')
-        self.srvdtb.add_document_key('quality-guide.md', 'SystemPage', 'Yes')
+        self.add_system_page('quality-guide', 'Quality guide', page, as_html=False)
 
     def _quality_best(self, per_type=3):
         """Top documents per DocType for the Quality page Best documents section."""
@@ -335,10 +330,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
                            for a, b, _ in pairs],
             'filter': bar,
         }
-        self.distribute_md('quality', self.template('PAGE_QUALITY').render(var={'q': quality_page}))
-        self.srvdtb.add_document('quality.md')
-        self.srvdtb.add_document_key('quality.md', 'Title', 'Quality')
-        self.srvdtb.add_document_key('quality.md', 'SystemPage', 'Yes')
+        self.add_system_page('quality', 'Quality', self.template('PAGE_QUALITY').render(var={'q': quality_page}))
 
     def build(self):
         """Create standard pages for default theme"""

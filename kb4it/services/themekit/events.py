@@ -52,9 +52,7 @@ class EventsMixin(ThemeHost):
         return os.path.join(self.srvbes.get_path('cache'), f"{name}.html")
 
     def _add_event_page(self, name: str, title: str) -> None:
-        self.srvdtb.add_document(f"{name}.md")
-        self.srvdtb.add_document_key(f"{name}.md", 'Title', title)
-        self.srvdtb.add_document_key(f"{name}.md", 'SystemPage', 'Yes')
+        self.add_system_page(name, title)
 
     def build_events(self, doclist: list[str]) -> set[str]:
         """Create the day, month and year pages of the dated documents in `doclist`.

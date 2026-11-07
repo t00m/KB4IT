@@ -52,9 +52,8 @@ class KeyPagesMixin(ThemeHost):
         return True
 
     def _add_system_page(self, name: str, title: str) -> None:
-        self.srvdtb.add_document(f'{name}.md')
-        self.srvdtb.add_document_key(f'{name}.md', 'Title', title)
-        self.srvdtb.add_document_key(f'{name}.md', 'SystemPage', 'Yes')
+        """Deprecated alias of Builder.add_system_page(name, title), kept for custom themes."""
+        self.add_system_page(name, title)
 
     def get_maxkv_freq(self) -> int:
         """Return the highest number of values of a property."""

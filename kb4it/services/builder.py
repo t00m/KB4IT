@@ -302,10 +302,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         """Search page (search.html), built only when search is on."""
         if not self.search_enabled():
             return
-        self.distribute_md("search", self.render_template("PAGE_SEARCH", self.get_theme_var()))
-        self.srvdtb.add_document("search.md")
-        self.srvdtb.add_document_key("search.md", "Title", "Search")
-        self.srvdtb.add_document_key("search.md", "SystemPage", "Yes")
+        self.add_system_page("search", "Search", self.render_template("PAGE_SEARCH", self.get_theme_var()))
 
     def search_record(self, doc_id) -> dict:
         """Index record of one document; themes may override to add facets or a summary."""
@@ -460,13 +457,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         TPL_PAGE_ABOUT_KB4IT = self.template("PAGE_ABOUT_KB4IT")
         var = self.get_theme_var()
         var["readme"] = about_markdown(readme_text())
-        self.distribute_md(
-            "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var),
-            as_html=False)
-        self.srvdtb.add_document("about_kb4it.md")
-        self.srvdtb.add_document_key(
-            "about_kb4it.md", "Title", "About KB4IT")
-        self.srvdtb.add_document_key("about_kb4it.md", "SystemPage", "Yes")
+        self.add_system_page("about_kb4it", "About KB4IT", TPL_PAGE_ABOUT_KB4IT.render(var=var), as_html=False)
 
     def create_page_about_app(self):
         """About this app page, generated only when the user repo has no about_app.md."""
@@ -476,10 +467,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
             return
         TPL_PAGE_ABOUT_APP = self.template("PAGE_ABOUT_APP")
         var = self.get_theme_var()
-        self.distribute_md("about_app", TPL_PAGE_ABOUT_APP.render(var=var), as_html=False)
-        self.srvdtb.add_document("about_app.md")
-        self.srvdtb.add_document_key("about_app.md", "Title", "About this app")
-        self.srvdtb.add_document_key("about_app.md", "SystemPage", "Yes")
+        self.add_system_page("about_app", "About this app", TPL_PAGE_ABOUT_APP.render(var=var), as_html=False)
 
     def create_page_help(self):
         """Help page,  generated only when the user repo has no help.md."""
@@ -489,7 +477,4 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
             return
         TPL_PAGE_HELP = self.template("PAGE_HELP")
         var = self.get_theme_var()
-        self.distribute_md("help", TPL_PAGE_HELP.render(var=var), as_html=False)
-        self.srvdtb.add_document("help.md")
-        self.srvdtb.add_document_key("help.md", "Title", "Help")
-        self.srvdtb.add_document_key("help.md", "SystemPage", "Yes")
+        self.add_system_page("help", "Help", TPL_PAGE_HELP.render(var=var), as_html=False)
