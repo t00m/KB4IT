@@ -414,36 +414,8 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         items = self.backlinks(doc_id)
         return self.render_template("HTML_BACKLINKS", {"backlinks": items}) if items else ""
 
-    def page_hook_pre(self, var):
-        """Insert html code before the content.
-
-        This method can be overwriten by custom themes.
-        """
-        return var
-
-    def page_hook_post(self, var):
-        """Insert html code after the content.
-
-        This method can be overwriten by custom themes.
-        """
-        return var
-
     def build_page_key(self, key, values):
         """Create page for a key."""
-
-    def build_page(self, path_md):
-        """Build the final HTML Page for a document.
-
-        At this point, the Markdown document has been compiled successfully,
-        and therefore the html page can be built. The Builder receives the
-        source document filepath; another file with extension .html should
-        also exist. The html page is built by inserting the html header at
-        the beginning, appending the footer at the end, and applying the
-        necessary transformations.
-
-        Finally, the html page produced by the compiler is overwritten.
-        This method must be overwritten by custom themes.
-        """
 
     def build_page_key_value(self, kvpath):
         """

@@ -80,3 +80,112 @@ def test_add_system_page_without_html_only_registers(fake_builder):
     fake_builder.add_system_page("all", "All documents")
     assert fake_builder.distributed == []
     assert ("add_document", "all.md") in fake_builder.db_calls
+
+
+class _Tpl:
+    def __init__(self, text):
+        self.text = text
+
+    def render(self, **kwargs):
+        return self.text
+
+
+class Recorder(Builder):
+    """A Builder whose hooks note the order they run in."""
+
+    def page_toc(self, source_html):
+        self.calls.append("page_toc")
+        return ""
+
+    def page_context(self, doc_id, var):
+        self.calls.append("page_context")
+        return var
+
+    def body_transforms(self, doc_id, var):
+        self.calls.append("body_transforms")
+        return [str.upper]
+
+    def page_actions(self, var):
+        self.calls.append("page_actions")
+        return ""
+
+    def render_page(self, doc_id, var):
+        self.calls.append("render_page")
+        self.seen = var
+        return var["source_html"]
+
+    def finalize_html(self, html):
+        self.calls.append("finalize_html")
+        return f"FINAL {html}"
+
+
+def _pipeline_builder(cls, props=None, system=False):
+    import logging
+    b = cls.__new__(cls)
+    b.calls = []
+    b._xform_pairs = []  # no heading templates to load
+    b.log = logging.getLogger("kb4it-test-pipeline")
+    b.get_theme_var = lambda: {"page": {"title": ""}}
+    b.srvbes = SimpleNamespace(get_dict=lambda name: {})
+    b.srvdtb = SimpleNamespace(get_doc_properties=lambda doc: dict(props or {}),
+                               is_system=lambda doc: system)
+    b.template = lambda name: _Tpl({"HTML_HEADER_COMMON": "H", "HTML_BODY": "B", "HTML_FOOTER": "F"}[name])
+    return b
+
+
+@pytest.fixture
+def page_files(tmp_path):
+    (tmp_path / "a.md").write_text("# A\n", encoding="utf-8")
+    (tmp_path / "a.html").write_text("<p>body</p>", encoding="utf-8")
+    return tmp_path
+
+
+def test_pipeline_runs_hooks_in_order(page_files):
+    b = _pipeline_builder(Recorder, {"Title": "A"})
+    b.build_page(str(page_files / "a.md"))
+    assert b.calls == ["page_toc", "page_context", "body_transforms", "page_actions", "render_page", "finalize_html"]
+    assert (page_files / "a.html").read_text(encoding="utf-8") == "FINAL <P>BODY</P>"
+
+
+def test_pipeline_fills_the_shared_page_keys(page_files):
+    b = _pipeline_builder(Recorder, {"Title": "A"}, system=True)
+    b.build_page(str(page_files / "a.md"))
+    var = b.seen
+    assert (var["basename_md"], var["basename_hdoc"], var["source_md"]) == ("a.md", "a.html", "# A\n")
+    assert var["SystemPage"] is True and var["has_toc"] is True and var["edit_url"] == ""
+    assert var["page"]["title"] == "A" and var["page"]["title-tooltip"] == "A"
+    assert var["keys"] == {"Title": "A"} and var["timestamp"]
+
+
+def test_pipeline_logs_missing_html_with_theme_area(page_files, caplog):
+    b = _pipeline_builder(Recorder)
+    b.log_area = "BOOKSHELF"
+    with caplog.at_level("ERROR", logger="kb4it-test-pipeline"):
+        b.build_page(str(page_files / "missing.md"))
+    assert "[BOOKSHELF] HTML_MISSING doc=missing.md" in caplog.text
+    assert b.calls == []
+
+
+def test_default_render_is_header_body_footer(page_files):
+    b = _pipeline_builder(Builder, {"Title": "A"})
+    b.build_page(str(page_files / "a.md"))
+    assert (page_files / "a.html").read_text(encoding="utf-8") == "HBF"
+
+
+def test_long_title_is_ellipsized_unless_the_theme_says_no(page_files):
+    title = "T" * 100
+    b = _pipeline_builder(Recorder, {"Title": title})
+    b.build_page(str(page_files / "a.md"))
+    assert len(b.seen["page"]["title"]) < 100 and b.seen["page"]["title-tooltip"] == title
+    (page_files / "a.html").write_text("<p>body</p>", encoding="utf-8")
+    b = _pipeline_builder(Recorder, {"Title": title})
+    b.ellipsize_titles = False
+    b.build_page(str(page_files / "a.md"))
+    assert b.seen["page"]["title"] == title
+
+
+def test_untitled_page_uses_label_without_ellipsis(page_files):
+    b = _pipeline_builder(Recorder, {})
+    b.untitled_label = "No title found..."
+    b.build_page(str(page_files / "a.md"))
+    assert b.seen["page"]["title"] == "No title found..." == b.seen["page"]["title-tooltip"]

@@ -11,12 +11,14 @@ from kb4it.services.themekit.events import EventsMixin
 from kb4it.services.themekit.keypages import KeyPagesMixin
 from kb4it.services.themekit.metadata import MetadataMixin
 from kb4it.services.themekit.notfound import NotFoundMixin
+from kb4it.services.themekit.page import DocumentPageMixin
 from kb4it.services.themekit.stats import StatsMixin
 from kb4it.services.themekit.tables import TableMixin
 from kb4it.services.themekit.toc import TocMixin
 
-__all__ = ["DocumentTheme", "EventsMixin", "KeyPagesMixin", "MetadataMixin", "NotFoundMixin", "StatsMixin", "TableMixin", "TocMixin"]
+__all__ = ["DocumentPageMixin", "DocumentTheme", "EventsMixin", "KeyPagesMixin", "MetadataMixin", "NotFoundMixin", "StatsMixin", "TableMixin", "TocMixin"]
 
 
-class DocumentTheme(MetadataMixin, NotFoundMixin, StatsMixin, KeyPagesMixin, TableMixin, EventsMixin, TocMixin, Builder):
+class DocumentTheme(DocumentPageMixin, MetadataMixin, NotFoundMixin, StatsMixin, KeyPagesMixin, TableMixin, EventsMixin,
+                    TocMixin, Builder):
     """Base class of the document themes."""

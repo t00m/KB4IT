@@ -21,6 +21,7 @@ SHARED = {
     "tables": ["build_datatable"],
     "events": ["build_events"],
     "toc": ["extract_toc"],
+    "page": ["page_toc", "page_actions", "menu_contents"],
 }
 
 
