@@ -10,13 +10,10 @@
 import os
 import sys
 import threading
-from datetime import datetime
 from html import escape
 
-from kb4it.core.util import (ellipsize_text, extract_sections_from_md,
-                             get_font_size, get_human_datetime,
-                             get_human_datetime_year, guess_datetime,
-                             html_id_for, valid_filename)
+from kb4it.core.util import (extract_sections_from_md, get_font_size, get_human_datetime_year, guess_datetime,
+                             valid_filename)
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
 from kb4it.core.log import q
@@ -194,150 +191,40 @@ class Theme(DocumentTheme):
         self.create_page_search()
         self.create_page_add()
 
-    def page_hook_pre(self, var):
-        var['related'] = ''
-        var['metadata'] = ''
-        var['source'] = ''
-        var['actions'] = ''
-        return var
-
-    def page_hook_post(self, var):
-        return var
-
-    def build_page(self, path_md, var={}):
-        """Build the final HTML Page.
-
-        At this point, the Markdown compilation has finished successfully,
-        and therefore the html page can be built. The Builder receives the
-        source filepath; another file with extension .html should also
-        exist.
-
-        The html page is built by inserting the html header at the beginning,
-        appending the footer at the end, and applying the necessary
-        transformations in the body.
-
-        Finally, the html page produced by the compiler is overwritten.
-        """
-        path_hdoc = html_id_for(path_md)
-        basename_md = os.path.basename(path_md)
-        basename_hdoc = os.path.basename(path_hdoc)
-        exists_hdoc = os.path.exists(path_hdoc)  # it should be true
-        repo = self.srvbes.get_dict('repo')
-        try:
-            strict = repo['strict']
-        except KeyError:
-            strict = False
-
-        if not exists_hdoc:
-            self.log.error("[THEME] HTML_MISSING doc=%s", basename_md)
-            self.log.error(f"[THEME] PATH doc={q(basename_md)} path={q(path_md)}")
-            self.log.error(f"[THEME] PATH doc={q(basename_hdoc)} path={q(path_hdoc)}")
-            return
-
-        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-        HTML_BODY = self.template('HTML_BODY')
-        HTML_BODY_POST = self.template('POST_HTML_SINGLE')
-        HTML_FOOTER = self.template('HTML_FOOTER')
-
-        if len(var) == 0:
-            var = self.get_theme_var()
-        var['edit_url'] = self.edit_url(basename_md)
-
+    def page_context(self, doc_id, var):
+        """Override: the post, the property counts, topics and tags, the header menu and the metadata."""
         var['count_docs'] = self.srvdtb.get_documents_count()
         keys = self.srvdtb.get_all_keys()
         var['count_keys'] = len(keys)
-        var['leader_items'] = []
-        for key in keys:
-            if key == 'Date':
-                continue
-            values = self.srvdtb.get_all_values_for_key(key)
-            item = {}
-            item['key'] = key
-            item['vfkey'] = valid_filename(key)
-            item['count_values'] = len(values)
-            var['leader_items'].append(item)
-
-        var['post'] = {}
-        metadata = self.srvdtb.get_doc_properties(basename_md)
-        for prop in metadata:
-            var['post'][prop] = metadata[prop]
-        self._post_author(var['post'], metadata)
-        if not self.srvdtb.is_system(basename_md):
-            self.note_undated(basename_md, var['post'].get('Date'))
+        var['leader_items'] = [{'key': key, 'vfkey': valid_filename(key),
+                                'count_values': len(self.srvdtb.get_all_values_for_key(key))}
+                               for key in keys if key != 'Date']
+        var['post'] = dict(var['keys'])
+        self._post_author(var['post'], var['keys'])
+        if not var['SystemPage']:
+            self.note_undated(doc_id, var['post'].get('Date'))
         var['topics'] = self.srvdtb.get_all_values_for_key('Topic')
         var['tags'] = self.srvdtb.get_all_values_for_key('Tag')
-        now = datetime.now()
-        timestamp = get_human_datetime(now)
-        keys = self.srvdtb.get_doc_properties(basename_md)
+        var['menu_contents'] = self.menu_contents(var)
+        var['metadata'] = self.build_metadata_section(doc_id)
+        return var
 
-        with open(path_md, 'r', encoding='utf-8') as fpa:
-            source_md = fpa.read()
+    def page_body_template(self, doc_id, var):
+        """Override: a document is a post; with repo.json strict only a document whose Category is Post."""
+        if var['SystemPage']:
+            return 'HTML_BODY'
+        if (self.srvbes.get_dict('repo') or {}).get('strict', False):
+            return 'POST_HTML_SINGLE' if 'Post' in var['post']['Category'] else 'HTML_BODY'
+        return 'POST_HTML_SINGLE'
 
-        with open(path_hdoc, 'r', encoding='utf-8') as fph:
-            source_html = fph.read()
-
-        var['toc'] = self.extract_toc(source_html)
-        var['has_toc'] = True
-
-        # Do not show metadata for system pages
-        if self.srvdtb.is_system(basename_md):
-            var['SystemPage'] = True
-            TPL_HTML_HEADER_MENU_CONTENTS_DISABLED = self.template('HTML_HEADER_MENU_CONTENTS_DISABLED')
-            HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_DISABLED.render()
-            var['metadata'] = ""
-        else:
-            var['SystemPage'] = False
-            TPL_HTML_HEADER_MENU_CONTENTS_ENABLED = self.template('HTML_HEADER_MENU_CONTENTS_ENABLED')
-            HTML_TOC = TPL_HTML_HEADER_MENU_CONTENTS_ENABLED.render(var=var)
-        var['metadata'] = self.build_metadata_section(basename_md)
-
-        var['menu_contents'] = HTML_TOC
+    def render_page(self, doc_id, var):
+        """Override: a body template that fails (a document without Date or Category) falls back to HTML_BODY."""
+        header = self.template('HTML_HEADER_COMMON').render(var=var)
         try:
-            var['keys'] = keys
-            if 'Post' in keys['Category']:
-                for key in keys:
-                    var['post'][key] = keys[key]
-                var['page']['title'] = var['post']['title']
-        except Exception as error:
-            var['keys'] = keys
-        try:
-            var['page']['title'] = ellipsize_text(keys['Title'])
-            var['page']['title-tooltip'] = keys['Title']
-        except Exception as error:
-            # ~ self.log.error(error)
-            pass
-        var['basename_md'] = basename_md
-        var['basename_hdoc'] = basename_hdoc
-        var['source_md'] = source_md
-        var['source_html'] = self.apply_transformations(source_html)
-        actions = self.get_page_actions(var)
-        var['actions'] = actions
-        var['timestamp'] = timestamp
-
-        HEADER = HTML_HEADER_COMMON.render(var=var)
-        try:
-            if self.srvdtb.is_system(basename_md):
-                # Index, property and key pages are not posts. (They used to reach the plain
-                # body only because the post template failed on their missing Date.)
-                BODY = HTML_BODY.render(var=var)
-            elif strict:
-                if 'Post' in var['post']['Category']:
-                    BODY = HTML_BODY_POST.render(var=var)
-                else:
-                    BODY = HTML_BODY.render(var=var)
-            else:
-                BODY = HTML_BODY_POST.render(var=var)
+            body = self.template(self.page_body_template(doc_id, var)).render(var=var)
         except Exception:
-            BODY = HTML_BODY.render(var=var)
-        FOOTER = HTML_FOOTER.render(var=var)
-
-        HTML = ""
-        HTML += HEADER
-        HTML += BODY
-        HTML += FOOTER
-
-        with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
-            fhtml.write(HTML)
+            body = self.template('HTML_BODY').render(var=var)
+        return header + body + self.template('HTML_FOOTER').render(var=var)
 
     def get_related(self, docId):
         """Get a list of related documents for each tag"""
