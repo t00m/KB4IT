@@ -8,6 +8,7 @@ from textual.widgets import Button, DataTable, Input, ListView, TextArea
 
 from kb4it.core.repocheck import check_repo
 from kb4it.tui import app as tui
+from kb4it.core import projects as core_projects
 from kb4it.tui import projects, repo_options
 from kb4it.tui.repo_options import current_value, theme_options
 from kb4it.tui.screens.confirm import ConfirmScreen
@@ -148,7 +149,7 @@ def run(config, registry, scenario):
 @pytest.fixture
 def registry(tmp_path, monkeypatch):
     path = tmp_path / "projects.json"
-    monkeypatch.setattr(projects, "PROJECTS_FILE", path)
+    monkeypatch.setattr(core_projects, "PROJECTS_FILE", path)
     return path
 
 

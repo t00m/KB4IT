@@ -10,6 +10,7 @@ import pytest
 from textual.widgets import Button, DataTable, Input, Label, ListView, RadioButton, RichLog
 
 from kb4it.tui import app as tui
+from kb4it.core import projects as core_projects
 from kb4it.tui import clipboard, projects
 from kb4it.tui.screens import project as project_screens
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
@@ -21,7 +22,7 @@ SIZE = (140, 60)
 def registry(tmp_path, monkeypatch):
     """Point the TUI project registry at a fresh file."""
     path = tmp_path / "projects.json"
-    monkeypatch.setattr(projects, "PROJECTS_FILE", path)
+    monkeypatch.setattr(core_projects, "PROJECTS_FILE", path)
     return path
 
 
