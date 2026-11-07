@@ -29,13 +29,17 @@ scripts/release.sh --dry-run                         # See what a release would 
 **Run**
 
 ```bash
-kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app defaults to "default"; --index yes|no writes seo.index)
+kb4it create <theme> [<app>] <repo_path>  # Initialize a new repository (app defaults to "default"; --index yes|no writes seo.index; --id sets the project id)
 kb4it build <config>                      # Build the site from repo.json (-f/--force recompiles everything, --trace writes var/log/trace.json); exits 1 when any page fails
 kb4it serve <config>                      # Build, serve on 127.0.0.1:8642 with live reload, rebuild on change (kb4it/core/serve.py); --host, --port, --open, --no-watch, --no-reload, --interval, -f/--force, --trace
 kb4it info <config>                       # Show repository info
 kb4it themes                              # List installed themes
 kb4it apps <theme>                        # List apps available for a theme
-kb4it projects                            # List all projects created by the user
+kb4it projects                            # List the projects with their ids (tab-separated when piped); registry in kb4it/core/projects.py
+kb4it import <config> [--id ID] [--name N] # Add a knowledge base to the list, or set its id and name (kb4it/core/projectcli.py)
+kb4it delete <project> [--files [--yes]]  # Remove a project from the list; --files also deletes its folder after confirmation
+kb4it keys <project> [KEY [VALUE]]        # Properties, values or documents, read from the sources without a build (kb4it/core/explore.py)
+kb4it search PATTERN [-p P]... [--where K=V]... [-r] [-s] [-l]  # path:line: text over the sources; exit 0/1/2 as grep (kb4it/core/grep.py)
 kb4it verify <config>                     # Verify sources are KB4IT conformant; exits 1 on any non-conformant file or theme problem
 kb4it doctor                              # Build version, commit, Python, paths, offline help and every theme; exits 1 when a bundled file or theme is missing
 kb4it help [--url | --dismiss]            # Open the offline help (kb4it/core/notice.py); --url prints the online address, --dismiss hides the first-run notice
@@ -47,6 +51,8 @@ kb4it help [--url | --dismiss]            # Open the offline help (kb4it/core/no
 kb4it -L DEBUG <command>                  # Set log level (DEBUG/INFO/WARNING/ERROR, default INFO)
 kb4it -v                                  # Print version and exit
 ```
+
+Every `<config>` and `<project>` argument takes a project id or a config path: an existing file wins, then a listed id (`projects.resolve()`, called in `main()`).
 
 CI (`.github/workflows/kb4it.yml`) runs a matrix of Linux, macOS and Windows with Python 3.11, 3.13 and 3.14: `kb4it --version`, the tests and `scripts/devel/smoke_build.py` (create and build every bundled theme's default app). Tests: `./scripts/devel/test.sh [--python X.Y]` (pytest via uv; add paths or pytest flags after it; Git Bash on Windows). CI also builds the wheel and runs `scripts/devel/check_wheel_themes.py`, which fails when a git-tracked theme, the offline help or the editor bundle is missing from `dist/*.whl` (or the wheel named on the command line) and prints a WARNING for themes that are in the wheel but not tracked in git; `--stamp X.Y.Z` also wants a `BUILD.json` of that version (`release.sh --commit`), `--release X.Y.Z` the stamp of the clean release commit (`publish.yml`, `publish_pypi.sh`). `scripts/devel/smoke_build.py --doctor --all-apps` checks an installation: `kb4it doctor`, then every sample app of every theme created and built with the `kb4it` on PATH (`--from-source` for this checkout).
 

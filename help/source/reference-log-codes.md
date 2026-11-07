@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Themes, Configuration
 HelpId: log-codes
-Keyword: log, error, warning, code, message, kb4it.log, build log, CONFIG_ERROR, THEME_ERROR, DOC_INVALID, PAGES_FAILED, META_INVALID
+Keyword: log, error, warning, code, message, kb4it.log, build log, CONFIG_ERROR, THEME_ERROR, DOC_INVALID, PAGES_FAILED, META_INVALID, PROJECT_DELETE_REFUSED
 Level: advanced
 Order: 640
 Related: troubleshooting.md
@@ -171,7 +171,11 @@ The apphelp theme checks the properties of each page. With `"strict": true`, the
 | Code | Level | Meaning | What to do |
 |---|---|---|---|
 | `PROJECTS_CORRUPT` | warning | `projects.json` cannot be read. KB4IT renames it to `projects.json.corrupt-<date>` and starts an empty list | Add your knowledge bases again, or repair the kept copy |
-| `PROJECTS_LOAD_ERROR` | error | `kb4it projects` cannot read the list | Check `~/.kb4it/projects.json` |
+| `PROJECT_IMPORTED` | info | A knowledge base was added to the list, by `kb4it create`, `kb4it import` or the terminal interface | Nothing |
+| `PROJECT_ID_SET` | info | A project got a new id, or lost it | Nothing |
+| `PROJECT_REMOVED` | info | A project was removed from the list. Its files stay unless the next line is `PROJECT_FILES_DELETED` | Nothing |
+| `PROJECT_FILES_DELETED` | info | `kb4it delete --files` deleted the project folder | Nothing |
+| `PROJECT_DELETE_REFUSED` | warning | `kb4it delete --files` would not delete the folder. `reason=no_config`: the folder has no `config/` holding this `repo.json`; `protected_folder`: the folder is, or contains, `/`, your home folder or `~/.kb4it`; `locked`: a build or `kb4it serve` is using it | Delete it by hand if you are sure, or stop the build first |
 | `PROJECT_SAVE_ERROR` | error | A new knowledge base could not be added to the list | Check permissions of `~/.kb4it` |
 | `REPO_PATH_MISSING`, `REPO_PATH_CREATED` | warning | `kb4it create` was given a folder that did not exist, and created it | Nothing |
 | `WARNING_PUBLIC` | warning | `kb4it serve` listens on an address other computers can reach | Use the default `--host 127.0.0.1` unless you need it |

@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, --index, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
+Keyword: cli, kb4it, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -17,6 +17,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 |---|---|
 | `kb4it create THEME [APP] PATH` | Creates a knowledge base in `PATH` from a theme and one of its apps (`default` if you leave it out) |
 | `kb4it create --index yes THEME [APP] PATH` | Also decides whether search engines may index the site: `--index yes` writes `"seo": {"index": true}` into `repo.json`, `--index no` writes `false`. Without it nothing is written and the build reminds you; see [Search engines](reference-repo-json.md#indexing) |
+| `kb4it create --id ID THEME [APP] PATH` | Also gives the new knowledge base the id `ID`; see [Project ids](#ids) |
 | `kb4it build CONFIG` | Builds the website of the knowledge base whose settings are in `CONFIG` |
 | `kb4it build --force CONFIG` | Rebuilds everything |
 | `kb4it build --trace CONFIG` | Builds and shows how long each part of the build took; see [Build timings](#trace) |
@@ -26,13 +27,78 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
 | `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
-| `kb4it projects` | Lists the knowledge bases you created or imported |
+| `kb4it projects` | Lists the knowledge bases you created or imported, with their ids. Piped, it prints `id`, name and config separated by tabs, with no header |
+| `kb4it import CONFIG [--id ID] [--name NAME]` | Adds an existing knowledge base to the list; on a listed one, sets its id or name. See [Import and delete](#import) |
+| `kb4it delete PROJECT [--files] [--yes]` | Removes a knowledge base from the list; `--files` also deletes its folder. See [Import and delete](#import) |
+| `kb4it keys PROJECT [KEY [VALUE]]` | Lists the properties of the documents, the values of one, or the documents with one value. See [Properties and values](#keys) |
+| `kb4it search PATTERN [-p PROJECT]...` | Finds text in the Markdown sources and prints `path:line: text`. See [Search the sources](#search) |
 | `kb4it help` | Opens the offline copy of this help in your browser; see [Help center](#help) |
 | `kb4it help --url` | Prints the address of the online help |
 | `kb4it help --dismiss` | Hides the help notice |
 | `kb4it --version` | Prints the KB4IT build, then the commit it was built from and when |
 
-`CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`.
+`CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`, or the id of a listed project. `PROJECT` is the same: an id or a config path.
+
+## Project ids {#ids}
+
+An id is a short name you choose for a knowledge base, so you type `kb4it build sapblog` instead of the whole path. It has 1 to 32 characters: lowercase letters, digits and dashes, starting with a letter. Each id is used by one project only.
+
+Give an id when you create or import a knowledge base: `kb4it create --id sapblog techdoc ~/kb/sap` or `kb4it import ~/kb/sap/config/repo.json --id sapblog`. To give an id to a knowledge base that is already listed, run `kb4it import` on it again with `--id`. The terminal interface has an **Edit id** button on the project screen.
+
+Every command that takes `CONFIG` (`build`, `serve`, `info`, `verify`, `keys`, `delete`, `search -p`) also takes an id. KB4IT reads the word this way:
+
+1. When a file with that name exists, it is the config file. So `kb4it build config/repo.json` works as always.
+2. Otherwise, when a listed project has that id, KB4IT uses its config file.
+3. Otherwise the command ends with `1` and says that there is no such id or file.
+
+## Import and delete {#import}
+
+`kb4it import CONFIG` adds a knowledge base you already have, for example one cloned from git. The display name is the `title` in `repo.json`, or the folder name; `--name` sets another one. Running it on a listed knowledge base adds nothing twice: it sets the `--id` and `--name` you give, or says it is already listed.
+
+`kb4it delete PROJECT` removes the knowledge base from the list. Its files stay on disk.
+
+`kb4it delete PROJECT --files` also deletes the knowledge base folder, the one that holds `config/`. In a terminal it shows the folder and the number of files, and asks you to type the id (or the folder name, when the project has no id). In a script, add `--yes`; without a terminal and without `--yes` it deletes nothing and ends with `1`. It refuses, and deletes nothing, when:
+
+- the folder has no `config/` holding the project's `repo.json`;
+- the folder is `/`, your home folder or `~/.kb4it`, or contains one of them;
+- a build or `kb4it serve` is using the knowledge base.
+
+When `target` in `repo.json` points outside the knowledge base folder, the website there is kept, and the command prints its path.
+
+## Properties and values {#keys}
+
+`kb4it keys` reads the front matter of the documents in `source/` directly. It needs no build.
+
+| Command | Prints |
+|---|---|
+| `kb4it keys sapblog` | Each property with the number of documents that use it. `Title` is left out |
+| `kb4it keys sapblog Tag` | Each value of `Tag` with its number of documents |
+| `kb4it keys sapblog Tag backup` | The path of each document with `Tag: backup`, one per line |
+
+Property names and values match in any case: `kb4it keys sapblog tag BACKUP` works. Documents KB4IT cannot read are left out, and one line on standard error gives how many; `kb4it verify` tells why. An unknown property or value ends with `1`.
+
+## Search the sources {#search}
+
+`kb4it search PATTERN` finds `PATTERN` in the Markdown documents of every listed knowledge base, front matter included. Each match prints as `path:line: text`, with the full path, the way `grep -n` does:
+
+```bash
+kb4it search restore                         # every knowledge base
+kb4it search restore -p sapblog -p ops       # only these two
+kb4it search restore --where Status=Open     # only documents with Status: Open
+vim -q <(kb4it search restore -p sapblog)    # open the matches in vim's quickfix list
+```
+
+| Option | Does |
+|---|---|
+| `-p PROJECT`, `--project PROJECT` | Searches this knowledge base only; repeat it for several. Without `-p`, every listed one |
+| `--where KEY=VALUE` | Keeps the documents with that property value, in any case. Different keys must all match; the same key repeated matches any of its values: `--where Status=Open --where Status=Planned --where Tag=backup` means (Open or Planned) and backup |
+| `-r`, `--regex` | `PATTERN` is a Python regular expression. Without it, it is plain text |
+| `-s`, `--case-sensitive` | Matches upper and lower case exactly. Without it, case does not matter |
+| `-l`, `--files-with-matches` | Prints only the path of each matching document |
+
+In a terminal the path, the line number and the match are colored; piped, or with `NO_COLOR` set, the output is plain. A listed knowledge base whose `repo.json` is gone is skipped with a warning.
+
+`kb4it search` ends like `grep`: `0` when something matched, `1` when nothing did, `2` on an error such as a wrong regular expression, an unknown `-p` or an empty project list.
 
 ## Help center {#help}
 
@@ -84,6 +150,8 @@ register-python-argcomplete --shell fish kb4it | source
 
 Put the line in `~/.bashrc`, `~/.zshrc` or `~/.config/fish/config.fish` to keep it. `activate-global-python-argcomplete` enables completion for `kb4it` and every other argcomplete-aware command at once.
 
+The `CONFIG` and `PROJECT` arguments complete the project ids and file paths; `search -p` completes the ids only. `kb4it keys sapblog <Tab>` lists the properties and, after one, its values; `kb4it search x --where <Tab>` completes `KEY=` and then `KEY=VALUE`.
+
 `kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes; after a theme, the next word lists its sample apps and folders. Once the app is typed, only folders are offered for the path. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
 
 Without argcomplete the command line works as before; only <kbd>Tab</kbd> completion is missing.
@@ -113,6 +181,8 @@ It also writes `<knowledge base>/var/log/trace.json`, replaced at each build. Op
 After a failed build the next build compiles again every document that changed since the last successful one, so there is no need for `--force`.
 
 `kb4it verify` ends with `1` when it finds a problem in a document, a theme or a link.
+
+`kb4it search` uses its own statuses, like `grep`; see [Search the sources](#search).
 
 ## Files KB4IT keeps {#files}
 

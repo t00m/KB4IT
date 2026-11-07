@@ -112,12 +112,16 @@ kb4it build ~/mykb/config/repo.json         # 4. write the final site to ~/mykb/
 ```bash
 kb4it create <theme> [<app>] <repo_path>  # new knowledge base (--index yes|no: may search engines index it)
 kb4it serve <config>                      # build, serve on 127.0.0.1:8642, rebuild on change (--port, --host, --open, ...)
-kb4it build <config>                      # build the site, incremental (-f/--force: everything; --trace: timings)
+kb4it build <config>                      # build the site, incremental (-f/--force: everything; --trace: timings); <config> can be an id
 kb4it verify <config>                     # check documents, links and theme rules without building
 kb4it info <config>                       # show the main settings
 kb4it themes                              # list the installed themes, with version, fingerprint and folder
 kb4it apps <theme>                        # list the sample apps of a theme
-kb4it projects                            # list your knowledge bases
+kb4it projects                            # list your knowledge bases and their ids
+kb4it import <config> --id <id>           # add a knowledge base you already have, with a short id
+kb4it search <text> [-p <id>]             # find text in the sources: path:line: text
+kb4it keys <id> [<key> [<value>]]         # list properties, values or the documents with a value
+kb4it delete <id> [--files]               # remove from the list; --files also deletes the folder
 kb4it doctor                              # show the build, Python, paths and themes; exit 1 if something bundled is missing
 kb4it help                                # open the offline help (--url: print the online address)
 kb4it --version                           # show the build version and the commit it was built from
