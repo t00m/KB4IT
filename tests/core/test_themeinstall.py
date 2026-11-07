@@ -345,3 +345,43 @@ def test_download_not_a_zip(home, monkeypatch):
 
 def test_install_from_a_path(tmp_path, home):
     assert themeinstall.install(str(mini_zip(tmp_path))).id == "mini"
+
+
+# Errors that zipfile and the file system raise outside ThemeInstallError
+
+def test_encrypted_theme_json_is_refused(tmp_path):
+    path = make_zip(tmp_path / "t.zip", mini_files())
+    # zipfile cannot write encrypted members: set the "encrypted" flag in every header.
+    data = bytearray(path.read_bytes())
+    for signature, offset in ((b"PK\x03\x04", 6), (b"PK\x01\x02", 8)):
+        start = data.find(signature)
+        while start != -1:
+            data[start + offset] |= 0x1
+            start = data.find(signature, start + 4)
+    path.write_bytes(bytes(data))
+    assert reason_of(path).reason == "not_a_zip"
+
+
+def test_unwritable_themes_folder_is_refused(tmp_path, home, monkeypatch):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("x", encoding="utf-8")
+    monkeypatch.setattr(themeinstall, "themes_dir", lambda: blocker / "themes")
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install_zip(mini_zip(tmp_path))
+    assert caught.value.reason == "install"
+    assert list(themeinstall.tmp_dir().iterdir()) == []
+
+
+def test_id_with_a_trailing_newline_is_refused(tmp_path):
+    assert reason_of(mini_zip(tmp_path, top="mini\n", name="t.zip", id="mini\n")).reason == "bad_id"
+
+
+def test_download_has_a_total_deadline(home, monkeypatch):
+    serve(monkeypatch, b"x" * 1000)
+    monkeypatch.setattr(themeinstall, "_CHUNK", 10)
+    clock = iter(range(0, 100000, 30))
+    monkeypatch.setattr(themeinstall.time, "monotonic", lambda: next(clock))
+    with pytest.raises(ThemeInstallError) as caught:
+        themeinstall.install("https://example.org/mini.zip")
+    assert caught.value.reason == "download"
+    assert list(themeinstall.tmp_dir().iterdir()) == []

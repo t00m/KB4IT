@@ -96,10 +96,11 @@ class ThemesScreen(Screen):
         self.app.push_screen(InstallThemeScreen(), callback=_after)
 
     def _install_worker(self, source: str) -> None:
-        source = os.path.expanduser(source)
+        if not source.lower().startswith(("http://", "https://")):
+            source = os.path.expanduser(source)
         try:
             result = themeinstall.install(source)
-        except (ThemeInstallError, LockBusyError) as error:
+        except Exception as error:  # an error in a worker would close the whole interface
             self.app.call_from_thread(self.app.notify, str(error), severity="error", timeout=10)
             return
         self.app.call_from_thread(self.app.notify, "\n".join(install_lines(result)), timeout=8)

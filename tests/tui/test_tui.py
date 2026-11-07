@@ -164,6 +164,27 @@ def test_themes_screen_installs_from_a_path(tmp_path, registry, user_themes):
     run(scenario)
 
 
+def test_unexpected_install_error_is_a_notification(tmp_path, registry, user_themes, monkeypatch):
+    from kb4it.core import themeinstall
+
+    def broken(source):
+        raise RuntimeError("File theme.json is encrypted, password required")
+    monkeypatch.setattr(themeinstall, "install", broken)
+    notes = []
+
+    async def scenario(app, pilot):
+        monkeypatch.setattr(app, "notify", lambda message, **kw: notes.append(message))
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        app.screen.query_one("#install", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#inp-source", Input).value = str(tmp_path / "x.zip")
+        app.screen.query_one("#do-install", Button).press()
+        await wait_for(pilot, lambda: any("encrypted" in note for note in notes), timeout=10)
+        assert isinstance(app.screen, tui.ThemesScreen)
+    run(scenario)
+
+
 def test_uninstall_enabled_only_for_local_rows(tmp_path, registry, user_themes):
     from kb4it.core import themeinstall
     from tests.core.test_themeinstall import mini_zip

@@ -22,6 +22,7 @@ import secrets
 import shutil
 import stat
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -111,6 +112,8 @@ def _read_theme_json(archive: zipfile.ZipFile, entries, top: str) -> dict:
         if "/".join(parts) == wanted:
             try:
                 data = json.loads(archive.read(info).decode("utf-8"))
+            except (RuntimeError, NotImplementedError) as error:
+                raise ThemeInstallError("not_a_zip", f"Cannot read {wanted}, encrypted or compressed in an unsupported way: {error}") from None
             except (ValueError, UnicodeDecodeError, zipfile.BadZipFile) as error:
                 raise ThemeInstallError("bad_theme_json", f"{wanted} is not valid JSON: {error}") from None
             if not isinstance(data, dict):
@@ -130,7 +133,7 @@ def _check_theme(theme: dict, top: str) -> None:
         raise ThemeInstallError(
             "id_mismatch",
             f"The top folder '{top}' must equal the id in theme.json, which is '{theme_id}'")
-    if not THEME_ID_RE.match(theme_id):
+    if not THEME_ID_RE.fullmatch(theme_id):
         raise ThemeInstallError(
             "bad_id",
             f"Theme id '{theme_id}' is not valid: use lowercase letters, digits, '-' and '_', "
@@ -245,7 +248,7 @@ def _extract(path: Path, info: ThemeZip, work: Path) -> None:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 with archive.open(member) as src, open(target, "wb") as dst:
                     shutil.copyfileobj(src, dst)
-    except (zipfile.BadZipFile, EOFError) as error:
+    except (zipfile.BadZipFile, EOFError, RuntimeError, NotImplementedError) as error:
         raise ThemeInstallError("not_a_zip", f"Cannot unpack {path}: {error}") from None
     except OSError as error:
         raise ThemeInstallError("install", f"Cannot unpack {path}: {error}") from None
@@ -254,7 +257,10 @@ def _extract(path: Path, info: ThemeZip, work: Path) -> None:
 def _swap(new: Path, theme_id: str) -> str | None:
     """Put new in place of the local theme theme_id; return the replaced version, if any."""
     themes = themes_dir()
-    themes.mkdir(parents=True, exist_ok=True)
+    try:
+        themes.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise ThemeInstallError("install", f"Cannot create the themes folder {themes}: {error}") from None
     target = themes / theme_id
     with themes_lock():
         old = None
@@ -270,7 +276,12 @@ def _swap(new: Path, theme_id: str) -> str | None:
             _move(new, target)
         except OSError as error:
             if old is not None:
-                _move(old, target)
+                try:
+                    _move(old, target)
+                except OSError:
+                    raise ThemeInstallError(
+                        "install", f"Cannot put {theme_id} in {themes}: {error}. "
+                        f"The old copy could not be put back either; it is in {old}") from None
             raise ThemeInstallError("install", f"Cannot put {theme_id} in {themes}: {error}") from None
         if old is not None:
             _remove(old)
@@ -328,9 +339,12 @@ def download(url: str) -> Path:
             "insecure_url", f"Only https:// URLs are accepted; a theme runs code at build time: {url}")
     target = tmp_dir() / f"download-{secrets.token_hex(4)}.zip"
     try:
+        deadline = time.monotonic() + DOWNLOAD_TIMEOUT
         with _open(url, DOWNLOAD_TIMEOUT) as response, open(target, "wb") as out:
             size = 0
             while True:
+                if time.monotonic() > deadline:
+                    raise ThemeInstallError("download", f"Cannot download {url}: it took more than {DOWNLOAD_TIMEOUT} seconds")
                 chunk = response.read(_CHUNK)
                 if not chunk:
                     break
@@ -377,7 +391,7 @@ def local_theme(theme_id: str) -> Path:
     # Compare with the listing, so an id such as '..' never reaches a path.
     if theme_id in local_themes():
         return themes_dir() / theme_id
-    if THEME_ID_RE.match(theme_id) and bundled_version(theme_id) is not None:
+    if THEME_ID_RE.fullmatch(theme_id) and bundled_version(theme_id) is not None:
         raise ThemeInstallError("bundled", f"{theme_id} is bundled with KB4IT and cannot be removed")
     raise ThemeInstallError("not_installed", f"Theme {theme_id} is not installed in {themes_dir()}")
 
