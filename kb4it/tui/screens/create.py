@@ -28,6 +28,7 @@ from textual.widgets import (
 
 from kb4it.core.util import json_load
 from kb4it.tui.projects import get_apps, get_themes
+from kb4it.tui.screens.edit_id import id_error
 from kb4it.tui.screens.build import _reset_logging
 from kb4it.tui.widgets import SelectableDataTable
 
@@ -36,6 +37,7 @@ class CreateProjectScreen(Screen):
     CSS = """
     CreateProjectScreen { layout: vertical; }
     .field-label { margin: 1 1 0 1; color: $text-muted; }
+    #id-error { margin: 0 1; color: $error; }
     #themes-list { height: 6; margin: 0 1; border: solid $primary; }
     #apps-list   { height: 4; margin: 0 1; border: solid $secondary; }
     Input { margin: 0 1 1 1; }
@@ -81,6 +83,9 @@ class CreateProjectScreen(Screen):
         yield ListView(id="apps-list")
         yield Label("Project display name:", classes="field-label")
         yield Input(placeholder="My Project", id="inp-name")
+        yield Label("Project id (optional, a shortcut for the command line):", classes="field-label")
+        yield Input(placeholder="sapblog", id="inp-id")
+        yield Label("", id="id-error")
         yield Label("Repository path:", classes="field-label")
         yield Input(
             placeholder=str(Path.home() / "Documents" / "my_project"),
@@ -149,6 +154,10 @@ class CreateProjectScreen(Screen):
             return None
         return "yes" if pressed.id == "index-yes" else "no"
 
+    @on(Input.Changed, "#inp-id")
+    def _check_id(self, event: Input.Changed) -> None:
+        self.query_one("#id-error", Label).update(id_error(event.value.strip(), None))
+
     @on(Button.Pressed, "#cancel")
     def _cancel(self) -> None:
         self.dismiss(None)
@@ -165,6 +174,11 @@ class CreateProjectScreen(Screen):
         path = os.path.expanduser(self.query_one("#inp-path", Input).value.strip())
         if not name:
             self._show_error("Project display name cannot be empty.")
+            return
+        pid = self.query_one("#inp-id", Input).value.strip()
+        problem = id_error(pid, None)
+        if problem:
+            self._show_error(problem)
             return
         if not path:
             self._show_error("Repository path cannot be empty.")
@@ -189,6 +203,7 @@ class CreateProjectScreen(Screen):
                 app=app_name,
                 repo_path=path,
                 index=index,
+                id=pid or None,
                 log_level="WARNING",
             )
             inst = KB4IT(params)
@@ -225,13 +240,14 @@ class CreateProjectScreen(Screen):
             return
         self.app.notify(f"Project '{name}' created at: {path}", severity="information")
         self.app.notify("\n".join(next_steps), severity="information", timeout=20)
-        self.dismiss({"name": name, "config": config})
+        self.dismiss({"name": name, "config": config, "id": pid})
 
 
 class ImportProjectScreen(Screen):
     CSS = """
     ImportProjectScreen { layout: vertical; }
     .field-label { margin: 1 1 0 1; color: $text-muted; }
+    #id-error { margin: 0 1; color: $error; }
     Input { margin: 0 1 1 1; }
     #preview { height: auto; max-height: 10; margin: 0 1 1 1; border: solid $primary; }
     #footer-bar { height: 3; align: center middle; }
@@ -249,6 +265,9 @@ class ImportProjectScreen(Screen):
         yield Input(placeholder="/path/to/config/repo.json", id="inp-path")
         yield Label("Display name:", classes="field-label")
         yield Input(placeholder="My Project", id="inp-name")
+        yield Label("Project id (optional, a shortcut for the command line):", classes="field-label")
+        yield Input(placeholder="sapblog", id="inp-id")
+        yield Label("", id="id-error")
         yield SelectableDataTable(id="preview", show_cursor=False)
         with Horizontal(id="footer-bar"):
             yield Button("Import", id="import", variant="success")
@@ -300,4 +319,14 @@ class ImportProjectScreen(Screen):
             if field not in self._repo:
                 self.app.notify(f"Config missing required field: '{field}'", severity="error")
                 return
-        self.dismiss({"name": name, "config": path})
+        pid = self.query_one("#inp-id", Input).value.strip()
+        problem = id_error(pid, path)
+        if problem:
+            self.query_one("#id-error", Label).update(problem)
+            self.app.notify(problem, severity="error")
+            return
+        self.dismiss({"name": name, "config": path, "id": pid})
+
+    @on(Input.Changed, "#inp-id")
+    def _check_id(self, event: Input.Changed) -> None:
+        self.query_one("#id-error", Label).update(id_error(event.value.strip(), self._config_path or None))

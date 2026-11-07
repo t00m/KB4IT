@@ -23,7 +23,8 @@ from textual.widgets import (
 
 from kb4it.core.notice import (HELP_ONLINE_URL, dismiss_help_notice, help_notice_lines,
                                help_notice_visible, offline_index)
-from kb4it.tui.projects import BUILD_VERSION, load_projects, save_projects
+from kb4it.core import projects
+from kb4it.tui.projects import BUILD_VERSION
 from kb4it.tui.screens.catalog import AppsScreen, ThemesScreen
 from kb4it.tui.screens.confirm import ConfirmScreen
 from kb4it.tui.screens.create import CreateProjectScreen, ImportProjectScreen
@@ -74,13 +75,14 @@ class MainScreen(Screen):
         self._reload()
 
     def _reload(self) -> None:
-        self._projects = load_projects()
+        self._projects = projects.load()
         lv = self.query_one("#proj-list", ListView)
         lv.clear()
         if self._projects:
             for p in self._projects:
+                pid = f"  [cyan]{p['id']}[/cyan]" if p.get("id") else ""
                 lv.append(
-                    ListItem(Label(f"[bold]{p['name']}[/bold]  [dim]{p.get('config', '')}[/dim]"))
+                    ListItem(Label(f"[bold]{p['name']}[/bold]{pid}  [dim]{p.get('config', '')}[/dim]"))
                 )
         else:
             lv.append(ListItem(Label("[dim]No projects. Use New or Import to add one.[/dim]")))
@@ -128,12 +130,17 @@ class MainScreen(Screen):
     def action_request_quit(self) -> None:
         self.app.exit()
 
+    def _register(self, result: dict) -> None:
+        try:
+            projects.register(result["config"], name=result["name"], pid=result.get("id") or None)
+        except projects.ProjectError as error:
+            self.app.notify(str(error), severity="error")
+
     @on(Button.Pressed, "#new")
     def _new(self) -> None:
         def _after(result: dict | None) -> None:
             if result:
-                self._projects.append(result)
-                save_projects(self._projects)
+                self._register(result)
                 self._reload()
         self.app.push_screen(CreateProjectScreen(), callback=_after)
 
@@ -141,8 +148,7 @@ class MainScreen(Screen):
     def _import(self) -> None:
         def _after(result: dict | None) -> None:
             if result:
-                self._projects.append(result)
-                save_projects(self._projects)
+                self._register(result)
                 self._reload()
         self.app.push_screen(ImportProjectScreen(), callback=_after)
 
@@ -157,8 +163,7 @@ class MainScreen(Screen):
 
         def _after(confirmed: bool | None) -> None:
             if confirmed:
-                del self._projects[idx]
-                save_projects(self._projects)
+                projects.remove(project["config"])
                 self._reload()
                 self.app.notify(f"Removed '{project['name']}' from registry.")
 

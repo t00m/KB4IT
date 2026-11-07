@@ -21,10 +21,12 @@ from textual.widgets import (
     Static,
 )
 
+from kb4it.core import projects
 from kb4it.core.util import json_load
 from kb4it.tui.projects import _kbdict_path, _log_path, _resolve_repo_path
 from kb4it.tui.screens.build import BuildScreen
 from kb4it.tui.screens.documents import ExplorerScreen
+from kb4it.tui.screens.edit_id import EditIdScreen
 from kb4it.tui.screens.logs import LogViewerScreen
 from kb4it.tui.screens.settings import RepoEditorScreen, SettingsReferenceScreen
 from kb4it.tui.servers import _WEB_SERVERS, _start_live_server
@@ -150,6 +152,7 @@ class ProjectScreen(Screen):
             yield Button("View Build Log", id="log", variant="default")
             yield Button("Settings Reference", id="settings-ref", variant="default")
             yield Button("Edit repo.json", id="edit-repo", variant="default")
+            yield Button("Edit id", id="edit-id", variant="default")
             yield Button("Browse Local (file://)", id="browse-local", variant="default")
             yield Button("Browse via Web Server (http)", id="browse-server", variant="default")
         with Horizontal(id="footer-bar"):
@@ -190,6 +193,25 @@ class ProjectScreen(Screen):
             target_ok = False
         self.query_one("#browse-local", Button).disabled = not target_ok
         self.query_one("#browse-server", Button).disabled = not target_ok
+
+    @on(Button.Pressed, "#edit-id")
+    def _edit_id(self) -> None:
+        config = self._project["config"]
+
+        def _after(pid: str | None) -> None:
+            if pid is None:
+                return
+            try:
+                entry = projects.set_id(config, pid)
+            except projects.ProjectError as error:
+                self.app.notify(str(error), severity="error")
+                return
+            self._project.update(entry)
+            if not pid:
+                self._project.pop("id", None)
+            self.app.notify(f"Id set to {pid}" if pid else "Id removed")
+
+        self.app.push_screen(EditIdScreen(self._project.get("id", ""), config), callback=_after)
 
     @on(Button.Pressed, "#compile")
     def _compile(self) -> None:

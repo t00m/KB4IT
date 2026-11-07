@@ -11,8 +11,9 @@ from textual.widgets import Button, DataTable, Input, Label, ListView, RadioButt
 
 from kb4it.tui import app as tui
 from kb4it.core import projects as core_projects
-from kb4it.tui import clipboard, projects
+from kb4it.tui import clipboard
 from kb4it.tui.screens import project as project_screens
+from kb4it.tui.screens.edit_id import EditIdScreen
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 SIZE = (140, 60)
@@ -447,3 +448,120 @@ def test_log_viewer_keeps_a_traceback_with_its_error(registry, tmp_path):
     screen._load()
     levels = [level for _, level in screen._lines]
     assert levels == ["INFO", "ERROR", "ERROR", "ERROR", "INFO"]
+
+
+async def fill_create(app, pilot, path, name, pid):
+    await pilot.click("#new")
+    await pilot.pause()
+    create = app.screen
+    ids = [t["id"] for t in create._themes]
+    create.query_one("#themes-list", ListView).index = ids.index("blog")
+    await pilot.pause()
+    create.query_one("#inp-name", Input).value = name
+    create.query_one("#inp-id", Input).value = pid
+    create.query_one("#inp-path", Input).value = str(path)
+    create.query_one("#index-no", RadioButton).value = True
+    await pilot.pause()
+    return create
+
+
+def test_create_project_with_id(registry, tmp_path):
+    path = tmp_path / "withid"
+
+    async def scenario(app, pilot):
+        create = await fill_create(app, pilot, path, "With id", "kb3")
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.MainScreen), create.query_one("#error-banner", Label).render()
+    run(scenario)
+    assert tui.load_projects() == [{"id": "kb3", "name": "With id", "config": str(path / "config" / "repo.json")}]
+
+
+def test_create_with_taken_id_shows_error_and_creates_nothing(registry, tmp_path, mini_repo):
+    core_projects.register(str(mini_repo), pid="kb3")
+    path = tmp_path / "taken"
+
+    async def scenario(app, pilot):
+        create = await fill_create(app, pilot, path, "Taken", "kb3")
+        assert "already used" in str(create.query_one("#id-error", Label).render())
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert "already used" in str(create.query_one("#error-banner", Label).render())
+        assert not isinstance(app.screen, tui.MainScreen)
+    run(scenario)
+    assert not path.exists()
+
+
+def test_import_project_with_id(registry, mini_repo):
+    async def scenario(app, pilot):
+        await pilot.click("#import")
+        await pilot.pause()
+        screen = app.screen
+        screen.query_one("#inp-path", Input).focus()
+        screen.query_one("#inp-path", Input).value = str(mini_repo)
+        await pilot.press("enter")
+        await pilot.pause()
+        screen.query_one("#inp-id", Input).value = "Bad Id"
+        await pilot.pause()
+        assert "Invalid id" in str(screen.query_one("#id-error", Label).render())
+        await pilot.click("#import")
+        await pilot.pause()
+        assert tui.load_projects() == []
+        screen.query_one("#inp-id", Input).value = "mini"
+        await pilot.pause()
+        screen.query_one("#import", Button).press()   # the error toast may cover the button
+        await pilot.pause()
+        assert isinstance(app.screen, tui.MainScreen)
+        label = str(app.screen.query_one("#proj-list", ListView).children[0].query_one(Label).render())
+        assert "mini" in label
+    run(scenario)
+    assert tui.load_projects() == [{"id": "mini", "name": "Test", "config": str(mini_repo)}]
+
+
+def test_edit_id_sets_changes_and_removes(registry, mini_repo):
+    core_projects.register(str(mini_repo))
+
+    async def edit(app, pilot, value):
+        app.screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        dialog = app.screen
+        assert isinstance(dialog, EditIdScreen)
+        dialog.query_one("#inp-id", Input).value = value
+        await pilot.pause()
+        dialog.query_one("#save", Button).press()
+        await pilot.pause()
+
+    async def scenario(app, pilot):
+        await open_first_project(app, pilot)
+        await edit(app, pilot, "kb5")
+        assert core_projects.load()[0]["id"] == "kb5"
+        app.screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        assert app.screen.query_one("#inp-id", Input).value == "kb5"
+        app.screen.query_one("#cancel", Button).press()
+        await pilot.pause()
+        await edit(app, pilot, "kb6")
+        assert core_projects.load()[0]["id"] == "kb6"
+        await edit(app, pilot, "")
+        assert "id" not in core_projects.load()[0]
+    run(scenario)
+
+
+def test_edit_id_rejects_taken_id(registry, mini_repo, tmp_path):
+    other = write_repo(tmp_path / "other", "mini", {"a.md": page("A", Tag="x")})
+    core_projects.register(str(mini_repo))
+    core_projects.register(str(other), pid="taken")
+
+    async def scenario(app, pilot):
+        await open_first_project(app, pilot)
+        app.screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        dialog = app.screen
+        dialog.query_one("#inp-id", Input).value = "taken"
+        await pilot.pause()
+        assert "already used" in str(dialog.query_one("#id-error", Label).render())
+        dialog.query_one("#save", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, EditIdScreen)
+    run(scenario)
+    assert "id" not in core_projects.load()[0]
