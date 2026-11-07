@@ -19,7 +19,8 @@ import uuid
 from typing import TYPE_CHECKING, Any, Literal, overload
 
 from kb4it.core import projects
-from kb4it.core.completion import app_completer, enable as enable_completion, theme_completer
+from kb4it.core.completion import (app_completer, enable as enable_completion, id_completer, key_completer,
+                                   project_completer, theme_completer, value_completer, where_completer)
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, prune_create_locks, repo_lock_path
@@ -367,7 +368,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="Examples:\n\n   kb4it delete sapblog\n   kb4it delete sapblog --files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    repo_delete.add_argument("project", help="Project id or path to config/repo.json")
+    repo_delete.add_argument("project", help="Project id or path to config/repo.json").completer = project_completer
     repo_delete.add_argument("--files", action="store_true",
                              help="Also delete the project folder (asks you to type the id to confirm)")
     repo_delete.add_argument("--yes", action="store_true", help="Do not ask for confirmation")
@@ -378,9 +379,9 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="Examples:\n\n   kb4it keys sapblog\n   kb4it keys sapblog Tag\n   kb4it keys sapblog Tag backup",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    repo_keys.add_argument("project", help="Project id or path to config/repo.json")
-    repo_keys.add_argument("key", nargs="?", help="Property name, such as Tag")
-    repo_keys.add_argument("value", nargs="?", help="Property value, such as backup")
+    repo_keys.add_argument("project", help="Project id or path to config/repo.json").completer = project_completer
+    repo_keys.add_argument("key", nargs="?", help="Property name, such as Tag").completer = key_completer
+    repo_keys.add_argument("value", nargs="?", help="Property value, such as backup").completer = value_completer
 
     # Find text in the sources
     repo_search = subparsers.add_parser(
@@ -392,9 +393,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     repo_search.add_argument("pattern", help="Text to find (plain text unless -r)")
     repo_search.add_argument("-p", "--project", dest="projects", action="append",
-                             help="Project id or config path; repeat for several (default: every project)")
+                             help="Project id or config path; repeat for several (default: every project)",
+                             ).completer = id_completer
     repo_search.add_argument("--where", action="append", metavar="KEY=VALUE",
-                             help="Only documents with this property value; repeat to combine")
+                             help="Only documents with this property value; repeat to combine",
+                             ).completer = where_completer
     repo_search.add_argument("-r", "--regex", action="store_true", help="PATTERN is a regular expression")
     repo_search.add_argument("-s", "--case-sensitive", action="store_true", help="Match upper and lower case exactly")
     repo_search.add_argument("-l", "--files-with-matches", action="store_true",
@@ -417,7 +420,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     repo_build.add_argument(
         "config", help="Project id or path to config/repo.json"
-    )
+    ).completer = project_completer
     repo_build.add_argument(
         "-f", "--force",
         action="store_true",
@@ -438,7 +441,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="Example:\n\n"
         "   kb4it serve /home/jsmith/Documents/myrepo/config/repo.json",
     )
-    repo_serve.add_argument("config", help="Project id or path to config/repo.json")
+    repo_serve.add_argument("config", help="Project id or path to config/repo.json").completer = project_completer
     repo_serve.add_argument("--host", default="127.0.0.1",
                             help="Address to listen on (default 127.0.0.1, this computer only)")
     repo_serve.add_argument("--port", type=int, default=8642,
@@ -464,7 +467,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     repo_info.add_argument(
         "config", help="Project id or path to config/repo.json"
-    )
+    ).completer = project_completer
 
     # Verify repository sources
     repo_verify = subparsers.add_parser(
@@ -477,7 +480,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     repo_verify.add_argument(
         "config", help="Project id or path to config/repo.json"
-    )
+    ).completer = project_completer
 
     return parser
 

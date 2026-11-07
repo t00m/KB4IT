@@ -73,3 +73,73 @@ def enable(parser: Any) -> None:
     except ImportError:
         return
     argcomplete.autocomplete(parser)
+
+
+def _ids(prefix: str) -> list[str]:
+    from kb4it.core import projects
+    return [e["id"] for e in projects.load() if e.get("id", "").startswith(prefix)]
+
+
+def id_completer(prefix: str, **kwargs: Any) -> list[str]:
+    """Complete `search -p` with the project ids."""
+    try:
+        return _ids(prefix)
+    except Exception:
+        return []
+
+
+def project_completer(prefix: str, **kwargs: Any) -> list[str]:
+    """Complete a project reference with the ids and the file paths."""
+    try:
+        from argcomplete.completers import FilesCompleter
+        return _ids(prefix) + list(FilesCompleter()(prefix))
+    except Exception:
+        return []
+
+
+def _index_of(refs: list[str]) -> dict:
+    """key -> value -> paths for the projects refs, merged."""
+    from kb4it.core import projects
+    from kb4it.core.explore import index, read_properties
+    merged: dict = {}
+    for ref in refs:
+        for key, by_value in index(read_properties(projects.resolve(ref))[0]).items():
+            merged.setdefault(key, {}).update(by_value)
+    return merged
+
+
+def key_completer(prefix: str, **kwargs: Any) -> list[str]:
+    """Complete `keys`' property name from the project's documents."""
+    try:
+        data = _index_of([kwargs["parsed_args"].project])
+        return sorted(k for k in data if k.startswith(prefix))
+    except Exception:
+        return []
+
+
+def value_completer(prefix: str, **kwargs: Any) -> list[str]:
+    """Complete `keys`' value from the values of the property already typed."""
+    try:
+        from kb4it.core.explore import matching
+        parsed = kwargs["parsed_args"]
+        data = _index_of([parsed.project])
+        values = {v for k in matching(data, parsed.key) for v in data[k]}
+        return sorted(v for v in values if v.startswith(prefix))
+    except Exception:
+        return []
+
+
+def where_completer(prefix: str, **kwargs: Any) -> list[str]:
+    """Complete `search --where` as KEY= and then KEY=VALUE, from the -p projects or every project."""
+    try:
+        from kb4it.core import projects
+        from kb4it.core.explore import matching
+        refs = getattr(kwargs.get("parsed_args"), "projects", None) or [e["config"] for e in projects.load()]
+        data = _index_of(refs)
+        if "=" not in prefix:
+            return sorted(f"{k}=" for k in data if k.startswith(prefix))
+        key, _sep, start = prefix.partition("=")
+        values = {v for k in matching(data, key) for v in data[k]}
+        return sorted(f"{key}={v}" for v in values if v.startswith(start))
+    except Exception:
+        return []

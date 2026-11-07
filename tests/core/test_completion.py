@@ -85,3 +85,46 @@ def test_argcomplete_completes_the_path_after_the_app(tmp_path, home):
     words = _complete(tmp_path, home, "kb4it create techdoc default ")
     assert "mykb/" in words
     assert "sapbasis" not in words
+
+
+def _listed_kb(tmp_path, home):
+    import json as _json
+    from tests.helpers import page, write_repo
+    config = write_repo(tmp_path / "kbdir", "techdoc", {"a.md": page("A", Tag="backup, linux", Status="Open")})
+    (home / ".kb4it").mkdir(exist_ok=True)
+    (home / ".kb4it" / "projects.json").write_text(_json.dumps(
+        {"projects": [{"id": "kb1", "name": "KB", "config": str(config)}]}), encoding="utf-8")
+    return config
+
+
+def test_argcomplete_completes_ids_and_paths(tmp_path, home):
+    _listed_kb(tmp_path, home)
+    words = _complete(tmp_path, home, "kb4it build k")
+    assert "kb1" in words
+    assert "kbdir/" in words
+
+
+def test_argcomplete_completes_only_ids_after_p(tmp_path, home):
+    _listed_kb(tmp_path, home)
+    words = _complete(tmp_path, home, "kb4it search x -p ")
+    assert "kb1" in words
+    assert "kbdir/" not in words
+
+
+def test_argcomplete_completes_keys_and_values(tmp_path, home):
+    _listed_kb(tmp_path, home)
+    assert "Tag" in _complete(tmp_path, home, "kb4it keys kb1 T")
+    assert "backup" in _complete(tmp_path, home, "kb4it keys kb1 Tag b")
+
+
+def test_argcomplete_completes_where(tmp_path, home):
+    _listed_kb(tmp_path, home)
+    assert "Tag=" in _complete(tmp_path, home, "kb4it search x --where Ta")
+    assert any(word.endswith("backup") for word in _complete(tmp_path, home, "kb4it search x --where Tag=b"))
+
+
+def test_completers_on_a_broken_project_return_nothing():
+    parsed = argparse.Namespace(project="nosuch-project", key="Tag", projects=["nosuch-project"])
+    assert completion.key_completer("", parsed_args=parsed) == []
+    assert completion.value_completer("", parsed_args=parsed) == []
+    assert completion.where_completer("", parsed_args=parsed) == []
