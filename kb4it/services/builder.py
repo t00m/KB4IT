@@ -113,10 +113,11 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         if self._xform_pairs is None:
             with self._xform_lock:
                 if self._xform_pairs is None:
+                    # A theme without a _NEW template keeps that markup as the compiler wrote it.
                     self._xform_pairs = [
                         (self.render_template(f'{n}_MD'),
                          self.render_template(f'{n}_NEW'))
-                        for n in self._XFORM_NAMES
+                        for n in self._XFORM_NAMES if self.has_template(f'{n}_NEW')
                     ]
         for old, new in self._xform_pairs:
             if old:

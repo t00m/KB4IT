@@ -36,6 +36,7 @@ STRUCTURED_MAP = {
 
 
 class Theme(Builder):
+    page_pipeline = True
     log_area = "APPHELP"
     # Help sites have no person pages, so the Add page offers no Person profile.
     profile_skeleton = False

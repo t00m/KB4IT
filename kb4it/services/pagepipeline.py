@@ -3,6 +3,7 @@
 import os
 from datetime import datetime
 
+from kb4it.core.env import ENV
 from kb4it.core.log import q
 from kb4it.core.util import ellipsize_text, get_human_datetime, html_id_for
 
@@ -25,8 +26,13 @@ def git_ready(repo) -> bool:
 class PagePipelineMixin:
     """Mixin of Builder: build_page() runs the same steps for every theme and calls small hooks.
 
-    A theme overrides the hooks it needs. A theme that overrides build_page() keeps its own pipeline.
+    A theme turns it on with page_pipeline = True (DocumentTheme and apphelp do) and overrides the hooks
+    it needs. Without it build_page() leaves the compiled body as it is, as it always did, so older themes
+    keep building; a theme that overrides build_page() keeps its own pipeline either way.
     """
+
+    # Run the shared pipeline in build_page().
+    page_pipeline = False
 
     # Title of a page whose document has no Title.
     untitled_label = ""
@@ -37,6 +43,8 @@ class PagePipelineMixin:
 
     def build_page(self, path_md: str) -> None:
         """Turn the compiled body of a document into its final page and overwrite the HTML file."""
+        if not self.page_pipeline:
+            return
         path_hdoc = html_id_for(path_md)
         doc_id = os.path.basename(path_md)
         if not os.path.exists(path_hdoc):
@@ -94,9 +102,24 @@ class PagePipelineMixin:
         return "HTML_BODY"
 
     def render_page(self, doc_id: str, var: dict) -> str:
-        """Whole page: header, body and footer templates rendered with var."""
-        return "".join(self.template(name).render(var=var) for name in
-                       ("HTML_HEADER_COMMON", self.page_body_template(doc_id, var), "HTML_FOOTER"))
+        """Whole page: the body template, between HTML_HEADER_COMMON and HTML_FOOTER when the theme has them."""
+        names = [self.page_body_template(doc_id, var)]
+        if self.has_template("HTML_HEADER_COMMON"):
+            names.insert(0, "HTML_HEADER_COMMON")
+        if self.has_template("HTML_FOOTER"):
+            names.append("HTML_FOOTER")
+        return "".join(self.template(name).render(var=var) for name in names)
+
+    def has_template(self, name: str) -> bool:
+        """True when the lookup of template() finds a file for name (override, theme, base or common)."""
+        from kb4it.services.builder import _template_candidates, template_base_dir
+        found = self.__dict__.setdefault("_has_template", {})
+        if name not in found:
+            theme = self.srvbes.get_dict("runtime")["theme"]
+            candidates = _template_candidates(name, theme["templates"], ENV["GPATH"]["TEMPLATES"],
+                                              getattr(self.srvbes, "overrides_dir", None), template_base_dir(theme))
+            found[name] = any(os.path.isfile(path) for path in candidates)
+        return found[name]
 
     def finalize_html(self, html: str) -> str:
         """Last change to the whole page before it is written."""

@@ -125,6 +125,8 @@ def _pipeline_builder(cls, props=None, system=False):
     b = cls.__new__(cls)
     b.calls = []
     b._xform_pairs = []  # no heading templates to load
+    b.page_pipeline = True
+    b.has_template = lambda name: True
     b.log = logging.getLogger("kb4it-test-pipeline")
     b.get_theme_var = lambda: {"page": {"title": ""}}
     b.srvbes = SimpleNamespace(get_dict=lambda name: {})
@@ -192,3 +194,17 @@ def test_untitled_page_uses_label_without_ellipsis(page_files):
     b.untitled_label = "No title found..."
     b.build_page(str(page_files / "a.md"))
     assert b.seen["page"]["title"] == "No title found..." == b.seen["page"]["title-tooltip"]
+
+
+def test_without_opt_in_build_page_leaves_the_body(page_files):
+    b = _pipeline_builder(Recorder, {"Title": "A"})
+    b.page_pipeline = False
+    b.build_page(str(page_files / "a.md"))
+    assert b.calls == [] and (page_files / "a.html").read_text(encoding="utf-8") == "<p>body</p>"
+
+
+def test_render_skips_missing_header_and_footer(page_files):
+    b = _pipeline_builder(Builder, {"Title": "A"})
+    b.has_template = lambda name: name == "HTML_BODY"
+    b.build_page(str(page_files / "a.md"))
+    assert (page_files / "a.html").read_text(encoding="utf-8") == "B"

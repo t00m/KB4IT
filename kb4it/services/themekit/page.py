@@ -10,6 +10,8 @@ from kb4it.services.themekit.host import ThemeHost
 class DocumentPageMixin(ThemeHost):
     """Fills the page hooks of Builder.build_page() for techdoc, blog and bookshelf."""
 
+    page_pipeline = True
+
     def page_toc(self, source_html: str) -> str:
         """The TOC of the compiled body, in the theme's markup."""
         return self.extract_toc(source_html)
