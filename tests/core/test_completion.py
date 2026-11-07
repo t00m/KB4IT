@@ -150,3 +150,18 @@ def test_where_completion_survives_one_broken_project(tmp_path, home, monkeypatc
     projects.register(good, pid="good")
     projects.save(projects.load() + [{"id": "gone", "name": "Gone", "config": str(tmp_path / "gone.json")}])
     assert "Tag=" in completion.where_completer("T", parsed_args=argparse.Namespace(projects=None))
+
+
+def test_completion_offers_local_themes_only(tmp_path, monkeypatch):
+    from kb4it.core.env import ENV
+    themes = tmp_path / "themes"
+    (themes / "mini").mkdir(parents=True)
+    (themes / "mini" / "theme.json").write_text("{}", encoding="utf-8")
+    (themes / "notatheme").mkdir()
+    monkeypatch.setitem(ENV["LPATH"], "THEMES", str(themes))
+    assert completion.local_theme_completer("") == ["mini"]
+    assert completion.local_theme_completer("t") == []
+    parser = build_parser()
+    subparsers = next(action for action in parser._actions if action.dest == "action")
+    uninstall = {action.dest: action for action in subparsers.choices["uninstall-theme"]._actions}
+    assert uninstall["id"].completer is completion.local_theme_completer

@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 from kb4it.core import projects
 from kb4it.core.completion import (app_completer, enable as enable_completion, id_completer, key_completer,
-                                   project_completer, theme_completer, value_completer, where_completer)
+                                   local_theme_completer, project_completer, theme_completer, value_completer, where_completer)
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
 from kb4it.core.lock import FileLock, prune_create_locks, repo_lock_path
@@ -340,6 +340,26 @@ def build_parser() -> argparse.ArgumentParser:
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
 
+    # Install a theme from a zip file or an https URL
+    theme_install = subparsers.add_parser(
+        "install-theme", help="Install a theme from a zip file or an https:// URL into your themes folder",
+        description="The zip holds one top folder named as the id in its theme.json. "
+        "A theme of yours with that id is replaced.",
+        epilog="Examples:\n\n   kb4it install-theme ~/Downloads/mytheme.zip\n"
+        "   kb4it install-theme https://example.org/themes/mytheme.zip",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    theme_install.add_argument("source", help="Path to a .zip file, or an https:// URL")
+
+    # Remove a theme of the user
+    theme_uninstall = subparsers.add_parser(
+        "uninstall-theme", help="Remove a theme from your themes folder (bundled themes stay)",
+        epilog="Example:\n\n   kb4it uninstall-theme mytheme",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    theme_uninstall.add_argument("id", help="Theme id").completer = local_theme_completer
+    theme_uninstall.add_argument("--yes", action="store_true", help="Do not ask for confirmation")
+
     # Installation report
     subparsers.add_parser("doctor", help="Show the build, Python, paths and themes; exit 1 when bundled files are missing")
 
@@ -531,6 +551,12 @@ def main():
         if params.action == "delete":
             from kb4it.core.projectcli import run_delete
             sys.exit(run_delete(vars(params)))
+        if params.action == "install-theme":
+            from kb4it.core.themecli import run_install_theme
+            sys.exit(run_install_theme(vars(params)))
+        if params.action == "uninstall-theme":
+            from kb4it.core.themecli import run_uninstall_theme
+            sys.exit(run_uninstall_theme(vars(params)))
         if params.action == "import":
             from kb4it.core.projectcli import run_import
             sys.exit(run_import(vars(params)))

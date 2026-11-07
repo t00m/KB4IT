@@ -150,7 +150,9 @@ def _check_theme(theme: dict, top: str) -> None:
 def inspect_zip(path: str | Path) -> ThemeZip:
     """Check a theme zip without unpacking it; raises ThemeInstallError when it is not installable."""
     path = Path(path)
-    if not path.is_file() or not zipfile.is_zipfile(path):
+    if not path.is_file():
+        raise ThemeInstallError("not_a_zip", f"No such file: {path}")
+    if not zipfile.is_zipfile(path):
         raise ThemeInstallError("not_a_zip", f"Not a zip file: {path}")
     try:
         archive = zipfile.ZipFile(path)
@@ -287,7 +289,7 @@ def install_zip(path: str | Path, source: str | None = None) -> InstallResult:
         _extract(path, info, work)
         replaced = _swap(work / theme_id, theme_id)
     except ThemeInstallError as error:
-        log.warning(f"[THEMES] THEME_INSTALL_REFUSED reason={error.reason} source={q(source)}")
+        log.info(f"[THEMES] THEME_INSTALL_REFUSED reason={error.reason} source={q(source)}")
         raise
     finally:
         if work is not None:
@@ -353,9 +355,57 @@ def install(source: str) -> InstallResult:
     try:
         path = download(source)
     except ThemeInstallError as error:
-        log.warning(f"[THEMES] THEME_INSTALL_REFUSED reason={error.reason} source={q(source)}")
+        log.info(f"[THEMES] THEME_INSTALL_REFUSED reason={error.reason} source={q(source)}")
         raise
     try:
         return install_zip(path, source=source)
     finally:
         path.unlink(missing_ok=True)
+
+
+def local_themes() -> list[str]:
+    """Names of the folders in the local themes folder that hold a theme.json."""
+    try:
+        names = os.listdir(themes_dir())
+    except OSError:
+        return []
+    return sorted(name for name in names if (themes_dir() / name / "theme.json").is_file())
+
+
+def local_theme(theme_id: str) -> Path:
+    """Folder of the local theme theme_id; raises bundled or not_installed when there is none."""
+    # Compare with the listing, so an id such as '..' never reaches a path.
+    if theme_id in local_themes():
+        return themes_dir() / theme_id
+    if THEME_ID_RE.match(theme_id) and bundled_version(theme_id) is not None:
+        raise ThemeInstallError("bundled", f"{theme_id} is bundled with KB4IT and cannot be removed")
+    raise ThemeInstallError("not_installed", f"Theme {theme_id} is not installed in {themes_dir()}")
+
+
+def projects_using(theme_id: str) -> list[dict]:
+    """Listed projects whose repo.json uses theme_id; unreadable configs are skipped."""
+    from kb4it.core import projects
+    found = []
+    for entry in projects.load(quarantine_bad=False):
+        try:
+            data = json.loads(Path(entry["config"]).read_text(encoding="utf-8"))
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        if isinstance(data, dict) and data.get("theme") == theme_id:
+            found.append(entry)
+    return found
+
+
+def uninstall(theme_id: str) -> str:
+    """Remove the local theme theme_id and return its version."""
+    with themes_lock():
+        folder = local_theme(theme_id)
+        version = _version_in(folder)
+        old = tmp_dir() / f"old-{theme_id}-{secrets.token_hex(4)}"
+        try:
+            _move(folder, old)
+        except OSError as error:
+            raise ThemeInstallError("install", f"Cannot remove {folder}: {error}") from None
+        _remove(old)
+    log.info(f"[THEMES] THEME_UNINSTALLED id={theme_id} version={q(version)}")
+    return version

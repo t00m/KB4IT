@@ -53,6 +53,12 @@ def theme_completer(prefix: str, **kwargs: Any) -> list[str]:
     return [name for name in installed_themes() if name.startswith(prefix)]
 
 
+def local_theme_completer(prefix: str, **kwargs: Any) -> list[str]:
+    """Complete `uninstall-theme` with the ids of the user's own themes."""
+    from kb4it.core.themeinstall import local_themes
+    return [name for name in local_themes() if name.startswith(prefix)]
+
+
 def app_completer(prefix: str, **kwargs: Any) -> list[str]:
     """Complete `create`'s app from the theme already typed, else from every theme."""
     parsed = kwargs.get("parsed_args")
