@@ -11,7 +11,7 @@ from tests.helpers import ROOT
 
 LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
 SKELETONS = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "templates" / "skeletons"
-sys.path.insert(0, str(LOGIC))  # techdoc_quality imports techdoc_media
+sys.path.insert(0, str(LOGIC))  # techdoc_quality imports techdoc_quality_guide
 _spec = importlib.util.spec_from_file_location("techdoc_quality", LOGIC / "techdoc_quality.py")
 quality = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(quality)

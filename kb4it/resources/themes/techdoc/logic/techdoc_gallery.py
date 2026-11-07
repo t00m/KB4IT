@@ -5,10 +5,10 @@ import os
 import re
 from html import unescape
 
-from techdoc_media import image_size, is_filename_alt, resolve_src
 from techdoc_thumbs import SITE_FOLDER, make_thumbnail
 
 from kb4it.core import trace
+from kb4it.core.html import image_size, is_filename_alt, resolve_src
 from kb4it.core.files import prune_tree, sync_file
 from kb4it.core.util import html_id_for
 from kb4it.core.log import q

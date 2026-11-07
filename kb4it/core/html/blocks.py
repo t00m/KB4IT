@@ -1,4 +1,4 @@
-"""Rewrite the content blocks of a document body.
+"""Rewrite the content blocks of a document body (moved from techdoc_blocks.py).
 
 Code blocks get a bar with a language label and a copy button; a block over
 LONG_CODE_LINES lines is folded to FOLDED_CODE_LINES and gets a "Show all"
@@ -186,3 +186,21 @@ def _wrap(node, wrapper):
     wrapper.append(node)
     wrapper.tail = tail
     parent.insert(index, wrapper)
+
+
+def wrap_code(pre, wrapper_class, copy_class):
+    """Put a code block in a div with a Copy button before it; apphelp's simple code markup."""
+    box = lhtml.Element("div", {"class": wrapper_class})
+    tail, pre.tail = pre.tail, None
+    pre.addprevious(box)
+    box.tail = tail
+    button = lhtml.Element("button", {"class": copy_class, "type": "button"})
+    button.text = "Copy"
+    box.append(button)
+    box.append(pre)
+
+
+def lazy_images(root):
+    """Let the browser load every image of the tree only when it is about to show it."""
+    for img in root.iter("img"):
+        img.set("loading", "lazy")

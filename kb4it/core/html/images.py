@@ -1,4 +1,4 @@
-"""techdoc media: image sizes and the rewrite of the images of a document body."""
+"""Image sizes and the rewrite of the images of a document body (moved from techdoc_media.py)."""
 
 import os
 import re

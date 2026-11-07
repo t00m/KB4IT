@@ -13,9 +13,9 @@ from dataclasses import dataclass, field
 from datetime import date
 from urllib.parse import unquote, urlsplit
 
-from techdoc_media import resolve_src
 from techdoc_quality_guide import CHECKS as GUIDE
 
+from kb4it.core.html import resolve_src
 from kb4it.core.mdlinks import bare_link_path, rewrite_md_href
 from kb4it.core.util import html_id_for
 

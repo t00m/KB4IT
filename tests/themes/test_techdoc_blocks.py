@@ -1,15 +1,9 @@
-"""techdoc techdoc_blocks.py: code bars, folded code, table wrappers and author tab labels."""
-
-import importlib.util
+"""kb4it.core.html.blocks (techdoc's block rewrite): code bars, folded code, table wrappers and author tab labels."""
 
 import pytest
 
+from kb4it.core.html import blocks
 from tests.helpers import ROOT, page, run_kb4it, write_repo
-
-spec = importlib.util.spec_from_file_location(
-    "techdoc_blocks", ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic" / "techdoc_blocks.py")
-blocks = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(blocks)
 
 
 def code_block(language=None, lines=1):

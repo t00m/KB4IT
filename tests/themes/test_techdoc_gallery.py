@@ -13,7 +13,7 @@ from tests.helpers import ROOT, page, run_kb4it, write_repo
 from tests.themes.test_techdoc_media import png
 
 LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-sys.path.insert(0, str(LOGIC))  # techdoc_gallery imports techdoc_media and techdoc_thumbs
+sys.path.insert(0, str(LOGIC))  # techdoc_gallery imports techdoc_thumbs
 
 
 def _load(name):
