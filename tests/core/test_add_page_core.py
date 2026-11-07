@@ -99,7 +99,7 @@ def test_system_page():
         def _render_add_page(self):
             return "<p>x</p>", "common", 1
 
-        def distribute_md(self, name, content):
+        def distribute_md(self, name, content, as_html=True, listing=False):
             self.written = (name, content)
 
     builder = _B()
