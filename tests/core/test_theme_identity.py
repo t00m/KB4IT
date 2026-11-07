@@ -108,8 +108,13 @@ def test_themes_listing_shows_version_fingerprint_and_where_a_theme_comes_from(t
     blog_version = json.loads((THEMES / "blog" / "theme.json").read_text(encoding="utf-8"))["version"]
     assert "scope=builtin" in blog and f"version={blog_version}" in blog and "fingerprint=" in blog
     assert f"path={THEMES / 'blog'}" in blog
+    assert "active=yes" in blog and "shadowed_by" not in blog
     techdoc = [line for line in lines if "id=techdoc" in line]
-    assert any("scope=user" in line and f"path={user_copy}" in line for line in techdoc), techdoc
+    assert len(techdoc) == 2, techdoc
+    user = next(line for line in techdoc if "scope=user" in line)
+    bundled = next(line for line in techdoc if "scope=builtin" in line)
+    assert f"path={user_copy}" in user and "active=yes" in user
+    assert f"path={THEMES / 'techdoc'}" in bundled and "active=no shadowed_by=user" in bundled
 
 
 def load_check_themes():

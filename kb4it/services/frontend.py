@@ -50,35 +50,40 @@ class Frontend(Service):
         """List available themes."""
         self.log.debug("[FRONTEND] THEME_LIST_START")
 
-        self.log.debug(f"[FRONTEND] THEME_SEARCH_GLOBAL path={q(ENV['GPATH']['THEMES'])}")
-        global_themes = sorted(os.listdir(ENV["GPATH"]["THEMES"]))
         n = 1
-        for dirname in global_themes:
+        for scope_key in ("GPATH", "LPATH"):
+            root = ENV[scope_key]["THEMES"]
+            self.log.debug(f"[FRONTEND] THEME_SEARCH_{'GLOBAL' if scope_key == 'GPATH' else 'LOCAL'} path={q(root)}")
             try:
-                self.theme_load(dirname)
-                self.log.info(f"[FRONTEND] THEME scope={q(self._scope(self.runtime['theme']['path']))} n={q(n)} "
-                              f"{self._describe(self.runtime['theme'])}")
-                n += 1
-            except Exception as error:
-                self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
-                self.log.error(f"[FRONTEND] THEME_INVALID id={q(dirname)}")
-
-        self.log.debug(f"[FRONTEND] THEME_SEARCH_LOCAL path={q(ENV['LPATH']['THEMES'])}")
-        local_themes = sorted(os.listdir(ENV["LPATH"]["THEMES"]))
-        if len(local_themes) > 0:
-            for dirname in local_themes:
+                dirnames = sorted(os.listdir(root))
+            except OSError:
+                dirnames = []
+            for dirname in dirnames:
                 self.log.debug(f"[FRONTEND] THEME_LOOKUP dir={q(dirname)}")
+                # A bundled theme is hidden when the user has a theme with the same id.
+                shadowed = scope_key == "GPATH" and os.path.isfile(
+                    os.path.join(ENV["LPATH"]["THEMES"], dirname, "theme.json"))
+                active = "active=no shadowed_by=user" if shadowed else "active=yes"
                 try:
-                    self.theme_load(dirname)
+                    self._load_listed(dirname, os.path.join(root, dirname))
                     self.log.info(f"[FRONTEND] THEME scope={q(self._scope(self.runtime['theme']['path']))} n={q(n)} "
-                                  f"{self._describe(self.runtime['theme'])}")
+                                  f"{self._describe(self.runtime['theme'], active)}")
                     n += 1
                 except Exception as error:
                     self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
-                    self.log.error("[FRONTEND] THEME_INVALID id=%s", q(dirname))
+                    self.log.error(f"[FRONTEND] THEME_INVALID id={q(dirname)}")
         if n == 0:
             self.log.info("[FRONTEND] NO_THEMES")
         self.app.stop()
+
+    def _load_listed(self, dirname, path):
+        """Load the theme in path itself, not the copy a build would pick for dirname."""
+        saved = self._theme_path_override
+        self._theme_path_override = path
+        try:
+            self.theme_load(dirname)
+        finally:
+            self._theme_path_override = saved
 
     def _scope(self, path):
         """Where a theme was found: source, user, builtin or theme_path (TV-06)."""
@@ -89,10 +94,11 @@ class Frontend(Service):
         return "theme_path" if self._theme_path_override else "source"
 
     @staticmethod
-    def _describe(theme):
+    def _describe(theme, active="active=yes"):
         """The fields of a theme listing line: identity first, the path last so a hidden copy is visible."""
         return (f"id={theme['id']} version={theme.get('version') or 'unversioned'} "
-                f"fingerprint={theme.get('fingerprint')} description={theme.get('description')} path={theme['path']}")
+                f"fingerprint={theme.get('fingerprint')} {active} description={theme.get('description')} "
+                f"path={theme['path']}")
 
     def apps_list(self, theme: str):
         """List available applications for a given theme."""
