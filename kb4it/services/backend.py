@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.log import discard_log_file, q, redirect_logs, release_log_file, rotate_log
+from kb4it.services.pagepipeline import git_server_problem
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save
@@ -467,6 +468,10 @@ class Backend(Service):
             else:
                 self.log.error(f"[BACKEND] THEME_NOT_FOUND name={q(theme_name)}")
                 raise ThemeError(f"Theme not found: {theme_name}")
+        repo = self.get_dict("repo") or {}
+        if git_server_problem(repo):
+            self.log.warning(f"[BACKEND] GIT_SERVER_NOT_URL value={q(repo['git_server'])} "
+                             "hint=write git_server as a full URL, such as https://github.com")
         self.log.debug("[BACKEND] CHECKS_END")
 
     def _apply_target_subdir(self):

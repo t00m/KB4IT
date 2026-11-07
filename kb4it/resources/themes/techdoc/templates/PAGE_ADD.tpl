@@ -9,12 +9,12 @@
         folder and rebuild.
     </div>
 
-% if var.get('edit_root_url'):
+% if var.get('source_folder_url'):
     <div class="kb-add-note uk-alert-primary" data-uk-alert>
         <span data-uk-icon="icon: git-branch; ratio: 0.9"></span>
         <strong>Online repository:</strong> The document source is hosted at
-        <a href="${var['edit_root_url']}" target="_blank">
-            ${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}
+        <a href="${var['source_folder_url']}" target="_blank">
+            ${var['git_repo_url']}
         </a>,  navigate to the source folder to upload your new file.
     </div>
 % endif

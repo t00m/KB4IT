@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+from urllib.parse import quote
 
 from kb4it.core.env import ENV
 from kb4it.core.log import q
@@ -20,7 +21,24 @@ def git_ready(repo) -> bool:
         return False
     values = [repo.get(key) for key in GIT_KEYS] + [repo.get("git_path") or ""]
     return all(isinstance(v, str) for v in values) and all(v.strip() for v in values[:4]) and \
-        not any("{" in v for v in values)
+        not any("{" in v for v in values) and _full_url(values[0])
+
+
+def _full_url(server: str) -> bool:
+    """True when git_server is a full URL, such as https://github.com."""
+    return server.strip().lower().startswith(("https://", "http://"))
+
+
+def git_server_problem(repo) -> str | None:
+    """Why the git links of repo.json are off although "git" is true and git_server is set; None otherwise."""
+    server = repo.get("git_server")
+    if repo.get("git") is not True or not isinstance(server, str) or not server.strip() or "{" in server:
+        return None
+    if _full_url(server):
+        return None
+    host = server.strip().strip("/")
+    return (f"repo.json: git_server must be a full URL, such as https://{host}, not {server!r}; "
+            "the git links are left out")
 
 
 class PagePipelineMixin:
@@ -48,14 +66,14 @@ class PagePipelineMixin:
         path_hdoc = html_id_for(path_md)
         doc_id = os.path.basename(path_md)
         if not os.path.exists(path_hdoc):
-            self.log.error(f"[{self.log_area}] HTML_MISSING doc={q(doc_id)}")
+            self.log.error(f"[{self.log_area}] HTML_MISSING doc={q(doc_id)} path={q(path_hdoc)}")
             return
         with open(path_md, encoding="utf-8") as fh:
             source_md = fh.read()
         with open(path_hdoc, encoding="utf-8") as fh:
             source_html = fh.read()
 
-        var = self.get_theme_var()
+        var = self.page_var()
         var["keys"] = self.srvdtb.get_doc_properties(doc_id)
         var["basename_md"] = doc_id
         var["basename_hdoc"] = os.path.basename(path_hdoc)
@@ -80,6 +98,10 @@ class PagePipelineMixin:
         html = self.finalize_html(self.render_page(doc_id, var))
         with open(path_hdoc, "w", encoding="utf-8") as fh:
             fh.write(html)
+
+    def page_var(self) -> dict:
+        """Base var of a document page: get_theme_var(); a theme whose templates do not use it may return less."""
+        return self.get_theme_var()
 
     def page_toc(self, source_html: str) -> str:
         """Table of contents of the page; document themes extract it from the compiled body."""
@@ -113,7 +135,7 @@ class PagePipelineMixin:
     def has_template(self, name: str) -> bool:
         """True when the lookup of template() finds a file for name (override, theme, base or common)."""
         from kb4it.services.builder import _template_candidates, template_base_dir
-        found = self.__dict__.setdefault("_has_template", {})
+        found = self.__dict__.setdefault("_has_template", {})  # reset by Builder._initialize() for each build
         if name not in found:
             theme = self.srvbes.get_dict("runtime")["theme"]
             candidates = _template_candidates(name, theme["templates"], ENV["GPATH"]["TEMPLATES"],
@@ -132,18 +154,23 @@ class PagePipelineMixin:
     def git_url(self, action: str, path: str = "") -> str:
         """Link to <server>/<user>/<repo>/<action>/<branch>/<git_path>/<path>; '' when git is off.
 
-        git_server may be a URL (https://github.com) or a host name (github.com); a host gets https://.
+        git_server must be a full URL (https://github.com); each part of the path is URL-encoded.
         """
         repo = self.srvbes.get_dict("repo") or {}
         if not git_ready(repo):
             return ""
+        branch = quote(repo["git_branch"].strip().strip("/"), safe="/")
+        tail = [quote(p, safe="/") for p in ((repo.get("git_path") or "").strip().strip("/"), path) if p]
+        return "/".join([self.git_repo_url(), action, branch, *tail])
+
+    def git_repo_url(self) -> str:
+        """Link to the repository on the git server, such as https://github.com/user/repo; '' when git is off."""
+        repo = self.srvbes.get_dict("repo") or {}
+        if not git_ready(repo):
+            return ""
         server = repo["git_server"].strip().strip("/")
-        if "://" not in server:
-            server = f"https://{server}"
-        parts = [repo[key].strip().strip("/") for key in GIT_KEYS[1:3]]
-        branch = repo["git_branch"].strip().strip("/")
-        tail = [p for p in ((repo.get("git_path") or "").strip().strip("/"), path) if p]
-        return "/".join([server, *parts, action, branch, *tail])
+        user, name = (quote(repo[key].strip().strip("/"), safe="") for key in GIT_KEYS[1:3])
+        return f"{server}/{user}/{name}"
 
     def add_system_page(self, name: str, title: str, html: str | None = None, as_html: bool = True,
                         listing: bool = False) -> None:

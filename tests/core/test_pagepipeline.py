@@ -18,9 +18,33 @@ def builder(repo, props=None):
     return b
 
 
-@pytest.mark.parametrize("server", ["https://github.com", "https://github.com/", "github.com", "/github.com/"])
-def test_edit_url_accepts_host_or_url(server):
+@pytest.mark.parametrize("server", ["https://github.com", "https://github.com/", " https://github.com "])
+def test_edit_url_takes_a_full_url(server):
     assert builder({**GIT, "git_server": server}).edit_url("a.md") == "https://github.com/u/r/edit/main/docs/a.md"
+
+
+@pytest.mark.parametrize("server", ["github.com", "/github.com/", "ftp://github.com"])
+def test_edit_url_is_empty_without_a_full_url(server):
+    assert builder({**GIT, "git_server": server}).edit_url("a.md") == ""
+
+
+def test_git_server_problem_names_a_host_name():
+    from kb4it.services.pagepipeline import git_server_problem
+    assert "https://github.com" in git_server_problem({**GIT, "git_server": "github.com"})
+    assert git_server_problem({**GIT, "git_server": "https://github.com"}) is None
+    assert git_server_problem({**GIT, "git_server": "github.com", "git": False}) is None
+    assert git_server_problem({**GIT, "git_server": "{server}"}) is None  # a sample placeholder, not a mistake
+
+
+def test_edit_url_encodes_names():
+    url = builder({**GIT, "git_server": "https://github.com", "git_path": "my docs"}).edit_url("año 1.md")
+    assert url == "https://github.com/u/r/edit/main/my%20docs/a%C3%B1o%201.md"
+
+
+def test_source_folder_url_uses_tree():
+    b = builder({**GIT, "git_server": "https://github.com"})
+    assert b.git_url("tree") == "https://github.com/u/r/tree/main/docs"
+    assert b.git_repo_url() == "https://github.com/u/r"
 
 
 def test_edit_url_keeps_another_scheme():
@@ -29,17 +53,17 @@ def test_edit_url_keeps_another_scheme():
 
 
 def test_edit_url_without_git_path_has_no_double_slash():
-    repo = {**GIT, "git_server": "github.com", "git_path": ""}
+    repo = {**GIT, "git_server": "https://github.com", "git_path": ""}
     assert builder(repo).edit_url("a.md") == "https://github.com/u/r/edit/main/a.md"
 
 
 def test_edit_url_root_is_the_source_folder():
-    assert builder({**GIT, "git_server": "github.com"}).edit_url() == "https://github.com/u/r/edit/main/docs"
+    assert builder({**GIT, "git_server": "https://github.com"}).edit_url() == "https://github.com/u/r/edit/main/docs"
 
 
 @pytest.mark.parametrize("change", [{"git": False}, {"git_user": ""}, {"git_repo": "{repo}"}])
 def test_edit_url_is_empty_when_git_is_not_ready(change):
-    assert builder({**GIT, "git_server": "github.com", **change}).edit_url("a.md") == ""
+    assert builder({**GIT, "git_server": "https://github.com", **change}).edit_url("a.md") == ""
 
 
 def test_page_title_uses_title_or_untitled_label():
@@ -167,7 +191,8 @@ def test_pipeline_logs_missing_html_with_theme_area(page_files, caplog):
     b.log_area = "BOOKSHELF"
     with caplog.at_level("ERROR", logger="kb4it-test-pipeline"):
         b.build_page(str(page_files / "missing.md"))
-    assert "[BOOKSHELF] HTML_MISSING doc=missing.md" in caplog.text
+    assert "[BOOKSHELF] HTML_MISSING doc=missing.md path=" in caplog.text
+    assert "missing.html" in caplog.text
     assert b.calls == []
 
 
@@ -211,5 +236,23 @@ def test_render_skips_missing_header_and_footer(page_files):
 
 
 def test_git_url_builds_any_action():
-    assert builder({**GIT, "git_server": "github.com/"}).git_url("new") == "https://github.com/u/r/new/main/docs"
-    assert builder({**GIT, "git_server": "github.com", "git": False}).git_url("new") == ""
+    assert builder({**GIT, "git_server": "https://github.com/"}).git_url("new") == "https://github.com/u/r/new/main/docs"
+    assert builder({**GIT, "git_server": "https://github.com", "git": False}).git_url("new") == ""
+
+
+def test_page_var_hook_replaces_the_theme_var(page_files):
+    b = _pipeline_builder(Recorder, {"Title": "A"})
+    b.get_theme_var = lambda: (_ for _ in ()).throw(AssertionError("not used"))
+    b.page_var = lambda: {"page": {}, "marker": 1}
+    b.build_page(str(page_files / "a.md"))
+    assert b.seen["marker"] == 1
+
+
+def test_initialize_forgets_the_template_lookups():
+    import logging
+    b = Builder.__new__(Builder)
+    b.log = logging.getLogger("kb4it-test-pipeline")
+    b.get_services = lambda: None
+    b._has_template = {"HTML_FOOTER": True}
+    Builder._initialize(b)
+    assert b._has_template == {}

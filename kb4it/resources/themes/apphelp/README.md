@@ -126,7 +126,7 @@ These keys are optional. Add one only to change its default.
 | `editor` | `true`, `false` | `false` | Add page (`add.html`) with a Markdown editor; any other value stops the build. Top-level key, not part of the `apphelp` block |
 | `timezone` | IANA zone name, such as `Europe/Madrid` | the computer's zone | Zone of every date written without an offset. An unknown name falls back to the computer's zone |
 | `git` | `true`, `false` | `false` | Edit links to your git server. They appear only with `git_server`, `git_user`, `git_repo` and `git_branch` all set |
-| `git_server` | Host name without scheme, such as `github.com` | empty | Git server of the edit links |
+| `git_server` | Full URL, such as `https://github.com` | empty | Git server of the edit links |
 | `git_user` | Text | empty | User or organisation on the git server |
 | `git_repo` | Text | empty | Repository name |
 | `git_branch` | Text | empty | Branch the edit links open |

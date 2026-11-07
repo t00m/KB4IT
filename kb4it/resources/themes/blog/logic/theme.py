@@ -220,9 +220,13 @@ class Theme(DocumentTheme):
     def render_page(self, doc_id, var):
         """Override: a body template that fails (a document without Date or Category) falls back to HTML_BODY."""
         header = self.template('HTML_HEADER_COMMON').render(var=var)
+        name = 'POST_HTML_SINGLE'  # the only choice that can fail
         try:
-            body = self.template(self.page_body_template(doc_id, var)).render(var=var)
-        except Exception:
+            name = self.page_body_template(doc_id, var)
+            body = self.template(name).render(var=var)
+        except Exception as error:
+            self.log.warning(f"[THEME] POST_TEMPLATE_FALLBACK doc={q(doc_id)} template={q(name)} "
+                             f"error={q(' '.join(str(error).split()) or type(error).__name__)}")
             body = self.template('HTML_BODY').render(var=var)
         return header + body + self.template('HTML_FOOTER').render(var=var)
 

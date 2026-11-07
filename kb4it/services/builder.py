@@ -94,6 +94,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         self._template_errors = {}
         self._autoescape_warned = False
         self._xform_pairs = None
+        self._has_template = {}
         self.listing_pages = set()
         self.log.debug("[BUILDER] CACHE_RESET")
         self.get_services()
@@ -264,7 +265,8 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
         theme_var["git_ok"] = git_ready(theme_var["repo"])
-        theme_var["edit_root_url"] = self.edit_url()
+        theme_var["source_folder_url"] = self.git_url("tree")
+        theme_var["git_repo_url"] = self.git_repo_url()
         theme_var["new_root_url"] = self.git_url("new")
         theme_var["lang"] = self.page_lang()
         theme_var["help_url"] = HELP_ONLINE_URL  # the KB4IT help site; links open it in a new window

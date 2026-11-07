@@ -13,7 +13,7 @@
         "index": true
     },
     "git": true,
-    "git_server": "github.com",
+    "git_server": "https://github.com",
     "git_user": "t00m",
     "git_repo": "KB4IT",
     "git_branch": "master",

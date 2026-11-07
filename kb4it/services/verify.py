@@ -26,6 +26,7 @@ from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_att
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
 from kb4it.services.people import refused_keys
 from kb4it.services.addpage import ADD_DOC, check_editor_setting, check_theme_editor, editor_on
+from kb4it.services.pagepipeline import git_server_problem
 from kb4it.core.log import q
 
 
@@ -133,6 +134,9 @@ class VerifyMixin:
             check_editor_setting(repo)
         except ConfigError as e:
             problems = [str(e), *problems]
+        git_problem = git_server_problem(repo)
+        if git_problem:
+            problems = [git_problem, *problems]
         seo = None
         try:
             seo = load_seo(repo)

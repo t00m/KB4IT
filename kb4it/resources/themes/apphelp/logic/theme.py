@@ -256,6 +256,10 @@ class Theme(Builder):
             return "ah-system"
         return f"ah-doctype-{page.doctype}" + (f" ah-layout-{page.layout}" if page.layout else "")
 
+    def page_var(self):
+        """Override: apphelp templates read only the "ah" context, so a page needs no get_theme_var()."""
+        return {"page": {"title": ""}}
+
     def body_transforms(self, doc_id, var):
         """Override: theme pages stay as they are; a help page gets the apphelp rewrite and its own TOC."""
         var["apphelp_toc"] = []
