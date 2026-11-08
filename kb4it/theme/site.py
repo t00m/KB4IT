@@ -374,7 +374,7 @@ class Site:
 
     def keep(self, name: str, reason: str = "no_changes") -> bool:
         """Reuse name.html of the previous build when nothing it shows changed; True if kept."""
-        return bool(self._need_host("keep")._reuse_cached_page(name, "nck", reason, name))
+        return bool(self._need_host("keep").reuse_cached_page(name, "nck", reason, name))
 
     def table(self, table: Table) -> str:
         """The HTML of a document table."""

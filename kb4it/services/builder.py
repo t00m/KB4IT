@@ -150,6 +150,19 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         Custom themes must subclass it.
         """
 
+    def reuse_cached_page(self, name, counter, reason, func):
+        """Keep the cached `name`.html of the previous build when the runtime counter (ncd or nck) is 0.
+
+        True when kept: the page is a target of this build again and nothing rebuilds it.
+        """
+        if self.srvbes.get_value("runtime", counter) != 0:
+            return False
+        if not os.path.exists(os.path.join(self.srvbes.get_path("cache"), f"{name}.html")):
+            return False
+        self.log.debug(f"[THEME] SKIP reason={q(reason)} func={q(func)}")
+        self.srvbes.add_target(f"{name}.md", f"{name}.html")
+        return True
+
     def prepare(self):
         """After the documents are read and before any page is built (stage 3); themes on BaseTheme use it."""
 

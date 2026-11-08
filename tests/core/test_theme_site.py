@@ -122,7 +122,7 @@ def test_writers_delegate_to_the_host():
         def add_system_page(self, *args, **kwargs):
             calls.append(("page", args, kwargs))
 
-        def _reuse_cached_page(self, *args):
+        def reuse_cached_page(self, *args):
             calls.append(("keep", args))
             return True
 

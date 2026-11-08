@@ -115,6 +115,7 @@ What `Builder` offers every theme: pages it can write, templates and shared data
 | `register_add_page(html: str) -> None` | Write the Add page body and register it as a system page; a theme may override this only. | `kb4it.services.addpage.AddPageMixin` |
 | `remove_stale_add_page() -> None` | Remove add.html left by an earlier build from the target and the cache. | `kb4it.services.addpage.AddPageMixin` |
 | `render_template(name, var=None)` | Render template according to dict var values. | `kb4it.services.builder.Builder` |
+| `reuse_cached_page(name, counter, reason, func)` | Keep the cached `name`.html of the previous build when the runtime counter (ncd or nck) is 0. | `kb4it.services.builder.Builder` |
 | `search_box() -> str` | Search box markup for the theme's header, or '' when search is off. | `kb4it.services.builder.Builder` |
 | `search_page() -> str` | Page that runs a search from ?q=, or empty when the site has none. | `kb4it.services.headmeta.HeadMetaMixin` |
 | `seo_settings() -> kb4it.core.structured.SeoSettings` | The checked repo.json "seo" block (Backend loads it with the configuration). | `kb4it.services.headmeta.HeadMetaMixin` |

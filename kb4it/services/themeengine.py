@@ -209,6 +209,22 @@ class ThemeEngine(Builder):
         return HeadMetaMixin.search_page(self)
 
     # ------------------------------------------------------- feature services
+    def build_page_key(self, key: str, values: list[str]) -> None:
+        pages = self.features.get("property_pages")
+        if pages is not None:
+            pages.write_key_page(key, values)
+
+    def build_page_key_value(self, kvpath: tuple[str, str, bool]) -> None:
+        pages = self.features.get("property_pages")
+        if pages is not None:
+            pages.value_page_of(kvpath)
+
+    def get_theme_var(self) -> dict[str, Any]:
+        return self.theme.base_var()
+
+    def default_theme_var(self) -> dict[str, Any]:
+        return dict(Builder.get_theme_var(self))
+
     def page_toc(self, source_html: str) -> str:
         toc = self.features.get("toc")
         return toc.extract(source_html) if toc is not None else ""

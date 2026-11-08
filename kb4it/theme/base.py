@@ -71,7 +71,7 @@ class BaseTheme:
 
     def base_var(self) -> dict[str, Any]:
         """A new dict of the variables every template gets: repo, theme, page, lang, search_box..."""
-        var: dict[str, Any] = self._engine.get_theme_var()
+        var: dict[str, Any] = self._engine.default_theme_var()
         return var
 
     # ------------------------------------------------------------ lifecycle
