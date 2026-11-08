@@ -6,10 +6,8 @@ Verify service: the checks of kb4it verify (documents, theme hook, repo.json set
 # License: GPL v3
 """
 
-import importlib.util
 import json
 import os
-import sys
 from pathlib import Path
 
 from kb4it.core.checks import check_anchors, html_pages
@@ -24,6 +22,7 @@ from kb4it.core.dateclass import date_reserved_names, load_dates
 from kb4it.core.daterules import resolve_dates
 from kb4it.core.structured import iso_date, load_seo
 from kb4it.core.themeconfig import build_config
+from kb4it.core.themeload import load_module
 from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
 from kb4it.services.people import refused_keys
@@ -346,16 +345,10 @@ class VerifyMixin:
         path = os.path.join(logic, "theme.py")
         if not os.path.isfile(path):
             return None
-        sys.path.insert(0, logic)
         try:
-            spec = importlib.util.spec_from_file_location(f"kb4it_reserved_{repo.get('theme', 'theme')}", path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module.Theme
+            return load_module(logic, repo.get("theme", "theme")).Theme
         except Exception:
             return None
-        finally:
-            sys.path.remove(logic)
 
     def _theme_verify(self, repo, config_file, docs):
         """Run the theme's optional logic/verify.py and return its problem lines."""
@@ -363,9 +356,7 @@ class VerifyMixin:
         hook = os.path.join(theme_dir, "logic", "verify.py") if theme_dir else ""
         if not os.path.isfile(hook):
             return []
-        spec = importlib.util.spec_from_file_location(f"kb4it_verify_{repo.get('theme', 'theme')}", hook)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = load_module(os.path.dirname(hook), repo.get("theme", "theme"), "verify")
         metadata = {}
         for doc in docs:
             keys, ok, _reason = get_document_attributes(doc)

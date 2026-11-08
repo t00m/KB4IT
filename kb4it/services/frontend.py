@@ -11,13 +11,13 @@ import glob
 import json
 import os
 import re
-import sys
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
 from kb4it.core.themeconfig import ThemeSettings, build_config
+from kb4it.core.themeload import load_module
 from kb4it.core.vendor import theme_assets, vendor_paths
 from kb4it.core.version import requirement_satisfied, theme_fingerprint, theme_identity
 from kb4it.core.log import q
@@ -212,11 +212,11 @@ class Frontend(Service):
 
             # Register theme service
             self.log.debug(f"[FRONTEND] THEME_REGISTER path={q(self.runtime['theme']['logic'])}")
-            sys.path.insert(0, self.runtime["theme"]["logic"])
-            # Every theme names its logic module "theme"; drop the one an earlier load cached.
-            sys.modules.pop("theme", None)
             try:
-                from theme import Theme
+                # logic/ is loaded as a package of its own (kb4it/core/themeload.py).
+                module = load_module(self.runtime["theme"]["logic"], self.runtime["theme"].get("id", "theme"),
+                                     on_bare_import=self._bare_import)
+                Theme = module.Theme
 
                 self.app.register_service("Theme", Theme())
                 self._configure(self.get_service("Theme"))
@@ -229,6 +229,16 @@ class Frontend(Service):
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
                 raise ThemeError(f"Theme load failed: {error}") from error
+
+    def _bare_import(self, name):
+        """A theme module imported a sibling by its bare name: deprecated for themes outside KB4IT."""
+        theme = self.runtime["theme"]
+        message = (f"[FRONTEND] THEME_BARE_IMPORT theme={q(theme.get('id'))} module={q(name)} "
+                   f"hint={q('import it relatively: from .' + name + ' import ...')}")
+        if self._scope(theme["path"]) == "builtin":
+            self.log.debug(message)
+        else:
+            self.log.warning(message)
 
     def _configure(self, instance):
         """Give the theme its settings as instance.config (P5); log each unknown key of its repo.json block."""

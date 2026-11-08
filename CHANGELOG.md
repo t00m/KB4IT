@@ -55,6 +55,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Themes: the `logic/` folder of a theme is loaded as a Python package of its own, so its modules can import each other relatively (`from .helpers import ...`), and two themes, or a bundled and a user copy of one, never share a helper module. Before, `logic/` went on `sys.path` and the first theme loaded in a process kept its helper modules for every later load (terminal interface, `kb4it serve`). Bare imports of a sibling module (`from helpers import ...`) keep working, and are deprecated: a theme outside KB4IT logs `[FRONTEND] THEME_BARE_IMPORT` once per module with the relative import to use. `kb4it verify` loads the theme the same way.
 - techdoc: the Quality column of the document tables no longer prints the tier (Exemplary, Complete, Basic, Stub) next to the meter. Point at the meter to see the tier and the score; the table's search box still finds a tier. A retired document still shows Retired.
 - A custom theme that has no `HTML_TAG_H2_NEW.tpl`, `HTML_TAG_SECT1_NEW.tpl` and the like now gets default heading and section wrappers with `kb-h2` ... `kb-sect4` classes. To keep the compiler's markup, ship templates that return it unchanged.
 - apphelp: its link, help id and contract checks now log as `[CHECK]` instead of `[APPHELP]`, and its search index lines as `[SEARCH]`. With `"strict": true` at the top of `repo.json`, blog sites now also stop on a post-build check warning.
