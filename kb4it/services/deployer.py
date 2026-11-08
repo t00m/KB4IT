@@ -20,6 +20,7 @@ from kb4it.core.log import get_logger, q
 from kb4it.core.mdconfig import pygments_css
 from kb4it.core.service import Service
 from kb4it.core.util import SOURCE_EXT_RE, delete_target_contents, timeit
+from kb4it.core.vendor import sync_vendor
 
 # A tag that loads a render file; text that only names the folder does not count.
 RENDER_REF = re.compile(r'(?:src|href)="[^"]*resources/render/')
@@ -241,6 +242,12 @@ class Deployer(Service):
                     provided |= files
             self.log.debug(f"[DEPLOYER] COPIED_THEME_DIRS dirs={q(','.join(deploy_dirs))} "
                            f"copied={q(n_copied)} deleted={q(n_deleted)}")
+
+        # Shared libraries the theme declares in theme.json 'assets'; any other folder there is stale.
+        names = theme.get("assets") or []
+        copied, deleted, files = sync_vendor(os.path.join(resources_dir_target, "vendor"), names, keep)
+        provided |= files
+        self.log.debug(f"[DEPLOYER] COPIED_VENDOR names={q(','.join(names))} copied={q(copied)} deleted={q(deleted)}")
 
         # Stylesheet for build-time code highlighting; outside resources/common, which some themes do not deploy.
         settings = getattr(self.srvbes, "markdown", None)

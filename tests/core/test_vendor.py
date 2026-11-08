@@ -59,3 +59,34 @@ def test_fingerprint_changes_with_vendor_file(fake_vendor, tmp_path):
     (fake_vendor / "b" / "x.js").write_text("changed", encoding="utf-8")
     second = fingerprint()
     assert fingerprint() == second, "an undeclared library does not count"
+
+
+def test_sync_copies_declared_libraries(fake_vendor, tmp_path):
+    from kb4it.core.vendor import sync_vendor
+    dest = tmp_path / "target" / "resources" / "vendor"
+    copied, deleted, files = sync_vendor(str(dest), ["a"], keep=())
+    assert (dest / "a" / "x.js").read_text(encoding="utf-8") == "a"
+    assert not (dest / "b").exists()
+    assert (copied, deleted) == (1, 0)
+    assert files == {str(dest / "a" / "x.js")}
+
+
+def test_sync_prunes_undeclared_libraries(fake_vendor, tmp_path):
+    from kb4it.core.vendor import sync_vendor
+    dest = tmp_path / "target" / "vendor"
+    (dest / "old").mkdir(parents=True)
+    (dest / "old" / "y.js").write_text("y", encoding="utf-8")
+    (dest / "mine.txt").write_text("user", encoding="utf-8")
+    _copied, deleted, _files = sync_vendor(str(dest), ["a"], keep={str(dest / "mine.txt")})
+    assert not (dest / "old").exists()
+    assert (dest / "mine.txt").exists(), "a repository file is kept"
+    assert deleted == 1
+
+
+def test_sync_without_libraries_removes_the_folder(fake_vendor, tmp_path):
+    from kb4it.core.vendor import sync_vendor
+    dest = tmp_path / "target" / "vendor"
+    (dest / "a").mkdir(parents=True)
+    (dest / "a" / "x.js").write_text("a", encoding="utf-8")
+    sync_vendor(str(dest), [], keep=())
+    assert not dest.exists()
