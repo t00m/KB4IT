@@ -19,7 +19,7 @@ def test_creates_docs_starter(tmp_path):
     theme = tmp_path / "mytheme"
     assert folder == str(theme)
     assert _conf(theme)["id"] == "mytheme" and _conf(theme)["name"] == "Mytheme"
-    assert "DocumentTheme" in (theme / "logic" / "theme.py").read_text(encoding="utf-8")
+    assert "class Theme(BaseTheme)" in (theme / "logic" / "theme.py").read_text(encoding="utf-8")
     sample = json.loads((theme / "apps" / "default" / "config" / "repo.json").read_text(encoding="utf-8"))
     assert sample["theme"] == "mytheme"
 

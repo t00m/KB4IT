@@ -1,42 +1,26 @@
-"""starter-docs: a document theme on DocumentTheme. Copy it with `kb4it new-theme <id>` and change what you need.
+"""starter-docs: a document theme. Copy it with `kb4it new-theme <id>` and change what you need.
 
-DocumentTheme gives the property pages, the table of all documents, the 404 page and the page
-pipeline; the uikit template base gives the tables, the table of contents and the heading wrappers.
-Add a kit (kb4it.services.themekit.navigation, filters, related, tocsidebar, gallery, diagrams) to the
-class line for more. The hook reference lists every hook: https://t00m.github.io/KB4IT/reference-theme-hooks.html
+The "documents" feature gives the property pages, the table of all documents, the 404 page, the
+table of contents and the page actions; the uikit template base gives their templates. Add more
+features by name, such as "events", "stats", "bookmarks", "table_filter" or "related".
+"Write a theme" in the help lists every feature and hook:
+https://t00m.github.io/KB4IT/howto-create-theme.html
 """
 
-from html import escape
-
-from kb4it.core.util import valid_filename
-from kb4it.services.themekit import DocumentTheme
+from kb4it.theme import BaseTheme, Table
 
 
-class Theme(DocumentTheme):
+class Theme(BaseTheme):
+    features = ("documents", "search")
     properties_cloud = False  # properties.html is a table; True shows one tag cloud button per property
-    datatable_link_template = 'LINK'  # the uikit base's link template, for the Title column of the tables
+    datatable_link_template = "LINK"  # the uikit base's link template, for the value columns of the tables
 
-    def build(self):
-        """Override: the pages this theme writes itself, besides the document and property pages."""
-        self.build_page_index()
-        self.build_page_properties()
-        self.build_page_index_all()
-        self.build_page_404()
-        self.create_page_search()
-
-    def build_page_index(self):
+    def build(self, site):
         """The home page: the ten newest documents. Change the number or the layout here and in PAGE_INDEX."""
-        docs = [d for d in self.srvdtb.sort_by_date(list(self.srvdtb.get_documents())) if not self.srvdtb.is_system(d)]
-        var = self.get_theme_var()
-        var['datatable'] = self.build_datatable(['Date', 'Title'], docs[:10])
-        self.add_system_page('index', 'Home', self.render_template('PAGE_INDEX', var))
+        latest = Table(documents=tuple(site.documents.latest(10)), columns=("Date", "Title"))
+        site.page("index", "Home", self.render("PAGE_INDEX", datatable=site.table(latest)))
 
-    def datatable_date_cell(self, timestamp):
-        """Override: this theme builds no event pages, so a date in a table is text, not a link to one."""
-        return f'<td>{escape(timestamp[:10])}</td>' if timestamp else '<td></td>'
-
-    def page_context(self, doc_id, var):
-        """Override: add your own data for HTML_BODY here; this one adds the document's tags."""
-        tags = [t for t in self.srvdtb.get_values(doc_id, 'Tag') or [] if t]
-        var['starter'] = {'tags': [{'name': t, 'url': f'Tag_{valid_filename(t)}.html'} for t in tags]}
+    def page_context(self, doc, var):
+        """Add your own data for HTML_BODY here; this one adds the document's tags with their pages."""
+        var["starter"] = {"tags": doc.links("Tag")}
         return var

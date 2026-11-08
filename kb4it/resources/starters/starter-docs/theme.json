@@ -1,14 +1,13 @@
 {
     "id": "starter-docs",
     "name": "Starter-docs",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "author": "",
     "email": "",
     "website": "",
     "description": "A document theme to start from: UIkit layout, property pages, all documents, search",
     "kb4it": ">=0.12.0",
-    "assets": ["uikit", "search"],
-    "search": true,
+    "assets": ["uikit"],
     "template_base": "uikit",
     "favicon": "framework/logo.svg",
     "autoescape": true

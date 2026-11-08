@@ -213,3 +213,20 @@ def test_theme_info_shows_the_public_api(tmp_path):
     assert "missing" not in {t["origin"] for t in info["templates"]}
     hooks = {h["hook"]: h for h in info["hooks"]}
     assert hooks["page_context"]["where"].startswith("logic/theme.py:")
+
+
+def test_legacy_theme_of_the_user_is_deprecated(tmp_path):
+    from tests.helpers import mini_theme
+    theme = mini_theme(tmp_path / "mini")
+    cfg = write_repo(tmp_path / "repo", "mini", {"one.md": page("One", Tag="a")}, theme_path=str(theme))
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=tmp_path)
+    assert result.returncode == 0, result.stdout
+    line = next(line for line in result.stdout.splitlines() if "THEME_API_LEGACY" in line)
+    assert "WARNING" in line and "base=Builder" in line
+
+
+def test_bundled_legacy_theme_builds_without_the_warning(tmp_path):
+    cfg = write_repo(tmp_path / "repo", "techdoc", {"one.md": page("One", Tag="a")})
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=tmp_path)
+    assert result.returncode == 0, result.stdout
+    assert "THEME_API_LEGACY" not in result.stdout

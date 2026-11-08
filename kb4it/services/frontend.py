@@ -260,8 +260,11 @@ class Frontend(Service):
         base = next((c.__name__ for c in theme_class.__mro__ if c.__name__ in ("DocumentTheme", "Builder")), "?")
         message = (f"[FRONTEND] THEME_API_LEGACY theme={q(theme.get('id'))} base={q(base)} "
                    f"hint={q('subclass kb4it.theme.BaseTheme; see Write a theme')}")
-        # Debug until starter-docs, which kb4it new-theme copies to the user's themes, is on BaseTheme.
-        self.log.debug(message)
+        # Bundled themes move to BaseTheme one by one; a theme of the user's own gets the warning.
+        if self._scope(theme["path"]) == "builtin":
+            self.log.debug(message)
+        else:
+            self.log.warning(message)
 
     def _bare_import(self, name):
         """A theme module imported a sibling by its bare name: deprecated for themes outside KB4IT."""
