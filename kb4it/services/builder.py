@@ -118,15 +118,18 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
 
         Source patterns (_MD templates) match the HTML produced by the
         Markdown compile pipeline; target (_NEW) templates supply theme-
-        specific replacements.
+        specific replacements. Headings and sections have defaults in the
+        common templates (and the uikit base) that read the classes from
+        theme.json "heading_classes"; they get var['theme'].
         """
         if self._xform_pairs is None:
             with self._xform_lock:
                 if self._xform_pairs is None:
-                    # A theme without a _NEW template keeps that markup as the compiler wrote it.
+                    # A name without any _NEW template keeps that markup as the compiler wrote it.
+                    new_var = {'theme': self.srvbes.get_dict('theme') or {}}
                     self._xform_pairs = [
                         (self.render_template(f'{n}_MD'),
-                         self.render_template(f'{n}_NEW'))
+                         self.render_template(f'{n}_NEW', new_var))
                         for n in self._XFORM_NAMES if self.has_template(f'{n}_NEW')
                     ]
         for old, new in self._xform_pairs:

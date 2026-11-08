@@ -14,6 +14,15 @@
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit",
+    "heading_classes": {
+        "h2": "kb-h2",
+        "h3": "kb-h3",
+        "h4": "kb-h4",
+        "sect1": "kb-sect1 uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded",
+        "sect2": "kb-sect2 sect2 uk-border-rounded uk-padding-small",
+        "sect3": "kb-sect3 sect3 uk-border-rounded uk-padding-small",
+        "sect4": "kb-sect4 sect4 uk-border-rounded uk-padding-small"
+    },
     "toc_sidebar": false,
     "table_filter": true,
     "header_keys": {
