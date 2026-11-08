@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import copy
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Callable, Iterable, Iterator, Mapping
 
@@ -303,14 +303,15 @@ class Table:
     columns: property names; 'Date' and 'Title' get their own cells. None: the
     repo.json "datatable" setting, else the theme's default.
     id: the HTML id of the table. filterable: the table filter bar may attach
-    to it (feature table_filter).
+    to it (feature table_filter). dates: {doc id: 'YYYY-MM-DD'}, the event day of
+    each row, for a calendar panel that filters the table.
     """
 
     documents: tuple[Doc | str, ...] = ()
     columns: tuple[str, ...] | None = None
     id: str = "kb4it-datatable"
     filterable: bool = False
-    extra: Mapping[str, Any] = field(default_factory=dict)
+    dates: Mapping[str, str] | None = None
 
     def doc_ids(self) -> list[str]:
         return [d.id if isinstance(d, Doc) else d for d in self.documents]
@@ -378,8 +379,13 @@ class Site:
 
     def table(self, table: Table) -> str:
         """The HTML of a document table."""
+        host = self._need_host("table")
+        render = getattr(host, "render_table", None)
+        if render is not None:
+            html: str = render(table)
+            return html
         columns = list(table.columns) if table.columns is not None else None
-        html: str = self._need_host("table").build_datatable(columns, table.doc_ids(), table.id)
+        html = host.build_datatable(columns, table.doc_ids(), table.id)
         return html
 
 

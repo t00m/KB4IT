@@ -11,7 +11,9 @@ from kb4it.core.util import ellipsize_text
 from kb4it.theme.feature import Feature
 
 if TYPE_CHECKING:
-    from kb4it.theme.site import Doc
+    from kb4it.theme.site import Doc, Table as TableSpec
+
+MARKER = '<!-- DOCUMENT LIST :: START -->'
 
 
 class Table(Feature):
@@ -22,7 +24,8 @@ class Table(Feature):
         "datatable_link_template": "LINK_DATATABLE",       # template of a value link in a cell
         "datatable_default_headers": ("Date", "Title"),     # columns when neither the caller nor repo.json names them
     }
-    hooks = ("datatable_date_cell", "datatable_title_cell", "datatable_custom_cell", "datatable_value_link")
+    hooks = ("datatable_date_cell", "datatable_title_cell", "datatable_custom_cell", "datatable_value_link",
+             "datatable_columns")
     templates = ("DATATABLE", "DATATABLE_HEADER_ITEM", "DATATABLE_BODY_ITEM")
 
     def properties(self, doc_id: str) -> dict[str, Any]:
@@ -84,6 +87,10 @@ class Table(Feature):
         """The variables of LINK_DATATABLE for one value of a cell."""
         return self.value_link_vars(self.properties(doc.id), key, value)
 
+    def datatable_columns(self, columns: list[str], docs: list[Doc]) -> list[str]:
+        """The columns of a table of these documents; a theme may drop or add some."""
+        return columns
+
     # ------------------------------------- hook calls, legacy or public API
     def _date(self, doc_id: str) -> str:
         if self.legacy:
@@ -102,11 +109,15 @@ class Table(Feature):
         cell: str = method(timestamp, doc_id) if takes_doc else method(timestamp)
         return cell
 
-    def _title(self, doc_id: str, properties: dict[str, Any]) -> str:
+    def _title(self, doc_id: str, properties: dict[str, Any], row_attrs: Any = None) -> str:
         if self.legacy:
             cell: str = self.theme.datatable_title_cell(doc_id, properties)
         else:
             cell = self.hook("datatable_title_cell")(self.doc(doc_id))
+            attrs = row_attrs(doc_id) if row_attrs is not None else ''
+            end = cell.find('>', cell.find('<td'))
+            if attrs and end != -1:
+                cell = f'{cell[:end]} {attrs}{cell[end:]}'
         return cell
 
     def _custom(self, doc_id: str, key: str) -> str | None:
@@ -124,9 +135,41 @@ class Table(Feature):
         return link
 
     # ----------------------------------------------------------- the table
+    def default_columns(self) -> list[str]:
+        columns: list[str] = self.engine.srvbes.get_dict('repo').get(
+            'datatable', list(self.option("datatable_default_headers")))
+        return list(columns)
+
+    def render_table(self, table: TableSpec) -> str:
+        """The HTML of a Table (public API): its columns, the theme's hooks and the features' extensions.
+
+        A feature that implements table_extension(table, columns, doc_ids) may return
+        (html put before the rows, doc id -> attributes of the row's Title cell); the
+        table_filter feature does.
+        """
+        doc_ids = [d for d in dict.fromkeys(table.doc_ids()) if not self.engine.srvdtb.is_system(d)]
+        columns = list(table.columns) if table.columns else self.default_columns()
+        columns = list(self.hook("datatable_columns")(columns, [self.doc(d) for d in doc_ids]))
+        before, row_attrs = [], []
+        for feature in self.engine.features.values():
+            extend = getattr(feature, "table_extension", None)
+            found = extend(table, columns, doc_ids) if extend is not None else None
+            if found is not None:
+                before.append(found[0])
+                row_attrs.append(found[1])
+        def attrs(doc_id: str) -> str:
+            return ' '.join(a for a in (f(doc_id) for f in row_attrs) if a)
+        html = self.render(columns, table.doc_ids(), table.id, attrs if row_attrs else None)
+        if before:
+            html = html.replace(MARKER, MARKER + '\n' + '\n'.join(before), 1)
+        return html
+
     def render(self, headers: list[str] | None = None, doclist: list[str] | None = None,
-               table_id: str = 'kb4it-datatable') -> str:
-        """The HTML of a table of documents; the first column is the date when headers has 'Date'."""
+               table_id: str = 'kb4it-datatable', row_attrs: Any = None) -> str:
+        """The HTML of a table of documents; the first column is the date when headers has 'Date'.
+
+        row_attrs(doc id) gives attributes for the Title cell of a row (public API only).
+        """
         engine = self.engine
         tpl_link = engine.template(self.option("datatable_link_template"))
         tpl_header_item = engine.template('DATATABLE_HEADER_ITEM')
@@ -149,7 +192,7 @@ class Table(Feature):
                 final_headers = headers
             for key in final_headers:
                 if key == 'Title':
-                    row.append(self._title(doc_id, properties))
+                    row.append(self._title(doc_id, properties, row_attrs))
                     continue
                 custom = self._custom(doc_id, key)
                 if custom is not None:

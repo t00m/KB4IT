@@ -14,6 +14,7 @@ class Toc(Feature):
     """var['toc'] of every document page, and the Contents menu of the header."""
 
     name = "toc"
+    # Always rendered; menu_contents() also needs HTML_HEADER_MENU_CONTENTS_ENABLED and _DISABLED.
     templates = ("HTML_TOC_LI", "HTML_TOC_SECTLEVEL1", "HTML_TOC_SECTLEVEL2", "HTML_TOC_SECTLEVEL3",
                  "HTML_TOC_SECTLEVEL4")
 

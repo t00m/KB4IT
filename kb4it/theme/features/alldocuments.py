@@ -25,7 +25,7 @@ class AllDocuments(Feature):
                 engine.reuse_cached_page('all', 'ncd', 'no_doc_changes', 'build_page_index_all'):
             return None
         var = engine.get_theme_var()
-        var['content'] = engine.build_datatable([], list(engine.srvdtb.get_documents()))
+        var['content'] = self.table_html(list(engine.srvdtb.get_documents()), filterable=True)
         page: str = engine.template('PAGE_ALL').render(var=var)
         engine.distribute_md('all', page, listing=True)
         engine.add_system_page('all', 'All documents')

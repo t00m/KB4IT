@@ -19,7 +19,8 @@ class Metadata(Feature):
 
     name = "metadata"
     hooks = ("build_metadata_section",)
-    templates = ("METADATA_SECTION", "METADATA_VALUE_LINK", "SECTION_ACTIONS")
+    # Always rendered; section() also needs METADATA_SECTION and METADATA_VALUE_LINK.
+    templates = ("SECTION_ACTIONS",)
 
     def actions(self, var: dict[str, Any]) -> str:
         """The html of the page actions (SECTION_ACTIONS)."""

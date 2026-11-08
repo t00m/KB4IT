@@ -1,59 +1,19 @@
 """Table filter kit (Layer 1). Filter bar of the document tables: pills per property value, behind a Filter button next to the search box.
 
-Only the tables of all.html, bookmarks.html, the property value pages, events.html and the archive
-pages of a year, month or day (events_YYYY*.html) get it. The Quality page uses the same bar over
-its document lists (list_filter). Each row
-carries its values as slugs in data-kb-f-<key> attributes of the Title cell; datatable-filter.js reads
-them and filters through DataTables, so the row count and the search box stay right. On events.html
-the cell also carries the event day (data-kb-date), which the calendar panel filters on.
+Legacy API: the code lives in the table_filter feature (kb4it/theme/features/tablefilter.py).
+Here a theme on DocumentTheme turns the bar on per page: the page builders set a flag while
+they build their table, and build_datatable() reads it.
 """
 
-from collections import Counter
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
-from html import escape
 from typing import Any
 
-from kb4it.core.util import slugify
-from kb4it.services.themekit.host import ThemeHost
+from kb4it.services.themekit.host import ThemeHost, feature_of
+from kb4it.theme.features.tablefilter import (FILTER_KEYS, FILTER_MIN_ROWS, TableFilter, ValuesOf, facet_attrs,
+                                              facet_groups, filter_groups, row_attrs)
 
-FILTER_KEYS = ('WorkType', 'DocType', 'Category', 'Topic', 'Status', 'Priority')
-ValuesOf = Callable[[str, str], list[str]]  # values_of(doc, key)
-FILTER_MIN_ROWS = 10  # smaller tables are short enough to scan by eye
-
-
-def facet_groups(docs: list[str], values_of: ValuesOf, keys: Sequence[str] = FILTER_KEYS) -> list[dict[str, Any]]:
-    """Return [{'key', 'slug', 'values': [{'name', 'slug', 'count'}]}] for the keys that split the documents.
-
-    values_of(doc, key) gives the values of a document. A key is left out when no document has a value,
-    or when every document has the same single value: filtering by it would change nothing.
-    Values are sorted by count, most used first, then by name.
-    """
-    groups = []
-    for key in keys:
-        counts: Counter[str] = Counter()
-        for doc in docs:
-            counts.update({value for value in values_of(doc, key) if value and slugify(value)})
-        if not counts or (len(counts) == 1 and next(iter(counts.values())) == len(docs)):
-            continue
-        values = [{'name': name, 'slug': slugify(name), 'count': count}
-                  for name, count in sorted(counts.items(), key=lambda item: (-item[1], item[0].lower()))]
-        groups.append({'key': key, 'slug': key.lower(), 'values': values})
-    return groups
-
-
-def facet_attrs(values_of: ValuesOf, doc: str | list[str] | tuple[str, ...], keys: Sequence[str] = FILTER_KEYS) -> str:
-    """Return the data-kb-f-<key> attributes of a row: its values as space separated slugs.
-
-    doc may be a list of documents (a pair of duplicates): the row then has the values of all of them.
-    """
-    docs = doc if isinstance(doc, (list, tuple)) else [doc]
-    attrs = []
-    for key in keys:
-        slugs = sorted({slugify(value) for d in docs for value in values_of(d, key) if value} - {''})
-        if slugs:
-            attrs.append(f'data-kb-f-{key.lower()}="{escape(" ".join(slugs))}"')
-    return ' '.join(attrs)
+__all__ = ["FILTER_KEYS", "FILTER_MIN_ROWS", "FilterMixin", "ValuesOf", "facet_attrs", "facet_groups"]
 
 
 class FilterMixin(ThemeHost):
@@ -105,13 +65,7 @@ class FilterMixin(ThemeHost):
 
         Returns (bar HTML or '', attrs(doc or [docs]) -> str); without a property that splits docs, no bar.
         """
-        def attrs(doc: Any) -> str:
-            return facet_attrs(self._values_of, doc, self.datatable_filter_keys)
-        groups = facet_groups(list(docs), self._values_of, self.datatable_filter_keys)
-        if not groups:
-            return '', attrs
-        bar = self.template('DATATABLE_FILTER').render(var={'list': list_id, 'groups': groups})
-        return bar, attrs
+        return feature_of(self, TableFilter).list_filter(docs, list_id)
 
     def _values_of(self, doc: str, key: str) -> list[str]:
         return self.srvdtb.get_values(doc, key) or []
@@ -121,10 +75,7 @@ class FilterMixin(ThemeHost):
         cell = super().datatable_title_cell(docId, properties)
         if not self._filter_rows:
             return cell
-        attrs = facet_attrs(self._values_of, docId, self.datatable_filter_keys)
-        day = (self._filter_dates or {}).get(docId)
-        if day:
-            attrs = f'{attrs} data-kb-date="{escape(day)}"'.strip()
+        attrs = row_attrs(self._values_of, docId, self.datatable_filter_keys, self._filter_dates)
         end = cell.find('>', cell.find('<td'))
         return f'{cell[:end]} {attrs}{cell[end:]}' if attrs and end != -1 else cell
 
@@ -139,7 +90,7 @@ class FilterMixin(ThemeHost):
             html = super().build_datatable(headers, doclist, table_id)
         finally:
             self._filter_rows = False
-        bar = self.template('DATATABLE_FILTER').render(var={'table_id': table_id, 'groups': groups})
+        bar = feature_of(self, TableFilter).bar(groups, table_id=table_id)
         marker = '<!-- DOCUMENT LIST :: START -->'
         return html.replace(marker, f'{marker}\n{bar}', 1)
 
@@ -151,8 +102,5 @@ class FilterMixin(ThemeHost):
         if not self._filter_tables or 'Title' not in (headers or []):
             return None
         docs = [doc for doc in dict.fromkeys(doclist or []) if not self.srvdtb.is_system(doc)]
-        if self._filter_dates is not None:
-            return facet_groups(docs, self._values_of, self.datatable_filter_keys) if docs else None
-        if len(docs) < self.datatable_filter_min_rows:
-            return None
-        return facet_groups(docs, self._values_of, self.datatable_filter_keys) or None
+        return filter_groups(docs, self._values_of, self.datatable_filter_keys, self.datatable_filter_min_rows,
+                             self._filter_dates)

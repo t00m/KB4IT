@@ -25,7 +25,8 @@ class PropertyPages(Feature):
         "tagcloud_scale_skips_empty": False,    # scale a tag cloud without the empty value
     }
     hooks = ("cloud_measure", "frequency_keys", "value_page")
-    templates = ("PAGE_PROPERTIES", "PAGE_KEY", "PAGE_KEY_VALUE", "WORDCLOUD", "KEY_MODAL_BUTTON")
+    # Always rendered; with properties_cloud the properties page also needs KEY_MODAL_BUTTON.
+    templates = ("PAGE_PROPERTIES", "PAGE_KEY", "PAGE_KEY_VALUE", "WORDCLOUD")
 
     # ------------------------------------------------------------ hook defaults
     def cloud_measure(self, frequency: int, max_frequency: int) -> dict[str, Any]:
@@ -153,7 +154,7 @@ class PropertyPages(Feature):
         var['doclist'] = sorted_docs
         var['compile'] = compile_value
         var['has_toc'] = False
-        var['page']['dt_documents'] = engine.build_datatable([], sorted_docs)
+        var['page']['dt_documents'] = self.table_html(sorted_docs, filterable=True)
         var['profile_card'] = engine.profile_card(key, value) if compile_value else ''
         if var['compile']:
             engine.distribute_md(var['pagename'], engine.template('PAGE_KEY_VALUE').render(var=var), listing=True)

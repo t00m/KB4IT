@@ -8,17 +8,20 @@ from kb4it.theme.features.about import About
 from kb4it.theme.features.alldocuments import AllDocuments
 from kb4it.theme.features.bookmarks import Bookmarks
 from kb4it.theme.features.editor import Editor
+from kb4it.theme.features.events import Events
 from kb4it.theme.features.metadata import Metadata
 from kb4it.theme.features.notfound import NotFound
 from kb4it.theme.features.propertypages import PropertyPages
 from kb4it.theme.features.search import Search
 from kb4it.theme.features.stats import Stats
 from kb4it.theme.features.table import Table
+from kb4it.theme.features.tablefilter import TableFilter
 from kb4it.theme.features.toc import Toc
 
 #: Built-in features by name.
 REGISTRY: dict[str, type[Feature]] = {cls.name: cls for cls in (
-    About, AllDocuments, Bookmarks, Editor, Metadata, NotFound, PropertyPages, Search, Stats, Table, Toc)}
+    About, AllDocuments, Bookmarks, Editor, Events, Metadata, NotFound, PropertyPages, Search, Stats, Table,
+    TableFilter, Toc)}
 
 #: Names that stand for several features.
 BUNDLES: dict[str, tuple[str, ...]] = {

@@ -75,6 +75,22 @@ class Feature:
         from kb4it.theme.site import Doc as DocView
         return DocView(self.site, doc_id)
 
+    def table_html(self, doc_ids: Iterable[str], *, filterable: bool = False,
+                   dates: Mapping[str, str] | None = None, table_id: str = "kb4it-datatable") -> str:
+        """The document table of a page the feature writes.
+
+        A legacy theme gets build_datatable([], docs), its old call (its mixins decide on the filter
+        bar); a BaseTheme theme gets a Table, which the enabled features may extend.
+        """
+        if self.legacy:
+            html: str = self.engine.build_datatable([], list(doc_ids))
+            return html
+        from kb4it.theme.site import Table as TableSpec
+        table = TableSpec(documents=tuple(doc_ids), id=table_id, filterable=filterable,
+                          dates=dict(dates) if dates is not None else None)
+        html = self.engine.render_table(table)
+        return html
+
     def feature(self, name: str) -> Any:
         """Another enabled feature, or None (always None for a legacy theme)."""
         if self.legacy:

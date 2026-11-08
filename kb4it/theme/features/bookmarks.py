@@ -36,7 +36,7 @@ class Bookmarks(Feature):
             if doc_bookmarked:
                 doclist.append(doc_id)
         engine.log.debug(f"[THEME] BOOKMARKS_FOUND n={len(doclist)}")
-        datatable = engine.build_datatable([], doclist)
+        datatable = self.table_html(doclist, filterable=True)
         engine.add_system_page('bookmarks', 'Bookmarks')
         var['page']['title'] = 'Bookmarks'
         var['page']['dt_bookmarks'] = datatable

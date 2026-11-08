@@ -241,6 +241,13 @@ class ThemeEngine(Builder):
         html: str = table.render(headers, doclist, table_id)
         return html
 
+    def render_table(self, table: Any) -> str:
+        feature = self.features.get("table")
+        if feature is None:
+            raise ThemeError("site.table() needs the table feature")
+        html: str = feature.render_table(table)
+        return html
+
     def editor_keys(self) -> dict[str, Any]:
         if "editor" not in self.features:
             return dict(Builder.editor_keys(self))
