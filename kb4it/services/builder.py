@@ -383,6 +383,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
                 "categories": conf.get("categories"), "full_content": conf.get("full_content", True)}
 
     def feed_enabled(self) -> bool:
+        """True when the feed is on and repo.json has the site_url its links need."""
         settings = self.feed_settings()
         return bool(settings and settings["enabled"] and getattr(self.srvbes, "site_url", None))
 
@@ -457,6 +458,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         return [{"title": title, "href": html_id_for(source)} for title, source in found]
 
     def backlinks_html(self, doc_id) -> str:
+        """The HTML_BACKLINKS block of the documents that link to doc_id; '' when none does."""
         items = self.backlinks(doc_id)
         return self.render_template("HTML_BACKLINKS", {"backlinks": items}) if items else ""
 

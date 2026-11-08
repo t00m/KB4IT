@@ -6,17 +6,8 @@ import sys
 
 import pytest
 
+from kb4it.services.themekit import KITS  # module -> mixin class of every Layer 1 kit
 from tests.helpers import ROOT
-
-# Module and mixin class of every Layer 1 kit.
-KITS = {
-    "kb4it.services.themekit.diagrams": "DiagramsMixin",
-    "kb4it.services.themekit.filters": "FilterMixin",
-    "kb4it.services.themekit.gallery": "GalleryMixin",
-    "kb4it.services.themekit.navigation": "NavigationMixin",
-    "kb4it.services.themekit.related": "RelatedMixin",
-    "kb4it.services.themekit.tocsidebar": "TocSidebarMixin",
-}
 
 
 def _imports(module):
