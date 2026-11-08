@@ -1,11 +1,8 @@
-/* ============================================================================
-   KB4IT - "Bookshelf" theme  .  production stylesheet
+/* KB4IT - "Bookshelf" theme  .  production stylesheet
    A focused study companion for certification books.
    Hierarchy it expresses:  Book > Part > Chapter
-   ----------------------------------------------------------------------------
    Type   : system font stacks, led by Red Hat Display (titles) . Red Hat Text (UI/body) . IBM Plex Mono
-   Palette: warm paper neutrals + a single Red Hat-red accent + status hues
-   ============================================================================ */
+   Palette: warm paper neutrals + a single Red Hat-red accent + status hues */
 
 :root {
     --paper:      #f4f2ee;
@@ -63,18 +60,18 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
     font-size: 0.68rem; color: var(--ink-3);
 }
 
-/* ============================================================ status dots == */
+/* status dots */
 .dot { display:inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .dot.done    { background: var(--done); }
 .dot.reading { background: var(--reading); box-shadow: 0 0 0 3px var(--accent-weak); }
 .dot.todo    { background: transparent; border: 1.5px solid var(--todo); }
 
-/* ============================================================ progress ===== */
+/* progress */
 .bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .bar > i { display:block; height: 100%; background: var(--accent); border-radius: 99px; }
 .bar.done > i { background: var(--done); }
 
-/* ============================================================ chips ======== */
+/* chips */
 .chip {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 0.74rem; font-weight: 500;
@@ -86,7 +83,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 .chip.accent { background: var(--accent-weak); border-color: #f4cfca; color: var(--accent-ink); }
 .chip.done   { background: var(--done-weak); border-color: #c9e3d3; color: var(--done); }
 
-/* ============================================================ app shell ==== */
+/* app shell */
 .app-top {
     position: sticky; top: 0; z-index: 40;
     background: rgba(244,242,238,0.86);
@@ -147,7 +144,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 .icon-btn:hover { background: var(--surface); border-color: var(--line); }
 .icon-btn svg { width: 18px; height: 18px; }
 
-/* ============================================================ page frame === */
+/* page frame */
 .page { display: block; animation: pop .22s ease; }
 @keyframes pop { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none;} }
 @media (prefers-reduced-motion: reduce) { .page { animation: none; } html { scroll-behavior: auto; } }
@@ -165,7 +162,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 .legend { display:flex; gap: 16px; align-items:center; flex-wrap: wrap; font-size: 0.78rem; color: var(--ink-2); }
 .legend span { display:inline-flex; align-items:center; gap: 6px; }
 
-/* ============================================================ LANDING ====== */
+/* LANDING */
 .shelf-wrap {
     background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
     border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -238,7 +235,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 .stat-strip .n { font-family: var(--f-display); font-weight: 700; font-size: 1.5rem; }
 .stat-strip .l { font-size: 0.74rem; color: var(--ink-3); }
 
-/* ============================================================ KANBAN ======= */
+/* KANBAN */
 .kanban-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
 .kanban-head .bookline { display:flex; align-items:center; gap: 10px; }
 .kanban-head .cover-xs { width: 30px; height: 40px; border-radius: 3px; box-shadow: inset -4px 0 7px rgba(0,0,0,0.2); }
@@ -269,7 +266,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 .ch-card.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--sh-1); }
 .col-more { text-align: center; font-size: 0.76rem; color: var(--ink-3); padding: 4px; }
 
-/* ============================================================ READING ====== */
+/* READING */
 .crumb { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 0.9rem; color: var(--ink-2); margin-bottom: 18px; }
 .crumb a:hover { color: var(--accent); }
 .crumb .sep { color: var(--ink-3); }
@@ -294,7 +291,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 .article .meta-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .article h1 { font-size: 2rem; letter-spacing: -0.02em; }
 
-/* ---- article content (markdown body) ---- */
+/* article content (markdown body) */
 .chapter-body { color: #2c2a26; }
 .chapter-body > .sect1 > h2:first-child,
 .chapter-body > h2:first-child { margin-top: 18px; }
@@ -385,13 +382,13 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 700; margin: 0; lin
 
 .print-only { display: none; }
 
-/* ============================================================ footer ======= */
+/* footer */
 .app-foot { border-top: 1px solid var(--line); background: var(--surface-2); }
 .app-foot-inner { max-width: var(--maxw); margin: 0 auto; padding: 18px 26px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; color: var(--ink-3); }
 .app-foot-inner .foot-top { margin-left: auto; color: var(--ink-2); }
 .app-foot-inner .foot-top:hover { color: var(--accent); }
 
-/* ============================================================ system pages = */
+/* system pages */
 .bk-kv-head { margin: 4px 0 16px; }
 .bk-kv-head h1 { font-size: 1.5rem; }
 .bk-kv-head .sub { color: var(--ink-3); font-size: 0.84rem; margin-top: 4px; }
@@ -487,7 +484,7 @@ a.bk-stat-card:hover { border-color: var(--accent); }
 /* section wrappers should not add their own block chrome inside the article */
 .article .bk-sect1, .article .bk-section-body { margin: 0; }
 
-/* ============================================================ responsive == */
+/* responsive */
 @media (max-width: 1080px) {
     .reader { grid-template-columns: minmax(0,1fr) 240px; }
     .chapnav { display: none; }

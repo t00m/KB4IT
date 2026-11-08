@@ -1,8 +1,6 @@
 @media print {
 
-    /* -----------------------------------------------------------------------
-       Page setup — tighter margins for better paper usage
-    ----------------------------------------------------------------------- */
+    /* Page setup: tighter margins for better paper usage */
     @page {
         size: A4 portrait;
         margin: 1cm 1.5cm 1.6cm;
@@ -27,9 +25,7 @@
         }
     }
 
-    /* -----------------------------------------------------------------------
-       Hide all UI chrome
-    ----------------------------------------------------------------------- */
+    /* Hide all UI chrome */
     #container-1,
     #kb4it-menu,
     .noprint,
@@ -49,9 +45,7 @@
         display: none !important;
     }
 
-    /* -----------------------------------------------------------------------
-       Reset backgrounds and shadows
-    ----------------------------------------------------------------------- */
+    /* Reset backgrounds and shadows */
     *,
     body,
     .uk-background-muted {
@@ -60,9 +54,7 @@
         text-shadow: none !important;
     }
 
-    /* -----------------------------------------------------------------------
-       Layout: full-width, no container constraints
-    ----------------------------------------------------------------------- */
+    /* Layout: full-width, no container constraints */
     .uk-container,
     .uk-container-center {
         max-width: 100% !important;
@@ -76,9 +68,7 @@
         display: block !important;
     }
 
-    /* -----------------------------------------------------------------------
-       Typography: the screen's sans-serif font on paper, code in monospace
-    ----------------------------------------------------------------------- */
+    /* Typography: the screen's sans-serif font on paper, code in monospace */
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
                      "Noto Sans", "Liberation Sans", sans-serif;
@@ -103,9 +93,7 @@
     p { margin: 0 0 6pt; orphans: 3; widows: 3; }
     li { margin-bottom: 2pt; }
 
-    /* -----------------------------------------------------------------------
-       Print-only document title block
-    ----------------------------------------------------------------------- */
+    /* Print-only document title block */
     .kb-print-header {
         display: block !important;
         margin-bottom: 12pt;
@@ -123,14 +111,10 @@
         padding: 0 !important;
     }
 
-    /* -----------------------------------------------------------------------
-       Force all section bodies visible in print (overrides collapsed state)
-    ----------------------------------------------------------------------- */
+    /* Force all section bodies visible in print (overrides collapsed state) */
     .kb-section-body { display: block !important; }
 
-    /* -----------------------------------------------------------------------
-       Document metadata list (at end of document)
-    ----------------------------------------------------------------------- */
+    /* Document metadata list (at end of document) */
     .kb-metadata-list {
         list-style: disc;
         padding-left: 14pt;
@@ -155,9 +139,7 @@
     /* Suppress URL appending for metadata links */
     .kb-metadata-list a[href]::after { content: none !important; }
 
-    /* -----------------------------------------------------------------------
-       Inline TOC panel — show open in print
-    ----------------------------------------------------------------------- */
+    /* Inline TOC panel: show open in print */
     details.kb-toc-panel {
         display: block !important;
         border: none !important;
@@ -208,9 +190,7 @@
 
     .kb-toc-nav ul ul { border-left-color: #ccc !important; }
 
-    /* -----------------------------------------------------------------------
-       Section headings — grayscale for print
-    ----------------------------------------------------------------------- */
+    /* Section headings: grayscale for print */
     .kb-h2 {
         font-size: 15pt !important;
         color: #000 !important;
@@ -249,22 +229,16 @@
 
     .uk-card-body { padding: 0 !important; }
 
-    /* -----------------------------------------------------------------------
-       Page-break rules
-    ----------------------------------------------------------------------- */
+    /* Page-break rules */
     pre, blockquote, figure, .admonitionblock { page-break-inside: avoid; }
     table { page-break-inside: auto; }
     tr    { page-break-inside: avoid; }
     .sect1 + .sect1 { margin-top: 12pt; }
 
-    /* -----------------------------------------------------------------------
-       Links: no URL after the text; a PDF keeps them clickable
-    ----------------------------------------------------------------------- */
+    /* Links: no URL after the text; a PDF keeps them clickable */
     a[href]::after { content: none !important; }
 
-    /* -----------------------------------------------------------------------
-       Code blocks — readable on paper, no neon colours
-    ----------------------------------------------------------------------- */
+    /* Code blocks: readable on paper, no neon colours */
     pre, code, kbd, samp, pre * {
         font-family: "DejaVu Sans Mono", "Liberation Mono", Menlo, Consolas, "Courier New", monospace !important;
         font-size: 9pt;
@@ -297,9 +271,7 @@
     .hljs-comment                  { color: #777 !important; font-style: italic; }
     .hljs-number, .hljs-literal    { color: #333 !important; }
 
-    /* -----------------------------------------------------------------------
-       Tables
-    ----------------------------------------------------------------------- */
+    /* Tables */
     table {
         border-collapse: collapse;
         width: 100%;
@@ -333,9 +305,7 @@
         overflow: visible !important;
     }
 
-    /* -----------------------------------------------------------------------
-       Admonition blocks — grayscale left-border, no background colour
-    ----------------------------------------------------------------------- */
+    /* Admonition blocks: grayscale left-border, no background colour */
     .admonitionblock {
         border: none !important;
         border-left: 3pt solid #666 !important;
@@ -347,9 +317,7 @@
     .admonitionblock td.icon    { display: none; }
     .admonitionblock td.content { font-size: 10.5pt; }
 
-    /* -----------------------------------------------------------------------
-       Images
-    ----------------------------------------------------------------------- */
+    /* Images */
     img {
         max-width: 100% !important;
         page-break-inside: avoid;
@@ -384,9 +352,7 @@
     /* Gallery thumbnails print as full-width figures. */
     .kb-gallery > * { width: 100% !important; }
 
-    /* -----------------------------------------------------------------------
-       Content blocks: no buttons, folded code and closed notes in full
-    ----------------------------------------------------------------------- */
+    /* Content blocks: no buttons, folded code and closed notes in full */
     .kb-code-bar, .kb-code-show, .kb-totop { display: none !important; }
     .kb-code > pre { max-height: none !important; overflow: visible !important; border-radius: 0; }
     .kb-table { overflow: visible !important; margin: 6pt 0; }

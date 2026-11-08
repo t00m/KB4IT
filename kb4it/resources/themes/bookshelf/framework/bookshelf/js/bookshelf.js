@@ -1,14 +1,11 @@
-/* ============================================================================
-   KB4IT - "Bookshelf" theme  .  runtime behaviour
-   ----------------------------------------------------------------------------
+/* KB4IT - "Bookshelf" theme  .  runtime behaviour
    - turns plain Markdown <pre><code> blocks into the dark .code component
      (language label + copy button + light shell highlighting)
    - numbers the article sections and feeds the right rail "On this page" TOC
    - fills the left chapter-nav sub-anchors under the current chapter
    - scroll-spy that keeps TOC and sub-anchors in sync with the viewport
    - buttons that open a <dialog> (the cards of the stats page)
-   - the prototype page switcher is intentionally NOT shipped here
-   ============================================================================ */
+   - the prototype page switcher is intentionally NOT shipped here */
 (function () {
     "use strict";
 

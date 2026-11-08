@@ -208,9 +208,7 @@ table.month tbody tr th {
 .admonitionblock .uk-icon { border: none; }
 
 
-/* ==========================================================================
-   Section containers — class-based
-   ========================================================================== */
+/* Section containers, class-based */
 .kb-sect1 {
     border: 1px solid #e2e8f0;
     border-top: 3px solid #1e87f0;
@@ -253,9 +251,7 @@ table.month tbody tr th {
     margin: 3px 0;
 }
 
-/* ==========================================================================
-   Section headings — h2/h3/h4 visual redesign
-   ========================================================================== */
+/* Section headings: h2/h3/h4 visual redesign */
 .kb-h2 {
     font-size: 1.08rem;
     font-weight: 700;
@@ -321,9 +317,7 @@ table.month tbody tr th {
 .kb-closed > .kb-h3.kb-fold-toggle::before,
 .kb-closed > .kb-h4.kb-fold-toggle::before { content: '\25B8'; }
 
-/* ==========================================================================
-   Inline collapsible TOC panel
-   ========================================================================== */
+/* Inline collapsible TOC panel */
 .kb-print-header { display: none; }
 
 details.kb-toc-panel {
@@ -400,9 +394,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     }
 }
 
-/* ==========================================================================
-   Landing page (PAGE_INDEX) — compact layout
-   ========================================================================== */
+/* Landing page (PAGE_INDEX), compact layout */
 .kb-index { font-size: 14px; }
 .kb-index .kb-section { margin-bottom: 20px; }
 /* Collapsible dashboard sections: the title folds and unfolds the panel. */
@@ -694,10 +686,8 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     padding: 4px 0;
 }
 
-/* ==========================================================================
-   Word cloud (property pages)
-   --kb-weight is a 0..1 value emitted per item from the theme.
-   ========================================================================== */
+/* Word cloud (property pages)
+   --kb-weight is a 0..1 value emitted per item from the theme. */
 .kb-cloud {
     display: flex;
     flex-wrap: wrap;
@@ -735,9 +725,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 }
 .kb-cloud-item:hover .kb-cloud-count { color: #6aa9e0; }
 
-/* ==========================================================================
-   Events page: calendar panel beside the events table (events.js)
-   ========================================================================== */
+/* Events page: calendar panel beside the events table (events.js) */
 .kb-ev-layout {
     display: grid;
     grid-template-columns: 290px minmax(0, 1fr);
@@ -870,9 +858,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-dt-facet .kb-dt-more > a { color: #1e87f0; font-style: italic; }
 .kb-dt-facet[hidden] { display: none; }
 
-/* ==========================================================================
-   Key-value page banner (PAGE_KEY_VALUE)
-   ========================================================================== */
+/* Key-value page banner (PAGE_KEY_VALUE) */
 .kb-kv-banner {
     background: #fff;
     border-radius: 6px;
@@ -900,9 +886,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-kv-value-badge { font-size: 1.05rem; font-weight: 700; color: #1e87f0; }
 .kb-kv-count { margin-left: auto; font-size: 0.75rem; color: #bbb; font-style: italic; }
 
-/* ==========================================================================
-   Key page header (PAGE_KEY)
-   ========================================================================== */
+/* Key page header (PAGE_KEY) */
 .kb-key-header {
     display: flex;
     align-items: baseline;
@@ -916,9 +900,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-key-meta { font-size: 0.76rem; color: #aaa; }
 .kb-meta-sep { margin: 0 4px; }
 
-/* ==========================================================================
-   Stats page (PAGE_STATS)
-   ========================================================================== */
+/* Stats page (PAGE_STATS) */
 .kb-stats-hero {
     display: flex;
     gap: 16px;
@@ -1026,9 +1008,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
 .kb-stats-docs .kb-stats-count { display: inline; float: right; }
 .kb-stats-more { color: #999; font-style: italic; }
 
-/* ==========================================================================
-   Document metadata section (end of document)
-   ========================================================================== */
+/* Document metadata section (end of document) */
 .kb-metadata-list {
     list-style: none;
     margin: 0;
@@ -1066,9 +1046,7 @@ details.kb-toc-panel[open] .kb-toc-summary::before {
     font-weight: normal;
 }
 
-/* ==========================================================================
-   Page footer (HTML_FOOTER)
-   ========================================================================== */
+/* Page footer (HTML_FOOTER) */
 .kb-footer {
     display: flex;
     justify-content: space-between;
@@ -1442,9 +1420,7 @@ html.kb-exemplary #kb4it-menu > nav::after {
 .kb-open-items .kb-event-date, .kb-open-items .kb-open-badges { width: 1%; }
 .kb-open-items .kb-open-badges { white-space: nowrap; }
 
-/* ---------------------------------------------------------------------------
-   Content blocks: code bars, folded code, tables, author tabs, notes, back to top
-   --------------------------------------------------------------------------- */
+/* Content blocks: code bars, folded code, tables, author tabs, notes, back to top */
 .kb-code { position: relative; margin: 1rem 0; }
 .kb-code > pre {
     margin: 0;
