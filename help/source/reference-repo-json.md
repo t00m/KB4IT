@@ -63,7 +63,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | `og_image` | Path inside the website | | Image shown when a page is shared on social networks, such as `resources/share.png`; needs `site_url` |
 | `sitemap` | `true`, `false` | `true` | With `site_url`, write `sitemap.xml` and `robots.txt`; a `robots.txt` in `source/` is used instead of the generated one. See [Search engines](#indexing) for `seo.index` |
 | `backlinks` | `true`, `false` | `true` | At the end of each document, list the documents that link to it ("Linked from"); `false` hides the list |
-| `feed` | Object | blog: on; techdoc, bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
+| `feed` | Object | blog, techdoc: on; bookshelf: off | Atom feed `feed.xml`, see [feed](#feed) |
 | `hooks` | Path to a Python file | | Python file with build hooks, such as `hooks/hooks.py`; see [Run your own code during a build](howto-hooks.md) |
 | `overrides` | Folder path | `overrides` | Folder with templates and files that replace or extend the theme's; see [Change one template of a theme](howto-customize-templates.md) |
 | `search` | `true`, `false` | `true` | Full-text search in techdoc, blog and bookshelf; `false` removes the search box, `search.html` and `search-index.js`. See [search](#search) |
@@ -280,7 +280,7 @@ A `robots.txt` in `source/` is always used instead of the generated one. KB4IT n
 
 ## Feed {#feed}
 
-With `site_url` set, the blog theme writes an Atom feed, `feed.xml`, with the newest dated documents. techdoc and bookshelf write one when you turn it on:
+With `site_url` set, the blog and techdoc themes write an Atom feed, `feed.xml`, with the newest dated documents. bookshelf writes one when you turn it on:
 
 ```json
 "feed": {"enabled": true, "limit": 20, "categories": ["Post", "Note"], "full_content": true}
@@ -288,7 +288,7 @@ With `site_url` set, the blog theme writes an Atom feed, `feed.xml`, with the ne
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
-| `enabled` | `true`, `false` | blog `true`, others `false` | Write the feed |
+| `enabled` | `true`, `false` | blog and techdoc `true`, others `false` | Write the feed |
 | `limit` | Integer | `20` | Number of entries, newest first |
 | `categories` | List of `Category` or `WorkType` values | all | Only documents with one of these `Category` or `WorkType` values |
 | `full_content` | `true`, `false` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |

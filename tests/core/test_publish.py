@@ -125,10 +125,13 @@ def test_feed_filters_and_limits(tmp_path, home):
     assert [e[0] for e in entries] == ["Post 4", "Post 3"]
 
 
-def test_feed_is_off_by_default_in_techdoc_and_needs_site_url(tmp_path, home):
+def test_feed_is_on_by_default_in_techdoc_and_needs_site_url(tmp_path, home):
     cfg = write_repo(tmp_path / "td", "techdoc", {"a.md": page("A", Date="2026-01-01", Tag="x")}, site_url="https://x.org/")
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
-    assert not (tmp_path / "td" / "target" / "feed.xml").exists()
+    assert (tmp_path / "td" / "target" / "feed.xml").exists()
+    cfg = write_repo(tmp_path / "bs", "bookshelf", {"a.md": page("A", Date="2026-01-01", Tag="x")}, site_url="https://x.org/")
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    assert not (tmp_path / "bs" / "target" / "feed.xml").exists()
     cfg = write_repo(tmp_path / "bl", "blog", {"a.md": page("A", Category="Post", Date="2026-01-01")}, **_blog_conf())
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert "[FEED] SKIP reason=no_site_url" in result.stdout

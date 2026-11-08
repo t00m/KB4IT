@@ -133,7 +133,7 @@ Atom feed `feed.xml` with the newest dated documents. Needs `site_url`. Document
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
-| `enabled` | `true`, `false` | `false` | Write the feed |
+| `enabled` | `true`, `false` | `true` | Write the feed |
 | `limit` | Integer | `20` | Number of entries, newest first |
 | `categories` | List of `Category` or `WorkType` values | all | Only documents with one of these values |
 | `full_content` | `true`, `false` | `true` | The whole document in each entry; `false` uses `Summary` or the first lines |
@@ -187,7 +187,7 @@ A bad entry is ignored and logged under `[DATES]`; it never stops the build.
 | `events` | List of `WorkType` values, or `Category` values for documents without a `WorkType` | `[]` | Documents that count as events: calendar, events archive and the Activity card |
 | `admin` | `true`, `false` | `false` | `true` builds the `admin/` page with the source and site backup zips |
 | `quality` | `true`, `false` | `true` | `false` removes the quality score, the Quality tab, the search chip and `quality-index.js` |
-| `toc_sidebar` | `true`, `false` | `toc_sidebar` of `theme.json` (`false`) | Second table of contents in a right column, with Expand all and Collapse all, for documents with four or more sections on screens 1400 pixels or wider |
+| `toc_sidebar` | `true`, `false` | `toc_sidebar` of `theme.json` (`true`) | Second table of contents in a right column, with Expand all and Collapse all, for documents with four or more sections on screens 1400 pixels or wider |
 | `menu` | List of property names | `[]` | Order of the property buttons on the Gallery and Diagrams pages: listed keys first, the rest by name. The navigation menu is not set here: it is built from the properties your documents use |
 
 The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`.
