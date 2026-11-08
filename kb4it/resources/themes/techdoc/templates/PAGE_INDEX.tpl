@@ -34,10 +34,17 @@ def prop_url(key, value):
 %     if i > 0:
             <div class="kb-hero-divider"></div>
 %     endif
+%     if stat['url']:
             <a class="kb-hero-stat" href="${stat['url']}">
                 <span class="num">${stat['num']}</span>
                 <span class="label">${stat['label']}</span>
             </a>
+%     else:
+            <span class="kb-hero-stat">
+                <span class="num">${stat['num']}</span>
+                <span class="label">${stat['label']}</span>
+            </span>
+%     endif
 % endfor
         </div>
     </section>
@@ -210,7 +217,11 @@ def prop_url(key, value):
 % for side in ('current', 'next'):
 <%  panel = var['page']['events_panel'][side] %>
                 <div class="uk-width-1-2@m">
+%     if panel['url']:
                     <div class="kb-events-month-header"><a href="${panel['url']}">${panel['label']}</a></div>
+%     else:
+                    <div class="kb-events-month-header">${panel['label']}</div>
+%     endif
 %     if len(panel['rows']) == 0:
                     <div class="kb-events-empty">No events scheduled.</div>
 %     else:

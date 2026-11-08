@@ -64,9 +64,8 @@ def read(site, name):
 
 def test_build_is_clean(site):
     assert "ERROR |" not in site["log"]
-    # [CHECK] lines are the post-build link check. It finds techdoc links to pages never built
-    # (Author.html without authors, events_YYYYMM.html and events_YYYYMMDD.html without events);
-    # reported for a separate fix, so they are left out here.
+    # [CHECK] lines are the post-build link check. It finds document dates linked to day pages
+    # (events_YYYYMMDD.html) that are built only for event days; reported for a separate fix.
     lines = [line for line in site["log"].splitlines() if "[CHECK] ANCHOR_MISSING" not in line]
     assert "WARNING |" not in "\n".join(lines).replace("THEME_REQUIREMENT_MISSING", "")
 

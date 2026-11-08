@@ -115,7 +115,7 @@ class DashboardMixin:
 
         return [
             {'num': count_docs,       'label': 'Documents',  'url': 'all.html'},
-            {'num': count_authors,    'label': 'Authors',    'url': 'Author.html'},
+            {'num': count_authors,    'label': 'Authors',    'url': 'Author.html' if count_authors else None},
             {'num': count_categories, 'label': 'Categories', 'url': 'Category.html'},
             {'num': count_events,     'label': 'Events',     'url': 'events.html'},
             {'num': count_bookmarks,  'label': 'Bookmarks',  'url': 'bookmarks.html'},
@@ -248,15 +248,21 @@ class DashboardMixin:
                     })
             return rows
 
+        def month_url(first):
+            """The month's events page; None for a month without events, which has no page."""
+            if first.month not in self.events_docs.get(first.year, {}):
+                return None
+            return 'events_%04d%02d.html' % (first.year, first.month)
+
         return {
             'current': {
                 'label': '%s · Current' % cur_first.strftime('%B %Y'),
-                'url': 'events_%04d%02d.html' % (cur_first.year, cur_first.month),
+                'url': month_url(cur_first),
                 'rows': rows_for(cur_first.year, cur_first.month),
             },
             'next': {
                 'label': '%s · Next' % nxt_first.strftime('%B %Y'),
-                'url': 'events_%04d%02d.html' % (nxt_first.year, nxt_first.month),
+                'url': month_url(nxt_first),
                 'rows': rows_for(nxt_first.year, nxt_first.month),
             },
         }
