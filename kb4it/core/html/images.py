@@ -74,7 +74,7 @@ def _jpeg_size(data):
     return None
 
 
-def image_size(path):
+def image_size(path: str) -> tuple[int, int] | None:
     """Return (width, height) of a PNG, JPEG, GIF or SVG file, or None."""
     try:
         with open(path, 'rb') as fh:
@@ -95,7 +95,7 @@ def image_size(path):
     return None
 
 
-def is_filename_alt(alt, src):
+def is_filename_alt(alt: str, src: str) -> bool:
     """Return True when an alt text looks like a file name rather than a caption."""
     alt = (alt or '').strip()
     if not alt or alt.lower() in GENERIC_ALTS:
@@ -106,7 +106,7 @@ def is_filename_alt(alt, src):
     return ' ' not in alt and bool(re.search(r'[\d_-]', alt))
 
 
-def resolve_src(src, source_dir):
+def resolve_src(src: str, source_dir: str) -> str | None:
     """Return the local file a relative image src points to, or None for remote and absolute ones."""
     src = (src or '').strip()
     if not src or src.startswith(('/', 'data:')) or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*:', src):

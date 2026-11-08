@@ -19,6 +19,6 @@ class TocSidebarMixin(ThemeHost):
             wanted = repo['toc_sidebar']
         else:
             config = getattr(self, 'config', None)
-            wanted = getattr(config, 'toc_sidebar', None) if not hasattr(config, 'get') else config.get('toc_sidebar')
-            wanted = wanted is True
+            getter = getattr(config, 'get', None)
+            wanted = (getter('toc_sidebar') if getter else getattr(config, 'toc_sidebar', None)) is True
         return wanted and len(re.findall(r'<h2\b', source_html)) >= TOC_SIDEBAR_MIN_SECTIONS

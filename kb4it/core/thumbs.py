@@ -17,14 +17,14 @@ KEEP_ORIGINAL = ('.svg', '.svgz')
 SITE_FOLDER = os.path.join('resources', 'kb4it-thumbs')
 
 
-def thumb_name(path, width=THUMB_WIDTH):
+def thumb_name(path: str, width: int = THUMB_WIDTH) -> str:
     """The cache name of the thumbnail of path: changes with the file's size, time and the thumbnail width."""
     stat = os.stat(path)
     key = f'{os.path.abspath(path)}|{stat.st_size}|{stat.st_mtime_ns}|{width}|{THUMB_QUALITY}'
     return get_hash_from_content(key)[:24] + '.webp'
 
 
-def make_thumbnail(path, cache_dir, width=THUMB_WIDTH):
+def make_thumbnail(path: str, cache_dir: str, width: int = THUMB_WIDTH) -> tuple[str, int, int] | None:
     """Return (file name, width, height) of the thumbnail of path in cache_dir, making it when missing.
 
     Return None when the original should be shown instead: a vector image, an image no wider than

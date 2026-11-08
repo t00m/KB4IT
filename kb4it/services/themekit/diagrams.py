@@ -3,6 +3,7 @@
 import os
 import re
 from html import unescape
+from typing import Any
 
 from kb4it.core import trace
 from kb4it.core.documents import strip_first_heading
@@ -20,7 +21,7 @@ HEADING_ID = re.compile(r'\bid="([^"]*)"')
 TAG = re.compile(r'<[^>]+>')
 
 
-def document_diagrams(html):
+def document_diagrams(html: str) -> list[tuple[str, str, str]]:
     """Return [(source, anchor, heading), ...]: each Mermaid diagram of the HTML and the section it is in.
 
     anchor and heading are those of the nearest heading above the diagram, or '' before the first one.
@@ -41,7 +42,7 @@ def document_diagrams(html):
 class DiagramsMixin(ThemeHost):
     """The Diagrams page: the Gallery page, with the Mermaid diagrams of the documents instead of their images."""
 
-    def diagram_html(self, doc_id):
+    def diagram_html(self, doc_id: str) -> str:
         """The HTML of a document body with a mermaid fence, as the compiler makes it, so the heading ids match; else ''.
 
         The theme pages are built before the documents are compiled, so the body is converted here.
@@ -59,16 +60,16 @@ class DiagramsMixin(ThemeHost):
                 line_end = text.find('\n', end + 4)
                 text = text[line_end + 1:].lstrip('\n') if line_end >= 0 else ''
         settings = getattr(self.srvbes, 'markdown', None) or load_settings(self.srvbes.get_dict('repo'))
-        return settings.new_markdown().convert(strip_first_heading(text))
+        return str(settings.new_markdown().convert(strip_first_heading(text)))
 
-    def diagram_items(self, doc_id):
+    def diagram_items(self, doc_id: str) -> list[dict[str, Any]]:
         """The diagrams of one document, each linked to its section."""
         href = html_id_for(doc_id)
         html = self.diagram_html(doc_id)
         return [{'code': source, 'caption': heading, 'href': f'{href}#{anchor}' if anchor else href}
                 for source, anchor, heading in document_diagrams(html)]
 
-    def build_page_diagrams(self):
+    def build_page_diagrams(self) -> None:
         """The Diagrams page: no diagram at first; the browser draws the ones the filters choose."""
         with trace.span('diagrams'):
             data = media_data(self, self.diagram_items)

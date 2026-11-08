@@ -3,12 +3,13 @@
 import os
 import re
 from html import unescape
+from typing import Any
 
 from kb4it.core import trace
 from kb4it.core.html import image_size, is_filename_alt, resolve_src
 from kb4it.core.files import prune_tree, sync_file
 from kb4it.core.thumbs import SITE_FOLDER, make_thumbnail
-from kb4it.services.themekit.media import media_data, render_media_page
+from kb4it.services.themekit.media import MediaData, media_data, render_media_page
 from kb4it.services.themekit.host import ThemeHost
 from kb4it.core.log import q
 
@@ -23,7 +24,7 @@ MD_REF_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*<?([^\s>]+)>?', re.MULTILINE)
 HTML_IMG = re.compile(r'<img\b[^>]*>', re.IGNORECASE)
 HTML_ATTR = re.compile(r'\b(src|alt)\s*=\s*(?:"([^"]*)"|\'([^\']*)\')', re.IGNORECASE)
 
-def document_images(text):
+def document_images(text: str) -> list[tuple[str, str]]:
     """Return [(src, alt), ...] of the images a Markdown document shows, in order, each src once.
 
     Images inside fenced code blocks and code spans are examples, not images, and are left out.
@@ -56,11 +57,11 @@ def document_images(text):
 class GalleryMixin(ThemeHost):
     """The Gallery page: property buttons, a value chooser, a masonry grid of thumbnails, a lightbox."""
 
-    def gallery_thumb_dir(self):
+    def gallery_thumb_dir(self) -> str:
         """Thumbnails made by earlier builds: <repo>/var/thumbs."""
         return os.path.join(os.path.dirname(self.srvbes.get_path('db')), 'thumbs')
 
-    def gallery_image(self, src, local):
+    def gallery_image(self, src: str, local: str | None) -> dict[str, Any]:
         """The entry of one image: what the grid shows (a thumbnail or the original) and its size."""
         entry = {'src': src, 'thumb': src, 'w': 0, 'h': 0}
         if local is None:
@@ -76,7 +77,7 @@ class GalleryMixin(ThemeHost):
                 entry.update(w=size[0], h=size[1])
         return entry
 
-    def gallery_items(self, doc_id):
+    def gallery_items(self, doc_id: str) -> list[dict[str, Any]]:
         """The images one document shows, each with its thumbnail, size and caption."""
         source_dir = self.srvbes.get_path('source')
         try:
@@ -92,12 +93,12 @@ class GalleryMixin(ThemeHost):
             images.append(dict(self.gallery_image(src, local), caption='' if is_filename_alt(alt, src) else alt))
         return images
 
-    def gallery_data(self):
+    def gallery_data(self) -> MediaData:
         """Return the documents with images, newest first, their images and the filters they can be narrowed by."""
-        self._gallery_thumbs = set()
+        self._gallery_thumbs: set[str] = set()
         return media_data(self, self.gallery_items)
 
-    def build_page_gallery(self):
+    def build_page_gallery(self) -> None:
         """The Gallery page: no image at first; the property buttons on the right choose which ones to show."""
         with trace.span('gallery'):
             data = self.gallery_data()
@@ -105,7 +106,7 @@ class GalleryMixin(ThemeHost):
         docs, items, _filters = data
         self.log.info(f"[THEME] GALLERY images={len(items)} docs={len(docs)} thumbs={len(self._gallery_thumbs)}")
 
-    def deploy_gallery_thumbs(self):
+    def deploy_gallery_thumbs(self) -> None:
         """Copy the thumbnails the Gallery uses into the site and drop the others, there and in var/thumbs."""
         used = getattr(self, '_gallery_thumbs', None)
         if used is None:

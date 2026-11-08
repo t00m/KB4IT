@@ -5,6 +5,8 @@ host is the theme: it needs srvdtb, srvbes, template() and add_system_page().
 """
 
 import json
+from collections.abc import Callable
+from typing import Any
 
 from kb4it.core.util import html_id_for
 
@@ -14,21 +16,26 @@ SKIP_KEYS = {'Summary', 'Bookmark'}
 # The filter made from the year of Date, which is a blocked key.
 YEAR = 'Year'
 
+# (documents, items, filters), as media_data() returns them.
+MediaData = tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]
 
-def filter_keys(present, menu):
+
+def filter_keys(present: set[str], menu: list[str]) -> list[str]:
     """Order the filter keys: the menu keys of repo.json first, as listed there, then the rest by name."""
     first = [key for key in menu if key in present]
     return first + sorted(key for key in present if key not in first)
 
 
-def media_data(host, items_of):
+def media_data(host: Any, items_of: Callable[[str], list[dict[str, Any]]]) -> MediaData:
     """Return the documents with items, newest first, their items and the filters they can be narrowed by.
 
     items_of(doc_id) gives the items of one document (images, diagrams); a document without any is left out.
     """
     skip = set(SKIP_KEYS) | set(host.srvdtb.get_blocked_keys()) | set(host.srvdtb.get_ignored_keys())
     docs_sorted = [d for d in host.srvdtb.sort_by_date(list(host.srvdtb.get_documents())) if not host.srvdtb.is_system(d)]
-    docs, items, values = [], [], {}
+    docs: list[dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
+    values: dict[str, dict[str, int]] = {}
     for doc_id in docs_sorted:
         found = items_of(doc_id)
         if not found:
@@ -59,7 +66,7 @@ def media_data(host, items_of):
     return docs, items, filters
 
 
-def render_media_page(host, name, title, kind, data):
+def render_media_page(host: Any, name: str, title: str, kind: str, data: MediaData) -> None:
     """Write a page of the Gallery kind: kind is 'image' or 'diagram', data comes from media_data."""
     docs, items, filters = data
     page = host.template('PAGE_GALLERY').render(var={

@@ -29,7 +29,7 @@ def _parse_date(text: str) -> datetime:
 EVENTS_TABLE = 'kb4it-events-table'
 
 
-def event_days(events_docs):
+def event_days(events_docs: dict[int, dict[int, dict[int, list[str]]]]) -> dict[str, str]:
     """Return {document: 'YYYY-MM-DD'} from events_docs, which maps year, month and day to documents."""
     days = {}
     for year, months in events_docs.items():
@@ -40,7 +40,7 @@ def event_days(events_docs):
     return days
 
 
-def calendar_json(days):
+def calendar_json(days: dict[str, str]) -> str:
     """Return the JSON the calendar panel reads: {"days": {"YYYY-MM-DD": number of events}}, safe inside <script>."""
     counts = dict(sorted(Counter(days.values()).items()))
     return json.dumps({'days': counts}, separators=(',', ':')).replace('</', '<\\/')
