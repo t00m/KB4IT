@@ -139,3 +139,29 @@ def test_tui_names_still_import(name):
 def test_tui_app_all_is_the_recorded_list():
     from kb4it.tui import app
     assert sorted(app.__all__) == sorted(TUI_NAMES)
+
+
+# The public API for themes (kb4it.theme). A name here is a promise: removing or renaming one
+# needs a deprecation period (see "Write a theme" in the help).
+THEME_NAMES = ["FEATURES", "BaseTheme", "Doc", "Feature", "Problem", "Site", "Table", "ThemeError", "page_name", "q",
+               "slugify"]
+THEME_HTML_NAMES = ["enhance_blocks", "enhance_images", "lazy_images", "wrap_code"]
+
+
+def test_theme_api_is_the_recorded_list():
+    module = importlib.import_module("kb4it.theme")
+    assert sorted(module.__all__) == sorted(THEME_NAMES)
+    for name in THEME_NAMES:
+        assert hasattr(module, name), name
+
+
+def test_theme_html_is_the_recorded_list():
+    module = importlib.import_module("kb4it.theme.html")
+    assert sorted(module.__all__) == sorted(THEME_HTML_NAMES)
+
+
+def test_theme_reexports_are_the_core_objects():
+    import kb4it.theme as api
+    from kb4it.core.checks import Problem
+    from kb4it.core.exceptions import ThemeError
+    assert api.Problem is Problem and api.ThemeError is ThemeError

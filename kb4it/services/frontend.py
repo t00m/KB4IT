@@ -18,6 +18,8 @@ from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
 from kb4it.core.themeconfig import ThemeSettings, build_config
 from kb4it.core.themeload import load_module
+from kb4it.theme.base import BaseTheme
+from kb4it.theme.feature import apply_theme_json
 from kb4it.core.vendor import theme_assets, vendor_paths
 from kb4it.core.version import requirement_satisfied, theme_fingerprint, theme_identity
 from kb4it.core.log import q
@@ -138,12 +140,17 @@ class Frontend(Service):
             self.log.error(f"[FRONTEND] THEME_REQUIREMENT_UNMET id={q(theme_id)} requires={q(spec)} current={q(current)}")
             raise ThemeError(f"Theme {theme_id} requires KB4IT {spec}; this is {current}")
 
-    def _identify(self, theme):
-        """Check the theme's own version and add its fingerprint and identity (TV-01 to TV-04)."""
+    def _identify(self, theme, quiet=False):
+        """Check the theme's own version and add its fingerprint and identity (TV-01 to TV-04).
+
+        quiet: the version was already checked (the second call, after the features filled theme.json).
+        """
         from kb4it.services.builder import template_base_dir
         theme_id = theme.get("id", "?")
         version = theme.get("version")
-        if version is None:
+        if quiet:
+            pass
+        elif version is None:
             self.log.warning(f"[FRONTEND] THEME_VERSION_MISSING id={q(theme_id)}")
         elif not VERSION_XYZ.match(str(version)):
             # A warning, so themes written before theme versions keep building (RA-16).
@@ -217,8 +224,13 @@ class Frontend(Service):
                 module = load_module(self.runtime["theme"]["logic"], self.runtime["theme"].get("id", "theme"),
                                      on_bare_import=self._bare_import)
                 Theme = module.Theme
+                if isinstance(Theme, type) and issubclass(Theme, BaseTheme):
+                    service = self._public_api(Theme)
+                else:
+                    self._legacy_api(Theme)
+                    service = Theme()
 
-                self.app.register_service("Theme", Theme())
+                self.app.register_service("Theme", service)
                 self._configure(self.get_service("Theme"))
                 loaded = self.runtime["theme"]
                 self.log.debug(f"[FRONTEND] THEME_LOADED id={q(loaded['id'])} version={loaded['version'] or 'unversioned'} "
@@ -229,6 +241,27 @@ class Frontend(Service):
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
                 raise ThemeError(f"Theme load failed: {error}") from error
+
+    def _public_api(self, theme_class):
+        """The engine of a BaseTheme theme; its features fill theme.json (search, metadata_pages, assets)."""
+        from kb4it.services.themeengine import ThemeEngine, theme_json_of
+        theme = self.runtime["theme"]
+        apply_theme_json(theme, theme_json_of(theme_class), theme.get("id", "?"))
+        theme["assets"] = theme_assets(theme)
+        self._identify(theme, quiet=True)
+        engine = ThemeEngine(theme_class)
+        names = ", ".join(engine.features) or "none"
+        self.log.debug(f"[FRONTEND] THEME_FEATURES id={q(theme.get('id'))} features={q(names)}")
+        return engine
+
+    def _legacy_api(self, theme_class):
+        """A theme on Builder or DocumentTheme: deprecated; a warning for themes outside KB4IT."""
+        theme = self.runtime["theme"]
+        base = next((c.__name__ for c in theme_class.__mro__ if c.__name__ in ("DocumentTheme", "Builder")), "?")
+        message = (f"[FRONTEND] THEME_API_LEGACY theme={q(theme.get('id'))} base={q(base)} "
+                   f"hint={q('subclass kb4it.theme.BaseTheme; see Write a theme')}")
+        # Debug until starter-docs, which kb4it new-theme copies to the user's themes, is on BaseTheme.
+        self.log.debug(message)
 
     def _bare_import(self, name):
         """A theme module imported a sibling by its bare name: deprecated for themes outside KB4IT."""
@@ -244,7 +277,7 @@ class Frontend(Service):
         """Give the theme its settings as instance.config (P5); log each unknown key of its repo.json block."""
         theme = self.runtime["theme"]
         theme_id = theme.get("id", "?")
-        config_class = getattr(type(instance), "config_class", None)
+        config_class = getattr(instance, "config_class", None)
         if config_class is None:
             instance.config = ThemeSettings(theme)
         else:
@@ -262,6 +295,9 @@ class Frontend(Service):
         required = list(REQUIRED_TEMPLATES)
         if theme.get("metadata_pages", True) is False:
             required = [n for n in required if n not in ("PAGE_KEY", "PAGE_KEY_VALUE")]
+        # A theme on BaseTheme also needs the templates of its features.
+        service = self.app.services.get("Theme") if hasattr(self.app, "services") else None
+        required += [n for n in getattr(service, "required_templates", []) if n not in required]
         base_tpl_dir = template_base_dir(theme)  # also refuses an unknown base before any page is built
         missing = [
             name for name in required

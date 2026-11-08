@@ -149,6 +149,12 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         Custom themes must subclass it.
         """
 
+    def prepare(self):
+        """After the documents are read and before any page is built (stage 3); themes on BaseTheme use it."""
+
+    def after_checks(self):
+        """After the post-build checks passed (stage 8); themes on BaseTheme use it."""
+
     def site_signature(self) -> str:
         """Return a value that changes when every page must be rebuilt; empty turns the check off.
 

@@ -74,6 +74,7 @@ What `Builder` offers every theme: pages it can write, templates and shared data
 
 | Method | What it does | Defined in |
 |---|---|---|
+| `after_checks()` | After the post-build checks passed (stage 8); themes on BaseTheme use it. | `kb4it.services.builder.Builder` |
 | `apply_transformations(content)` | Apply CSS transformations to the compiled page. | `kb4it.services.builder.Builder` |
 | `backlinks(doc_id) -> list` | [{title, href}] of the documents that link to doc_id; [] when "backlinks" is false. | `kb4it.services.builder.Builder` |
 | `backlinks_html(doc_id) -> str` | The HTML_BACKLINKS block of the documents that link to doc_id; '' when none does. | `kb4it.services.builder.Builder` |
@@ -107,6 +108,7 @@ What `Builder` offers every theme: pages it can write, templates and shared data
 | `person_tip(key: str, value: str) -> str` | Role and team of the person a people key value names, for the tooltip of the name on document pages. | `kb4it.services.profilecard.ProfileCardMixin` |
 | `post_activities()` | Theme post activities. | `kb4it.services.builder.Builder` |
 | `post_deploy_activities()` | Theme activities executed after the site has been deployed. | `kb4it.services.builder.Builder` |
+| `prepare()` | After the documents are read and before any page is built (stage 3); themes on BaseTheme use it. | `kb4it.services.builder.Builder` |
 | `profile_actions(value: str, profile: kb4it.core.people.Profile \| None) -> dict` | Create and Edit links to the Add page, while the editor is on; the texts travel in the address. | `kb4it.services.profilecard.ProfileCardMixin` |
 | `profile_card(key: str, value: str) -> str` | HTML of the profile card for a value page, or an empty string. | `kb4it.services.profilecard.ProfileCardMixin` |
 | `profile_rows(profile: kb4it.core.people.Profile) -> list[dict]` | {key, value, href} of each visible profile key, in card order. | `kb4it.services.profilecard.ProfileCardMixin` |

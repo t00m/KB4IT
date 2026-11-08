@@ -26,7 +26,7 @@ def test_creates_docs_starter(tmp_path):
 
 def test_creates_plain_starter(tmp_path):
     create_theme("notes", plain=True, dest=str(tmp_path))
-    assert "page_pipeline = True" in (tmp_path / "notes" / "logic" / "theme.py").read_text(encoding="utf-8")
+    assert "class Theme(BaseTheme)" in (tmp_path / "notes" / "logic" / "theme.py").read_text(encoding="utf-8")
     assert _conf(tmp_path / "notes")["id"] == "notes"
 
 

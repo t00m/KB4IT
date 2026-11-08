@@ -532,6 +532,8 @@ class Backend(Service):
         self.log.debug("[BACKEND] ANALYSIS_START")
         self.srvprc.step_01_analysis()
         self.log.debug("[BACKEND] ANALYSIS_END")
+        # The theme computes what its pages need before the property pages are built.
+        self.srvthm.prepare()
         self.log.debug("[BACKEND] TRANSFORMATION_START")
         self.srvprc.step_02_transformation()
         self.log.debug("[BACKEND] TRANSFORMATION_END")

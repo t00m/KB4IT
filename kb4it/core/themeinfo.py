@@ -155,7 +155,7 @@ def options(cls) -> dict:
     return dict(sorted(values.items()))
 
 
-def templates(folder: str, theme_json: dict, overrides: str | None) -> list[dict]:
+def templates(folder: str, theme_json: dict, overrides: str | None, extra=()) -> list[dict]:
     """Every template the theme can render, and the file it comes from (first match wins)."""
     from kb4it.services.builder import REQUIRED_TEMPLATES, template_base_dir
     base = template_base_dir(theme_json)
@@ -166,7 +166,7 @@ def templates(folder: str, theme_json: dict, overrides: str | None) -> list[dict
     if base:
         sources.append((f"base:{theme_json['template_base']}", base))
     sources.append(("common", ENV["GPATH"]["TEMPLATES"]))
-    names = set(REQUIRED_TEMPLATES)
+    names = set(REQUIRED_TEMPLATES) | set(extra)
     if theme_json.get("metadata_pages", True) is False:
         names -= {"PAGE_KEY", "PAGE_KEY_VALUE"}
     for _origin, path in sources[:-1]:
@@ -198,6 +198,34 @@ def settings(cls, theme_json: dict, repo: dict, theme_id: str) -> dict:
     return {"class": config_class.__name__, "values": values}
 
 
+def public_api(cls, folder: str) -> dict:
+    """features, hooks and options of a theme on kb4it.theme.BaseTheme."""
+    from kb4it.services.themeengine import features_of
+    from kb4it.theme import BaseTheme
+    from kb4it.theme.features import REGISTRY
+    classes = features_of(cls)
+    owners = {hook: feat.name for feat in classes for hook in feat.hooks}
+    option_names = {opt: feat.name for feat in classes for opt in feat.options}
+    features = [f.name if REGISTRY.get(f.name) is f else f"{f.name} (theme)" for f in classes]
+    rows, values, seen = [], {}, set()
+    for klass in cls.__mro__:
+        if klass is BaseTheme or klass is object:
+            continue
+        for attr, value in vars(klass).items():
+            if attr in seen or attr.startswith("_"):
+                continue
+            seen.add(attr)
+            if callable(value) and not inspect.isclass(value):
+                if hasattr(BaseTheme, attr) or attr in owners:
+                    rows.append({"hook": attr, "class": klass.__name__, "where": _where(value, folder),
+                                 "feature": owners.get(attr, ""), "kb4it": "kb4it.theme.BaseTheme"})
+            elif attr in option_names or (hasattr(BaseTheme, attr) and attr != "features"):
+                values[attr] = value
+    return {"features": features, "hooks": sorted(rows, key=lambda r: r["hook"]),
+            "templates": [t for f in classes for t in f.templates],
+            "options": dict(sorted(values.items()))}
+
+
 def collect(name: str, repo_config: str | None = None) -> dict:
     """Everything theme-info prints, as a dict (the --json output)."""
     folder, origin, repo = find_theme(name, repo_config)
@@ -206,6 +234,12 @@ def collect(name: str, repo_config: str | None = None) -> dict:
     theme_id = theme_json.get("id") or os.path.basename(folder)
     cls = load_module(os.path.join(folder, "logic"), theme_id).Theme
     legacy = [b.__name__ for b in cls.__mro__ if _kb4it_class(b) and b.__name__ in LEGACY_BASES]
+    from kb4it.theme import BaseTheme
+    public = public_api(cls, folder) if issubclass(cls, BaseTheme) else None
+    if public:
+        from kb4it.services.themeengine import theme_json_of
+        from kb4it.theme.feature import apply_theme_json
+        apply_theme_json(theme_json, theme_json_of(cls), theme_id)
     overrides = None
     if repo_config:
         root = os.path.dirname(os.path.dirname(os.path.abspath(repo_config)))
@@ -215,12 +249,12 @@ def collect(name: str, repo_config: str | None = None) -> dict:
         "version": theme_json.get("version"),
         "origin": origin,
         "path": folder,
-        "api": f"legacy {legacy[0]} (deprecated)" if legacy else "unknown",
+        "api": "BaseTheme" if public else f"legacy {legacy[0]} (deprecated)" if legacy else "unknown",
         "mro": len(cls.__mro__),
-        "features": legacy_features(cls, theme_json),
-        "hooks": hooks(cls, folder),
-        "options": options(cls),
-        "templates": templates(folder, theme_json, overrides),
+        "features": public["features"] if public else legacy_features(cls, theme_json),
+        "hooks": public["hooks"] if public else hooks(cls, folder),
+        "options": public["options"] if public else options(cls),
+        "templates": templates(folder, theme_json, overrides, public["templates"] if public else ()),
         "settings": settings(cls, theme_json, repo, theme_id),
     }
 

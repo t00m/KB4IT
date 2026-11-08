@@ -1,6 +1,7 @@
 """Starter themes (kb4it/resources/starters/): each builds its sample app cleanly from a copy."""
 
 import json
+import re
 import shutil
 
 import pytest
@@ -30,7 +31,7 @@ def test_starter_builds(tmp_path, home, name):
 @pytest.mark.parametrize("name", ["starter-docs", "starter-plain"])
 def test_starter_theme_json(name):
     conf = json.loads((STARTERS / name / "theme.json").read_text(encoding="utf-8"))
-    assert conf["id"] == name and conf["version"] == "0.1.0" and conf["kb4it"] == ">=0.12.0"
+    assert conf["id"] == name and re.fullmatch(r"\d+\.\d+\.\d+", conf["version"]) and conf["kb4it"] == ">=0.12.0"
     assert conf["autoescape"] is True
 
 
