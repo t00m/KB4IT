@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${var['page']['title']} | ${var['repo']['title']}</title>
-    <link rel="stylesheet" href="resources/themes/starter-plain/framework/style.css">
+    <link rel="stylesheet" href="resources/themes/${var['theme']['id']}/framework/style.css">
 </head>
 <body>
 <header>

@@ -351,6 +351,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     theme_install.add_argument("source", help="Path to a .zip file, or an https:// URL")
 
+    # Start a theme of your own from a starter
+    new_theme = subparsers.add_parser(
+        "new-theme", help="Create a theme of your own from a starter theme",
+        description="Copies starter-docs (a document theme on UIkit) or, with --plain, starter-plain "
+        "(plain pages) into DIR/ID; DIR defaults to your themes folder.",
+        epilog="Examples:\n\n   kb4it new-theme mytheme\n   kb4it new-theme --plain notes ~/devel/themes",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    new_theme.add_argument("id", help="Theme id: lower-case letters, digits, '-' and '_'")
+    new_theme.add_argument("dir", nargs="?", default=None, help="Folder to create the theme in")
+    new_theme.add_argument("--plain", action="store_true", help="Start from starter-plain instead of starter-docs")
+
     # Remove a theme of the user
     theme_uninstall = subparsers.add_parser(
         "uninstall-theme", help="Remove a theme from your themes folder (bundled themes stay)",
@@ -554,6 +566,9 @@ def main():
         if params.action == "install-theme":
             from kb4it.core.themecli import run_install_theme
             sys.exit(run_install_theme(vars(params)))
+        if params.action == "new-theme":
+            from kb4it.core.newtheme import run_new_theme
+            sys.exit(run_new_theme(vars(params)))
         if params.action == "uninstall-theme":
             from kb4it.core.themecli import run_uninstall_theme
             sys.exit(run_uninstall_theme(vars(params)))

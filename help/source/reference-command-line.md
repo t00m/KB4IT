@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, install-theme, uninstall-theme, theme zip, active theme, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
+Keyword: cli, kb4it, install-theme, uninstall-theme, new-theme, --plain, starter, theme zip, active theme, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -26,6 +26,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it info CONFIG` | Shows the main settings |
 | `kb4it themes` | Lists the installed themes with their version, fingerprint, folder and whether builds use that copy (`active=yes` or `active=no`) |
 | `kb4it install-theme SOURCE` | Installs a theme from a zip file or an `https://` URL into your themes folder. See [Install a theme](#themes) |
+| `kb4it new-theme ID [--plain] [DIR]` | Creates a theme of your own from a starter theme. See [Start a theme](#new-theme) |
 | `kb4it uninstall-theme ID [--yes]` | Removes a theme from your themes folder. See [Install a theme](#themes) |
 | `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
@@ -83,6 +84,17 @@ Installed mytheme 1.2.0 in /home/me/.kb4it/opt/resources/themes/mytheme, replaci
 ```
 
 `kb4it uninstall-theme ID` removes a theme from your themes folder. Bundled themes cannot be removed. Before it deletes anything, it lists the projects that use the theme: with a bundled theme of the same id they use it again, otherwise their builds fail until you install the theme again. In a terminal, type the id to confirm; in a script, add `--yes`. Without a terminal and without `--yes` it removes nothing and ends with `1`.
+
+### Start a theme {#new-theme}
+
+`kb4it new-theme ID` copies the starter theme `starter-docs` into your themes folder as `~/.kb4it/opt/resources/themes/ID/`, with `ID` as its `id` in `theme.json` and in the `repo.json` of its sample app. `starter-docs` is a document theme on UIkit: property pages, a table of all documents and search. With `--plain` it copies `starter-plain`, a theme of plain pages with a home page and search, no property pages. Give a folder after the id to create the theme there instead, as `DIR/ID`.
+
+```
+$ kb4it new-theme mytheme
+Theme mytheme created in /home/me/.kb4it/opt/resources/themes/mytheme
+```
+
+The id takes lower-case letters, digits, `-` and `_`. The command ends with `1` and writes nothing when the id is not valid, names a bundled theme, or the folder exists. See [Create your own theme](howto-create-theme.md).
 
 `kb4it themes` lists every copy. The one builds use has `active=yes`; a bundled theme hidden by one of yours shows `active=no shadowed_by=user`. A theme shipped inside a knowledge base's `source/resources/themes/` wins over both, and is not listed.
 
