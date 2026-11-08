@@ -47,5 +47,6 @@ def test_normalise_maps_old_and_new_vendor_paths_to_one_token():
 
 def test_normalise_maps_the_moved_kit_scripts():
     for old, new in (("resources/themes/techdoc/framework/kb4it/js/datatable-filter.js",
-                      "resources/vendor/tablefilter/js/datatable-filter.js"),):
+                      "resources/vendor/tablefilter/js/datatable-filter.js"),
+                     ("resources/themes/techdoc/framework/kb4it/js/gallery.js", "resources/vendor/gallery/js/gallery.js")):
         assert snapshot.normalise(f'src="{old}"') == snapshot.normalise(f'src="{new}"'), (old, new)

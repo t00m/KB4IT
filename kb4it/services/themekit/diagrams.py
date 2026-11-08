@@ -1,4 +1,4 @@
-"""techdoc diagrams: the Mermaid diagrams of every document, shown by the properties chosen in a filter panel."""
+"""Diagrams kit (Layer 1): the Mermaid diagrams of every document, shown by the properties chosen in a filter panel."""
 
 import os
 import re
@@ -8,6 +8,8 @@ from kb4it.core import trace
 from kb4it.core.documents import strip_first_heading
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.util import html_id_for
+from kb4it.services.themekit.media import media_data, render_media_page
+from kb4it.services.themekit.host import ThemeHost
 
 # A document is converted only when a line opens a mermaid fence.
 MERMAID_FENCE = re.compile(r'^(`{3,}|~{3,})[ \t]*mermaid[ \t]*$', re.MULTILINE)
@@ -36,7 +38,7 @@ def document_diagrams(html):
     return diagrams
 
 
-class DiagramsMixin:
+class DiagramsMixin(ThemeHost):
     """The Diagrams page: the Gallery page, with the Mermaid diagrams of the documents instead of their images."""
 
     def diagram_html(self, doc_id):
@@ -69,7 +71,7 @@ class DiagramsMixin:
     def build_page_diagrams(self):
         """The Diagrams page: no diagram at first; the browser draws the ones the filters choose."""
         with trace.span('diagrams'):
-            data = self.media_data(self.diagram_items)
-        self.build_media_page('diagrams', 'Diagrams', 'diagram', data)
+            data = media_data(self, self.diagram_items)
+        render_media_page(self, 'diagrams', 'Diagrams', 'diagram', data)
         docs, items, _filters = data
         self.log.info(f"[THEME] DIAGRAMS diagrams={len(items)} docs={len(docs)}")

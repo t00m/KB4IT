@@ -40,7 +40,7 @@ def _resource_links(html):
 
 
 def test_bundled_vendor_libraries():
-    assert vendor_names() == ["datatables", "highlight", "search", "tablefilter", "uikit"]
+    assert vendor_names() == ["datatables", "gallery", "highlight", "search", "tablefilter", "uikit"]
 
 
 def test_no_duplicate_vendor_in_tree():

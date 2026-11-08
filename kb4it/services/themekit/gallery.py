@@ -1,16 +1,15 @@
-"""techdoc gallery: thumbnails of the images of every document, shown by the properties chosen in a filter panel."""
+"""Gallery kit (Layer 1): thumbnails of the images of every document, shown by the properties chosen in a filter panel."""
 
-import json
 import os
 import re
 from html import unescape
 
-from techdoc_thumbs import SITE_FOLDER, make_thumbnail
-
 from kb4it.core import trace
 from kb4it.core.html import image_size, is_filename_alt, resolve_src
 from kb4it.core.files import prune_tree, sync_file
-from kb4it.core.util import html_id_for
+from kb4it.core.thumbs import SITE_FOLDER, make_thumbnail
+from kb4it.services.themekit.media import media_data, render_media_page
+from kb4it.services.themekit.host import ThemeHost
 from kb4it.core.log import q
 
 FRONTMATTER = re.compile(r'\A---\n.*?\n---[ \t]*\n?', re.DOTALL)
@@ -23,13 +22,6 @@ MD_IMAGE_REF = re.compile(r'!\[([^\]]*)\]\[([^\]]*)\]')
 MD_REF_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*<?([^\s>]+)>?', re.MULTILINE)
 HTML_IMG = re.compile(r'<img\b[^>]*>', re.IGNORECASE)
 HTML_ATTR = re.compile(r'\b(src|alt)\s*=\s*(?:"([^"]*)"|\'([^\']*)\')', re.IGNORECASE)
-
-# Keys that never become a filter: free text, or the page itself.
-SKIP_KEYS = {'Summary', 'Bookmark'}
-
-# The filter made from the year of Date, which is a blocked key.
-YEAR = 'Year'
-
 
 def document_images(text):
     """Return [(src, alt), ...] of the images a Markdown document shows, in order, each src once.
@@ -61,13 +53,7 @@ def document_images(text):
     return images
 
 
-def filter_keys(present, menu):
-    """Order the filter keys: the menu keys of repo.json first, as listed there, then the rest by name."""
-    first = [key for key in menu if key in present]
-    return first + sorted(key for key in present if key not in first)
-
-
-class GalleryMixin:
+class GalleryMixin(ThemeHost):
     """The Gallery page: property buttons, a value chooser, a masonry grid of thumbnails, a lightbox."""
 
     def gallery_thumb_dir(self):
@@ -106,67 +92,16 @@ class GalleryMixin:
             images.append(dict(self.gallery_image(src, local), caption='' if is_filename_alt(alt, src) else alt))
         return images
 
-    def media_data(self, items_of):
-        """Return the documents with items, newest first, their items and the filters they can be narrowed by.
-
-        items_of(doc_id) gives the items of one document (images, diagrams); a document without any is left out.
-        """
-        skip = set(SKIP_KEYS) | set(self.srvdtb.get_blocked_keys()) | set(self.srvdtb.get_ignored_keys())
-        docs_sorted = [d for d in self.srvdtb.sort_by_date(list(self.srvdtb.get_documents())) if not self.srvdtb.is_system(d)]
-        docs, items, values = [], [], {}
-        for doc_id in docs_sorted:
-            found = items_of(doc_id)
-            if not found:
-                continue
-            props = {}
-            for key in self.srvdtb.get_doc_keys(doc_id):
-                if key in skip:
-                    continue
-                vals = sorted({v for v in self.srvdtb.get_values(doc_id, key) if v})
-                if vals:
-                    props[key] = vals
-            year = (self.srvdtb.get_values(doc_id, 'Date') or [''])[0][:4]
-            if year.isdigit():
-                props[YEAR] = [year]
-            title = (self.srvdtb.get_values(doc_id, 'Title') or [doc_id])[0]
-            for item in found:
-                items.append(dict(item, d=len(docs)))
-            docs.append({'title': title, 'href': html_id_for(doc_id), 'props': props})
-            for key, vals in props.items():
-                for value in vals:
-                    values.setdefault(key, {}).setdefault(value, 0)
-                    values[key][value] += len(found)
-        menu = (self.srvbes.get_dict('repo') or {}).get('menu') or []
-        filters = []
-        for key in filter_keys(set(values) - {YEAR}, menu) + ([YEAR] if YEAR in values else []):
-            order = sorted(values[key], reverse=True) if key == YEAR else sorted(values[key], key=str.lower)
-            filters.append({'key': key, 'values': [[v, values[key][v]] for v in order]})
-        return docs, items, filters
-
     def gallery_data(self):
         """Return the documents with images, newest first, their images and the filters they can be narrowed by."""
         self._gallery_thumbs = set()
-        return self.media_data(self.gallery_items)
-
-    def build_media_page(self, name, title, kind, data):
-        """Write a page of the Gallery kind: kind is 'image' or 'diagram', data comes from media_data."""
-        docs, items, filters = data
-        page = self.template('PAGE_GALLERY').render(var={
-            'kind': kind,
-            'items': len(items),
-            'docs': len(docs),
-            'filters': filters,
-            # JSON inside <script>: "<" escaped so a value cannot close the element.
-            'json': json.dumps({'kind': kind, 'docs': docs, 'items': items, 'filters': filters},
-                               ensure_ascii=False, sort_keys=True, separators=(',', ':')).replace('<', '\\u003c'),
-        })
-        self.add_system_page(name, title, page)
+        return media_data(self, self.gallery_items)
 
     def build_page_gallery(self):
         """The Gallery page: no image at first; the property buttons on the right choose which ones to show."""
         with trace.span('gallery'):
             data = self.gallery_data()
-        self.build_media_page('gallery', 'Gallery', 'image', data)
+        render_media_page(self, 'gallery', 'Gallery', 'image', data)
         docs, items, _filters = data
         self.log.info(f"[THEME] GALLERY images={len(items)} docs={len(docs)} thumbs={len(self._gallery_thumbs)}")
 

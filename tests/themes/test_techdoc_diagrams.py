@@ -1,26 +1,13 @@
 """techdoc Diagrams page: the Mermaid diagrams of the documents, filtered like the Gallery, drawn in the browser."""
 
-import importlib.util
 import json
 import re
-import sys
 
 import pytest
 
 from tests.helpers import ROOT, page, run_kb4it, write_repo
 
-LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-sys.path.insert(0, str(LOGIC))  # techdoc_diagrams is loaded as the theme loads it
-
-
-def _load(name):
-    spec = importlib.util.spec_from_file_location(name, LOGIC / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-diagrams = _load("techdoc_diagrams")
+from kb4it.services.themekit import diagrams
 
 FENCE = "`" * 3
 FLOW = f"{FENCE}mermaid\nflowchart LR\n  A[Alert] --> B[Restart & check]\n{FENCE}\n"

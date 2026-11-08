@@ -46,6 +46,7 @@ _VOLATILE = [
     # Scripts of techdoc features that became kits (Part C).
     (re.compile(r"resources/(?:themes/techdoc/framework/kb4it|vendor/tablefilter)/js/datatable-filter\.js"),
      "<VENDOR:tablefilter>/js/datatable-filter.js"),
+    (re.compile(r"resources/(?:themes/techdoc/framework/kb4it|vendor/gallery)/js/gallery\.js"), "<VENDOR:gallery>/js/gallery.js"),
 ]
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 

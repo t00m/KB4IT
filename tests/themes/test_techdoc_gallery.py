@@ -1,10 +1,8 @@
-"""techdoc gallery: thumbnails, filters from document properties, no image in the page, the menu link."""
+"""Gallery kit (themekit/gallery.py) in techdoc: thumbnails, filters from document properties, no image in the page."""
 
-import importlib.util
 import json
 import os
 import re
-import sys
 
 import pytest
 from PIL import Image
@@ -12,19 +10,8 @@ from PIL import Image
 from tests.helpers import ROOT, page, run_kb4it, write_repo
 from tests.themes.test_techdoc_media import png
 
-LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-sys.path.insert(0, str(LOGIC))  # techdoc_gallery imports techdoc_thumbs
-
-
-def _load(name):
-    spec = importlib.util.spec_from_file_location(name, LOGIC / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-gallery = _load("techdoc_gallery")
-thumbs = _load("techdoc_thumbs")
+from kb4it.core import thumbs
+from kb4it.services.themekit import gallery, media
 
 DOCS = {
     "storage.md": page("Storage screenshots",
@@ -76,7 +63,7 @@ def test_document_images_in_order_without_code_and_duplicates():
 
 
 def test_filter_keys_follow_the_menu_then_the_name():
-    assert gallery.filter_keys({"Tag", "Author", "Product", "Category"}, ["Product", "Missing", "Category"]) == [
+    assert media.filter_keys({"Tag", "Author", "Product", "Category"}, ["Product", "Missing", "Category"]) == [
         "Product", "Category", "Author", "Tag"]
 
 
@@ -164,7 +151,7 @@ def test_gallery_without_images_says_so(tmp_path):
 
 
 def test_gallery_script_is_offline_and_builds_no_html():
-    script = (ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "js" / "gallery.js")
+    script = ROOT / "kb4it" / "resources" / "vendor" / "gallery" / "js" / "gallery.js"
     text = script.read_text(encoding="utf-8")
     assert "http://" not in text and "https://" not in text
     assert "innerHTML" not in text

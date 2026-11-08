@@ -60,7 +60,7 @@
     </div>
     <!-- ${tag} VALUES DIALOG :: END -->
     <script type="application/json" id="kb-gal-data">${var['json'] | n}</script>
-    <script src="resources/themes/techdoc/framework/kb4it/js/gallery.js" defer></script>
+    <script src="resources/vendor/gallery/js/gallery.js" defer></script>
 % elif diagram:
     <p class="kb-gal-status">No document has a diagram yet. Add one with a <code>```mermaid</code> code block; see the <a href="https://mermaid.js.org/">Mermaid documentation</a>.</p>
 % else:

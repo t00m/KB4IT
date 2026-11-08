@@ -19,9 +19,7 @@ from lxml import etree
 from techdoc_admin import AdminMixin
 from techdoc_config import TechdocConfig
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
-from techdoc_diagrams import DiagramsMixin
 from techdoc_docpage import banners, header_strip, info_groups, summary
-from techdoc_gallery import GalleryMixin
 from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInput, assess, checklist, index_js,
                              load_skeletons, peer_stats, profile)
 from techdoc_quality_guide import CHECKS as GUIDE_CHECKS
@@ -40,8 +38,10 @@ from kb4it.core.util import (
 from kb4it.core.html import enhance_blocks, enhance_images
 from kb4it.core.people import named_people, person_status
 from kb4it.services.themekit import DocumentTheme
+from kb4it.services.themekit.diagrams import DiagramsMixin
 from kb4it.services.themekit.events import EVENTS_TABLE, calendar_json, event_days
 from kb4it.services.themekit.filters import FilterMixin
+from kb4it.services.themekit.gallery import GalleryMixin
 from kb4it.services.themekit.related import RelatedMixin
 from kb4it.services.themekit.tocsidebar import TocSidebarMixin
 from kb4it.core.log import q
