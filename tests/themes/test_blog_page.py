@@ -44,3 +44,11 @@ def test_new_post_link(tmp_path, home):
            "git_path": "source"}
     target = _build(tmp_path, home, {"a.md": page("A", Category="Post", Date="2026-01-01")}, **git)
     assert 'href="https://github.com/me/kb/new/main/source"' in _html(target, "a.html")
+
+
+def test_date_property_is_not_a_link(tmp_path, home):
+    """Date keys have no page, so the properties table shows the key name without a link."""
+    target = _build(tmp_path, home, {"a.md": page("A", Category="Post", Date="2026-01-01")})
+    html = _html(target, "a.html")
+    assert 'href="Date.html"' not in html
+    assert 'href="Category.html"' in html

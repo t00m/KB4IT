@@ -39,6 +39,7 @@ class MetadataMixin(ThemeHost):
         try:
             tpl_section = self.template('METADATA_SECTION')
             var: dict[str, Any] = {'items': []}
+            blocked = set(self.srvdtb.get_blocked_keys())
             for key in self.srvdtb.get_custom_keys(os.path.basename(docId)):
                 try:
                     values = self.get_html_values_from_key(docId, key)
@@ -46,6 +47,7 @@ class MetadataMixin(ThemeHost):
                         'doc': docId,
                         'key': key,
                         'vfkey': valid_filename(key),
+                        'has_page': key not in blocked,  # date keys get no page of their own
                         'labels': self.get_labels(values),
                     })
                 except Exception as error:

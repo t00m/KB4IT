@@ -9,9 +9,13 @@
 % for item in var['items']:
     <tr class="">
         <td class="">
+% if item.get('has_page', True):
             <a class="uk-link-text" href="${item['vfkey']}.html">
                 <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">${item['key']}</div>
             </a>
+% else:
+            <div class="uk-text-bolder uk-text-secondary uk-text-bold uk-text-meta">${item['key']}</div>
+% endif
         </td>
         <td class=""><div class="uk-flex uk-flex-row uk-flex-wrap uk-text-meta">${item['labels'] | n}</div></td>
     </tr>
