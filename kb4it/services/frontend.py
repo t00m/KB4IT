@@ -17,6 +17,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
+from kb4it.core.vendor import theme_assets, vendor_paths
 from kb4it.core.version import requirement_satisfied, theme_fingerprint, theme_identity
 from kb4it.core.log import q
 
@@ -144,7 +145,7 @@ class Frontend(Service):
         if version is None:
             self.log.warning(f"[FRONTEND] THEME_VERSION_MISSING id={q(theme_id)}")
         elif not VERSION_XYZ.match(str(version)):
-            # A warning for now, so themes written before theme versions keep building; an error in the next minor release (RA-16).
+            # A warning, so themes written before theme versions keep building (RA-16).
             self.log.warning(f"[FRONTEND] THEME_VERSION_INVALID id={q(theme_id)} version={q(version)} expected=X.Y.Z")
             version = None
         try:
@@ -152,7 +153,10 @@ class Frontend(Service):
         except ThemeError:
             base = None  # the build refuses it in _validate_required_templates; a listing still shows the theme
         theme["version"] = version
-        theme["fingerprint"] = theme_fingerprint(theme["path"], base, ENV["GPATH"]["TEMPLATES"])
+        assets = theme.get("assets")
+        # A listing shows a theme even with a bad 'assets' value; theme_load refuses it.
+        shared = vendor_paths(n for n in assets if isinstance(n, str)) if isinstance(assets, list) else []
+        theme["fingerprint"] = theme_fingerprint(theme["path"], base, ENV["GPATH"]["TEMPLATES"], *shared)
         theme["identity"] = theme_identity(theme_id, version, theme["fingerprint"])
 
     def theme_load(self, theme_name=None):
@@ -186,6 +190,7 @@ class Frontend(Service):
                 return None
 
             self._check_requirement(theme)
+            self.runtime["theme"]["assets"] = theme_assets(theme)
             check_theme_editor(theme)
             self._identify(self.runtime["theme"])
 
