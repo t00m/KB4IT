@@ -36,10 +36,11 @@ def legacy(tmp_path_factory):
     (folder / "logic").mkdir(parents=True)
     (folder / "templates").mkdir()
     (folder / "theme.json").write_text(json.dumps({"id": "legacy", "name": "Legacy", "version": "1.0.0",
-                                                   "kb4it": ">=0.12.0", "search": True, "template_base": "uikit"}))
+                                                   "kb4it": ">=0.12.0", "search": True, "template_base": "uikit"}),
+                                       encoding="utf-8")
     (folder / "logic" / "helpers.py").write_text("class LocalMixin:\n    def post_deploy_activities(self):\n"
-                                                 "        pass\n")
-    (folder / "logic" / "theme.py").write_text(LEGACY)
+                                                 "        pass\n", encoding="utf-8")
+    (folder / "logic" / "theme.py").write_text(LEGACY, encoding="utf-8")
     return collect(str(folder))
 
 

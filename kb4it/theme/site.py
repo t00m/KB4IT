@@ -82,6 +82,7 @@ class Doc:
 
     @property
     def title(self) -> str:
+        """The Title (the first heading of the document), or ''."""
         return self.value("Title")
 
     @property
@@ -185,9 +186,11 @@ class Documents:
         return Doc(self._site, doc_id) if doc_id in self._site._db.db else None
 
     def latest(self, n: int) -> list[Doc]:
+        """The n newest documents."""
         return list(self)[:n]
 
     def by_date(self) -> list[Doc]:
+        """Every document, newest first, undated ones last."""
         return list(self)
 
     def with_value(self, key: str, value: str) -> list[Doc]:
@@ -196,6 +199,7 @@ class Documents:
         return [Doc(self._site, d) for d in db.get_docs_by_key_value(key, value) if not db.is_system(d)]
 
     def filter(self, test: Callable[[Doc], bool]) -> list[Doc]:
+        """The documents for which test(doc) is true, newest first."""
         return [doc for doc in self if test(doc)]
 
 
@@ -214,21 +218,26 @@ class Properties:
         return tuple(self._site._db.get_all_keys())
 
     def values(self, key: str) -> tuple[str, ...]:
+        """Every value of a property in the site, sorted without case."""
         return tuple(self._site._db.get_all_values_for_key(key))
 
     def documents(self, key: str, value: str) -> list[Doc]:
+        """The documents with a value of a property, newest first."""
         return self._site.documents.with_value(key, value)
 
     @staticmethod
     def url(key: str, value: str | None = None) -> str:
+        """The page of a property (Key.html) or of one of its values (Key_Value.html)."""
         return page_name(key, value)
 
     @property
     def blocked(self) -> tuple[str, ...]:
+        """Keys that never get a page: Title, SystemPage and the date keys."""
         return tuple(self._site._db.get_blocked_keys())
 
     @property
     def ignored(self) -> tuple[str, ...]:
+        """Keys left out of every page (repo.json ignored_keys)."""
         return tuple(self._site._db.get_ignored_keys())
 
     @property
@@ -262,6 +271,7 @@ class People:
         return person_tip(self.lookup(name), self._settings())
 
     def status(self, name: str) -> str:
+        """'ok', 'missing' or 'no_contact': whether the person has a profile with contact details."""
         return person_status(self.lookup(name), self._settings())
 
 
@@ -279,16 +289,19 @@ class Build:
 
     @property
     def documents_changed(self) -> int:
+        """How many documents this build compiles."""
         plan = self._site._plan()
         return plan.doc_count if plan is not None else 0
 
     @property
     def keys_changed(self) -> tuple[str, ...]:
+        """The properties whose pages this build rebuilds."""
         plan = self._site._plan()
         return tuple(key for key, _values, flag in (plan.K_PATH if plan else ()) if flag)
 
     @property
     def force(self) -> bool:
+        """True for a full build (--force, or nothing cached)."""
         plan = self._site._plan()
         return bool(plan.force_all) if plan is not None else True
 
@@ -307,6 +320,7 @@ class Paths:
 
     @property
     def source(self) -> str | None:
+        """The folder of the Markdown documents."""
         path: str | None = self._site._backend.get_path("source")
         return path
 

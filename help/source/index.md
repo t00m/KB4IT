@@ -54,7 +54,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
       <li><a href="explanation-themes.html">Themes</a><br><span class="ah-muted">Pick the theme that fits what you write.</span></li>
       <li><a href="reference-theme-techdoc.html">techdoc</a>, <a href="reference-theme-blog.html">blog</a>, <a href="reference-theme-bookshelf.html">bookshelf</a>, <a href="reference-theme-apphelp.html">apphelp</a><br><span class="ah-muted">What each bundled theme offers.</span></li>
       <li><a href="howto-customize-templates.html">Change one template</a><br><span class="ah-muted">Adjust a theme for one site, without copying it.</span></li>
-      <li><a href="howto-create-theme.html">Create your own theme</a><br><span class="ah-muted">Templates, logic and where to install it.</span></li>
+      <li><a href="howto-create-theme.html">Write a theme</a><br><span class="ah-muted">Features, hooks, templates and where to install it.</span></li>
     </ul>
   </section>
   <section class="ah-card">

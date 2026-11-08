@@ -95,7 +95,7 @@ $ kb4it new-theme mytheme
 Theme mytheme created in /home/me/.kb4it/opt/resources/themes/mytheme
 ```
 
-The id takes lower-case letters, digits, `-` and `_`. The command ends with `1` and writes nothing when the id is not valid, names a bundled theme, or the folder exists. See [Create your own theme](howto-create-theme.md).
+The id takes lower-case letters, digits, `-` and `_`. The command ends with `1` and writes nothing when the id is not valid, names a bundled theme, or the folder exists. See [Write a theme](howto-create-theme.md).
 
 `kb4it themes` lists every copy. The one builds use has `active=yes`; a bundled theme hidden by one of yours shows `active=no shadowed_by=user`. A theme shipped inside a knowledge base's `source/resources/themes/` wins over both, and is not listed.
 
@@ -107,7 +107,7 @@ A build that runs while you reinstall the theme it uses may fail; build again.
 
 - `theme`: id, version, where it was found (`builtin`, `user`, `path` or `theme_path`) and its folder.
 - `api`: the base class. A theme on `Builder` or `DocumentTheme` shows `legacy ... (deprecated)`.
-- `features`: what the theme has switched on, such as `property_pages`, `events`, `table_filter` or `search`. Theme-local parts are marked `(theme)`.
+- `features`: what the theme has switched on, in the order they run, such as `property_pages`, `events`, `table_filter` or `search`. The theme's own features are marked `(theme)`.
 - `hooks`: every method the theme overrides, with its file and line and the feature it belongs to.
 - `options`: the class attributes the theme sets over a KB4IT default.
 - `templates`: every template the theme can render and where it comes from: `repo` (the site's overrides), `theme`, `base:NAME` (the template base) or `common`.
@@ -115,9 +115,9 @@ A build that runs while you reinstall the theme it uses may fail; build again.
 
 ```
 $ kb4it theme-info techdoc
-theme      techdoc 1.3.0 (builtin) /usr/lib/python3/site-packages/kb4it/resources/themes/techdoc
-api        legacy DocumentTheme (deprecated), 26 classes in the MRO
-features   toc, events, table, property_pages, stats, ...
+theme      techdoc 1.4.0 (builtin) /usr/lib/python3/site-packages/kb4it/resources/themes/techdoc
+api        BaseTheme, 3 classes in the MRO
+features   toc, metadata, table, property_pages, all_documents, not_found, events, stats, ...
 ```
 
 Give a folder instead of an id to look at a theme you are writing. `--repo CONFIG` takes the theme of that site (or its `theme_path`), resolves the site's template overrides and shows the settings merged with its `repo.json`. `--json` prints the same as JSON. The command ends with `1` when the theme cannot be found or loaded.

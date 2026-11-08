@@ -77,4 +77,4 @@ Each theme says which KB4IT it needs, in the `kb4it` field of its `theme.json`, 
 
 Each theme also has its own version, in the `version` field of its `theme.json`, and a fingerprint of its files. `kb4it themes` shows both, with the folder the theme comes from, so a copy in `~/.kb4it/opt/resources/themes/` that hides a bundled theme is easy to spot. A change to any theme file rebuilds every page on the next build; see [Theme version and fingerprint](howto-create-theme.md#version).
 
-Want something different? [Create your own theme](howto-create-theme.md).
+Want something different? [Write a theme](howto-create-theme.md).

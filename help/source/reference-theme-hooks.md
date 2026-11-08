@@ -2,255 +2,529 @@
 DocType: Reference
 Feature: Themes, Development
 HelpId: theme-hooks
-Keyword: theme hooks, Builder, DocumentTheme, page pipeline, kit, themekit, override, config_class, checks
+Keyword: theme hooks, kb4it.theme, BaseTheme, Site, Doc, Table, feature, features, options, prepare, build, page_context, config_class, checks
 Level: advanced
 Order: 645
-Related: howto-create-theme.md
+Related: howto-create-theme.md, dev-theme-internals.md
 Section: Reference
-Summary: Every hook and helper a theme can fill or call, generated from the docstrings of the KB4IT code.
+Summary: Every hook, option and feature of kb4it.theme, the public theme API, generated from the KB4IT code.
 ---
 
-# Theme hooks
+# Theme API reference
 
-A theme is a `Theme` class in `logic/theme.py`. It subclasses `Builder`, or `DocumentTheme` for a theme with
-property pages, and adds the kits it wants to its class line. It fills a hook by defining a method with the
-same name; a method that replaces a shared one starts its docstring with `Override:`. The tables below come
-from the KB4IT source (`scripts/devel/theme_hooks_doc.py`), so they match the installed version.
-See [Create your own theme](howto-create-theme.md) for a walk through.
+A theme is a `Theme` class in `logic/theme.py` that subclasses `kb4it.theme.BaseTheme`. It switches on
+features by name in `features`, sets their options as class attributes and fills a hook by defining a
+method with the same name. The tables below come from the KB4IT source (`scripts/devel/theme_hooks_doc.py`),
+so they match the installed version. See [Write a theme](howto-create-theme.md) for a walk through.
 
-## Page pipeline
+`kb4it.theme` exports `BaseTheme`, `Site`, `Doc`, `Table`, `Feature`, `FEATURES`, `Problem`, `ThemeError`,
+`page_name`, `slugify` and `q`; `kb4it.theme.html` has the body rewrites `enhance_images`, `enhance_blocks`,
+`lazy_images` and `wrap_code`. Anything else is internal.
 
-With `page_pipeline = True`, `build_page()` runs these hooks for every document page, in this order: `page_var`, `page_toc`, `page_context`, `body_transforms`, `page_actions`, `render_page`, `finalize_html`.
+## BaseTheme
 
-| Method | What it does | Defined in |
+The base class of every theme.
+
+| Class attribute | Default | Meaning |
 |---|---|---|
-| `add_system_page(name: str, title: str, html: str \| None = None, as_html: bool = True, listing: bool = False) -> None` | Add a page the theme generates: write it (unless html is None) and register it as a system page. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `body_transforms(doc_id: str, var: dict) -> list` | Functions from HTML to HTML applied in order to the compiled body. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `build_page(path_md: str) -> None` | Turn the compiled body of a document into its final page and overwrite the HTML file. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `edit_url(doc_id: str = '') -> str` | Link to edit doc_id on the git server, or to the source folder without doc_id; '' when git is off. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `finalize_html(html: str) -> str` | Last change to the whole page before it is written. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `git_repo_url() -> str` | Link to the repository on the git server, such as https://github.com/user/repo; '' when git is off. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `git_url(action: str, path: str = '') -> str` | Link to <server>/<user>/<repo>/<action>/<branch>/<git_path>/<path>; '' when git is off. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `has_template(name: str) -> bool` | True when the lookup of template() finds a file for name (override, theme, base or common). | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_actions(var: dict) -> str` | HTML of the page actions (edit, properties...); '' when the theme has none. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_body_template(doc_id: str, var: dict) -> str` | Name of the template that renders the body of the page. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_context(doc_id: str, var: dict) -> dict` | Add the theme's own data to var before the body is rewritten and the page rendered. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_title(doc_id: str) -> str` | Title of a document page, or untitled_label when the document has none. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_toc(source_html: str) -> str` | Table of contents of the page; document themes extract it from the compiled body. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_var() -> dict` | Base var of a document page: get_theme_var(); a theme whose templates do not use it may return less. | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `render_page(doc_id: str, var: dict) -> str` | Whole page: the body template, between HTML_HEADER_COMMON and HTML_FOOTER when the theme has them. | `kb4it.services.pagepipeline.PagePipelineMixin` |
+| `features` | `()` | Features to switch on: names of built-in features or bundles, or Feature subclasses. |
+| `config_class` | `None` | Dataclass of the theme's settings (theme.json and the repo.json block named after the theme). |
+| `reserved_pages` | `()` | Source file names the build refuses because the theme writes a page with that name. |
+| `untitled_label` | `''` | Title of a page whose document has no Title. |
+| `ellipsize_titles` | `True` | Cut long titles (True) or leave them whole (False, when the CSS cuts them). |
+| `log_area` | `'THEME'` | Area of the theme's log lines, such as [THEME] HTML_MISSING. |
+| `person_pages` | `True` | The site has a page per person (Author_<name>.html) that the structured data links to; False describes each person in the home page instead. |
 
-| Attribute | Default | Defined in |
-|---|---|---|
-| `ellipsize_titles` | `True` | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `log_area` | `'THEME'` | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `page_pipeline` | `False` | `kb4it.services.pagepipeline.PagePipelineMixin` |
-| `untitled_label` | `''` | `kb4it.services.pagepipeline.PagePipelineMixin` |
+KB4IT sets `self.site` (the [Site](#site)), `self.config` (the settings), `self.log` and `self.internals` (unstable, see [Theme internals](dev-theme-internals.md)) before the first hook.
 
-## Settings, checks and search
+### Lifecycle
 
-Theme settings (`config_class`), the post-build checks and the search index.
+Called once per build, in this order. Every one is optional.
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `checks(target) -> list` | Problems of the built site in target; default: broken links to pages and anchors of the target root. | `kb4it.services.builder.Builder` |
-| `run_checks(target=None) -> list` | Log every problem of checks(); an error, or any problem with repo.json "strict": true, fails the build. | `kb4it.services.builder.Builder` |
-| `search_documents() -> list` | Doc ids of the search index, in index order; default: the source documents, sorted. | `kb4it.services.builder.Builder` |
-| `search_enabled() -> bool` | Full-text search is on when the theme supports it ("search": true in theme.json) | `kb4it.services.builder.Builder` |
-| `search_record(doc_id) -> dict` | Index record of one document; themes may override to add facets or a summary. | `kb4it.services.builder.Builder` |
-| `search_sections(doc_id) -> list` | [[anchor, heading, text], ...] of one document; default: the sections the compiler recorded. | `kb4it.services.builder.Builder` |
-| `write_index_file(target) -> list` | Write target/search-index.js: search_record() of each search_documents() id, None skipped; return the ids. | `kb4it.services.builder.Builder` |
-| `write_search_index()` | Write target/search-index.js from the sections the compiler recorded; remove it when search is off. | `kb4it.services.builder.Builder` |
+| Hook | What it does |
+|---|---|
+| `setup() -> None` | Once per build, before anything else: reset the theme's own per-build state. |
+| `generate_sources(site: Site) -> None` | Write documents into the source folder before KB4IT reads it. |
+| `prepare(site: Site) -> None` | After the documents are read, before any page is built: compute what the pages need. |
+| `build(site: Site) -> None` | Write the theme's own pages with site.page(). The features' pages are already written. |
+| `after_build(site: Site) -> None` | After every document page is compiled, before the site is deployed. |
+| `after_deploy(site: Site) -> None` | After the site is in target (site.paths.target): copy or package files there. |
+| `checks(site: Site) -> list[Problem]` | Problems of the built site; default: links to missing pages and anchors. |
+| `after_checks(site: Site) -> None` | After the checks passed: publish, copy, notify. |
 
-| Attribute | Default | Defined in |
-|---|---|---|
-| `config_class` | `None` | `kb4it.services.builder.Builder` |
-| `search_index_var` | `'KB4IT_INDEX'` | `kb4it.services.builder.Builder` |
-| `search_index_warn_bytes` | `5242880` | `kb4it.services.builder.Builder` |
+### Document pages
 
-## Generated pages and helpers
+Called for every page, in this order: `page_var`, `page_context`, `body_transforms`, `page_template` (through `render_page`), `finalize_html`. `backlinks_html` adds the block after the body.
 
-What `Builder` offers every theme: pages it can write, templates and shared data.
+| Hook | What it does |
+|---|---|
+| `page_var() -> dict[str, Any]` | The starting var of a document page; default: base_var(). |
+| `page_context(doc: Doc, var: dict[str, Any]) -> dict[str, Any]` | Add the theme's data to var before the body is rewritten and the page rendered. |
+| `body_transforms(doc: Doc, var: dict[str, Any]) -> list[Callable[[str], str]]` | Functions from HTML to HTML applied in order to the compiled body. |
+| `page_template(doc: Doc, var: dict[str, Any]) -> str` | Name of the template that renders the body of the page. |
+| `render_page(doc: Doc, var: dict[str, Any]) -> str` | The whole page: page_template() between HTML_HEADER_COMMON and HTML_FOOTER when they exist. |
+| `finalize_html(html: str) -> str` | Last change to the whole page before it is written. |
+| `backlinks_html(doc: Doc) -> str` | The block after the body that lists the documents linking here (HTML_BACKLINKS); '' for none. |
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `after_checks()` | After the post-build checks passed (stage 8); themes on BaseTheme use it. | `kb4it.services.builder.Builder` |
-| `apply_transformations(content)` | Apply CSS transformations to the compiled page. | `kb4it.services.builder.Builder` |
-| `backlinks(doc_id) -> list` | [{title, href}] of the documents that link to doc_id; [] when "backlinks" is false. | `kb4it.services.builder.Builder` |
-| `backlinks_html(doc_id) -> str` | The HTML_BACKLINKS block of the documents that link to doc_id; '' when none does. | `kb4it.services.builder.Builder` |
-| `build_page_key(key, values)` | Create page for a key. | `kb4it.services.builder.Builder` |
-| `build_page_key_value(kvpath)` | Build the final HTML Page for a document key-value. | `kb4it.services.builder.Builder` |
-| `create_page_about_app()` | About this app page, generated only when the user repo has no about_app.md. | `kb4it.services.builder.Builder` |
-| `create_page_about_kb4it()` | About KB4IT page. | `kb4it.services.builder.Builder` |
-| `create_page_add() -> None` | Build add.html when the editor is on, otherwise remove the page an earlier build left. | `kb4it.services.addpage.AddPageMixin` |
-| `create_page_help()` | Help page,  generated only when the user repo has no help.md. | `kb4it.services.builder.Builder` |
-| `create_page_search()` | Search page (search.html), built only when search is on. | `kb4it.services.builder.Builder` |
-| `distribute_html(mdId, htmlId)` | Add compiled page to the target list. | `kb4it.services.builder.Builder` |
-| `distribute_md(name, content, as_html=True, listing=False)` | Distribute a theme-rendered system page to the temporary directory. | `kb4it.services.builder.Builder` |
-| `editor_enabled() -> bool` | True when the theme class supports the Add page and the editor setting is on. | `kb4it.services.addpage.AddPageMixin` |
-| `editor_keys() -> dict` | Completion data {Key: [{"v": value, "c": count}]} from the repository's documents. | `kb4it.services.addpage.AddPageMixin` |
-| `feed_enabled() -> bool` | True when the feed is on and repo.json has the site_url its links need. | `kb4it.services.builder.Builder` |
-| `feed_settings()` | Feed settings, or None when the theme has no feed. theme.json "feed": true turns it on by default. | `kb4it.services.builder.Builder` |
-| `generate_sources()` | Generate sources. | `kb4it.services.builder.Builder` |
-| `get_services()` | Get services. | `kb4it.services.builder.Builder` |
-| `get_theme_var()` | Create a new variable for rendering templates. | `kb4it.services.builder.Builder` |
-| `inject_head_meta(html, page_name) -> str` | Insert (or replace) the HTML_HEAD_META block before </head>. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `is_listing_page(page_name) -> bool` | True for a page that lists documents (property, value, event, stats pages), not content. | `kb4it.services.indexing.IndexingMixin` |
-| `modified_date(doc_id) -> str` | dateModified of a document, as the processor resolved it (Modified, git, file time). | `kb4it.services.indexing.IndexingMixin` |
-| `page_dates() -> dict` | 'page.html' -> dateModified of each content document, the value its page head carries. | `kb4it.services.indexing.IndexingMixin` |
-| `page_lang() -> str` | Language of the generated pages: repo.json seo.lang, else English. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `page_meta(page_name, html) -> dict` | Values for HTML_HEAD_META: description, Open Graph and canonical link of one page. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `page_robots(page_name) -> str` | Content of the robots meta tag of a page, or empty when it may be indexed. | `kb4it.services.indexing.IndexingMixin` |
-| `people_settings() -> kb4it.core.people.PeopleSettings` | The checked repo.json "people" block (Backend loads it with the configuration). | `kb4it.services.profilecard.ProfileCardMixin` |
-| `person_category() -> dict` | The Person profile skeleton, added to every skeleton set (see core/people.py). | `kb4it.services.addpage.AddPageMixin` |
-| `person_data(profile) -> dict` | The schema.org Person of a profile; private keys are left out. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `person_iri(name) -> str` | The @id of a person: <site_url>Author_Jane_Doe.html#person, or <site_url>#person-Jane_Doe without person pages. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `person_tip(key: str, value: str) -> str` | Role and team of the person a people key value names, for the tooltip of the name on document pages. | `kb4it.services.profilecard.ProfileCardMixin` |
-| `post_activities()` | Theme post activities. | `kb4it.services.builder.Builder` |
-| `post_deploy_activities()` | Theme activities executed after the site has been deployed. | `kb4it.services.builder.Builder` |
-| `prepare()` | After the documents are read and before any page is built (stage 3); themes on BaseTheme use it. | `kb4it.services.builder.Builder` |
-| `profile_actions(value: str, profile: kb4it.core.people.Profile \| None) -> dict` | Create and Edit links to the Add page, while the editor is on; the texts travel in the address. | `kb4it.services.profilecard.ProfileCardMixin` |
-| `profile_card(key: str, value: str) -> str` | HTML of the profile card for a value page, or an empty string. | `kb4it.services.profilecard.ProfileCardMixin` |
-| `profile_rows(profile: kb4it.core.people.Profile) -> list[dict]` | {key, value, href} of each visible profile key, in card order. | `kb4it.services.profilecard.ProfileCardMixin` |
-| `register_add_page(html: str) -> None` | Write the Add page body and register it as a system page; a theme may override this only. | `kb4it.services.addpage.AddPageMixin` |
-| `remove_stale_add_page() -> None` | Remove add.html left by an earlier build from the target and the cache. | `kb4it.services.addpage.AddPageMixin` |
-| `render_template(name, var=None)` | Render template according to dict var values. | `kb4it.services.builder.Builder` |
-| `reuse_cached_page(name, counter, reason, func)` | Keep the cached `name`.html of the previous build when the runtime counter (ncd or nck) is 0. | `kb4it.services.builder.Builder` |
-| `search_box() -> str` | Search box markup for the theme's header, or '' when search is off. | `kb4it.services.builder.Builder` |
-| `search_page() -> str` | Page that runs a search from ?q=, or empty when the site has none. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `seo_settings() -> kb4it.core.structured.SeoSettings` | The checked repo.json "seo" block (Backend loads it with the configuration). | `kb4it.services.headmeta.HeadMetaMixin` |
-| `site_signature() -> str` | Return a value that changes when every page must be rebuilt; empty turns the check off. | `kb4it.services.builder.Builder` |
-| `sitemap_exclude() -> set` | Pages left out of sitemap.xml; themes may add their own. | `kb4it.services.indexing.IndexingMixin` |
-| `skeleton_set() -> tuple[str, list[dict]]` | Return (source, categories) of the first skeleton folder that holds a *-SKELETON.md file. | `kb4it.services.addpage.AddPageMixin` |
-| `structured_data(page_name, doc_id, title, description) -> str` | JSON-LD of one page: the document node, and the WebSite node on the home page. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `structured_defaults() -> dict` | schema.org type of a document without a known DocType, and the frontmatter key map of the theme. | `kb4it.services.headmeta.HeadMetaMixin` |
-| `target_subdir()` | Folder inside target to build into, or None. apphelp uses it for versioned help. | `kb4it.services.builder.Builder` |
-| `template(template)` | Return Mako Template object. | `kb4it.services.builder.Builder` |
-| `write_feed()` | feed.xml (Atom) with the newest dated documents. | `kb4it.services.builder.Builder` |
-| `write_sitemap()` | sitemap.xml and robots.txt, following seo.index; "sitemap": false turns them off. | `kb4it.services.indexing.IndexingMixin` |
+### Site-wide
 
-| Attribute | Default | Defined in |
-|---|---|---|
-| `add_page` | `False` | `kb4it.services.addpage.AddPageMixin` |
-| `person_pages` | `True` | `kb4it.services.headmeta.HeadMetaMixin` |
-| `profile_skeleton` | `True` | `kb4it.services.addpage.AddPageMixin` |
+Values that hold for the whole site.
 
-## DocumentTheme
+| Hook | What it does |
+|---|---|
+| `site_signature() -> str` | A value that changes when every page must be rebuilt (site-wide navigation...); '' for none. |
+| `target_subdir() -> str \| None` | Folder inside target to build into, or None. |
+| `page_lang() -> str` | Language of the pages (<html lang>); default: repo.json seo.lang. |
+| `structured_defaults() -> dict[str, Any]` | Schema.org defaults of the theme's documents: {'type': ..., 'map': {property: schema field}}. |
+| `search_page() -> str` | The search page of the site, for the structured data of the home page. |
 
-What a `DocumentTheme` subclass gets on top of `Builder`: property pages, tables, events, the table of contents and the 404 page.
+### Rendering
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `build_datatable(headers: 'list[str] \| None' = None, doclist: 'list[str] \| None' = None, table_id: 'str' = 'kb4it-datatable') -> 'str'` | Given a list of columns, it builds a datatable; the first column is the date when headers has 'Date'. | `kb4it.services.themekit.tables.TableMixin` |
-| `build_events(doclist: 'list[str]') -> 'set[str]'` | Create the day, month and year pages of the dated documents in `doclist`. | `kb4it.services.themekit.events.EventsMixin` |
-| `build_metadata_section(docId: 'str') -> 'str'` | Return a html block for displaying metadata (keys and values). | `kb4it.services.themekit.metadata.MetadataMixin` |
-| `build_page_404() -> 'None'` | Create the 404 page; as a system page it stays out of listings, search, feed and sitemap. | `kb4it.services.themekit.notfound.NotFoundMixin` |
-| `build_page_bookmarks() -> 'str \| None'` | Create the bookmarks page: documents with Bookmark set to Yes, True or On, in any case. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `build_page_index_all() -> 'str \| None'` | Create the page that lists every document. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `build_page_key(key: 'str', values: 'list[str]') -> 'None'` | Create the page of a property: its tag cloud and the count of each value. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `build_page_key_value(kvpath: 'tuple[str, str, bool]') -> 'None'` | Create the page of a property value: the documents that have it. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `build_page_properties() -> 'None'` | Create the properties page: every property with its numbers of values and documents, and with | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `build_page_stats() -> 'None'` | Create the stats page of the repository. | `kb4it.services.themekit.stats.StatsMixin` |
-| `build_tagcloud_from_key(key: 'str') -> 'str'` | Return a tag cloud of the values of a property, or '' when it has none. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `cloud_measure(frequency: 'int', max_frequency: 'int') -> 'dict[str, Any]'` | Return the size fields of a property button or a tag cloud word. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `datatable_custom_cell(doc_id: 'str', key: 'str') -> 'str \| None'` | Return the whole <td> of a column the theme draws itself, or None for a plain property cell. | `kb4it.services.themekit.tables.TableMixin` |
-| `datatable_date_cell(timestamp: 'str \| None', doc_id: 'str \| None' = None) -> 'str'` | Return the cell of the date column; `timestamp` is None when the document has none. | `kb4it.services.themekit.tables.TableMixin` |
-| `datatable_title_cell(docId: 'str', properties: 'dict[str, Any]') -> 'str'` | Return the cell of the Title column: the title, shortened, with a tooltip. | `kb4it.services.themekit.tables.TableMixin` |
-| `datatable_value_link(properties: 'dict[str, Any]', key: 'str', value: 'str') -> 'dict[str, str]'` | Return the variables of the link to the page of a value; KeyError leaves the cell empty. | `kb4it.services.themekit.tables.TableMixin` |
-| `date_cell(timestamp: 'str \| None', doc_id: 'str') -> 'str'` | datatable_date_cell() of one row; a theme's override written before `doc_id` existed gets the date only. | `kb4it.services.themekit.tables.TableMixin` |
-| `event_documents() -> 'list[str]'` | Documents that get day, month and year pages; default none. | `kb4it.services.themekit.events.EventsMixin` |
-| `extract_toc(source: 'str') -> 'str'` | Extract the TOC from compiled HTML in the theme's markup; '' when the source has none. | `kb4it.services.themekit.toc.TocMixin` |
-| `frequency_keys() -> 'list[str]'` | Return the properties whose value count sizes the property buttons. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `get_html_values_from_key(docId: 'str', key: 'str') -> 'list[tuple[str, str]]'` | Return (page, value) pairs for the values of a property of a document; a date key has no page. | `kb4it.services.themekit.metadata.MetadataMixin` |
-| `get_labels(values: 'list[tuple[str, str]]') -> 'str'` | Return the html links for (page, text) pairs; empty texts are left out. | `kb4it.services.themekit.metadata.MetadataMixin` |
-| `get_maxkv_freq() -> 'int'` | Return the highest number of values of a property. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `get_page_actions(var: 'dict[str, Any]') -> 'str'` | Return the html of the page actions (SECTION_ACTIONS). | `kb4it.services.themekit.metadata.MetadataMixin` |
-| `has_event_page(doc_id: 'str') -> 'bool'` | True when doc_id is on an events day page of this build, so its date may link there. | `kb4it.services.themekit.events.EventsMixin` |
-| `menu_contents(var: 'dict[str, Any]') -> 'str'` | The header menu: disabled on a system page, the document contents otherwise. | `kb4it.services.themekit.page.DocumentPageMixin` |
-| `page_actions(var: 'dict[str, Any]') -> 'str'` | The page actions (SECTION_ACTIONS). | `kb4it.services.themekit.page.DocumentPageMixin` |
-| `page_toc(source_html: 'str') -> 'str'` | The TOC of the compiled body, in the theme's markup. | `kb4it.services.themekit.page.DocumentPageMixin` |
-| `stats_keys() -> 'list[str]'` | Return the properties listed on the stats page. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
+Helpers to call from the hooks.
 
-| Attribute | Default | Defined in |
-|---|---|---|
-| `datatable_default_headers` | `('Date', 'Title')` | `kb4it.services.themekit.tables.TableMixin` |
-| `datatable_link_template` | `'LINK_DATATABLE'` | `kb4it.services.themekit.tables.TableMixin` |
-| `page_pipeline` | `True` | `kb4it.services.themekit.page.DocumentPageMixin` |
-| `properties_cloud` | `True` | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `properties_title` | `'Properties'` | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `reserved_pages` | `()` | `kb4it.services.themekit.notfound.NotFoundMixin` |
-| `reuse_unchanged_pages` | `False` | `kb4it.services.themekit.keypages.KeyPagesMixin` |
-| `stats_skip_keys` | `('Summary',)` | `kb4it.services.themekit.stats.StatsMixin` |
-| `tagcloud_scale_skips_empty` | `False` | `kb4it.services.themekit.keypages.KeyPagesMixin` |
+| Hook | What it does |
+|---|---|
+| `render(name: str, **values: Any) -> str` | Render template `name` with the base variables plus values, all under `var`. |
+| `template(name: str) -> Any` | The compiled template `name`; call .render(var=...) on it. |
+| `has_template(name: str) -> bool` | True when a template named `name` exists (site override, theme, base or common). |
+| `base_var() -> dict[str, Any]` | A new dict of the variables every template gets: repo, theme, page, lang, search_box... |
 
-## Diagrams kit
+## Site
 
-The Diagrams page: every Mermaid diagram of the documents, with filters. Add `DiagramsMixin` from `kb4it.services.themekit.diagrams` to the class line.
+The knowledge base being built, read-only. `site.page()`, `site.keep()` and `site.table()` write through KB4IT.
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `build_page_diagrams() -> 'None'` | The Diagrams page: no diagram at first; the browser draws the ones the filters choose. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
-| `diagram_html(doc_id: 'str') -> 'str'` | The HTML of a document body with a mermaid fence, as the compiler makes it, so the heading ids match; else ''. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
-| `diagram_items(doc_id: 'str') -> 'list[dict[str, Any]]'` | The diagrams of one document, each linked to its section. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
+| Member | What it is |
+|---|---|
+| `site.documents` | The documents of the site (no system pages), newest first, undated ones last. |
+| `site.properties` | The properties used by the documents and their values. |
+| `site.people` | The person profiles of the site. |
+| `site.build` | What this build compiles. |
+| `site.paths` | Folders of the site. |
+| `site.features` | The enabled features, by name: `site.features.events`, `site.features['table']` |
+| `doc(doc_id: str) -> Doc` | The Doc of an id, also for a system page. |
+| `keep(name: str, unless: str = 'documents') -> bool` | Reuse name.html of the previous build when nothing it shows changed; True if kept. |
+| `page(name: str, title: str, html: str, *, markdown: bool = False, listing: bool = False) -> None` | Add a page to the site: name.html with this title and content. |
+| `repo` | repo.json, read-only. |
+| `table(table: Table) -> str` | The HTML of a document table. |
+| `theme` | theme.json of the theme being built, read-only. |
 
-## Gallery kit
+### site.documents
 
-The Gallery page: every image of the documents as thumbnails, with filters; needs the vendor library `gallery`. Add `GalleryMixin` from `kb4it.services.themekit.gallery` to the class line.
+| Member | What it does |
+|---|---|
+| `by_date() -> list[Doc]` | Every document, newest first, undated ones last. |
+| `filter(test: Callable[[Doc], bool]) -> list[Doc]` | The documents for which test(doc) is true, newest first. |
+| `get(doc_id: str) -> Doc \| None` | The document with this id ('note.md'), system pages included, or None. |
+| `latest(n: int) -> list[Doc]` | The n newest documents. |
+| `with_value(key: str, value: str) -> list[Doc]` | Documents that have value among the values of key, newest first. |
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `build_page_gallery() -> 'None'` | The Gallery page: no image at first; the property buttons on the right choose which ones to show. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `deploy_gallery_thumbs() -> 'None'` | Copy the thumbnails the Gallery uses into the site and drop the others, there and in var/thumbs. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_data() -> 'MediaData'` | Return the documents with images, newest first, their images and the filters they can be narrowed by. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_image(src: 'str', local: 'str \| None') -> 'dict[str, Any]'` | The entry of one image: what the grid shows (a thumbnail or the original) and its size. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_items(doc_id: 'str') -> 'list[dict[str, Any]]'` | The images one document shows, each with its thumbnail, size and caption. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_thumb_dir() -> 'str'` | Thumbnails made by earlier builds: <repo>/var/thumbs. | `kb4it.services.themekit.gallery.GalleryMixin` |
+### site.properties
 
-## Navigation kit
+| Member | What it does |
+|---|---|
+| `all_keys() -> tuple[str, ...]` | Every key of the documents except the blocked ones (Title, SystemPage, dates). |
+| `blocked` | Keys that never get a page: Title, SystemPage and the date keys. |
+| `documents(key: str, value: str) -> list[Doc]` | The documents with a value of a property, newest first. |
+| `hidden` | Keys left out of the properties page (repo.json hidden_properties). |
+| `ignored` | Keys left out of every page (repo.json ignored_keys). |
+| `keys() -> tuple[str, ...]` | The properties that get pages: every key but the blocked and the ignored ones. |
+| `values(key: str) -> tuple[str, ...]` | Every value of a property in the site, sorted without case. |
 
-Previous and next page in the reading order the theme gives. Add `NavigationMixin` from `kb4it.services.themekit.navigation` to the class line.
+### site.people
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `neighbours(doc_id: 'str') -> 'tuple[str \| None, str \| None]'` | Previous and next doc id of doc_id in its sequence; (None, None) when it is not listed. | `kb4it.services.themekit.navigation.NavigationMixin` |
-| `ordered_pages(doc_id: 'str') -> 'list[str]'` | Doc ids of the reading sequence doc_id belongs to, in order (a whole help site, one book); default none. | `kb4it.services.themekit.navigation.NavigationMixin` |
+| Member | What it does |
+|---|---|
+| `keys` | The properties that name people (Author by default). |
+| `lookup(name: str) -> Any` | The profile of a person by name or alias, or None. |
+| `status(name: str) -> str` | 'ok', 'missing' or 'no_contact': whether the person has a profile with contact details. |
+| `tip(name: str) -> str` | Role and team of a person, for a tooltip; '' without a profile. |
 
-## Related kit
+### site.build
 
-Related documents: those that share rare property values. Add `RelatedMixin` from `kb4it.services.themekit.related` to the class line.
+| Member | What it does |
+|---|---|
+| `changed(doc: Doc \| str) -> bool` | True when the document is compiled in this build (new or changed, or a full build). |
+| `documents_changed` | How many documents this build compiles. |
+| `force` | True for a full build (--force, or nothing cached). |
+| `invalid` | (source file, reason) of each document KB4IT could not read; they are not in the site. |
+| `keys_changed` | The properties whose pages this build rebuilds. |
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `related_candidates() -> 'list[str]'` | Documents that may be listed as related; default: every document that is not a system page. | `kb4it.services.themekit.related.RelatedMixin` |
-| `related_docs(doc_id: 'str', limit: 'int' = 5) -> 'list[dict[str, Any]]'` | related() of doc_id over the candidates; [] when doc_id is not one. The metadata is read once per build. | `kb4it.services.themekit.related.RelatedMixin` |
+### site.paths
 
-| Attribute | Default | Defined in |
-|---|---|---|
-| `related_keys` | `('SID', 'Product', 'Transaction', 'Component', 'Tag')` | `kb4it.services.themekit.related.RelatedMixin` |
+| Member | What it does |
+|---|---|
+| `source` | The folder of the Markdown documents. |
+| `target` | The published site; only complete after deployment (after_deploy). |
 
-## TOC sidebar kit
+## Doc
 
-A second, sticky table of contents for long documents. Add `TocSidebarMixin` from `kb4it.services.themekit.tocsidebar` to the class line.
+One document of the knowledge base, read-only.
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `toc_sidebar(source_html: 'str') -> 'bool'` | True when repo.json (else the theme settings) asks for the sidebar and the page has four or more sections. | `kb4it.services.themekit.tocsidebar.TocSidebarMixin` |
+| Member | What it does |
+|---|---|
+| `id` | The file name in `source/`, such as `note.md` |
+| `backlinks` | {title, url} of the documents that link to this one. |
+| `date` | The Date property as written, or None. |
+| `datetime` | The Date property as a datetime, or None when missing or unreadable. |
+| `is_system` | True for a page KB4IT or the theme generates (property pages, index, about...). |
+| `keys() -> tuple[str, ...]` | The properties of the document, sorted, without the ones KB4IT ignores (Title...). |
+| `links(key: str) -> list[dict[str, str]]` | {name, url} of each value of a property, url being the value's page. |
+| `modified` | When the document last changed (Modified property, git or file time), or None. |
+| `name` | The file name without .md. |
+| `properties` | Every property of the document and its values. |
+| `source() -> str` | The Markdown text of the document ('' for a page without a source file). |
+| `template_keys() -> dict[str, Any]` | The var['keys'] of the document's page: {key: [values]}, 'Title' as a string, and the |
+| `title` | The Title (the first heading of the document), or ''. |
+| `url` | The page of the document, relative to the site root. |
+| `value(key: str, default: str = '') -> str` | The first value of a property, or default. |
+| `values(key: str) -> tuple[str, ...]` | The values of a property, () when the document does not have it. |
 
-## Table filter kit
+## Table
 
-A filter bar over the document tables; needs `DATATABLE_FILTER.tpl` and the vendor library `tablefilter`. Add `FilterMixin` from `kb4it.services.themekit.filters` to the class line.
+A table of documents, as site.table() renders it. columns: property names; 'Date' and 'Title' get their own cells. None: the repo.json "datatable" setting, else the theme's default. id: the HTML id of the table. filterable: the table filter bar may attach to it (feature table_filter). dates: {doc id: 'YYYY-MM-DD'}, the event day of each row, for a calendar panel that filters the table.
 
-| Method | What it does | Defined in |
-|---|---|---|
-| `build_datatable(headers: list[str] \| None = None, doclist: list[str] \| None = None, table_id: str = 'kb4it-datatable') -> str` | Put the filter bar, hidden, before the table; datatable-filter.js moves it below the search box. | `kb4it.services.themekit.filters.FilterMixin` |
-| `build_events(doclist: Any) -> Any` | Archive pages of a year, month or day (events_YYYY*.html): their tables get the filter bar. | `kb4it.services.themekit.filters.FilterMixin` |
-| `build_page_bookmarks() -> Any` | bookmarks.html: its table gets the filter bar. | `kb4it.services.themekit.filters.FilterMixin` |
-| `build_page_index_all() -> Any` | all.html: its table gets the filter bar. | `kb4it.services.themekit.filters.FilterMixin` |
-| `build_page_key_value(kvpath: Any) -> Any` | Property value pages: their table gets the filter bar. | `kb4it.services.themekit.filters.FilterMixin` |
-| `datatable_title_cell(docId: str, properties: Any) -> str` | The Title cell of a table with the filter bar carries the values the bar matches on. | `kb4it.services.themekit.filters.FilterMixin` |
-| `list_filter(docs: collections.abc.Iterable[str], list_id: str) -> tuple[str, collections.abc.Callable[[typing.Any], str]]` | The filter bar of plain document lists (Quality page), and the attributes of each document. | `kb4it.services.themekit.filters.FilterMixin` |
+Fields: `documents`, `columns`, `id`, `filterable`, `dates`.
 
-| Attribute | Default | Defined in |
-|---|---|---|
-| `datatable_filter_keys` | `('WorkType', 'DocType', 'Category', 'Topic', 'Status', 'P...` | `kb4it.services.themekit.filters.FilterMixin` |
-| `datatable_filter_min_rows` | `10` | `kb4it.services.themekit.filters.FilterMixin` |
+## Features
+
+Switch a feature on by listing its name in `features`; a feature that another one `requires` comes with it, and a feature runs after the ones it requires or uses. Set an option as a class attribute of the theme. Fill a hook by defining a method with its name; to call the default from it, use the feature: `self.site.features.table.datatable_date_cell(doc)`.
+
+| Bundle | Features |
+|---|---|
+| `documents` | `toc`, `metadata`, `property_pages`, `all_documents`, `not_found` |
+
+### about
+
+about_kb4it.html, and about_app.html unless the site has its own about_app.md.
+
+- Templates: `PAGE_ABOUT_KB4IT`, `PAGE_ABOUT_APP`
+
+| Hook | Default |
+|---|---|
+| `about_pages() -> bool` | Whether this build writes the About pages; a theme may leave them out by a setting. |
+
+### all_documents
+
+all.html.
+
+- Requires: `table`
+- Templates: `PAGE_ALL`
+
+| Option | Default |
+|---|---|
+| `reuse_unchanged_pages` | `False` |
+
+What `site.features.all_documents` offers:
+
+| Method | What it does |
+|---|---|
+| `write() -> str \| None` | Write all.html; the page, or None when the cached one is kept. |
+
+### bookmarks
+
+bookmarks.html.
+
+- Requires: `table`
+- Templates: `PAGE_BOOKMARKS`
+
+| Option | Default |
+|---|---|
+| `reuse_unchanged_pages` | `False` |
+
+What `site.features.bookmarks` offers:
+
+| Method | What it does |
+|---|---|
+| `write() -> str \| None` | Write bookmarks.html; the page, or None when the cached one is kept. |
+
+### diagrams
+
+diagrams.html: the Gallery page, with the Mermaid diagrams of the documents instead of their images.
+
+- Templates: `PAGE_GALLERY`
+- Assets: `gallery`
+- Reserves: `diagrams.md`
+
+What `site.features.diagrams` offers:
+
+| Method | What it does |
+|---|---|
+| `html_of(doc_id: str) -> str` | The HTML of a document body with a mermaid fence, as the compiler makes it, so the heading ids match; else ''. |
+| `items(doc_id: str) -> list[dict[str, Any]]` | The diagrams of one document, each linked to its section. |
+| `write() -> None` | diagrams.html: no diagram at first; the browser draws the ones the filters choose. |
+
+### editor
+
+add.html when the editor setting is on (repo.json "editor", default theme.json "editor").
+
+- Templates: `PAGE_ADD`, `EDITOR_DIALOGS`
+
+| Option | Default |
+|---|---|
+| `profile_skeleton` | `True` |
+
+| Hook | Default |
+|---|---|
+| `editor_keys() -> dict[str, Any]` | Completion data {Key: [{"v": value, "c": count}]} for the properties pane. |
+| `register_add_page(html: str) -> None` | Write the Add page and register it as a system page. |
+
+What `site.features.editor` offers:
+
+| Method | What it does |
+|---|---|
+| `enabled() -> bool` | True when this build has the Add page (the editor setting is on). |
+
+### events
+
+events_YYYYMMDD.html, events_YYYYMM.html and events_YYYY.html of the event documents.
+
+- Requires: `table`
+- Templates: `EVENTCAL_PAGE_EVENTS_DAYS`, `EVENTCAL_PAGE_EVENTS_MONTHS`, `EVENTCAL_PAGE_EVENTS_YEARS`
+
+| Hook | Default |
+|---|---|
+| `event_documents() -> list[Any]` | Default: every dated document. A theme returns the ones that are events (Docs or ids). |
+
+What `site.features.events` offers:
+
+| Method | What it does |
+|---|---|
+| `build_pages(doclist: list[str], *, collect: bool = True) -> set[str]` | Create the day, month and year pages of the dated documents in doclist. |
+| `calendar(days: dict[str, str] \| None = None) -> str` | The JSON a calendar panel reads, {"days": {"YYYY-MM-DD": count}}, safe inside <script>. |
+| `collect(doclist: list[str]) -> None` | Add the dated documents of doclist to index and dey. |
+| `day_url(doc: Doc) -> str \| None` | events_YYYYMMDD.html of the document, or None when it is not on a day page. |
+| `days() -> dict[str, str]` | {doc id: 'YYYY-MM-DD'} of every event. |
+| `has_day_page(doc: Doc) -> bool` | True when the document is on a day page of this build, so its date may link there. |
+
+### gallery
+
+gallery.html: property buttons, a value chooser, a masonry grid of thumbnails, a lightbox.
+
+- Templates: `PAGE_GALLERY`
+- Assets: `gallery`
+- Reserves: `gallery.md`
+
+What `site.features.gallery` offers:
+
+| Method | What it does |
+|---|---|
+| `data() -> MediaData` | The documents with images, newest first, their images and the filters they can be narrowed by. |
+| `deploy_thumbs() -> None` | Copy the thumbnails the Gallery uses into the site and drop the others, there and in var/thumbs. |
+| `image(src: str, local: str \| None) -> dict[str, Any]` | The entry of one image: what the grid shows (a thumbnail or the original) and its size. |
+| `items(doc_id: str) -> list[dict[str, Any]]` | The images one document shows, each with its thumbnail, size and caption. |
+| `theme_image(src: str, local: str \| None) -> dict[str, Any]` | A legacy theme may override gallery_image(); a BaseTheme theme gets image(). |
+| `thumb_dir() -> str` | Thumbnails made by earlier builds: <repo>/var/thumbs. |
+| `write() -> None` | gallery.html: no image at first; the property buttons on the right choose which ones to show. |
+
+### metadata
+
+section(doc): the METADATA_SECTION of a document; actions(var): its SECTION_ACTIONS.
+
+- Templates: `SECTION_ACTIONS`
+
+| Hook | Default |
+|---|---|
+| `build_metadata_section(doc: Doc) -> str` | Default of the hook: the metadata section of a document. |
+
+What `site.features.metadata` offers:
+
+| Method | What it does |
+|---|---|
+| `actions(var: dict[str, Any]) -> str` | The html of the page actions (SECTION_ACTIONS). |
+| `labels(values: list[tuple[str, str]]) -> str` | The html links of (page, text) pairs; empty texts are left out. |
+| `section(doc: Doc) -> str` | The metadata section of a document, through the theme's hook when it has one. |
+| `section_html(doc_id: str) -> str` | The METADATA_SECTION block of a document (keys and values). |
+| `values_of(doc_id: str, key: str) -> list[tuple[str, str]]` | (page, value) pairs of a property of a document; a date key has no page. |
+
+### navigation
+
+neighbours(doc): the previous and next document of the reading sequence doc belongs to.
+
+| Hook | Default |
+|---|---|
+| `ordered_pages(doc: Doc) -> list[Any]` | The reading sequence doc belongs to, in order (Docs or ids); default none. |
+
+What `site.features.navigation` offers:
+
+| Method | What it does |
+|---|---|
+| `neighbours(doc: Doc) -> tuple[Doc \| None, Doc \| None]` | The previous and next Doc of doc; None at either end or when doc is not in a sequence. |
+
+### not_found
+
+The page web servers show for a missing page.
+
+- Templates: `PAGE_404`
+- Reserves: `404.md`
+
+### property_pages
+
+The pages built from the properties of the documents.
+
+- Requires: `table`
+- Templates: `PAGE_PROPERTIES`, `PAGE_KEY`, `PAGE_KEY_VALUE`, `WORDCLOUD`
+
+| Option | Default |
+|---|---|
+| `properties_title` | `'Properties'` |
+| `properties_cloud` | `True` |
+| `reuse_unchanged_pages` | `False` |
+| `tagcloud_scale_skips_empty` | `False` |
+
+| Hook | Default |
+|---|---|
+| `cloud_measure(frequency: int, max_frequency: int) -> dict[str, Any]` | The size fields of a property button or a tag cloud word. |
+| `frequency_keys() -> list[str]` | The properties whose value count sizes the property buttons. |
+| `value_page(key: str, value: str, docs: list[Doc]) -> None` | Write the page of a property value (Key_Value.html): the table of its documents. |
+
+What `site.features.property_pages` offers:
+
+| Method | What it does |
+|---|---|
+| `max_values() -> int` | The highest number of values of a property. |
+| `reuse(name: str, counter: str, reason: str, func: str) -> bool` | Keep the cached page when reuse_unchanged_pages is on and nothing it shows changed. |
+| `tagcloud(key: str) -> str` | A tag cloud of the values of a property, or '' when it has none. |
+| `value_page_of(kvpath: tuple[str, str, bool]) -> None` | The pipeline's call for one value: the theme's value_page() hook when the page is rebuilt. |
+| `write_key_page(key: str, values: list[str]) -> None` | Key.html: the tag cloud of a property and the count of each value. |
+| `write_properties_page() -> None` | properties.html: every property with its numbers of values and documents, and with |
+| `write_value_page(kvpath: tuple[str, str, bool]) -> None` | Key_Value.html: the documents that have a value (written only when compile is True). |
+
+### related
+
+related(doc): the documents that share the rarest values with doc, best first.
+
+| Option | Default |
+|---|---|
+| `related_keys` | `('SID', 'Product', 'Transaction', 'Component', 'Tag')` |
+
+| Hook | Default |
+|---|---|
+| `related_candidates() -> list[Any]` | Documents that may be listed as related (Docs or ids); default: every document. |
+
+What `site.features.related` offers:
+
+| Method | What it does |
+|---|---|
+| `meta() -> dict[str, dict[str, list[str]]]` | {doc id: {key: [values]}} of the candidates, read once per build. |
+| `related(doc: Doc, limit: int = 5) -> list[dict[str, Any]]` | [{doc, score, shared}] of the documents related to doc, best first; doc is a document id. |
+| `related_ids(doc_id: str, limit: int = 5) -> list[dict[str, Any]]` | related() of a document id over the candidates; [] when it is not one. |
+
+### search
+
+Full-text search over the documents, in the browser.
+
+- Templates: `PAGE_SEARCH`, `HTML_SEARCH_BOX`
+- Assets: `search`
+- Sets in theme.json: `"search": true`
+
+| Option | Default |
+|---|---|
+| `search_index_var` | `'KB4IT_INDEX'` |
+| `search_index_warn_bytes` | `2097152` |
+| `search_own_page` | `False` |
+| `search_optional` | `True` |
+
+| Hook | Default |
+|---|---|
+| `search_documents() -> list[Any]` | The documents of the index, in index order (Docs or ids). |
+| `search_record(doc: Doc) -> dict[str, Any] \| None` | The index record of one document; None leaves it out. |
+| `search_sections(doc: Doc) -> list[Any]` | [[anchor, heading, text], ...] of one document. |
+
+What `site.features.search` offers:
+
+| Method | What it does |
+|---|---|
+| `enabled() -> bool` | True when this build has search: always when search_optional is False. |
+| `write_index() -> None` | Stage 8: target/search-index.js (removed with search.html when search is off). |
+
+### stats
+
+stats.html; with the events feature on, its year and month bars link the archive pages.
+
+- Uses: `events`
+- Templates: `PAGE_STATS`
+
+| Option | Default |
+|---|---|
+| `stats_skip_keys` | `('Summary',)` |
+| `reuse_unchanged_pages` | `False` |
+
+| Hook | Default |
+|---|---|
+| `stats_keys() -> list[str]` | The properties listed on the stats page. |
+
+What `site.features.stats` offers:
+
+| Method | What it does |
+|---|---|
+| `events_index() -> Any` | {year: {month: {day: [docs]}}} of the events pages, or None. |
+
+### table
+
+Tables of documents: a date, a title and one column per property.
+
+- Templates: `DATATABLE`, `DATATABLE_HEADER_ITEM`, `DATATABLE_BODY_ITEM`
+
+| Option | Default |
+|---|---|
+| `datatable_link_template` | `'LINK_DATATABLE'` |
+| `datatable_default_headers` | `('Date', 'Title')` |
+
+| Hook | Default |
+|---|---|
+| `datatable_date_cell(doc: Doc) -> str` | The <td> of the date column. |
+| `datatable_title_cell(doc: Doc) -> str` | The <td> of the Title column. |
+| `datatable_custom_cell(doc: Doc, key: str) -> str \| None` | The whole <td> of a column the theme draws itself, or None for a plain property cell. |
+| `datatable_value_link(doc: Doc, key: str, value: str) -> dict[str, str]` | The variables of LINK_DATATABLE for one value of a cell. |
+| `datatable_columns(columns: list[str], docs: list[Doc]) -> list[str]` | The columns of a table of these documents; a theme may drop or add some. |
+
+What `site.features.table` offers:
+
+| Method | What it does |
+|---|---|
+| `date_cell_html(timestamp: str \| None, doc_id: str \| None) -> str` | The date cell; the date links to its events day page when the document is on one. |
+| `has_day_page(doc_id: str) -> bool` | True when the document is on an events day page (feature events). |
+| `legacy_date_cell(timestamp: str \| None, doc_id: str) -> str` | A legacy theme's datatable_date_cell(); an override written before doc_id existed gets the date only. |
+| `render(headers: list[str] \| None = None, doclist: list[str] \| None = None, table_id: str = 'kb4it-datatable', row_attrs: Any = None) -> str` | The HTML of a table of documents; the first column is the date when headers has 'Date'. |
+| `render_table(table: TableSpec) -> str` | The HTML of a Table (public API): its columns, the theme's hooks and the features' extensions. |
+| `title_cell_html(doc_id: str, properties: dict[str, Any]) -> str` | The title cell: the title, shortened, with a tooltip. |
+
+### table_filter
+
+The filter bar of the tables of all.html, bookmarks.html, the value pages and the events pages.
+
+- Requires: `table`
+- Templates: `DATATABLE_FILTER`
+- Assets: `tablefilter`
+
+| Option | Default |
+|---|---|
+| `datatable_filter_keys` | `('WorkType', 'DocType', 'Category', 'Topic', 'Status', 'P...` |
+| `datatable_filter_min_rows` | `10` |
+
+What `site.features.table_filter` offers:
+
+| Method | What it does |
+|---|---|
+| `bar(groups: list[dict[str, Any]], **where: str) -> str` | The DATATABLE_FILTER bar: where is table_id=... for a table, list=... for a plain list. |
+| `list_filter(docs: Iterable[str], list_id: str) -> tuple[str, Callable[[Any], str]]` | The filter bar of a plain document list, and the attributes of each document. |
+| `table_extension(table: Table, columns: list[str], doc_ids: list[str]) -> tuple[str, Callable[[str], str]] \| None` | The bar and row attributes of a filterable table with a Title column. |
+
+### toc
+
+var['toc'] of every document page, and the Contents menu of the header.
+
+- Templates: `HTML_TOC_LI`, `HTML_TOC_SECTLEVEL1`, `HTML_TOC_SECTLEVEL2`, `HTML_TOC_SECTLEVEL3`, `HTML_TOC_SECTLEVEL4`
+
+What `site.features.toc` offers:
+
+| Method | What it does |
+|---|---|
+| `extract(source: str) -> str` | The TOC of compiled HTML in the theme's markup; '' when the source has none. |
+| `menu_contents(var: dict[str, Any]) -> str` | The header's Contents menu: disabled on a system page, the document's TOC otherwise. |
+
+### toc_sidebar
+
+wanted(html): whether a document page shows the side table of contents.
+
+- Requires: `toc`
