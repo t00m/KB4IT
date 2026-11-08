@@ -4,7 +4,7 @@
 import json
 import os
 
-from apphelp_checks import (check_anchors, check_contract, check_helpids, helpid_map, load_contract,
+from apphelp_checks import (check_contract, check_helpids, helpid_map, load_contract,
                             render_helpids_js)
 from apphelp_config import HelpConfig, load_config
 from apphelp_html import transform
@@ -14,6 +14,7 @@ from apphelp_nav import build_sections, flatten, neighbours, related_pages
 from apphelp_search import extract_sections, page_record, render_index_js
 from apphelp_versions import publish as publish_versions
 
+from kb4it.core.checks import Problem as CheckProblem
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.core.util import get_hash_from_content, html_id_for
@@ -286,13 +287,30 @@ class Theme(Builder):
         target = self.srvbes.get_path("target")
         self._write(target, ".nojekyll", "")
         self._write_search_index(target)
+        self._write(target, "helpids.js", render_helpids_js(helpid_map(self.flat)))
+
+    def checks(self, target) -> list:
+        """Override: the shared anchor check, then help ids and the contract file."""
+        problems = super().checks(target)
         mapping = helpid_map(self.flat)
-        self._write(target, "helpids.js", render_helpids_js(mapping))
-        self._run_checks(target, mapping)
+        severity = "error" if self.config.strict else "warning"
+        problems += [CheckProblem("HELPID_TARGET_MISSING", "", f"id={q(ident)} url={q(mapping[ident])}", severity)
+                     for ident in check_helpids(target, mapping)]
+        contract = os.path.join(str(self.srvbes.get_path("root")), self.config.contract)
+        if self.config.contract_explicit and not os.path.isfile(contract):
+            problems.append(CheckProblem("CONTRACT_FILE_MISSING", "", f"path={q(contract)}"))
+        problems += [CheckProblem("CONTRACT_MISSING", "", f"entry={q(entry)}", "error")
+                     for entry in check_contract(load_contract(contract), mapping, target)]
+        return problems
+
+    def run_checks(self, target=None) -> list:
+        """Override: publish the version folder only after the checks pass."""
+        problems = super().run_checks(target)
         if self.config.versions:
             site_root = self.srvbes.get_path("site_root")
             labels, latest = publish_versions(site_root, self.config.version, self.config.latest)
             self.log.info(f"[VERSIONS] PUBLISHED current={q(self.config.version)} latest={q(latest)} all={q(','.join(labels))}")
+        return problems
 
     def _write_search_index(self, target):
         records = []
@@ -309,24 +327,6 @@ class Theme(Builder):
         if size > INDEX_WARN_BYTES:
             self.log.warning(f"[APPHELP] INDEX_LARGE size={q(size)}")
         self.log.info(f"[APPHELP] INDEX_BUILT pages={len(records)} size={q(size)}")
-
-    def _run_checks(self, target, mapping):
-        pages = sorted(name for name in os.listdir(target) if name.endswith(".html"))
-        for page, href in check_anchors(target, pages):
-            self.log.warning(f"[APPHELP] ANCHOR_MISSING from={q(page)} to={q(href)}")
-        missing_ids = check_helpids(target, mapping)
-        for ident in missing_ids:
-            self.log.warning(f"[APPHELP] HELPID_TARGET_MISSING id={q(ident)} url={q(mapping[ident])}")
-        if missing_ids and self.config.strict:
-            raise ThemeError(f"Help ids point to missing pages or anchors: {', '.join(missing_ids)}")
-        contract = os.path.join(str(self.srvbes.get_path("root")), self.config.contract)
-        if self.config.contract_explicit and not os.path.isfile(contract):
-            self.log.warning(f"[APPHELP] CONTRACT_FILE_MISSING path={q(contract)}")
-        missing = check_contract(load_contract(contract), mapping, target)
-        for entry in missing:
-            self.log.error(f"[APPHELP] CONTRACT_MISSING entry={q(entry)}")
-        if missing:
-            raise ThemeError(f"{len(missing)} contract entries missing: {', '.join(missing)}")
 
     def generate_sources(self):
         pass

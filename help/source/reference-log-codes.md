@@ -150,6 +150,17 @@ A profile is a source whose file name starts with `PROFILE-`: it describes one v
 | `TEMPLATE_NOT_FOUND` | error | A template the theme asks for does not exist. Stops | Add it to the theme or to `overrides/templates/` |
 | `TEMPLATE_COMPILE_FAIL` | error | A template has a syntax error. Stops | See [TEMPLATE_COMPILE_FAIL](troubleshooting.md#template-compile) |
 
+## Post-build checks {#checks}
+
+After every build, KB4IT reads the pages of the website and logs what it finds as `[CHECK]` lines. An error stops the build. With `"strict": true` at the top of `repo.json`, a warning stops it too. `kb4it verify` runs the link check on the built website, when there is one.
+
+| Code | Level | Meaning | What to do |
+|---|---|---|---|
+| `ANCHOR_MISSING` | warning | A link between two pages of the website points to a page or a section that does not exist: `from=` names the page with the link, `to=` the link | Fix the link or the heading it points to. If a theme wrote the link, report it |
+| `HELPID_TARGET_MISSING` | error with apphelp `"strict": true`, else warning | A help id points to a page or section that does not exist | Fix the `HelpId` or the heading it points to |
+| `CONTRACT_MISSING` | error | An entry of the apphelp contract file has no page. Stops | Add the page or help id, or remove the entry |
+| `CONTRACT_FILE_MISSING` | warning | The `contract` file named in the `apphelp` block of `repo.json` does not exist | Create it, or remove `contract` |
+
 ## Help sites {#apphelp}
 
 The apphelp theme checks the properties of each page. With `"strict": true`, the default, any of these problems stops the build and the message lists them all. With `"strict": false` they are warnings. See [apphelp](reference-theme-apphelp.md).
@@ -164,9 +175,6 @@ The apphelp theme checks the properties of each page. With `"strict": true`, the
 | `DOCTYPE_INVALID` | `DocType` is not `Tutorial`, `How-to guide`, `Reference` or `Explanation`. It is left out | Use one of the four |
 | `DOC_LEFT_OUT` | A page without a valid `DocType` was left out of the site | See `DOCTYPE_MISSING` and `DOCTYPE_INVALID` |
 | `HELPID_DUPLICATE` | Two pages use the same help id | Give each page its own |
-| `HELPID_TARGET_MISSING` | A help id points to a page or section that does not exist. Stops in strict mode | Fix the `HelpId` or the heading it points to |
-| `CONTRACT_MISSING` | An entry of the contract file has no page. Stops | Add the page or help id, or remove the entry |
-| `CONTRACT_FILE_MISSING` | The `contract` file named in `repo.json` does not exist | Create it, or remove `contract` |
 | `INDEX_PAGE_MISSING` | A page is missing from the search index because its file was not written | Look for its error above in the log |
 
 ## Terminal interface and projects {#projects}

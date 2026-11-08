@@ -1,6 +1,9 @@
-from apphelp_checks import (check_anchors, check_contract, check_helpids, helpid_map, load_contract,
-                            render_helpids_js)
-from apphelp_meta import Page
+import apphelp_checks
+from apphelp_checks import check_contract, check_helpids, helpid_map, load_contract, render_helpids_js
+from apphelp_meta import Page, Problem
+
+from kb4it.core.checks import Problem as CoreProblem
+from kb4it.core.checks import check_anchors
 
 
 def write(target, name, body):
@@ -18,8 +21,19 @@ def site(tmp_path):
 
 def test_check_anchors(tmp_path):
     target = site(tmp_path)
-    assert check_anchors(target, ["a.html", "b.html", "search.html"]) == [
-        ("a.html", "b.html#nope"), ("a.html", "gone.html")]
+    assert [str(p) for p in check_anchors(target, ["a.html", "b.html", "search.html"])] == [
+        "ANCHOR_MISSING from=a.html to=b.html#nope", "ANCHOR_MISSING from=a.html to=gone.html"]
+
+
+def test_anchor_check_lives_in_the_core():
+    assert not hasattr(apphelp_checks, "check_anchors") and not hasattr(apphelp_checks, "page_ids")
+
+
+def test_metadata_problem_is_the_shared_type_and_keeps_its_text():
+    problem = Problem("FEATURE_UNKNOWN", "a.md", "value=X")
+    assert isinstance(problem, CoreProblem)
+    assert str(problem) == "FEATURE_UNKNOWN doc=a.md value=X"
+    assert problem.doc == "a.md"
 
 
 def test_helpids(tmp_path):

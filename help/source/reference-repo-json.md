@@ -43,6 +43,7 @@ KB4IT removes from `target` the pages of documents you deleted. It only removes 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
 | `tagline` | Text | | Short subtitle |
+| `strict` | `true`, `false` | `false` | `true` stops the build on any problem of the [post-build checks](reference-log-codes.md#checks), warnings too. The blog theme also uses it: only `Category: Post` documents get the post layout |
 | `logo` | Path inside the website | theme logo | Logo image, relative to the website. The logo is also the favicon of every page; without `logo`, the page uses the theme's own logo |
 | `logo_alt` | Text | | Text of the logo for screen readers; empty uses the site `title` |
 | `workers` | Integer, 1 or more | half the processor cores | Documents converted at the same time |

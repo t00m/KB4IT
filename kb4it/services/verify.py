@@ -12,6 +12,7 @@ import os
 import sys
 from pathlib import Path
 
+from kb4it.core.checks import check_anchors, html_pages
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.mdconfig import load_settings
@@ -195,9 +196,28 @@ class VerifyMixin:
                 print(f"  {line}")
             print(f"Total: {len(link_problems)} broken links.")
 
-        if non_conformant or problems or link_problems:
+        check_problems = self._post_build_checks(repo, config_file)
+
+        if non_conformant or problems or link_problems or check_problems:
             raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
-                             f"{len(problems)} theme problems, {len(link_problems)} broken links")
+                             f"{len(problems)} theme problems, {len(link_problems)} broken links, "
+                             f"{len(check_problems)} post-build problems")
+
+    def _post_build_checks(self, repo, config_file):
+        """The default post-build checks on the built site (P7); return the problems that fail verify."""
+        target = resolve_repo_path(repo.get("target", "target"), Path(config_file).absolute().parent.parent)
+        pages = html_pages(target)
+        if not pages:
+            print("\npost-build checks skipped: no built site")
+            return []
+        found = check_anchors(target, pages)
+        if not found:
+            return []
+        strict = repo.get("strict") is True
+        print("\nPost-build checks:" if strict else "\nPost-build checks (warnings unless an error or strict):")
+        for problem in found:
+            print(f"  {problem}")
+        return [p for p in found if p.severity == "error" or strict]
 
     def _verify_people(self, attributes, repo, indexed):
         """(errors, notices) of the profiles: errors fail verify, notices are warnings and information."""

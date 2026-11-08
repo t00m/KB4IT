@@ -281,6 +281,8 @@ class Workflow(VerifyMixin, Service):
                 theme.write_sitemap()
             with trace.span("theme.write_feed"):
                 theme.write_feed()
+            with trace.span("theme.checks"):
+                theme.run_checks()
 
         # Build summary
         runtime = backend.get_dict("runtime")

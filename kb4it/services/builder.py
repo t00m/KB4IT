@@ -14,6 +14,7 @@ from datetime import datetime
 
 from mako.template import Template
 
+from kb4it.core.checks import check_anchors, html_pages
 from kb4it.core.documents import joined_value
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
@@ -364,6 +365,23 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
     def feed_enabled(self) -> bool:
         settings = self.feed_settings()
         return bool(settings and settings["enabled"] and getattr(self.srvbes, "site_url", None))
+
+    def checks(self, target) -> list:
+        """Problems of the built site in target; default: broken links to pages and anchors of the target root."""
+        return check_anchors(target, html_pages(target))
+
+    def run_checks(self, target=None) -> list:
+        """Log every problem of checks(); an error, or any problem with repo.json "strict": true, fails the build."""
+        target = target or self.srvbes.get_path("target")
+        problems = self.checks(target)
+        for problem in problems:
+            log = self.log.error if problem.severity == "error" else self.log.warning
+            log(f"[CHECK] {problem}")
+        strict = (self.srvbes.get_dict("repo") or {}).get("strict") is True
+        failing = [p for p in problems if p.severity == "error" or strict]
+        if failing:
+            raise ThemeError(f"{len(failing)} post-build problem(s): {', '.join(str(p) for p in failing[:5])}")
+        return problems
 
     def write_feed(self):
         """feed.xml (Atom) with the newest dated documents."""
