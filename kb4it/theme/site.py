@@ -112,6 +112,14 @@ class Doc:
         """Every property of the document and its values."""
         return MappingProxyType({key: self.values(key) for key in self._db.get_doc_keys(self.id)})
 
+    def template_keys(self) -> dict[str, Any]:
+        """The var['keys'] of the document's page: {key: [values]}, 'Title' as a string, and the
+        page of each value as '<Key>_<Value>_Url' and '<Key>_<n>_Url' ('Title_Url' is the page itself).
+
+        A copy: changing it changes nothing else.
+        """
+        return copy.deepcopy(dict(self._db.get_doc_properties(self.id)))
+
     def links(self, key: str) -> list[dict[str, str]]:
         """{name, url} of each value of a property, url being the value's page."""
         return [{"name": value, "url": page_name(key, value)} for value in self.values(key)]
@@ -375,9 +383,18 @@ class Site:
         name = name[:-5] if name.endswith(".html") else name
         self._need_host("page").add_system_page(name, title, html, as_html=not markdown, listing=listing)
 
-    def keep(self, name: str, reason: str = "no_changes") -> bool:
-        """Reuse name.html of the previous build when nothing it shows changed; True if kept."""
-        return bool(self._need_host("keep").reuse_cached_page(name, "nck", reason, name))
+    def keep(self, name: str, unless: str = "documents") -> bool:
+        """Reuse name.html of the previous build when nothing it shows changed; True if kept.
+
+        unless: "documents" keeps the page while no document changed; "properties" while no
+        property changed (a page that shows only properties and values).
+        """
+        counters = {"documents": ("ncd", "no_doc_changes"), "properties": ("nck", "no_key_changes")}
+        if unless not in counters:
+            raise ValueError(f"site.keep(): unless must be 'documents' or 'properties', not {unless!r}")
+        counter, reason = counters[unless]
+        name = name[:-5] if name.endswith(".html") else name
+        return bool(self._need_host("keep").reuse_cached_page(name, counter, reason, name))
 
     def table(self, table: Table) -> str:
         """The HTML of a document table."""

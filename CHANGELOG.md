@@ -57,6 +57,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- blog is written with `kb4it.theme` (version 1.3.0). Its pages do not change. Every dated post is an event of the `events` feature, so the date links of its tables and post headers and the archive pages come from one list.
 - bookshelf is written with `kb4it.theme` (version 1.3.0). Its pages do not change. The Book > Part > Chapter model is computed once per build in `prepare()`, before the Book pages, instead of on first use.
 - The `starter-docs` starter (`kb4it new-theme`) is written with `kb4it.theme`: `features = ("documents", "search")`, a `build()` of two lines and a `page_context()` of two (version 0.2.0). Its tables now show the date with the default markup of the uikit base, with the time, instead of a plain date cell.
 - Themes: the `logic/` folder of a theme is loaded as a Python package of its own, so its modules can import each other relatively (`from .helpers import ...`), and two themes, or a bundled and a user copy of one, never share a helper module. Before, `logic/` went on `sys.path` and the first theme loaded in a process kept its helper modules for every later load (terminal interface, `kb4it serve`). Bare imports of a sibling module (`from helpers import ...`) keep working, and are deprecated: a theme outside KB4IT logs `[FRONTEND] THEME_BARE_IMPORT` once per module with the relative import to use. `kb4it verify` loads the theme the same way.

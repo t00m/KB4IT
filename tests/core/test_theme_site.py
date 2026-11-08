@@ -66,6 +66,10 @@ def test_doc_values_are_read_only():
     with pytest.raises(TypeError):
         doc.properties["Tag"] = ("x",)
     assert doc.datetime.year == 2025
+    keys = doc.template_keys()
+    assert keys["Title"] == "Alpha" and keys["Title_Url"] == "a.html" and keys["Tag_backup_Url"] == "Tag_backup.html"
+    keys["Tag"].append("x")
+    assert doc.values("Tag") == ("linux", "backup")
 
 
 def test_properties():
@@ -135,7 +139,7 @@ def test_writers_delegate_to_the_host():
     assert site.keep("stats")
     assert site.table(Table(documents=(site.doc("a.md"), "b.md"), columns=("Date", "Title"), id="t")) == "<table>"
     assert calls == [("page", ("about", "About", "text"), {"as_html": False, "listing": False}),
-                     ("keep", ("stats", "nck", "no_changes", "stats")),
+                     ("keep", ("stats", "ncd", "no_doc_changes", "stats")),
                      ("table", (["Date", "Title"], ["a.md", "b.md"], "t"))]
 
 
