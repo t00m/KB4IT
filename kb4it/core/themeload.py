@@ -31,8 +31,9 @@ import os
 import re
 import sys
 import threading
+from importlib.machinery import ModuleSpec
 from types import ModuleType
-from typing import Callable
+from typing import Any, Callable, Sequence
 
 PREFIX = "kb4it_theme_"
 
@@ -61,7 +62,7 @@ def _siblings(logic: str) -> list[str]:
     return sorted(names)
 
 
-def _from_theme(module) -> bool:
+def _from_theme(module: Any) -> bool:
     """True when module was loaded from a theme logic/ folder (by this module or from sys.path)."""
     if getattr(module, "__name__", "").startswith(PREFIX):
         return True
@@ -72,16 +73,16 @@ def _from_theme(module) -> bool:
 class _BareLoader(importlib.abc.Loader):
     """Give the module already loaded as <package>.<name> to a bare import of <name>."""
 
-    def __init__(self, qualified: str):
+    def __init__(self, qualified: str) -> None:
         self.qualified = qualified
-        self.real_spec = None
+        self.real_spec: ModuleSpec | None = None
 
-    def create_module(self, spec):
+    def create_module(self, spec: ModuleSpec) -> ModuleType:
         module = importlib.import_module(self.qualified)
         self.real_spec = module.__spec__
         return module
 
-    def exec_module(self, module):
+    def exec_module(self, module: ModuleType) -> None:
         # module_from_spec() replaced __spec__ with the bare one; relative imports need the real one.
         module.__spec__ = self.real_spec
 
@@ -89,13 +90,14 @@ class _BareLoader(importlib.abc.Loader):
 class _BareFinder(importlib.abc.MetaPathFinder):
     """Resolve a top-level import to the sibling module of a loaded theme package."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.names: dict[str, str] = {}          # bare name -> package
         self.notify: dict[str, Callable[[str], None]] = {}   # package -> callback
         self.seen: set[tuple[str, str]] = set()
         self.lock = threading.Lock()
 
-    def find_spec(self, fullname, path=None, target=None):
+    def find_spec(self, fullname: str, path: Sequence[str] | None = None,
+                  target: ModuleType | None = None) -> ModuleSpec | None:
         if path is not None or "." in fullname:
             return None
         package = self.names.get(fullname)
@@ -132,8 +134,11 @@ def _purge(package: str, logic: str) -> None:
 
 def _new_package(package: str, logic: str) -> ModuleType:
     init = os.path.join(logic, "__init__.py")
+    spec: ModuleSpec | None
     if os.path.isfile(init):
         spec = importlib.util.spec_from_file_location(package, init, submodule_search_locations=[logic])
+        if spec is None:
+            raise ImportError(f"cannot load {init}")
     else:
         spec = importlib.machinery.ModuleSpec(package, None, is_package=True)
         spec.submodule_search_locations = [logic]
