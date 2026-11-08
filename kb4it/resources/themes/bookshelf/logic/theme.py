@@ -37,6 +37,10 @@ PALETTES = [
     ('s-clay',  'linear-gradient(95deg,#8a4b2f,#693620)'),
 ]
 
+# Chapters without a Book property go to this shelf. It has no Book page of
+# its own, so it links to the list of all chapters.
+UNFILED = 'Unfiled'
+
 ROMAN_MAP = {'i': 1, 'v': 5, 'x': 10, 'l': 50, 'c': 100, 'd': 500, 'm': 1000}
 
 
@@ -96,6 +100,7 @@ class Theme(NavigationMixin, DocumentTheme):
         self.books = OrderedDict()
         self.doc_index = {}
         self._context_ready = False
+        self._filed = set()
 
     # ------------------------------------------------------------------ data
     def structured_defaults(self):
@@ -127,10 +132,15 @@ class Theme(NavigationMixin, DocumentTheme):
     def _build_book_context(self):
         """Compute the Book > Part > Chapter model from document properties."""
         chapters = []
+        self._filed = set()
         for docId in self.srvdtb.get_documents():
             if self.srvdtb.is_system(docId):
                 continue
-            book = self._first(docId, 'Book', 'Unfiled')
+            book = self._first(docId, 'Book', '')
+            if book:
+                self._filed.add(book)
+            else:
+                book = UNFILED
             part_raw = self._first(docId, 'Part', '')
             chapter_raw = self._first(docId, 'Chapter', '')
             try:
@@ -218,9 +228,15 @@ class Theme(NavigationMixin, DocumentTheme):
             'percent': round(done / total * 100) if total else 0,
             'part_count': len(parts),
             'current': None,
-            'url': 'Book_%s.html' % valid_filename(book_title),
+            'url': self._book_url(book_title),
             'height': 200,
         }
+
+    def _book_url(self, book_title):
+        """The Book page of a book, or the list of all chapters for the unfiled shelf."""
+        if book_title in self._filed:
+            return 'Book_%s.html' % valid_filename(book_title)
+        return 'all.html'
 
     def _mark_reading_state(self):
         """Pick the 'reading' chapter per book and the current chapter."""

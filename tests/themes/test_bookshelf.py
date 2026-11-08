@@ -49,6 +49,14 @@ def test_index_shows_every_book(site):
     assert "Unfiled" in html
 
 
+def test_unfiled_shelf_links_all_chapters(site):
+    """The Unfiled shelf has no Book page: its links go to all.html."""
+    assert not (site["target"] / "Book_Unfiled.html").exists()
+    for name in ("index.html", "loose.html"):
+        assert "Book_Unfiled.html" not in read(site, name)
+    assert "ANCHOR_MISSING" not in site["log"]
+
+
 def test_book_overview_orders_parts_and_chapters(site):
     html = read(site, "Book_Linux_Admin.html")
     assert html.index("c1.html") < html.index("c2.html") < html.index("c3.html")
