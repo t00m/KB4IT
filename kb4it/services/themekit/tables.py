@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 from html import escape
 from typing import Any
 
@@ -18,14 +20,30 @@ class TableMixin(ThemeHost):
     #: Columns when neither the caller nor repo.json "datatable" names them.
     datatable_default_headers: tuple[str, ...] = ('Date', 'Title')
 
-    def datatable_date_cell(self, timestamp: str | None) -> str:
-        """Return the cell of the date column; `timestamp` is None when the document has none."""
+    def datatable_date_cell(self, timestamp: str | None, doc_id: str | None = None) -> str:
+        """Return the cell of the date column; `timestamp` is None when the document has none.
+
+        The date links to its events day page only when `doc_id` is on one (`has_event_page`).
+        """
         if timestamp is None:
             return '<td class="uk-text-left"></td>'
         ts_title = escape(timestamp[:16])
+        if doc_id is None or not self.has_event_page(doc_id):
+            return f'<td class="uk-text-left"><span class="uk-text-left">{ts_title}</span></td>'
         ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
         return (f'<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}">'
                 f'<span class="uk-text-left">{ts_title}</span></a></td>')
+
+    def date_cell(self, timestamp: str | None, doc_id: str) -> str:
+        """datatable_date_cell() of one row; a theme's override written before `doc_id` existed gets the date only."""
+        takes_doc = self.__dict__.get('_date_cell_takes_doc')
+        if takes_doc is None:
+            params = inspect.signature(self.datatable_date_cell).parameters.values()
+            takes_doc = len(params) >= 2 or any(p.kind == p.VAR_POSITIONAL for p in params)
+            self.__dict__['_date_cell_takes_doc'] = takes_doc
+        if takes_doc:
+            return self.datatable_date_cell(timestamp, doc_id)
+        return self.datatable_date_cell(timestamp)
 
     def datatable_title_cell(self, docId: str, properties: dict[str, Any]) -> str:
         """Return the cell of the Title column: the title, shortened, with a tooltip."""
@@ -75,7 +93,7 @@ class TableMixin(ThemeHost):
                 continue
             row = ['<tr>']
             if 'Date' in headers:
-                row.append(self.datatable_date_cell(self.srvdtb.get_doc_timestamp(docId)))
+                row.append(self.date_cell(self.srvdtb.get_doc_timestamp(docId), docId))
                 final_headers = headers[1:]
             else:
                 final_headers = headers

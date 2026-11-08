@@ -151,15 +151,18 @@ What a `DocumentTheme` subclass gets on top of `Builder`: property pages, tables
 | `build_tagcloud_from_key(key: 'str') -> 'str'` | Return a tag cloud of the values of a property, or '' when it has none. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
 | `cloud_measure(frequency: 'int', max_frequency: 'int') -> 'dict[str, Any]'` | Return the size fields of a property button or a tag cloud word. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
 | `datatable_custom_cell(doc_id: 'str', key: 'str') -> 'str \| None'` | Return the whole <td> of a column the theme draws itself, or None for a plain property cell. | `kb4it.services.themekit.tables.TableMixin` |
-| `datatable_date_cell(timestamp: 'str \| None') -> 'str'` | Return the cell of the date column; `timestamp` is None when the document has none. | `kb4it.services.themekit.tables.TableMixin` |
+| `datatable_date_cell(timestamp: 'str \| None', doc_id: 'str \| None' = None) -> 'str'` | Return the cell of the date column; `timestamp` is None when the document has none. | `kb4it.services.themekit.tables.TableMixin` |
 | `datatable_title_cell(docId: 'str', properties: 'dict[str, Any]') -> 'str'` | Return the cell of the Title column: the title, shortened, with a tooltip. | `kb4it.services.themekit.tables.TableMixin` |
 | `datatable_value_link(properties: 'dict[str, Any]', key: 'str', value: 'str') -> 'dict[str, str]'` | Return the variables of the link to the page of a value; KeyError leaves the cell empty. | `kb4it.services.themekit.tables.TableMixin` |
+| `date_cell(timestamp: 'str \| None', doc_id: 'str') -> 'str'` | datatable_date_cell() of one row; a theme's override written before `doc_id` existed gets the date only. | `kb4it.services.themekit.tables.TableMixin` |
+| `event_documents() -> 'list[str]'` | Documents that get day, month and year pages; default none. | `kb4it.services.themekit.events.EventsMixin` |
 | `extract_toc(source: 'str') -> 'str'` | Extract TOC from compiled HTML code and make it theme dependent. | `kb4it.services.themekit.toc.TocMixin` |
 | `frequency_keys() -> 'list[str]'` | Return the properties whose value count sizes the property buttons. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
 | `get_html_values_from_key(docId: 'str', key: 'str') -> 'list[tuple[str, str]]'` | Return (page, value) pairs for the values of a property of a document; a date key has no page. | `kb4it.services.themekit.metadata.MetadataMixin` |
 | `get_labels(values: 'list[tuple[str, str]]') -> 'str'` | Return the html links for (page, text) pairs; empty texts are left out. | `kb4it.services.themekit.metadata.MetadataMixin` |
 | `get_maxkv_freq() -> 'int'` | Return the highest number of values of a property. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
 | `get_page_actions(var: 'dict[str, Any]') -> 'str'` | Return the html of the page actions (SECTION_ACTIONS). | `kb4it.services.themekit.metadata.MetadataMixin` |
+| `has_event_page(doc_id: 'str') -> 'bool'` | True when doc_id is on an events day page of this build, so its date may link there. | `kb4it.services.themekit.events.EventsMixin` |
 | `menu_contents(var: 'dict[str, Any]') -> 'str'` | The header menu: disabled on a system page, the document contents otherwise. | `kb4it.services.themekit.page.DocumentPageMixin` |
 | `page_actions(var: 'dict[str, Any]') -> 'str'` | The page actions (SECTION_ACTIONS). | `kb4it.services.themekit.page.DocumentPageMixin` |
 | `page_toc(source_html: 'str') -> 'str'` | The TOC of the compiled body, in the theme's markup. | `kb4it.services.themekit.page.DocumentPageMixin` |

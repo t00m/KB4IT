@@ -82,9 +82,9 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         return (f'<td data-order="{assessment.score}"><span class="kb-q-meter kb-q-{tier}">{squares}</span>'
                 f'<span class="kb-q-chip kb-q-{tier}">{TIER_LABELS[tier]}</span></td>')
 
-    def datatable_date_cell(self, timestamp):
+    def datatable_date_cell(self, timestamp, doc_id=None):
         """The date cell gets a class, so the date stays on one line and the time wraps below it."""
-        return super().datatable_date_cell(timestamp).replace('<td class="uk-text-left">', '<td class="uk-text-left kb-dt-date">', 1)
+        return super().datatable_date_cell(timestamp, doc_id).replace('<td class="uk-text-left">', '<td class="uk-text-left kb-dt-date">', 1)
 
     def datatable_value_link(self, properties, key, value):
         """Priority and Status values show as colored labels."""
@@ -95,15 +95,21 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             link['class'] = 'uk-label kb-badge kb-dt-label %s' % status_css(value)
         return link
 
+    def event_documents(self):
+        """Override: the documents whose type of work (else first Category) is listed in repo.json "events"."""
+        event_types = (self.srvbes.get_dict('repo') or {}).get('events', [])
+        return [doc for doc in self.srvdtb.get_documents()
+                if not self.srvdtb.is_system(doc) and event_type(self.srvdtb, doc) in event_types]
+
     def build_page_events(self):
         """events.html: a calendar panel beside one table of every event, which the calendar and the filter bar filter."""
-        event_types = (self.srvbes.get_dict('repo') or {}).get('events', [])
-        doclist = [doc for doc in self.srvdtb.get_documents()
-                   if not self.srvdtb.is_system(doc) and event_type(self.srvdtb, doc) in event_types]
-        must_compile_year = self.build_events(doclist)
+        before = self.srvbes.get_events_before()
+        must_compile_year = self.build_events(self.event_documents())
+        # A day page that disappeared rebuilds no year page, but the table here must lose its link.
+        pages_changed = before is None or set(before) != set(self.srvbes.get_kb_dict().get('events') or {})
 
         events_pagename = os.path.join(self.srvbes.get_path('cache'), 'events.html')
-        if must_compile_year or not os.path.exists(events_pagename):
+        if must_compile_year or pages_changed or not os.path.exists(events_pagename):
             days = event_days(self.events_docs)
             docs = sorted(days, key=days.get, reverse=True)
             with self._filtered_tables(dates=days):
@@ -359,7 +365,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         var['page']['exemplary'] = bool(quality_doc) and quality_doc['tier'] == 'exemplary'
         var['doc_header'] = self.template('DOC_HEADER').render(var={
             'quality': quality_doc,
-            'strip': header_strip(self.srvdtb, doc_id, self.config.header_keys),
+            'strip': header_strip(self.srvdtb, doc_id, self.config.header_keys, self.has_event_page(doc_id)),
             'summary': doc_summary,
             'banners': banners(self.srvdtb, doc_id),
         })
@@ -367,7 +373,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         var['info_card'] = self.template('INFO_CARD').render(var={'card': {
             'open': not doc_summary,
             'groups': info_groups(self.srvdtb, doc_id, self.config.info_groups, var['source_md'],
-                                  self.person_tip),
+                                  self.person_tip, self.has_event_page(doc_id)),
             'history': {
                 'date': (self.srvdtb.get_values(doc_id, 'Date') or [''])[0],
                 'source': doc_id,

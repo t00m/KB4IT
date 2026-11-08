@@ -72,12 +72,13 @@ def test_missing_image_is_logged(page_site):
 def test_header_strip_shows_badges_then_links(page_site):
     html = read(page_site, "full.html")
     strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
-    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("events_20261001")
-    assert 'href="events_20261001.html"' in strip and 'href="Product_ADS.html"' in strip
+    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("2026-10-01")
+    # The site lists no "events" in repo.json, so no day page exists and the date is text.
+    assert 'href="events_' not in strip and 'href="Product_ADS.html"' in strip
     assert "Author_Ana" not in strip and "Topic" not in strip   # Author is not a strip key; full.md has no Topic
     ex = read(page_site, "exemplary.html")
     ex_strip = ex[ex.index("HEADER STRIP :: START"):ex.index("HEADER STRIP :: END")]
-    assert ex_strip.index("events_20261020") < ex_strip.index("Topic_Security.html") < ex_strip.index("Product_ADS.html")
+    assert ex_strip.index("2026-10-20") < ex_strip.index("Topic_Security.html") < ex_strip.index("Product_ADS.html")
 
 
 def test_strip_links_are_date_worktype_topic_product():
@@ -154,8 +155,9 @@ def test_sap_notes_found_in_text():
 def test_strip_date_shows_the_time_below_the_date(page_site):
     html = read(page_site, "full.html")
     strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
-    assert ('<a class="kb-date" href="events_20261001.html" title="2026-10-01 00:00:00">'
-            '<span class="kb-day">2026-10-01</span><span class="kb-time">00:00</span></a>') in strip
+    # No events day page in this site: the same date and time, without a link.
+    assert ('<span class="kb-date" title="2026-10-01 00:00:00">'
+            '<span class="kb-day">2026-10-01</span><span class="kb-time">00:00</span></span>') in strip
 
 
 def test_strip_date_without_time_shows_only_the_date():

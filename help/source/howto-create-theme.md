@@ -100,7 +100,8 @@ It brings the pages per property and per value, the properties, stats, bookmarks
 | `stats_skip_keys` | `('Summary',)` | Properties left out of the stats page, such as free text |
 | `datatable_link_template` | `'LINK_DATATABLE'` | Template of a value link in the document table |
 | `datatable_default_headers` | `('Date', 'Title')` | Columns when neither the page nor `repo.json` `"datatable"` names them |
-| `datatable_date_cell(timestamp)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table |
+| `datatable_date_cell(timestamp, doc_id)`, `datatable_title_cell(doc, properties)`, `datatable_value_link(properties, key, value)` | UIkit cells | The cells of the document table; the date links to its events day page only when `has_event_page(doc_id)` |
+| `event_documents()` | `[]` | The documents that get day, month and year pages; return the list you pass to `build_events()`, so their dates link there |
 
 The stats page template, `PAGE_STATS`, gets `var['stats']`, built by `collect_stats()` in `kb4it/services/themekit/stats.py`: the totals (`documents`, `properties`, `values`, `dated_pct`, `bookmarks`, `links`), the activity (`oldest`, `newest`, `undated`, and `years` and `months`, lists of bars with `label`, `count`, `pct` and `url`), `coverage` (one row per property with `key`, `url`, `docs`, `pct`, `values` and `top`), the health lists (`duplicates`, `rare_keys`, `sparse_docs`) and the links (`most_linked`, `orphans`, `no_outgoing`). The health lists and `orphans` hold at most ten `items` and say how many more there are in `more` (`total` is both). For a section's summary line it also gives `dated`, `busiest_year`, `full_coverage`, `least_covered` and `health_issues`. Content documents only: system pages never count. The page is kept from the cache only when no document and no property changed.
 

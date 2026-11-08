@@ -18,9 +18,12 @@ SAP_NOTE_URL = 'https://me.sap.com/notes/'
 RETIRED_STATUSES = ('Obsolete', 'Deprecated', 'Withdrawn', 'Rejected')
 
 
-def value_url(props, key, value, blocked=()):
-    """Return the page of one value: the day's events page for Date, none for another date key, else the key-value page."""
-    if key == 'Date':
+def value_url(props, key, value, blocked=(), day_page=True):
+    """Return the page of one value: the day's events page for Date, none for another date key, else the key-value page.
+
+    day_page is False when the document is on no events day page; its Date then links nowhere.
+    """
+    if key == 'Date' and day_page:
         day = value[:10]
         if len(day) == 10 and day.replace('-', '').isdigit():
             return f"events_{day.replace('-', '')}.html"
@@ -45,20 +48,23 @@ def summary(srvdtb, doc_id):
     return joined_value(srvdtb.get_values(doc_id, 'Summary'))
 
 
-def header_strip(srvdtb, doc_id, conf):
-    """Return the badges and links of the header strip, as set in theme.json header_keys."""
+def header_strip(srvdtb, doc_id, conf, day_page=True):
+    """Return the badges and links of the header strip, as set in theme.json header_keys.
+
+    day_page: whether the document is on an events day page, which its Date may link to.
+    """
     props = srvdtb.get_doc_properties(doc_id)
     blocked = srvdtb.get_blocked_keys()
     badges = []
     for key in conf.get('badges', []):
         for value in values(srvdtb, doc_id, key):
             css = {'Priority': priority_css, 'Status': status_css}.get(key, lambda _v: 'kb-label-doctype')(value)
-            badges.append({'key': key, 'text': value, 'css': css, 'url': value_url(props, key, value, blocked)})
+            badges.append({'key': key, 'text': value, 'css': css, 'url': value_url(props, key, value, blocked, day_page)})
     links = []
     for key in conf.get('links', []):
         items = []
         for v in values(srvdtb, doc_id, key):
-            item = {'text': v, 'url': value_url(props, key, v, blocked), 'time': '', 'full': v}
+            item = {'text': v, 'url': value_url(props, key, v, blocked, day_page), 'time': '', 'full': v}
             if key == 'Date':
                 item['text'], item['time'] = date_parts(v)
             items.append(item)
@@ -93,10 +99,11 @@ def sap_notes(text):
     return found
 
 
-def info_groups(srvdtb, doc_id, groups, body_md, tip=None):
+def info_groups(srvdtb, doc_id, groups, body_md, tip=None, day_page=True):
     """Return the non-empty groups of the Details tab, then Other with every key not in a group.
 
     tip(key, value) gives the tooltip of a value, such as the role and team of an author.
+    day_page: whether the document is on an events day page, which its Date may link to.
     """
     props = srvdtb.get_doc_properties(doc_id)
     present = [k for k in srvdtb.get_custom_keys(doc_id) if k not in HIDDEN_KEYS]
@@ -107,7 +114,8 @@ def info_groups(srvdtb, doc_id, groups, body_md, tip=None):
     def item(key):
         def text(v):
             return display_date(v) if key in blocked else v
-        return {'key': key, 'values': [{'text': text(v), 'url': value_url(props, key, v, blocked), 'tip': tip(key, v)}
+        return {'key': key, 'values': [{'text': text(v), 'url': value_url(props, key, v, blocked, day_page),
+                                        'tip': tip(key, v)}
                                        for v in values(srvdtb, doc_id, key)]}
 
     result = []

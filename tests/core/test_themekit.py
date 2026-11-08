@@ -199,7 +199,8 @@ def test_datatable_rows_and_hooks():
     theme.srvdtb, theme.srvbes = _TableDb(), _Backend()
     html = theme.build_datatable([], ["a.html", "sys.html"], table_id="t1")
     assert html.startswith("<DATATABLE") and "'table_id', 't1'" in html
-    assert "events_20261015.html" in html and "2026-10-15T09:30" in html
+    # No event documents in this theme, so the date is text, not a link to a day page.
+    assert "events_20261015.html" not in html and "2026-10-15T09:30" in html
     assert "A &lt;b&gt;" in html and "System" not in html
     # Tag_y has no page: the whole cell stays empty, as before the move
     assert "LINK_DATATABLE" not in html
