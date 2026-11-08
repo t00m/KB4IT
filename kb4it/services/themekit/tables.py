@@ -1,15 +1,15 @@
-"""The document table (datatable) of the list pages: all, bookmarks, events, values."""
+"""The document table (datatable) of the list pages: all, bookmarks, events, values.
+
+Legacy API: the code lives in the table feature (kb4it/theme/features/table.py);
+these methods keep the names and arguments themes on DocumentTheme use.
+"""
 
 from __future__ import annotations
 
-import inspect
-
-from html import escape
 from typing import Any
 
-from kb4it.core.util import ellipsize_text
-from kb4it.services.themekit.host import ThemeHost
-from kb4it.core.log import q
+from kb4it.services.themekit.host import ThemeHost, feature_of
+from kb4it.theme.features.table import Table
 
 
 class TableMixin(ThemeHost):
@@ -20,43 +20,23 @@ class TableMixin(ThemeHost):
     #: Columns when neither the caller nor repo.json "datatable" names them.
     datatable_default_headers: tuple[str, ...] = ('Date', 'Title')
 
+    def _table(self) -> Table:
+        return feature_of(self, Table)
+
     def datatable_date_cell(self, timestamp: str | None, doc_id: str | None = None) -> str:
         """Return the cell of the date column; `timestamp` is None when the document has none.
 
         The date links to its events day page only when `doc_id` is on one (`has_event_page`).
         """
-        if timestamp is None:
-            return '<td class="uk-text-left"></td>'
-        ts_title = escape(timestamp[:16])
-        if doc_id is None or not self.has_event_page(doc_id):
-            return f'<td class="uk-text-left"><span class="uk-text-left">{ts_title}</span></td>'
-        ts_link = escape(f"events_{timestamp[:10].replace('-', '')}.html")
-        return (f'<td class="uk-text-left"><a class="uk-link-heading" href="{ts_link}">'
-                f'<span class="uk-text-left">{ts_title}</span></a></td>')
+        return self._table().date_cell_html(timestamp, doc_id)
 
     def date_cell(self, timestamp: str | None, doc_id: str) -> str:
         """datatable_date_cell() of one row; a theme's override written before `doc_id` existed gets the date only."""
-        takes_doc = self.__dict__.get('_date_cell_takes_doc')
-        if takes_doc is None:
-            params = inspect.signature(self.datatable_date_cell).parameters.values()
-            takes_doc = len(params) >= 2 or any(p.kind == p.VAR_POSITIONAL for p in params)
-            self.__dict__['_date_cell_takes_doc'] = takes_doc
-        if takes_doc:
-            return self.datatable_date_cell(timestamp, doc_id)
-        return self.datatable_date_cell(timestamp)
+        return self._table().legacy_date_cell(timestamp, doc_id)
 
     def datatable_title_cell(self, docId: str, properties: dict[str, Any]) -> str:
         """Return the cell of the Title column: the title, shortened, with a tooltip."""
-        item = {}
-        try:
-            title = properties['Title']
-            # Built as HTML here, printed raw by the template: escape the document title.
-            item['title'] = f"<span data-uk-tooltip=\"{escape(str(title))}\">{escape(ellipsize_text(title, 80))}</span>"
-            item['url'] = properties['Title_Url']
-            return self.template('DATATABLE_BODY_ITEM').render(var=item)
-        except (KeyError, AttributeError) as e:
-            self.log.error(f"[THEME] DATATABLE_FAIL doc={q(docId)} item={q(item)} reason={q(e)}")
-            raise
+        return self._table().title_cell_html(docId, properties)
 
     def datatable_custom_cell(self, doc_id: str, key: str) -> str | None:
         """Return the whole <td> of a column the theme draws itself, or None for a plain property cell."""
@@ -64,54 +44,9 @@ class TableMixin(ThemeHost):
 
     def datatable_value_link(self, properties: dict[str, Any], key: str, value: str) -> dict[str, str]:
         """Return the variables of the link to the page of a value; KeyError leaves the cell empty."""
-        return {'class': 'uk-link-heading', 'title': value, 'url': properties[f'{key}_{value}_Url']}
+        return Table.value_link_vars(properties, key, value)
 
     def build_datatable(self, headers: list[str] | None = None, doclist: list[str] | None = None,
                         table_id: str = 'kb4it-datatable') -> str:
-        """Given a list of columns, it builds a datatable.
-
-        First column is always a date field, which is got by using the
-        method get_doc_timestamp from the database module. It means
-        that, firstly, it will retrieve the first date property defined
-        by the theme (or one of the next ones defined if the first isn't
-        found). If none is found, it will retrieve the timestamp of the
-        file from the OS).
-        So, it is not necessary to pass a date property in the headers.
-        """
-        tpl_link = self.template(self.datatable_link_template)
-        tpl_header_item = self.template('DATATABLE_HEADER_ITEM')
-        if not headers:
-            headers = self.srvbes.get_dict('repo').get('datatable', list(self.datatable_default_headers))
-
-        datatable = {'table_id': table_id}
-        datatable['header'] = ''.join(tpl_header_item.render(var={'item': item}) for item in headers)
-
-        documents = {docId: self.srvdtb.get_doc_properties(docId) for docId in doclist or []}
-        rows = []
-        for docId, properties in documents.items():
-            if self.srvdtb.is_system(docId):
-                continue
-            row = ['<tr>']
-            if 'Date' in headers:
-                row.append(self.date_cell(self.srvdtb.get_doc_timestamp(docId), docId))
-                final_headers = headers[1:]
-            else:
-                final_headers = headers
-            for key in final_headers:
-                if key == 'Title':
-                    row.append(self.datatable_title_cell(docId, properties))
-                    continue
-                custom = self.datatable_custom_cell(docId, key)
-                if custom is not None:
-                    row.append(custom)
-                    continue
-                try:
-                    field = [tpl_link.render(var=self.datatable_value_link(properties, key, value))
-                             for value in properties[key]]
-                except KeyError:
-                    field = []
-                row.append(f'<td class="">{", ".join(field)}</td>')
-            row.append('</tr>')
-            rows.append(''.join(row))
-        datatable['rows'] = ''.join(rows)
-        return self.template('DATATABLE').render(var=datatable)
+        """Given a list of columns, it builds a datatable; the first column is the date when headers has 'Date'."""
+        return self._table().render(headers, doclist, table_id)

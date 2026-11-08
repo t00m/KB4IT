@@ -1,14 +1,14 @@
-"""Metadata of a document page: the property and value links, and the page actions."""
+"""Metadata of a document page: the property and value links, and the page actions.
+
+Legacy API: the code lives in the metadata feature (kb4it/theme/features/metadata.py).
+"""
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
-from kb4it.core.dateclass import display_date
-from kb4it.core.util import valid_filename
-from kb4it.services.themekit.host import ThemeHost
-from kb4it.core.log import q
+from kb4it.services.themekit.host import ThemeHost, feature_of
+from kb4it.theme.features.metadata import Metadata
 
 
 class MetadataMixin(ThemeHost):
@@ -16,44 +16,16 @@ class MetadataMixin(ThemeHost):
 
     def get_page_actions(self, var: dict[str, Any]) -> str:
         """Return the html of the page actions (SECTION_ACTIONS)."""
-        return self.template('SECTION_ACTIONS').render(var=var)
+        return feature_of(self, Metadata).actions(var)
 
     def get_labels(self, values: list[tuple[str, str]]) -> str:
         """Return the html links for (page, text) pairs; empty texts are left out."""
-        label_links = ''
-        tpl_value_link = self.template('METADATA_VALUE_LINK')
-        for page, text in values:
-            if text:
-                url = valid_filename(page) if page else '#'
-                label_links += tpl_value_link.render(var={'link_url': url, 'link_name': text})
-        return label_links
+        return feature_of(self, Metadata).labels(values)
 
     def get_html_values_from_key(self, docId: str, key: str) -> list[tuple[str, str]]:
         """Return (page, value) pairs for the values of a property of a document; a date key has no page."""
-        if key in self.srvdtb.get_blocked_keys():
-            return [("", display_date(value)) for value in self.srvdtb.get_values(docId, key)]
-        return [(f"{key}_{value}.html", value) for value in self.srvdtb.get_values(docId, key)]
+        return feature_of(self, Metadata).values_of(docId, key)
 
     def build_metadata_section(self, docId: str) -> str:
         """Return a html block for displaying metadata (keys and values)."""
-        try:
-            tpl_section = self.template('METADATA_SECTION')
-            var: dict[str, Any] = {'items': []}
-            blocked = set(self.srvdtb.get_blocked_keys())
-            for key in self.srvdtb.get_custom_keys(os.path.basename(docId)):
-                try:
-                    values = self.get_html_values_from_key(docId, key)
-                    var['items'].append({
-                        'doc': docId,
-                        'key': key,
-                        'vfkey': valid_filename(key),
-                        'has_page': key not in blocked,  # date keys get no page of their own
-                        'labels': self.get_labels(values),
-                    })
-                except Exception as error:
-                    self.log.error(f"[THEME] KEY_FAIL key={q(key)} error={q(error)}", exc_info=True)
-                    raise
-            return tpl_section.render(var=var)
-        except Exception as error:
-            self.log.error(f"[THEME] METADATA_FAIL doc={q(docId)} error={q(error)}", exc_info=True)
-            raise
+        return feature_of(self, Metadata).section_html(docId)

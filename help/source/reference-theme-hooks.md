@@ -140,7 +140,7 @@ What a `DocumentTheme` subclass gets on top of `Builder`: property pages, tables
 
 | Method | What it does | Defined in |
 |---|---|---|
-| `build_datatable(headers: 'list[str] \| None' = None, doclist: 'list[str] \| None' = None, table_id: 'str' = 'kb4it-datatable') -> 'str'` | Given a list of columns, it builds a datatable. | `kb4it.services.themekit.tables.TableMixin` |
+| `build_datatable(headers: 'list[str] \| None' = None, doclist: 'list[str] \| None' = None, table_id: 'str' = 'kb4it-datatable') -> 'str'` | Given a list of columns, it builds a datatable; the first column is the date when headers has 'Date'. | `kb4it.services.themekit.tables.TableMixin` |
 | `build_events(doclist: 'list[str]') -> 'set[str]'` | Create the day, month and year pages of the dated documents in `doclist`. | `kb4it.services.themekit.events.EventsMixin` |
 | `build_metadata_section(docId: 'str') -> 'str'` | Return a html block for displaying metadata (keys and values). | `kb4it.services.themekit.metadata.MetadataMixin` |
 | `build_page_404() -> 'None'` | Create the 404 page; as a system page it stays out of listings, search, feed and sitemap. | `kb4it.services.themekit.notfound.NotFoundMixin` |
@@ -158,7 +158,7 @@ What a `DocumentTheme` subclass gets on top of `Builder`: property pages, tables
 | `datatable_value_link(properties: 'dict[str, Any]', key: 'str', value: 'str') -> 'dict[str, str]'` | Return the variables of the link to the page of a value; KeyError leaves the cell empty. | `kb4it.services.themekit.tables.TableMixin` |
 | `date_cell(timestamp: 'str \| None', doc_id: 'str') -> 'str'` | datatable_date_cell() of one row; a theme's override written before `doc_id` existed gets the date only. | `kb4it.services.themekit.tables.TableMixin` |
 | `event_documents() -> 'list[str]'` | Documents that get day, month and year pages; default none. | `kb4it.services.themekit.events.EventsMixin` |
-| `extract_toc(source: 'str') -> 'str'` | Extract TOC from compiled HTML code and make it theme dependent. | `kb4it.services.themekit.toc.TocMixin` |
+| `extract_toc(source: 'str') -> 'str'` | Extract the TOC from compiled HTML in the theme's markup; '' when the source has none. | `kb4it.services.themekit.toc.TocMixin` |
 | `frequency_keys() -> 'list[str]'` | Return the properties whose value count sizes the property buttons. | `kb4it.services.themekit.keypages.KeyPagesMixin` |
 | `get_html_values_from_key(docId: 'str', key: 'str') -> 'list[tuple[str, str]]'` | Return (page, value) pairs for the values of a property of a document; a date key has no page. | `kb4it.services.themekit.metadata.MetadataMixin` |
 | `get_labels(values: 'list[tuple[str, str]]') -> 'str'` | Return the html links for (page, text) pairs; empty texts are left out. | `kb4it.services.themekit.metadata.MetadataMixin` |

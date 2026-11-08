@@ -51,16 +51,35 @@ class Feature:
     theme_json: ClassVar[Mapping[str, Any]] = {}
 
     def __init__(self, theme: Any, engine: Any) -> None:
+        from kb4it.theme.base import BaseTheme
         self.theme = theme
         self.engine = engine
+        # A theme on Builder or DocumentTheme: the mixin shims call the feature, and the
+        # feature calls the theme's hooks with their old arguments (doc ids, not Docs).
+        self.legacy = not isinstance(theme, BaseTheme)
+        self._site: Site | None = None
 
     def __repr__(self) -> str:
         return f"<feature {self.name}>"
 
     @property
     def site(self) -> Site:
-        site: Site = self.engine.site
+        site: Site | None = getattr(self.engine, "site", None) if not self.legacy else self._site
+        if site is None:
+            from kb4it.theme.site import Site as SiteView
+            site = self._site = SiteView(self.engine.srvdtb, self.engine.srvbes, host=self.engine)
         return site
+
+    def doc(self, doc_id: str) -> Doc:
+        """The Doc of a document id."""
+        from kb4it.theme.site import Doc as DocView
+        return DocView(self.site, doc_id)
+
+    def feature(self, name: str) -> Any:
+        """Another enabled feature, or None (always None for a legacy theme)."""
+        if self.legacy:
+            return None
+        return self.engine.features.get(name)
 
     def option(self, name: str) -> Any:
         """The theme's value of one of this feature's options, else its default."""

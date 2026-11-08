@@ -105,6 +105,7 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         self._xform_pairs = None
         self._has_template = {}
         self.listing_pages = set()
+        self._kb4it_features = {}  # feature objects of the legacy mixins (themekit/host.py feature_of)
         self.log.debug("[BUILDER] CACHE_RESET")
         self.get_services()
 

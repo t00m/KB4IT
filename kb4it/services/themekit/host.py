@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
+
+if TYPE_CHECKING:
+    from kb4it.theme.feature import Feature
 
 
 class Renderable(Protocol):
@@ -53,3 +56,19 @@ class ThemeHost:
         def datatable_title_cell(self, docId: str, properties: Any) -> str: ...
 
         def has_event_page(self, doc_id: str) -> bool: ...
+
+
+_F = TypeVar("_F", bound="Feature")
+
+
+def feature_of(host: Any, cls: type[_F]) -> _F:
+    """The feature object a legacy mixin hands its work to, one per theme instance and build.
+
+    The theme is both the hook owner and the engine: the feature calls the theme's methods
+    with their old arguments, and the theme's services (srvdtb, srvbes, template()).
+    """
+    cache: dict[str, Any] = host.__dict__.setdefault("_kb4it_features", {})
+    feature = cache.get(cls.name)
+    if feature is None:
+        feature = cache[cls.name] = cls(host, host)
+    return feature

@@ -208,6 +208,32 @@ class ThemeEngine(Builder):
     def default_search_page(self) -> str:
         return HeadMetaMixin.search_page(self)
 
+    # ------------------------------------------------------- feature services
+    def page_toc(self, source_html: str) -> str:
+        toc = self.features.get("toc")
+        return toc.extract(source_html) if toc is not None else ""
+
+    def page_actions(self, var: dict[str, Any]) -> str:
+        metadata = self.features.get("metadata")
+        return metadata.actions(var) if metadata is not None else ""
+
+    def build_datatable(self, headers: list[str] | None = None, doclist: list[str] | None = None,
+                        table_id: str = "kb4it-datatable") -> str:
+        table = self.features.get("table")
+        if table is None:
+            raise ThemeError("site.table() needs the table feature")
+        html: str = table.render(headers, doclist, table_id)
+        return html
+
+    def editor_keys(self) -> dict[str, Any]:
+        if "editor" not in self.features:
+            return dict(Builder.editor_keys(self))
+        keys: dict[str, Any] = self.hook("editor_keys")()
+        return keys
+
+    def register_add_page(self, html: str) -> None:
+        self.hook("register_add_page")(html)
+
     # ------------------------------------------------------------------ search
     def search_documents(self) -> list[str]:
         if "search" not in self.features:

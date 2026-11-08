@@ -4,10 +4,16 @@ never another feature module; it reaches other features through requires, uses a
 from __future__ import annotations
 
 from kb4it.theme.feature import Feature
+from kb4it.theme.features.about import About
+from kb4it.theme.features.editor import Editor
+from kb4it.theme.features.metadata import Metadata
+from kb4it.theme.features.notfound import NotFound
 from kb4it.theme.features.search import Search
+from kb4it.theme.features.table import Table
+from kb4it.theme.features.toc import Toc
 
 #: Built-in features by name.
-REGISTRY: dict[str, type[Feature]] = {cls.name: cls for cls in (Search,)}
+REGISTRY: dict[str, type[Feature]] = {cls.name: cls for cls in (About, Editor, Metadata, NotFound, Search, Table, Toc)}
 
 #: Names that stand for several features.
 BUNDLES: dict[str, tuple[str, ...]] = {}

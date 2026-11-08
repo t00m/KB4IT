@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from kb4it.services.themekit.host import ThemeHost
+from kb4it.services.themekit.host import ThemeHost, feature_of
+from kb4it.theme.features.toc import Toc
 
 
 class DocumentPageMixin(ThemeHost):
@@ -22,6 +23,4 @@ class DocumentPageMixin(ThemeHost):
 
     def menu_contents(self, var: dict[str, Any]) -> str:
         """The header menu: disabled on a system page, the document contents otherwise."""
-        if var['SystemPage']:
-            return self.template('HTML_HEADER_MENU_CONTENTS_DISABLED').render()
-        return self.template('HTML_HEADER_MENU_CONTENTS_ENABLED').render(var=var)
+        return feature_of(self, Toc).menu_contents(var)
