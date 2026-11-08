@@ -11,7 +11,6 @@ Server module.
 """
 
 import os
-import re
 import shutil
 import zipfile
 from datetime import datetime
@@ -21,8 +20,6 @@ from techdoc_admin import AdminMixin
 from techdoc_config import TechdocConfig
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_diagrams import DiagramsMixin
-from techdoc_events import EVENTS_TABLE, calendar_json, event_days
-from techdoc_filters import FilterMixin
 from techdoc_docpage import banners, header_strip, info_groups, summary
 from techdoc_gallery import GalleryMixin
 from techdoc_quality import (DIM_LABELS, DIMENSIONS, MAXIMA, TIER_LABELS, DocInput, assess, checklist, index_js,
@@ -31,7 +28,6 @@ from techdoc_quality_guide import CHECKS as GUIDE_CHECKS
 from techdoc_quality_page import duplicates, quick_wins, tier_mix
 from techdoc_quality_guide import DIMS as GUIDE_DIMS
 from techdoc_records import event_type, work_type
-from techdoc_related import RELATED_KEYS, related
 
 from kb4it.core.util import (
     get_source_docs,
@@ -44,10 +40,15 @@ from kb4it.core.util import (
 from kb4it.core.html import enhance_blocks, enhance_images
 from kb4it.core.people import named_people, person_status
 from kb4it.services.themekit import DocumentTheme
+from kb4it.services.themekit.events import EVENTS_TABLE, calendar_json, event_days
+from kb4it.services.themekit.filters import FilterMixin
+from kb4it.services.themekit.related import RelatedMixin
+from kb4it.services.themekit.tocsidebar import TocSidebarMixin
 from kb4it.core.log import q
 
 
-class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin, DocumentTheme):
+class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin, RelatedMixin, TocSidebarMixin,
+            DocumentTheme):
     reserved_pages = ('404.md', 'diagrams.md', 'gallery.md', 'quality-guide.md', 'quality.md')  # pages build() writes
     add_page = True   # create_page_add() runs in build()
     properties_cloud = False  # properties.html is a table of the properties
@@ -114,12 +115,6 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
 
         self.add_system_page('events', 'Events')
 
-    def toc_sidebar(self, source_html):
-        """Show the sticky table of contents when repo.json (else theme.json) asks for it and the page has four or more sections."""
-        repo = self.srvbes.get_dict('repo') or {}
-        wanted = repo['toc_sidebar'] if isinstance(repo.get('toc_sidebar'), bool) else self.config.toc_sidebar
-        return wanted and len(re.findall(r'<h2\b', source_html)) >= 4
-
     def table_filter_on(self):
         """Long tables of a document get search and sort unless theme.json sets "table_filter": false."""
         return self.config.table_filter
@@ -163,14 +158,13 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         """Override: techdoc shows the documents that link here in the Related tab of the info card, not after the body."""
         return ''
 
+    def related_candidates(self):
+        """Override: retired documents are never suggested as related."""
+        return [d for d in super().related_candidates()
+                if self.quality.get(d) is None or self.quality[d].tier != 'retired']
+
     def related_view(self, doc_id):
         """Linked from and related documents for the Related tab, each with the tier of its target."""
-        plan = self.srvbes.get_plan()
-        if getattr(self, '_related_plan', None) is not plan:
-            docs = [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)
-                    and (self.quality.get(d) is None or self.quality[d].tier != 'retired')]
-            self._related_meta = {d: {k: list(self.srvdtb.get_values(d, k)) for k in RELATED_KEYS} for d in docs}
-            self._related_plan = plan
         tiers = (getattr(self, 'quality_stats', None) or {}).get('docs', {})
 
         def chip(page):
@@ -179,11 +173,10 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
 
         linked = [dict(item, chip=chip(item['href'])) for item in self.backlinks(doc_id)]
         similar = []
-        if doc_id in self._related_meta:
-            for item in related(doc_id, self._related_meta):
-                page = html_id_for(item['doc'])
-                title = (self.srvdtb.get_values(item['doc'], 'Title') or [item['doc']])[0]
-                similar.append({'title': title, 'href': page, 'shared': ', '.join(item['shared']), 'chip': chip(page)})
+        for item in self.related_docs(doc_id):
+            page = html_id_for(item['doc'])
+            title = (self.srvdtb.get_values(item['doc'], 'Title') or [item['doc']])[0]
+            similar.append({'title': title, 'href': page, 'shared': ', '.join(item['shared']), 'chip': chip(page)})
         return {'linked': linked, 'similar': similar} if linked or similar else None
 
     def ensure_quality(self):

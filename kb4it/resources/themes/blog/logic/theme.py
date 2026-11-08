@@ -230,37 +230,6 @@ class Theme(DocumentTheme):
             body = self.template('HTML_BODY').render(var=var)
         return header + body + self.template('HTML_FOOTER').render(var=var)
 
-    def get_related(self, docId):
-        """Get a list of related documents for each tag"""
-        # DISABLED:
-        # Related section code works.
-        # However, because of the workflow do not detect which sources
-        # have been added or removed, if any of the remaining sources do
-        # not change, the related section will not be rebuilt again.
-        # As a consecuence, documents displayed in the related section
-        # might not exist. Or the other way around, the new documents
-        # might exist, but they are not referenced.
-        # Workaround: just browse the metadata from the document menu
-
-        TPL_SECTION_RELATED = self.template('SECTION_RELATED')
-        blocked_keys = self.srvdtb.get_blocked_keys()
-        doclist = set()
-        doc_keys = self.srvdtb.get_doc_properties(docId)
-        filtered_keys = [key for key in doc_keys if key not in blocked_keys]
-        for key in filtered_keys:
-            for value in self.srvdtb.get_values(docId, key):
-                for rel_docId in self.srvdtb.get_docs_by_key_value(key, value):
-                    doclist.add(rel_docId)
-
-        doclist.discard(docId)
-        self.log.debug(f"[THEME] RELATED_FOUND doc={q(docId)} n={len(doclist)}")
-
-        headers = []
-        var = self.get_theme_var()
-        var['datatable'] = self.build_datatable(headers, doclist)
-        html_related = TPL_SECTION_RELATED.render(var=var)
-        return html_related
-
     def cloud_measure(self, frequency, max_frequency):
         """Blog sizes property buttons and tag cloud words by font size."""
         return {'size': get_font_size(frequency, max_frequency)}

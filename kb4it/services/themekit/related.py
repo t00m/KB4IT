@@ -1,6 +1,10 @@
-"""techdoc related documents: other documents that share property values, the rarest values weighing most."""
+"""Related kit (Layer 1): other documents that share property values, the rarest values weighing most."""
+
+from __future__ import annotations
 
 import math
+
+from kb4it.services.themekit.host import ThemeHost
 
 RELATED_KEYS = ('SID', 'Product', 'Transaction', 'Component', 'Tag')
 
@@ -32,3 +36,24 @@ def related(doc_id, meta, limit=5):
                           'shared': [f"{key}: {', '.join(vals)}" for key, vals in grouped.items()]})
     found.sort(key=lambda item: (-item['score'], item['doc']))
     return found[:limit]
+
+
+class RelatedMixin(ThemeHost):
+    """`related_docs`; needs `srvdtb` and `srvbes.get_plan()`. A theme narrows the candidates with `related_candidates`."""
+
+    related_keys = RELATED_KEYS
+
+    def related_candidates(self) -> list:
+        """Documents that may be listed as related; default: every document that is not a system page."""
+        return [d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d)]
+
+    def related_docs(self, doc_id: str, limit: int = 5) -> list:
+        """related() of doc_id over the candidates; [] when doc_id is not one. The metadata is read once per build."""
+        plan = self.srvbes.get_plan()
+        if getattr(self, '_related_plan', None) is not plan or not hasattr(self, '_related_meta'):
+            self._related_meta = {d: {k: list(self.srvdtb.get_values(d, k)) for k in self.related_keys}
+                                  for d in self.related_candidates()}
+            self._related_plan = plan
+        if doc_id not in self._related_meta:
+            return []
+        return related(doc_id, self._related_meta, limit)

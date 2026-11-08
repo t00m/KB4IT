@@ -43,3 +43,9 @@ def test_normalise_maps_old_and_new_vendor_paths_to_one_token():
         assert snapshot.normalise(f'src="{old}"') == snapshot.normalise(f'src="{new}"'), (old, new)
     assert snapshot.normalise('src="resources/themes/techdoc/framework/kb4it/js/page.js"') == \
         'src="resources/themes/techdoc/framework/kb4it/js/page.js"', "a theme's own files keep their path"
+
+
+def test_normalise_maps_the_moved_kit_scripts():
+    for old, new in (("resources/themes/techdoc/framework/kb4it/js/datatable-filter.js",
+                      "resources/vendor/tablefilter/js/datatable-filter.js"),):
+        assert snapshot.normalise(f'src="{old}"') == snapshot.normalise(f'src="{new}"'), (old, new)

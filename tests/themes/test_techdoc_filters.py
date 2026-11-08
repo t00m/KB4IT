@@ -1,23 +1,14 @@
-"""techdoc techdoc_filters.py: the filter bar of the document tables on all, bookmarks and value pages."""
+"""Table filter kit (themekit/filters.py) in techdoc: the filter bar of the document tables on all, bookmarks and value pages."""
 
-import importlib.util
 import json
 import re
 
 import pytest
 
-from tests.helpers import ROOT, page
+from tests.helpers import page
 from tests.themes.test_techdoc_add import build_techdoc
 
-LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-spec = importlib.util.spec_from_file_location("techdoc_filters", LOGIC / "techdoc_filters.py")
-filters = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(filters)
-
-
-espec = importlib.util.spec_from_file_location("techdoc_events", LOGIC / "techdoc_events.py")
-events = importlib.util.module_from_spec(espec)
-espec.loader.exec_module(events)
+from kb4it.services.themekit import events, filters
 
 
 def test_event_days_map_each_document_to_its_day():
@@ -154,9 +145,10 @@ def test_events_page_has_the_calendar_data(target):
 
 
 def test_scripts_are_deployed_and_loaded(target):
-    assert "framework/kb4it/js/datatable-filter.js" in read(target, "all.html")
+    assert "resources/vendor/tablefilter/js/datatable-filter.js" in read(target, "all.html")
     js = target / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "js"
-    assert (js / "datatable-filter.js").exists() and (js / "events.js").exists()
+    assert (target / "resources" / "vendor" / "tablefilter" / "js" / "datatable-filter.js").exists()
+    assert (js / "events.js").exists() and not (js / "datatable-filter.js").exists()
 
 
 def test_pair_attributes_have_the_values_of_both_documents():

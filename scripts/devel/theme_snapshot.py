@@ -43,6 +43,9 @@ _VOLATILE = [
     (re.compile(r"resources/vendor/(highlight|uikit|datatables)/"), lambda m: f"<VENDOR:{m.group(1)}>/"),
     (re.compile(r"resources/(?:common|vendor/search)/(js|css)/kb4it-search"), r"<VENDOR:search>/\1/kb4it-search"),
     (re.compile(r"resources/themes/apphelp/framework/apphelp/js/search\.js"), "<VENDOR:search>/js/kb4it-search.js"),
+    # Scripts of techdoc features that became kits (Part C).
+    (re.compile(r"resources/(?:themes/techdoc/framework/kb4it|vendor/tablefilter)/js/datatable-filter\.js"),
+     "<VENDOR:tablefilter>/js/datatable-filter.js"),
 ]
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 

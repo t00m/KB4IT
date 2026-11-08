@@ -10,7 +10,7 @@
     "editor": true,
     "feed": false,
     "kb4it": ">=0.12.0",
-    "assets": ["highlight", "uikit", "datatables", "search"],
+    "assets": ["highlight", "uikit", "datatables", "search", "tablefilter"],
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit",

@@ -1,4 +1,4 @@
-"""Filter bar of the document tables: pills per property value, behind a Filter button next to the search box.
+"""Table filter kit (Layer 1). Filter bar of the document tables: pills per property value, behind a Filter button next to the search box.
 
 Only the tables of all.html, bookmarks.html, the property value pages, events.html and the archive
 pages of a year, month or day (events_YYYY*.html) get it. The Quality page uses the same bar over
@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from html import escape
 
 from kb4it.core.util import slugify
+from kb4it.services.themekit.host import ThemeHost
 
 FILTER_KEYS = ('WorkType', 'DocType', 'Category', 'Topic', 'Status', 'Priority')
 FILTER_MIN_ROWS = 10  # smaller tables are short enough to scan by eye
@@ -52,8 +53,12 @@ def facet_attrs(values_of, doc, keys=FILTER_KEYS):
     return ' '.join(attrs)
 
 
-class FilterMixin:
-    """Adds the filter bar to the document tables of the listing pages; needs build_datatable and srvdtb."""
+class FilterMixin(ThemeHost):
+    """Adds the filter bar to the document tables of the listing pages.
+
+    Needs `build_datatable` and `srvdtb`, the theme's `DATATABLE_FILTER` template and the vendor
+    library `tablefilter` in its theme.json `assets`.
+    """
 
     datatable_filter_keys = FILTER_KEYS
     datatable_filter_min_rows = FILTER_MIN_ROWS
