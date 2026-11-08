@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, install-theme, uninstall-theme, new-theme, --plain, starter, theme zip, active theme, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
+Keyword: cli, kb4it, install-theme, uninstall-theme, new-theme, theme-info, --plain, starter, theme zip, active theme, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -27,6 +27,7 @@ Summary: Every kb4it command and option, and what the exit status means.
 | `kb4it themes` | Lists the installed themes with their version, fingerprint, folder and whether builds use that copy (`active=yes` or `active=no`) |
 | `kb4it install-theme SOURCE` | Installs a theme from a zip file or an `https://` URL into your themes folder. See [Install a theme](#themes) |
 | `kb4it new-theme ID [--plain] [DIR]` | Creates a theme of your own from a starter theme. See [Start a theme](#new-theme) |
+| `kb4it theme-info [ID or DIR] [--repo CONFIG] [--json]` | Shows what a theme is made of: features, hooks, options, templates and settings. See [Look inside a theme](#theme-info) |
 | `kb4it uninstall-theme ID [--yes]` | Removes a theme from your themes folder. See [Install a theme](#themes) |
 | `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
@@ -99,6 +100,27 @@ The id takes lower-case letters, digits, `-` and `_`. The command ends with `1` 
 `kb4it themes` lists every copy. The one builds use has `active=yes`; a bundled theme hidden by one of yours shows `active=no shadowed_by=user`. A theme shipped inside a knowledge base's `source/resources/themes/` wins over both, and is not listed.
 
 A build that runs while you reinstall the theme it uses may fail; build again.
+
+### Look inside a theme {#theme-info}
+
+`kb4it theme-info ID` loads the theme without building a site and prints, one section per line:
+
+- `theme`: id, version, where it was found (`builtin`, `user`, `path` or `theme_path`) and its folder.
+- `api`: the base class. A theme on `Builder` or `DocumentTheme` shows `legacy ... (deprecated)`.
+- `features`: what the theme has switched on, such as `property_pages`, `events`, `table_filter` or `search`. Theme-local parts are marked `(theme)`.
+- `hooks`: every method the theme overrides, with its file and line and the feature it belongs to.
+- `options`: the class attributes the theme sets over a KB4IT default.
+- `templates`: every template the theme can render and where it comes from: `repo` (the site's overrides), `theme`, `base:NAME` (the template base) or `common`.
+- `settings`: the settings class and its values.
+
+```
+$ kb4it theme-info techdoc
+theme      techdoc 1.3.0 (builtin) /usr/lib/python3/site-packages/kb4it/resources/themes/techdoc
+api        legacy DocumentTheme (deprecated), 26 classes in the MRO
+features   toc, events, table, property_pages, stats, ...
+```
+
+Give a folder instead of an id to look at a theme you are writing. `--repo CONFIG` takes the theme of that site (or its `theme_path`), resolves the site's template overrides and shows the settings merged with its `repo.json`. `--json` prints the same as JSON. The command ends with `1` when the theme cannot be found or loaded.
 
 ## Properties and values {#keys}
 

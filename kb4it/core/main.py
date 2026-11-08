@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import os
 import sys
 import uuid
@@ -354,6 +355,8 @@ def build_parser() -> argparse.ArgumentParser:
     # Start a theme of your own from a starter
     from kb4it.core.newtheme import add_parser as add_new_theme_parser
     add_new_theme_parser(subparsers)
+    from kb4it.core.themeinfo import add_parser as add_theme_info_parser
+    add_theme_info_parser(subparsers)
 
     # Remove a theme of the user
     theme_uninstall = subparsers.add_parser(
@@ -509,6 +512,20 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# Commands that run without the build services: action -> (module, function taking vars(params)).
+SIMPLE_ACTIONS = {
+    "search": ("kb4it.core.grep", "run_search"),
+    "keys": ("kb4it.core.explore", "run_keys"),
+    "delete": ("kb4it.core.projectcli", "run_delete"),
+    "install-theme": ("kb4it.core.themecli", "run_install_theme"),
+    "new-theme": ("kb4it.core.newtheme", "run_new_theme"),
+    "theme-info": ("kb4it.core.themeinfo", "run_theme_info"),
+    "uninstall-theme": ("kb4it.core.themecli", "run_uninstall_theme"),
+    "import": ("kb4it.core.projectcli", "run_import"),
+    "serve": ("kb4it.core.serve", "run_serve"),
+}
+
+
 def main():
     """Set up application arguments and execute."""
     # When called with no arguments in an interactive terminal, launch the TUI
@@ -546,30 +563,9 @@ def main():
                         print(line, file=sys.stderr)
             except OSError:
                 pass  # The notice is optional; an unreadable KB4IT_HOME must not stop the command.
-        if params.action == "search":
-            from kb4it.core.grep import run_search
-            sys.exit(run_search(vars(params)))
-        if params.action == "keys":
-            from kb4it.core.explore import run_keys
-            sys.exit(run_keys(vars(params)))
-        if params.action == "delete":
-            from kb4it.core.projectcli import run_delete
-            sys.exit(run_delete(vars(params)))
-        if params.action == "install-theme":
-            from kb4it.core.themecli import run_install_theme
-            sys.exit(run_install_theme(vars(params)))
-        if params.action == "new-theme":
-            from kb4it.core.newtheme import run_new_theme
-            sys.exit(run_new_theme(vars(params)))
-        if params.action == "uninstall-theme":
-            from kb4it.core.themecli import run_uninstall_theme
-            sys.exit(run_uninstall_theme(vars(params)))
-        if params.action == "import":
-            from kb4it.core.projectcli import run_import
-            sys.exit(run_import(vars(params)))
-        if params.action == "serve":
-            from kb4it.core.serve import run_serve
-            sys.exit(run_serve(vars(params)))
+        if params.action in SIMPLE_ACTIONS:
+            module, function = SIMPLE_ACTIONS[params.action]
+            sys.exit(getattr(importlib.import_module(module), function)(vars(params)))
         if params.action == "help":
             from kb4it.core.notice import run_help
             sys.exit(run_help(url=params.url, dismiss=params.dismiss))
