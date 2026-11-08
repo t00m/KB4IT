@@ -29,7 +29,9 @@ def test_fixtures_exist():
 def test_every_app_is_snapshotted_with_content():
     pairs = list(snapshot.apps(content=True))
     assert ("techdoc", "sapbasis") in pairs and ("apphelp", "default") in pairs
-    assert list(snapshot.apps(content=False)) == [p for p in pairs if p[1] == "default" and p[0] != "apphelp"]
+    assert ("starter-docs", "default") in pairs and ("starter-plain", "default") in pairs
+    themes = [p for p in pairs if p[1] == "default" and p[0] != "apphelp" and p[0] not in snapshot.STARTERS]
+    assert list(snapshot.apps(content=False)) == themes
 
 
 def test_normalise_maps_old_and_new_vendor_paths_to_one_token():
