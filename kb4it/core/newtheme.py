@@ -9,6 +9,7 @@ kb4it new-theme: copy a starter theme (kb4it/resources/starters/) under a new id
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -52,6 +53,20 @@ def create_theme(theme_id: str, plain: bool = False, dest: str | None = None) ->
     if os.path.isfile(sample):
         _rewrite_json(sample, theme=theme_id)
     return folder
+
+
+def add_parser(subparsers) -> None:
+    """The new-theme subcommand of the kb4it command line."""
+    new_theme = subparsers.add_parser(
+        "new-theme", help="Create a theme of your own from a starter theme",
+        description="Copies starter-docs (a document theme on UIkit) or, with --plain, starter-plain "
+        "(plain pages) into DIR/ID; DIR defaults to your themes folder.",
+        epilog="Examples:\n\n   kb4it new-theme mytheme\n   kb4it new-theme --plain notes ~/devel/themes",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    new_theme.add_argument("id", help="Theme id: lower-case letters, digits, '-' and '_'")
+    new_theme.add_argument("dir", nargs="?", default=None, help="Folder to create the theme in")
+    new_theme.add_argument("--plain", action="store_true", help="Start from starter-plain instead of starter-docs")
 
 
 def run_new_theme(params: dict) -> int:

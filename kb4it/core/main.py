@@ -352,16 +352,8 @@ def build_parser() -> argparse.ArgumentParser:
     theme_install.add_argument("source", help="Path to a .zip file, or an https:// URL")
 
     # Start a theme of your own from a starter
-    new_theme = subparsers.add_parser(
-        "new-theme", help="Create a theme of your own from a starter theme",
-        description="Copies starter-docs (a document theme on UIkit) or, with --plain, starter-plain "
-        "(plain pages) into DIR/ID; DIR defaults to your themes folder.",
-        epilog="Examples:\n\n   kb4it new-theme mytheme\n   kb4it new-theme --plain notes ~/devel/themes",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    new_theme.add_argument("id", help="Theme id: lower-case letters, digits, '-' and '_'")
-    new_theme.add_argument("dir", nargs="?", default=None, help="Folder to create the theme in")
-    new_theme.add_argument("--plain", action="store_true", help="Start from starter-plain instead of starter-docs")
+    from kb4it.core.newtheme import add_parser as add_new_theme_parser
+    add_new_theme_parser(subparsers)
 
     # Remove a theme of the user
     theme_uninstall = subparsers.add_parser(
