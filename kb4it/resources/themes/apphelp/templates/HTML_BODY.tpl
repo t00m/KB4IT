@@ -193,7 +193,7 @@ ${ah['content'] | n}
 % if ah.get('versions'):
 <script src="../versions.js"></script>
 % endif
-<script src="${A}/js/search.js"></script>
+<script src="resources/vendor/search/js/kb4it-search.js"></script>
 <script src="${A}/js/apphelp.js"></script>
 <!-- PAGE SCRIPTS :: END -->
 </body>

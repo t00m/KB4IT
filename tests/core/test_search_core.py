@@ -30,6 +30,6 @@ def test_apphelp_site_carries_the_shared_engine(tmp_path, home):
     cfg = write_repo(tmp_path / "help", "apphelp", {"a.md": page("A", DocType="Reference", Tag="x")}, **conf)
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
-    deployed = tmp_path / "help" / "target" / "resources" / "themes" / "apphelp" / "framework" / "apphelp" / "js"
-    engine = (ROOT / "kb4it" / "resources" / "common" / "js" / "kb4it-search.js").read_text(encoding="utf-8")
-    assert (deployed / "search.js").read_text(encoding="utf-8") == engine
+    deployed = tmp_path / "help" / "target" / "resources" / "vendor" / "search" / "js"
+    engine = (ROOT / "kb4it" / "resources" / "vendor" / "search" / "js" / "kb4it-search.js").read_text(encoding="utf-8")
+    assert (deployed / "kb4it-search.js").read_text(encoding="utf-8") == engine

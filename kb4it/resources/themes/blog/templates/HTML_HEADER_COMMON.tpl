@@ -10,22 +10,22 @@
   <!-- PAGE METADATA :: END -->
   <!-- STYLESHEETS :: START -->
 % if _hl == 'client':
-  <link rel="stylesheet" href="resources/themes/blog/framework/Highlight/styles/github-dark.css">
+  <link rel="stylesheet" href="resources/vendor/highlight/styles/github-dark.css">
 % elif _hl == 'pygments':
   <link rel="stylesheet" href="resources/pygments.css">
 % endif
   <link rel="stylesheet" href="resources/themes/blog/css/blog.css">
-  <link rel="stylesheet" href="resources/themes/blog/framework/uikit/css/uikit.min.css">
+  <link rel="stylesheet" href="resources/vendor/uikit/css/uikit.min.css">
   <!-- STYLESHEETS :: END -->
   <!-- LIBRARIES :: START -->
 % if _hl == 'client':
-  <script src="resources/themes/blog/framework/Highlight/highlight.js"></script>
+  <script src="resources/vendor/highlight/highlight.js"></script>
 % endif
-  <script src="resources/themes/blog/framework/uikit/js/uikit.min.js"></script>
-  <script src="resources/themes/blog/framework/uikit/js/uikit-icons.min.js"></script>
-  <script src="resources/themes/blog/framework/datatables/js/jquery-3.5.1.js"></script>
-  <script src="resources/themes/blog/framework/datatables/js/jquery.dataTables.min.js"></script>
-  <script src="resources/themes/blog/framework/datatables/js/dataTables.uikit.min.js"></script>
+  <script src="resources/vendor/uikit/js/uikit.min.js"></script>
+  <script src="resources/vendor/uikit/js/uikit-icons.min.js"></script>
+  <script src="resources/vendor/datatables/js/jquery-3.5.1.js"></script>
+  <script src="resources/vendor/datatables/js/jquery.dataTables.min.js"></script>
+  <script src="resources/vendor/datatables/js/dataTables.uikit.min.js"></script>
   <!-- LIBRARIES :: END -->
   <!-- DATATABLES SETUP :: START -->
   <script class="init">

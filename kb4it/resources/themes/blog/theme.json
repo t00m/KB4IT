@@ -9,6 +9,7 @@
     "search": true,
     "feed": true,
     "kb4it": ">=0.12.0",
+    "assets": ["highlight", "uikit", "datatables", "search"],
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit"

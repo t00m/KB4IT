@@ -8,7 +8,7 @@ RESOURCES = ROOT / "kb4it" / "resources"
 # Each theme's own scripts; vendored libraries (uikit, highlight.js, jQuery) never touch pre.mermaid.
 OWN_SCRIPTS = [RESOURCES / "themes" / "bookshelf" / "framework" / "bookshelf" / "js" / "bookshelf.js",
                RESOURCES / "themes" / "apphelp" / "framework" / "apphelp" / "js" / "apphelp.js",
-               *sorted((RESOURCES / "common" / "js").glob("*.js"))]
+               *sorted((RESOURCES / "vendor" / "search" / "js").glob("*.js"))]
 PRE_SELECTOR = re.compile(r"""querySelectorAll\(\s*(["'])([^"']*)\1""")
 
 

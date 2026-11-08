@@ -7,6 +7,7 @@
     "website": "https://github.com/t00m/KB4IT",
     "description": "Help site for an application: works from disk, on GitHub Pages and inside the app",
     "kb4it": ">=0.12.0",
+    "assets": ["search"],
     "favicon": "images/logo.svg",
     "metadata_pages": false,
     "deploy_dirs": [

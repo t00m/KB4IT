@@ -9,6 +9,7 @@
     "search": true,
     "feed": false,
     "kb4it": ">=0.12.0",
+    "assets": ["search"],
     "favicon": "images/logo.svg",
     "autoescape": true
 }

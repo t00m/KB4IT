@@ -18,23 +18,23 @@
     <!-- SCRIPT FLAG :: END -->
     <!-- STYLESHEETS :: START -->
 % if _hl == 'client':
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/Highlight/styles/github-dark.css">
+    <link rel="stylesheet" href="resources/vendor/highlight/styles/github-dark.css">
 % elif _hl == 'pygments':
     <link rel="stylesheet" href="resources/pygments.css">
 % endif
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
+    <link rel="stylesheet" href="resources/vendor/uikit/css/uikit.min.css" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
     <!-- STYLESHEETS :: END -->
     <!-- LIBRARIES :: START -->
 % if _hl == 'client':
-    <script src="resources/themes/techdoc/framework/Highlight/highlight.js"></script>
+    <script src="resources/vendor/highlight/highlight.js"></script>
 % endif
-    <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
-    <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
-    <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
-    <script src="resources/themes/techdoc/framework/datatables/js/jquery.dataTables.min.js"></script>
-    <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
+    <script src="resources/vendor/uikit/js/uikit.min.js"></script>
+    <script src="resources/vendor/uikit/js/uikit-icons.min.js"></script>
+    <script src="resources/vendor/datatables/js/jquery-3.5.1.js"></script>
+    <script src="resources/vendor/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="resources/vendor/datatables/js/dataTables.uikit.min.js"></script>
     <!-- LIBRARIES :: END -->
     <script src="resources/themes/techdoc/framework/kb4it/js/page.js" defer></script>
     <script src="resources/themes/techdoc/framework/kb4it/js/blocks.js" defer></script>
