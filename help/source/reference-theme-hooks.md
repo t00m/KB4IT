@@ -189,9 +189,9 @@ The Diagrams page: every Mermaid diagram of the documents, with filters. Add `Di
 
 | Method | What it does | Defined in |
 |---|---|---|
-| `build_page_diagrams() -> None` | The Diagrams page: no diagram at first; the browser draws the ones the filters choose. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
-| `diagram_html(doc_id: str) -> str` | The HTML of a document body with a mermaid fence, as the compiler makes it, so the heading ids match; else ''. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
-| `diagram_items(doc_id: str) -> list[dict[str, typing.Any]]` | The diagrams of one document, each linked to its section. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
+| `build_page_diagrams() -> 'None'` | The Diagrams page: no diagram at first; the browser draws the ones the filters choose. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
+| `diagram_html(doc_id: 'str') -> 'str'` | The HTML of a document body with a mermaid fence, as the compiler makes it, so the heading ids match; else ''. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
+| `diagram_items(doc_id: 'str') -> 'list[dict[str, Any]]'` | The diagrams of one document, each linked to its section. | `kb4it.services.themekit.diagrams.DiagramsMixin` |
 
 ## Gallery kit
 
@@ -199,12 +199,12 @@ The Gallery page: every image of the documents as thumbnails, with filters; need
 
 | Method | What it does | Defined in |
 |---|---|---|
-| `build_page_gallery() -> None` | The Gallery page: no image at first; the property buttons on the right choose which ones to show. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `deploy_gallery_thumbs() -> None` | Copy the thumbnails the Gallery uses into the site and drop the others, there and in var/thumbs. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_data() -> tuple[list[dict[str, typing.Any]], list[dict[str, typing.Any]], list[dict[str, typing.Any]]]` | Return the documents with images, newest first, their images and the filters they can be narrowed by. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_image(src: str, local: str \| None) -> dict[str, typing.Any]` | The entry of one image: what the grid shows (a thumbnail or the original) and its size. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_items(doc_id: str) -> list[dict[str, typing.Any]]` | The images one document shows, each with its thumbnail, size and caption. | `kb4it.services.themekit.gallery.GalleryMixin` |
-| `gallery_thumb_dir() -> str` | Thumbnails made by earlier builds: <repo>/var/thumbs. | `kb4it.services.themekit.gallery.GalleryMixin` |
+| `build_page_gallery() -> 'None'` | The Gallery page: no image at first; the property buttons on the right choose which ones to show. | `kb4it.services.themekit.gallery.GalleryMixin` |
+| `deploy_gallery_thumbs() -> 'None'` | Copy the thumbnails the Gallery uses into the site and drop the others, there and in var/thumbs. | `kb4it.services.themekit.gallery.GalleryMixin` |
+| `gallery_data() -> 'MediaData'` | Return the documents with images, newest first, their images and the filters they can be narrowed by. | `kb4it.services.themekit.gallery.GalleryMixin` |
+| `gallery_image(src: 'str', local: 'str \| None') -> 'dict[str, Any]'` | The entry of one image: what the grid shows (a thumbnail or the original) and its size. | `kb4it.services.themekit.gallery.GalleryMixin` |
+| `gallery_items(doc_id: 'str') -> 'list[dict[str, Any]]'` | The images one document shows, each with its thumbnail, size and caption. | `kb4it.services.themekit.gallery.GalleryMixin` |
+| `gallery_thumb_dir() -> 'str'` | Thumbnails made by earlier builds: <repo>/var/thumbs. | `kb4it.services.themekit.gallery.GalleryMixin` |
 
 ## Navigation kit
 

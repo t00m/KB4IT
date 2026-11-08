@@ -1,8 +1,12 @@
-"""Navigation kit (Layer 1): previous and next page in the theme's reading order."""
+"""Navigation kit (Layer 1): previous and next page in the theme's reading order.
+
+Legacy API: the public API has the navigation feature (kb4it/theme/features/navigation.py).
+"""
 
 from __future__ import annotations
 
 from kb4it.services.themekit.host import ThemeHost
+from kb4it.theme.features.navigation import neighbours_in
 
 
 class NavigationMixin(ThemeHost):
@@ -14,10 +18,4 @@ class NavigationMixin(ThemeHost):
 
     def neighbours(self, doc_id: str) -> tuple[str | None, str | None]:
         """Previous and next doc id of doc_id in its sequence; (None, None) when it is not listed."""
-        order = self.ordered_pages(doc_id)
-        if doc_id not in order:
-            return None, None
-        index = order.index(doc_id)
-        prev = order[index - 1] if index > 0 else None
-        nxt = order[index + 1] if index < len(order) - 1 else None
-        return prev, nxt
+        return neighbours_in(self.ordered_pages(doc_id), doc_id)

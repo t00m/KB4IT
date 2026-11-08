@@ -1,12 +1,14 @@
-"""TOC sidebar kit (Layer 1): a second, sticky table of contents for long documents."""
+"""TOC sidebar kit (Layer 1): a second, sticky table of contents for long documents.
+
+Legacy API: the code lives in the toc_sidebar feature (kb4it/theme/features/tocsidebar.py).
+"""
 
 from __future__ import annotations
 
-import re
-
 from kb4it.services.themekit.host import ThemeHost
+from kb4it.theme.features.tocsidebar import TOC_SIDEBAR_MIN_SECTIONS, sidebar_wanted
 
-TOC_SIDEBAR_MIN_SECTIONS = 4
+__all__ = ["TOC_SIDEBAR_MIN_SECTIONS", "TocSidebarMixin"]
 
 
 class TocSidebarMixin(ThemeHost):
@@ -14,11 +16,4 @@ class TocSidebarMixin(ThemeHost):
 
     def toc_sidebar(self, source_html: str) -> bool:
         """True when repo.json (else the theme settings) asks for the sidebar and the page has four or more sections."""
-        repo = self.srvbes.get_dict('repo') or {}
-        if isinstance(repo.get('toc_sidebar'), bool):
-            wanted = repo['toc_sidebar']
-        else:
-            config = getattr(self, 'config', None)
-            getter = getattr(config, 'get', None)
-            wanted = (getter('toc_sidebar') if getter else getattr(config, 'toc_sidebar', None)) is True
-        return wanted and len(re.findall(r'<h2\b', source_html)) >= TOC_SIDEBAR_MIN_SECTIONS
+        return sidebar_wanted(self.srvbes.get_dict('repo') or {}, getattr(self, 'config', None), source_html)
