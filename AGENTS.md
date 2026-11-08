@@ -135,7 +135,8 @@ With `kb4it build --trace` (or `serve --trace`), `Workflow.build_website()` time
 | `kb4it/core/webserver.py`         | `SiteServer` (threaded `http.server`), `BuildStatus`, live reload script injection, `/__kb4it/status` |
 | `kb4it/core/watch.py`             | `PollingWatcher`: stdlib polling with debounce, ignores editor scratch files |
 | `kb4it/core/html/`                | Body rewrites any theme can use: `images.py` (`enhance_images()`, `image_size()`, `is_filename_alt()`, `resolve_src()`, from techdoc), `blocks.py` (`enhance_blocks()`: code bars, folded code, tables, tab labels, from techdoc; `wrap_code()` and `lazy_images()`, from apphelp) |
-| `kb4it/core/search.py`            | Search index: section extraction (also used by apphelp), per-document cache in `<repo>/var/search/` written by the compiler, `render_index_js`; browser engine `resources/common/js/kb4it-search.js` + UI `kb4it-search-ui.js`. `Builder.write_search_index()` runs after stage 8 for themes with `"search": true` in `theme.json` |
+| `kb4it/core/vendor.py`            | Shared vendor libraries (P6): `VENDOR_DIR`, `vendor_names`, `theme_assets` (validates theme.json `assets`), `vendor_paths`, `sync_vendor` (deployer step 8) |
+| `kb4it/core/search.py`            | Search index: section extraction (also used by apphelp), per-document cache in `<repo>/var/search/` written by the compiler, `render_index_js`; browser engine `resources/vendor/search/js/kb4it-search.js` + UI `kb4it-search-ui.js` (vendor library `search`). `Builder.write_search_index()` runs after stage 8 for themes with `"search": true` in `theme.json` |
 | `kb4it/core/publish.py`           | `site_url`, `sitemap.xml`/`robots.txt` (`robots_txt`, `robots_block_txt`, `page_noindex`), Atom feed; `Builder.write_sitemap()` (`indexing.py`)/`write_feed()` run after stage 8; `Deployer.step_05_add_head_meta()` injects `HTML_HEAD_META.tpl` (description, Open Graph, canonical, feed link) into the pages built in this run, between `<!-- kb4it:meta -->` markers |
 | `kb4it/core/hooks.py`             | Per-repository hooks named by `repo.json` `hooks`: `on_config` (Backend), `on_document` (Compiler, worker threads), `on_page` (Deployer step 5), `on_build_end` (Workflow); a failing hook raises `CompilationError`; the file hash is part of the core signature |
 | `kb4it/core/lock.py`              | `FileLock` (flock / msvcrt), `repo_lock_path`, `registry_lock` |
@@ -150,7 +151,8 @@ Each theme lives under `kb4it/resources/themes/<name>/`:
 - Mako `.tpl` files directly in `templates/` (flat, no subdirectories). Shared fallbacks live in `kb4it/resources/common/templates/`; templates shared by a family of themes live in a template base, `kb4it/resources/bases/<name>/templates/` (see `template_base`). No bundled template is byte-identical in two themes of the same base (`tests/themes/test_templates_used.py`).
 - Optional `templates/skeletons/` -- `*-SKELETON.md` files and an optional `skeletons.json`: the skeleton set of the Add page (see the Editor section).
 - Optional `logic/verify.py` -- hook `verify(repo, docs) -> list[str]`, run by `kb4it verify` (`Workflow.verify_sources`); `docs` is `{file name: {key: [values]}}`; every returned string is reported as a problem.
-- Static assets under `framework/` (CSS, JS, images, UIKit, DataTables).
+- Static assets under `framework/` (the theme's own CSS, JS and images).
+- `assets` (default `[]`): names of the shared libraries under `kb4it/resources/vendor/` the theme's pages load: `highlight`, `uikit`, `datatables`, `search`. `kb4it/core/vendor.py` checks the list in `Frontend.theme_load` (`ThemeError` for a non-list, a non-string or an unknown name), adds the declared folders to the theme fingerprint, and deployer step 8 mirrors them into `<target>/resources/vendor/<name>/` (`sync_vendor`; any other folder there is deleted, repository files spared), with or without `deploy_dirs`. Templates link `resources/vendor/<name>/...`. techdoc and blog declare all four, bookshelf and apphelp `["search"]`.
 - `apps/<app>/` repository scaffolds used by `kb4it create`, each holding `config/repo.json`, `source/`, and `target/`.
 
 Optional `theme.json` keys:
@@ -393,6 +395,7 @@ Every KB4IT logger is under the `kb4it` logger: `get_logger("Backend")` is `kb4i
 | `kb4it/resources/common/` | Common assets (templates, images, appdata) |
 | `kb4it/resources/common/templates/` | Global template fallbacks |
 | `kb4it/resources/common/images/` | Common images |
+| `kb4it/resources/vendor/` | Shared third-party and KB4IT libraries, one folder each (`highlight`, `uikit`, `datatables`, `search`); themes list theirs in `theme.json` `assets` |
 | `kb4it/resources/themes/` | Built-in themes |
 
 ## Terminal User Interface (TUI)
@@ -498,7 +501,7 @@ Frontmatter rules and the controlled vocabulary for `Category`, `WorkType`, `Doc
 - **Save analysis responses and plans** under `responses/` using the `kb4itdoc_md` skill (KB4IT Markdown format). `responses/`, `docs/` (specs and plans) and `claude/` (agent skills) are local working folders: git-ignored, never tracked, never referenced from tracked files.
 - **Match KB4IT's existing log style** (`[<COMPONENT>] EVENT key=value`).
 - **Prefer dataclasses + typed exceptions over runtime side-channels** when adding new cross-service communication. A service that belongs to one build takes its collaborators in its constructor (see `Pipeline`) instead of `get_service`; a build's decisions go into `runtime` or the build's objects, never into `params` or `repo`.
-- **Module size.** No module under `kb4it/` is over 600 lines (theme `framework/` folders aside); `tests/test_module_size.py` enforces it. Split by concern, and when a name moves, keep the old import path working (`tests/test_public_names.py` lists the names of `kb4it.core.util` and `kb4it.tui.app`).
+- **Module size.** No module under `kb4it/` is over 600 lines (theme `framework/` folders and `kb4it/resources/vendor/` aside); `tests/test_module_size.py` enforces it. Split by concern, and when a name moves, keep the old import path working (`tests/test_public_names.py` lists the names of `kb4it.core.util` and `kb4it.tui.app`).
 - **Types.** The modules that `scripts/devel/typecheck.sh` lists pass `mypy --strict`; keep them annotated, and add a module to the list when it is fully annotated.
 - **Shared theme code.** Code that two document themes need goes into `kb4it/services/themekit/`, with a class attribute or hook method for each difference, not into a copy in each `theme.py`; templates two UIkit themes share go into `kb4it/resources/bases/uikit/templates/`.
 - **Templates are Mako** -- `${var}` and `% for`/`% if`, never `{var}` or `{include:...}`.
