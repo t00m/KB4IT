@@ -6,7 +6,7 @@ import os
 
 from apphelp_checks import (check_anchors, check_contract, check_helpids, helpid_map, load_contract,
                             render_helpids_js)
-from apphelp_config import load_config
+from apphelp_config import HelpConfig, load_config
 from apphelp_html import transform
 from apphelp_meta import (DOCTYPES, LANDING, LAYOUTS, Problem, feature_anchor, is_classified, is_content, page_from_keys,
                           validate_all)
@@ -42,10 +42,11 @@ class Theme(Builder):
     # No person pages either: the schema.org Person of each profile goes into the home page.
     person_pages = False
     add_page = True   # create_page_add() runs in build()
+    config_class = HelpConfig  # Frontend sets self.config from the "apphelp" block of repo.json
 
     def _initialize(self):
         super()._initialize()
-        self.config = load_config({})
+        self.config = load_config({})  # Frontend replaces it; a Theme() built by hand keeps the defaults
         self.pages = {}
         self.sections = []
         self.flat = []
@@ -83,7 +84,6 @@ class Theme(Builder):
 
     def build(self):
         repo = self.srvbes.get_dict("repo")
-        self.config = load_config(repo)
         docs = self._source_metadata()
         plan = self.srvbes.get_plan()
         # Documents KB4IT could not read are left out of the site; they are metadata problems too.

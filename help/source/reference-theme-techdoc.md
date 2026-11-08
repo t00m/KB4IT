@@ -293,7 +293,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 
 The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`. Document tables never show a Scope column, even when `datatable` lists it.
 
-The document page reads these keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
+The document page reads these keys of the theme's `theme.json`. Set them for one site in the `techdoc` block of `repo.json`, for example `"techdoc": {"table_filter": false}`, or copy the theme (see [create a theme](howto-create-theme.md)). A value of the wrong type stops the build; an unknown key logs `THEME_SETTING_UNKNOWN`:
 
 | Key | Meaning |
 |---|---|
@@ -301,7 +301,8 @@ The document page reads these keys of the theme's `theme.json`. To change them, 
 | `info_groups` | The groups of the Details tab: `name`, `keys`, and `"chips": true` for the group shown as chips. Keys in no group go to Other |
 | `info_tabs` | `details` and `history`, each with `print`: whether the tab is printed. By default Details is printed and History is not |
 | `table_filter` | `true`: tables with more than 15 rows and a plain grid get a search box and sortable columns; `false` keeps only the style and the scrolling |
-| `toc_sidebar` | `false`: the default when `repo.json` has no `toc_sidebar`; see [settings](#settings) |
+| `toc_sidebar` | `false`: the default when `repo.json` has no top-level `toc_sidebar`; see [settings](#settings) |
+| `quality` | Thresholds, word targets and weights of the [quality score](#quality); keys you set replace the defaults one by one |
 
 On paper, the header strip is one line of text, banners have a border instead of a colour, Details follows the title under the heading "Document details" in two columns, and the tab bar is left out.
 

@@ -303,6 +303,8 @@ Each theme reads its own keys as well:
 - [bookshelf](reference-theme-bookshelf.md#settings): `datatable`
 - [apphelp](reference-theme-apphelp.md#settings): the `apphelp` block and `version`
 
+A theme that declares its settings (techdoc and apphelp) also reads a block named after it: `"techdoc": {"toc_sidebar": true}`. A key there wins over the same key of the theme's `theme.json`. A value of the wrong type stops the build with a message naming the key; an unknown key logs `THEME_SETTING_UNKNOWN` and makes `kb4it verify` fail.
+
 `version` is the version of the application the help describes. apphelp shows it on the home page, next to the pages new in that version, and uses it to name the folder of each version; see [versions](reference-theme-apphelp.md#versions). The value `"kb4it"` stands for the version of the installed KB4IT. The other themes ignore it.
 
 Sample apps from older versions also contain `menu`, `sort`, `timeline` and `webserver`. KB4IT no longer reads them, except techdoc, which uses `menu` to order the filters of the Gallery and Diagrams pages; you can leave them or delete them.

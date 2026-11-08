@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import ConfigError, KB4ITError
+from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
 from kb4it.core.mdconfig import load_settings
 from kb4it.core.mdlinks import scan_document, suggest_md
 from kb4it.core.paths import resolve_repo_path
@@ -22,6 +22,7 @@ from kb4it.core.profiles import key_notices, load_profiles, people_settings
 from kb4it.core.dateclass import date_reserved_names, load_dates
 from kb4it.core.daterules import resolve_dates
 from kb4it.core.structured import iso_date, load_seo
+from kb4it.core.themeconfig import build_config
 from kb4it.core.util import (SOURCE_ENCODING, fences_in_blocks, get_document_attributes, get_source_docs,
                              is_windows_reserved, json_load, page_name_clashes, raw_script_lines)
 from kb4it.services.people import refused_keys
@@ -125,6 +126,7 @@ class VerifyMixin:
         except Exception as e:
             self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={q(e)}", exc_info=True)
             raise KB4ITError(f"Theme verify hook failed: {e}") from e
+        problems = [*self._theme_settings_problems(repo, config_file, theme_class), *problems]
         settings = None
         try:
             settings = load_settings(repo)
@@ -297,6 +299,25 @@ class VerifyMixin:
         if not getattr(theme_class, "add_page", False):
             return False
         return editor_on(repo, theme)
+
+    def _theme_settings_problems(self, repo, config_file, theme_class):
+        """Unknown keys and wrong types in the repo.json block of a theme with a config_class (P5)."""
+        config_class = getattr(theme_class, "config_class", None)
+        if config_class is None:
+            return []
+        theme_dir = self._find_theme_dir(repo, config_file)
+        try:
+            with open(os.path.join(theme_dir, "theme.json"), encoding="utf-8") as fin:
+                theme = json.load(fin)
+        except (OSError, ValueError, TypeError):
+            theme = {}
+        theme = theme if isinstance(theme, dict) else {}
+        theme_id = theme.get("id") or repo.get("theme", "")
+        try:
+            _config, unknown = build_config(config_class, theme, repo, theme_id)
+        except ThemeError as error:
+            return [str(error)]
+        return [f"THEME_SETTING_UNKNOWN theme={q(theme_id)} key={q(key)}" for key in unknown]
 
     def _theme_class(self, repo, config_file):
         """The Theme class of logic/theme.py in the repository's theme, or None. It runs theme.py, so call it once."""

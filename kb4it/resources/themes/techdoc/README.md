@@ -192,7 +192,7 @@ A bad entry is ignored and logged under `[DATES]`; it never stops the build.
 
 The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`.
 
-The document page also reads `header_keys`, `info_groups`, `info_tabs`, `table_filter`, `toc_sidebar` and the `quality` block from the theme's own `theme.json`. Those are theme settings, not `repo.json` keys: to change them, copy the theme.
+The document page also reads `header_keys`, `info_groups`, `info_tabs`, `table_filter`, `toc_sidebar` and the `quality` block from the theme's own `theme.json` (class `TechdocConfig` in `logic/techdoc_config.py`). A site changes them in the `techdoc` block of `repo.json`, such as `"techdoc": {"table_filter": false}`; a top-level `toc_sidebar` in `repo.json` still wins. A value of the wrong type stops the build; an unknown key logs `THEME_SETTING_UNKNOWN`.
 
 ### Keys no longer read
 

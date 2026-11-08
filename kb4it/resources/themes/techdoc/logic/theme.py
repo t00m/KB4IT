@@ -18,6 +18,7 @@ from datetime import datetime
 
 from lxml import etree
 from techdoc_admin import AdminMixin
+from techdoc_config import TechdocConfig
 from techdoc_dashboard import DashboardMixin, priority_css, status_css
 from techdoc_diagrams import DiagramsMixin
 from techdoc_events import EVENTS_TABLE, calendar_json, event_days
@@ -53,6 +54,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
     datatable_hidden = ('Scope',)  # never a column, even when repo.json lists it
     untitled_label = 'No title found...'
     ellipsize_titles = False  # the top bar cuts the title with CSS
+    config_class = TechdocConfig  # header_keys, info_groups, info_tabs, toc_sidebar, table_filter, quality
 
     def build_datatable(self, headers=None, doclist=None, table_id='kb4it-datatable'):
         """Override: document tables leave out the hidden columns and those empty in every row; Date and Title always stay."""
@@ -115,18 +117,17 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
     def toc_sidebar(self, source_html):
         """Show the sticky table of contents when repo.json (else theme.json) asks for it and the page has four or more sections."""
         repo = self.srvbes.get_dict('repo') or {}
-        theme = self.srvbes.get_dict('theme') or {}
-        wanted = repo['toc_sidebar'] if isinstance(repo.get('toc_sidebar'), bool) else theme.get('toc_sidebar') is True
+        wanted = repo['toc_sidebar'] if isinstance(repo.get('toc_sidebar'), bool) else self.config.toc_sidebar
         return wanted and len(re.findall(r'<h2\b', source_html)) >= 4
 
     def table_filter_on(self):
         """Long tables of a document get search and sort unless theme.json sets "table_filter": false."""
-        return (self.srvbes.get_dict('theme') or {}).get('table_filter', True) is not False
+        return self.config.table_filter
 
     def quality_on(self):
         """Quality scores are on unless repo.json sets "quality": false or theme.json turns them off."""
         repo = self.srvbes.get_dict('repo') or {}
-        return repo.get('quality', True) is not False and profile(self.srvbes.get_dict('theme')).get('enabled', True)
+        return repo.get('quality', True) is not False and profile({'quality': self.config.quality}).get('enabled', True)
 
     def search_record(self, doc_id):
         """Override: the shared search carries the quality tier, so readers can pick the better page."""
@@ -198,7 +199,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         self.quality, self.quality_stats = {}, {}
         if not self.quality_on():
             return
-        prof = profile(self.srvbes.get_dict('theme'))
+        prof = profile({'quality': self.config.quality})
         theme_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         skeletons = load_skeletons(os.path.join(theme_dir, 'templates', 'skeletons'))
         source_dir = self.srvbes.get_path('source')
@@ -250,7 +251,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         """The system page every Quality tab item links to: tiers, every check with an example, the skeletons."""
         if not self.quality_on():
             return
-        prof = profile(self.srvbes.get_dict('theme'))
+        prof = profile({'quality': self.config.quality})
         dims = []
         for key in DIMENSIONS:
             title, what = GUIDE_DIMS[key]
@@ -280,7 +281,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             {'name': 'Explanation'},
         ]
         from techdoc_quality import profile
-        floor = profile(self.srvbes.get_dict('theme'))['tiers']['complete']
+        floor = profile({'quality': self.config.quality})['tiers']['complete']
         shelf = []
         for item in diataxis:
             docs = sorted((d for d, a in self.quality.items() if a.peer == item['name'] and a.tier != 'retired' and a.score >= floor),
@@ -320,7 +321,7 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             'mix': tier_mix(self.quality),
             'best': self._quality_best(),
             'exemplary': [ref(d, score=live[d].score, peer=live[d].peer) for d in best],
-            'wins': [dict(ref(w['doc']), **w) for w in quick_wins(live, profile(self.srvbes.get_dict('theme')))],
+            'wins': [dict(ref(w['doc']), **w) for w in quick_wins(live, profile({'quality': self.config.quality}))],
             'broken': broken,
             'images': images,
             'no_summary': [ref(d) for d in sorted(live) if not any(c.key == 'check-summary' and c.passed for c in live[d].checks)],
@@ -358,7 +359,6 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         if var['SystemPage']:
             var['metadata'] = ""
             return var
-        theme_conf = self.srvbes.get_dict('theme') or {}
         var['toc_sidebar'] = self.toc_sidebar(var['source_html'])
         doc_summary = summary(self.srvdtb, doc_id)
         quality_doc = self.quality_view(doc_id)
@@ -366,14 +366,14 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         var['page']['exemplary'] = bool(quality_doc) and quality_doc['tier'] == 'exemplary'
         var['doc_header'] = self.template('DOC_HEADER').render(var={
             'quality': quality_doc,
-            'strip': header_strip(self.srvdtb, doc_id, theme_conf.get('header_keys', {})),
+            'strip': header_strip(self.srvdtb, doc_id, self.config.header_keys),
             'summary': doc_summary,
             'banners': banners(self.srvdtb, doc_id),
         })
-        info_tabs = theme_conf.get('info_tabs', {})
+        info_tabs = self.config.info_tabs
         var['info_card'] = self.template('INFO_CARD').render(var={'card': {
             'open': not doc_summary,
-            'groups': info_groups(self.srvdtb, doc_id, theme_conf.get('info_groups', []), var['source_md'],
+            'groups': info_groups(self.srvdtb, doc_id, self.config.info_groups, var['source_md'],
                                   self.person_tip),
             'history': {
                 'date': (self.srvdtb.get_values(doc_id, 'Date') or [''])[0],

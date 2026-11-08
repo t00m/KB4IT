@@ -54,6 +54,7 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `VERIFY_ERROR` | error | `kb4it verify` cannot read `repo.json`. Stops | Fix the JSON or the path |
 | `PATH_CWD_RELATIVE` | warning | `source` was found relative to the current folder, not to the knowledge base folder. Older settings worked that way. The build goes on | Make `source` and `target` relative to the folder that holds `config/` |
 | `GIT_SERVER_NOT_URL` | warning | `"git": true`, but `git_server` is not a full URL, for example `github.com`. The build goes on without git links, and `kb4it verify` reports it | Write `git_server` as a full URL, such as `https://github.com`; see [Optional settings](reference-repo-json.md#optional) |
+| `THEME_SETTING_UNKNOWN` | warning | The block of `repo.json` named after the theme, such as `"techdoc": {...}`, has a key the theme does not know, often a typo. The key is ignored and the build goes on; `kb4it verify` reports it and exits 1 | Fix or delete the key; the theme's reference page lists its settings |
 | `SOURCE_MISSING` | error | The `source` folder does not exist. Stops | See [SOURCE_MISSING](troubleshooting.md#source-missing) |
 | `LOAD_FAIL` | error | The `hooks` file raised an error while loading. Stops | Fix the Python file; the message has the error |
 | `MD_EXTENSION_MISSING` | error | A Markdown extension, nh3 or Pygments is not installed. Stops | See [MD_EXTENSION_MISSING](troubleshooting.md#md-extension) |

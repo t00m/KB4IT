@@ -75,6 +75,10 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
 
+    # Dataclass of the theme's settings (P5): Frontend builds it from theme.json and the repo.json block
+    # named after the theme, and stores it as self.config. None: self.config wraps theme.json.
+    config_class = None
+
     # Source patterns (common HTML_TAG_<name>_MD templates) that python-markdown's output, after
     # the compiler's section restructuring, can contain; tests/core/test_transformations.py checks it.
     _XFORM_NAMES = [

@@ -17,6 +17,7 @@ from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
 from kb4it.core.service import Service
 from kb4it.services.addpage import check_theme_editor
+from kb4it.core.themeconfig import ThemeSettings, build_config
 from kb4it.core.vendor import theme_assets, vendor_paths
 from kb4it.core.version import requirement_satisfied, theme_fingerprint, theme_identity
 from kb4it.core.log import q
@@ -217,7 +218,7 @@ class Frontend(Service):
                 from theme import Theme
 
                 self.app.register_service("Theme", Theme())
-                self.get_service("Theme")
+                self._configure(self.get_service("Theme"))
                 loaded = self.runtime["theme"]
                 self.log.debug(f"[FRONTEND] THEME_LOADED id={q(loaded['id'])} version={loaded['version'] or 'unversioned'} "
                                f"fingerprint={q(loaded['fingerprint'])} path={q(loaded['path'])}")
@@ -227,6 +228,20 @@ class Frontend(Service):
             except Exception as error:
                 self.log.error(f"[FRONTEND] ERROR {error}", exc_info=True)
                 raise ThemeError(f"Theme load failed: {error}") from error
+
+    def _configure(self, instance):
+        """Give the theme its settings as instance.config (P5); log each unknown key of its repo.json block."""
+        theme = self.runtime["theme"]
+        theme_id = theme.get("id", "?")
+        config_class = getattr(type(instance), "config_class", None)
+        if config_class is None:
+            instance.config = ThemeSettings(theme)
+        else:
+            repo = self.srvbes.get_dict("repo") or {}
+            instance.config, unknown = build_config(config_class, theme, repo, theme_id)
+            for key in unknown:
+                self.log.warning(f"[FRONTEND] THEME_SETTING_UNKNOWN theme={q(theme_id)} key={q(key)}")
+        self.log.debug(f"[FRONTEND] THEME_SETTINGS id={q(theme_id)} class={type(instance.config).__name__}")
 
     def _validate_required_templates(self, theme):
         """Check that all required templates exist for the loaded theme."""
