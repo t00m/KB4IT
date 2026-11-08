@@ -10,7 +10,7 @@ from apphelp_config import HelpConfig, load_config
 from apphelp_html import transform
 from apphelp_meta import (DOCTYPES, LANDING, LAYOUTS, Problem, feature_anchor, is_classified, is_content, page_from_keys,
                           validate_all)
-from apphelp_nav import build_sections, flatten, neighbours, related_pages
+from apphelp_nav import build_sections, flatten, related_pages
 from apphelp_search import extract_sections, page_record
 from apphelp_versions import publish as publish_versions
 
@@ -19,6 +19,7 @@ from kb4it.core.exceptions import ThemeError
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.core.util import get_hash_from_content, html_id_for
 from kb4it.services.builder import Builder
+from kb4it.services.themekit.navigation import NavigationMixin
 from kb4it.core.log import q
 
 ASSETS = "resources/themes/apphelp/framework/apphelp"
@@ -35,7 +36,7 @@ STRUCTURED_MAP = {
 }
 
 
-class Theme(Builder):
+class Theme(NavigationMixin, Builder):
     page_pipeline = True
     log_area = "APPHELP"
     # Help sites have no person pages, so the Add page offers no Person profile.
@@ -250,7 +251,7 @@ class Theme(Builder):
             "load_helpids": doc_id == "go.md",
         })
         if page is not None:
-            prev, nxt = neighbours(self.flat, doc_id)
+            prev, nxt = (self.pages.get(d) for d in self.neighbours(doc_id))
             var["prev"] = {"title": prev.title, "url": prev.url} if prev else None
             var["next"] = {"title": nxt.title, "url": nxt.url} if nxt else None
             var["related"] = [self._card_item(p) for p in related_pages(page, self.flat)]
@@ -317,6 +318,10 @@ class Theme(Builder):
             labels, latest = publish_versions(site_root, self.config.version, self.config.latest)
             self.log.info(f"[VERSIONS] PUBLISHED current={q(self.config.version)} latest={q(latest)} all={q(','.join(labels))}")
         return problems
+
+    def ordered_pages(self, doc_id) -> list:
+        """Override: every page, section by section, in the sidebar order."""
+        return [page.doc_id for page in self.flat]
 
     def search_documents(self) -> list:
         """Override: the pages in reading order."""

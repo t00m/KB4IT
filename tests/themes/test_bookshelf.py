@@ -98,3 +98,26 @@ def test_book_model_is_not_class_state():
     theme = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
     names = {t.id for n in theme.body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
     assert not names & {"books", "doc_index", "_context_ready"}
+
+
+def test_prev_next_stay_inside_the_book():
+    """bookshelf's reading order is the chapters of one book, through the navigation kit."""
+    import importlib.util
+    import sys
+
+    from tests.helpers import ROOT
+    logic = ROOT / "kb4it" / "resources" / "themes" / "bookshelf" / "logic"
+    sys.path.insert(0, str(logic))
+    try:
+        spec = importlib.util.spec_from_file_location("bookshelf_theme_module", logic / "theme.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(str(logic))
+    theme = module.Theme.__new__(module.Theme)
+    chapters = {"A": ["a1.md", "a2.md"], "B": ["b1.md", "b2.md"]}
+    theme.books = {book: {"chapters": [{"docId": d} for d in ids]} for book, ids in chapters.items()}
+    theme.doc_index = {d: {"docId": d, "book": book} for book, ids in chapters.items() for d in ids}
+    assert theme.neighbours("a2.md") == ("a1.md", None)
+    assert theme.neighbours("b1.md") == (None, "b2.md")
+    assert theme.neighbours("x.md") == (None, None)

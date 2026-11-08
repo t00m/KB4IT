@@ -1,5 +1,6 @@
 from apphelp_meta import Page
-from apphelp_nav import build_sections, flatten, neighbours, related_pages
+import apphelp_nav
+from apphelp_nav import build_sections, flatten, related_pages
 
 
 def p(doc, section, order, features=(), keywords=(), tags=(), related=()):
@@ -18,12 +19,16 @@ def test_sections_ordered_by_lowest_order():
 
 
 def test_neighbours_cross_sections():
-    flat = flatten(build_sections(PAGES))
-    prev, nxt = neighbours(flat, "d.md")
-    assert (prev.doc_id, nxt.doc_id) == ("a.md", "b.md")
-    assert neighbours(flat, "a.md")[0] is None
-    assert neighbours(flat, "e.md")[1] is None
-    assert neighbours(flat, "missing.md") == (None, None)
+    """apphelp's reading order is every page, section by section, through the navigation kit."""
+    from tests.apphelp.test_search_index import _apphelp_theme_class
+    theme_class = _apphelp_theme_class()
+    theme = theme_class.__new__(theme_class)
+    theme.flat = flatten(build_sections(PAGES))
+    assert theme.neighbours("d.md") == ("a.md", "b.md")
+    assert theme.neighbours("a.md")[0] is None
+    assert theme.neighbours("e.md")[1] is None
+    assert theme.neighbours("missing.md") == (None, None)
+    assert not hasattr(apphelp_nav, "neighbours")
 
 
 def test_related_scoring_and_forced_first():

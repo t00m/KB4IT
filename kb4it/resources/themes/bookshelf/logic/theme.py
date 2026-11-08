@@ -20,6 +20,7 @@ from html import escape
 from kb4it.core.util import ellipsize_text, guess_datetime, html_id_for, valid_filename
 from kb4it.core.structured import DEFAULT_MAP
 from kb4it.services.themekit import DocumentTheme
+from kb4it.services.themekit.navigation import NavigationMixin
 from kb4it.core.log import q
 
 
@@ -78,7 +79,7 @@ def status_bucket(status):
     return 'todo'
 
 
-class Theme(DocumentTheme):
+class Theme(NavigationMixin, DocumentTheme):
     """Builder for the Bookshelf theme."""
 
     tagcloud_scale_skips_empty = True
@@ -255,6 +256,12 @@ class Theme(DocumentTheme):
                 book['height'] = round(160 + (book['total'] - lo) / (hi - lo) * 54)
 
     # ----------------------------------------------------------- nav helpers
+    def ordered_pages(self, doc_id):
+        """Override: the chapters of the book doc_id belongs to, in reading order."""
+        info = self.doc_index.get(os.path.basename(doc_id))
+        book = self.books.get(info['book']) if info else None
+        return [c['docId'] for c in book['chapters']] if book else []
+
     def _reading_context(self, basename_md):
         """Build the left-nav, prev/next and rail data for a chapter page."""
         info = self.doc_index.get(basename_md)
@@ -264,10 +271,9 @@ class Theme(DocumentTheme):
         if not book:
             return None
 
-        ordered = book['chapters']
-        idx = next((i for i, c in enumerate(ordered) if c['docId'] == info['docId']), None)
-        prev_info = ordered[idx - 1] if idx not in (None, 0) else None
-        next_info = ordered[idx + 1] if idx is not None and idx < len(ordered) - 1 else None
+        prev_id, next_id = self.neighbours(info['docId'])
+        prev_info = self.doc_index.get(os.path.basename(prev_id)) if prev_id else None
+        next_info = self.doc_index.get(os.path.basename(next_id)) if next_id else None
 
         part = book['parts'].get(info['part_num'], {})
         siblings = []
