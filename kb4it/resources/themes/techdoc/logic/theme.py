@@ -70,7 +70,11 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
         return super().build_datatable(headers, doclist, table_id)
 
     def datatable_custom_cell(self, doc_id, key):
-        """The Quality column: a five-square meter and the tier chip, sorted by score; retired documents last."""
+        """The Quality column: a five-square meter with the tier as its tooltip, sorted by score; retired documents last.
+
+        The tier is not printed, but data-search keeps it findable with the table's search box. A retired
+        document has no meaningful score, so it shows the word "Retired" instead of a meter.
+        """
         assessment = self.ensure_quality().get(doc_id) if key == 'Quality' else None
         if assessment is None:
             return None
@@ -79,8 +83,10 @@ class Theme(AdminMixin, DashboardMixin, DiagramsMixin, GalleryMixin, FilterMixin
             return '<td data-order="-1"><span class="kb-q-chip kb-q-retired">Retired</span></td>'
         on = 5 if tier == 'exemplary' else min(5, assessment.score // 20)
         squares = '<i class="on"></i>' * on + '<i></i>' * (5 - on)
-        return (f'<td data-order="{assessment.score}"><span class="kb-q-meter kb-q-{tier}">{squares}</span>'
-                f'<span class="kb-q-chip kb-q-{tier}">{TIER_LABELS[tier]}</span></td>')
+        label = f'{TIER_LABELS[tier]}, score {assessment.score}'
+        return (f'<td data-order="{assessment.score}" data-search="{TIER_LABELS[tier]}">'
+                f'<span class="kb-q-meter kb-q-{tier}" role="img" aria-label="{label}" title="{label}" data-uk-tooltip>'
+                f'{squares}</span></td>')
 
     def datatable_date_cell(self, timestamp, doc_id=None):
         """The date cell gets a class, so the date stays on one line and the time wraps below it."""

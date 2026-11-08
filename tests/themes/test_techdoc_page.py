@@ -263,8 +263,13 @@ def _table_headers(html):
 def test_quality_column_sorts_by_score(page_site):
     html = read(page_site, "Category_Procedure.html")
     assert "Quality" in _table_headers(html)
-    assert re.search(r'<td data-order="\d+"><span class="kb-q-meter kb-q-exemplary">(<i class="on"></i>){5}</span>'
-                     r'<span class="kb-q-chip kb-q-exemplary">Exemplary</span></td>', html)
+    # The tier is the tooltip of the meter, not a text chip; the table search still finds it.
+    cell = re.search(r'<td data-order="(\d+)" data-search="Exemplary">'
+                     r'<span class="kb-q-meter kb-q-exemplary" role="img" aria-label="Exemplary, score (\d+)" '
+                     r'title="Exemplary, score (\d+)" data-uk-tooltip>(<i class="on"></i>){5}</span></td>', html)
+    assert cell and cell.group(1) == cell.group(2) == cell.group(3)
+    table = html[html.index("<tbody"):html.index("</tbody>")]
+    assert "kb-q-chip" not in table
 
 
 def test_quality_column_is_left_out_when_quality_is_off(off_site):

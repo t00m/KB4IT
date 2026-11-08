@@ -141,7 +141,7 @@ Some skeletons also carry optional keys for their kind, left empty: the planned 
 
 Ranks and medians are in `quality-index.js`, written at every build.
 
-Add `"Quality"` to the `datatable` list of `repo.json` to get a Quality column in the document tables: five squares (one per 20 points) and the tier; the column sorts by score, retired documents last.
+Add `"Quality"` to the `datatable` list of `repo.json` to get a Quality column in the document tables: five squares, one per 20 points. Point at them to see the tier and the score; type a tier, such as `Stub`, in the table's search box to list those documents. A retired document shows the word Retired. The column sorts by score, retired documents last.
 
 The **Quality page** (`quality.html`, in the logo menu) is for maintainers: the tier mix per type, the Exemplary documents, quick wins (documents within 5 points of the next tier, with the one change that gets them there), broken links, missing images, documents without a Summary and possible duplicates (titles that share most words; journal titles that differ only by a date are left out). The score does not check that the content is correct.
 

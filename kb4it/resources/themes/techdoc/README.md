@@ -183,7 +183,7 @@ A bad entry is ignored and logged under `[DATES]`; it never stops the build.
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
-| `datatable` | List of property names, plus `Quality` | `["Date", "Title"]` | Columns of the document tables. A column empty in every row of a table is left out. `Scope` is never shown. `Quality` adds the quality meter and tier |
+| `datatable` | List of property names, plus `Quality` | `["Date", "Title"]` | Columns of the document tables. A column empty in every row of a table is left out. `Scope` is never shown. `Quality` adds the quality meter, with the tier and score as its tooltip (the table search finds the tier); a retired document shows Retired |
 | `events` | List of `WorkType` values, or `Category` values for documents without a `WorkType` | `[]` | Documents that count as events: calendar, events archive and the Activity card |
 | `admin` | `true`, `false` | `false` | `true` builds the `admin/` page with the source and site backup zips |
 | `quality` | `true`, `false` | `true` | `false` removes the quality score, the Quality tab, the search chip and `quality-index.js` |
