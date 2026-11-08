@@ -22,16 +22,22 @@ def vendor_names() -> list[str]:
 
 
 def theme_assets(theme: dict) -> list[str]:
-    """The validated 'assets' list of a theme.json dict; [] when the key is missing."""
+    """The validated 'assets' list of a theme.json dict; [] when the key is missing.
+
+    "search": true adds the search library: the shared search box links it, and themes written
+    before 'assets' existed must keep a working search.
+    """
     assets = theme.get("assets")
     if assets is None:
-        return []
+        return ["search"] if theme.get("search") is True and "search" in vendor_names() else []
     if not isinstance(assets, list) or not all(isinstance(name, str) for name in assets):
         raise ThemeError("theme.json 'assets' must be a list of names")
     known = set(vendor_names())
     for name in assets:
         if name not in known:
             raise ThemeError(f"theme.json 'assets': unknown vendor library: {name}")
+    if theme.get("search") is True and "search" not in assets:
+        return [*assets, "search"]
     return list(assets)
 
 

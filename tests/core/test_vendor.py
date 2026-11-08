@@ -90,3 +90,12 @@ def test_sync_without_libraries_removes_the_folder(fake_vendor, tmp_path):
     (dest / "a" / "x.js").write_text("a", encoding="utf-8")
     sync_vendor(str(dest), [], keep=())
     assert not dest.exists()
+
+
+def test_search_true_implies_the_search_library(fake_vendor):
+    """A theme written before 'assets' with "search": true keeps a working search box (the box links vendor/search)."""
+    (fake_vendor / "search").mkdir()
+    assert theme_assets({"search": True}) == ["search"]
+    assert theme_assets({"search": True, "assets": ["a"]}) == ["a", "search"]
+    assert theme_assets({"search": True, "assets": ["search", "a"]}) == ["search", "a"]
+    assert theme_assets({"search": False}) == []

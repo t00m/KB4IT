@@ -88,3 +88,13 @@ def test_apphelp_versioned_search_script(tmp_path, home):
     assert (site / "1.0" / "resources" / "vendor" / "search" / "js" / "kb4it-search.js").is_file()
     html = (site / "1.0" / "start.html").read_text(encoding="utf-8")
     assert 'src="resources/vendor/search/js/kb4it-search.js"' in html
+
+
+def test_custom_theme_with_search_and_no_assets_gets_the_engine(tmp_path, home):
+    """A theme written before 'assets' existed keeps its search box working."""
+    from tests.helpers import mini_theme
+    theme = mini_theme(tmp_path / "mini", search=True)
+    cfg = write_repo(tmp_path / "repo", "mini", {"a.md": page("A", Tag="x")}, theme_path=str(theme))
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert (tmp_path / "repo" / "target" / "resources" / "vendor" / "search" / "js" / "kb4it-search.js").is_file()

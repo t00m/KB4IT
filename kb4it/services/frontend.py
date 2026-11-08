@@ -154,9 +154,10 @@ class Frontend(Service):
         except ThemeError:
             base = None  # the build refuses it in _validate_required_templates; a listing still shows the theme
         theme["version"] = version
-        assets = theme.get("assets")
-        # A listing shows a theme even with a bad 'assets' value; theme_load refuses it.
-        shared = vendor_paths(n for n in assets if isinstance(n, str)) if isinstance(assets, list) else []
+        try:
+            shared = vendor_paths(theme_assets(theme))
+        except ThemeError:
+            shared = []  # a listing shows a theme even with a bad 'assets' value; theme_load refuses it
         theme["fingerprint"] = theme_fingerprint(theme["path"], base, ENV["GPATH"]["TEMPLATES"], *shared)
         theme["identity"] = theme_identity(theme_id, version, theme["fingerprint"])
 
