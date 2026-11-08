@@ -39,7 +39,6 @@ class Theme(BaseTheme):
     ellipsize_titles = False  # the top bar cuts the title with CSS
     config_class = TechdocConfig  # header_keys, info_groups, info_tabs, toc_sidebar, table_filter, quality
 
-    # ---------------------------------------------------------------- tables
     def datatable_columns(self, columns, docs):
         """Document tables leave out the hidden columns and those empty in every row; Date and Title always stay."""
         columns = [key for key in columns if key not in self.datatable_hidden]
@@ -82,7 +81,6 @@ class Theme(BaseTheme):
             link['class'] = 'uk-label kb-badge kb-dt-label %s' % status_css(value)
         return link
 
-    # ---------------------------------------------------------------- events
     def event_documents(self):
         """The documents whose type of work (else first Category) is listed in repo.json "events"."""
         event_types = self.site.repo.get('events', [])
@@ -108,7 +106,6 @@ class Theme(BaseTheme):
             builder.distribute_html('events', cached)
             builder.add_system_page('events', 'Events')
 
-    # ----------------------------------------------------------------- build
     def build(self, site):
         """The theme's own pages: events.html and the home page; the features wrote the others."""
         var = self.base_var()
@@ -154,7 +151,6 @@ class Theme(BaseTheme):
                             'shared': ', '.join(item['shared']), 'chip': chip(other.url)})
         return {'linked': linked, 'similar': similar} if linked or similar else None
 
-    # ------------------------------------------------------------ doc pages
     def page_context(self, doc, var):
         """The header menu, and for a document its header, info card, quality and TOC sidebar."""
         site = self.site

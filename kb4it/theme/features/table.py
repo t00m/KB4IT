@@ -39,7 +39,6 @@ class Table(Feature):
         events = self.feature("events")
         return bool(events is not None and events.has_day_page(self.doc(doc_id)))
 
-    # ------------------------------------------------------- cell builders
     def date_cell_html(self, timestamp: str | None, doc_id: str | None) -> str:
         """The date cell; the date links to its events day page when the document is on one."""
         if timestamp is None:
@@ -70,7 +69,6 @@ class Table(Feature):
         """The variables of the link to the page of a value; KeyError leaves the cell empty."""
         return {'class': 'uk-link-heading', 'title': value, 'url': properties[f'{key}_{value}_Url']}
 
-    # ------------------------------------------------- hook defaults (Doc)
     def datatable_date_cell(self, doc: Doc) -> str:
         """The <td> of the date column."""
         return self.date_cell_html(doc.date, doc.id)
@@ -91,7 +89,6 @@ class Table(Feature):
         """The columns of a table of these documents; a theme may drop or add some."""
         return columns
 
-    # ------------------------------------- hook calls, legacy or public API
     def _date(self, doc_id: str) -> str:
         if self.legacy:
             return self.legacy_date_cell(self.engine.srvdtb.get_doc_timestamp(doc_id), doc_id)
@@ -134,7 +131,6 @@ class Table(Feature):
             link = self.hook("datatable_value_link")(self.doc(doc_id), key, value)
         return link
 
-    # ----------------------------------------------------------- the table
     def default_columns(self) -> list[str]:
         columns: list[str] = self.engine.srvbes.get_dict('repo').get(
             'datatable', list(self.option("datatable_default_headers")))

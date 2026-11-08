@@ -59,7 +59,6 @@ class Theme(BaseTheme):
             return f'<td class="">{ts_title}</td>'
         return f"""<td class=""><a class="uk-link-heading" href="{escape(url)}">{ts_title}</a></td>"""
 
-    # ---------------------------------------------------------------- pages
     def build(self, site):
         """The home page with the newest posts, and the archive (events.html)."""
         self.build_page_index(site)
@@ -124,7 +123,6 @@ class Theme(BaseTheme):
         self.log.debug("[THEME] POST_START")
         self.log.debug("[THEME] POST_END")
 
-    # ------------------------------------------------------------ post pages
     def page_context(self, doc, var):
         """The post, the property counts, topics and tags, the header menu and the metadata."""
         site = self.site
@@ -165,7 +163,6 @@ class Theme(BaseTheme):
             body = self.template('HTML_BODY').render(var=var)
         return header + body + self.template('HTML_FOOTER').render(var=var)
 
-    # ------------------------------------------------------- property pages
     def cloud_measure(self, frequency, max_frequency):
         """Blog sizes property buttons and tag cloud words by font size."""
         return {'size': get_font_size(frequency, max_frequency)}

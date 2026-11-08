@@ -125,7 +125,6 @@ class ThemeEngine(Builder):
             raise ThemeError(f"no enabled feature has the hook {name!r}")
         return feature.hook(name)
 
-    # ------------------------------------------------------------------ stages
     def generate_sources(self) -> None:
         self.theme.generate_sources(self.site)
 
@@ -158,7 +157,6 @@ class ThemeEngine(Builder):
     def after_checks(self) -> None:
         self.theme.after_checks(self.site)
 
-    # ------------------------------------------------------------ page pipeline
     def page_var(self) -> dict[str, Any]:
         return self.theme.page_var()
 
@@ -192,7 +190,6 @@ class ThemeEngine(Builder):
     def default_backlinks_html(self, doc_id: str) -> str:
         return str(Builder.backlinks_html(self, doc_id))
 
-    # --------------------------------------------------------------- site-wide
     def site_signature(self) -> str:
         return self.theme.site_signature()
 
@@ -217,7 +214,6 @@ class ThemeEngine(Builder):
     def default_search_page(self) -> str:
         return HeadMetaMixin.search_page(self)
 
-    # ------------------------------------------------------- feature services
     def build_page_key(self, key: str, values: list[str]) -> None:
         pages = self.features.get("property_pages")
         if pages is not None:
@@ -266,7 +262,6 @@ class ThemeEngine(Builder):
     def register_add_page(self, html: str) -> None:
         self.hook("register_add_page")(html)
 
-    # ------------------------------------------------------------------ search
     def search_enabled(self) -> bool:
         search = self.features.get("search")
         return bool(search.enabled()) if search is not None else False

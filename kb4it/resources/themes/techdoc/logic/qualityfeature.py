@@ -51,7 +51,6 @@ class Quality(Feature):
         """Quality scores are on unless repo.json sets "quality": false or theme.json turns them off."""
         return self.site.repo.get('quality', True) is not False and self.profile().get('enabled', True)
 
-    # --------------------------------------------------------------- scoring
     def prepare(self, site):
         """Score every document once per build."""
         self.scores, self.stats = {}, {}
@@ -105,7 +104,6 @@ class Quality(Feature):
                 links[name] = actions['create'] or actions['edit']
         return statuses, {name: links[name] for name in statuses if name in links}
 
-    # ----------------------------------------------------------------- views
     def view(self, doc_id):
         """What the header, the note and the Quality tab show for a document; None when there is no score."""
         assessment = self.scores.get(doc_id)
@@ -124,7 +122,6 @@ class Quality(Feature):
             'checklist': checklist(assessment),
         }
 
-    # ----------------------------------------------------------------- pages
     def pages(self, site):
         self.write_guide(site)
         self.write_quality_page(site)

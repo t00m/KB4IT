@@ -96,7 +96,6 @@ class Theme(BaseTheme):
         self.doc_index = {}
         self._filed = set()
 
-    # ------------------------------------------------------------------ data
     def structured_defaults(self):
         """A note is a Chapter of its Book; Status is reading progress, not the state of the text."""
         return {'type': 'Chapter', 'map': {**DEFAULT_MAP, 'Book': 'isPartOf:Book', 'Chapter': 'position',
@@ -244,7 +243,6 @@ class Theme(BaseTheme):
             else:
                 book['height'] = round(160 + (book['total'] - lo) / (hi - lo) * 54)
 
-    # ----------------------------------------------------------- nav helpers
     def ordered_pages(self, doc):
         """The chapters of the book doc belongs to, in reading order."""
         info = self.doc_index.get(doc.id)
@@ -288,7 +286,6 @@ class Theme(BaseTheme):
             'tags': info['tags'],
         }
 
-    # ------------------------------------------------------------- theme var
     def base_var(self):
         """Every page gets the shelf: var['bk']."""
         var = super().base_var()
@@ -362,7 +359,6 @@ class Theme(BaseTheme):
             'part_title': book['parts'].get(current['part_num'], {}).get('title', ''),
         }
 
-    # ---------------------------------------------------------------- build
     def build(self, site):
         """The home page: the shelf, unless the site has its own index.md."""
         if 'index.md' in site.documents:
@@ -420,7 +416,6 @@ class Theme(BaseTheme):
             'columns': columns,
         }
 
-    # ------------------------------------------------------------ doc pages
     def page_context(self, doc, var):
         """Reading time, and the metadata and reading position of a chapter."""
         var['has_toc'] = len(var['toc']) > 0
@@ -433,7 +428,6 @@ class Theme(BaseTheme):
             var['reading'] = self._reading_context(doc)
         return var
 
-    # --------------------------------------------------------------- shared
     def datatable_date_cell(self, doc):
         """Bookshelf's date cell: the date only, no link."""
         if doc.date is None:

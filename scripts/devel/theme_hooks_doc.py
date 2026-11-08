@@ -131,7 +131,6 @@ def _shown(value):
     return shown.replace("|", "/")
 
 
-# ---------------------------------------------------------------- public API
 def _method_rows(cls, names):
     rows = []
     for name in names:
@@ -234,7 +233,6 @@ def render():
     return "\n".join(lines).rstrip() + "\n"
 
 
-# ---------------------------------------------------------------- legacy API
 def _own_members(cls, base_skip=()):
     """(name, value, defining class) of the public members cls defines itself."""
     for name, value in sorted(vars(cls).items()):

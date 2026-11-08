@@ -56,7 +56,6 @@ class BaseTheme:
     internals: Internals
     _engine: Any
 
-    # ------------------------------------------------------------ rendering
     def render(self, name: str, **values: Any) -> str:
         """Render template `name` with the base variables plus values, all under `var`."""
         var = self.base_var()
@@ -77,7 +76,6 @@ class BaseTheme:
         var: dict[str, Any] = self._engine.default_theme_var()
         return var
 
-    # ------------------------------------------------------------ lifecycle
     def setup(self) -> None:
         """Once per build, before anything else: reset the theme's own per-build state."""
 
@@ -104,7 +102,6 @@ class BaseTheme:
     def after_checks(self, site: Site) -> None:
         """After the checks passed: publish, copy, notify."""
 
-    # ------------------------------------------------------------ document pages
     def page_var(self) -> dict[str, Any]:
         """The starting var of a document page; default: base_var()."""
         return self.base_var()
@@ -136,7 +133,6 @@ class BaseTheme:
         html: str = self._engine.default_backlinks_html(doc.id)
         return html
 
-    # ------------------------------------------------------------ site-wide
     def site_signature(self) -> str:
         """A value that changes when every page must be rebuilt (site-wide navigation...); '' for none."""
         return ""

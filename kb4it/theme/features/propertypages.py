@@ -28,7 +28,6 @@ class PropertyPages(Feature):
     # Always rendered; with properties_cloud the properties page also needs KEY_MODAL_BUTTON.
     templates = ("PAGE_PROPERTIES", "PAGE_KEY", "PAGE_KEY_VALUE", "WORDCLOUD")
 
-    # ------------------------------------------------------------ hook defaults
     def cloud_measure(self, frequency: int, max_frequency: int) -> dict[str, Any]:
         """The size fields of a property button or a tag cloud word."""
         log_max = math.log(1 + max_frequency) if max_frequency > 0 else 1
@@ -43,7 +42,6 @@ class PropertyPages(Feature):
         """Write the page of a property value (Key_Value.html): the table of its documents."""
         self.write_value_page((key, value, True))
 
-    # ------------------------------------------------------------------ helpers
     def reuse(self, name: str, counter: str, reason: str, func: str) -> bool:
         """Keep the cached page when reuse_unchanged_pages is on and nothing it shows changed."""
         if not self.option("reuse_unchanged_pages"):
@@ -83,7 +81,6 @@ class PropertyPages(Feature):
         html: str = engine.template('WORDCLOUD').render(var=var)
         return html
 
-    # -------------------------------------------------------------------- pages
     def write_properties_page(self) -> None:
         """properties.html: every property with its numbers of values and documents, and with
         properties_cloud, one button per property opening its tag cloud."""

@@ -76,12 +76,10 @@ class Events(Feature):
         dey: dict[int, list[tuple[int, int]]] = self.theme.dey if self.legacy else self._dey
         return dey
 
-    # ---------------------------------------------------------------- hook
     def event_documents(self) -> list[Any]:
         """Default: every dated document. A theme returns the ones that are events (Docs or ids)."""
         return [doc for doc in self.site.documents if doc.date]
 
-    # --------------------------------------------------------------- queries
     def has_day_page(self, doc: Doc) -> bool:
         """True when the document is on a day page of this build, so its date may link there."""
         return doc.id in self._docs
@@ -104,7 +102,6 @@ class Events(Feature):
         """The JSON a calendar panel reads, {"days": {"YYYY-MM-DD": count}}, safe inside <script>."""
         return calendar_json(self.days() if days is None else days)
 
-    # ---------------------------------------------------------------- stages
     def prepare(self, site: Site) -> None:
         self._index, self._dey = {}, {}
         ids = [d if isinstance(d, str) else d.id for d in self.hook("event_documents")()]
@@ -118,7 +115,6 @@ class Events(Feature):
         """The event documents in the order of the site's documents (newest first)."""
         return [doc for doc in self.engine.srvdtb.get_documents() if doc in self._docs]
 
-    # ------------------------------------------------------------ the pages
     def collect(self, doclist: list[str]) -> None:
         """Add the dated documents of doclist to index and dey."""
         db, index, dey = self.engine.srvdtb, self.index, self.dey
