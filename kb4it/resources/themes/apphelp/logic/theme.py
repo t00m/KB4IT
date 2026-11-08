@@ -11,7 +11,7 @@ from apphelp_html import transform
 from apphelp_meta import (DOCTYPES, LANDING, LAYOUTS, Problem, feature_anchor, is_classified, is_content, page_from_keys,
                           validate_all)
 from apphelp_nav import build_sections, flatten, neighbours, related_pages
-from apphelp_search import extract_sections, page_record, render_index_js
+from apphelp_search import extract_sections, page_record
 from apphelp_versions import publish as publish_versions
 
 from kb4it.core.checks import Problem as CheckProblem
@@ -44,6 +44,13 @@ class Theme(Builder):
     person_pages = False
     add_page = True   # create_page_add() runs in build()
     config_class = HelpConfig  # Frontend sets self.config from the "apphelp" block of repo.json
+    search_index_var = "APPHELP_INDEX"
+    search_index_warn_bytes = INDEX_WARN_BYTES
+
+    @staticmethod
+    def template_var(ctx) -> dict:
+        """The template context: under "apphelp", and under "ah" as the templates always used it (P3)."""
+        return {"apphelp": ctx, "ah": ctx}
 
     def _initialize(self):
         super()._initialize()
@@ -150,7 +157,7 @@ class Theme(Builder):
         self.theme_pages.add(f"{name}.md")
 
     def _render(self, name, extra):
-        var = {"ah": self._common()}
+        var = self.template_var(self._common())
         var.update(extra)
         return self.template(name).render(var=var)
 
@@ -277,7 +284,7 @@ class Theme(Builder):
         """Override: one HTML_BODY template with the apphelp context."""
         page = self.pages.get(doc_id)
         return self.template("HTML_BODY").render(
-            var={"ah": self._page_var(doc_id, page, var["source_html"], var["apphelp_toc"])})
+            var=self.template_var(self._page_var(doc_id, page, var["source_html"], var["apphelp_toc"])))
 
     def _write(self, target, name, content):
         with open(os.path.join(target, name), "w", encoding="utf-8") as fh:
@@ -286,7 +293,6 @@ class Theme(Builder):
     def post_deploy_activities(self):
         target = self.srvbes.get_path("target")
         self._write(target, ".nojekyll", "")
-        self._write_search_index(target)
         self._write(target, "helpids.js", render_helpids_js(helpid_map(self.flat)))
 
     def checks(self, target) -> list:
@@ -312,21 +318,29 @@ class Theme(Builder):
             self.log.info(f"[VERSIONS] PUBLISHED current={q(self.config.version)} latest={q(latest)} all={q(','.join(labels))}")
         return problems
 
-    def _write_search_index(self, target):
-        records = []
-        for page in self.flat:
-            path = os.path.join(target, page.url)
-            if not os.path.isfile(path):
-                self.log.warning(f"[APPHELP] INDEX_PAGE_MISSING page={q(page.url)}")
-                continue
-            with open(path, encoding="utf-8") as fh:
-                records.append(page_record(page, extract_sections(fh.read())))
-        content = render_index_js(records)
-        self._write(target, "search-index.js", content)
-        size = len(content.encode("utf-8"))
-        if size > INDEX_WARN_BYTES:
-            self.log.warning(f"[APPHELP] INDEX_LARGE size={q(size)}")
-        self.log.info(f"[APPHELP] INDEX_BUILT pages={len(records)} size={q(size)}")
+    def search_documents(self) -> list:
+        """Override: the pages in reading order."""
+        return [page.doc_id for page in self.flat]
+
+    def search_record(self, doc_id):
+        """Override: apphelp facets (DocType, Feature, Level...); None when the page file was not written."""
+        page = self.pages.get(doc_id)
+        if page is None:
+            return None
+        if not os.path.isfile(os.path.join(self.srvbes.get_path("target"), page.url)):
+            self.log.warning(f"[APPHELP] INDEX_PAGE_MISSING page={q(page.url)}")
+            return None
+        return page_record(page, [])
+
+    def search_sections(self, doc_id) -> list:
+        """Override: the sections of the built page's article."""
+        path = os.path.join(self.srvbes.get_path("target"), self.pages[doc_id].url)
+        with open(path, encoding="utf-8") as fh:
+            return [[s["id"], s["heading"], s["text"]] for s in extract_sections(fh.read())]
+
+    def write_search_index(self):
+        """Override: apphelp always has its search, so the index is always written."""
+        self.write_index_file(self.srvbes.get_path("target"))
 
     def generate_sources(self):
         pass

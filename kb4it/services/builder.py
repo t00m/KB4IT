@@ -80,6 +80,10 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
     # named after the theme, and stores it as self.config. None: self.config wraps theme.json.
     config_class = None
 
+    # Global variable and size warning of target/search-index.js (P8).
+    search_index_var = "KB4IT_INDEX"
+    search_index_warn_bytes = INDEX_WARN_BYTES
+
     # Source patterns (common HTML_TAG_<name>_MD templates) that python-markdown's output, after
     # the compiler's section restructuring, can contain; tests/core/test_transformations.py checks it.
     _XFORM_NAMES = [
@@ -322,35 +326,48 @@ class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, Pro
         return {"u": html_id_for(doc_id), "t": title, "s": summary, "k": "", "c": "", "f": facets,
                 "w": [], "g": [], "x": []}
 
+    def search_documents(self) -> list:
+        """Doc ids of the search index, in index order; default: the source documents, sorted."""
+        known = set(self.srvdtb.get_documents())
+        sources = self.srvbes.get_value("docs", "filenames") or []
+        return sorted(d for d in sources if d in known and not self.srvdtb.is_system(d))
+
+    def search_sections(self, doc_id) -> list:
+        """[[anchor, heading, text], ...] of one document; default: the sections the compiler recorded."""
+        root = self.srvbes.get_path("root")
+        return [[s["id"], s["heading"], s["text"]] for s in load_doc_sections(root, doc_id)]
+
     def write_search_index(self):
         """Write target/search-index.js from the sections the compiler recorded; remove it when search is off."""
         target = self.srvbes.get_path("target")
-        root = self.srvbes.get_path("root")
-        index_path = os.path.join(target, "search-index.js")
         if (self.srvbes.get_dict("theme") or {}).get("search") is not True:
-            return  # the theme has no shared search (apphelp writes its own index)
+            return  # the theme has no shared search
         if not self.search_enabled():
             for name in ("search-index.js", "search.html"):
                 path = os.path.join(target, name)
                 if os.path.exists(path):
                     os.unlink(path)
             return
-        known = set(self.srvdtb.get_documents())
-        sources = self.srvbes.get_value("docs", "filenames") or []
-        docs = [d for d in sources if d in known and not self.srvdtb.is_system(d)]
-        records = []
-        for doc_id in sorted(docs):
+        docs = self.write_index_file(target)
+        prune_sections(self.srvbes.get_path("root"), docs)
+
+    def write_index_file(self, target) -> list:
+        """Write target/search-index.js: search_record() of each search_documents() id, None skipped; return the ids."""
+        records, docs = [], self.search_documents()
+        for doc_id in docs:
             record = self.search_record(doc_id)
-            record["x"] = [[s["id"], s["heading"], s["text"]] for s in load_doc_sections(root, doc_id)]
+            if record is None:
+                continue
+            record["x"] = self.search_sections(doc_id)
             records.append(record)
-        prune_sections(root, docs)
-        content = render_index_js(records, "KB4IT_INDEX")
-        with open(index_path, "w", encoding="utf-8") as fh:
+        content = render_index_js(records, self.search_index_var)
+        with open(os.path.join(target, "search-index.js"), "w", encoding="utf-8") as fh:
             fh.write(content)
         size = len(content.encode("utf-8"))
-        if size > INDEX_WARN_BYTES:
+        if size > self.search_index_warn_bytes:
             self.log.warning(f"[SEARCH] INDEX_LARGE size={q(size)}")
         self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={q(size)}")
+        return docs
 
     def feed_settings(self):
         """Feed settings, or None when the theme has no feed. theme.json "feed": true turns it on by default."""
