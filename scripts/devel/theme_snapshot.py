@@ -37,6 +37,12 @@ _VOLATILE = [
     # The commit of the build and the theme fingerprint change with every run of different code.
     (re.compile(r"<VERSION>-dev\+[\w.]+|<VERSION>\+unknown"), "<VERSION>"),
     (re.compile(r"(<meta name=\"generator\" content=\"[^;\"]*); [^\"]*\""), r'\1; <THEME>"'),
+    # Shared libraries moved from the theme folders to resources/vendor (P6): one token per library.
+    (re.compile(r"resources/themes/[\w-]+/framework/(highlight|uikit|datatables)/", re.IGNORECASE),
+     lambda m: f"<VENDOR:{m.group(1).lower()}>/"),
+    (re.compile(r"resources/vendor/(highlight|uikit|datatables)/"), lambda m: f"<VENDOR:{m.group(1)}>/"),
+    (re.compile(r"resources/(?:common|vendor/search)/(js|css)/kb4it-search"), r"<VENDOR:search>/\1/kb4it-search"),
+    (re.compile(r"resources/themes/apphelp/framework/apphelp/js/search\.js"), "<VENDOR:search>/js/kb4it-search.js"),
 ]
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 

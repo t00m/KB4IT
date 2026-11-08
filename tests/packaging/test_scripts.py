@@ -190,12 +190,15 @@ def test_wheel_check_wants_the_offline_help_index():
     assert not module.has_offline_help([theme, "kb4it/resources/help/search.html"])
 
 
-def _stamped_wheel(tmp_path, **stamp):
-    """A wheel with every tracked theme, the offline help, the editor bundle and the given BUILD.json."""
+def _stamped_wheel(tmp_path, vendor=True, **stamp):
+    """A wheel with every tracked theme and vendor library, the offline help, the editor bundle and the given BUILD.json."""
     import json
     import zipfile
     listed = subprocess.run(["git", "ls-files", "kb4it/resources/themes/*/theme.json"], cwd=ROOT,
                             capture_output=True, text=True, encoding="utf-8").stdout.split()
+    if vendor:
+        listed += subprocess.run(["git", "ls-files", "kb4it/resources/vendor"], cwd=ROOT,
+                                 capture_output=True, text=True, encoding="utf-8").stdout.split()
     wheel = tmp_path / "kb4it-1.2.3-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as zf:
         for rel in listed:
@@ -225,3 +228,18 @@ def test_wheel_check_wants_the_right_build_stamp(tmp_path, args, stamp, ok):
     assert (result.returncode == 0) is ok, result.stdout + result.stderr
     if not ok:
         assert "Build stamp:" in result.stderr
+
+
+def test_wheel_check_requires_vendor(tmp_path):
+    if not subprocess.run(["git", "ls-files", "kb4it/resources/vendor"], cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8").stdout:
+        pytest.skip("not a git checkout")
+    script = str(ROOT / "scripts" / "devel" / "check_wheel_themes.py")
+    good = _stamped_wheel(tmp_path)
+    assert subprocess.run([sys.executable, script, str(good)], capture_output=True, text=True,
+                          encoding="utf-8").returncode == 0
+    (tmp_path / "bad").mkdir()
+    bad = _stamped_wheel(tmp_path / "bad", vendor=False)
+    result = subprocess.run([sys.executable, script, str(bad)], capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode != 0
+    assert "Vendor libraries missing" in result.stderr and "search" in result.stderr

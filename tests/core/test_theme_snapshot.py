@@ -30,3 +30,16 @@ def test_every_app_is_snapshotted_with_content():
     pairs = list(snapshot.apps(content=True))
     assert ("techdoc", "sapbasis") in pairs and ("apphelp", "default") in pairs
     assert list(snapshot.apps(content=False)) == [p for p in pairs if p[1] == "default" and p[0] != "apphelp"]
+
+
+def test_normalise_maps_old_and_new_vendor_paths_to_one_token():
+    pairs = [("resources/themes/techdoc/framework/Highlight/highlight.js", "resources/vendor/highlight/highlight.js"),
+             ("resources/themes/blog/framework/uikit/css/uikit.min.css", "resources/vendor/uikit/css/uikit.min.css"),
+             ("resources/themes/techdoc/framework/datatables/js/x.js", "resources/vendor/datatables/js/x.js"),
+             ("resources/common/js/kb4it-search.js", "resources/vendor/search/js/kb4it-search.js"),
+             ("resources/common/css/kb4it-search.css", "resources/vendor/search/css/kb4it-search.css"),
+             ("resources/themes/apphelp/framework/apphelp/js/search.js", "resources/vendor/search/js/kb4it-search.js")]
+    for old, new in pairs:
+        assert snapshot.normalise(f'src="{old}"') == snapshot.normalise(f'src="{new}"'), (old, new)
+    assert snapshot.normalise('src="resources/themes/techdoc/framework/kb4it/js/page.js"') == \
+        'src="resources/themes/techdoc/framework/kb4it/js/page.js"', "a theme's own files keep their path"
