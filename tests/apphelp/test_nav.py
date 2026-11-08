@@ -19,15 +19,21 @@ def test_sections_ordered_by_lowest_order():
 
 
 def test_neighbours_cross_sections():
-    """apphelp's reading order is every page, section by section, through the navigation kit."""
+    """apphelp's reading order is every page, section by section, through the navigation feature."""
     from tests.apphelp.test_search_index import _apphelp_theme_class
     theme_class = _apphelp_theme_class()
+    from types import SimpleNamespace
+
+    from kb4it.theme.features.navigation import neighbours_in
     theme = theme_class.__new__(theme_class)
     theme.flat = flatten(build_sections(PAGES))
-    assert theme.neighbours("d.md") == ("a.md", "b.md")
-    assert theme.neighbours("a.md")[0] is None
-    assert theme.neighbours("e.md")[1] is None
-    assert theme.neighbours("missing.md") == (None, None)
+
+    def neighbours(doc_id):
+        return neighbours_in(theme.ordered_pages(SimpleNamespace(id=doc_id)), doc_id)
+    assert neighbours("d.md") == ("a.md", "b.md")
+    assert neighbours("a.md")[0] is None
+    assert neighbours("e.md")[1] is None
+    assert neighbours("missing.md") == (None, None)
     assert not hasattr(apphelp_nav, "neighbours")
 
 

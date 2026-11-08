@@ -97,7 +97,7 @@ def test_build_reads_the_plan():
     site = make_site(plan=plan)
     assert site.build.changed("b.md") and not site.build.changed(site.doc("a.md"))
     assert site.build.documents_changed == 1 and site.build.keys_changed == ("Tag",)
-    assert site.build.invalid == ("bad.md",) and not site.build.force
+    assert site.build.invalid == (("bad.md", "no title"),) and not site.build.force
     assert site.doc("a.md").backlinks == [{"title": "Beta", "url": "b.html"}]
     assert site.doc("a.md").modified == "2025-04-01"
 

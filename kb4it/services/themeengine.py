@@ -29,7 +29,7 @@ from kb4it.theme.features import BUNDLES, REGISTRY
 from kb4it.theme.site import Doc, Site
 
 # Theme class attributes the engine takes over as its own Builder settings.
-ENGINE_OPTIONS = ("untitled_label", "ellipsize_titles", "log_area", "config_class")
+ENGINE_OPTIONS = ("untitled_label", "ellipsize_titles", "log_area", "config_class", "person_pages")
 
 
 def features_of(theme_class: type[BaseTheme]) -> list[type[Feature]]:
@@ -71,7 +71,10 @@ class ThemeEngine(Builder):
         names = {cls.name for cls in self.feature_classes}
         for cls in self.feature_classes:
             for option, default in cls.options.items():
-                setattr(self, option, getattr(theme_class, option, default))
+                value = getattr(theme_class, option, default)
+                if callable(value) or callable(getattr(Builder, option, None)):
+                    raise ThemeError(f"option {option!r} of feature {cls.name} clashes with a method")
+                setattr(self, option, value)
         self.add_page = "editor" in names
         reserved = list(theme_class.reserved_pages)
         for cls in self.feature_classes:
@@ -258,6 +261,15 @@ class ThemeEngine(Builder):
         self.hook("register_add_page")(html)
 
     # ------------------------------------------------------------------ search
+    def search_enabled(self) -> bool:
+        search = self.features.get("search")
+        return bool(search.enabled()) if search is not None else False
+
+    def write_search_index(self) -> None:
+        search = self.features.get("search")
+        if search is not None:
+            search.write_index()
+
     def search_documents(self) -> list[str]:
         if "search" not in self.features:
             return list(Builder.search_documents(self))

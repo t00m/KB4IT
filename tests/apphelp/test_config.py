@@ -54,19 +54,17 @@ def test_plain_version_is_kept():
 
 
 def test_helpconfig_is_the_theme_config_class():
-    import importlib.util
-    from apphelp_config import HelpConfig
     from kb4it.core.themeconfig import build_config
+    from kb4it.core.themeload import load_module
     from tests.helpers import ROOT
-    path = ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic" / "theme.py"
-    spec = importlib.util.spec_from_file_location("apphelp_theme_module", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    assert module.Theme.config_class is HelpConfig
+    module = load_module(str(ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic"), "apphelp")
+    assert module.Theme.config_class.__name__ == "HelpConfig"
+    HelpConfig = module.Theme.config_class
     repo = {"version": "0.5", "apphelp": {"strict": False, "versions": {"enabled": True}, "bogus": 1}}
     config, unknown = build_config(HelpConfig, {}, repo, "apphelp")
     assert unknown == ["bogus"]
-    assert config == load_config(repo)
+    from dataclasses import asdict
+    assert asdict(config) == asdict(load_config(repo))
     assert config.versions is True and config.strict is False and config.contract_explicit is False
 
 

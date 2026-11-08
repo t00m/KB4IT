@@ -339,14 +339,23 @@ class VerifyMixin:
         return [f"THEME_SETTING_UNKNOWN theme={q(theme_id)} key={q(key)}" for key in unknown]
 
     def _theme_class(self, repo, config_file):
-        """The Theme class of logic/theme.py in the repository's theme, or None. It runs theme.py, so call it once."""
+        """The Theme class of logic/theme.py in the repository's theme, or None. It runs theme.py, so call it once.
+
+        For a theme on BaseTheme, its engine: it has reserved_pages, add_page and config_class like a legacy class.
+        """
         theme_dir = self._find_theme_dir(repo, config_file)
         logic = os.path.join(theme_dir, "logic") if theme_dir else ""
         path = os.path.join(logic, "theme.py")
         if not os.path.isfile(path):
             return None
         try:
-            return load_module(logic, repo.get("theme", "theme")).Theme
+            theme_class = load_module(logic, repo.get("theme", "theme")).Theme
+            from kb4it.theme import BaseTheme
+            if isinstance(theme_class, type) and issubclass(theme_class, BaseTheme):
+                # Its reserved pages, editor and settings come from its features: the engine has them.
+                from kb4it.services.themeengine import ThemeEngine
+                return ThemeEngine(theme_class)
+            return theme_class
         except Exception:
             return None
 

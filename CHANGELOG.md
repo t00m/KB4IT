@@ -57,6 +57,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- apphelp is written with `kb4it.theme` (version 1.2.0). Its pages do not change. Its modules import each other relatively, and `logic/verify.py` no longer changes `sys.path`. The `search` feature has two options for themes like it: `search_own_page = True` (the theme writes `search.html` itself) and `search_optional = False` (the index is always written, whatever `repo.json` says). The `about` feature has the hook `about_pages()`, which apphelp uses for its `about` setting.
 - blog is written with `kb4it.theme` (version 1.3.0). Its pages do not change. Every dated post is an event of the `events` feature, so the date links of its tables and post headers and the archive pages come from one list.
 - bookshelf is written with `kb4it.theme` (version 1.3.0). Its pages do not change. The Book > Part > Chapter model is computed once per build in `prepare()`, before the Book pages, instead of on first use.
 - The `starter-docs` starter (`kb4it new-theme`) is written with `kb4it.theme`: `features = ("documents", "search")`, a `build()` of two lines and a `page_context()` of two (version 0.2.0). Its tables now show the date with the default markup of the uikit base, with the time, instead of a plain date cell.

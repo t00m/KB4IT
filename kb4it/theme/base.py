@@ -45,6 +45,9 @@ class BaseTheme:
     ellipsize_titles: ClassVar[bool] = True
     #: Area of the theme's log lines, such as [THEME] HTML_MISSING.
     log_area: ClassVar[str] = "THEME"
+    #: The site has a page per person (Author_<name>.html) that the structured data links to;
+    #: False describes each person in the home page instead.
+    person_pages: ClassVar[bool] = True
 
     # Set by KB4IT before the first hook runs.
     site: Site

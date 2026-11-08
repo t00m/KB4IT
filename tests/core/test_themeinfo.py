@@ -49,7 +49,7 @@ def test_templates_say_where_they_come_from(techdoc):
 
 def test_page_theme_does_not_need_property_templates():
     info = collect("apphelp")
-    assert info["api"] == "legacy Builder (deprecated)"
+    assert info["api"] == "BaseTheme"
     assert "PAGE_KEY" not in {t["name"] for t in info["templates"]}
     assert {"navigation", "search", "editor"} <= set(info["features"])
 

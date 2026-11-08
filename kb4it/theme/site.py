@@ -25,10 +25,22 @@ from kb4it.core.people import person_status, person_tip
 from kb4it.core.util import guess_datetime, html_id_for, valid_filename
 
 
+class FrozenDict(dict[str, Any]):
+    """A dict that refuses changes; json.dumps() writes it like any dict."""
+
+    def _refuse(self, *args: Any, **kwargs: Any) -> None:
+        raise TypeError("site settings are read-only")
+
+    __setitem__ = __delitem__ = clear = pop = popitem = setdefault = update = _refuse  # type: ignore[assignment]
+
+    def __ior__(self, other: Any) -> Any:  # type: ignore[misc]
+        raise TypeError("site settings are read-only")
+
+
 def _freeze(value: Any) -> Any:
-    """A read-only copy of a JSON-like value: dicts become mappings, lists become tuples."""
+    """A read-only copy of a JSON-like value: dicts become FrozenDicts, lists become tuples."""
     if isinstance(value, Mapping):
-        return MappingProxyType({k: _freeze(v) for k, v in value.items()})
+        return FrozenDict({k: _freeze(v) for k, v in value.items()})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze(v) for v in value)
     return copy.copy(value)
@@ -281,9 +293,10 @@ class Build:
         return bool(plan.force_all) if plan is not None else True
 
     @property
-    def invalid(self) -> tuple[str, ...]:
+    def invalid(self) -> tuple[tuple[str, str], ...]:
+        """(source file, reason) of each document KB4IT could not read; they are not in the site."""
         plan = self._site._plan()
-        return tuple(doc for doc, _reason in (plan.invalid_docs if plan else ()))
+        return tuple((doc, reason) for doc, reason in (plan.invalid_docs if plan else ()))
 
 
 class Paths:

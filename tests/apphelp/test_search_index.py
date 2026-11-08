@@ -38,23 +38,20 @@ def test_record_and_js():
 
 
 def _apphelp_theme_class():
-    import importlib.util
+    from kb4it.core.themeload import load_module
     from tests.helpers import ROOT
-    path = ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic" / "theme.py"
-    spec = importlib.util.spec_from_file_location("apphelp_theme_module_b3", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.Theme
+    return load_module(str(ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic"), "apphelp").Theme
 
 
 def test_apphelp_has_no_private_index_writer():
-    from kb4it.services.builder import Builder
+    from kb4it.theme.features.search import Search
     theme = _apphelp_theme_class()
     assert not hasattr(theme, "_write_search_index")
-    assert theme.search_record is not Builder.search_record
-    assert theme.search_sections is not Builder.search_sections
+    assert theme.search_record is not Search.search_record
+    assert theme.search_sections is not Search.search_sections
     assert theme.search_index_var == "APPHELP_INDEX"
     assert theme.search_index_warn_bytes == 2 * 1024 * 1024
+    assert "search" in theme.features and theme.search_optional is False
 
 
 def test_apphelp_templates_get_the_apphelp_namespace():

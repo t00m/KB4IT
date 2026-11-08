@@ -21,6 +21,10 @@ class Editor(Feature):
     def pages(self, site: Site) -> None:
         self.engine.create_page_add()
 
+    def enabled(self) -> bool:
+        """True when this build has the Add page (the editor setting is on)."""
+        return bool(self.engine.editor_enabled())
+
     def editor_keys(self) -> dict[str, Any]:
         """Completion data {Key: [{"v": value, "c": count}]} for the properties pane."""
         from kb4it.services.addpage import AddPageMixin
