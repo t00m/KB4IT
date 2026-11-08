@@ -10,7 +10,9 @@ With --content every app of every theme is built (apphelp included), the techdoc
 blog and bookshelf sites also get the documents in tests/fixtures/audit/ (a rich
 document and one with hostile values), and techdoc and blog are built a second time
 after one dated document changed, so the incremental path is recorded too
-(OUT/<theme>-<app>.incremental). Build dates, times and the KB4IT version are
+(OUT/<theme>-<app>.incremental). The two starters of `kb4it new-theme` are built
+too, as user themes named after them (OUT/starter-docs-default, starter-plain-default),
+with the same documents. Build dates, times and the KB4IT version are
 replaced by placeholders.
 """
 
@@ -25,6 +27,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 THEMES = ROOT / "kb4it" / "resources" / "themes"
+# Starters of `kb4it new-theme`: theme id to create, flag of new-theme.
+STARTERS = {"starter-docs": ("starterdocs", []), "starter-plain": ("starterplain", ["--plain"])}
 FIXTURES = ROOT / "tests" / "fixtures" / "audit"
 
 # Values that change from one build to the next.
@@ -100,6 +104,9 @@ def apps(content):
         names = sorted(p.name for p in apps_dir.iterdir() if p.is_dir()) if content else ["default"]
         for app in names:
             yield theme_dir.name, app
+    if content:
+        for starter in STARTERS:
+            yield starter, "default"
 
 
 def problems_of(result):
@@ -119,7 +126,11 @@ def main(out, content=False):
         home = work / "home"
         home.mkdir()
         repo = work / "repo"
-        kb4it(["create", theme, app, str(repo)], work, home)
+        theme_id = theme
+        if theme in STARTERS:
+            theme_id, flags = STARTERS[theme]
+            kb4it(["new-theme", *flags, theme_id], work, home)
+        kb4it(["create", theme_id, app, str(repo)], work, home)
         if content and theme != "apphelp":
             for doc in sorted(FIXTURES.glob("*.md")):
                 shutil.copy(doc, repo / "source" / doc.name)
