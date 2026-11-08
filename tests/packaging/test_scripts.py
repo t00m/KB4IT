@@ -197,7 +197,7 @@ def _stamped_wheel(tmp_path, vendor=True, **stamp):
     listed = subprocess.run(["git", "ls-files", "kb4it/resources/themes/*/theme.json"], cwd=ROOT,
                             capture_output=True, text=True, encoding="utf-8").stdout.split()
     if vendor:
-        listed += subprocess.run(["git", "ls-files", "kb4it/resources/vendor"], cwd=ROOT,
+        listed += subprocess.run(["git", "ls-files", "kb4it/resources/vendor", "kb4it/resources/starters"], cwd=ROOT,
                                  capture_output=True, text=True, encoding="utf-8").stdout.split()
     wheel = tmp_path / "kb4it-1.2.3-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as zf:
@@ -243,3 +243,21 @@ def test_wheel_check_requires_vendor(tmp_path):
     result = subprocess.run([sys.executable, script, str(bad)], capture_output=True, text=True, encoding="utf-8")
     assert result.returncode != 0
     assert "Vendor libraries missing" in result.stderr and "search" in result.stderr
+
+
+def test_wheel_check_requires_starters(tmp_path):
+    import zipfile
+    if not subprocess.run(["git", "ls-files", "kb4it/resources/starters"], cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8").stdout:
+        pytest.skip("not a git checkout")
+    wheel = _stamped_wheel(tmp_path)
+    stripped = tmp_path / "stripped" / wheel.name
+    stripped.parent.mkdir()
+    with zipfile.ZipFile(wheel) as src, zipfile.ZipFile(stripped, "w") as dst:
+        for name in src.namelist():
+            if not name.startswith("kb4it/resources/starters/"):
+                dst.writestr(name, src.read(name))
+    result = subprocess.run([sys.executable, str(ROOT / "scripts" / "devel" / "check_wheel_themes.py"), str(stripped)],
+                            capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode != 0
+    assert "Starter themes missing" in result.stderr and "starter-docs" in result.stderr

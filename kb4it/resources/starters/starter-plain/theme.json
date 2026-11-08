@@ -1,0 +1,16 @@
+{
+    "id": "starter-plain",
+    "name": "Starter-plain",
+    "version": "0.1.0",
+    "author": "",
+    "email": "",
+    "website": "",
+    "description": "A plain page theme to start from: one template per page, no property pages",
+    "kb4it": ">=0.12.0",
+    "assets": ["search"],
+    "search": true,
+    "metadata_pages": false,
+    "deploy_dirs": ["framework"],
+    "favicon": "framework/logo.svg",
+    "autoescape": true
+}
