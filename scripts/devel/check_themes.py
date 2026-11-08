@@ -142,6 +142,8 @@ def check_static(code_root, theme_dir, version):
             problems.append(f"invalid kb4it requirement: {error}")
     if not (theme_dir / "logic" / "theme.py").is_file():
         problems.append("logic/theme.py is missing")
+    else:
+        conf = with_features(theme_dir, conf)
     required = ["HTML_BODY", "PAGE_INDEX"]
     if conf.get("metadata_pages", True) is not False:
         required += ["PAGE_KEY", "PAGE_KEY_VALUE"]
@@ -160,6 +162,25 @@ def check_static(code_root, theme_dir, version):
     if not (theme_dir / "apps").is_dir() or not any((theme_dir / "apps").iterdir()):
         problems.append("no sample app under apps/")
     return problems
+
+
+def with_features(theme_dir, conf):
+    """theme.json as a build sees it: a theme on kb4it.theme.BaseTheme has keys its features fill."""
+    try:
+        from kb4it.core.themeload import load_module
+        from kb4it.theme import BaseTheme
+        from kb4it.services.themeengine import theme_json_of
+        from kb4it.theme.feature import apply_theme_json
+    except ImportError:
+        return conf  # a KB4IT before kb4it.theme
+    try:
+        theme_class = load_module(str(theme_dir / "logic"), conf.get("id") or theme_dir.name).Theme
+        if isinstance(theme_class, type) and issubclass(theme_class, BaseTheme):
+            conf = dict(conf)
+            apply_theme_json(conf, theme_json_of(theme_class), conf.get("id", theme_dir.name))
+    except Exception:
+        pass  # the builds of its apps report a theme that does not load
+    return conf
 
 
 def check_app(code_root, theme, app, work):
