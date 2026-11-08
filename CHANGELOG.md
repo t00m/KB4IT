@@ -50,6 +50,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Post-build checks: after every build, KB4IT checks the links between the pages of the website and logs each one that points to a missing page or section as `[CHECK] ANCHOR_MISSING`. With `"strict": true` in `repo.json` these warnings stop the build. `kb4it verify` runs the same check on the built website. See [Post-build checks](https://t00m.github.io/KB4IT/reference-log-codes.html#checks).
 - Theme kits: the table filter bar, related documents, the sidebar table of contents, the Gallery and Diagrams pages and previous/next navigation are now mixins in `kb4it/services/themekit/` that any theme can add to its class. techdoc, apphelp and bookshelf use them; their pages do not change.
 - `theme.json` `heading_classes`: the classes of the headings and section wrappers of a document page. techdoc and blog no longer ship their own heading templates; a theme without them gets plain `kb-h2` ... `kb-sect4` wrappers.
+- `kb4it new-theme ID [--plain] [DIR]` starts a theme of your own from a starter: `starter-docs`, a document theme on UIkit with property pages and search, or with `--plain` `starter-plain`, plain pages with a home page and search. See [Create your own theme](https://t00m.github.io/KB4IT/howto-create-theme.html).
+- Help: a [Theme hooks](https://t00m.github.io/KB4IT/reference-theme-hooks.html) page lists every hook and helper a theme can use, generated from the KB4IT code, and the theme how-to now starts from `kb4it new-theme` and covers kits, theme settings, shared libraries and post-build checks.
 
 ### Changed
 

@@ -2,149 +2,76 @@
 DocType: How-to guide
 Feature: Themes, Development
 HelpId: create-theme
-Keyword: custom theme, template, mako, theme.json, Builder, DocumentTheme, themekit, template_base, build_page, page_pipeline, page_context, add_system_page, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
+Keyword: custom theme, new-theme, starter, template, mako, theme.json, Builder, DocumentTheme, themekit, kit, template_base, build_page, page_pipeline, page_context, add_system_page, config_class, assets, checks, verify.py, autoescape, escaping, THEME_AUTOESCAPE_OFF
 Level: advanced
 Order: 560
-Related: explanation-themes.md, dev-architecture.md
+Related: explanation-themes.md, reference-theme-hooks.md, dev-architecture.md
 Section: Guides
-Summary: Make your own theme, starting from a bundled one or from a small working example.
+Summary: Make your own theme with kb4it new-theme, then add kits, settings, shared libraries and checks.
 ---
 
 # Create your own theme
 
-A theme is a folder with a description, some Python and some templates. Start from a copy of a bundled theme, or from the small example below.
+A theme is a folder with a description, some Python and some templates. The quickest start is a copy of a starter theme, made by `kb4it new-theme`.
 
-## Start from a bundled theme {#copy}
+## Start from a starter theme {#start}
 
-1. Find where KB4IT keeps its themes:
+1. Create the theme. `mytheme` is its id: lower-case letters, digits, `-` and `_`.
 
-        kb4it -L DEBUG themes 2>&1 | grep THEME_SEARCH_GLOBAL
+        kb4it new-theme mytheme
 
-2. Copy one into your own themes folder under a new name, replacing `<path>` with the folder the first command printed:
+    It copies `starter-docs` into `~/.kb4it/opt/resources/themes/mytheme/` and sets the id. Add `--plain` to start from `starter-plain` instead.
 
-        mkdir -p ~/.kb4it/opt/resources/themes
-        cp -r <path>/techdoc ~/.kb4it/opt/resources/themes/mytheme
+2. Make a site from its sample app and build it:
 
-3. In `mytheme/theme.json`, set `"id": "mytheme"`, a new `name` and `"version": "1.0.0"`.
-4. Set `"theme": "mytheme"` in the `repo.json` of a knowledge base and build it with `--force`.
+        kb4it create mytheme default ~/my-site
+        kb4it build ~/my-site/config/repo.json
 
-`kb4it themes` now lists it with `scope=user`, its version, its fingerprint and its folder. Change the templates and CSS step by step and rebuild. A normal build is enough: when any file of the theme changes, its fingerprint changes and the next build rebuilds every page (`CORE_SIGNATURE_CHANGED` in the log). See [Theme version and fingerprint](#version).
+3. Open `~/my-site/target/index.html`. Change the templates and `logic/theme.py` of the theme step by step and build again.
+
+`kb4it themes` lists the theme with `scope=user`, its version, its fingerprint and its folder. A normal build is enough after a change: when any file of the theme changes, its fingerprint changes and the next build rebuilds every page. See [Theme version and fingerprint](#version).
+
+The two starters:
+
+| Starter | Built on | What it has |
+|---|---|---|
+| `starter-docs` | `DocumentTheme` and the `uikit` template base | Home page with the latest documents, a page per property and per value, all documents, properties, search, 404 page |
+| `starter-plain` | `Builder` | Home page listing every document, one plain page per document, search. No property pages (`"metadata_pages": false`) |
+
+To start from a bundled theme instead, copy its folder (`kb4it themes` shows it after `path=`) into `~/.kb4it/opt/resources/themes/`, and set a new `id`, `name` and `version` in its `theme.json`.
 
 ## What a theme contains {#layout}
 
 ```text
 mytheme/
-├── theme.json        # id, name, version, description, KB4IT it needs
+├── theme.json        # id, name, version, the KB4IT it needs, the libraries it uses
 ├── logic/theme.py    # class Theme: builds the pages
 ├── templates/*.tpl   # Mako templates
 │   └── skeletons/    # optional: skeletons of the Add page
-├── framework/        # CSS, JavaScript, fonts, images
+├── framework/        # the theme's own CSS, JavaScript, fonts, images
 └── apps/default/     # optional sample knowledge base for kb4it create
 ```
 
-## A small working theme {#example}
-
-This theme, `plain`, makes a home page that lists every document and wraps each document in a simple layout. Create these files in `~/.kb4it/opt/resources/themes/plain/`.
-
-`theme.json`:
-
-```json
-{
-    "id": "plain",
-    "name": "Plain",
-    "author": "Ann Lopez",
-    "email": "ann@example.com",
-    "website": "",
-    "description": "One page per document and a list of them",
-    "kb4it": ">=X.Y.Z",
-    "metadata_pages": false,
-    "autoescape": true
-}
-```
-
-`"metadata_pages": false` skips the pages per property and per value, so the theme needs no templates for them. `"autoescape": true` escapes every value the templates print; see [Escaping](#escaping).
-
-`logic/theme.py`:
-
-```python
-"""Plain theme: a home page listing every document, and one page per document."""
-
-from kb4it.core.util import html_id_for
-from kb4it.services.builder import Builder
-
-
-class Theme(Builder):
-    page_pipeline = True  # KB4IT wraps every page in HTML_BODY.tpl
-
-    def build(self):
-        """Build the pages that do not come from a document: here, the home page."""
-        var = self.get_theme_var()
-        var["docs"] = [
-            {"url": html_id_for(doc), "title": self.srvdtb.get_values(doc, "Title")[0]}
-            for doc in self.srvdtb.get_documents()
-            if not self.srvdtb.is_system(doc)
-        ]
-        self.add_system_page("index", var["repo"]["title"], self.template("PAGE_INDEX").render(var=var))
-```
-
-`page_pipeline = True` lets KB4IT build each page: it reads the compiled document, fills `var` with the title (`var['page']['title']`), the body (`var['source_html']`), the properties (`var['keys']`) and more, and renders `HTML_BODY`. The home page goes through the same pipeline.
-
-`templates/HTML_BODY.tpl`, the layout of every page:
-
-```html
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>${var['page']['title']} · ${var['repo']['title']}</title>
-  <link rel="stylesheet" href="resources/themes/plain/framework/plain.css">
-</head>
-<body>
-  <header><a href="index.html">${var['repo']['title']}</a></header>
-  <main>${var['source_html'] | n}</main>
-</body>
-</html>
-```
-
-`templates/PAGE_INDEX.tpl`, the home page:
-
-```html
-<h1>${var['repo']['title']}</h1>
-<ul>
-% for doc in var['docs']:
-  <li><a href="${doc['url']}">${doc['title']}</a></li>
-% endfor
-</ul>
-```
-
-`framework/plain.css`:
-
-```css
-body { max-width: 46rem; margin: 2rem auto; font-family: sans-serif; line-height: 1.6; }
-header a { font-weight: bold; text-decoration: none; }
-```
-
-KB4IT copies the theme folder to `target/resources/themes/plain/`; that is why the layout links the CSS from there.
+KB4IT copies the theme folder to `target/resources/themes/<id>/`, so templates link the theme's files from there: `resources/themes/${var['theme']['id']}/framework/style.css`. Libraries such as UIkit are not in the theme: list them in `assets` (see [Shared libraries](#assets)).
 
 ## How the pieces fit {#hooks}
 
+`logic/theme.py` holds a class `Theme`. With `page_pipeline = True` (the starters have it), KB4IT builds every page the same way: it reads the compiled document, fills `var` with the title (`var['page']['title']`), the body (`var['source_html']`), the properties (`var['keys']`) and more, calls your hooks, and renders `HTML_HEADER_COMMON`, the body template and `HTML_FOOTER`.
+
 | Part | Role |
 |---|---|
-| `build()` | Builds the pages that do not come from a document: home, lists, calendars |
-| `page_pipeline = True` | Lets KB4IT build every page: read the compiled document, fill `var`, rewrite the body, render, write |
+| `build()` | Builds the pages that do not come from a document, with `add_system_page(name, title, html)`: home, lists, calendars |
 | `page_context(doc_id, var)` | Adds the theme's own data to `var` for one page; returns `var` |
-| `body_transforms(doc_id, var)` | Functions from HTML to HTML applied to the body in order; by default the heading templates `HTML_TAG_*_NEW` the theme has |
-| `page_body_template(doc_id, var)`, `render_page(doc_id, var)` | The body template (default `HTML_BODY`) and the whole page: `HTML_HEADER_COMMON`, body and `HTML_FOOTER`, the first and last only when the theme has them |
+| `body_transforms(doc_id, var)` | Functions from HTML to HTML applied to the body in order; by default the heading and section wrappers (see `heading_classes` in [Options](#options)) |
+| `page_body_template(doc_id, var)`, `render_page(doc_id, var)` | The body template (default `HTML_BODY`) and the whole page |
 | `finalize_html(html)` | A last change to the whole page, such as pretty printing |
 | `build_page(path_md)` | Override it only to build the page completely yourself; the hooks above then do not run |
-| `page_pipeline = False` | Leaves each compiled document as the compiler wrote it. A theme built on `DocumentTheme` has the pipeline on; set this to turn it off |
-| `build_page_key(key, values)`, `build_page_key_value(kvpath)` | Build the pages per property and per value, unless `metadata_pages` is `false` |
 | `post_activities()`, `post_deploy_activities()` | Run after compilation and after the copy to `target/` |
 | `site_signature()` | Returns a value that changes when every page must be rebuilt, for example when the navigation changes |
 | `self.srvdtb` | The documents and their properties: `get_documents()`, `get_values(doc, key)` |
-| `self.add_system_page(name, title, html)` | Adds a page the theme rendered, with its title |
-| `self.edit_url(doc_id)` | The link to edit a document on the git server, or `''`; pages get it as `var['edit_url']` |
 | `self.template(name)` | Loads a template from `templates/`, then from the theme's `template_base`, then from KB4IT's shared ones |
+
+[Theme hooks](reference-theme-hooks.md) lists every hook and helper, generated from the KB4IT code.
 
 Templates use [Mako](https://www.makotemplates.org/): `${var['repo']['title']}` prints a value, and `% for` ... `% endfor` repeats a block. `var['repo']` holds every key of `repo.json`.
 
@@ -185,6 +112,77 @@ For the templates, set `"template_base": "uikit"` in `theme.json` (see [Options 
 
 A theme that looks nothing like them keeps subclassing `Builder`, as apphelp does.
 
+## Add a kit {#kits}
+
+Some features of techdoc are kits: mixins in `kb4it/services/themekit/` that any theme adds to its class line. A kit needs no other kit.
+
+```python
+from kb4it.services.themekit import DocumentTheme
+from kb4it.services.themekit.navigation import NavigationMixin
+
+class Theme(NavigationMixin, DocumentTheme):
+    def ordered_pages(self, doc_id):
+        """Override: every document, sorted by file name."""
+        return sorted(d for d in self.srvdtb.get_documents() if not self.srvdtb.is_system(d))
+```
+
+| Kit | Module | What it adds |
+|---|---|---|
+| Navigation | `navigation` | `neighbours(doc_id)`: previous and next page of the order `ordered_pages(doc_id)` gives |
+| Table filter | `filters` | A filter bar over the document tables; needs a `DATATABLE_FILTER.tpl` and `"tablefilter"` in `assets` |
+| Related | `related` | `related_docs(doc_id)`: documents that share rare property values |
+| TOC sidebar | `tocsidebar` | `toc_sidebar(source_html)`: whether a page gets a second, sticky table of contents |
+| Gallery | `gallery` | The Gallery page of every image; needs `"gallery"` in `assets` |
+| Diagrams | `diagrams` | The Diagrams page of every Mermaid diagram |
+
+## Theme settings {#settings}
+
+A setting the users of your theme may change goes into a dataclass, named in the class attribute `config_class`:
+
+```python
+from dataclasses import dataclass
+
+from kb4it.services.builder import Builder
+
+@dataclass
+class MySettings:
+    show_dates: bool = True
+
+class Theme(Builder):
+    config_class = MySettings
+```
+
+`self.config.show_dates` is then the field default, replaced by `"show_dates"` in `theme.json`, replaced by the block named after the theme in `repo.json`: `"mytheme": {"show_dates": false}`. A value of the wrong type stops the build with a message naming the key; an unknown key in the block logs `THEME_SETTING_UNKNOWN` and makes `kb4it verify` fail. Without `config_class`, `self.config.get("name")` reads `theme.json`.
+
+## Shared libraries {#assets}
+
+UIkit, highlight.js, DataTables and the search engine come with KB4IT, one copy each. List the ones your pages load in `theme.json`:
+
+```json
+"assets": ["uikit", "search"]
+```
+
+Each is copied to `resources/vendor/<name>/` in the website, so templates link `resources/vendor/uikit/css/uikit.min.css`. The names are `highlight`, `uikit`, `datatables`, `search`, `tablefilter` and `gallery`. An unknown name stops the build.
+
+## Checks after the build {#checks}
+
+After every build KB4IT reads the pages of the website and logs each link to a missing page or section as `[CHECK] ANCHOR_MISSING`. A theme adds its own checks by overriding `checks(target)`, which returns a list of `Problem` (from `kb4it.core.checks`):
+
+```python
+import os
+
+from kb4it.core.checks import Problem
+
+def checks(self, target):
+    """Override: the shared link check, then mine."""
+    problems = super().checks(target)
+    if not os.path.isfile(os.path.join(target, "index.html")):
+        problems.append(Problem("HOME_MISSING", "", "page=index.html", severity="error"))
+    return problems
+```
+
+An `error` stops the build; with `"strict": true` in `repo.json`, a warning does too. See [Post-build checks](reference-log-codes.md#checks).
+
 ## Escaping {#escaping}
 
 Titles, property values and `repo.json` settings are written by people, and may hold `<`, `"` or a whole `<script>`. With `"autoescape": true` in `theme.json`, every `${...}` is HTML-escaped, so such text shows as text. A value that is HTML on purpose, such as the compiled body of a document or a fragment your `theme.py` built, must be printed raw with `| n`:
@@ -213,12 +211,12 @@ The bundled themes follow these rules, and a theme you share should too:
 
 | Key | Meaning |
 |---|---|
-| `version` | The theme's own version, `X.Y.Z`. Raise it when you change the theme. Without it the theme loads and is shown as `unversioned` (`THEME_VERSION_MISSING`); another form, such as `1.0` or `2.1-beta`, logs `THEME_VERSION_INVALID` and the theme is shown as `unversioned`. From the next minor release that form stops the build |
+| `version` | The theme's own version, `X.Y.Z`. Raise it when you change the theme. Without it the theme loads and is shown as `unversioned` (`THEME_VERSION_MISSING`); another form, such as `1.0` or `2.1-beta`, logs `THEME_VERSION_INVALID` and the theme is shown as `unversioned`. |
 | `favicon` | Path of the theme's icon inside the theme folder, such as `images/logo.svg`. Pages use it when `repo.json` has no `logo`. The folder must be in `deploy_dirs` if you set that list |
 | `kb4it` | The KB4IT versions the theme works with, such as `">=X.Y.Z"` or `">=X.Y.Z, <A.B.C"` |
 | `metadata_pages` | `false` skips the pages per property and per value |
 | `deploy_dirs` | Only these folders of the theme are copied to the website, for example `["framework"]` |
-| `assets` | Shared libraries bundled with KB4IT that the theme's pages load, such as `["uikit", "search"]`. Each one is copied to `resources/vendor/<name>/` in the website, so templates link, for example, `resources/vendor/uikit/js/uikit.min.js`. The names are `highlight` (highlight.js), `uikit` (UIkit), `datatables` (jQuery and DataTables) and `search` (the search engine and search box). An unknown name stops the build |
+| `assets` | Shared libraries bundled with KB4IT that the theme's pages load, such as `["uikit", "search"]`. Each one is copied to `resources/vendor/<name>/` in the website, so templates link, for example, `resources/vendor/uikit/js/uikit.min.js`. The names are `highlight` (highlight.js), `uikit` (UIkit), `datatables` (jQuery and DataTables), `search` (the search engine and search box), `tablefilter` (the table filter kit) and `gallery` (the gallery kit). An unknown name stops the build. See [Shared libraries](#assets) |
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |
 | `editor` | `true` or `false`: whether the Add page is on when `repo.json` has no `editor` key. Without it, the page is off. See [Add the editor page](#editor) |
 | `template_base` | Name of a set of templates bundled with KB4IT that the theme builds on, such as `"uikit"`, the UIkit layout techdoc and blog share. A template is looked up in the repository's overrides, then the theme, then its base, then KB4IT's shared templates, so the theme only holds the ones it changes |
@@ -265,7 +263,7 @@ The page uses the common `PAGE_ADD.tpl`; put a `PAGE_ADD.tpl` in `templates/` to
 
 A theme that does not set `add_page = True` and call `create_page_add()` never gets the page, whatever `repo.json` says.
 
-## Add your own checks {#verify}
+## Check the sources with kb4it verify {#verify}
 
 A file `logic/verify.py` with a function `verify(repo, docs)` runs during `kb4it verify`. `docs` maps each file name to its properties. Return a list of problem messages, empty when all is well.
 
