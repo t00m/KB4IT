@@ -2,7 +2,7 @@
 
 import re
 
-from techdoc_dashboard import priority_css, status_css
+from .dashboard import priority_css, status_css
 
 from kb4it.core.dateclass import display_date
 from kb4it.core.documents import joined_value

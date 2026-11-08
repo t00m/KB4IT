@@ -77,3 +77,17 @@ def page(title, body="Text.", **keys):
     """Return a Markdown page; pass at least one key, an empty frontmatter is invalid."""
     front = "".join(f"{key}: {value}\n" for key, value in keys.items())
     return f"---\n{front}---\n\n# {title}\n\n{body}\n"
+
+
+TECHDOC_LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
+
+
+def techdoc_module(name):
+    """A module of techdoc's logic/ package (quality, docpage, records...), loaded once per test process."""
+    import importlib
+
+    from kb4it.core.themeload import load_package, package_name
+    package = package_name("techdoc", str(TECHDOC_LOGIC))
+    if package not in sys.modules:
+        load_package(str(TECHDOC_LOGIC), "techdoc")
+    return importlib.import_module(f"{package}.{name}")

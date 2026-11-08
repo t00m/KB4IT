@@ -10,4 +10,4 @@ class TechdocConfig:
     info_tabs: dict = field(default_factory=dict)     # tabs of the info card and whether they print
     toc_sidebar: bool = False                         # sticky table of contents; repo.json "toc_sidebar" wins
     table_filter: bool = True                         # search and sort on long document tables
-    quality: dict = field(default_factory=dict)       # quality profile overrides, see techdoc_quality.profile()
+    quality: dict = field(default_factory=dict)       # quality profile overrides, see quality.profile()

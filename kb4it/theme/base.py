@@ -131,6 +131,11 @@ class BaseTheme:
         """Last change to the whole page before it is written."""
         return html
 
+    def backlinks_html(self, doc: Doc) -> str:
+        """The block after the body that lists the documents linking here (HTML_BACKLINKS); '' for none."""
+        html: str = self._engine.default_backlinks_html(doc.id)
+        return html
+
     # ------------------------------------------------------------ site-wide
     def site_signature(self) -> str:
         """A value that changes when every page must be rebuilt (site-wide navigation...); '' for none."""

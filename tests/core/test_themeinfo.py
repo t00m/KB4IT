@@ -14,23 +14,67 @@ def techdoc():
     return collect("techdoc")
 
 
-def test_legacy_theme_is_marked_deprecated(techdoc):
-    assert techdoc["api"] == "legacy DocumentTheme (deprecated)"
-    assert techdoc["origin"] == "builtin"
+LEGACY = """
+from kb4it.services.themekit import DocumentTheme
+from kb4it.services.themekit.filters import FilterMixin
+
+from .helpers import LocalMixin
 
 
-def test_kits_map_to_feature_names(techdoc):
+class Theme(LocalMixin, FilterMixin, DocumentTheme):
+    add_page = True
+    properties_cloud = False
+
+    def event_documents(self):
+        return []
+"""
+
+
+@pytest.fixture(scope="module")
+def legacy(tmp_path_factory):
+    folder = tmp_path_factory.mktemp("legacy") / "legacy"
+    (folder / "logic").mkdir(parents=True)
+    (folder / "templates").mkdir()
+    (folder / "theme.json").write_text(json.dumps({"id": "legacy", "name": "Legacy", "version": "1.0.0",
+                                                   "kb4it": ">=0.12.0", "search": True, "template_base": "uikit"}))
+    (folder / "logic" / "helpers.py").write_text("class LocalMixin:\n    def post_deploy_activities(self):\n"
+                                                 "        pass\n")
+    (folder / "logic" / "theme.py").write_text(LEGACY)
+    return collect(str(folder))
+
+
+def test_legacy_theme_is_marked_deprecated(legacy):
+    assert legacy["api"] == "legacy DocumentTheme (deprecated)"
+    assert legacy["origin"] == "path"
+
+
+def test_kits_map_to_feature_names(legacy):
+    features = legacy["features"]
+    for name in ("table", "events", "property_pages", "table_filter", "search", "editor"):
+        assert name in features
+    assert "LocalMixin (theme)" in features
+
+
+def test_legacy_hooks_name_the_theme_file_and_the_feature(legacy):
+    hooks = {h["hook"]: h for h in legacy["hooks"]}
+    assert hooks["event_documents"]["feature"] == "events"
+    assert hooks["event_documents"]["where"].startswith("logic/theme.py:")
+    assert hooks["post_deploy_activities"]["class"] == "LocalMixin"
+
+
+def test_public_theme_lists_its_own_features(techdoc):
+    assert techdoc["api"] == "BaseTheme" and techdoc["origin"] == "builtin"
     features = techdoc["features"]
     for name in ("table", "events", "property_pages", "table_filter", "gallery", "search", "editor"):
         assert name in features
-    assert "AdminMixin (theme)" in features
+    assert features[-2:] == ["quality (theme)", "admin (theme)"]
 
 
 def test_hooks_name_the_theme_file_and_the_feature(techdoc):
     hooks = {h["hook"]: h for h in techdoc["hooks"]}
     assert hooks["event_documents"]["feature"] == "events"
     assert hooks["event_documents"]["where"].startswith("logic/theme.py:")
-    assert hooks["post_deploy_activities"]["class"] == "AdminMixin"
+    assert hooks["datatable_columns"]["feature"] == "table"
     assert "config_class" not in hooks  # a class attribute, not a hook
 
 

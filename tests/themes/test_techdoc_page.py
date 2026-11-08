@@ -7,14 +7,10 @@ import sys
 
 import pytest
 
-from tests.helpers import ROOT, page, run_kb4it, write_repo
+from tests.helpers import ROOT, page, run_kb4it, techdoc_module, write_repo
 from tests.themes.test_techdoc_media import png
 
-LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-sys.path.insert(0, str(LOGIC))  # techdoc_docpage imports techdoc_dashboard
-_spec = importlib.util.spec_from_file_location("techdoc_docpage", LOGIC / "techdoc_docpage.py")
-docpage = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(docpage)
+docpage = techdoc_module("docpage")
 
 BODY_FULL = "## Steps\n\nSee SAP note 736902 first.\n\nRun it."
 FILLER = " ".join(["Renew the credential with the portal and record the date of the change."] * 16)
@@ -234,8 +230,7 @@ def test_quality_items_have_tips_and_guide_links(page_site):
 
 
 def test_quality_guide_page_explains_every_check(page_site):
-    sys.path.insert(0, str(LOGIC))
-    import techdoc_quality_guide as guide
+    guide = techdoc_module("quality_guide")
     html = read(page_site, "quality-guide.html")
     for key in guide.CHECKS:
         assert f'id="{key}"' in html, key

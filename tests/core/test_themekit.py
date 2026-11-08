@@ -49,9 +49,9 @@ def test_document_themes_subclass_document_theme(theme):
     cls = _theme_class(theme)
     bases = [ast.unparse(b) for b in cls.bases]
     if bases[-1] == "BaseTheme":
-        features = next(ast.literal_eval(n.value) for n in cls.body
-                        if isinstance(n, ast.Assign) and ast.unparse(n.targets[0]) == "features")
-        assert "documents" in features
+        node = next(n.value for n in cls.body if isinstance(n, ast.Assign) and ast.unparse(n.targets[0]) == "features")
+        names = [e.value for e in node.elts if isinstance(e, ast.Constant)]  # theme-local features are classes
+        assert "documents" in names
     else:
         assert bases[-1] == "DocumentTheme"  # techdoc adds its own mixins before it
 

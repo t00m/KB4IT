@@ -17,33 +17,43 @@ from kb4it.core.util import (
     slugify,
     valid_filename,
 )
-from kb4it.core.log import q
+from kb4it.theme import Feature, q
 
 
-class AdminMixin:
-    def post_deploy_activities(self):
-        """Copy the gallery thumbnails, write quality-index.js, then build the admin area once the site has been deployed.
+class Admin(Feature):
+    """techdoc's admin area: target/admin/ with a backup page and two zip files (repo.json "admin": true).
 
-        Only runs when repo.json sets "admin": true. It writes an admin
-        subdirectory in the target with a backup page and two zip files:
-        one holding the source Markdown documents, another holding the
-        whole compiled site.
+    A theme-local feature: it runs after deployment, after the gallery thumbnails and the
+    quality index are in the site, so the site zip holds them.
+    """
+
+    name = "admin"
+    uses = ("gallery", "quality")
+
+    # What the code below reads from the build; theme.internals is set before the first stage.
+    @property
+    def srvbes(self):
+        return self.theme.internals.backend
+
+    @property
+    def log(self):
+        return self.theme.log
+
+    def template(self, name):
+        return self.theme.template(name)
+
+    def after_deploy(self, site):
+        """Build the admin area once the site is deployed; only with repo.json "admin": true.
+
+        It writes an admin subdirectory in the target with a backup page and two zip files:
+        one holding the source Markdown documents, another holding the whole compiled site.
         """
-        from techdoc_quality import index_js
-
-        self.deploy_gallery_thumbs()
-        index_path = os.path.join(self.srvbes.get_path('target'), 'quality-index.js')
-        if getattr(self, 'quality', None):
-            with open(index_path, 'w', encoding='utf-8') as fh:
-                fh.write(index_js(self.quality_stats))
-        elif os.path.exists(index_path):
-            os.unlink(index_path)
-        repo = self.srvbes.get_dict('repo')
+        repo = site.repo
         if not repo.get('admin', False):
             self.log.debug("[ADMIN] DISABLED")
             return
 
-        admin_dir = os.path.join(self.srvbes.get_path('target'), 'admin')
+        admin_dir = os.path.join(site.paths.target, 'admin')
         os.makedirs(admin_dir, exist_ok=True)
 
         slug = slugify(repo.get('title', ''))
@@ -155,7 +165,7 @@ class AdminMixin:
         HTML_FOOTER = self.template('HTML_FOOTER')
         TPL_PAGE_ADMIN = self.template('PAGE_ADMIN')
 
-        var = self.get_theme_var()
+        var = self.theme.base_var()
         var['page']['title'] = 'Admin'
         var['page']['title-tooltip'] = 'Admin'
         var['SystemPage'] = True
@@ -164,7 +174,7 @@ class AdminMixin:
         var['metadata'] = ''
         var['fmt'] = 'md'
         var['timestamp'] = get_human_datetime(datetime.now())
-        var['actions'] = self.get_page_actions(var)
+        var['actions'] = self.site.features.metadata.actions(var)
         var['backups'] = [
             self.get_backup_item(
                 zip_sources, 'Documents only',
@@ -180,7 +190,7 @@ class AdminMixin:
         HTML += HTML_FOOTER.render(var=var)
 
         page_path = os.path.join(admin_dir, 'index.html')
-        HTML = self.inject_head_meta(HTML, 'admin/index.html')
+        HTML = self.theme.internals.builder.inject_head_meta(HTML, 'admin/index.html')
         parser = etree.HTMLParser()
         tree = etree.fromstring(HTML, parser)
         self.relocate_links(tree)

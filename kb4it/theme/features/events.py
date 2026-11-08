@@ -100,6 +100,10 @@ class Events(Feature):
     def years(self) -> list[int]:
         return sorted(self.dey, reverse=True)
 
+    def calendar(self, days: dict[str, str] | None = None) -> str:
+        """The JSON a calendar panel reads, {"days": {"YYYY-MM-DD": count}}, safe inside <script>."""
+        return calendar_json(self.days() if days is None else days)
+
     # ---------------------------------------------------------------- stages
     def prepare(self, site: Site) -> None:
         self._index, self._dey = {}, {}

@@ -3,9 +3,9 @@
 from calendar import monthrange
 from datetime import datetime, timedelta
 
-from techdoc_quality import profile
-from techdoc_quality_page import tier_mix
-from techdoc_records import docs_of_work_type, event_type, kind_url
+from .quality import profile
+from .quality_page import tier_mix
+from .records import docs_of_work_type, event_type, kind_url
 
 from kb4it.core.documents import is_yes
 from kb4it.core.util import guess_datetime, html_id_for, valid_filename
@@ -57,8 +57,27 @@ def status_css(value):
     return STATUS_CSS.get(value, 'kb-label-muted')
 
 
-class DashboardMixin:
-    """Home page of techdoc (index.html); part of techdoc's Theme class."""
+class Dashboard:
+    """Home page of techdoc (index.html), built once per build by the theme.
+
+    Its panels read the database through theme.internals (the helpers of this theme take a
+    database), the events of the events feature and the scores of the quality feature.
+    """
+
+    def __init__(self, theme, site):
+        self.theme = theme
+        self.site = site
+        self.srvdtb = theme.internals.db
+        self.srvbes = theme.internals.backend
+        self.log = theme.log
+        self.events_docs = site.features.events.index
+        self.quality = site.features.quality.scores
+
+    def template(self, name):
+        return self.theme.template(name)
+
+    def add_system_page(self, name, title, html):
+        self.site.page(name, title, html)
 
     def build_page_index(self, var):
         """Create landing page."""

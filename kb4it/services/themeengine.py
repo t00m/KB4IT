@@ -186,6 +186,12 @@ class ThemeEngine(Builder):
     def finalize_html(self, html: str) -> str:
         return self.theme.finalize_html(html)
 
+    def backlinks_html(self, doc_id: str) -> str:
+        return self.theme.backlinks_html(self.doc(doc_id))
+
+    def default_backlinks_html(self, doc_id: str) -> str:
+        return str(Builder.backlinks_html(self, doc_id))
+
     # --------------------------------------------------------------- site-wide
     def site_signature(self) -> str:
         return self.theme.site_signature()

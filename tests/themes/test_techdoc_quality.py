@@ -1,4 +1,4 @@
-"""techdoc techdoc_quality.py: the score of one document and the peer statistics."""
+"""techdoc logic/quality.py: the score of one document and the peer statistics."""
 
 import importlib.util
 import re
@@ -7,14 +7,11 @@ from datetime import date
 
 import pytest
 
-from tests.helpers import ROOT
+from tests.helpers import ROOT, techdoc_module
 
 LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
 SKELETONS = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "templates" / "skeletons"
-sys.path.insert(0, str(LOGIC))  # techdoc_quality imports techdoc_quality_guide
-_spec = importlib.util.spec_from_file_location("techdoc_quality", LOGIC / "techdoc_quality.py")
-quality = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(quality)
+quality = techdoc_module("quality")
 
 
 @pytest.fixture
@@ -150,8 +147,7 @@ def test_peer_stats_ranks_within_peers_and_skips_retired():
 
 
 def test_every_check_has_a_guide_entry_and_a_tip(prof, skeletons, doc):
-    sys.path.insert(0, str(LOGIC))
-    import techdoc_quality_guide as guide
+    guide = techdoc_module("quality_guide")
     body = "# T\n\n## Summary\n\nX.\n\n## Empty\n\n## Root Cause\n\nY [gone](gone.md) ![i](resources/images/none.png)\n"
     docs = [doc(body, work_type="Incident", Status="Open", Category="Note", WorkType="Incident"),
             doc(body, DocType="Tutorial", Category="Note", Date="soon"),

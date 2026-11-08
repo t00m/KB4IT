@@ -1,16 +1,9 @@
-"""techdoc techdoc_quality_page.py: quick wins, possible duplicates and the tier mix."""
+"""techdoc logic/quality_page.py: quick wins, possible duplicates and the tier mix."""
 
-import importlib.util
-import sys
+from tests.helpers import techdoc_module
 
-from tests.helpers import ROOT
-
-LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-sys.path.insert(0, str(LOGIC))
-_spec = importlib.util.spec_from_file_location("techdoc_quality_page", LOGIC / "techdoc_quality_page.py")
-qpage = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(qpage)
-import techdoc_quality as quality
+qpage = techdoc_module("quality_page")
+quality = techdoc_module("quality")
 
 DIMS = {k: 0 for k in quality.DIMENSIONS}
 

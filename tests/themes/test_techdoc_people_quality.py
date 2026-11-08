@@ -32,14 +32,11 @@ def test_without_the_editor_the_check_links_to_the_guide(tmp_path, home):
 
 
 def test_author_profiles_setting():
-    sys.path.insert(0, str(LOGIC))
-    spec = importlib.util.spec_from_file_location("techdoc_theme_for_test", LOGIC / "theme.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    on = module.Theme.author_profiles_on
+    from tests.helpers import techdoc_module
+    on = techdoc_module("qualityfeature").Quality.author_profiles_on
 
     def theme(profiles):
-        return SimpleNamespace(srvdtb=SimpleNamespace(people=[None] * profiles), log=logging.getLogger("test"))
+        return SimpleNamespace(db=SimpleNamespace(people=[None] * profiles), log=logging.getLogger("test"))
 
     assert on(theme(0), {"author_profiles": "auto"}) is False and on(theme(1), {"author_profiles": "auto"}) is True
     assert on(theme(0), {"author_profiles": True}) is True and on(theme(1), {"author_profiles": False}) is False

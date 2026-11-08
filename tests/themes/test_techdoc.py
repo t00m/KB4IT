@@ -273,8 +273,8 @@ def test_skeleton_keys_are_alphabetical_without_version(path):
 
 
 def test_worktype_knowledge_is_not_a_record():
-    sys.path.insert(0, str(ROOT / "kb4it/resources/themes/techdoc/logic"))
-    import techdoc_records as records
+    from tests.helpers import techdoc_module
+    records = techdoc_module("records")
 
     class Db:
         def __init__(self, meta):
