@@ -222,6 +222,7 @@ The bundled themes follow these rules, and a theme you share should too:
 | `autoescape` | `true` escapes every value the templates print, except those marked raw. See [Escaping](#escaping) |
 | `editor` | `true` or `false`: whether the Add page is on when `repo.json` has no `editor` key. Without it, the page is off. See [Add the editor page](#editor) |
 | `template_base` | Name of a set of templates bundled with KB4IT that the theme builds on, such as `"uikit"`, the UIkit layout techdoc and blog share. A template is looked up in the repository's overrides, then the theme, then its base, then KB4IT's shared templates, so the theme only holds the ones it changes |
+| `heading_classes` | Classes of the headings and section wrappers of a document page: keys `h2`, `h3`, `h4` and `sect1` to `sect4`, for example `{"h2": "uk-card-title"}`. A key you leave out keeps its default: `kb-h2` ... `kb-sect4`, or techdoc's UIkit classes with `"template_base": "uikit"`. For other markup, ship your own `HTML_TAG_H2_NEW.tpl` and the like in `templates/` |
 
 ## Theme version and fingerprint {#version}
 
