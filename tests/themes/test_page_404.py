@@ -102,8 +102,18 @@ def test_reserved_pages_only_where_a_404_page_is_written():
     from kb4it.services.themekit import DocumentTheme
 
     assert DocumentTheme.reserved_pages == ()
+    from kb4it.core.themeload import load_module
+    from kb4it.services.themeengine import ThemeEngine
+    from kb4it.theme import BaseTheme
+
     for theme in THEMES:
-        source = (ROOT / "kb4it" / "resources" / "themes" / theme / "logic" / "theme.py").read_text(encoding="utf-8")
+        logic = ROOT / "kb4it" / "resources" / "themes" / theme / "logic"
+        theme_class = load_module(str(logic), theme).Theme
+        if issubclass(theme_class, BaseTheme):
+            # The not_found feature writes 404.html and reserves 404.md.
+            assert "404.md" in ThemeEngine(theme_class).reserved_pages, theme
+            continue
+        source = (logic / "theme.py").read_text(encoding="utf-8")
         cls = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
         values = [ast.literal_eval(n.value) for n in cls.body
                   if isinstance(n, ast.AnnAssign | ast.Assign) and "reserved_pages" in ast.unparse(n)]

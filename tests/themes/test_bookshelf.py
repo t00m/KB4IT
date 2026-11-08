@@ -98,7 +98,7 @@ def test_user_index_page_wins(site, tmp_path):
 
 
 def test_book_model_is_not_class_state():
-    """books, doc_index and _context_ready are set per build in _initialize(), never shared on the class."""
+    """books and doc_index are set per build in setup(), never shared on the class."""
     import ast
 
     from tests.helpers import ROOT
@@ -109,23 +109,20 @@ def test_book_model_is_not_class_state():
 
 
 def test_prev_next_stay_inside_the_book():
-    """bookshelf's reading order is the chapters of one book, through the navigation kit."""
-    import importlib.util
-    import sys
+    """bookshelf's reading order is the chapters of one book, through the navigation feature."""
+    from types import SimpleNamespace
 
+    from kb4it.core.themeload import load_module
+    from kb4it.theme.features.navigation import neighbours_in
     from tests.helpers import ROOT
-    logic = ROOT / "kb4it" / "resources" / "themes" / "bookshelf" / "logic"
-    sys.path.insert(0, str(logic))
-    try:
-        spec = importlib.util.spec_from_file_location("bookshelf_theme_module", logic / "theme.py")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-    finally:
-        sys.path.remove(str(logic))
-    theme = module.Theme.__new__(module.Theme)
+    module = load_module(str(ROOT / "kb4it" / "resources" / "themes" / "bookshelf" / "logic"), "bookshelf")
+    theme = module.Theme()
     chapters = {"A": ["a1.md", "a2.md"], "B": ["b1.md", "b2.md"]}
     theme.books = {book: {"chapters": [{"docId": d} for d in ids]} for book, ids in chapters.items()}
     theme.doc_index = {d: {"docId": d, "book": book} for book, ids in chapters.items() for d in ids}
-    assert theme.neighbours("a2.md") == ("a1.md", None)
-    assert theme.neighbours("b1.md") == (None, "b2.md")
-    assert theme.neighbours("x.md") == (None, None)
+
+    def neighbours(doc_id):
+        return neighbours_in(theme.ordered_pages(SimpleNamespace(id=doc_id)), doc_id)
+    assert neighbours("a2.md") == ("a1.md", None)
+    assert neighbours("b1.md") == (None, "b2.md")
+    assert neighbours("x.md") == (None, None)

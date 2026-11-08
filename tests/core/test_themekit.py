@@ -33,17 +33,35 @@ def _theme_methods(theme):
     raise AssertionError(f"{theme}: no Theme class")
 
 
+def _theme_class(theme):
+    tree = ast.parse((THEMES / theme / "logic" / "theme.py").read_text(encoding="utf-8"))
+    return next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Theme")
+
+
+def _public_api(theme):
+    """True for a theme on kb4it.theme.BaseTheme (it lists its features); False for a legacy one."""
+    return [ast.unparse(b) for b in _theme_class(theme).bases][-1] == "BaseTheme"
+
+
 @pytest.mark.parametrize("theme", DOCUMENT_THEMES)
 def test_document_themes_subclass_document_theme(theme):
-    tree = ast.parse((THEMES / theme / "logic" / "theme.py").read_text(encoding="utf-8"))
-    bases = [ast.unparse(b) for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Theme" for b in n.bases]
-    assert bases[-1] == "DocumentTheme"  # techdoc adds its own mixins before it
+    """A document theme is a DocumentTheme (legacy) or a BaseTheme with the documents feature."""
+    cls = _theme_class(theme)
+    bases = [ast.unparse(b) for b in cls.bases]
+    if bases[-1] == "BaseTheme":
+        features = next(ast.literal_eval(n.value) for n in cls.body
+                        if isinstance(n, ast.Assign) and ast.unparse(n.targets[0]) == "features")
+        assert "documents" in features
+    else:
+        assert bases[-1] == "DocumentTheme"  # techdoc adds its own mixins before it
 
 
 def test_shared_methods_are_defined_once():
     """A theme redefines a shared method only with a docstring starting "Override:" that says why."""
     stray = []
     for theme in DOCUMENT_THEMES:
+        if _public_api(theme):
+            continue  # a BaseTheme theme fills the hooks of its features; it inherits no shared method
         methods = _theme_methods(theme)
         for names in SHARED.values():
             for name in names:

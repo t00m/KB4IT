@@ -368,9 +368,11 @@ class Site:
     def page(self, name: str, title: str, html: str, *, markdown: bool = False, listing: bool = False) -> None:
         """Add a page to the site: name.html with this title and content.
 
-        markdown: html is Markdown and goes through the converter like a document.
-        listing: a page that only lists documents (search engines get noindex, follow).
+        name may end in .html (page_name() gives it so). markdown: html is Markdown and goes through
+        the converter like a document. listing: a page that only lists documents (search engines get
+        noindex, follow).
         """
+        name = name[:-5] if name.endswith(".html") else name
         self._need_host("page").add_system_page(name, title, html, as_html=not markdown, listing=listing)
 
     def keep(self, name: str, reason: str = "no_changes") -> bool:
