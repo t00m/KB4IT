@@ -66,4 +66,4 @@ def test_kb4it_floor():
     paths = sorted(THEMES.glob("*/theme.json"))
     assert len(paths) == 4
     for path in paths:
-        assert json.loads(path.read_text(encoding="utf-8"))["kb4it"] == ">=0.11.0", path
+        assert json.loads(path.read_text(encoding="utf-8"))["kb4it"] == ">=0.12.0", path
