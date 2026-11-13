@@ -23,7 +23,7 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 | `WorkType` | `Knowledge` for a knowledge document; for a record, the type of work it holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
 | `DocType` | `Tutorial`, `How-to guide`, `Reference`, `Explanation` | Counted in the four cards of the dashboard |
 | `Priority` | `Critical`, `Very high`, `High`, `Medium`, `Normal`, `Low`, `Unknown` | Coloured label; open items are sorted by it |
-| `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Closed: `Completed`, `Finished`, `Released`, `Successful`. Faded: `Deprecated`, `Obsolete` | Coloured label; open values put incidents, changes and tasks under **Open items** |
+| `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Closed: `Completed`, `Finished`, `Released`, `Successful`; `Degraded` (completed with problems) in a warning colour. Faded: `Deprecated`, `Obsolete` | Coloured label; open values put incidents, changes and tasks under **Open items** |
 | `Topic` + `Periodicity` | `Topic: Monitoring` with `Periodicity: Daily`, `Weekly`, ... | Listed in the **Monitoring** panel by periodicity |
 | `Bookmark` | `Yes` | Listed on the **Bookmarks** page |
 | `Date` | any [date](reference-document-format.md#dates) | Sorting, calendar, upcoming and recent events |
@@ -119,7 +119,7 @@ Every document gets a score from 0 to 100. A ring in the header strip shows it; 
 | Structured | 25 | Two or more sections; a first section that gives context (Description, Introduction, Overview); the shape of its DocType (steps for a how-to guide, a table or list for a reference); the sections of its skeleton. Empty sections and skeleton text left in cost points |
 | Complete | 25 | Words against a target: how-to guide 150, reference 200, explanation 500, tutorial 800 |
 | Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3. Once the knowledge base has a [profile](howto-describe-person.md), each person named without a profile costs 2 and each person whose profile has no contact details costs 1, at most 4 per document |
-| Current | 20 | A final status (Released, Completed, Finished, Successful); a recent `Date` (the points halve every 3 years for how-to guides and tutorials, 4 for references, 8 for explanations) |
+| Current | 20 | A final status (Released, Completed, Finished, Successful, Degraded); a recent `Date` (the points halve every 3 years for how-to guides and tutorials, 4 for references, 8 for explanations) |
 
 The score gives a tier: **Exemplary** (75 and up, gold ring and a note under the top bar), **Complete** (60 to 74, green), **Basic** (40 to 59) and **Stub** (under 40), both grey. Documents with the Status `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` are **Retired** and get no score.
 

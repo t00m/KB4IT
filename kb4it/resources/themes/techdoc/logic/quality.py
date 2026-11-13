@@ -30,10 +30,10 @@ DEFAULTS = {
     # Penalties for people named without a profile: "auto" turns them on once the knowledge base has a profile.
     'author_profiles': 'auto',
     'half_life': {'How-to guide': 3, 'Tutorial': 3, 'Reference': 4, 'Explanation': 8},
-    'final_status': ['Released', 'Completed', 'Finished', 'Successful'],
+    'final_status': ['Released', 'Completed', 'Finished', 'Successful', 'Degraded'],
     'retired_status': ['Obsolete', 'Deprecated', 'Withdrawn', 'Rejected'],
     'known_values': {
-        'Status': ['New', 'Open', 'Draft', 'Planned', 'Completed', 'Released', 'Finished', 'Successful',
+        'Status': ['New', 'Open', 'Draft', 'Planned', 'Completed', 'Released', 'Finished', 'Successful', 'Degraded',
                    'Deprecated', 'Obsolete', 'Withdrawn', 'Rejected'],
         'Priority': ['Critical', 'Very high', 'High', 'Medium', 'Normal', 'Low'],
         'DocType': ['Tutorial', 'How-to guide', 'Reference', 'Explanation'],

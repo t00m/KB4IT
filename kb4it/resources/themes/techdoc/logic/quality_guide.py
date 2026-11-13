@@ -27,7 +27,7 @@ CHECKS = {
         'title': 'Known values',
         'dim': 'findable',
         'what': 'Status, Priority, DocType, Category and WorkType use values the theme knows, so lists, colours and filters work.',
-        'how': 'Use one of these values. Status: New, Open, Draft, Planned, Completed, Released, Finished, Successful, '
+        'how': 'Use one of these values. Status: New, Open, Draft, Planned, Completed, Released, Finished, Successful, Degraded, '
                'Deprecated, Obsolete, Withdrawn, Rejected. Priority: Critical, Very high, High, Medium, Normal, Low. '
                'DocType: Tutorial, How-to guide, Reference, Explanation. Category: Procedure, Note, Post, Report, Template, '
                'Record, Minutes. WorkType: Knowledge, Change, Incident, Task, Meeting. An older `Category: Change` '
@@ -198,7 +198,7 @@ CHECKS = {
     'check-final-status': {
         'title': 'Final status',
         'dim': 'current',
-        'what': 'The Status is final: Released, Completed, Finished or Successful.',
+        'what': 'The Status is final: Released, Completed, Finished, Successful or Degraded.',
         'how': 'When the document is ready, set a final status. A draft or an open item gets fewer points '
                '(records: 10 of 20).',
         'example': 'Status: Released',

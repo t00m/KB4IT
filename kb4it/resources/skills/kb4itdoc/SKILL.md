@@ -268,7 +268,7 @@ Use only these values, which techdoc knows and scores:
 | Group | Values | Effect in techdoc |
 |---|---|---|
 | Open | `New`, `Open`, `Draft`, `Planned` | Records with an open status appear under **Open items**; `Draft` shows a draft banner |
-| Final | `Completed`, `Released`, `Finished`, `Successful` | Counts as final for the quality score |
+| Final | `Completed`, `Released`, `Finished`, `Successful`, `Degraded` | Counts as final for the quality score; `Degraded` means completed with problems and shows an orange label |
 | Retired | `Deprecated`, `Obsolete`, `Withdrawn`, `Rejected` | Grey "Do not follow" banner; no quality score |
 
 Default values from the skeletons:

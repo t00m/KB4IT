@@ -38,6 +38,7 @@ STATUS_CSS = {
     'Finished': 'uk-label-success',
     'Released': 'uk-label-success',
     'Successful': 'uk-label-success',
+    'Degraded': 'uk-label-warning',
     'Deprecated': 'kb-label-muted',
     'Obsolete': 'kb-label-muted',
 }
