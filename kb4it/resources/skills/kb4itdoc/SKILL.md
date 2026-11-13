@@ -268,8 +268,24 @@ Use only these values, which techdoc knows and scores:
 | Group | Values | Effect in techdoc |
 |---|---|---|
 | Open | `New`, `Open`, `Draft`, `Planned` | Records with an open status appear under **Open items**; `Draft` shows a draft banner |
-| Final | `Completed`, `Released`, `Finished`, `Successful`, `Degraded` | Counts as final for the quality score; `Degraded` means completed with problems and shows an orange label |
+| Final | `Completed`, `Released`, `Finished`, `Successful`, `Degraded` | Counts as final for the quality score; never under **Open items** |
 | Retired | `Deprecated`, `Obsolete`, `Withdrawn`, `Rejected` | Grey "Do not follow" banner; no quality score |
+
+What each value means:
+
+- `New`: a record was opened; nobody works on it yet.
+- `Open`: work on the record is under way.
+- `Draft`: the document is being written and is not reviewed.
+- `Planned`: the work is scheduled for a later date.
+- `Completed`, `Finished`: the work is done.
+- `Released`: the document was reviewed and is ready to follow.
+- `Successful`: the change or task ran as planned.
+- `Degraded`: completed with problems. The work is done, but with errors, side effects or a partial
+  result; say what went wrong in the document. It shows an orange label.
+- `Deprecated`: replaced by a newer document.
+- `Obsolete`: no longer valid.
+- `Withdrawn`: taken back by its author.
+- `Rejected`: the change or proposal was not approved.
 
 Default values from the skeletons:
 

@@ -23,7 +23,7 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 | `WorkType` | `Knowledge` for a knowledge document; for a record, the type of work it holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
 | `DocType` | `Tutorial`, `How-to guide`, `Reference`, `Explanation` | Counted in the four cards of the dashboard |
 | `Priority` | `Critical`, `Very high`, `High`, `Medium`, `Normal`, `Low`, `Unknown` | Coloured label; open items are sorted by it |
-| `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Closed: `Completed`, `Finished`, `Released`, `Successful`; `Degraded` (completed with problems) in a warning colour. Faded: `Deprecated`, `Obsolete` | Coloured label; open values put incidents, changes and tasks under **Open items** |
+| `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Final: `Completed`, `Finished`, `Released`, `Successful`, `Degraded`. Retired: `Deprecated`, `Obsolete`, `Withdrawn`, `Rejected`. See [Status values](#status) | Coloured label; open values put incidents, changes and tasks under **Open items** |
 | `Topic` + `Periodicity` | `Topic: Monitoring` with `Periodicity: Daily`, `Weekly`, ... | Listed in the **Monitoring** panel by periodicity |
 | `Bookmark` | `Yes` | Listed on the **Bookmarks** page |
 | `Date` | any [date](reference-document-format.md#dates) | Sorting, calendar, upcoming and recent events |
@@ -39,6 +39,32 @@ Every document carries a `WorkType`, and its `Category` must go with it:
 | `Meeting` | `Minutes` |
 
 A document whose `WorkType` is `Change`, `Incident`, `Task` or `Meeting` is a record; a document with `WorkType: Knowledge` is a knowledge document. The quality score takes a point when `WorkType` is missing and three when the `Category` does not go with it. A document with no `WorkType` is still read as a knowledge document, unless its `Category` holds an older type of work (see [Upgrading](#upgrade)).
+
+### Status values {#status}
+
+Each `Status` value falls in one of three groups. The group decides where the document shows up and how it scores.
+
+| Status | Meaning | Label | Group |
+|---|---|---|---|
+| `New` | A record was opened; nobody works on it yet | red | open |
+| `Open` | Work on the record is under way | red | open |
+| `Draft` | The document is being written and is not reviewed; its page shows an amber "Not final" banner | grey | open |
+| `Planned` | The work is scheduled for a later date | grey | open |
+| `Completed` | The work is done | green | final |
+| `Finished` | The work is done; same as `Completed` | green | final |
+| `Released` | The document was reviewed and is ready to follow | green | final |
+| `Successful` | The change or task ran as planned | green | final |
+| `Degraded` | Completed with problems: the work is done, but with errors, side effects or a partial result. Say what went wrong in the document | orange | final |
+| `Deprecated` | Replaced by a newer document; do not use it for new work | grey | retired |
+| `Obsolete` | No longer valid | grey | retired |
+| `Withdrawn` | Taken back by its author | grey | retired |
+| `Rejected` | The change or proposal was not approved | grey | retired |
+
+- **Open**: incidents, changes and tasks with an open status appear under **Open items** on the dashboard. For the quality score, an open status is not final.
+- **Final**: the document gets the points for a final status in the quality score, and it does not appear under **Open items**.
+- **Retired**: the page shows a grey "Do not follow this document" banner and the document gets no quality score.
+
+A value that is not in this list gets a grey label, does not count as final, and costs points in the quality check for known values. The lists are in the `quality` block of `theme.json` (`final_status`, `retired_status`, `known_values`).
 
 ### Upgrading an older repository {#upgrade}
 
