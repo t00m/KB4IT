@@ -106,7 +106,7 @@ The top bar holds the logo menu on the left, the page title in the middle, and t
 
 - The logo menu links to the dashboard (click the logo), the Add page, Search, Events, Bookmarks, Gallery, Diagrams, Properties, Stats, Quality, Help (the KB4IT help site, in a new window), About this app and About KB4IT (the KB4IT README).
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit on the git server with `"git": true`, edit in the editor when the [editor](#editor) is on, document properties, document source, print), then the table of contents.
-- The focus mode icon, on document pages only, is a switch for reading without distractions. On, the page keeps the top bar with the title, the document with every section open, and the side table of contents when the document has one. The page action icons under the title, the header strip, Summary, banners, info card, inline table of contents, the Expand all and Collapse all buttons, the footer and Back to top are hidden. Click it again to get the page back as it was, with each section open or folded as before. Focus mode is not kept when you open another page.
+- The focus mode icon, on document pages only, is a switch for reading without distractions. On, the page keeps the top bar with the title, the document with every section open, and the side table of contents when the document has one. The page action icons under the title, the header strip, Summary, banners, info card, inline table of contents, the Expand all and Collapse all buttons, the footer and Back to top are hidden. Click it again to get the page back as it was, with each section open or folded as before. Focus mode is not kept when you open another page: each document opens in focus mode only with `"focus_mode": true` in `repo.json` (see [settings](#settings)).
 - The reload icon reloads the page.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The Search entry of the logo menu opens `search.html`, the full page with filters. The keys do nothing while you type in a field. Each result shows the quality tier of the document, and the score breaks a tie between matches of the same relevance.
 
@@ -310,6 +310,7 @@ Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-re
 | `admin` | `true`, `false` | `false` | Builds the backup page, see below |
 | `quality` | `true`, `false` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
 | `toc_sidebar` | `true`, `false` | `toc_sidebar` of `theme.json` (`true`) | Second table of contents in a right column, with Expand all and Collapse all buttons, for documents with four or more sections on screens 1400 pixels or wider. It wins over `toc_sidebar` in `theme.json` |
+| `focus_mode` | `true`, `false` | `focus_mode` of `theme.json` (`false`) | Every document page opens in focus mode; the focus mode icon in the top bar still switches it off. It wins over `focus_mode` in `theme.json` |
 | `menu` | List of property names | `[]` | Order of the property buttons on the Gallery and Diagrams pages: listed keys first, the rest by name. The navigation menu is built from the properties the documents use |
 | `git` | `true`, `false` | `false` | Edit links to your git server; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
 | `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links |
@@ -329,6 +330,7 @@ The document page reads these keys of the theme's `theme.json`. Set them for one
 | `info_tabs` | `details` and `history`, each with `print`: whether the tab is printed. By default Details is printed and History is not |
 | `table_filter` | `true`: tables with more than 15 rows and a plain grid get a search box and sortable columns; `false` keeps only the style and the scrolling |
 | `toc_sidebar` | `true`: the default when `repo.json` has no top-level `toc_sidebar`; see [settings](#settings) |
+| `focus_mode` | `false`: the default when `repo.json` has no top-level `focus_mode`; see [settings](#settings) |
 | `quality` | Thresholds, word targets and weights of the [quality score](#quality); keys you set replace the defaults one by one |
 
 On paper, the header strip is one line of text, banners have a border instead of a colour, Details follows the title under the heading "Document details" in two columns, and the tab bar is left out.

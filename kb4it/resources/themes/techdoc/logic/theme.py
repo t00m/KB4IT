@@ -155,6 +155,7 @@ class Theme(BaseTheme):
         """The header menu, and for a document its header, info card, quality and TOC sidebar."""
         site = self.site
         var['toc_sidebar'] = False
+        var['focus_mode'] = False
         var['menu_contents'] = site.features.toc.menu_contents(var)
         var['fmt'] = source_ext(doc.id) or "md"
         if var['SystemPage']:
@@ -163,6 +164,7 @@ class Theme(BaseTheme):
         db = self.internals.db
         day_page = site.features.events.has_day_page(doc)
         var['toc_sidebar'] = site.features.toc_sidebar.wanted(var['source_html'])
+        var['focus_mode'] = self.focus_mode_wanted()
         doc_summary = summary(db, doc.id)
         quality_doc = site.features.quality.view(doc.id)
         var['has_quality'] = quality_doc is not None
@@ -192,6 +194,11 @@ class Theme(BaseTheme):
             'quality_html': self.template('QUALITY_PANEL').render(var={'q': quality_doc}) if quality_doc else '',
         }})
         return var
+
+    def focus_mode_wanted(self):
+        """True when document pages open in focus mode: repo.json "focus_mode", else the theme setting."""
+        repo = self.site.repo.get('focus_mode')
+        return repo if isinstance(repo, bool) else self.config.focus_mode is True
 
     def body_transforms(self, doc, var):
         """After the heading transformations, the images of a document and the code and table blocks."""

@@ -111,7 +111,8 @@
 
 /* techdoc document page: focus mode, a switch in the top bar. On, it hides everything but the top bar title,
    the document and the side table of contents (screen.css, .kb-focus) and opens every section. Off, the page
-   is back as it was, with each section open or folded as before. */
+   is back as it was, with each section open or folded as before. With "focus_mode": true in repo.json, the
+   page comes with .kb-focus on <html> and starts in focus mode. */
 (function () {
     'use strict';
 
@@ -164,4 +165,8 @@
         event.preventDefault();
         setFocus(!root.classList.contains('kb-focus'));
     });
+
+    if (root.classList.contains('kb-focus')) {
+        setFocus(true);
+    }
 }());

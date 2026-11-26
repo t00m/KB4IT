@@ -4,7 +4,9 @@ import pytest
 
 from kb4it.core.notice import HELP_ONLINE_URL
 from tests.browser.test_add_editor import open_cat
+from tests.core.test_highlight import _app_conf
 from tests.helpers import page as md_page
+from tests.helpers import run_kb4it, write_repo
 from tests.themes.test_techdoc_add import build_techdoc
 
 pytestmark = pytest.mark.browser
@@ -191,6 +193,25 @@ def test_focus_mode_keeps_the_side_table_of_contents(browser, tmp_path):
     page.click("[data-kb-focus]")
     assert page.is_visible(".kb-toc-sidebar")
     assert not page.is_visible(".kb-toc-sidebar-actions")
+    page.close()
+
+
+def test_repo_json_focus_mode_starts_in_focus_and_the_switch_leaves_it(browser, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    body = "\n\n".join(f"## Part {n}\n\nText." for n in range(1, 6))
+    cfg = write_repo(tmp_path, "techdoc", {"five.md": md_page("Five", body=body, Category="Note")},
+                     focus_mode=True, **_app_conf("techdoc"))
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    page = browser.new_page()
+    page.goto((tmp_path / "target" / "five.html").as_uri())
+    page.wait_for_function("document.querySelector('[data-kb-focus]').getAttribute('aria-pressed') === 'true'")
+    assert not page.query_selector(".kb-content .kb-closed")
+    assert not page.is_visible(".kb-doc-meta")
+    page.click("[data-kb-focus]")
+    assert page.is_visible(".kb-doc-meta")
+    # Off, the sections fold as on any page: every top-level section but the first.
+    assert len(page.query_selector_all(".kb-content .kb-sect1.kb-closed")) == 4
     page.close()
 
 

@@ -1,7 +1,8 @@
 <% _hl = (var['repo'].get('markdown') or {}).get('highlight', 'client') %>
 <!DOCTYPE html>
-% if var['page'].get('exemplary'):
-<html lang="${var['lang']}" class="kb-exemplary">
+<% _html_class = ' '.join(name for name, on in (('kb-exemplary', var['page'].get('exemplary')), ('kb-focus', var.get('focus_mode'))) if on) %>
+% if _html_class:
+<html lang="${var['lang']}" class="${_html_class}">
 % else:
 <html lang="${var['lang']}">
 % endif
@@ -196,9 +197,9 @@ ${var['actions'] | n}
                 <ul class="uk-navbar-nav noprint">
 % if _focus:
                     <!-- FOCUS BUTTON :: START -->
-                    <!-- A switch: hides everything but the top bar, the document and the side table of contents. -->
+                    <!-- A switch: hides everything but the top bar, the document and the side table of contents. "focus_mode": true starts it on. -->
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
-                        <a class="uk-link-heading kb-focus-toggle" href="#" role="button" aria-pressed="false" title="Focus mode" aria-label="Focus mode" data-kb-focus><span class="kb-focus-enter" data-uk-icon="expand"></span><span class="kb-focus-leave" data-uk-icon="shrink"></span></a>
+                        <a class="uk-link-heading kb-focus-toggle" href="#" role="button" aria-pressed="${'true' if var.get('focus_mode') else 'false'}" title="${'Leave focus mode' if var.get('focus_mode') else 'Focus mode'}" aria-label="${'Leave focus mode' if var.get('focus_mode') else 'Focus mode'}" data-kb-focus><span class="kb-focus-enter" data-uk-icon="expand"></span><span class="kb-focus-leave" data-uk-icon="shrink"></span></a>
                     </li>
                     <!-- FOCUS BUTTON :: END -->
 % endif

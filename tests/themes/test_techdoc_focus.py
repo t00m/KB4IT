@@ -1,12 +1,17 @@
-"""techdoc: the focus mode switch in the top bar of a document page."""
+"""techdoc: the focus mode switch in the top bar of a document page, and "focus_mode" to start it on."""
+
+import json
+import re
 
 import pytest
 
-from tests.helpers import ROOT, page
+from tests.core.test_highlight import _app_conf
+from tests.helpers import ROOT, page, run_kb4it, write_repo
 from tests.themes.test_techdoc_add import build_techdoc
 
 THEME = ROOT / "kb4it" / "resources" / "themes" / "techdoc"
 FOUR = "## One\n\nA.\n\n## Two\n\nB.\n\n## Three\n\nC.\n\n## Four\n\nD."
+DOCS = {"four.md": page("Four sections", FOUR, Category="Note", Date="2026-10-01")}
 
 
 @pytest.fixture(scope="module")
@@ -14,7 +19,7 @@ def focus_site(tmp_path_factory):
     base = tmp_path_factory.mktemp("techdoc-focus")
     home = base / "home"
     home.mkdir()
-    return build_techdoc(base, home, {"four.md": page("Four sections", FOUR, Category="Note", Date="2026-10-01")})
+    return build_techdoc(base, home, DOCS)
 
 
 def buttons(html):
@@ -51,3 +56,50 @@ def test_script_toggles_the_class_and_restores_the_folds():
     assert "document.querySelector('[data-kb-focus]')" in js
     assert "root.classList.toggle('kb-focus', on)" in js
     assert "folded.indexOf(s) >= 0" in js
+
+
+def html_tag(html):
+    return re.search(r"<html\b[^>]*>", html).group(0)
+
+
+def build_with(tmp_path, home, **conf):
+    cfg = write_repo(tmp_path / "repo", "techdoc", DOCS, **{**_app_conf("techdoc"), **conf})
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "THEME_SETTING_UNKNOWN" not in result.stdout
+    return tmp_path / "repo" / "target"
+
+
+def test_focus_mode_is_off_by_default(focus_site):
+    html = (focus_site / "four.html").read_text(encoding="utf-8")
+    assert "kb-focus" not in html_tag(html)
+    assert 'aria-pressed="false"' in buttons(html)
+
+
+def test_repo_json_focus_mode_starts_documents_in_focus(tmp_path, home):
+    target = build_with(tmp_path, home, focus_mode=True)
+    html = (target / "four.html").read_text(encoding="utf-8")
+    assert 'class="kb-focus"' in html_tag(html)
+    assert 'aria-pressed="true"' in buttons(html) and 'title="Leave focus mode"' in buttons(html)
+    # System pages have no document to focus on.
+    assert "kb-focus" not in html_tag((target / "index.html").read_text(encoding="utf-8"))
+
+
+def test_techdoc_block_sets_focus_mode(tmp_path, home):
+    target = build_with(tmp_path, home, techdoc={"focus_mode": True})
+    assert 'class="kb-focus"' in html_tag((target / "four.html").read_text(encoding="utf-8"))
+
+
+def test_top_level_focus_mode_wins_over_the_techdoc_block(tmp_path, home):
+    target = build_with(tmp_path, home, focus_mode=False, techdoc={"focus_mode": True})
+    assert "kb-focus" not in html_tag((target / "four.html").read_text(encoding="utf-8"))
+
+
+def test_theme_default_is_off():
+    conf = json.loads((THEME / "theme.json").read_text(encoding="utf-8"))
+    assert conf["focus_mode"] is False
+
+
+def test_script_starts_in_focus_when_the_page_asks():
+    js = (THEME / "framework" / "kb4it" / "js" / "page.js").read_text(encoding="utf-8")
+    assert "if (root.classList.contains('kb-focus')) {\n        setFocus(true);" in js

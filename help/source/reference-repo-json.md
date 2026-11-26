@@ -299,7 +299,7 @@ Documents without a `Date` are not in the feed.
 
 Each theme reads its own keys as well:
 
-- [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`, `quality`, `toc_sidebar`, `menu`
+- [techdoc](reference-theme-techdoc.md#settings): `datatable`, `events`, `admin`, `quality`, `toc_sidebar`, `focus_mode`, `menu`
 - [blog](reference-theme-blog.md#settings): `index_posts`, `strict`, `datatable`
 - [bookshelf](reference-theme-bookshelf.md#settings): `datatable`
 - [apphelp](reference-theme-apphelp.md#settings): the `apphelp` block and `version`
