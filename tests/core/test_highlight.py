@@ -14,7 +14,8 @@ def _app_conf(theme):
     """Settings of the theme's sample app, so every key the theme expects is present."""
     path = ROOT / "kb4it" / "resources" / "themes" / theme / "apps" / "default" / "config" / "repo.json"
     conf = json.loads(path.read_text(encoding="utf-8"))
-    for key in ("theme", "source", "target", "title"):
+    # focus_mode: the sample apps start documents in focus mode; tests start from the theme default.
+    for key in ("theme", "source", "target", "title", "focus_mode"):
         conf.pop(key, None)
     if theme == "apphelp":
         conf.setdefault("apphelp", {})["strict"] = False

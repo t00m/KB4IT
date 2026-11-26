@@ -103,3 +103,20 @@ def test_theme_default_is_off():
 def test_script_starts_in_focus_when_the_page_asks():
     js = (THEME / "framework" / "kb4it" / "js" / "page.js").read_text(encoding="utf-8")
     assert "if (root.classList.contains('kb-focus')) {\n        setFocus(true);" in js
+
+
+@pytest.mark.parametrize("app", ["default", "sapbasis"])
+def test_sample_apps_turn_focus_mode_on(app):
+    conf = json.loads((THEME / "apps" / app / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["focus_mode"] is True
+
+
+def test_a_new_repository_opens_documents_in_focus(tmp_path, home):
+    assert run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home).returncode == 0
+    cfg = tmp_path / "repo" / "config" / "repo.json"
+    assert json.loads(cfg.read_text(encoding="utf-8"))["focus_mode"] is True
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    target = tmp_path / "repo" / "target"
+    doc = next(p for p in target.glob("*.html") if 'data-kb-focus' in p.read_text(encoding="utf-8"))
+    assert "kb-focus" in html_tag(doc.read_text(encoding="utf-8")).split("class=")[1]

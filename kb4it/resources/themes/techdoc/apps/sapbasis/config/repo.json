@@ -19,6 +19,7 @@
         "Report",
         "Task"
     ],
+    "focus_mode": true,
     "git": false,
     "ignored_keys": [
         "Date"
