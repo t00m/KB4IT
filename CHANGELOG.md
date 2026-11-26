@@ -7,6 +7,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.12.0] - 2026-11-26
+
 ### Added
 
 - `kb4it.theme`, the public API for themes: one module with `BaseTheme`, `Site`, `Doc`, `Table`, `Feature`, `Problem` and a few helpers. A theme is `class Theme(BaseTheme)`, lists the features it wants (`features = ("search",)`) and overrides only the hooks it needs; the hooks get a read-only `Site` and `Doc` objects instead of the database. Features set their own `theme.json` keys (`search`, `metadata_pages`, `assets`); a `theme.json` value that contradicts them stops the build with a message naming both. Two new stages: `prepare(site)`, after the documents are read and before any page is built, and `after_checks(site)`, after the post-build checks pass. A method named like a hook of a feature the theme does not switch on logs `[FRONTEND] THEME_HOOK_UNUSED`. The `starter-plain` starter (`kb4it new-theme --plain`) is written with it (version 0.2.0); themes on `Builder` and `DocumentTheme` keep working.
