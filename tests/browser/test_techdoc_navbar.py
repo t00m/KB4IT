@@ -154,4 +154,46 @@ def test_title_menu_is_wide_and_nests_the_contents(nav_page):
 def test_reload_is_a_top_bar_button_left_of_search(nav_page):
     assert not nav_page.query_selector('#kb4it-menu .uk-navbar-left a[href="javascript:location.reload();"]')
     hrefs = [a.get_attribute("href") for a in nav_page.query_selector_all("#kb4it-menu .uk-navbar-right a")]
-    assert hrefs == ["javascript:location.reload();", "#kb4it-search-modal"]
+    # The focus mode switch (href="#") comes first on a document.
+    assert hrefs == ["#", "javascript:location.reload();", "#kb4it-search-modal"]
+
+
+def test_focus_mode_hides_the_page_furniture_and_opens_every_section(nav_page):
+    _goto(nav_page, "toc.html")
+    closed = nav_page.eval_on_selector_all(".kb-content .kb-closed", "els => els.map(e => e.id || e.className)")
+    assert closed, "the test needs folded sections"
+    for selector in (".kb4it-page-actions", ".kb-doc-meta", "#kb-toc-inline", ".kb-footer"):
+        assert nav_page.is_visible(selector), selector
+    nav_page.click("[data-kb-focus]")
+    assert nav_page.get_attribute("[data-kb-focus]", "aria-pressed") == "true"
+    assert nav_page.eval_on_selector("html", "e => e.classList.contains('kb-focus')")
+    for selector in (".kb4it-page-actions", ".kb-doc-meta", "#kb-toc-inline", ".kb-footer", ".kb-totop"):
+        assert not nav_page.is_visible(selector), selector
+    assert nav_page.is_visible("#kb4it-page-title") and nav_page.is_visible("[data-kb-focus]")
+    assert not nav_page.query_selector(".kb-content .kb-closed")
+    # A second click puts the page back, folded sections included.
+    nav_page.click("[data-kb-focus]")
+    assert nav_page.get_attribute("[data-kb-focus]", "aria-pressed") == "false"
+    for selector in (".kb4it-page-actions", ".kb-doc-meta", "#kb-toc-inline", ".kb-footer"):
+        assert nav_page.is_visible(selector), selector
+    after = nav_page.eval_on_selector_all(".kb-content .kb-closed", "els => els.map(e => e.id || e.className)")
+    assert after == closed
+
+
+def test_focus_mode_keeps_the_side_table_of_contents(browser, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    body = "\n\n".join(f"## Part {n}\n\nText." for n in range(1, 6))
+    target = build_techdoc(tmp_path, home, {"five.md": md_page("Five", body=body, Category="Note")})
+    page = browser.new_page(viewport={"width": 1500, "height": 800})
+    page.goto((target / "five.html").as_uri())
+    assert page.is_visible(".kb-toc-sidebar") and page.is_visible(".kb-toc-sidebar-actions")
+    page.click("[data-kb-focus]")
+    assert page.is_visible(".kb-toc-sidebar")
+    assert not page.is_visible(".kb-toc-sidebar-actions")
+    page.close()
+
+
+def test_system_pages_have_no_focus_switch(nav_page):
+    _goto(nav_page, "index.html")
+    assert not nav_page.query_selector("[data-kb-focus]")

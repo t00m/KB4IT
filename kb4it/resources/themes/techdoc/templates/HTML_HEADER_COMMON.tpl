@@ -163,6 +163,7 @@
 <%
     _has_actions = '<a ' in var['actions']
     _has_toc = var['has_toc'] and len(var['toc']) > 0
+    _focus = var.get('has_toc') and not var.get('SystemPage')
 %>
             <div class="kb4it-navbar-title${' kb4it-has-actions' if _has_actions else ''}">
                 <ul class="uk-navbar-nav">
@@ -193,6 +194,14 @@ ${var['actions'] | n}
             <!-- TOP BAR BUTTONS :: START -->
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
+% if _focus:
+                    <!-- FOCUS BUTTON :: START -->
+                    <!-- A switch: hides everything but the top bar, the document and the side table of contents. -->
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-link-heading kb-focus-toggle" href="#" role="button" aria-pressed="false" title="Focus mode" aria-label="Focus mode" data-kb-focus><span class="kb-focus-enter" data-uk-icon="expand"></span><span class="kb-focus-leave" data-uk-icon="shrink"></span></a>
+                    </li>
+                    <!-- FOCUS BUTTON :: END -->
+% endif
                     <!-- RELOAD BUTTON :: START -->
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-link-heading" href="javascript:location.reload();" title="Reload page" aria-label="Reload page"><span data-uk-icon="refresh"></span></a>

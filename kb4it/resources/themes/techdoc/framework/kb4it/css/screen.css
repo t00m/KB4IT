@@ -159,6 +159,21 @@ table.month tbody tr th {
 }
 .kb4it-page-action:hover { background: #dbeafe; color: #1e87f0; }
 
+/* Focus mode (the switch in the top bar, page.js): only the top bar title, the document and the side table of
+   contents stay. The page actions, header strip, banners, info card, inline table of contents, the Expand all
+   and Collapse all buttons, the footer and Back to top are hidden. */
+.kb-focus .kb4it-page-actions,
+.kb-focus .kb-doc-meta,
+.kb-focus #kb-toc-inline,
+.kb-focus .kb-toc-sidebar-actions,
+.kb-focus .kb-footer,
+.kb-focus .kb-totop { display: none !important; }
+.kb-focus .kb-focus-toggle { color: #1e87f0; }
+/* The button shows "expand" when off and "shrink" when on. */
+.kb-focus-toggle .kb-focus-leave,
+.kb-focus .kb-focus-toggle .kb-focus-enter { display: none; }
+.kb-focus .kb-focus-toggle .kb-focus-leave { display: inline-block; }
+
 /* Title menu: the table of contents, shown on hover over the title. */
 .kb4it-title-menu {
     width: min(40rem, calc(100vw - 32px));

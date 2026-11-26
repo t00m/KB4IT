@@ -8,8 +8,13 @@
         <h1 class="kb-print-doc-title">${var['page']['title']}</h1>
     </div>
     <!-- PRINT HEADER :: END -->
+    <!-- DOCUMENT META :: START -->
+    <!-- Header strip, banners and info card; focus mode hides them. -->
+    <div class="kb-doc-meta">
 ${var.get('doc_header', '') | n}
 ${var.get('info_card', '') | n}
+    </div>
+    <!-- DOCUMENT META :: END -->
     % if len(var['toc']) > 0:
     <!-- TABLE OF CONTENTS :: START -->
     <details id="kb-toc-inline" open class="kb-toc-panel">

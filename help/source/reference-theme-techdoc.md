@@ -102,10 +102,11 @@ Every section except the counts and the four document types folds when you click
 
 ![A techdoc document](resources/images/techdoc-page.webp)
 
-The top bar holds the logo menu on the left, the page title in the middle, and the reload and search icons on the right:
+The top bar holds the logo menu on the left, the page title in the middle, and the focus mode, reload and search icons on the right:
 
 - The logo menu links to the dashboard (click the logo), the Add page, Search, Events, Bookmarks, Gallery, Diagrams, Properties, Stats, Quality, Help (the KB4IT help site, in a new window), About this app and About KB4IT (the KB4IT README).
 - A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit on the git server with `"git": true`, edit in the editor when the [editor](#editor) is on, document properties, document source, print), then the table of contents.
+- The focus mode icon, on document pages only, is a switch for reading without distractions. On, the page keeps the top bar with the title, the document with every section open, and the side table of contents when the document has one. The page action icons under the title, the header strip, Summary, banners, info card, inline table of contents, the Expand all and Collapse all buttons, the footer and Back to top are hidden. Click it again to get the page back as it was, with each section open or folded as before. Focus mode is not kept when you open another page.
 - The reload icon reloads the page.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The Search entry of the logo menu opens `search.html`, the full page with filters. The keys do nothing while you type in a field. Each result shows the quality tier of the document, and the score breaks a tie between matches of the same relevance.
 
