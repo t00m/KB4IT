@@ -69,7 +69,7 @@ On Fedora, and on RHEL, Rocky Linux and AlmaLinux 9 or newer:
 sudo dnf install ./kb4it-X.Y.Z-1.x86_64.rpm
 ```
 
-The package uses a Python from 3.11 to 3.14. On RHEL 9, whose `python3` is 3.9, dnf installs `python3.11` or `python3.12` next to it. Remove the package with `sudo apt remove kb4it` or `sudo dnf remove kb4it`.
+The package uses a Python from 3.11 to 3.15. On RHEL 9, whose `python3` is 3.9, dnf installs `python3.11` or `python3.12` next to it. Remove the package with `sudo apt remove kb4it` or `sudo dnf remove kb4it`.
 
 ## Run in a container {#container}
 
@@ -148,7 +148,7 @@ It uses uv, else pipx, else a virtual environment. Choose with `--method uv`, `-
 | Option | Does |
 |---|---|
 | `--method venv` | Needs only Python 3.11 or newer: creates `~/.local/share/kb4it/venv` (or `KB4IT_VENV`) and links `~/.local/bin/kb4it` to it |
-| `--python PATH` | The Python to use. Without it the newest `python3.14` to `python3.11` on `PATH` is used, never an older `python3` |
+| `--python PATH` | The Python to use. Without it the newest `python3.15` to `python3.11` on `PATH` is used, never an older `python3` |
 | `--allow-dirty` | Builds even with uncommitted changes; the build is marked `.dirty`. Without it the installer stops and lists them |
 | `--extras` | Also installs the optional extras (nh3) |
 | `--wheel FILE` | Installs a wheel you already have, such as one from a release, instead of building one |

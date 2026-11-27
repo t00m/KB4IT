@@ -39,7 +39,7 @@ Live sites built with KB4IT: [techdoc](https://t00m.github.io/techdoc/index.html
 ## Prerequisites
 
 - GNU/Linux, macOS 13 or newer, or Windows 10 or 11.
-- Python 3.11 to 3.14 (CI tests 3.11, 3.13 and 3.14 on all three systems). uv can install Python for you.
+- Python 3.11 to 3.15 (CI tests 3.11, 3.13, 3.14 and 3.15 on all three systems). uv can install Python for you.
 - Everything else is installed with KB4IT: Mako, Markdown, PyMdown Extensions, PyYAML, Pygments, lxml, Pillow, Rich, Textual and argcomplete (plus tzdata on Windows).
 
 The container image and the Linux packages need no Python setup of your own.
@@ -258,7 +258,7 @@ scripts/install/local/install_kb4it_from_source.sh --allow-dirty   # install you
 - [Write the help](https://t00m.github.io/KB4IT/dev-help.html)
 - [Make a release](https://t00m.github.io/KB4IT/dev-release.html)
 
-CI runs the tests and a build of every theme on GNU/Linux, macOS and Windows with Python 3.11, 3.13 and 3.14.
+CI runs the tests and a build of every theme on GNU/Linux, macOS and Windows with Python 3.11, 3.13, 3.14 and 3.15.
 
 ## Tech stack
 

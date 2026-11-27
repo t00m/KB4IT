@@ -7,7 +7,7 @@ This directory builds KB4IT for the channels other than PyPI. All scripts:
 - read the version from `kb4it/VERSION`
 - can be run from anywhere (they locate the repo root themselves)
 - share their settings in `lib/common.sh`: the package description, the Python
-  versions the Linux packages support (3.11 to 3.14), and the helpers that build
+  versions the Linux packages support (3.11 to 3.15), and the helpers that build
   the wheel only when `dist/` has none for the current version
 
 The `.deb`, `.rpm` and container image are Linux-only; the scripts run on any
@@ -47,14 +47,14 @@ push and pull request, so they cannot break silently.
 ### .deb / .rpm
 
 Both packages carry the KB4IT wheel and the wheels of its dependencies for Python
-3.11 to 3.14 (lxml, Pillow, PyYAML and MarkupSafe have compiled code, so the packages are
+3.11 to 3.15 (lxml, Pillow, PyYAML and MarkupSafe have compiled code, so the packages are
 per architecture). The post-install script creates `/opt/kb4it/venv` from those
 wheels without network access and links `/usr/bin/kb4it`. Removing the package
 removes `/opt/kb4it` completely.
 
 - `.deb`: needs `python3 (>= 3.11)` and `python3-venv` (Debian 12, Ubuntu 24.04 and newer).
-- `.rpm`: needs a Python from 3.11 to 3.14 as `python3` or as `python3.11` to
-  `python3.14`, so it installs on RHEL 9 and its rebuilds next to their Python 3.9.
+- `.rpm`: needs a Python from 3.11 to 3.15 as `python3` or as `python3.11` to
+  `python3.15`, so it installs on RHEL 9 and its rebuilds next to their Python 3.9.
   `%post` uses the newest supported one and logs which.
 
 Test both offline in containers with `test/test_packages.sh`;

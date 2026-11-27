@@ -105,7 +105,7 @@ def test_download_wheels_needs_a_known_architecture():
 
 def test_package_pythons_cover_the_supported_range():
     common = (DIST / "lib" / "common.sh").read_text(encoding="utf-8")
-    assert "KB4IT_PYTHONS=(3.11 3.12 3.13 3.14)" in common
+    assert "KB4IT_PYTHONS=(3.11 3.12 3.13 3.14 3.15)" in common
 
 
 def test_packages_install_offline():

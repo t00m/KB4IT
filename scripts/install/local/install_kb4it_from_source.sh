@@ -60,7 +60,7 @@ find_python() {
         python_ok "$PYTHON_ARG" && { command -v "$PYTHON_ARG"; return 0; }
         return 1
     fi
-    for candidate in python3.14 python3.13 python3.12 python3.11 python3; do
+    for candidate in python3.15 python3.14 python3.13 python3.12 python3.11 python3; do
         if command -v "$candidate" &>/dev/null && python_ok "$candidate"; then
             command -v "$candidate"
             return 0
