@@ -119,6 +119,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `kb4it theme-info` writes the file of a hook with `/` on Windows too (`logic/theme.py:16`, not `logic\theme.py:16`).
 - bookshelf: chapters without a `Book` property are on the Unfiled shelf, which has no Book page. The current-book switch, the shelf and the chapter breadcrumbs linked `Book_Unfiled.html` on every page (`[CHECK] ANCHOR_MISSING`); they link the list of all chapters (`all.html`) now. The bookshelf theme is now version 1.2.1.
 - techdoc: the date of a document links to its events day page only when the document is an event (its type of work, else its first Category, is in `repo.json` `"events"`). Other dated documents, such as templates, showed a link to a page that is never built, in every document table and on the document page. The events page also drops a day that no longer has events. A theme on `DocumentTheme` names its event documents in `event_documents()`.
 - blog: the properties table of a post no longer links the `Date` property to a page that is never built.

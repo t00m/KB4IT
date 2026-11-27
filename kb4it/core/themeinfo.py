@@ -20,6 +20,7 @@ import inspect
 import json
 import os
 import sys
+from pathlib import Path
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
@@ -90,7 +91,7 @@ def _where(obj, folder: str) -> str:
         line = inspect.getsourcelines(obj)[1]
     except (OSError, TypeError):
         return "?"
-    return f"{os.path.relpath(path, folder)}:{line}"
+    return f"{Path(os.path.relpath(path, folder)).as_posix()}:{line}"
 
 
 def _kb4it_owner(cls, name: str):
