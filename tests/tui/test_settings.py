@@ -162,6 +162,19 @@ async def open_project_button(app, pilot, button):
     await pilot.pause()
 
 
+async def open_editor(app, pilot):
+    """Open the repo.json editor and wait until on_mount has loaded the file into it.
+
+    Text typed before that is replaced by the file, which a slow runner makes likely.
+    """
+    await open_project_button(app, pilot, "#edit-repo")
+    for _ in range(100):
+        if isinstance(app.screen, RepoEditorScreen) and app.screen.query_one(TextArea).text:
+            return app.screen
+        await pilot.pause(0.05)
+    raise AssertionError("the repo.json editor did not load the file")
+
+
 def test_settings_reference_screen(repo, registry):
     async def scenario(app, pilot):
         await open_project_button(app, pilot, "#settings-ref")
@@ -185,9 +198,7 @@ def test_editor_saves_only_after_a_passing_check(repo, registry):
     original = repo.read_text(encoding="utf-8")
 
     async def scenario(app, pilot):
-        await open_project_button(app, pilot, "#edit-repo")
-        screen = app.screen
-        assert isinstance(screen, RepoEditorScreen)
+        screen = await open_editor(app, pilot)
         editor = screen.query_one(TextArea)
         save = screen.query_one("#save", Button)
         assert editor.text == original and save.disabled
@@ -225,8 +236,7 @@ def test_editor_saves_only_after_a_passing_check(repo, registry):
 
 def test_editor_asks_before_dropping_changes(repo, registry):
     async def scenario(app, pilot):
-        await open_project_button(app, pilot, "#edit-repo")
-        screen = app.screen
+        screen = await open_editor(app, pilot)
         screen.query_one(TextArea).load_text("{}")
         await pilot.pause()
         screen.action_back()

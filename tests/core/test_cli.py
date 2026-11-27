@@ -268,6 +268,7 @@ def test_two_repositories_build_at_the_same_time(tmp_path, home):
                               env=isolated_env(home), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8") for cfg in configs]
     outputs = [proc.communicate(timeout=600)[0] for proc in procs]
-    assert [proc.returncode for proc in procs] == [0, 0], outputs
+    # The end of each output holds the error; pytest would cut it from the whole text.
+    assert [proc.returncode for proc in procs] == [0, 0], [out[-2000:] for out in outputs]
     assert (tmp_path / "one" / "target" / "one.html").exists()
     assert (tmp_path / "two" / "target" / "two.html").exists()
