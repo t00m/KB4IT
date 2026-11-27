@@ -3,11 +3,16 @@
 import argparse
 import sys
 
+import pytest
+
 from kb4it.core import completion
 from kb4it.core.main import build_parser
 from tests.helpers import run_kb4it
 
 TRACKED_THEMES = ("apphelp", "blog", "bookshelf", "techdoc")
+
+# argcomplete completes file paths with bash compgen, which a native Windows Python cannot run.
+needs_compgen = pytest.mark.skipif(sys.platform == "win32", reason="file completion runs bash compgen")
 
 
 def test_installed_themes_lists_every_tracked_theme():
@@ -80,6 +85,7 @@ def test_app_completer_stops_once_the_app_is_typed():
     assert completion.app_completer("", parsed_args=parsed) == []
 
 
+@needs_compgen
 def test_argcomplete_completes_the_path_after_the_app(tmp_path, home):
     (tmp_path / "mykb").mkdir()
     words = _complete(tmp_path, home, "kb4it create techdoc default ")
@@ -97,6 +103,7 @@ def _listed_kb(tmp_path, home):
     return config
 
 
+@needs_compgen
 def test_argcomplete_completes_ids_and_paths(tmp_path, home):
     _listed_kb(tmp_path, home)
     words = _complete(tmp_path, home, "kb4it build k")

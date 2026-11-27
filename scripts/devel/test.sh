@@ -11,5 +11,5 @@ fi
 exec uv run --no-project --python "$python_version" \
     --with pytest --with "Mako==1.4.2" --with "Markdown>=3.5" --with "PyYAML>=6.0" --with "Pygments>=2.15" \
     --with lxml --with "Pillow>=10.0" --with "rich>=14.2.0" --with "textual>=6.7.0" --with "pymdown-extensions>=10.0" --with "nh3>=0.3.0" \
-    --with "argcomplete>=3.0" \
+    --with "argcomplete>=3.0" --with "tzdata; sys_platform == 'win32'" \
     python -m pytest "$@"

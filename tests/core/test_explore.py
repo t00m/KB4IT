@@ -1,5 +1,7 @@
 """kb4it keys: properties, values and documents read from the sources."""
 
+import os
+
 import pytest
 
 from kb4it.core.explore import run_keys
@@ -44,7 +46,7 @@ def test_level_three_paths(kb, capsys):
 def test_case_insensitive_key_and_value(kb, capsys):
     assert keys(kb, "tag", "BACKUP") == 0
     out = capsys.readouterr().out.splitlines()
-    assert [line.rsplit("/", 1)[1] for line in out] == ["a.md", "b.md"]
+    assert [os.path.basename(line) for line in out] == ["a.md", "b.md"]
 
 
 def test_title_on_request(kb, capsys):

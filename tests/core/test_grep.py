@@ -2,6 +2,7 @@
 
 import io
 import os
+import re
 
 import pytest
 
@@ -46,6 +47,11 @@ def search(pattern, *, p=None, where=None, regex=False, case_sensitive=False, fi
     return status, out.getvalue().splitlines(), err.getvalue()
 
 
+def file_of(line):
+    """The file of a "file:line: text" result. A Windows path has a colon of its own (C:)."""
+    return re.match(r"(.*?):\d+: ", line).group(1)
+
+
 def src(config, name):
     return str(config.parent.parent / "source" / name)
 
@@ -54,7 +60,7 @@ def test_plain_case_insensitive(kb1):
     status, lines, _ = search("RESTORE", p=["kb1"])
     assert status == 0
     assert lines[0] == f"{src(kb1, 'a.md')}:9: Restore the backup."
-    assert [line.split(":")[0] for line in lines] == [src(kb1, n) for n in ("a.md", "b.md", "c.md")]
+    assert [file_of(line) for line in lines] == [src(kb1, n) for n in ("a.md", "b.md", "c.md")]
 
 
 def test_front_matter_is_searched(kb1):
@@ -71,7 +77,7 @@ def test_regex_flag(kb1):
 
 def test_case_sensitive_flag(kb1):
     status, lines, _ = search("Restore", p=["kb1"], case_sensitive=True)
-    assert [line.split(":")[0] for line in lines] == [src(kb1, "a.md")]
+    assert [file_of(line) for line in lines] == [src(kb1, "a.md")]
 
 
 def test_plain_pattern_with_regex_chars(kb1):
@@ -93,9 +99,9 @@ def test_files_only(kb1):
 
 def test_where_and_or(kb1):
     status, lines, _ = search("restore", p=["kb1"], where=["Status=Open", "Status=Planned", "Tag=backup"])
-    assert [line.split(":")[0] for line in lines] == [src(kb1, "a.md"), src(kb1, "b.md")]
+    assert [file_of(line) for line in lines] == [src(kb1, "a.md"), src(kb1, "b.md")]
     status, lines, _ = search("restore", p=["kb1"], where=["status=open"])
-    assert [line.split(":")[0] for line in lines] == [src(kb1, "a.md"), src(kb1, "c.md")]
+    assert [file_of(line) for line in lines] == [src(kb1, "a.md"), src(kb1, "c.md")]
 
 
 def test_parse_where():
@@ -119,11 +125,11 @@ def test_bad_where_exits_2(kb1):
 
 def test_all_projects_vs_p(kb1, kb2):
     _status, lines, _ = search("restore")
-    files = [line.split(":")[0] for line in lines]
+    files = [file_of(line) for line in lines]
     assert files[-1] == src(kb2, "z.md")
     assert src(kb1, "a.md") in files
     _status, lines, _ = search("restore", p=["kb2"])
-    assert [line.split(":")[0] for line in lines] == [src(kb2, "z.md")]
+    assert [file_of(line) for line in lines] == [src(kb2, "z.md")]
     _status, lines, _ = search("restore", p=["kb2", "kb1"])
     assert lines[0].startswith(src(kb2, "z.md"))
 

@@ -163,6 +163,7 @@ def test_delete_refuses_home_folder(listing, monkeypatch):
     home = listing / "user"
     config = write_repo(home, "techdoc", {"a.md": page("A", Tag="x")})
     monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))  # the home folder on Windows
     projects.register(config, pid="kb1")
     assert delete("kb1", files=True, yes=True) == 1
     assert config.exists()
