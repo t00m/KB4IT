@@ -28,16 +28,23 @@ def prop_url(key, value):
 
     <!-- SUMMARY COUNTS :: START -->
     <section class="kb-section" aria-labelledby="kb-hero-heading">
-        <h2 id="kb-hero-heading" class="uk-hidden-visually">Summary</h2>
+        <div class="uk-hidden-visually"><h2 id="kb-hero-heading">Summary</h2></div>
         <div class="kb-hero-bar">
 % for i, stat in enumerate(var['page']['stats']):
 %     if i > 0:
             <div class="kb-hero-divider"></div>
 %     endif
+%     if stat['url']:
             <a class="kb-hero-stat" href="${stat['url']}">
                 <span class="num">${stat['num']}</span>
                 <span class="label">${stat['label']}</span>
             </a>
+%     else:
+            <span class="kb-hero-stat">
+                <span class="num">${stat['num']}</span>
+                <span class="label">${stat['label']}</span>
+            </span>
+%     endif
 % endfor
         </div>
     </section>
@@ -45,7 +52,7 @@ def prop_url(key, value):
 
     <!-- DOCUMENT TYPES :: START -->
     <section class="kb-section" aria-labelledby="kb-doctypes-heading">
-        <h2 id="kb-doctypes-heading" class="uk-hidden-visually">Document types</h2>
+        <div class="uk-hidden-visually"><h2 id="kb-doctypes-heading">Document types</h2></div>
         <div class="uk-grid-small uk-grid-match uk-child-width-1-2@s uk-child-width-1-4@m" data-uk-grid>
 % for item in var['page']['diataxis']:
             <div>
@@ -82,11 +89,13 @@ def prop_url(key, value):
     </section>
     <!-- DOCUMENT TYPES :: END -->
 
-% if var['page']['open_items']:
+<% act = var['page']['activity'] %>
+% if var['page']['open_items'] or any(act.values()):
+%     if var['page']['open_items']:
     <!-- OPEN ITEMS :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="open-items" open>
         <summary class="kb-section-title">Open items</summary>
-        <div class="kb-panel uk-card-hover uk-box-shadow-large">
+            <div class="kb-work-block kb-open-items">
             <table class="uk-table uk-table-small uk-table-divider uk-margin-remove kb-events-table">
                 <tbody>
 %     for row in var['page']['open_items']:
@@ -96,30 +105,34 @@ def prop_url(key, value):
                         <td class="kb-open-badges">
 %         if row['priority']:
                             <a class="uk-label kb-badge ${row['priority_css']}" href="${prop_url('Priority', row['priority'])}" title="${row['priority']}">${row['priority']}</a>
+%         else:
+                            <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if row['status']:
                             <a class="uk-label kb-badge ${row['status_css']}" href="${prop_url('Status', row['status'])}" title="${row['status']}">${row['status']}</a>
+%         else:
+                            <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if row['category']:
                             <a class="uk-label kb-badge ${category_css(row['category'])}" href="${row['category_url']}" title="${row['category']}">${row['category']}</a>
+%         else:
+                            <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
                         </td>
                     </tr>
 %     endfor
                 </tbody>
             </table>
-        </div>
+            </div>
     </details>
     <!-- OPEN ITEMS :: END -->
-% endif
-
-<% act = var['page']['activity'] %>
-% if any(act.values()):
+%     endif
+%     if any(act.values()):
     <!-- ACTIVITY :: START -->
     <details class="kb-section kb-collapsible" data-kb-section="activity" open>
         <summary class="kb-section-title">Activity</summary>
-        <div class="kb-activity">
-            <ul class="kb-activity-tabs" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
+        <div class="kb-work-block kb-activity">
+            <ul class="kb-activity-tabs" data-kb-remember="kb-activity-tab" data-uk-tab="connect: #kb-activity-panels; animation: uk-animation-fade">
 %     for name, label in (('changes', 'Changes'), ('incidents', 'Incidents'), ('events', 'Events'), ('monitoring', 'Monitoring')):
 %         if act[name]:
                 <li data-kb-tab="${name}"><a href="#">${label}</a></li>
@@ -143,9 +156,13 @@ def prop_url(key, value):
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
 %         if item['status']:
                         <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}" title="${item['status']}">${item['status']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if item['priority']:
                         <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}" title="${item['priority']}">${item['priority']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
                     </li>
 %     endfor
@@ -173,9 +190,13 @@ def prop_url(key, value):
                         <a class="kb-alert-title" href="${item['url']}">${item['title']}</a>
 %         if item['status']:
                         <a class="uk-label kb-badge ${item['status_css']}" href="${prop_url('Status', item['status'])}" title="${item['status']}">${item['status']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
 %         if item['priority']:
                         <a class="uk-label kb-badge ${item['priority_css']}" href="${prop_url('Priority', item['priority'])}" title="${item['priority']}">${item['priority']}</a>
+%         else:
+                        <span class="kb-badge kb-badge-empty" aria-hidden="true"></span>
 %         endif
                     </li>
 %     endfor
@@ -196,7 +217,11 @@ def prop_url(key, value):
 % for side in ('current', 'next'):
 <%  panel = var['page']['events_panel'][side] %>
                 <div class="uk-width-1-2@m">
+%     if panel['url']:
                     <div class="kb-events-month-header"><a href="${panel['url']}">${panel['label']}</a></div>
+%     else:
+                    <div class="kb-events-month-header">${panel['label']}</div>
+%     endif
 %     if len(panel['rows']) == 0:
                     <div class="kb-events-empty">No events scheduled.</div>
 %     else:
@@ -283,25 +308,28 @@ def prop_url(key, value):
         </div>
     </details>
     <!-- ACTIVITY :: END -->
-    <!-- ACTIVITY TAB MEMORY :: START -->
+%     endif
+    <!-- TAB MEMORY :: START -->
     <script>
-    // The Activity card opens on the tab the reader chose last.
+    // Each tab bar of the card opens on the tab the reader chose last.
     (function () {
-        var tabs = document.querySelector('.kb-activity-tabs');
-        if (!tabs || typeof UIkit === 'undefined') { return; }
-        var names = Array.prototype.map.call(tabs.children, function (li) { return li.getAttribute('data-kb-tab'); });
-        try {
-            var i = names.indexOf(window.localStorage.getItem('kb-activity-tab'));
-            if (i > 0) { UIkit.tab(tabs).show(i); }
-        } catch (e) { /* private window: start on the first tab */ }
-        tabs.addEventListener('click', function (event) {
-            var li = event.target.closest('li');
-            if (!li) { return; }
-            try { window.localStorage.setItem('kb-activity-tab', li.getAttribute('data-kb-tab')); } catch (e) { /* not kept */ }
+        if (typeof UIkit === 'undefined') { return; }
+        document.querySelectorAll('[data-kb-remember]').forEach(function (tabs) {
+            var key = tabs.getAttribute('data-kb-remember');
+            var names = Array.prototype.map.call(tabs.children, function (li) { return li.getAttribute('data-kb-tab'); });
+            try {
+                var i = names.indexOf(window.localStorage.getItem(key));
+                if (i > 0) { UIkit.tab(tabs).show(i); }
+            } catch (e) { /* private window: start on the first tab */ }
+            tabs.addEventListener('click', function (event) {
+                var li = event.target.closest('li');
+                if (!li || li.parentNode !== tabs) { return; }
+                try { window.localStorage.setItem(key, li.getAttribute('data-kb-tab')); } catch (e) { /* not kept */ }
+            });
         });
     })();
     </script>
-    <!-- ACTIVITY TAB MEMORY :: END -->
+    <!-- TAB MEMORY :: END -->
 % endif
 
 </div>

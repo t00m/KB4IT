@@ -1,16 +1,16 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Reference
 Category: Minutes
-WorkType: Meeting
+Date: YYYY-MM-DD
+DocType: Reference
+Product:
+Scope:
 Status: New
 Summary:
 Tag:
+Team:
 Topic:
-Scope:
-Product:
+WorkType: Meeting
 ---
 
 # Title of the meeting
@@ -18,10 +18,11 @@ Product:
 ## Objective
 
 Say why the meeting took place and what it had to decide.
+Give the room or the call link, and link the minutes of the previous meeting.
 
 ## Attendees
 
-- List each attendee with their role.
+- List each attendee with their role. Mark the organiser and who was absent.
 
 ## Agenda
 
@@ -30,11 +31,15 @@ Say why the meeting took place and what it had to decide.
 
 ## Notes
 
-Record the discussion and the decisions taken.
+Record the discussion of each agenda item: technical details, risks found and open questions.
+
+## Decisions
+
+- Describe each decision, who took it and the record it leads to, such as a change.
 
 ## Action Items
 
-- [ ] Describe the action, with its owner and due date.
+- [ ] Describe the action, with its owner and due date (YYYY-MM-DD).
 
 ## References
 

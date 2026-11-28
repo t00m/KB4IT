@@ -23,9 +23,10 @@ from textual.widgets import (
     RichLog,
 )
 
-from kb4it.core.log import reset_logging
+from kb4it.core.log import get_logger, kb4it_logger, reset_logging
 from kb4it.tui import clipboard
 from kb4it.tui.screens.logs import _LOG_STYLE
+from kb4it.tui.widgets import SelectableRichLog
 
 _reset_logging = reset_logging
 
@@ -67,7 +68,7 @@ class BuildScreen(Screen):
         yield Header(show_clock=True)
         yield Label("Preparing build…", id="status")
         yield ProgressBar(total=None, id="prog")
-        yield RichLog(highlight=True, markup=False, id="log")
+        yield SelectableRichLog(highlight=True, markup=False, id="log")
         with Horizontal(id="footer-bar"):
             yield Button("Copy Log", id="copy", variant="default")
             yield Button("Close", id="close", variant="primary", disabled=True)
@@ -80,7 +81,7 @@ class BuildScreen(Screen):
     def _launch_build(self) -> None:
         handler = _TUILogHandler(self._on_log)
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s: %(message)s"))
-        t = threading.Thread(target=self._build_thread, args=(handler,), daemon=True)
+        t = threading.Thread(target=self._build_thread, args=(handler,), name="kb4it-build", daemon=True)
         t.start()
 
     def _build_thread(self, handler: _TUILogHandler) -> None:
@@ -99,7 +100,7 @@ class BuildScreen(Screen):
             inst = KB4IT(params)
             # KB4IT's __init__ has already called setup_logging() and registered
             # its file handler; now we add our real-time display handler.
-            logging.getLogger().addHandler(handler)
+            kb4it_logger().addHandler(handler)
             if not inst.run():
                 error = "Build failed,  see log for details."
         except SystemExit as exc:
@@ -107,8 +108,9 @@ class BuildScreen(Screen):
                 error = "Build failed,  see log for details."
         except Exception as exc:
             error = str(exc)
+            get_logger("TUI").error(f"[TUI] BUILD_ERROR reason={exc}", exc_info=True)
         finally:
-            logging.getLogger().removeHandler(handler)
+            kb4it_logger().removeHandler(handler)
             self.app.call_from_thread(self._on_done, error)
 
     # ── callbacks invoked from the build thread ───────────────────────────────

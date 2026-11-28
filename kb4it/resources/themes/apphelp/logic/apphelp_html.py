@@ -5,6 +5,9 @@ import html as htmllib
 import lxml.html
 from lxml import etree
 
+from kb4it.core.html import lazy_images, wrap_code
+from kb4it.core.html.lxmllock import lxml_serialized
+
 
 def _inner_html(element) -> str:
     parts = [htmllib.escape(element.text or "", quote=False)]
@@ -28,17 +31,6 @@ def _move_children(source, dest):
     dest.text = source.text
     for child in list(source):
         dest.append(child)
-
-
-def _wrap_code(pre):
-    box = lxml.html.Element("div", {"class": "ah-code"})
-    tail, pre.tail = pre.tail, None
-    pre.addprevious(box)
-    box.tail = tail
-    button = lxml.html.Element("button", {"class": "ah-copy", "type": "button"})
-    button.text = "Copy"
-    box.append(button)
-    box.append(pre)
 
 
 def _faq(root):
@@ -87,6 +79,7 @@ def _toc(root, layout):
             for h in root.iter("h2", "h3") if h.get("id")]
 
 
+@lxml_serialized
 def transform(fragment: str, doctype: str, layout: str = "", labels: dict | None = None) -> tuple:
     """Return the article HTML and its table of contents for a page of the given type and layout."""
     if not fragment.strip():
@@ -94,11 +87,10 @@ def transform(fragment: str, doctype: str, layout: str = "", labels: dict | None
     root = lxml.html.fragment_fromstring(fragment, create_parent="div")
     for toc in root.xpath('.//div[@id="toc"]'):
         _drop(toc)
-    for img in root.iter("img"):
-        img.set("loading", "lazy")
+    lazy_images(root)
     for pre in list(root.iter("pre")):
         if "mermaid" not in (pre.get("class") or "").split():  # a diagram, not code to copy
-            _wrap_code(pre)
+            wrap_code(pre, "ah-code", "ah-copy")
     if layout == "faq":
         _faq(root)
     elif layout == "troubleshooting":

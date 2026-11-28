@@ -36,7 +36,8 @@ def build(base, home, theme, **conf):
 def test_on_builds_page_and_link(tmp_path, home, theme):
     target = build(tmp_path, home, theme, editor=True)
     add = (target / "add.html").read_text(encoding="utf-8")
-    assert len(re.findall(r'<dialog[^>]*id="modal-add-', add)) == 1
+    assert len(re.findall(r'<dialog[^>]*id="modal-add-(?!_edit")', add)) == 2  # one card and the Person profile, plus the Edit dialog
+    assert 'id="modal-add-_edit"' in add
     assert f'id="{DIALOG[theme]}"' in add
     assert 'href="add.html"' in (target / "index.html").read_text(encoding="utf-8")
 
@@ -65,4 +66,4 @@ def test_kb4it_floor():
     paths = sorted(THEMES.glob("*/theme.json"))
     assert len(paths) == 4
     for path in paths:
-        assert json.loads(path.read_text(encoding="utf-8"))["kb4it"] == ">=0.10.0", path
+        assert json.loads(path.read_text(encoding="utf-8"))["kb4it"] == ">=0.12.0", path

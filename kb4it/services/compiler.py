@@ -19,7 +19,7 @@ from typing import Any
 from kb4it.core import trace
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import CompilationError
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 from kb4it.core.mdconfig import load_settings, sanitize_html
 from kb4it.core.mdlinks import suggest_md
 from kb4it.core.search import save_doc_sections
@@ -53,6 +53,8 @@ class Compiler(Service):
         self.failed = []
         self._failed_lock = threading.Lock()
         self.markdown = getattr(self.srvbes, "markdown", None) or load_settings(self.srvbes.get_dict("repo"))
+        # Links to a profile document lead to the person's page; filled by execute(), after extraction.
+        self.redirects = {}
         callbacks = callbacks or {}
         self.progress_callback = callbacks.get("progress_callback")
         self.compile_start_callback = callbacks.get("compile_start_callback")
@@ -60,6 +62,8 @@ class Compiler(Service):
     def execute(self):
         """Compile Markdown documents to HTML."""
         self.log.debug("[COMPILER] START")
+        plan = self.srvbes.get_plan() if hasattr(self.srvbes, "get_plan") else None
+        self.redirects = dict(getattr(plan, "profile_pages", None) or {})
 
         # copy online resources to target path
         resources_dir_tmp = os.path.join(self.srvbes.get_path("tmp"), "resources")
@@ -72,18 +76,18 @@ class Compiler(Service):
 
         distributed = self.srvbes.get_value("docs", "targets")
         targets_count = len(distributed) if distributed else 0
-        self.log.debug(f"[COMPILER] TARGETS count={targets_count}")
+        self.log.debug(f"[COMPILER] TARGETS count={q(targets_count)}")
         max_workers = self.srvbes.get_value("repo", "workers")
         if max_workers is None:
             max_workers = get_default_workers()
-        self.log.debug(f"[COMPILER] WORKERS n={max_workers}")
-        with Executor(max_workers=max_workers) as exe:
+        self.log.debug(f"[COMPILER] WORKERS n={q(max_workers)}")
+        with Executor(max_workers=max_workers, thread_name_prefix="compile") as exe:
             docs = sorted(get_source_docs(self.srvbes.get_path("tmp")))
             if self.compile_start_callback is not None:
                 try:
                     self.compile_start_callback(len(docs))
                 except Exception as err:
-                    self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=start err={err}")
+                    self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=start err={q(err)}")
             jobs = []
             num = 1
             tmp_dir = self.srvbes.get_path("tmp")
@@ -97,7 +101,7 @@ class Compiler(Service):
                     "tmp_dir": tmp_dir,
                     "num": num,
                 }
-                self.log.debug(f"[COMPILER] QUEUE doc={basename} format={fmt}")
+                self.log.debug(f"[COMPILER] QUEUE doc={q(basename)} format={q(fmt)}")
                 job = exe.submit(self._compile_job, data)
                 job.add_done_callback(self.compilation_finished)
                 jobs.append(job)
@@ -121,14 +125,14 @@ class Compiler(Service):
         for doc, links in sorted(self.links.items()):
             for path, _fragment in links:
                 if os.path.normpath(path) not in known:
-                    self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
+                    self.log.warning(f"[COMPILER] LINK_BROKEN from={q(doc)} to={q(path)}")
         for doc, paths in sorted(self.bare_links.items()):
             for path in paths:
                 suggestion = suggest_md(path, known)
                 if suggestion:
-                    self.log.warning(f"[COMPILER] LINK_NO_EXTENSION from={doc} to={path} suggest={suggestion}")
+                    self.log.warning(f"[COMPILER] LINK_NO_EXTENSION from={q(doc)} to={q(path)} suggest={q(suggestion)}")
                 else:
-                    self.log.warning(f"[COMPILER] LINK_BROKEN from={doc} to={path}")
+                    self.log.warning(f"[COMPILER] LINK_BROKEN from={q(doc)} to={q(path)}")
 
     def _compile_job(self, data):
         """Compile one document in a worker thread; the trace records each one as a compile span."""
@@ -173,6 +177,7 @@ class Compiler(Service):
                 if not isinstance(text, str):
                     raise CompilationError("Hook on_document must return the Markdown text")
             md = self.markdown.new_markdown()
+            md.kb4it_redirects = self.redirects
             html_fragment = md.convert(text)
             if self.markdown.sanitize:
                 # Before KB4IT adds its own markup (backlinks, TOC, sections): only the document is cleaned.
@@ -197,7 +202,7 @@ class Compiler(Service):
         except CompilationError:
             raise  # a failing hook stops the build
         except Exception as err:
-            self.log.error(f"[COMPILER] MD_COMPILE_FAIL doc={os.path.basename(doc)} error={err}")
+            self.log.error(f"[COMPILER] MD_COMPILE_FAIL doc={q(os.path.basename(doc))} error={q(err)}", exc_info=True)
             self._fail(doc, f"compile: {err}")
             return doc, False, num
 
@@ -217,12 +222,12 @@ class Compiler(Service):
         if cur_thread != x:
             path_hdoc, rc, num = x
             basename = os.path.basename(path_hdoc)
-            self.log.info(f"[COMPILER] COMPILED doc={basename} rc={rc}")
+            self.log.info(f"[COMPILER] COMPILED doc={q(basename)} rc={q(rc)}")
             if self.progress_callback is not None:
                 try:
                     self.progress_callback(basename, rc)
                 except Exception as err:
-                    self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=progress err={err}")
+                    self.log.debug(f"[COMPILER] CALLBACK_ERROR stage=progress err={q(err)}")
             if rc is True:
                 try:
                     self.srvthm.build_page(path_hdoc)
@@ -231,12 +236,12 @@ class Compiler(Service):
                     self.log.error("[COMPILER] HINT use fewer workers or add memory")
                     self._fail(path_hdoc, "render: out of memory")
                 except Exception as error:
-                    self.log.error(f"[COMPILER] ERROR doc={basename} error={error}")
+                    self.log.error(f"[COMPILER] ERROR doc={q(basename)} error={q(error)}", exc_info=True)
                     self.print_traceback()
                     self._fail(path_hdoc, f"render: {error}")
                 return x
             else:
-                self.log.error(f"[COMPILER] COMPILE_FAILED doc={basename}")
+                self.log.error(f"[COMPILER] COMPILE_FAILED doc={q(basename)}")
                 return x
 
 

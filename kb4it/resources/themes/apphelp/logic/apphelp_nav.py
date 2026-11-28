@@ -1,4 +1,4 @@
-"""AppHelp navigation: sidebar sections, prev/next order and related pages."""
+"""AppHelp navigation: sidebar sections, their reading order and related pages (prev/next: the navigation kit)."""
 
 
 def build_sections(pages):
@@ -13,16 +13,6 @@ def build_sections(pages):
 
 def flatten(sections):
     return [page for _name, entries in sections for page in entries]
-
-
-def neighbours(flat, doc_id):
-    ids = [page.doc_id for page in flat]
-    if doc_id not in ids:
-        return None, None
-    index = ids.index(doc_id)
-    prev = flat[index - 1] if index > 0 else None
-    nxt = flat[index + 1] if index < len(flat) - 1 else None
-    return prev, nxt
 
 
 def related_pages(page, pages, limit=5):

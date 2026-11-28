@@ -16,10 +16,12 @@ DOCUMENT_THEMES = ("techdoc", "blog", "bookshelf")
 SHARED = {
     "metadata": ["get_labels", "get_html_values_from_key", "build_metadata_section", "get_page_actions"],
     "keypages": ["build_page_key", "build_page_key_value", "build_page_properties", "build_tagcloud_from_key",
-                 "get_maxkv_freq", "build_page_stats", "build_page_bookmarks", "build_page_index_all"],
+                 "get_maxkv_freq", "build_page_bookmarks", "build_page_index_all"],
+    "stats": ["build_page_stats"],
     "tables": ["build_datatable"],
     "events": ["build_events"],
     "toc": ["extract_toc"],
+    "page": ["page_toc", "page_actions", "menu_contents"],
 }
 
 
@@ -31,17 +33,35 @@ def _theme_methods(theme):
     raise AssertionError(f"{theme}: no Theme class")
 
 
+def _theme_class(theme):
+    tree = ast.parse((THEMES / theme / "logic" / "theme.py").read_text(encoding="utf-8"))
+    return next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Theme")
+
+
+def _public_api(theme):
+    """True for a theme on kb4it.theme.BaseTheme (it lists its features); False for a legacy one."""
+    return [ast.unparse(b) for b in _theme_class(theme).bases][-1] == "BaseTheme"
+
+
 @pytest.mark.parametrize("theme", DOCUMENT_THEMES)
 def test_document_themes_subclass_document_theme(theme):
-    tree = ast.parse((THEMES / theme / "logic" / "theme.py").read_text(encoding="utf-8"))
-    bases = [ast.unparse(b) for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Theme" for b in n.bases]
-    assert bases[-1] == "DocumentTheme"  # techdoc adds its own mixins before it
+    """A document theme is a DocumentTheme (legacy) or a BaseTheme with the documents feature."""
+    cls = _theme_class(theme)
+    bases = [ast.unparse(b) for b in cls.bases]
+    if bases[-1] == "BaseTheme":
+        node = next(n.value for n in cls.body if isinstance(n, ast.Assign) and ast.unparse(n.targets[0]) == "features")
+        names = [e.value for e in node.elts if isinstance(e, ast.Constant)]  # theme-local features are classes
+        assert "documents" in names
+    else:
+        assert bases[-1] == "DocumentTheme"  # techdoc adds its own mixins before it
 
 
 def test_shared_methods_are_defined_once():
     """A theme redefines a shared method only with a docstring starting "Override:" that says why."""
     stray = []
     for theme in DOCUMENT_THEMES:
+        if _public_api(theme):
+            continue  # a BaseTheme theme fills the hooks of its features; it inherits no shared method
         methods = _theme_methods(theme)
         for names in SHARED.values():
             for name in names:
@@ -88,12 +108,15 @@ class _Db:
             raise KeyError(doc)
         return ["Tag"]
 
+    def get_blocked_keys(self):
+        return ["Title", "SystemPage", "Date", "Modified"]
+
 
 class _Log:
     def __init__(self):
         self.errors = []
 
-    def error(self, message):
+    def error(self, message, **kwargs):
         self.errors.append(message)
 
     def debug(self, message):
@@ -151,6 +174,22 @@ def test_tagcloud_scale_with_and_without_the_empty_value(skip_empty, weight):
     assert cloud.startswith("<WORDCLOUD") and f"'weight': {weight}" in cloud and "'word': 'a'" in cloud
 
 
+
+class _MdCloudDb(_Db):
+    def get_documents(self):
+        return ["note-a1.md", "note-a2.md", "sub/note-a1.md"]
+
+    def get_values(self, doc, key):
+        return ["a"]
+
+
+def test_tagcloud_counts_every_document():
+    """Document ids are Markdown paths; ids that share a prefix or a basename count apart."""
+    theme = _Theme()
+    theme.srvdtb = _MdCloudDb()
+    cloud = theme.build_tagcloud_from_key("Tag")
+    assert "'count': 3" in cloud and "'tooltip': '3 documents'" in cloud
+
 _TABLE_PROPS = {
     "a.html": {"Title": "A <b>", "Title_Url": "a.html", "Tag": ["x", "y"], "Tag_x_Url": "Tag_x.html"},
     "sys.html": {"Title": "System"},
@@ -178,7 +217,8 @@ def test_datatable_rows_and_hooks():
     theme.srvdtb, theme.srvbes = _TableDb(), _Backend()
     html = theme.build_datatable([], ["a.html", "sys.html"], table_id="t1")
     assert html.startswith("<DATATABLE") and "'table_id', 't1'" in html
-    assert "events_20261015.html" in html and "2026-10-15T09:30" in html
+    # No event documents in this theme, so the date is text, not a link to a day page.
+    assert "events_20261015.html" not in html and "2026-10-15T09:30" in html
     assert "A &lt;b&gt;" in html and "System" not in html
     # Tag_y has no page: the whole cell stays empty, as before the move
     assert "LINK_DATATABLE" not in html
@@ -246,7 +286,7 @@ class _EventsTheme(_Theme):
     def build_datatable(self, headers=None, doclist=None, table_id="kb4it-datatable"):
         return "table"
 
-    def distribute_md(self, name, content):
+    def distribute_md(self, name, content, listing=False):
         self.built.append(name)
 
     def distribute_html(self, name, path):

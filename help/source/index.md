@@ -31,6 +31,8 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
       <li><a href="howto-write-documents.html">Write a document</a><br><span class="ah-muted">Properties, title, sections, links, notes, diagrams, formulas and images.</span></li>
       <li><a href="howto-content-blocks.html">Make code, tables and notes easier to read</a><br><span class="ah-muted">Copy code, fold long blocks, scroll tables, write tabs and collapsible notes.</span></li>
       <li><a href="howto-write-document-editor.html">Write in the editor</a><br><span class="ah-muted">The Add page, in every theme: completion, checks, properties, toolbar and saving.</span></li>
+      <li><a href="howto-describe-person.html">Describe a person with a profile</a><br><span class="ah-muted">Role, team and contact details behind every author name.</span></li>
+      <li><a href="howto-write-with-ai-assistant.html">Write with an AI assistant</a><br><span class="ah-muted">The kb4itdoc skill: techdoc documents with the right properties, sections and quality.</span></li>
       <li><a href="explanation-properties.html">How properties become navigation</a><br><span class="ah-muted">Every property you use gets its own pages.</span></li>
       <li><a href="reference-document-format.html">Document format</a><br><span class="ah-muted">The exact rules a document must follow.</span></li>
       <li><a href="reference-diagrams-formulas.html">Diagrams and formulas</a><br><span class="ah-muted">Mermaid diagrams and math, with the source of each example.</span></li>
@@ -52,7 +54,7 @@ New here? [Get started with KB4IT](getting-started.md) takes ten minutes, from i
       <li><a href="explanation-themes.html">Themes</a><br><span class="ah-muted">Pick the theme that fits what you write.</span></li>
       <li><a href="reference-theme-techdoc.html">techdoc</a>, <a href="reference-theme-blog.html">blog</a>, <a href="reference-theme-bookshelf.html">bookshelf</a>, <a href="reference-theme-apphelp.html">apphelp</a><br><span class="ah-muted">What each bundled theme offers.</span></li>
       <li><a href="howto-customize-templates.html">Change one template</a><br><span class="ah-muted">Adjust a theme for one site, without copying it.</span></li>
-      <li><a href="howto-create-theme.html">Create your own theme</a><br><span class="ah-muted">Templates, logic and where to install it.</span></li>
+      <li><a href="howto-create-theme.html">Write a theme</a><br><span class="ah-muted">Features, hooks, templates and where to install it.</span></li>
     </ul>
   </section>
   <section class="ah-card">

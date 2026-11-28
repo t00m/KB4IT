@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Themes, Configuration
 HelpId: techdoc
-Keyword: dashboard, incident, change, meeting, procedure, priority, status, periodicity, monitoring, bookmark, backup, admin, datatable
+Keyword: dashboard, incident, change, meeting, procedure, priority, status, periodicity, monitoring, bookmark, gallery, image, diagram, mermaid, backup, admin, datatable
 Level: basic
 Order: 520
 Section: Reference
@@ -20,17 +20,51 @@ techdoc turns a folder of runbooks, incident reports, changes and notes into a t
 | Property | Values | Effect |
 |---|---|---|
 | `Category` | The form of the document: `Procedure`, `Note`, `Report`, `Template`, `Post`, `Record`, `Minutes` | Groups documents |
-| `WorkType` | The type of work a record holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
+| `WorkType` | `Knowledge` for a knowledge document; for a record, the type of work it holds: `Change`, `Incident`, `Task`, `Meeting` | Drives the latest changes and incidents, **Open items** and the calendar: dated documents whose work type (or, without one, whose Category) is in `events` appear in the calendar |
 | `DocType` | `Tutorial`, `How-to guide`, `Reference`, `Explanation` | Counted in the four cards of the dashboard |
 | `Priority` | `Critical`, `Very high`, `High`, `Medium`, `Normal`, `Low`, `Unknown` | Coloured label; open items are sorted by it |
-| `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Closed: `Completed`, `Finished`, `Released`, `Successful`. Faded: `Deprecated`, `Obsolete` | Coloured label; open values put incidents, changes and tasks under **Open items** |
+| `Status` | Open: `New`, `Open`, `Draft`, `Planned`. Final: `Completed`, `Finished`, `Released`, `Successful`, `Degraded`. Retired: `Deprecated`, `Obsolete`, `Withdrawn`, `Rejected`. See [Status values](#status) | Coloured label; open values put incidents, changes and tasks under **Open items** |
 | `Topic` + `Periodicity` | `Topic: Monitoring` with `Periodicity: Daily`, `Weekly`, ... | Listed in the **Monitoring** panel by periodicity |
 | `Bookmark` | `Yes` | Listed on the **Bookmarks** page |
 | `Date` | any [date](reference-document-format.md#dates) | Sorting, calendar, upcoming and recent events |
 
 Any other property gets its own pages, as in every theme.
 
-A change, incident or task record has `Category: Record`; meeting notes have `Category: Minutes`. Both carry a `WorkType`. A document with a `WorkType` is a record; any other document is a knowledge document.
+Every document carries a `WorkType`, and its `Category` must go with it:
+
+| WorkType | Category |
+|---|---|
+| `Knowledge` | `Procedure`, `Note`, `Post`, `Report`, `Template` |
+| `Change`, `Incident`, `Task` | `Record` |
+| `Meeting` | `Minutes` |
+
+A document whose `WorkType` is `Change`, `Incident`, `Task` or `Meeting` is a record; a document with `WorkType: Knowledge` is a knowledge document. The quality score takes a point when `WorkType` is missing and three when the `Category` does not go with it. A document with no `WorkType` is still read as a knowledge document, unless its `Category` holds an older type of work (see [Upgrading](#upgrade)).
+
+### Status values {#status}
+
+Each `Status` value falls in one of three groups. The group decides where the document shows up and how it scores.
+
+| Status | Meaning | Label | Group |
+|---|---|---|---|
+| `New` | A record was opened; nobody works on it yet | red | open |
+| `Open` | Work on the record is under way | red | open |
+| `Draft` | The document is being written and is not reviewed; its page shows an amber "Not final" banner | grey | open |
+| `Planned` | The work is scheduled for a later date | grey | open |
+| `Completed` | The work is done | green | final |
+| `Finished` | The work is done; same as `Completed` | green | final |
+| `Released` | The document was reviewed and is ready to follow | green | final |
+| `Successful` | The change or task ran as planned | green | final |
+| `Degraded` | Completed with problems: the work is done, but with errors, side effects or a partial result. Say what went wrong in the document | orange | final |
+| `Deprecated` | Replaced by a newer document; do not use it for new work | grey | retired |
+| `Obsolete` | No longer valid | grey | retired |
+| `Withdrawn` | Taken back by its author | grey | retired |
+| `Rejected` | The change or proposal was not approved | grey | retired |
+
+- **Open**: incidents, changes and tasks with an open status appear under **Open items** on the dashboard. For the quality score, an open status is not final.
+- **Final**: the document gets the points for a final status in the quality score, and it does not appear under **Open items**.
+- **Retired**: the page shows a grey "Do not follow this document" banner and the document gets no quality score.
+
+A value that is not in this list gets a grey label, does not count as final, and costs points in the quality check for known values. The lists are in the `quality` block of `theme.json` (`final_status`, `retired_status`, `known_values`).
 
 ### Upgrading an older repository {#upgrade}
 
@@ -48,7 +82,7 @@ python scripts/conv/split_category.py source --csv split.csv --dry-run
 python scripts/conv/split_category.py source --csv split.csv
 ```
 
-It only rewrites the `Category` line of the frontmatter and adds `WorkType` below it. `Category: Change` becomes `Category: Record` with `WorkType: Change`; `Category: Meeting` becomes `Category: Minutes` with `WorkType: Meeting`; in `Category: Report, Incident` the `Report` stays. Running it twice changes nothing. Back up the `source` folder first if it is not under version control.
+It only rewrites the `Category` line of the frontmatter and adds `WorkType` below it. `Category: Change` becomes `Category: Record` with `WorkType: Change`; `Category: Meeting` becomes `Category: Minutes` with `WorkType: Meeting`; in `Category: Report, Incident` the `Report` stays, so check those documents by hand. A document whose `Category` is only `Procedure`, `Note`, `Post`, `Report` or `Template` gets `WorkType: Knowledge`; any other `Category` is left alone. Running it twice changes nothing. Back up the `source` folder first if it is not under version control.
 
 ## Dashboard {#dashboard}
 
@@ -58,7 +92,9 @@ The home page shows, from top to bottom:
 - The four types of document, with counts and, under each, a bar with the mix of quality tiers ("22 exemplary, 113 complete of 230").
 - **Best documents**: up to three Exemplary or Complete documents per type, best first.
 - **Open items**: incidents, changes and tasks with an open status, highest priority first.
-- **Activity**: one card with a tab each for the latest changes, the latest incidents, events (this month and the next, then the last month) and monitoring (recurring checks by periodicity). A tab without entries is not shown; the card opens on the tab you chose last.
+- **Activity**: a tab each for the latest changes, the latest incidents, events (this month and the next, then the last month) and monitoring (recurring checks by periodicity). A tab without entries is not shown, and the tab bar opens on the tab you chose last.
+
+A section without entries is not shown.
 
 Every section except the counts and the four document types folds when you click its title. The browser remembers which sections you folded.
 
@@ -66,10 +102,12 @@ Every section except the counts and the four document types folds when you click
 
 ![A techdoc document](resources/images/techdoc-page.webp)
 
-The top bar holds the logo menu on the left, the page title in the middle and a search icon on the right:
+The top bar holds the logo menu on the left, the page title in the middle, and the focus mode, reload and search icons on the right:
 
-- The logo menu links to the dashboard (click the logo), the Add page, Search, Events, Bookmarks, Properties, Stats, Quality, Reload page, Help, About this app and About KB4IT.
-- A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit with `"git": true`, document properties, document source, print), then the table of contents.
+- The logo menu links to the dashboard (click the logo), the Add page, Search, Events, Bookmarks, Gallery, Diagrams, Properties, Stats, Quality, Help (the KB4IT help site, in a new window), About this app and About KB4IT (the KB4IT README).
+- A long title ends in an ellipsis; hover over it to read it whole. On a document, hovering over the title opens the title menu: one row of buttons at the top (edit on the git server with `"git": true`, edit in the editor when the [editor](#editor) is on, document properties, document source, print), then the table of contents.
+- The focus mode icon, on document pages only, is a switch for reading without distractions. On, the page keeps the top bar with the title, the document with every section open, and the side table of contents when the document has one. The page action icons under the title, the header strip, Summary, banners, info card, inline table of contents, the Expand all and Collapse all buttons, the footer and Back to top are hidden. Click it again to get the page back as it was, with each section open or folded as before. Focus mode is not kept when you open another page: each document opens in focus mode only with `"focus_mode": true` in `repo.json`, which a new repository has (see [settings](#settings)).
+- The reload icon reloads the page.
 - The search icon, `/` or `Ctrl+K` opens the search dialog, which shows the best matches as you type. The Search entry of the logo menu opens `search.html`, the full page with filters. The keys do nothing while you type in a field. Each result shows the quality tier of the document, and the score breaks a tie between matches of the same relevance.
 
 Below the top bar, a document page shows:
@@ -79,7 +117,7 @@ Below the top bar, a document page shows:
 - **Banners** for documents that need care: red when `Environment` is `Production` ("This document changes production systems", with the `SID` values), grey when `Status` is `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` ("Do not follow this document"), amber when `Status` is `Draft`.
 - **An info card** with two tabs. **Details** lists every property in groups (Classification, Systems, Technical objects, Organisation, Lifecycle, Other); technical objects such as transactions and commands show as chips, and SAP notes named in the text ("note 736902") link to the SAP support portal. **History** shows the date, the source file with a link to view it, an edit link with `"git": true`, and the build time. The card starts closed when the document has a Summary and open on Details when it does not. Click a tab to open it, click the open tab or the arrow to close it; the card remembers your last tab. The document properties button in the title menu, or `#kb-info-details` at the end of the address, opens Details. `#details` does too, unless the document has a section with that name, which keeps the link.
 
-Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. With `"toc_sidebar": true` in the theme's `theme.json`, a document with four or more sections gets a second table of contents in a right column on screens 1400 pixels or wider. It stays in view while you scroll and marks the section you are reading. It is left out of print; the inline table of contents and the title menu still hold it on narrower screens. Every heading level folds. The table of contents and the first section start open, with its subsections; every other section starts folded, subsections too. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. The **Related** tab of the info card lists the documents that link to this one (**Linked from**) and up to five **Related documents**: documents that share a SID, Product, Transaction, Component or Tag, the rarest shared values first. Each line shows the quality tier of the document.
+Each document gets a table of contents, sections that fold when you click their heading, and buttons in the title menu to show the properties and the Markdown source and to print. A document with four or more sections gets a second table of contents in a right column on screens 1400 pixels or wider. It stays in view while you scroll and marks the section you are reading. Its **Expand all** and **Collapse all** buttons open or close every section of the document. It is left out of print; the inline table of contents and the title menu still hold it on narrower screens. Every heading level folds. The table of contents and the first section start open, with its subsections; every other section starts folded, subsections too. A link to a section, from the table of contents or another page, unfolds it. Printing shows every section, and each printed page (documents and the other techdoc pages) ends with the page title on the left and the page number (`3/8`) on the right. The footer needs a browser that supports CSS page-margin boxes, such as Chrome or Edge; turn off the browser's own headers and footers in the print dialog to avoid a second footer. With `"git": true`, an edit button opens the file in your git server. The **Related** tab of the info card lists the documents that link to this one (**Linked from**) and up to five **Related documents**: documents that share a SID, Product, Transaction, Component or Tag, the rarest shared values first. Each line shows the quality tier of the document.
 
 Images in a document:
 
@@ -93,7 +131,7 @@ Images in a document:
 Content blocks:
 
 - Code blocks have a bar with a language label and a **Copy** button; a block over 30 lines shows the first 20 and a **Show all N lines** button. Both buttons are left out of print, and a long block prints in full.
-- Wide tables scroll sideways and a table over 15 rows keeps its header visible. Print shows the whole table.
+- Tables get the UIkit table style. Wide tables scroll sideways; a table over 15 rows keeps its header visible and gets a search box and sortable columns (see [content blocks](howto-content-blocks.md)). Print shows the whole table.
 - With `pymdown-extensions` and `alternate_style`, `pymdownx.tabbed` sets show a tab bar that works without JavaScript; all panels print with their label. See [Make code, tables and notes easier to read](howto-content-blocks.md).
 - `pymdownx.details` notes fold; they print open.
 - After one screen of scrolling, a **Back to top** button appears at the bottom right. It is not printed.
@@ -104,35 +142,37 @@ Every document gets a score from 0 to 100. A ring in the header strip shows it; 
 
 | Dimension | Points | What counts |
 |---|---|---|
-| Findable | 15 | Author, Date, DocType, Category, Status, Tag, Topic, Scope and Product (1 each); known values for Status, Priority and DocType (3); a `Summary` (3) |
+| Findable | 15 | Author, Date, DocType, Category, WorkType, Status, Tag, Topic, Scope and Product (1 each); known values for Status, Priority, DocType, Category and WorkType (2); a `Summary` (3). A Category that does not go with the WorkType costs 3 |
 | Structured | 25 | Two or more sections; a first section that gives context (Description, Introduction, Overview); the shape of its DocType (steps for a how-to guide, a table or list for a reference); the sections of its skeleton. Empty sections and skeleton text left in cost points |
 | Complete | 25 | Words against a target: how-to guide 150, reference 200, explanation 500, tutorial 800 |
-| Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3 |
-| Current | 20 | A final status (Released, Completed, Finished, Successful); a recent `Date` (the points halve every 3 years for how-to guides and tutorials, 4 for references, 8 for explanations) |
+| Connected | 15 | Linked from another document; links to a document; cites a source; a References section; an image or a diagram. Each broken link and each missing image costs 3. Once the knowledge base has a [profile](howto-describe-person.md), each person named without a profile costs 2 and each person whose profile has no contact details costs 1, at most 4 per document |
+| Current | 20 | A final status (Released, Completed, Finished, Successful, Degraded); a recent `Date` (the points halve every 3 years for how-to guides and tutorials, 4 for references, 8 for explanations) |
 
 The score gives a tier: **Exemplary** (75 and up, gold ring and a note under the top bar), **Complete** (60 to 74, green), **Basic** (40 to 59) and **Stub** (under 40), both grey. Documents with the Status `Obsolete`, `Deprecated`, `Withdrawn` or `Rejected` are **Retired** and get no score.
 
-Records (documents with a `WorkType`) are short by nature and are scored on a lighter scale: the sections of their WorkType skeleton instead of a DocType shape, a 60-word target, and a final status instead of freshness. A record is compared with records of the same WorkType.
+Records (documents whose `WorkType` is Change, Incident, Task or Meeting) are short by nature and are scored on a lighter scale: the sections of their WorkType skeleton instead of a DocType shape, a 60-word target, and a final status instead of freshness. A record is compared with records of the same WorkType.
 
-The skeletons of the Add page are written to this standard. Each one has every core key (empty keys to fill: Author, Summary, Tag, Topic, Scope, Product), a first section that gives context, the shape of its type (numbered steps and a command for a procedure, a table for a report, three sections for a note or a post) and a References section with an example source. A document that keeps that structure, replaces the example text and reaches the word target scores Exemplary. Each example line says what to write; one left unchanged costs points as skeleton text.
+The skeletons of the Add page are written to this standard. Each one has every core key in alphabetical order, with its Category and WorkType already set (empty keys to fill: Author, Summary, Tag, Topic, Scope, Product), a first section that gives context, the shape of its type (numbered steps and a command for a procedure, a table for a report, three sections for a note or a post) and a References section with an example source. A document that keeps that structure, replaces the example text and reaches the word target scores Exemplary. Each example line says what to write; one left unchanged costs points as skeleton text. To have an AI assistant write documents to the same standard, give it the [kb4itdoc skill](howto-write-with-ai-assistant.md).
 
 | Skeleton | Sections |
 |---|---|
 | Procedure | Introduction, Prerequisites, Steps, Verification, References |
 | Note, Post | Overview, Details, References |
 | Report | Executive Summary, Findings, Recommendations, References |
-| Change | Overview, Impact, Rollback, References |
-| Incident | Summary, Timeline, Root Cause, Resolution, References |
-| Task | Objective, Acceptance Criteria, Notes, References |
-| Meeting | Objective, Attendees, Agenda, Notes, Action Items, References |
+| Change | Overview, Impact, Implementation Plan, Verification, Rollback, Result, References |
+| Incident | Summary, Timeline, Investigation, Root Cause, Resolution, Follow-up Actions, References |
+| Task | Objective, Acceptance Criteria, Subtasks, Notes, References |
+| Meeting | Objective, Attendees, Agenda, Notes, Decisions, Action Items, References |
+
+Some skeletons also carry optional keys for their kind, left empty: the planned window and downtime of a change (`ScheduledStart`, `ScheduledEnd`, `Downtime`, `DowntimeStart`, `DowntimeEnd`), when an incident was detected and resolved (`DetectedDate`, `ResolvedDate`), the deadline of a task (`DueDate`), the next review of a procedure or a note (`ReviewDate`), and `Team`, `Environment`, `SID` and `Periodicity` where they apply. Dates take `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`, see [dates](reference-repo-json.md#dates). An optional key you do not need can be removed. Optional `###` subsections, such as Approvals and Risks in a change, are not scored.
 
 Ranks and medians are in `quality-index.js`, written at every build.
 
-Add `"Quality"` to the `datatable` list of `repo.json` to get a Quality column in the document tables: five squares (one per 20 points) and the tier; the column sorts by score, retired documents last.
+Add `"Quality"` to the `datatable` list of `repo.json` to get a Quality column in the document tables: five squares, one per 20 points. Point at them to see the tier and the score; type a tier, such as `Stub`, in the table's search box to list those documents. A retired document shows the word Retired. The column sorts by score, retired documents last.
 
 The **Quality page** (`quality.html`, in the logo menu) is for maintainers: the tier mix per type, the Exemplary documents, quick wins (documents within 5 points of the next tier, with the one change that gets them there), broken links, missing images, documents without a Summary and possible duplicates (titles that share most words; journal titles that differ only by a date are left out). The score does not check that the content is correct.
 
-Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known.
+Turn it off with `"quality": false` in `repo.json`. The `quality` block of the theme's `theme.json` sets the tiers, the word targets, the half-lives and the statuses that count as final, retired or known. Its `author_profiles` sets when the profile checks apply: `"auto"` (the default) once the knowledge base has one profile, `true` always, `false` never. While the editor is on, the Quality tab links "Create a profile for ..." to the Add page with the Person profile skeleton, and "Add contact details to the profile of ..." to the editor on the profile.
 
 ## Add page and editor {#editor}
 
@@ -148,6 +188,8 @@ Turn it off with `"quality": false` in `repo.json`. The `quality` block of the t
 | Save and Copy | Save a file or download it; Copy writes the text to the clipboard |
 
 On open, the text of the H1 title is selected, so typing replaces it.
+
+**Edit in the editor**, on every document page (title menu and History tab), opens the same editor on the document's Markdown; **Save** suggests its own file name. See [Edit an existing document](howto-write-document-editor.md#edit).
 
 ### Checks {#lint}
 
@@ -189,15 +231,67 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 
 | Page | Shows |
 |---|---|
-| `all.html` | Every document in a sortable, searchable table |
-| `events.html` | A calendar per year and a table of events |
-| `properties.html` | Every property and its values |
-| `stats.html` | Counts and a word cloud of the values |
-| `bookmarks.html` | Documents with `Bookmark: Yes` |
+| `all.html` | Every document in a sortable, searchable table, with the [filter bar](#filter-bar) |
+| `events.html` | A calendar panel beside the table of every event. See [Events](#events) |
+| `properties.html` | A table of every property with its number of values and of documents, sorted by name, with a filter box and sortable columns; each property links to its page. Properties in `hidden_properties` are left out of it and of the Properties submenu of the logo menu. A property's page (such as `Author.html`) shows its values as a cloud or as a table |
+| `stats.html` | Totals, then one card per section with a summary line; its Details button opens the section in a modal: activity (documents per year and per month), property coverage with the most used values, metadata health (similar values, properties used once, documents with little metadata) and links (most linked documents, documents nothing links to) |
+| `bookmarks.html` | Documents with `Bookmark: Yes`, with the [filter bar](#filter-bar) |
+| `gallery.html` | The images of every document. See [Gallery](#gallery) |
+| `diagrams.html` | The Mermaid diagrams of every document. See [Diagrams](#diagrams) |
 | `add.html` | A Markdown [editor](#editor) with a ready-made skeleton per category; saves a new file |
-| `help.html` | A short guide to writing documents |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search dialog in the top bar shows the best matches as you type, with the quality tier of each document. See [search](reference-repo-json.md#search) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
+
+A property value page, such as `Status_Open.html`, lists its documents in the same table, with the filter bar.
+
+## Filter bar {#filter-bar}
+
+The document tables of `all.html`, `bookmarks.html`, the property value pages, `events.html` and the archive pages of a year, month or day (`events_2026.html`, `events_202603.html`, `events_20260324.html`) have a **Filter** button next to the search box. It opens one row of values per property: `WorkType`, `DocType`, `Category`, `Topic`, `Status` and `Priority`.
+
+1. Click a value to keep only the documents that have it. Values of one property widen the choice (Status Open or Planned); values of two properties narrow it (Status Open and Priority High).
+2. Each value shows how many rows it would show, given the search box and the other filters, and the most used values come first. Values that would show nothing are hidden. A property with more than ten values shows the first ten and a **+N more** link.
+3. The active filters show as chips below the search box, also while the bar is closed. Click a chip to remove it. **All** clears one property; **Clear filters** clears everything.
+4. The row count under the table counts the filters too.
+
+The Quality page has the same bar above its document lists: Exemplary documents, Quick wins, Broken links, Missing images, Documents without a Summary and Possible duplicates. The count in each list title follows the filters, and a list with nothing left says so. A pair of possible duplicates matches the values of either document. The tier mix and the best documents always cover every document.
+
+The values come from the documents of that table. A property that would not split them is left out, such as `Status` on `Status_Open.html`. Tables with fewer than ten documents have no filter bar, except on `events.html`. Document pages have none.
+
+## Events {#events}
+
+`events.html` lists every event in one table, with a calendar panel on its left. Events are the dated documents whose work type (or category) is in the `events` key of `repo.json`.
+
+- **Year**: the arrows go to the previous and next year with events. Click the year to choose any year, or **All years**. The page opens on the current year, or on the last year with events.
+- **Bars**: the events of each month of the year. Click a bar to show that month; click it again to go back to the whole year. With **All years**, the bars are the years.
+- **Calendar**: one month. Days with events are blue and today has a red frame. Click a day to show its events, the month name to show the month. While a month is chosen, the arrows move to the next or previous month.
+- The choice shows as a chip next to the other filters, and in the address: `events.html#2026`, `#2026-03`, `#2026-03-24` or `#all`. A link with that address opens the same view, and the browser's back button returns to the previous one.
+- **Page of ...**, under the calendar, opens the archive page of the chosen year, month or day (`events_2026.html`, `events_202603.html`, `events_20260324.html`).
+
+The table has the [filter bar](#filter-bar), so you can show, for example, the open changes of March. On a narrow screen the panel moves above the table. Print leaves the panel out.
+
+## Gallery {#gallery}
+
+`gallery.html`, in the logo menu, shows the images of your documents. It opens empty, so a large knowledge base loads nothing until you ask:
+
+1. The filter panel on the right has one button per document property, plus **Year** (from `Date`). The button shows how many values the property has.
+2. Click a button to open its values in a dialog and tick the ones you want. Each value shows how many images it adds to the filters already chosen; a value that would add none is greyed out. A property with many values gets a search box. **None** clears the property; **Show images** closes the dialog.
+3. The images appear as thumbnails in a masonry grid, newest document first, each with its document title (a link) and its caption. Values of one property widen the choice; values of two properties narrow it (`Product` Linux or SAP, and `Tag` backup).
+4. Click a thumbnail to enlarge the original. Previous and next follow the filters, and the caption links to the document.
+
+The text box above the buttons matches words of the document title or the image caption. Each chosen value shows as a chip under the buttons; click it to remove it, or **Clear all**. The choice is kept in the address, such as `gallery.html#Product=SAP&Tag=backup`, so you can bookmark or link a view.
+
+The build makes a thumbnail of each image 480 pixels wide, in WebP, keeps it in `var/thumbs/` and makes it again only when the image changes. The site gets the ones in use in `resources/kb4it-thumbs/`. SVG images, images no wider than a thumbnail and files the build cannot read are shown as they are; remote images too. Missing images and images inside code are left out. `Summary`, `Bookmark` and the keys of `ignored_keys` are not offered as filters. A document named `gallery.md` is left out with `DOC_NAME_RESERVED`.
+
+## Diagrams {#diagrams}
+
+`diagrams.html`, in the logo menu, shows the [Mermaid diagrams](reference-document-format.md#diagrams) of your documents. It works like the [Gallery](#gallery): it opens empty, and the filter panel on the right chooses which diagrams to show.
+
+1. Choose property values in the filter panel, or type in the text box. The text box matches words of the document title, the section heading above the diagram and the diagram text itself, so `HANA` finds every diagram that names it.
+2. The browser draws only the diagrams the filters show, the first time they are shown, and keeps them while the page is open.
+3. Each thumbnail shows its document title and section heading. The title links to that section of the document, which opens even when the section is folded.
+4. Click a thumbnail to enlarge the diagram. Previous and next follow the filters.
+
+A diagram with an error shows "Mermaid could not draw this diagram" and the first line of Mermaid's message instead of a thumbnail. Fix the source in the document; the document page shows the same error. Diagrams inside other code blocks are examples, not diagrams, and are left out. The page uses the bundled Mermaid, so it works offline. A document named `diagrams.md` is left out with `DOC_NAME_RESERVED`.
 
 ## Icon, diagrams and formulas {#render}
 
@@ -208,25 +302,36 @@ If the dialog is cancelled or the write fails, the page offers a download. A doc
 
 Keys in `repo.json` that techdoc reads, on top of the [common ones](reference-repo-json.md):
 
-| Key | Default | Meaning |
-|---|---|---|
-| `datatable` | `["Date", "Title"]` | Columns of the document tables; a column that is empty in every row of a table is left out of it |
-| `events` | `[]` | Work types (or, for documents without one, categories) that count as events |
-| `editor` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
-| `admin` | `false` | Builds the backup page, see below |
-| `quality` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `datatable` | List of property names, plus `Quality` | `["Date", "Title"]` | Columns of the document tables; a column that is empty in every row of a table is left out of it. `Scope` is never shown. `Quality` adds the quality column |
+| `events` | List of `WorkType` values, or `Category` values for documents without one | `[]` | Work types (or, for documents without one, categories) that count as events |
+| `editor` | `true`, `false` | `true` | Builds the Add page; `false` removes `add.html` and the link to it |
+| `admin` | `true`, `false` | `false` | Builds the backup page, see below |
+| `quality` | `true`, `false` | `true` | Scores every document, see [quality score](#quality); `false` removes the score, the Quality tab, the search chip and `quality-index.js` |
+| `toc_sidebar` | `true`, `false` | `toc_sidebar` of `theme.json` (`true`) | Second table of contents in a right column, with Expand all and Collapse all buttons, for documents with four or more sections on screens 1400 pixels or wider. It wins over `toc_sidebar` in `theme.json` |
+| `focus_mode` | `true`, `false` | `focus_mode` of `theme.json` (`false`) | Every document page opens in focus mode; the focus mode icon in the top bar still switches it off. It wins over `focus_mode` in `theme.json` |
+| `menu` | List of property names | `[]` | Order of the property buttons on the Gallery and Diagrams pages: listed keys first, the rest by name. The navigation menu is built from the properties the documents use |
+| `git` | `true`, `false` | `false` | Edit links to your git server; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
+| `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links |
+| `git_user` | Text | | User or organisation on the git server |
+| `git_repo` | Text | | Repository name |
+| `git_branch` | Text | | Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Folder that holds the documents; empty for the repository root |
 
-The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status, Scope and Topic, and lists every work type and category in `events`.
+The `default` app sets `datatable` to Date, Title, Category, WorkType, Priority, Status and Topic, and lists every work type and category in `events`. Both sample apps, `default` and `sapbasis`, set `"focus_mode": true`, so a repository made with `kb4it create` opens its documents in focus mode; set it to `false` to open them as before. Document tables never show a Scope column, even when `datatable` lists it.
 
-The document page reads three keys of the theme's `theme.json`. To change them, copy the theme (see [create a theme](howto-create-theme.md)):
+The document page reads these keys of the theme's `theme.json`. Set them for one site in the `techdoc` block of `repo.json`, for example `"techdoc": {"table_filter": false}`, or copy the theme (see [create a theme](howto-create-theme.md)). A value of the wrong type stops the build; an unknown key logs `THEME_SETTING_UNKNOWN`:
 
 | Key | Meaning |
 |---|---|
 | `header_keys` | `badges` and `links`: the keys shown in the header strip, in order |
 | `info_groups` | The groups of the Details tab: `name`, `keys`, and `"chips": true` for the group shown as chips. Keys in no group go to Other |
 | `info_tabs` | `details` and `history`, each with `print`: whether the tab is printed. By default Details is printed and History is not |
-| `toc_sidebar` | `false`: show a second table of contents in a right column on screens 1400 pixels or wider, for documents with four or more sections |
+| `table_filter` | `true`: tables with more than 15 rows and a plain grid get a search box and sortable columns; `false` keeps only the style and the scrolling |
+| `toc_sidebar` | `true`: the default when `repo.json` has no top-level `toc_sidebar`; see [settings](#settings) |
+| `focus_mode` | `false`: the default when `repo.json` has no top-level `focus_mode`; see [settings](#settings) |
+| `quality` | Thresholds, word targets and weights of the [quality score](#quality); keys you set replace the defaults one by one |
 
 On paper, the header strip is one line of text, banners have a border instead of a colour, Details follows the title under the heading "Document details" in two columns, and the tab bar is left out.
 

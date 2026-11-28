@@ -21,8 +21,12 @@
 %         for link in strip['links']:
         <span><span class="k">${link['key']}</span>
 %             for item in link['items']:
-%                 if item['time']:
+%                 if item['time'] and item['url']:
             <a class="kb-date" href="${item['url']}" title="${item['full']}"><span class="kb-day">${item['text']}</span><span class="kb-time">${item['time']}</span></a>${'' if loop.last else ','}
+%                 elif item['time']:
+            <span class="kb-date" title="${item['full']}"><span class="kb-day">${item['text']}</span><span class="kb-time">${item['time']}</span></span>${'' if loop.last else ','}
+%                 elif not item['url']:
+            <span>${item['text']}</span>${'' if loop.last else ','}
 %                 else:
             <a href="${item['url']}">${item['text']}</a>${'' if loop.last else ','}
 %                 endif

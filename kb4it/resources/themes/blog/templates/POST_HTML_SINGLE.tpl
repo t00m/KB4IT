@@ -2,7 +2,7 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    sort_by = var['repo']['sort']
+    sort_by = 'Date'
     timestamp = (var['post'].get(sort_by) or [None])[0]
     dt = guess_datetime(timestamp) if timestamp else None
     # An undated post has no calendar line (the theme logs DOC_UNDATED for it).
@@ -36,7 +36,11 @@
 % if 'Author_0_Url' in var['post']:
                             <li>
                                 <span data-uk-icon="user"></span>
+% if var['post'].get('Author_0_Tip'):
+                                <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}" title="${var['post']['Author_0_Tip']}" data-uk-tooltip>${var['post']['Author'][0]}</a></span>
+% else:
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
+% endif
                             </li>
 % endif
 % if var['post']['dated']:
@@ -86,11 +90,11 @@
                                 </div>
                             </li>
                             <!-- SOURCE BUTTON AND DIALOG :: END -->
-% if var.get('git_ok'):
+% if var.get('edit_url'):
                             <li data-uk-tooltip="title: Edit document">
                                 <span data-uk-icon="pencil"></span>
                                 <span class="uk-margin-small-left">
-                                    <a class="" href="${var['repo']['git_server']}/${var['repo']['git_user']}/${var['repo']['git_repo']}/edit/${var['repo']['git_branch']}/${var['repo']['git_path']}/${var['basename_md']}" target="_blank" data-uk-toggle>Edit</a>
+                                    <a class="" href="${var['edit_url']}" target="_blank" data-uk-toggle>Edit</a>
                                 </span>
                             </li>
 % endif

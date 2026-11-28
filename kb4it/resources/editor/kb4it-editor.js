@@ -10,8 +10,14 @@
   var UNSAVED = "You have unsaved changes. Close and lose them?";
   var OFFER_DOWNLOAD = "The file was not saved. Download it instead?";
 
+  // The dialog that edits an existing document; add.html#edit=<file>&text=<text> opens it.
+  var EDIT = "_edit";
+  E.EDIT = EDIT;
+
   E.views = {};
   var base = {};      // text at creation or at the last save, per category
+  var editing = { name: "", text: "" };   // the document the edit dialog holds
+  var prefill = {};   // one-shot frontmatter values per category, from add.html#new=...
   var handles = {};   // file handle of the last save, per category
   var look = {};      // Compartment of the light or dark look, per category
   var data = null;
@@ -524,17 +530,87 @@
       cm.keymap.of([].concat(cm.closeBracketsKeymap, cm.defaultKeymap, cm.searchKeymap, cm.historyKeymap)),
       cm.yamlFrontmatter({ content: cm.markdown() }),
       look[cat].of(lookFor(pageIsDark())),
-      cm.EditorView.updateListener.of(function (update) { syncPane(cat, update); }),
+      cm.EditorView.updateListener.of(function (update) {
+        syncPane(cat, update);
+        if (update.docChanged) { showFileName(cat); }
+      }),
       toolbarListener(cat)
     ];
   };
 
   function freshState(cat) {
-    var doc = E.skeleton(cat);
+    var doc = cat === EDIT ? editing.text : E.skeleton(cat);
+    if (prefill[cat]) {
+      // One-shot values from add.html#new=..., see E.newFromHash.
+      var title = prefill[cat].title;
+      delete prefill[cat].title;
+      doc = KB4ITFrontmatter.withValues(doc, prefill[cat]);
+      if (title) { doc = KB4ITFrontmatter.withTitle(doc, title); }
+      delete prefill[cat];
+    }
     base[cat] = doc;
     forgetHandle(cat);
-    return cm.EditorState.create({ doc: doc, selection: titleSelection(doc), extensions: E.extensions(cat) });
+    // A new document selects its title placeholder; an edited one keeps its title and starts on its body.
+    var selection = cat === EDIT ? bodyStart(doc) : titleSelection(doc);
+    return cm.EditorState.create({ doc: doc, selection: selection, extensions: E.extensions(cat) });
   }
+
+  // The start of the line after the first "# " heading below the frontmatter, else the start of the text.
+  function bodyStart(doc) {
+    var title = titleSelection(doc);
+    if (title.empty) { return title; }
+    var nl = doc.indexOf("\n", title.to);
+    return cm.EditorSelection.cursor(nl < 0 ? doc.length : nl + 1);
+  }
+
+  // The file a save writes: the edited document keeps its name, a new one is named after its title.
+  function fileNameOf(cat, text) {
+    return cat === EDIT && editing.name ? editing.name : KB4ITFrontmatter.fileName(text, cat);
+  }
+
+  // Opens the edit dialog on the text of an existing document.
+  E.edit = function (name, text) {
+    if (E.views[EDIT] && E.dirty(EDIT) && !window.confirm(DISCARD)) { return; }
+    editing = { name: name, text: text.replace(/\r\n?/g, "\n") };
+    var label = document.getElementById("kb-edit-name");
+    if (label) { label.textContent = name; }
+    if (E.views[EDIT]) { E.markClean(EDIT); }
+    E.open(EDIT);
+  };
+
+  // add.html#edit=<file>&text=<text>, as a document page writes it: the file name, then the Markdown.
+  E.editFromHash = function () {
+    var hash = window.location.hash || "";
+    if (hash.indexOf("#edit=") !== 0 || !document.getElementById("modal-add-" + EDIT)) { return false; }
+    var params = KB4ITFrontmatter.hashParams(hash);
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    var name = (params.edit || "").split(/[\\/]/).pop();
+    if (!/\.(md|markdown)$/i.test(name) || typeof params.text !== "string") {
+      E.notify("The document to edit could not be read", "danger");
+      return false;
+    }
+    E.edit(name, params.text);
+    return true;
+  };
+
+  // add.html#new=<category>&<Key>=<value>..., as the Create profile button writes it: the category opens
+  // with its skeleton, those keys set, and the title set to the title value when one is given.
+  E.newFromHash = function () {
+    var hash = window.location.hash || "";
+    if (hash.indexOf("#new=") !== 0) { return false; }
+    var params = KB4ITFrontmatter.hashParams(hash);
+    var cat = params["new"];
+    if (!cat || cat === EDIT || !document.getElementById("modal-add-" + cat)) { return false; }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    delete params["new"];
+    prefill[cat] = params;
+    E.open(cat);
+    return true;
+  };
 
   // The text of the first "# " heading below the frontmatter, so typing replaces the placeholder and
   // the toolbar is enabled on open; else the start of the line after the closing "---".
@@ -934,6 +1010,7 @@
     document.getElementById("kb-toolbar-" + cat).classList.toggle("kb-tb-dark", pageIsDark());
     refreshToolbar(cat);
     E.renderPane(cat);
+    showFileName(cat);
     var dialog = document.getElementById("modal-add-" + cat);
     dialog.classList.toggle("kb-dialog-dark", pageIsDark());
     if (!dialog.open) { dialog.showModal(); }
@@ -1013,6 +1090,19 @@
     setLabel(cat, null);
   }
 
+  // A new profile shows the file it will be saved as in the dialog title and on Save: the person's page
+  // shows the profile once that profile-<name>.md file is in the source folder. Other documents show it once saved.
+  function showFileName(cat) {
+    var view = E.views[cat];
+    if (cat === EDIT || !view) { return; }
+    var text = view.state.doc.toString();
+    var proposed = cat === "person" ? KB4ITFrontmatter.fileName(text, cat) : "";
+    var name = handles[cat] ? handles[cat].name : proposed;
+    var node = document.getElementById("kb-file-" + cat);
+    if (node) { node.textContent = name ? ": " + name : ""; }
+    if (!handles[cat]) { setLabel(cat, proposed || null); }
+  }
+
   function errorCount(cat) {
     return E.diagnostics(cat).filter(function (d) { return d.severity === "error"; }).length;
   }
@@ -1023,7 +1113,7 @@
   }
 
   function downloadText(cat, text) {
-    var name = KB4ITFrontmatter.fileName(text, cat);
+    var name = fileNameOf(cat, text);
     var url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
     var link = document.createElement("a");
     link.href = url;
@@ -1082,13 +1172,14 @@
       }).then(function () {
         handles[cat] = handle;
         setLabel(cat, handle.name);
+        showFileName(cat);
         markCleanIf(cat, text);
         return "saved";
       });
     };
     var ask = function () {
       return window.showSaveFilePicker({
-        suggestedName: KB4ITFrontmatter.fileName(text, cat),
+        suggestedName: fileNameOf(cat, text),
         id: "kb4it-source",
         types: [{ description: "Markdown", accept: { "text/markdown": [".md"] } }]
       }).then(write);
@@ -1153,6 +1244,7 @@
       else if ((cat = button.getAttribute("data-kb-copy")) !== null) { E.copy(cat); }
       else if ((cat = button.getAttribute("data-kb-close")) !== null) { E.close(cat); }
     });
+    E.editFromHash() || E.newFromHash();
   };
 
   if (document.readyState === "loading") {

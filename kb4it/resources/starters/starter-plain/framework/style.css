@@ -1,0 +1,4 @@
+body { font-family: sans-serif; max-width: 48rem; margin: 0 auto; padding: 0 1rem; line-height: 1.5; }
+header { display: flex; gap: 1rem; align-items: center; justify-content: space-between; padding: 1rem 0; }
+footer { color: #666; font-size: 0.9rem; padding: 2rem 0; }
+.date { color: #666; }

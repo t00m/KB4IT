@@ -84,27 +84,37 @@ class HelpConfig:
     versions: bool = False   # build into <target>/<version>/ and keep the other versions
     latest: str = ""         # version the site root and latest/ point to; default the highest
 
+    # Keys of the "apphelp" block of repo.json; some are not fields (versions is an object there).
+    SETTINGS_KEYS = ("strict", "lang", "accent", "about", "contract", "vocabulary", "labels", "versions")
+
+    @classmethod
+    def from_settings(cls, merged: dict, repo: dict) -> "HelpConfig":
+        """Build the settings from the merged values and repo.json; unknown label names are ignored."""
+        block = repo.get("apphelp") or {}
+        labels = dict(DEFAULT_LABELS)
+        for name, text in (merged.get("labels") or {}).items():
+            if name in labels:
+                labels[name] = str(text)
+        vocabulary = {str(k): [str(v) for v in values] for k, values in (merged.get("vocabulary") or {}).items()}
+        accent = str(merged.get("accent", DEFAULT_ACCENT))
+        versions = block.get("versions") or {}
+        return cls(
+            strict=bool(merged.get("strict", True)),
+            lang=str(block.get("lang") or (repo.get("seo") or {}).get("lang") or "en"),
+            # The accent goes into a <style> tag, so only a plain hex colour is accepted.
+            accent=accent if ACCENT_RE.fullmatch(accent) else DEFAULT_ACCENT,
+            about=bool(merged.get("about", False)),
+            contract=str(merged.get("contract", "config/contract.txt")),
+            contract_explicit="contract" in block,
+            vocabulary=vocabulary,
+            labels=labels,
+            version=help_version(repo.get("version")),
+            versions=bool(versions.get("enabled", False)) if isinstance(versions, dict) else False,
+            latest=str((versions.get("latest", "") if isinstance(versions, dict) else "") or ""),
+        )
+
 
 def load_config(repo: dict) -> HelpConfig:
-    """Build the settings from repo.json; unknown label names are ignored."""
-    block = repo.get("apphelp") or {}
-    labels = dict(DEFAULT_LABELS)
-    for name, text in (block.get("labels") or {}).items():
-        if name in labels:
-            labels[name] = str(text)
-    vocabulary = {str(k): [str(v) for v in values] for k, values in (block.get("vocabulary") or {}).items()}
-    accent = str(block.get("accent", DEFAULT_ACCENT))
-    return HelpConfig(
-        strict=bool(block.get("strict", True)),
-        lang=str(block.get("lang", "en")),
-        # The accent goes into a <style> tag, so only a plain hex colour is accepted.
-        accent=accent if ACCENT_RE.fullmatch(accent) else DEFAULT_ACCENT,
-        about=bool(block.get("about", False)),
-        contract=str(block.get("contract", "config/contract.txt")),
-        contract_explicit="contract" in block,
-        vocabulary=vocabulary,
-        labels=labels,
-        version=help_version(repo.get("version")),
-        versions=bool((block.get("versions") or {}).get("enabled", False)),
-        latest=str((block.get("versions") or {}).get("latest", "") or ""),
-    )
+    """The settings of a repo.json, as the build makes them (kept for the tests and callers before P5)."""
+    from kb4it.core.themeconfig import build_config
+    return build_config(HelpConfig, {}, repo, "apphelp")[0]

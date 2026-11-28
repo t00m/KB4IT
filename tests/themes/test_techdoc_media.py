@@ -1,16 +1,10 @@
-"""techdoc techdoc_media.py: image sizes, alt text rule and the rewrite of document images."""
+"""kb4it.core.html.images (techdoc's media rewrite): image sizes, alt text rule and the rewrite of document images."""
 
-import importlib.util
 import struct
 
 import pytest
 
-from tests.helpers import ROOT
-
-spec = importlib.util.spec_from_file_location(
-    "techdoc_media", ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic" / "techdoc_media.py")
-media = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(media)
+from kb4it.core.html import images as media
 
 
 def png(w, h):

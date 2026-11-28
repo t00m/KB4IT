@@ -48,7 +48,7 @@ def test_failing_hook_stops_the_build(tmp_path, home):
     cfg, _target = _repo(tmp_path, "def on_document(doc_id, meta, text):\n    raise ValueError('bad doc')\n")
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert result.returncode == 1
-    assert "[HOOKS] FAIL hook=on_document doc=a.md error=bad doc" in result.stdout
+    assert "[HOOKS] FAIL hook=on_document doc=a.md error=\"bad doc\"" in result.stdout
 
 
 def test_missing_hooks_file(tmp_path, home):

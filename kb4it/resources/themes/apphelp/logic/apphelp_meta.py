@@ -3,6 +3,7 @@
 import re
 from dataclasses import dataclass, field
 
+from kb4it.core.checks import Problem as CoreProblem
 from kb4it.core.documents import joined_value
 from kb4it.core.util import html_id_for, slugify
 
@@ -44,13 +45,16 @@ class Page:
 
 
 @dataclass(frozen=True)
-class Problem:
-    code: str
-    doc: str
-    detail: str
+class Problem(CoreProblem):
+    """A metadata problem of one document: the shared Problem, written "CODE doc=<file> detail"."""
+    label: str = "doc"
+
+    @property
+    def doc(self) -> str:
+        return self.page
 
     def __str__(self):
-        return f"{self.code} doc={self.doc} {self.detail}".rstrip()
+        return f"{self.code} doc={self.page} {self.detail}".rstrip()  # the text apphelp always wrote
 
 
 def _first(keys, name, default=""):

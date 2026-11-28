@@ -2,7 +2,7 @@
     from kb4it.core.util import get_human_datetime
     from kb4it.core.util import guess_datetime
     from kb4it.core.util import valid_filename
-    sort_by = 'Date' # var['repo']['sort']
+    sort_by = 'Date'
     # The index repeats this block per post: its ids carry the post name to stay unique.
     pid = valid_filename(var['basename_md']).replace('.', '-')
     timestamp = (var['post'].get(sort_by) or [None])[0]
@@ -38,7 +38,11 @@
 % if 'Author_0_Url' in var['post']:
                             <li>
                                 <span data-uk-icon="user"></span>
+% if var['post'].get('Author_0_Tip'):
+                                <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}" title="${var['post']['Author_0_Tip']}" data-uk-tooltip>${var['post']['Author'][0]}</a></span>
+% else:
                                 <span class="uk-margin-small-left"><a href="${var['post']['Author_0_Url']}">${var['post']['Author'][0]}</a></span>
+% endif
                             </li>
 % endif
 % if var['post']['dated']:

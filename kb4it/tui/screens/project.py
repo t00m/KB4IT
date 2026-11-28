@@ -21,12 +21,16 @@ from textual.widgets import (
     Static,
 )
 
+from kb4it.core import projects
 from kb4it.core.util import json_load
 from kb4it.tui.projects import _kbdict_path, _log_path, _resolve_repo_path
 from kb4it.tui.screens.build import BuildScreen
 from kb4it.tui.screens.documents import ExplorerScreen
+from kb4it.tui.screens.edit_id import EditIdScreen
 from kb4it.tui.screens.logs import LogViewerScreen
+from kb4it.tui.screens.settings import RepoEditorScreen, SettingsReferenceScreen
 from kb4it.tui.servers import _WEB_SERVERS, _start_live_server
+from kb4it.tui.widgets import SelectableDataTable
 
 
 class ProjectInfoScreen(Screen):
@@ -43,7 +47,7 @@ class ProjectInfoScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield DataTable(id="tbl", show_cursor=False)
+        yield SelectableDataTable(id="tbl", show_cursor=False)
         with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="default")
         yield Footer()
@@ -83,7 +87,7 @@ class FileListScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield DataTable(id="tbl", show_cursor=True)
+        yield SelectableDataTable(id="tbl", show_cursor=True)
         with Horizontal(id="footer-bar"):
             yield Button("Back", id="back", variant="default")
         yield Footer()
@@ -146,6 +150,9 @@ class ProjectScreen(Screen):
             yield Button("List Source Files", id="files", variant="default")
             yield Button("Explore Keys & Values", id="explore", variant="default")
             yield Button("View Build Log", id="log", variant="default")
+            yield Button("Settings Reference", id="settings-ref", variant="default")
+            yield Button("Edit repo.json", id="edit-repo", variant="default")
+            yield Button("Edit id", id="edit-id", variant="default")
             yield Button("Browse Local (file://)", id="browse-local", variant="default")
             yield Button("Browse via Web Server (http)", id="browse-server", variant="default")
         with Horizontal(id="footer-bar"):
@@ -153,7 +160,6 @@ class ProjectScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.title = self._project["name"]
         self._refresh()
 
     def _refresh(self) -> None:
@@ -171,8 +177,11 @@ class ProjectScreen(Screen):
         log_ok = _log_path(config) is not None
         built = "[green]yes[/green]" if db_ok else "[dim]not yet[/dim]"
         log_lbl = "[green]yes[/green]" if log_ok else "[dim]none[/dim]"
+        pid = self._project.get("id")
+        self.title = f"{self._project['name']} ({pid})" if pid else self._project["name"]
         self.query_one("#info-panel", Static).update(
             f"[bold]{title}[/bold]\n"
+            f"Id: {pid or '[dim]none[/dim]'}\n"
             f"Theme: {theme}   Built: {built}   Log: {log_lbl}\n"
             f"Source: [dim]{source}[/dim]\n"
             f"Target: [dim]{target}[/dim]"
@@ -186,6 +195,26 @@ class ProjectScreen(Screen):
             target_ok = False
         self.query_one("#browse-local", Button).disabled = not target_ok
         self.query_one("#browse-server", Button).disabled = not target_ok
+
+    @on(Button.Pressed, "#edit-id")
+    def _edit_id(self) -> None:
+        config = self._project["config"]
+
+        def _after(pid: str | None) -> None:
+            if pid is None:
+                return
+            try:
+                entry = projects.set_id(config, pid)
+            except projects.ProjectError as error:
+                self.app.notify(str(error), severity="error")
+                return
+            self._project.update(entry)
+            if not pid:
+                self._project.pop("id", None)
+            self._refresh()
+            self.app.notify(f"Id set to {pid}" if pid else "Id removed")
+
+        self.app.push_screen(EditIdScreen(self._project.get("id", ""), config), callback=_after)
 
     @on(Button.Pressed, "#compile")
     def _compile(self) -> None:
@@ -216,6 +245,14 @@ class ProjectScreen(Screen):
     @on(Button.Pressed, "#log")
     def _log(self) -> None:
         self.app.push_screen(LogViewerScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#settings-ref")
+    def _settings_ref(self) -> None:
+        self.app.push_screen(SettingsReferenceScreen(self._project["config"]))
+
+    @on(Button.Pressed, "#edit-repo")
+    def _edit_repo(self) -> None:
+        self.app.push_screen(RepoEditorScreen(self._project["config"]), callback=lambda _: self._refresh())
 
     def _target_index(self) -> Path | None:
         try:

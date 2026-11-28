@@ -42,6 +42,8 @@ A theme decides what the website looks like and which pages it has. Your documen
   </section>
 </div>
 
+More pages of each theme, and the terminal interface, are on [Screenshots](gallery.md).
+
 Each theme can also have the [Add page](howto-write-document-editor.md), a Markdown editor in the browser. It is on by default in techdoc. In blog, bookshelf and apphelp it is off until you set `"editor": true` in `repo.json`. Any theme can turn it off with `"editor": false`.
 
 ## Sample apps {#apps}
@@ -65,6 +67,8 @@ When you build, KB4IT looks for the theme named in `repo.json` in this order and
 
 `"theme_path"` in `repo.json` skips the search and names the theme folder directly.
 
+`kb4it install-theme` puts a theme in the second place, `~/.kb4it/opt/resources/themes/`. So a theme you install with the id of a bundled theme is the one your builds use. `kb4it themes` marks the copy builds use with `active=yes`, and the hidden bundled copy with `active=no shadowed_by=user`; `kb4it uninstall-theme` brings the bundled one back. See [Install a theme](reference-command-line.md#themes).
+
 To change only one template of a theme, put your version in the knowledge base's `overrides/templates/` folder; see [Change one template of a theme](howto-customize-templates.md).
 
 ## Themes and KB4IT versions {#versions}
@@ -73,4 +77,4 @@ Each theme says which KB4IT it needs, in the `kb4it` field of its `theme.json`, 
 
 Each theme also has its own version, in the `version` field of its `theme.json`, and a fingerprint of its files. `kb4it themes` shows both, with the folder the theme comes from, so a copy in `~/.kb4it/opt/resources/themes/` that hides a bundled theme is easy to spot. A change to any theme file rebuilds every page on the next build; see [Theme version and fingerprint](howto-create-theme.md#version).
 
-Want something different? [Create your own theme](howto-create-theme.md).
+Want something different? [Write a theme](howto-create-theme.md).

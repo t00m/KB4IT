@@ -59,7 +59,7 @@ def test_theme_requiring_a_newer_kb4it_is_refused(tmp_path, home):
     cfg = write_repo(repo, "mini", {"a.md": page("A", Date="2026-01-01")}, theme_path=str(theme))
     result = run_kb4it("build", cfg, cwd=repo, home=home)
     assert result.returncode != 0
-    assert "THEME_REQUIREMENT_UNMET id=mini requires=>=99.0" in result.stdout
+    assert "THEME_REQUIREMENT_UNMET id=mini requires=\">=99.0\"" in result.stdout
 
 
 def test_theme_with_a_bad_requirement_is_refused(tmp_path, home):

@@ -1,4 +1,4 @@
-"""techdoc techdoc_quality.py: the score of one document and the peer statistics."""
+"""techdoc logic/quality.py: the score of one document and the peer statistics."""
 
 import importlib.util
 import re
@@ -7,14 +7,11 @@ from datetime import date
 
 import pytest
 
-from tests.helpers import ROOT
+from tests.helpers import ROOT, techdoc_module
 
 LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
 SKELETONS = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "templates" / "skeletons"
-sys.path.insert(0, str(LOGIC))  # techdoc_quality imports techdoc_media
-_spec = importlib.util.spec_from_file_location("techdoc_quality", LOGIC / "techdoc_quality.py")
-quality = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(quality)
+quality = techdoc_module("quality")
 
 
 @pytest.fixture
@@ -37,9 +34,30 @@ def doc(tmp_path):
 
 def test_findable_counts_core_keys_known_values_and_summary(prof, doc):
     full = doc("# T\n", Author="A", Date="2026-01-01", DocType="How-to guide", Category="Procedure", Status="Released",
-               Tag="x", Topic="y", Scope="z", Product="p", Summary="S")
+               Tag="x", Topic="y", Scope="z", Product="p", Summary="S", WorkType="Knowledge")
     assert sum(c.points for c in quality.findable(full, prof)) == 15
     assert sum(c.points for c in quality.findable(doc("# T\n", Status="Whatever"), prof)) == 1
+
+
+def test_a_missing_worktype_costs_a_point_and_says_knowledge(prof, doc):
+    checks = quality.findable(doc("# T\n", Category="Procedure"), prof)
+    worktype = next(c for c in checks if c.name == "WorkType key")
+    assert not worktype.passed and "WorkType: Knowledge" in worktype.tip
+
+
+def test_an_old_category_is_not_a_known_value(prof, doc):
+    checks = quality.findable(doc("# T\n", Category="Change", Status="Open"), prof)
+    known = next(c for c in checks if c.key == "check-known-values")
+    assert known.points == 0 and "Category: Change" in known.tip
+
+
+def test_a_category_that_does_not_go_with_the_worktype_costs_points(prof, doc):
+    for category, work in (("Procedure", "Incident"), ("Record", "Knowledge"), ("Minutes", "Change")):
+        checks = quality.findable(doc("# T\n", Category=category, WorkType=work), prof)
+        assert [c.points for c in checks if c.key == "check-work-category"] == [-3], (category, work)
+    for category, work in (("Procedure", "Knowledge"), ("Record", "Incident"), ("Minutes", "Meeting"), ("Recipe", "Other")):
+        checks = quality.findable(doc("# T\n", Category=category, WorkType=work), prof)
+        assert not any(c.key == "check-work-category" for c in checks), (category, work)
 
 
 def test_structured_how_to_with_skeleton_sections(prof, skeletons, doc):
@@ -49,9 +67,24 @@ def test_structured_how_to_with_skeleton_sections(prof, skeletons, doc):
 
 
 def test_structured_record_uses_worktype_skeleton_times_16(prof, skeletons, doc):
-    body = "# T\n\n## Overview\n\nX.\n\n## Impact\n\nY.\n\n## Rollback\n\nZ.\n"
+    body = ("# T\n\n## Overview\n\nX.\n\n## Impact\n\nY.\n\n## Implementation Plan\n\n1. a\n\n"
+            "## Verification\n\nV.\n\n## Rollback\n\nZ.\n\n## Result\n\nR.\n")
     checks = quality.structured(doc(body, work_type="Change", Category="Record"), prof, skeletons)
     assert sum(c.points for c in checks) == 25 and not any(c.name.startswith("Fits") for c in checks)
+
+
+def test_record_sections_accept_their_synonyms(prof, skeletons, doc):
+    # Older records name the new skeleton sections in their own words.
+    cases = {"Change": "## Plan\n\nA.\n\n## Checks\n\nB.\n\n## Outcome\n\nC.\n",
+             "Incident": "## Analysis\n\nA.\n\n## Lessons learned\n\nB.\n",
+             "Task": "## Checklist\n\n- [ ] a\n",
+             "Meeting": "## Agreed\n\nA.\n"}
+    expected = {"Change": ["Implementation plan", "Verification", "Result"], "Incident": ["Investigation", "Follow-up actions"],
+                "Task": ["Subtasks"], "Meeting": ["Decisions"]}
+    for work, body in cases.items():
+        checks = quality.structured(doc("# T\n\n" + body, work_type=work, Category="Record"), prof, skeletons)
+        passed = {c.name.removesuffix(" section") for c in checks if c.key == "check-skeleton-section" and c.passed}
+        assert set(expected[work]) <= passed, (work, passed)
 
 
 def test_empty_sections_and_placeholders_cost_points(prof, skeletons, doc):
@@ -114,11 +147,12 @@ def test_peer_stats_ranks_within_peers_and_skips_retired():
 
 
 def test_every_check_has_a_guide_entry_and_a_tip(prof, skeletons, doc):
-    sys.path.insert(0, str(LOGIC))
-    import techdoc_quality_guide as guide
+    guide = techdoc_module("quality_guide")
     body = "# T\n\n## Summary\n\nX.\n\n## Empty\n\n## Root Cause\n\nY [gone](gone.md) ![i](resources/images/none.png)\n"
-    docs = [doc(body, work_type="Incident", Status="Open"), doc(body, DocType="Tutorial", Category="Note", Date="soon"),
+    docs = [doc(body, work_type="Incident", Status="Open", Category="Note", WorkType="Incident"),
+            doc(body, DocType="Tutorial", Category="Note", Date="soon"),
             doc("# T\n", DocType="Reference", Category="Procedure", Status="Released", Date="2010-01-01")]
+    docs[0].people = {"Ana": "missing", "Bob": "no_contact"}
     for d in docs:
         for check in quality.assess(d, prof, skeletons, date(2026, 10, 24)).checks:
             assert check.key in guide.CHECKS, check.name
@@ -136,7 +170,7 @@ def _filled(name, text, skeleton):
     sentence = " ".join(["The service account renews the certificate and the team checks the log afterwards."] * 6)
     for line in skeleton.placeholders:
         text = text.replace(line, sentence)
-    record = "\nWorkType:" in text
+    record = "\nWorkType: Knowledge" not in text
     keys = {"Author": "Ana", "Date": "2026-10-20", "Tag": "renewal", "Topic": "Security", "Scope": "Infrastructure",
             "Product": "ADS", "Summary": "Renew the certificate.", "Status": "Completed" if record else "Released"}
     for key, value in keys.items():
@@ -146,7 +180,8 @@ def _filled(name, text, skeleton):
         key, _, value = line.partition(":")
         if value.strip():
             meta[key.strip()] = [v.strip() for v in value.split(",")]
-    work = (meta.get("WorkType") or [""])[0]
+    # The theme passes the type of work of a record; a knowledge document has none.
+    work = (meta.get("WorkType") or [""])[0].replace("Knowledge", "")
     return quality.DocInput(text=text, meta=meta, backlinks=0, known_docs=set(), source_dir="/nonexistent", work_type=work)
 
 
@@ -172,3 +207,38 @@ def test_a_references_heading_in_a_skeleton_is_scored_under_connected_only(prof,
                                             encoding="utf-8")
     checks = quality.structured(doc("# T\n\n## Overview\n\nText.\n", Category="X"), prof, quality.load_skeletons(str(tmp_path)))
     assert not any(c.name == "References section" for c in checks)
+
+
+def test_a_link_to_a_profile_is_neither_broken_nor_a_related_document(prof, tmp_path):
+    body = "# T\n\nAsk [Jane](PROFILE-JANE.md).\n"
+    profile_link = quality.DocInput(text=body, meta={}, backlinks=0, known_docs={"a.md"}, source_dir=str(tmp_path),
+                                    profile_docs={"PROFILE-JANE.md"})
+    checks = quality.connected(profile_link, prof)
+    assert not [c for c in checks if c.key == "check-broken-link"]
+    assert next(c for c in checks if c.key == "check-internal-link").points == 0
+
+
+def test_people_without_profile_or_contact_cost_points(prof, doc):
+    d = doc("# T\n")
+    d.people = {"Ana": "missing", "Bob": "no_contact", "Eve": "ok"}
+    d.people_links = {"Ana": "add.html#new=person&title=Ana"}
+    checks = [c for c in quality.connected(d, prof) if c.key in ("check-author-profile", "check-author-contact")]
+    assert [(c.key, c.points) for c in checks] == [("check-author-profile", -2), ("check-author-contact", -1)]
+    assert checks[0].href == "add.html#new=person&title=Ana" and checks[1].href == ""
+
+
+def test_profile_checks_are_capped(prof, doc):
+    d = doc("# T\n")
+    d.people = {name: "missing" for name in ("A", "B", "C")}
+    assert sum(c.points for c in quality.people_checks(d)) == -quality.PROFILE_CAP
+    d.people = {}
+    assert quality.people_checks(d) == []
+
+
+def test_checklist_links_a_profile_check_to_the_add_page(prof, skeletons, doc):
+    d = doc("# T\n")
+    d.people = {"Ana": "missing"}
+    d.people_links = {"Ana": "add.html#new=person&title=Ana"}
+    items = quality.checklist(quality.assess(d, prof, skeletons, date(2026, 10, 24)))
+    item = next(i for i in items if i["text"] == "Create a profile for Ana")
+    assert item["href"] == "add.html#new=person&title=Ana" and item["gain"] == 2

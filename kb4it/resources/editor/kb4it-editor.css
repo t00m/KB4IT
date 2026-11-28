@@ -189,9 +189,7 @@
 .kb-new-prop { display: flex; gap: 6px; margin-top: 6px; }
 .kb-new-prop[hidden] { display: none; }
 
-/* ==========================================================================
-   Add document page (PAGE_ADD)
-   ========================================================================== */
+/* Add document page (PAGE_ADD) */
 .kb-add-note {
     font-size: 0.84rem;
     padding: 10px 16px;
@@ -254,6 +252,7 @@
     font-weight: 700;
     flex-shrink: 0;
 }
+.kb-dialog-file { font-weight: 400; }
 .kb-dialog-desc {
     flex: 1;
     min-width: 0;

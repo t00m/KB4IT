@@ -5,12 +5,13 @@
 import json
 import re
 import shutil
+import sys
 import zipfile
 from datetime import datetime, timedelta
 
 import pytest
 
-from tests.helpers import ROOT, page, run_kb4it
+from tests.helpers import ROOT, page, relative_paths, run_kb4it
 from tests.themes.test_techdoc_add import build_techdoc
 
 TODAY = datetime.now()
@@ -25,6 +26,7 @@ PAGES = {
                       Scope="Infrastructure"),
     "change2.md": page("Migrated change", Date=day(2), Category="Record", WorkType="Change", Status="Open",
                        Priority="Low"),
+    "change3.md": page("Unranked change", Date=day(1), Category="Record", WorkType="Change", Status="Open"),
     "incident.md": page("Recent incident", Date=day(-5), Category="Incident", Priority="Critical",
                         Status="Open"),
     "meeting.md": page("Old meeting", Date="2025-01-15", Category="Meeting", Team="Linux"),
@@ -47,6 +49,7 @@ def site(tmp_path_factory):
     cfg = repo / "config" / "repo.json"
     conf = json.loads(cfg.read_text(encoding="utf-8"))
     conf["admin"] = True
+    conf["datatable"] = [k for k in conf["datatable"] if k != "Scope"] + ["Scope"]  # an older repo.json: techdoc must still hide the column
     cfg.write_text(json.dumps(conf), encoding="utf-8")
     for name, text in PAGES.items():
         (repo / "source" / name).write_text(text, encoding="utf-8")
@@ -83,6 +86,26 @@ def test_alert_bar_and_open_items_read_worktype_with_legacy_fallback(site):
     assert bar.index('href="change.html"') < bar.index('href="change2.html"')  # newest Date first: day(3) before day(2)
     assert 'href="WorkType_Change.html">Changes</a>' in html
     assert 'href="Category_Incident.html">Incidents</a>' in html   # only legacy incidents in this site
+
+
+def slots(html):
+    """Badge slots in a dashboard row: the badges plus the empty placeholders."""
+    return html.count('class="uk-label kb-badge') + html.count('class="kb-badge kb-badge-empty"')
+
+
+def test_dashboard_rows_keep_a_slot_for_a_missing_badge(site):
+    """A missing Priority or Status leaves an empty slot, so each badge stays in its column."""
+    html = read(site, "index.html")
+    bar = html[html.index("CHANGES PANEL :: START"):html.index("CHANGES PANEL :: END")]
+    items = re.findall(r'<li class="kb-alert-item">(.*?)</li>', bar, re.S)
+    assert len(items) == 3
+    assert all(slots(item) == 2 for item in items), items
+    unranked = next(item for item in items if 'href="change3.html"' in item)
+    assert 'kb-badge-empty' in unranked
+    assert unranked.index('Status_Open.html') < unranked.index('kb-badge-empty')  # Status keeps the first slot
+    open_items = html[html.index("OPEN ITEMS :: START"):html.index("OPEN ITEMS :: END")]
+    cells = re.findall(r'<td class="kb-open-badges">(.*?)</td>', open_items, re.S)
+    assert cells and all(slots(cell) == 3 for cell in cells), cells
 
 
 def test_events_page_uses_worktype(site):
@@ -125,6 +148,35 @@ def test_metadata_pages(site):
     assert "change.html" in read(site, "Priority_High.html")
     for name in ("Category.html", "Status.html", "stats.html", "properties.html", "all.html", "bookmarks.html"):
         assert (site["target"] / name).exists(), name
+
+
+def test_properties_page_is_a_datatable_of_the_properties(site):
+    html = read(site, "properties.html")
+    block = html.split("PROPERTIES :: START")[1]
+    assert 'class="kb-props"' in html and "kb-cloud" not in html and "data-uk-modal" not in block
+    assert re.search(r'<table id="kb-props-table" class="kb4it-datatable[^"]*"[^>]*data-kb-order=\'\[\[0, "asc"\]\]\'', block)
+    assert "data-uk-leader" not in block
+    row = re.search(r'<a class="kb-props-key" href="Priority.html">Priority</a></td>\s*'
+                    r'<td class="kb-props-num">(\d+)</td>\s*<td class="kb-props-num">(\d+)</td>', block)
+    assert row and row.group(1) == "3"
+    setup = html[html.index("DATATABLES SETUP :: START"):html.index("DATATABLES SETUP :: END")]
+    assert "data('kbOrder')" in setup       # the table sorts by property name first
+
+
+def test_property_page_has_cloud_and_table_but_no_leader(site):
+    html = read(site, "Priority.html")
+    tabs = re.findall(r'<li><a href="#">([^<]+)</a></li>', html)
+    assert tabs == ["Cloud", "Table"]
+    assert "data-uk-leader" not in html
+
+
+def test_stats_page(site):
+    """Totals, activity and property coverage; Summary is not counted."""
+    html = read(site, "stats.html")
+    for anchor in ("stats-activity", "stats-coverage", "stats-health", "stats-links"):
+        assert f'id="{anchor}"' in html, anchor  # every section is a card
+    assert 'id="stats-coverage-details"' in html  # its details open in a modal
+    assert 'href="Periodicity.html"' in html and 'href="Summary.html"' not in html
 
 
 def test_document_page_has_toc_and_properties(site):
@@ -184,6 +236,7 @@ def test_admin_backups_follow_changes(site, tmp_path):
     repo = tmp_path / "repo"
     shutil.copytree(site["repo"], repo)
     cfg = repo / "config" / "repo.json"
+    relative_paths(cfg)
     admin = repo / "target" / "admin"
     before = (admin / "kb4it_site.zip").stat().st_mtime_ns
     result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
@@ -204,7 +257,36 @@ SKELETONS = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "templates" / 
                                                      ("TASK", "Record", "Task"), ("MEETING", "Minutes", "Meeting")])
 def test_record_skeletons_use_worktype(name, category, worktype):
     text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
-    assert f"\nCategory: {category}\nWorkType: {worktype}\n" in text
+    assert f"\nCategory: {category}\n" in text and f"\nWorkType: {worktype}\n" in text
+
+
+@pytest.mark.parametrize("name", ["NOTE", "POST", "PROCEDURE", "REPORT"])
+def test_knowledge_skeletons_use_worktype_knowledge(name):
+    text = (SKELETONS / f"{name}-SKELETON.md").read_text(encoding="utf-8")
+    assert "\nWorkType: Knowledge\n" in text
+
+
+@pytest.mark.parametrize("path", sorted(SKELETONS.glob("*-SKELETON.md")), ids=lambda p: p.name)
+def test_skeleton_keys_are_alphabetical_without_version(path):
+    keys = [line.split(":")[0] for line in path.read_text(encoding="utf-8").split("---")[1].splitlines() if line]
+    assert keys == sorted(keys) and "Version" not in keys
+
+
+def test_worktype_knowledge_is_not_a_record():
+    from tests.helpers import techdoc_module
+    records = techdoc_module("records")
+
+    class Db:
+        def __init__(self, meta):
+            self.meta = meta
+
+        def get_values(self, doc_id, key):
+            return self.meta.get(key, [''])
+
+    assert records.work_type(Db({"WorkType": ["Knowledge"], "Category": ["Procedure"]}), "a.md") == ""
+    assert records.event_type(Db({"WorkType": ["Knowledge"], "Category": ["Procedure"]}), "a.md") == "Procedure"
+    assert records.work_type(Db({"WorkType": ["Incident"], "Category": ["Record"]}), "a.md") == "Incident"
+    assert records.work_type(Db({"Category": ["Change"]}), "a.md") == "Change"
 
 
 def test_apps_list_worktype_after_category():
@@ -236,6 +318,25 @@ def test_document_tables_hide_columns_empty_in_every_row(site):
     # Category_Note lists only undated.md: no WorkType, Priority, Status or Scope; Date and Title always stay.
     assert _headers(read(site, "Category_Note.html")) == ["Date", "Title", "Category"]
     assert "WorkType" in _headers(read(site, "Category_Record.html"))
+
+
+def test_document_tables_never_show_scope(site):
+    # change.md sets Scope and the fixture lists it in "datatable"; the shipped apps no longer list it.
+    for app in ("default", "sapbasis"):
+        conf = json.loads((ROOT / f"kb4it/resources/themes/techdoc/apps/{app}/config/repo.json").read_text(encoding="utf-8"))
+        assert "Scope" not in conf["datatable"], app
+    for name in ("all.html", "Category_Change.html", "Scope_Infrastructure.html"):
+        assert "Scope" not in _headers(read(site, name)), name
+
+
+def test_open_items_and_activity_are_two_sections_one_above_the_other(site):
+    html = read(site, "index.html")
+    sections = re.findall(r'<details class="kb-section kb-collapsible" data-kb-section="([\w-]+)" open>\s*'
+                          r'<summary class="kb-section-title">([^<]+)</summary>', html)
+    assert ("open-items", "Open items") in sections and ("activity", "Activity") in sections
+    assert html.index("OPEN ITEMS :: START") < html.index("OPEN ITEMS :: END") < html.index("ACTIVITY :: START")
+    for gone in ("WORK :: START", 'data-kb-section="work"', "kb-work-tabs", "kb-work-title", "uk-child-width-expand@m"):
+        assert gone not in html
 
 
 def test_activity_card_has_a_tab_per_kind_of_activity(site):

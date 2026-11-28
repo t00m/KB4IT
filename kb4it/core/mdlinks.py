@@ -56,6 +56,10 @@ class _MdLinkProcessor(Treeprocessor):
                 continue
             parts = urlsplit(href)
             self.md.kb4it_links.append((unquote(parts.path), parts.fragment))
+            # A link to a profile leads to the person's page (see core/people.py).
+            redirect = self.md.kb4it_redirects.get(posixpath.normpath(unquote(parts.path)))
+            if redirect:
+                new_href = urlunsplit(("", "", redirect, parts.query, parts.fragment))
             element.set("href", new_href)
 
 
@@ -64,16 +68,18 @@ class MdLinkExtension(Extension):
 
     Links written without an extension, or to a .adoc file, are left as written and
     recorded on md.kb4it_bare_links, so they are reported but never counted as backlinks.
+    md.kb4it_redirects maps a source path to the page its links lead to instead (profiles).
     """
 
     def extendMarkdown(self, md):
         md.kb4it_links = []
         md.kb4it_bare_links = []
+        md.kb4it_redirects = {}
         # Priority 5 runs after the inline processor (20), which creates the <a> elements.
         md.treeprocessors.register(_MdLinkProcessor(md), "kb4it_mdlinks", 5)
 
 
-def _body(text: str) -> str:
+def document_body(text: str) -> str:
     """Markdown after the frontmatter and the H1 title line."""
     if text.startswith("---"):
         end = text.find("\n---", 3)
@@ -94,7 +100,7 @@ def scan_document(path):
     import markdown
     from kb4it.core.util import SOURCE_ENCODING
     with open(path, encoding=SOURCE_ENCODING) as fh:
-        text = _body(fh.read())
+        text = document_body(fh.read())
     md = markdown.Markdown(extensions=["extra", "admonition", "toc", "sane_lists", MdLinkExtension()])
     html = md.convert(text)
     anchors = set(_anchor_ids(md.toc_tokens)) | set(re.findall(r'\sid="([^"]+)"', html))

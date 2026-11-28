@@ -14,17 +14,23 @@ from datetime import datetime
 
 from mako.template import Template
 
+from kb4it.core.checks import check_anchors, html_pages
 from kb4it.core.documents import joined_value
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ThemeError
-from kb4it.core.publish import (ROBOTS_MARK, absolute, atom_date, atom_feed, robots_txt, site_pages,
-                                sitemap_xml)
+from kb4it.core.notice import HELP_ONLINE_URL
+from kb4it.core.publish import absolute, atom_date, atom_feed
+from kb4it.core.readme import about_markdown, readme_text
 from kb4it.core.search import (INDEX_WARN_BYTES, load_doc_html, load_doc_sections, prune_sections,
                                render_index_js)
 from kb4it.core.service import Service
 from kb4it.services.addpage import AddPageMixin
 from kb4it.core.util import get_human_datetime, html_id_for, valid_filename
 from kb4it.services.headmeta import META_END, META_START, HeadMetaMixin, short_text  # noqa: F401
+from kb4it.services.indexing import IndexingMixin
+from kb4it.services.pagepipeline import GIT_KEYS, PagePipelineMixin, git_ready  # noqa: F401
+from kb4it.services.profilecard import ProfileCardMixin
+from kb4it.core.log import q
 
 
 REQUIRED_TEMPLATES = [
@@ -64,35 +70,19 @@ def template_base_dir(theme):
     return folder
 
 
-GIT_KEYS = ("git_server", "git_user", "git_repo", "git_branch")
-
-
-def git_ready(repo) -> bool:
-    """True when repo.json turns git links on and names server, user, repository and branch.
-
-    git_path may stay empty (documents at the repository root). A "{placeholder}" counts as unset,
-    so a sample configuration never produces edit links that lead nowhere.
-    """
-    if repo.get("git") is not True:
-        return False
-    values = [repo.get(key) for key in GIT_KEYS] + [repo.get("git_path") or ""]
-    return all(isinstance(v, str) for v in values) and all(v.strip() for v in values[:4]) and \
-        not any("{" in v for v in values)
-
-
-def _written_by_kb4it(path) -> bool:
-    try:
-        with open(path, encoding="utf-8") as fh:
-            return fh.readline().strip() == ROBOTS_MARK
-    except OSError:
-        return False
-
-
-class Builder(AddPageMixin, HeadMetaMixin, Service):
+class Builder(AddPageMixin, HeadMetaMixin, IndexingMixin, PagePipelineMixin, ProfileCardMixin, Service):
     """Build HTML blocks."""
 
     _templates_lock = threading.Lock()
     _xform_lock = threading.Lock()
+
+    # Dataclass of the theme's settings (P5): Frontend builds it from theme.json and the repo.json block
+    # named after the theme, and stores it as self.config. None: self.config wraps theme.json.
+    config_class = None
+
+    # Global variable and size warning of target/search-index.js (P8).
+    search_index_var = "KB4IT_INDEX"
+    search_index_warn_bytes = INDEX_WARN_BYTES
 
     # Source patterns (common HTML_TAG_<name>_MD templates) that python-markdown's output, after
     # the compiler's section restructuring, can contain; tests/core/test_transformations.py checks it.
@@ -113,6 +103,9 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         self._template_errors = {}
         self._autoescape_warned = False
         self._xform_pairs = None
+        self._has_template = {}
+        self.listing_pages = set()
+        self._kb4it_features = {}  # feature objects of the legacy mixins (themekit/host.py feature_of)
         self.log.debug("[BUILDER] CACHE_RESET")
         self.get_services()
 
@@ -126,15 +119,19 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
 
         Source patterns (_MD templates) match the HTML produced by the
         Markdown compile pipeline; target (_NEW) templates supply theme-
-        specific replacements.
+        specific replacements. Headings and sections have defaults in the
+        common templates (and the uikit base) that read the classes from
+        theme.json "heading_classes"; they get var['theme'].
         """
         if self._xform_pairs is None:
             with self._xform_lock:
                 if self._xform_pairs is None:
+                    # A name without any _NEW template keeps that markup as the compiler wrote it.
+                    new_var = {'theme': self.srvbes.get_dict('theme') or {}}
                     self._xform_pairs = [
                         (self.render_template(f'{n}_MD'),
-                         self.render_template(f'{n}_NEW'))
-                        for n in self._XFORM_NAMES
+                         self.render_template(f'{n}_NEW', new_var))
+                        for n in self._XFORM_NAMES if self.has_template(f'{n}_NEW')
                     ]
         for old, new in self._xform_pairs:
             if old:
@@ -152,6 +149,25 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
 
         Custom themes must subclass it.
         """
+
+    def reuse_cached_page(self, name, counter, reason, func):
+        """Keep the cached `name`.html of the previous build when the runtime counter (ncd or nck) is 0.
+
+        True when kept: the page is a target of this build again and nothing rebuilds it.
+        """
+        if self.srvbes.get_value("runtime", counter) != 0:
+            return False
+        if not os.path.exists(os.path.join(self.srvbes.get_path("cache"), f"{name}.html")):
+            return False
+        self.log.debug(f"[THEME] SKIP reason={q(reason)} func={q(func)}")
+        self.srvbes.add_target(f"{name}.md", f"{name}.html")
+        return True
+
+    def prepare(self):
+        """After the documents are read and before any page is built (stage 3); themes on BaseTheme use it."""
+
+    def after_checks(self):
+        """After the post-build checks passed (stage 8); themes on BaseTheme use it."""
 
     def site_signature(self) -> str:
         """Return a value that changes when every page must be rebuilt; empty turns the check off.
@@ -173,13 +189,15 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         shutil.copy(htmlId, self.srvbes.get_path("www"))
         self.srvbes.add_target(mdId, os.path.basename(htmlId))
 
-    def distribute_md(self, name, content, as_html=True):
+    def distribute_md(self, name, content, as_html=True, listing=False):
         """Distribute a theme-rendered system page to the temporary directory.
 
         When *as_html* is True (default), the file is tagged with a sentinel
         so the compiler treats it as ready-made HTML and skips
         python-markdown.  When *as_html* is False the content is treated as
         Markdown and goes through the normal compilation pipeline.
+        A *listing* page (property, value, event, stats pages) gets "noindex, follow"
+        unless repo.json seo.noindex_keys is false.
         """
         MD_NAME = f"{name}.md"
         PAGE_PATH = os.path.join(self.srvbes.get_path("tmp"), MD_NAME)
@@ -190,8 +208,10 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
                 else:
                     fpag.write(content)
             except Exception as error:
-                self.log.error(f"[BUILDER] WRITE_FAIL doc={MD_NAME} error={error}")
+                self.log.error(f"[BUILDER] WRITE_FAIL doc={q(MD_NAME)} error={q(error)}", exc_info=True)
         PAGE_NAME = html_id_for(MD_NAME)
+        if listing:
+            self.listing_pages.add(PAGE_NAME)
 
         # Add compiled page to the target list
         self.srvbes.add_target(MD_NAME, PAGE_NAME)
@@ -216,7 +236,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
             autoescape = self._theme_autoescape(theme)
             for template_path in candidates:
                 if not os.path.isfile(template_path):
-                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={template_path} reason=missing")
+                    self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_SKIP path={q(template_path)} reason=missing")
                     continue
                 # A template that exists but does not compile is an error, never a reason to fall back.
                 failed = self._template_errors.get(template)
@@ -230,17 +250,17 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
                     tpl = Template(filename=template_path, default_filters=filters)
                 except Exception as err:
                     reason = " ".join(str(err).split())  # Mako puts the line number on a line of its own
-                    self.log.error(f"[BUILDER] TEMPLATE_COMPILE_FAIL name={template} path={template_path} error={reason}")
+                    self.log.error(f"[BUILDER] TEMPLATE_COMPILE_FAIL name={q(template)} path={q(template_path)} error={q(reason)}", exc_info=True)
                     failed = ThemeError(f"Template {template} at {template_path}: {reason}")
                     self._template_errors[template] = failed
                     raise failed from err
                 self.templates[template] = tpl
-                self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={template_path}")
+                self.log.debug(f"[BUILDER] TEMPLATE_CANDIDATE_FOUND path={q(template_path)}")
                 if override_dir and template_path == candidates[0]:
-                    self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={template} path={template_path}")
+                    self.log.info(f"[BUILDER] TEMPLATE_OVERRIDE name={q(template)} path={q(template_path)}")
                 return tpl
 
-            self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={template}")
+            self.log.error(f"[BUILDER] TEMPLATE_NOT_FOUND name={q(template)}")
             raise ThemeError(f"Template not found: {template}")
 
     def _theme_autoescape(self, theme) -> bool:
@@ -251,7 +271,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         custom = os.path.dirname(os.path.abspath(str(theme.get("path", "")))) != bundled
         if custom and not self._autoescape_warned:
             self._autoescape_warned = True
-            self.log.warning(f"[BUILDER] THEME_AUTOESCAPE_OFF theme={theme.get('id')}")
+            self.log.warning(f"[BUILDER] THEME_AUTOESCAPE_OFF theme={q(theme.get('id'))}")
             self.log.warning('[BUILDER] HINT add "autoescape": true to theme.json and mark HTML values with | n')
         return False
 
@@ -277,15 +297,21 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         theme_var["count_docs"] = self.srvdtb.get_documents_count()
         theme_var["updated"] = get_human_datetime(datetime.now())
         theme_var["git_ok"] = git_ready(theme_var["repo"])
+        theme_var["source_folder_url"] = self.git_url("tree")
+        theme_var["git_repo_url"] = self.git_repo_url()
+        theme_var["new_root_url"] = self.git_url("new")
+        theme_var["lang"] = self.page_lang()
+        theme_var["help_url"] = HELP_ONLINE_URL  # the KB4IT help site; links open it in a new window
 
         # Only pass to theme those keys used by documents
         kbdict = self.srvbes.get_kb_dict()
         metadata = kbdict["metadata"]
         ignored_keys = set(self.srvdtb.get_ignored_keys())
         blocked_keys = set(self.srvdtb.get_blocked_keys())
+        hidden_keys = set(self.srvdtb.get_hidden_keys())  # repo.json hidden_properties: off the menu too
         used_keys = set(metadata.keys())
         theme_var["kb"]["keys"]["menu"] = sorted(
-            [{"name": k, "href": valid_filename(k)} for k in (used_keys - blocked_keys - ignored_keys)],
+            [{"name": k, "href": valid_filename(k)} for k in (used_keys - blocked_keys - ignored_keys - hidden_keys)],
             key=lambda d: d["name"],
         )
 
@@ -312,10 +338,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         """Search page (search.html), built only when search is on."""
         if not self.search_enabled():
             return
-        self.distribute_md("search", self.render_template("PAGE_SEARCH", self.get_theme_var()))
-        self.srvdtb.add_document("search.md")
-        self.srvdtb.add_document_key("search.md", "Title", "Search")
-        self.srvdtb.add_document_key("search.md", "SystemPage", "Yes")
+        self.add_system_page("search", "Search", self.render_template("PAGE_SEARCH", self.get_theme_var()))
 
     def search_record(self, doc_id) -> dict:
         """Index record of one document; themes may override to add facets or a summary."""
@@ -326,79 +349,48 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         return {"u": html_id_for(doc_id), "t": title, "s": summary, "k": "", "c": "", "f": facets,
                 "w": [], "g": [], "x": []}
 
+    def search_documents(self) -> list:
+        """Doc ids of the search index, in index order; default: the source documents, sorted."""
+        known = set(self.srvdtb.get_documents())
+        sources = self.srvbes.get_value("docs", "filenames") or []
+        return sorted(d for d in sources if d in known and not self.srvdtb.is_system(d))
+
+    def search_sections(self, doc_id) -> list:
+        """[[anchor, heading, text], ...] of one document; default: the sections the compiler recorded."""
+        root = self.srvbes.get_path("root")
+        return [[s["id"], s["heading"], s["text"]] for s in load_doc_sections(root, doc_id)]
+
     def write_search_index(self):
         """Write target/search-index.js from the sections the compiler recorded; remove it when search is off."""
         target = self.srvbes.get_path("target")
-        root = self.srvbes.get_path("root")
-        index_path = os.path.join(target, "search-index.js")
         if (self.srvbes.get_dict("theme") or {}).get("search") is not True:
-            return  # the theme has no shared search (apphelp writes its own index)
+            return  # the theme has no shared search
         if not self.search_enabled():
             for name in ("search-index.js", "search.html"):
                 path = os.path.join(target, name)
                 if os.path.exists(path):
                     os.unlink(path)
             return
-        known = set(self.srvdtb.get_documents())
-        sources = self.srvbes.get_value("docs", "filenames") or []
-        docs = [d for d in sources if d in known and not self.srvdtb.is_system(d)]
-        records = []
-        for doc_id in sorted(docs):
+        docs = self.write_index_file(target)
+        prune_sections(self.srvbes.get_path("root"), docs)
+
+    def write_index_file(self, target) -> list:
+        """Write target/search-index.js: search_record() of each search_documents() id, None skipped; return the ids."""
+        records, docs = [], self.search_documents()
+        for doc_id in docs:
             record = self.search_record(doc_id)
-            record["x"] = [[s["id"], s["heading"], s["text"]] for s in load_doc_sections(root, doc_id)]
+            if record is None:
+                continue
+            record["x"] = self.search_sections(doc_id)
             records.append(record)
-        prune_sections(root, docs)
-        content = render_index_js(records, "KB4IT_INDEX")
-        with open(index_path, "w", encoding="utf-8") as fh:
+        content = render_index_js(records, self.search_index_var)
+        with open(os.path.join(target, "search-index.js"), "w", encoding="utf-8") as fh:
             fh.write(content)
         size = len(content.encode("utf-8"))
-        if size > INDEX_WARN_BYTES:
-            self.log.warning(f"[SEARCH] INDEX_LARGE size={size}")
-        self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={size}")
-
-    def sitemap_exclude(self) -> set:
-        """Pages left out of sitemap.xml; themes may add their own."""
-        return {"404.html", "search.html", "add.html"}
-
-    def page_dates(self) -> dict:
-        """'page.html' -> 'YYYY-MM-DD' for documents with a Date."""
-        dates = {}
-        for doc_id in self.srvdtb.get_documents():
-            values = self.srvdtb.get_values(doc_id, "Date") or []
-            if values and values[0]:
-                dates[html_id_for(doc_id)] = str(values[0])[:10]
-        return dates
-
-    def write_sitemap(self):
-        """sitemap.xml and robots.txt for sites with a site_url; "sitemap": false turns them off."""
-        target = self.srvbes.get_path("target")
-        repo = self.srvbes.get_dict("repo") or {}
-        base = getattr(self.srvbes, "site_url", None)
-        sitemap = os.path.join(target, "sitemap.xml")
-        robots = os.path.join(target, "robots.txt")
-        user_robots = os.path.join(self.srvbes.get_path("source"), "robots.txt")
-        if repo.get("sitemap") is False or base is None:
-            if base is None and repo.get("sitemap") is not False:
-                self.log.info("[SITEMAP] SKIP reason=no_site_url")
-            for path in (sitemap, robots):
-                if os.path.exists(path) and (path == sitemap or _written_by_kb4it(path)):
-                    os.unlink(path)
-            return
-        dates = self.page_dates()
-        entries = []
-        for rel in site_pages(target, self.sitemap_exclude()):
-            lastmod = dates.get(rel)
-            if lastmod is None:
-                lastmod = datetime.fromtimestamp(os.path.getmtime(os.path.join(target, rel))).strftime("%Y-%m-%d")
-            entries.append((absolute(base, rel), lastmod))
-        with open(sitemap, "w", encoding="utf-8") as fh:
-            fh.write(sitemap_xml(entries))
-        if os.path.isfile(user_robots):
-            shutil.copyfile(user_robots, robots)
-        else:
-            with open(robots, "w", encoding="utf-8") as fh:
-                fh.write(robots_txt(base))
-        self.log.info(f"[SITEMAP] WRITTEN pages={len(entries)}")
+        if size > self.search_index_warn_bytes:
+            self.log.warning(f"[SEARCH] INDEX_LARGE size={q(size)}")
+        self.log.info(f"[SEARCH] INDEX_BUILT pages={len(records)} size={q(size)}")
+        return docs
 
     def feed_settings(self):
         """Feed settings, or None when the theme has no feed. theme.json "feed": true turns it on by default."""
@@ -411,8 +403,26 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
                 "categories": conf.get("categories"), "full_content": conf.get("full_content", True)}
 
     def feed_enabled(self) -> bool:
+        """True when the feed is on and repo.json has the site_url its links need."""
         settings = self.feed_settings()
         return bool(settings and settings["enabled"] and getattr(self.srvbes, "site_url", None))
+
+    def checks(self, target) -> list:
+        """Problems of the built site in target; default: broken links to pages and anchors of the target root."""
+        return check_anchors(target, html_pages(target))
+
+    def run_checks(self, target=None) -> list:
+        """Log every problem of checks(); an error, or any problem with repo.json "strict": true, fails the build."""
+        target = target or self.srvbes.get_path("target")
+        problems = self.checks(target)
+        for problem in problems:
+            log = self.log.error if problem.severity == "error" else self.log.warning
+            log(f"[CHECK] {problem}")
+        strict = (self.srvbes.get_dict("repo") or {}).get("strict") is True
+        failing = [p for p in problems if p.severity == "error" or strict]
+        if failing:
+            raise ThemeError(f"{len(failing)} post-build problem(s): {', '.join(str(p) for p in failing[:5])}")
+        return problems
 
     def write_feed(self):
         """feed.xml (Atom) with the newest dated documents."""
@@ -468,39 +478,12 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         return [{"title": title, "href": html_id_for(source)} for title, source in found]
 
     def backlinks_html(self, doc_id) -> str:
+        """The HTML_BACKLINKS block of the documents that link to doc_id; '' when none does."""
         items = self.backlinks(doc_id)
         return self.render_template("HTML_BACKLINKS", {"backlinks": items}) if items else ""
 
-    def page_hook_pre(self, var):
-        """Insert html code before the content.
-
-        This method can be overwriten by custom themes.
-        """
-        return var
-
-    def page_hook_post(self, var):
-        """Insert html code after the content.
-
-        This method can be overwriten by custom themes.
-        """
-        return var
-
     def build_page_key(self, key, values):
         """Create page for a key."""
-
-    def build_page(self, path_md):
-        """Build the final HTML Page for a document.
-
-        At this point, the Markdown document has been compiled successfully,
-        and therefore the html page can be built. The Builder receives the
-        source document filepath; another file with extension .html should
-        also exist. The html page is built by inserting the html header at
-        the beginning, appending the footer at the end, and applying the
-        necessary transformations.
-
-        Finally, the html page produced by the compiler is overwritten.
-        This method must be overwritten by custom themes.
-        """
 
     def build_page_key_value(self, kvpath):
         """
@@ -513,13 +496,8 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
         """About KB4IT page."""
         TPL_PAGE_ABOUT_KB4IT = self.template("PAGE_ABOUT_KB4IT")
         var = self.get_theme_var()
-        self.distribute_md(
-            "about_kb4it", TPL_PAGE_ABOUT_KB4IT.render(var=var),
-            as_html=False)
-        self.srvdtb.add_document("about_kb4it.md")
-        self.srvdtb.add_document_key(
-            "about_kb4it.md", "Title", "About KB4IT")
-        self.srvdtb.add_document_key("about_kb4it.md", "SystemPage", "Yes")
+        var["readme"] = about_markdown(readme_text())
+        self.add_system_page("about_kb4it", "About KB4IT", TPL_PAGE_ABOUT_KB4IT.render(var=var), as_html=False)
 
     def create_page_about_app(self):
         """About this app page, generated only when the user repo has no about_app.md."""
@@ -529,10 +507,7 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
             return
         TPL_PAGE_ABOUT_APP = self.template("PAGE_ABOUT_APP")
         var = self.get_theme_var()
-        self.distribute_md("about_app", TPL_PAGE_ABOUT_APP.render(var=var), as_html=False)
-        self.srvdtb.add_document("about_app.md")
-        self.srvdtb.add_document_key("about_app.md", "Title", "About this app")
-        self.srvdtb.add_document_key("about_app.md", "SystemPage", "Yes")
+        self.add_system_page("about_app", "About this app", TPL_PAGE_ABOUT_APP.render(var=var), as_html=False)
 
     def create_page_help(self):
         """Help page,  generated only when the user repo has no help.md."""
@@ -542,7 +517,4 @@ class Builder(AddPageMixin, HeadMetaMixin, Service):
             return
         TPL_PAGE_HELP = self.template("PAGE_HELP")
         var = self.get_theme_var()
-        self.distribute_md("help", TPL_PAGE_HELP.render(var=var), as_html=False)
-        self.srvdtb.add_document("help.md")
-        self.srvdtb.add_document_key("help.md", "Title", "Help")
-        self.srvdtb.add_document_key("help.md", "SystemPage", "Yes")
+        self.add_system_page("help", "Help", TPL_PAGE_HELP.render(var=var), as_html=False)

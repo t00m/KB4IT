@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 
 """
 KB4IT module. Entry point.
@@ -12,15 +13,19 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import os
 import sys
 import uuid
 from typing import TYPE_CHECKING, Any, Literal, overload
 
+from kb4it.core import projects
+from kb4it.core.completion import (app_completer, enable as enable_completion, id_completer, key_completer,
+                                   local_theme_completer, project_completer, theme_completer, value_completer, where_completer)
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import KB4ITError, CompilationError, ConfigError, LockBusyError, ThemeError
-from kb4it.core.lock import FileLock, repo_lock_path
-from kb4it.core.log import get_logger, setup_logging
+from kb4it.core.lock import FileLock, prune_create_locks, repo_lock_path
+from kb4it.core.log import current_log_file, discard_log_file, get_logger, kb4it_logger, prune_temp_logs, q, setup_logging
 from kb4it.services.backend import Backend
 from kb4it.services.builder import Builder
 from kb4it.services.database import Database
@@ -30,6 +35,8 @@ from kb4it.services.workflow import Workflow
 if TYPE_CHECKING:
     from kb4it.core.service import Service
 
+# Actions whose config argument may be a project id.
+REF_ACTIONS = ("build", "serve", "info", "verify")
 # Actions that write into a repository take its lock: <root>/var/kb4it.lock.
 LOCKED_ACTIONS = ("build", "create")
 # Parameters that carry code for the build to call, not settings (see services/compiler.py).
@@ -79,19 +86,23 @@ class KB4IT:
             self.params["LOGLEVEL"] = "INFO"
         setup_logging(self.params["log_level"], self.log_file)
         self.log = get_logger(__class__.__name__)
-        self.log.debug(f"[CONTROLLER] KB4IT version={ENV['APP']['build_version']}")
-        self.log.debug(f"[CONTROLLER] SYS python={ENV['SYS']['PYTHON']['VERSION']}")
-        self.log.debug(f"[CONTROLLER] SYS mako={ENV['SYS']['MAKO']['VERSION']}")
-        self.log.debug(f"[CONTROLLER] SYS platform={ENV['SYS']['PLATFORM']['OS']} family={ENV['SYS']['PLATFORM']['FAMILY']}")
-        self.log.debug(f"[CONTROLLER] GPATH_ROOT path={ENV['GPATH']['ROOT']}")
-        self.log.debug(f"[CONTROLLER] LPATH_ROOT path={ENV['LPATH']['ROOT']}")
+        self.log.debug(f"[CONTROLLER] KB4IT version={q(ENV['APP']['build_version'])}")
+        self.log.debug(f"[CONTROLLER] SYS python={q(ENV['SYS']['PYTHON']['VERSION'])}")
+        self.log.debug(f"[CONTROLLER] SYS mako={q(ENV['SYS']['MAKO']['VERSION'])}")
+        self.log.debug(f"[CONTROLLER] SYS platform={q(ENV['SYS']['PLATFORM']['OS'])} family={q(ENV['SYS']['PLATFORM']['FAMILY'])}")
+        self.log.debug(f"[CONTROLLER] GPATH_ROOT path={q(ENV['GPATH']['ROOT'])}")
+        self.log.debug(f"[CONTROLLER] LPATH_ROOT path={q(ENV['LPATH']['ROOT'])}")
+        if self.pruned_logs or self.pruned_locks:
+            self.log.debug(f"[CONTROLLER] VAR_PRUNED logs={self.pruned_logs} create_locks={self.pruned_locks}")
 
         # Start up
         self.__check_params()
         self.__setup_services()
 
     def set_log_file(self):
-        """Generate a temporary log file."""
+        """Name this run's temporary log file and sweep the old logs and create locks other runs left behind."""
+        self.pruned_logs = prune_temp_logs(ENV["LPATH"]["LOG"])
+        self.pruned_locks = prune_create_locks(ENV["LPATH"]["VAR"])
         suffix = str(uuid.uuid1().time)
         self.log_file = f"{ENV['FILE']['LOG']}.{suffix}"
 
@@ -102,7 +113,7 @@ class KB4IT:
     def __check_params(self):
         """Check arguments passed to the application."""
         for key in sorted(self.params):
-            self.log.debug(f"[CONTROLLER] PARAM name={key} value={self.params[key]}")
+            self.log.debug(f"[CONTROLLER] PARAM name={q(key)} value={q(self.params[key])}")
 
     def get_params(self):
         """Return app configuration."""
@@ -150,7 +161,7 @@ class KB4IT:
         """Get or start a registered service."""
         service = self.services.get(name) or None
         if service is None:
-            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={name}")
+            self.log.error(f"[CONTROLLER] SERVICE_NOT_REGISTERED name={q(name)}")
             raise KB4ITError(f"Service not registered: {name}")
         if not service.is_started():
             service.start(self)
@@ -160,7 +171,7 @@ class KB4IT:
         """Register a new service."""
         try:
             self.services[name] = service
-            self.log.debug(f"[CONTROLLER] SERVICE_REGISTER name={name}")
+            self.log.debug(f"[CONTROLLER] SERVICE_REGISTER name={q(name)}")
             return service
         except KeyError as error:
             self.log.error(f"[CONTROLLER] ERROR {error}")
@@ -173,14 +184,14 @@ class KB4IT:
         started = service.is_started()
         if registered and started:
             service.end()
-            self.log.debug(f"[CONTROLLER] SERVICE_UNREGISTER name={name}")
+            self.log.debug(f"[CONTROLLER] SERVICE_UNREGISTER name={q(name)}")
         service = None
 
     def run(self):
         """Run the requested action. Returns True on success, False on error."""
         action = self.params["action"]
-        self.log.debug(f"[CONTROLLER] START version={ENV['APP']['build_version']}")
-        self.log.debug(f"[CONTROLLER] ACTION name={action}")
+        self.log.debug(f"[CONTROLLER] START version={q(ENV['APP']['build_version'])}")
+        self.log.debug(f"[CONTROLLER] ACTION name={q(action)}")
         error = False
         lock = None
         try:
@@ -188,7 +199,7 @@ class KB4IT:
             if path is not None:
                 lock = FileLock(path)
                 lock.acquire()
-                self.log.debug(f"[LOCK] ACQUIRED path={path}")
+                self.log.debug(f"[LOCK] ACQUIRED path={q(path)}")
             workflow = self.get_service("Workflow")
             if action == "themes":
                 workflow.list_themes()
@@ -209,21 +220,21 @@ class KB4IT:
             elif action == "doctor":
                 workflow.doctor()
         except LockBusyError as e:
-            self.log.error(f"[LOCK] BUSY path={e.path} pid={e.pid}")
+            self.log.error(f"[LOCK] BUSY path={q(e.path)} pid={q(e.pid)}")
             holder = f" (PID {e.pid})" if e.pid else ""
             print(f"KB4IT is already working on this repository{holder}", file=sys.stderr)
             error = True
         except ConfigError as e:
-            self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] CONFIG_ERROR reason={q(e)}")
             error = True
         except ThemeError as e:
-            self.log.error(f"[CONTROLLER] THEME_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] THEME_ERROR reason={q(e)}")
             error = True
         except CompilationError as e:
-            self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] COMPILE_ERROR reason={q(e)}")
             error = True
         except KB4ITError as e:
-            self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={e}")
+            self.log.error(f"[CONTROLLER] KB4IT_ERROR reason={q(e)}")
             error = True
         finally:
             if lock is not None:
@@ -241,7 +252,11 @@ class KB4IT:
         except AttributeError as errmsg:
             # KB4IT wasn't even started
             self.log.error(f"[CONTROLLER] ERROR {errmsg}")
-        self.log.debug(f"[CONTROLLER] END version={ENV['APP']['build_version']}")
+        self.log.debug(f"[CONTROLLER] END version={q(ENV['APP']['build_version'])}")
+        # A build has already moved this log into <repo>/var/log; the other actions have no
+        # repository to keep it in. Keep it after an error, for the user to read.
+        if not error:
+            discard_log_file(self.log_file)
 
 
 def version_text():
@@ -254,13 +269,26 @@ def version_text():
     return f"{text}\ncommit {build['commit']} {origin}"
 
 
-def _log_hint(params) -> str:
-    """' (see <repo>/var/log/kb4it.log)' when the action has a repository whose log exists, else ''."""
+def _log_of_run(params, app=None) -> str | None:
+    """The log of this run: the one KB4IT writes now when it is this run's, else its temporary log, else its repository log."""
+    candidates = []
     config = getattr(params, "config", None)
-    if not isinstance(config, str):
-        return ""
-    log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(config))), "var", "log", "kb4it.log")
-    return f" (see {log_file})" if os.path.exists(log_file) else ""
+    if isinstance(config, str):
+        candidates.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(config))), "var", "log", "kb4it.log"))
+    temporary = getattr(app, "get_log_file", None)  # the error path must not fail on a half-made app
+    if callable(temporary):
+        candidates.insert(0, temporary())
+    # Another KB4IT in this process (the TUI, kb4it serve, a test) may still hold a handler on its own log.
+    current = current_log_file()
+    if current and any(os.path.abspath(current) == os.path.abspath(c) for c in candidates):
+        return current
+    return next((c for c in candidates if os.path.exists(c)), None)
+
+
+def _log_hint(params, app=None) -> str:
+    """' (see <log file>)' when the run has a log file, else ''."""
+    log_file = _log_of_run(params, app)
+    return f" (see {log_file})" if log_file else ""
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -296,17 +324,48 @@ def build_parser() -> argparse.ArgumentParser:
     # Initialize repository
     init_parser = subparsers.add_parser(
         "create", help="Initialize a new repository")
-    init_parser.add_argument("theme", help="Theme to use for initialization")
+    init_parser.add_argument("theme", help="Theme to use for initialization").completer = theme_completer
     init_parser.add_argument(
         "app",
         nargs="?",
         default="default",
         help="App template to use (default: 'default')",
-    )
+    ).completer = app_completer
     init_parser.add_argument("repo_path", help="Path to the repository")
+    init_parser.add_argument(
+        "--id", help="Short id for the new project, usable instead of its config path")
+    init_parser.add_argument(
+        "--index", choices=("yes", "no"),
+        help="Allow search engines to index the site: writes seo.index into repo.json (default: decide later)")
 
     # List themes
     subparsers.add_parser("themes", help="List all installed themes")
+
+    # Install a theme from a zip file or an https URL
+    theme_install = subparsers.add_parser(
+        "install-theme", help="Install a theme from a zip file or an https:// URL into your themes folder",
+        description="The zip holds one top folder named as the id in its theme.json. "
+        "A theme of yours with that id is replaced.",
+        epilog="Examples:\n\n   kb4it install-theme ~/Downloads/mytheme.zip\n"
+        "   kb4it install-theme https://example.org/themes/mytheme.zip",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    theme_install.add_argument("source", help="Path to a .zip file, or an https:// URL")
+
+    # Start a theme of your own from a starter
+    from kb4it.core.newtheme import add_parser as add_new_theme_parser
+    add_new_theme_parser(subparsers)
+    from kb4it.core.themeinfo import add_parser as add_theme_info_parser
+    add_theme_info_parser(subparsers)
+
+    # Remove a theme of the user
+    theme_uninstall = subparsers.add_parser(
+        "uninstall-theme", help="Remove a theme from your themes folder (bundled themes stay)",
+        epilog="Example:\n\n   kb4it uninstall-theme mytheme",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    theme_uninstall.add_argument("id", help="Theme id").completer = local_theme_completer
+    theme_uninstall.add_argument("--yes", action="store_true", help="Do not ask for confirmation")
 
     # Installation report
     subparsers.add_parser("doctor", help="Show the build, Python, paths and themes; exit 1 when bundled files are missing")
@@ -320,11 +379,62 @@ def build_parser() -> argparse.ArgumentParser:
     # List projects
     subparsers.add_parser("projects", help="List all projects created by the user")
 
+    # Add an existing knowledge base to the project list
+    repo_import = subparsers.add_parser(
+        "import", help="Add an existing knowledge base to the project list, or set its id and name",
+        epilog="Example:\n\n   kb4it import ~/kb/sap/config/repo.json --id sapblog",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_import.add_argument("config", help="Path to config/repo.json")
+    repo_import.add_argument("--id", help="Short id, usable instead of the config path")
+    repo_import.add_argument("--name", help="Display name (default: title in repo.json)")
+
+    # Remove a project from the list, and optionally its files
+    repo_delete = subparsers.add_parser(
+        "delete", help="Remove a project from the project list; --files also deletes its folder",
+        epilog="Examples:\n\n   kb4it delete sapblog\n   kb4it delete sapblog --files",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_delete.add_argument("project", help="Project id or path to config/repo.json").completer = project_completer
+    repo_delete.add_argument("--files", action="store_true",
+                             help="Also delete the project folder (asks you to type the id to confirm)")
+    repo_delete.add_argument("--yes", action="store_true", help="Do not ask for confirmation")
+
+    # Explore properties and values read from the sources
+    repo_keys = subparsers.add_parser(
+        "keys", help="List the properties of a project, the values of one, or the documents with one value",
+        epilog="Examples:\n\n   kb4it keys sapblog\n   kb4it keys sapblog Tag\n   kb4it keys sapblog Tag backup",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_keys.add_argument("project", help="Project id or path to config/repo.json").completer = project_completer
+    repo_keys.add_argument("key", nargs="?", help="Property name, such as Tag").completer = key_completer
+    repo_keys.add_argument("value", nargs="?", help="Property value, such as backup").completer = value_completer
+
+    # Find text in the sources
+    repo_search = subparsers.add_parser(
+        "search", help="Find text in the Markdown sources of every project, or of the ones given with -p",
+        description="Print path:line: text for each matching line. Exit status: 0 found, 1 not found, 2 error.",
+        epilog="Examples:\n\n   kb4it search restore\n   kb4it search restore -p sapblog --where Status=Open\n"
+        "   vim -q <(kb4it search restore)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    repo_search.add_argument("pattern", help="Text to find (plain text unless -r)")
+    repo_search.add_argument("-p", "--project", dest="projects", action="append",
+                             help="Project id or config path; repeat for several (default: every project)",
+                             ).completer = id_completer
+    repo_search.add_argument("--where", action="append", metavar="KEY=VALUE",
+                             help="Only documents with this property value; repeat to combine",
+                             ).completer = where_completer
+    repo_search.add_argument("-r", "--regex", action="store_true", help="PATTERN is a regular expression")
+    repo_search.add_argument("-s", "--case-sensitive", action="store_true", help="Match upper and lower case exactly")
+    repo_search.add_argument("-l", "--files-with-matches", action="store_true",
+                             help="Print only the paths of matching files")
+
     # List apps for a specific theme
     theme_apps = subparsers.add_parser(
         "apps", help="List all apps for a specific theme"
     )
-    theme_apps.add_argument("theme", help="Theme to query")
+    theme_apps.add_argument("theme", help="Theme to query").completer = theme_completer
 
     # Run repository workflow
     repo_build = subparsers.add_parser(
@@ -336,8 +446,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     repo_build.add_argument(
-        "config", help="Path to the repository config file (mandatory)"
-    )
+        "config", help="Project id or path to config/repo.json"
+    ).completer = project_completer
     repo_build.add_argument(
         "-f", "--force",
         action="store_true",
@@ -358,7 +468,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="Example:\n\n"
         "   kb4it serve /home/jsmith/Documents/myrepo/config/repo.json",
     )
-    repo_serve.add_argument("config", help="Path to the repository config file (mandatory)")
+    repo_serve.add_argument("config", help="Project id or path to config/repo.json").completer = project_completer
     repo_serve.add_argument("--host", default="127.0.0.1",
                             help="Address to listen on (default 127.0.0.1, this computer only)")
     repo_serve.add_argument("--port", type=int, default=8642,
@@ -383,8 +493,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     repo_info.add_argument(
-        "config", help="Path to the repository config file (mandatory)"
-    )
+        "config", help="Project id or path to config/repo.json"
+    ).completer = project_completer
 
     # Verify repository sources
     repo_verify = subparsers.add_parser(
@@ -396,10 +506,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     repo_verify.add_argument(
-        "config", help="Path to the repository config file (mandatory)"
-    )
+        "config", help="Project id or path to config/repo.json"
+    ).completer = project_completer
 
     return parser
+
+
+# Commands that run without the build services: action -> (module, function taking vars(params)).
+SIMPLE_ACTIONS = {
+    "search": ("kb4it.core.grep", "run_search"),
+    "keys": ("kb4it.core.explore", "run_keys"),
+    "delete": ("kb4it.core.projectcli", "run_delete"),
+    "install-theme": ("kb4it.core.themecli", "run_install_theme"),
+    "new-theme": ("kb4it.core.newtheme", "run_new_theme"),
+    "theme-info": ("kb4it.core.themeinfo", "run_theme_info"),
+    "uninstall-theme": ("kb4it.core.themecli", "run_uninstall_theme"),
+    "import": ("kb4it.core.projectcli", "run_import"),
+    "serve": ("kb4it.core.serve", "run_serve"),
+}
 
 
 def main():
@@ -417,11 +541,19 @@ def main():
         return
 
     parser = build_parser()
+    enable_completion(parser)
 
     # Dispatch to the appropriate action handler
     params = None
+    app = None
     try:
         params = parser.parse_args()
+        if params.action in REF_ACTIONS:
+            params.config = projects.resolve(params.config)
+        if params.action == "create" and params.id:
+            problem = projects.id_problem(params.id, projects.load())
+            if problem:
+                raise projects.ProjectError(problem)
         if params.action != "help" and not os.environ.get("CI"):
             from kb4it.core.notice import (HELP_ONLINE_URL, help_notice_dismissed,
                                            help_notice_lines, offline_index)
@@ -431,19 +563,29 @@ def main():
                         print(line, file=sys.stderr)
             except OSError:
                 pass  # The notice is optional; an unreadable KB4IT_HOME must not stop the command.
-        if params.action == "serve":
-            from kb4it.core.serve import run_serve
-            sys.exit(run_serve(vars(params)))
+        if params.action in SIMPLE_ACTIONS:
+            module, function = SIMPLE_ACTIONS[params.action]
+            sys.exit(getattr(importlib.import_module(module), function)(vars(params)))
         if params.action == "help":
             from kb4it.core.notice import run_help
             sys.exit(run_help(url=params.url, dismiss=params.dismiss))
         app = KB4IT(params)
         success = app.run()
+        log_file = None if success else _log_of_run(params, app)
+        if log_file:
+            print(f"Log: {log_file}", file=sys.stderr)
         sys.exit(0 if success else 1)
     except SystemExit:
         raise
+    except projects.ProjectError as error:
+        print(f"Error: {error}")
+        sys.exit(1)
     except Exception as error:
-        print(f"Error: {type(error).__name__}: {error}{_log_hint(params)}")
+        if kb4it_logger().handlers:
+            # The screen gets one line below; the log file gets the traceback to find the cause.
+            get_logger("KB4IT").error(f"[CONTROLLER] UNEXPECTED_ERROR type={type(error).__name__} reason={q(error)}",
+                                      exc_info=True, extra={"file_only": True})
+        print(f"Error: {type(error).__name__}: {error}{_log_hint(params, app)}")
         print("Run 'kb4it <action name> --help' to get help for a specific command.")
         sys.exit(1)
 

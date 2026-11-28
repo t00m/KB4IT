@@ -7,11 +7,14 @@ import time
 import urllib.request
 
 import pytest
-from textual.widgets import Button, DataTable, Input, Label, ListView, RichLog
+from textual.widgets import Button, DataTable, Input, Label, ListView, RadioButton, RichLog
 
 from kb4it.tui import app as tui
-from kb4it.tui import clipboard, projects
+from kb4it.core import projects as core_projects
+from kb4it.tui import clipboard
+from kb4it.tui import projects as tui_projects
 from kb4it.tui.screens import project as project_screens
+from kb4it.tui.screens.edit_id import EditIdScreen
 from tests.helpers import mini_theme, page, run_kb4it, write_repo
 
 SIZE = (140, 60)
@@ -21,7 +24,7 @@ SIZE = (140, 60)
 def registry(tmp_path, monkeypatch):
     """Point the TUI project registry at a fresh file."""
     path = tmp_path / "projects.json"
-    monkeypatch.setattr(projects, "PROJECTS_FILE", path)
+    monkeypatch.setattr(core_projects, "PROJECTS_FILE", path)
     return path
 
 
@@ -65,7 +68,7 @@ async def wait_for(pilot, condition, timeout=60):
 
 
 async def open_first_project(app, pilot):
-    app.screen.query_one("#proj-list", ListView).index = 0
+    app.screen.query_one("#proj-list", DataTable).move_cursor(row=0)
     await pilot.pause()
     app.screen.action_open_project()
     await pilot.pause()
@@ -92,6 +95,124 @@ def test_helpers(tmp_path):
     assert tui._log_path(cfg) is None and tui._kbdict_path(cfg) is None
     assert tui._parse_level("   ERROR | x") == "ERROR"
     assert tui._parse_level("plain line") == "INFO"
+    assert tui._parse_level("2026-11-03 21:00:00 |    WARNING | MainThread | Backend | backend:1 | x") == "WARNING"
+
+
+@pytest.fixture
+def user_themes(tmp_path, monkeypatch):
+    """Point the user's themes folder and var folder at fresh ones; return the themes folder."""
+    from kb4it.core.env import ENV
+    root = tmp_path / "kbhome"
+    monkeypatch.setitem(ENV["LPATH"], "VAR", str(root / "var"))
+    monkeypatch.setitem(ENV["LPATH"], "THEMES", str(root / "themes"))
+    return root / "themes"
+
+
+def test_get_themes_lists_every_copy_and_marks_the_active_one(tmp_path, user_themes):
+    from kb4it.core import themeinstall
+    from tests.core.test_themeinstall import mini_zip
+    themeinstall.install_zip(mini_zip(tmp_path, top="techdoc", id="techdoc"))
+    techdoc = [t for t in tui.get_themes() if t["id"] == "techdoc"]
+    assert len(techdoc) == 2
+    assert [t["_scope"] for t in techdoc if t["_active"]] == ["local"]
+    active = [t for t in tui_projects.active_themes() if t["id"] == "techdoc"]
+    assert len(active) == 1 and active[0]["_scope"] == "local"
+    assert all(t["_active"] for t in tui_projects.active_themes())
+
+
+def theme_rows(table):
+    return [table.get_row_at(index) for index in range(table.row_count)]
+
+
+def test_themes_screen_shows_active_column(tmp_path, registry, user_themes):
+    from kb4it.core import themeinstall
+    from tests.core.test_themeinstall import mini_zip
+    themeinstall.install_zip(mini_zip(tmp_path, top="techdoc", id="techdoc"))
+
+    async def scenario(app, pilot):
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        table = app.screen.query_one("#tbl", DataTable)
+        columns = [str(column.label) for column in table.columns.values()]
+        assert columns[:5] == ["ID", "Name", "Version", "Active", "Scope"]
+        techdoc = sorted((row[3], row[4]) for row in theme_rows(table) if row[0] == "techdoc")
+        assert techdoc == [("no", "global"), ("yes", "local")]
+    run(scenario)
+
+
+def test_themes_screen_installs_from_a_path(tmp_path, registry, user_themes):
+    from tests.core.test_themeinstall import mini_zip
+    zip_path = mini_zip(tmp_path)
+
+    async def scenario(app, pilot):
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        app.screen.query_one("#install", Button).press()
+        await wait_for(pilot, lambda: bool(app.screen.query("#inp-source")), timeout=20)
+        app.screen.query_one("#inp-source", Input).value = str(zip_path)
+        app.screen.query_one("#do-install", Button).press()
+        table = None
+
+        def installed():
+            nonlocal table
+            if not isinstance(app.screen, tui.ThemesScreen):
+                return False
+            table = app.screen.query_one("#tbl", DataTable)
+            return any(row[0] == "mini" for row in theme_rows(table))
+        await wait_for(pilot, installed, timeout=20)
+        assert (user_themes / "mini" / "theme.json").is_file()
+    run(scenario)
+
+
+def test_unexpected_install_error_is_a_notification(tmp_path, registry, user_themes, monkeypatch):
+    from kb4it.core import themeinstall
+
+    def broken(source):
+        raise RuntimeError("File theme.json is encrypted, password required")
+    monkeypatch.setattr(themeinstall, "install", broken)
+    notes = []
+
+    async def scenario(app, pilot):
+        monkeypatch.setattr(app, "notify", lambda message, **kw: notes.append(message))
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        app.screen.query_one("#install", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#inp-source", Input).value = str(tmp_path / "x.zip")
+        app.screen.query_one("#do-install", Button).press()
+        await wait_for(pilot, lambda: any("encrypted" in note for note in notes), timeout=10)
+        assert isinstance(app.screen, tui.ThemesScreen)
+    run(scenario)
+
+
+def test_uninstall_enabled_only_for_local_rows(tmp_path, registry, user_themes):
+    from kb4it.core import themeinstall
+    from tests.core.test_themeinstall import mini_zip
+    themeinstall.install_zip(mini_zip(tmp_path))
+
+    async def scenario(app, pilot):
+        app.push_screen(tui.ThemesScreen())
+        await pilot.pause()
+        table = app.screen.query_one("#tbl", DataTable)
+        uninstall = app.screen.query_one("#uninstall", Button)
+        rows = theme_rows(table)
+        global_row = next(i for i, row in enumerate(rows) if row[4] == "global")
+        local_row = next(i for i, row in enumerate(rows) if row[0] == "mini")
+        table.move_cursor(row=global_row)
+        await pilot.pause()
+        assert uninstall.disabled
+        table.move_cursor(row=local_row)
+        await pilot.pause()
+        assert not uninstall.disabled
+        uninstall.press()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.ConfirmScreen)
+        app.screen.query_one("#yes", Button).press()
+        await pilot.pause()
+        await wait_for(pilot, lambda: not (user_themes / "mini").exists(), timeout=10)
+        assert isinstance(app.screen, tui.ThemesScreen)
+        assert not any(row[0] == "mini" for row in theme_rows(app.screen.query_one("#tbl", DataTable)))
+    run(scenario)
 
 
 def test_copy_to_clipboard_falls_back_to_osc52(monkeypatch):
@@ -285,9 +406,17 @@ def test_create_project(registry, tmp_path):
         create.query_one("#inp-path", Input).value = str(path)
         create.query_one("#create", Button).press()
         await pilot.pause()
+        assert "search engines" in str(create.query_one("#error-banner", Label).render())   # no choice yet
+        assert not path.exists()
+        create.query_one("#index-no", RadioButton).value = True
+        await pilot.pause()
+        create.query_one("#create", Button).press()
+        await pilot.pause()
         assert isinstance(app.screen, tui.MainScreen), create.query_one("#error-banner", Label).render()
     run(scenario)
-    assert json.loads((path / "config" / "repo.json").read_text(encoding="utf-8"))["theme"] == "blog"
+    conf = json.loads((path / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["theme"] == "blog"
+    assert conf["seo"]["index"] is False, "the same path as kb4it create --index no"
     assert tui.load_projects() == [{"name": "New blog", "config": str(path / "config" / "repo.json")}]
 
 
@@ -304,6 +433,8 @@ def test_create_project_shows_next_steps(registry, tmp_path):
         create.query_one("#themes-list", ListView).index = ids.index("blog")
         await pilot.pause()
         create.query_one("#inp-name", Input).value = "Steps"
+        create.query_one("#index-yes", RadioButton).value = True
+        await pilot.pause()
         create.query_one("#inp-path", Input).value = str(path)
         create.query_one("#create", Button).press()
         await pilot.pause()
@@ -327,6 +458,8 @@ def test_create_failure_shows_no_next_steps(registry, tmp_path):
         create.query_one("#themes-list", ListView).index = ids.index("blog")
         await pilot.pause()
         create.query_one("#inp-name", Input).value = "Blocked"
+        create.query_one("#index-yes", RadioButton).value = True
+        await pilot.pause()
         create.query_one("#inp-path", Input).value = str(blocked)
         create.query_one("#create", Button).press()
         await pilot.pause()
@@ -352,7 +485,7 @@ def test_import_and_delete_project(registry, mini_repo):
         await pilot.pause()
         assert tui.load_projects() == [{"name": "Test", "config": str(mini_repo)}]
 
-        app.screen.query_one("#proj-list", ListView).index = 0
+        app.screen.query_one("#proj-list", DataTable).move_cursor(row=0)
         await pilot.click("#delete")
         await pilot.pause()
         assert isinstance(app.screen, tui.ConfirmScreen)
@@ -408,4 +541,182 @@ def test_tui_hides_the_help_banner_in_ci(registry, tmp_path, monkeypatch):
 
     async def scenario(app, pilot):
         assert not app.screen.query_one("#help-banner").display
+    run(scenario)
+
+
+def test_log_viewer_keeps_a_traceback_with_its_error(registry, tmp_path):
+    log = tmp_path / "repo" / "var" / "log" / "kb4it.log"
+    log.parent.mkdir(parents=True)
+    log.write_text(
+        "2026-11-03 21:00:00 |       INFO | MainThread | Backend | backend:1 | [BACKEND] START\n"
+        "2026-11-03 21:00:01 |      ERROR | compile_0 | Compiler | compiler:2 | [COMPILER] ERROR doc=a.md\n"
+        "Traceback (most recent call last):\n"
+        "KeyError: 'Date'\n"
+        "2026-11-03 21:00:02 |       INFO | MainThread | Workflow | workflow:3 | [WORKFLOW] END\n",
+        encoding="utf-8")
+    screen = tui.LogViewerScreen(str(tmp_path / "repo" / "config" / "repo.json"))
+
+    class _Log:
+        def write(self, _):
+            pass
+
+        def clear(self):
+            pass
+    screen.query_one = lambda *_: _Log()
+    screen._load()
+    levels = [level for _, level in screen._lines]
+    assert levels == ["INFO", "ERROR", "ERROR", "ERROR", "INFO"]
+
+
+async def fill_create(app, pilot, path, name, pid):
+    await pilot.click("#new")
+    await pilot.pause()
+    create = app.screen
+    ids = [t["id"] for t in create._themes]
+    create.query_one("#themes-list", ListView).index = ids.index("blog")
+    await pilot.pause()
+    create.query_one("#inp-name", Input).value = name
+    create.query_one("#inp-id", Input).value = pid
+    create.query_one("#inp-path", Input).value = str(path)
+    create.query_one("#index-no", RadioButton).value = True
+    await pilot.pause()
+    return create
+
+
+def test_create_project_with_id(registry, tmp_path):
+    path = tmp_path / "withid"
+
+    async def scenario(app, pilot):
+        create = await fill_create(app, pilot, path, "With id", "kb3")
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.MainScreen), create.query_one("#error-banner", Label).render()
+    run(scenario)
+    assert tui.load_projects() == [{"id": "kb3", "name": "With id", "config": str(path / "config" / "repo.json")}]
+
+
+def test_create_with_taken_id_shows_error_and_creates_nothing(registry, tmp_path, mini_repo):
+    core_projects.register(str(mini_repo), pid="kb3")
+    path = tmp_path / "taken"
+
+    async def scenario(app, pilot):
+        create = await fill_create(app, pilot, path, "Taken", "kb3")
+        assert "already used" in str(create.query_one("#id-error", Label).render())
+        create.query_one("#create", Button).press()
+        await pilot.pause()
+        assert "already used" in str(create.query_one("#error-banner", Label).render())
+        assert not isinstance(app.screen, tui.MainScreen)
+    run(scenario)
+    assert not path.exists()
+
+
+def test_import_project_with_id(registry, mini_repo):
+    async def scenario(app, pilot):
+        await pilot.click("#import")
+        await pilot.pause()
+        screen = app.screen
+        screen.query_one("#inp-path", Input).focus()
+        screen.query_one("#inp-path", Input).value = str(mini_repo)
+        await pilot.press("enter")
+        await pilot.pause()
+        screen.query_one("#inp-id", Input).value = "Bad Id"
+        await pilot.pause()
+        assert "Invalid id" in str(screen.query_one("#id-error", Label).render())
+        await pilot.click("#import")
+        await pilot.pause()
+        assert tui.load_projects() == []
+        screen.query_one("#inp-id", Input).value = "mini"
+        await pilot.pause()
+        screen.query_one("#import", Button).press()   # the error toast may cover the button
+        await pilot.pause()
+        assert isinstance(app.screen, tui.MainScreen)
+        assert app.screen.query_one("#proj-list", DataTable).get_row_at(0)[0] == "mini"
+    run(scenario)
+    assert tui.load_projects() == [{"id": "mini", "name": "Test", "config": str(mini_repo)}]
+
+
+def test_edit_id_sets_changes_and_removes(registry, mini_repo):
+    core_projects.register(str(mini_repo))
+
+    async def edit(app, pilot, value):
+        app.screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        dialog = app.screen
+        assert isinstance(dialog, EditIdScreen)
+        dialog.query_one("#inp-id", Input).value = value
+        await pilot.pause()
+        dialog.query_one("#save", Button).press()
+        await pilot.pause()
+
+    async def scenario(app, pilot):
+        await open_first_project(app, pilot)
+        await edit(app, pilot, "kb5")
+        assert core_projects.load()[0]["id"] == "kb5"
+        app.screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        assert app.screen.query_one("#inp-id", Input).value == "kb5"
+        app.screen.query_one("#cancel", Button).press()
+        await pilot.pause()
+        await edit(app, pilot, "kb6")
+        assert core_projects.load()[0]["id"] == "kb6"
+        await edit(app, pilot, "")
+        assert "id" not in core_projects.load()[0]
+    run(scenario)
+
+
+def test_edit_id_rejects_taken_id(registry, mini_repo, tmp_path):
+    other = write_repo(tmp_path / "other", "mini", {"a.md": page("A", Tag="x")})
+    core_projects.register(str(mini_repo))
+    core_projects.register(str(other), pid="taken")
+
+    async def scenario(app, pilot):
+        await open_first_project(app, pilot)
+        app.screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        dialog = app.screen
+        dialog.query_one("#inp-id", Input).value = "taken"
+        await pilot.pause()
+        assert "already used" in str(dialog.query_one("#id-error", Label).render())
+        dialog.query_one("#save", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, EditIdScreen)
+    run(scenario)
+    assert "id" not in core_projects.load()[0]
+
+
+def test_main_list_is_a_table_of_id_name_and_config(registry, mini_repo, tmp_path):
+    other = write_repo(tmp_path / "other", "mini", {"a.md": page("A", Tag="x")}, title="Other")
+    core_projects.register(str(mini_repo), pid="kb1")
+    core_projects.register(str(other))
+
+    async def scenario(app, pilot):
+        table = app.screen.query_one("#proj-list", DataTable)
+        assert [str(column.label) for column in table.columns.values()] == ["ID", "Name", "Config"]
+        assert table.get_row_at(0) == ["kb1", "Test", str(mini_repo)]
+        assert table.get_row_at(1) == ["-", "Other", str(other)]
+        table.move_cursor(row=1)
+        await pilot.pause()
+        app.screen.action_open_project()
+        await pilot.pause()
+        assert isinstance(app.screen, tui.ProjectScreen)
+        assert app.screen.title.startswith("Other")
+    run(scenario)
+
+
+def test_project_screen_shows_the_id(registry, mini_repo):
+    core_projects.register(str(mini_repo), pid="kb1")
+
+    async def scenario(app, pilot):
+        await open_first_project(app, pilot)
+        screen = app.screen
+        assert screen.title == "Test (kb1)"
+        assert "Id: kb1" in str(screen.query_one("#info-panel").render())
+        screen.query_one("#edit-id", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#inp-id", Input).value = "kb7"
+        await pilot.pause()
+        app.screen.query_one("#save", Button).press()
+        await pilot.pause()
+        assert screen.title == "Test (kb7)"
+        assert "Id: kb7" in str(screen.query_one("#info-panel").render())
     run(scenario)

@@ -1,14 +1,15 @@
 <% _hl = (var['repo'].get('markdown') or {}).get('highlight', 'client') %>
 <!DOCTYPE html>
-% if var['page'].get('exemplary'):
-<html lang="en" class="kb-exemplary">
+<% _html_class = ' '.join(name for name, on in (('kb-exemplary', var['page'].get('exemplary')), ('kb-focus', var.get('focus_mode'))) if on) %>
+% if _html_class:
+<html lang="${var['lang']}" class="${_html_class}">
 % else:
-<html lang="en">
+<html lang="${var['lang']}">
 % endif
 <head>
     <!-- PAGE METADATA :: START -->
     <meta charset="UTF-8">
-    <title>${var['repo']['title']} - ${var['page']['title']}</title>
+    <title>${var['repo']['title'] if var['page']['title'] in ('', var['repo']['title']) else var['page']['title'] + ' - ' + var['repo']['title']}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="KB4IT ${var['env']['APP']['build_version']}; ${var['theme'].get('identity', '')}">
     <!-- PAGE METADATA :: END -->
@@ -18,26 +19,27 @@
     <!-- SCRIPT FLAG :: END -->
     <!-- STYLESHEETS :: START -->
 % if _hl == 'client':
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/Highlight/styles/github-dark.css">
+    <link rel="stylesheet" href="resources/vendor/highlight/styles/github-dark.css">
 % elif _hl == 'pygments':
     <link rel="stylesheet" href="resources/pygments.css">
 % endif
-    <link rel="stylesheet" href="resources/themes/techdoc/framework/uikit/css/uikit.min.css" />
+    <link rel="stylesheet" href="resources/vendor/uikit/css/uikit.min.css" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="resources/themes/techdoc/framework/kb4it/css/screen.css" />
     <!-- STYLESHEETS :: END -->
     <!-- LIBRARIES :: START -->
 % if _hl == 'client':
-    <script src="resources/themes/techdoc/framework/Highlight/highlight.js"></script>
+    <script src="resources/vendor/highlight/highlight.js"></script>
 % endif
-    <script src="resources/themes/techdoc/framework/uikit/js/uikit.min.js"></script>
-    <script src="resources/themes/techdoc/framework/uikit/js/uikit-icons.min.js"></script>
-    <script src="resources/themes/techdoc/framework/datatables/js/jquery-3.5.1.js"></script>
-    <script src="resources/themes/techdoc/framework/datatables/js/jquery.dataTables.min.js"></script>
-    <script src="resources/themes/techdoc/framework/datatables/js/dataTables.uikit.min.js"></script>
+    <script src="resources/vendor/uikit/js/uikit.min.js"></script>
+    <script src="resources/vendor/uikit/js/uikit-icons.min.js"></script>
+    <script src="resources/vendor/datatables/js/jquery-3.5.1.js"></script>
+    <script src="resources/vendor/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="resources/vendor/datatables/js/dataTables.uikit.min.js"></script>
     <!-- LIBRARIES :: END -->
     <script src="resources/themes/techdoc/framework/kb4it/js/page.js" defer></script>
     <script src="resources/themes/techdoc/framework/kb4it/js/blocks.js" defer></script>
+    <script src="resources/vendor/tablefilter/js/datatable-filter.js" defer></script>
 % if var.get('has_quality'):
     <script defer src="quality-index.js"></script>
     <script defer src="resources/themes/techdoc/framework/kb4it/js/quality.js"></script>
@@ -55,12 +57,13 @@
                     autoWidth:      false,
                     scrollY:        'calc(100vh - 200px)',
                     scrollX:        true,
-                    scrollCollapse: false,
+                    scrollCollapse: true,
                     scroller:       false,
                     stateSave: false,
                     paging:   false,
                     info:     true,
-                    order: [[ 0, "desc" ]]
+                    // A table may set its own first order: data-kb-order='[[0, "asc"]]'.
+                    order: $(this).data('kbOrder') || [[ 0, "desc" ]]
                 });
             });
         });
@@ -114,6 +117,12 @@
                                     <a class="uk-link-heading" href="bookmarks.html"><span data-uk-icon="bookmark"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Bookmarks</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="gallery.html"><span data-uk-icon="image"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Gallery</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
+                                    <a class="uk-link-heading" href="diagrams.html"><span data-uk-icon="git-fork"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Diagrams</span></a>
+                                </li>
+                                <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="properties.html"><span data-uk-icon="database"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Properties</span></a>
                                     <div class="uk-navbar-dropdown" data-uk-dropdown="pos: right-top">
                                         <ul class="uk-nav uk-navbar-dropdown-nav uk-padding-small uk-column-1-2">
@@ -136,10 +145,7 @@
 % endif
                                 <li class="uk-nav-divider"></li>
                                 <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="javascript:location.reload();"><span data-uk-icon="refresh"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Reload page</span></a>
-                                </li>
-                                <li class="uk-link-toggle">
-                                    <a class="uk-link-heading" href="help.html"><span data-uk-icon="question"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Help</span></a>
+                                    <a class="uk-link-heading" href="${var['help_url']}" target="_blank" rel="noopener"><span data-uk-icon="question"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">Help</span></a>
                                 </li>
                                 <li class="uk-link-toggle">
                                     <a class="uk-link-heading" href="about_app.html"><span data-uk-icon="info"></span><span class="uk-padding-small uk-padding-remove-bottom uk-padding-remove-bottom-right uk-padding-remove-top">About this app</span></a>
@@ -155,50 +161,63 @@
             <!-- LOGO MENU :: END -->
             <!-- PAGE TITLE :: START -->
             <!-- The title takes the room the left and right blocks leave, and is cut with an ellipsis. -->
-            <div class="kb4it-navbar-title">
-                <ul class="uk-navbar-nav">
-                    <li>
-                        <a class="uk-link-toggle uk-text-primary" href="#" title="${var['page']['title']}"><span id="kb4it-page-title" class="uk-text-primary uk-text-small">${var['page']['title']}</span></a>
 <%
     _has_actions = '<a ' in var['actions']
     _has_toc = var['has_toc'] and len(var['toc']) > 0
+    _focus = var.get('has_toc') and not var.get('SystemPage')
 %>
-% if _has_actions or _has_toc:
+            <div class="kb4it-navbar-title${' kb4it-has-actions' if _has_actions else ''}">
+                <ul class="uk-navbar-nav">
+                    <li>
+                        <a class="uk-link-toggle uk-text-primary" href="#" title="${var['page']['title']}"><span id="kb4it-page-title" class="uk-text-primary uk-text-small">${var['page']['title']}</span></a>
+% if _has_toc:
                         <!-- TITLE MENU :: START -->
-                        <!-- Shown on hover: the page actions in one row, then the table of contents. -->
-                        <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center kb4it-title-menu">
-    % if _has_actions:
-                            <!-- PAGE ACTIONS :: START -->
-                            <div class="kb4it-page-actions noprint">
-${var['actions'] | n}
-                            </div>
-                            <!-- PAGE ACTIONS :: END -->
-    % endif
-    % if _has_toc:
-                            <!-- TITLE MENU CONTENTS :: START -->
+                        <!-- Shown on hover: the table of contents, below the whole bar so it never covers the actions. -->
+                        <div class="uk-navbar-dropdown uk-navbar-dropdown-bottom-center kb4it-title-menu" data-uk-drop="target-y: !.uk-navbar-container">
                             <div class="uk-navbar-dropdown-nav kb4it-title-toc">
 ${var['toc'] | n}
                             </div>
-                            <!-- TITLE MENU CONTENTS :: END -->
-    % endif
                         </div>
                         <!-- TITLE MENU :: END -->
 % endif
                     </li>
                 </ul>
+% if _has_actions:
+                <!-- PAGE ACTIONS :: START -->
+                <!-- Always visible: one row of icons under the title. -->
+                <div class="kb4it-page-actions noprint">
+${var['actions'] | n}
+                </div>
+                <!-- PAGE ACTIONS :: END -->
+% endif
             </div>
             <!-- PAGE TITLE :: END -->
-% if var.get('search_box'):
-            <!-- SEARCH BUTTON :: START -->
+            <!-- TOP BAR BUTTONS :: START -->
             <div class="uk-navbar-right">
                 <ul class="uk-navbar-nav noprint">
+% if _focus:
+                    <!-- FOCUS BUTTON :: START -->
+                    <!-- A switch: hides everything but the top bar, the document and the side table of contents. "focus_mode": true starts it on. -->
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-link-heading kb-focus-toggle" href="#" role="button" aria-pressed="${'true' if var.get('focus_mode') else 'false'}" title="${'Leave focus mode' if var.get('focus_mode') else 'Focus mode'}" aria-label="${'Leave focus mode' if var.get('focus_mode') else 'Focus mode'}" data-kb-focus><span class="kb-focus-enter" data-uk-icon="expand"></span><span class="kb-focus-leave" data-uk-icon="shrink"></span></a>
+                    </li>
+                    <!-- FOCUS BUTTON :: END -->
+% endif
+                    <!-- RELOAD BUTTON :: START -->
+                    <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
+                        <a class="uk-link-heading" href="javascript:location.reload();" title="Reload page" aria-label="Reload page"><span data-uk-icon="refresh"></span></a>
+                    </li>
+                    <!-- RELOAD BUTTON :: END -->
+% if var.get('search_box'):
+                    <!-- SEARCH BUTTON :: START -->
                     <li class="uk-card uk-card-small uk-card-hover uk-padding-small uk-padding-remove-vertical">
                         <a class="uk-link-heading" href="#kb4it-search-modal" title="Search (/ or Ctrl+K)" aria-label="Search" data-uk-toggle><span data-uk-icon="search"></span></a>
                     </li>
+                    <!-- SEARCH BUTTON :: END -->
+% endif
                 </ul>
             </div>
-            <!-- SEARCH BUTTON :: END -->
-% endif
+            <!-- TOP BAR BUTTONS :: END -->
         </nav>
     </div>
 % if var.get('search_box'):

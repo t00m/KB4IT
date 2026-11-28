@@ -49,6 +49,16 @@ def _start_tags(page):
         yield match.group(1).lower(), [m.group(1).lower() for m in ATTRIBUTE.finditer(match.group(2))], match.group(0)
 
 
+@pytest.mark.parametrize("theme", ["techdoc", "blog", "bookshelf"])
+def test_page_title_comes_before_the_site_title(sites, theme):
+    page = next(p for p in sites[theme] if p.stem == "cor07")
+    title = re.search(r"<title>([^<]*)</title>", page.read_text(encoding="utf-8")).group(1)
+    assert title.startswith("Real title - "), title
+    index = (sites[theme][0].parent / "index.html").read_text(encoding="utf-8")
+    site_title = title.removeprefix("Real title - ")
+    assert f"<title>{site_title} - " not in index  # the home page names the site once
+
+
 @pytest.mark.parametrize("theme", THEMES)
 def test_no_empty_target_and_no_duplicate_attribute(sites, theme):
     problems = []
@@ -182,3 +192,35 @@ def test_edit_link_when_git_is_set(tmp_path, home, theme):
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     assert "https://github.com/me/kb/edit/main/source/rich.md" in (repo / "target" / "rich.html").read_text(encoding="utf-8")
+
+
+def test_git_server_must_be_a_full_url(tmp_path, home):
+    """A host name as git_server gives no git links, a build warning and a verify problem."""
+    repo = tmp_path / "techdoc"
+    assert run_kb4it("create", "techdoc", repo, cwd=tmp_path, home=home).returncode == 0
+    shutil.copy(FIXTURES / "audit" / "rich.md", repo / "source" / "rich.md")
+    cfg = repo / "config" / "repo.json"
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
+    conf.update(git=True, git_server="github.com", git_user="me", git_repo="kb", git_branch="main", git_path="")
+    cfg.write_text(json.dumps(conf), encoding="utf-8")
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "/edit/" not in (repo / "target" / "rich.html").read_text(encoding="utf-8")
+    assert "[BACKEND] GIT_SERVER_NOT_URL value=github.com" in (repo / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
+    verify = run_kb4it("verify", cfg, cwd=tmp_path, home=home)
+    assert verify.returncode == 1
+    assert "git_server must be a full URL, such as https://github.com" in verify.stdout
+
+
+def test_add_page_links_the_source_folder(tmp_path, home):
+    repo = tmp_path / "techdoc"
+    assert run_kb4it("create", "techdoc", repo, cwd=tmp_path, home=home).returncode == 0
+    cfg = repo / "config" / "repo.json"
+    conf = json.loads(cfg.read_text(encoding="utf-8"))
+    conf.update(git=True, git_server="https://github.com/", git_user="me", git_repo="kb", git_branch="main",
+                git_path="source")
+    cfg.write_text(json.dumps(conf), encoding="utf-8")
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    add = (repo / "target" / "add.html").read_text(encoding="utf-8")
+    assert 'href="https://github.com/me/kb/tree/main/source"' in add
+    assert ">https://github.com/me/kb</a>" in "".join(add.split())  # the repository, without a doubled slash

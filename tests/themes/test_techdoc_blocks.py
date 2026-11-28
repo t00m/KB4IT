@@ -1,15 +1,9 @@
-"""techdoc techdoc_blocks.py: code bars, folded code, table wrappers and author tab labels."""
-
-import importlib.util
+"""kb4it.core.html.blocks (techdoc's block rewrite): code bars, folded code, table wrappers and author tab labels."""
 
 import pytest
 
+from kb4it.core.html import blocks
 from tests.helpers import ROOT, page, run_kb4it, write_repo
-
-spec = importlib.util.spec_from_file_location(
-    "techdoc_blocks", ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic" / "techdoc_blocks.py")
-blocks = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(blocks)
 
 
 def code_block(language=None, lines=1):
@@ -64,15 +58,48 @@ def test_short_code_is_not_folded():
     assert "kb-code-show" not in html
 
 
-def test_tables_are_wrapped_for_sideways_scrolling():
+UK_TABLE = 'class="uk-table uk-table-small uk-table-divider uk-table-hover uk-table-striped"'
+
+
+def test_tables_are_wrapped_for_sideways_scrolling_and_get_the_uikit_style():
     html = blocks.enhance_blocks(table(2))
-    assert '<div class="kb-table uk-overflow-auto"><table>' in html
-    assert "kb-table-sticky" not in html
+    assert f'<div class="kb-table uk-overflow-auto"><table {UK_TABLE}>' in html
+    assert "kb-table-sticky" not in html and "kb-table-filter" not in html
 
 
-def test_long_tables_get_a_sticky_header():
-    assert "kb-table-sticky" in blocks.enhance_blocks(table(16))
-    assert "kb-table-sticky" not in blocks.enhance_blocks(table(15))
+def test_a_table_keeps_its_own_classes():
+    html = blocks.enhance_blocks(table(2).replace("<table>", '<table class="mine uk-table">'))
+    assert 'class="mine uk-table uk-table-small uk-table-divider uk-table-hover uk-table-striped"' in html
+
+
+def test_long_tables_get_a_sticky_header_and_search():
+    assert 'class="kb-table uk-overflow-auto kb-table-sticky kb-table-filter"' in blocks.enhance_blocks(table(16))
+    short = blocks.enhance_blocks(table(15))
+    assert "kb-table-sticky" not in short and "kb-table-filter" not in short
+
+
+def test_document_lists_keep_their_own_datatable():
+    listing = table(16).replace("<table>", '<table id="kb4it-datatable" class="kb4it-datatable uk-table">')
+    html = blocks.enhance_blocks(listing)
+    assert 'class="kb-table uk-overflow-auto kb-table-sticky"' in html
+    assert 'class="kb4it-datatable uk-table"' in html and "kb-table-filter" not in html
+
+
+def test_table_search_can_be_turned_off():
+    html = blocks.enhance_blocks(table(16), table_filter=False)
+    assert "kb-table-sticky" in html and "kb-table-filter" not in html
+
+
+@pytest.mark.parametrize("change", [
+    lambda t: t.replace("<td>3</td>", '<td colspan="2">3</td>'),
+    lambda t: t.replace("<td>3</td>", '<td rowspan="2">3</td>'),
+    lambda t: t.replace("<thead>", "<thead><tr><th>Group</th></tr>"),
+    lambda t: t.replace("<td>3</td>", "<td>3</td><td>extra</td>"),
+    lambda t: t.replace("<thead><tr><th>A</th></tr></thead>", ""),
+])
+def test_long_tables_that_datatables_cannot_read_get_no_search(change):
+    html = blocks.enhance_blocks(change(table(16)))
+    assert "kb-table-sticky" in html and "kb-table-filter" not in html
 
 
 def test_author_tabs_get_a_print_label_per_panel():
@@ -144,6 +171,7 @@ def blocks_site(tmp_path_factory):
     home = base / "home"
     home.mkdir()
     docs = {"blocks.md": page("Content blocks", BLOCKS_BODY, Category="Note")}
+    docs.update({f"saved{i:02d}.md": page(f"Saved {i}", Category="Note", Bookmark="Yes") for i in range(16)})
     cfg = write_repo(base / "repo", "techdoc", docs, markdown={
         "extensions": ["pymdownx.tabbed", "pymdownx.details"],
         "extension_configs": {"pymdownx.tabbed": {"alternate_style": True}},
@@ -163,7 +191,15 @@ def test_built_page_has_code_bars_and_folded_long_code(blocks_site):
 def test_built_page_has_scrolling_and_sticky_tables(blocks_site):
     html = (blocks_site / "blocks.html").read_text(encoding="utf-8")
     assert html.count('class="kb-table uk-overflow-auto"') == 1
-    assert 'class="kb-table uk-overflow-auto kb-table-sticky"' in html
+    assert 'class="kb-table uk-overflow-auto kb-table-sticky kb-table-filter"' in html
+    assert html.count(UK_TABLE) == 2
+
+
+def test_long_document_lists_are_not_started_twice(blocks_site):
+    """The bookmarks and all-documents lists are DataTables of the page header; blocks.js must leave them alone."""
+    for name in ("bookmarks.html", "all.html", "Category_Note.html"):
+        html = (blocks_site / name).read_text(encoding="utf-8")
+        assert 'class="kb4it-datatable' in html and "kb-table-filter" not in html, name
 
 
 def test_built_page_has_author_tabs_and_collapsible_notes(blocks_site):
@@ -191,12 +227,13 @@ def test_blocks_script_is_offline_and_builds_no_html():
     assert "innerHTML" not in script
     assert "navigator.clipboard" in script and "execCommand" in script
     assert "beforeprint" in script and "afterprint" in script
+    assert "'.kb-table-filter > table'" in script and "kb-number-pre" in script
 
 
 def test_screen_styles_cover_code_tables_tabs_notes_and_totop():
     css = (THEME / "framework" / "kb4it" / "css" / "screen.css").read_text(encoding="utf-8")
     for selector in (".kb-code-show", ".kb-code-long:not(.kb-code-open) > pre",
-                     ".kb-table-sticky thead th", ".kb-content .tabbed-block",
+                     ".kb-table-sticky thead th", ".kb-table-tools", ".kb-content .tabbed-block",
                      "details:not(.kb-toc-panel)", ".kb-totop"):
         assert selector in css
     assert "input:nth-of-type(1):checked ~ .tabbed-content > .tabbed-block:nth-of-type(1)" in css
@@ -206,5 +243,6 @@ def test_print_styles_hide_the_buttons_and_unfold_the_blocks():
     css = (THEME / "framework" / "kb4it" / "css" / "print.css").read_text(encoding="utf-8")
     assert ".kb-code-bar, .kb-code-show, .kb-totop { display: none !important; }" in css
     assert ".kb-code > pre { max-height: none !important;" in css
+    assert ".kb-table-tools { display: none !important; }" in css
     assert ".tabbed-block { display: block !important; }" in css
     assert ".kb-tab-print { display: block !important;" in css

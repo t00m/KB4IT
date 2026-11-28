@@ -48,8 +48,8 @@ The full text...
 | `events.html` | The archive, by year and month |
 | `all.html` | Every document in a table |
 | `bookmarks.html` | Documents with `Bookmark: Yes` |
-| `properties.html` | Every property and its values |
-| `stats.html` | A tag cloud of the values |
+| `properties.html` | Every property and its values, except those in `hidden_properties` |
+| `stats.html` | Totals, then one card per section with a summary line; its Details button opens the section in a modal: activity (documents per year and per month), property coverage with the most used values, metadata health (similar values, properties used once, documents with little metadata) and links (most linked documents, documents nothing links to) |
 | `feed.xml` | Atom feed of the newest posts, when `site_url` is set; see [feed](reference-repo-json.md#feed) |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search box in the sidebar shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `add.html` | Markdown editor for a new post; only when `"editor": true` is set in `repo.json`. The footer then shows an "Add document" link. See [the editor](howto-write-document-editor.md) |
@@ -62,13 +62,18 @@ The full text...
 
 ## Settings {#settings}
 
-| Key | Default | Meaning |
-|---|---|---|
-| `index_posts` | `10` | Number of posts on the home page |
-| `strict` | `false` | When `true`, only `Category: Post` documents use the post layout; other documents use a plain page |
-| `editor` | `false` | `true` builds the Add page. The skeleton is `POST-SKELETON.md` (`Author`, `Category: Post`, `Date`, `Tag`, `Topic`, an `## Excerpt` and a `## Body`); put your own in `templates/skeletons/` of the repository overrides to replace it |
-| `datatable` | | Columns of the document tables; the `default` app uses Date, Title and Topic |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `index_posts` | Integer | `10` | Number of posts on the home page |
+| `strict` | `true`, `false` | `false` | When `true`, only `Category: Post` documents use the post layout; other documents use a plain page |
+| `editor` | `true`, `false` | `false` | `true` builds the Add page. The skeleton is `POST-SKELETON.md` (`Author`, `Category: Post`, `Date`, `Tag`, `Topic`, an `## Excerpt` and a `## Body`); put your own in `templates/skeletons/` of the repository overrides to replace it |
+| `datatable` | List of property names | `["Date", "Title"]` | Columns of the document tables; the `default` app uses Date, Title and Topic |
+| `git` | `true`, `false` | `false` | Edit links to your git server; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
+| `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links |
+| `git_user` | Text | | User or organisation on the git server |
+| `git_repo` | Text | | Repository name |
+| `git_branch` | Text | | Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Folder that holds the documents; empty for the repository root |
 
 The `default` app has four sample posts, each with an `## Excerpt` and a `## Body`.
 

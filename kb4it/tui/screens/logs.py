@@ -20,6 +20,7 @@ from textual.widgets import (
 
 from kb4it.tui import clipboard
 from kb4it.tui.projects import _log_path
+from kb4it.tui.widgets import SelectableRichLog
 
 _LOG_STYLE: dict[str, str] = {
     "CRITICAL": "bold red",
@@ -31,10 +32,11 @@ _LOG_STYLE: dict[str, str] = {
 
 
 def _parse_level(line: str) -> str:
-    prefix = line[:15].upper()
-    for lvl in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"):
-        if lvl in prefix:
-            return lvl
+    """Level of a log line: its first field, or its second when the line starts with the time."""
+    for field in line.split("|", 2)[:2]:
+        word = field.strip().upper()
+        if word in _LOG_STYLE:
+            return word
     return "INFO"
 
 
@@ -60,7 +62,7 @@ class LogViewerScreen(Screen):
             yield Button("Info only", id="f-info", variant="default")
             yield Button("Warnings+", id="f-warn", variant="warning")
             yield Button("Errors only", id="f-err", variant="error")
-        yield RichLog(highlight=False, markup=False, id="log")
+        yield SelectableRichLog(highlight=False, markup=False, id="log")
         with Horizontal(id="footer-bar"):
             yield Button("Copy Log", id="copy", variant="default")
             yield Button("Back", id="back", variant="default")
@@ -81,7 +83,12 @@ class LogViewerScreen(Screen):
         except Exception as exc:
             log.write(f"Cannot read log: {exc}")
             return
-        self._lines = [(line, _parse_level(line)) for line in text.splitlines()]
+        self._lines = []
+        level = "INFO"
+        for line in text.splitlines():
+            # A traceback line has no fields; it belongs to the error above it.
+            level = _parse_level(line) if " | " in line else level
+            self._lines.append((line, level))
         self._apply_filter()
 
     def _apply_filter(self) -> None:

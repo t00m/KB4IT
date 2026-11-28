@@ -27,13 +27,17 @@
                     <h3>${group['name']}</h3>
                     <dl>
 %     for item in group['items']:
-                        <dt>${item['key']}</dt>
+                        <dt title="${item['key']}">${item['key']}</dt>
                         <dd>
 %         for value in item['values']:
-%             if group['chips']:
-                            <a class="kb-obj" href="${value['url']}">${value['text']}</a>
+%             if not value['url']:
+                            <span class="kb-item"><span class="kb-val" title="${value['text']}">${value['text']}</span>${'' if loop.last else ','}</span>
+%             elif group['chips']:
+                            <a class="kb-obj kb-val" href="${value['url']}" title="${value['text']}">${value['text']}</a>
+%             elif value.get('tip'):
+                            <span class="kb-item"><a class="kb-val" href="${value['url']}" title="${value['tip']}" data-uk-tooltip>${value['text']}</a>${'' if loop.last else ','}</span>
 %             else:
-                            <a href="${value['url']}">${value['text']}</a>${'' if loop.last else ','}
+                            <span class="kb-item"><a class="kb-val" href="${value['url']}" title="${value['text']}">${value['text']}</a>${'' if loop.last else ','}</span>
 %             endif
 %         endfor
                         </dd>
@@ -96,6 +100,9 @@ ${card['quality_html'] | n}
                 <dd><code>${history['source']}</code>: <a href="#modal-full-source" data-uk-toggle>View source</a>
 % if history['edit_url']:
                     , <a href="${history['edit_url']}" target="_blank" rel="noopener">Edit</a>
+% endif
+% if history.get('editor'):
+                    , <a href="add.html" data-kb-edit="${history['source']}">Edit in the editor</a>
 % endif
                 </dd>
                 <dt>Built</dt>

@@ -9,22 +9,21 @@ Full-text search index shared by the themes.
 A page is split into sections (heading, anchor, plain text) taken from one
 container element. The index is written as a script that sets a global, so
 search works from file:// as well as from a web server. The browser side is
-kb4it/resources/common/js/kb4it-search.js.
+kb4it/resources/vendor/search/js/kb4it-search.js.
 """
 
 import hashlib
 import json
 import os
-import shutil
 
 import lxml.html
 
-from kb4it.core.env import ENV
+from kb4it.core.html.lxmllock import lxml_serialized
+
 
 SKIP_TAGS = {"script", "style", "button"}
 SECTION_TEXT_MAX = 5000
 INDEX_WARN_BYTES = 5 * 1024 * 1024
-ENGINE_JS = os.path.join(ENV["GPATH"]["COMMON"], "js", "kb4it-search.js")
 
 
 def _add(section, text):
@@ -32,6 +31,7 @@ def _add(section, text):
         section["text"].append(text)
 
 
+@lxml_serialized
 def extract_sections(page_html: str, container_id: str) -> list:
     """Split the element with id container_id into sections: [{id, heading, text}, ...]."""
     root = lxml.html.fromstring(page_html)
@@ -71,12 +71,6 @@ def render_index_js(records, var_name="KB4IT_INDEX") -> str:
     """The index as a script: window.<var_name> = [...]."""
     payload = json.dumps(records, ensure_ascii=False, separators=(",", ":"))
     return f"window.{var_name} = {payload};\n"
-
-
-def copy_engine(dest):
-    """Copy the search engine script to dest (a file path)."""
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    shutil.copyfile(ENGINE_JS, dest)
 
 
 DOC_CONTAINER = "kb4it-doc"

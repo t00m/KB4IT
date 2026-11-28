@@ -8,6 +8,7 @@ Status: Finished
 Summary: What RAID 1, 5, 6 and 10 protect against, and what they cost in disk space.
 Tag: raid, storage
 Topic: Storage
+WorkType: Knowledge
 ---
 
 # RAID levels in short

@@ -242,6 +242,14 @@ def test_file_name_fallback():
     assert call("fileName", "# In a fence-less doc\n", "note") == "in-a-fence-less-doc.md"
 
 
+def test_file_name_of_profile():
+    # A profile is named after its title, with the profile- prefix that makes it a profile.
+    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# Tomás Vírseda\n", "person") == "profile-tomas-virseda.md"
+    assert call("fileName", "---\nEmail: a@b.c\n---\n\n# 日本語\n", "person") == "profile.md"
+    # The Person key no longer makes a profile: other categories are named after the title.
+    assert call("fileName", "---\nPerson: Jane Doe\n---\n\n# Two People\n", "note") == "two-people.md"
+
+
 def _build_values(raw):
     """What the build makes of `K: <raw>`, or None when the property must be complex."""
     from kb4it.core.documents import load_frontmatter
@@ -534,3 +542,20 @@ def test_flow_list_rewrite_keeps_items_after_the_cursor():
         assert _doc_values(out) == want, out
         if "# note" in after:
             assert "# note" in out
+
+
+def test_with_values():
+    text = "---\nPerson: Full name\nRole: x\n---\n\n# T\n"
+    assert call("withValues", text, {"Person": "Jane Doe"}) == "---\nPerson: Jane Doe\nRole: x\n---\n\n# T\n"
+    assert call("withValues", text, {"Team": "Basis"}) == "---\nPerson: Full name\nRole: x\nTeam: Basis\n---\n\n# T\n"
+
+
+def test_with_title():
+    text = "---\nPerson: Full name\n---\n\n# Full name\n\nBody.\n"
+    assert call("withTitle", text, "Jane Doe") == "---\nPerson: Full name\n---\n\n# Jane Doe\n\nBody.\n"
+    assert call("withTitle", "---\nA: b\n---\n\nNo title.\n", "X") == "---\nA: b\n---\n\nNo title.\n"
+
+
+def test_hash_params():
+    assert call("hashParams", "#new=person&Person=Jane%20Doe") == {"new": "person", "Person": "Jane Doe"}
+    assert call("hashParams", "#new=person&Bad=%E0%A4%A") == {"new": "person"}

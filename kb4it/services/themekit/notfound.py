@@ -1,8 +1,12 @@
-"""The 404 page of the document themes: a system page that no listing, search or feed knows."""
+"""The 404 page of the document themes: a system page that no listing, search or feed knows.
+
+Legacy API: the code lives in the not_found feature (kb4it/theme/features/notfound.py).
+"""
 
 from __future__ import annotations
 
-from kb4it.services.themekit.host import ThemeHost
+from kb4it.services.themekit.host import ThemeHost, feature_of
+from kb4it.theme.features.notfound import NotFound
 
 
 class NotFoundMixin(ThemeHost):
@@ -14,8 +18,4 @@ class NotFoundMixin(ThemeHost):
 
     def build_page_404(self) -> None:
         """Create the 404 page; as a system page it stays out of listings, search, feed and sitemap."""
-        var = self.get_theme_var()
-        self.distribute_md("404", self.template("PAGE_404").render(var=var))
-        self.srvdtb.add_document("404.md")
-        self.srvdtb.add_document_key("404.md", "Title", "Page not found")
-        self.srvdtb.add_document_key("404.md", "SystemPage", "Yes")
+        feature_of(self, NotFound).write()

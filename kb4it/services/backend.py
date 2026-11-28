@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, KB4ITError, ThemeError
-from kb4it.core.log import redirect_logs, release_log_file
+from kb4it.core.log import discard_log_file, q, redirect_logs, release_log_file, rotate_log
+from kb4it.services.pagepipeline import git_server_problem
 from kb4it.core.paths import check_target, resolve_repo_path
 from kb4it.core.service import Service
 from kb4it.core.util import get_source_docs, json_load, json_save
@@ -61,18 +62,18 @@ class Backend(Service):
             config_path = Path(config_file).absolute()
             if config_path.exists():
                 try:
-                    self.log.debug(f"[BACKEND] CONFIG_FILE path={config_path}")
+                    self.log.debug(f"[BACKEND] CONFIG_FILE path={q(config_path)}")
                     self.repo = json_load(config_path)
                     self.log.debug("[BACKEND] CONFIG_LOADED")
                 except AttributeError as error:
                     self.log.error("[BACKEND] CONFIG_PARSE_FAIL")
                     raise ConfigError(f"Config parse failed: {error}") from error
                 except Exception as error:
-                    self.log.error(f"[BACKEND] ERROR {error}")
+                    self.log.error(f"[BACKEND] ERROR {error}", exc_info=True)
                     raise ConfigError(f"Config load failed: {error}") from error
                 self._validate_config()
             else:
-                self.log.error(f"[BACKEND] CONFIG_MISSING path={config_path}")
+                self.log.error(f"[BACKEND] CONFIG_MISSING path={q(config_path)}")
                 raise ConfigError(f"Config file not found: {config_path}")
 
             self.runtime["force_all"] = bool(self.params.get("force") or self.repo.get("force"))
@@ -108,7 +109,7 @@ class Backend(Service):
                     artifact = self.runtime["dir"][key]
                     if _dir_contains(artifact, source_dir) or _dir_contains(artifact, target_dir):
                         self.log.warning(
-                            f"[BACKEND] FORCE_SKIP path={artifact} reason=holds_source_or_target")
+                            f"[BACKEND] FORCE_SKIP path={q(artifact)} reason=holds_source_or_target")
                         continue
                     shutil.rmtree(artifact, ignore_errors=True)
                 # Reset the incremental cache without touching other data that
@@ -129,17 +130,16 @@ class Backend(Service):
             # Activate application log
             app_log_file = Path.joinpath(dir_log, "kb4it.log")
             release_log_file(app_log_file)
-            # Rotate the existing log before redirecting
-            if app_log_file.exists():
-                shutil.copy2(app_log_file, app_log_file.with_suffix('.log.old'))
+            # The logs of earlier builds move to kb4it.log.old, kb4it.log.old.2...
+            rotate_log(str(app_log_file))
             self.runtime["logfile"] = app_log_file
-            self.log.debug(f"[BACKEND] LOG_FILE path={app_log_file}")
-            if os.path.exists(app_log_file):
-                os.unlink(app_log_file)
+            self.log.debug(f"[BACKEND] LOG_FILE path={q(app_log_file)}")
             kb4it_temp_log = self.app.get_log_file()
             if os.path.exists(kb4it_temp_log):
                 shutil.copy(kb4it_temp_log, app_log_file)
             redirect_logs(app_log_file)
+            # The project log now holds its lines; the temporary one under KB4IT_HOME would pile up.
+            discard_log_file(kb4it_temp_log)
 
             # Initialize docs structure
             self.runtime["docs"] = {}
@@ -157,7 +157,7 @@ class Backend(Service):
         missing = [k for k in self.REQUIRED_CONFIG_KEYS if k not in self.repo]
         if missing:
             for key in missing:
-                self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={key}")
+                self.log.error(f"[BACKEND] CONFIG_KEY_MISSING key={q(key)}")
             raise ConfigError(f"Missing required config keys: {missing}")
         # Fail early on a bad markdown block or a missing extension package.
         from kb4it.core.mdconfig import load_settings
@@ -178,6 +178,20 @@ class Backend(Service):
             if not isinstance(repo, dict):
                 raise ConfigError("Hook on_config must return the settings dictionary")
             self.repo = repo
+        # After the hook, so a setting it adds is checked too.
+        from kb4it.core.structured import load_seo
+        self.seo = load_seo(self.repo)
+        from kb4it.services.database import hidden_properties
+        hidden_properties(self.repo)
+        from kb4it.core.profiles import load_profiles, people_settings
+        self.profiles, notices = load_profiles(self.repo)
+        self.people = people_settings(self.profiles)
+        for line in notices:
+            self.log.warning(f"[PEOPLE] {line}")
+        from kb4it.core.dateclass import date_reserved_names, load_dates
+        self.dates, notices = load_dates(self.repo, reserved_names=date_reserved_names(self.repo))
+        for line in notices:
+            (self.log.info if line == "TIMEZONE_UNSET" else self.log.warning)(f"[DATES] {line}")
 
     def _resolve_source_target(self, dir_root):
         """Resolve source and target against the repository root, falling back to old cwd-relative configs."""
@@ -186,7 +200,7 @@ class Backend(Service):
         target = resolve_repo_path(raw_target, dir_root)
         legacy_source = os.path.realpath(os.path.expanduser(os.path.expandvars(raw_source)))
         if not os.path.exists(source) and os.path.exists(legacy_source):
-            self.log.warning(f"[BACKEND] PATH_CWD_RELATIVE key=source path={legacy_source}")
+            self.log.warning(f"[BACKEND] PATH_CWD_RELATIVE key=source path={q(legacy_source)}")
             self.log.warning("[BACKEND] HINT make source and target relative to the repository root")
             source = legacy_source
             target = os.path.realpath(os.path.expanduser(os.path.expandvars(raw_target)))
@@ -255,7 +269,7 @@ class Backend(Service):
             adict = None
 
         if adict is None:
-            self.log.error(f"[BACKEND] DOMAIN_UNKNOWN domain={domain}")
+            self.log.error(f"[BACKEND] DOMAIN_UNKNOWN domain={q(domain)}")
         else:
             adict[key] = value
 
@@ -299,12 +313,12 @@ class Backend(Service):
         empty_kbdict.update(records or {})
         try:
             kbdict = json_load(kb4it_dbfile)
-            self.log.debug(f"[BACKEND] KBDICT_LOAD path={kb4it_dbfile}")
+            self.log.debug(f"[BACKEND] KBDICT_LOAD path={q(kb4it_dbfile)}")
             stored_version = kbdict.get("kb4it_version")
             current_version = ENV["APP"]["version"]
             if stored_version != current_version:
                 self.log.warning(
-                    f"[BACKEND] KBDICT_VERSION_MISMATCH stored={stored_version} current={current_version}"
+                    f"[BACKEND] KBDICT_VERSION_MISMATCH stored={q(stored_version)} current={q(current_version)}"
                 )
                 self.runtime["force_all"] = True
                 return empty_kbdict
@@ -312,7 +326,7 @@ class Backend(Service):
             stored_build = kbdict.get("kb4it_build")
             current_build = build_cache_key(ENV["APP"]["build"])
             if stored_build != current_build:
-                self.log.warning(f"[BACKEND] KBDICT_BUILD_MISMATCH stored={stored_build} current={current_build}")
+                self.log.warning(f"[BACKEND] KBDICT_BUILD_MISMATCH stored={q(stored_build)} current={q(current_build)}")
                 self.runtime["force_all"] = True
                 return empty_kbdict
             stored_yaml = kbdict.get("pyyaml_version")
@@ -320,7 +334,7 @@ class Backend(Service):
             if stored_yaml != current_yaml:
                 # A YAML upgrade can change what a header means, so no parsed header can be trusted.
                 self.log.warning(
-                    f"[BACKEND] KBDICT_PYYAML_MISMATCH stored={stored_yaml} current={current_yaml}"
+                    f"[BACKEND] KBDICT_PYYAML_MISMATCH stored={q(stored_yaml)} current={q(current_yaml)}"
                 )
                 self.runtime["force_all"] = True
                 return empty_kbdict
@@ -328,11 +342,11 @@ class Backend(Service):
             kbdict = empty_kbdict
         except (ValueError, AttributeError) as error:
             # Unreadable cache (a truncated write, a hand edit): rebuild everything; the next save replaces it.
-            self.log.warning(f"[BACKEND] KBDICT_CORRUPT path={kb4it_dbfile} reason={error}")
+            self.log.warning(f"[BACKEND] KBDICT_CORRUPT path={q(kb4it_dbfile)} reason={q(error)}")
             self.runtime["force_all"] = True
             return empty_kbdict
         except Exception as error:
-            self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={kb4it_dbfile}")
+            self.log.error(f"[BACKEND] KBDICT_LOAD_FAIL path={q(kb4it_dbfile)}", exc_info=True)
             raise KB4ITError(f"kbdict load failed: {error}") from error
         self.log.debug(f"[BACKEND] KBDICT_ENTRIES n={len(kbdict)}")
         return kbdict
@@ -344,12 +358,12 @@ class Backend(Service):
         kbdict["kb4it_build"] = build_cache_key(ENV["APP"]["build"])
         kbdict["pyyaml_version"] = yaml.__version__
         json_save(kb4it_dbfile, kbdict)
-        self.log.debug(f"[BACKEND] KBDICT_SAVED path={kb4it_dbfile}")
+        self.log.debug(f"[BACKEND] KBDICT_SAVED path={q(kb4it_dbfile)}")
 
     def add_target(self, aid, hid):
         """Add documents to be compiled."""
         self.runtime["docs"]["targets"].add(hid)
-        self.log.debug(f"[BACKEND] ADD_TARGET doc={aid} resource={hid}")
+        self.log.debug(f"[BACKEND] ADD_TARGET doc={q(aid)} resource={q(hid)}")
 
     def get_services(self):
         """Get services needed."""
@@ -363,8 +377,7 @@ class Backend(Service):
     def start_pipeline(self):
         """Make the Processor, Compiler and Deployer of this build; the theme must be loaded."""
         self.pipeline = Pipeline(self, self.get_service("DB"), self.get_service("Theme"), self.params,
-                                 callbacks=getattr(self.app, "callbacks", None),
-                                 log_file=self.app.get_log_file())
+                                 callbacks=getattr(self.app, "callbacks", None))
 
     def get_kb_dict(self):
         """Shortcut to Processor method."""
@@ -418,20 +431,20 @@ class Backend(Service):
         """Check environment."""
         frontend = self.get_service("Frontend")
         self.log.debug("[BACKEND] CHECKS_START")
-        self.log.debug(f"[BACKEND] DIR name=cache path={self.get_path('cache')}")
-        self.log.debug(f"[BACKEND] DIR name=tmp path={self.get_path('tmp')}")
-        self.log.debug(f"[BACKEND] DIR name=www path={self.get_path('www')}")
+        self.log.debug(f"[BACKEND] DIR name=cache path={q(self.get_path('cache'))}")
+        self.log.debug(f"[BACKEND] DIR name=tmp path={q(self.get_path('tmp'))}")
+        self.log.debug(f"[BACKEND] DIR name=www path={q(self.get_path('www'))}")
 
         # Check if source directory exists. If not, stop application
         if not os.path.exists(self.get_path("source")):
-            self.log.error(f"[BACKEND] SOURCE_MISSING path={self.get_path('source')}")
+            self.log.error(f"[BACKEND] SOURCE_MISSING path={q(self.get_path('source'))}")
             raise ConfigError(f"Source directory not found: {self.get_path('source')}")
-        self.log.debug(f"[BACKEND] DIR name=source path={self.get_path('source')}")
+        self.log.debug(f"[BACKEND] DIR name=source path={q(self.get_path('source'))}")
 
         # check if target directory exists. If not, create it:
         if not os.path.exists(self.get_path("target")):
             os.makedirs(self.get_path("target"), exist_ok=True)
-        self.log.debug(f"[BACKEND] DIR name=target path={self.get_path('target')}")
+        self.log.debug(f"[BACKEND] DIR name=target path={q(self.get_path('target'))}")
 
         theme_name = self.get_value("repo", "theme")
         if theme_name is None:
@@ -440,21 +453,25 @@ class Backend(Service):
         else:
             theme_override = self._resolve_theme_path_override()
             if theme_override is not None:
-                self.log.info(f"[BACKEND] THEME_PATH_OVERRIDE path={theme_override}")
+                self.log.info(f"[BACKEND] THEME_PATH_OVERRIDE path={q(theme_override)}")
                 frontend.set_theme_path_override(theme_override)
             theme_path = frontend.theme_search(theme_name)
             if theme_path is not None:
                 result = frontend.theme_load(os.path.basename(theme_path))
                 if result is None and not self.runtime["theme"].get("id"):
-                    self.log.error(f"[BACKEND] THEME_LOAD_FAIL name={theme_name}")
+                    self.log.error(f"[BACKEND] THEME_LOAD_FAIL name={q(theme_name)}")
                     raise ThemeError(f"Theme load failed: {theme_name}")
                 else:
                     frontend._validate_required_templates(self.runtime["theme"])
                     self._apply_target_subdir()
                     self.start_pipeline()
             else:
-                self.log.error(f"[BACKEND] THEME_NOT_FOUND name={theme_name}")
+                self.log.error(f"[BACKEND] THEME_NOT_FOUND name={q(theme_name)}")
                 raise ThemeError(f"Theme not found: {theme_name}")
+        repo = self.get_dict("repo") or {}
+        if git_server_problem(repo):
+            self.log.warning(f"[BACKEND] GIT_SERVER_NOT_URL value={q(repo['git_server'])} "
+                             "hint=write git_server as a full URL, such as https://github.com")
         self.log.debug("[BACKEND] CHECKS_END")
 
     def _apply_target_subdir(self):
@@ -470,7 +487,7 @@ class Backend(Service):
         os.makedirs(self.runtime["dir"]["target"], exist_ok=True)
         if getattr(self, "site_url", None):
             self.site_url = f"{self.site_url}{sub}/"
-        self.log.info(f"[BACKEND] TARGET_SUBDIR name={sub} path={self.runtime['dir']['target']}")
+        self.log.info(f"[BACKEND] TARGET_SUBDIR name={q(sub)} path={q(self.runtime['dir']['target'])}")
 
     def stage_02_get_source_documents(self):
         """Get source documents from source directory."""
@@ -490,21 +507,21 @@ class Backend(Service):
                 head = fh.read(len(generated_head))
             if head == generated_head:
                 os.unlink(legacy)
-                self.log.info(f"[BACKEND] GENERATED_SOURCE_REMOVED path={legacy}")
+                self.log.info(f"[BACKEND] GENERATED_SOURCE_REMOVED path={q(legacy)}")
 
         # Remove stale .adoc system files left over from older repos.
         for stale_name in ("about_kb4it.adoc", "about_app.adoc"):
             stale_path = os.path.join(sources_path, stale_name)
             if os.path.exists(stale_path):
                 os.unlink(stale_path)
-                self.log.debug(f"[BACKEND] STALE_REMOVED path={stale_path}")
+                self.log.debug(f"[BACKEND] STALE_REMOVED path={q(stale_path)}")
 
         # Collect all source documents
         self.runtime["docs"]["bag"] = get_source_docs(sources_path)
         basenames = [os.path.basename(f) for f in self.runtime["docs"]["bag"]]
         self.runtime["docs"]["filenames"] = basenames
         self.runtime["docs"]["count"] = len(self.runtime["docs"]["bag"])
-        self.log.debug(f"[BACKEND] DOCS_FOUND n={self.runtime['docs']['count']}")
+        self.log.debug(f"[BACKEND] DOCS_FOUND n={q(self.runtime['docs']['count'])}")
         self.log.debug("[BACKEND] SOURCES_END")
 
     def stage_03_process_sources(self):
@@ -515,6 +532,8 @@ class Backend(Service):
         self.log.debug("[BACKEND] ANALYSIS_START")
         self.srvprc.step_01_analysis()
         self.log.debug("[BACKEND] ANALYSIS_END")
+        # The theme computes what its pages need before the property pages are built.
+        self.srvthm.prepare()
         self.log.debug("[BACKEND] TRANSFORMATION_START")
         self.srvprc.step_02_transformation()
         self.log.debug("[BACKEND] TRANSFORMATION_END")

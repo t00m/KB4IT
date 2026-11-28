@@ -105,7 +105,7 @@ def test_download_wheels_needs_a_known_architecture():
 
 def test_package_pythons_cover_the_supported_range():
     common = (DIST / "lib" / "common.sh").read_text(encoding="utf-8")
-    assert "KB4IT_PYTHONS=(3.11 3.12 3.13 3.14)" in common
+    assert "KB4IT_PYTHONS=(3.11 3.12 3.13 3.14 3.15)" in common
 
 
 def test_packages_install_offline():
@@ -190,12 +190,15 @@ def test_wheel_check_wants_the_offline_help_index():
     assert not module.has_offline_help([theme, "kb4it/resources/help/search.html"])
 
 
-def _stamped_wheel(tmp_path, **stamp):
-    """A wheel with every tracked theme, the offline help, the editor bundle and the given BUILD.json."""
+def _stamped_wheel(tmp_path, vendor=True, **stamp):
+    """A wheel with every tracked theme and vendor library, the offline help, the editor bundle and the given BUILD.json."""
     import json
     import zipfile
     listed = subprocess.run(["git", "ls-files", "kb4it/resources/themes/*/theme.json"], cwd=ROOT,
                             capture_output=True, text=True, encoding="utf-8").stdout.split()
+    if vendor:
+        listed += subprocess.run(["git", "ls-files", "kb4it/resources/vendor", "kb4it/resources/starters"], cwd=ROOT,
+                                 capture_output=True, text=True, encoding="utf-8").stdout.split()
     wheel = tmp_path / "kb4it-1.2.3-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as zf:
         for rel in listed:
@@ -225,3 +228,36 @@ def test_wheel_check_wants_the_right_build_stamp(tmp_path, args, stamp, ok):
     assert (result.returncode == 0) is ok, result.stdout + result.stderr
     if not ok:
         assert "Build stamp:" in result.stderr
+
+
+def test_wheel_check_requires_vendor(tmp_path):
+    if not subprocess.run(["git", "ls-files", "kb4it/resources/vendor"], cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8").stdout:
+        pytest.skip("not a git checkout")
+    script = str(ROOT / "scripts" / "devel" / "check_wheel_themes.py")
+    good = _stamped_wheel(tmp_path)
+    assert subprocess.run([sys.executable, script, str(good)], capture_output=True, text=True,
+                          encoding="utf-8").returncode == 0
+    (tmp_path / "bad").mkdir()
+    bad = _stamped_wheel(tmp_path / "bad", vendor=False)
+    result = subprocess.run([sys.executable, script, str(bad)], capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode != 0
+    assert "Vendor libraries missing" in result.stderr and "search" in result.stderr
+
+
+def test_wheel_check_requires_starters(tmp_path):
+    import zipfile
+    if not subprocess.run(["git", "ls-files", "kb4it/resources/starters"], cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8").stdout:
+        pytest.skip("not a git checkout")
+    wheel = _stamped_wheel(tmp_path)
+    stripped = tmp_path / "stripped" / wheel.name
+    stripped.parent.mkdir()
+    with zipfile.ZipFile(wheel) as src, zipfile.ZipFile(stripped, "w") as dst:
+        for name in src.namelist():
+            if not name.startswith("kb4it/resources/starters/"):
+                dst.writestr(name, src.read(name))
+    result = subprocess.run([sys.executable, str(ROOT / "scripts" / "devel" / "check_wheel_themes.py"), str(stripped)],
+                            capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode != 0
+    assert "Starter themes missing" in result.stderr and "starter-docs" in result.stderr

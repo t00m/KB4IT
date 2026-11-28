@@ -7,6 +7,7 @@ from collections import Counter
 
 from kb4it.core.env import ENV
 from kb4it.core.exceptions import ConfigError, ThemeError
+from kb4it.core.log import q
 
 ADD_DOC = "add.md"   # source name reserved while the editor is on
 SUFFIX = "-SKELETON.md"
@@ -36,6 +37,9 @@ def editor_on(repo: dict, theme: dict) -> bool:
 class AddPageMixin:
     """Builder part that decides whether the Add page exists and builds it with its skeletons."""
 
+    # The Add page offers the Person profile skeleton; a theme without person pages sets it to False.
+    profile_skeleton = True
+
     add_page = False   # a Theme class sets True when it builds the Add page (create_page_add())
 
     def editor_enabled(self) -> bool:
@@ -58,19 +62,18 @@ class AddPageMixin:
             self.log.info("[BUILDER] ADD_PAGE enabled=False")
             return
         html, source, count = self._render_add_page()
-        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={source} categories={count}")
+        self.log.info(f"[BUILDER] ADD_PAGE enabled=True skeletons={q(source)} categories={q(count)}")
         self.register_add_page(html)
 
     def register_add_page(self, html: str) -> None:
         """Write the Add page body and register it as a system page; a theme may override this only."""
-        self.distribute_md("add", html)
-        self.srvdtb.add_document(ADD_DOC)
-        self.srvdtb.add_document_key(ADD_DOC, "Title", "Add document")
-        self.srvdtb.add_document_key(ADD_DOC, "SystemPage", "Yes")
+        self.add_system_page("add", "Add document", html)
 
     def _render_add_page(self) -> tuple[str, str, int]:
         """Return (html, skeleton source, number of categories) of the Add page."""
         source, categories = self.skeleton_set()
+        if self.profile_skeleton and not any(c["id"] == "person" for c in categories):
+            categories = [*categories, self.person_category()]
         var = self.get_theme_var()
         var["page"]["title"] = "Add document"
         var["page"]["categories"] = categories
@@ -80,6 +83,16 @@ class AddPageMixin:
         var["page"]["keys_json"] = json.dumps(self.editor_keys(), ensure_ascii=True).replace("<", "\\u003c")
         var["page"]["editor_dialogs"] = self.render_template("EDITOR_DIALOGS", var)
         return self.render_template("PAGE_ADD", var), source, len(categories)
+
+    def person_category(self) -> dict:
+        """The Person profile skeleton, added to every skeleton set (see core/people.py)."""
+        path = os.path.join(ENV["GPATH"]["TEMPLATES"], "profile", "PERSON" + SUFFIX)
+        with open(path, "rb") as fin:
+            text = fin.read().decode("utf-8").replace("\r\n", "\n")
+        return {"id": "person", "name": "Person profile",
+                "description": ("A person named in the documents: role, team and how to reach them. "
+                                "Save it in the source folder and rebuild to show it on the person's page."),
+                "color": "#6d28d9", "icon": "user", "text": text}
 
     def editor_keys(self) -> dict:
         """Completion data {Key: [{"v": value, "c": count}]} from the repository's documents."""
@@ -154,7 +167,7 @@ class AddPageMixin:
             listed = {e["file"] for e in entries}
             for name in files:
                 if name not in listed:
-                    self.log.warning(f"[BUILDER] SKELETON_UNLISTED file={name}")
+                    self.log.warning(f"[BUILDER] SKELETON_UNLISTED file={q(name)}")
         return categories
 
     def _read_skeleton_listing(self, listing: str) -> list[dict]:

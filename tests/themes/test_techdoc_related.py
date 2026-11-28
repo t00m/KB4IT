@@ -1,13 +1,6 @@
-"""techdoc techdoc_related.py: related documents by shared, rare property values."""
+"""Related kit (themekit/related.py): related documents by shared, rare property values."""
 
-import importlib.util
-
-from tests.helpers import ROOT
-
-spec = importlib.util.spec_from_file_location(
-    "techdoc_related", ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic" / "techdoc_related.py")
-related = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(related)
+from kb4it.services.themekit import related
 
 META = {"a.md": {"SID": ["BWP"], "Tag": ["x"]}, "b.md": {"SID": ["BWP"]}, "c.md": {"Tag": ["x"]},
         "d.md": {"Tag": ["x"]}, "e.md": {"Tag": ["y"], "Author": ["Ana"]}}
@@ -31,3 +24,28 @@ def test_limit():
 def test_shared_values_are_grouped_by_key():
     meta = {"a.md": {"Tag": ["form", "pdf"], "SID": ["BJP"]}, "b.md": {"Tag": ["form", "pdf"], "SID": ["BJP"]}}
     assert related.related("a.md", meta)[0]["shared"] == ["SID: BJP", "Tag: form, pdf"]
+
+
+def test_related_docs_use_the_theme_candidates():
+    from types import SimpleNamespace
+
+    class _Db:
+        values = {"a.md": {"SID": ["BWP"]}, "b.md": {"SID": ["BWP"]}, "c.md": {"SID": ["BWP"]}}
+
+        def get_documents(self):
+            return list(self.values)
+
+        def is_system(self, doc):
+            return False
+
+        def get_values(self, doc, key):
+            return self.values[doc].get(key, [])
+
+    class _Theme(related.RelatedMixin):
+        def related_candidates(self):
+            return [d for d in super().related_candidates() if d != "c.md"]
+
+    theme = _Theme()
+    theme.srvdtb, theme.srvbes = _Db(), SimpleNamespace(get_plan=lambda: "plan")
+    assert [r["doc"] for r in theme.related_docs("a.md")] == ["b.md"]
+    assert theme.related_docs("c.md") == []

@@ -16,15 +16,19 @@ if TYPE_CHECKING:
     from kb4it.core.types import KBDict
 
 from kb4it.core.exceptions import CompilationError
-from kb4it.core.log import get_logger
+from kb4it.core.log import get_logger, q
 from kb4it.core.service import Service
 from kb4it.services.addpage import ADD_DOC
+from kb4it.services.people import PeopleMixin
 from kb4it.core.documents import parse_markdown_attributes
 from kb4it.core.files import read_document
 from kb4it.core.mdlinks import scan_document
+from kb4it.core.moddates import GIT_CACHE, file_time, git_dates, modified_date
+from kb4it.core.daterules import resolve_and_log
+from kb4it.core.people import is_profile
 from kb4it.core.util import (get_hash_from_body,
                              get_hash_from_dict, html_id_for, is_windows_reserved,
-                             page_name_clashes, string_timestamp, valid_filename,
+                             page_name_clashes, valid_filename,
                              SOURCE_ENCODING, timeit, tree_hash)
 
 # repo.json keys that never reach a page: changing them must not rebuild the site.
@@ -53,6 +57,9 @@ class BuildPlan:
     invalid_docs: list = field(default_factory=list)  # [(docId, reason), ...]
     name_clashes: list = field(default_factory=list)  # [(docId, docId), ...] pages differing only by case
     backlinks: dict = field(default_factory=dict)  # {docId: [[title, source docId], ...]}
+    modified: dict = field(default_factory=dict)  # {docId: dateModified}, see Processor.modified_dates()
+    profile_count: int = 0  # valid profiles; a bad one counts as an invalid document
+    profile_pages: dict = field(default_factory=dict)  # {profile docId: person page}, for links to a profile
 
     @property
     def invalid_count(self) -> int:
@@ -71,7 +78,7 @@ class BuildPlan:
         return sum(1 for _, _, flag in self.KV_PATH if flag)
 
 
-class Processor(Service):
+class Processor(PeopleMixin, Service):
     """KB4IT Processor Service."""
 
     def __init__(self, backend: Any, db: Any, theme: Any) -> None:
@@ -104,8 +111,9 @@ class Processor(Service):
         runtime = self.srvbes.get_dict("runtime")
         sources = self.srvbes.get_value("docs", "bag")
         for first, second in page_name_clashes(os.path.basename(f) for f in sources):
-            self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={first} b={second}")
+            self.log.warning(f"[PROCESSOR] DOC_NAME_CLASH a={q(first)} b={q(second)}")
             self.plan.name_clashes.append((first, second))
+        profiles = []
         for filepath in sources:
             # Get Id
             docId = os.path.basename(filepath)
@@ -113,7 +121,7 @@ class Processor(Service):
             # A page Windows cannot create is left out everywhere, so a site builds the same on every system.
             if is_windows_reserved(docId) or docId in getattr(self.srvthm, "reserved_pages", ()) \
                     or (docId == ADD_DOC and getattr(self.srvthm, "editor_enabled", lambda: False)()):
-                self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={docId}")
+                self.log.error(f"[PROCESSOR] DOC_NAME_RESERVED doc={q(docId)}")
                 self.plan.invalid_docs.append((docId, "reserved_name"))
                 continue
 
@@ -121,7 +129,7 @@ class Processor(Service):
             try:
                 content, file_hash = read_document(filepath)
             except Exception as err:
-                self.log.error(f"[UTIL] DOC_INVALID doc={docId} reason=error error={err}")
+                self.log.error(f"[UTIL] DOC_INVALID doc={q(docId)} reason=error error={q(err)}", exc_info=True)
                 self.plan.invalid_docs.append((docId, str(err)))
                 continue
 
@@ -148,11 +156,16 @@ class Processor(Service):
                     m_hash = get_hash_from_dict(keys)
                 else:
                     b_hash = m_hash = None
-            self.log.debug(f"[PROCESSOR] HEADER_CACHE doc={docId} action={cache_action} reason={cache_reason}")
-            self.log.debug(f"[PROCESSOR] DOC_VALID doc={docId} valid={valid} reason={reason}")
+            self.log.debug(f"[PROCESSOR] HEADER_CACHE doc={q(docId)} action={q(cache_action)} reason={q(cache_reason)}")
+            self.log.debug(f"[PROCESSOR] DOC_VALID doc={q(docId)} valid={valid} reason={reason}")
 
             if not valid:
                 self.plan.invalid_docs.append((docId, reason))
+                continue
+
+            # A profile describes a person; it is not a document and never gets a page of its own.
+            if is_profile(docId):
+                profiles.append((docId, keys, content))
                 continue
 
             # Add to cache
@@ -161,14 +174,15 @@ class Processor(Service):
 
             # Add to the in-memory database
             self.srvdtb.add_document(docId)
+            keys = resolve_and_log(keys, getattr(self.srvbes, "dates", None), self.log, docId)
+            n_values = 0
             for key in keys:
                 alist = keys[key]
                 for value in alist:
                     if len(value.strip()) == 0:
                         continue
-                    if key == "Date":
-                        value = string_timestamp(value)
                     self.srvdtb.add_document_key(docId, key, value)
+                    n_values += 1
 
                     # For each document and for each key/value linked to that document add an entry to kbdic['document']
                     try:
@@ -187,6 +201,8 @@ class Processor(Service):
                         if value not in self.kbdict_new["metadata"][key]:
                             self.kbdict_new["metadata"][key][value] = [docId]
 
+            self.log.debug(f"[DATABASE] DOC_KEYS doc={q(docId)} keys={len(keys)} values={n_values}")
+
             # Sorted once per document, not after each value.
             for key in keys:
                 values = self.kbdict_new["document"][docId].get(key)
@@ -201,7 +217,7 @@ class Processor(Service):
             # Body and metadata hashes were computed while parsing, or taken from the cache.
             entry["body_hash"] = b_hash
             entry["metadata_hash"] = m_hash
-            self.log.debug(f"[PROCESSOR] HASH doc={docId} body={b_hash} meta={m_hash}")
+            self.log.debug(f"[PROCESSOR] HASH doc={q(docId)} body={q(b_hash)} meta={q(m_hash)}")
 
             # Add compiled page to the target list
             htmlId = html_id_for(docId)
@@ -213,11 +229,16 @@ class Processor(Service):
             for documents in values.values():
                 documents.sort(key=str.lower)
 
+        self.load_people(profiles)
+
         # A repo can ask that any unreadable document fails the build instead of vanishing.
         problems = self.plan.invalid_docs + [(b, f"name_clash_with={a}") for a, b in self.plan.name_clashes]
         if problems and self.srvbes.get_value("repo", "fail_on_invalid") is True:
             names = ", ".join(f"{doc} ({reason})" for doc, reason in problems)
             raise CompilationError(f"{len(problems)} invalid document(s): {names}")
+
+        self.plan.modified = self.modified_dates(sources)
+        self.kbdict_new["modified"] = self.plan.modified
 
         # Rebuild every page when the theme says the site as a whole changed.
         signature = self.srvthm.site_signature()
@@ -236,6 +257,24 @@ class Processor(Service):
         # The new kbdict stays in memory; Backend.commit_kbdict() writes it once the build succeeded.
 
 
+    def modified_dates(self, sources) -> dict:
+        """{docId: dateModified} of the content documents: Modified, else the last git commit, else the file time."""
+        docs = self.kbdict_new["document"]
+        paths = {os.path.basename(f): f for f in sources}
+        wanted = [d for d, entry in docs.items() if d in paths and "SystemPage" not in (entry.get("keys") or {})]
+        if not wanted:
+            return {}
+        git = git_dates(self.srvbes.get_path("source"), os.path.join(self.srvbes.get_path("db"), GIT_CACHE))
+        result = {}
+        for docId in wanted:
+            keys = docs[docId].get("keys") or {}
+            modified = next(iter(keys.get("Modified") or []), "")
+            published = next(iter(keys.get("Date") or []), "")
+            git_date = git.get(docId, "")
+            mtime = "" if git_date else file_time(paths[docId])
+            result[docId] = modified_date(str(modified), str(published), git_date, mtime)
+        return result
+
     def signature_parts(self) -> dict:
         """Core settings whose change must rebuild every page; each feature adds its own entry."""
         repo = self.srvbes.get_dict("repo")
@@ -245,6 +284,10 @@ class Processor(Service):
                 "overrides": tree_hash(getattr(self.srvbes, "overrides_dir", None)),
                 "hooks": self.srvbes.hooks.signature() if getattr(self.srvbes, "hooks", None) else "",
                 "backlinks": repo.get("backlinks", True),
+                # Language and structured data of every page head.
+                "seo": repo.get("seo"),
+                # Which keys name people, and what of their profiles the pages show.
+                "people": repo.get("people"),
                 # Theme templates, logic and assets, its template base and the common templates (TV-05).
                 "theme": (self.srvbes.get_dict("runtime").get("theme") or {}).get("fingerprint", ""),
                 # Any other setting may be printed by the theme (title, tagline, menus): rebuild on change.
@@ -270,7 +313,7 @@ class Processor(Service):
             try:
                 found, _anchors, _bare = scan_document(entry["content"])
             except Exception as err:
-                self.log.warning(f"[LINKS] SCAN_FAIL doc={doc_id} error={err}")
+                self.log.warning(f"[LINKS] SCAN_FAIL doc={q(doc_id)} error={q(err)}")
                 found = []
             pairs = sorted({(os.path.normpath(path).replace(os.sep, "/"), frag) for path, frag in found})
             links[doc_id] = [[path, frag] for path, frag in pairs]
@@ -303,7 +346,9 @@ class Processor(Service):
         backlinks_cur = self.backlinks_from(self.kbdict_cur.get("links", {}) or {}, titles_cur)
         backlinks_changed = {d for d in titles_new if self.plan.backlinks.get(d) != backlinks_cur.get(d)}
         for doc in sorted(backlinks_changed):
-            self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={doc}")
+            self.log.debug(f"[LINKS] BACKLINKS_CHANGED doc={q(doc)}")
+        people_pairs, people_docs = self.people_changes()
+        analysis.force_kv_pairs.update(people_pairs)
 
         for filepath in sources:
             docId = os.path.basename(filepath)
@@ -313,7 +358,7 @@ class Processor(Service):
                 continue
 
             result = self.step_01_00_analyze_document(docId)
-            if docId in backlinks_changed and not result['compile']:
+            if (docId in backlinks_changed or docId in people_docs) and not result['compile']:
                 result['compile'] = True
             if result['compile']:
                 # Write new source file to temporary dir for the compiler
@@ -445,10 +490,14 @@ class Processor(Service):
         NOT_CACHED = not os.path.exists(cached_document)
         result['not_cached'] = NOT_CACHED
 
-        DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or FORCE_COMPILATION
+        # dateModified is printed in the page head: a new value (a commit, a touched file) rebuilds the page.
+        MODIFIED_DIFFERS = self.plan.modified.get(docId) != (self.kbdict_cur.get("modified") or {}).get(docId)
+        result['modified_differs'] = MODIFIED_DIFFERS
+
+        DOC_COMPILATION = BODY_DIFFERS or METADATA_DIFFERS or TITLES_DIFFER or NOT_CACHED or MODIFIED_DIFFERS or FORCE_COMPILATION
         result['compile'] = DOC_COMPILATION
 
-        self.log.debug(f"[PROCESSOR] ANALYZE doc={docId} body={BODY_DIFFERS} meta={METADATA_DIFFERS} title={TITLES_DIFFER} not_cached={NOT_CACHED} compile={DOC_COMPILATION}")
+        self.log.debug(f"[PROCESSOR] ANALYZE doc={q(docId)} body={q(BODY_DIFFERS)} meta={q(METADATA_DIFFERS)} title={q(TITLES_DIFFER)} modified={q(MODIFIED_DIFFERS)} not_cached={q(NOT_CACHED)} compile={q(DOC_COMPILATION)}")
 
         return result
 
@@ -475,7 +524,7 @@ class Processor(Service):
                 K_PATH.append((key, values, True))
                 for value in values:
                     KV_PATH.append((key, value, True))
-                self.log.debug(f"[PROCESSOR] KEY key={key} compile=True forced=True")
+                self.log.debug(f"[PROCESSOR] KEY key={q(key)} compile=True forced=True")
                 continue
 
             # Key value-set changed?
@@ -491,11 +540,12 @@ class Processor(Service):
                 KV_PATH.append((key, value, COMPILE_VALUE))
                 if COMPILE_VALUE:
                     COMPILE_KEY = True
-                self.log.debug(f"[PROCESSOR] KV key={key} value={value} compile={COMPILE_VALUE}")
+                self.log.debug(f"[PROCESSOR] KV key={q(key)} value={q(value)} compile={q(COMPILE_VALUE)}")
 
             K_PATH.append((key, values, COMPILE_KEY))
-            self.log.debug(f"[PROCESSOR] KEY key={key} compile={COMPILE_KEY}")
+            self.log.debug(f"[PROCESSOR] KEY key={q(key)} compile={q(COMPILE_KEY)}")
 
+        KV_PATH += self.profile_kv_paths({(k, v) for k, v, _ in KV_PATH}, FORCE_COMPILATION, force_kv_pairs)
         return K_PATH, KV_PATH
 
     @timeit
@@ -539,7 +589,7 @@ class Processor(Service):
             self.srvbes.add_target(docId, htmlId)
 
         targets = self.srvbes.get_value("docs", "targets")
-        self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={keys_with_compile_true}")
-        self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={pairs_with_compile_true}")
+        self.log.debug(f"[PROCESSOR] KEYS_TO_COMPILE n={q(keys_with_compile_true)}")
+        self.log.debug(f"[PROCESSOR] KV_PAIRS_TO_COMPILE n={q(pairs_with_compile_true)}")
         self.log.debug(f"[PROCESSOR] TARGET_DOCS n={len(targets)}")
         self.log.debug("[PROCESSOR] TRANSFORM_END")

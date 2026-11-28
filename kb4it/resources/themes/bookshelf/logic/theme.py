@@ -11,15 +11,14 @@ Bookshelf theme.
 #              Book > Part > Chapter for certification preparation.
 """
 
-import os
 import re
 from collections import Counter, OrderedDict
 from datetime import datetime
 from html import escape
 
-from kb4it.core.util import (ellipsize_text, get_human_datetime,
-                             guess_datetime, html_id_for, valid_filename)
-from kb4it.services.themekit import DocumentTheme
+from kb4it.core.structured import DEFAULT_MAP
+from kb4it.core.util import ellipsize_text, guess_datetime
+from kb4it.theme import BaseTheme, page_name, q
 
 
 # Status -> study bucket. Anything not matched falls into 'todo'.
@@ -34,6 +33,10 @@ PALETTES = [
     ('s-olive', 'linear-gradient(95deg,#5b6133,#42471f)'),
     ('s-clay',  'linear-gradient(95deg,#8a4b2f,#693620)'),
 ]
+
+# Chapters without a Book property go to this shelf. It has no Book page of
+# its own, so it links to the list of all chapters.
+UNFILED = 'Unfiled'
 
 ROMAN_MAP = {'i': 1, 'v': 5, 'x': 10, 'l': 50, 'c': 100, 'd': 500, 'm': 1000}
 
@@ -77,81 +80,67 @@ def status_bucket(status):
     return 'todo'
 
 
-class Theme(DocumentTheme):
-    """Builder for the Bookshelf theme."""
+class Theme(BaseTheme):
+    """The Bookshelf theme."""
 
+    features = ("documents", "stats", "bookmarks", "navigation", "search", "about", "editor")
     tagcloud_scale_skips_empty = True
-    reserved_pages = ('404.md',)  # build() writes 404.html
-    add_page = True   # create_page_add() runs in build()
     datatable_link_template = 'LINK'
     datatable_default_headers = ('Date', 'Title', 'Chapter')
 
-    books = OrderedDict()
-    doc_index = {}
-    _context_ready = False
+    log_area = 'BOOKSHELF'
+    untitled_label = 'Untitled'
 
-    def _initialize(self):
-        super()._initialize()
+    def setup(self):
         self.books = OrderedDict()
         self.doc_index = {}
-        self._context_ready = False
+        self._filed = set()
 
-    # ------------------------------------------------------------------ data
-    def _first(self, docId, key, default=''):
-        values = self.srvdtb.get_values(docId, key)
-        if values and values[0]:
-            return values[0]
-        return default
+    def structured_defaults(self):
+        """A note is a Chapter of its Book; Status is reading progress, not the state of the text."""
+        return {'type': 'Chapter', 'map': {**DEFAULT_MAP, 'Book': 'isPartOf:Book', 'Chapter': 'position',
+                                          'Command': 'mentions:DefinedTerm', 'Status': None}}
 
-    def _list(self, docId, key):
-        return [v for v in self.srvdtb.get_values(docId, key) if v]
-
-    def _ensure_context(self):
-        """Build the Book > Part > Chapter model once, on first use.
-
-        Key/value pages (the Book overview kanban) are generated in
-        ``step_02_transformation`` (stage 3), which runs before
-        ``theme.build()`` (stage 4). Building the context lazily makes the
-        model available to whichever stage needs it first.
-        """
-        if not self._context_ready:
-            self._build_book_context()
-            self._context_ready = True
-
-    def _build_book_context(self):
-        """Compute the Book > Part > Chapter model from document properties."""
+    def prepare(self, site):
+        """Compute the Book > Part > Chapter model before any page is built: the Book pages need it."""
         chapters = []
-        for docId in self.srvdtb.get_documents():
-            if self.srvdtb.is_system(docId):
-                continue
-            book = self._first(docId, 'Book', 'Unfiled')
-            part_raw = self._first(docId, 'Part', '')
-            chapter_raw = self._first(docId, 'Chapter', '')
+        self._filed = set()
+        people = site.people
+        for doc in site.documents:
+            book = doc.value('Book')
+            if book:
+                self._filed.add(book)
+            else:
+                book = UNFILED
+            part_raw = doc.value('Part')
+            chapter_raw = doc.value('Chapter')
             try:
                 chapter = int(re.findall(r'\d+', str(chapter_raw))[0])
             except (IndexError, ValueError):
                 chapter = 9999
-            status = self._first(docId, 'Status', '')
+            status = doc.value('Status')
+            author = doc.value('Author')
             info = {
-                'docId': docId,
-                'url': html_id_for(docId),
+                'docId': doc.id,
+                'url': doc.url,
                 'book': book,
                 'part_raw': part_raw,
                 'part_num': roman_to_int(part_raw),
-                'part_title': self._first(docId, 'PartTitle', ''),
+                'part_title': doc.value('PartTitle'),
                 'chapter': chapter,
                 'cnum': '%02d' % chapter if chapter < 9999 else '--',
-                'title': self._first(docId, 'Title', docId),
+                'title': doc.value('Title', doc.id),
                 'status': status or 'Draft',
                 'bucket': status_bucket(status),
-                'doctype': self._first(docId, 'DocType', ''),
-                'author': self._first(docId, 'Author', ''),
-                'date': self.srvdtb.get_doc_timestamp(docId) or '',
-                'commands': self._list(docId, 'Command'),
-                'tags': self._list(docId, 'Tag'),
+                'doctype': doc.value('DocType'),
+                'author': author,
+                'author_tip': people.tip(author) if 'Author' in people.keys and author else '',
+                'date': doc.date or '',
+                'commands': list(doc.values('Command')),
+                'tags': list(doc.values('Tag')),
             }
             chapters.append(info)
-            self.doc_index[os.path.basename(docId)] = info
+            self.doc_index[doc.id] = info
 
         by_book = OrderedDict()
         for info in chapters:
@@ -211,9 +200,15 @@ class Theme(DocumentTheme):
             'percent': round(done / total * 100) if total else 0,
             'part_count': len(parts),
             'current': None,
-            'url': 'Book_%s.html' % valid_filename(book_title),
+            'url': self._book_url(book_title),
             'height': 200,
         }
+
+    def _book_url(self, book_title):
+        """The Book page of a book, or the list of all chapters for the unfiled shelf."""
+        if book_title in self._filed:
+            return page_name('Book', book_title)
+        return 'all.html'
 
     def _mark_reading_state(self):
         """Pick the 'reading' chapter per book and the current chapter."""
@@ -248,20 +243,24 @@ class Theme(DocumentTheme):
             else:
                 book['height'] = round(160 + (book['total'] - lo) / (hi - lo) * 54)
 
-    # ----------------------------------------------------------- nav helpers
-    def _reading_context(self, basename_md):
+    def ordered_pages(self, doc):
+        """The chapters of the book doc belongs to, in reading order."""
+        info = self.doc_index.get(doc.id)
+        book = self.books.get(info['book']) if info else None
+        return [c['docId'] for c in book['chapters']] if book else []
+
+    def _reading_context(self, doc):
         """Build the left-nav, prev/next and rail data for a chapter page."""
-        info = self.doc_index.get(basename_md)
+        info = self.doc_index.get(doc.id)
         if not info:
             return None
         book = self.books.get(info['book'])
         if not book:
             return None
 
-        ordered = book['chapters']
-        idx = next((i for i, c in enumerate(ordered) if c['docId'] == info['docId']), None)
-        prev_info = ordered[idx - 1] if idx not in (None, 0) else None
-        next_info = ordered[idx + 1] if idx is not None and idx < len(ordered) - 1 else None
+        prev_doc, next_doc = self.site.features.navigation.neighbours(doc)
+        prev_info = self.doc_index.get(prev_doc.id) if prev_doc else None
+        next_info = self.doc_index.get(next_doc.id) if next_doc else None
 
         part = book['parts'].get(info['part_num'], {})
         siblings = []
@@ -287,10 +286,9 @@ class Theme(DocumentTheme):
             'tags': info['tags'],
         }
 
-    # ------------------------------------------------------------- theme var
-    def get_theme_var(self):
-        self._ensure_context()
-        var = super().get_theme_var()
+    def base_var(self):
+        """Every page gets the shelf: var['bk']."""
+        var = super().base_var()
         var['bk'] = self._library_summary()
         return var
 
@@ -361,53 +359,25 @@ class Theme(DocumentTheme):
             'part_title': book['parts'].get(current['part_num'], {}).get('title', ''),
         }
 
-    # ---------------------------------------------------------------- build
-    def build(self):
-        self._ensure_context()
-        var = self.get_theme_var()
-        self.build_page_properties()
-        self.build_page_stats()
-        self.build_page_bookmarks()
-        self.build_page_404()
-        self.build_page_index_all()
-        self.build_page_index(var)
-        self.create_page_about_kb4it()
-        self.create_page_about_app()
-        self.create_page_help()
-        self.create_page_search()
-        self.create_page_add()
-
-    def build_page_index(self, var):
-        runtime = self.srvbes.get_dict('runtime')
-        if 'index.md' in runtime['docs']['filenames']:
+    def build(self, site):
+        """The home page: the shelf, unless the site has its own index.md."""
+        if 'index.md' in site.documents:
             self.log.info("[BOOKSHELF] INDEX_SKIP reason=user_generated")
             return
+        var = self.base_var()
         var['page']['title'] = var['repo']['title']
-        page = self.template('PAGE_INDEX').render(var=var)
-        self.distribute_md('index', page)
-        self.srvdtb.add_document('index.md')
-        self.srvdtb.add_document_key('index.md', 'Title', var['repo']['title'])
-        self.srvdtb.add_document_key('index.md', 'SystemPage', 'Yes')
+        site.page('index', var['repo']['title'], self.template('PAGE_INDEX').render(var=var))
 
-    def build_page_key_value(self, kvpath):
-        """Override: the page of a Book value is the book overview (PAGE_BOOK), not a document list."""
-        self._ensure_context()
-        key, value, COMPILE_VALUE = kvpath
-        pagename = "%s_%s" % (valid_filename(key), valid_filename(value))
-
-        # The Book overview is a specialized kanban rendering of Book_<value>.
-        if key == 'Book' and value in self.books and COMPILE_VALUE:
-            var = self.get_theme_var()
-            var['has_toc'] = False
-            var['page']['title'] = value
-            var['book'] = self._book_view(value)
-            content = self.template('PAGE_BOOK').render(var=var)
-            self.distribute_md(pagename, content)
-            self.srvdtb.add_document(f"{pagename}.md")
-            self.srvdtb.add_document_key(f"{pagename}.md", 'Title', value)
-            self.srvdtb.add_document_key(f"{pagename}.md", 'SystemPage', 'Yes')
+    def value_page(self, key, value, docs):
+        """The page of a Book value is the book overview (PAGE_BOOK), not a document list."""
+        if key != 'Book' or value not in self.books:
+            self.site.features.property_pages.value_page(key, value, docs)
             return
-        super().build_page_key_value(kvpath)
+        var = self.base_var()
+        var['has_toc'] = False
+        var['page']['title'] = value
+        var['book'] = self._book_view(value)
+        self.site.page(page_name(key, value), value, self.template('PAGE_BOOK').render(var=var), listing=True)
 
     def _book_view(self, book_title):
         """Shape a single book for the kanban (Book overview) template."""
@@ -446,85 +416,42 @@ class Theme(DocumentTheme):
             'columns': columns,
         }
 
-    # ------------------------------------------------------------ doc pages
-    def build_page(self, path_md):
-        path_hdoc = html_id_for(path_md)
-        basename_md = os.path.basename(path_md)
-        basename_hdoc = os.path.basename(path_hdoc)
-        if not os.path.exists(path_hdoc):
-            self.log.error(f"[BOOKSHELF] HTML_MISSING doc={basename_md}")
-            return
-
-        HTML_HEADER_COMMON = self.template('HTML_HEADER_COMMON')
-        HTML_BODY = self.template('HTML_BODY')
-        HTML_FOOTER = self.template('HTML_FOOTER')
-        var = self.get_theme_var()
-        var['timestamp'] = get_human_datetime(datetime.now())
-        var['keys'] = self.srvdtb.get_doc_properties(basename_md)
-
-        with open(path_md, 'r', encoding='utf-8') as fpa:
-            source_md = fpa.read()
-        with open(path_hdoc, 'r', encoding='utf-8') as fph:
-            source_html = fph.read()
-
-        var['toc'] = self.extract_toc(source_html)
+    def page_context(self, doc, var):
+        """Reading time, and the metadata and reading position of a chapter."""
         var['has_toc'] = len(var['toc']) > 0
-        var['read_min'] = max(1, round(len(source_md.split()) / 200))
-
-        if self.srvdtb.is_system(basename_md):
-            var['SystemPage'] = True
+        var['read_min'] = max(1, round(len(var['source_md'].split()) / 200))
+        if var['SystemPage']:
             var['metadata'] = ''
             var['reading'] = None
         else:
-            var['SystemPage'] = False
-            var['metadata'] = self.build_metadata_section(basename_md)
-            var['reading'] = self._reading_context(basename_md)
+            var['metadata'] = self.site.features.metadata.section(doc)
+            var['reading'] = self._reading_context(doc)
+        return var
 
-        var['page']['title'] = 'Untitled'
-        try:
-            var['page']['title'] = ellipsize_text(var['keys']['Title'])
-        except Exception:
-            pass
-        var['basename_md'] = basename_md
-        var['basename_hdoc'] = basename_hdoc
-        var['source_md'] = source_md
-        var['source_html'] = self.apply_transformations(source_html)
-        var['actions'] = self.get_page_actions(var)
-
-        HTML = (HTML_HEADER_COMMON.render(var=var)
-                + HTML_BODY.render(var=var)
-                + HTML_FOOTER.render(var=var))
-        with open(path_hdoc, 'w', encoding='utf-8') as fhtml:
-            fhtml.write(HTML)
-
-    # --------------------------------------------------------------- shared
-    def datatable_date_cell(self, timestamp):
+    def datatable_date_cell(self, doc):
         """Bookshelf's date cell: the date only, no link."""
-        if timestamp is None:
+        if doc.date is None:
             return '<td class="bk-td-date"></td>'
-        return f'<td class="bk-td-date">{escape(timestamp[:16])}</td>'
+        return f'<td class="bk-td-date">{escape(doc.date[:16])}</td>'
 
-    def datatable_title_cell(self, docId, properties):
+    def datatable_title_cell(self, doc):
         """Bookshelf's title cell: a plain link, empty when the document has no title."""
-        try:
-            title = properties['Title']
-            url = properties.get('Title_Url', html_id_for(docId))
-            # Built as HTML here and printed raw: escape what comes from the document.
-            return f'<td class="bk-td-title"><a href="{escape(url)}">{escape(ellipsize_text(title, 80))}</a></td>'
-        except (KeyError, AttributeError):
+        if 'Title' not in doc.properties:
             return '<td></td>'
+        # Built as HTML here and printed raw: escape what comes from the document.
+        return f'<td class="bk-td-title"><a href="{escape(doc.url)}">{escape(ellipsize_text(doc.title, 80))}</a></td>'
 
-    def datatable_value_link(self, properties, key, value):
-        """Bookshelf's value link: its own class, and "#" when the value has no page."""
-        return {'class': 'bk-link', 'title': value, 'url': properties.get(f'{key}_{value}_Url', '#')}
+    def datatable_value_link(self, doc, key, value):
+        """Bookshelf's value link: its own class."""
+        return {'class': 'bk-link', 'title': value, 'url': page_name(key, value)}
 
-    def build_metadata_section(self, docId):
-        """Override: a study page is still built when its metadata fails; the section is left empty."""
+    def build_metadata_section(self, doc):
+        """A study page is still built when its metadata fails; the section is left empty."""
         try:
-            return super().build_metadata_section(docId)
+            return self.site.features.metadata.build_metadata_section(doc)
         except Exception as error:
-            self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={docId} error={error}")
+            self.log.error(f"[BOOKSHELF] METADATA_FAIL doc={q(doc.id)} error={q(error)}", exc_info=True)
             return ''
 
-    def post_activities(self):
+    def after_build(self, site):
         self.log.debug("[BOOKSHELF] POST_END")

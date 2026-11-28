@@ -1,19 +1,30 @@
 {
     "id": "techdoc",
     "name": "Techdoc",
-    "version": "1.0.0",
+    "version": "1.4.0",
     "author": "[Tomás Vírseda]",
     "email": "[tomasvirseda@gmail.com]",
     "website": "https://github.com/t00m/KB4IT",
     "description": "Theme for technical documentation",
-    "search": true,
     "editor": true,
-    "feed": false,
-    "kb4it": ">=0.10.0",
+    "feed": true,
+    "kb4it": ">=0.12.0",
+    "assets": ["highlight", "uikit", "datatables"],
     "favicon": "images/logo.svg",
     "autoescape": true,
     "template_base": "uikit",
-    "toc_sidebar": false,
+    "heading_classes": {
+        "h2": "kb-h2",
+        "h3": "kb-h3",
+        "h4": "kb-h4",
+        "sect1": "kb-sect1 uk-margin-small-bottom uk-card uk-card-small uk-card-body uk-border-rounded",
+        "sect2": "kb-sect2 sect2 uk-border-rounded uk-padding-small",
+        "sect3": "kb-sect3 sect3 uk-border-rounded uk-padding-small",
+        "sect4": "kb-sect4 sect4 uk-border-rounded uk-padding-small"
+    },
+    "toc_sidebar": true,
+    "focus_mode": false,
+    "table_filter": true,
     "header_keys": {
         "badges": ["DocType", "Status", "Priority"],
         "links": ["Date", "WorkType", "Topic", "Product"]
@@ -30,14 +41,24 @@
         "tiers": {"exemplary": 75, "complete": 60, "basic": 40},
         "targets": {"How-to guide": 150, "Reference": 200, "Explanation": 500, "Tutorial": 800},
         "record_target": 60,
+        "author_profiles": "auto",
         "half_life": {"How-to guide": 3, "Tutorial": 3, "Reference": 4, "Explanation": 8},
-        "final_status": ["Released", "Completed", "Finished", "Successful"],
+        "final_status": ["Released", "Completed", "Finished", "Successful", "Degraded"],
         "retired_status": ["Obsolete", "Deprecated", "Withdrawn", "Rejected"],
         "known_values": {
-            "Status": ["New", "Open", "Draft", "Planned", "Completed", "Released", "Finished", "Successful",
+            "Status": ["New", "Open", "Draft", "Planned", "Completed", "Released", "Finished", "Successful", "Degraded",
                        "Deprecated", "Obsolete", "Withdrawn", "Rejected"],
             "Priority": ["Critical", "Very high", "High", "Medium", "Normal", "Low"],
-            "DocType": ["Tutorial", "How-to guide", "Reference", "Explanation"]
+            "DocType": ["Tutorial", "How-to guide", "Reference", "Explanation"],
+            "Category": ["Procedure", "Note", "Post", "Report", "Template", "Record", "Minutes"],
+            "WorkType": ["Knowledge", "Change", "Incident", "Task", "Meeting"]
+        },
+        "work_categories": {
+            "Knowledge": ["Procedure", "Note", "Post", "Report", "Template"],
+            "Change": ["Record"],
+            "Incident": ["Record"],
+            "Task": ["Record"],
+            "Meeting": ["Minutes"]
         }
     },
     "info_tabs": {

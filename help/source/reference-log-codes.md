@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Themes, Configuration
 HelpId: log-codes
-Keyword: log, error, warning, code, message, kb4it.log, build log, CONFIG_ERROR, THEME_ERROR, DOC_INVALID, PAGES_FAILED, META_INVALID
+Keyword: log, error, warning, code, message, kb4it.log, build log, CONFIG_ERROR, THEME_ERROR, DOC_INVALID, PAGES_FAILED, META_INVALID, PROJECT_DELETE_REFUSED
 Level: advanced
 Order: 640
 Related: troubleshooting.md
@@ -18,7 +18,15 @@ Each warning or error line in the log has a component in brackets, a code, and d
 [BACKEND] CONFIG_KEY_MISSING key=title
 ```
 
-The code tells you what happened. The details name the file, key or page. KB4IT prints these lines in the terminal and keeps them in `var/log/kb4it.log` inside the knowledge base. Run with `-L DEBUG` to see every step around them.
+The code tells you what happened. The details name the file, key or page. A value with spaces, quotes or `=` is written in double quotes: `reason="boom in run"`.
+
+In `var/log/kb4it.log` each line starts with the time, the level, the thread, the part of KB4IT and the place in its code; the terminal shows the same line without the time:
+
+```
+2026-11-03 21:40:12 |      ERROR | compile_2    | Compiler        | compiler:239 | [COMPILER] ERROR doc=NOTE.md error='Date'
+```
+
+When an error comes from an exception, the file also holds its traceback; the terminal shows one line. Warnings and errors of the Markdown and Pillow libraries appear under their own names, `MARKDOWN` and `PIL`. KB4IT prints these lines in the terminal and keeps them in `var/log/kb4it.log` inside the knowledge base, with every debug line around them at any `-L` level. Run with `-L DEBUG` to see those steps in the terminal too.
 
 The tables list each code once. **Stops** means the command ends with exit status `1`. The common problems have a longer answer in [Troubleshooting](troubleshooting.md).
 
@@ -32,6 +40,8 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_ERROR` | error | The theme cannot load, or its own checks failed. Stops |
 | `COMPILE_ERROR` | error | Pages could not be made, a hook failed, or documents cannot be read with `"fail_on_invalid": true`. Stops |
 | `KB4IT_ERROR` | error | Any other failure. Stops |
+| `UNEXPECTED_ERROR` | error | A failure KB4IT did not expect, usually a bug. The terminal shows `Error:` and the message; the log file has the full traceback. Stops. Please report it with that traceback |
+| `BUILD_ERROR` | error | The same, in a build started by the terminal interface or `kb4it serve`. The build fails; the interface or the server keeps running |
 | `DOCTOR_PROBLEM` | error | `kb4it doctor` found a bundled file or theme missing, one line each, before `KB4IT_ERROR`. Install KB4IT again; see [Check the installation](howto-install.md#check) |
 
 ## Settings {#settings}
@@ -43,6 +53,11 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `CONFIG_KEY_MISSING` | error | A required key is missing. Stops | See [CONFIG_KEY_MISSING](troubleshooting.md#config-key) |
 | `VERIFY_ERROR` | error | `kb4it verify` cannot read `repo.json`. Stops | Fix the JSON or the path |
 | `PATH_CWD_RELATIVE` | warning | `source` was found relative to the current folder, not to the knowledge base folder. Older settings worked that way. The build goes on | Make `source` and `target` relative to the folder that holds `config/` |
+| `GIT_SERVER_NOT_URL` | warning | `"git": true`, but `git_server` is not a full URL, for example `github.com`. The build goes on without git links, and `kb4it verify` reports it | Write `git_server` as a full URL, such as `https://github.com`; see [Optional settings](reference-repo-json.md#optional) |
+| `THEME_SETTING_UNKNOWN` | warning | The block of `repo.json` named after the theme, such as `"techdoc": {...}`, has a key the theme does not know, often a typo. The key is ignored and the build goes on; `kb4it verify` reports it and exits 1 | Fix or delete the key; the theme's reference page lists its settings |
+| `THEME_BARE_IMPORT` | warning | A module of the theme's `logic/` folder imports a sibling by its bare name, such as `from helpers import x`. It still works, and is deprecated. Logged once per module, for themes outside KB4IT | Import it relatively: `from .helpers import x` |
+| `THEME_HOOK_UNUSED` | warning | A theme on `BaseTheme` has a method named like a hook of a feature it does not switch on, such as `event_documents` without `events`. KB4IT never calls it. The build goes on | Add the feature to `features`, or rename or remove the method |
+| `THEME_API_LEGACY` | warning | The theme subclasses `Builder` or `DocumentTheme`, the theme API before `kb4it.theme`. It keeps working, and is deprecated. Logged once per build, for themes outside KB4IT | Move the theme to `kb4it.theme.BaseTheme`; see Write a theme |
 | `SOURCE_MISSING` | error | The `source` folder does not exist. Stops | See [SOURCE_MISSING](troubleshooting.md#source-missing) |
 | `LOAD_FAIL` | error | The `hooks` file raised an error while loading. Stops | Fix the Python file; the message has the error |
 | `MD_EXTENSION_MISSING` | error | A Markdown extension, nh3 or Pygments is not installed. Stops | See [MD_EXTENSION_MISSING](troubleshooting.md#md-extension) |
@@ -60,9 +75,30 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `DATE_INVALID` | warning, error | A date value cannot be read as a date. The document is sorted with the undated ones | Use a [date form KB4IT reads](reference-document-format.md#dates) |
 | `DOC_UNDATED` | warning | The blog theme found a post without a `Date` | Add a `Date` property |
 | `LINK_BROKEN` | warning | A link points to a `.md` file that is not in `source/` | See [LINK_BROKEN](troubleshooting.md#link-broken) |
+| `LINK_NO_EXTENSION` | warning | A link names a source document without its `.md` extension, so it stays broken on the site. The line suggests the right link | See [LINK_NO_EXTENSION](troubleshooting.md#link-no-extension) |
 | `ANCHOR_MISSING` | warning | A link points to a section that does not exist | Fix the `#anchor` part of the link |
 | `SCAN_FAIL` | warning | The links of a document cannot be checked. The build goes on | Run `kb4it verify` and look at the document the line names |
 | `MD_FENCE_IN_BLOCK` | warning | A fenced code block sits inside a list or a quote, where plain Markdown does not see it | See [code inside a note or a list](reference-document-format.md#code-in-blocks) |
+
+## People {#people}
+
+A profile is a source whose file name starts with `PROFILE-`: it describes one value of the property that `ProfileOf` names, such as a person in `Author` or a team in `Team`, and its title is that value. A file named with the old `PERSON-` prefix is an ordinary document. A profile with an error is left out of the site; with `"fail_on_invalid": true` the build stops.
+
+| Code | Level | Meaning | What to do |
+|---|---|---|---|
+| `LOADED` | information | The number of profiles and aliases read | Nothing |
+| `PROFILE_INVALID` | error | The title of the profile is not one name (it has a comma, which splits values, so `# Doe, Jane` could never match); a `PROFILE-` file has no `ProfileOf`; or `ProfileOf` names a property that cannot have profiles (a date, `Title`, an ignored property, `Alias`, `ProfileOf`) | Write one name without a comma, and add `ProfileOf` with the property the profile describes |
+| `PROFILE_DUPLICATE` | error | Two profiles claim the same name or alias for the same property. The first file in name order is kept | Keep one profile per person; move the extra spellings to its `Alias` key |
+| `PROFILE_ALIAS_IS_NAME` | error | An `Alias` of one profile is the name of another profile of the same property. The profile with the alias is left out | Remove the alias, or merge the two profiles |
+| `PROFILE_KEY_UNUSED` | warning | `ProfileOf` names a property that no document uses and `profiles` in `repo.json` does not list, such as `ProfileOf: Jane Doe` written instead of `ProfileOf: Author`. The profile is built, but no page shows it | Write the property in `ProfileOf`, such as `ProfileOf: Author` |
+| `PEOPLE_BLOCK_DEPRECATED` | warning | `repo.json` has the old `people` block. It is read as the `Author` entries of `profiles` | Move it to `profiles`, see [Profiles](reference-repo-json.md#people) |
+| `PEOPLE_BLOCK_IGNORED` | warning | `repo.json` has both `profiles` and the old `people` block. `people` is not read | Move what `people` says into `profiles` and remove it |
+| `VALUE_NO_PROFILE` | information | Shown by `kb4it verify` for properties with `"missing": "notice"`: a value has no profile, with the number of documents | Add a profile, or fix the spelling of the value |
+| `PROFILE_NO_CONTACT` | warning | Shown by `kb4it verify`: a profile has none of the contact properties (`people.contact_keys`), or only private ones | Add `Email`, `Phone`, `Chat` or `Url` to the profile |
+| `PROFILE_UNUSED` | information | Shown by `kb4it verify`: no document uses the value the profile describes | Nothing, if the person has not written anything yet |
+| `AUTHOR_NO_PROFILE` | information | Shown by `kb4it verify` once the knowledge base has one profile: a person named by documents has no profile, with the number of documents | Add a profile, or fix the spelling of the name in the documents |
+| `PROFILE_NO_PREFIX` | information | Shown by `kb4it verify`: a document has the title of a person who is named by documents and has no profile. It may be a profile whose file lost the `PROFILE-` prefix | Rename the file to `PROFILE-<name>.md` and add `ProfileOf` if it is a profile |
+| `PROFILE_CONTACT_PUBLIC` | information | Shown by `kb4it verify` while `seo.index` is `true`: a profile shows an email address or a phone number to search engines | Keep it, or list the property in `people.private` |
 
 ## Build {#build}
 
@@ -77,7 +113,10 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `HTML_MISSING` | error | The theme cannot find the converted text of a document | Look for `MD_COMPILE_FAIL` for the same document |
 | `METADATA_FAIL`, `KEY_FAIL` | error | The theme cannot build the list of properties of a document | Check the properties of the document the line names |
 | `DATATABLE_FAIL` | error | The theme cannot add a document to a table | Check the properties of the document the line names |
+| `POST_TEMPLATE_FALLBACK` | warning | The blog theme could not render a document with its post layout and used the plain page layout. The line names the template and the error | Check the properties of the document, often `Date` or `Category`, or fix the template override |
 | `INDEX_SKIP` | warning | The blog theme left a post out of its home page | Check the post the line names; the line has the error |
+| `INDEX_UNSET` | info | Written as `[SEO] INDEX_UNSET`: `seo.index` is not set in `repo.json`, so the site is indexable by default | Set `"seo": {"index": true}` or `false`; see [Search engines](reference-repo-json.md#indexing) |
+| `ROBOTS_KEPT` | warning | `target/robots.txt` was not written by KB4IT, so the build leaves it as it is | Put your `robots.txt` in `source/`, or delete the one in `target/` |
 | `INDEX_LARGE` | warning | The search index is larger than 5 MB, or 2 MB for apphelp sites | See [search](reference-repo-json.md#search). The build goes on |
 | `ADD_PAGE` | info | Written as `[BUILDER] ADD_PAGE enabled=<True or False> skeletons=<overrides, theme or common> categories=<n>`: whether this build makes the Add page, and the skeleton set and number of cards it uses (the last two only when enabled). See the `editor` key in [repo.json](reference-repo-json.md) | Nothing |
 | `SKELETON_UNLISTED` | warning | Written as `[BUILDER] SKELETON_UNLISTED file=<name>`: a `*-SKELETON.md` file is not listed in `skeletons.json`, so the Add page ignores it | List the file in `skeletons.json`, or delete it |
@@ -105,12 +144,25 @@ KB4IT writes one of these lines last, when a command fails. The line before it n
 | `THEME_REQUIREMENT_INVALID` | error | The `kb4it` field of `theme.json` is not a valid version rule. Stops | Write it like `">=0.9"` |
 | `THEME_VERSION_MISSING` | warning | The theme has no `version` in its `theme.json`. It loads and is shown as `unversioned` | Add `"version": "1.0.0"` to its `theme.json` |
 | `THEME_VERSION_INVALID` | warning | The `version` of `theme.json` is not `X.Y.Z`. The theme loads as `unversioned`; from the next minor release this stops the build | Write it like `"1.2.0"` |
+| `IMAGE_MISSING` | warning | techdoc: a document shows an image whose file is not in `source/`. The page shows a grey box with the path | See [IMAGE_MISSING](troubleshooting.md#image-missing) |
+| `QUALITY_SETTING` | warning | techdoc: `author_profiles` in the `quality` block of `theme.json` is not `"auto"`, `true` or `false`. The build uses `"auto"` | Set one of the three values |
 | `THEME_NOT_LOADED` | error | The site was about to be written without a loaded theme. Stops | Report it as a bug |
 | `THEME_AUTOESCAPE_OFF` | warning | Your own theme prints values without escaping them | Add `"autoescape": true` to `theme.json`; see [Escaping](howto-create-theme.md#escaping) |
 | `THEME_VERIFY_ERROR` | error | The theme's own check crashed during `kb4it verify`. Stops | Fix the theme's `verify.py` |
 | `TEMPLATE_MISSING` | error | The theme lacks a template every theme needs. Stops | Add the template the line names |
 | `TEMPLATE_NOT_FOUND` | error | A template the theme asks for does not exist. Stops | Add it to the theme or to `overrides/templates/` |
 | `TEMPLATE_COMPILE_FAIL` | error | A template has a syntax error. Stops | See [TEMPLATE_COMPILE_FAIL](troubleshooting.md#template-compile) |
+
+## Post-build checks {#checks}
+
+After every build, KB4IT reads the pages of the website and logs what it finds as `[CHECK]` lines. An error stops the build. With `"strict": true` at the top of `repo.json`, a warning stops it too. `kb4it verify` runs the link check on the built website, when there is one.
+
+| Code | Level | Meaning | What to do |
+|---|---|---|---|
+| `ANCHOR_MISSING` | warning | A link between two pages of the website points to a page or a section that does not exist: `from=` names the page with the link, `to=` the link | Fix the link or the heading it points to. If a theme wrote the link, report it |
+| `HELPID_TARGET_MISSING` | error with apphelp `"strict": true`, else warning | A help id points to a page or section that does not exist | Fix the `HelpId` or the heading it points to |
+| `CONTRACT_MISSING` | error | An entry of the apphelp contract file has no page. Stops | Add the page or help id, or remove the entry |
+| `CONTRACT_FILE_MISSING` | warning | The `contract` file named in the `apphelp` block of `repo.json` does not exist | Create it, or remove `contract` |
 
 ## Help sites {#apphelp}
 
@@ -126,9 +178,6 @@ The apphelp theme checks the properties of each page. With `"strict": true`, the
 | `DOCTYPE_INVALID` | `DocType` is not `Tutorial`, `How-to guide`, `Reference` or `Explanation`. It is left out | Use one of the four |
 | `DOC_LEFT_OUT` | A page without a valid `DocType` was left out of the site | See `DOCTYPE_MISSING` and `DOCTYPE_INVALID` |
 | `HELPID_DUPLICATE` | Two pages use the same help id | Give each page its own |
-| `HELPID_TARGET_MISSING` | A help id points to a page or section that does not exist. Stops in strict mode | Fix the `HelpId` or the heading it points to |
-| `CONTRACT_MISSING` | An entry of the contract file has no page. Stops | Add the page or help id, or remove the entry |
-| `CONTRACT_FILE_MISSING` | The `contract` file named in `repo.json` does not exist | Create it, or remove `contract` |
 | `INDEX_PAGE_MISSING` | A page is missing from the search index because its file was not written | Look for its error above in the log |
 
 ## Terminal interface and projects {#projects}
@@ -136,7 +185,14 @@ The apphelp theme checks the properties of each page. With `"strict": true`, the
 | Code | Level | Meaning | What to do |
 |---|---|---|---|
 | `PROJECTS_CORRUPT` | warning | `projects.json` cannot be read. KB4IT renames it to `projects.json.corrupt-<date>` and starts an empty list | Add your knowledge bases again, or repair the kept copy |
-| `PROJECTS_LOAD_ERROR` | error | `kb4it projects` cannot read the list | Check `~/.kb4it/projects.json` |
+| `PROJECT_IMPORTED` | info | A knowledge base was added to the list, by `kb4it create`, `kb4it import` or the terminal interface | Nothing |
+| `PROJECT_ID_SET` | info | A project got a new id, or lost it | Nothing |
+| `PROJECT_REMOVED` | info | A project was removed from the list. Its files stay unless the next line is `PROJECT_FILES_DELETED` | Nothing |
+| `PROJECT_FILES_DELETED` | info | `kb4it delete --files` deleted the project folder | Nothing |
+| `PROJECT_DELETE_REFUSED` | warning | `kb4it delete --files` would not delete the folder. `reason=no_config`: the folder has no `config/` holding this `repo.json`; `protected_folder`: the folder is, or contains, `/`, your home folder or `~/.kb4it`; `locked`: a build or `kb4it serve` is using it | Delete it by hand if you are sure, or stop the build first |
+| `THEME_INSTALLED` | info | `kb4it install-theme` or the Themes screen installed a theme. `replaced=` is the version it replaced, empty when there was none | Nothing |
+| `THEME_INSTALL_REFUSED` | info | A theme zip was not installed. `reason=` is one of `not_a_zip`, `layout` (not one top folder), `unsafe_entry` (a path leaving the folder, or a symbolic link), `too_large`, `no_theme_json`, `bad_theme_json`, `id_mismatch` (top folder and `theme.json` id differ), `bad_id`, `requirement` (needs another KB4IT), `download`, `insecure_url` (not `https://`), `install` (the folder could not be put in place; the old theme was kept) | Read the error line; for a theme you made, see [Pack a theme as a zip](howto-create-theme.md#zip) |
+| `THEME_UNINSTALLED` | info | `kb4it uninstall-theme` or the Themes screen removed one of your themes | Nothing |
 | `PROJECT_SAVE_ERROR` | error | A new knowledge base could not be added to the list | Check permissions of `~/.kb4it` |
 | `REPO_PATH_MISSING`, `REPO_PATH_CREATED` | warning | `kb4it create` was given a folder that did not exist, and created it | Nothing |
 | `WARNING_PUBLIC` | warning | `kb4it serve` listens on an address other computers can reach | Use the default `--host 127.0.0.1` unless you need it |
@@ -150,3 +206,5 @@ These point to a bug in KB4IT or in a theme, not to your documents. Please [repo
 | `SERVICE_NOT_REGISTERED` | error | A part of KB4IT asked for a service that does not exist. Stops |
 | `DOMAIN_UNKNOWN` | error | A theme wrote a value into an unknown place |
 | `DOC_NOT_IN_DB` | warning | A theme asked for a document that is not in the build |
+| `LEVEL_UNKNOWN` | warning | A program that runs KB4IT asked for a log level KB4IT does not know. The terminal uses `INFO`; the file still gets every line |
+| `ROTATE_FAIL` | warning | The log of the previous build could not be moved to `kb4it.log.old`, usually because another program has it open. The build goes on |

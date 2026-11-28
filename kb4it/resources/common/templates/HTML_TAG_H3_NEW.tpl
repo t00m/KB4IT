@@ -1,0 +1,1 @@
+<h3 class="${var['theme'].get('heading_classes', {}).get('h3', 'kb-h3')}" 

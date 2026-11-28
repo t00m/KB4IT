@@ -24,7 +24,7 @@ KB4IT is a Python package (`kb4it/`) built around a small controller and a set o
 | Database | `services/database.py` | Documents and their properties, in memory |
 | Processor | `services/processor.py` | Reads the properties and decides what to compile |
 | Compiler | `services/compiler.py` | Markdown to HTML, in parallel |
-| Builder | `services/builder.py` | Base class of every theme: templates and pages |
+| Builder | `services/builder.py` | Templates and pages; `ThemeEngine` (`services/themeengine.py`) runs a `kb4it.theme.BaseTheme` theme through it |
 | Frontend | `services/frontend.py` | Finds, checks and loads the theme |
 | Deployer | `services/deployer.py` | Copies the result to `target/` |
 
@@ -61,7 +61,7 @@ The Processor turns this into a `BuildPlan`: the documents to compile and the pr
 
 ## Themes {#themes}
 
-A theme's `logic/theme.py` subclasses `Builder`. The core calls its hooks at the stages above and renders its Mako templates. Template lookup tries the theme's `templates/` first, then `kb4it/resources/common/templates/`. See [Create your own theme](howto-create-theme.md).
+A theme's `logic/theme.py` subclasses `kb4it.theme.BaseTheme` and lists its features. The core calls the theme engine at the stages above, which calls the features and the theme's hooks and renders its Mako templates. Template lookup tries the site's overrides, the theme's `templates/`, its template base, then `kb4it/resources/common/templates/`. See [Write a theme](howto-create-theme.md) and [Theme internals](dev-theme-internals.md).
 
 ## Where things are {#paths}
 

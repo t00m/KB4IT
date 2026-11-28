@@ -21,8 +21,8 @@ DEFAULT_OUT = ROOT / "kb4it" / "resources" / "help"
 RUNNER = "import sys; from kb4it.core.main import main; sys.argv[0] = 'kb4it'; main()"
 
 
-# Import names of the optional packages the build needs. Keep in sync with the
-# "extras" definition in pyproject.toml (pymdown-extensions, nh3) plus pygments.
+# Import names of the packages the help build needs: PyMdown Extensions and pygments
+# (dependencies of KB4IT) and nh3 (the "extras" in pyproject.toml).
 REQUIRED = ("pymdownx", "nh3", "pygments")
 
 

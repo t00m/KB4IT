@@ -20,7 +20,8 @@ def isolated_env(home, **extra):
     # A fake HOME hides ~/.local, so keep the user base: optional packages stay visible.
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
                PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000",
-               PYTHONIOENCODING="utf-8")  # run_kb4it reads the output as UTF-8, also on Windows
+               PYTHONIOENCODING="utf-8",  # run_kb4it reads the output as UTF-8, also on Windows
+               PYTHONFAULTHANDLER="1")  # a build that crashes prints the stack of every thread
     env.update(extra)
     return env
 
@@ -63,7 +64,31 @@ def mini_theme(dest, **theme_json):
     return dest
 
 
+def relative_paths(cfg):
+    """Point repo.json source and target at the repository root, as a knowledge base kept in git does.
+
+    kb4it create writes absolute paths; a test that copies or moves a created repository needs this.
+    """
+    conf = json.loads(Path(cfg).read_text(encoding="utf-8"))
+    conf.update(source="source", target="target")
+    Path(cfg).write_text(json.dumps(conf), encoding="utf-8")
+
+
 def page(title, body="Text.", **keys):
     """Return a Markdown page; pass at least one key, an empty frontmatter is invalid."""
     front = "".join(f"{key}: {value}\n" for key, value in keys.items())
     return f"---\n{front}---\n\n# {title}\n\n{body}\n"
+
+
+TECHDOC_LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
+
+
+def techdoc_module(name):
+    """A module of techdoc's logic/ package (quality, docpage, records...), loaded once per test process."""
+    import importlib
+
+    from kb4it.core.themeload import load_package, package_name
+    package = package_name("techdoc", str(TECHDOC_LOGIC))
+    if package not in sys.modules:
+        load_package(str(TECHDOC_LOGIC), "techdoc")
+    return importlib.import_module(f"{package}.{name}")

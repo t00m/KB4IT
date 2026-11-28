@@ -5,7 +5,6 @@
 # Description: Workflow module
 """
 
-import importlib.util
 import json
 import os
 import shlex
@@ -13,20 +12,14 @@ import shutil
 import stat
 import sys
 import time
-from pathlib import Path
 
-from kb4it.core import trace
+from kb4it.core import projects, trace
 from kb4it.core.env import ENV
-from kb4it.core.exceptions import CompilationError, ConfigError, KB4ITError, ThemeError
-from kb4it.core.lock import registry_lock
-from kb4it.core.mdconfig import load_settings
-from kb4it.core.mdlinks import scan_document, suggest_md
+from kb4it.core.exceptions import CompilationError, KB4ITError, ThemeError
 from kb4it.core.service import Service
-from kb4it.core.util import (SOURCE_ENCODING, copydir, delete_target_contents, fences_in_blocks,
-                             get_document_attributes, get_source_docs, is_windows_reserved, json_load, json_save,
-                             page_name_clashes, quarantine, raw_script_lines)
-from kb4it.core.paths import resolve_repo_path
-from kb4it.services.addpage import ADD_DOC, check_editor_setting, check_theme_editor, editor_on
+from kb4it.core.util import copydir, delete_target_contents, json_load
+from kb4it.services.verify import VerifyMixin
+from kb4it.core.log import q
 
 
 def build_script(config_file, platform=None):
@@ -40,7 +33,7 @@ def build_script(config_file, platform=None):
     return "compile.sh", f"#!/bin/sh\nkb4it -L INFO build {shlex.quote(str(config_file))}\n", True
 
 
-class Workflow(Service):
+class Workflow(VerifyMixin, Service):
     """KB4IT workflow class."""
 
     def _initialize(self):
@@ -69,278 +62,28 @@ class Workflow(Service):
 
     def list_apps(self, theme):
         """Print all apps available for a given theme to the log."""
-        self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={theme}")
+        self.log.debug(f"[WORKFLOW] ACTION name=list_apps theme={q(theme)}")
         frontend = self.get_service("Frontend")
         frontend.apps_list(theme)
 
     def list_projects(self):
         """Print all projects created by the user to stdout."""
         self.log.info("[WORKFLOW] ACTION name=list_projects")
-        projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
-        if not os.path.exists(projects_file):
+        def corrupt(kept, error):
+            print(f"Error loading projects: {error}. The file was kept as {kept}")
+        entries = projects.load(on_corrupt=corrupt)
+        if not entries:
             print("No projects found.")
             return
+        for line in projects.format_projects(entries, table=sys.stdout.isatty()):
+            print(line)
 
+    def _save_project(self, name, config_path, pid=None):
+        """Add the project to projects.json."""
         try:
-            data = json_load(projects_file)
-            projects = data.get("projects", [])
-            if not projects:
-                print("No projects found.")
-                return
-
-            print(f"{'Name':<30} {'Config Path'}")
-            print("-" * 80)
-            for proj in projects:
-                print(f"{proj['name']:<30} {proj['config']}")
+            projects.register(config_path, name=name, pid=pid)
         except Exception as e:
-            self.log.error(f"[WORKFLOW] PROJECTS_LOAD_ERROR reason={e}")
-            print(f"Error loading projects: {e}")
-
-    def _save_project(self, name, config_path):
-        """Save project to projects.json registry."""
-        with registry_lock():
-            self._save_project_locked(name, config_path)
-
-    def _save_project_locked(self, name, config_path):
-        projects_file = os.path.join(ENV["LPATH"]["ROOT"], "projects.json")
-        projects = []
-        if os.path.exists(projects_file):
-            try:
-                data = json_load(projects_file)
-                projects = data["projects"]
-                if not isinstance(projects, list):
-                    raise TypeError("'projects' is not a list")
-            except (ValueError, KeyError, TypeError) as error:
-                kept = quarantine(projects_file)
-                self.log.warning(f"[WORKFLOW] PROJECTS_CORRUPT path={projects_file} kept={kept} reason={error}")
-                projects = []
-
-        # Avoid duplicates
-        if any(p["config"] == config_path for p in projects):
-            return
-
-        projects.append({"name": name, "config": config_path})
-        try:
-            json_save(projects_file, {"projects": projects})
-            self.log.info(f"[WORKFLOW] PROJECT_REGISTERED name={name}")
-        except Exception as e:
-            self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={e}")
-
-    def _verify_links(self, docs):
-        """LINK_BROKEN, LINK_NO_EXTENSION and ANCHOR_MISSING lines for links between source documents."""
-        scanned = {}
-        for doc in docs:
-            try:
-                scanned[os.path.basename(doc)] = scan_document(doc)
-            except Exception as e:
-                self.log.warning(f"[LINKS] SCAN_FAIL doc={os.path.basename(doc)} error={e}")
-        problems = []
-        for name in sorted(scanned):
-            links, _anchors, bare = scanned[name]
-            for path in bare:
-                suggestion = suggest_md(path, set(scanned))
-                if suggestion:
-                    problems.append(f"LINK_NO_EXTENSION from={name} to={path} suggest={suggestion}")
-                else:
-                    problems.append(f"LINK_BROKEN from={name} to={path}")
-            for path, fragment in links:
-                target = os.path.normpath(path).replace(os.sep, "/")
-                if target not in scanned:
-                    problems.append(f"LINK_BROKEN from={name} to={path}")
-                elif fragment and fragment not in scanned[target][1]:
-                    problems.append(f"ANCHOR_MISSING from={name} to={path}#{fragment}")
-        return problems
-
-    def verify_sources(self):
-        """Verify project sources, display non-conformant ones and fail when there are any."""
-        self.log.info("[WORKFLOW] ACTION name=verify_sources")
-        backend = self.app.get_service("Backend")
-        config_file = backend.get_value("app", "config")
-
-        if config_file is None or not os.path.exists(config_file):
-            print("Error: Configuration file not found.")
-            raise ConfigError(f"Configuration file not found: {config_file}")
-
-        try:
-            repo = json_load(config_file)
-        except Exception as e:
-            self.log.error(f"[WORKFLOW] VERIFY_ERROR reason={e}")
-            raise ConfigError(f"Config load failed: {e}") from e
-
-        source_dir = repo.get("source")
-        if not source_dir:
-            print("Error: 'source' directory not defined in config.")
-            raise ConfigError("'source' directory not defined in config")
-        source_dir = resolve_repo_path(source_dir, Path(config_file).absolute().parent.parent)
-        if not os.path.exists(source_dir):
-            print(f"Error: Source directory not found: {source_dir}")
-            raise ConfigError(f"Source directory not found: {source_dir}")
-
-        docs = get_source_docs(source_dir)
-        if not docs:
-            print(f"No source documents found in {source_dir}")
-            return
-
-        print(f"Verifying {len(docs)} source documents in {source_dir}...")
-        non_conformant = []
-        theme_class = self._theme_class(repo, config_file)
-        reserved = tuple(getattr(theme_class, "reserved_pages", ()))
-        if self._editor_on(repo, config_file, theme_class):
-            reserved = (*reserved, ADD_DOC)
-        for doc in docs:
-            if is_windows_reserved(doc) or os.path.basename(doc) in reserved:
-                non_conformant.append((doc, "reserved_name"))
-                continue
-            _keys, success, reason = get_document_attributes(doc)
-            if not success:
-                non_conformant.append((doc, reason))
-        for first, second in page_name_clashes(os.path.basename(d) for d in docs):
-            non_conformant.append((os.path.join(source_dir, second), f"name_clash_with={first}"))
-
-        if non_conformant:
-            print("\nNon-conformant source files found:")
-            print("-" * 80)
-            for doc, reason in non_conformant:
-                print(f"{os.path.abspath(doc)} (Reason: {reason})")
-            print("-" * 80)
-            print(f"Total: {len(non_conformant)} non-conformant files.")
-        else:
-            print("\nAll source documents are conformant.")
-
-        try:
-            problems = self._theme_verify(repo, config_file, docs)
-        except Exception as e:
-            self.log.error(f"[WORKFLOW] THEME_VERIFY_ERROR reason={e}")
-            raise KB4ITError(f"Theme verify hook failed: {e}") from e
-        settings = None
-        try:
-            settings = load_settings(repo)
-        except ConfigError as e:
-            problems = [f"repo.json: {e}", *problems]
-        try:
-            check_editor_setting(repo)
-        except ConfigError as e:
-            problems = [str(e), *problems]
-        if problems:
-            print("\nTheme checks:")
-            for line in problems:
-                print(f"  {line}")
-            print(f"Total: {len(problems)} theme problems.")
-
-        markdown_warnings = self._verify_fences(docs, settings)
-        if markdown_warnings:
-            print("\nMarkdown (warnings):")
-            for line in markdown_warnings:
-                print(f"  {line}")
-
-        raw_html = self._verify_raw_scripts(docs, settings)
-        if raw_html:
-            print("\nRaw HTML (information: it reaches the pages as written; see markdown.sanitize):")
-            for line in raw_html:
-                print(f"  {line}")
-
-        link_problems = self._verify_links(docs)
-        if link_problems:
-            print("\nLinks:")
-            for line in link_problems:
-                print(f"  {line}")
-            print(f"Total: {len(link_problems)} broken links.")
-
-        if non_conformant or problems or link_problems:
-            raise KB4ITError(f"Verification failed: {len(non_conformant)} non-conformant files, "
-                             f"{len(problems)} theme problems, {len(link_problems)} broken links")
-
-    def _verify_fences(self, docs, settings):
-        """MD_FENCE_IN_BLOCK lines for fences that python-markdown cannot see without superfences."""
-        if settings is None or "pymdownx.superfences" in settings.extensions:
-            return []
-        lines = []
-        for doc in sorted(docs):
-            with open(doc, encoding=SOURCE_ENCODING) as fh:
-                numbers = fences_in_blocks(fh.read())
-            if numbers:
-                name = os.path.basename(doc)
-                self.log.warning(f"[WORKFLOW] MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}")
-                lines.append(f"MD_FENCE_IN_BLOCK doc={name} lines={','.join(map(str, numbers))}: "
-                             "indent the code instead of fencing it, or enable pymdownx.superfences")
-        return lines
-
-    def _verify_raw_scripts(self, docs, settings):
-        """DOC_RAW_SCRIPT lines for documents with scripts or event handlers, when sanitize is off."""
-        if settings is None or settings.sanitize:
-            return []
-        lines = []
-        for doc in sorted(docs):
-            with open(doc, encoding=SOURCE_ENCODING) as fh:
-                numbers = raw_script_lines(fh.read())
-            if numbers:
-                name = os.path.basename(doc)
-                line = f"DOC_RAW_SCRIPT doc={name} lines={','.join(map(str, numbers))}"
-                self.log.info(f"[WORKFLOW] {line}")
-                lines.append(line)
-        return lines
-
-    def _find_theme_dir(self, repo, config_file):
-        """Return the theme folder for a repo, following the same order as the build."""
-        root = Path(config_file).absolute().parent.parent
-        if repo.get("theme_path"):
-            return resolve_repo_path(repo["theme_path"], root)
-        theme = repo.get("theme", "")
-        source = resolve_repo_path(repo.get("source", "source"), root)
-        for base in (os.path.join(source, "resources", "themes"), ENV["LPATH"]["THEMES"], ENV["GPATH"]["THEMES"]):
-            candidate = os.path.join(base, theme)
-            if os.path.isfile(os.path.join(candidate, "theme.json")):
-                return candidate
-        return None
-
-    def _editor_on(self, repo, config_file, theme_class):
-        """True when the Add page is on: theme_class supports it and editor_on() says so."""
-        theme_dir = self._find_theme_dir(repo, config_file)
-        try:
-            with open(os.path.join(theme_dir, "theme.json"), encoding="utf-8") as fin:
-                theme = json.load(fin)
-        except (OSError, ValueError, TypeError):
-            theme = {}
-        if not isinstance(theme, dict):
-            theme = {}
-        check_theme_editor(theme)
-        if not getattr(theme_class, "add_page", False):
-            return False
-        return editor_on(repo, theme)
-
-    def _theme_class(self, repo, config_file):
-        """The Theme class of logic/theme.py in the repository's theme, or None. It runs theme.py, so call it once."""
-        theme_dir = self._find_theme_dir(repo, config_file)
-        logic = os.path.join(theme_dir, "logic") if theme_dir else ""
-        path = os.path.join(logic, "theme.py")
-        if not os.path.isfile(path):
-            return None
-        sys.path.insert(0, logic)
-        try:
-            spec = importlib.util.spec_from_file_location(f"kb4it_reserved_{repo.get('theme', 'theme')}", path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module.Theme
-        except Exception:
-            return None
-        finally:
-            sys.path.remove(logic)
-
-    def _theme_verify(self, repo, config_file, docs):
-        """Run the theme's optional logic/verify.py and return its problem lines."""
-        theme_dir = self._find_theme_dir(repo, config_file)
-        hook = os.path.join(theme_dir, "logic", "verify.py") if theme_dir else ""
-        if not os.path.isfile(hook):
-            return []
-        spec = importlib.util.spec_from_file_location(f"kb4it_verify_{repo.get('theme', 'theme')}", hook)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        metadata = {}
-        for doc in docs:
-            keys, ok, _reason = get_document_attributes(doc)
-            if ok:
-                metadata[os.path.basename(doc)] = keys
-        return [str(line) for line in module.verify(repo, metadata)]
+            self.log.error(f"[WORKFLOW] PROJECT_SAVE_ERROR reason={q(e)}", exc_info=True)
 
     @staticmethod
     def _theme_tag(backend):
@@ -372,29 +115,29 @@ class Workflow(Service):
         self.log.debug(f"[WORKFLOW] PARAMS {params}")
         initialize = False
         theme, repo_path = params["theme"], params["repo_path"]
-        self.log.debug(f"[WORKFLOW] THEME name={theme}")
-        self.log.debug(f"[WORKFLOW] REPO_PATH path={repo_path}")
+        self.log.debug(f"[WORKFLOW] THEME name={q(theme)}")
+        self.log.debug(f"[WORKFLOW] REPO_PATH path={q(repo_path)}")
         theme_path = frontend.theme_search(theme=theme)
         if theme_path is None:
-            self.log.error(f"[WORKFLOW] THEME_NOT_FOUND name={theme}")
+            self.log.error(f"[WORKFLOW] THEME_NOT_FOUND name={q(theme)}")
             self.log.info("[WORKFLOW] LIST_AVAILABLE_THEMES")
             frontend.theme_list()
             raise ThemeError(f"Theme not found: {theme}")
         else:
             if not os.path.exists(repo_path):
-                self.log.warning(f"[WORKFLOW] REPO_PATH_MISSING path={repo_path}")
+                self.log.warning(f"[WORKFLOW] REPO_PATH_MISSING path={q(repo_path)}")
                 os.makedirs(repo_path, exist_ok=True)
-                self.log.warning(f"[WORKFLOW] REPO_PATH_CREATED path={repo_path}")
+                self.log.warning(f"[WORKFLOW] REPO_PATH_CREATED path={q(repo_path)}")
             initialize = True
 
         if initialize:
-            self.log.info(f"[WORKFLOW] REPO_PATH path={repo_path}")
-            self.log.info(f"[WORKFLOW] THEME_USE name={theme} path={theme_path}")
+            self.log.info(f"[WORKFLOW] REPO_PATH path={q(repo_path)}")
+            self.log.info(f"[WORKFLOW] THEME_USE name={q(theme)} path={q(theme_path)}")
             app_name = params.get("app", "default") or "default"
             repo_demo = os.path.join(theme_path, "apps", app_name)
             if not os.path.isdir(repo_demo):
                 repo_demo = os.path.join(theme_path, "example", "repo")
-            self.log.info(f"[WORKFLOW] APP_TEMPLATE name={app_name} path={repo_demo}")
+            self.log.info(f"[WORKFLOW] APP_TEMPLATE name={q(app_name)} path={q(repo_demo)}")
             copydir(repo_demo, repo_path, keep_existing=True)
             # The theme's own config always replaces an old one, so the theme matches the request.
             shutil.copyfile(os.path.join(repo_demo, "config", "repo.json"), os.path.join(repo_path, "config", "repo.json"))
@@ -407,9 +150,15 @@ class Workflow(Service):
             config_file = os.path.abspath(os.path.join(repo_path, "config", "repo.json"))
             with open(config_file, encoding="utf-8") as fc:
                 repoconf = json.load(fc)
-            # Relative to the repository root, so the repository can move and work in CI.
-            repoconf["source"] = "source"
-            repoconf["target"] = "target"
+            # Absolute, so the config works from any folder. A knowledge base kept in git or built
+            # elsewhere (CI) can switch them to "source" and "target", which resolve against its root.
+            repoconf["source"] = os.path.abspath(source_dir)
+            repoconf["target"] = os.path.abspath(target_dir)
+            # kb4it create --index yes|no (and the TUI choice): may search engines index the site?
+            index = params.get("index")
+            if index is not None:
+                seo = repoconf.get("seo") if isinstance(repoconf.get("seo"), dict) else {}
+                repoconf["seo"] = {**seo, "index": index == "yes"}
             with open(config_file, "w", encoding="utf-8") as fc:
                 json.dump(repoconf, fc, sort_keys=True, indent=4)
             os.makedirs(bin_dir, exist_ok=True)
@@ -421,15 +170,16 @@ class Workflow(Service):
                 os.chmod(script, stat.S_IRUSR | stat.S_IRGRP | stat.S_IWUSR | stat.S_IWGRP | stat.S_IXUSR | stat.S_IXGRP)
             self.log.info("[WORKFLOW] REPO_INITIALIZED")
             repo_abs = os.path.abspath(repo_path)
+            pid = params.get("id")
             self.app.next_steps = [
                 f"Your knowledge base is ready at {repo_abs}.",
                 f"Write documents in {os.path.join(repo_abs, 'source')}/ and copy or delete the samples there.",
-                f"Preview the site with: kb4it serve {config_file}",
+                f"Preview the site with: kb4it serve {pid or config_file}",
             ]
 
             # Register project in projects.json
             repo_title = repoconf.get("title") or os.path.basename(repo_path)
-            self._save_project(repo_title, config_file)
+            self._save_project(repo_title, config_file, pid)
 
     def _failed_pages(self) -> dict:
         """Pages the compiler could not make or the deployer could not find, with the reason."""
@@ -457,7 +207,7 @@ class Workflow(Service):
             result = trace.stop(backend.get_path("log") or ENV["LPATH"]["LOG"])
             if result is not None:
                 path, events = result
-                self.log.info(f"[WORKFLOW] TRACE path={path}")
+                self.log.info(f"[WORKFLOW] TRACE path={q(path)}")
                 print("\n".join(trace.summary(events)))
                 print(f"Trace: {path} (open it in https://ui.perfetto.dev)")
 
@@ -478,7 +228,7 @@ class Workflow(Service):
         repo = backend.get_dict("repo")
         repo_title = repo["title"]
         repo_theme = repo["theme"]
-        self.log.info(f"[WORKFLOW] BUILD theme={repo_theme} repo={repo_title}")
+        self.log.info(f"[WORKFLOW] BUILD theme={q(repo_theme)} repo={q(repo_title)}")
 
         self.log.info("[WORKFLOW] STAGE n=1 name=check_environment")
         with trace.span("1 check_environment"):
@@ -500,9 +250,9 @@ class Workflow(Service):
         plan = backend.get_plan()
         if plan is not None:
             self.log.info(
-                f"[WORKFLOW] PLAN docs={plan.doc_count}"
-                f" keys={plan.key_count}"
-                f" kv={plan.kv_count}"
+                f"[WORKFLOW] PLAN docs={q(plan.doc_count)}"
+                f" keys={q(plan.key_count)}"
+                f" kv={q(plan.kv_count)}"
             )
 
         self.log.info("[WORKFLOW] STAGE n=4 name=process_theme")
@@ -531,6 +281,10 @@ class Workflow(Service):
                 theme.write_sitemap()
             with trace.span("theme.write_feed"):
                 theme.write_feed()
+            with trace.span("theme.checks"):
+                theme.run_checks()
+            with trace.span("theme.after_checks"):
+                theme.after_checks()
 
         # Build summary
         runtime = backend.get_dict("runtime")
@@ -538,7 +292,8 @@ class Workflow(Service):
         docs_total = runtime["docs"].get("count", 0)
         compiled   = plan.doc_count if plan is not None else 0
         invalid    = plan.invalid_count if plan is not None else 0
-        skipped    = docs_total - compiled - invalid
+        profiles   = plan.profile_count if plan is not None else 0
+        skipped    = docs_total - compiled - invalid - profiles
         keys_compiled = plan.key_count if plan is not None else 0
         kv_compiled   = plan.kv_count if plan is not None else 0
         failed = self._failed_pages()
@@ -549,15 +304,15 @@ class Workflow(Service):
 
         self.log.info(
             f"[WORKFLOW] SUMMARY"
-            f" docs_total={docs_total}"
-            f" compiled={compiled}"
-            f" skipped={skipped}"
-            f" invalid={invalid}"
-            f" keys_compiled={keys_compiled}"
-            f" kv_pages_compiled={kv_compiled}"
+            f" docs_total={q(docs_total)}"
+            f" compiled={q(compiled)}"
+            f" skipped={q(skipped)}"
+            f" invalid={q(invalid)}"
+            f" keys_compiled={q(keys_compiled)}"
+            f" kv_pages_compiled={q(kv_compiled)}"
             f" failed={len(failed)}"
-            f" kb4it={ENV['APP']['build_version']}"
-            f" theme={self._theme_tag(backend)}"
+            f" kb4it={q(ENV['APP']['build_version'])}"
+            f" theme={q(self._theme_tag(backend))}"
         )
         self.log.info(f"[WORKFLOW] TOTAL_TIME elapsed={elapsed:.2f}s")
 
@@ -570,7 +325,7 @@ class Workflow(Service):
 
         if failed:
             names = ", ".join(sorted(failed))
-            self.log.error(f"[WORKFLOW] PAGES_FAILED n={len(failed)} pages={names}")
+            self.log.error(f"[WORKFLOW] PAGES_FAILED n={len(failed)} pages={q(names)}")
             raise CompilationError(f"{len(failed)} page(s) could not be built: {names}")
 
         # Report
@@ -579,5 +334,5 @@ class Workflow(Service):
         )
         self.log.info("[WORKFLOW] BUILD_COMPLETE")
         self.log.info(f"[WORKFLOW] URL {homepage}")
-        self.log.info(f"[WORKFLOW] LOG path={backend.get_value('runtime', 'logfile')}")
+        self.log.info(f"[WORKFLOW] LOG path={q(backend.get_value('runtime', 'logfile'))}")
         self.log.info("[WORKFLOW] END")

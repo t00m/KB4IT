@@ -1,15 +1,16 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Explanation
 Category: Note
+Date: YYYY-MM-DD
+DocType: Explanation
+Product:
+ReviewDate:
+Scope:
 Status: Draft
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Knowledge
 ---
 
 # Title of the note
@@ -21,6 +22,7 @@ Say what this note is about and why it matters.
 ## Details
 
 Explain the topic: background, how it works, what to keep in mind.
+Name the environment and the versions you tested it on.
 
 ## References
 

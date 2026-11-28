@@ -11,6 +11,7 @@
     <h1>${var['key']}: ${var['value']}</h1>
     <p class="sub">${len(var['doclist'])} document${'s' if len(var['doclist']) != 1 else ''}</p>
 </div>
+${var.get('profile_card', '') | n}
 <!-- DOCUMENTS TABLE :: START -->
 <div class="bk-panel">
     ${var['page']['dt_documents'] | n}

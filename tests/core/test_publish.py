@@ -1,5 +1,7 @@
 """Publishing: site_url, sitemap.xml, robots.txt, Atom feed and page metadata."""
 
+import re
+
 import pytest
 
 from kb4it.core.exceptions import ConfigError
@@ -49,7 +51,10 @@ def test_sitemap_and_robots(tmp_path, home):
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     tree = ET.parse(target / "sitemap.xml")
     urls = {u.find("s:loc", ns).text: u.find("s:lastmod", ns).text for u in tree.findall("s:url", ns)}
-    assert urls["https://x.org/kb/a.html"] == "2026-05-01"
+    modified = re.search(r'<meta property="article:modified_time" content="([^"]+)">',
+                         (target / "a.html").read_text(encoding="utf-8")).group(1)
+    assert urls["https://x.org/kb/a.html"] == modified, "the sitemap and the page agree"
+    assert modified >= "2026-05-01"
     assert "https://x.org/kb/b.html" in urls and "https://x.org/kb/index.html" in urls
     assert not any("search.html" in u or "/resources/" in u for u in urls)
     assert "Sitemap: https://x.org/kb/sitemap.xml" in (target / "robots.txt").read_text(encoding="utf-8")
@@ -120,10 +125,13 @@ def test_feed_filters_and_limits(tmp_path, home):
     assert [e[0] for e in entries] == ["Post 4", "Post 3"]
 
 
-def test_feed_is_off_by_default_in_techdoc_and_needs_site_url(tmp_path, home):
+def test_feed_is_on_by_default_in_techdoc_and_needs_site_url(tmp_path, home):
     cfg = write_repo(tmp_path / "td", "techdoc", {"a.md": page("A", Date="2026-01-01", Tag="x")}, site_url="https://x.org/")
     assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
-    assert not (tmp_path / "td" / "target" / "feed.xml").exists()
+    assert (tmp_path / "td" / "target" / "feed.xml").exists()
+    cfg = write_repo(tmp_path / "bs", "bookshelf", {"a.md": page("A", Date="2026-01-01", Tag="x")}, site_url="https://x.org/")
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    assert not (tmp_path / "bs" / "target" / "feed.xml").exists()
     cfg = write_repo(tmp_path / "bl", "blog", {"a.md": page("A", Category="Post", Date="2026-01-01")}, **_blog_conf())
     result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
     assert "[FEED] SKIP reason=no_site_url" in result.stdout

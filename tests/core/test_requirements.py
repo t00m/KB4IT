@@ -12,16 +12,18 @@ def _from_pyproject():
     for name, spec in deps.items():
         if name == "python":
             continue
+        marker = ""
         if isinstance(spec, dict):
             if spec.get("optional"):
                 continue
+            marker = f";{spec['markers'].replace(' ', '')}" if spec.get("markers") else ""
             spec = spec["version"]
         if spec == "*":
-            wanted.add(name.lower())
+            wanted.add(f"{name.lower()}{marker}")
         elif re.match(r"^\d", spec):
-            wanted.add(f"{name.lower()}=={spec}")
+            wanted.add(f"{name.lower()}=={spec}{marker}")
         else:
-            wanted.add(f"{name.lower()}{spec.replace(' ', '')}")
+            wanted.add(f"{name.lower()}{spec.replace(' ', '')}{marker}")
     return wanted
 
 

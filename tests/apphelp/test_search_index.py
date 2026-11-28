@@ -35,3 +35,25 @@ def test_record_and_js():
     js = render_index_js([record])
     assert js.startswith("window.APPHELP_INDEX = ") and js.endswith(";\n")
     assert json.loads(js[len("window.APPHELP_INDEX = "):-2]) == [record]
+
+
+def _apphelp_theme_class():
+    from kb4it.core.themeload import load_module
+    from tests.helpers import ROOT
+    return load_module(str(ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic"), "apphelp").Theme
+
+
+def test_apphelp_has_no_private_index_writer():
+    from kb4it.theme.features.search import Search
+    theme = _apphelp_theme_class()
+    assert not hasattr(theme, "_write_search_index")
+    assert theme.search_record is not Search.search_record
+    assert theme.search_sections is not Search.search_sections
+    assert theme.search_index_var == "APPHELP_INDEX"
+    assert theme.search_index_warn_bytes == 2 * 1024 * 1024
+    assert "search" in theme.features and theme.search_optional is False
+
+
+def test_apphelp_templates_get_the_apphelp_namespace():
+    ctx = {"lang": "en"}
+    assert _apphelp_theme_class().template_var(ctx) == {"apphelp": ctx, "ah": ctx}

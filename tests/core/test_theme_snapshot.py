@@ -29,4 +29,26 @@ def test_fixtures_exist():
 def test_every_app_is_snapshotted_with_content():
     pairs = list(snapshot.apps(content=True))
     assert ("techdoc", "sapbasis") in pairs and ("apphelp", "default") in pairs
-    assert list(snapshot.apps(content=False)) == [p for p in pairs if p[1] == "default" and p[0] != "apphelp"]
+    assert ("starter-docs", "default") in pairs and ("starter-plain", "default") in pairs
+    themes = [p for p in pairs if p[1] == "default" and p[0] != "apphelp" and p[0] not in snapshot.STARTERS]
+    assert list(snapshot.apps(content=False)) == themes
+
+
+def test_normalise_maps_old_and_new_vendor_paths_to_one_token():
+    pairs = [("resources/themes/techdoc/framework/Highlight/highlight.js", "resources/vendor/highlight/highlight.js"),
+             ("resources/themes/blog/framework/uikit/css/uikit.min.css", "resources/vendor/uikit/css/uikit.min.css"),
+             ("resources/themes/techdoc/framework/datatables/js/x.js", "resources/vendor/datatables/js/x.js"),
+             ("resources/common/js/kb4it-search.js", "resources/vendor/search/js/kb4it-search.js"),
+             ("resources/common/css/kb4it-search.css", "resources/vendor/search/css/kb4it-search.css"),
+             ("resources/themes/apphelp/framework/apphelp/js/search.js", "resources/vendor/search/js/kb4it-search.js")]
+    for old, new in pairs:
+        assert snapshot.normalise(f'src="{old}"') == snapshot.normalise(f'src="{new}"'), (old, new)
+    assert snapshot.normalise('src="resources/themes/techdoc/framework/kb4it/js/page.js"') == \
+        'src="resources/themes/techdoc/framework/kb4it/js/page.js"', "a theme's own files keep their path"
+
+
+def test_normalise_maps_the_moved_kit_scripts():
+    for old, new in (("resources/themes/techdoc/framework/kb4it/js/datatable-filter.js",
+                      "resources/vendor/tablefilter/js/datatable-filter.js"),
+                     ("resources/themes/techdoc/framework/kb4it/js/gallery.js", "resources/vendor/gallery/js/gallery.js")):
+        assert snapshot.normalise(f'src="{old}"') == snapshot.normalise(f'src="{new}"'), (old, new)

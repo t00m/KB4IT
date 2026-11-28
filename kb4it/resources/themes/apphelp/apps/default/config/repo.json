@@ -9,11 +9,14 @@
     "logo_alt": "My App",
     "publish_sources": false,
     "git": false,
-    "git_server": "github.com",
+    "git_server": "https://github.com",
     "git_user": "",
     "git_repo": "",
     "git_branch": "main",
     "git_path": "help/source",
+    "markdown": {
+        "extensions": ["pymdownx.tasklist"]
+    },
     "apphelp": {
         "strict": true,
         "lang": "en",

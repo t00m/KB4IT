@@ -2,7 +2,7 @@
 DocType: Reference
 Feature: Building, Configuration
 HelpId: command-line
-Keyword: cli, kb4it, create, build, serve, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME
+Keyword: cli, kb4it, install-theme, uninstall-theme, new-theme, theme-info, --plain, starter, theme zip, active theme, create, --index, --id, id, project id, import, delete, --files, --yes, keys, search, --where, -p, grep, vim, quickfix, build, doctor, serve, --host, --port, --open, --no-watch, --no-reload, --interval, verify, info, themes, apps, projects, help, --url, --dismiss, notice, --force, --trace, --log-level, exit status, KB4IT_HOME, completion, autocomplete, bash, zsh, fish
 Level: basic
 Order: 610
 Section: Reference
@@ -16,22 +16,146 @@ Summary: Every kb4it command and option, and what the exit status means.
 | Command | Does |
 |---|---|
 | `kb4it create THEME [APP] PATH` | Creates a knowledge base in `PATH` from a theme and one of its apps (`default` if you leave it out) |
+| `kb4it create --index yes THEME [APP] PATH` | Also decides whether search engines may index the site: `--index yes` writes `"seo": {"index": true}` into `repo.json`, `--index no` writes `false`. Without it nothing is written and the build reminds you; see [Search engines](reference-repo-json.md#indexing) |
+| `kb4it create --id ID THEME [APP] PATH` | Also gives the new knowledge base the id `ID`; see [Project ids](#ids) |
 | `kb4it build CONFIG` | Builds the website of the knowledge base whose settings are in `CONFIG` |
 | `kb4it build --force CONFIG` | Rebuilds everything |
 | `kb4it build --trace CONFIG` | Builds and shows how long each part of the build took; see [Build timings](#trace) |
-| `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [Preview while you write](howto-preview.md) |
-| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building |
+| `kb4it serve CONFIG` | Builds, serves the site at `http://127.0.0.1:8642/` and rebuilds it when you save; see [its options](#serve) and [Preview while you write](howto-preview.md) |
+| `kb4it verify CONFIG` | Checks every document, the links between documents (`LINK_BROKEN`, `LINK_NO_EXTENSION`, `ANCHOR_MISSING`) and the theme's own rules without building. It also shows `INDEX_UNSET` while `seo.index` is not set, as information, and checks the [profiles](reference-log-codes.md#people): an error such as `PROFILE_INVALID` fails it, `PROFILE_NO_CONTACT` and `AUTHOR_NO_PROFILE` do not |
 | `kb4it info CONFIG` | Shows the main settings |
-| `kb4it themes` | Lists the installed themes with their version, fingerprint and folder |
+| `kb4it themes` | Lists the installed themes with their version, fingerprint, folder and whether builds use that copy (`active=yes` or `active=no`) |
+| `kb4it install-theme SOURCE` | Installs a theme from a zip file or an `https://` URL into your themes folder. See [Install a theme](#themes) |
+| `kb4it new-theme ID [--plain] [DIR]` | Creates a theme of your own from a starter theme. See [Start a theme](#new-theme) |
+| `kb4it theme-info [ID or DIR] [--repo CONFIG] [--json]` | Shows what a theme is made of: features, hooks, options, templates and settings. See [Look inside a theme](#theme-info) |
+| `kb4it uninstall-theme ID [--yes]` | Removes a theme from your themes folder. See [Install a theme](#themes) |
 | `kb4it doctor` | Shows the KB4IT build and commit, Python, the folders it uses and every theme; ends with `1` when a bundled file or theme is missing. See [Check the installation](howto-install.md#check) |
 | `kb4it apps THEME` | Lists the sample apps of a theme |
-| `kb4it projects` | Lists the knowledge bases you created or imported |
+| `kb4it projects` | Lists the knowledge bases you created or imported, with their ids. Piped, it prints `id`, name and config separated by tabs, with no header |
+| `kb4it import CONFIG [--id ID] [--name NAME]` | Adds an existing knowledge base to the list; on a listed one, sets its id or name. See [Import and delete](#import) |
+| `kb4it delete PROJECT [--files] [--yes]` | Removes a knowledge base from the list; `--files` also deletes its folder. See [Import and delete](#import) |
+| `kb4it keys PROJECT [KEY [VALUE]]` | Lists the properties of the documents, the values of one, or the documents with one value. See [Properties and values](#keys) |
+| `kb4it search PATTERN [-p PROJECT]...` | Finds text in the Markdown sources and prints `path:line: text`. See [Search the sources](#search) |
 | `kb4it help` | Opens the offline copy of this help in your browser; see [Help center](#help) |
 | `kb4it help --url` | Prints the address of the online help |
 | `kb4it help --dismiss` | Hides the help notice |
 | `kb4it --version` | Prints the KB4IT build, then the commit it was built from and when |
 
-`CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`.
+`CONFIG` is the path of `config/repo.json`, for example `~/mykb/config/repo.json`, or the id of a listed project. `PROJECT` is the same: an id or a config path.
+
+## Project ids {#ids}
+
+An id is a short name you choose for a knowledge base, so you type `kb4it build sapblog` instead of the whole path. It has 1 to 32 characters: lowercase letters, digits and dashes, starting with a letter. Each id is used by one project only.
+
+Give an id when you create or import a knowledge base: `kb4it create --id sapblog techdoc ~/kb/sap` or `kb4it import ~/kb/sap/config/repo.json --id sapblog`. To give an id to a knowledge base that is already listed, run `kb4it import` on it again with `--id`. The terminal interface has an **Edit id** button on the project screen.
+
+Every command that takes `CONFIG` (`build`, `serve`, `info`, `verify`, `keys`, `delete`, `search -p`) also takes an id. KB4IT reads the word this way:
+
+1. When a file with that name exists, it is the config file. So `kb4it build config/repo.json` works as always.
+2. Otherwise, when a listed project has that id, KB4IT uses its config file.
+3. Otherwise the command ends with `1` and says that there is no such id or file.
+
+## Import and delete {#import}
+
+`kb4it import CONFIG` adds a knowledge base you already have, for example one cloned from git. The display name is the `title` in `repo.json`, or the folder name; `--name` sets another one. Running it on a listed knowledge base adds nothing twice: it sets the `--id` and `--name` you give, or says it is already listed.
+
+`kb4it delete PROJECT` removes the knowledge base from the list. Its files stay on disk.
+
+`kb4it delete PROJECT --files` also deletes the knowledge base folder, the one that holds `config/`. In a terminal it shows the folder and the number of files, and asks you to type the id (or the folder name, when the project has no id). In a script, add `--yes`; without a terminal and without `--yes` it deletes nothing and ends with `1`. It refuses, and deletes nothing, when:
+
+- the folder has no `config/` holding the project's `repo.json`;
+- the folder is `/`, your home folder or `~/.kb4it`, or contains one of them;
+- a build or `kb4it serve` is using the knowledge base.
+
+When `target` in `repo.json` points outside the knowledge base folder, the website there is kept, and the command prints its path.
+
+## Install a theme {#themes}
+
+`kb4it install-theme SOURCE` installs a theme into `~/.kb4it/opt/resources/themes/`. `SOURCE` is the path of a zip file or an `https://` address of one. The zip holds one top folder named exactly as the `id` in its `theme.json`; see [Pack a theme as a zip](howto-create-theme.md#zip).
+
+- KB4IT checks the whole zip before it changes anything. A refused zip leaves your themes as they were; the message says what is wrong.
+- When you already have a theme with that id, it is deleted and the new one takes its place. The output names the version it replaced.
+- A theme of yours may have the id of a bundled theme. Yours is used in every build, and the output says so.
+- Downloads use `https://` only, also after a redirect, because a theme runs code at build time. The limit is 100 MB and 60 seconds.
+- The zip is unpacked in `~/.kb4it/var/tmp/`, and the temporary files are removed afterwards.
+
+```bash
+$ kb4it install-theme ~/Downloads/mytheme.zip
+Installed mytheme 1.2.0 in /home/me/.kb4it/opt/resources/themes/mytheme, replacing 1.1.0
+```
+
+`kb4it uninstall-theme ID` removes a theme from your themes folder. Bundled themes cannot be removed. Before it deletes anything, it lists the projects that use the theme: with a bundled theme of the same id they use it again, otherwise their builds fail until you install the theme again. In a terminal, type the id to confirm; in a script, add `--yes`. Without a terminal and without `--yes` it removes nothing and ends with `1`.
+
+### Start a theme {#new-theme}
+
+`kb4it new-theme ID` copies the starter theme `starter-docs` into your themes folder as `~/.kb4it/opt/resources/themes/ID/`, with `ID` as its `id` in `theme.json` and in the `repo.json` of its sample app. `starter-docs` is a document theme on UIkit: property pages, a table of all documents and search. With `--plain` it copies `starter-plain`, a theme of plain pages with a home page and search, no property pages. Give a folder after the id to create the theme there instead, as `DIR/ID`.
+
+```
+$ kb4it new-theme mytheme
+Theme mytheme created in /home/me/.kb4it/opt/resources/themes/mytheme
+```
+
+The id takes lower-case letters, digits, `-` and `_`. The command ends with `1` and writes nothing when the id is not valid, names a bundled theme, or the folder exists. See [Write a theme](howto-create-theme.md).
+
+`kb4it themes` lists every copy. The one builds use has `active=yes`; a bundled theme hidden by one of yours shows `active=no shadowed_by=user`. A theme shipped inside a knowledge base's `source/resources/themes/` wins over both, and is not listed.
+
+A build that runs while you reinstall the theme it uses may fail; build again.
+
+### Look inside a theme {#theme-info}
+
+`kb4it theme-info ID` loads the theme without building a site and prints, one section per line:
+
+- `theme`: id, version, where it was found (`builtin`, `user`, `path` or `theme_path`) and its folder.
+- `api`: the base class. A theme on `Builder` or `DocumentTheme` shows `legacy ... (deprecated)`.
+- `features`: what the theme has switched on, in the order they run, such as `property_pages`, `events`, `table_filter` or `search`. The theme's own features are marked `(theme)`.
+- `hooks`: every method the theme overrides, with its file and line and the feature it belongs to.
+- `options`: the class attributes the theme sets over a KB4IT default.
+- `templates`: every template the theme can render and where it comes from: `repo` (the site's overrides), `theme`, `base:NAME` (the template base) or `common`.
+- `settings`: the settings class and its values.
+
+```
+$ kb4it theme-info techdoc
+theme      techdoc 1.4.0 (builtin) /usr/lib/python3/site-packages/kb4it/resources/themes/techdoc
+api        BaseTheme, 3 classes in the MRO
+features   toc, metadata, table, property_pages, all_documents, not_found, events, stats, ...
+```
+
+Give a folder instead of an id to look at a theme you are writing. `--repo CONFIG` takes the theme of that site (or its `theme_path`), resolves the site's template overrides and shows the settings merged with its `repo.json`. `--json` prints the same as JSON. The command ends with `1` when the theme cannot be found or loaded.
+
+## Properties and values {#keys}
+
+`kb4it keys` reads the front matter of the documents in `source/` directly. It needs no build.
+
+| Command | Prints |
+|---|---|
+| `kb4it keys sapblog` | Each property with the number of documents that use it. `Title` is left out |
+| `kb4it keys sapblog Tag` | Each value of `Tag` with its number of documents |
+| `kb4it keys sapblog Tag backup` | The path of each document with `Tag: backup`, one per line |
+
+Property names and values match in any case: `kb4it keys sapblog tag BACKUP` works. Documents KB4IT cannot read are left out, and one line on standard error gives how many; `kb4it verify` tells why. An unknown property or value ends with `1`.
+
+## Search the sources {#search}
+
+`kb4it search PATTERN` finds `PATTERN` in the Markdown documents of every listed knowledge base, front matter included. Each match prints as `path:line: text`, with the full path, the way `grep -n` does:
+
+```bash
+kb4it search restore                         # every knowledge base
+kb4it search restore -p sapblog -p ops       # only these two
+kb4it search restore --where Status=Open     # only documents with Status: Open
+vim -q <(kb4it search restore -p sapblog)    # open the matches in vim's quickfix list
+```
+
+| Option | Does |
+|---|---|
+| `-p PROJECT`, `--project PROJECT` | Searches this knowledge base only; repeat it for several. Without `-p`, every listed one |
+| `--where KEY=VALUE` | Keeps the documents with that property value, in any case. Different keys must all match; the same key repeated matches any of its values: `--where Status=Open --where Status=Planned --where Tag=backup` means (Open or Planned) and backup |
+| `-r`, `--regex` | `PATTERN` is a Python regular expression. Without it, it is plain text |
+| `-s`, `--case-sensitive` | Matches upper and lower case exactly. Without it, case does not matter |
+| `-l`, `--files-with-matches` | Prints only the path of each matching document |
+
+In a terminal the path, the line number and the match are colored; piped, or with `NO_COLOR` set, the output is plain. A listed knowledge base whose `repo.json` is gone is skipped with a warning.
+
+`kb4it search` ends like `grep`: `0` when something matched, `1` when nothing did, `2` on an error such as a wrong regular expression, an unknown `-p` or an empty project list.
 
 ## Help center {#help}
 
@@ -47,11 +171,47 @@ Put them before the command.
 
 | Option | Does |
 |---|---|
-| `-L LEVEL`, `--log-level LEVEL` | How much to print: `DEBUG`, `INFO` (default), `WARNING` or `ERROR` |
+| `-L LEVEL`, `--log-level LEVEL` | How much to print: `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The log file gets every line at any level |
 | `-v`, `--version` | Prints the version and exits |
 | `-h`, `--help` | Prints help; `kb4it build --help` prints help for one command |
 
 `-f` is short for `--force`.
+
+## Options of serve {#serve}
+
+Put them after `serve`, before or after `CONFIG`.
+
+| Option | Does |
+|---|---|
+| `--host ADDRESS` | Address to listen on. Default `127.0.0.1`, this computer only; `0.0.0.0` lets other computers see the preview (`WARNING_PUBLIC`) |
+| `--port PORT` | First port to try. Default `8642`; when it is busy, the next free one is used |
+| `--open` | Opens the site in your browser |
+| `--no-watch` | Serves only; does not rebuild when a file changes |
+| `--no-reload` | Rebuilds, but does not reload pages in the browser |
+| `--interval SECONDS` | Seconds between checks for changes. Default `1.0` |
+| `-f`, `--force` | Rebuilds everything in the first build |
+| `--trace` | Writes `var/log/trace.json` with the timings of each build; see [Build timings](#trace) |
+
+## Shell completion {#completion}
+
+KB4IT completes commands, options, the installed themes, the apps of a theme and file paths with <kbd>Tab</kbd>. It uses [argcomplete](https://kislyuk.github.io/argcomplete/), which is installed with KB4IT. Register the command once per shell:
+
+```bash
+# bash
+eval "$(register-python-argcomplete kb4it)"
+# zsh, after compinit
+eval "$(register-python-argcomplete kb4it)"
+# fish
+register-python-argcomplete --shell fish kb4it | source
+```
+
+Put the line in `~/.bashrc`, `~/.zshrc` or `~/.config/fish/config.fish` to keep it. `activate-global-python-argcomplete` enables completion for `kb4it` and every other argcomplete-aware command at once.
+
+The `CONFIG` and `PROJECT` arguments complete the project ids and file paths; `search -p` completes the ids only. `kb4it keys sapblog <Tab>` lists the properties and, after one, its values; `kb4it search x --where <Tab>` completes `KEY=` and then `KEY=VALUE`.
+
+`kb4it create <Tab>` and `kb4it apps <Tab>` list the installed themes, and `kb4it uninstall-theme <Tab>` only yours; after a theme, the next word lists its sample apps and folders. Once the app is typed, only folders are offered for the path. The `config` argument of `build`, `serve`, `info` and `verify` completes file paths, so `config/repo.json` is a few keystrokes away. Completion reads the theme folders directly, so a theme installed under `~/.kb4it/opt/resources/themes/` appears without regenerating anything.
+
+Without argcomplete the command line works as before; only <kbd>Tab</kbd> completion is missing.
 
 ## Build timings {#trace}
 
@@ -79,6 +239,8 @@ After a failed build the next build compiles again every document that changed s
 
 `kb4it verify` ends with `1` when it finds a problem in a document, a theme or a link.
 
+`kb4it search` uses its own statuses, like `grep`; see [Search the sources](#search).
+
 ## Files KB4IT keeps {#files}
 
 | Path | Holds |
@@ -86,6 +248,8 @@ After a failed build the next build compiles again every document that changed s
 | `~/.kb4it/projects.json` | The list behind `kb4it projects` and the terminal interface |
 | `~/.kb4it/opt/resources/themes/` | Your own themes |
 | `~/.kb4it/var/projects.lock` | Held for a moment while `projects.json` is written |
+| `~/.kb4it/var/themes.lock` | Held while a theme is installed or removed |
+| `~/.kb4it/var/tmp/` | Downloads and unpacked zips of `kb4it install-theme`, removed when it ends |
 | `~/.kb4it/help-notice-dismissed` | Written by `kb4it help --dismiss`; hides the help notice |
 | `<knowledge base>/var/` | Build cache and logs; safe to delete |
 | `<knowledge base>/var/kb4it.lock` | Stops two builds of the same knowledge base at once |

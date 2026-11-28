@@ -1,15 +1,15 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Reference
 Category: Report
+Date: YYYY-MM-DD
+DocType: Reference
+Product:
+Scope:
 Status: Draft
 Summary:
 Tag:
 Topic:
-Scope:
-Product:
+WorkType: Knowledge
 ---
 
 # Title of the report
@@ -17,6 +17,7 @@ Product:
 ## Executive Summary
 
 Summarise the main findings and the decision you need, in a few lines.
+State the period the report covers and where the data comes from.
 
 ## Findings
 
@@ -26,8 +27,8 @@ Summarise the main findings and the decision you need, in a few lines.
 
 ## Recommendations
 
-- Recommend the first action, with an owner and a date.
-- Recommend the next action, with an owner and a date.
+- Recommend the first action, with an owner and a due date (YYYY-MM-DD).
+- Recommend the next action, with an owner and a due date (YYYY-MM-DD).
 
 ## References
 

@@ -18,11 +18,11 @@ This is a sample of meeting minutes. `Category: Minutes` and `WorkType: Meeting`
 
 ## Objective
 
-Review last week's incidents and changes, and agree on the tasks for this week.
+Review last week's incidents and changes, and agree on the tasks for this week. The meeting takes place every Monday in the operations room.
 
 ## Attendees
 
-- Operations lead
+- Operations lead (organiser)
 - Two system administrators
 - Service desk representative
 
@@ -33,7 +33,11 @@ Review last week's incidents and changes, and agree on the tasks for this week.
 
 ## Notes
 
-The new disk alert is in place. The team agreed to renew the web certificates before the end of the month.
+The new disk alert is in place. Three intranet certificates expire at the end of October; nobody owns the certificate inventory yet.
+
+## Decisions
+
+- The team renews the web certificates before the end of the month, as [a task](renew-web-certificates.md).
 
 ## Action Items
 

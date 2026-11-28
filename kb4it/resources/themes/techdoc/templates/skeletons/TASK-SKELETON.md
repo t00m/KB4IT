@@ -1,17 +1,18 @@
 ---
 Author:
-Date: YYYY-MM-DD
-Version: 1.0
-DocType: Reference
 Category: Record
-WorkType: Task
+Date: YYYY-MM-DD
+DocType: Reference
+DueDate:
 Priority: Normal
+Product:
+Scope:
 Status: New
 Summary:
 Tag:
+Team:
 Topic:
-Scope:
-Product:
+WorkType: Task
 ---
 
 # Title of the task
@@ -19,15 +20,23 @@ Product:
 ## Objective
 
 Describe what this task must achieve and why.
+Link the incident, change or meeting it comes from, and name what it depends on.
 
 ## Acceptance Criteria
 
 - [ ] Describe the first condition for done.
 - [ ] Describe the second condition for done.
 
+## Subtasks
+
+- [ ] Describe the first subtask, with its owner.
+- [ ] Describe the next subtask, with its owner.
+
 ## Notes
 
-Record decisions, findings and links gathered while working.
+Record decisions, findings and links gathered while working, one dated line each.
+
+- YYYY-MM-DD Describe what you did or found.
 
 ## References
 

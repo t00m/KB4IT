@@ -1,0 +1,187 @@
+"""The page pipeline of every theme: build_page() and its hooks, generated pages, the edit link and the title."""
+
+import os
+from datetime import datetime
+from urllib.parse import quote
+
+from kb4it.core.env import ENV
+from kb4it.core.log import q
+from kb4it.core.util import ellipsize_text, get_human_datetime, html_id_for
+
+GIT_KEYS = ("git_server", "git_user", "git_repo", "git_branch")
+
+
+def git_ready(repo) -> bool:
+    """True when repo.json turns git links on and names server, user, repository and branch.
+
+    git_path may stay empty (documents at the repository root). A "{placeholder}" counts as unset,
+    so a sample configuration never produces edit links that lead nowhere.
+    """
+    if repo.get("git") is not True:
+        return False
+    values = [repo.get(key) for key in GIT_KEYS] + [repo.get("git_path") or ""]
+    return all(isinstance(v, str) for v in values) and all(v.strip() for v in values[:4]) and \
+        not any("{" in v for v in values) and _full_url(values[0])
+
+
+def _full_url(server: str) -> bool:
+    """True when git_server is a full URL, such as https://github.com."""
+    return server.strip().lower().startswith(("https://", "http://"))
+
+
+def git_server_problem(repo) -> str | None:
+    """Why the git links of repo.json are off although "git" is true and git_server is set; None otherwise."""
+    server = repo.get("git_server")
+    if repo.get("git") is not True or not isinstance(server, str) or not server.strip() or "{" in server:
+        return None
+    if _full_url(server):
+        return None
+    host = server.strip().strip("/")
+    return (f"repo.json: git_server must be a full URL, such as https://{host}, not {server!r}; "
+            "the git links are left out")
+
+
+class PagePipelineMixin:
+    """Mixin of Builder: build_page() runs the same steps for every theme and calls small hooks.
+
+    A theme turns it on with page_pipeline = True (DocumentTheme and apphelp do) and overrides the hooks
+    it needs. Without it build_page() leaves the compiled body as it is, as it always did, so older themes
+    keep building; a theme that overrides build_page() keeps its own pipeline either way.
+    """
+
+    # Run the shared pipeline in build_page().
+    page_pipeline = False
+
+    # Title of a page whose document has no Title.
+    untitled_label = ""
+    # Area of the HTML_MISSING log line.
+    log_area = "THEME"
+    # Cut long titles with ellipsize_text(); techdoc cuts them with CSS.
+    ellipsize_titles = True
+
+    def build_page(self, path_md: str) -> None:
+        """Turn the compiled body of a document into its final page and overwrite the HTML file."""
+        if not self.page_pipeline:
+            return
+        path_hdoc = html_id_for(path_md)
+        doc_id = os.path.basename(path_md)
+        if not os.path.exists(path_hdoc):
+            self.log.error(f"[{self.log_area}] HTML_MISSING doc={q(doc_id)} path={q(path_hdoc)}")
+            return
+        with open(path_md, encoding="utf-8") as fh:
+            source_md = fh.read()
+        with open(path_hdoc, encoding="utf-8") as fh:
+            source_html = fh.read()
+
+        var = self.page_var()
+        var["keys"] = self.srvdtb.get_doc_properties(doc_id)
+        var["basename_md"] = doc_id
+        var["basename_hdoc"] = os.path.basename(path_hdoc)
+        var["source_md"] = source_md
+        var["timestamp"] = get_human_datetime(datetime.now())
+        var["toc"] = self.page_toc(source_html)
+        var["has_toc"] = True
+        var["SystemPage"] = self.srvdtb.is_system(doc_id)
+        var["edit_url"] = self.edit_url(doc_id)
+        title = self.page_title(doc_id)
+        cut = self.ellipsize_titles and title != self.untitled_label
+        var["page"]["title"] = ellipsize_text(title) if cut else title
+        var["page"]["title-tooltip"] = title
+        var["source_html"] = source_html  # the compiled body; replaced by the transformed one below
+
+        var = self.page_context(doc_id, var)
+        html = source_html
+        for transform in self.body_transforms(doc_id, var):
+            html = transform(html)
+        var["source_html"] = html
+        var["actions"] = self.page_actions(var)
+        html = self.finalize_html(self.render_page(doc_id, var))
+        with open(path_hdoc, "w", encoding="utf-8") as fh:
+            fh.write(html)
+
+    def page_var(self) -> dict:
+        """Base var of a document page: get_theme_var(); a theme whose templates do not use it may return less."""
+        return self.get_theme_var()
+
+    def page_toc(self, source_html: str) -> str:
+        """Table of contents of the page; document themes extract it from the compiled body."""
+        return ""
+
+    def page_context(self, doc_id: str, var: dict) -> dict:
+        """Add the theme's own data to var before the body is rewritten and the page rendered."""
+        return var
+
+    def body_transforms(self, doc_id: str, var: dict) -> list:
+        """Functions from HTML to HTML applied in order to the compiled body."""
+        return [self.apply_transformations]
+
+    def page_actions(self, var: dict) -> str:
+        """HTML of the page actions (edit, properties...); '' when the theme has none."""
+        return ""
+
+    def page_body_template(self, doc_id: str, var: dict) -> str:
+        """Name of the template that renders the body of the page."""
+        return "HTML_BODY"
+
+    def render_page(self, doc_id: str, var: dict) -> str:
+        """Whole page: the body template, between HTML_HEADER_COMMON and HTML_FOOTER when the theme has them."""
+        names = [self.page_body_template(doc_id, var)]
+        if self.has_template("HTML_HEADER_COMMON"):
+            names.insert(0, "HTML_HEADER_COMMON")
+        if self.has_template("HTML_FOOTER"):
+            names.append("HTML_FOOTER")
+        return "".join(self.template(name).render(var=var) for name in names)
+
+    def has_template(self, name: str) -> bool:
+        """True when the lookup of template() finds a file for name (override, theme, base or common)."""
+        from kb4it.services.builder import _template_candidates, template_base_dir
+        found = self.__dict__.setdefault("_has_template", {})  # reset by Builder._initialize() for each build
+        if name not in found:
+            theme = self.srvbes.get_dict("runtime")["theme"]
+            candidates = _template_candidates(name, theme["templates"], ENV["GPATH"]["TEMPLATES"],
+                                              getattr(self.srvbes, "overrides_dir", None), template_base_dir(theme))
+            found[name] = any(os.path.isfile(path) for path in candidates)
+        return found[name]
+
+    def finalize_html(self, html: str) -> str:
+        """Last change to the whole page before it is written."""
+        return html
+
+    def edit_url(self, doc_id: str = "") -> str:
+        """Link to edit doc_id on the git server, or to the source folder without doc_id; '' when git is off."""
+        return self.git_url("edit", doc_id)
+
+    def git_url(self, action: str, path: str = "") -> str:
+        """Link to <server>/<user>/<repo>/<action>/<branch>/<git_path>/<path>; '' when git is off.
+
+        git_server must be a full URL (https://github.com); each part of the path is URL-encoded.
+        """
+        repo = self.srvbes.get_dict("repo") or {}
+        if not git_ready(repo):
+            return ""
+        branch = quote(repo["git_branch"].strip().strip("/"), safe="/")
+        tail = [quote(p, safe="/") for p in ((repo.get("git_path") or "").strip().strip("/"), path) if p]
+        return "/".join([self.git_repo_url(), action, branch, *tail])
+
+    def git_repo_url(self) -> str:
+        """Link to the repository on the git server, such as https://github.com/user/repo; '' when git is off."""
+        repo = self.srvbes.get_dict("repo") or {}
+        if not git_ready(repo):
+            return ""
+        server = repo["git_server"].strip().strip("/")
+        user, name = (quote(repo[key].strip().strip("/"), safe="") for key in GIT_KEYS[1:3])
+        return f"{server}/{user}/{name}"
+
+    def add_system_page(self, name: str, title: str, html: str | None = None, as_html: bool = True,
+                        listing: bool = False) -> None:
+        """Add a page the theme generates: write it (unless html is None) and register it as a system page."""
+        if html is not None:
+            self.distribute_md(name, html, as_html=as_html, listing=listing)
+        doc_id = f"{name}.md"
+        self.srvdtb.add_document(doc_id)
+        self.srvdtb.add_document_key(doc_id, "Title", title)
+        self.srvdtb.add_document_key(doc_id, "SystemPage", "Yes")
+
+    def page_title(self, doc_id: str) -> str:
+        """Title of a document page, or untitled_label when the document has none."""
+        return self.srvdtb.get_doc_properties(doc_id).get("Title") or self.untitled_label

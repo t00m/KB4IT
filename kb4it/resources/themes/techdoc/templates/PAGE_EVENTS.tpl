@@ -1,70 +1,32 @@
-<!-- EVENTS CALENDAR :: START -->
+<!-- EVENTS :: START -->
 <div class="uk-container uk-margin-top">
+  <div class="kb-ev-layout" data-kb-events data-kb-table="${var['table_id']}">
 
-  <!-- YEAR SELECTOR :: START -->
-  <div class="uk-flex uk-flex-center uk-margin">
-    <select id="kb4it-events-year-select" class="uk-select uk-form-width-medium uk-text-center">
-      % for i, ydata in enumerate(var['years']):
-      <option value="${i}" ${'selected' if i == 0 else ''}>${ydata['year']} (${ydata['count']})</option>
-      % endfor
-    </select>
+    <!-- EVENTS PANEL :: START -->
+    <aside class="kb-ev-panel noprint" aria-label="Events calendar">
+      <div class="kb-ev-year">
+        <button type="button" class="kb-ev-step" data-kb-step="older" aria-label="Previous year">&lsaquo;</button>
+        <button type="button" class="kb-ev-year-label" aria-haspopup="true" aria-expanded="false" aria-controls="kb-ev-years">
+          <span class="kb-ev-year-name">Events</span>
+          <span class="kb-ev-year-count"></span>
+        </button>
+        <button type="button" class="kb-ev-step" data-kb-step="newer" aria-label="Next year">&rsaquo;</button>
+        <ul id="kb-ev-years" class="kb-ev-years" hidden></ul>
+      </div>
+      <div class="kb-ev-strip" role="group" aria-label="Events per month"></div>
+      <div class="kb-ev-cal"></div>
+      <div class="kb-ev-foot"></div>
+    </aside>
+    <!-- EVENTS PANEL :: END -->
+
+    <!-- EVENTS LIST :: START -->
+    <div class="kb-ev-list">
+      ${var['datatable'] | n}
+    </div>
+    <!-- EVENTS LIST :: END -->
+
   </div>
-  <!-- YEAR SELECTOR :: END -->
-
-  <!-- YEARS :: START -->
-  <ul id="kb4it-events-switcher" class="uk-switcher uk-margin">
-    % for ydata in var['years']:
-    <li>
-      <div hidden></div>
-      <div class="uk-margin-bottom">
-        ${ydata['calendar'] | n}
-      </div>
-      <div class="uk-overflow-auto">
-        ${ydata['datatable'] | n}
-      </div>
-    </li>
-    % endfor
-  </ul>
-  <!-- YEARS :: END -->
-
 </div>
-<!-- EVENTS CALENDAR :: END -->
-
-<script>
-(function () {
-  var switcher = UIkit.switcher('#kb4it-events-switcher');
-
-  document.getElementById('kb4it-events-year-select').addEventListener('change', function () {
-    switcher.show(parseInt(this.value));
-  });
-
-  % for ydata in var['years']:
-  (function () {
-    var tid = 'kb4it-datatable-${ydata["year"]}';
-    var el = document.getElementById(tid);
-    if (el && !$.fn.DataTable.isDataTable('#' + tid)) {
-      $('#' + tid).attr('data-dt-init', '1').DataTable({
-        dom: '<"kbfilter"flrtip>',
-        serverSide: false,
-        ordering: true,
-        searching: true,
-        deferRender: true,
-        autoWidth: false,
-        stateSave: false,
-        paging: false,
-        info: true,
-        order: [[0, 'desc']]
-      });
-    }
-  })();
-  % endfor
-
-  UIkit.util.on('#kb4it-events-switcher', 'shown', function (e) {
-    $(e.target).find('.kb4it-datatable').each(function () {
-      if ($.fn.DataTable.isDataTable(this)) {
-        $(this).DataTable().columns.adjust();
-      }
-    });
-  });
-})();
-</script>
+<script type="application/json" id="kb-events-data">${var['data'] | n}</script>
+<script src="resources/themes/techdoc/framework/kb4it/js/events.js" defer></script>
+<!-- EVENTS :: END -->

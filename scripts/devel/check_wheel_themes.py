@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail when a theme tracked in git, or the offline help, is missing from the built wheel.
+"""Fail when a theme, vendor library or starter theme tracked in git, or the offline help, is missing from the built wheel.
 
 --stamp X.Y.Z also wants the build stamp kb4it/BUILD.json of that version;
 --release X.Y.Z wants the stamp of the clean release commit (RA-08).
@@ -18,10 +18,17 @@ import zipfile
 PREFIX = "kb4it/resources/themes/"
 HELP_INDEX = "kb4it/resources/help/index.html"
 EDITOR_BUNDLE = "kb4it/resources/editor/codemirror.min.js"
+VENDOR = "kb4it/resources/vendor/"
+STARTERS = "kb4it/resources/starters/"
 
 
 def themes(paths):
     return {p[len(PREFIX):].split("/")[0] for p in paths if p.startswith(PREFIX) and p.count("/") >= 4}
+
+
+def vendor_libraries(paths, prefix=VENDOR):
+    """Names of the folders under prefix that hold at least one file."""
+    return {p[len(prefix):].split("/")[0] for p in paths if p.startswith(prefix) and p.count("/") >= 4}
 
 
 def has_offline_help(paths):
@@ -65,6 +72,16 @@ def main():
         sys.exit(f"Offline help missing from {wheels[-1]}: no {HELP_INDEX}. Run scripts/help/build_offline.py first")
     if not has_editor_bundle(names):
         sys.exit(f"Editor bundle missing from {wheels[-1]}: no {EDITOR_BUNDLE}")
+    tracked_vendor = vendor_libraries(subprocess.run(["git", "ls-files", VENDOR], cwd=root, capture_output=True,
+                                                     text=True, check=True).stdout.split())
+    missing_vendor = sorted(tracked_vendor - vendor_libraries(names))
+    if missing_vendor:
+        sys.exit(f"Vendor libraries missing from {wheels[-1]}: {', '.join(missing_vendor)}")
+    tracked_starters = vendor_libraries(subprocess.run(["git", "ls-files", STARTERS], cwd=root, capture_output=True,
+                                                       text=True, check=True).stdout.split(), STARTERS)
+    missing_starters = sorted(tracked_starters - vendor_libraries(names, STARTERS))
+    if missing_starters:
+        sys.exit(f"Starter themes missing from {wheels[-1]}: {', '.join(missing_starters)}")
     packaged = themes(names)
     missing = sorted(tracked - packaged)
     if missing or "apphelp" not in packaged:

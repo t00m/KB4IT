@@ -60,7 +60,7 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 | `index.html` | The shelf, the chapter to continue and totals; your own `index.md` replaces it |
 | `Book_<name>.html` | The book overview: one column per part, one card per chapter |
 | Chapter pages | Navigation through the part, previous and next chapter, commands and tags |
-| `all.html`, `bookmarks.html`, `properties.html`, `stats.html` | As in the other themes |
+| `all.html`, `bookmarks.html`, `properties.html`, `stats.html` | As in the other themes; `properties.html` leaves out the properties in `hidden_properties` |
 | `search.html` | Full-text search over every document, with filters by Category, WorkType and Tag; the search box in the top bar (it replaces the link to `all.html`) shows the best matches as you type. See [search](reference-repo-json.md#search) |
 | `add.html` | Markdown editor for a new chapter; only when `"editor": true` is set in `repo.json`. The top bar then shows a plus button titled "Add document". See [the editor](howto-write-document-editor.md) |
 | `404.html` | "Page not found", in the theme's layout, with a link home and the search box. A web server shows it for a missing address; see [serving it](howto-publish-web-server.md#not-found). A document named `404.md` is left out with `DOC_NAME_RESERVED` |
@@ -73,11 +73,16 @@ Case does not matter. The shelf shows the progress of each book, and **Continue 
 
 ## Settings {#settings}
 
-| Key | Default | Meaning |
-|---|---|---|
-| `editor` | `false` | `true` builds the Add page. The skeleton is `CHAPTER-SKELETON.md` (`Author`, `Book`, `Part`, `Chapter`, `Date`, `Status`); put your own in `templates/skeletons/` of the repository overrides to replace it |
-| `datatable` | `["Date", "Title", "Chapter"]` | Columns of the document tables |
-| `git`, `git_server`, `git_user`, `git_repo`, `git_branch`, `git_path` | | Edit links; `git_server` is a full URL such as `https://github.com` |
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `editor` | `true`, `false` | `false` | `true` builds the Add page. The skeleton is `CHAPTER-SKELETON.md` (`Author`, `Book`, `Part`, `Chapter`, `Date`, `Status`); put your own in `templates/skeletons/` of the repository overrides to replace it |
+| `datatable` | List of property names | `["Date", "Title", "Chapter"]` | Columns of the document tables |
+| `git` | `true`, `false` | `false` | Edit links to your git server; they need `git_server`, `git_user`, `git_repo` and `git_branch` |
+| `git_server` | Full URL, such as `https://github.com` | | Git server of the edit links |
+| `git_user` | Text | | User or organisation on the git server |
+| `git_repo` | Text | | Repository name |
+| `git_branch` | Text | | Branch the edit links open |
+| `git_path` | Folder path inside the repository | | Folder that holds the documents; empty for the repository root |
 
 The `default` app has five sample chapters in two books, `Sample Book` and `Linux Basics`.
 

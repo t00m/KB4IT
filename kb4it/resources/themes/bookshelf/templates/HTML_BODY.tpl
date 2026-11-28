@@ -106,7 +106,11 @@ from kb4it.core.util import valid_filename
                     <div class="row"><span class="k">Part</span><span>${rd['part_label']}${(' &middot; ' if rd['part_title'] else '') | n}${rd['part_title'] or ''}</span></div>
                     <div class="row"><span class="k">Chapter</span><span>${info['chapter']}</span></div>
 % if info['author']:
+%     if info.get('author_tip'):
+                    <div class="row"><span class="k">Author</span><span title="${info['author_tip']}">${info['author']}</span></div>
+%     else:
                     <div class="row"><span class="k">Author</span><span>${info['author']}</span></div>
+%     endif
 % endif
                     <div class="row"><span class="k">Updated</span><span>${info['date'][:16]} &middot; ${info['status']}</span></div>
                 </div>

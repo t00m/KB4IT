@@ -51,7 +51,7 @@ def test_index_page_and_box(tmp_path, home, theme):
     assert 'id="kb4it-search-page"' in (target / "search.html").read_text(encoding="utf-8")
     assert 'id="kb4it-search-input"' in (target / "a.html").read_text(encoding="utf-8")
     for asset in ("js/kb4it-search.js", "js/kb4it-search-ui.js", "css/kb4it-search.css"):
-        assert (target / "resources" / "common" / asset).is_file(), asset
+        assert (target / "resources" / "vendor" / "search" / asset).is_file(), asset
 
 
 def test_techdoc_menu_links_to_the_search_page(tmp_path, home):
@@ -102,7 +102,7 @@ def test_engine_finds_a_section_in_the_built_index(tmp_path, home):
               "const e=new window.KB4ITSearch.Engine(window.KB4IT_INDEX);"
               "console.log(JSON.stringify(e.search('quokka',{}).map(r=>r.url)));")
     env = dict(os.environ, INDEX=str(target / "search-index.js"),
-               ENGINE=str(target / "resources" / "common" / "js" / "kb4it-search.js"))
+               ENGINE=str(target / "resources" / "vendor" / "search" / "js" / "kb4it-search.js"))
     out = subprocess.run([node, "-e", script], env=env, capture_output=True, text=True, encoding="utf-8", check=True)
     assert json.loads(out.stdout) == ["a.html#restore-steps"]
 

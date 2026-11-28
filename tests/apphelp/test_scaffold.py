@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from tests.helpers import APPHELP, page, run_kb4it
+from tests.helpers import APPHELP, page, relative_paths, run_kb4it
 
 PREFIX = "window.APPHELP_INDEX = "
 
@@ -68,6 +68,7 @@ def test_deleted_page_disappears_everywhere(scaffold, home):
 
 def test_moved_repository_still_builds(scaffold, tmp_path, home):
     repo, _ = scaffold
+    relative_paths(repo / "config" / "repo.json")  # a repository that moves keeps relative paths
     moved = tmp_path / "moved"
     shutil.move(str(repo), str(moved))
     result = run_kb4it("build", moved / "config" / "repo.json", cwd=home, home=home)

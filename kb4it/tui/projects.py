@@ -4,48 +4,22 @@ Project registry and the themes and apps KB4IT ships.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 from kb4it.core.env import ENV
-from kb4it.core.util import json_load, json_save, quarantine
+from kb4it.core.projects import PROJECTS_FILE, root_of  # noqa: F401  PROJECTS_FILE is a public name
+from kb4it.core.projects import load as load_projects  # noqa: F401  public name
+from kb4it.core.projects import save as save_projects  # noqa: F401  public name
+from kb4it.core.util import json_load
 from kb4it.core.version import theme_fingerprint
-
-PROJECTS_FILE = Path(ENV["LPATH"]["ROOT"]) / "projects.json"
-
 
 VERSION = ENV["APP"]["version"]
 BUILD_VERSION = ENV["APP"]["build_version"]  # shown in titles, so a development build is identifiable (BI-08)
 
 
-def load_projects() -> list[dict]:
-    if not PROJECTS_FILE.exists():
-        return []
-    try:
-        data = json_load(str(PROJECTS_FILE))
-        projects = data["projects"]
-        if not isinstance(projects, list):
-            raise TypeError("'projects' is not a list")
-        return projects
-    except (ValueError, KeyError, TypeError) as error:
-        # Keep the unreadable file: the next save would otherwise replace the whole list.
-        kept = quarantine(str(PROJECTS_FILE))
-        logging.getLogger(__name__).warning(f"[TUI] PROJECTS_CORRUPT path={PROJECTS_FILE} kept={kept} reason={error}")
-        return []
-    except OSError:
-        return []
-
-
-def save_projects(projects: list[dict]) -> None:
-    from kb4it.core.lock import registry_lock
-    PROJECTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with registry_lock():
-        json_save(str(PROJECTS_FILE), {"projects": projects})
-
-
 def get_themes() -> list[dict]:
+    """Every installed copy of every theme, bundled and local; _active marks the one builds use."""
     themes: list[dict] = []
-    seen_ids: set[str] = set()
     for scope, base in [
         ("global", ENV["GPATH"]["THEMES"]),
         ("local", ENV["LPATH"]["THEMES"]),
@@ -61,11 +35,10 @@ def get_themes() -> list[dict]:
                 continue
             try:
                 data = json_load(str(tfile))
-                tid = data.get("id", entry.name)
-                if tid in seen_ids:
-                    continue
-                seen_ids.add(tid)
+                data.setdefault("id", entry.name)
                 data["_scope"] = scope
+                # A build looks for a theme folder in the local themes first, then in the bundled ones.
+                data["_active"] = scope == "local" or not (Path(ENV["LPATH"]["THEMES"]) / entry.name / "theme.json").is_file()
                 data["version"] = data.get("version") or "unversioned"  # the theme's own version (TV-01)
                 data["fingerprint"] = _fingerprint(entry, data)
                 data["_path"] = str(entry)
@@ -73,6 +46,11 @@ def get_themes() -> list[dict]:
             except Exception:
                 pass
     return themes
+
+
+def active_themes() -> list[dict]:
+    """One entry per theme: the copy a build uses."""
+    return sorted((theme for theme in get_themes() if theme["_active"]), key=lambda theme: str(theme["id"]))
 
 
 def _fingerprint(theme_dir: Path, data: dict) -> str:
@@ -99,7 +77,7 @@ def get_apps(theme_name: str) -> list[str]:
 
 def _project_root(config_path: str) -> Path:
     """Project root is the parent of the config/ directory holding repo.json."""
-    return Path(config_path).resolve().parent.parent
+    return root_of(config_path)
 
 
 def _resolve_repo_path(config_path: str, value: str) -> Path:

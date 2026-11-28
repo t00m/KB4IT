@@ -12,6 +12,8 @@ VERSION = (ROOT / "kb4it" / "VERSION").read_text(encoding="utf-8").strip()
 SCANNED = ("kb4it", "scripts", "help", ".github", "tests", "action.yml", "pyproject.toml")
 TEXT_SUFFIXES = {".py", ".sh", ".cmd", ".ps1", ".tpl", ".json", ".yml", ".yaml", ".md", ".toml", ".cfg", ".csv", ".txt"}
 SKIPPED_PARTS = {"framework", "images", "__pycache__", "var", "node_modules"}  # var: generated build state
+# Third-party libraries shipped in kb4it/resources/vendor; their files carry their own versions.
+THIRD_PARTY = tuple(f"kb4it/resources/vendor/{name}/" for name in ("datatables", "highlight", "uikit"))
 
 # A hand-written 0.x version: KB4IT next to it, a version key, or a release named after "in", "since", "until" or "from".
 PATTERNS = [
@@ -37,6 +39,11 @@ ALLOWED = {
     "tests/core/test_changelog_tool.py": "fixture releases for the changelog tool",
     "tests/core/test_owned_pages.py": "a file as written by an older KB4IT, read for compatibility",
     "tests/fixtures/themes/mini/theme.json": "a fixture theme with its own version",
+    "kb4it/resources/starters/starter-docs/theme.json": "a starter theme with its own version",
+    "kb4it/resources/starters/starter-plain/theme.json": "a starter theme with its own version",
+    "tests/core/test_starters.py": "checks the starters' own version and floor",
+    "tests/core/test_themeinstall.py": "versions of the mini fixture theme, installed from zips",
+    "tests/core/test_themecli.py": "versions of the mini fixture theme, installed from zips",
     "tests/packaging/test_install_scripts.py": "fake output of pipx",
     "tests/packaging/test_scripts.py": "fake wheel name",
 }
@@ -59,7 +66,7 @@ def test_no_old_kb4it_version_in_code_or_docs():
     hits = []
     for file in _text_files():
         rel = file.relative_to(ROOT).as_posix()
-        if rel in ALLOWED or rel.startswith(SAMPLE_APP):
+        if rel in ALLOWED or rel.startswith(SAMPLE_APP) or rel.startswith(THIRD_PARTY):
             continue
         for number, line in enumerate(file.read_text(encoding="utf-8").splitlines(), start=1):
             if FLOOR.search(line):

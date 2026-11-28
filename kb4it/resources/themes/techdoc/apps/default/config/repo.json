@@ -7,7 +7,6 @@
         "WorkType",
         "Priority",
         "Status",
-        "Scope",
         "Topic"
     ],
     "events": [
@@ -20,12 +19,18 @@
         "Report",
         "Task"
     ],
+    "focus_mode": true,
     "git": false,
     "ignored_keys": [
         "Date"
     ],
     "logo": "resources/themes/techdoc/images/logo.svg",
     "logo_alt": "",
+    "markdown": {
+        "extensions": [
+            "pymdownx.tasklist"
+        ]
+    },
     "menu": [
         "Author",
         "Category",
@@ -42,6 +47,5 @@
     "source": "{source_directory}",
     "target": "{target_directory}",
     "theme": "techdoc",
-    "title": "KB4IT",
-    "webserver": false
+    "title": "KB4IT"
 }

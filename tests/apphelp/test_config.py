@@ -51,3 +51,27 @@ def test_version_token_is_the_kb4it_version():
 
 def test_plain_version_is_kept():
     assert load_config({"version": "2.1"}).version == "2.1"
+
+
+def test_helpconfig_is_the_theme_config_class():
+    from kb4it.core.themeconfig import build_config
+    from kb4it.core.themeload import load_module
+    from tests.helpers import ROOT
+    module = load_module(str(ROOT / "kb4it" / "resources" / "themes" / "apphelp" / "logic"), "apphelp")
+    assert module.Theme.config_class.__name__ == "HelpConfig"
+    HelpConfig = module.Theme.config_class
+    repo = {"version": "0.5", "apphelp": {"strict": False, "versions": {"enabled": True}, "bogus": 1}}
+    config, unknown = build_config(HelpConfig, {}, repo, "apphelp")
+    assert unknown == ["bogus"]
+    from dataclasses import asdict
+    assert asdict(config) == asdict(load_config(repo))
+    assert config.versions is True and config.strict is False and config.contract_explicit is False
+
+
+def test_unknown_apphelp_key_is_logged(tmp_path, home):
+    from tests.helpers import page, run_kb4it, write_repo
+    pages = {"start.md": page("Start", "Text.", DocType="Tutorial", HelpId="start")}
+    cfg = write_repo(tmp_path / "help", "apphelp", pages, apphelp={"strict": False, "bogus": 1})
+    result = run_kb4it("build", cfg, cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    assert "[FRONTEND] THEME_SETTING_UNKNOWN theme=apphelp key=bogus" in result.stdout

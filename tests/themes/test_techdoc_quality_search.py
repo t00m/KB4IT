@@ -50,7 +50,7 @@ def test_quality_breaks_a_relevance_tie(tmp_path, home):
     ]
     index = tmp_path / "index.js"
     index.write_text("window.KB4IT_INDEX = " + json.dumps(records) + ";\n", encoding="utf-8")
-    engine = ROOT / "kb4it" / "resources" / "common" / "js" / "kb4it-search.js"
+    engine = ROOT / "kb4it" / "resources" / "vendor" / "search" / "js" / "kb4it-search.js"
     script = ("const fs=require('fs'); global.window=global;"
               "eval(fs.readFileSync(process.env.INDEX,'utf8')); eval(fs.readFileSync(process.env.ENGINE,'utf8'));"
               "const e=new window.KB4ITSearch.Engine(window.KB4IT_INDEX);"
@@ -61,7 +61,7 @@ def test_quality_breaks_a_relevance_tie(tmp_path, home):
 
 
 def test_ui_renders_the_same_quality_chip():
-    ui = (ROOT / "kb4it" / "resources" / "common" / "js" / "kb4it-search-ui.js").read_text(encoding="utf-8")
+    ui = (ROOT / "kb4it" / "resources" / "vendor" / "search" / "js" / "kb4it-search-ui.js").read_text(encoding="utf-8")
     assert '"kb-q-chip kb-q-" +' in ui
     assert "record.q" in ui
     assert "Quality " in ui and " of 100, " in ui

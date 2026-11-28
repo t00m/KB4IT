@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from tests.helpers import page, run_kb4it
+from tests.helpers import page, relative_paths, run_kb4it
 
 BOOK = "Linux Admin"
 
@@ -49,6 +49,14 @@ def test_index_shows_every_book(site):
     assert "Unfiled" in html
 
 
+def test_unfiled_shelf_links_all_chapters(site):
+    """The Unfiled shelf has no Book page: its links go to all.html."""
+    assert not (site["target"] / "Book_Unfiled.html").exists()
+    for name in ("index.html", "loose.html"):
+        assert "Book_Unfiled.html" not in read(site, name)
+    assert "ANCHOR_MISSING" not in site["log"]
+
+
 def test_book_overview_orders_parts_and_chapters(site):
     html = read(site, "Book_Linux_Admin.html")
     assert html.index("c1.html") < html.index("c2.html") < html.index("c3.html")
@@ -63,8 +71,17 @@ def test_chapter_navigation(site):
 
 def test_metadata_pages(site):
     assert "c1.html" in read(site, "Command_systemctl.html")
-    for name in ("properties.html", "stats.html", "all.html", "bookmarks.html", "help.html"):
+    for name in ("properties.html", "stats.html", "all.html", "bookmarks.html", "about_kb4it.html"):
         assert (site["target"] / name).exists(), name
+
+
+def test_stats_page(site):
+    """Totals, activity and property coverage; Summary is not counted."""
+    html = read(site, "stats.html")
+    for anchor in ("stats-activity", "stats-coverage", "stats-health", "stats-links"):
+        assert f'id="{anchor}"' in html, anchor  # every section is a card
+    assert 'id="stats-coverage-details"' in html  # its details open in a modal
+    assert 'href="Command.html"' in html and 'href="Summary.html"' not in html
 
 
 def test_user_index_page_wins(site, tmp_path):
@@ -72,8 +89,40 @@ def test_user_index_page_wins(site, tmp_path):
     repo = tmp_path / "repo"
     shutil.copytree(site["repo"], repo)
     cfg = repo / "config" / "repo.json"
+    relative_paths(cfg)
     (repo / "source" / "index.md").write_text(page("My own index", Tag="home"), encoding="utf-8")
     result = run_kb4it("build", cfg, cwd=tmp_path, home=site["home"])
     assert result.returncode == 0, result.stdout
     assert "INDEX_SKIP reason=user_generated" in result.stdout
     assert "My own index" in (repo / "target" / "index.html").read_text(encoding="utf-8")
+
+
+def test_book_model_is_not_class_state():
+    """books and doc_index are set per build in setup(), never shared on the class."""
+    import ast
+
+    from tests.helpers import ROOT
+    source = (ROOT / "kb4it" / "resources" / "themes" / "bookshelf" / "logic" / "theme.py").read_text(encoding="utf-8")
+    theme = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Theme")
+    names = {t.id for n in theme.body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
+    assert not names & {"books", "doc_index", "_context_ready"}
+
+
+def test_prev_next_stay_inside_the_book():
+    """bookshelf's reading order is the chapters of one book, through the navigation feature."""
+    from types import SimpleNamespace
+
+    from kb4it.core.themeload import load_module
+    from kb4it.theme.features.navigation import neighbours_in
+    from tests.helpers import ROOT
+    module = load_module(str(ROOT / "kb4it" / "resources" / "themes" / "bookshelf" / "logic"), "bookshelf")
+    theme = module.Theme()
+    chapters = {"A": ["a1.md", "a2.md"], "B": ["b1.md", "b2.md"]}
+    theme.books = {book: {"chapters": [{"docId": d} for d in ids]} for book, ids in chapters.items()}
+    theme.doc_index = {d: {"docId": d, "book": book} for book, ids in chapters.items() for d in ids}
+
+    def neighbours(doc_id):
+        return neighbours_in(theme.ordered_pages(SimpleNamespace(id=doc_id)), doc_id)
+    assert neighbours("a2.md") == ("a1.md", None)
+    assert neighbours("b1.md") == (None, "b2.md")
+    assert neighbours("x.md") == (None, None)

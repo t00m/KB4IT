@@ -7,14 +7,10 @@ import sys
 
 import pytest
 
-from tests.helpers import ROOT, page, run_kb4it, write_repo
+from tests.helpers import ROOT, page, run_kb4it, techdoc_module, write_repo
 from tests.themes.test_techdoc_media import png
 
-LOGIC = ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic"
-sys.path.insert(0, str(LOGIC))  # techdoc_docpage imports techdoc_dashboard
-_spec = importlib.util.spec_from_file_location("techdoc_docpage", LOGIC / "techdoc_docpage.py")
-docpage = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(docpage)
+docpage = techdoc_module("docpage")
 
 BODY_FULL = "## Steps\n\nSee SAP note 736902 first.\n\nRun it."
 FILLER = " ".join(["Renew the credential with the portal and record the date of the change."] * 16)
@@ -72,12 +68,13 @@ def test_missing_image_is_logged(page_site):
 def test_header_strip_shows_badges_then_links(page_site):
     html = read(page_site, "full.html")
     strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
-    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("events_20261001")
-    assert 'href="events_20261001.html"' in strip and 'href="Product_ADS.html"' in strip
+    assert strip.index("How-to guide") < strip.index("Draft") < strip.index("High") < strip.index("2026-10-01")
+    # The site lists no "events" in repo.json, so no day page exists and the date is text.
+    assert 'href="events_' not in strip and 'href="Product_ADS.html"' in strip
     assert "Author_Ana" not in strip and "Topic" not in strip   # Author is not a strip key; full.md has no Topic
     ex = read(page_site, "exemplary.html")
     ex_strip = ex[ex.index("HEADER STRIP :: START"):ex.index("HEADER STRIP :: END")]
-    assert ex_strip.index("events_20261020") < ex_strip.index("Topic_Security.html") < ex_strip.index("Product_ADS.html")
+    assert ex_strip.index("2026-10-20") < ex_strip.index("Topic_Security.html") < ex_strip.index("Product_ADS.html")
 
 
 def test_strip_links_are_date_worktype_topic_product():
@@ -116,11 +113,20 @@ def test_card_is_closed_with_summary_and_open_without(page_site):
 def test_details_groups_and_chips(page_site):
     c = card(page_site, "full.html")
     assert c.index("<h3>Classification</h3>") < c.index("<h3>Systems</h3>") < c.index("<h3>Technical objects</h3>") < c.index("<h3>Other</h3>")
-    assert '<a class="kb-obj" href="Transaction_SU01.html">SU01</a>' in c
-    assert '<a class="kb-obj" href="https://me.sap.com/notes/736902">736902</a>' in c
+    assert '<a class="kb-obj kb-val" href="Transaction_SU01.html" title="SU01">SU01</a>' in c
+    assert '<a class="kb-obj kb-val" href="https://me.sap.com/notes/736902" title="736902">736902</a>' in c
     details = c[c.index("DETAILS PANEL :: START"):c.index("DETAILS PANEL :: END")]
-    assert "Color" in details and "Summary" not in details and "<dt>Title</dt>" not in details
+    assert "Color" in details and "Summary" not in details and '>Title</dt>' not in details
     assert "<h3>Systems</h3>" not in card(page_site, "plain.html")   # empty groups are hidden
+
+
+def test_long_values_end_in_an_ellipsis(page_site):
+    details = card(page_site, "full.html")
+    assert '<span class="kb-item"><a class="kb-val" href=' in details
+    css = (ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "framework" / "kb4it" / "css" / "screen.css").read_text(encoding="utf-8")
+    assert ".kb-val { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;" in css
+    assert ".kb-group { min-width: 0; }" in css
+    assert "grid-template-columns: max-content minmax(0, 1fr)" in css
 
 
 def test_panels_have_headings_and_print_classes(page_site):
@@ -145,8 +151,9 @@ def test_sap_notes_found_in_text():
 def test_strip_date_shows_the_time_below_the_date(page_site):
     html = read(page_site, "full.html")
     strip = html[html.index("HEADER STRIP :: START"):html.index("HEADER STRIP :: END")]
-    assert ('<a class="kb-date" href="events_20261001.html" title="2026-10-01 00:00:00">'
-            '<span class="kb-day">2026-10-01</span><span class="kb-time">00:00</span></a>') in strip
+    # No events day page in this site: the same date and time, without a link.
+    assert ('<span class="kb-date" title="2026-10-01 00:00:00">'
+            '<span class="kb-day">2026-10-01</span><span class="kb-time">00:00</span></span>') in strip
 
 
 def test_strip_date_without_time_shows_only_the_date():
@@ -223,8 +230,7 @@ def test_quality_items_have_tips_and_guide_links(page_site):
 
 
 def test_quality_guide_page_explains_every_check(page_site):
-    sys.path.insert(0, str(LOGIC))
-    import techdoc_quality_guide as guide
+    guide = techdoc_module("quality_guide")
     html = read(page_site, "quality-guide.html")
     for key in guide.CHECKS:
         assert f'id="{key}"' in html, key
@@ -234,7 +240,7 @@ def test_quality_guide_page_explains_every_check(page_site):
 
 def test_markdown_system_pages_keep_their_headings(page_site):
     # Mako reads a line starting with ## as a comment, so the templates must escape it.
-    assert re.search(r'<h2 class="kb-h2" id="what-is-kb4it">', read(page_site, "help.html"))
+    assert re.search(r'<h2 class="kb-h2" id="quick-start">', read(page_site, "about_kb4it.html"))
     assert re.search(r'<h3 class="kb-h3" id="check-summary">', read(page_site, "quality-guide.html"))
 
 
@@ -252,8 +258,13 @@ def _table_headers(html):
 def test_quality_column_sorts_by_score(page_site):
     html = read(page_site, "Category_Procedure.html")
     assert "Quality" in _table_headers(html)
-    assert re.search(r'<td data-order="\d+"><span class="kb-q-meter kb-q-exemplary">(<i class="on"></i>){5}</span>'
-                     r'<span class="kb-q-chip kb-q-exemplary">Exemplary</span></td>', html)
+    # The tier is the tooltip of the meter, not a text chip; the table search still finds it.
+    cell = re.search(r'<td data-order="(\d+)" data-search="Exemplary">'
+                     r'<span class="kb-q-meter kb-q-exemplary" role="img" aria-label="Exemplary, score (\d+)" '
+                     r'title="Exemplary, score (\d+)" data-uk-tooltip>(<i class="on"></i>){5}</span></td>', html)
+    assert cell and cell.group(1) == cell.group(2) == cell.group(3)
+    table = html[html.index("<tbody"):html.index("</tbody>")]
+    assert "kb-q-chip" not in table
 
 
 def test_quality_column_is_left_out_when_quality_is_off(off_site):
@@ -314,3 +325,11 @@ def test_dashboard_without_quality_has_no_stat_mix_or_shelf(off_site):
     index = read(off_site, "index.html")
     assert "quality.html" not in _block(index, "SUMMARY COUNTS")
     assert "kb-q-mix" not in index and "BEST DOCUMENTS" not in index
+
+
+def test_no_parser_shared_between_compile_threads():
+    """finalize_html runs in the compiler threads; an lxml parser object must not be shared between them."""
+    import ast
+    tree = ast.parse((ROOT / "kb4it" / "resources" / "themes" / "techdoc" / "logic" / "theme.py").read_text(encoding="utf-8"))
+    shared = [n for n in tree.body if isinstance(n, ast.Assign) and "HTMLParser" in ast.unparse(n.value)]
+    assert shared == []

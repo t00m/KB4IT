@@ -65,18 +65,33 @@ def test_projects_registry_unreadable(tmp_path, home):
     assert "Error loading projects" in result.stdout
 
 
-def test_create_writes_relative_paths_and_compile_script(tmp_path, home):
+def test_create_writes_absolute_paths_and_compile_script(tmp_path, home):
     result = run_kb4it("create", "techdoc", "repo", cwd=tmp_path, home=home)
     assert result.returncode == 0, result.stdout
     repo = tmp_path / "repo"
     conf = json.loads((repo / "config" / "repo.json").read_text(encoding="utf-8"))
-    assert (conf["source"], conf["target"]) == ("source", "target")
+    assert (conf["source"], conf["target"]) == (str((repo / "source").resolve()), str((repo / "target").resolve()))
     if sys.platform == "win32":
         assert (repo / "bin" / "compile.cmd").read_text(encoding="utf-8").startswith("@echo off")
     else:
         script = repo / "bin" / "compile.sh"
         assert "kb4it -L INFO build " in script.read_text(encoding="utf-8")
         assert script.stat().st_mode & 0o100
+
+
+def test_create_index_option(tmp_path, home):
+    result = run_kb4it("create", "techdoc", "private", "--index", "no", cwd=tmp_path, home=home)
+    assert result.returncode == 0, result.stdout
+    conf = json.loads((tmp_path / "private" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["seo"]["index"] is False
+    assert run_kb4it("create", "blog", "public", "--index", "yes", cwd=tmp_path, home=home).returncode == 0
+    conf = json.loads((tmp_path / "public" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert conf["seo"]["index"] is True
+    assert run_kb4it("create", "techdoc", "later", cwd=tmp_path, home=home).returncode == 0
+    conf = json.loads((tmp_path / "later" / "config" / "repo.json").read_text(encoding="utf-8"))
+    assert "index" not in (conf.get("seo") or {}), "without --index nothing is decided"
+    result = run_kb4it("create", "techdoc", "bad", "--index", "maybe", cwd=tmp_path, home=home)
+    assert result.returncode != 0 and not (tmp_path / "bad").exists()
 
 
 @pytest.mark.parametrize("platform, name, line", [
@@ -253,6 +268,7 @@ def test_two_repositories_build_at_the_same_time(tmp_path, home):
                               env=isolated_env(home), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8") for cfg in configs]
     outputs = [proc.communicate(timeout=600)[0] for proc in procs]
-    assert [proc.returncode for proc in procs] == [0, 0], outputs
+    # The end of each output holds the error; pytest would cut it from the whole text.
+    assert [proc.returncode for proc in procs] == [0, 0], [out[-2000:] for out in outputs]
     assert (tmp_path / "one" / "target" / "one.html").exists()
     assert (tmp_path / "two" / "target" / "two.html").exists()

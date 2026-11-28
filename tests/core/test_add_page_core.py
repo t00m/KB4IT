@@ -36,7 +36,7 @@ def test_hostile_category_text_escaped(tmp_path, home):
     assert "&lt;b&gt;x&lt;/b&gt;" in html
     assert "&lt;/script&gt;" in html
     assert "<b>x</b>" not in html
-    assert html.count("<dialog") == 1
+    assert html.count("<dialog") == 3  # the card's dialog, the Person profile and the Edit dialog
 
 
 def test_system_page_and_keys(tmp_path, home):
@@ -47,7 +47,7 @@ def test_system_page_and_keys(tmp_path, home):
     keys = re.search(r'id="kb-add-keys" type="application/json">(.*?)</script>', html, re.S)
     assert {"v": "Note", "c": 2} in json.loads(keys.group(1))["Category"]
     log = (tmp_path / "var" / "log" / "kb4it.log").read_text(encoding="utf-8")
-    assert "[BUILDER] ADD_PAGE enabled=True skeletons=theme categories=8" in log
+    assert "[BUILDER] ADD_PAGE enabled=True skeletons=theme categories=9" in log
 
 
 def test_editor_keys_counts_and_system_page():
@@ -76,6 +76,7 @@ def test_system_page():
     import logging
 
     from kb4it.services.addpage import AddPageMixin
+    from kb4it.services.pagepipeline import PagePipelineMixin
 
     class _Dtb:
         def __init__(self):
@@ -87,7 +88,7 @@ def test_system_page():
         def add_document_key(self, name, key, value):
             self.keys[name][key] = value
 
-    class _B(AddPageMixin):
+    class _B(AddPageMixin, PagePipelineMixin):  # add_system_page() comes from Builder
         log = logging.getLogger("test")
         srvdtb = _Dtb()
         written = None
@@ -98,7 +99,7 @@ def test_system_page():
         def _render_add_page(self):
             return "<p>x</p>", "common", 1
 
-        def distribute_md(self, name, content):
+        def distribute_md(self, name, content, as_html=True, listing=False):
             self.written = (name, content)
 
     builder = _B()

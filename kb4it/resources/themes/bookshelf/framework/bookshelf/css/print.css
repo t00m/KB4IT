@@ -1,12 +1,10 @@
-/* ============================================================================
-   KB4IT - "Bookshelf" theme  .  print stylesheet
+/* KB4IT - "Bookshelf" theme  .  print stylesheet
    Goal: turn a chapter (reading page) into a clean, focused study handout.
-   Extends the philosophy of the original techdoc print.css for the new markup.
-   ============================================================================ */
+   Extends the philosophy of the original techdoc print.css for the new markup. */
 
 @media print {
 
-    /* ---- page setup ---------------------------------------------------- */
+    /* page setup */
     @page {
         size: A4 portrait;
         margin: 1.4cm 1.6cm 1.6cm;
@@ -26,7 +24,7 @@
     }
     body { background-image: none !important; }   /* drop the screen paper grid */
 
-    /* ---- hide all app chrome & navigation ------------------------------ */
+    /* hide all app chrome & navigation */
     .app-top,
     .app-foot,
     .chapnav,
@@ -56,9 +54,7 @@
     /* hide the inline Markdown TOC; the printed handout keeps headings only */
     .bk-toc-block { display: none !important; }
 
-    /* ====================================================================
-       READING PAGE  =>  study handout
-       ==================================================================== */
+    /* READING PAGE  =>  study handout */
 
     /* collapse the 3-column reader to a single full-width column */
     .reader { display: block !important; }
@@ -148,7 +144,7 @@
         padding: 0.5pt 3pt;
     }
 
-    /* ---- code blocks: dark => ink-on-paper ----------------------------- */
+    /* code blocks: dark => ink-on-paper */
     .code {
         background: #f6f6f4 !important;
         border: 0.75pt solid #bbb !important;
@@ -180,7 +176,7 @@
     .code .flag { font-weight: 700; }                 /* flags => bold         */
     .code .cmt  { color: #666 !important; font-style: italic; }  /* comments */
 
-    /* ---- print-only command appendix (right rail is hidden in print) --- */
+    /* print-only command appendix (right rail is hidden in print) */
     .print-only { display: block !important; }
     .print-appendix {
         margin-top: 14pt;
@@ -235,9 +231,7 @@
     }
     .docmeta a::after { content: none !important; }
 
-    /* ====================================================================
-       LIBRARY  &  BOOK OVERVIEW  (printable, but flattened)
-       ==================================================================== */
+    /* LIBRARY  &  BOOK OVERVIEW  (printable, but flattened) */
 
     .shelf-wrap, .continue, .stat-strip,
     .book-card, .col, .ch-card, .rail-card, .kanban-head .whole {
@@ -279,4 +273,8 @@
     pre, blockquote, table, .docmeta, .code { page-break-inside: avoid; }
     h1, h2, h3 { page-break-after: avoid; }
     img { max-width: 100% !important; page-break-inside: avoid; }
+}
+
+@media print {
+    .kb-profile-actions { display: none !important; }
 }

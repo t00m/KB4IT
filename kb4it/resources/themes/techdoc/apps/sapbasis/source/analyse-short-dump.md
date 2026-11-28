@@ -11,6 +11,7 @@ Summary: Find out why an ABAP program ended with a short dump, and who should fi
 Tag: troubleshooting
 Topic: Runtime errors
 Transaction: ST22
+WorkType: Knowledge
 ---
 
 # Analyse a short dump

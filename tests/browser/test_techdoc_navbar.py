@@ -2,8 +2,11 @@
 
 import pytest
 
+from kb4it.core.notice import HELP_ONLINE_URL
 from tests.browser.test_add_editor import open_cat
+from tests.core.test_highlight import _app_conf
 from tests.helpers import page as md_page
+from tests.helpers import run_kb4it, write_repo
 from tests.themes.test_techdoc_add import build_techdoc
 
 pytestmark = pytest.mark.browser
@@ -90,37 +93,50 @@ def test_shortcuts_do_nothing_in_the_add_page_editor(add_page):
     assert not add_page.is_visible("#kb4it-search-input")
 
 
-def test_reload_help_and_about_are_in_the_logo_menu(nav_page):
+def test_help_and_about_are_in_the_logo_menu(nav_page):
     menu = "#kb4it-menu .uk-navbar-left .uk-navbar-dropdown"
-    for href in ("javascript:location.reload();", "help.html", "about_app.html", "about_kb4it.html"):
+    for href in ("about_app.html", "about_kb4it.html"):
         assert nav_page.query_selector(f'{menu} a[href="{href}"]'), href
+    # Help is the KB4IT help site, opened in a new window.
+    assert nav_page.query_selector(f'{menu} a[href="{HELP_ONLINE_URL}"][target="_blank"][rel="noopener"]')
     assert not nav_page.query_selector('#kb4it-menu .uk-navbar-right a[href="help.html"]')
 
 
-def _open_title_menu(page, doc):
+def _goto(page, doc):
     page.goto(page.url.rsplit("/", 1)[0] + "/" + doc)
+
+
+def _open_title_menu(page, doc):
+    _goto(page, doc)
+    # UIkit 3.22+ ignores the first hover of a navbar when the pointer already sits on it
+    # at load, and Playwright starts the pointer at (0, 0). Come in from the page instead.
+    page.mouse.move(600, 600)
     page.hover(".kb4it-navbar-title a")
     page.wait_for_selector(".kb4it-title-menu", state="visible")
 
 
-def test_page_actions_are_one_row_at_the_top_of_the_title_menu(nav_page):
+def test_page_actions_are_one_row_under_the_title_in_the_top_bar(nav_page):
     assert not nav_page.query_selector("#kb4it-menu .uk-navbar-left .kb4it-page-action")
-    _open_title_menu(nav_page, "toc.html")
+    assert not nav_page.query_selector(".kb4it-title-menu .kb4it-page-action")
+    _goto(nav_page, "toc.html")
+    # Visible without hovering the title.
+    assert nav_page.is_visible(".kb4it-page-action")
     tops = nav_page.eval_on_selector_all(".kb4it-page-action", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
-    # Properties, quality, source and print; edit only shows with git settings.
-    assert len(tops) == 4 and len(set(tops)) == 1, tops
-    first_toc = nav_page.eval_on_selector(".kb4it-title-toc a", "e => e.getBoundingClientRect().top")
-    assert tops[0] < first_toc
+    # Edit in the editor (on by default), properties, quality, source and print; edit in git only with git settings.
+    assert len(tops) == 5 and len(set(tops)) == 1, tops
+    title_bottom = nav_page.eval_on_selector("#kb4it-page-title", "e => e.getBoundingClientRect().bottom")
+    bar_bottom = nav_page.eval_on_selector("#kb4it-menu nav", "e => e.getBoundingClientRect().bottom")
+    assert title_bottom <= tops[0] and tops[0] + 28 <= bar_bottom
 
 
-def test_source_action_opens_its_dialog_from_the_title_menu(nav_page):
-    _open_title_menu(nav_page, "toc.html")
+def test_source_action_opens_its_dialog_from_the_top_bar(nav_page):
+    _goto(nav_page, "toc.html")
     nav_page.click('.kb4it-page-action[href="#modal-full-source"]')
     nav_page.wait_for_selector("#modal-full-source.uk-open", state="visible")
 
 
-def test_properties_action_opens_the_details_tab_from_the_title_menu(nav_page):
-    _open_title_menu(nav_page, "toc.html")
+def test_properties_action_opens_the_details_tab_from_the_top_bar(nav_page):
+    _goto(nav_page, "toc.html")
     nav_page.click('.kb4it-page-action[href="#kb-info-details"]')
     nav_page.wait_for_selector("#kb-info-card.kb-open #kb-info-details", state="visible")
 
@@ -128,7 +144,77 @@ def test_properties_action_opens_the_details_tab_from_the_title_menu(nav_page):
 def test_title_menu_is_wide_and_nests_the_contents(nav_page):
     _open_title_menu(nav_page, "toc.html")
     assert nav_page.eval_on_selector(".kb4it-title-menu", "e => e.getBoundingClientRect().width") >= 600
+    # The menu opens below the whole bar, so it never covers the page actions.
+    menu_top = nav_page.eval_on_selector(".kb4it-title-menu", "e => e.getBoundingClientRect().top")
+    assert menu_top >= nav_page.eval_on_selector("#kb4it-menu nav", "e => e.getBoundingClientRect().bottom")
     top = nav_page.eval_on_selector('.kb4it-title-toc a[href="#part-1-of-a-long-procedure-with-many-steps"]', "e => e.getBoundingClientRect().left")
     sub = nav_page.eval_on_selector('.kb4it-title-toc a[href="#detail-1"]', "e => e.getBoundingClientRect().left")
     assert sub > top
     assert nav_page.eval_on_selector(".kb4it-title-toc a", "e => e.scrollWidth <= e.clientWidth"), "an entry runs over"
+
+
+def test_reload_is_a_top_bar_button_left_of_search(nav_page):
+    assert not nav_page.query_selector('#kb4it-menu .uk-navbar-left a[href="javascript:location.reload();"]')
+    hrefs = [a.get_attribute("href") for a in nav_page.query_selector_all("#kb4it-menu .uk-navbar-right a")]
+    # The focus mode switch (href="#") comes first on a document.
+    assert hrefs == ["#", "javascript:location.reload();", "#kb4it-search-modal"]
+
+
+def test_focus_mode_hides_the_page_furniture_and_opens_every_section(nav_page):
+    _goto(nav_page, "toc.html")
+    closed = nav_page.eval_on_selector_all(".kb-content .kb-closed", "els => els.map(e => e.id || e.className)")
+    assert closed, "the test needs folded sections"
+    for selector in (".kb4it-page-actions", ".kb-doc-meta", "#kb-toc-inline", ".kb-footer"):
+        assert nav_page.is_visible(selector), selector
+    nav_page.click("[data-kb-focus]")
+    assert nav_page.get_attribute("[data-kb-focus]", "aria-pressed") == "true"
+    assert nav_page.eval_on_selector("html", "e => e.classList.contains('kb-focus')")
+    for selector in (".kb4it-page-actions", ".kb-doc-meta", "#kb-toc-inline", ".kb-footer", ".kb-totop"):
+        assert not nav_page.is_visible(selector), selector
+    assert nav_page.is_visible("#kb4it-page-title") and nav_page.is_visible("[data-kb-focus]")
+    assert not nav_page.query_selector(".kb-content .kb-closed")
+    # A second click puts the page back, folded sections included.
+    nav_page.click("[data-kb-focus]")
+    assert nav_page.get_attribute("[data-kb-focus]", "aria-pressed") == "false"
+    for selector in (".kb4it-page-actions", ".kb-doc-meta", "#kb-toc-inline", ".kb-footer"):
+        assert nav_page.is_visible(selector), selector
+    after = nav_page.eval_on_selector_all(".kb-content .kb-closed", "els => els.map(e => e.id || e.className)")
+    assert after == closed
+
+
+def test_focus_mode_keeps_the_side_table_of_contents(browser, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    body = "\n\n".join(f"## Part {n}\n\nText." for n in range(1, 6))
+    target = build_techdoc(tmp_path, home, {"five.md": md_page("Five", body=body, Category="Note")})
+    page = browser.new_page(viewport={"width": 1500, "height": 800})
+    page.goto((target / "five.html").as_uri())
+    assert page.is_visible(".kb-toc-sidebar") and page.is_visible(".kb-toc-sidebar-actions")
+    page.click("[data-kb-focus]")
+    assert page.is_visible(".kb-toc-sidebar")
+    assert not page.is_visible(".kb-toc-sidebar-actions")
+    page.close()
+
+
+def test_repo_json_focus_mode_starts_in_focus_and_the_switch_leaves_it(browser, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    body = "\n\n".join(f"## Part {n}\n\nText." for n in range(1, 6))
+    cfg = write_repo(tmp_path, "techdoc", {"five.md": md_page("Five", body=body, Category="Note")},
+                     focus_mode=True, **_app_conf("techdoc"))
+    assert run_kb4it("build", cfg, cwd=tmp_path, home=home).returncode == 0
+    page = browser.new_page()
+    page.goto((tmp_path / "target" / "five.html").as_uri())
+    page.wait_for_function("document.querySelector('[data-kb-focus]').getAttribute('aria-pressed') === 'true'")
+    assert not page.query_selector(".kb-content .kb-closed")
+    assert not page.is_visible(".kb-doc-meta")
+    page.click("[data-kb-focus]")
+    assert page.is_visible(".kb-doc-meta")
+    # Off, the sections fold as on any page: every top-level section but the first.
+    assert len(page.query_selector_all(".kb-content .kb-sect1.kb-closed")) == 4
+    page.close()
+
+
+def test_system_pages_have_no_focus_switch(nav_page):
+    _goto(nav_page, "index.html")
+    assert not nav_page.query_selector("[data-kb-focus]")
