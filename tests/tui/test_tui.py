@@ -148,7 +148,7 @@ def test_themes_screen_installs_from_a_path(tmp_path, registry, user_themes):
         app.push_screen(tui.ThemesScreen())
         await pilot.pause()
         app.screen.query_one("#install", Button).press()
-        await pilot.pause()
+        await wait_for(pilot, lambda: bool(app.screen.query("#inp-source")), timeout=20)
         app.screen.query_one("#inp-source", Input).value = str(zip_path)
         app.screen.query_one("#do-install", Button).press()
         table = None

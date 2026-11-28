@@ -20,7 +20,8 @@ def isolated_env(home, **extra):
     # A fake HOME hides ~/.local, so keep the user base: optional packages stay visible.
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), KB4IT_HOME=str(Path(home) / ".kb4it"),
                PYTHONPATH=str(ROOT), PYTHONUSERBASE=site.USER_BASE, COLUMNS="1000",
-               PYTHONIOENCODING="utf-8")  # run_kb4it reads the output as UTF-8, also on Windows
+               PYTHONIOENCODING="utf-8",  # run_kb4it reads the output as UTF-8, also on Windows
+               PYTHONFAULTHANDLER="1")  # a build that crashes prints the stack of every thread
     env.update(extra)
     return env
 

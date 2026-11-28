@@ -14,6 +14,7 @@ from kb4it.tui.repo_options import current_value, theme_options
 from kb4it.tui.screens.confirm import ConfirmScreen
 from kb4it.tui.screens.settings import RepoEditorScreen, SettingsReferenceScreen
 from tests.helpers import write_repo
+from tests.tui.test_tui import wait_for
 
 
 @pytest.fixture
@@ -158,8 +159,9 @@ async def open_project_button(app, pilot, button):
     await pilot.pause()
     app.screen.action_open_project()
     await pilot.pause()
+    project_screen = app.screen
     app.screen.query_one(button, Button).press()
-    await pilot.pause()
+    await wait_for(pilot, lambda: app.screen is not project_screen, timeout=20)
 
 
 async def open_editor(app, pilot):
@@ -181,7 +183,8 @@ def test_settings_reference_screen(repo, registry):
         screen = app.screen
         assert isinstance(screen, SettingsReferenceScreen)
         table = screen.query_one(DataTable)
-        assert table.row_count == len(theme_options("techdoc")[0])
+        expected = len(theme_options("techdoc")[0])
+        await wait_for(pilot, lambda: table.row_count == expected, timeout=20)
         assert "set in this project" in str(screen.query_one("#summary").render())
         screen.query_one("#filter", Input).value = "toc_sidebar"
         await pilot.pause()
