@@ -19,6 +19,8 @@ from html import escape
 from lxml import etree
 from lxml import html as lhtml
 
+from kb4it.core.html.lxmllock import lxml_serialized
+
 LONG_CODE_LINES = 30
 FOLDED_CODE_LINES = 20
 STICKY_TABLE_ROWS = 15
@@ -30,6 +32,7 @@ TABLE_CLASSES = "uk-table uk-table-small uk-table-divider uk-table-hover uk-tabl
 DATATABLE_CLASS = "kb4it-datatable"
 
 
+@lxml_serialized
 def enhance_blocks(html, table_filter=True):
     """Wrap the code blocks and tables of a body and label the panels of author tabs.
 

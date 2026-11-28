@@ -9,6 +9,8 @@ from urllib.parse import unquote
 from lxml import etree
 from lxml import html as lhtml
 
+from kb4it.core.html.lxmllock import lxml_serialized
+
 # Bytes read from an image file to find its size.
 HEADER_BYTES = 65536
 
@@ -187,6 +189,7 @@ def _make_galleries(root):
         run = [child] if child is not None and child.tag == 'figure' and child.get('class') == 'kb-figure' else []
 
 
+@lxml_serialized
 def enhance_images(html, source_dir):
     """Rewrite the images of a body: size, lazy loading, figures, lightbox links, galleries, missing files.
 

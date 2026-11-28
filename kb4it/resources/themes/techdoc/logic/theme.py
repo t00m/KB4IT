@@ -14,6 +14,7 @@ import os
 
 from lxml import etree
 
+from kb4it.core.html.lxmllock import LXML_LOCK
 from kb4it.core.util import source_ext
 from kb4it.theme import BaseTheme, Table, q
 from kb4it.theme.html import enhance_blocks, enhance_images
@@ -216,6 +217,7 @@ class Theme(BaseTheme):
 
     def finalize_html(self, html):
         """techdoc writes pretty-printed HTML with a doctype."""
-        tree = etree.fromstring(html, etree.HTMLParser())  # one parser per page: lxml parsers are not thread-safe
-        pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
+        with LXML_LOCK:  # one thread inside lxml at a time, see kb4it/core/html/lxmllock.py
+            tree = etree.fromstring(html, etree.HTMLParser())  # one parser per page: lxml parsers are not thread-safe
+            pretty_html = etree.tostring(tree, pretty_print=True, method="html", encoding="unicode")
         return f"<!DOCTYPE html>\n{pretty_html}"

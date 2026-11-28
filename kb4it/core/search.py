@@ -18,6 +18,8 @@ import os
 
 import lxml.html
 
+from kb4it.core.html.lxmllock import lxml_serialized
+
 
 SKIP_TAGS = {"script", "style", "button"}
 SECTION_TEXT_MAX = 5000
@@ -29,6 +31,7 @@ def _add(section, text):
         section["text"].append(text)
 
 
+@lxml_serialized
 def extract_sections(page_html: str, container_id: str) -> list:
     """Split the element with id container_id into sections: [{id, heading, text}, ...]."""
     root = lxml.html.fromstring(page_html)

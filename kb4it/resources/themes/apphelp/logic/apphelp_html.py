@@ -6,6 +6,7 @@ import lxml.html
 from lxml import etree
 
 from kb4it.core.html import lazy_images, wrap_code
+from kb4it.core.html.lxmllock import lxml_serialized
 
 
 def _inner_html(element) -> str:
@@ -78,6 +79,7 @@ def _toc(root, layout):
             for h in root.iter("h2", "h3") if h.get("id")]
 
 
+@lxml_serialized
 def transform(fragment: str, doctype: str, layout: str = "", labels: dict | None = None) -> tuple:
     """Return the article HTML and its table of contents for a page of the given type and layout."""
     if not fragment.strip():
